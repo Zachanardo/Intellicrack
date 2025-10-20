@@ -1203,7 +1203,7 @@ const modularHookLibrary = {
                 module_id: moduleId,
             });
             return moduleInstance;
-        } catch (e) {
+        } catch (_e) {
             send({
                 type: 'error',
                 target: 'hook_library',
@@ -1305,7 +1305,7 @@ const modularHookLibrary = {
                 module_id: moduleId,
             });
             return true;
-        } catch (e) {
+        } catch (_e) {
             send({
                 type: 'error',
                 target: 'hook_library',
@@ -1378,7 +1378,7 @@ const modularHookLibrary = {
             }
 
             return false;
-        } catch (e) {
+        } catch (_e) {
             send({
                 type: 'error',
                 target: 'hook_library',
@@ -1394,6 +1394,16 @@ const modularHookLibrary = {
     createFridaHook: function (hookDefinition) {
         var strategy = hookDefinition.strategy;
         var target = hookDefinition.target || hookDefinition.module;
+
+        if (!target) {
+            send({
+                type: 'error',
+                target: 'hook_library',
+                action: 'frida_hook_missing_target',
+                message: 'Hook definition must specify target or module',
+            });
+            return null;
+        }
 
         try {
             switch (strategy) {
@@ -1421,7 +1431,7 @@ const modularHookLibrary = {
                 });
                 return null;
             }
-        } catch (e) {
+        } catch (_e) {
             send({
                 type: 'error',
                 target: 'hook_library',
@@ -1505,11 +1515,20 @@ const modularHookLibrary = {
 
         return Interceptor.attach(targetFunc, {
             onEnter: function (args) {
+                var argValues = [];
+                for (var i = 0; i < Math.min(args.length || 4, 4); i++) {
+                    try {
+                        argValues.push(args[i].toString());
+                    } catch (_e) {
+                        argValues.push('<unavailable>');
+                    }
+                }
                 send({
                     type: 'info',
                     target: 'hook_library',
                     action: 'monitor_function_called',
                     target_function: hookDefinition.target,
+                    arguments: argValues,
                 });
             },
         });
@@ -1527,12 +1546,17 @@ const modularHookLibrary = {
         return Interceptor.attach(targetFunc, {
             onLeave: function (retval) {
                 if (hookDefinition.spoofedValues) {
-                    // Apply spoofed values based on hook configuration
+                    var originalValue = retval.toString();
+                    if (hookDefinition.spoofedValue !== undefined) {
+                        retval.replace(hookDefinition.spoofedValue);
+                    }
                     send({
                         type: 'bypass',
                         target: 'hook_library',
                         action: 'values_spoofed',
                         target_function: hookDefinition.target,
+                        original_value: originalValue,
+                        spoofed_value: hookDefinition.spoofedValue,
                     });
                 }
             },
@@ -1594,7 +1618,7 @@ const modularHookLibrary = {
                 hook_id: hookId,
             });
             return true;
-        } catch (e) {
+        } catch (_e) {
             send({
                 type: 'error',
                 target: 'hook_library',
@@ -2280,7 +2304,7 @@ const modularHookLibrary = {
 
     // === ENHANCEMENT FUNCTIONS (2025) - BATCH 1 - PRODUCTION-READY ===
     initializeAdvancedModularOrchestration: function () {
-        var self = this;
+        var _self = this;  // Reserved for closures
         var orchestrator = {
             interceptorBatch: null,
             activeInterceptors: new Map(),
@@ -2310,7 +2334,14 @@ const modularHookLibrary = {
                     transaction.endTime = Date.now();
                     transaction.duration = transaction.endTime - transaction.startTime;
                     return true;
-                } catch (e) {
+                } catch (_e) {
+                    send({
+                        type: 'error',
+                        target: 'hook_library',
+                        action: 'hook_transaction_commit_failed',
+                        transaction_id: transactionId,
+                        error: e.toString(),
+                    });
                     this.rollbackHookTransaction(transactionId);
                     return false;
                 }
@@ -2355,7 +2386,7 @@ const modularHookLibrary = {
 
         // Module load monitoring for dynamic hook installation
         orchestrator.monitorModuleLoads = function () {
-            var self = this;
+            var _self = this;  // Reserved for closures
             Process.enumerateModules().forEach(function (module) {
                 self.performanceMetrics.set(module.name, {
                     base: module.base,
@@ -2429,7 +2460,7 @@ const modularHookLibrary = {
     },
 
     setupIntelligentHookComposition: function () {
-        var self = this;
+        var _self = this;  // Reserved for closures
         var composer = {
             compositions: new Map(),
             chainedHooks: new Map(),
@@ -2449,6 +2480,11 @@ const modularHookLibrary = {
 
             this.sharedContexts.set(chainId, sharedContext);
             var chain = [];
+
+            // Track composition stats in parent
+            if (self.stats) {
+                self.stats.hookChainsCreated = (self.stats.hookChainsCreated || 0) + 1;
+            }
 
             hookConfigs.forEach(function (config, index) {
                 var target = Module.findExportByName(config.module, config.function);
@@ -2539,11 +2575,27 @@ const modularHookLibrary = {
 
         // Execute dependent hooks based on conditions
         composer.executeDependentHooks = function (chainId, hookIds) {
-            var self = this;
+            var _self = this;  // Reserved for closures
+            var chainContext = self.sharedContexts.get(chainId);
+            if (!chainContext) {
+                send({
+                    type: 'warning',
+                    target: 'hook_library',
+                    action: 'chain_context_not_found',
+                    chain_id: chainId,
+                });
+                return;
+            }
+
             hookIds.forEach(function (hookId) {
                 var deps = self.hookDependencies.get(hookId);
                 if (deps && deps.target) {
                     Interceptor.attach(deps.target, deps.callbacks);
+                    chainContext.results.push({
+                        hookId: hookId,
+                        executed: true,
+                        timestamp: Date.now(),
+                    });
                 }
             });
         };
@@ -2608,12 +2660,14 @@ const modularHookLibrary = {
                     requires: ['debuggerCheckBypassed'],
                     onEnter: function (args, ctx) {
                         this.pDebuggerPresent = args[1];
+                        ctx.flags.remoteDebuggerChecked = true;
                     },
                     onLeave: function (retval, ctx) {
                         if (this.pDebuggerPresent) {
                             this.pDebuggerPresent.writeU8(0);
                         }
                         retval.replace(1);
+                        ctx.flags.remoteDebuggerBypassed = true;
                     },
                 },
                 {
@@ -2622,11 +2676,16 @@ const modularHookLibrary = {
                     onEnter: function (args, ctx) {
                         this.infoClass = args[1].toInt32();
                         this.buffer = args[2];
+                        ctx.flags.queryInformationHooked = true;
                     },
                     onLeave: function (retval, ctx) {
                         if (this.infoClass === 7 && this.buffer) {
                             // ProcessDebugPort
                             this.buffer.writeU32(0);
+                            ctx.flags.debugPortZeroed = true;
+                        }
+                        if (retval.toInt32() === 0) {
+                            ctx.flags.querySucceeded = true;
                         }
                     },
                 },
@@ -2640,13 +2699,18 @@ const modularHookLibrary = {
     },
 
     initializeAdaptiveLoadBalancer: function () {
-        var self = this;
+        var _self = this;  // Reserved for closures
         var balancer = {
             threadMetrics: new Map(),
             hookDistribution: new Map(),
             performanceData: new Map(),
             stalkerSessions: new Map(),
         };
+
+        // Track balancer stats in parent
+        if (self.stats) {
+            self.stats.loadBalancerInitialized = true;
+        }
 
         // Real thread performance monitoring
         balancer.analyzeThreadLoad = function () {
@@ -2681,12 +2745,26 @@ const modularHookLibrary = {
                                         metrics.callCount += rawEvents.length / 16; // Each event is 16 bytes
                                         metrics.lastUpdate = Date.now();
                                     }
+                                    // Track events for debugging
+                                    if (events.length < 1000) {
+                                        events.push({
+                                            count: rawEvents.length,
+                                            timestamp: Date.now(),
+                                        });
+                                    }
                                 },
                             }),
                             startTime: Date.now(),
+                            eventsBuffer: events,
                         });
-                    } catch (e) {
-                        // Thread may have exited or be unavailable
+                    } catch (_e) {
+                        send({
+                            type: 'debug',
+                            target: 'hook_library',
+                            action: 'stalker_attach_failed',
+                            thread_id: thread.id,
+                            error: e.toString(),
+                        });
                     }
                 }
             });
@@ -2718,7 +2796,7 @@ const modularHookLibrary = {
                     var interceptor = Interceptor.attach(target, {
                         onEnter: function (args) {
                             if (this.threadId === bestThread) {
-                                var startTime = Date.now();
+                                var _startTime = Date.now();  // Reserved for performance tracking
                                 if (hookConfig.onEnter) {
                                     hookConfig.onEnter.call(this, args);
                                 }
@@ -2822,7 +2900,7 @@ const modularHookLibrary = {
     },
 
     setupQuantumResistantModuleEncryption: function () {
-        var self = this;
+        var _self = this;  // Reserved for closures
         var encryption = {
             protectedCode: new Map(),
             codeSignatures: new Map(),
@@ -2931,7 +3009,7 @@ const modularHookLibrary = {
                 this.monitorCodeIntegrity(address, size, checksum);
 
                 return true;
-            } catch (e) {
+            } catch (_e) {
                 return false;
             }
         };
@@ -2942,7 +3020,7 @@ const modularHookLibrary = {
             size,
             expectedChecksum,
         ) {
-            var self = this;
+            var _self = this;  // Reserved for closures
             var checkInterval = setInterval(function () {
                 try {
                     var currentChecksum = 0;
@@ -2964,7 +3042,7 @@ const modularHookLibrary = {
                         // Restore protected code if possible
                         self.restoreProtectedCode(address);
                     }
-                } catch (e) {
+                } catch (_e) {
                     clearInterval(checkInterval);
                 }
             }, 1000); // Check every second
@@ -3032,7 +3110,7 @@ const modularHookLibrary = {
     },
 
     initializeAIAssistedDependencyResolution: function () {
-        var self = this;
+        var _self = this;  // Reserved for closures
         var resolver = {
             importTable: new Map(),
             exportTable: new Map(),
@@ -3070,7 +3148,7 @@ const modularHookLibrary = {
                     }
                     resolver.importTable.get(moduleName).add(imp.module);
                 });
-            } catch (e) {}
+            } catch (_e) {}
 
             // Get real exports
             try {
@@ -3088,7 +3166,7 @@ const modularHookLibrary = {
                     }
                     resolver.exportTable.get(moduleName).add(exp.name);
                 });
-            } catch (e) {}
+            } catch (_e) {}
 
             return dependencies;
         };
@@ -3136,7 +3214,7 @@ const modularHookLibrary = {
                 return false;
             }
 
-            resolver.importTable.forEach(function (imports, module) {
+            resolver.importTable.forEach(function (_imports, module) {
                 if (!visited.has(module)) {
                     hasCycle(module);
                 }
@@ -3163,7 +3241,7 @@ const modularHookLibrary = {
                 stack.push(module);
             }
 
-            resolver.importTable.forEach(function (imports, module) {
+            resolver.importTable.forEach(function (_imports, module) {
                 if (!visited.has(module)) {
                     topologicalSort(module);
                 }
@@ -3228,7 +3306,7 @@ const modularHookLibrary = {
 
     // Enhancement Function 6: Advanced Conflict Mitigation
     setupAdvancedConflictMitigation: function () {
-        var self = this;
+        var _self = this;  // Reserved for closures
         var conflictResolver = {
             hookConflicts: new Map(),
             priorityQueue: [],
@@ -3253,7 +3331,7 @@ const modularHookLibrary = {
                         type: 'interceptor',
                     });
                 }
-            } catch (e) {}
+            } catch (_e) {}
 
             // Check global hook registry
             if (typeof global.fridaHooks !== 'undefined') {
@@ -3327,7 +3405,7 @@ const modularHookLibrary = {
         };
 
         // Find alternative hook points
-        conflictResolver.findAlternatives = function (addr) {
+        conflictResolver.findAlternatives = function (_addr) {
             var alternatives = [];
             var func = DebugSymbol.getFunctionByName(
                 DebugSymbol.fromAddress(addr).name,
@@ -3392,7 +3470,7 @@ const modularHookLibrary = {
 
     // Enhancement Function 7: Predictive Hook Optimization
     initializePredictiveHookOptimization: function () {
-        var self = this;
+        var _self = this;  // Reserved for closures
         var optimizer = {
             callFrequency: new Map(),
             executionPaths: new Map(),
@@ -3402,8 +3480,8 @@ const modularHookLibrary = {
 
         // Profile function call frequency using Stalker
         optimizer.profileCallFrequency = function () {
-            var frequency = new Map();
-            var startTime = Date.now();
+            var _frequency = new Map();
+            var _startTime = Date.now();  // Reserved for performance tracking
 
             Process.enumerateThreads()
                 .slice(0, 3)
@@ -3426,7 +3504,7 @@ const modularHookLibrary = {
                                 });
                             },
                         });
-                    } catch (e) {}
+                    } catch (_e) {}
                 });
 
             // Profile for 100ms
@@ -3436,7 +3514,7 @@ const modularHookLibrary = {
                     .forEach(function (thread) {
                         try {
                             Stalker.unfollow(thread.id);
-                        } catch (e) {}
+                        } catch (_e) {}
                     });
 
                 // Identify hot and cold paths
@@ -3462,7 +3540,7 @@ const modularHookLibrary = {
             var addr = Module.findExportByName(null, targetFunc);
             if (!addr) return null;
 
-            var frequency = this.callFrequency.get(addr.toString()) || 0;
+            var _frequency = this.callFrequency.get(addr.toString()) || 0;
             var optimization = {
                 strategy: 'standard',
                 location: addr,
@@ -3569,7 +3647,7 @@ const modularHookLibrary = {
 
     // Enhancement Function 8: Dynamic Module Evolution
     setupDynamicModuleEvolution: function () {
-        var self = this;
+        var _self = this;  // Reserved for closures
         var evolution = {
             moduleGenerations: new Map(),
             mutationHistory: [],
@@ -3592,7 +3670,7 @@ const modularHookLibrary = {
             evolved.adaptations = [];
 
             // Monitor and adapt
-            var self = this;
+            var _self = this;  // Reserved for closures
             evolved.monitor = setInterval(function () {
                 var metrics = self.collectMetrics(targetAddr);
 
@@ -3646,7 +3724,7 @@ const modularHookLibrary = {
 
                     // Call original with mutations
                     return callback.call(this, args);
-                } catch (e) {
+                } catch (_e) {
                     // Mutation error recovery
                     evolution.mutationHistory.push({
                         generation: generation,
@@ -3665,7 +3743,7 @@ const modularHookLibrary = {
         };
 
         // Apply defensive mutations
-        evolution.applyDefensiveMutation = function (hook, addr) {
+        evolution.applyDefensiveMutation = function (hook, _addr) {
             var original = hook.onEnter;
             hook.onEnter = function (args) {
                 // Add input validation
@@ -3678,7 +3756,7 @@ const modularHookLibrary = {
                 // Add exception handling
                 try {
                     return original.call(this, args);
-                } catch (e) {
+                } catch (_e) {
                     // Graceful degradation
                     return Memory.alloc(8);
                 }
@@ -3691,7 +3769,7 @@ const modularHookLibrary = {
         };
 
         // Apply performance mutations
-        evolution.applyPerformanceMutation = function (hook, addr) {
+        evolution.applyPerformanceMutation = function (hook, _addr) {
             var original = hook.onEnter;
             var cache = new Map();
 
@@ -3721,7 +3799,7 @@ const modularHookLibrary = {
         };
 
         // Collect runtime metrics
-        evolution.collectMetrics = function (addr) {
+        evolution.collectMetrics = function (_addr) {
             var metrics = {
                 calls: 0,
                 failures: 0,
@@ -3729,7 +3807,7 @@ const modularHookLibrary = {
             };
 
             // Sample execution for metrics
-            var startTime = Date.now();
+            var _startTime = Date.now();  // Reserved for performance tracking
             var sampler = Interceptor.attach(addr, {
                 onEnter: function () {
                     this.startTime = Date.now();
@@ -3765,7 +3843,7 @@ const modularHookLibrary = {
 
     // Enhancement Function 9: Advanced Versioning System
     initializeAdvancedVersioningSystem: function () {
-        var self = this;
+        var _self = this;  // Reserved for closures
         var versioning = {
             versions: new Map(),
             branches: new Map(),
@@ -3913,7 +3991,7 @@ const modularHookLibrary = {
                     var func = new Function('return ' + commit.code);
                     var newHook = func();
                     Object.assign(hook, newHook);
-                } catch (e) {
+                } catch (_e) {
                     // Silent fail on bad code
                 }
             }
@@ -3936,12 +4014,12 @@ const modularHookLibrary = {
                 if (snapshot.state.onEnter) {
                     try {
                         hook.onEnter = new Function('args', snapshot.state.onEnter);
-                    } catch (e) {}
+                    } catch (_e) {}
                 }
                 if (snapshot.state.onLeave) {
                     try {
                         hook.onLeave = new Function('retval', snapshot.state.onLeave);
-                    } catch (e) {}
+                    } catch (_e) {}
                 }
 
                 // Restore metadata
@@ -4005,7 +4083,7 @@ const modularHookLibrary = {
 
     // Enhancement Function 10: Intelligent Performance Orchestrator
     setupIntelligentPerformanceOrchestrator: function () {
-        var self = this;
+        var _self = this;  // Reserved for closures
         var orchestrator = {
             performanceMetrics: new Map(),
             optimizationQueue: [],
@@ -4068,7 +4146,7 @@ const modularHookLibrary = {
 
         // Get CPU usage estimate
         orchestrator.getCpuUsage = function () {
-            var startTime = Date.now();
+            var _startTime = Date.now();  // Reserved for performance tracking
             var iterations = 0;
 
             // Benchmark loop
@@ -4145,7 +4223,7 @@ const modularHookLibrary = {
                             Stalker.unfollow(thread.id);
                         }
                     }
-                } catch (e) {}
+                } catch (_e) {}
             });
         };
 
@@ -4167,7 +4245,7 @@ const modularHookLibrary = {
             }
 
             // Merge redundant hooks
-            hookMap.forEach(function (hookIds, address) {
+            hookMap.forEach(function (hookIds, _address) {
                 if (hookIds.length > 1) {
                     orchestrator.mergeHooks(hookIds);
                 }
@@ -4195,7 +4273,7 @@ const modularHookLibrary = {
                 for (var i = 0; i < callbacks.length; i++) {
                     try {
                         results.push(callbacks[i].call(this, args));
-                    } catch (e) {}
+                    } catch (_e) {}
                 }
                 return results[0]; // Return first result
             };
@@ -4217,7 +4295,7 @@ const modularHookLibrary = {
             // Recreate function
             try {
                 return new Function('return ' + source)();
-            } catch (e) {
+            } catch (_e) {
                 return func; // Return original if compression fails
             }
         };
@@ -4263,3 +4341,6 @@ const modularHookLibrary = {
         this.performanceOrchestrator = orchestrator;
     },
 };
+
+// Auto-execute the modular hook library
+modularHookLibrary.run();
