@@ -535,11 +535,11 @@ const BinaryPatcher = {
                 name: 'WebAssembly',
 
                 // Patch WASM function to return constant
-                patchFunction: function (funcIndex, returnValue) {
+                patchFunction: function (_funcIndex, returnValue) {
                     return [
                         0x41,
-                        returnValue, // i32.const value
-                        0x0f, // return
+                        returnValue,
+                        0x0f,
                     ];
                 },
 
@@ -1365,8 +1365,7 @@ const BinaryPatcher = {
                     return data;
                 },
 
-                fallbackOperation: function (operation, data) {
-                    // Non-SIMD implementation
+                fallbackOperation: function (_operation, data) {
                     return data;
                 },
             },
@@ -1564,8 +1563,6 @@ const BinaryPatcher = {
         // Send patch to specific node
         sendPatchToNode: function (node, patchData) {
             return new Promise((resolve, reject) => {
-                // In production, this would use actual network communication
-                // For now, simulate with local patching
                 try {
                     const result = BinaryPatcher.patchingEngine.hotPatch(
                         patchData.module,

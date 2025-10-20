@@ -2,6 +2,9 @@ use std::env;
 use std::path::PathBuf;
 use std::process::Command;
 
+#[allow(clippy::cognitive_complexity)]
+#[allow(clippy::too_many_lines)]
+#[allow(clippy::option_if_let_else)]
 fn main() {
     #[cfg(target_os = "windows")]
     {
@@ -118,16 +121,18 @@ fn main() {
         }
 
         #[allow(non_snake_case)]
-        match found_python {
-            Some(p) => {
+        found_python.map_or_else(
+            || {
+                panic!(
+                    "CI environment detected but Python not found. Set PYO3_PYTHON environment variable."
+                )
+            },
+            |p| {
                 let p_display = p.display();
                 println!("cargo:warning=CI environment detected, using Python: {p_display}");
                 p
-            }
-            None => panic!(
-                "CI environment detected but Python not found. Set PYO3_PYTHON environment variable."
-            ),
-        }
+            },
+        )
     } else {
         // Local development with Pixi
         let pixi_python = PathBuf::from(&project_root).join(".pixi/envs/default/python.exe");

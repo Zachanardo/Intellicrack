@@ -72,7 +72,7 @@ impl Default for StartupValidator {
 }
 
 impl StartupValidator {
-    #[must_use] 
+    #[must_use]
     pub fn new() -> Self {
         Self {
             requirements: SystemRequirements::default(),
@@ -80,7 +80,7 @@ impl StartupValidator {
         }
     }
 
-    #[must_use] 
+    #[must_use]
     pub const fn with_requirements(requirements: SystemRequirements) -> Self {
         Self {
             requirements,
@@ -429,13 +429,11 @@ impl StartupValidator {
                 Duration::from_secs(10),
                 Command::new(cmd).arg("--version").output(),
             )
-            .await {
-                if output.status.success() {
-                    python_found = true;
-                    python_executable = (*cmd).to_string();
-                    python_version = String::from_utf8_lossy(&output.stdout).trim().to_string();
-                    break;
-                }
+            .await && output.status.success() {
+                python_found = true;
+                python_executable = (*cmd).to_string();
+                python_version = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                break;
             }
         }
 
@@ -1100,26 +1098,26 @@ impl StartupValidator {
         }
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn get_results(&self) -> &[StartupCheckResult] {
         &self.check_results
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn has_critical_failures(&self) -> bool {
         self.check_results
             .iter()
             .any(|r| r.status == StartupStatus::Critical)
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn has_failures(&self) -> bool {
         self.check_results
             .iter()
             .any(|r| matches!(r.status, StartupStatus::Fail | StartupStatus::Critical))
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn get_summary_report(&self) -> String {
         let total = self.check_results.len();
         let passed = self

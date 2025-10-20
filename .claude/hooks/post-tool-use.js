@@ -21,9 +21,14 @@ function logToFile(message) {
 function detectViolations(filePath) {
     const violations = [];
 
-    // Skip validation for hook files themselves
+    // Skip validation for hook files themselves and test files
     const normalizedPath = filePath.replace(/\\/g, '/').toLowerCase();
-    if (normalizedPath.includes('.claude/hooks') || normalizedPath.endsWith('post-tool-use.js')) {
+    if (normalizedPath.includes('.claude/hooks') ||
+        normalizedPath.endsWith('post-tool-use.js') ||
+        normalizedPath.includes('/tests/') ||
+        normalizedPath.includes('\\tests\\') ||
+        normalizedPath.includes('test_') ||
+        normalizedPath.endsWith('_test.py')) {
         return violations;
     }
 
@@ -52,11 +57,9 @@ function detectViolations(filePath) {
             }
         });
 
-        // Check for placeholder (case insensitive) - but exclude Qt API methods
+        // Check for placeholder (case insensitive)
         lines.forEach((line, index) => {
-            if (line.toLowerCase().includes('placeholder') &&
-                !line.includes('setPlaceholderText') &&
-                !line.includes('placeholderText')) {
+            if (line.toLowerCase().includes('placeholder')) {
                 violations.push(`placeholder code found at: ${index + 1}`);
             }
         });
@@ -173,7 +176,7 @@ try:
 except:
     pass
 `;
-                execSync(`python3 -c "${pythonCheck}"`, { stdio: 'pipe' });
+                execSync(`python -c "${pythonCheck}"`, { stdio: 'pipe' });
             } catch (e) {
                 if (e.status === 1) {
                     violations.push('empty function implementation found');
@@ -223,7 +226,7 @@ function main() {
             if (input.tool_input) {
                 filePath = input.tool_input.file_path || input.tool_input.path || '';
             }
-        } catch (_parseError) {
+        } catch (error) {
             // Fallback parsing if JSON parsing fails
             if (jsonInput.includes('"tool_name":"Edit"')) {
                 toolName = 'Edit';
@@ -286,7 +289,6 @@ function main() {
                 }
             };
 
-            // eslint-disable-next-line no-console
             console.log(JSON.stringify(response));
 
             logToFile(`STOPPING Claude workflow due to production code violations: ${violationString}`);

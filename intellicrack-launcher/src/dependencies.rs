@@ -64,7 +64,7 @@ pub struct SystemHealthReport {
 }
 
 impl ValidationSummary {
-    #[must_use] 
+    #[must_use]
     pub fn all_critical_available(&self) -> bool {
         let critical_deps = ["Flask", "TensorFlow"];
         critical_deps.iter().all(|dep| {
@@ -74,12 +74,12 @@ impl ValidationSummary {
         })
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn total(&self) -> usize {
         self.dependencies.len()
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn successful(&self) -> usize {
         self.dependencies
             .values()
@@ -87,7 +87,7 @@ impl ValidationSummary {
             .count()
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn failed(&self) -> usize {
         self.dependencies
             .values()
@@ -95,7 +95,7 @@ impl ValidationSummary {
             .count()
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn success_rate(&self) -> f64 {
         if self.total() == 0 {
             0.0
@@ -111,7 +111,7 @@ pub struct DependencyValidator {
 }
 
 impl DependencyValidator {
-    #[must_use] 
+    #[must_use]
     pub fn new() -> Self {
         Self {
             results: HashMap::new(),
@@ -383,7 +383,7 @@ impl DependencyValidator {
     async fn check_qemu_dependency(&mut self) -> Result<()> {
         info!("Checking QEMU dependency");
 
-        let qemu_status = if let Ok(_) = Command::new("qemu-system-x86_64").arg("--version").output() {
+        let qemu_status = if Command::new("qemu-system-x86_64").arg("--version").output().is_ok() {
             info!("QEMU system emulator found");
             DependencyStatus {
                 available: true,

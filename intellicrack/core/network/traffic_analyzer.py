@@ -115,7 +115,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             "capture_file": "license_traffic.pcap",
             "max_packets": 10000,
             "filter": "tcp",
-            "visualization_dir": "visualizations",
+            "visualization_dir": str(get_visualizations_dir()),
             "auto_analyze": True,
         }
 
@@ -191,9 +191,6 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             "127.",
             "localhost",
         ]
-
-        # Create visualization directory
-        os.makedirs(self.config["visualization_dir"], exist_ok=True)
 
     def start_capture(self, interface: str | None = None) -> bool:
         """Start capturing network traffic.

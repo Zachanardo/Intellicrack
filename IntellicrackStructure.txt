@@ -1,7 +1,7 @@
 INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: Fri, Oct 17, 2025 01:13:23 PM
+Generated: Sun, Oct 19, 2025 08:55:02 PM
 Directory: D:\Intellicrack\intellicrack
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -244,7 +244,14 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── terminal_dashboard.py
 │   └── tutorial_system.py
 ├── core/
+│   ├── __pycache__/
+│   │   ├── subscription_validation_bypass.cpython-312.pyc
+│   │   └── subscription_validation_bypass.cpython-314.pyc
 │   ├── analysis/
+│   │   ├── __pycache__/
+│   │   │   ├── symbolic_devirtualizer.cpython-312.pyc
+│   │   │   ├── symbolic_devirtualizer.cpython-314.pyc
+│   │   │   └── vmprotect_detector.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── analysis_orchestrator.py
 │   │   ├── automated_patch_agent.py
@@ -304,8 +311,10 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── rop_generator.py
 │   │   ├── simconcolic.py
 │   │   ├── similarity_searcher.py
+│   │   ├── symbolic_devirtualizer.py
 │   │   ├── symbolic_executor.py
 │   │   ├── taint_analyzer.py
+│   │   ├── vmprotect_detector.py
 │   │   ├── vulnerability_engine.py
 │   │   ├── yara_pattern_engine.py
 │   │   └── yara_scanner.py
@@ -329,6 +338,13 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── integration/
 │   │   ├── intelligent_correlation.py
 │   │   └── real_tool_communication.py
+│   ├── license/
+│   │   ├── __pycache__/
+│   │   │   ├── keygen.cpython-312.pyc
+│   │   │   └── keygen.cpython-314.pyc
+│   │   ├── __init__.py
+│   │   ├── keygen.py
+│   │   └── README.md
 │   ├── logging/
 │   │   ├── __init__.py
 │   │   └── audit_logger.py
@@ -390,6 +406,9 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   └── vm_workflow_manager.py
 │   ├── protection/
 │   ├── protection_bypass/
+│   │   ├── __pycache__/
+│   │   │   ├── cloud_license.cpython-312.pyc
+│   │   │   └── cloud_license.cpython-314.pyc
 │   │   ├── hooks/
 │   │   │   └── yubikey_hook.dll
 │   │   ├── __init__.py
@@ -597,14 +616,21 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── plugin_system.py
 │   └── remote_executor.py
 ├── protection/
+│   ├── __pycache__/
+│   │   ├── denuvo_analyzer.cpython-312.pyc
+│   │   ├── denuvo_ticket_analyzer.cpython-312.pyc
+│   │   └── themida_analyzer.cpython-312.pyc
 │   ├── __init__.py
 │   ├── analysis_cache.py
 │   ├── commercial_protectors_database.py
+│   ├── denuvo_analyzer.py
+│   ├── denuvo_ticket_analyzer.py
 │   ├── icp_backend.py
 │   ├── icp_report_generator.py
 │   ├── intellicrack_protection_advanced.py
 │   ├── intellicrack_protection_core.py
 │   ├── protection_detector.py
+│   ├── themida_analyzer.py
 │   └── unified_protection_engine.py
 ├── scripts/
 │   ├── ai_scripts/
@@ -678,7 +704,8 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── Windows_Patch/
 │   │   └── WindowsActivator.cmd
 │   ├── __init__.py
-│   └── README.md
+│   ├── README.md
+│   └── run_analysis_cli.py
 ├── ssl_certificates/
 │   ├── ca.crt
 │   ├── ca.key

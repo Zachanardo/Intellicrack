@@ -22,6 +22,7 @@ import numpy as np
 
 from intellicrack.core.analysis.binary_analyzer import BinaryAnalyzer
 from intellicrack.core.analysis.binary_pattern_detector import BinaryPatternDetector
+from intellicrack.core.analysis.vmprotect_detector import VMProtectDetector
 from intellicrack.core.analysis.yara_pattern_engine import YaraPatternEngine
 from intellicrack.ml.pattern_evolution_tracker import PatternEvolutionTracker
 from intellicrack.utils.logger import get_logger
@@ -1151,6 +1152,7 @@ class EnhancedProtectionScanner:
         self.binary_analyzer = BinaryAnalyzer()
         self.yara_engine = YaraPatternEngine()
         self.binary_detector = BinaryPatternDetector()
+        self.vmprotect_detector = VMProtectDetector()
 
         # Cache for performance
         self.cache = {}

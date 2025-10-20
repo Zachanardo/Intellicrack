@@ -472,8 +472,16 @@ class ResourceManager:
 
     def _get_system_limits(self) -> dict[ResourceType, int]:
         """Get system resource limits."""
+        try:
+            cpu_count = psutil.cpu_count(logical=False) if PSUTIL_AVAILABLE else 4
+            # Ensure cpu_count is an integer
+            if not isinstance(cpu_count, int):
+                cpu_count = 4
+        except (AttributeError, TypeError):
+            cpu_count = 4
+
         return {
-            ResourceType.CPU: psutil.cpu_count(logical=False) if PSUTIL_AVAILABLE else 4,
+            ResourceType.CPU: cpu_count,
             # MB
             ResourceType.MEMORY: psutil.virtual_memory()
             if PSUTIL_AVAILABLE

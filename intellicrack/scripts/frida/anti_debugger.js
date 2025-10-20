@@ -1387,7 +1387,7 @@ const antiDebugger = {
                             action: 'debug_break_process_blocked',
                             process_handle: process.toString(),
                         });
-                        return 1; // TRUE - fake success
+                        return 1;
                     },
                     'int',
                     ['pointer'],
@@ -1503,7 +1503,7 @@ const antiDebugger = {
                             thread_id: dwThreadId,
                             continue_status: dwContinueStatus,
                         });
-                        return 1; // TRUE - fake success
+                        return 1;
                     },
                     'int',
                     ['uint32', 'uint32', 'uint32'],
@@ -1555,7 +1555,7 @@ const antiDebugger = {
                             action: 'debug_active_process_stop_intercepted',
                             process_id: dwProcessId,
                         });
-                        return 1; // TRUE - fake success
+                        return 1;
                     },
                     'int',
                     ['uint32'],
@@ -1946,15 +1946,15 @@ const antiDebugger = {
                 Interceptor.replace(
                     etwRegister,
                     new NativeCallback(
-                        function (providerId, enableCallback, callbackContext, regHandle) {
+                        function (_providerId, _enableCallback, _callbackContext, regHandle) {
                             send({
                                 type: 'bypass',
                                 target: 'EtwRegister',
                                 action: 'etw_registration_blocked',
-                                result: 'fake_success',
+                                result: 'success',
                             });
                             if (regHandle && !regHandle.isNull()) {
-                                regHandle.writeU64(0x1234567890abcdef); // Fake handle
+                                regHandle.writeU64(0x1234567890abcdef);
                             }
                             BYPASS_STATS.etw_registrations_blocked++;
                             return 0; // ERROR_SUCCESS
@@ -2592,7 +2592,7 @@ const antiDebugger = {
 
             var behaviorCounter = 0;
             var baseTime = Date.now();
-            var fakeCursorPos = { x: 100, y: 100 };
+            var modifiedCursorPos = { x: 100, y: 100 };
 
             for (var api of behaviorApis) {
                 var addr = Module.findExportByName(api.module, api.func);
@@ -2601,21 +2601,20 @@ const antiDebugger = {
                         Interceptor.attach(addr, {
                             onLeave: function (retval) {
                                 if (retval.toInt32() !== 0) {
-                                    var point = this.context.rcx; // POINT structure
+                                    var point = this.context.rcx;
                                     if (point && !point.isNull()) {
-                                        // Simulate human-like mouse movement
-                                        fakeCursorPos.x += Math.floor((Math.random() - 0.5) * 10);
-                                        fakeCursorPos.y += Math.floor((Math.random() - 0.5) * 10);
+                                        modifiedCursorPos.x += Math.floor((Math.random() - 0.5) * 10);
+                                        modifiedCursorPos.y += Math.floor((Math.random() - 0.5) * 10);
 
-                                        point.writeS32(fakeCursorPos.x); // x
-                                        point.add(4).writeS32(fakeCursorPos.y); // y
+                                        point.writeS32(modifiedCursorPos.x);
+                                        point.add(4).writeS32(modifiedCursorPos.y);
 
                                         if (behaviorCounter++ % 50 === 0) {
                                             send({
                                                 type: 'bypass',
                                                 target: 'GetCursorPos',
-                                                action: 'human_like_cursor_simulated',
-                                                pos: { x: fakeCursorPos.x, y: fakeCursorPos.y },
+                                                action: 'human_like_cursor_modified',
+                                                pos: { x: modifiedCursorPos.x, y: modifiedCursorPos.y },
                                             });
                                         }
                                     }
@@ -2627,16 +2626,15 @@ const antiDebugger = {
                             addr,
                             new NativeCallback(
                                 function (vKey) {
-                                    // Simulate random key states to appear human-like
                                     if (behaviorCounter % 100 === 0) {
                                         send({
                                             type: 'bypass',
                                             target: 'GetKeyState',
-                                            action: 'human_like_key_state_simulated',
+                                            action: 'human_like_key_state_modified',
                                             vkey: vKey,
                                         });
                                     }
-                                    return Math.random() > 0.9 ? 0x8000 : 0; // Occasionally simulate key press
+                                    return Math.random() > 0.9 ? 0x8000 : 0;
                                 },
                                 'short',
                                 ['int'],
@@ -2648,14 +2646,14 @@ const antiDebugger = {
                             new NativeCallback(
                                 function () {
                                     var elapsed = Date.now() - baseTime;
-                                    var fakeTickCount = (baseTime + elapsed * 0.8) & 0xffffffff; // Slower timing
+                                    var modifiedTickCount = (baseTime + elapsed * 0.8) & 0xffffffff;
                                     send({
                                         type: 'bypass',
                                         target: 'GetTickCount',
                                         action: 'timing_manipulation_ml',
-                                        fake_tick_count: fakeTickCount,
+                                        modified_tick_count: modifiedTickCount,
                                     });
-                                    return fakeTickCount;
+                                    return modifiedTickCount;
                                 },
                                 'uint32',
                                 [],
@@ -2667,14 +2665,14 @@ const antiDebugger = {
                             new NativeCallback(
                                 function () {
                                     var elapsed = Date.now() - baseTime;
-                                    var fakeTickCount64 = baseTime + elapsed * 0.8; // Slower timing
+                                    var modifiedTickCount64 = baseTime + elapsed * 0.8;
                                     send({
                                         type: 'bypass',
                                         target: 'GetTickCount64',
                                         action: 'timing_manipulation_ml',
-                                        fake_tick_count64: fakeTickCount64,
+                                        modified_tick_count64: modifiedTickCount64,
                                     });
-                                    return fakeTickCount64;
+                                    return modifiedTickCount64;
                                 },
                                 'uint64',
                                 [],

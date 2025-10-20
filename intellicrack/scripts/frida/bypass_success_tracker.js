@@ -764,7 +764,7 @@ const BypassSuccessTracker = {
         }
     },
 
-    evaluateAntiDebugSuccess: function (method, args, returnValue) {
+    evaluateAntiDebugSuccess: function (method, _args, returnValue) {
     // Anti-debug bypass is successful if debugger presence is hidden
         switch (method) {
         case 'IsDebuggerPresent':
@@ -781,18 +781,18 @@ const BypassSuccessTracker = {
         }
     },
 
-    evaluateLicensingSuccess: function (method, args, returnValue) {
+    evaluateLicensingSuccess: function (_method, _args, returnValue) {
     // Licensing bypass is successful if validation returns positive
         var successValues = [1, true, 0]; // Various success indicators
         return successValues.includes(returnValue);
     },
 
-    evaluateDrmSuccess: function (method, args, returnValue) {
+    evaluateDrmSuccess: function (_method, _args, returnValue) {
     // DRM bypass is successful if operations complete without errors
         return returnValue === 0 || returnValue === 1;
     },
 
-    evaluateIntegritySuccess: function (method, args, returnValue) {
+    evaluateIntegritySuccess: function (method, _args, returnValue) {
     // Integrity bypass is successful if checks pass or are bypassed
         switch (method) {
         case 'CryptHashData':
@@ -807,32 +807,32 @@ const BypassSuccessTracker = {
         }
     },
 
-    evaluateVirtualizationSuccess: function (method, args, returnValue) {
+    evaluateVirtualizationSuccess: function (_method, _args, returnValue) {
     // Virtualization bypass is successful if VM is not detected
         return returnValue === 0; // No VM detected
     },
 
-    evaluateHardwareSuccess: function (method, args, returnValue) {
+    evaluateHardwareSuccess: function (_method, _args, returnValue) {
     // Hardware bypass is successful if spoofed values are returned
         return returnValue !== 0; // Non-zero typically indicates success
     },
 
-    evaluateNetworkSuccess: function (method, args, returnValue) {
+    evaluateNetworkSuccess: function (_method, _args, returnValue) {
     // Network bypass is successful if requests complete or are intercepted
         return returnValue !== 0 && returnValue !== -1;
     },
 
-    evaluateCryptographySuccess: function (method, args, returnValue) {
+    evaluateCryptographySuccess: function (_method, _args, returnValue) {
     // Cryptography bypass is successful if operations complete
         return returnValue !== 0; // Non-zero = success
     },
 
-    evaluateMemorySuccess: function (method, args, returnValue) {
+    evaluateMemorySuccess: function (_method, _args, returnValue) {
     // Memory bypass is successful if operations complete
         return returnValue !== 0; // Non-zero = success
     },
 
-    evaluateRegistrySuccess: function (method, args, returnValue) {
+    evaluateRegistrySuccess: function (_method, _args, returnValue) {
     // Registry bypass is successful if operations complete without errors
         return returnValue === 0; // ERROR_SUCCESS
     },
@@ -1835,7 +1835,7 @@ const BypassSuccessTracker = {
                 var isRealCategory =
           !category.startsWith('test_') &&
           !category.startsWith('debug_') &&
-          !category.includes('mock');
+          !category.includes('synthetic');
                 return stats.attempts > 0 && isRealCategory;
             })
             .map(([category, stats]) => ({
@@ -2565,7 +2565,7 @@ const BypassSuccessTracker = {
 
             quantum_computing_integration: {
                 quantum_algorithms: {
-                    grovers_algorithm_simulation: false,
+                    grovers_algorithm_enabled: false,
                     quantum_annealing_optimization: false,
                     quantum_machine_learning: false,
                 },
@@ -2758,7 +2758,6 @@ const BypassSuccessTracker = {
                 timestamp: Date.now(),
             });
 
-            // Simulate training process
             this.mlMetrics.model_accuracy = Math.min(
                 0.95,
                 this.mlMetrics.model_accuracy + 0.01,

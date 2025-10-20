@@ -97,7 +97,7 @@ lint-js-fix:
 
 # Lint Java files with Checkstyle
 lint-java:
-    pixi run ./tools/checkstyle/checkstyle -c ./tools/checkstyle/intellicrack_checks.xml (Get-ChildItem -Recurse -Filter *.java | Where-Object { $_.FullName -notmatch '(tools|\.venv|\.pixi|build|dist)' } | Select-Object -ExpandProperty FullName)
+    pixi run ./tools/checkstyle/checkstyle.bat -c ./tools/checkstyle/intellicrack_checks.xml (Get-ChildItem -Recurse -Filter *.java | Where-Object { $_.FullName -notmatch '(tools|\.venv|\.pixi|build|dist)' } | Select-Object -ExpandProperty FullName)
 
 # Lint Markdown files with markdownlint
 lint-md:
@@ -107,20 +107,14 @@ lint-md:
 lint-md-fix:
     pixi run markdownlint "**/*.md" --fix --ignore node_modules --ignore .venv* --ignore .pixi --ignore build --ignore dist --ignore tools
 
-# Lint all core file types (Python + Rust)
+# Lint all file types (Python, Rust, Java, JavaScript, Markdown)
 lint-all:
     -@just lint
     -@just lint-rust-all
-    @echo "All core linting complete ✓"
-
-# Lint all file types including optional linters (requires setup-all first)
-lint-all-extended:
-    -@just lint
-    -@just lint-js
     -@just lint-java
+    -@just lint-js
     -@just lint-md
-    -@just lint-rust-all
-    @echo "All extended linting complete ✓"
+    @echo "All linting complete ✓"
 
 # Lint Rust code with clippy (comprehensive - all lints)
 lint-rust:
@@ -150,21 +144,15 @@ lint-rust-fix:
 lint-rust-all: lint-rust lint-rust-fmt-check
     @echo "Rust linting and formatting complete ✓"
 
-# Fix all core auto-fixable linting issues (Python + Rust)
+# Fix all auto-fixable linting issues (Python, Rust, JavaScript, Markdown)
+# Note: Java Checkstyle does not support auto-fix
 lint-all-fix:
     -@just lint-fix
     -@just lint-rust-fix
     -@just lint-rust-fmt
-    @echo "All core auto-fixable linting issues resolved ✓"
-
-# Fix all auto-fixable linting issues including optional linters
-lint-all-fix-extended:
-    -@just lint-fix
     -@just lint-js-fix
     -@just lint-md-fix
-    -@just lint-rust-fix
-    -@just lint-rust-fmt
-    @echo "All extended auto-fixable linting issues resolved ✓"
+    @echo "All auto-fixable linting issues resolved ✓"
 
 # ==================== DOCUMENTATION ====================
 

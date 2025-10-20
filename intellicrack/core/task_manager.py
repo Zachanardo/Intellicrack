@@ -72,14 +72,29 @@ class TaskSignals(QObject if QObject is not None else object):
     finished = pyqtSignal(str)
 
 
-# Create a metaclass that resolves the conflict between QRunnable and ABC
-class TaskMeta(type(QRunnable), type(ABC)):
-    """Metaclass to resolve conflicts between QRunnable and ABC."""
+# Determine if we can use ABC or need to fall back for documentation builds
+try:
+    # Check if ABC is properly available (not mocked)
+    if hasattr(ABC, "__abstractmethods__"):
+        # ABC is available, use it
+        ABC_BASE = ABC
 
-    pass
+        # Create a metaclass that resolves the conflict between QRunnable and ABC
+        class TaskMeta(type(QRunnable), type(ABC)):
+            """Metaclass to resolve conflicts between QRunnable and ABC."""
+
+            pass
+    else:
+        # ABC is mocked, don't use it
+        ABC_BASE = object
+        TaskMeta = type
+except (TypeError, AttributeError, NameError):
+    # Fallback if anything fails
+    ABC_BASE = object
+    TaskMeta = type
 
 
-class BaseTask(QRunnable, ABC, metaclass=TaskMeta):
+class BaseTask(QRunnable, ABC_BASE, metaclass=TaskMeta):
     """Base class for all background tasks."""
 
     def __init__(self, task_id: str | None = None, description: str = ""):

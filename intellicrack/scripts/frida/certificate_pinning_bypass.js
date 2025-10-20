@@ -1554,10 +1554,16 @@ const CertificatePinningBypass = {
                     SecTrustEvaluate,
                     new NativeCallback(
                         function (trust, result) {
+                            const trustObject = new ObjC.Object(trust);
+                            const certificateCount = trustObject.$ivars._certificateChain ?
+                                trustObject.$ivars._certificateChain.count() : 0;
+
                             send({
                                 type: 'bypass',
                                 target: 'sec_trust',
                                 action: 'sec_trust_evaluate_bypassed',
+                                trust_object: trust.toString(),
+                                certificate_chain_length: certificateCount,
                             });
 
                             // Set result to kSecTrustResultProceed (1)
@@ -4144,11 +4150,19 @@ Object.assign(CertificatePinningBypass, {
                                 validateCaaRecords.implementation,
                                 new NativeCallback(
                                     function (self, cmd, records, hostname) {
+                                        const selfObject = new ObjC.Object(self);
+                                        const selector = ObjC.selectorAsString(cmd);
+                                        const recordsArray = records.isNull() ? [] :
+                                            new ObjC.Object(records).toString();
+
                                         send({
                                             type: 'bypass',
                                             target: 'certificate_pinning_bypass',
                                             action: 'ios_doh_caa_validation_bypassed',
                                             hostname: hostname.toString(),
+                                            selector: selector,
+                                            self_class: selfObject.$className,
+                                            records_count: recordsArray.length || 0,
                                         });
                                         this.state.dnsOverHttpsCAABypassEvents++;
                                         return true;
@@ -4390,11 +4404,20 @@ Object.assign(CertificatePinningBypass, {
                         if (EVValidator.validateExtendedValidationPolicy) {
                             EVValidator.validateExtendedValidationPolicy.implementation =
                 function (certificate, hostname) {
+                    const X509Certificate = Java.use('java.security.cert.X509Certificate');
+                    const certObject = Java.cast(certificate, X509Certificate);
+                    const subject = certObject.getSubjectDN().toString();
+                    const issuer = certObject.getIssuerDN().toString();
+                    const serialNumber = certObject.getSerialNumber().toString();
+
                     send({
                         type: 'bypass',
                         target: 'certificate_pinning_bypass',
                         action: 'extended_validation_policy_bypassed',
                         hostname: hostname,
+                        certificate_subject: subject,
+                        certificate_issuer: issuer,
+                        serial_number: serialNumber,
                     });
                     return true;
                 };
@@ -4537,12 +4560,29 @@ Object.assign(CertificatePinningBypass, {
                                     daneFunction,
                                     new NativeCallback(
                                         function (certificate, tlsa_records, usage) {
+                                            let certInfo = 'unknown';
+                                            let recordsInfo = 'unknown';
+
+                                            if (certificate && !certificate.isNull()) {
+                                                const certData = certificate.readByteArray(20);
+                                                certInfo = certData ? Array.from(new Uint8Array(certData))
+                                                    .map((b) => b.toString(16).padStart(2, '0'))
+                                                    .join(':') : 'null_data';
+                                            }
+
+                                            if (tlsa_records && !tlsa_records.isNull()) {
+                                                const recordCount = tlsa_records.readU32();
+                                                recordsInfo = `count:${recordCount}`;
+                                            }
+
                                             send({
                                                 type: 'bypass',
                                                 target: 'certificate_pinning_bypass',
                                                 action: 'dane_over_doh_validation_bypassed',
                                                 pattern: pattern,
                                                 usage: usage,
+                                                certificate_hash: certInfo,
+                                                tlsa_records_info: recordsInfo,
                                             });
                                             this.state.daneOverDohBypassEvents++;
                                             return 1; // DANE validation success
@@ -5150,7 +5190,34 @@ Object.assign(CertificatePinningBypass, {
                       parameters,
                       authAlgorithm,
                   ) {
-                      // Force SCT validation bypass through trust manager
+                      const SSLSession = Java.use('javax.net.ssl.SSLSession');
+                      const SSLParameters = Java.use('javax.net.ssl.SSLParameters');
+
+                      let sessionInfo = 'no_session';
+                      let parametersInfo = 'no_parameters';
+
+                      if (session) {
+                          const sessionObj = Java.cast(session, SSLSession);
+                          sessionInfo = {
+                              protocol: sessionObj.getProtocol(),
+                              cipher_suite: sessionObj.getCipherSuite(),
+                              peer_host: sessionObj.getPeerHost(),
+                              peer_port: sessionObj.getPeerPort(),
+                          };
+                      }
+
+                      if (parameters) {
+                          const paramsObj = Java.cast(parameters, SSLParameters);
+                          const protocols = paramsObj.getProtocols();
+                          const cipherSuites = paramsObj.getCipherSuites();
+                          parametersInfo = {
+                              protocols: protocols ? protocols.join(',') : 'none',
+                              cipher_suites: cipherSuites ? cipherSuites.join(',') : 'none',
+                              need_client_auth: paramsObj.getNeedClientAuth(),
+                              want_client_auth: paramsObj.getWantClientAuth(),
+                          };
+                      }
+
                       this.state.basicSctBypassFallbackEvents++;
                       send({
                           type: 'fallback_bypass',
@@ -5159,6 +5226,8 @@ Object.assign(CertificatePinningBypass, {
                           original_error: e.message,
                           auth_type: authType,
                           auth_algorithm: authAlgorithm,
+                          session_info: sessionInfo,
+                          parameters_info: parametersInfo,
                       });
                       return certs[0]; // Accept first certificate
                   }.bind(this);
@@ -5648,11 +5717,21 @@ Object.assign(CertificatePinningBypass, {
                         if (PostQuantumValidator.validateCertificate) {
                             PostQuantumValidator.validateCertificate.implementation =
                 function (certificate, algorithm) {
+                    const X509Certificate = Java.use('java.security.cert.X509Certificate');
+                    const certObject = Java.cast(certificate, X509Certificate);
+                    const subject = certObject.getSubjectDN().toString();
+                    const issuer = certObject.getIssuerDN().toString();
+                    const publicKey = certObject.getPublicKey();
+                    const keyAlgorithm = publicKey.getAlgorithm();
+
                     send({
                         type: 'bypass',
                         target: 'certificate_pinning_bypass',
                         action: 'bouncycastle_pq_validation_bypassed',
                         algorithm: algorithm,
+                        certificate_subject: subject,
+                        certificate_issuer: issuer,
+                        key_algorithm: keyAlgorithm,
                     });
                     this.state
                         .tls13PostQuantumCertificateValidationBypassEvents++;
@@ -6507,11 +6586,18 @@ Object.assign(CertificatePinningBypass, {
                         if (Http2AlpnValidator.validateCertificateForProtocol) {
                             Http2AlpnValidator.validateCertificateForProtocol.implementation =
                 function (certificate, protocol) {
+                    const X509Certificate = Java.use('java.security.cert.X509Certificate');
+                    const certObject = Java.cast(certificate, X509Certificate);
+                    const subject = certObject.getSubjectDN().toString();
+                    const issuer = certObject.getIssuerDN().toString();
+
                     send({
                         type: 'bypass',
                         target: 'certificate_pinning_bypass',
                         action: 'android_http2_alpn_validation_bypassed',
                         protocol: protocol,
+                        certificate_subject: subject,
+                        certificate_issuer: issuer,
                     });
                     return true;
                 };
@@ -7237,10 +7323,34 @@ Object.assign(CertificatePinningBypass, {
                                 ubResolveCaa,
                                 new NativeCallback(
                                     function (ctx, name, rrtype, result) {
+                                        let contextInfo = 'unknown';
+                                        let domainName = 'unknown';
+                                        let recordType = rrtype;
+
+                                        if (ctx && !ctx.isNull()) {
+                                            try {
+                                                const ctxData = ctx.readPointer();
+                                                contextInfo = ctxData ? ctxData.toString() : 'null_pointer';
+                                            } catch (error) {
+                                                contextInfo = `read_error:${error.message}`;
+                                            }
+                                        }
+
+                                        if (name && !name.isNull()) {
+                                            try {
+                                                domainName = name.readCString() || 'null_string';
+                                            } catch (error) {
+                                                domainName = `read_error:${error.message}`;
+                                            }
+                                        }
+
                                         send({
                                             type: 'bypass',
                                             target: 'certificate_pinning_bypass',
                                             action: 'libunbound_caa_resolution_bypassed',
+                                            context: contextInfo,
+                                            domain: domainName,
+                                            record_type: recordType,
                                         });
                                         this.state
                                             .certificateAuthorityAuthorizationDnsSecBypassEvents++;
@@ -7702,11 +7812,25 @@ Object.assign(CertificatePinningBypass, {
                                 validateCaaRecords.implementation,
                                 new NativeCallback(
                                     function (self, cmd, records, signatures, domain) {
+                                        const selfObject = new ObjC.Object(self);
+                                        const selector = ObjC.selectorAsString(cmd);
+                                        const recordsArray = records.isNull() ? [] :
+                                            new ObjC.Object(records);
+                                        const signaturesArray = signatures.isNull() ? [] :
+                                            new ObjC.Object(signatures);
+
+                                        const recordCount = recordsArray.count ? recordsArray.count() : 0;
+                                        const signatureCount = signaturesArray.count ? signaturesArray.count() : 0;
+
                                         send({
                                             type: 'bypass',
                                             target: 'certificate_pinning_bypass',
                                             action: 'ios_dnssec_caa_validation_bypassed',
                                             domain: domain.toString(),
+                                            selector: selector,
+                                            self_class: selfObject.$className,
+                                            records_count: recordCount,
+                                            signatures_count: signatureCount,
                                         });
                                         this.state
                                             .certificateAuthorityAuthorizationDnsSecBypassEvents++;

@@ -372,7 +372,7 @@ class ProtectionDetector:
                             results["virtualization_detected"] = True
                             winreg.CloseKey(key)
                         except FileNotFoundError:
-                            pass
+                            continue
                 except ImportError:
                     logger.debug("winreg not available")
 
@@ -408,6 +408,276 @@ class ProtectionDetector:
 
         return results
 
+    def detect_themida_advanced(self, binary_path: str) -> dict[str, Any]:
+        """Advanced Themida/WinLicense detection using virtualization analysis.
+
+        Args:
+            binary_path: Path to binary to analyze
+
+        Returns:
+            Detailed Themida analysis results
+
+        """
+        try:
+            from .themida_analyzer import ThemidaAnalyzer
+
+            analyzer = ThemidaAnalyzer()
+            result = analyzer.analyze(binary_path)
+
+            if result.is_protected:
+                report = analyzer.get_analysis_report(result)
+                return {
+                    "detected": True,
+                    "version": result.version.value,
+                    "vm_architecture": result.vm_architecture.value,
+                    "confidence": result.confidence,
+                    "handlers_found": len(result.handlers),
+                    "vm_sections": result.vm_sections,
+                    "devirtualized_sections": len(result.devirtualized_sections),
+                    "anti_debug_checks": len(result.anti_debug_locations),
+                    "detailed_report": report,
+                }
+            else:
+                return {"detected": False, "confidence": 0.0}
+
+        except ImportError:
+            logger.warning("Themida analyzer not available, falling back to signature detection")
+            return {"detected": False, "error": "Advanced analyzer not available"}
+        except Exception as e:
+            logger.error(f"Themida advanced detection failed: {e}")
+            return {"detected": False, "error": str(e)}
+
+    def detect_denuvo_advanced(self, binary_path: str) -> dict[str, Any]:
+        """Advanced Denuvo Anti-Tamper detection using multi-layer analysis.
+
+        Args:
+            binary_path: Path to binary to analyze
+
+        Returns:
+            Detailed Denuvo analysis results
+
+        """
+        try:
+            from .denuvo_analyzer import DenuvoAnalyzer
+
+            analyzer = DenuvoAnalyzer()
+            result = analyzer.analyze(binary_path)
+
+            if result.detected:
+                version_info = result.version.name if result.version else "Unknown"
+                return {
+                    "detected": True,
+                    "confidence": result.confidence,
+                    "version": version_info,
+                    "triggers": len(result.triggers),
+                    "integrity_checks": len(result.integrity_checks),
+                    "timing_checks": len(result.timing_checks),
+                    "vm_regions": len(result.vm_regions),
+                    "encrypted_sections": len(result.encrypted_sections),
+                    "bypass_recommendations": result.bypass_recommendations,
+                    "analysis_details": result.analysis_details,
+                }
+            else:
+                return {"detected": False, "confidence": 0.0}
+
+        except ImportError:
+            logger.warning("Denuvo analyzer not available, falling back to signature detection")
+            return {"detected": False, "error": "Advanced analyzer not available"}
+        except Exception as e:
+            logger.error(f"Denuvo advanced detection failed: {e}")
+            return {"detected": False, "error": str(e)}
+
+    def analyze_denuvo_ticket(
+        self,
+        ticket_data: bytes | str,
+    ) -> dict[str, Any]:
+        """Analyze Denuvo activation ticket/token.
+
+        Args:
+            ticket_data: Raw ticket bytes or path to ticket file
+
+        Returns:
+            Detailed ticket analysis results
+
+        """
+        try:
+            from .denuvo_ticket_analyzer import DenuvoTicketAnalyzer
+
+            analyzer = DenuvoTicketAnalyzer()
+
+            if isinstance(ticket_data, str):
+                if os.path.exists(ticket_data):
+                    with open(ticket_data, 'rb') as f:
+                        data = f.read()
+                else:
+                    logger.error(f"Ticket file not found: {ticket_data}")
+                    return {"error": "File not found"}
+            else:
+                data = ticket_data
+
+            ticket = analyzer.parse_ticket(data)
+            if ticket:
+                result = {
+                    "type": "ticket",
+                    "valid": ticket.is_valid,
+                    "version": ticket.header.version,
+                    "magic": ticket.header.magic.decode('latin-1'),
+                    "timestamp": ticket.header.timestamp,
+                    "encryption_type": ticket.header.encryption_type,
+                    "decrypted": ticket.payload is not None,
+                }
+
+                if ticket.payload:
+                    result.update({
+                        "game_id": ticket.payload.game_id.hex(),
+                        "machine_id": ticket.payload.machine_id.combined_hash.hex()[:32],
+                        "license_type": ticket.payload.license_data.get("type"),
+                        "expiration": ticket.payload.license_data.get("expiration"),
+                    })
+
+                return result
+            else:
+                token = analyzer.parse_token(data)
+                if token:
+                    return {
+                        "type": "token",
+                        "game_id": token.game_id.hex(),
+                        "machine_id": token.machine_id.hex()[:32],
+                        "license_type": token.license_type,
+                        "activation_time": token.activation_time,
+                        "expiration_time": token.expiration_time,
+                        "features_enabled": hex(token.features_enabled),
+                    }
+                else:
+                    return {"error": "Unable to parse as ticket or token"}
+
+        except ImportError:
+            logger.warning("Denuvo ticket analyzer not available")
+            return {"error": "Ticket analyzer not available"}
+        except Exception as e:
+            logger.error(f"Ticket analysis failed: {e}")
+            return {"error": str(e)}
+
+    def generate_denuvo_activation(
+        self,
+        request_data: bytes,
+        license_type: str = "perpetual",
+        duration_days: int = 36500,
+    ) -> dict[str, Any]:
+        """Generate offline Denuvo activation response.
+
+        Args:
+            request_data: Original activation request
+            license_type: License type (trial, full, subscription, perpetual)
+            duration_days: License duration in days
+
+        Returns:
+            Generated activation response data
+
+        """
+        try:
+            from .denuvo_ticket_analyzer import DenuvoTicketAnalyzer
+
+            analyzer = DenuvoTicketAnalyzer()
+
+            license_map = {
+                "trial": analyzer.LICENSE_TRIAL,
+                "full": analyzer.LICENSE_FULL,
+                "subscription": analyzer.LICENSE_SUBSCRIPTION,
+                "perpetual": analyzer.LICENSE_PERPETUAL,
+            }
+
+            license_code = license_map.get(license_type.lower(), analyzer.LICENSE_PERPETUAL)
+
+            response = analyzer.generate_activation_response(
+                request_data=request_data,
+                license_type=license_code,
+                duration_days=duration_days,
+            )
+
+            if response:
+                return {
+                    "success": True,
+                    "response_id": response.response_id.hex(),
+                    "ticket_size": len(response.ticket),
+                    "token_size": len(response.token),
+                    "timestamp": response.timestamp,
+                    "expiration": response.expiration,
+                    "license_type": license_type,
+                    "ticket": response.ticket.hex(),
+                    "token": response.token.hex(),
+                }
+            else:
+                return {"success": False, "error": "Failed to generate response"}
+
+        except ImportError:
+            logger.warning("Denuvo ticket analyzer not available")
+            return {"success": False, "error": "Ticket analyzer not available"}
+        except Exception as e:
+            logger.error(f"Activation generation failed: {e}")
+            return {"success": False, "error": str(e)}
+
+    def forge_denuvo_token(
+        self,
+        game_id: str,
+        machine_id: str,
+        license_type: str = "perpetual",
+        duration_days: int = 36500,
+    ) -> dict[str, Any]:
+        """Forge Denuvo activation token.
+
+        Args:
+            game_id: Game identifier (hex string)
+            machine_id: Machine identifier (hex string)
+            license_type: License type
+            duration_days: License duration
+
+        Returns:
+            Forged token data
+
+        """
+        try:
+            from .denuvo_ticket_analyzer import DenuvoTicketAnalyzer
+
+            analyzer = DenuvoTicketAnalyzer()
+
+            license_map = {
+                "trial": analyzer.LICENSE_TRIAL,
+                "full": analyzer.LICENSE_FULL,
+                "subscription": analyzer.LICENSE_SUBSCRIPTION,
+                "perpetual": analyzer.LICENSE_PERPETUAL,
+            }
+
+            license_code = license_map.get(license_type.lower(), analyzer.LICENSE_PERPETUAL)
+
+            game_id_bytes = bytes.fromhex(game_id) if len(game_id) == 32 else (game_id.encode() + b"\x00" * 16)[:16]
+            machine_id_bytes = bytes.fromhex(machine_id) if len(machine_id) == 64 else hashlib.sha256(machine_id.encode()).digest()
+
+            token = analyzer.forge_token(
+                game_id=game_id_bytes,
+                machine_id=machine_id_bytes,
+                license_type=license_code,
+                duration_days=duration_days,
+            )
+
+            if token:
+                return {
+                    "success": True,
+                    "token": token.hex(),
+                    "token_size": len(token),
+                    "license_type": license_type,
+                    "duration_days": duration_days,
+                }
+            else:
+                return {"success": False, "error": "Token forging failed"}
+
+        except ImportError:
+            logger.warning("Denuvo ticket analyzer not available")
+            return {"success": False, "error": "Ticket analyzer not available"}
+        except Exception as e:
+            logger.error(f"Token forging failed: {e}")
+            return {"success": False, "error": str(e)}
+
     def detect_commercial_protections(self, binary_path: str) -> dict[str, Any]:
         """Detect commercial protections in binary.
 
@@ -421,7 +691,17 @@ class ProtectionDetector:
         if not os.path.exists(binary_path):
             return {"error": "File not found", "protections": []}
 
-        results = {"protections": [], "signatures_found": []}
+        results = {"protections": [], "signatures_found": [], "advanced_analysis": {}}
+
+        themida_advanced = self.detect_themida_advanced(binary_path)
+        if themida_advanced.get("detected"):
+            results["protections"].append(themida_advanced["version"])
+            results["advanced_analysis"]["themida"] = themida_advanced
+
+        denuvo_advanced = self.detect_denuvo_advanced(binary_path)
+        if denuvo_advanced.get("detected"):
+            results["protections"].append(denuvo_advanced["version"])
+            results["advanced_analysis"]["denuvo"] = denuvo_advanced
 
         # Commercial protection signatures
         signatures = {

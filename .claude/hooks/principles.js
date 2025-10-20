@@ -11,6 +11,5 @@ const principlesReminder = `<system-reminder>
 [5] Claude must display all 5 principles verbatim at start of every response in this exact format.
 </system-reminder>`;
 
-// eslint-disable-next-line no-console
 console.log(principlesReminder);
 process.exit(0);

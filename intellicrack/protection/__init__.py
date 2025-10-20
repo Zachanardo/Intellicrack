@@ -17,7 +17,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-# Local imports with error handling
+import logging
+
+logger = logging.getLogger(__name__)
+
 try:
     from .intellicrack_protection_core import (
         DetectionResult,
@@ -25,9 +28,12 @@ try:
         ProtectionAnalysis,
         ProtectionType,
     )
-except ImportError:
-    # Don't set variables if import fails
-    pass
+except ImportError as e:
+    logger.warning(f"Failed to import intellicrack_protection_core: {e}")
+    DetectionResult = None
+    IntellicrackProtectionCore = None
+    ProtectionAnalysis = None
+    ProtectionType = None
 
 try:
     from .protection_detector import (
@@ -36,9 +42,12 @@ try:
         get_protection_detector,
         quick_analyze,
     )
-except ImportError:
-    # Don't set variables if import fails
-    pass
+except ImportError as e:
+    logger.warning(f"Failed to import protection_detector: {e}")
+    ProtectionDetector = None
+    deep_analyze = None
+    get_protection_detector = None
+    quick_analyze = None
 
 try:
     from .unified_protection_engine import (
@@ -46,9 +55,31 @@ try:
         UnifiedProtectionResult,
         get_unified_engine,
     )
-except ImportError:
-    # Don't set variables if import fails
-    pass
+except ImportError as e:
+    logger.warning(f"Failed to import unified_protection_engine: {e}")
+    UnifiedProtectionEngine = None
+    UnifiedProtectionResult = None
+    get_unified_engine = None
+
+try:
+    from .themida_analyzer import (
+        ThemidaAnalysisResult,
+        ThemidaAnalyzer,
+        VMArchitecture,
+        ThemidaVersion,
+        VMHandler,
+        VMContext,
+        DevirtualizedCode,
+    )
+except ImportError as e:
+    logger.warning(f"Failed to import themida_analyzer: {e}")
+    ThemidaAnalysisResult = None
+    ThemidaAnalyzer = None
+    VMArchitecture = None
+    ThemidaVersion = None
+    VMHandler = None
+    VMContext = None
+    DevirtualizedCode = None
 
 """
 Protection Detection Module
@@ -69,7 +100,13 @@ __all__ = [
     "get_protection_detector",
     "get_unified_engine",
     "quick_analyze",
+    "ThemidaAnalysisResult",
+    "ThemidaAnalyzer",
+    "VMArchitecture",
+    "ThemidaVersion",
+    "VMHandler",
+    "VMContext",
+    "DevirtualizedCode",
 ]
 
-# Filter out items that are not available
-__all__ = [item for item in __all__ if item in locals()]
+__all__ = [item for item in __all__ if item in locals() and locals()[item] is not None]
