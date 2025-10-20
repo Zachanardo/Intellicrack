@@ -214,6 +214,147 @@ const DotnetBypassSuite = {
         this.hookSecurityAPIs();
     },
 
+    // Hook Mono runtime
+    hookMono: function () {
+        var self = this;
+
+        send({
+            type: 'info',
+            target: 'dotnet_bypass_suite',
+            action: 'hooking_mono_runtime',
+        });
+
+        var monoImageOpen = Module.findExportByName(this.monoModule.name, 'mono_image_open');
+        if (monoImageOpen) {
+            Interceptor.attach(monoImageOpen, {
+                onEnter: function (args) {
+                    var imageName = args[0].readUtf8String();
+                    send({
+                        type: 'info',
+                        target: 'dotnet_bypass_suite',
+                        action: 'mono_image_opening',
+                        image_name: imageName,
+                    });
+                },
+                onLeave: function (retval) {
+                    if (!retval.isNull()) {
+                        self.processMonoImage(retval);
+                    }
+                },
+            });
+            this.stats.methodsHooked++;
+        }
+
+        var monoMethodGetName = Module.findExportByName(this.monoModule.name, 'mono_method_get_name');
+        if (monoMethodGetName) {
+            this.monoMethodGetName = new NativeFunction(monoMethodGetName, 'pointer', ['pointer']);
+        }
+
+        var monoCompileMethod = Module.findExportByName(this.monoModule.name, 'mono_compile_method');
+        if (monoCompileMethod) {
+            Interceptor.attach(monoCompileMethod, {
+                onEnter: function (args) {
+                    var method = args[0];
+                    if (method && !method.isNull() && self.monoMethodGetName) {
+                        var namePtr = self.monoMethodGetName(method);
+                        if (namePtr && !namePtr.isNull()) {
+                            var methodName = namePtr.readUtf8String();
+                            if (self.isLicenseMethod(methodName)) {
+                                send({
+                                    type: 'bypass',
+                                    target: 'dotnet_bypass_suite',
+                                    action: 'mono_license_method_compiling',
+                                    method_name: methodName,
+                                });
+                                this.shouldPatch = true;
+                                this.method = method;
+                            }
+                        }
+                    }
+                },
+                onLeave: function (retval) {
+                    if (this.shouldPatch && !retval.isNull()) {
+                        Memory.patchCode(retval, 3, function (code) {
+                            code.putU8(0xb0);
+                            code.putU8(0x01);
+                            code.putU8(0xc3);
+                        });
+                        self.bypassedChecks++;
+                    }
+                },
+            });
+            this.stats.methodsHooked++;
+        }
+    },
+
+    // Hook .NET Core runtime
+    hookDotNetCore: function () {
+        var self = this;
+
+        send({
+            type: 'info',
+            target: 'dotnet_bypass_suite',
+            action: 'hooking_dotnet_core_runtime',
+        });
+
+        this.hookAssemblyLoad();
+        this.hookJITCompilation();
+        this.hookMetadataAPIs();
+        this.hookReflectionAPIs();
+        this.hookSecurityAPIs();
+
+        var coreClrInitialize = Module.findExportByName(this.clrModule.name, 'coreclr_initialize');
+        if (coreClrInitialize) {
+            Interceptor.attach(coreClrInitialize, {
+                onEnter: function (args) {
+                    send({
+                        type: 'info',
+                        target: 'dotnet_bypass_suite',
+                        action: 'coreclr_initializing',
+                    });
+                },
+                onLeave: function (retval) {
+                    if (retval.toInt32() === 0) {
+                        send({
+                            type: 'success',
+                            target: 'dotnet_bypass_suite',
+                            action: 'coreclr_initialized',
+                        });
+                    }
+                },
+            });
+            this.stats.methodsHooked++;
+        }
+
+        var coreClrExecuteAssembly = Module.findExportByName(this.clrModule.name, 'coreclr_execute_assembly');
+        if (coreClrExecuteAssembly) {
+            Interceptor.attach(coreClrExecuteAssembly, {
+                onEnter: function (args) {
+                    var assemblyPath = args[2].readUtf8String();
+                    send({
+                        type: 'info',
+                        target: 'dotnet_bypass_suite',
+                        action: 'coreclr_executing_assembly',
+                        assembly_path: assemblyPath,
+                    });
+                },
+            });
+            this.stats.methodsHooked++;
+        }
+    },
+
+    // Process Mono image
+    processMonoImage: function (image) {
+        send({
+            type: 'info',
+            target: 'dotnet_bypass_suite',
+            action: 'processing_mono_image',
+        });
+
+        this.checkForProtections(image);
+        this.patchAntiTamperChecks(image);
+    },
+
     // Hook assembly loading
     hookAssemblyLoad: function () {
         var self = this;
@@ -1771,7 +1912,15 @@ const DotnetBypassSuite = {
                     });
                 }
             } catch (e) {
-                // Module not found
+                send({
+                    type: 'debug',
+                    target: 'dotnet_bypass',
+                    action: 'module_not_found',
+                    function: 'hookWasmBlazorNetRuntimeBypass',
+                    module_name: moduleName,
+                    error: e.toString(),
+                    stack: e.stack || 'No stack trace available',
+                });
             }
         });
 
