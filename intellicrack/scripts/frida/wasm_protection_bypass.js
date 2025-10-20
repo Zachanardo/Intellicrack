@@ -1047,7 +1047,15 @@ const wasmProtectionBypass = {
                 }
             });
         } catch (e) {
-            // Memory might be detached
+            send({
+                type: 'debug',
+                target: 'wasm_bypass',
+                action: 'memory_access_failed',
+                function: 'patchMemoryLicenseChecks',
+                error: e.toString(),
+                stack: e.stack || 'No stack trace available',
+                reason: 'Memory might be detached or inaccessible',
+            });
         }
     },
 
