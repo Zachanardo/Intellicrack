@@ -1217,7 +1217,53 @@ const DotnetBypassSuite = {
             target: 'dotnet_bypass_suite',
             action: 'patching_anti_tamper_checks',
         });
-    // Implementation would patch specific anti-tamper patterns
+
+        try {
+            var assemblyPtr = assembly.readPointer();
+            if (!assemblyPtr || assemblyPtr.isNull()) {
+                return;
+            }
+
+            var antiTamperPatterns = [
+                [0x48, 0x8B, 0x05, 0x90, 0x90, 0x90, 0x90],
+                [0xE8, 0x90, 0x90, 0x90, 0x90, 0x84, 0xC0, 0x74],
+                [0x48, 0x85, 0xC0, 0x74, 0x90, 0x48, 0x8B, 0xC8],
+            ];
+
+            var peHeader = assemblyPtr.add(0x3C).readU32();
+            var codeSection = assemblyPtr.add(peHeader + 0x18);
+            var codeBase = codeSection.add(0x0C).readPointer();
+            var codeSize = codeSection.add(0x08).readU32();
+
+            antiTamperPatterns.forEach(function(pattern) {
+                var matches = Memory.scanSync(codeBase, codeSize, pattern.map(function(b) {
+                    return b === 0x90 ? '??' : b.toString(16).padStart(2, '0');
+                }).join(' '));
+
+                matches.forEach(function(match) {
+                    Memory.patchCode(match.address, pattern.length, function(code) {
+                        for (var i = 0; i < pattern.length; i++) {
+                            code.putU8(0x90);
+                        }
+                    });
+                    send({
+                        type: 'bypass',
+                        target: 'dotnet_bypass_suite',
+                        action: 'anti_tamper_pattern_patched',
+                        address: match.address.toString(),
+                    });
+                });
+            });
+        } catch (e) {
+            send({
+                type: 'debug',
+                target: 'dotnet_bypass',
+                action: 'anti_tamper_patch_failed',
+                function: 'patchAntiTamperChecks',
+                error: e.toString(),
+                stack: e.stack || 'No stack trace available',
+            });
+        }
     },
 
     // Helper: Patch compiled method
