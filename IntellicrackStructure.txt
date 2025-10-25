@@ -1,7 +1,7 @@
 INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: Sun, Oct 19, 2025 08:55:02 PM
+Generated: Sat, Oct 25, 2025 01:52:06 PM
 Directory: D:\Intellicrack\intellicrack
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -10,11 +10,9 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 ----------------------------------------
 
 ├── ai/
-│   ├── templates/
-│   │   ├── __init__.py
-│   │   ├── frida_license_bypass.js
-│   │   ├── ghidra_analysis.py
-│   │   └── README.md
+│   ├── __pycache__/
+│   │   ├── ai_file_tools.cpython-314.pyc
+│   │   └── model_sharding.cpython-314.pyc
 │   ├── __init__.py
 │   ├── ai_assistant_enhanced.py
 │   ├── ai_file_tools.py
@@ -65,12 +63,12 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── quantization_manager.py
 │   ├── README.md
 │   ├── realtime_adaptation_engine.py
-│   ├── resilience_self_healing.py
 │   ├── response_parser.py
 │   ├── script_editor.py
 │   ├── script_generation_prompts.py
-│   ├── script_templates.py
 │   ├── semantic_code_analyzer.py
+│   ├── system_monitor.py
+│   ├── tool_schemas.py
 │   ├── visualization_analytics.py
 │   ├── vulnerability_research_integration.py
 │   └── vulnerability_research_integration_helper.py
@@ -244,16 +242,15 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── terminal_dashboard.py
 │   └── tutorial_system.py
 ├── core/
-│   ├── __pycache__/
-│   │   ├── subscription_validation_bypass.cpython-312.pyc
-│   │   └── subscription_validation_bypass.cpython-314.pyc
 │   ├── analysis/
 │   │   ├── __pycache__/
-│   │   │   ├── symbolic_devirtualizer.cpython-312.pyc
-│   │   │   ├── symbolic_devirtualizer.cpython-314.pyc
-│   │   │   └── vmprotect_detector.cpython-312.pyc
+│   │   │   ├── streaming_crypto_detector.cpython-314.pyc
+│   │   │   ├── streaming_entropy_analyzer.cpython-314.pyc
+│   │   │   └── streaming_yara_scanner.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── analysis_orchestrator.py
+│   │   ├── angr_enhancements.py
+│   │   ├── arxan_analyzer.py
 │   │   ├── automated_patch_agent.py
 │   │   ├── behavioral_analysis.py
 │   │   ├── binary_analyzer.py
@@ -263,6 +260,8 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── commercial_license_analyzer.py
 │   │   ├── concolic_executor.py
 │   │   ├── concolic_executor_fixed.py
+│   │   ├── concolic_obfuscation_handler.py
+│   │   ├── control_flow_deobfuscation.py
 │   │   ├── core_analysis.py
 │   │   ├── cross_tool_orchestrator.py
 │   │   ├── cryptographic_routine_detector.py
@@ -277,6 +276,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── frida_script_manager.py
 │   │   ├── ghidra_advanced_analyzer.py
 │   │   ├── ghidra_analyzer.py
+│   │   ├── ghidra_binary_integration.py
 │   │   ├── ghidra_output_parser.py
 │   │   ├── ghidra_project_manager.py
 │   │   ├── ghidra_script_runner.py
@@ -285,6 +285,8 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── memory_forensics_engine.py
 │   │   ├── multi_format_analyzer.py
 │   │   ├── network_forensics_engine.py
+│   │   ├── opaque_predicate_analyzer.py
+│   │   ├── polymorphic_analyzer.py
 │   │   ├── protection_scanner.py
 │   │   ├── radare2_advanced_patcher.py
 │   │   ├── radare2_ai_integration.py
@@ -304,13 +306,21 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── radare2_performance_optimizer.py
 │   │   ├── radare2_realtime_analyzer.py
 │   │   ├── radare2_scripting.py
+│   │   ├── radare2_session_helpers.py
+│   │   ├── radare2_session_manager.py
 │   │   ├── radare2_signature_detector.py
 │   │   ├── radare2_signatures.py
 │   │   ├── radare2_strings.py
 │   │   ├── radare2_vulnerability_engine.py
 │   │   ├── rop_generator.py
+│   │   ├── securom_analyzer.py
 │   │   ├── simconcolic.py
 │   │   ├── similarity_searcher.py
+│   │   ├── stalker_manager.py
+│   │   ├── starforce_analyzer.py
+│   │   ├── streaming_crypto_detector.py
+│   │   ├── streaming_entropy_analyzer.py
+│   │   ├── streaming_yara_scanner.py
 │   │   ├── symbolic_devirtualizer.py
 │   │   ├── symbolic_executor.py
 │   │   ├── taint_analyzer.py
@@ -319,9 +329,13 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── yara_pattern_engine.py
 │   │   └── yara_scanner.py
 │   ├── anti_analysis/
+│   │   ├── __pycache__/
+│   │   │   └── sandbox_detector.cpython-312.pyc
 │   │   ├── __init__.py
+│   │   ├── advanced_debugger_bypass.py
 │   │   ├── api_obfuscation.py
 │   │   ├── base_detector.py
+│   │   ├── debugger_bypass.py
 │   │   ├── debugger_detector.py
 │   │   ├── sandbox_detector.py
 │   │   ├── timing_attacks.py
@@ -340,7 +354,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   └── real_tool_communication.py
 │   ├── license/
 │   │   ├── __pycache__/
-│   │   │   ├── keygen.cpython-312.pyc
 │   │   │   └── keygen.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── keygen.py
@@ -348,6 +361,14 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── logging/
 │   │   ├── __init__.py
 │   │   └── audit_logger.py
+│   ├── ml/
+│   │   ├── __init__.py
+│   │   ├── feature_extraction.py
+│   │   ├── incremental_learner.py
+│   │   ├── ml_integration.py
+│   │   ├── protection_classifier.py
+│   │   ├── README.md
+│   │   └── sample_database.py
 │   ├── monitoring/
 │   │   ├── __init__.py
 │   │   ├── api_monitor.py
@@ -393,34 +414,43 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── radare2_patch_integration.py
 │   │   └── windows_activator.py
 │   ├── processing/
+│   │   ├── __pycache__/
+│   │   │   ├── distributed_manager.cpython-314.pyc
+│   │   │   └── streaming_analysis_manager.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── base_snapshot_handler.py
-│   │   ├── distributed_analysis_manager.py
 │   │   ├── distributed_manager.py
 │   │   ├── emulator_manager.py
 │   │   ├── gpu_accelerator.py
 │   │   ├── memory_loader.py
 │   │   ├── memory_optimizer.py
+│   │   ├── parallel_processing_manager.py
 │   │   ├── qemu_emulator.py
 │   │   ├── qiling_emulator.py
+│   │   ├── streaming_analysis_manager.py
 │   │   └── vm_workflow_manager.py
 │   ├── protection/
 │   ├── protection_bypass/
-│   │   ├── __pycache__/
-│   │   │   ├── cloud_license.cpython-312.pyc
-│   │   │   └── cloud_license.cpython-314.pyc
 │   │   ├── hooks/
 │   │   │   └── yubikey_hook.dll
 │   │   ├── __init__.py
+│   │   ├── arxan_bypass.py
 │   │   ├── cloud_license.py
 │   │   ├── cloud_license_analyzer.py
 │   │   ├── dongle_emulator.py
 │   │   ├── hardware_id_spoofer.py
 │   │   ├── hardware_token.py
 │   │   ├── integrity_check_defeat.py
+│   │   ├── securom_bypass.py
+│   │   ├── starforce_bypass.py
 │   │   ├── tpm_bypass.py
 │   │   ├── tpm_secure_enclave_bypass.py
 │   │   └── vm_bypass.py
+│   ├── protection_detection/
+│   │   ├── __init__.py
+│   │   ├── arxan_detector.py
+│   │   ├── securom_detector.py
+│   │   └── starforce_detector.py
 │   ├── reporting/
 │   │   ├── __init__.py
 │   │   ├── pdf_generator.py
@@ -490,6 +520,14 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── visualization_renderer.py
 │   └── websocket_stream.py
 ├── data/
+│   ├── data/
+│   │   ├── cache/
+│   │   │   └── ghidra_scripts_cache.json
+│   │   ├── logs/
+│   │   ├── output/
+│   │   ├── plugin_cache/
+│   │   ├── reports/
+│   │   └── visualizations/
 │   ├── signatures/
 │   │   ├── README.md
 │   │   └── sample_signatures.sg
@@ -528,6 +566,8 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── torch_handler.py
 │   └── wmi_handler.py
 ├── hexview/
+│   ├── __pycache__/
+│   │   └── advanced_search.cpython-314.pyc
 │   ├── __init__.py
 │   ├── advanced_search.py
 │   ├── ai_bridge.py
@@ -556,7 +596,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   └── plugins/
 │       └── custom_modules/
 │           ├── binary_patcher_plugin.py
-│           ├── demo_plugin.py
 │           ├── network_analysis_plugin.py
 │           └── simple_analysis_plugin.py
 ├── llm/
@@ -577,6 +616,13 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── license_protection_neural_network.py
 │   └── pattern_evolution_tracker.py
 ├── models/
+│   ├── protection_classifier/
+│   │   ├── encoder.pkl
+│   │   ├── metadata.json
+│   │   ├── model.pkl
+│   │   ├── README.md
+│   │   ├── scaler.pkl
+│   │   └── training_results.json
 │   ├── repositories/
 │   │   ├── __init__.py
 │   │   ├── anthropic_repository.py
@@ -598,7 +644,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── anti_anti_debug_suite.py
 │   │   ├── binary_patcher_plugin.py
 │   │   ├── cloud_license_interceptor.py
-│   │   ├── demo_plugin.py
 │   │   ├── hardware_dongle_emulator.py
 │   │   ├── intellicrack_core_engine.py
 │   │   ├── license_server_emulator.py
@@ -616,10 +661,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── plugin_system.py
 │   └── remote_executor.py
 ├── protection/
-│   ├── __pycache__/
-│   │   ├── denuvo_analyzer.cpython-312.pyc
-│   │   ├── denuvo_ticket_analyzer.cpython-312.pyc
-│   │   └── themida_analyzer.cpython-312.pyc
 │   ├── __init__.py
 │   ├── analysis_cache.py
 │   ├── commercial_protectors_database.py
@@ -637,7 +678,9 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── frida/
 │   │   ├── ai_scripts/
 │   │   │   └── ai_3d72c547_20250817_041722.js
+│   │   ├── advanced_anti_debug_bypass.js
 │   │   ├── anti_debugger.js
+│   │   ├── arxan_bypass.js
 │   │   ├── behavioral_pattern_analyzer.js
 │   │   ├── binary_patcher.js
 │   │   ├── binary_patcher_advanced.js
@@ -667,11 +710,14 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── README.md
 │   │   ├── realtime_protection_detector.js
 │   │   ├── registry_monitor.js
+│   │   ├── stalker_tracer.js
 │   │   ├── telemetry_blocker.js
 │   │   ├── test_binary_patcher.js
 │   │   ├── test_structured_messaging.js
 │   │   ├── time_bomb_defuser.js
+│   │   ├── tpm_command_interceptor.js
 │   │   ├── tpm_emulator.js
+│   │   ├── tpm_pcr_manipulator.js
 │   │   ├── universal_unpacker.js
 │   │   ├── virtualization_bypass.js
 │   │   ├── wasm_protection_bypass.js
@@ -700,7 +746,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   └── radare2_license_analyzer.py
 │   ├── setup/
 │   │   └── __init__.py
-│   ├── versions/
 │   ├── Windows_Patch/
 │   │   └── WindowsActivator.cmd
 │   ├── __init__.py
@@ -712,10 +757,14 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   └── README.md
 ├── tools/
 │   ├── __init__.py
+│   ├── classify_protection.py
+│   ├── deobfuscate_cfg.py
+│   ├── ml_manager.py
 │   ├── plugin_ci_cd.py
 │   ├── plugin_debugger.py
 │   ├── plugin_test_generator.py
-│   └── protection_analyzer_tool.py
+│   ├── protection_analyzer_tool.py
+│   └── train_classifier.py
 ├── ui/
 │   ├── dialogs/
 │   │   ├── __init__.py
@@ -783,8 +832,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── tools_tab.py
 │   │   └── workspace_tab.py
 │   ├── widgets/
-│   │   ├── __pycache__/
-│   │   │   └── ai_assistant_widget.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── ai_assistant_widget.py
 │   │   ├── batch_analysis_widget.py
@@ -850,6 +897,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── analysis_stats.py
 │   │   ├── binary_analysis.py
 │   │   ├── entropy_utils.py
+│   │   ├── network_api_common.py
 │   │   ├── pattern_search.py
 │   │   └── security_analysis.py
 │   ├── binary/
@@ -862,7 +910,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── pe_analysis_common.py
 │   │   └── pe_common.py
 │   ├── core/
-│   │   ├── __pycache__/
 │   │   ├── __init__.py
 │   │   ├── core_utilities.py
 │   │   ├── dependency_feedback.py
@@ -919,10 +966,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── system_utils.py
 │   │   ├── windows_common.py
 │   │   └── windows_structures.py
-│   ├── templates/
-│   │   ├── __init__.py
-│   │   ├── license_response_templates.py
-│   │   └── network_api_common.py
 │   ├── tools/
 │   │   ├── __init__.py
 │   │   ├── ghidra_script_manager.py
@@ -940,11 +983,16 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── validation/
 │   │   ├── __init__.py
 │   │   └── import_validator.py
+│   ├── windows/
+│   │   ├── __init__.py
+│   │   └── service_manager.py
 │   ├── __init__.py
 │   ├── api_client.py
+│   ├── cache.py
 │   ├── config.py
 │   ├── config_cleanup.py
 │   ├── constants.py
+│   ├── crypto.py
 │   ├── dependencies.py
 │   ├── dependency_fallbacks.py
 │   ├── deprecation_warnings.py
@@ -958,6 +1006,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── log_message.py
 │   ├── logger.py
 │   ├── path_resolver.py
+│   ├── project_paths.py
 │   ├── protection_utils.py
 │   ├── qemu_image_discovery.py
 │   ├── report_generator.py
