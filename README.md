@@ -17,6 +17,7 @@ A comprehensive binary analysis and security research platform designed to help 
 
 ### Advanced Features
 - **AI/ML Integration**: Multiple AI providers with dynamic model fetching (OpenAI, Anthropic, Google, Local models)
+- **Template-Free Design**: No hardcoded templates or rigid patterns - AI generates adaptive, context-aware code and responses
 - **GPU Acceleration**: NVIDIA, AMD, and Intel GPU support for intensive operations
 - **Parallel Processing**: Multi-core processing support via Python multiprocessing
 - **Symbolic Execution**: Advanced path exploration and constraint solving
