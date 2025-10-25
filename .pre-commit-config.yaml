@@ -1,22 +1,24 @@
 repos:
   # Rust Quality Assurance (New Intellicrack Launcher)
   - repo: https://github.com/doublify/pre-commit-rust
-    rev: v1.0
+    rev: eeee35a89e69d5772bdee97db1a6a898467b686e  # pragma: allowlist secret
     hooks:
       - id: cargo-check
         args: ["--manifest-path", "intellicrack-launcher/Cargo.toml"]
         name: Rust cargo check
-      - id: fmt
-        name: Rust code formatting
-        pass_filenames: false
-        args: []
-        entry: bash -c "cd intellicrack-launcher && rustfmt --write-mode=diff src/*.rs src/**/*.rs 2>/dev/null || cargo fmt -- --check 2>/dev/null || true"
       - id: clippy
         args: ["--manifest-path", "intellicrack-launcher/Cargo.toml", "--", "-D", "warnings"]
         name: Rust clippy linting
 
   - repo: local
     hooks:
+      - id: rust-fmt
+        name: Rust code formatting (cargo fmt)
+        entry: cargo fmt --manifest-path intellicrack-launcher/Cargo.toml -- --check
+        language: system
+        types: [rust]
+        pass_filenames: false
+
       - id: test-coverage-modified
         name: Test Coverage (Modified Files - 80% minimum)
         entry: pixi run python -m pytest --cov=intellicrack --cov-fail-under=80 --cov-report=term-missing
@@ -70,7 +72,8 @@ repos:
     rev: 1.8.3
     hooks:
       - id: bandit
-        args: ['-r', 'intellicrack/', '-f', 'json', '-o', 'bandit-report.json']
+        args: ['-r', 'intellicrack/', '-ll', '-i']
+        pass_filenames: false
         exclude: ^tests/
 
   # Basic Git Hygiene (Updated to Latest)
