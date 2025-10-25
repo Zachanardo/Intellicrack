@@ -24,15 +24,21 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import hashlib
+import json
 import logging
+import mmap
 import struct
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Iterator
 
 
 class BinaryAnalyzer:
     """Core binary analysis engine for executable file examination."""
+
+    LARGE_FILE_THRESHOLD = 50 * 1024 * 1024
+    CHUNK_SIZE = 8 * 1024 * 1024
+    HASH_CHUNK_SIZE = 64 * 1024
 
     def __init__(self):
         """Initialize the binary analyzer.
@@ -43,7 +49,6 @@ class BinaryAnalyzer:
         """
         self.logger = logging.getLogger(__name__)
 
-        # Magic bytes for file format detection
         self.magic_bytes = {
             b"MZ": "PE",
             b"\x7fELF": "ELF",
@@ -60,11 +65,12 @@ class BinaryAnalyzer:
             b"%PDF": "PDF Document",
         }
 
-    def analyze(self, binary_path: str | Path) -> dict[str, Any]:
+    def analyze(self, binary_path: str | Path, use_streaming: bool | None = None) -> dict[str, Any]:
         """Perform comprehensive binary analysis.
 
         Args:
             binary_path: Path to the binary file
+            use_streaming: Force streaming mode (None = auto-detect based on size)
 
         Returns:
             Analysis results dictionary
@@ -79,16 +85,19 @@ class BinaryAnalyzer:
             if not binary_path.is_file():
                 return {"error": f"Not a file: {binary_path}"}
 
-            # Basic file information
             file_info = self._get_file_info(binary_path)
+            file_size = file_info.get("size", 0)
 
-            # Detect file format
+            if use_streaming is None:
+                use_streaming = file_size > self.LARGE_FILE_THRESHOLD
+
+            if use_streaming:
+                self.logger.info("Using streaming analysis for large binary: %d bytes", file_size)
+                return self._analyze_streaming(binary_path, file_info)
+
             file_format = self._detect_format(binary_path)
-
-            # Calculate hashes
             hashes = self._calculate_hashes(binary_path)
 
-            # Analyze based on format
             format_analysis = {}
             if file_format == "PE":
                 format_analysis = self._analyze_pe(binary_path)
@@ -101,13 +110,8 @@ class BinaryAnalyzer:
             elif file_format in ["ZIP/JAR/APK"]:
                 format_analysis = self._analyze_archive(binary_path)
 
-            # String analysis
             strings_info = self._extract_strings(binary_path)
-
-            # Entropy analysis
             entropy_info = self._analyze_entropy(binary_path)
-
-            # Security analysis
             security_info = self._security_analysis(binary_path, file_format)
 
             return {
@@ -126,6 +130,828 @@ class BinaryAnalyzer:
         except Exception as e:
             self.logger.error("Binary analysis failed: %s", e)
             return {"error": str(e), "analysis_status": "failed"}
+
+    def _analyze_streaming(self, binary_path: Path, file_info: dict[str, Any]) -> dict[str, Any]:
+        """Perform streaming analysis for large binaries.
+
+        Args:
+            binary_path: Path to the binary file
+            file_info: Pre-computed file information
+
+        Returns:
+            Analysis results dictionary
+
+        """
+        try:
+            file_format = self._detect_format_streaming(binary_path)
+            hashes = self._calculate_hashes_streaming(binary_path)
+
+            format_analysis = {}
+            if file_format == "PE":
+                format_analysis = self._analyze_pe_streaming(binary_path)
+            elif file_format == "ELF":
+                format_analysis = self._analyze_elf_streaming(binary_path)
+            elif file_format.startswith("Mach-O"):
+                format_analysis = self._analyze_macho_streaming(binary_path)
+
+            strings_info = self._extract_strings_streaming(binary_path)
+            entropy_info = self._analyze_entropy_streaming(binary_path)
+            security_info = self._security_analysis(binary_path, file_format)
+
+            return {
+                "format": file_format,
+                "path": str(binary_path),
+                "file_info": file_info,
+                "hashes": hashes,
+                "format_analysis": format_analysis,
+                "strings": strings_info,
+                "entropy": entropy_info,
+                "security": security_info,
+                "analysis_status": "completed",
+                "streaming_mode": True,
+                "timestamp": datetime.now().isoformat(),
+            }
+
+        except Exception as e:
+            self.logger.error("Streaming analysis failed: %s", e)
+            return {"error": str(e), "analysis_status": "failed"}
+
+    def _open_mmap(self, file_path: Path) -> tuple[Any, Any]:
+        """Open file with memory mapping for efficient large file access.
+
+        Args:
+            file_path: Path to file
+
+        Returns:
+            Tuple of (file_handle, mmap_object)
+
+        """
+        file_handle = open(file_path, "rb")
+        try:
+            if file_handle.fileno() == -1:
+                raise OSError("Invalid file descriptor")
+            mmap_obj = mmap.mmap(file_handle.fileno(), 0, access=mmap.ACCESS_READ)
+            return file_handle, mmap_obj
+        except (OSError, ValueError) as e:
+            file_handle.close()
+            raise RuntimeError(f"Failed to create memory map: {e}") from e
+
+    def _read_chunks(self, file_path: Path, chunk_size: int | None = None) -> Iterator[tuple[bytes, int]]:
+        """Generate chunks of file data for streaming analysis.
+
+        Args:
+            file_path: Path to file
+            chunk_size: Size of each chunk (default: CHUNK_SIZE)
+
+        Yields:
+            Tuple of (chunk_data, offset)
+
+        """
+        if chunk_size is None:
+            chunk_size = self.CHUNK_SIZE
+
+        with open(file_path, "rb") as f:
+            offset = 0
+            while True:
+                chunk = f.read(chunk_size)
+                if not chunk:
+                    break
+                yield chunk, offset
+                offset += len(chunk)
+
+    def _detect_format_streaming(self, file_path: Path) -> str:
+        """Detect file format using streaming read.
+
+        Args:
+            file_path: Path to file
+
+        Returns:
+            Detected format string
+
+        """
+        try:
+            with open(file_path, "rb") as f:
+                header = f.read(8)
+
+            for magic, format_name in self.magic_bytes.items():
+                if header.startswith(magic):
+                    return format_name
+
+            try:
+                with open(file_path, encoding="utf-8") as f:
+                    text = f.read(1000)
+                    if text.startswith("#!/"):
+                        return "Script"
+                    if text.startswith("<?xml"):
+                        return "XML"
+                    if text.startswith(("{", "[")):
+                        return "JSON"
+            except (UnicodeDecodeError, AttributeError):
+                pass
+
+            return "Unknown"
+        except Exception as e:
+            return f"Error: {e}"
+
+    def _calculate_hashes_streaming(self, file_path: Path, progress_callback: Callable[[int, int], None] | None = None) -> dict[str, str]:
+        """Calculate file hashes using streaming to avoid loading entire file.
+
+        Args:
+            file_path: Path to file
+            progress_callback: Optional callback for progress updates (bytes_processed, total_bytes)
+
+        Returns:
+            Dictionary of hash algorithm names to hex digests
+
+        """
+        try:
+            sha256_hash = hashlib.sha256()
+            sha512_hash = hashlib.sha512()
+            sha3_256_hash = hashlib.sha3_256()
+            blake2b_hash = hashlib.blake2b()
+
+            file_size = file_path.stat().st_size
+            bytes_processed = 0
+
+            with open(file_path, "rb") as f:
+                while True:
+                    chunk = f.read(self.HASH_CHUNK_SIZE)
+                    if not chunk:
+                        break
+
+                    sha256_hash.update(chunk)
+                    sha512_hash.update(chunk)
+                    sha3_256_hash.update(chunk)
+                    blake2b_hash.update(chunk)
+
+                    bytes_processed += len(chunk)
+
+                    if progress_callback:
+                        progress_callback(bytes_processed, file_size)
+
+            return {
+                "sha256": sha256_hash.hexdigest(),
+                "sha512": sha512_hash.hexdigest(),
+                "sha3_256": sha3_256_hash.hexdigest(),
+                "blake2b": blake2b_hash.hexdigest(),
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    def _analyze_pe_streaming(self, file_path: Path) -> dict[str, Any]:
+        """Analyze PE file using memory mapping for large files.
+
+        Args:
+            file_path: Path to PE file
+
+        Returns:
+            PE analysis results
+
+        """
+        try:
+            file_handle, mm = self._open_mmap(file_path)
+            try:
+                pe_info = {}
+
+                if len(mm) < 64:
+                    return {"error": "File too small for PE"}
+
+                if mm[:2] != b"MZ":
+                    return {"error": "Invalid DOS header"}
+
+                pe_offset = struct.unpack("<I", mm[0x3C:0x40])[0]
+
+                if pe_offset >= len(mm) or mm[pe_offset : pe_offset + 4] != b"PE\x00\x00":
+                    return {"error": "Invalid PE header"}
+
+                coff_header = mm[pe_offset + 4 : pe_offset + 24]
+                (
+                    machine,
+                    num_sections,
+                    timestamp,
+                    symbol_table_offset,
+                    num_symbols,
+                    optional_header_size,
+                    characteristics,
+                ) = struct.unpack("<HHIIIHH", coff_header)
+
+                pe_info.update(
+                    {
+                        "machine": f"0x{machine:04x}",
+                        "num_sections": num_sections,
+                        "timestamp": datetime.fromtimestamp(timestamp).isoformat() if timestamp > 0 else "N/A",
+                        "characteristics": f"0x{characteristics:04x}",
+                        "sections": [],
+                    }
+                )
+
+                section_table_offset = pe_offset + 24 + optional_header_size
+                for i in range(num_sections):
+                    section_offset = section_table_offset + (i * 40)
+                    if section_offset + 40 > len(mm):
+                        break
+
+                    section_data = mm[section_offset : section_offset + 40]
+                    name = section_data[:8].decode("utf-8", errors="ignore").rstrip("\x00")
+                    virtual_size, virtual_address, raw_size, raw_address = struct.unpack("<IIII", section_data[8:24])
+
+                    pe_info["sections"].append(
+                        {
+                            "name": name,
+                            "virtual_address": f"0x{virtual_address:08x}",
+                            "virtual_size": virtual_size,
+                            "raw_size": raw_size,
+                            "raw_address": f"0x{raw_address:08x}",
+                        }
+                    )
+
+                return pe_info
+
+            finally:
+                mm.close()
+                file_handle.close()
+
+        except Exception as e:
+            return {"error": str(e)}
+
+    def _analyze_elf_streaming(self, file_path: Path) -> dict[str, Any]:
+        """Analyze ELF file using memory mapping.
+
+        Args:
+            file_path: Path to ELF file
+
+        Returns:
+            ELF analysis results
+
+        """
+        try:
+            file_handle, mm = self._open_mmap(file_path)
+            try:
+                if len(mm) < 64:
+                    return {"error": "File too small for ELF"}
+
+                if mm[:4] != b"\x7fELF":
+                    return {"error": "Invalid ELF header"}
+
+                elf_info = {}
+
+                ei_class = mm[4]
+                ei_data = mm[5]
+                ei_version = mm[6]
+
+                elf_info.update(
+                    {
+                        "class": "64-bit" if ei_class == 2 else "32-bit",
+                        "data": "little-endian" if ei_data == 1 else "big-endian",
+                        "version": ei_version,
+                        "segments": [],
+                        "sections": [],
+                    }
+                )
+
+                if ei_class == 2:
+                    e_type, e_machine, e_version, e_entry, e_phoff, e_shoff = struct.unpack("<HHIQQQQ", mm[16:48])[:6]
+                    e_phentsize, e_phnum = struct.unpack("<HH", mm[54:58])
+                else:
+                    e_type, e_machine, e_version, e_entry, e_phoff, e_shoff = struct.unpack("<HHIIII", mm[16:36])[:6]
+                    e_phentsize, e_phnum = struct.unpack("<HH", mm[42:46])
+
+                elf_info.update(
+                    {
+                        "type": {1: "REL", 2: "EXEC", 3: "DYN", 4: "CORE"}.get(e_type, f"Unknown({e_type})"),
+                        "machine": f"0x{e_machine:04x}",
+                        "entry_point": f"0x{e_entry:08x}",
+                    }
+                )
+
+                for i in range(min(e_phnum, 20)):
+                    ph_offset = e_phoff + (i * e_phentsize)
+                    if ph_offset + e_phentsize > len(mm):
+                        break
+
+                    if ei_class == 2:
+                        p_type, p_flags, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_align = struct.unpack(
+                            "<IIQQQQQQ", mm[ph_offset : ph_offset + 56]
+                        )
+                    else:
+                        p_type, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_flags, p_align = struct.unpack(
+                            "<IIIIIIII", mm[ph_offset : ph_offset + 32]
+                        )
+
+                    segment_types = {
+                        0: "NULL",
+                        1: "LOAD",
+                        2: "DYNAMIC",
+                        3: "INTERP",
+                        4: "NOTE",
+                        5: "SHLIB",
+                        6: "PHDR",
+                        7: "TLS",
+                    }
+
+                    elf_info["segments"].append(
+                        {
+                            "type": segment_types.get(p_type, f"Unknown({p_type})"),
+                            "offset": f"0x{p_offset:08x}",
+                            "vaddr": f"0x{p_vaddr:08x}",
+                            "filesz": p_filesz,
+                            "memsz": p_memsz,
+                            "flags": self._get_segment_flags(p_flags),
+                        }
+                    )
+
+                return elf_info
+
+            finally:
+                mm.close()
+                file_handle.close()
+
+        except Exception as e:
+            return {"error": str(e)}
+
+    def _analyze_macho_streaming(self, file_path: Path) -> dict[str, Any]:
+        """Analyze Mach-O file using memory mapping.
+
+        Args:
+            file_path: Path to Mach-O file
+
+        Returns:
+            Mach-O analysis results
+
+        """
+        try:
+            file_handle, mm = self._open_mmap(file_path)
+            try:
+                if len(mm) < 32:
+                    return {"error": "File too small for Mach-O"}
+
+                magic = struct.unpack("<I", mm[:4])[0]
+
+                macho_info = {}
+
+                if magic == 0xFEEDFACE:
+                    is_64 = False
+                    endian = "<"
+                elif magic == 0xFEEDFACF:
+                    is_64 = True
+                    endian = "<"
+                elif magic == 0xCEFAEDFE:
+                    is_64 = False
+                    endian = ">"
+                elif magic == 0xCFFAEDFE:
+                    is_64 = True
+                    endian = ">"
+                else:
+                    return {"error": "Invalid Mach-O magic"}
+
+                if is_64:
+                    cpu_type, cpu_subtype, file_type, ncmds, sizeofcmds, flags = struct.unpack(endian + "IIIIII", mm[4:28])
+                    offset = 32
+                else:
+                    cpu_type, cpu_subtype, file_type, ncmds, sizeofcmds, flags = struct.unpack(endian + "IIIIII", mm[4:28])
+                    offset = 28
+
+                macho_info.update(
+                    {
+                        "architecture": "64-bit" if is_64 else "32-bit",
+                        "cpu_type": f"0x{cpu_type:08x}",
+                        "file_type": file_type,
+                        "num_commands": ncmds,
+                        "commands_size": sizeofcmds,
+                        "flags": f"0x{flags:08x}",
+                        "load_commands": [],
+                    }
+                )
+
+                for _i in range(min(ncmds, 50)):
+                    if offset + 8 > len(mm):
+                        break
+
+                    cmd, cmdsize = struct.unpack(endian + "II", mm[offset : offset + 8])
+
+                    macho_info["load_commands"].append(
+                        {
+                            "cmd": f"0x{cmd:08x}",
+                            "cmdsize": cmdsize,
+                        }
+                    )
+
+                    offset += cmdsize
+
+                return macho_info
+
+            finally:
+                mm.close()
+                file_handle.close()
+
+        except Exception as e:
+            return {"error": str(e)}
+
+    def _extract_strings_streaming(self, file_path: Path, max_strings: int = 100) -> list[str]:
+        """Extract strings from large binary using streaming.
+
+        Args:
+            file_path: Path to file
+            max_strings: Maximum number of strings to extract
+
+        Returns:
+            List of extracted strings
+
+        """
+        try:
+            strings = []
+            min_length = 4
+            current_string = bytearray()
+
+            for chunk, _offset in self._read_chunks(file_path):
+                for byte in chunk:
+                    if 32 <= byte <= 126:
+                        current_string.append(byte)
+                    else:
+                        if len(current_string) >= min_length:
+                            string = current_string.decode("ascii", errors="ignore")
+                            if not all(c in "0123456789ABCDEFabcdef" for c in string):
+                                strings.append(string)
+                                if len(strings) >= max_strings:
+                                    return strings
+                        current_string = bytearray()
+
+                if len(strings) >= max_strings:
+                    break
+
+            if len(current_string) >= min_length and len(strings) < max_strings:
+                strings.append(current_string.decode("ascii", errors="ignore"))
+
+            return strings
+
+        except Exception as e:
+            return [f"Error extracting strings: {e}"]
+
+    def _analyze_entropy_streaming(self, file_path: Path) -> dict[str, Any]:
+        """Analyze entropy using streaming for large files.
+
+        Args:
+            file_path: Path to file
+
+        Returns:
+            Entropy analysis results
+
+        """
+        try:
+            import math
+
+            byte_counts = {}
+            total_bytes = 0
+
+            for chunk, _offset in self._read_chunks(file_path):
+                for byte in chunk:
+                    byte_counts[byte] = byte_counts.get(byte, 0) + 1
+                    total_bytes += 1
+
+            entropy = 0.0
+            for count in byte_counts.values():
+                if count > 0:
+                    probability = count / total_bytes
+                    entropy -= probability * math.log2(probability)
+
+            entropy_info = {
+                "overall_entropy": round(entropy, 4),
+                "file_size": total_bytes,
+                "unique_bytes": len(byte_counts),
+                "analysis": "Normal" if entropy < 7.0 else "High (possibly packed/encrypted)",
+            }
+
+            return entropy_info
+
+        except Exception as e:
+            return {"error": str(e)}
+
+    def analyze_with_progress(self, binary_path: str | Path, progress_callback: Callable[[str, int, int], None] | None = None) -> dict[str, Any]:
+        """Analyze binary with progress tracking for large files.
+
+        Args:
+            binary_path: Path to binary file
+            progress_callback: Callback function(stage, current, total)
+
+        Returns:
+            Analysis results dictionary
+
+        """
+        try:
+            binary_path = Path(binary_path)
+
+            if not binary_path.exists():
+                return {"error": f"File not found: {binary_path}"}
+
+            if not binary_path.is_file():
+                return {"error": f"Not a file: {binary_path}"}
+
+            file_info = self._get_file_info(binary_path)
+            file_info.get("size", 0)
+
+            stages = ["format_detection", "hash_calculation", "format_analysis", "string_extraction", "entropy_analysis"]
+            current_stage = 0
+            total_stages = len(stages)
+
+            def update_progress(stage_name: str):
+                nonlocal current_stage
+                if progress_callback:
+                    progress_callback(stage_name, current_stage, total_stages)
+                current_stage += 1
+
+            update_progress(stages[0])
+            file_format = self._detect_format_streaming(binary_path)
+
+            update_progress(stages[1])
+
+            def hash_progress(current: int, total: int):
+                if progress_callback:
+                    progress_callback(f"hash_calculation: {current}/{total}", current, total)
+
+            hashes = self._calculate_hashes_streaming(binary_path, hash_progress)
+
+            update_progress(stages[2])
+            format_analysis = {}
+            if file_format == "PE":
+                format_analysis = self._analyze_pe_streaming(binary_path)
+            elif file_format == "ELF":
+                format_analysis = self._analyze_elf_streaming(binary_path)
+            elif file_format.startswith("Mach-O"):
+                format_analysis = self._analyze_macho_streaming(binary_path)
+
+            update_progress(stages[3])
+            strings_info = self._extract_strings_streaming(binary_path)
+
+            update_progress(stages[4])
+            entropy_info = self._analyze_entropy_streaming(binary_path)
+
+            security_info = self._security_analysis(binary_path, file_format)
+
+            if progress_callback:
+                progress_callback("completed", total_stages, total_stages)
+
+            return {
+                "format": file_format,
+                "path": str(binary_path),
+                "file_info": file_info,
+                "hashes": hashes,
+                "format_analysis": format_analysis,
+                "strings": strings_info,
+                "entropy": entropy_info,
+                "security": security_info,
+                "analysis_status": "completed",
+                "streaming_mode": True,
+                "timestamp": datetime.now().isoformat(),
+            }
+
+        except Exception as e:
+            self.logger.error("Analysis with progress failed: %s", e)
+            return {"error": str(e), "analysis_status": "failed"}
+
+    def save_analysis_checkpoint(self, analysis_results: dict[str, Any], checkpoint_path: str | Path) -> bool:
+        """Save analysis checkpoint for resumable operations.
+
+        Args:
+            analysis_results: Partial or complete analysis results
+            checkpoint_path: Path to save checkpoint file
+
+        Returns:
+            True if successful, False otherwise
+
+        """
+        try:
+            checkpoint_path = Path(checkpoint_path)
+            checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+
+            with open(checkpoint_path, "w", encoding="utf-8") as f:
+                json.dump(analysis_results, f, indent=2)
+
+            return True
+
+        except Exception as e:
+            self.logger.error("Failed to save checkpoint: %s", e)
+            return False
+
+    def load_analysis_checkpoint(self, checkpoint_path: str | Path) -> dict[str, Any] | None:
+        """Load analysis checkpoint to resume interrupted operations.
+
+        Args:
+            checkpoint_path: Path to checkpoint file
+
+        Returns:
+            Checkpoint data or None if failed
+
+        """
+        try:
+            checkpoint_path = Path(checkpoint_path)
+
+            if not checkpoint_path.exists():
+                return None
+
+            with open(checkpoint_path, encoding="utf-8") as f:
+                return json.load(f)
+
+        except Exception as e:
+            self.logger.error("Failed to load checkpoint: %s", e)
+            return None
+
+    def scan_for_patterns_streaming(self, binary_path: str | Path, patterns: list[bytes], context_bytes: int = 32) -> dict[str, list[dict[str, Any]]]:
+        """Scan large binary for multiple byte patterns using streaming.
+
+        Args:
+            binary_path: Path to binary file
+            patterns: List of byte patterns to search for
+            context_bytes: Number of bytes before/after match to include
+
+        Returns:
+            Dictionary mapping pattern to list of matches with offsets and context
+
+        """
+        try:
+            binary_path = Path(binary_path)
+            results = {pattern.hex(): [] for pattern in patterns}
+
+            overlap_size = max(len(p) for p in patterns) - 1
+            previous_chunk_tail = b""
+
+            for chunk, chunk_offset in self._read_chunks(binary_path):
+                search_data = previous_chunk_tail + chunk
+                search_offset = chunk_offset - len(previous_chunk_tail)
+
+                for pattern in patterns:
+                    offset = 0
+                    while True:
+                        pos = search_data.find(pattern, offset)
+                        if pos == -1:
+                            break
+
+                        actual_offset = search_offset + pos
+                        context_start = max(0, pos - context_bytes)
+                        context_end = min(len(search_data), pos + len(pattern) + context_bytes)
+                        search_data[context_start:context_end]
+
+                        results[pattern.hex()].append(
+                            {
+                                "offset": actual_offset,
+                                "context_before": search_data[max(0, pos - context_bytes) : pos].hex(),
+                                "match": pattern.hex(),
+                                "context_after": search_data[pos + len(pattern) : context_end].hex(),
+                            }
+                        )
+
+                        offset = pos + 1
+
+                previous_chunk_tail = chunk[-overlap_size:] if len(chunk) > overlap_size else chunk
+
+            return results
+
+        except Exception as e:
+            self.logger.error("Pattern scanning failed: %s", e)
+            return {"error": str(e)}
+
+    def scan_for_license_strings_streaming(self, binary_path: str | Path) -> list[dict[str, Any]]:
+        """Scan large binary for licensing-related strings using streaming.
+
+        Args:
+            binary_path: Path to binary file
+
+        Returns:
+            List of licensing-related string matches with offsets
+
+        """
+        license_patterns = [
+            b"serial",
+            b"license",
+            b"activation",
+            b"registration",
+            b"product key",
+            b"unlock code",
+            b"trial",
+            b"expired",
+            b"validate",
+            b"authenticate",
+        ]
+
+        try:
+            binary_path = Path(binary_path)
+            results = []
+
+            for chunk, chunk_offset in self._read_chunks(binary_path):
+                for i in range(len(chunk) - 4):
+                    if 32 <= chunk[i] <= 126:
+                        string_start = i
+                        string_bytes = bytearray()
+
+                        while i < len(chunk) and 32 <= chunk[i] <= 126:
+                            string_bytes.append(chunk[i])
+                            i += 1
+
+                        if len(string_bytes) >= 6:
+                            string_lower = string_bytes.lower()
+                            for pattern in license_patterns:
+                                if pattern in string_lower:
+                                    try:
+                                        decoded_string = string_bytes.decode("ascii", errors="ignore")
+                                        results.append(
+                                            {
+                                                "offset": chunk_offset + string_start,
+                                                "string": decoded_string,
+                                                "pattern_matched": pattern.decode("ascii"),
+                                                "length": len(string_bytes),
+                                            }
+                                        )
+                                    except Exception:
+                                        pass
+                                    break
+
+            return results[:500]
+
+        except Exception as e:
+            self.logger.error("License string scanning failed: %s", e)
+            return [{"error": str(e)}]
+
+    def analyze_sections_streaming(self, binary_path: str | Path, section_ranges: list[tuple[int, int]]) -> dict[str, Any]:
+        """Analyze specific sections of large binary using memory mapping.
+
+        Args:
+            binary_path: Path to binary file
+            section_ranges: List of (start_offset, end_offset) tuples
+
+        Returns:
+            Analysis results for each section
+
+        """
+        try:
+            binary_path = Path(binary_path)
+            results = {}
+
+            file_handle, mm = self._open_mmap(binary_path)
+            try:
+                for idx, (start, end) in enumerate(section_ranges):
+                    if start < 0 or end > len(mm) or start >= end:
+                        results[f"section_{idx}"] = {"error": "Invalid range"}
+                        continue
+
+                    section_data = mm[start:end]
+                    section_size = len(section_data)
+
+                    byte_counts = {}
+                    for byte in section_data:
+                        byte_counts[byte] = byte_counts.get(byte, 0) + 1
+
+                    import math
+
+                    entropy = 0.0
+                    for count in byte_counts.values():
+                        if count > 0:
+                            probability = count / section_size
+                            entropy -= probability * math.log2(probability)
+
+                    printable_count = sum(1 for byte in section_data if 32 <= byte <= 126)
+                    null_count = byte_counts.get(0, 0)
+
+                    results[f"section_{idx}"] = {
+                        "range": f"0x{start:08x}-0x{end:08x}",
+                        "size": section_size,
+                        "entropy": round(entropy, 4),
+                        "unique_bytes": len(byte_counts),
+                        "printable_ratio": round(printable_count / section_size, 4) if section_size > 0 else 0,
+                        "null_ratio": round(null_count / section_size, 4) if section_size > 0 else 0,
+                        "characteristics": self._classify_section_characteristics(entropy, printable_count / section_size if section_size > 0 else 0),
+                    }
+
+                return results
+
+            finally:
+                mm.close()
+                file_handle.close()
+
+        except Exception as e:
+            self.logger.error("Section analysis failed: %s", e)
+            return {"error": str(e)}
+
+    def _classify_section_characteristics(self, entropy: float, printable_ratio: float) -> str:
+        """Classify section characteristics based on entropy and printable content.
+
+        Args:
+            entropy: Section entropy value
+            printable_ratio: Ratio of printable characters
+
+        Returns:
+            Characteristic classification string
+
+        """
+        if entropy > 7.5:
+            return "Encrypted/Compressed"
+        if entropy < 2.0:
+            return "Highly Repetitive/Padded"
+        if printable_ratio > 0.8:
+            return "Text/Strings"
+        if printable_ratio < 0.1 and entropy > 5.0:
+            return "Code/Binary Data"
+        if 4.0 <= entropy < 6.0:
+            return "Structured Binary"
+        return "Mixed Content"
 
     def _get_file_info(self, file_path: Path) -> dict[str, Any]:
         """Extract basic file metadata."""
@@ -596,26 +1422,53 @@ class BinaryAnalyzer:
                 "risk_level": "Unknown",
                 "suspicious_indicators": [],
                 "recommendations": [],
+                "protection_detected": None,
             }
 
-            # Basic file size check
             file_size = file_path.stat().st_size
             if file_size == 0:
                 security_info["suspicious_indicators"].append("Empty file")
                 security_info["risk_level"] = "Low"
-            elif file_size > 100 * 1024 * 1024:  # > 100MB
+            elif file_size > 100 * 1024 * 1024:
                 security_info["suspicious_indicators"].append("Very large file size")
                 security_info["risk_level"] = "Medium"
             else:
                 security_info["risk_level"] = "Low"
 
-            # Format-specific checks
             if file_format == "Unknown":
                 security_info["suspicious_indicators"].append("Unknown file format")
                 security_info["risk_level"] = "Medium"
             elif file_format in ["PE", "ELF", "Mach-O"]:
                 security_info["recommendations"].append("Run in sandboxed environment")
                 security_info["recommendations"].append("Scan with antivirus")
+
+                try:
+                    from intellicrack.core.protection_detection.arxan_detector import ArxanDetector
+
+                    arxan_detector = ArxanDetector()
+                    arxan_result = arxan_detector.detect(file_path)
+
+                    if arxan_result.is_protected:
+                        security_info["protection_detected"] = {
+                            "type": "Arxan TransformIT",
+                            "version": arxan_result.version.value,
+                            "confidence": arxan_result.confidence,
+                            "features": {
+                                "anti_debugging": arxan_result.features.anti_debugging,
+                                "anti_tampering": arxan_result.features.anti_tampering,
+                                "rasp": arxan_result.features.rasp_protection,
+                                "license_validation": arxan_result.features.license_validation,
+                            }
+                        }
+                        security_info["suspicious_indicators"].append(
+                            f"Protected with Arxan TransformIT {arxan_result.version.value}"
+                        )
+                        security_info["recommendations"].append(
+                            "Use Arxan bypass tools for analysis"
+                        )
+
+                except Exception as e:
+                    self.logger.debug(f"Arxan detection failed: {e}")
 
             return security_info
 

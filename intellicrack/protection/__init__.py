@@ -63,13 +63,13 @@ except ImportError as e:
 
 try:
     from .themida_analyzer import (
+        DevirtualizedCode,
         ThemidaAnalysisResult,
         ThemidaAnalyzer,
-        VMArchitecture,
         ThemidaVersion,
-        VMHandler,
+        VMArchitecture,
         VMContext,
-        DevirtualizedCode,
+        VMHandler,
     )
 except ImportError as e:
     logger.warning(f"Failed to import themida_analyzer: {e}")

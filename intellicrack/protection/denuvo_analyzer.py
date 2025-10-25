@@ -23,12 +23,9 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-import hashlib
 import math
 import os
-import struct
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 from ..utils.logger import get_logger
@@ -53,6 +50,7 @@ except ImportError:
 @dataclass
 class DenuvoVersion:
     """Denuvo version information."""
+
     major: int
     minor: int
     name: str
@@ -62,6 +60,7 @@ class DenuvoVersion:
 @dataclass
 class DenuvoTrigger:
     """Denuvo activation trigger information."""
+
     address: int
     type: str
     function_name: str
@@ -72,6 +71,7 @@ class DenuvoTrigger:
 @dataclass
 class IntegrityCheck:
     """Integrity check routine information."""
+
     address: int
     type: str
     target: str
@@ -82,6 +82,7 @@ class IntegrityCheck:
 @dataclass
 class TimingCheck:
     """Timing check information."""
+
     address: int
     method: str
     threshold: int
@@ -91,6 +92,7 @@ class TimingCheck:
 @dataclass
 class VMRegion:
     """Virtual machine protected region."""
+
     start_address: int
     end_address: int
     entry_points: list[int]
@@ -101,6 +103,7 @@ class VMRegion:
 @dataclass
 class DenuvoAnalysisResult:
     """Comprehensive Denuvo analysis results."""
+
     detected: bool
     confidence: float
     version: DenuvoVersion | None

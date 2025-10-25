@@ -98,11 +98,10 @@ Binary modification and patching:
 
 ### Processing (`processing/`)
 
-Distributed and accelerated processing:
+Parallel and accelerated processing:
 
 - **base_snapshot_handler.py** - Snapshot management
-- **distributed_analysis_manager.py** - Distributed analysis coordination
-- **distributed_manager.py** - General distributed processing
+- **parallel_processing_manager.py** - Multi-core parallel processing
 - **docker_container.py** - Docker containerization support
 - **emulator_manager.py** - Emulator management and coordination
 - **gpu_accelerator.py** - GPU acceleration support
@@ -181,7 +180,7 @@ The core module integrates with:
 
 ### Scalability
 
-- Distributed processing support
+- Multi-core parallel processing support
 - GPU acceleration for intensive operations
 - Memory optimization for large binaries
 

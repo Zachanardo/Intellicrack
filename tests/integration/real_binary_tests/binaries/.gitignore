@@ -1,0 +1,38 @@
+# Real protected binaries are NOT committed to repository
+# Users must provide their own legally obtained test binaries
+
+# Ignore all executable files
+*.exe
+*.dll
+*.sys
+
+# Ignore all files in subdirectories
+securom/v7/*
+securom/v8/*
+starforce/v3/*
+starforce/v4/*
+starforce/v5/*
+vmprotect/v1/*
+vmprotect/v2/*
+vmprotect/v3/*
+themida/*
+winlicense/*
+hasp/hasp4/*
+hasp/hasp_hl/*
+hasp/sentinel/*
+flexlm/*
+flexlm/licenses/*
+flexnet/*
+armadillo/*
+asprotect/*
+enigma/*
+safengine/*
+obsidium/*
+packers/upx/*
+packers/pecompact/*
+packers/aspack/*
+drivers/*
+
+# Keep directory structure
+!.gitignore
+!**/.gitkeep

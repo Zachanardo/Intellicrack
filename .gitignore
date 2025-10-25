@@ -178,11 +178,11 @@ intellicrack_config.json
 security.ini
 
 # Runtime data directories
-data/
+intellicrack/data/data/
 logs/
-data/plugin_cache/
-data/visualizations/
-data/reports/
+intellicrack/data/data/plugin_cache/
+intellicrack/data/data/visualizations/
+intellicrack/data/data/reports/
 
 # Cache directories
 plugin_cache/
@@ -230,6 +230,14 @@ signatures/
 # Plugin development
 plugins/dev/
 plugins/test/
+
+# Prevent incorrect script directories in plugins (scripts belong in intellicrack/scripts/)
+intellicrack/plugins/frida_scripts/
+intellicrack/plugins/ghidra_scripts/
+
+# Prevent unnecessary subdirectories in intellicrack/scripts/
+intellicrack/scripts/setup/
+intellicrack/scripts/versions/
 
 # ==============================================================================
 # LOGS AND OUTPUT FILES
@@ -394,6 +402,17 @@ mypy.ini
 # Legacy tools
 tools/icp_engine/
 tools/icp_engine/**
+# Ghidra installation
+tools/ghidra/
+tools/ghidra_*.zip
+tools/ghidra_temp/
+# radare2 installation
+tools/radare2/
+tools/radare2*.zip
+tools/radare2_temp/
+# QEMU installation
+tools/qemu/
+tools/qemu-w64-setup-*.exe
 *.dll
 *.exe
 !tools/AdobeInjector/AdobeInjector.exe
@@ -673,3 +692,11 @@ intellicrack/assets/qemu_images/*.vhdx
 # pixi environments
 .pixi/*
 !.pixi/config.toml
+
+# ==============================================================================
+# REMOVED TEMPLATE DIRECTORIES - DO NOT RECREATE  
+# ==============================================================================
+# These directories were removed as part of template cleanup
+# Templates were constraining AI functionality - removed in favor of dynamic generation
+intellicrack/ai/templates/
+intellicrack/utils/templates/

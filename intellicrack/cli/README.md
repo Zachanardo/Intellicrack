@@ -243,8 +243,7 @@ The CLI provides access to core Intellicrack functionality. Some advanced featur
 
 ```bash
 --gpu-accelerate         # GPU acceleration
---distributed            # Distributed processing
---distributed-backend {ray,dask}  # Distributed backend
+--parallel               # Parallel processing
 --threads NUM            # Number of threads
 --incremental            # Incremental analysis cache
 --memory-optimized       # Memory-optimized loading
@@ -482,7 +481,7 @@ python intellicrack/cli/main.py binary.exe --comprehensive \
 ## Performance Tips
 
 1. **Use GPU acceleration** for large binaries: `--gpu-accelerate`
-2. **Enable distributed processing** for batch jobs: `--distributed --threads 16`
+2. **Enable parallel processing** for batch jobs: `--parallel --threads 16`
 3. **Use incremental analysis** for repeated analysis: `--incremental`
 4. **Memory optimization** for large files: `--memory-optimized`
 5. **Parallel batch processing** for multiple files: `--batch-parallel`

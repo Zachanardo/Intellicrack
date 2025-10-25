@@ -29,7 +29,6 @@ from enum import Enum
 from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import QObject, QRunnable, QThreadPool, pyqtSignal, pyqtSlot
-
 from intellicrack.utils.logger import get_logger
 
 logger = get_logger(__name__)

@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Optional
 
 from intellicrack.handlers.pyqt6_handler import (
+    PYQT6_AVAILABLE,
     QGroupBox,
     QHBoxLayout,
     QLabel,
@@ -25,7 +26,6 @@ from intellicrack.handlers.pyqt6_handler import (
     QVBoxLayout,
     QWidget,
     pyqtSignal,
-    PYQT6_AVAILABLE,
 )
 
 # Win32 API constants

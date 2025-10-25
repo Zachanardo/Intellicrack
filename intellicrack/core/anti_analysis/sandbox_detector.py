@@ -63,6 +63,12 @@ class SandboxDetector(BaseDetector):
             "hardware_analysis": self._check_hardware_indicators,
             "registry_analysis": self._check_registry_indicators,
             "virtualization": self._check_virtualization_artifacts,
+            "environment_variables": self._check_environment_variables,
+            "parent_process_analysis": self._check_parent_process,
+            "cpuid_hypervisor_check": self._check_cpuid_hypervisor,
+            "mac_address_analysis": self._check_mac_address_artifacts,
+            "browser_automation": self._check_browser_automation,
+            "timing_attacks": self._check_advanced_timing,
         }
 
         # Build dynamic sandbox signatures
@@ -133,6 +139,30 @@ class SandboxDetector(BaseDetector):
                 "process_patterns": ["fireeye", "feye_"],
                 "network_patterns": ["10.10.10."],
             },
+            "hatching_triage": {
+                "path_patterns": ["triage", "hatching", "tria"],
+                "process_patterns": ["triage", "hatching", "tria_"],
+                "registry_keys": ["Hatching", "Triage"],
+                "network_patterns": ["192.168.30."],
+                "environment_vars": ["TRIAGE_ANALYSIS", "HATCHING_TRIAGE"],
+            },
+            "intezer": {
+                "path_patterns": ["intezer", "analyze", "intz"],
+                "process_patterns": ["intezer", "analyze_agent"],
+                "registry_keys": ["Intezer"],
+                "environment_vars": ["INTEZER_ANALYSIS"],
+            },
+            "virustotal": {
+                "path_patterns": ["vt", "virustotal", "vtotal"],
+                "process_patterns": ["vt_agent", "virustotal"],
+                "network_patterns": ["10.0.2."],
+                "environment_vars": ["VT_SANDBOX", "VIRUSTOTAL_ANALYSIS"],
+            },
+            "browserstack": {
+                "path_patterns": ["browserstack", "bstack"],
+                "process_patterns": ["browserstack", "bstack"],
+                "environment_vars": ["BROWSERSTACK"],
+            },
         }
 
         # Build signatures for each sandbox
@@ -145,6 +175,7 @@ class SandboxDetector(BaseDetector):
                 "registry": [],
                 "services": [],
                 "dlls": [],
+                "environment_vars": [],
             }
 
             # Build file paths dynamically
@@ -202,6 +233,10 @@ class SandboxDetector(BaseDetector):
             # Add DLL names
             if "dll_names" in patterns:
                 signatures[sandbox_name]["dlls"].extend(patterns["dll_names"])
+
+            # Add environment variables
+            if "environment_vars" in patterns:
+                signatures[sandbox_name]["environment_vars"].extend(patterns["environment_vars"])
 
         # Add virtualization platform indicators
         vm_signatures = self._build_vm_signatures()
@@ -1276,45 +1311,179 @@ class SandboxDetector(BaseDetector):
         return False, 0.0, details
 
     def _check_time_acceleration(self) -> tuple[bool, float, dict]:
-        """Check for time acceleration used by sandboxes."""
-        details = {"time_anomaly": False, "drift": 0}
+        """Check for time acceleration using RDTSC instruction."""
+        details = {"time_anomaly": False, "rdtsc_drift": 0, "qpc_drift": 0}
 
         try:
-            # Measure time drift
-            # Get initial time
-            start_real = time.time()
-            start_perf = time.perf_counter()
-
-            # Sleep for a short period
-            time.sleep(2)
-
-            # Check time drift
-            end_real = time.time()
-            end_perf = time.perf_counter()
-
-            real_elapsed = end_real - start_real
-            perf_elapsed = end_perf - start_perf
-
-            drift = abs(real_elapsed - perf_elapsed)
-            details["drift"] = drift
-
-            # Significant drift indicates time manipulation
-            if drift > 0.1:  # 100ms drift
-                details["time_anomaly"] = True
-                return True, 0.7, details
-
-            # Check for GetTickCount acceleration
             if platform.system() == "Windows":
+                import ctypes
+
                 kernel32 = ctypes.windll.kernel32
 
-                tick1 = kernel32.GetTickCount()
-                time.sleep(1)
-                tick2 = kernel32.GetTickCount()
+                code = bytes([
+                    0x0F, 0x31,
+                    0x48, 0xC1, 0xE2, 0x20,
+                    0x48, 0x09, 0xD0,
+                    0x48, 0x89, 0x01,
+                    0x48, 0x8B, 0x02,
+                    0x48, 0x85, 0xC0,
+                    0x74, 0x0E,
+                    0x48, 0x8D, 0x0C, 0x00,
+                    0x48, 0xFF, 0xC9,
+                    0x75, 0xFE,
+                    0x90,
+                    0x0F, 0x31,
+                    0x48, 0xC1, 0xE2, 0x20,
+                    0x48, 0x09, 0xD0,
+                    0x48, 0x2B, 0x01,
+                    0xC3,
+                ])
 
-                tick_elapsed = (tick2 - tick1) / 1000.0
-                if abs(tick_elapsed - 1.0) > 0.1:
-                    details["time_anomaly"] = True
-                    return True, 0.7, details
+                buf = ctypes.create_string_buffer(code)
+                exec_mem = kernel32.VirtualAlloc(
+                    None,
+                    len(code),
+                    0x1000 | 0x2000,
+                    0x04,
+                )
+
+                if not exec_mem:
+                    return False, 0.0, details
+
+                try:
+                    ctypes.memmove(exec_mem, buf, len(code))
+
+                    old_protect = ctypes.c_ulong()
+                    if not kernel32.VirtualProtect(
+                        exec_mem,
+                        len(code),
+                        0x20,
+                        ctypes.byref(old_protect),
+                    ):
+                        return False, 0.0, details
+
+                    func = ctypes.CFUNCTYPE(ctypes.c_uint64, ctypes.POINTER(ctypes.c_uint64), ctypes.POINTER(ctypes.c_uint64))(exec_mem)
+
+                    tsc_storage = ctypes.c_uint64(0)
+                    loop_count = ctypes.c_uint64(1000000)
+
+                    deltas_rdtsc = []
+                    for _ in range(100):
+                        delta = func(ctypes.byref(tsc_storage), ctypes.byref(loop_count))
+                        if 0 < delta < 100000000:
+                            deltas_rdtsc.append(delta)
+
+                    if not deltas_rdtsc:
+                        return False, 0.0, details
+
+                    avg_rdtsc = sum(deltas_rdtsc) / len(deltas_rdtsc)
+                    variance_rdtsc = sum((d - avg_rdtsc) ** 2 for d in deltas_rdtsc) / len(deltas_rdtsc)
+                    std_dev_rdtsc = variance_rdtsc ** 0.5
+
+                    QueryPerformanceFrequency = kernel32.QueryPerformanceFrequency
+                    QueryPerformanceFrequency.argtypes = [ctypes.POINTER(ctypes.c_int64)]
+                    QueryPerformanceFrequency.restype = ctypes.c_bool
+
+                    QueryPerformanceCounter = kernel32.QueryPerformanceCounter
+                    QueryPerformanceCounter.argtypes = [ctypes.POINTER(ctypes.c_int64)]
+                    QueryPerformanceCounter.restype = ctypes.c_bool
+
+                    freq = ctypes.c_int64()
+                    if not QueryPerformanceFrequency(ctypes.byref(freq)):
+                        return False, 0.0, details
+
+                    deltas_qpc = []
+                    for _ in range(100):
+                        start_qpc = ctypes.c_int64()
+                        end_qpc = ctypes.c_int64()
+
+                        QueryPerformanceCounter(ctypes.byref(start_qpc))
+                        for _ in range(100000):
+                            pass
+                        QueryPerformanceCounter(ctypes.byref(end_qpc))
+
+                        delta_qpc = end_qpc.value - start_qpc.value
+                        if delta_qpc > 0:
+                            deltas_qpc.append(delta_qpc)
+
+                    if not deltas_qpc:
+                        return False, 0.0, details
+
+                    avg_qpc = sum(deltas_qpc) / len(deltas_qpc)
+                    variance_qpc = sum((d - avg_qpc) ** 2 for d in deltas_qpc) / len(deltas_qpc)
+                    std_dev_qpc = variance_qpc ** 0.5
+
+                    ratio = std_dev_rdtsc / avg_rdtsc if avg_rdtsc > 0 else 0
+                    qpc_ratio = std_dev_qpc / avg_qpc if avg_qpc > 0 else 0
+
+                    details["rdtsc_drift"] = ratio
+                    details["qpc_drift"] = qpc_ratio
+                    details["rdtsc_avg"] = avg_rdtsc
+                    details["qpc_avg"] = avg_qpc
+
+                    if ratio > 0.5 or qpc_ratio > 0.3:
+                        details["time_anomaly"] = True
+                        return True, 0.8, details
+
+                    if std_dev_rdtsc > avg_rdtsc * 2:
+                        details["time_anomaly"] = True
+                        return True, 0.7, details
+
+                finally:
+                    kernel32.VirtualFree(exec_mem, 0, 0x8000)
+
+            elif platform.system() == "Linux":
+                import mmap
+
+                code = bytes([
+                    0x0F, 0x31,
+                    0x48, 0xC1, 0xE2, 0x20,
+                    0x48, 0x09, 0xD0,
+                    0x48, 0x89, 0x07,
+                    0x48, 0x85, 0xF6,
+                    0x74, 0x09,
+                    0x48, 0xFF, 0xCE,
+                    0x75, 0xFB,
+                    0x90,
+                    0x0F, 0x31,
+                    0x48, 0xC1, 0xE2, 0x20,
+                    0x48, 0x09, 0xD0,
+                    0x48, 0x2B, 0x07,
+                    0xC3,
+                ])
+
+                exec_mem = mmap.mmap(
+                    -1,
+                    len(code),
+                    mmap.MAP_PRIVATE | mmap.MAP_ANONYMOUS,
+                    mmap.PROT_READ | mmap.PROT_WRITE | mmap.PROT_EXEC,
+                )
+                exec_mem.write(code)
+
+                exec_addr = ctypes.addressof(ctypes.c_char.from_buffer(exec_mem))
+                func = ctypes.CFUNCTYPE(ctypes.c_uint64, ctypes.POINTER(ctypes.c_uint64), ctypes.c_uint64)(exec_addr)
+
+                tsc_storage = ctypes.c_uint64(0)
+
+                deltas = []
+                for _ in range(100):
+                    delta = func(ctypes.byref(tsc_storage), 1000000)
+                    if 0 < delta < 100000000:
+                        deltas.append(delta)
+
+                if deltas:
+                    avg = sum(deltas) / len(deltas)
+                    variance = sum((d - avg) ** 2 for d in deltas) / len(deltas)
+                    std_dev = variance ** 0.5
+
+                    ratio = std_dev / avg if avg > 0 else 0
+                    details["rdtsc_drift"] = ratio
+
+                    if ratio > 0.5 or std_dev > avg * 2:
+                        details["time_anomaly"] = True
+                        return True, 0.7, details
+
+                exec_mem.close()
 
         except Exception as e:
             self.logger.debug(f"Time acceleration check failed: {e}")
@@ -1496,24 +1665,88 @@ class SandboxDetector(BaseDetector):
 
                 user32 = ctypes.windll.user32
 
-                # Track mouse position over time
                 positions = []
+                timestamps = []
+                click_states = []
 
-                for _ in range(10):
+                GetCursorPos = user32.GetCursorPos
+                GetCursorPos.argtypes = [ctypes.POINTER(wintypes.POINT)]
+                GetCursorPos.restype = ctypes.c_bool
+
+                GetAsyncKeyState = user32.GetAsyncKeyState
+                GetAsyncKeyState.argtypes = [ctypes.c_int]
+                GetAsyncKeyState.restype = ctypes.c_short
+
+                VK_LBUTTON = 0x01
+                VK_RBUTTON = 0x02
+
+                for _ in range(20):
                     point = wintypes.POINT()
-                    user32.GetCursorPos(ctypes.byref(point))
+                    GetCursorPos(ctypes.byref(point))
                     positions.append((point.x, point.y))
-                    time.sleep(0.5)
+                    timestamps.append(time.perf_counter())
 
-                # Check for movement
-                unique_positions = len(set(positions))
-                details["movement_count"] = unique_positions
+                    lbutton = GetAsyncKeyState(VK_LBUTTON) & 0x8000
+                    rbutton = GetAsyncKeyState(VK_RBUTTON) & 0x8000
+                    click_states.append((bool(lbutton), bool(rbutton)))
 
-                if unique_positions > 1:
-                    details["mouse_active"] = True
-                else:
-                    # No mouse movement in 5 seconds is suspicious
+                    time.sleep(0.05)
+
+                if len(set(positions)) < 2:
+                    return True, 0.7, details
+
+                movements = []
+                for i in range(1, len(positions)):
+                    dx = positions[i][0] - positions[i-1][0]
+                    dy = positions[i][1] - positions[i-1][1]
+                    distance = (dx * dx + dy * dy) ** 0.5
+                    time_delta = timestamps[i] - timestamps[i-1]
+
+                    if distance > 0:
+                        movements.append({
+                            "distance": distance,
+                            "time_delta": time_delta,
+                            "velocity": distance / time_delta if time_delta > 0 else 0,
+                            "dx": dx,
+                            "dy": dy,
+                        })
+
+                if not movements:
+                    return True, 0.7, details
+
+                velocities = [m["velocity"] for m in movements]
+                avg_velocity = sum(velocities) / len(velocities) if velocities else 0
+                velocity_variance = sum((v - avg_velocity) ** 2 for v in velocities) / len(velocities) if velocities else 0
+
+                if velocity_variance < 10:
+                    details["suspicious_pattern"] = "constant_velocity"
                     return True, 0.6, details
+
+                direction_changes = 0
+                for i in range(1, len(movements)):
+                    if movements[i]["dx"] * movements[i-1]["dx"] < 0 or movements[i]["dy"] * movements[i-1]["dy"] < 0:
+                        direction_changes += 1
+
+                if direction_changes == 0 and len(movements) > 5:
+                    details["suspicious_pattern"] = "perfectly_linear"
+                    return True, 0.7, details
+
+                distances = [m["distance"] for m in movements]
+                if all(abs(d - distances[0]) < 1.0 for d in distances):
+                    details["suspicious_pattern"] = "identical_distances"
+                    return True, 0.8, details
+
+                click_count = sum(1 for lbutton, rbutton in click_states if lbutton or rbutton)
+                movement_count = sum(1 for m in movements if m["distance"] > 5)
+
+                if movement_count > 5 and click_count == 0:
+                    details["warning"] = "movement_without_clicks"
+
+                details["mouse_active"] = True
+                details["movement_count"] = len(movements)
+                details["velocity_variance"] = velocity_variance
+                details["direction_changes"] = direction_changes
+                details["click_count"] = click_count
 
         except Exception as e:
             self.logger.debug(f"Mouse movement check failed: {e}")
@@ -1683,3 +1916,1114 @@ Sleep(30000);  // 30 seconds
     def get_detection_type(self) -> str:
         """Get the type of detection this class performs."""
         return "sandbox"
+
+    def evade_with_behavioral_adaptation(self, aggressive: bool = False) -> dict[str, Any]:
+        """Perform sandbox detection and adapt behavior to evade analysis.
+
+        Args:
+            aggressive: Use aggressive evasion that might affect analysis
+
+        Returns:
+            Evasion results with adapted behavior strategy
+
+        """
+        results = {
+            "evasion_applied": False,
+            "evasion_strategy": None,
+            "behavioral_changes": [],
+            "detection_bypassed": False,
+            "confidence": 0.0,
+            "sandbox_detected": False,
+            "sandbox_type": None,
+            "evasion_techniques": [],
+        }
+
+        try:
+            self.logger.info("Starting sandbox evasion with behavioral adaptation...")
+
+            detection_results = self.detect_sandbox(aggressive=aggressive)
+            results["sandbox_detected"] = detection_results["is_sandbox"]
+            results["sandbox_type"] = detection_results.get("sandbox_type")
+            results["confidence"] = detection_results["confidence"]
+
+            if results["sandbox_detected"]:
+                self.logger.warning(f"Sandbox detected: {results['sandbox_type']} (confidence: {results['confidence']:.2f})")
+
+                evasion_strategy = self._determine_evasion_strategy(detection_results, aggressive)
+                results["evasion_strategy"] = evasion_strategy
+                results["evasion_applied"] = True
+
+                behavioral_changes = self._apply_behavioral_adaptation(evasion_strategy, detection_results)
+                results["behavioral_changes"] = behavioral_changes
+                results["evasion_techniques"] = list(evasion_strategy.keys())
+
+                bypass_success = self._verify_evasion_effectiveness(detection_results, evasion_strategy)
+                results["detection_bypassed"] = bypass_success
+
+                self.logger.info(f"Evasion applied with {len(behavioral_changes)} behavioral changes")
+            else:
+                self.logger.info("No sandbox detected - continuing normal execution")
+
+            return results
+
+        except Exception as e:
+            self.logger.error(f"Sandbox evasion failed: {e}")
+            return results
+
+    def _determine_evasion_strategy(self, detection_results: dict[str, Any], aggressive: bool) -> dict[str, Any]:
+        """Determine optimal evasion strategy based on detection results.
+
+        Args:
+            detection_results: Results from sandbox detection
+            aggressive: Whether to use aggressive evasion
+
+        Returns:
+            Evasion strategy with specific techniques
+
+        """
+        strategy = {
+            "timing": {},
+            "interaction": {},
+            "environment": {},
+            "behavior": {},
+            "anti_monitoring": {},
+        }
+
+        detections = detection_results.get("detections", {})
+        sandbox_type = detection_results.get("sandbox_type", "Generic Sandbox")
+        confidence = detection_results.get("confidence", 0.0)
+
+        if confidence > 0.8:
+            strategy["timing"]["delay_execution"] = {"enabled": True, "delay_seconds": 120 if aggressive else 30, "reason": "High confidence sandbox detection"}
+
+            strategy["timing"]["time_bomb"] = {"enabled": True, "trigger_time": time.time() + (600 if aggressive else 300), "reason": "Delay past typical analysis window"}
+
+        if "behavioral_detection" in detections and detections["behavioral_detection"]["detected"]:
+            anomalies = detections["behavioral_detection"]["details"].get("anomalies", [])
+
+            if any("Few user files" in a for a in anomalies):
+                strategy["behavior"]["user_activity_verification"] = {"enabled": True, "verify_user_files": True, "min_file_count": 10, "reason": "Detected low user file count"}
+
+            if any("Few processes" in a for a in anomalies):
+                strategy["behavior"]["process_check"] = {"enabled": True, "min_processes": 40, "reason": "Detected low process count"}
+
+            if any("Low uptime" in a for a in anomalies):
+                strategy["timing"]["uptime_check"] = {"enabled": True, "min_uptime_seconds": 600, "reason": "Detected recent system boot"}
+
+        if "user_interaction" in detections and detections["user_interaction"]["detected"]:
+            strategy["interaction"]["require_user_input"] = {"enabled": True, "input_type": "mouse_click", "timeout_seconds": 60, "reason": "No user interaction detected"}
+
+            strategy["interaction"]["mouse_movement_check"] = {"enabled": True, "duration_seconds": 10, "min_movements": 3, "reason": "Verify human mouse activity"}
+
+        if "process_monitoring" in detections and detections["process_monitoring"]["detected"]:
+            monitoring_signs = detections["process_monitoring"]["details"].get("monitoring_signs", [])
+
+            if monitoring_signs:
+                strategy["anti_monitoring"]["detect_and_exit"] = {"enabled": True, "exit_gracefully": True, "reason": f"Monitoring detected: {len(monitoring_signs)} tools"}
+
+                strategy["anti_monitoring"]["api_unhooking"] = {"enabled": aggressive, "reason": "Attempt to unhook monitored APIs"}
+
+        if "api_hooks" in detections and detections["api_hooks"]["detected"]:
+            hooked_apis = detections["api_hooks"]["details"].get("hooked_apis", [])
+
+            if hooked_apis:
+                strategy["anti_monitoring"]["unhook_apis"] = {"enabled": True, "apis": hooked_apis, "reason": f"Detected {len(hooked_apis)} hooked APIs"}
+
+        if "time_acceleration" in detections and detections["time_acceleration"]["detected"]:
+            strategy["timing"]["time_drift_detection"] = {"enabled": True, "exit_on_acceleration": True, "reason": "Time manipulation detected"}
+
+        if "network_connectivity" in detections and detections["network_connectivity"]["detected"]:
+            network_anomalies = detections["network_connectivity"]["details"].get("network_anomalies", [])
+
+            if any("Sandbox network" in a for a in network_anomalies):
+                strategy["environment"]["sandbox_network_exit"] = {"enabled": True, "reason": "Detected sandbox network configuration"}
+
+            if "No DNS resolution" in network_anomalies:
+                strategy["environment"]["dns_check"] = {"enabled": True, "required_domains": ["google.com", "microsoft.com"], "reason": "No DNS resolution available"}
+
+        if sandbox_type in ["cuckoo", "vmray", "joe_sandbox", "any.run", "cape", "triage", "hatching_triage", "intezer", "virustotal", "hybrid_analysis"]:
+            strategy["behavior"]["sandbox_specific_evasion"] = {"enabled": True, "sandbox_type": sandbox_type, "techniques": self._get_sandbox_specific_techniques(sandbox_type)}
+
+        if "resource_limits" in detections and detections["resource_limits"]["detected"]:
+            limitations = detections["resource_limits"]["details"].get("limitations", [])
+
+            if any("Low CPU" in limitation for limitation in limitations):
+                strategy["environment"]["cpu_check"] = {"enabled": True, "min_cores": 4, "reason": "Detected limited CPU resources"}
+
+            if any("Low memory" in limitation for limitation in limitations):
+                strategy["environment"]["memory_check"] = {"enabled": True, "min_gb": 4, "reason": "Detected limited memory"}
+
+        strategy["timing"]["stalling"] = {"enabled": aggressive, "technique": "computation_intensive" if aggressive else "sleep_loops", "reason": "Exceed sandbox analysis timeout"}
+
+        return strategy
+
+    def _get_sandbox_specific_techniques(self, sandbox_type: str) -> list[str]:
+        """Get sandbox-specific evasion techniques.
+
+        Args:
+            sandbox_type: Type of sandbox detected
+
+        Returns:
+            List of applicable evasion techniques
+
+        """
+        techniques = {
+            "cuckoo": [
+                "detect_cuckoo_agent_process",
+                "check_for_cuckoo_network_192_168_56",
+                "detect_analyzer_py_script",
+                "check_for_agent_auxiliary_modules",
+                "verify_results_server_accessibility",
+            ],
+            "vmray": ["detect_vmray_controller_process", "check_for_vmray_agent", "detect_vmray_network_artifacts", "verify_vmray_registry_keys"],
+            "joe_sandbox": ["detect_joebox_processes", "check_for_joe_api_hooks", "verify_joe_network_config", "detect_joecontrol_service"],
+            "any.run": ["detect_anyrun_browser_environment", "check_for_anyrun_network", "verify_interactive_session", "detect_web_based_analysis"],
+            "cape": ["detect_cape_monitor_dll", "check_for_cape_analyzer", "verify_cape_network_config", "detect_cape_process_injection"],
+            "triage": ["detect_triage_analysis_environment", "check_for_triage_artifacts", "verify_triage_network", "detect_automated_browser"],
+            "hatching_triage": ["detect_triage_analysis_environment", "check_for_hatching_process", "verify_triage_network_192_168_30", "detect_automated_browser"],
+            "intezer": ["detect_intezer_environment_vars", "check_for_intezer_agent", "verify_cloud_analysis_indicators"],
+            "virustotal": ["detect_vt_environment_vars", "check_for_vt_network_10_0_2", "verify_virtualization_layer"],
+            "hybrid_analysis": ["detect_falcon_sandbox_artifacts", "check_for_cwsandbox_processes", "verify_hybrid_analysis_network"],
+        }
+
+        return techniques.get(sandbox_type.lower(), ["generic_sandbox_evasion"])
+
+    def _apply_behavioral_adaptation(self, strategy: dict[str, Any], detection_results: dict[str, Any]) -> list[str]:
+        """Apply behavioral changes based on evasion strategy.
+
+        Args:
+            strategy: Evasion strategy to apply
+            detection_results: Original detection results
+
+        Returns:
+            List of behavioral changes applied
+
+        """
+        changes = []
+
+        try:
+            if strategy["timing"].get("delay_execution", {}).get("enabled"):
+                delay = strategy["timing"]["delay_execution"]["delay_seconds"]
+                changes.append(f"Delayed execution by {delay} seconds")
+                time.sleep(delay)
+
+            if strategy["timing"].get("uptime_check", {}).get("enabled"):
+                min_uptime = strategy["timing"]["uptime_check"]["min_uptime_seconds"]
+                current_uptime = self._get_system_uptime()
+
+                if current_uptime and current_uptime < min_uptime:
+                    changes.append(f"System uptime too low ({current_uptime}s < {min_uptime}s) - exiting")
+                    return changes
+
+            if strategy["environment"].get("cpu_check", {}).get("enabled"):
+                min_cores = strategy["environment"]["cpu_check"]["min_cores"]
+                cpu_count = os.cpu_count()
+
+                if cpu_count and cpu_count < min_cores:
+                    changes.append(f"CPU count too low ({cpu_count} < {min_cores}) - exiting")
+                    return changes
+
+            if strategy["environment"].get("memory_check", {}).get("enabled"):
+                min_gb = strategy["environment"]["memory_check"]["min_gb"]
+                mem = psutil.virtual_memory()
+                total_gb = mem.total / (1024**3)
+
+                if total_gb < min_gb:
+                    changes.append(f"Memory too low ({total_gb:.1f}GB < {min_gb}GB) - exiting")
+                    return changes
+
+            if strategy["interaction"].get("mouse_movement_check", {}).get("enabled") and platform.system() == "Windows":
+                duration = strategy["interaction"]["mouse_movement_check"]["duration_seconds"]
+                min_movements = strategy["interaction"]["mouse_movement_check"]["min_movements"]
+
+                mouse_active = self._verify_mouse_movement(duration, min_movements)
+
+                if not mouse_active:
+                    changes.append(f"No mouse movement detected in {duration}s - likely sandbox")
+                    return changes
+                changes.append(f"Mouse movement verified - {min_movements}+ movements detected")
+
+            if strategy["environment"].get("dns_check", {}).get("enabled"):
+                required_domains = strategy["environment"]["dns_check"]["required_domains"]
+                dns_working = self._verify_dns_resolution(required_domains)
+
+                if not dns_working:
+                    changes.append("DNS resolution failed - network restricted environment")
+                    return changes
+                changes.append("DNS resolution verified")
+
+            if strategy["anti_monitoring"].get("detect_and_exit", {}).get("enabled"):
+                monitoring_detected = self._check_for_monitoring_tools()
+
+                if monitoring_detected:
+                    changes.append("Monitoring tools detected - exiting gracefully")
+                    return changes
+
+            if strategy["anti_monitoring"].get("unhook_apis", {}).get("enabled") and platform.system() == "Windows":
+                hooked_apis = strategy["anti_monitoring"]["unhook_apis"].get("apis", [])
+
+                if hooked_apis:
+                    unhooked_count = self._attempt_api_unhooking(hooked_apis)
+                    changes.append(f"Attempted unhooking {unhooked_count} APIs")
+
+            if strategy["timing"].get("time_drift_detection", {}).get("enabled"):
+                time_accelerated = self._detect_time_acceleration()
+
+                if time_accelerated:
+                    changes.append("Time acceleration detected - exiting")
+                    return changes
+
+            if strategy["behavior"].get("sandbox_specific_evasion", {}).get("enabled"):
+                sandbox_type = strategy["behavior"]["sandbox_specific_evasion"]["sandbox_type"]
+                techniques = strategy["behavior"]["sandbox_specific_evasion"]["techniques"]
+
+                evasion_applied = self._apply_sandbox_specific_evasion(sandbox_type, techniques)
+                changes.append(f"Applied {evasion_applied} {sandbox_type}-specific evasion techniques")
+
+            if strategy["timing"].get("stalling", {}).get("enabled"):
+                technique = strategy["timing"]["stalling"]["technique"]
+                stall_result = self._apply_stalling_technique(technique)
+                changes.append(f"Applied stalling technique: {stall_result}")
+
+            if strategy["timing"].get("time_bomb", {}).get("enabled"):
+                trigger_time = strategy["timing"]["time_bomb"]["trigger_time"]
+                changes.append(f"Set execution trigger for {time.ctime(trigger_time)}")
+
+        except Exception as e:
+            self.logger.error(f"Error applying behavioral adaptation: {e}")
+            changes.append(f"Adaptation error: {str(e)}")
+
+        return changes
+
+    def _verify_mouse_movement(self, duration_seconds: int, min_movements: int) -> bool:
+        """Verify human-like mouse movement over duration.
+
+        Args:
+            duration_seconds: How long to monitor
+            min_movements: Minimum number of unique positions required
+
+        Returns:
+            True if sufficient mouse movement detected
+
+        """
+        if platform.system() != "Windows":
+            return True
+
+        try:
+            try:
+                from ctypes import wintypes
+            except (ImportError, AttributeError):
+
+                class _TempWinTypes:
+                    class POINT(ctypes.Structure):
+                        _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
+
+                wintypes = _TempWinTypes()
+
+            user32 = ctypes.windll.user32
+            positions = []
+            samples = max(10, duration_seconds)
+
+            for _ in range(samples):
+                point = wintypes.POINT()
+                user32.GetCursorPos(ctypes.byref(point))
+                positions.append((point.x, point.y))
+                time.sleep(duration_seconds / samples)
+
+            unique_positions = len(set(positions))
+            return unique_positions >= min_movements
+
+        except Exception as e:
+            self.logger.debug(f"Mouse movement verification failed: {e}")
+            return True
+
+    def _verify_dns_resolution(self, required_domains: list[str]) -> bool:
+        """Verify DNS resolution works for required domains.
+
+        Args:
+            required_domains: List of domains to test
+
+        Returns:
+            True if at least one domain resolves
+
+        """
+        try:
+            for domain in required_domains:
+                try:
+                    socket.gethostbyname(domain)
+                    return True
+                except Exception as e:
+                    self.logger.debug(f"DNS resolution failed for {domain}: {e}")
+
+            return False
+
+        except Exception as e:
+            self.logger.debug(f"DNS verification failed: {e}")
+            return True
+
+    def _check_for_monitoring_tools(self) -> bool:
+        """Check if monitoring tools are running.
+
+        Returns:
+            True if monitoring detected
+
+        """
+        try:
+            monitoring_processes = [
+                "procmon",
+                "procexp",
+                "apimonitor",
+                "wireshark",
+                "tcpdump",
+                "strace",
+                "ltrace",
+                "sysmon",
+                "regmon",
+                "filemon",
+            ]
+
+            processes, process_list = self.get_running_processes()
+
+            for monitor in monitoring_processes:
+                if monitor.lower() in processes or any(monitor in p.lower() for p in process_list):
+                    return True
+
+            return False
+
+        except Exception as e:
+            self.logger.debug(f"Monitoring tool check failed: {e}")
+            return False
+
+    def _attempt_api_unhooking(self, hooked_apis: list[str]) -> int:
+        """Attempt to unhook monitored APIs using PE-based clean memory mapping.
+
+        Args:
+            hooked_apis: List of hooked API names
+
+        Returns:
+            Number of APIs potentially unhooked
+
+        """
+        if platform.system() != "Windows":
+            return 0
+
+        unhooked_count = 0
+
+        try:
+            import ctypes
+            import struct
+
+            kernel32 = ctypes.windll.kernel32
+            LoadLibraryExW = kernel32.LoadLibraryExW
+            LoadLibraryExW.argtypes = [ctypes.c_wchar_p, ctypes.c_void_p, ctypes.c_uint32]
+            LoadLibraryExW.restype = ctypes.c_void_p
+
+            GetModuleHandleW = kernel32.GetModuleHandleW
+            GetModuleHandleW.argtypes = [ctypes.c_wchar_p]
+            GetModuleHandleW.restype = ctypes.c_void_p
+
+            GetProcAddress = kernel32.GetProcAddress
+            GetProcAddress.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
+            GetProcAddress.restype = ctypes.c_void_p
+
+            VirtualProtect = kernel32.VirtualProtect
+            VirtualProtect.argtypes = [ctypes.c_void_p, ctypes.c_size_t, ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint32)]
+            VirtualProtect.restype = ctypes.c_bool
+
+            FreeLibrary = kernel32.FreeLibrary
+            FreeLibrary.argtypes = [ctypes.c_void_p]
+            FreeLibrary.restype = ctypes.c_bool
+
+            DONT_RESOLVE_DLL_REFERENCES = 0x00000001
+            LOAD_LIBRARY_AS_DATAFILE = 0x00000002
+
+            for hooked_api in hooked_apis:
+                try:
+                    if "!" not in hooked_api:
+                        continue
+
+                    dll_name, api_name = hooked_api.split("!")
+
+                    loaded_module = GetModuleHandleW(dll_name)
+                    if not loaded_module:
+                        continue
+
+                    hooked_addr = GetProcAddress(loaded_module, api_name.encode())
+                    if not hooked_addr:
+                        continue
+
+                    first_bytes = (ctypes.c_ubyte * 5).from_address(hooked_addr)
+                    if first_bytes[0] not in [0xE9, 0x68, 0xEB, 0xFF]:
+                        continue
+
+                    clean_module = LoadLibraryExW(dll_name, None, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_AS_DATAFILE)
+                    if not clean_module:
+                        continue
+
+                    try:
+                        dos_header = (ctypes.c_ubyte * 64).from_address(clean_module)
+                        e_lfanew = struct.unpack("<I", bytes(dos_header[60:64]))[0]
+
+                        pe_header_addr = clean_module + e_lfanew
+                        pe_signature = (ctypes.c_ubyte * 4).from_address(pe_header_addr)
+
+                        if bytes(pe_signature) != b"PE\x00\x00":
+                            continue
+
+                        coff_header_addr = pe_header_addr + 4
+                        coff_header = (ctypes.c_ubyte * 20).from_address(coff_header_addr)
+                        optional_header_size = struct.unpack("<H", bytes(coff_header[16:18]))[0]
+
+                        optional_header_addr = coff_header_addr + 20
+                        optional_header = (ctypes.c_ubyte * optional_header_size).from_address(optional_header_addr)
+
+                        magic = struct.unpack("<H", bytes(optional_header[0:2]))[0]
+                        if magic == 0x20b:
+                            export_table_rva = struct.unpack("<I", bytes(optional_header[112:116]))[0]
+                        else:
+                            export_table_rva = struct.unpack("<I", bytes(optional_header[96:100]))[0]
+
+                        if export_table_rva == 0:
+                            continue
+
+                        export_dir_addr = clean_module + export_table_rva
+                        export_dir = (ctypes.c_ubyte * 40).from_address(export_dir_addr)
+
+                        num_names = struct.unpack("<I", bytes(export_dir[24:28]))[0]
+                        names_rva = struct.unpack("<I", bytes(export_dir[32:36]))[0]
+                        ordinals_rva = struct.unpack("<I", bytes(export_dir[36:40]))[0]
+                        functions_rva = struct.unpack("<I", bytes(export_dir[28:32]))[0]
+
+                        names_table = clean_module + names_rva
+                        ordinals_table = clean_module + ordinals_rva
+                        functions_table = clean_module + functions_rva
+
+                        function_rva = None
+                        for i in range(num_names):
+                            name_rva_addr = names_table + (i * 4)
+                            name_rva = struct.unpack("<I", bytes((ctypes.c_ubyte * 4).from_address(name_rva_addr)))[0]
+                            name_addr = clean_module + name_rva
+
+                            name_bytes = ctypes.string_at(name_addr)
+                            if name_bytes == api_name.encode():
+                                ordinal_addr = ordinals_table + (i * 2)
+                                ordinal = struct.unpack("<H", bytes((ctypes.c_ubyte * 2).from_address(ordinal_addr)))[0]
+
+                                func_rva_addr = functions_table + (ordinal * 4)
+                                function_rva = struct.unpack("<I", bytes((ctypes.c_ubyte * 4).from_address(func_rva_addr)))[0]
+                                break
+
+                        if function_rva:
+                            clean_func_addr = clean_module + function_rva
+                            original_bytes = bytes((ctypes.c_ubyte * 16).from_address(clean_func_addr))
+
+                            old_protect = ctypes.c_uint32()
+                            if VirtualProtect(hooked_addr, 16, 0x40, ctypes.byref(old_protect)):
+                                ctypes.memmove(hooked_addr, original_bytes, 16)
+                                VirtualProtect(hooked_addr, 16, old_protect.value, ctypes.byref(old_protect))
+
+                                unhooked_count += 1
+                                self.logger.debug(f"Unhooked {hooked_api} using PE-based clean copy")
+
+                    finally:
+                        FreeLibrary(clean_module)
+
+                except Exception as e:
+                    self.logger.debug(f"Failed to unhook {hooked_api}: {e}")
+
+        except Exception as e:
+            self.logger.debug(f"API unhooking failed: {e}")
+
+        return unhooked_count
+
+    def _detect_time_acceleration(self) -> bool:
+        """Detect if time is being accelerated by sandbox.
+
+        Returns:
+            True if time acceleration detected
+
+        """
+        try:
+            start_real = time.time()
+            start_perf = time.perf_counter()
+
+            time.sleep(1)
+
+            end_real = time.time()
+            end_perf = time.perf_counter()
+
+            real_elapsed = end_real - start_real
+            perf_elapsed = end_perf - start_perf
+
+            drift = abs(real_elapsed - perf_elapsed)
+
+            return drift > 0.1
+
+        except Exception as e:
+            self.logger.debug(f"Time acceleration detection failed: {e}")
+            return False
+
+    def _apply_sandbox_specific_evasion(self, sandbox_type: str, techniques: list[str]) -> int:
+        """Apply sandbox-specific evasion techniques.
+
+        Args:
+            sandbox_type: Type of sandbox to evade
+            techniques: List of technique names to apply
+
+        Returns:
+            Number of techniques successfully applied
+
+        """
+        applied = 0
+
+        try:
+            for technique in techniques:
+                success = False
+
+                if technique == "detect_cuckoo_agent_process":
+                    processes, _ = self.get_running_processes()
+                    success = "analyzer" in processes or "agent.py" in processes
+
+                elif technique == "check_for_cuckoo_network_192_168_56":
+                    try:
+                        hostname = socket.gethostname()
+                        local_ip = socket.gethostbyname(hostname)
+                        success = local_ip.startswith("192.168.56.")
+                    except Exception:
+                        success = False
+
+                elif technique == "detect_vmray_controller_process":
+                    processes, _ = self.get_running_processes()
+                    success = any("vmray" in p for p in processes)
+
+                elif technique == "detect_joebox_processes":
+                    processes, _ = self.get_running_processes()
+                    success = any("joe" in p or "jbx" in p for p in processes)
+
+                elif technique == "detect_cape_monitor_dll" and platform.system() == "Windows":
+                    try:
+                        current_proc = psutil.Process()
+                        dlls = [os.path.basename(dll.path).lower() for dll in current_proc.memory_maps()]
+                        success = any("cape" in dll or "monitor" in dll for dll in dlls)
+                    except Exception:
+                        success = False
+
+                elif technique == "detect_anyrun_browser_environment":
+                    success = os.environ.get("ANYRUN_ANALYSIS") is not None
+
+                elif technique == "verify_interactive_session" and platform.system() == "Windows":
+                    try:
+                        processes, _ = self.get_running_processes()
+                        success = "explorer.exe" in processes
+                    except Exception:
+                        success = False
+
+                elif technique == "check_for_hatching_process":
+                    processes, _ = self.get_running_processes()
+                    success = any("hatching" in p.lower() or "triage" in p.lower() for p in processes)
+
+                elif technique == "verify_triage_network_192_168_30":
+                    try:
+                        hostname = socket.gethostname()
+                        local_ip = socket.gethostbyname(hostname)
+                        success = local_ip.startswith("192.168.30.")
+                    except Exception:
+                        success = False
+
+                elif technique == "detect_intezer_environment_vars":
+                    success = os.environ.get("INTEZER_ANALYSIS") is not None
+
+                elif technique == "check_for_intezer_agent":
+                    processes, _ = self.get_running_processes()
+                    success = any("intezer" in p.lower() for p in processes)
+
+                elif technique == "detect_vt_environment_vars":
+                    success = os.environ.get("VT_SANDBOX") is not None or os.environ.get("VIRUSTOTAL_ANALYSIS") is not None
+
+                elif technique == "check_for_vt_network_10_0_2":
+                    try:
+                        hostname = socket.gethostname()
+                        local_ip = socket.gethostbyname(hostname)
+                        success = local_ip.startswith("10.0.2.")
+                    except Exception:
+                        success = False
+
+                elif technique == "detect_falcon_sandbox_artifacts":
+                    processes, _ = self.get_running_processes()
+                    success = any("falcon" in p.lower() or "hybrid" in p.lower() for p in processes)
+
+                elif technique == "check_for_cwsandbox_processes":
+                    processes, _ = self.get_running_processes()
+                    success = any("cws" in p.lower() or "cwsandbox" in p.lower() for p in processes)
+
+                elif technique == "generic_sandbox_evasion":
+                    success = True
+
+                if success:
+                    applied += 1
+                    self.logger.debug(f"Applied technique: {technique}")
+
+        except Exception as e:
+            self.logger.debug(f"Sandbox-specific evasion failed: {e}")
+
+        return applied
+
+    def _apply_stalling_technique(self, technique: str) -> str:
+        """Apply stalling technique to exceed sandbox timeout.
+
+        Args:
+            technique: Type of stalling technique
+
+        Returns:
+            Description of applied technique
+
+        """
+        try:
+            if technique == "sleep_loops":
+                for _i in range(10):
+                    time.sleep(5)
+                return "Applied 10x5s sleep loops"
+
+            elif technique == "computation_intensive":
+                result = 0
+                for i in range(10000000):
+                    result += i * i % 97
+                return f"Completed computation-intensive loop (result: {result})"
+
+            elif technique == "file_operations":
+                temp_dir = tempfile.gettempdir()
+                temp_file = os.path.join(temp_dir, f"intellicrack_stall_{uuid.uuid4().hex}.tmp")
+
+                try:
+                    with open(temp_file, "wb") as f:
+                        for _ in range(1000):
+                            f.write(b"A" * 1024)
+                    os.remove(temp_file)
+                    return "Completed file I/O stalling"
+                except Exception as e:
+                    return f"File I/O stalling failed: {e}"
+
+            return "Unknown stalling technique"
+
+        except Exception as e:
+            self.logger.debug(f"Stalling technique failed: {e}")
+            return f"Stalling failed: {e}"
+
+    def _verify_evasion_effectiveness(self, detection_results: dict[str, Any], evasion_strategy: dict[str, Any]) -> bool:
+        """Verify if evasion was effective.
+
+        Args:
+            detection_results: Original detection results
+            evasion_strategy: Applied evasion strategy
+
+        Returns:
+            True if evasion appears effective
+
+        """
+        try:
+            bypass_indicators = 0
+            total_checks = 0
+
+            if evasion_strategy["timing"].get("uptime_check", {}).get("enabled"):
+                total_checks += 1
+                current_uptime = self._get_system_uptime()
+                min_uptime = evasion_strategy["timing"]["uptime_check"]["min_uptime_seconds"]
+
+                if current_uptime and current_uptime >= min_uptime:
+                    bypass_indicators += 1
+
+            if evasion_strategy["environment"].get("cpu_check", {}).get("enabled"):
+                total_checks += 1
+                cpu_count = os.cpu_count()
+                min_cores = evasion_strategy["environment"]["cpu_check"]["min_cores"]
+
+                if cpu_count and cpu_count >= min_cores:
+                    bypass_indicators += 1
+
+            if evasion_strategy["interaction"].get("mouse_movement_check", {}).get("enabled"):
+                total_checks += 1
+                duration = evasion_strategy["interaction"]["mouse_movement_check"]["duration_seconds"]
+                min_movements = evasion_strategy["interaction"]["mouse_movement_check"]["min_movements"]
+
+                if self._verify_mouse_movement(duration, min_movements):
+                    bypass_indicators += 1
+
+            if evasion_strategy["environment"].get("dns_check", {}).get("enabled"):
+                total_checks += 1
+                required_domains = evasion_strategy["environment"]["dns_check"]["required_domains"]
+
+                if self._verify_dns_resolution(required_domains):
+                    bypass_indicators += 1
+
+            if total_checks == 0:
+                return False
+
+            success_rate = bypass_indicators / total_checks
+            return success_rate >= 0.5
+
+        except Exception as e:
+            self.logger.debug(f"Evasion verification failed: {e}")
+            return False
+
+    def _check_environment_variables(self) -> tuple[bool, float, dict]:
+        """Check environment variables for sandbox indicators."""
+        details = {"suspicious_vars": [], "sandbox_indicators": []}
+
+        try:
+            for sandbox_name, sig_data in self.sandbox_signatures.items():
+                env_vars = sig_data.get("environment_vars", [])
+
+                for var in env_vars:
+                    if os.environ.get(var):
+                        details["suspicious_vars"].append(var)
+                        details["sandbox_indicators"].append(f"{sandbox_name}: {var}")
+
+            common_sandbox_vars = [
+                "SANDBOX", "ANALYSIS", "MONITOR", "TRACE",
+                "CUCKOO", "VMRAY", "JOEBOX", "TRIAGE",
+                "VBOX", "VMWARE", "WINE"
+            ]
+
+            for key, value in os.environ.items():
+                key_upper = key.upper()
+                for indicator in common_sandbox_vars:
+                    if indicator in key_upper or (value and indicator in value.upper()):
+                        details["suspicious_vars"].append(f"{key}={value}")
+
+            if details["suspicious_vars"]:
+                confidence = min(0.9, len(details["suspicious_vars"]) * 0.2)
+                return True, confidence, details
+
+        except Exception as e:
+            self.logger.debug(f"Environment variable check failed: {e}")
+
+        return False, 0.0, details
+
+    def _check_parent_process(self) -> tuple[bool, float, dict]:
+        """Analyze parent process for sandbox indicators."""
+        details = {"parent_name": None, "parent_cmdline": None, "suspicious": False}
+
+        try:
+            current_proc = psutil.Process()
+            parent_proc = current_proc.parent()
+
+            if parent_proc:
+                details["parent_name"] = parent_proc.name()
+
+                try:
+                    details["parent_cmdline"] = " ".join(parent_proc.cmdline())
+                except (psutil.AccessDenied, psutil.NoSuchProcess):
+                    pass
+
+                suspicious_parents = [
+                    "python", "python.exe", "pythonw.exe",
+                    "perl", "perl.exe",
+                    "powershell", "powershell.exe",
+                    "cmd.exe",
+                    "analyzer", "agent",
+                    "sample", "malware",
+                    "vboxservice", "vmtoolsd"
+                ]
+
+                parent_name_lower = parent_proc.name().lower()
+                for suspicious in suspicious_parents:
+                    if suspicious in parent_name_lower:
+                        details["suspicious"] = True
+
+                        if parent_name_lower in ["python.exe", "pythonw.exe", "python"]:
+                            try:
+                                cmdline = parent_proc.cmdline()
+                                if any("analyzer" in arg.lower() or "agent" in arg.lower() or "monitor" in arg.lower() for arg in cmdline):
+                                    return True, 0.85, details
+                            except (psutil.AccessDenied, psutil.NoSuchProcess):
+                                pass
+
+                        return True, 0.6, details
+
+                if platform.system() == "Windows":
+                    expected_parents = ["explorer.exe", "cmd.exe", "powershell.exe", "services.exe"]
+                    if parent_name_lower not in expected_parents:
+                        details["suspicious"] = True
+                        return True, 0.3, details
+
+        except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+            self.logger.debug(f"Parent process check failed: {e}")
+
+        return False, 0.0, details
+
+    def _check_cpuid_hypervisor(self) -> tuple[bool, float, dict]:
+        """Check CPUID for hypervisor presence using hypervisor bit."""
+        details = {"hypervisor_present": False, "cpu_brand": None, "hypervisor_vendor": None}
+
+        try:
+            if platform.system() == "Windows":
+                kernel32 = ctypes.windll.kernel32
+
+                code_cpuid = bytes([
+                    0x53,
+                    0x57,
+                    0x56,
+                    0x89, 0xC8,
+                    0x0F, 0xA2,
+                    0x89, 0x1F,
+                    0x89, 0x4F, 0x04,
+                    0x89, 0x57, 0x08,
+                    0x89, 0x77, 0x0C,
+                    0x5E,
+                    0x5F,
+                    0x5B,
+                    0xC3,
+                ])
+
+                buf = ctypes.create_string_buffer(code_cpuid)
+                exec_mem = kernel32.VirtualAlloc(
+                    None,
+                    len(code_cpuid),
+                    0x1000 | 0x2000,
+                    0x04,
+                )
+
+                if not exec_mem:
+                    return False, 0.0, details
+
+                try:
+                    ctypes.memmove(exec_mem, buf, len(code_cpuid))
+
+                    old_protect = ctypes.c_ulong()
+                    if not kernel32.VirtualProtect(
+                        exec_mem,
+                        len(code_cpuid),
+                        0x20,
+                        ctypes.byref(old_protect),
+                    ):
+                        return False, 0.0, details
+
+                    func = ctypes.CFUNCTYPE(None, ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint32))(exec_mem)
+
+                    result = (ctypes.c_uint32 * 4)()
+
+                    func(1, result)
+                    ecx = result[2]
+
+                    hypervisor_bit = (ecx >> 31) & 1
+                    details["hypervisor_present"] = bool(hypervisor_bit)
+
+                    if hypervisor_bit:
+                        func(0x40000000, result)
+                        vendor_string = b""
+                        for reg in [result[1], result[2], result[3]]:
+                            vendor_string += reg.to_bytes(4, byteorder='little')
+
+                        try:
+                            details["hypervisor_vendor"] = vendor_string.decode('ascii').strip('\x00')
+                        except UnicodeDecodeError:
+                            details["hypervisor_vendor"] = vendor_string.hex()
+
+                        return True, 0.75, details
+
+                finally:
+                    kernel32.VirtualFree(exec_mem, 0, 0x8000)
+
+            elif platform.system() == "Linux":
+                try:
+                    with open("/proc/cpuinfo", "r") as f:
+                        cpuinfo = f.read()
+
+                        if "hypervisor" in cpuinfo.lower():
+                            details["hypervisor_present"] = True
+
+                            for line in cpuinfo.split("\n"):
+                                if "model name" in line.lower():
+                                    details["cpu_brand"] = line.split(":")[1].strip()
+                                    break
+
+                            return True, 0.7, details
+                except IOError:
+                    pass
+
+        except Exception as e:
+            self.logger.debug(f"CPUID hypervisor check failed: {e}")
+
+        return False, 0.0, details
+
+    def _check_mac_address_artifacts(self) -> tuple[bool, float, dict]:
+        """Check MAC addresses for VM/sandbox vendor patterns."""
+        details = {"mac_addresses": [], "suspicious_vendors": []}
+
+        try:
+            if hasattr(psutil, "net_if_addrs"):
+                interfaces = psutil.net_if_addrs()
+
+                vm_mac_prefixes = {
+                    "00:05:69": "VMware",
+                    "00:0C:29": "VMware",
+                    "00:1C:14": "VMware",
+                    "00:50:56": "VMware",
+                    "08:00:27": "VirtualBox",
+                    "00:16:3E": "Xen",
+                    "00:1C:42": "Parallels",
+                    "00:03:FF": "Microsoft Hyper-V",
+                    "00:15:5D": "Microsoft Hyper-V",
+                    "00:17:FA": "Microsoft Hyper-V",
+                    "BC:30:5B": "Microsoft Hyper-V",
+                    "52:54:00": "QEMU/KVM",
+                }
+
+                for interface_name, addrs in interfaces.items():
+                    for addr in addrs:
+                        if addr.family == psutil.AF_LINK:
+                            mac = addr.address
+                            details["mac_addresses"].append(f"{interface_name}: {mac}")
+
+                            mac_upper = mac.upper()
+                            for prefix, vendor in vm_mac_prefixes.items():
+                                if mac_upper.startswith(prefix):
+                                    details["suspicious_vendors"].append(f"{vendor} (MAC: {mac})")
+
+                if details["suspicious_vendors"]:
+                    confidence = min(0.9, len(details["suspicious_vendors"]) * 0.3)
+                    return True, confidence, details
+
+        except Exception as e:
+            self.logger.debug(f"MAC address check failed: {e}")
+
+        return False, 0.0, details
+
+    def _check_browser_automation(self) -> tuple[bool, float, dict]:
+        """Detect browser automation frameworks used in sandboxes."""
+        details = {"automation_indicators": [], "detected_frameworks": []}
+
+        try:
+            processes, process_list = self.get_running_processes()
+
+            automation_processes = [
+                "chromedriver", "geckodriver", "msedgedriver",
+                "selenium", "puppeteer", "playwright",
+                "phantomjs", "casperjs"
+            ]
+
+            for proc in process_list:
+                proc_lower = proc.lower()
+                for auto_proc in automation_processes:
+                    if auto_proc in proc_lower:
+                        details["automation_indicators"].append(f"Process: {proc}")
+                        details["detected_frameworks"].append(auto_proc)
+
+            common_dirs = self._get_common_directories()
+            for directory in common_dirs:
+                for auto_proc in automation_processes:
+                    potential_path = os.path.join(directory, f"{auto_proc}.exe")
+                    if os.path.exists(potential_path):
+                        details["automation_indicators"].append(f"File: {potential_path}")
+                        if auto_proc not in details["detected_frameworks"]:
+                            details["detected_frameworks"].append(auto_proc)
+
+            if platform.system() == "Windows":
+                try:
+                    user32 = ctypes.windll.user32
+                    enum_windows_proc = ctypes.WINFUNCTYPE(
+                        ctypes.c_bool,
+                        ctypes.c_void_p,
+                        ctypes.c_void_p
+                    )
+
+                    automation_titles = []
+
+                    def enum_callback(hwnd, lParam):
+                        length = user32.GetWindowTextLengthW(hwnd)
+                        if length > 0:
+                            buffer = ctypes.create_unicode_buffer(length + 1)
+                            user32.GetWindowTextW(hwnd, buffer, length + 1)
+                            title = buffer.value.lower()
+
+                            if any(keyword in title for keyword in ["selenium", "webdriver", "automation", "puppeteer", "chromedriver"]):
+                                automation_titles.append(buffer.value)
+                        return True
+
+                    callback = enum_windows_proc(enum_callback)
+                    user32.EnumWindows(callback, 0)
+
+                    if automation_titles:
+                        details["automation_indicators"].extend([f"Window: {t}" for t in automation_titles])
+
+                except Exception as e:
+                    self.logger.debug(f"Window enumeration failed: {e}")
+
+            if details["automation_indicators"]:
+                confidence = min(0.8, len(details["detected_frameworks"]) * 0.25)
+                return True, confidence, details
+
+        except Exception as e:
+            self.logger.debug(f"Browser automation check failed: {e}")
+
+        return False, 0.0, details
+
+    def _check_advanced_timing(self) -> tuple[bool, float, dict]:
+        """Advanced timing checks using multiple methods to detect time manipulation."""
+        details = {"timing_anomalies": [], "methods_checked": []}
+
+        try:
+            start_time = time.time()
+            start_perf = time.perf_counter()
+            start_monotonic = time.monotonic()
+
+            compute_iterations = 1000000
+            result = 0
+            for i in range(compute_iterations):
+                result = (result + i) % 997
+
+            end_time = time.time()
+            end_perf = time.perf_counter()
+            end_monotonic = time.monotonic()
+
+            elapsed_time = end_time - start_time
+            elapsed_perf = end_perf - start_perf
+            elapsed_monotonic = end_monotonic - start_monotonic
+
+            details["methods_checked"].extend(["time()", "perf_counter()", "monotonic()"])
+
+            drift_time_perf = abs(elapsed_time - elapsed_perf)
+            drift_time_monotonic = abs(elapsed_time - elapsed_monotonic)
+            drift_perf_monotonic = abs(elapsed_perf - elapsed_monotonic)
+
+            if drift_time_perf > 0.1:
+                details["timing_anomalies"].append(f"time() vs perf_counter() drift: {drift_time_perf:.3f}s")
+
+            if drift_time_monotonic > 0.1:
+                details["timing_anomalies"].append(f"time() vs monotonic() drift: {drift_time_monotonic:.3f}s")
+
+            if drift_perf_monotonic > 0.1:
+                details["timing_anomalies"].append(f"perf_counter() vs monotonic() drift: {drift_perf_monotonic:.3f}s")
+
+            if elapsed_perf < 0.001:
+                details["timing_anomalies"].append(f"Computation too fast: {elapsed_perf:.6f}s (expected >0.001s)")
+
+            if elapsed_perf > 10.0:
+                details["timing_anomalies"].append(f"Computation too slow: {elapsed_perf:.3f}s (expected <10s)")
+
+            samples = []
+            for _ in range(10):
+                t1 = time.perf_counter()
+                time.sleep(0.01)
+                t2 = time.perf_counter()
+                samples.append(t2 - t1)
+
+            if samples:
+                avg_sleep = sum(samples) / len(samples)
+                variance = sum((s - avg_sleep) ** 2 for s in samples) / len(samples)
+                std_dev = variance ** 0.5
+
+                if std_dev > 0.005:
+                    details["timing_anomalies"].append(f"High sleep variance: {std_dev:.6f}s")
+
+                if avg_sleep < 0.005 or avg_sleep > 0.1:
+                    details["timing_anomalies"].append(f"Abnormal sleep duration: {avg_sleep:.6f}s (expected ~0.01s)")
+
+            if details["timing_anomalies"]:
+                confidence = min(0.7, len(details["timing_anomalies"]) * 0.15)
+                return True, confidence, details
+
+        except Exception as e:
+            self.logger.debug(f"Advanced timing check failed: {e}")
+
+        return False, 0.0, details

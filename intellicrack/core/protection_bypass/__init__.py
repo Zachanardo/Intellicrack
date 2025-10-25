@@ -68,6 +68,16 @@ try:
 except ImportError as e:
     logger.warning("Failed to import integrity_check_defeat: %s", e)
 
+try:
+    from .starforce_bypass import StarForceBypass
+except ImportError as e:
+    logger.warning("Failed to import starforce_bypass: %s", e)
+
+try:
+    from .securom_bypass import BypassResult, SecuROMBypass, SecuROMRemovalResult
+except ImportError as e:
+    logger.warning("Failed to import securom_bypass: %s", e)
+
 # Define package exports
 __all__ = [
     # From tpm_bypass
@@ -91,6 +101,12 @@ __all__ = [
     "HardwareIDSpoofer",
     # From integrity_check_defeat
     "IntegrityCheckDefeat",
+    # From starforce_bypass
+    "StarForceBypass",
+    # From securom_bypass
+    "SecuROMBypass",
+    "BypassResult",
+    "SecuROMRemovalResult",
 ]
 
 # Filter out items that are not available

@@ -52,98 +52,18 @@ class GhidraScript:
 
 
 class GhidraScriptRunner:
-    """Manages Ghidra script execution."""
-
-    BUILTIN_SCRIPTS = {
-        "function_analysis": GhidraScript(
-            name="FunctionAnalysis",
-            path=Path("FunctionID.py"),
-            language="python",
-            parameters={"detailed": True, "include_thunks": False},
-            output_format="json",
-            description="Analyze all functions in the binary",
-        ),
-        "string_extraction": GhidraScript(
-            name="StringExtractor",
-            path=Path("FindStrings.py"),
-            language="python",
-            parameters={"min_length": 4, "encoding": "UTF-8"},
-            output_format="json",
-            description="Extract all strings from the binary",
-        ),
-        "crypto_detection": GhidraScript(
-            name="CryptoFinder",
-            path=Path("FindCrypto.py"),
-            language="python",
-            parameters={"algorithms": ["AES", "RSA", "SHA256"]},
-            output_format="json",
-            description="Detect cryptographic algorithms",
-        ),
-        "import_analysis": GhidraScript(
-            name="ImportAnalysis",
-            path=Path("ImportSymbolScript.py"),
-            language="python",
-            parameters={"resolve_ordinals": True},
-            output_format="json",
-            description="Analyze imported functions",
-        ),
-        "export_analysis": GhidraScript(
-            name="ExportAnalysis",
-            path=Path("ExportSymbolScript.py"),
-            language="python",
-            parameters={},
-            output_format="json",
-            description="Analyze exported functions",
-        ),
-        "decompilation": GhidraScript(
-            name="DecompileAll",
-            path=Path("DecompileAllFunctionsScript.py"),
-            language="python",
-            parameters={"output_dir": None, "format": "c"},
-            output_format="text",
-            description="Decompile all functions to C pseudocode",
-        ),
-        "call_graph": GhidraScript(
-            name="CallGraphBuilder",
-            path=Path("GraphFunctionCalls.py"),
-            language="python",
-            parameters={"format": "dot", "max_depth": 10},
-            output_format="text",
-            description="Generate function call graph",
-        ),
-        "vtable_recovery": GhidraScript(
-            name="VTableRecovery",
-            path=Path("RecoverClassesFromRTTI.py"),
-            language="python",
-            parameters={"deep_analysis": True},
-            output_format="json",
-            description="Recover C++ virtual tables and classes",
-        ),
-        "license_finder": GhidraScript(
-            name="LicenseFinder",
-            path=Path("custom/FindLicenseChecks.py"),
-            language="python",
-            parameters={"patterns": ["license", "serial", "key", "activation"]},
-            output_format="json",
-            description="Find license validation routines",
-        ),
-        "anti_debug_detector": GhidraScript(
-            name="AntiDebugDetector",
-            path=Path("custom/DetectAntiDebug.py"),
-            language="python",
-            parameters={},
-            output_format="json",
-            description="Detect anti-debugging techniques",
-        ),
-    }
+    """Manages Ghidra script execution with dynamic script discovery."""
 
     def __init__(self, ghidra_path: Path):
         """Initialize the GhidraScriptRunner with the Ghidra path."""
         self.ghidra_path = ghidra_path
         self.headless_path = self._get_headless_path()
         self.scripts_dir = ghidra_path / "Ghidra" / "Features" / "Base" / "ghidra_scripts"
-        self.custom_scripts: Dict[str, GhidraScript] = {}
-        self._load_custom_scripts()
+
+        self.intellicrack_scripts_dir = Path(__file__).parent.parent.parent / "scripts" / "ghidra"
+
+        self.discovered_scripts: Dict[str, GhidraScript] = {}
+        self._discover_all_scripts()
 
     def _get_headless_path(self) -> Path:
         """Get path to headless analyzer."""
@@ -152,50 +72,64 @@ class GhidraScriptRunner:
         else:
             return self.ghidra_path / "support" / "analyzeHeadless"
 
-    def _load_custom_scripts(self) -> None:
-        """Load custom Ghidra scripts from user directory."""
-        custom_dir = Path.home() / ".ghidra" / "scripts"
-        if custom_dir.exists():
-            for script_file in custom_dir.glob("*.py"):
-                # Parse script metadata from header comments
-                metadata = self._parse_script_metadata(script_file)
-                if metadata:
-                    self.custom_scripts[script_file.stem] = GhidraScript(
-                        name=script_file.stem,
-                        path=script_file,
-                        language="python",
-                        parameters=metadata.get("parameters", {}),
-                        output_format=metadata.get("output_format", "text"),
-                        description=metadata.get("description", ""),
-                    )
+    def _discover_all_scripts(self) -> None:
+        """Dynamically discover all Ghidra scripts from intellicrack scripts directory."""
+        if not self.intellicrack_scripts_dir.exists():
+            logger.warning(f"Intellicrack scripts directory not found: {self.intellicrack_scripts_dir}")
+            return
 
-    def _parse_script_metadata(self, script_path: Path) -> Optional[Dict[str, Any]]:
-        """Parse metadata from script header comments."""
+        for script_file in self.intellicrack_scripts_dir.glob("*.[pj][ya][vt][ah]*"):
+            if script_file.name == "__init__.py" or script_file.name == "README.md":
+                continue
+
+            language = "python" if script_file.suffix == ".py" else "java"
+
+            metadata = self._parse_script_metadata(script_file)
+
+            script_key = script_file.stem.lower()
+
+            self.discovered_scripts[script_key] = GhidraScript(
+                name=script_file.stem,
+                path=script_file,
+                language=language,
+                parameters=metadata.get("parameters", {}),
+                output_format=metadata.get("output_format", "json"),
+                timeout=int(metadata.get("timeout", 300)),
+                requires_project=metadata.get("requires_project", "true").lower() == "true",
+                description=metadata.get("description", f"{script_file.stem} Ghidra script")
+            )
+
+        logger.info(f"Discovered {len(self.discovered_scripts)} Ghidra scripts from {self.intellicrack_scripts_dir}")
+
+    def _parse_script_metadata(self, script_path: Path) -> Dict[str, Any]:
+        """Parse metadata from script header comments.
+
+        Supports both Python (#) and Java (//, /*) style comments.
+        Looks for @key: value patterns in the first 100 lines.
+        """
+        metadata = {}
+
         try:
-            with open(script_path, "r", encoding="utf-8") as f:
+            with open(script_path, "r", encoding="utf-8", errors="ignore") as f:
                 lines = f.readlines()
 
-            metadata = {}
-            in_metadata = False
+            for line in lines[:100]:
+                line_stripped = line.strip()
 
-            for line in lines[:50]:  # Check first 50 lines
-                if "@metadata" in line:
-                    in_metadata = True
-                    continue
-                if "@end_metadata" in line:
-                    break
-                if in_metadata and line.strip().startswith("#"):
-                    # Parse metadata line
-                    content = line.strip()[1:].strip()
-                    if ":" in content:
-                        key, value = content.split(":", 1)
-                        metadata[key.strip()] = value.strip()
+                if line_stripped.startswith("#") or line_stripped.startswith("//") or line_stripped.startswith("*"):
+                    content = line_stripped.lstrip("#/*").strip()
 
-            return metadata if metadata else None
+                    if content.startswith("@"):
+                        if ":" in content:
+                            key_value = content[1:]
+                            key, value = key_value.split(":", 1)
+                            metadata[key.strip().lower()] = value.strip()
+
+            return metadata
 
         except Exception as e:
-            logger.warning(f"Failed to parse script metadata from {script_path}: {e}")
-            return None
+            logger.debug(f"Could not parse metadata from {script_path.name}: {e}")
+            return {}
 
     def run_script(
         self,
@@ -405,26 +339,35 @@ class GhidraScriptRunner:
         return script
 
     def _get_script(self, name: str) -> Optional[GhidraScript]:
-        """Get script by name."""
-        # Check builtin scripts
-        if name in self.BUILTIN_SCRIPTS:
-            return self.BUILTIN_SCRIPTS[name]
+        """Get script by name (case-insensitive)."""
+        name_lower = name.lower()
 
-        # Check custom scripts
-        if name in self.custom_scripts:
-            return self.custom_scripts[name]
+        if name_lower in self.discovered_scripts:
+            return self.discovered_scripts[name_lower]
 
-        # Check if it's a path
+        if name in self.discovered_scripts:
+            return self.discovered_scripts[name]
+
+        for _script_name, script in self.discovered_scripts.items():
+            if script.name.lower() == name_lower or script.name == name:
+                return script
+
         script_path = Path(name)
         if script_path.exists():
+            language = "python" if script_path.suffix == ".py" else "java"
+            metadata = self._parse_script_metadata(script_path)
+
             return GhidraScript(
                 name=script_path.stem,
                 path=script_path,
-                language="python" if script_path.suffix == ".py" else "java",
-                parameters={},
-                output_format="text",
+                language=language,
+                parameters=metadata.get("parameters", {}),
+                output_format=metadata.get("output_format", "json"),
+                timeout=int(metadata.get("timeout", 300)),
+                description=metadata.get("description", "")
             )
 
+        logger.warning(f"Script not found: {name}")
         return None
 
     def _parse_script_output(self, output_dir: Path, format: str, stdout: str, stderr: str) -> Dict[str, Any]:
@@ -459,16 +402,18 @@ class GhidraScriptRunner:
         return results
 
     def list_available_scripts(self) -> List[Dict[str, str]]:
-        """List all available scripts."""
+        """List all dynamically discovered scripts."""
         scripts = []
 
-        # Add builtin scripts
-        for name, script in self.BUILTIN_SCRIPTS.items():
-            scripts.append({"name": name, "type": "builtin", "language": script.language, "description": script.description})
-
-        # Add custom scripts
-        for name, script in self.custom_scripts.items():
-            scripts.append({"name": name, "type": "custom", "language": script.language, "description": script.description})
+        for name, script in self.discovered_scripts.items():
+            scripts.append({
+                "name": name,
+                "actual_name": script.name,
+                "language": script.language,
+                "description": script.description,
+                "path": str(script.path.relative_to(self.intellicrack_scripts_dir)),
+                "timeout": script.timeout
+            })
 
         return scripts
 

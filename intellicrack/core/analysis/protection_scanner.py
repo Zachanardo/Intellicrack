@@ -22,6 +22,10 @@ import numpy as np
 
 from intellicrack.core.analysis.binary_analyzer import BinaryAnalyzer
 from intellicrack.core.analysis.binary_pattern_detector import BinaryPatternDetector
+from intellicrack.core.analysis.polymorphic_analyzer import (
+    MutationType,
+    PolymorphicAnalyzer,
+)
 from intellicrack.core.analysis.vmprotect_detector import VMProtectDetector
 from intellicrack.core.analysis.yara_pattern_engine import YaraPatternEngine
 from intellicrack.ml.pattern_evolution_tracker import PatternEvolutionTracker
@@ -920,32 +924,104 @@ class DynamicSignatureExtractor:
         return patterns
 
     def _detect_polymorphic_engines(self, data: bytes) -> List[Tuple[bytes, float, str]]:
-        """Detect polymorphic engine signatures."""
+        """Detect polymorphic engine signatures using advanced analysis."""
         patterns = []
 
-        # Simplified detection - look for decryption loops
-        xor_loop = b"\x31"  # XOR instruction
-        offset = 0
+        try:
+            analyzer = PolymorphicAnalyzer(arch="x86", bits=self._guess_bitness(data))
 
-        while True:
-            offset = data.find(xor_loop, offset)
-            if offset == -1:
-                break
+            analysis = analyzer.analyze_polymorphic_code(data, base_address=0, max_instructions=500)
 
-            # Check for loop construct nearby
-            context = data[max(0, offset - 32) : min(len(data), offset + 32)]
+            if analysis.engine_type.value != "unknown":
+                semantic_sig = analysis.invariant_features.get("semantic_sequence", ())
+                if semantic_sig:
+                    sig_bytes = str(semantic_sig).encode()[:64]
+                    confidence = 0.85 if analysis.mutation_complexity > 0.5 else 0.70
+                    patterns.append((sig_bytes, confidence, f"Polymorphic engine: {analysis.engine_type.value}"))
 
-            if b"\xe2" in context or b"\x75" in context:  # LOOP or JNZ
-                patterns.append((context, 0.75, "Polymorphic decryption loop"))
+            if analysis.decryption_routine:
+                decryption_block = analysis.decryption_routine
+                routine_bytes = data[decryption_block.start_address:decryption_block.end_address][:64]
+                patterns.append((routine_bytes, 0.90, "Polymorphic decryption routine"))
 
-            offset += 1
+            for mutation_type in analysis.mutation_types:
+                mutation_desc = mutation_type.value.replace("_", " ").title()
+                patterns.append((data[:32], 0.65, f"Mutation: {mutation_desc}"))
+
+            for behavior in analysis.behavior_patterns:
+                behavior_bytes = behavior.behavioral_hash.encode()[:64]
+                patterns.append((behavior_bytes, behavior.confidence, f"Behavior pattern: {behavior.pattern_id}"))
+
+        except Exception as e:
+            logger.debug(f"Polymorphic analysis error: {e}")
+
+            xor_loop = b"\x31"
+            offset = 0
+            while True:
+                offset = data.find(xor_loop, offset)
+                if offset == -1:
+                    break
+                context = data[max(0, offset - 32) : min(len(data), offset + 32)]
+                if b"\xe2" in context or b"\x75" in context:
+                    patterns.append((context, 0.60, "Possible polymorphic decryption loop"))
+                offset += 1
 
         return patterns
 
     def _detect_metamorphic_code(self, data: bytes) -> List[Tuple[bytes, float, str]]:
-        """Detect metamorphic code transformations."""
-        # Simplified - would need instruction equivalence analysis
-        return []
+        """Detect metamorphic code transformations using semantic analysis."""
+        patterns = []
+
+        try:
+            analyzer = PolymorphicAnalyzer(arch="x86", bits=self._guess_bitness(data))
+
+            analysis = analyzer.analyze_polymorphic_code(data, base_address=0, max_instructions=500)
+
+            metamorphic_mutations = {
+                MutationType.INSTRUCTION_SUBSTITUTION,
+                MutationType.INSTRUCTION_EXPANSION,
+                MutationType.CODE_REORDERING,
+                MutationType.SEMANTIC_NOP,
+            }
+
+            detected_metamorphic = [m for m in analysis.mutation_types if m in metamorphic_mutations]
+
+            if len(detected_metamorphic) >= 2:
+                semantic_sig = analyzer.extract_semantic_signature(data, base_address=0)
+                if semantic_sig:
+                    sig_bytes = semantic_sig.encode()[:64]
+                    confidence = min(0.95, 0.70 + (len(detected_metamorphic) * 0.08))
+                    patterns.append((sig_bytes, confidence, f"Metamorphic code: {len(detected_metamorphic)} techniques"))
+
+            for mutation in detected_metamorphic:
+                mutation_name = mutation.value.replace("_", " ").title()
+                patterns.append((data[:32], 0.70, f"Metamorphic: {mutation_name}"))
+
+            if analysis.invariant_features:
+                invariants = analysis.invariant_features
+                if invariants.get("control_flow_branches", 0) > 5:
+                    patterns.append((data[:48], 0.75, "Metamorphic: Complex control flow"))
+
+        except Exception as e:
+            logger.debug(f"Metamorphic analysis error: {e}")
+
+        return patterns
+
+    def _guess_bitness(self, data: bytes) -> int:
+        """Guess binary bitness from code patterns."""
+        if len(data) < 64:
+            return 32
+
+        rex_prefix_count = sum(1 for b in data[:64] if 0x40 <= b <= 0x4F)
+        if rex_prefix_count > 2:
+            return 64
+
+        reg64_patterns = [b"\x48\x8b", b"\x48\x89", b"\x48\x83", b"\x48\x8d"]
+        for pattern in reg64_patterns:
+            if pattern in data[:128]:
+                return 64
+
+        return 32
 
     def _assess_mutation_complexity(self, pattern: bytes) -> str:
         """Assess complexity of mutation pattern."""

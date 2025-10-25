@@ -1,0 +1,16 @@
+[
+  {
+    "name": "Example Game v1.0 (SecuROM 7.38)",
+    "file": "examplegame.exe",
+    "protection": "securom",
+    "version": "7.38.0004",
+    "expected_drivers": ["secdrv.sys"],
+    "expected_sections": [".securom"],
+    "has_activation": true,
+    "expected_activation_type": "online",
+    "expected_max_activations": 5,
+    "allow_bypass_test": true,
+    "sha256": "abc123def456...",
+    "notes": "Retail release from 2008, obtained legally from personal collection"
+  }
+]

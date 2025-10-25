@@ -24,7 +24,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from intellicrack.handlers.pyqt6_handler import QObject, pyqtSignal, PYQT6_AVAILABLE
+from intellicrack.handlers.pyqt6_handler import PYQT6_AVAILABLE, QObject, pyqtSignal
 from intellicrack.utils.logger import get_logger
 
 logger = get_logger(__name__)

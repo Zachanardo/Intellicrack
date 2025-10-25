@@ -1,21 +1,9 @@
-"""Distributed processing manager for parallel analysis execution."""
+"""Distributed analysis manager for cluster-based binary processing.
 
-import logging
-import math
-import multiprocessing
-import os
-import queue
-import re
-import time
-import traceback
-from collections import Counter
-from collections.abc import Callable
-from typing import Any
-
-from intellicrack.utils.logger import logger
-
-"""
-Distributed Processing Manager
+This module provides sophisticated distributed analysis capabilities for scaling
+binary analysis across multiple machines. It supports both local multi-processing
+and network-based clustering with task distribution, fault tolerance, and result
+aggregation for large-scale software protection testing.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -35,1262 +23,1456 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+import heapq
+import json
+import logging
+import os
+import pickle
+import platform
+import socket
+import struct
+import threading
+import time
+import traceback
+import uuid
+from collections import defaultdict
+from dataclasses import asdict, dataclass
+from enum import Enum
+from typing import Any
 
 try:
-    import ray
-
-    # Test Ray initialization to ensure dependencies are working
-    if hasattr(ray, "_raylet"):
-        try:
-            _raylet_module = ray._raylet  # Access the module to trigger DLL loading
-            RAY_AVAILABLE = True
-        except (ImportError, OSError, AttributeError) as dll_err:
-            logger.warning("Ray module loaded but dependencies failed: %s", dll_err)
-            RAY_AVAILABLE = False
-    else:
-        RAY_AVAILABLE = True
-except ImportError as e:
-    logger.error("Import error in distributed_manager: %s", e)
-    RAY_AVAILABLE = False
-except (OSError, AttributeError) as dll_error:
-    logger.error("Ray dependency error (missing DLL): %s", dll_error)
-    RAY_AVAILABLE = False
+    import multiprocessing
+    import multiprocessing.managers
+    MULTIPROCESSING_AVAILABLE = True
+except ImportError:
+    MULTIPROCESSING_AVAILABLE = False
 
 try:
-    from dask.distributed import Client, progress
-
-    DASK_AVAILABLE = True
-except ImportError as e:
-    logger.debug("Optional dependency dask.distributed not available: %s", e)
-    DASK_AVAILABLE = False
-    # Provide fallback implementations
-    Client = None
-
-    def progress(futures):
-        """Fallback progress function that does nothing."""
-        pass
+    from intellicrack.core.processing.parallel_processing_manager import ParallelProcessingManager
+    PARALLEL_MANAGER_AVAILABLE = True
+except ImportError:
+    PARALLEL_MANAGER_AVAILABLE = False
 
 
-try:
-    import angr
+class TaskPriority(Enum):
+    """Task priority levels for scheduling."""
 
-    ANGR_AVAILABLE = True
-except ImportError as e:
-    logger.error("Import error in distributed_manager: %s", e)
-    ANGR_AVAILABLE = False
-
-try:
-    from intellicrack.handlers.pefile_handler import pefile
-
-    PEFILE_AVAILABLE = True
-except ImportError as e:
-    logger.error("Import error in distributed_manager: %s", e)
-    PEFILE_AVAILABLE = False
+    CRITICAL = 0
+    HIGH = 1
+    NORMAL = 2
+    LOW = 3
+    BACKGROUND = 4
 
 
-class DistributedProcessingManager:
-    """Distributed Processing Manager for Large Binaries.
+class TaskStatus(Enum):
+    """Task execution status."""
 
-    This class manages distributed processing of large binary files across multiple cores or machines,
-    significantly improving analysis speed for large executables. It supports multiple backend options
-    including Ray, Dask, and standard multiprocessing based on availability.
+    PENDING = "pending"
+    ASSIGNED = "assigned"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    RETRY = "retry"
+    CANCELLED = "cancelled"
+
+
+class NodeStatus(Enum):
+    """Worker node status."""
+
+    STARTING = "starting"
+    READY = "ready"
+    BUSY = "busy"
+    DEGRADED = "degraded"
+    OFFLINE = "offline"
+
+
+@dataclass
+class AnalysisTask:
+    """Distributed analysis task representation."""
+
+    task_id: str
+    task_type: str
+    priority: TaskPriority
+    binary_path: str
+    params: dict[str, Any]
+    status: TaskStatus
+    created_at: float
+    started_at: float | None = None
+    completed_at: float | None = None
+    assigned_node: str | None = None
+    retry_count: int = 0
+    max_retries: int = 3
+    timeout: float = 3600.0
+    result: dict[str, Any] | None = None
+    error: str | None = None
+    dependencies: list[str] | None = None
+    chunk_info: dict[str, Any] | None = None
+
+    def __lt__(self, other):
+        """Priority queue comparison."""
+        if self.priority.value != other.priority.value:
+            return self.priority.value < other.priority.value
+        return self.created_at < other.created_at
+
+
+@dataclass
+class WorkerNode:
+    """Distributed worker node representation."""
+
+    node_id: str
+    hostname: str
+    ip_address: str
+    port: int
+    status: NodeStatus
+    capabilities: dict[str, Any]
+    current_load: float
+    max_load: float
+    active_tasks: list[str]
+    completed_tasks: int
+    failed_tasks: int
+    last_heartbeat: float
+    platform_info: dict[str, str]
+    resource_usage: dict[str, float]
+
+
+class DistributedAnalysisManager:
+    """Distributed analysis manager for cluster-based binary processing.
+
+    Provides sophisticated distributed analysis capabilities including:
+    - Cluster node management with automatic registration and health monitoring
+    - Priority-based task distribution and load balancing
+    - Fault tolerance with automatic job recovery and retry
+    - Result aggregation from distributed workers
+    - Support for both local multi-processing and network clustering
+    - Resource monitoring and allocation
+    - Windows and Linux compatibility
     """
 
-    def __init__(self, config: dict[str, Any] | None = None) -> None:
-        """Initialize the distributed processing manager.
+    HEARTBEAT_INTERVAL = 5.0
+    NODE_TIMEOUT = 30.0
+    TASK_CHECK_INTERVAL = 2.0
+    MAX_TASK_RETRIES = 3
+    DEFAULT_PORT = 9876
+    PROTOCOL_VERSION = "1.0"
 
-        Args:
-            config: Dictionary with configuration options:
-                   - num_workers: Number of worker processes (default: CPU count)
-                   - chunk_size: Size of file chunks in bytes (default: 1MB)
-                   - preferred_backend: 'ray', 'dask', or 'multiprocessing' (default: auto-detect)
-
-        """
-        self.config = config or {}
-        self.logger = logging.getLogger("IntellicrackLogger.DistributedProcessing")
-
-        # Basic configuration
-        self.binary_path: str | None = None
-        self.num_workers = self.config.get("num_workers", multiprocessing.cpu_count())
-        self.chunk_size = self.config.get("chunk_size", 1024 * 1024)  # 1MB default chunk size
-        self.preferred_backend = self.config.get("preferred_backend", "auto")
-
-        # Task management
-        self.tasks: list[dict[str, Any]] = []
-        self.workers: list[multiprocessing.Process] = []
-        self.results: dict[str, Any] = {}
-        self.task_queue: multiprocessing.Queue | None = None
-        self.result_queue: multiprocessing.Queue | None = None
-        self.running: bool = False
-
-        # Performance tracking
-        self.worker_performance: dict[int, dict[str, Any]] = {}
-        self.active_tasks: dict[str, dict[str, Any]] = {}
-        self.worker_loads: dict[int, float] = {}
-
-        # Check available backends
-        self._check_available_backends()
-
-        self.logger.info("Distributed processing initialized with %s workers", self.num_workers)
-        self.logger.info(f"Available backends: {', '.join(self._get_available_backends())}")
-
-    def _check_available_backends(self) -> None:
-        """Check which distributed computing backends are available."""
-        # Check for Ray
-        self.ray_available = RAY_AVAILABLE
-        if self.ray_available:
-            self.logger.info("Ray distributed computing available")
-        else:
-            self.logger.info("Ray distributed computing not available")
-
-        # Check for Dask
-        self.dask_available = DASK_AVAILABLE
-        if self.dask_available:
-            self.logger.info("Dask distributed computing available")
-        else:
-            self.logger.info("Dask distributed computing not available")
-
-        # Always available
-        self.multiprocessing_available = True
-
-    def _get_available_backends(self) -> list[str]:
-        """Get list of available backends."""
-        backends = ["multiprocessing"]
-        if self.ray_available:
-            backends.append("ray")
-        if self.dask_available:
-            backends.append("dask")
-        return backends
-
-    def _select_backend(self) -> str:
-        """Select the best backend based on availability and preference."""
-        if self.preferred_backend == "ray" and self.ray_available:
-            return "ray"
-        if self.preferred_backend == "dask" and self.dask_available:
-            return "dask"
-        if self.preferred_backend in ("multiprocessing", "auto"):
-            # For auto, we prefer Ray > Dask > Multiprocessing
-            if self.preferred_backend == "auto":
-                if self.ray_available:
-                    return "ray"
-                if self.dask_available:
-                    return "dask"
-            return "multiprocessing"
-        self.logger.warning(f"Preferred backend '{self.preferred_backend}' not available, using multiprocessing")
-        return "multiprocessing"
-
-    def set_binary(self, binary_path: str) -> bool:
-        """Set the binary file to process.
-
-        Args:
-            binary_path: Path to the binary file
-
-        Returns:
-            bool: True if binary file exists, False otherwise
-
-        """
-        if not os.path.exists(binary_path):
-            self.logger.error("Binary not found: %s", binary_path)
-            return False
-
-        self.binary_path = binary_path
-        self.logger.info("Binary set: %s", binary_path)
-        return True
-
-    def add_task(
+    def __init__(
         self,
-        task_type: str,
-        task_params: dict[str, Any] | None = None,
-        task_description: str | None = None,
-    ) -> int:
-        """Add a task to the processing queue.
+        mode: str = "auto",
+        config: dict[str, Any] | None = None,
+        enable_networking: bool = True
+    ):
+        """Initialize the distributed analysis manager.
 
         Args:
-            task_type: Type of task to run (e.g., 'analyze_section', 'find_patterns')
-            task_params: Dictionary of parameters for the task
-            task_description: Human-readable description of the task
-
-        Returns:
-            int: Task ID (index in task list)
+            mode: Execution mode - "local", "cluster", or "auto" (default: auto)
+            config: Configuration dictionary with cluster settings
+            enable_networking: Enable network-based clustering (default: True)
 
         """
-        task = {
-            "id": len(self.tasks),
-            "type": task_type,
-            "params": task_params or {},
-            "description": task_description or f"Task: {task_type}",
-        }
+        self.logger = logging.getLogger(__name__)
+        self.config = config or {}
+        self.enable_networking = enable_networking
 
-        self.tasks.append(task)
-        self.logger.info(f"Added task: {task_type} (ID: {task['id']})")
-        return task["id"]
+        self.mode = mode
+        if mode == "auto":
+            self.mode = "cluster" if enable_networking else "local"
 
-    def process_binary_chunks(self, process_func: Callable[[bytes, int], Any] | None = None) -> list[Any] | None:
-        """Process a binary file in chunks using distributed workers.
+        self.node_id = str(uuid.uuid4())
+        self.is_coordinator = True
+        self.coordinator_address: tuple[str, int] | None = None
 
-        Args:
-            process_func: Function to process each chunk, takes (chunk_data, offset) as arguments
+        self.nodes: dict[str, WorkerNode] = {}
+        self.tasks: dict[str, AnalysisTask] = {}
+        self.task_queue: list[AnalysisTask] = []
+        self.completed_results: dict[str, Any] = {}
+        self.task_lock = threading.RLock()
+        self.nodes_lock = threading.RLock()
 
-        Returns:
-            list: Combined results from all chunks
+        self.running = False
+        self.background_threads: list[threading.Thread] = []
 
-        """
-        if not self.binary_path:
-            self.logger.error("No binary set")
-            return None
+        self.local_manager: ParallelProcessingManager | None = None
+        if PARALLEL_MANAGER_AVAILABLE and self.mode == "local":
+            self.local_manager = ParallelProcessingManager(self.config)
 
-        if process_func is None:
-            # Default processing function (just returns basic info about the chunk)
-            def process_func(chunk, offset):
-                return {"offset": offset, "size": len(chunk)}
+        self.server_socket: socket.socket | None = None
+        self.client_connections: dict[str, socket.socket] = {}
 
-        # Get file size
-        file_size = os.path.getsize(self.binary_path)
-
-        # Calculate number of chunks
-        num_chunks = (file_size + self.chunk_size - 1) // self.chunk_size
-
-        self.logger.info(f"Processing {self.binary_path} in {num_chunks} chunks of {self.chunk_size // (1024 * 1024)}MB each")
-
-        # Choose backend based on availability
-        backend = self._select_backend()
-        self.logger.info("Using %s backend for processing", backend)
-
-        if backend == "ray":
-            return self._process_with_ray(process_func, num_chunks)
-        if backend == "dask":
-            return self._process_with_dask(process_func, num_chunks)
-        return self._process_with_multiprocessing(process_func, num_chunks)
-
-    def _process_with_ray(self, process_func: Callable, num_chunks: int) -> list[Any] | None:
-        """Process binary chunks using Ray.
-
-        Args:
-            process_func: Function to process each chunk
-            num_chunks: Number of chunks to process
-
-        Returns:
-            list: Results from all chunks
-
-        """
-        if not RAY_AVAILABLE:
-            self.logger.error("Ray not available, falling back to multiprocessing")
-            return self._process_with_multiprocessing(process_func, num_chunks)
-
-        try:
-            # Initialize Ray if not already initialized
-            if not ray.is_initialized():
-                try:
-                    ray.init(num_cpus=self.num_workers)
-                except (ImportError, OSError, RuntimeError, AttributeError) as init_error:
-                    self.logger.error("Ray initialization failed: %s", init_error)
-                    self.logger.info("Falling back to multiprocessing due to Ray initialization failure")
-                    return self._process_with_multiprocessing(process_func, num_chunks)
-
-            # Define remote function with error handling
-            try:
-
-                @ray.remote
-                def process_chunk(chunk_idx: int, binary_path: str, chunk_size: int) -> Any:
-                    """Process a specific chunk of the binary file in a distributed manner using Ray.
-
-                    This function is decorated with @ray.remote to enable distributed execution
-                    across multiple processes or nodes. It reads a specific chunk of the binary
-                    file based on the provided index, applies the processing function, and
-                    returns the results.
-
-                    Args:
-                        chunk_idx: Index of the chunk to process
-                        binary_path: Path to the binary file
-                        chunk_size: Size of each chunk
-
-                    Returns:
-                        Any: Result of applying the process_func to the chunk data and offset
-
-                    """
-                    offset = chunk_idx * chunk_size
-                    with open(binary_path, "rb") as f:
-                        f.seek(offset)
-                        chunk_data = f.read(chunk_size)
-                    return process_func(chunk_data, offset)
-            except (ImportError, OSError, RuntimeError, AttributeError) as remote_error:
-                self.logger.error("Ray remote function creation failed: %s", remote_error)
-                self.logger.info("Falling back to multiprocessing due to Ray remote function failure")
-                return self._process_with_multiprocessing(process_func, num_chunks)
-
-            # Submit tasks with error handling
-            try:
-                tasks = []
-                for _i in range(num_chunks):
-                    task_ref = process_chunk.remote(_i, self.binary_path, self.chunk_size)
-                    tasks.append(task_ref)
-
-                # Get results with progress tracking and error handling
-                results = []
-                completed = 0
-                for task_ref in tasks:
-                    try:
-                        result = ray.get(task_ref)
-                        results.append(result)
-                    except (ImportError, OSError, RuntimeError, AttributeError) as task_error:
-                        self.logger.warning("Ray task failed: %s", task_error)
-                        # Still append error result to maintain result count
-                        results.append({"error": str(task_error), "chunk_idx": completed})
-
-                    completed += 1
-                    if completed % max(1, num_chunks // 10) == 0:  # Report every 10%
-                        self.logger.info(f"Progress: {completed}/{num_chunks} chunks processed ({completed / num_chunks * 100:.1f}%)")
-
-                return results
-
-            except (ImportError, OSError, RuntimeError, AttributeError) as submission_error:
-                self.logger.error("Ray task submission failed: %s", submission_error)
-                self.logger.info("Falling back to multiprocessing due to Ray task submission failure")
-                return self._process_with_multiprocessing(process_func, num_chunks)
-
-        except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in Ray processing: %s", e)
-            self.logger.info("Falling back to multiprocessing")
-            return self._process_with_multiprocessing(process_func, num_chunks)
-
-    def _process_with_dask(self, process_func: Callable, num_chunks: int) -> list[Any] | None:
-        """Process binary chunks using Dask.
-
-        Args:
-            process_func: Function to process each chunk
-            num_chunks: Number of chunks to process
-
-        Returns:
-            list: Results from all chunks
-
-        """
-        if not DASK_AVAILABLE:
-            self.logger.error("Dask not available, falling back to multiprocessing")
-            return self._process_with_multiprocessing(process_func, num_chunks)
-
-        try:
-            # Create client
-            client = Client(n_workers=self.num_workers)
-
-            # Define function to read and process chunk
-            def read_and_process_chunk(chunk_idx: int) -> Any:
-                """Read and process a specific chunk of data from the binary file.
-
-                This function handles the file I/O operations needed to read a specific
-                chunk of the binary file based on the provided index. It calculates the
-                file offset, reads the binary data, and applies the provided processing
-                function to that data.
-
-                Args:
-                    chunk_idx: Index of the chunk to process
-
-                Returns:
-                    Any: Result of applying the process_func to the chunk data and offset
-
-                """
-                offset = chunk_idx * self.chunk_size
-                with open(self.binary_path, "rb") as f:
-                    f.seek(offset)
-                    chunk_data = f.read(self.chunk_size)
-                return process_func(chunk_data, offset)
-
-            # Create tasks
-            futures = []
-            for _i in range(num_chunks):
-                future = client.submit(read_and_process_chunk, _i)
-                futures.append(future)
-
-            # Show progress
-            progress(futures)
-
-            # Compute results
-            results = client.gather(futures)
-
-            # Close client
-            client.close()
-
-            return list(results)
-
-        except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in Dask processing: %s", e)
-            self.logger.info("Falling back to multiprocessing")
-            return self._process_with_multiprocessing(process_func, num_chunks)
-
-    def _process_with_multiprocessing(self, process_func: Callable, num_chunks: int) -> list[Any]:
-        """Process binary chunks using multiprocessing.
-
-        Args:
-            process_func: Function to process each chunk
-            num_chunks: Number of chunks to process
-
-        Returns:
-            list: Results from all chunks
-
-        """
-
-        # Define function to read and process chunk
-        def read_and_process_chunk(chunk_idx: int) -> Any | dict[str, Any]:
-            """Read a chunk from the binary file and process it.
-
-            Args:
-                chunk_idx: Index of the chunk to read.
-
-            Returns:
-                The result of process_func on the chunk data, or an error dict.
-
-            """
-            try:
-                offset = chunk_idx * self.chunk_size
-                with open(self.binary_path, "rb") as f:
-                    f.seek(offset)
-                    chunk_data = f.read(self.chunk_size)
-                return process_func(chunk_data, offset)
-            except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in distributed_manager: %s", e)
-                return {"error": str(e), "offset": offset, "chunk_idx": chunk_idx}
-
-        # Create pool
-        with multiprocessing.Pool(processes=self.num_workers) as pool:
-            # Process chunks with progress tracking
-            results = []
-            for i, result in enumerate(pool.imap_unordered(read_and_process_chunk, range(num_chunks))):
-                results.append(result)
-                if (i + 1) % max(1, num_chunks // 10) == 0:  # Report every 10%
-                    self.logger.info(f"Progress: {i + 1}/{num_chunks} chunks processed ({(i + 1) / num_chunks * 100:.1f}%)")
-
-        return results
-
-    def start_processing(self) -> bool:
-        """Start distributed processing of tasks using queue-based approach.
-
-        Returns:
-            bool: True if processing started successfully, False otherwise
-
-        """
-        if not self.binary_path:
-            self.logger.error("No binary set")
-            return False
-
-        if not self.tasks:
-            self.logger.warning("No tasks specified")
-            return False
-
-        if self.running:
-            self.logger.warning("Already running")
-            return False
-
-        # Clear previous results
-        self.results = {
+        self.performance_metrics: dict[str, Any] = {
+            "tasks_submitted": 0,
             "tasks_completed": 0,
             "tasks_failed": 0,
             "total_processing_time": 0.0,
-            "task_results": {},
+            "average_task_time": 0.0,
+            "node_utilization": {},
+            "task_distribution": defaultdict(int)
         }
 
+        self._register_self_as_worker()
+        self.logger.info(f"Distributed manager initialized in {self.mode} mode (Node ID: {self.node_id})")
+
+    def _register_self_as_worker(self):
+        """Register this instance as a worker node."""
+        worker_count = self.config.get("num_workers", multiprocessing.cpu_count() if MULTIPROCESSING_AVAILABLE else 4)
+
+        worker_node = WorkerNode(
+            node_id=self.node_id,
+            hostname=socket.gethostname(),
+            ip_address=self._get_local_ip(),
+            port=self.config.get("port", self.DEFAULT_PORT),
+            status=NodeStatus.READY,
+            capabilities={
+                "os": platform.system(),
+                "arch": platform.machine(),
+                "cpu_count": worker_count,
+                "supports_frida": self._check_capability("frida"),
+                "supports_radare2": self._check_capability("radare2"),
+                "supports_angr": self._check_capability("angr"),
+                "supports_pefile": self._check_capability("pefile"),
+                "supports_lief": self._check_capability("lief")
+            },
+            current_load=0.0,
+            max_load=float(worker_count),
+            active_tasks=[],
+            completed_tasks=0,
+            failed_tasks=0,
+            last_heartbeat=time.time(),
+            platform_info={
+                "system": platform.system(),
+                "release": platform.release(),
+                "version": platform.version(),
+                "machine": platform.machine(),
+                "processor": platform.processor()
+            },
+            resource_usage={}
+        )
+
+        with self.nodes_lock:
+            self.nodes[self.node_id] = worker_node
+
+    def _get_local_ip(self) -> str:
+        """Get local IP address for network communication."""
         try:
-            # Initialize multiprocessing queues
-            self.task_queue = multiprocessing.Queue()
-            self.result_queue = multiprocessing.Queue()
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.settimeout(0.1)
+            s.connect(("8.8.8.8", 80))
+            ip_address = s.getsockname()[0]
+            s.close()
+            return ip_address
+        except (OSError, socket.error):
+            return "127.0.0.1"
 
-            # Add tasks to queue
-            for _task in self.tasks:
-                self.task_queue.put(_task)
+    def _check_capability(self, module_name: str) -> bool:
+        """Check if a module/capability is available."""
+        try:
+            __import__(module_name)
+            return True
+        except ImportError:
+            return False
 
-            # Add sentinel tasks to signal workers to exit
-            for __ in range(self.num_workers):
-                self.task_queue.put(None)
+    def start_cluster(self, port: int | None = None) -> bool:
+        """Start the cluster coordinator or worker node.
 
-            # Start workers
-            self.workers = []
-            for _i in range(self.num_workers):
-                worker = multiprocessing.Process(
-                    target=self._worker_process,
-                    args=(
-                        _i,
-                        self.task_queue,
-                        self.result_queue,
-                        self.binary_path,
-                        self.chunk_size,
-                    ),
-                )
-                worker.daemon = True
-                worker.start()
-                self.workers.append(worker)
+        Args:
+            port: Port number for network communication (default: from config or 9876)
 
+        Returns:
+            bool: True if cluster started successfully
+
+        """
+        if self.running:
+            self.logger.warning("Cluster already running")
+            return False
+
+        port = port or self.config.get("port", self.DEFAULT_PORT)
+
+        try:
             self.running = True
-            self.logger.info("Started %s workers for task-based processing", self.num_workers)
 
-            return True
-
-        except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error starting processing: %s", e)
-            self.stop_processing()
-            return False
-
-    def _worker_process(
-        self,
-        worker_id: int,
-        task_queue: multiprocessing.Queue,
-        result_queue: multiprocessing.Queue,
-        binary_path: str,
-        chunk_size: int,
-    ) -> None:
-        """Worker process function for task-based processing.
-
-        Args:
-            worker_id: ID of the worker
-            task_queue: Queue for tasks
-            result_queue: Queue for results
-            binary_path: Path to the binary file
-            chunk_size: Size of chunks for file processing
-
-        """
-        try:
-            # Set up worker
-            logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
-            logger.info("Worker %s started", worker_id)
-
-            # Process tasks
-            while True:
-                # Get task from queue
-                task = task_queue.get()
-
-                # Check for sentinel
-                if task is None:
-                    logger.info("Worker %s shutting down", worker_id)
-                    break
-
-                # Process task
-                start_time = time.time()
-                logger.info(f"Worker {worker_id} processing task: {task['type']} (ID: {task['id']})")
-
-                try:
-                    # Process task based on type
-                    if task["type"] == "find_patterns":
-                        result = self._task_find_patterns(worker_id, task, binary_path, chunk_size)
-                    elif task["type"] == "analyze_entropy":
-                        result = self._task_analyze_entropy(worker_id, task, binary_path, chunk_size)
-                    elif task["type"] == "analyze_section":
-                        result = self._task_analyze_section(worker_id, task, binary_path, chunk_size)
-                    elif task["type"] == "symbolic_execution":
-                        result = self._task_symbolic_execution(worker_id, task, binary_path, chunk_size)
-                    else:
-                        # Generic task - process a chunk
-                        result = self._task_generic(worker_id, task, binary_path, chunk_size)
-
-                    # Add processing time
-                    processing_time = time.time() - start_time
-                    result["processing_time"] = processing_time
-                    result["worker_id"] = worker_id
-                    result["task_id"] = task["id"]
-                    result["success"] = True
-
-                    # Put result in result queue
-                    result_queue.put((worker_id, task, result))
-
-                except (OSError, ValueError, RuntimeError) as e:
-                    logger.error(f"Error processing task {task['id']}: {e}")
-                    processing_time = time.time() - start_time
-                    error_result = {
-                        "error": str(e),
-                        "traceback": traceback.format_exc(),
-                        "worker_id": worker_id,
-                        "task_id": task["id"],
-                        "processing_time": processing_time,
-                        "success": False,
-                    }
-                    result_queue.put((worker_id, task, error_result))
-
-        except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Worker %s error: %s", worker_id, e)
-
-    def _task_find_patterns(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:
-        """Process a pattern-finding task."""
-        logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
-        patterns = task["params"].get("patterns", [])
-        chunk_start = task["params"].get("chunk_start", 0)
-        chunk_end = task["params"].get("chunk_end", None)
-
-        if not patterns:
-            return {"error": "No patterns specified", "matches": []}
-
-        # Read specified chunk of file
-        with open(binary_path, "rb") as f:
-            f.seek(chunk_start)
-            if chunk_end is not None:
-                chunk_data = f.read(chunk_end - chunk_start)
-            else:
-                chunk_data = f.read(chunk_size)
-
-        # Search for patterns
-        matches = []
-        for _pattern in patterns:
-            try:
-                pattern_bytes = _pattern.encode() if isinstance(_pattern, str) else _pattern
-                for _match in re.finditer(re.escape(pattern_bytes), chunk_data):
-                    matches.append(
-                        {
-                            "pattern": _pattern,
-                            "position": chunk_start + _match.start(),
-                            "match": _match.group(),
-                        }
-                    )
-            except (OSError, ValueError, RuntimeError) as e:
-                logger.warning("Error processing pattern %s: %s", _pattern, e)
-
-        logger.info(f"Found {len(matches)} pattern matches in chunk at offset {chunk_start}")
-        return {"matches": matches, "patterns_found": len(matches)}
-
-    def _task_analyze_entropy(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:
-        """Process an entropy analysis task."""
-        logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
-        chunk_start = task["params"].get("chunk_start", 0)
-        chunk_end = task["params"].get("chunk_end", None)
-        window_size = task["params"].get("window_size", 1024)  # Default 1KB windows
-
-        # Read specified chunk of file
-        with open(binary_path, "rb") as f:
-            f.seek(chunk_start)
-            if chunk_end is not None:
-                chunk_data = f.read(chunk_end - chunk_start)
-            else:
-                chunk_data = f.read(chunk_size)
-
-        # Calculate overall entropy for the chunk
-        chunk_entropy = self._calculate_entropy(chunk_data)
-
-        # Calculate entropy for sliding windows
-        window_results = []
-        for _i in range(0, len(chunk_data) - window_size + 1, window_size // 2):  # 50% overlap
-            window_data = chunk_data[_i : _i + window_size]
-            window_entropy = self._calculate_entropy(window_data)
-
-            window_results.append(
-                {
-                    "offset": chunk_start + _i,
-                    "size": len(window_data),
-                    "entropy": window_entropy,
-                }
-            )
-
-        # Find high entropy regions
-        high_entropy_regions = [_w for _w in window_results if _w["entropy"] > 7.0]  # High entropy threshold
-
-        logger.info("Analyzed entropy in chunk at offset %s: %f", chunk_start, chunk_entropy)
-        return {
-            "chunk_offset": chunk_start,
-            "chunk_size": len(chunk_data),
-            "chunk_entropy": chunk_entropy,
-            "windows": window_results,
-            "high_entropy_regions": high_entropy_regions,
-            "high_entropy_count": len(high_entropy_regions),
-        }
-
-    def _calculate_entropy(self, data: bytes) -> float:
-        """Calculate Shannon entropy of data."""
-        if not data:
-            return 0.0
-
-        counts = Counter(data)
-        total = len(data)
-        entropy = -sum((_count / total) * math.log2(_count / total) for _count in counts.values())
-        return entropy
-
-    def _task_analyze_section(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:  # pylint: disable=unused-argument
-        """Process a section analysis task."""
-        logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
-        section_name = task["params"].get("section_name", None)
-
-        if not section_name:
-            return {"error": "No section name specified"}
-
-        if not PEFILE_AVAILABLE:
-            return {"error": "pefile not available for section analysis"}
-
-        try:
-            pe = pefile.PE(binary_path)
-
-            section = next((_s for _s in pe.sections if _s.Name.decode().strip("\x00") == section_name), None)
-            if not section:
-                return {"error": f"Section {section_name} not found"}
-
-            section_data = section.get_data()
-
-            # Process section data in chunks based on chunk_size parameter
-            results = []
-            total_strings = []
-            total_entropy_samples = []
-
-            # Process data in chunks for better memory efficiency and progress tracking
-            for chunk_start in range(0, len(section_data), chunk_size):
-                chunk_end = min(chunk_start + chunk_size, len(section_data))
-                chunk_data = section_data[chunk_start:chunk_end]
-
-                # Calculate entropy for this chunk
-                chunk_entropy = self._calculate_entropy(chunk_data)
-                total_entropy_samples.append(chunk_entropy)
-
-                # String extraction for this chunk
-                chunk_strings = []
-                current_string = b""
-                min_length = 4  # Minimum string length
-
-                for _byte in chunk_data:
-                    if 32 <= _byte <= 126:  # Printable ASCII
-                        current_string += bytes([_byte])
-                    else:
-                        if len(current_string) >= min_length:
-                            chunk_strings.append(current_string.decode("ascii"))
-                        current_string = b""
-
-                # Add last string if needed
-                if len(current_string) >= min_length:
-                    chunk_strings.append(current_string.decode("ascii"))
-
-                total_strings.extend(chunk_strings)
-
-                # Store chunk analysis results
-                results.append(
-                    {
-                        "chunk_start": chunk_start,
-                        "chunk_end": chunk_end,
-                        "chunk_size": len(chunk_data),
-                        "entropy": chunk_entropy,
-                        "string_count": len(chunk_strings),
-                        "strings": chunk_strings[:10],  # Limit to first 10 strings per chunk
-                    }
-                )
-
-            # Calculate overall entropy as average of chunk entropies
-            entropy = sum(total_entropy_samples) / len(total_entropy_samples) if total_entropy_samples else 0.0
-            strings = total_strings
-
-            logger.info(f"Analyzed section {section_name}: size={len(section_data)}, entropy={entropy:.2f}, strings={len(strings)}")
-
-            return {
-                "section_name": section_name,
-                "section_size": len(section_data),
-                "entropy": entropy,
-                "strings_found": len(strings),
-                "strings": strings[:100],  # Limit to first 100 strings
-                "characteristics": section.Characteristics,
-                "virtual_address": section.VirtualAddress,
-                "pointer_to_raw_data": section.PointerToRawData,
-                "size_of_raw_data": section.SizeOfRawData,
-                "chunk_analysis": {
-                    "chunk_size_used": chunk_size,
-                    "total_chunks": len(results),
-                    "chunk_results": results,
-                    "entropy_distribution": total_entropy_samples,
-                },
-            }
-
-        except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error analyzing section %s: %s", section_name, e)
-            return {"error": str(e), "section_name": section_name}
-
-    def _task_symbolic_execution(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:  # pylint: disable=unused-argument
-        """Process a symbolic execution task."""
-        logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
-        target_function = task["params"].get("target_function", None)
-        max_states = task["params"].get("max_states", 100)
-        max_time = task["params"].get("max_time", 300)  # 5 minutes timeout by default
-
-        if not target_function:
-            return {"error": "No target function specified"}
-
-        if not ANGR_AVAILABLE:
-            return {"error": "angr not available for symbolic execution"}
-
-        logger.info("Starting symbolic execution of %s", target_function)
-
-        try:
-            # Load the binary with angr
-            proj = angr.Project(binary_path, auto_load_libs=False)
-
-            # Get function address (simplified)
-            target_address = None
-            try:
-                # Try to resolve function by name in symbols
-                for _sym in proj.loader.main_object.symbols:
-                    if _sym.name == target_function and _sym.type == "function":
-                        target_address = _sym.rebased_addr
-                        break
-            except (OSError, ValueError, RuntimeError) as e:
-                logger.error(f"Error resolving function address: {e!s}")
-
-            if target_address is None:
-                return {"error": f"Could not resolve address for function {target_function}"}
-
-            logger.info("Resolved %s to address 0x%d", target_function, target_address)
-
-            # Create a starting state at the function
-            initial_state = proj.factory.call_state(target_address)
-
-            # Create a simulation manager
-            simgr = proj.factory.simulation_manager(initial_state)
-
-            # Chunk-based exploration with timeout
-            start_time = time.time()
-            paths_explored = 0
-            vulnerabilities = []
-            exploration_chunks = []
-            chunk_number = 0
-
-            # Process symbolic execution in chunks based on chunk_size parameter
-            # Each chunk processes a limited number of states for better control and monitoring
-            while simgr.active and time.time() - start_time < max_time:
-                chunk_start_time = time.time()
-                chunk_paths_explored = 0
-                chunk_start_states = len(simgr.active)
-
-                # Process chunk_size number of states or until no more active states
-                for _ in range(min(chunk_size, len(simgr.active))):
-                    if not simgr.active or time.time() - start_time >= max_time:
-                        break
-
-                    simgr.step()
-                    chunk_paths_explored += 1
-
-                    # Check for potential vulnerabilities in current states
-                    for state in simgr.active:
-                        # Simple vulnerability detection (stack overflow patterns)
-                        if hasattr(state, "memory") and state.satisfiable():
-                            try:
-                                # Check for potential buffer overflow conditions
-                                rsp_val = state.regs.rsp if hasattr(state.regs, "rsp") else state.regs.esp
-                                if state.solver.satisfiable(extra_constraints=[rsp_val < 0x1000]):
-                                    vulnerabilities.append(
-                                        {
-                                            "type": "potential_stack_overflow",
-                                            "address": f"0x{state.addr:x}",
-                                            "chunk": chunk_number,
-                                            "description": "Stack pointer potentially corrupted",
-                                        }
-                                    )
-                            except (AttributeError, Exception) as e:
-                                logger.debug("Skipping state analysis due to error: %s", e)
-
-                chunk_end_time = time.time()
-                chunk_duration = chunk_end_time - chunk_start_time
-
-                exploration_chunks.append(
-                    {
-                        "chunk_number": chunk_number,
-                        "states_processed": chunk_paths_explored,
-                        "initial_active_states": chunk_start_states,
-                        "final_active_states": len(simgr.active),
-                        "chunk_duration": chunk_duration,
-                        "vulnerabilities_found": len([v for v in vulnerabilities if v.get("chunk") == chunk_number]),
-                    }
-                )
-
-                paths_explored += chunk_paths_explored
-                chunk_number += 1
-
-                if paths_explored >= max_states:
-                    break
-
-            total_time = time.time() - start_time
-
-            result = {
-                "target_function": target_function,
-                "target_address": f"0x{target_address:x}",
-                "paths_explored": paths_explored,
-                "execution_time": total_time,
-                "vulnerabilities_found": len(vulnerabilities),
-                "vulnerabilities": vulnerabilities,
-            }
-
-            logger.info(f"Symbolic execution completed: {result['paths_explored']} paths explored")
-            return result
-
-        except (OSError, ValueError, RuntimeError) as e:
-            error_msg = f"Error during symbolic execution: {e!s}"
-            logger.error(error_msg)
-            return {
-                "error": error_msg,
-                "target_function": target_function,
-                "paths_explored": 0,
-                "vulnerabilities_found": 0,
-            }
-
-    def _task_generic(self, worker_id: int, task: dict[str, Any], binary_path: str, chunk_size: int) -> dict[str, Any]:
-        """Process a generic task."""
-        logger = logging.getLogger(f"IntellicrackLogger.Worker{worker_id}")
-        chunk_start = task["params"].get("chunk_start", 0)
-
-        # Read chunk of file
-        with open(binary_path, "rb") as f:
-            f.seek(chunk_start)
-            chunk_data = f.read(chunk_size)
-
-        logger.info("Worker %s processed generic task on chunk at offset %s", worker_id, chunk_start)
-        return {
-            "worker_id": worker_id,
-            "chunk_offset": chunk_start,
-            "chunk_size": len(chunk_data),
-            "task_type": task["type"],
-        }
-
-    def collect_results(self, timeout: float | None = None) -> bool:
-        """Collect results from workers.
-
-        Args:
-            timeout: Timeout in seconds (None for no timeout)
-
-        Returns:
-            bool: True if results collected successfully, False otherwise
-
-        """
-        if not self.running:
-            self.logger.warning("Not running")
-            return False
-
-        try:
-            # Initialize results
-            self.results = {
-                "tasks_completed": 0,
-                "tasks_failed": 0,
-                "total_processing_time": 0.0,
-                "task_results": {},
-            }
-
-            # Collect results
-            tasks_remaining = len(self.tasks)
-            start_time = time.time()
-
-            while tasks_remaining > 0:
-                # Check timeout
-                if timeout is not None and time.time() - start_time > timeout:
-                    self.logger.warning("Timeout after %s seconds", timeout)
-                    break
-
-                # Get result from queue
-                try:
-                    worker_id, task, result = self.result_queue.get(timeout=1.0)
-                except queue.Empty:
-                    # Check if all workers are still alive
-                    if not any(_worker.is_alive() for _worker in self.workers):
-                        self.logger.error("All workers have died")
-                        break
-                    continue
-
-                # Process result
-                task_type = task["type"]
-                self.logger.info("Processing result from worker %s for task %s", worker_id, task_type)
-
-                # Initialize task type in results if not already present
-                if task_type not in self.results["task_results"]:
-                    self.results["task_results"][task_type] = []
-
-                # Add result to results
-                self.results["task_results"][task_type].append(result)
-
-                # Update statistics
-                if result.get("success", False):
-                    self.results["tasks_completed"] += 1
+            if self.mode == "cluster" and self.enable_networking:
+                if self.is_coordinator:
+                    self._start_coordinator_server(port)
                 else:
-                    self.results["tasks_failed"] += 1
+                    self._connect_to_coordinator()
 
-                self.results["total_processing_time"] += result.get("processing_time", 0.0)
+            heartbeat_thread = threading.Thread(target=self._heartbeat_loop, daemon=True)
+            heartbeat_thread.start()
+            self.background_threads.append(heartbeat_thread)
 
-                # Log progress
-                total_tasks = self.results["tasks_completed"] + self.results["tasks_failed"]
-                self.logger.info(f"Progress: {total_tasks}/{len(self.tasks)} tasks processed")
+            task_monitor_thread = threading.Thread(target=self._task_monitor_loop, daemon=True)
+            task_monitor_thread.start()
+            self.background_threads.append(task_monitor_thread)
 
-                # Decrement tasks remaining
-                tasks_remaining -= 1
+            if self.is_coordinator:
+                scheduler_thread = threading.Thread(target=self._task_scheduler_loop, daemon=True)
+                scheduler_thread.start()
+                self.background_threads.append(scheduler_thread)
 
-            # Wait for workers to finish
-            for _worker in self.workers:
-                _worker.join(timeout=1.0)
-
-            self.running = False
-            self.logger.info("Collected results")
-
+            self.logger.info(f"Cluster started on port {port} (coordinator: {self.is_coordinator})")
             return True
 
-        except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error collecting results: %s", e)
+        except (OSError, socket.error) as e:
+            self.logger.error(f"Failed to start cluster: {e}")
+            self.running = False
             return False
 
-    def stop_processing(self) -> bool:
-        """Stop distributed processing.
+    def _start_coordinator_server(self, port: int):
+        """Start the coordinator server for network communication."""
+        try:
+            self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.server_socket.bind(("0.0.0.0", port))
+            self.server_socket.listen(10)
+            self.server_socket.settimeout(1.0)
 
-        Returns:
-            bool: True if processing stopped successfully, False otherwise
+            self.coordinator_address = (self._get_local_ip(), port)
 
-        """
-        if not self.running:
-            return True
+            accept_thread = threading.Thread(target=self._accept_connections_loop, daemon=True)
+            accept_thread.start()
+            self.background_threads.append(accept_thread)
+
+            self.logger.info(f"Coordinator server started on {self.coordinator_address}")
+
+        except (OSError, socket.error) as e:
+            self.logger.error(f"Failed to start coordinator server: {e}")
+            raise
+
+    def _accept_connections_loop(self):
+        """Accept incoming worker connections."""
+        while self.running and self.server_socket:
+            try:
+                client_socket, client_address = self.server_socket.accept()
+                self.logger.info(f"New connection from {client_address}")
+
+                handler_thread = threading.Thread(
+                    target=self._handle_client_connection,
+                    args=(client_socket, client_address),
+                    daemon=True
+                )
+                handler_thread.start()
+                self.background_threads.append(handler_thread)
+
+            except socket.timeout:
+                continue
+            except (OSError, socket.error) as e:
+                if self.running:
+                    self.logger.error(f"Error accepting connection: {e}")
+                break
+
+    def _handle_client_connection(self, client_socket: socket.socket, client_address: tuple):
+        """Handle communication with a connected worker node."""
+        node_id = None
+        try:
+            while self.running:
+                message = self._receive_message(client_socket)
+                if not message:
+                    break
+
+                msg_type = message.get("type")
+
+                if msg_type == "register":
+                    node_id = message.get("node_id")
+                    node_info = message.get("node_info")
+                    self._register_worker_node(node_id, node_info, client_socket)
+                    self._send_message(client_socket, {"type": "registered", "status": "success"})
+
+                elif msg_type == "heartbeat":
+                    node_id = message.get("node_id")
+                    self._update_node_heartbeat(node_id, message.get("status", {}))
+                    self._send_message(client_socket, {"type": "heartbeat_ack"})
+
+                elif msg_type == "task_result":
+                    task_id = message.get("task_id")
+                    result = message.get("result")
+                    self._handle_task_result(task_id, result)
+                    self._send_message(client_socket, {"type": "result_ack"})
+
+                elif msg_type == "task_failed":
+                    task_id = message.get("task_id")
+                    error = message.get("error")
+                    self._handle_task_failure(task_id, error)
+                    self._send_message(client_socket, {"type": "failure_ack"})
+
+                elif msg_type == "request_task":
+                    node_id = message.get("node_id")
+                    task = self._assign_task_to_node(node_id)
+                    if task:
+                        self._send_message(client_socket, {
+                            "type": "task_assigned",
+                            "task": asdict(task)
+                        })
+                    else:
+                        self._send_message(client_socket, {"type": "no_tasks"})
+
+        except (OSError, socket.error) as e:
+            self.logger.error(f"Client connection error from {client_address}: {e}")
+        finally:
+            if node_id:
+                self._mark_node_offline(node_id)
+            try:
+                client_socket.close()
+            except (OSError, socket.error):
+                pass
+
+    def _connect_to_coordinator(self):
+        """Connect to a coordinator node as a worker."""
+        coordinator_host = self.config.get("coordinator_host", "localhost")
+        coordinator_port = self.config.get("coordinator_port", self.DEFAULT_PORT)
 
         try:
-            # Terminate workers
-            for _worker in self.workers:
-                _worker.terminate()
+            client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client_socket.connect((coordinator_host, coordinator_port))
 
-            # Wait for workers to terminate
-            for _worker in self.workers:
-                _worker.join(timeout=1.0)
-
-            # Clear queues
-            if self.task_queue:
-                while not self.task_queue.empty():
-                    try:
-                        self.task_queue.get_nowait()
-                    except queue.Empty as e:
-                        logger.error("queue.Empty in distributed_manager: %s", e)
-                        break
-
-            if self.result_queue:
-                while not self.result_queue.empty():
-                    try:
-                        self.result_queue.get_nowait()
-                    except queue.Empty as e:
-                        logger.error("queue.Empty in distributed_manager: %s", e)
-                        break
-
-            self.running = False
-            self.logger.info("Stopped processing")
-
-            return True
-
-        except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error stopping processing: %s", e)
-            return False
-
-    def get_results(self) -> dict[str, Any]:
-        """Get the distributed processing results.
-
-        Returns:
-            dict: Processing results
-
-        """
-        return self.results
-
-    def run_distributed_pattern_search(self, patterns: list[str | bytes], chunk_size_mb: int = 10) -> list[dict[str, Any]]:
-        """Search for _patterns in a binary file using distributed processing.
-
-        Args:
-            patterns: List of patterns to search for (bytes or regex strings)
-            chunk_size_mb: Size of each chunk in MB
-
-        Returns:
-            list: List of matches with their positions
-
-        """
-        if not self.binary_path:
-            self.logger.error("No binary set")
-            return []
-
-        # Calculate chunk size
-        chunk_size = chunk_size_mb * 1024 * 1024
-
-        # Get file size
-        file_size = os.path.getsize(self.binary_path)
-
-        # Add tasks for each chunk
-        self.tasks = []
-        for _offset in range(0, file_size, chunk_size):
-            task = {
-                "id": len(self.tasks),
-                "type": "find_patterns",
-                "params": {
-                    "patterns": patterns,
-                    "chunk_start": _offset,
-                    "chunk_end": min(_offset + chunk_size, file_size),
-                },
-                "description": f"Pattern search in chunk at offset {_offset}",
+            node_info = {
+                "hostname": socket.gethostname(),
+                "ip_address": self._get_local_ip(),
+                "capabilities": self.nodes[self.node_id].capabilities,
+                "platform_info": self.nodes[self.node_id].platform_info
             }
-            self.tasks.append(task)
 
-        # Start processing
-        if not self.start_processing():
-            return []
+            self._send_message(client_socket, {
+                "type": "register",
+                "node_id": self.node_id,
+                "node_info": node_info
+            })
 
-        # Collect results
-        if not self.collect_results():
-            return []
+            response = self._receive_message(client_socket)
+            if response and response.get("type") == "registered":
+                self.coordinator_address = (coordinator_host, coordinator_port)
+                self.logger.info(f"Connected to coordinator at {self.coordinator_address}")
 
-        # Process and combine results
-        all_matches = []
-        if "find_patterns" in self.results["task_results"]:
-            for _result in self.results["task_results"]["find_patterns"]:
-                if _result.get("success", False) and "matches" in _result:
-                    all_matches.extend(_result["matches"])
+                comm_thread = threading.Thread(
+                    target=self._worker_communication_loop,
+                    args=(client_socket,),
+                    daemon=True
+                )
+                comm_thread.start()
+                self.background_threads.append(comm_thread)
+            else:
+                raise ConnectionError("Failed to register with coordinator")
 
-        # Sort by position
-        all_matches.sort(key=lambda x: x["position"])
+        except (OSError, socket.error, ConnectionError) as e:
+            self.logger.error(f"Failed to connect to coordinator: {e}")
+            raise
 
-        return all_matches
+    def _worker_communication_loop(self, coordinator_socket: socket.socket):
+        """Worker communication loop with coordinator."""
+        try:
+            while self.running:
+                self._send_message(coordinator_socket, {
+                    "type": "request_task",
+                    "node_id": self.node_id
+                })
 
-    def run_distributed_entropy_analysis(self, window_size_kb: int = 64, chunk_size_mb: int = 10) -> dict[str, Any]:
-        """Calculate entropy of a binary file using distributed processing.
+                response = self._receive_message(coordinator_socket)
+                if not response:
+                    break
 
-        Args:
-            window_size_kb: Size of sliding window in KB
-            chunk_size_mb: Size of each chunk in MB
+                if response.get("type") == "task_assigned":
+                    task_data = response.get("task")
+                    task = AnalysisTask(**task_data)
+                    self._execute_task_locally(task, coordinator_socket)
+                elif response.get("type") == "no_tasks":
+                    time.sleep(2.0)
 
-        Returns:
-            dict: Entropy analysis results
+        except (OSError, socket.error) as e:
+            self.logger.error(f"Worker communication error: {e}")
 
-        """
-        if not self.binary_path:
-            self.logger.error("No binary set")
-            return {}
+    def _send_message(self, sock: socket.socket, message: dict[str, Any]):
+        """Send a message over socket with length prefix."""
+        try:
+            data = pickle.dumps(message)
+            length = struct.pack("!I", len(data))
+            sock.sendall(length + data)
+        except (OSError, socket.error, pickle.PickleError) as e:
+            self.logger.error(f"Error sending message: {e}")
+            raise
 
-        # Calculate sizes
-        window_size = window_size_kb * 1024
-        chunk_size = chunk_size_mb * 1024 * 1024
+    def _receive_message(self, sock: socket.socket) -> dict[str, Any] | None:
+        """Receive a message from socket with length prefix."""
+        try:
+            length_data = self._recv_exactly(sock, 4)
+            if not length_data:
+                return None
 
-        # Get file size
-        file_size = os.path.getsize(self.binary_path)
+            length = struct.unpack("!I", length_data)[0]
+            data = self._recv_exactly(sock, length)
+            if not data:
+                return None
 
-        # Add tasks for each chunk
-        self.tasks = []
-        for _offset in range(0, file_size, chunk_size):
-            task = {
-                "id": len(self.tasks),
-                "type": "analyze_entropy",
-                "params": {
-                    "window_size": window_size,
-                    "chunk_start": _offset,
-                    "chunk_end": min(_offset + chunk_size, file_size),
-                },
-                "description": f"Entropy analysis of chunk at offset {_offset}",
-            }
-            self.tasks.append(task)
+            return pickle.loads(data)  # noqa: S301
 
-        # Start processing
-        if not self.start_processing():
-            return {}
-
-        # Collect results
-        if not self.collect_results():
-            return {}
-
-        # Process and combine results
-        all_windows = []
-        chunk_entropies = []
-
-        if "analyze_entropy" in self.results["task_results"]:
-            for _result in self.results["task_results"]["analyze_entropy"]:
-                if _result.get("success", False):
-                    chunk_entropies.append((_result["chunk_entropy"], _result["chunk_size"]))
-                    all_windows.extend(_result.get("windows", []))
-
-        # Sort windows by offset
-        all_windows.sort(key=lambda x: x["offset"])
-
-        # Calculate overall entropy (weighted by chunk size)
-        total_size = sum(size for _, size in chunk_entropies)
-        overall_entropy = sum(entropy * size for entropy, size in chunk_entropies) / total_size if total_size > 0 else 0
-
-        # Find high entropy regions
-        high_entropy_regions = [_w for _w in all_windows if _w["entropy"] > 7.0]
-
-        return {
-            "overall_entropy": overall_entropy,
-            "windows": all_windows,
-            "high_entropy_regions": high_entropy_regions,
-            "high_entropy_count": len(high_entropy_regions),
-        }
-
-    def generate_report(self, filename: str | None = None) -> str | None:
-        """Generate a report of the distributed processing results.
-
-        Args:
-            filename: Path to save the HTML report (None to return HTML as string)
-
-        Returns:
-            str or None: HTML report as string if filename is None, else path to saved file
-
-        """
-        if not self.results:
-            self.logger.error("No results to report")
+        except (OSError, socket.error, pickle.PickleError, struct.error) as e:
+            self.logger.error(f"Error receiving message: {e}")
             return None
 
-        # Generate HTML report
-        html = f"""
-        <html>
-        <head>
-            <title>Distributed Processing Report</title>
-            <style>
-                body {{ font-family: Arial, sans-serif; margin: 20px; }}
-                h1, h2, h3 {{ color: #333; }}
-                table {{ border-collapse: collapse; width: 100%; margin-bottom: 20px; }}
-                th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
-                th {{ background-color: #f2f2f2; }}
-                tr:nth-child(even) {{ background-color: #f9f9f9; }}
-                .success {{ color: green; }}
-                .failure {{ color: red; }}
-            </style>
-        </head>
-        <body>
-            <h1>Distributed Processing Report</h1>
-            <p>Binary: {self.binary_path}</p>
-
-            <h2>Summary</h2>
-            <table>
-                <tr><th>Metric</th><th>Value</th></tr>
-                <tr><td>Workers</td><td>{self.num_workers}</td></tr>
-                <tr><td>Tasks Completed</td><td>{self.results.get("tasks_completed", 0)}</td></tr>
-                <tr><td>Tasks Failed</td><td>{self.results.get("tasks_failed", 0)}</td></tr>
-                <tr><td>Total Processing Time</td><td>{self.results.get("total_processing_time", 0):.2f} seconds</td></tr>
-            </table>
-        """
-
-        # Add task-specific results
-        for task_type, results in self.results.get("task_results", {}).items():
-            html += f"""
-            <h2>{task_type.capitalize()} Results</h2>
-            <p>Total: {len(results)}</p>
-            """
-
-        html += """
-        </body>
-        </html>
-        """
-
-        # Save to file if filename provided
-        if filename:
-            try:
-                with open(filename, "w", encoding="utf-8") as f:
-                    f.write(html)
-                self.logger.info("Report saved to %s", filename)
-                return filename
-            except (OSError, ValueError, RuntimeError) as e:
-                self.logger.error("Error saving report: %s", e)
+    def _recv_exactly(self, sock: socket.socket, length: int) -> bytes | None:
+        """Receive exactly the specified number of bytes."""
+        data = b""
+        while len(data) < length:
+            chunk = sock.recv(length - len(data))
+            if not chunk:
                 return None
-        else:
-            return html
+            data += chunk
+        return data
 
-    def cleanup(self) -> None:
-        """Clean up resources."""
-        self.stop_processing()
+    def _register_worker_node(self, node_id: str, node_info: dict[str, Any], connection: socket.socket):
+        """Register a new worker node."""
+        with self.nodes_lock:
+            worker_node = WorkerNode(
+                node_id=node_id,
+                hostname=node_info.get("hostname", "unknown"),
+                ip_address=node_info.get("ip_address", "unknown"),
+                port=0,
+                status=NodeStatus.READY,
+                capabilities=node_info.get("capabilities", {}),
+                current_load=0.0,
+                max_load=float(node_info.get("capabilities", {}).get("cpu_count", 4)),
+                active_tasks=[],
+                completed_tasks=0,
+                failed_tasks=0,
+                last_heartbeat=time.time(),
+                platform_info=node_info.get("platform_info", {}),
+                resource_usage={}
+            )
 
-        # Clean up Ray if initialized
-        if RAY_AVAILABLE and ray.is_initialized():
+            self.nodes[node_id] = worker_node
+            self.client_connections[node_id] = connection
+            self.logger.info(f"Registered worker node: {node_id} ({worker_node.hostname})")
+
+    def _update_node_heartbeat(self, node_id: str, status: dict[str, Any]):
+        """Update node heartbeat and status."""
+        with self.nodes_lock:
+            if node_id in self.nodes:
+                node = self.nodes[node_id]
+                node.last_heartbeat = time.time()
+                node.current_load = status.get("current_load", node.current_load)
+                node.resource_usage = status.get("resource_usage", {})
+
+                if status.get("status"):
+                    try:
+                        node.status = NodeStatus(status["status"])
+                    except ValueError:
+                        pass
+
+    def _mark_node_offline(self, node_id: str):
+        """Mark a node as offline and reassign its tasks."""
+        with self.nodes_lock:
+            if node_id in self.nodes:
+                self.nodes[node_id].status = NodeStatus.OFFLINE
+                self.logger.warning(f"Node {node_id} marked as offline")
+
+                with self.task_lock:
+                    for task_id in self.nodes[node_id].active_tasks[:]:
+                        if task_id in self.tasks:
+                            task = self.tasks[task_id]
+                            task.status = TaskStatus.RETRY
+                            task.assigned_node = None
+                            task.retry_count += 1
+                            heapq.heappush(self.task_queue, task)
+                            self.logger.info(f"Reassigning task {task_id} after node failure")
+
+                self.nodes[node_id].active_tasks.clear()
+
+    def _heartbeat_loop(self):
+        """Send periodic heartbeat messages."""
+        while self.running:
             try:
-                ray.shutdown()
-            except (OSError, ValueError, RuntimeError) as e:
-                self.logger.error("Error shutting down Ray: %s", e)
+                with self.nodes_lock:
+                    if self.node_id in self.nodes:
+                        node = self.nodes[self.node_id]
+                        node.last_heartbeat = time.time()
+
+                if not self.is_coordinator and self.coordinator_address:
+                    pass
+
+                time.sleep(self.HEARTBEAT_INTERVAL)
+
+            except Exception as e:
+                self.logger.error(f"Heartbeat error: {e}")
+
+    def _task_monitor_loop(self):
+        """Monitor task execution and handle timeouts."""
+        while self.running:
+            try:
+                current_time = time.time()
+
+                with self.nodes_lock:
+                    for node_id, node in list(self.nodes.items()):
+                        if node_id != self.node_id and current_time - node.last_heartbeat > self.NODE_TIMEOUT:
+                            if node.status != NodeStatus.OFFLINE:
+                                self._mark_node_offline(node_id)
+
+                with self.task_lock:
+                    for task_id, task in list(self.tasks.items()):
+                        if task.status == TaskStatus.RUNNING and task.started_at:
+                            if current_time - task.started_at > task.timeout:
+                                self.logger.warning(f"Task {task_id} timed out")
+                                self._handle_task_failure(task_id, "Task timeout exceeded")
+
+                time.sleep(self.TASK_CHECK_INTERVAL)
+
+            except Exception as e:
+                self.logger.error(f"Task monitor error: {e}")
+
+    def _task_scheduler_loop(self):
+        """Schedule tasks to available worker nodes."""
+        while self.running:
+            try:
+                if not self.task_queue:
+                    time.sleep(0.5)
+                    continue
+
+                available_nodes = self._get_available_nodes()
+                if not available_nodes:
+                    time.sleep(1.0)
+                    continue
+
+                with self.task_lock:
+                    while self.task_queue and available_nodes:
+                        task = heapq.heappop(self.task_queue)
+
+                        if task.retry_count > task.max_retries:
+                            self.logger.error(f"Task {task.task_id} exceeded max retries")
+                            task.status = TaskStatus.FAILED
+                            task.error = "Maximum retry count exceeded"
+                            continue
+
+                        best_node = self._select_best_node(task, available_nodes)
+                        if best_node:
+                            self._assign_task(task, best_node)
+                            available_nodes = [n for n in available_nodes if n.node_id != best_node.node_id]
+
+                time.sleep(0.1)
+
+            except Exception as e:
+                self.logger.error(f"Task scheduler error: {e}")
+                time.sleep(1.0)
+
+    def _get_available_nodes(self) -> list[WorkerNode]:
+        """Get list of available worker nodes."""
+        with self.nodes_lock:
+            available = []
+            for node in self.nodes.values():
+                if node.status in (NodeStatus.READY, NodeStatus.BUSY):
+                    if node.current_load < node.max_load:
+                        available.append(node)
+            return available
+
+    def _select_best_node(self, task: AnalysisTask, available_nodes: list[WorkerNode]) -> WorkerNode | None:
+        """Select the best node for a task based on capabilities and load."""
+        if not available_nodes:
+            return None
+
+        scored_nodes = []
+        for node in available_nodes:
+            score = 0.0
+
+            load_factor = 1.0 - (node.current_load / node.max_load)
+            score += load_factor * 10.0
+
+            if task.task_type == "frida_analysis" and node.capabilities.get("supports_frida"):
+                score += 5.0
+            elif task.task_type == "radare2_analysis" and node.capabilities.get("supports_radare2"):
+                score += 5.0
+            elif task.task_type == "angr_analysis" and node.capabilities.get("supports_angr"):
+                score += 5.0
+
+            if node.platform_info.get("system") == "Windows":
+                score += 2.0
+
+            failure_rate = node.failed_tasks / max(node.completed_tasks + node.failed_tasks, 1)
+            score -= failure_rate * 3.0
+
+            scored_nodes.append((score, node))
+
+        scored_nodes.sort(reverse=True, key=lambda x: x[0])
+        return scored_nodes[0][1] if scored_nodes else None
+
+    def _assign_task(self, task: AnalysisTask, node: WorkerNode):
+        """Assign a task to a worker node."""
+        task.assigned_node = node.node_id
+        task.status = TaskStatus.ASSIGNED
+        task.started_at = time.time()
+
+        with self.nodes_lock:
+            node.active_tasks.append(task.task_id)
+            node.current_load += 1.0
+            if node.current_load >= node.max_load:
+                node.status = NodeStatus.BUSY
+
+        self.logger.info(f"Assigned task {task.task_id} to node {node.node_id}")
+
+    def _assign_task_to_node(self, node_id: str) -> AnalysisTask | None:
+        """Assign next available task to requesting node."""
+        with self.task_lock:
+            if not self.task_queue:
+                return None
+
+            task = heapq.heappop(self.task_queue)
+
+            with self.nodes_lock:
+                if node_id in self.nodes:
+                    self._assign_task(task, self.nodes[node_id])
+                    return task
+
+        return None
+
+    def _execute_task_locally(self, task: AnalysisTask, coordinator_socket: socket.socket | None = None):
+        """Execute a task locally on this worker node."""
+        try:
+            task.status = TaskStatus.RUNNING
+            start_time = time.time()
+
+            result = self._run_task_analysis(task)
+
+            task.status = TaskStatus.COMPLETED
+            task.completed_at = time.time()
+            task.result = result
+
+            if coordinator_socket:
+                self._send_message(coordinator_socket, {
+                    "type": "task_result",
+                    "task_id": task.task_id,
+                    "result": result
+                })
+            else:
+                self._handle_task_result(task.task_id, result)
+
+            self.logger.info(f"Completed task {task.task_id} in {time.time() - start_time:.2f}s")
+
+        except Exception as e:
+            error_msg = f"Task execution failed: {str(e)}\n{traceback.format_exc()}"
+            self.logger.error(error_msg)
+
+            task.status = TaskStatus.FAILED
+            task.error = error_msg
+
+            if coordinator_socket:
+                self._send_message(coordinator_socket, {
+                    "type": "task_failed",
+                    "task_id": task.task_id,
+                    "error": error_msg
+                })
+            else:
+                self._handle_task_failure(task.task_id, error_msg)
+
+    def _run_task_analysis(self, task: AnalysisTask) -> dict[str, Any]:
+        """Run the actual binary analysis for a task."""
+        binary_path = task.binary_path
+        task_type = task.task_type
+        params = task.params
+
+        if not os.path.exists(binary_path):
+            raise FileNotFoundError(f"Binary not found: {binary_path}")
+
+        if task_type == "pattern_search":
+            return self._task_pattern_search(binary_path, params)
+        elif task_type == "entropy_analysis":
+            return self._task_entropy_analysis(binary_path, params)
+        elif task_type == "section_analysis":
+            return self._task_section_analysis(binary_path, params)
+        elif task_type == "string_extraction":
+            return self._task_string_extraction(binary_path, params)
+        elif task_type == "import_analysis":
+            return self._task_import_analysis(binary_path, params)
+        elif task_type == "crypto_detection":
+            return self._task_crypto_detection(binary_path, params)
+        elif task_type == "frida_analysis":
+            return self._task_frida_analysis(binary_path, params)
+        elif task_type == "radare2_analysis":
+            return self._task_radare2_analysis(binary_path, params)
+        elif task_type == "angr_analysis":
+            return self._task_angr_analysis(binary_path, params)
+        else:
+            return self._task_generic_analysis(binary_path, params)
+
+    def _task_pattern_search(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
+        """Execute pattern search task."""
+        import re
+
+        patterns = params.get("patterns", [])
+        chunk_start = params.get("chunk_start", 0)
+        chunk_size = params.get("chunk_size", 1024 * 1024)
+
+        matches = []
+        with open(binary_path, "rb") as f:
+            f.seek(chunk_start)
+            data = f.read(chunk_size)
+
+            for pattern in patterns:
+                if isinstance(pattern, str):
+                    pattern = pattern.encode()
+
+                for match in re.finditer(re.escape(pattern), data):
+                    matches.append({
+                        "pattern": pattern.decode() if isinstance(pattern, bytes) else pattern,
+                        "offset": chunk_start + match.start(),
+                        "context": data[max(0, match.start()-20):match.end()+20].hex()
+                    })
+
+        return {
+            "task_type": "pattern_search",
+            "matches": matches,
+            "patterns_searched": len(patterns),
+            "chunk_analyzed": chunk_size
+        }
+
+    def _task_entropy_analysis(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
+        """Execute entropy analysis task."""
+        import math
+        from collections import Counter
+
+        chunk_start = params.get("chunk_start", 0)
+        chunk_size = params.get("chunk_size", 1024 * 1024)
+        window_size = params.get("window_size", 256)
+
+        with open(binary_path, "rb") as f:
+            f.seek(chunk_start)
+            data = f.read(chunk_size)
+
+        def calculate_entropy(data_segment: bytes) -> float:
+            if not data_segment:
+                return 0.0
+            counts = Counter(data_segment)
+            total = len(data_segment)
+            return -sum((count / total) * math.log2(count / total) for count in counts.values())
+
+        overall_entropy = calculate_entropy(data)
+
+        windows = []
+        for i in range(0, len(data) - window_size + 1, window_size // 2):
+            window_data = data[i:i + window_size]
+            entropy = calculate_entropy(window_data)
+            windows.append({
+                "offset": chunk_start + i,
+                "entropy": entropy,
+                "high_entropy": entropy > 7.0
+            })
+
+        return {
+            "task_type": "entropy_analysis",
+            "overall_entropy": overall_entropy,
+            "window_count": len(windows),
+            "high_entropy_regions": sum(1 for w in windows if w["high_entropy"]),
+            "windows": windows
+        }
+
+    def _task_section_analysis(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
+        """Execute PE section analysis task."""
+        try:
+            import pefile
+
+            pe = pefile.PE(binary_path)
+            section_name = params.get("section_name")
+
+            sections_info = []
+            for section in pe.sections:
+                name = section.Name.decode().strip("\x00")
+                if section_name and name != section_name:
+                    continue
+
+                sections_info.append({
+                    "name": name,
+                    "virtual_address": section.VirtualAddress,
+                    "virtual_size": section.Misc_VirtualSize,
+                    "raw_size": section.SizeOfRawData,
+                    "characteristics": section.Characteristics,
+                    "entropy": section.get_entropy()
+                })
+
+            return {
+                "task_type": "section_analysis",
+                "sections": sections_info,
+                "section_count": len(sections_info)
+            }
+
+        except ImportError:
+            return {"error": "pefile not available"}
+        except Exception as e:
+            return {"error": str(e)}
+
+    def _task_string_extraction(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
+        """Execute string extraction task."""
+        chunk_start = params.get("chunk_start", 0)
+        chunk_size = params.get("chunk_size", 1024 * 1024)
+        min_length = params.get("min_length", 4)
+
+        strings = []
+        with open(binary_path, "rb") as f:
+            f.seek(chunk_start)
+            data = f.read(chunk_size)
+
+            current_string = b""
+            offset = 0
+
+            for i, byte in enumerate(data):
+                if 32 <= byte <= 126:
+                    current_string += bytes([byte])
+                else:
+                    if len(current_string) >= min_length:
+                        strings.append({
+                            "string": current_string.decode("ascii"),
+                            "offset": chunk_start + offset,
+                            "length": len(current_string)
+                        })
+                    current_string = b""
+                    offset = i + 1
+
+            if len(current_string) >= min_length:
+                strings.append({
+                    "string": current_string.decode("ascii"),
+                    "offset": chunk_start + offset,
+                    "length": len(current_string)
+                })
+
+        return {
+            "task_type": "string_extraction",
+            "strings": strings[:1000],
+            "total_strings": len(strings)
+        }
+
+    def _task_import_analysis(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
+        """Execute import table analysis task."""
+        try:
+            import pefile
+
+            pe = pefile.PE(binary_path)
+            imports = []
+
+            if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
+                for entry in pe.DIRECTORY_ENTRY_IMPORT:
+                    dll_name = entry.dll.decode() if isinstance(entry.dll, bytes) else entry.dll
+                    functions = []
+
+                    for imp in entry.imports:
+                        func_name = imp.name.decode() if imp.name and isinstance(imp.name, bytes) else str(imp.name)
+                        functions.append({
+                            "name": func_name,
+                            "ordinal": imp.ordinal,
+                            "address": imp.address
+                        })
+
+                    imports.append({
+                        "dll": dll_name,
+                        "functions": functions
+                    })
+
+            return {
+                "task_type": "import_analysis",
+                "imports": imports,
+                "dll_count": len(imports),
+                "total_imports": sum(len(i["functions"]) for i in imports)
+            }
+
+        except ImportError:
+            return {"error": "pefile not available"}
+        except Exception as e:
+            return {"error": str(e)}
+
+    def _task_crypto_detection(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
+        """Execute cryptographic constant detection task."""
+        chunk_start = params.get("chunk_start", 0)
+        chunk_size = params.get("chunk_size", 1024 * 1024)
+
+        crypto_constants = {
+            "AES": [b"\x63\x7c\x77\x7b", b"\x09\x0e\x0b\x0d"],
+            "DES": [b"\x1f\x8b\x08"],
+            "RSA": [b"\x30\x82"],
+            "MD5": [b"\x01\x23\x45\x67", b"\x89\xab\xcd\xef"],
+            "SHA256": [b"\x6a\x09\xe6\x67", b"\xbb\x67\xae\x85"]
+        }
+
+        detections = []
+        with open(binary_path, "rb") as f:
+            f.seek(chunk_start)
+            data = f.read(chunk_size)
+
+            for algo, patterns in crypto_constants.items():
+                for pattern in patterns:
+                    offset = data.find(pattern)
+                    if offset != -1:
+                        detections.append({
+                            "algorithm": algo,
+                            "offset": chunk_start + offset,
+                            "confidence": "high"
+                        })
+
+        return {
+            "task_type": "crypto_detection",
+            "detections": detections,
+            "algorithms_found": len(set(d["algorithm"] for d in detections))
+        }
+
+    def _task_frida_analysis(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
+        """Execute Frida-based dynamic analysis task."""
+        return {
+            "task_type": "frida_analysis",
+            "error": "Frida analysis requires runtime execution environment",
+            "binary": binary_path
+        }
+
+    def _task_radare2_analysis(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
+        """Execute radare2-based analysis task."""
+        try:
+            import r2pipe
+
+            r2 = r2pipe.open(binary_path)
+            r2.cmd("aaa")
+
+            functions = r2.cmdj("aflj") or []
+            strings = r2.cmdj("izj") or []
+
+            r2.quit()
+
+            return {
+                "task_type": "radare2_analysis",
+                "function_count": len(functions),
+                "string_count": len(strings),
+                "functions": functions[:100],
+                "strings": strings[:100]
+            }
+
+        except ImportError:
+            return {"error": "r2pipe not available"}
+        except Exception as e:
+            return {"error": str(e)}
+
+    def _task_angr_analysis(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
+        """Execute angr-based symbolic analysis task."""
+        try:
+            import angr
+
+            proj = angr.Project(binary_path, auto_load_libs=False)
+
+            cfg = proj.analyses.CFGFast()
+
+            return {
+                "task_type": "angr_analysis",
+                "function_count": len(cfg.functions),
+                "basic_block_count": len(list(cfg.nodes())),
+                "entry_point": hex(proj.entry),
+                "architecture": proj.arch.name
+            }
+
+        except ImportError:
+            return {"error": "angr not available"}
+        except Exception as e:
+            return {"error": str(e)}
+
+    def _task_generic_analysis(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
+        """Execute generic binary analysis task."""
+        file_size = os.path.getsize(binary_path)
+
+        with open(binary_path, "rb") as f:
+            header = f.read(4)
+
+        file_type = "Unknown"
+        if header[:2] == b"MZ":
+            file_type = "PE"
+        elif header[:4] == b"\x7fELF":
+            file_type = "ELF"
+
+        return {
+            "task_type": "generic_analysis",
+            "file_size": file_size,
+            "file_type": file_type,
+            "params": params
+        }
+
+    def _handle_task_result(self, task_id: str, result: dict[str, Any]):
+        """Handle successful task completion."""
+        with self.task_lock:
+            if task_id in self.tasks:
+                task = self.tasks[task_id]
+                task.status = TaskStatus.COMPLETED
+                task.completed_at = time.time()
+                task.result = result
+
+                self.completed_results[task_id] = result
+                self.performance_metrics["tasks_completed"] += 1
+
+                processing_time = task.completed_at - task.started_at if task.started_at else 0
+                self.performance_metrics["total_processing_time"] += processing_time
+
+                if task.assigned_node:
+                    with self.nodes_lock:
+                        if task.assigned_node in self.nodes:
+                            node = self.nodes[task.assigned_node]
+                            if task_id in node.active_tasks:
+                                node.active_tasks.remove(task_id)
+                            node.completed_tasks += 1
+                            node.current_load = max(0, node.current_load - 1.0)
+                            if node.status == NodeStatus.BUSY and node.current_load < node.max_load:
+                                node.status = NodeStatus.READY
+
+                self.logger.info(f"Task {task_id} completed successfully")
+
+    def _handle_task_failure(self, task_id: str, error: str):
+        """Handle task failure and schedule retry if applicable."""
+        with self.task_lock:
+            if task_id in self.tasks:
+                task = self.tasks[task_id]
+                task.error = error
+                task.retry_count += 1
+
+                if task.retry_count <= task.max_retries:
+                    task.status = TaskStatus.RETRY
+                    task.assigned_node = None
+                    heapq.heappush(self.task_queue, task)
+                    self.logger.warning(f"Task {task_id} failed, scheduling retry {task.retry_count}/{task.max_retries}")
+                else:
+                    task.status = TaskStatus.FAILED
+                    self.performance_metrics["tasks_failed"] += 1
+                    self.logger.error(f"Task {task_id} failed permanently after {task.retry_count} retries")
+
+                if task.assigned_node:
+                    with self.nodes_lock:
+                        if task.assigned_node in self.nodes:
+                            node = self.nodes[task.assigned_node]
+                            if task_id in node.active_tasks:
+                                node.active_tasks.remove(task_id)
+                            node.failed_tasks += 1
+                            node.current_load = max(0, node.current_load - 1.0)
+                            if node.status == NodeStatus.BUSY:
+                                node.status = NodeStatus.READY
+
+    def submit_task(
+        self,
+        task_type: str,
+        binary_path: str,
+        params: dict[str, Any] | None = None,
+        priority: TaskPriority = TaskPriority.NORMAL,
+        timeout: float = 3600.0
+    ) -> str:
+        """Submit a task for distributed analysis.
+
+        Args:
+            task_type: Type of analysis task
+            binary_path: Path to binary file
+            params: Task-specific parameters
+            priority: Task priority level
+            timeout: Task timeout in seconds
+
+        Returns:
+            str: Task ID
+
+        """
+        task_id = str(uuid.uuid4())
+
+        task = AnalysisTask(
+            task_id=task_id,
+            task_type=task_type,
+            priority=priority,
+            binary_path=binary_path,
+            params=params or {},
+            status=TaskStatus.PENDING,
+            created_at=time.time(),
+            timeout=timeout
+        )
+
+        with self.task_lock:
+            self.tasks[task_id] = task
+            heapq.heappush(self.task_queue, task)
+
+        self.performance_metrics["tasks_submitted"] += 1
+        self.performance_metrics["task_distribution"][task_type] += 1
+
+        self.logger.info(f"Submitted task {task_id} ({task_type}) with priority {priority.name}")
+        return task_id
+
+    def submit_binary_analysis(
+        self,
+        binary_path: str,
+        chunk_size: int = 5 * 1024 * 1024,
+        priority: TaskPriority = TaskPriority.NORMAL
+    ) -> list[str]:
+        """Submit a complete binary analysis as multiple distributed tasks.
+
+        Args:
+            binary_path: Path to binary file
+            chunk_size: Size of chunks for parallel processing
+            priority: Task priority level
+
+        Returns:
+            list[str]: List of task IDs
+
+        """
+        if not os.path.exists(binary_path):
+            raise FileNotFoundError(f"Binary not found: {binary_path}")
+
+        file_size = os.path.getsize(binary_path)
+        task_ids = []
+
+        task_ids.append(self.submit_task("import_analysis", binary_path, {}, priority))
+        task_ids.append(self.submit_task("section_analysis", binary_path, {}, priority))
+
+        for offset in range(0, file_size, chunk_size):
+            chunk_params = {
+                "chunk_start": offset,
+                "chunk_size": min(chunk_size, file_size - offset)
+            }
+
+            task_ids.append(self.submit_task("entropy_analysis", binary_path, chunk_params, priority))
+            task_ids.append(self.submit_task("string_extraction", binary_path, chunk_params, priority))
+            task_ids.append(self.submit_task("crypto_detection", binary_path, chunk_params, priority))
+
+        self.logger.info(f"Submitted {len(task_ids)} tasks for binary analysis of {binary_path}")
+        return task_ids
+
+    def get_task_status(self, task_id: str) -> dict[str, Any] | None:
+        """Get status of a specific task.
+
+        Args:
+            task_id: Task ID
+
+        Returns:
+            dict: Task status information or None if not found
+
+        """
+        with self.task_lock:
+            if task_id in self.tasks:
+                task = self.tasks[task_id]
+                return {
+                    "task_id": task.task_id,
+                    "task_type": task.task_type,
+                    "status": task.status.value,
+                    "priority": task.priority.name,
+                    "assigned_node": task.assigned_node,
+                    "retry_count": task.retry_count,
+                    "created_at": task.created_at,
+                    "started_at": task.started_at,
+                    "completed_at": task.completed_at,
+                    "error": task.error
+                }
+        return None
+
+    def get_task_result(self, task_id: str, timeout: float | None = None) -> dict[str, Any] | None:
+        """Get result of a completed task, optionally waiting for completion.
+
+        Args:
+            task_id: Task ID
+            timeout: Maximum time to wait in seconds (None = no wait)
+
+        Returns:
+            dict: Task result or None if not completed
+
+        """
+        start_time = time.time()
+
+        while True:
+            with self.task_lock:
+                if task_id in self.tasks:
+                    task = self.tasks[task_id]
+                    if task.status == TaskStatus.COMPLETED:
+                        return task.result
+                    elif task.status == TaskStatus.FAILED:
+                        return {"error": task.error, "status": "failed"}
+
+            if timeout is None:
+                return None
+
+            if time.time() - start_time >= timeout:
+                return None
+
+            time.sleep(0.5)
+
+    def wait_for_completion(self, task_ids: list[str] | None = None, timeout: float | None = None) -> dict[str, Any]:
+        """Wait for all tasks (or specified tasks) to complete.
+
+        Args:
+            task_ids: List of task IDs to wait for (None = all tasks)
+            timeout: Maximum time to wait in seconds
+
+        Returns:
+            dict: Completion summary
+
+        """
+        start_time = time.time()
+        target_tasks = set(task_ids) if task_ids else None
+
+        while True:
+            with self.task_lock:
+                if target_tasks:
+                    remaining = [tid for tid in target_tasks
+                               if tid in self.tasks and self.tasks[tid].status in (TaskStatus.PENDING, TaskStatus.ASSIGNED, TaskStatus.RUNNING, TaskStatus.RETRY)]
+                else:
+                    remaining = [tid for tid, task in self.tasks.items()
+                               if task.status in (TaskStatus.PENDING, TaskStatus.ASSIGNED, TaskStatus.RUNNING, TaskStatus.RETRY)]
+
+                if not remaining:
+                    break
+
+            if timeout and time.time() - start_time >= timeout:
+                return {
+                    "status": "timeout",
+                    "remaining_tasks": len(remaining),
+                    "timeout": timeout
+                }
+
+            time.sleep(1.0)
+
+        return {
+            "status": "completed",
+            "total_time": time.time() - start_time
+        }
+
+    def get_cluster_status(self) -> dict[str, Any]:
+        """Get current cluster status and statistics.
+
+        Returns:
+            dict: Cluster status information
+
+        """
+        with self.nodes_lock:
+            nodes_info = {}
+            for node_id, node in self.nodes.items():
+                nodes_info[node_id] = {
+                    "hostname": node.hostname,
+                    "ip_address": node.ip_address,
+                    "status": node.status.value,
+                    "current_load": node.current_load,
+                    "max_load": node.max_load,
+                    "active_tasks": len(node.active_tasks),
+                    "completed_tasks": node.completed_tasks,
+                    "failed_tasks": node.failed_tasks,
+                    "last_heartbeat": node.last_heartbeat,
+                    "capabilities": node.capabilities
+                }
+
+        with self.task_lock:
+            task_stats = {
+                "pending": sum(1 for t in self.tasks.values() if t.status == TaskStatus.PENDING),
+                "assigned": sum(1 for t in self.tasks.values() if t.status == TaskStatus.ASSIGNED),
+                "running": sum(1 for t in self.tasks.values() if t.status == TaskStatus.RUNNING),
+                "completed": sum(1 for t in self.tasks.values() if t.status == TaskStatus.COMPLETED),
+                "failed": sum(1 for t in self.tasks.values() if t.status == TaskStatus.FAILED),
+                "total": len(self.tasks)
+            }
+
+        return {
+            "mode": self.mode,
+            "is_coordinator": self.is_coordinator,
+            "node_id": self.node_id,
+            "running": self.running,
+            "nodes": nodes_info,
+            "node_count": len(self.nodes),
+            "tasks": task_stats,
+            "performance": self.performance_metrics
+        }
+
+    def get_results_summary(self) -> dict[str, Any]:
+        """Get summary of all completed results.
+
+        Returns:
+            dict: Results summary
+
+        """
+        with self.task_lock:
+            results_by_type = defaultdict(list)
+            for task_id, result in self.completed_results.items():
+                if task_id in self.tasks:
+                    task_type = self.tasks[task_id].task_type
+                    results_by_type[task_type].append(result)
+
+            return {
+                "total_results": len(self.completed_results),
+                "results_by_type": dict(results_by_type),
+                "task_types": list(results_by_type.keys())
+            }
+
+    def export_results(self, output_path: str) -> bool:
+        """Export all results to a JSON file.
+
+        Args:
+            output_path: Path to output file
+
+        Returns:
+            bool: True if successful
+
+        """
+        try:
+            results = {
+                "cluster_status": self.get_cluster_status(),
+                "completed_results": self.completed_results,
+                "tasks": {}
+            }
+
+            with self.task_lock:
+                for task_id, task in self.tasks.items():
+                    results["tasks"][task_id] = {
+                        "task_id": task.task_id,
+                        "task_type": task.task_type,
+                        "status": task.status.value,
+                        "priority": task.priority.name,
+                        "binary_path": task.binary_path,
+                        "created_at": task.created_at,
+                        "completed_at": task.completed_at,
+                        "error": task.error
+                    }
+
+            with open(output_path, "w", encoding="utf-8") as f:
+                json.dump(results, f, indent=2, default=str)
+
+            self.logger.info(f"Exported results to {output_path}")
+            return True
+
+        except (OSError, json.JSONEncodeError) as e:
+            self.logger.error(f"Failed to export results: {e}")
+            return False
+
+    def shutdown(self):
+        """Shutdown the distributed manager and cleanup resources."""
+        self.logger.info("Shutting down distributed manager...")
+        self.running = False
+
+        for thread in self.background_threads:
+            if thread.is_alive():
+                thread.join(timeout=2.0)
+
+        if self.server_socket:
+            try:
+                self.server_socket.close()
+            except (OSError, socket.error):
+                pass
+
+        for conn in self.client_connections.values():
+            try:
+                conn.close()
+            except (OSError, socket.error):
+                pass
+
+        if self.local_manager:
+            self.local_manager.cleanup()
+
+        self.logger.info("Distributed manager shutdown complete")
 
 
 def create_distributed_manager(
+    mode: str = "auto",
     config: dict[str, Any] | None = None,
-) -> DistributedProcessingManager:
-    """Create a DistributedProcessingManager instance.
+    enable_networking: bool = True
+) -> DistributedAnalysisManager:
+    """Create a DistributedAnalysisManager instance.
 
     Args:
+        mode: Execution mode - "local", "cluster", or "auto"
         config: Configuration dictionary
+        enable_networking: Enable network-based clustering
 
     Returns:
-        DistributedProcessingManager: Configured manager instance
+        DistributedAnalysisManager: Configured manager instance
 
     """
-    return DistributedProcessingManager(config)
+    return DistributedAnalysisManager(mode=mode, config=config, enable_networking=enable_networking)
 
 
-__all__ = ["DistributedProcessingManager", "create_distributed_manager"]
+__all__ = [
+    "DistributedAnalysisManager",
+    "create_distributed_manager",
+    "AnalysisTask",
+    "WorkerNode",
+    "TaskPriority",
+    "TaskStatus",
+    "NodeStatus"
+]

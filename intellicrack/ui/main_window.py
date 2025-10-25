@@ -53,6 +53,7 @@ from ..analysis.handlers.script_generation_handler import ScriptGenerationHandle
 
 # Local imports
 from ..config import CONFIG
+from ..core.analysis.frida_gui_integration import integrate_frida_gui
 from ..core.analysis.multi_format_analyzer import MultiFormatBinaryAnalyzer
 from ..core.analysis.vulnerability_engine import AdvancedVulnerabilityEngine
 from ..utils.logger import get_logger
@@ -179,6 +180,13 @@ class IntellicrackMainWindow(QMainWindow):
         self._setup_signals()
         self._setup_status_bar()
         self._setup_menu_bar()
+
+        # Integrate Frida GUI components
+        try:
+            integrate_frida_gui(self)
+            self.logger.info("Frida GUI integration completed successfully")
+        except Exception as e:
+            self.logger.warning(f"Frida GUI integration failed: {e}")
 
         # Apply initial settings
         self._apply_initial_settings()

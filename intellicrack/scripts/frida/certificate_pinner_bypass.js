@@ -399,6 +399,11 @@ const CertificatePinnerBypass = {
                         target: 'certificate_pinner_bypass',
                         action: 'android_trust_manager_bypassed',
                         method: 'verifyChain',
+                        host: host,
+                        clientAuth: clientAuth,
+                        hasOcspData: ocspData !== null,
+                        hasTlsSctData: tlsSctData !== null,
+                        trustAnchorCount: trustAnchorChain ? trustAnchorChain.length : 0,
                     });
                     self.stats.validationsBypassed++;
                     return untrustedChain;
@@ -417,6 +422,12 @@ const CertificatePinnerBypass = {
                         target: 'certificate_pinner_bypass',
                         action: 'android_trust_manager_bypassed',
                         method: 'checkTrustedRecursive',
+                        certsCount: certs ? certs.length : 0,
+                        host: host,
+                        clientAuth: clientAuth,
+                        untrustedChainCount: untrustedChain ? untrustedChain.length : 0,
+                        trustAnchorChainCount: trustAnchorChain ? trustAnchorChain.length : 0,
+                        usedCount: used ? used.length : 0,
                     });
                     self.stats.validationsBypassed++;
                     return Java.use('java.util.ArrayList').$new();
@@ -424,7 +435,13 @@ const CertificatePinnerBypass = {
 
                 self.stats.hooksInstalled += 2;
             } catch (e) {
-                // Different Android version
+                send({
+                    type: 'debug',
+                    target: 'certificate_pinner_bypass',
+                    action: 'trust_manager_hook_failed',
+                    error: e.toString(),
+                    stack: e.stack || 'No stack trace',
+                });
             }
 
             // X509TrustManager implementations
@@ -471,7 +488,14 @@ const CertificatePinnerBypass = {
 
                             self.stats.hooksInstalled += 3;
                         } catch (e) {
-                            // Not a valid TrustManager
+                            send({
+                                type: 'debug',
+                                target: 'certificate_pinner_bypass',
+                                action: 'custom_trust_manager_hook_failed',
+                                className: className,
+                                error: e.toString(),
+                                stack: e.stack || 'No stack trace',
+                            });
                         }
                     }
                 },
@@ -481,18 +505,22 @@ const CertificatePinnerBypass = {
             // HostnameVerifier
             try {
                 var HostnameVerifier = Java.use('javax.net.ssl.HostnameVerifier');
-                var SSLSession = Java.use('javax.net.ssl.SSLSession');
 
-                var MyHostnameVerifier = Java.registerClass({
+                Java.registerClass({
                     name: 'com.intellicrack.MyHostnameVerifier',
                     implements: [HostnameVerifier],
                     methods: {
                         verify: function (hostname, session) {
+                            var sessionInfo = {
+                                hostname: hostname,
+                                protocol: session ? session.getProtocol() : 'unknown',
+                                cipherSuite: session ? session.getCipherSuite() : 'unknown',
+                            };
                             send({
                                 type: 'bypass',
                                 target: 'certificate_pinner_bypass',
                                 action: 'hostname_verifier_bypassed',
-                                hostname: hostname,
+                                session: sessionInfo,
                             });
                             self.stats.validationsBypassed++;
                             return true;
@@ -507,11 +535,17 @@ const CertificatePinnerBypass = {
                             try {
                                 var clazz = Java.use(className);
                                 clazz.verify.implementation = function (hostname, session) {
+                                    var sessionData = {
+                                        hostname: hostname,
+                                        protocol: session ? session.getProtocol() : 'N/A',
+                                        peerHost: session ? session.getPeerHost() : 'N/A',
+                                    };
                                     send({
                                         type: 'bypass',
                                         target: 'certificate_pinner_bypass',
                                         action: 'custom_hostname_verifier_bypassed',
                                         class_name: className,
+                                        session_data: sessionData,
                                     });
                                     self.stats.validationsBypassed++;
                                     return true;
@@ -562,6 +596,7 @@ const CertificatePinnerBypass = {
                         action: 'okhttp3_pinning_bypassed',
                         method: 'List overload',
                         hostname: hostname,
+                        certificateCount: peerCertificates ? peerCertificates.size() : 0,
                     });
                     self.stats.validationsBypassed++;
                 };
@@ -576,13 +611,20 @@ const CertificatePinnerBypass = {
                         action: 'okhttp3_pinning_bypassed',
                         method: 'Certificate array overload',
                         hostname: hostname,
+                        certificateCount: peerCertificates ? peerCertificates.length : 0,
                     });
                     self.stats.validationsBypassed++;
                 };
 
                 self.stats.hooksInstalled += 2;
             } catch (e) {
-                // OkHttp3 not found
+                send({
+                    type: 'debug',
+                    target: 'certificate_pinner_bypass',
+                    action: 'okhttp3_hook_failed',
+                    error: e.toString(),
+                    stack: e.stack || 'No stack trace',
+                });
             }
 
             // OkHttp2
@@ -600,13 +642,20 @@ const CertificatePinnerBypass = {
                         target: 'certificate_pinner_bypass',
                         action: 'okhttp2_pinning_bypassed',
                         hostname: hostname,
+                        certificateCount: peerCertificates ? peerCertificates.size() : 0,
                     });
                     self.stats.validationsBypassed++;
                 };
 
                 self.stats.hooksInstalled++;
             } catch (e) {
-                // OkHttp2 not found
+                send({
+                    type: 'debug',
+                    target: 'certificate_pinner_bypass',
+                    action: 'okhttp2_hook_failed',
+                    error: e.toString(),
+                    stack: e.stack || 'No stack trace',
+                });
             }
 
             // Retrofit
@@ -618,8 +667,24 @@ const CertificatePinnerBypass = {
                     name: 'com.intellicrack.TrustAllManager',
                     implements: [TrustManager],
                     methods: {
-                        checkClientTrusted: function (chain, authType) {},
-                        checkServerTrusted: function (chain, authType) {},
+                        checkClientTrusted: function (chain, authType) {
+                            send({
+                                type: 'debug',
+                                target: 'certificate_pinner_bypass',
+                                action: 'trust_all_manager_check_client',
+                                chainLength: chain ? chain.length : 0,
+                                authType: authType,
+                            });
+                        },
+                        checkServerTrusted: function (chain, authType) {
+                            send({
+                                type: 'debug',
+                                target: 'certificate_pinner_bypass',
+                                action: 'trust_all_manager_check_server',
+                                chainLength: chain ? chain.length : 0,
+                                authType: authType,
+                            });
+                        },
                         getAcceptedIssuers: function () {
                             return Java.array('java.security.cert.X509Certificate', []);
                         },
@@ -639,7 +704,13 @@ const CertificatePinnerBypass = {
 
                 self.stats.hooksInstalled++;
             } catch (e) {
-                // Retrofit not found
+                send({
+                    type: 'debug',
+                    target: 'certificate_pinner_bypass',
+                    action: 'retrofit_hook_failed',
+                    error: e.toString(),
+                    stack: e.stack || 'No stack trace',
+                });
             }
         });
     },
@@ -687,11 +758,13 @@ const CertificatePinnerBypass = {
                 x509_verify_cert,
                 new NativeCallback(
                     function (ctx) {
+                        var contextPtr = ctx.toString();
                         send({
                             type: 'bypass',
                             target: 'certificate_pinner_bypass',
                             action: 'openssl_cert_verification_bypassed',
                             api: 'X509_verify_cert',
+                            context: contextPtr,
                         });
                         self.stats.validationsBypassed++;
                         return 1; // Success
@@ -713,11 +786,13 @@ const CertificatePinnerBypass = {
                 ssl_get_verify_result,
                 new NativeCallback(
                     function (ssl) {
+                        var sslPtr = ssl.toString();
                         send({
                             type: 'bypass',
                             target: 'certificate_pinner_bypass',
                             action: 'openssl_verify_result_bypassed',
                             api: 'SSL_get_verify_result',
+                            ssl_pointer: sslPtr,
                         });
                         self.stats.validationsBypassed++;
                         return 0; // X509_V_OK
@@ -818,6 +893,9 @@ const CertificatePinnerBypass = {
                         type: 'bypass',
                         target: 'certificate_pinner_bypass',
                         action: 'java_sslcontext_init_intercepted',
+                        hasKeyManager: keyManager !== null,
+                        hasTrustManager: trustManager !== null,
+                        hasSecureRandom: secureRandom !== null,
                     });
 
                     // Create custom TrustManager
@@ -832,6 +910,8 @@ const CertificatePinnerBypass = {
                                     target: 'certificate_pinner_bypass',
                                     action: 'java_trust_manager_bypassed',
                                     method: 'checkClientTrusted',
+                                    chainLength: chain ? chain.length : 0,
+                                    authType: authType,
                                 });
                                 self.stats.validationsBypassed++;
                             },
@@ -841,6 +921,8 @@ const CertificatePinnerBypass = {
                                     target: 'certificate_pinner_bypass',
                                     action: 'java_trust_manager_bypassed',
                                     method: 'checkServerTrusted',
+                                    chainLength: chain ? chain.length : 0,
+                                    authType: authType,
                                 });
                                 self.stats.validationsBypassed++;
                             },
@@ -876,6 +958,7 @@ const CertificatePinnerBypass = {
                   type: 'bypass',
                   target: 'certificate_pinner_bypass',
                   action: 'java_https_hostname_verifier_intercepted',
+                  originalVerifier: verifier !== null ? verifier.$className : 'null',
               });
 
               var HostnameVerifier = Java.use('javax.net.ssl.HostnameVerifier');
@@ -884,11 +967,16 @@ const CertificatePinnerBypass = {
                   implements: [HostnameVerifier],
                   methods: {
                       verify: function (hostname, session) {
+                          var sessionData = {
+                              hostname: hostname,
+                              protocol: session ? session.getProtocol() : 'N/A',
+                              peerPort: session ? session.getPeerPort() : -1,
+                          };
                           send({
                               type: 'bypass',
                               target: 'certificate_pinner_bypass',
                               action: 'java_hostname_verification_bypassed',
-                              hostname: hostname,
+                              session: sessionData,
                           });
                           self.stats.validationsBypassed++;
                           return true;
@@ -989,10 +1077,14 @@ const CertificatePinnerBypass = {
                 SecTrustEvaluate,
                 new NativeCallback(
                     function (trust, result) {
+                        var trustPtr = trust.toString();
+                        var resultPtr = result.toString();
                         send({
                             type: 'bypass',
                             target: 'certificate_pinner_bypass',
                             action: 'ios_sectrust_evaluate_bypassed',
+                            trust_pointer: trustPtr,
+                            result_pointer: resultPtr,
                         });
                         Memory.writeU32(result, 1); // kSecTrustResultProceed
                         self.stats.validationsBypassed++;
@@ -1015,10 +1107,14 @@ const CertificatePinnerBypass = {
                 SecTrustSetAnchorCertificates,
                 new NativeCallback(
                     function (trust, anchorCertificates) {
+                        var trustPtr = trust.toString();
+                        var anchorPtr = anchorCertificates.toString();
                         send({
                             type: 'bypass',
                             target: 'certificate_pinner_bypass',
                             action: 'ios_sectrust_anchor_certs_bypassed',
+                            trust_pointer: trustPtr,
+                            anchor_pointer: anchorPtr,
                         });
                         return 0; // errSecSuccess
                     },
@@ -1074,7 +1170,14 @@ const CertificatePinnerBypass = {
                                 });
                                 self.stats.hooksInstalled++;
                             } catch (e) {
-                                // Failed to hook
+                                send({
+                                    type: 'debug',
+                                    target: 'certificate_pinner_bypass',
+                                    action: 'custom_function_hook_failed',
+                                    function_name: exp.name,
+                                    error: e.toString(),
+                                    stack: e.stack || 'No stack trace',
+                                });
                             }
                         }
                     });
@@ -1085,12 +1188,13 @@ const CertificatePinnerBypass = {
 
     // Inject trusted certificate
     injectTrustedCertificate: function (buffer) {
-    // This would contain actual certificate injection logic
-    // For now, we'll just mark it as trusted
+        var bufferPtr = buffer ? buffer.toString() : 'null';
         send({
             type: 'info',
             target: 'certificate_pinner_bypass',
             action: 'injecting_trusted_certificate',
+            buffer_pointer: bufferPtr,
+            buffer_size: buffer && !buffer.isNull() ? 'valid' : 'invalid',
         });
     },
 
@@ -1184,6 +1288,8 @@ const CertificatePinnerBypass = {
                         type: 'bypass',
                         target: 'certificate_pinner_bypass',
                         action: 'android_conscrypt_chain_pinning_bypassed',
+                        hostname: hostname,
+                        chainLength: chain ? chain.length : 0,
                     });
                     self.stats.validationsBypassed++;
                     return true;
@@ -1197,6 +1303,8 @@ const CertificatePinnerBypass = {
                         type: 'bypass',
                         target: 'certificate_pinner_bypass',
                         action: 'android_conscrypt_chain_valid_bypassed',
+                        hostname: hostname,
+                        chainLength: chain ? chain.length : 0,
                     });
                     self.stats.validationsBypassed++;
                     return true;
@@ -1204,7 +1312,13 @@ const CertificatePinnerBypass = {
 
                 self.stats.hooksInstalled += 2;
             } catch (e) {
-                // Conscrypt not found
+                send({
+                    type: 'debug',
+                    target: 'certificate_pinner_bypass',
+                    action: 'conscrypt_hook_failed',
+                    error: e.toString(),
+                    stack: e.stack || 'No stack trace',
+                });
             }
 
             // Network Security Config (Android N+)
@@ -1216,13 +1330,14 @@ const CertificatePinnerBypass = {
                 NetworkSecurityConfig.getDefaultBuilder.implementation = function (
                     applicationInfo,
                 ) {
+                    var appPackage = applicationInfo ? applicationInfo.packageName : 'unknown';
                     send({
                         type: 'bypass',
                         target: 'certificate_pinner_bypass',
                         action: 'android_network_security_config_intercepted',
+                        package: appPackage,
                     });
 
-                    var builder = this.getDefaultBuilder(applicationInfo);
                     var NetworkSecurityConfigBuilder = Java.use(
                         'android.security.net.config.NetworkSecurityConfig$Builder',
                     );
@@ -1236,7 +1351,13 @@ const CertificatePinnerBypass = {
 
                 self.stats.hooksInstalled++;
             } catch (e) {
-                // Not Android N+
+                send({
+                    type: 'debug',
+                    target: 'certificate_pinner_bypass',
+                    action: 'network_security_config_hook_failed',
+                    error: e.toString(),
+                    stack: e.stack || 'No stack trace',
+                });
             }
         });
     },
@@ -1270,6 +1391,7 @@ const CertificatePinnerBypass = {
                             Interceptor.attach(match.address, {
                                 onEnter: function (args) {
                                     this.ctContext = true;
+                                    this.argsCount = args.length;
                                 },
                                 onLeave: function (retval) {
                                     if (this.ctContext && retval.toInt32() === 0) {
@@ -1280,6 +1402,7 @@ const CertificatePinnerBypass = {
                                             target: 'certificate_pinner_bypass',
                                             action: 'certificate_transparency_bypassed',
                                             method: 'chrome_ct_verification',
+                                            args_count: this.argsCount,
                                         });
                                     }
                                 },
@@ -1290,7 +1413,9 @@ const CertificatePinnerBypass = {
                                 type: 'debug',
                                 target: 'certificate_pinner_bypass',
                                 action: 'hook_failed',
+                                module: module.name,
                                 error: e.toString(),
+                                stack: e.stack || 'No stack trace',
                             });
                         }
                     });
@@ -1318,6 +1443,11 @@ const CertificatePinnerBypass = {
                             target: 'certificate_pinner_bypass',
                             action: 'certificate_transparency_bypassed',
                             method: 'openssl_ct_validate_sct',
+                            sct_ptr: sct.toString(),
+                            cert_ptr: cert.toString(),
+                            issuer_ptr: issuer.toString(),
+                            log_id_ptr: log_id.toString(),
+                            signature_type: signature_type,
                         });
                         return 1; // SCT_VALIDATION_STATUS_VALID
                     },
@@ -1372,6 +1502,9 @@ const CertificatePinnerBypass = {
                             target: 'certificate_pinner_bypass',
                             action: 'certificate_transparency_bypassed',
                             method: 'chromium_ct_verification',
+                            chainLength: certChain ? certChain.length : 0,
+                            hostname: hostname,
+                            authType: authType,
                         });
                         return [];
                     };
@@ -1507,6 +1640,7 @@ const CertificatePinnerBypass = {
                             action: 'caa_record_validation_bypassed',
                             method: 'android_caa_validator',
                             hostname: hostname,
+                            certificatesCount: certificates ? certificates.length : 0,
                         });
                         return true;
                     };
@@ -1645,11 +1779,17 @@ const CertificatePinnerBypass = {
                         error,
                     ) {
                         self.stats.httpPublicKeyPinningAdvancedBypassEvents++;
+                        var errorDetails = {
+                            primaryError: error ? error.getPrimaryError() : -1,
+                            url: error ? error.getUrl() : 'unknown',
+                            viewUrl: view ? view.getUrl() : 'unknown',
+                        };
                         send({
                             type: 'bypass',
                             target: 'certificate_pinner_bypass',
                             action: 'hpkp_validation_bypassed',
                             method: 'android_webview_ssl_error',
+                            error_details: errorDetails,
                         });
                         handler.proceed();
                     };
@@ -1677,6 +1817,8 @@ const CertificatePinnerBypass = {
                             target: 'certificate_pinner_bypass',
                             action: 'hpkp_validation_bypassed',
                             method: 'android_hpkp_validator',
+                            hostname: hostname,
+                            chainLength: chain ? chain.length : 0,
                         });
                         return true;
                     };
@@ -1758,12 +1900,14 @@ const CertificatePinnerBypass = {
                 daneVerify,
                 new NativeCallback(
                     function (ssl) {
+                        var sslPtr = ssl.toString();
                         self.stats.dnsBasedAuthenticationBypassEvents++;
                         send({
                             type: 'bypass',
                             target: 'certificate_pinner_bypass',
                             action: 'dane_validation_bypassed',
                             method: 'openssl_dane_disable',
+                            ssl_pointer: sslPtr,
                         });
                         return 1; // Success (but DANE disabled)
                     },
@@ -1784,12 +1928,18 @@ const CertificatePinnerBypass = {
                 daneVerifyCert,
                 new NativeCallback(
                     function (ssl, mcert, mspki) {
+                        var sslPtr = ssl.toString();
+                        var mcertPtr = mcert ? mcert.toString() : 'null';
+                        var mspkiPtr = mspki ? mspki.toString() : 'null';
                         self.stats.dnsBasedAuthenticationBypassEvents++;
                         send({
                             type: 'bypass',
                             target: 'certificate_pinner_bypass',
                             action: 'dane_validation_bypassed',
                             method: 'openssl_dane_authority_spoofed',
+                            ssl_pointer: sslPtr,
+                            mcert_pointer: mcertPtr,
+                            mspki_pointer: mspkiPtr,
                         });
                         return 1; // Successful match
                     },
@@ -1870,12 +2020,20 @@ const CertificatePinnerBypass = {
                 sctVerify,
                 new NativeCallback(
                     function (logkey, sct, cert, issuer) {
+                        var logkeyPtr = logkey.toString();
+                        var sctPtr = sct.toString();
+                        var certPtr = cert.toString();
+                        var issuerPtr = issuer.toString();
                         self.stats.signedCertificateTimestampsBypassEvents++;
                         send({
                             type: 'bypass',
                             target: 'certificate_pinner_bypass',
                             action: 'sct_validation_bypassed',
                             method: 'openssl_sct_verify',
+                            logkey_ptr: logkeyPtr,
+                            sct_ptr: sctPtr,
+                            cert_ptr: certPtr,
+                            issuer_ptr: issuerPtr,
                         });
                         return 1; // SCT_VALIDATION_STATUS_VALID
                     },
@@ -1952,6 +2110,9 @@ const CertificatePinnerBypass = {
                             target: 'certificate_pinner_bypass',
                             action: 'sct_validation_bypassed',
                             method: 'android_conscrypt_sct',
+                            hasSct: sct !== null,
+                            hasCertificate: certificate !== null,
+                            hasIssuer: issuer !== null,
                         });
                         return true;
                     };
@@ -1980,6 +2141,9 @@ const CertificatePinnerBypass = {
                             target: 'certificate_pinner_bypass',
                             action: 'sct_validation_bypassed',
                             method: 'android_ct_policy_conformance',
+                            hasResult: result !== null,
+                            hostname: hostname,
+                            certificatesCount: certificates ? certificates.length : 0,
                         });
                         return true;
                     };
@@ -2091,12 +2255,19 @@ const CertificatePinnerBypass = {
                 tls13CertVerify,
                 new NativeCallback(
                     function (ssl, cert, verify_data, verify_len) {
+                        var sslPtr = ssl.toString();
+                        var certPtr = cert.toString();
+                        var verifyDataPtr = verify_data.toString();
                         self.stats.modernTls13SecurityBypassEvents++;
                         send({
                             type: 'bypass',
                             target: 'certificate_pinner_bypass',
                             action: 'tls13_security_bypassed',
                             method: 'certificate_verify_message',
+                            ssl_pointer: sslPtr,
+                            cert_pointer: certPtr,
+                            verify_data_pointer: verifyDataPtr,
+                            verify_len: verify_len,
                         });
                         return 1; // Success
                     },
@@ -2115,12 +2286,13 @@ const CertificatePinnerBypass = {
         if (tls13PSK) {
             Interceptor.attach(tls13PSK, {
                 onEnter: function (args) {
-                    // Modify PSK to accept any identity
+                    this.argsCount = args.length;
                     send({
                         type: 'info',
                         target: 'certificate_pinner_bypass',
                         action: 'tls13_psk_manipulation',
                         method: 'psk_binder_generation',
+                        args_count: this.argsCount,
                     });
                 },
                 onLeave: function (retval) {
@@ -2147,12 +2319,14 @@ const CertificatePinnerBypass = {
                 tls13EarlyData,
                 new NativeCallback(
                     function (ssl) {
+                        var sslPtr = ssl.toString();
                         self.stats.modernTls13SecurityBypassEvents++;
                         send({
                             type: 'bypass',
                             target: 'certificate_pinner_bypass',
                             action: 'tls13_security_bypassed',
                             method: 'early_data_acceptance',
+                            ssl_pointer: sslPtr,
                         });
                         return 1; // SSL_EARLY_DATA_ACCEPTED
                     },
@@ -2232,12 +2406,13 @@ const CertificatePinnerBypass = {
         if (alpnSelect) {
             Interceptor.attach(alpnSelect, {
                 onEnter: function (args) {
-                    // Always approve ALPN protocol selection
+                    this.argsCount = args.length;
                     send({
                         type: 'info',
                         target: 'certificate_pinner_bypass',
                         action: 'alpn_protocol_negotiation',
                         method: 'selection_callback_hooked',
+                        args_count: this.argsCount,
                     });
                 },
                 onLeave: function (retval) {
@@ -2271,6 +2446,7 @@ const CertificatePinnerBypass = {
                                 target: 'certificate_pinner_bypass',
                                 action: 'alpn_protocol_override',
                                 protocols: 'h2,http/1.1',
+                                protocols_length: protocols ? protocols.byteLength : 0,
                             });
                         } catch (e) {
                             send({
@@ -2278,6 +2454,7 @@ const CertificatePinnerBypass = {
                                 target: 'certificate_pinner_bypass',
                                 action: 'hook_failed',
                                 error: e.toString(),
+                                stack: e.stack || 'No stack trace',
                             });
                         }
                     }
@@ -2300,7 +2477,6 @@ const CertificatePinnerBypass = {
         if (Java.available) {
             Java.perform(function () {
                 try {
-                    var OkHttpClient = Java.use('okhttp3.OkHttpClient');
                     var Builder = Java.use('okhttp3.OkHttpClient$Builder');
 
                     Builder.protocols.implementation = function (protocols) {
@@ -2310,6 +2486,7 @@ const CertificatePinnerBypass = {
                             target: 'certificate_pinner_bypass',
                             action: 'alpn_security_bypassed',
                             method: 'okhttp_protocols_override',
+                            originalProtocolsCount: protocols ? protocols.size() : 0,
                         });
 
                         // Force HTTP/1.1 and HTTP/2 support
@@ -2327,6 +2504,7 @@ const CertificatePinnerBypass = {
                         target: 'certificate_pinner_bypass',
                         action: 'hook_failed',
                         error: e.toString(),
+                        stack: e.stack || 'No stack trace',
                     });
                 }
 
@@ -2423,12 +2601,16 @@ const CertificatePinnerBypass = {
                 ocspStaple,
                 new NativeCallback(
                     function (ssl, resp) {
+                        var sslPtr = ssl.toString();
+                        var respPtr = resp ? resp.toString() : 'null';
                         self.stats.onlineCertificateStatusProtocolBypassEvents++;
                         send({
                             type: 'bypass',
                             target: 'certificate_pinner_bypass',
                             action: 'ocsp_must_staple_bypassed',
                             method: 'ocsp_response_status_override',
+                            ssl_pointer: sslPtr,
+                            resp_pointer: respPtr,
                         });
                         return 0; // OCSP_RESPONSE_STATUS_SUCCESSFUL
                     },
@@ -2449,12 +2631,19 @@ const CertificatePinnerBypass = {
                 ocspVerify,
                 new NativeCallback(
                     function (bs, certs, st, flags) {
+                        var bsPtr = bs.toString();
+                        var certsPtr = certs ? certs.toString() : 'null';
+                        var stPtr = st ? st.toString() : 'null';
                         self.stats.onlineCertificateStatusProtocolBypassEvents++;
                         send({
                             type: 'bypass',
                             target: 'certificate_pinner_bypass',
                             action: 'ocsp_must_staple_bypassed',
                             method: 'ocsp_basic_verify_override',
+                            bs_pointer: bsPtr,
+                            certs_pointer: certsPtr,
+                            st_pointer: stPtr,
+                            flags: flags,
                         });
                         return 1; // Success
                     },
@@ -2475,12 +2664,22 @@ const CertificatePinnerBypass = {
                 ocspCertStatus,
                 new NativeCallback(
                     function (single, reason, revtime, thisupd, nextupd) {
+                        var singlePtr = single.toString();
+                        var reasonPtr = reason ? reason.toString() : 'null';
+                        var revtimePtr = revtime ? revtime.toString() : 'null';
+                        var thisupdPtr = thisupd ? thisupd.toString() : 'null';
+                        var nextupdPtr = nextupd ? nextupd.toString() : 'null';
                         self.stats.onlineCertificateStatusProtocolBypassEvents++;
                         send({
                             type: 'bypass',
                             target: 'certificate_pinner_bypass',
                             action: 'ocsp_must_staple_bypassed',
                             method: 'ocsp_cert_status_good',
+                            single_ptr: singlePtr,
+                            reason_ptr: reasonPtr,
+                            revtime_ptr: revtimePtr,
+                            thisupd_ptr: thisupdPtr,
+                            nextupd_ptr: nextupdPtr,
                         });
                         return 0; // V_OCSP_CERTSTATUS_GOOD
                     },
@@ -2544,6 +2743,16 @@ const CertificatePinnerBypass = {
                             target: 'certificate_pinner_bypass',
                             action: 'ocsp_must_staple_bypassed',
                             method: 'java_ocsp_checker',
+                            hasCert: cert !== null,
+                            hasIssuerCert: issuerCert !== null,
+                            hasResponderCert: responderCert !== null,
+                            responderURI: responderURI,
+                            responseLifetime: responseLifetime,
+                            useNonce: useNonce,
+                            hasTrustAnchors: trustAnchors !== null,
+                            hasCertStores: certStores !== null,
+                            hasUnresolvedCritExts: unresolvedCritExts !== null,
+                            hasResponseMap: responseMap !== null,
                         });
                         // Return without throwing exception (successful validation)
                     };
@@ -2572,6 +2781,9 @@ const CertificatePinnerBypass = {
                             target: 'certificate_pinner_bypass',
                             action: 'ocsp_must_staple_bypassed',
                             method: 'android_conscrypt_ocsp',
+                            chainLength: chain ? chain.length : 0,
+                            hasOcspData: ocspData !== null,
+                            hostname: hostname,
                         });
                         return true;
                     };
@@ -2616,6 +2828,7 @@ const CertificatePinnerBypass = {
                             Interceptor.attach(match.address, {
                                 onEnter: function (args) {
                                     this.cabfValidation = true;
+                                    this.argsCount = args.length;
                                 },
                                 onLeave: function (retval) {
                                     if (this.cabfValidation && retval.toInt32() === 0) {
@@ -2626,6 +2839,7 @@ const CertificatePinnerBypass = {
                                             target: 'certificate_pinner_bypass',
                                             action: 'cabf_validation_bypassed',
                                             method: 'baseline_requirements_override',
+                                            args_count: this.argsCount,
                                         });
                                     }
                                 },
@@ -2636,7 +2850,9 @@ const CertificatePinnerBypass = {
                                 type: 'debug',
                                 target: 'certificate_pinner_bypass',
                                 action: 'hook_failed',
+                                module: module.name,
                                 error: e.toString(),
+                                stack: e.stack || 'No stack trace',
                             });
                         }
                     });
@@ -2688,12 +2904,16 @@ const CertificatePinnerBypass = {
                 evValidation,
                 new NativeCallback(
                     function (x, purpose, ca) {
+                        var xPtr = x.toString();
                         self.stats.certificateAuthorityBrowserForumBypassEvents++;
                         send({
                             type: 'bypass',
                             target: 'certificate_pinner_bypass',
                             action: 'cabf_validation_bypassed',
                             method: 'ev_certificate_validation',
+                            x_pointer: xPtr,
+                            purpose: purpose,
+                            ca: ca,
                         });
                         return 1; // Success
                     },
@@ -2721,6 +2941,8 @@ const CertificatePinnerBypass = {
                             target: 'certificate_pinner_bypass',
                             action: 'cabf_validation_bypassed',
                             method: 'java_policy_checker',
+                            hasCert: cert !== null,
+                            hasUnresolvedCritExts: unresolvedCritExts !== null,
                         });
                         // Return without throwing exception
                     };
@@ -2752,6 +2974,12 @@ const CertificatePinnerBypass = {
                             target: 'certificate_pinner_bypass',
                             action: 'cabf_validation_bypassed',
                             method: 'android_trust_recursive',
+                            certsCount: certs ? certs.length : 0,
+                            host: host,
+                            clientAuth: clientAuth,
+                            untrustedChainCount: untrustedChain ? untrustedChain.length : 0,
+                            trustAnchorChainCount: trustAnchorChain ? trustAnchorChain.length : 0,
+                            usedCount: used ? used.length : 0,
                         });
                         return Java.use('java.util.ArrayList').$new();
                     };
@@ -2868,12 +3096,18 @@ const CertificatePinnerBypass = {
                 latticeValidation,
                 new NativeCallback(
                     function (signature, message, publicKey) {
+                        var signaturePtr = signature.toString();
+                        var messagePtr = message.toString();
+                        var publicKeyPtr = publicKey.toString();
                         self.stats.quantumSafeCertificateValidationBypassEvents++;
                         send({
                             type: 'bypass',
                             target: 'certificate_pinner_bypass',
                             action: 'quantum_safe_validation_bypassed',
                             method: 'lattice_based_crypto_override',
+                            signature_ptr: signaturePtr,
+                            message_ptr: messagePtr,
+                            publicKey_ptr: publicKeyPtr,
                         });
                         return 1; // Valid signature
                     },
@@ -3001,6 +3235,8 @@ const CertificatePinnerBypass = {
                             target: 'certificate_pinner_bypass',
                             action: 'quantum_safe_validation_bypassed',
                             method: 'java_dilithium_verify',
+                            hasMessage: message !== null,
+                            hasSignature: signature !== null,
                         });
                         return true; // Force signature validation success
                     };

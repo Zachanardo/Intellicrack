@@ -17,8 +17,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from .advanced_debugger_bypass import (
+    AdvancedDebuggerBypass,
+    HypervisorDebugger,
+    KernelHookManager,
+    TimingNeutralizer,
+    install_advanced_bypass,
+)
 from .api_obfuscation import APIObfuscator
 from .base_detector import BaseDetector
+from .debugger_bypass import DebuggerBypass, install_anti_antidebug
 from .debugger_detector import DebuggerDetector
 from .sandbox_detector import SandboxDetector
 from .timing_attacks import TimingAttackDefense
@@ -56,11 +64,18 @@ class AntiAnalysisEngine:
 
 
 __all__ = [
+    "AdvancedDebuggerBypass",
     "APIObfuscator",
     "AntiAnalysisEngine",
     "BaseDetector",
+    "DebuggerBypass",
     "DebuggerDetector",
+    "HypervisorDebugger",
+    "KernelHookManager",
     "SandboxDetector",
     "TimingAttackDefense",
+    "TimingNeutralizer",
     "VMDetector",
+    "install_advanced_bypass",
+    "install_anti_antidebug",
 ]

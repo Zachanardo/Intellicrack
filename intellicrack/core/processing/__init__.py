@@ -25,7 +25,20 @@ logger = logging.getLogger(__name__)
 
 # Import processing modules with error handling
 try:
-    from .distributed_manager import DistributedProcessingManager, create_distributed_manager
+    from .parallel_processing_manager import ParallelProcessingManager, create_parallel_manager
+except ImportError as e:
+    logger.warning("Failed to import parallel_processing_manager: %s", e)
+
+try:
+    from .distributed_manager import (
+        AnalysisTask,
+        DistributedAnalysisManager,
+        NodeStatus,
+        TaskPriority,
+        TaskStatus,
+        WorkerNode,
+        create_distributed_manager,
+    )
 except ImportError as e:
     logger.warning("Failed to import distributed_manager: %s", e)
 
@@ -62,9 +75,17 @@ run_qemu_analysis = None
 
 # Define package exports
 __all__ = [
+    # From parallel_processing_manager
+    "ParallelProcessingManager",
+    "create_parallel_manager",
     # From distributed_manager
-    "DistributedProcessingManager",
+    "DistributedAnalysisManager",
     "create_distributed_manager",
+    "AnalysisTask",
+    "WorkerNode",
+    "TaskPriority",
+    "TaskStatus",
+    "NodeStatus",
     # From gpu_accelerator
     "GPUAccelerationManager",
     "GPUAccelerator",

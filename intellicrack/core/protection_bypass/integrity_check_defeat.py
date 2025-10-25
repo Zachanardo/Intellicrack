@@ -2,17 +2,23 @@
 
 Detects and bypasses various integrity checking mechanisms including
 CRC checks, hash validations, signature verifications, and anti-tampering.
+Implements genuine checksum recalculation and hook-based runtime bypasses.
 """
 
+import hashlib
+import hmac
 import logging
 import os
 import struct
-from dataclasses import dataclass
+import zlib
+from dataclasses import dataclass, field
 from enum import IntEnum
-from typing import Any, Dict, List, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import capstone
 import frida
+import lief
 import pefile
 
 logger = logging.getLogger(__name__)
@@ -34,6 +40,10 @@ class IntegrityCheckType(IntEnum):
     MEMORY_HASH = 10
     CODE_SIGNING = 11
     ANTI_TAMPER = 12
+    CRC64 = 13
+    SHA512_HASH = 14
+    HMAC_SIGNATURE = 15
+    AUTHENTICODE = 16
 
 
 @dataclass
@@ -48,6 +58,8 @@ class IntegrityCheck:
     function_name: str
     bypass_method: str
     confidence: float
+    section_name: str = ""
+    binary_path: str = ""
 
 
 @dataclass
@@ -61,13 +73,447 @@ class BypassStrategy:
     priority: int
 
 
+@dataclass
+class ChecksumRecalculation:
+    """Results of checksum recalculation for patched binary."""
+
+    original_crc32: int
+    patched_crc32: int
+    original_crc64: int
+    patched_crc64: int
+    original_md5: str
+    patched_md5: str
+    original_sha1: str
+    patched_sha1: str
+    original_sha256: str
+    patched_sha256: str
+    original_sha512: str
+    patched_sha512: str
+    pe_checksum: int
+    sections: Dict[str, Dict[str, str]] = field(default_factory=dict)
+    hmac_keys: List[Dict[str, str]] = field(default_factory=list)
+
+
+@dataclass
+class ChecksumLocation:
+    """Location of embedded checksum in binary."""
+
+    offset: int
+    size: int
+    algorithm: IntegrityCheckType
+    current_value: bytes
+    calculated_value: bytes
+    confidence: float
+
+
+class ChecksumRecalculator:
+    """Recalculates checksums for patched binaries with production-grade algorithms."""
+
+    def __init__(self):
+        """Initialize the ChecksumRecalculator with lookup tables."""
+        self.crc32_table = self._generate_crc32_table()
+        self.crc32_reversed_table = self._generate_crc32_reversed_table()
+        self.crc64_table = self._generate_crc64_table()
+
+    def _generate_crc32_table(self) -> List[int]:
+        """Generate CRC32 lookup table using standard polynomial."""
+        polynomial = 0xEDB88320
+        table = []
+        for i in range(256):
+            crc = i
+            for _ in range(8):
+                if crc & 1:
+                    crc = (crc >> 1) ^ polynomial
+                else:
+                    crc >>= 1
+            table.append(crc)
+        return table
+
+    def _generate_crc32_reversed_table(self) -> List[int]:
+        """Generate reversed CRC32 table for forward computation."""
+        polynomial = 0x04C11DB7
+        table = []
+        for i in range(256):
+            crc = i << 24
+            for _ in range(8):
+                if crc & 0x80000000:
+                    crc = (crc << 1) ^ polynomial
+                else:
+                    crc <<= 1
+                crc &= 0xFFFFFFFF
+            table.append(crc)
+        return table
+
+    def _generate_crc64_table(self) -> List[int]:
+        """Generate CRC64 lookup table using ECMA-182 polynomial."""
+        polynomial = 0x42F0E1EBA9EA3693
+        table = []
+        for i in range(256):
+            crc = i
+            for _ in range(8):
+                if crc & 1:
+                    crc = (crc >> 1) ^ polynomial
+                else:
+                    crc >>= 1
+            table.append(crc)
+        return table
+
+    def calculate_crc32(self, data: bytes) -> int:
+        """Calculate CRC32 checksum using lookup table."""
+        crc = 0xFFFFFFFF
+        for byte in data:
+            table_index = (crc & 0xFF) ^ byte
+            crc = self.crc32_table[table_index] ^ (crc >> 8)
+        return crc ^ 0xFFFFFFFF
+
+    def calculate_crc32_zlib(self, data: bytes) -> int:
+        """Calculate CRC32 using zlib (faster for large data)."""
+        return zlib.crc32(data) & 0xFFFFFFFF
+
+    def calculate_md5(self, data: bytes) -> str:
+        """Calculate MD5 hash."""
+        return hashlib.md5(data).hexdigest()  # noqa: S324
+
+    def calculate_sha1(self, data: bytes) -> str:
+        """Calculate SHA-1 hash."""
+        return hashlib.sha1(data).hexdigest()  # noqa: S324
+
+    def calculate_sha256(self, data: bytes) -> str:
+        """Calculate SHA-256 hash."""
+        return hashlib.sha256(data).hexdigest()
+
+    def calculate_sha512(self, data: bytes) -> str:
+        """Calculate SHA-512 hash."""
+        return hashlib.sha512(data).hexdigest()
+
+    def calculate_crc64(self, data: bytes) -> int:
+        """Calculate CRC64 checksum using lookup table."""
+        crc = 0xFFFFFFFFFFFFFFFF
+        for byte in data:
+            table_index = (crc & 0xFF) ^ byte
+            crc = self.crc64_table[table_index] ^ (crc >> 8)
+        return crc ^ 0xFFFFFFFFFFFFFFFF
+
+    def calculate_hmac(self, data: bytes, key: bytes, algorithm: str = 'sha256') -> str:
+        """Calculate HMAC signature with specified algorithm."""
+        hash_func = getattr(hashlib, algorithm)
+        return hmac.new(key, data, hash_func).hexdigest()
+
+    def calculate_all_hashes(self, data: bytes) -> Dict[str, str]:
+        """Calculate all supported hash algorithms."""
+        return {
+            "crc32": hex(self.calculate_crc32_zlib(data)),
+            "crc64": hex(self.calculate_crc64(data)),
+            "md5": self.calculate_md5(data),
+            "sha1": self.calculate_sha1(data),
+            "sha256": self.calculate_sha256(data),
+            "sha512": self.calculate_sha512(data),
+        }
+
+    def recalculate_pe_checksum(self, binary_path: str) -> int:
+        """Recalculate PE checksum for Windows executables."""
+        try:
+            pe = pefile.PE(binary_path)
+
+            binary_data = pe.__data__
+            checksum = 0
+
+            checksum_offset = pe.OPTIONAL_HEADER.get_file_offset() + 64
+
+            for i in range(0, len(binary_data), 4):
+                if i == checksum_offset:
+                    continue
+
+                if i + 4 <= len(binary_data):
+                    dword = struct.unpack("<I", binary_data[i:i+4])[0]
+                elif i + 2 <= len(binary_data):
+                    dword = struct.unpack("<H", binary_data[i:i+2])[0]
+                else:
+                    dword = binary_data[i]
+
+                checksum = (checksum + dword) & 0xFFFFFFFF
+                checksum = (checksum & 0xFFFF) + (checksum >> 16)
+
+            checksum = (checksum & 0xFFFF) + (checksum >> 16)
+            checksum += len(binary_data)
+
+            pe.close()
+            return checksum & 0xFFFFFFFF
+
+        except Exception as e:
+            logger.error(f"PE checksum calculation failed: {e}")
+            return 0
+
+    def recalculate_section_hashes(self, binary_path: str) -> Dict[str, Dict[str, str]]:
+        """Recalculate hashes for individual PE sections."""
+        section_hashes = {}
+
+        try:
+            pe = pefile.PE(binary_path)
+
+            for section in pe.sections:
+                section_name = section.Name.decode().rstrip('\x00')
+                section_data = section.get_data()
+
+                section_hashes[section_name] = {
+                    "md5": self.calculate_md5(section_data),
+                    "sha1": self.calculate_sha1(section_data),
+                    "sha256": self.calculate_sha256(section_data),
+                    "sha512": self.calculate_sha512(section_data),
+                    "crc32": hex(self.calculate_crc32_zlib(section_data)),
+                    "crc64": hex(self.calculate_crc64(section_data)),
+                    "size": str(len(section_data)),
+                }
+
+            pe.close()
+
+        except Exception as e:
+            logger.error(f"Section hash calculation failed: {e}")
+
+        return section_hashes
+
+    def extract_hmac_keys(self, binary_path: str) -> List[Dict[str, Union[str, int]]]:
+        """Extract potential HMAC keys from binary using entropy and pattern analysis."""
+        hmac_keys = []
+
+        try:
+            with open(binary_path, 'rb') as f:
+                binary_data = f.read()
+
+            key_sizes = [16, 20, 24, 32, 48, 64]
+
+            for key_size in key_sizes:
+                offset = 0
+                while offset < len(binary_data) - key_size:
+                    potential_key = binary_data[offset:offset + key_size]
+
+                    entropy = self._calculate_key_entropy(potential_key)
+
+                    if 3.5 < entropy < 7.0:
+                        if self._is_likely_key(potential_key):
+                            hmac_keys.append({
+                                "offset": offset,
+                                "size": key_size,
+                                "key_hex": potential_key.hex(),
+                                "entropy": entropy,
+                                "confidence": self._calculate_key_confidence(potential_key, entropy),
+                            })
+
+                    offset += 1
+
+            hmac_keys.sort(key=lambda x: x["confidence"], reverse=True)
+            return hmac_keys[:10]
+
+        except Exception as e:
+            logger.error(f"HMAC key extraction failed: {e}")
+            return []
+
+    def _calculate_key_entropy(self, data: bytes) -> float:
+        """Calculate Shannon entropy for potential key material."""
+        if not data:
+            return 0.0
+
+        import math
+
+        frequency_map = {}
+        for byte in data:
+            frequency_map[byte] = frequency_map.get(byte, 0) + 1
+
+        entropy = 0.0
+        data_len = len(data)
+        for count in frequency_map.values():
+            if count > 0:
+                frequency = float(count) / data_len
+                entropy -= frequency * math.log2(frequency)
+
+        return entropy
+
+    def _is_likely_key(self, data: bytes) -> bool:
+        """Heuristic check if data is likely cryptographic key material."""
+        if data.count(b'\x00') > len(data) * 0.3:
+            return False
+
+        if data.count(b'\xff') > len(data) * 0.3:
+            return False
+
+        repeating_patterns = [data[i:i+2] for i in range(len(data)-1)]
+        if len(set(repeating_patterns)) < len(data) * 0.4:
+            return False
+
+        return True
+
+    def _calculate_key_confidence(self, data: bytes, entropy: float) -> float:
+        """Calculate confidence score for potential key material."""
+        confidence = 0.0
+
+        if 4.0 <= entropy <= 6.5:
+            confidence += 0.4
+
+        unique_bytes = len(set(data))
+        if unique_bytes > len(data) * 0.5:
+            confidence += 0.3
+
+        if not (b'\x00' * 4 in data or b'\xff' * 4 in data):
+            confidence += 0.2
+
+        printable_count = sum(1 for b in data if 32 <= b <= 126)
+        if printable_count < len(data) * 0.2:
+            confidence += 0.1
+
+        return min(confidence, 1.0)
+
+    def find_checksum_locations(self, binary_path: str) -> List[ChecksumLocation]:
+        """Automatically identify locations where checksums are stored in binary."""
+        locations = []
+
+        try:
+            with open(binary_path, 'rb') as f:
+                binary_data = f.read()
+
+            actual_crc32 = self.calculate_crc32_zlib(binary_data)
+            actual_crc64 = self.calculate_crc64(binary_data)
+            actual_md5 = bytes.fromhex(self.calculate_md5(binary_data))
+            actual_sha1 = bytes.fromhex(self.calculate_sha1(binary_data))
+            actual_sha256 = bytes.fromhex(self.calculate_sha256(binary_data))
+            actual_sha512 = bytes.fromhex(self.calculate_sha512(binary_data))
+
+            crc32_bytes_le = struct.pack('<I', actual_crc32)
+            crc32_bytes_be = struct.pack('>I', actual_crc32)
+            crc64_bytes_le = struct.pack('<Q', actual_crc64)
+            crc64_bytes_be = struct.pack('>Q', actual_crc64)
+
+            search_patterns = [
+                (crc32_bytes_le, IntegrityCheckType.CRC32, 4),
+                (crc32_bytes_be, IntegrityCheckType.CRC32, 4),
+                (crc64_bytes_le, IntegrityCheckType.CRC64, 8),
+                (crc64_bytes_be, IntegrityCheckType.CRC64, 8),
+                (actual_md5, IntegrityCheckType.MD5_HASH, 16),
+                (actual_sha1, IntegrityCheckType.SHA1_HASH, 20),
+                (actual_sha256, IntegrityCheckType.SHA256_HASH, 32),
+                (actual_sha512, IntegrityCheckType.SHA512_HASH, 64),
+            ]
+
+            for pattern, check_type, size in search_patterns:
+                offset = 0
+                while True:
+                    pos = binary_data.find(pattern, offset)
+                    if pos == -1:
+                        break
+
+                    if self._is_valid_checksum_location(binary_data, pos, size):
+                        location = ChecksumLocation(
+                            offset=pos,
+                            size=size,
+                            algorithm=check_type,
+                            current_value=pattern,
+                            calculated_value=pattern,
+                            confidence=0.8,
+                        )
+                        locations.append(location)
+
+                    offset = pos + 1
+
+            pe = pefile.PE(binary_path)
+            for section in pe.sections:
+                section_data = section.get_data()
+                section_crc32 = self.calculate_crc32_zlib(section_data)
+                section_md5 = bytes.fromhex(self.calculate_md5(section_data))
+                section_sha256 = bytes.fromhex(self.calculate_sha256(section_data))
+
+                section_patterns = [
+                    (struct.pack('<I', section_crc32), IntegrityCheckType.CRC32, 4),
+                    (struct.pack('>I', section_crc32), IntegrityCheckType.CRC32, 4),
+                    (section_md5, IntegrityCheckType.MD5_HASH, 16),
+                    (section_sha256, IntegrityCheckType.SHA256_HASH, 32),
+                ]
+
+                for pattern, check_type, size in section_patterns:
+                    pos = binary_data.find(pattern)
+                    if pos != -1 and self._is_valid_checksum_location(binary_data, pos, size):
+                        location = ChecksumLocation(
+                            offset=pos,
+                            size=size,
+                            algorithm=check_type,
+                            current_value=pattern,
+                            calculated_value=pattern,
+                            confidence=0.9,
+                        )
+                        if not any(loc.offset == pos for loc in locations):
+                            locations.append(location)
+
+            pe.close()
+
+        except Exception as e:
+            logger.error(f"Checksum location identification failed: {e}")
+
+        return locations
+
+    def _is_valid_checksum_location(self, binary_data: bytes, offset: int, size: int) -> bool:
+        """Validate if offset is a likely checksum storage location."""
+        try:
+            pe = pefile.PE(data=binary_data)
+
+            for section in pe.sections:
+                section_start = section.PointerToRawData
+                section_end = section_start + section.SizeOfRawData
+
+                if section_start <= offset < section_end:
+                    section_name = section.Name.decode().rstrip('\x00')
+
+                    if section_name in ['.rdata', '.data', '.idata']:
+                        return True
+
+                    if not (section.IMAGE_SCN_MEM_EXECUTE):
+                        return True
+
+            pe.close()
+            return False
+
+        except Exception:
+            return offset > 0x400
+
+    def recalculate_for_patched_binary(
+        self, original_path: str, patched_path: str
+    ) -> ChecksumRecalculation:
+        """Recalculate all checksums for patched binary."""
+        with open(original_path, "rb") as f:
+            original_data = f.read()
+
+        with open(patched_path, "rb") as f:
+            patched_data = f.read()
+
+        pe_checksum = self.recalculate_pe_checksum(patched_path)
+        section_hashes = self.recalculate_section_hashes(patched_path)
+        hmac_keys = self.extract_hmac_keys(patched_path)
+
+        return ChecksumRecalculation(
+            original_crc32=self.calculate_crc32_zlib(original_data),
+            patched_crc32=self.calculate_crc32_zlib(patched_data),
+            original_crc64=self.calculate_crc64(original_data),
+            patched_crc64=self.calculate_crc64(patched_data),
+            original_md5=self.calculate_md5(original_data),
+            patched_md5=self.calculate_md5(patched_data),
+            original_sha1=self.calculate_sha1(original_data),
+            patched_sha1=self.calculate_sha1(patched_data),
+            original_sha256=self.calculate_sha256(original_data),
+            patched_sha256=self.calculate_sha256(patched_data),
+            original_sha512=self.calculate_sha512(original_data),
+            patched_sha512=self.calculate_sha512(patched_data),
+            pe_checksum=pe_checksum,
+            sections=section_hashes,
+            hmac_keys=hmac_keys,
+        )
+
+
 class IntegrityCheckDetector:
     """Detect integrity checking mechanisms in binaries."""
 
     def __init__(self):
         """Initialize the IntegrityCheckDetector with disassembler and pattern databases."""
-        self.md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
-        self.md.detail = True
+        self.md_32 = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
+        self.md_32.detail = True
+        self.md_64 = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
+        self.md_64.detail = True
         self.check_patterns = self._load_check_patterns()
         self.api_signatures = self._load_api_signatures()
 
@@ -75,27 +521,77 @@ class IntegrityCheckDetector:
         """Load patterns for detecting integrity checks."""
         return {
             "crc32": {
-                "pattern": b"\xc1\xe8\x08\x33",  # SHR EAX, 8; XOR
+                "pattern": b"\xc1\xe8\x08\x33",
                 "type": IntegrityCheckType.CRC32,
                 "description": "CRC32 calculation",
             },
+            "crc32_xor": {
+                "pattern": b"\x33\x81",
+                "type": IntegrityCheckType.CRC32,
+                "description": "CRC32 XOR operation",
+            },
+            "crc64_poly": {
+                "pattern": b"\x93\x36\xea\xa9\xeb\xe1\xf0\x42",
+                "type": IntegrityCheckType.CRC64,
+                "description": "CRC64 ECMA polynomial",
+            },
+            "crc64_calc": {
+                "pattern": b"\x48\xc1\xe8\x08",
+                "type": IntegrityCheckType.CRC64,
+                "description": "CRC64 calculation (64-bit shift)",
+            },
             "md5": {
-                "pattern": b"\x67\x45\x23\x01",  # MD5 constants
+                "pattern": b"\x67\x45\x23\x01",
                 "type": IntegrityCheckType.MD5_HASH,
                 "description": "MD5 hash calculation",
+            },
+            "md5_init": {
+                "pattern": b"\x01\x23\x45\x67\x89\xab\xcd\xef",
+                "type": IntegrityCheckType.MD5_HASH,
+                "description": "MD5 initialization constants",
             },
             "sha1": {
                 "pattern": b"\x67\x45\x23\x01\xef\xcd\xab\x89",
                 "type": IntegrityCheckType.SHA1_HASH,
                 "description": "SHA1 hash calculation",
             },
+            "sha1_init": {
+                "pattern": b"\xc3\xd2\xe1\xf0",
+                "type": IntegrityCheckType.SHA1_HASH,
+                "description": "SHA1 initialization",
+            },
             "sha256": {
-                "pattern": b"\x6a\x09\xe6\x67",  # SHA256 init values
+                "pattern": b"\x6a\x09\xe6\x67",
                 "type": IntegrityCheckType.SHA256_HASH,
                 "description": "SHA256 hash calculation",
             },
+            "sha256_k": {
+                "pattern": b"\x42\x8a\x2f\x98",
+                "type": IntegrityCheckType.SHA256_HASH,
+                "description": "SHA256 K constants",
+            },
+            "sha512_init": {
+                "pattern": b"\x6a\x09\xe6\x67\xf3\xbc\xc9\x08",
+                "type": IntegrityCheckType.SHA512_HASH,
+                "description": "SHA512 initialization constants",
+            },
+            "sha512_k": {
+                "pattern": b"\x42\x8a\x2f\x98\xd7\x28\xae\x22",
+                "type": IntegrityCheckType.SHA512_HASH,
+                "description": "SHA512 K constants",
+            },
+            "hmac_ipad": {
+                "pattern": b"\x36\x36\x36\x36",
+                "type": IntegrityCheckType.HMAC_SIGNATURE,
+                "description": "HMAC inner padding",
+            },
+            "hmac_opad": {
+                "pattern": b"\x5c\x5c\x5c\x5c",
+                "type": IntegrityCheckType.HMAC_SIGNATURE,
+                "description": "HMAC outer padding",
+            },
             "size_check": {
-                "pattern": b"\x81\x7d.\x00\x00",  # CMP [EBP+x], size
+                "pattern": b"\x81\x7d.\x00\x00",
                 "type": IntegrityCheckType.SIZE_CHECK,
                 "description": "File size verification",
             },
@@ -105,15 +601,35 @@ class IntegrityCheckDetector:
         """Load Windows API signatures for integrity checks."""
         return {
             "GetFileSize": IntegrityCheckType.SIZE_CHECK,
+            "GetFileSizeEx": IntegrityCheckType.SIZE_CHECK,
             "GetFileTime": IntegrityCheckType.TIMESTAMP,
             "CryptHashData": IntegrityCheckType.SHA256_HASH,
             "CryptVerifySignature": IntegrityCheckType.SIGNATURE,
-            "WinVerifyTrust": IntegrityCheckType.CERTIFICATE,
+            "CryptVerifySignatureA": IntegrityCheckType.SIGNATURE,
+            "CryptVerifySignatureW": IntegrityCheckType.SIGNATURE,
+            "WinVerifyTrust": IntegrityCheckType.AUTHENTICODE,
+            "WinVerifyTrustEx": IntegrityCheckType.AUTHENTICODE,
             "CertVerifyCertificateChainPolicy": IntegrityCheckType.CERTIFICATE,
             "CheckSumMappedFile": IntegrityCheckType.CHECKSUM,
             "MapFileAndCheckSum": IntegrityCheckType.CHECKSUM,
+            "MapFileAndCheckSumA": IntegrityCheckType.CHECKSUM,
+            "MapFileAndCheckSumW": IntegrityCheckType.CHECKSUM,
             "ImageGetCertificateData": IntegrityCheckType.CODE_SIGNING,
+            "ImageGetCertificateHeader": IntegrityCheckType.CODE_SIGNING,
             "CryptCATAdminCalcHashFromFileHandle": IntegrityCheckType.SHA256_HASH,
+            "CryptCATAdminCalcHashFromFileHandle2": IntegrityCheckType.SHA512_HASH,
+            "RtlComputeCrc32": IntegrityCheckType.CRC32,
+            "RtlComputeCrc64": IntegrityCheckType.CRC64,
+            "CryptCreateHash": IntegrityCheckType.SHA256_HASH,
+            "CryptGetHashParam": IntegrityCheckType.SHA256_HASH,
+            "BCryptHash": IntegrityCheckType.SHA256_HASH,
+            "BCryptCreateHash": IntegrityCheckType.SHA256_HASH,
+            "BCryptHashData": IntegrityCheckType.SHA256_HASH,
+            "BCryptFinishHash": IntegrityCheckType.SHA256_HASH,
+            "memcmp": IntegrityCheckType.CHECKSUM,
+            "strcmp": IntegrityCheckType.CHECKSUM,
+            "strncmp": IntegrityCheckType.CHECKSUM,
+            "memcmp_s": IntegrityCheckType.CHECKSUM,
         }
 
     def detect_checks(self, binary_path: str) -> List[IntegrityCheck]:
@@ -121,28 +637,30 @@ class IntegrityCheckDetector:
         checks = []
 
         try:
-            pe = pefile.PE(binary_path)
+            if binary_path.lower().endswith(('.exe', '.dll', '.sys')):
+                pe = pefile.PE(binary_path)
 
-            # Scan for API imports
-            api_checks = self._scan_api_imports(pe)
-            checks.extend(api_checks)
+                api_checks = self._scan_api_imports(pe, binary_path)
+                checks.extend(api_checks)
 
-            # Scan for inline checks
-            inline_checks = self._scan_inline_checks(pe)
-            checks.extend(inline_checks)
+                inline_checks = self._scan_inline_checks(pe, binary_path)
+                checks.extend(inline_checks)
 
-            # Scan for anti-tamper mechanisms
-            antitamper_checks = self._scan_antitamper(pe)
-            checks.extend(antitamper_checks)
+                antitamper_checks = self._scan_antitamper(pe, binary_path)
+                checks.extend(antitamper_checks)
 
-            pe.close()
+                pe.close()
+            else:
+                binary = lief.parse(binary_path)
+                if binary:
+                    checks.extend(self._scan_elf_checks(binary, binary_path))
 
         except Exception as e:
             logger.error(f"Integrity check detection failed: {e}")
 
         return checks
 
-    def _scan_api_imports(self, pe: pefile.PE) -> List[IntegrityCheck]:
+    def _scan_api_imports(self, pe: pefile.PE, binary_path: str) -> List[IntegrityCheck]:
         """Scan for integrity check API imports."""
         checks = []
 
@@ -164,19 +682,20 @@ class IntegrityCheckDetector:
                             function_name=func_name,
                             bypass_method="hook_api",
                             confidence=0.9,
+                            binary_path=binary_path,
                         )
                         checks.append(check)
 
         return checks
 
-    def _scan_inline_checks(self, pe: pefile.PE) -> List[IntegrityCheck]:
+    def _scan_inline_checks(self, pe: pefile.PE, binary_path: str) -> List[IntegrityCheck]:
         """Scan for inline integrity checks."""
         checks = []
 
-        # Scan code sections
         for section in pe.sections:
             if section.IMAGE_SCN_MEM_EXECUTE:
                 section_data = section.get_data()
+                section_name = section.Name.decode().rstrip('\x00')
 
                 for _pattern_name, pattern_info in self.check_patterns.items():
                     pattern = pattern_info["pattern"]
@@ -196,20 +715,22 @@ class IntegrityCheckDetector:
                             function_name=pattern_info["description"],
                             bypass_method="patch_inline",
                             confidence=0.7,
+                            section_name=section_name,
+                            binary_path=binary_path,
                         )
                         checks.append(check)
                         offset = pos + 1
 
         return checks
 
-    def _scan_antitamper(self, pe: pefile.PE) -> List[IntegrityCheck]:
+    def _scan_antitamper(self, pe: pefile.PE, binary_path: str) -> List[IntegrityCheck]:
         """Scan for anti-tamper mechanisms."""
         checks = []
 
-        # Check for packed sections
         for section in pe.sections:
             entropy = self._calculate_entropy(section.get_data())
-            if entropy > 7.5:  # High entropy indicates encryption/compression
+            if entropy > 7.5:
+                section_name = section.Name.decode().rstrip('\x00')
                 check = IntegrityCheck(
                     check_type=IntegrityCheckType.ANTI_TAMPER,
                     address=section.VirtualAddress,
@@ -219,21 +740,23 @@ class IntegrityCheckDetector:
                     function_name="Packed/Encrypted Section",
                     bypass_method="unpack_section",
                     confidence=0.8,
+                    section_name=section_name,
+                    binary_path=binary_path,
                 )
                 checks.append(check)
 
-        # Check for self-modifying code patterns
         smc_patterns = [
-            b"\xf0\x0f\xc1",  # LOCK XADD - often used in SMC
-            b"\x0f\xba\x2d",  # BTS with memory operand
-            b"\x0f\xc7\x08",  # CMPXCHG8B - atomic compare and swap
-            b"\x0f\xb0",  # CMPXCHG - compare and exchange
-            b"\xf0\x0f\xb1",  # LOCK CMPXCHG - atomic operation
-            b"\x66\x0f\xc7",  # CMPXCHG16B - 16-byte atomic operation
+            b"\xf0\x0f\xc1",
+            b"\x0f\xba\x2d",
+            b"\x0f\xc7\x08",
+            b"\x0f\xb0",
+            b"\xf0\x0f\xb1",
+            b"\x66\x0f\xc7",
         ]
 
         for section in pe.sections:
             section_data = section.get_data()
+            section_name = section.Name.decode().rstrip('\x00')
             for pattern in smc_patterns:
                 if pattern in section_data:
                     check = IntegrityCheck(
@@ -245,8 +768,35 @@ class IntegrityCheckDetector:
                         function_name="Self-Modifying Code",
                         bypass_method="hook_smc",
                         confidence=0.6,
+                        section_name=section_name,
+                        binary_path=binary_path,
                     )
                     checks.append(check)
+
+        return checks
+
+    def _scan_elf_checks(self, binary: lief.Binary, binary_path: str) -> List[IntegrityCheck]:
+        """Scan ELF binaries for integrity checks."""
+        checks = []
+
+        try:
+            for symbol in binary.imported_functions:
+                func_name = symbol.name
+                if func_name in self.api_signatures:
+                    check = IntegrityCheck(
+                        check_type=self.api_signatures[func_name],
+                        address=symbol.value,
+                        size=0,
+                        expected_value=b"",
+                        actual_value=b"",
+                        function_name=func_name,
+                        bypass_method="hook_api",
+                        confidence=0.85,
+                        binary_path=binary_path,
+                    )
+                    checks.append(check)
+        except Exception as e:
+            logger.debug(f"ELF check scan error: {e}")
 
         return checks
 
@@ -272,7 +822,7 @@ class IntegrityCheckDetector:
 
 
 class IntegrityBypassEngine:
-    """Bypasses detected integrity checks using Frida."""
+    """Bypasses detected integrity checks using Frida runtime hooks."""
 
     def __init__(self):
         """Initialize the IntegrityBypassEngine with bypass strategies and Frida session."""
@@ -280,106 +830,470 @@ class IntegrityBypassEngine:
         self.session = None
         self.script = None
         self.hooks_installed = []
-        self.crc_table = self._generate_crc32_table()
+        self.checksum_calc = ChecksumRecalculator()
         self.original_bytes_cache = {}
 
     def _load_bypass_strategies(self) -> List[BypassStrategy]:
         """Load bypass strategies for different check types."""
         strategies = []
 
-        # CRC32 bypass
         strategies.append(
             BypassStrategy(
                 name="crc32_bypass",
                 check_types=[IntegrityCheckType.CRC32],
                 frida_script="""
-                Interceptor.attach(Module.findExportByName(null, 'RtlComputeCrc32'), {
-                    onEnter: function(args) {
-                        this.buffer = args[1];
-                        this.length = args[2].toInt32();
-                    },
-                    onLeave: function(retval) {
-                        // Return expected CRC32 value
-                        retval.replace(ptr('%EXPECTED_VALUE%'));
-                        console.log('[CRC32] Bypassed check, returned: ' + retval);
-                    }
-                });
+                var rtlComputeCrc32 = Module.findExportByName(null, 'RtlComputeCrc32');
+                if (rtlComputeCrc32) {
+                    Interceptor.attach(rtlComputeCrc32, {
+                        onEnter: function(args) {
+                            this.buffer = args[1];
+                            this.length = args[2].toInt32();
+                            this.initialCrc = args[0].toInt32();
+                        },
+                        onLeave: function(retval) {
+                            var address = parseInt(this.buffer);
+                            if (address >= %PROTECTED_START% && address <= %PROTECTED_END%) {
+                                retval.replace(ptr('%EXPECTED_CRC32%'));
+                                console.log('[CRC32] Bypassed: addr=' + address.toString(16) +
+                                          ' returned=' + retval);
+                            }
+                        }
+                    });
+                }
+
+                var zlib_crc32 = Module.findExportByName('zlib1.dll', 'crc32');
+                if (!zlib_crc32) {
+                    zlib_crc32 = Module.findExportByName('zlibwapi.dll', 'crc32');
+                }
+                if (zlib_crc32) {
+                    Interceptor.attach(zlib_crc32, {
+                        onEnter: function(args) {
+                            this.crc = args[0].toInt32();
+                            this.buf = args[1];
+                            this.len = args[2].toInt32();
+                        },
+                        onLeave: function(retval) {
+                            var address = parseInt(this.buf);
+                            if (address >= %PROTECTED_START% && address <= %PROTECTED_END%) {
+                                retval.replace(ptr('%EXPECTED_CRC32%'));
+                                console.log('[CRC32-zlib] Bypassed check');
+                            }
+                        }
+                    });
+                }
             """,
                 success_rate=0.95,
                 priority=1,
             )
         )
 
-        # Hash verification bypass
+        strategies.append(
+            BypassStrategy(
+                name="crc64_bypass",
+                check_types=[IntegrityCheckType.CRC64],
+                frida_script="""
+                var rtlComputeCrc64 = Module.findExportByName(null, 'RtlComputeCrc64');
+                if (rtlComputeCrc64) {
+                    Interceptor.attach(rtlComputeCrc64, {
+                        onEnter: function(args) {
+                            this.buffer = args[1];
+                            this.length = args[2].toInt32();
+                            this.initialCrc = args[0];
+                        },
+                        onLeave: function(retval) {
+                            var address = parseInt(this.buffer);
+                            if (address >= %PROTECTED_START% && address <= %PROTECTED_END%) {
+                                retval.replace(ptr('%EXPECTED_CRC64%'));
+                                console.log('[CRC64] Bypassed CRC64 check');
+                            }
+                        }
+                    });
+                }
+
+                var customCrc64Patterns = Process.enumerateRanges('r-x').filter(function(range) {
+                    return range.protection === 'r-x' && range.size > 0x1000;
+                });
+
+                customCrc64Patterns.forEach(function(range) {
+                    try {
+                        var matches = Memory.scanSync(range.base, range.size, '93 36 ea a9 eb e1 f0 42');
+                        matches.forEach(function(match) {
+                            var func = new NativeFunction(match.address.sub(0x20), 'uint64', ['pointer', 'uint64']);
+                            Interceptor.replace(func, new NativeCallback(function(buffer, length) {
+                                return '%EXPECTED_CRC64%';
+                            }, 'uint64', ['pointer', 'uint64']));
+                            console.log('[CRC64] Hooked custom CRC64 at ' + match.address);
+                        });
+                    } catch (e) {}
+                });
+            """,
+                success_rate=0.92,
+                priority=1,
+            )
+        )
+
         strategies.append(
             BypassStrategy(
                 name="hash_bypass",
-                check_types=[IntegrityCheckType.MD5_HASH, IntegrityCheckType.SHA1_HASH, IntegrityCheckType.SHA256_HASH],
+                check_types=[IntegrityCheckType.MD5_HASH, IntegrityCheckType.SHA1_HASH, IntegrityCheckType.SHA256_HASH, IntegrityCheckType.SHA512_HASH],
                 frida_script="""
-                var cryptHashDataAddr = Module.findExportByName('Advapi32.dll', 'CryptHashData');
-                if (cryptHashDataAddr) {
-                    Interceptor.attach(cryptHashDataAddr, {
+                var cryptHashData = Module.findExportByName('Advapi32.dll', 'CryptHashData');
+                if (cryptHashData) {
+                    Interceptor.attach(cryptHashData, {
                         onEnter: function(args) {
                             this.hHash = args[0];
                             this.pbData = args[1];
                             this.dwDataLen = args[2].toInt32();
-                        },
-                        onLeave: function(retval) {
-                            // Skip hash calculation for protected regions
+                            this.dwFlags = args[3].toInt32();
+
                             var address = parseInt(this.pbData);
                             if (address >= %PROTECTED_START% && address <= %PROTECTED_END%) {
-                                retval.replace(1);  // Return success without hashing
+                                this.skipHash = true;
+                                console.log('[Hash] Intercepted hash of protected region');
+                            }
+                        },
+                        onLeave: function(retval) {
+                            if (this.skipHash) {
+                                retval.replace(1);
                                 console.log('[Hash] Skipped hashing protected region');
                             }
                         }
                     });
                 }
 
-                // Also hook comparison functions
-                Interceptor.attach(Module.findExportByName(null, 'memcmp'), {
-                    onEnter: function(args) {
-                        this.buf1 = args[0];
-                        this.buf2 = args[1];
-                        this.size = args[2].toInt32();
-                    },
-                    onLeave: function(retval) {
-                        // Check if comparing hash values
-                        if (this.size == 16 || this.size == 20 || this.size == 32) {
-                            retval.replace(0);  // Return match
-                            console.log('[Hash] Forced hash comparison match');
+                var cryptGetHashParam = Module.findExportByName('Advapi32.dll', 'CryptGetHashParam');
+                if (cryptGetHashParam) {
+                    Interceptor.attach(cryptGetHashParam, {
+                        onEnter: function(args) {
+                            this.hHash = args[0];
+                            this.dwParam = args[1].toInt32();
+                            this.pbData = args[2];
+                            this.pdwDataLen = args[3];
+                        },
+                        onLeave: function(retval) {
+                            if (retval.toInt32() !== 0 && this.dwParam === 2) {
+                                var dataLen = this.pdwDataLen.readU32();
+                                if (dataLen === 16) {
+                                    var expectedMd5 = '%EXPECTED_MD5%';
+                                    if (expectedMd5 && expectedMd5.length === 32) {
+                                        for (var i = 0; i < 16; i++) {
+                                            this.pbData.add(i).writeU8(
+                                                parseInt(expectedMd5.substr(i*2, 2), 16)
+                                            );
+                                        }
+                                        console.log('[Hash] Replaced MD5 with expected value');
+                                    }
+                                } else if (dataLen === 20) {
+                                    var expectedSha1 = '%EXPECTED_SHA1%';
+                                    if (expectedSha1 && expectedSha1.length === 40) {
+                                        for (var i = 0; i < 20; i++) {
+                                            this.pbData.add(i).writeU8(
+                                                parseInt(expectedSha1.substr(i*2, 2), 16)
+                                            );
+                                        }
+                                        console.log('[Hash] Replaced SHA1 with expected value');
+                                    }
+                                } else if (dataLen === 32) {
+                                    var expectedSha256 = '%EXPECTED_SHA256%';
+                                    if (expectedSha256 && expectedSha256.length === 64) {
+                                        for (var i = 0; i < 32; i++) {
+                                            this.pbData.add(i).writeU8(
+                                                parseInt(expectedSha256.substr(i*2, 2), 16)
+                                            );
+                                        }
+                                        console.log('[Hash] Replaced SHA256 with expected value');
+                                    }
+                                } else if (dataLen === 64) {
+                                    var expectedSha512 = '%EXPECTED_SHA512%';
+                                    if (expectedSha512 && expectedSha512.length === 128) {
+                                        for (var i = 0; i < 64; i++) {
+                                            this.pbData.add(i).writeU8(
+                                                parseInt(expectedSha512.substr(i*2, 2), 16)
+                                            );
+                                        }
+                                        console.log('[Hash] Replaced SHA512 with expected value');
+                                    }
+                                }
+                            }
                         }
-                    }
-                });
+                    });
+                }
+
+                var bcryptHashData = Module.findExportByName('Bcrypt.dll', 'BCryptHashData');
+                if (bcryptHashData) {
+                    Interceptor.attach(bcryptHashData, {
+                        onEnter: function(args) {
+                            this.hHash = args[0];
+                            this.pbInput = args[1];
+                            this.cbInput = args[2].toInt32();
+                            var address = parseInt(this.pbInput);
+                            if (address >= %PROTECTED_START% && address <= %PROTECTED_END%) {
+                                this.skipBCryptHash = true;
+                                console.log('[BCrypt] Intercepted hash of protected region');
+                            }
+                        },
+                        onLeave: function(retval) {
+                            if (this.skipBCryptHash) {
+                                retval.replace(0);
+                                console.log('[BCrypt] Bypassed BCryptHashData');
+                            }
+                        }
+                    });
+                }
+
+                var bcryptFinishHash = Module.findExportByName('Bcrypt.dll', 'BCryptFinishHash');
+                if (bcryptFinishHash) {
+                    Interceptor.attach(bcryptFinishHash, {
+                        onEnter: function(args) {
+                            this.pbOutput = args[1];
+                            this.cbOutput = args[2].toInt32();
+                        },
+                        onLeave: function(retval) {
+                            if (retval.toInt32() === 0) {
+                                if (this.cbOutput === 32) {
+                                    var expectedSha256 = '%EXPECTED_SHA256%';
+                                    if (expectedSha256 && expectedSha256.length === 64) {
+                                        for (var i = 0; i < 32; i++) {
+                                            this.pbOutput.add(i).writeU8(
+                                                parseInt(expectedSha256.substr(i*2, 2), 16)
+                                            );
+                                        }
+                                        console.log('[BCrypt] Replaced SHA256 with expected value');
+                                    }
+                                } else if (this.cbOutput === 64) {
+                                    var expectedSha512 = '%EXPECTED_SHA512%';
+                                    if (expectedSha512 && expectedSha512.length === 128) {
+                                        for (var i = 0; i < 64; i++) {
+                                            this.pbOutput.add(i).writeU8(
+                                                parseInt(expectedSha512.substr(i*2, 2), 16)
+                                            );
+                                        }
+                                        console.log('[BCrypt] Replaced SHA512 with expected value');
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                var memcmpFunc = Module.findExportByName(null, 'memcmp');
+                if (memcmpFunc) {
+                    Interceptor.attach(memcmpFunc, {
+                        onEnter: function(args) {
+                            this.buf1 = args[0];
+                            this.buf2 = args[1];
+                            this.size = args[2].toInt32();
+                        },
+                        onLeave: function(retval) {
+                            if (this.size === 16 || this.size === 20 || this.size === 32 || this.size === 64) {
+                                retval.replace(0);
+                                console.log('[Hash] Forced hash comparison match (size=' + this.size + ')');
+                            }
+                        }
+                    });
+                }
             """,
                 success_rate=0.90,
                 priority=2,
             )
         )
 
-        # Signature verification bypass
         strategies.append(
             BypassStrategy(
-                name="signature_bypass",
-                check_types=[IntegrityCheckType.SIGNATURE, IntegrityCheckType.CERTIFICATE],
+                name="hmac_bypass",
+                check_types=[IntegrityCheckType.HMAC_SIGNATURE],
                 frida_script="""
-                // Hook WinVerifyTrust
-                var winVerifyTrustAddr = Module.findExportByName('Wintrust.dll', 'WinVerifyTrust');
-                if (winVerifyTrustAddr) {
-                    Interceptor.attach(winVerifyTrustAddr, {
-                        onLeave: function(retval) {
-                            retval.replace(0);  // Return S_OK (trusted)
-                            console.log('[Signature] Bypassed WinVerifyTrust check');
+                var expectedHmacKeys = %HMAC_KEYS%;
+
+                var cryptCreateHash = Module.findExportByName('Advapi32.dll', 'CryptCreateHash');
+                if (cryptCreateHash) {
+                    Interceptor.attach(cryptCreateHash, {
+                        onEnter: function(args) {
+                            this.hProv = args[0];
+                            this.algId = args[1].toInt32();
+                            this.hKey = args[2];
+                            this.dwFlags = args[3].toInt32();
+                            this.phHash = args[4];
+
+                            if (this.hKey && !this.hKey.isNull()) {
+                                console.log('[HMAC] Detected HMAC creation with key');
+                                this.isHmac = true;
+                            }
                         }
                     });
                 }
 
-                // Hook certificate verification
-                var certVerifyAddr = Module.findExportByName('Crypt32.dll', 'CertVerifyCertificateChainPolicy');
-                if (certVerifyAddr) {
-                    Interceptor.attach(certVerifyAddr, {
+                var cryptHashData = Module.findExportByName('Advapi32.dll', 'CryptHashData');
+                if (cryptHashData) {
+                    var originalCryptHashData = new NativeFunction(cryptHashData, 'int', ['pointer', 'pointer', 'uint32', 'uint32']);
+                    Interceptor.replace(cryptHashData, new NativeCallback(function(hHash, pbData, dwDataLen, dwFlags) {
+                        var address = parseInt(pbData);
+                        if (address >= %PROTECTED_START% && address <= %PROTECTED_END%) {
+                            console.log('[HMAC] Bypassed HMAC hash of protected region');
+                            return 1;
+                        }
+                        return originalCryptHashData(hHash, pbData, dwDataLen, dwFlags);
+                    }, 'int', ['pointer', 'pointer', 'uint32', 'uint32']));
+                }
+
+                var bcryptCreateHash = Module.findExportByName('Bcrypt.dll', 'BCryptCreateHash');
+                if (bcryptCreateHash) {
+                    Interceptor.attach(bcryptCreateHash, {
+                        onEnter: function(args) {
+                            this.hAlgorithm = args[0];
+                            this.phHash = args[1];
+                            this.pbHashObject = args[2];
+                            this.cbHashObject = args[3].toInt32();
+                            this.pbSecret = args[4];
+                            this.cbSecret = args[5].toInt32();
+
+                            if (this.pbSecret && !this.pbSecret.isNull() && this.cbSecret > 0) {
+                                console.log('[HMAC] Detected BCrypt HMAC with ' + this.cbSecret + ' byte key');
+                                this.isHmac = true;
+                            }
+                        }
+                    });
+                }
+            """,
+                success_rate=0.85,
+                priority=2,
+            )
+        )
+
+        strategies.append(
+            BypassStrategy(
+                name="authenticode_bypass",
+                check_types=[IntegrityCheckType.AUTHENTICODE, IntegrityCheckType.CODE_SIGNING],
+                frida_script="""
+                var winVerifyTrust = Module.findExportByName('Wintrust.dll', 'WinVerifyTrust');
+                if (winVerifyTrust) {
+                    Interceptor.attach(winVerifyTrust, {
+                        onEnter: function(args) {
+                            this.hWnd = args[0];
+                            this.pgActionID = args[1];
+                            this.pWinTrustData = args[2];
+                            console.log('[Authenticode] WinVerifyTrust called');
+                        },
                         onLeave: function(retval) {
-                            retval.replace(1);  // Return TRUE (valid)
+                            retval.replace(0);
+                            console.log('[Authenticode] Bypassed WinVerifyTrust - returned success');
+                        }
+                    });
+                }
+
+                var winVerifyTrustEx = Module.findExportByName('Wintrust.dll', 'WinVerifyTrustEx');
+                if (winVerifyTrustEx) {
+                    Interceptor.attach(winVerifyTrustEx, {
+                        onLeave: function(retval) {
+                            retval.replace(0);
+                            console.log('[Authenticode] Bypassed WinVerifyTrustEx');
+                        }
+                    });
+                }
+
+                var imageGetCertificateData = Module.findExportByName('Imagehlp.dll', 'ImageGetCertificateData');
+                if (imageGetCertificateData) {
+                    Interceptor.attach(imageGetCertificateData, {
+                        onEnter: function(args) {
+                            this.fileHandle = args[0];
+                            this.certIndex = args[1].toInt32();
+                            this.certificate = args[2];
+                            this.requiredLength = args[3];
+                        },
+                        onLeave: function(retval) {
+                            if (retval.toInt32() !== 0 && this.certificate && !this.certificate.isNull()) {
+                                console.log('[Authenticode] Intercepted certificate data retrieval');
+                            }
+                        }
+                    });
+                }
+
+                var imageGetCertificateHeader = Module.findExportByName('Imagehlp.dll', 'ImageGetCertificateHeader');
+                if (imageGetCertificateHeader) {
+                    Interceptor.attach(imageGetCertificateHeader, {
+                        onLeave: function(retval) {
+                            console.log('[Authenticode] Intercepted certificate header');
+                        }
+                    });
+                }
+
+                var cryptCATAdminCalcHash = Module.findExportByName('Wintrust.dll', 'CryptCATAdminCalcHashFromFileHandle');
+                if (cryptCATAdminCalcHash) {
+                    Interceptor.attach(cryptCATAdminCalcHash, {
+                        onEnter: function(args) {
+                            this.hFile = args[0];
+                            this.pcbHash = args[1];
+                            this.pbHash = args[2];
+                            this.dwFlags = args[3].toInt32();
+                        },
+                        onLeave: function(retval) {
+                            if (retval.toInt32() !== 0 && this.pbHash && !this.pbHash.isNull()) {
+                                var hashSize = this.pcbHash.readU32();
+                                if (hashSize === 32) {
+                                    var expectedSha256 = '%EXPECTED_SHA256%';
+                                    if (expectedSha256 && expectedSha256.length === 64) {
+                                        for (var i = 0; i < 32; i++) {
+                                            this.pbHash.add(i).writeU8(
+                                                parseInt(expectedSha256.substr(i*2, 2), 16)
+                                            );
+                                        }
+                                        console.log('[Authenticode] Replaced catalog hash');
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            """,
+                success_rate=0.88,
+                priority=3,
+            )
+        )
+
+        strategies.append(
+            BypassStrategy(
+                name="certificate_bypass",
+                check_types=[IntegrityCheckType.CERTIFICATE, IntegrityCheckType.SIGNATURE],
+                frida_script="""
+                var certVerify = Module.findExportByName('Crypt32.dll', 'CertVerifyCertificateChainPolicy');
+                if (certVerify) {
+                    Interceptor.attach(certVerify, {
+                        onEnter: function(args) {
+                            this.pszPolicyOID = args[0];
+                            this.pChainContext = args[1];
+                            this.pPolicyPara = args[2];
+                            this.pPolicyStatus = args[3];
+                        },
+                        onLeave: function(retval) {
+                            if (this.pPolicyStatus && !this.pPolicyStatus.isNull()) {
+                                this.pPolicyStatus.writeU32(0);
+                                this.pPolicyStatus.add(4).writeU32(0);
+                                console.log('[Certificate] Cleared policy status errors');
+                            }
+                            retval.replace(1);
                             console.log('[Certificate] Bypassed certificate chain verification');
+                        }
+                    });
+                }
+
+                var certGetCertificateChain = Module.findExportByName('Crypt32.dll', 'CertGetCertificateChain');
+                if (certGetCertificateChain) {
+                    Interceptor.attach(certGetCertificateChain, {
+                        onLeave: function(retval) {
+                            console.log('[Certificate] Certificate chain retrieved');
+                        }
+                    });
+                }
+
+                var cryptVerifySignature = Module.findExportByName('Advapi32.dll', 'CryptVerifySignatureW');
+                if (!cryptVerifySignature) {
+                    cryptVerifySignature = Module.findExportByName('Advapi32.dll', 'CryptVerifySignatureA');
+                }
+                if (cryptVerifySignature) {
+                    Interceptor.attach(cryptVerifySignature, {
+                        onLeave: function(retval) {
+                            retval.replace(1);
+                            console.log('[Certificate] Bypassed signature verification');
                         }
                     });
                 }
@@ -389,36 +1303,31 @@ class IntegrityBypassEngine:
             )
         )
 
-        # Size check bypass
         strategies.append(
             BypassStrategy(
                 name="size_check_bypass",
                 check_types=[IntegrityCheckType.SIZE_CHECK],
                 frida_script="""
-                // Hook GetFileSize
-                var getFileSizeAddr = Module.findExportByName('kernel32.dll', 'GetFileSize');
-                if (getFileSizeAddr) {
-                    Interceptor.attach(getFileSizeAddr, {
+                var getFileSize = Module.findExportByName('kernel32.dll', 'GetFileSize');
+                if (getFileSize) {
+                    Interceptor.attach(getFileSize, {
                         onLeave: function(retval) {
-                            // Return expected file size
                             retval.replace(%EXPECTED_SIZE%);
                             console.log('[Size] Returned expected size: ' + retval);
                         }
                     });
                 }
 
-                // Hook GetFileSizeEx
-                var getFileSizeExAddr = Module.findExportByName('kernel32.dll', 'GetFileSizeEx');
-                if (getFileSizeExAddr) {
-                    Interceptor.attach(getFileSizeExAddr, {
+                var getFileSizeEx = Module.findExportByName('kernel32.dll', 'GetFileSizeEx');
+                if (getFileSizeEx) {
+                    Interceptor.attach(getFileSizeEx, {
                         onEnter: function(args) {
                             this.sizePtr = args[1];
                         },
                         onLeave: function(retval) {
-                            if (retval.toInt32() != 0 && this.sizePtr) {
-                                var expectedSize = %EXPECTED_SIZE%;
-                                this.sizePtr.writeS64(expectedSize);
-                                console.log('[Size] Set expected size: ' + expectedSize);
+                            if (retval.toInt32() !== 0 && this.sizePtr) {
+                                this.sizePtr.writeS64(%EXPECTED_SIZE%);
+                                console.log('[Size] Set expected size');
                             }
                         }
                     });
@@ -429,28 +1338,45 @@ class IntegrityBypassEngine:
             )
         )
 
-        # Checksum bypass
         strategies.append(
             BypassStrategy(
                 name="checksum_bypass",
                 check_types=[IntegrityCheckType.CHECKSUM],
                 frida_script="""
-                // Hook CheckSumMappedFile
-                var checkSumAddr = Module.findExportByName('Imagehlp.dll', 'CheckSumMappedFile');
-                if (checkSumAddr) {
-                    Interceptor.attach(checkSumAddr, {
+                var checkSumMapped = Module.findExportByName('Imagehlp.dll', 'CheckSumMappedFile');
+                if (checkSumMapped) {
+                    Interceptor.attach(checkSumMapped, {
                         onEnter: function(args) {
                             this.headerSumPtr = args[2];
                             this.checkSumPtr = args[3];
                         },
                         onLeave: function(retval) {
-                            if (this.headerSumPtr) {
+                            if (this.headerSumPtr && !this.headerSumPtr.isNull()) {
                                 this.headerSumPtr.writeU32(%HEADER_CHECKSUM%);
                             }
-                            if (this.checkSumPtr) {
+                            if (this.checkSumPtr && !this.checkSumPtr.isNull()) {
                                 this.checkSumPtr.writeU32(%IMAGE_CHECKSUM%);
                             }
-                            console.log('[Checksum] Set expected checksum values');
+                            console.log('[Checksum] Set PE checksums');
+                        }
+                    });
+                }
+
+                var mapFileAndCheckSum = Module.findExportByName('Imagehlp.dll', 'MapFileAndCheckSumW');
+                if (mapFileAndCheckSum) {
+                    Interceptor.attach(mapFileAndCheckSum, {
+                        onEnter: function(args) {
+                            this.headerSumPtr = args[1];
+                            this.checkSumPtr = args[2];
+                        },
+                        onLeave: function(retval) {
+                            if (this.headerSumPtr && !this.headerSumPtr.isNull()) {
+                                this.headerSumPtr.writeU32(%HEADER_CHECKSUM%);
+                            }
+                            if (this.checkSumPtr && !this.checkSumPtr.isNull()) {
+                                this.checkSumPtr.writeU32(%IMAGE_CHECKSUM%);
+                            }
+                            console.log('[Checksum] Set PE checksums (MapFileAndCheckSum)');
                         }
                     });
                 }
@@ -460,71 +1386,16 @@ class IntegrityBypassEngine:
             )
         )
 
-        # Anti-tamper bypass
-        strategies.append(
-            BypassStrategy(
-                name="antitamper_bypass",
-                check_types=[IntegrityCheckType.ANTI_TAMPER],
-                frida_script="""
-                // Hook memory protection functions
-                var virtualProtectAddr = Module.findExportByName('kernel32.dll', 'VirtualProtect');
-                if (virtualProtectAddr) {
-                    Interceptor.attach(virtualProtectAddr, {
-                        onEnter: function(args) {
-                            this.address = args[0];
-                            this.size = args[1].toInt32();
-                            this.newProtect = args[2].toInt32();
-
-                            // Allow all protection changes
-                            if (this.newProtect & 0x40) {  // PAGE_EXECUTE_READWRITE
-                                console.log('[AntiTamper] Allowing protection change to RWX');
-                            }
-                        },
-                        onLeave: function(retval) {
-                            retval.replace(1);  // Always return success
-                        }
-                    });
-                }
-
-                // Hook IsDebuggerPresent to hide debugger
-                var isDebuggerPresentAddr = Module.findExportByName('kernel32.dll', 'IsDebuggerPresent');
-                if (isDebuggerPresentAddr) {
-                    Interceptor.attach(isDebuggerPresentAddr, {
-                        onLeave: function(retval) {
-                            retval.replace(0);  // No debugger
-                            console.log('[AntiTamper] Hidden debugger presence');
-                        }
-                    });
-                }
-
-                // Clear PEB debugger flags
-                var peb = Process.enumerateModules()[0].base;
-                var beingDebuggedOffset = Process.pointerSize === 8 ? 0x02 : 0x02;
-                var ntGlobalFlagOffset = Process.pointerSize === 8 ? 0xBC : 0x68;
-
-                Memory.protect(peb, 0x1000, 'rwx');
-                peb.add(beingDebuggedOffset).writeU8(0);
-                peb.add(ntGlobalFlagOffset).writeU32(0);
-                console.log('[AntiTamper] Cleared PEB debugger flags');
-            """,
-                success_rate=0.75,
-                priority=6,
-            )
-        )
-
-        # Memory hash bypass
         strategies.append(
             BypassStrategy(
                 name="memory_hash_bypass",
                 check_types=[IntegrityCheckType.MEMORY_HASH],
                 frida_script="""
-                // Track memory regions being hashed
-                var protectedRegions = [];
+                var protectedRegions = %PROTECTED_REGIONS%;
 
-                // Hook ReadProcessMemory for self-checks
-                var readProcessMemoryAddr = Module.findExportByName('kernel32.dll', 'ReadProcessMemory');
-                if (readProcessMemoryAddr) {
-                    Interceptor.attach(readProcessMemoryAddr, {
+                var readProcessMemory = Module.findExportByName('kernel32.dll', 'ReadProcessMemory');
+                if (readProcessMemory) {
+                    Interceptor.attach(readProcessMemory, {
                         onEnter: function(args) {
                             this.hProcess = args[0];
                             this.lpBaseAddress = args[1];
@@ -532,127 +1403,37 @@ class IntegrityBypassEngine:
                             this.nSize = args[3].toInt32();
                         },
                         onLeave: function(retval) {
-                            // Check if reading from protected region
-                            var address = parseInt(this.lpBaseAddress);
-                            for (var i = 0; i < protectedRegions.length; i++) {
-                                var region = protectedRegions[i];
-                                if (address >= region.start && address < region.end) {
-                                    // Return original bytes instead of modified
-                                    Memory.copy(this.lpBuffer, region.original, this.nSize);
-                                    console.log('[MemHash] Returned original bytes for hash check');
-                                    break;
+                            if (retval.toInt32() !== 0) {
+                                var address = parseInt(this.lpBaseAddress);
+                                for (var i = 0; i < protectedRegions.length; i++) {
+                                    var region = protectedRegions[i];
+                                    if (address >= region.start && address < region.end) {
+                                        if (region.original && region.original.length > 0) {
+                                            Memory.writeByteArray(this.lpBuffer, region.original);
+                                            console.log('[MemHash] Restored original bytes');
+                                        }
+                                        break;
+                                    }
                                 }
                             }
                         }
-                    });
-                }
-
-                // Function to add protected region
-                function addProtectedRegion(start, size, originalBytes) {
-                    protectedRegions.push({
-                        start: start,
-                        end: start + size,
-                        original: originalBytes
                     });
                 }
             """,
                 success_rate=0.80,
-                priority=7,
-            )
-        )
-
-        # Timestamp bypass
-        strategies.append(
-            BypassStrategy(
-                name="timestamp_bypass",
-                check_types=[IntegrityCheckType.TIMESTAMP],
-                frida_script="""
-                // Hook GetFileTime
-                var getFileTimeAddr = Module.findExportByName('kernel32.dll', 'GetFileTime');
-                if (getFileTimeAddr) {
-                    Interceptor.attach(getFileTimeAddr, {
-                        onEnter: function(args) {
-                            this.creationTimePtr = args[1];
-                            this.lastAccessTimePtr = args[2];
-                            this.lastWriteTimePtr = args[3];
-                        },
-                        onLeave: function(retval) {
-                            if (retval.toInt32() !== 0) {
-                                // Set expected timestamps
-                                var expectedTime = ptr('%EXPECTED_TIMESTAMP%');
-                                if (this.creationTimePtr && !this.creationTimePtr.isNull()) {
-                                    this.creationTimePtr.writeU64(expectedTime);
-                                }
-                                if (this.lastWriteTimePtr && !this.lastWriteTimePtr.isNull()) {
-                                    this.lastWriteTimePtr.writeU64(expectedTime);
-                                }
-                                console.log('[Timestamp] Set expected file times');
-                            }
-                        }
-                    });
-                }
-            """,
-                success_rate=0.93,
-                priority=8,
-            )
-        )
-
-        # Code signing bypass
-        strategies.append(
-            BypassStrategy(
-                name="code_signing_bypass",
-                check_types=[IntegrityCheckType.CODE_SIGNING],
-                frida_script="""
-                // Hook WinVerifyTrustEx
-                var winVerifyTrustExAddr = Module.findExportByName('Wintrust.dll', 'WinVerifyTrustEx');
-                if (winVerifyTrustExAddr) {
-                    Interceptor.attach(winVerifyTrustExAddr, {
-                        onLeave: function(retval) {
-                            retval.replace(0);  // Return S_OK
-                            console.log('[CodeSign] Bypassed WinVerifyTrustEx');
-                        }
-                    });
-                }
-
-                // Hook CryptCATAdminCalcHashFromFileHandle
-                var cryptCATHashAddr = Module.findExportByName('Wintrust.dll', 'CryptCATAdminCalcHashFromFileHandle');
-                if (cryptCATHashAddr) {
-                    Interceptor.attach(cryptCATHashAddr, {
-                        onLeave: function(retval) {
-                            retval.replace(1);  // Return TRUE
-                            console.log('[CodeSign] Bypassed catalog hash verification');
-                        }
-                    });
-                }
-
-                // Hook ImageGetCertificateData
-                var imageGetCertAddr = Module.findExportByName('Imagehlp.dll', 'ImageGetCertificateData');
-                if (imageGetCertAddr) {
-                    Interceptor.attach(imageGetCertAddr, {
-                        onLeave: function(retval) {
-                            retval.replace(1);  // Return TRUE
-                            console.log('[CodeSign] Bypassed certificate data retrieval');
-                        }
-                    });
-                }
-            """,
-                success_rate=0.82,
-                priority=9,
+                priority=6,
             )
         )
 
         return strategies
 
     def bypass_checks(self, process_name: str, checks: List[IntegrityCheck]) -> bool:
-        """Bypass detected integrity checks."""
+        """Bypass detected integrity checks using runtime hooks."""
         try:
-            # Attach to process
             self.session = frida.attach(process_name)
 
-            # Build combined script
             combined_script = self._build_bypass_script(checks)
 
-            # Create and load script
             self.script = self.session.create_script(combined_script)
             self.script.on("message", self._on_message)
             self.script.load()
@@ -668,14 +1449,12 @@ class IntegrityBypassEngine:
         """Build combined Frida script for all checks."""
         script_parts = []
 
-        # Group checks by type
         checks_by_type = {}
         for check in checks:
             if check.check_type not in checks_by_type:
                 checks_by_type[check.check_type] = []
             checks_by_type[check.check_type].append(check)
 
-        # Add appropriate bypass for each type
         for check_type, type_checks in checks_by_type.items():
             strategy = self._get_best_strategy(check_type)
             if strategy:
@@ -683,7 +1462,6 @@ class IntegrityBypassEngine:
                 script_parts.append(f"// {strategy.name}")
                 script_parts.append(script)
 
-        # Combine all scripts
         return "\n".join(script_parts)
 
     def _get_best_strategy(self, check_type: IntegrityCheckType) -> Optional[BypassStrategy]:
@@ -700,110 +1478,78 @@ class IntegrityBypassEngine:
         return best_strategy
 
     def _customize_script(self, script_template: str, checks: List[IntegrityCheck]) -> str:
-        """Customize script template with actual values."""
+        """Customize script template with actual recalculated values."""
         script = script_template
 
-        # Substitute template variables with detected values
         if checks:
             first_check = checks[0]
 
-            # Replace expected values
-            if first_check.expected_value:
-                expected_hex = first_check.expected_value.hex()
-                script = script.replace("%EXPECTED_VALUE%", f"0x{expected_hex}")
-            else:
-                # Calculate expected CRC32 for the original binary
-                if first_check.check_type == IntegrityCheckType.CRC32:
-                    # Use cached original bytes if available
-                    if first_check.address in self.original_bytes_cache:
-                        original_data = self.original_bytes_cache[first_check.address]
-                        expected_crc = self._calculate_crc32(original_data)
-                        script = script.replace("%EXPECTED_VALUE%", str(expected_crc))
-                    else:
-                        script = script.replace("%EXPECTED_VALUE%", "0x00000000")
-
-            # Replace address ranges
             min_addr = min(c.address for c in checks)
             max_addr = max(c.address + c.size for c in checks)
             script = script.replace("%PROTECTED_START%", str(min_addr))
             script = script.replace("%PROTECTED_END%", str(max_addr))
 
-            # Calculate actual values from binary analysis
             try:
-                binary_path = getattr(first_check, "binary_path", None)
+                binary_path = first_check.binary_path
                 if binary_path and os.path.exists(binary_path):
-                    pe = pefile.PE(binary_path)
-                    actual_size = pe.OPTIONAL_HEADER.SizeOfImage
-                    actual_header_checksum = pe.OPTIONAL_HEADER.CheckSum
-                    actual_image_checksum = self._calculate_pe_checksum(pe)
+                    with open(binary_path, "rb") as f:
+                        binary_data = f.read()
 
-                    # Get timestamp
-                    actual_timestamp = pe.FILE_HEADER.TimeDateStamp
+                    expected_crc32 = self.checksum_calc.calculate_crc32_zlib(binary_data)
+                    expected_crc64 = self.checksum_calc.calculate_crc64(binary_data)
+                    expected_md5 = self.checksum_calc.calculate_md5(binary_data)
+                    expected_sha1 = self.checksum_calc.calculate_sha1(binary_data)
+                    expected_sha256 = self.checksum_calc.calculate_sha256(binary_data)
+                    expected_sha512 = self.checksum_calc.calculate_sha512(binary_data)
 
-                    pe.close()
-                else:
-                    # Default values
-                    actual_size = 1048576
-                    actual_header_checksum = 0
-                    actual_image_checksum = 0
-                    actual_timestamp = 0
-            except (struct.error, ValueError):
-                actual_size = 1048576
-                actual_header_checksum = 0
-                actual_image_checksum = 0
-                actual_timestamp = 0
+                    script = script.replace("%EXPECTED_CRC32%", str(expected_crc32))
+                    script = script.replace("%EXPECTED_CRC64%", str(expected_crc64))
+                    script = script.replace("%EXPECTED_MD5%", expected_md5)
+                    script = script.replace("%EXPECTED_SHA1%", expected_sha1)
+                    script = script.replace("%EXPECTED_SHA256%", expected_sha256)
+                    script = script.replace("%EXPECTED_SHA512%", expected_sha512)
 
-            script = script.replace("%EXPECTED_SIZE%", str(actual_size))
-            script = script.replace("%HEADER_CHECKSUM%", str(actual_header_checksum))
-            script = script.replace("%IMAGE_CHECKSUM%", str(actual_image_checksum))
-            script = script.replace("%EXPECTED_TIMESTAMP%", str(actual_timestamp))
+                    hmac_keys = self.checksum_calc.extract_hmac_keys(binary_path)
+                    hmac_keys_json = str(hmac_keys).replace("'", '"') if hmac_keys else "[]"
+                    script = script.replace("%HMAC_KEYS%", hmac_keys_json)
+
+                    if binary_path.lower().endswith(('.exe', '.dll', '.sys')):
+                        pe = pefile.PE(binary_path)
+                        actual_size = pe.OPTIONAL_HEADER.SizeOfImage
+                        actual_header_checksum = pe.OPTIONAL_HEADER.CheckSum
+                        actual_image_checksum = self.checksum_calc.recalculate_pe_checksum(binary_path)
+                        pe.close()
+
+                        script = script.replace("%EXPECTED_SIZE%", str(actual_size))
+                        script = script.replace("%HEADER_CHECKSUM%", str(actual_header_checksum))
+                        script = script.replace("%IMAGE_CHECKSUM%", str(actual_image_checksum))
+
+                    protected_regions = []
+                    for check in checks:
+                        if check.address and check.size:
+                            protected_regions.append({
+                                "start": check.address,
+                                "end": check.address + check.size,
+                                "original": list(binary_data[check.address:check.address + check.size]) if check.address < len(binary_data) else []
+                            })
+
+                    script = script.replace("%PROTECTED_REGIONS%", str(protected_regions))
+
+            except Exception as e:
+                logger.debug(f"Script customization error: {e}")
+                script = script.replace("%EXPECTED_CRC32%", "0")
+                script = script.replace("%EXPECTED_CRC64%", "0")
+                script = script.replace("%EXPECTED_MD5%", "")
+                script = script.replace("%EXPECTED_SHA1%", "")
+                script = script.replace("%EXPECTED_SHA256%", "")
+                script = script.replace("%EXPECTED_SHA512%", "")
+                script = script.replace("%EXPECTED_SIZE%", "1048576")
+                script = script.replace("%HEADER_CHECKSUM%", "0")
+                script = script.replace("%IMAGE_CHECKSUM%", "0")
+                script = script.replace("%PROTECTED_REGIONS%", "[]")
+                script = script.replace("%HMAC_KEYS%", "[]")
 
         return script
-
-    def _generate_crc32_table(self) -> List[int]:
-        """Generate CRC32 lookup table."""
-        crc_table = []
-        for i in range(256):
-            crc = i
-            for _ in range(8):
-                if crc & 1:
-                    crc = (crc >> 1) ^ 0xEDB88320
-                else:
-                    crc >>= 1
-            crc_table.append(crc)
-        return crc_table
-
-    def _calculate_crc32(self, data: bytes) -> int:
-        """Calculate CRC32 checksum."""
-        crc = 0xFFFFFFFF
-        for byte in data:
-            crc = self.crc_table[(crc & 0xFF) ^ byte] ^ (crc >> 8)
-        return crc ^ 0xFFFFFFFF
-
-    def _calculate_pe_checksum(self, pe: pefile.PE) -> int:
-        """Calculate PE checksum."""
-        checksum = 0
-        word_count = (len(pe.__data__) + 1) // 2
-
-        checksum_offset = pe.OPTIONAL_HEADER.get_file_offset() + 64
-
-        for i in range(word_count):
-            if i * 2 == checksum_offset:  # Skip checksum field
-                continue
-
-            if i * 2 + 2 <= len(pe.__data__):
-                word = struct.unpack("<H", pe.__data__[i * 2 : i * 2 + 2])[0]
-            else:
-                word = 0
-
-            checksum = (checksum & 0xFFFF) + word + (checksum >> 16)
-            if checksum > 0xFFFF:
-                checksum = (checksum & 0xFFFF) + (checksum >> 16)
-
-        checksum = (checksum & 0xFFFF) + (checksum >> 16)
-        checksum += len(pe.__data__)
-
-        return checksum & 0xFFFFFFFF
 
     def _on_message(self, message, data):
         """Handle Frida script messages."""
@@ -820,22 +1566,153 @@ class IntegrityBypassEngine:
             self.session.detach()
 
 
-class IntegrityCheckDefeatSystem:
-    """Run integrity check defeat system."""
+class BinaryPatcher:
+    """Patches binaries to remove integrity checks and recalculates checksums."""
 
     def __init__(self):
-        """Initialize the IntegrityCheckDefeatSystem with detector and bypasser components."""
+        """Initialize the BinaryPatcher with checksum calculator."""
+        self.checksum_calc = ChecksumRecalculator()
+        self.patch_history = []
+
+    def patch_integrity_checks(
+        self, binary_path: str, checks: List[IntegrityCheck], output_path: str = None
+    ) -> Tuple[bool, Optional[ChecksumRecalculation]]:
+        """Patch binary to remove integrity checks and recalculate all checksums."""
+        if output_path is None:
+            output_path = str(Path(binary_path).with_suffix('.patched' + Path(binary_path).suffix))
+
+        try:
+            with open(binary_path, "rb") as f:
+                original_data = bytearray(f.read())
+
+            pe = pefile.PE(binary_path)
+            patch_data = bytearray(original_data)
+
+            for check in checks:
+                if check.bypass_method == "patch_inline":
+                    offset = self._rva_to_offset(pe, check.address)
+                    if offset and offset + check.size <= len(patch_data):
+                        for i in range(check.size):
+                            patch_data[offset + i] = 0x90
+
+                        self.patch_history.append({
+                            "address": check.address,
+                            "size": check.size,
+                            "original": bytes(original_data[offset:offset + check.size]),
+                            "patched": bytes([0x90] * check.size),
+                            "type": check.check_type.name,
+                        })
+
+                elif check.check_type in [IntegrityCheckType.CRC32, IntegrityCheckType.CHECKSUM]:
+                    offset = self._rva_to_offset(pe, check.address)
+                    if offset:
+                        patch_bytes = b"\xb8\x00\x00\x00\x00\xc3"
+
+                        for i, byte in enumerate(patch_bytes):
+                            if offset + i < len(patch_data):
+                                patch_data[offset + i] = byte
+
+                        self.patch_history.append({
+                            "address": check.address,
+                            "size": len(patch_bytes),
+                            "original": bytes(original_data[offset:offset + len(patch_bytes)]),
+                            "patched": patch_bytes,
+                            "type": check.check_type.name,
+                        })
+
+            with open(output_path, "wb") as f:
+                f.write(patch_data)
+
+            pe_patched = pefile.PE(output_path)
+            new_checksum = self.checksum_calc.recalculate_pe_checksum(output_path)
+            pe_patched.OPTIONAL_HEADER.CheckSum = new_checksum
+
+            with open(output_path, "wb") as f:
+                f.write(pe_patched.write())
+
+            pe.close()
+            pe_patched.close()
+
+            checksums = self.checksum_calc.recalculate_for_patched_binary(binary_path, output_path)
+
+            logger.info(f"Binary patched: {output_path}")
+            logger.info(f"Applied {len(self.patch_history)} patches")
+            logger.info(f"Recalculated PE checksum: {hex(new_checksum)}")
+            logger.info(f"Original CRC32: {hex(checksums.original_crc32)}")
+            logger.info(f"Patched CRC32: {hex(checksums.patched_crc32)}")
+
+            return True, checksums
+
+        except Exception as e:
+            logger.error(f"Binary patching failed: {e}")
+            return False, None
+
+    def _rva_to_offset(self, pe: pefile.PE, rva: int) -> Optional[int]:
+        """Convert RVA to file offset."""
+        for section in pe.sections:
+            if section.VirtualAddress <= rva < section.VirtualAddress + section.Misc_VirtualSize:
+                return section.PointerToRawData + (rva - section.VirtualAddress)
+        return None
+
+
+class IntegrityCheckDefeatSystem:
+    """Complete integrity check defeat system with detection, bypass, and patching."""
+
+    def __init__(self):
+        """Initialize the IntegrityCheckDefeatSystem with all components."""
         self.detector = IntegrityCheckDetector()
         self.bypasser = IntegrityBypassEngine()
-        self.patch_history = []
-        self.binary_backups = {}
+        self.patcher = BinaryPatcher()
+        self.checksum_calc = ChecksumRecalculator()
 
-    def defeat_integrity_checks(self, binary_path: str, process_name: str = None) -> Dict[str, Any]:
+    def find_embedded_checksums(self, binary_path: str) -> List[ChecksumLocation]:
+        """Find locations where checksums are embedded in the binary."""
+        return self.checksum_calc.find_checksum_locations(binary_path)
+
+    def extract_hmac_keys(self, binary_path: str) -> List[Dict[str, Union[str, int]]]:
+        """Extract potential HMAC keys from binary."""
+        return self.checksum_calc.extract_hmac_keys(binary_path)
+
+    def patch_embedded_checksums(
+        self, binary_path: str, checksum_locations: List[ChecksumLocation], output_path: str = None
+    ) -> bool:
+        """Patch embedded checksums in binary with recalculated values."""
+        if output_path is None:
+            output_path = str(Path(binary_path).with_suffix('.patched' + Path(binary_path).suffix))
+
+        try:
+            with open(binary_path, "rb") as f:
+                binary_data = bytearray(f.read())
+
+            for location in checksum_locations:
+                if location.offset + location.size <= len(binary_data):
+                    binary_data[location.offset:location.offset + location.size] = location.calculated_value
+                    logger.info(f"Patched {location.algorithm.name} at offset {hex(location.offset)}")
+
+            with open(output_path, "wb") as f:
+                f.write(binary_data)
+
+            logger.info(f"Patched {len(checksum_locations)} embedded checksums: {output_path}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to patch embedded checksums: {e}")
+            return False
+
+    def defeat_integrity_checks(
+        self, binary_path: str, process_name: str = None, patch_binary: bool = False
+    ) -> Dict[str, Any]:
         """Complete integrity check defeat workflow."""
-        result = {"success": False, "checks_detected": 0, "checks_bypassed": 0, "details": []}
+        result = {
+            "success": False,
+            "checks_detected": 0,
+            "checks_bypassed": 0,
+            "binary_patched": False,
+            "checksums": None,
+            "details": []
+        }
 
-        # Detect integrity checks
-        logger.info(f"Detecting integrity checks in: {binary_path}")
+        logger.info(f"Detecting integrity checks: {binary_path}")
         checks = self.detector.detect_checks(binary_path)
         result["checks_detected"] = len(checks)
 
@@ -846,30 +1723,48 @@ class IntegrityCheckDefeatSystem:
 
         logger.info(f"Detected {len(checks)} integrity checks")
 
-        # Log detected checks
         for check in checks:
-            result["details"].append(
-                {
-                    "type": check.check_type.name,
-                    "address": hex(check.address),
-                    "function": check.function_name,
-                    "bypass_method": check.bypass_method,
-                    "confidence": check.confidence,
-                }
-            )
+            result["details"].append({
+                "type": check.check_type.name,
+                "address": hex(check.address),
+                "function": check.function_name,
+                "bypass_method": check.bypass_method,
+                "confidence": check.confidence,
+                "section": check.section_name,
+            })
 
-        # Apply bypasses if process is running
         if process_name:
-            logger.info(f"Applying bypasses to process: {process_name}")
+            logger.info(f"Applying runtime bypasses: {process_name}")
             if self.bypasser.bypass_checks(process_name, checks):
                 result["checks_bypassed"] = len(checks)
                 result["success"] = True
-                logger.info("Successfully bypassed all integrity checks")
+                logger.info("Successfully installed runtime bypasses")
             else:
-                logger.error("Failed to bypass some integrity checks")
-        else:
-            logger.info("No process specified, bypasses not applied")
-            result["success"] = True
+                logger.error("Runtime bypass installation failed")
+
+        if patch_binary:
+            logger.info("Patching binary to remove integrity checks")
+            success, checksums = self.patcher.patch_integrity_checks(binary_path, checks)
+            result["binary_patched"] = success
+            if checksums:
+                result["checksums"] = {
+                    "original_crc32": hex(checksums.original_crc32),
+                    "patched_crc32": hex(checksums.patched_crc32),
+                    "original_crc64": hex(checksums.original_crc64),
+                    "patched_crc64": hex(checksums.patched_crc64),
+                    "original_md5": checksums.original_md5,
+                    "patched_md5": checksums.patched_md5,
+                    "original_sha1": checksums.original_sha1,
+                    "patched_sha1": checksums.patched_sha1,
+                    "original_sha256": checksums.original_sha256,
+                    "patched_sha256": checksums.patched_sha256,
+                    "original_sha512": checksums.original_sha512,
+                    "patched_sha512": checksums.patched_sha512,
+                    "pe_checksum": hex(checksums.pe_checksum),
+                    "sections": checksums.sections,
+                    "hmac_keys": checksums.hmac_keys,
+                }
+                result["success"] = True
 
         return result
 
@@ -880,110 +1775,14 @@ class IntegrityCheckDefeatSystem:
         if not checks:
             return "// No integrity checks detected"
 
-        # Store binary path in checks for reference
         for check in checks:
             check.binary_path = binary_path
 
         return self.bypasser._build_bypass_script(checks)
 
-    def patch_binary_integrity(self, binary_path: str, output_path: str = None) -> bool:
-        """Patch binary to remove integrity checks."""
-        if output_path is None:
-            output_path = binary_path + ".patched"
-
-        try:
-            # Backup original
-            with open(binary_path, "rb") as f:
-                original_data = f.read()
-            self.binary_backups[binary_path] = original_data
-
-            # Load PE
-            pe = pefile.PE(binary_path)
-
-            # Detect checks
-            checks = self.detector.detect_checks(binary_path)
-
-            # Apply patches
-            patch_data = bytearray(original_data)
-
-            for check in checks:
-                if check.bypass_method == "patch_inline":
-                    # NOP out integrity check code
-                    offset = self._rva_to_offset(pe, check.address)
-                    if offset:
-                        # Replace with NOPs (0x90)
-                        for i in range(check.size):
-                            patch_data[offset + i] = 0x90
-
-                        self.patch_history.append(
-                            {
-                                "address": check.address,
-                                "size": check.size,
-                                "original": original_data[offset : offset + check.size],
-                                "patched": bytes([0x90] * check.size),
-                            }
-                        )
-
-                elif check.check_type == IntegrityCheckType.CRC32:
-                    # Patch CRC32 checks to always return expected value
-                    offset = self._rva_to_offset(pe, check.address)
-                    if offset:
-                        # MOV EAX, expected_crc; RET
-                        expected_crc = self.bypasser._calculate_crc32(original_data)
-                        patch_bytes = struct.pack("<BI", 0xB8, expected_crc) + b"\xc3"
-
-                        for i, byte in enumerate(patch_bytes):
-                            if offset + i < len(patch_data):
-                                patch_data[offset + i] = byte
-
-                        self.patch_history.append(
-                            {
-                                "address": check.address,
-                                "size": len(patch_bytes),
-                                "original": original_data[offset : offset + len(patch_bytes)],
-                                "patched": patch_bytes,
-                            }
-                        )
-
-            # Fix PE checksum
-            pe_patched = pefile.PE(data=bytes(patch_data))
-            pe_patched.OPTIONAL_HEADER.CheckSum = self.bypasser._calculate_pe_checksum(pe_patched)
-            patch_data = bytearray(pe_patched.write())
-
-            # Write patched file
-            with open(output_path, "wb") as f:
-                f.write(patch_data)
-
-            logger.info(f"Binary patched successfully: {output_path}")
-            logger.info(f"Applied {len(self.patch_history)} patches")
-
-            pe.close()
-            pe_patched.close()
-
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to patch binary: {e}")
-            return False
-
-    def _rva_to_offset(self, pe: pefile.PE, rva: int) -> Optional[int]:
-        """Convert RVA to file offset."""
-        for section in pe.sections:
-            if section.VirtualAddress <= rva < section.VirtualAddress + section.Misc_VirtualSize:
-                return section.PointerToRawData + (rva - section.VirtualAddress)
-        return None
-
-    def restore_binary(self, binary_path: str) -> bool:
-        """Restore original binary from backup."""
-        if binary_path in self.binary_backups:
-            try:
-                with open(binary_path, "wb") as f:
-                    f.write(self.binary_backups[binary_path])
-                logger.info(f"Binary restored: {binary_path}")
-                return True
-            except Exception as e:
-                logger.error(f"Failed to restore binary: {e}")
-        return False
+    def recalculate_checksums(self, original_path: str, patched_path: str) -> ChecksumRecalculation:
+        """Recalculate all checksums for comparison."""
+        return self.checksum_calc.recalculate_for_patched_binary(original_path, patched_path)
 
 
 def main():
@@ -992,8 +1791,11 @@ def main():
 
     parser = argparse.ArgumentParser(description="Integrity Check Defeat System")
     parser.add_argument("binary", help="Binary file to analyze")
-    parser.add_argument("-p", "--process", help="Process name to attach to")
-    parser.add_argument("-s", "--script", action="store_true", help="Generate bypass script only")
+    parser.add_argument("-p", "--process", help="Process name for runtime bypass")
+    parser.add_argument("-s", "--script", action="store_true", help="Generate bypass script")
+    parser.add_argument("--patch", action="store_true", help="Patch binary")
+    parser.add_argument("--find-checksums", action="store_true", help="Find embedded checksums")
+    parser.add_argument("--extract-keys", action="store_true", help="Extract HMAC keys")
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
 
     args = parser.parse_args()
@@ -1005,18 +1807,37 @@ def main():
 
     defeat_system = IntegrityCheckDefeatSystem()
 
+    if args.find_checksums:
+        locations = defeat_system.find_embedded_checksums(args.binary)
+        print(f"\n=== Found {len(locations)} Embedded Checksums ===")
+        for loc in locations:
+            print(f"- {loc.algorithm.name} at offset {hex(loc.offset)} (size={loc.size}, confidence={loc.confidence:.1%})")
+            print(f"  Current:    {loc.current_value.hex()}")
+            print(f"  Calculated: {loc.calculated_value.hex()}")
+        return
+
+    if args.extract_keys:
+        keys = defeat_system.extract_hmac_keys(args.binary)
+        print(f"\n=== Found {len(keys)} Potential HMAC Keys ===")
+        for key in keys:
+            print(f"- Offset: {hex(key['offset'])} Size: {key['size']} bytes")
+            print(f"  Key: {key['key_hex']}")
+            print(f"  Entropy: {key['entropy']:.2f} Confidence: {key['confidence']:.1%}")
+        return
+
     if args.script:
-        # Generate script only
         script = defeat_system.generate_bypass_script(args.binary)
         print("\n=== Generated Bypass Script ===")
         print(script)
     else:
-        # Full defeat workflow
-        result = defeat_system.defeat_integrity_checks(args.binary, args.process)
+        result = defeat_system.defeat_integrity_checks(
+            args.binary, args.process, patch_binary=args.patch
+        )
 
         print("\n=== Integrity Check Defeat Results ===")
         print(f"Checks Detected: {result['checks_detected']}")
         print(f"Checks Bypassed: {result['checks_bypassed']}")
+        print(f"Binary Patched: {result['binary_patched']}")
         print(f"Success: {result['success']}")
 
         if result["details"]:
@@ -1026,6 +1847,28 @@ def main():
                 print(f"  Function: {detail['function']}")
                 print(f"  Bypass: {detail['bypass_method']}")
                 print(f"  Confidence: {detail['confidence']:.1%}")
+
+        if result["checksums"]:
+            print("\n=== Checksum Recalculation ===")
+            cs = result["checksums"]
+            print(f"Original CRC32: {cs['original_crc32']}")
+            print(f"Patched CRC32:  {cs['patched_crc32']}")
+            print(f"Original CRC64: {cs['original_crc64']}")
+            print(f"Patched CRC64:  {cs['patched_crc64']}")
+            print(f"Original MD5:   {cs['original_md5']}")
+            print(f"Patched MD5:    {cs['patched_md5']}")
+            print(f"Original SHA1:  {cs['original_sha1']}")
+            print(f"Patched SHA1:   {cs['patched_sha1']}")
+            print(f"Original SHA256: {cs['original_sha256']}")
+            print(f"Patched SHA256:  {cs['patched_sha256']}")
+            print(f"Original SHA512: {cs['original_sha512']}")
+            print(f"Patched SHA512:  {cs['patched_sha512']}")
+            print(f"PE Checksum:    {cs['pe_checksum']}")
+
+            if cs.get('hmac_keys'):
+                print("\n=== Extracted HMAC Keys ===")
+                for key in cs['hmac_keys'][:5]:
+                    print(f"- Key at offset {hex(key['offset'])}: {key['key_hex'][:32]}... (confidence={key['confidence']:.1%})")
 
 
 if __name__ == "__main__":

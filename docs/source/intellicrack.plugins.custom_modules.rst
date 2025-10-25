@@ -28,14 +28,6 @@ intellicrack.plugins.custom\_modules.cloud\_license\_interceptor module
    :show-inheritance:
    :undoc-members:
 
-intellicrack.plugins.custom\_modules.demo\_plugin module
---------------------------------------------------------
-
-.. automodule:: intellicrack.plugins.custom_modules.demo_plugin
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 intellicrack.plugins.custom\_modules.hardware\_dongle\_emulator module
 ----------------------------------------------------------------------
 

@@ -18,7 +18,7 @@ A comprehensive binary analysis and security research platform designed to help 
 ### Advanced Features
 - **AI/ML Integration**: Multiple AI providers with dynamic model fetching (OpenAI, Anthropic, Google, Local models)
 - **GPU Acceleration**: NVIDIA, AMD, and Intel GPU support for intensive operations
-- **Distributed Processing**: Ray, Dask, and multiprocessing support
+- **Parallel Processing**: Multi-core processing support via Python multiprocessing
 - **Symbolic Execution**: Advanced path exploration and constraint solving
 - **Dynamic Analysis**: Runtime behavior analysis and instrumentation
 - **C2 Infrastructure**: Command and control capabilities for security testing
@@ -48,34 +48,86 @@ A comprehensive binary analysis and security research platform designed to help 
 
 ## Installation
 
-### Manual Installation
+### Prerequisites
 
-1. **Install Python 3.12+**
+**1. Install Pixi package manager:**
 
-   ```bash
-   # Verify Python version
-   python --version  # Should be 3.12.x or higher
-   ```
+```bash
+# Windows (PowerShell)
+iwr -useb https://pixi.sh/install.ps1 | iex
 
-2. **Clone the repository**
+# Or via winget
+winget install prefix-dev.pixi
+```
+
+**2. Install `just` command runner:**
+
+```bash
+# Windows (via winget)
+winget install --id Casey.Just -e
+
+# Or via scoop
+scoop install just
+
+# Or via cargo (after running 'just install')
+pixi run cargo install just
+```
+
+**Note:** Rust, Node.js, radare2, and git are automatically installed by pixi. Rustup and JDK 21 are installed via winget during `just install`.
+
+### Automated Installation (Recommended)
+
+1. **Clone the repository**
 
    ```bash
    git clone https://github.com/Zachanardo/Intellicrack.git
    cd Intellicrack
    ```
 
-3. **Create and activate virtual environment**
+2. **Run automated setup**
 
    ```bash
-   pixi init
-   pixi shell   ```
-
-4. **Install dependencies**
-
-   ```bash
-   # Install from requirements lock file
-   pip install -r requirements/requirements.lock
+   # Installs all dependencies + Intel XPU + linters + Rust build
+   just install
    ```
+
+   This automatically runs:
+   - `pixi install` - Installs all Python/Conda dependencies
+   - `rustup update stable` - Updates Rust toolchain to latest
+   - JDK 21 installation (system-wide via winget)
+   - Latest Ghidra download and installation to `tools/ghidra/`
+   - Latest radare2 download and installation to `tools/radare2/`
+   - Latest QEMU download and installation to `tools/qemu/`
+   - Intel XPU PyTorch installation (for Intel GPU acceleration)
+   - ESLint + Markdownlint installation
+   - Rust launcher build (release mode)
+
+### Manual Installation
+
+If you prefer step-by-step installation:
+
+1. **Install base dependencies**
+
+   ```bash
+   pixi install
+   ```
+
+2. **Run post-install setup**
+
+   ```bash
+   pixi run setup
+   ```
+
+### Activate Environment
+
+```bash
+# Activate pixi shell
+pixi shell
+
+# Or run commands directly
+pixi run intellicrack --help
+pixi run intellicrack-gui
+```
 
 ### Dependencies
 

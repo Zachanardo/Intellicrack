@@ -1,4 +1,6 @@
-"""Copyright (C) 2025 Zachary Flint.
+"""Production tests for hardware dongle emulation.
+
+Copyright (C) 2025 Zachary Flint
 
 This file is part of Intellicrack.
 
@@ -16,406 +18,599 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-import pytest
-import os
-import struct
 import hashlib
 import hmac
-import time
-from pathlib import Path
-import ctypes
-import usb.core
-import usb.util
+import struct
 
-from intellicrack.core.protection_bypass.dongle_emulator import DongleEmulator
+import pytest
+
+from intellicrack.core.protection_bypass.dongle_emulator import (
+    CryptoEngine,
+    DongleMemory,
+    HardwareDongleEmulator,
+    HASPDongle,
+    HASPStatus,
+    SentinelDongle,
+    SentinelStatus,
+    USBDescriptor,
+    USBEmulator,
+    WibuKeyDongle,
+)
 
 
-class TestDongleEmulationProduction:
+class TestHardwareDongleEmulator:
     """Production tests for hardware dongle emulation against real protection systems."""
 
-    @pytest.fixture
-    def usb_devices(self):
-        """Enumerate real USB devices for testing."""
-        try:
-            devices = usb.core.find(find_all=True)
-            device_list = []
-            for device in devices:
-                device_list.append({
-                    'vendor_id': device.idVendor,
-                    'product_id': device.idProduct,
-                    'manufacturer': self._get_string(device, device.iManufacturer),
-                    'product': self._get_string(device, device.iProduct)
-                })
-            return device_list
-        except Exception:
-            return []
-
-    def _get_string(self, device, index):
-        """Get USB string descriptor."""
-        try:
-            if index:
-                return usb.util.get_string(device, index)
-        except:
-            pass
-        return None
-
-    def test_dongle_emulator_initialization(self):
-        """Test dongle emulator initialization."""
-        emulator = DongleEmulator()
+    def test_emulator_initialization(self):
+        """Test that HardwareDongleEmulator initializes correctly."""
+        emulator = HardwareDongleEmulator()
 
         assert emulator is not None
-        assert hasattr(emulator, 'emulate_hasp')
-        assert hasattr(emulator, 'emulate_sentinel')
-        assert hasattr(emulator, 'emulate_codemeter')
+        assert hasattr(emulator, 'activate_dongle_emulation')
+        assert hasattr(emulator, 'process_hasp_challenge')
+        assert hasattr(emulator, 'read_dongle_memory')
+        assert hasattr(emulator, 'write_dongle_memory')
+        assert hasattr(emulator, 'crypto_engine')
+        assert isinstance(emulator.crypto_engine, CryptoEngine)
 
-    def test_hasp_dongle_emulation(self):
-        """Test HASP/SafeNet dongle emulation."""
-        emulator = DongleEmulator()
+    def test_activate_dongle_emulation_hasp(self):
+        """Test HASP dongle emulation activation with real validation."""
+        emulator = HardwareDongleEmulator()
 
-        # HASP dongle configuration
-        hasp_config = {
-            'dongle_id': 0x12345678,
-            'vendor_id': 0x0529,  # Aladdin/SafeNet
-            'product_id': 0x0001,
-            'memory_size': 112,  # HASP HL Basic has 112 bytes
-            'algorithm': 'AES'
-        }
+        result = emulator.activate_dongle_emulation(['HASP'])
 
-        # Generate HASP emulation
-        hasp_emulation = emulator.emulate_hasp(hasp_config)
+        assert result is not None
+        assert isinstance(result, dict)
+        assert 'success' in result
+        assert 'emulated_dongles' in result
+        assert 'methods_applied' in result
+        assert result['success'] is True
+        assert len(result['emulated_dongles']) > 0
+        assert 'HASP_1' in result['emulated_dongles']
+        assert 'Virtual Dongle Creation' in result['methods_applied']
+        assert 'USB Device Emulation' in result['methods_applied']
 
-        assert hasp_emulation is not None
-        assert 'driver_hooks' in hasp_emulation
-        assert 'api_responses' in hasp_emulation
-        assert 'memory_map' in hasp_emulation
+    def test_activate_dongle_emulation_sentinel(self):
+        """Test Sentinel dongle emulation activation."""
+        emulator = HardwareDongleEmulator()
 
-        # Verify HASP API responses
-        api_functions = [
-            'hasp_login',
-            'hasp_logout',
-            'hasp_encrypt',
-            'hasp_decrypt',
-            'hasp_read',
-            'hasp_write',
-            'hasp_get_info'
-        ]
+        result = emulator.activate_dongle_emulation(['Sentinel'])
 
-        for func in api_functions:
-            assert func in hasp_emulation['api_responses']
+        assert result['success'] is True
+        assert any('Sentinel_' in d for d in result['emulated_dongles'])
+        assert 1 in emulator.sentinel_dongles
+        sentinel = emulator.sentinel_dongles[1]
+        assert sentinel.device_id == 0x87654322
+        assert sentinel.serial_number == "SN123456789ABCDEF"
+        assert sentinel.firmware_version == "8.0.0"
 
-    def test_sentinel_superpro_emulation(self):
-        """Test Sentinel SuperPro dongle emulation."""
-        emulator = DongleEmulator()
+    def test_activate_dongle_emulation_codemeter(self):
+        """Test CodeMeter/WibuKey dongle emulation activation."""
+        emulator = HardwareDongleEmulator()
 
-        # Sentinel configuration
-        sentinel_config = {
-            'dongle_id': 'ABCD-1234-5678-90EF',
-            'developer_id': 0x1234,
-            'algorithm_descriptor': 0x0001,
-            'memory_cells': 64,
-            'query_responses': {}
-        }
+        result = emulator.activate_dongle_emulation(['CodeMeter'])
 
-        # Generate Sentinel emulation
-        sentinel_emulation = emulator.emulate_sentinel(sentinel_config)
+        assert result['success'] is True
+        assert any('WibuKey_' in d for d in result['emulated_dongles'])
+        assert 1 in emulator.wibukey_dongles
+        wibu = emulator.wibukey_dongles[1]
+        assert wibu.firm_code == 101
+        assert wibu.product_code == 1000
+        assert wibu.serial_number == 1000001
 
-        assert sentinel_emulation is not None
-        assert 'packet_responses' in sentinel_emulation
-        assert 'algorithm_implementation' in sentinel_emulation
-        assert 'cell_memory' in sentinel_emulation
+    def test_activate_all_dongles(self):
+        """Test activating multiple dongle types simultaneously."""
+        emulator = HardwareDongleEmulator()
 
-        # Check memory cells
-        assert len(sentinel_emulation['cell_memory']) == 64
+        result = emulator.activate_dongle_emulation(['HASP', 'Sentinel', 'CodeMeter'])
 
-    def test_codemeter_emulation(self):
-        """Test CodeMeter dongle emulation."""
-        emulator = DongleEmulator()
+        assert result['success'] is True
+        assert len(result['emulated_dongles']) >= 3
+        assert len(emulator.hasp_dongles) > 0
+        assert len(emulator.sentinel_dongles) > 0
+        assert len(emulator.wibukey_dongles) > 0
 
-        # CodeMeter configuration
-        codemeter_config = {
-            'firm_code': 0x12345678,
-            'product_code': 0x100001,
-            'feature_map': 0xFFFFFFFF,
-            'license_quantity': 1,
-            'expiration_date': None  # Perpetual
-        }
+    def test_crypto_engine_hasp_aes_encryption(self):
+        """Test HASP AES encryption produces valid ciphertext."""
+        crypto = CryptoEngine()
+        plaintext = b'TestData12345678'
+        key = b'0123456789ABCDEF0123456789ABCDEF'
 
-        # Generate CodeMeter emulation
-        cm_emulation = emulator.emulate_codemeter(codemeter_config)
+        ciphertext = crypto.hasp_encrypt(plaintext, key, 'AES')
 
-        assert cm_emulation is not None
-        assert 'cmstick_responses' in cm_emulation
-        assert 'license_entries' in cm_emulation
-        assert 'crypto_context' in cm_emulation
+        assert ciphertext is not None
+        assert len(ciphertext) >= len(plaintext)
+        assert ciphertext != plaintext
 
-    def test_dongle_memory_emulation(self):
-        """Test dongle memory read/write emulation."""
-        emulator = DongleEmulator()
+        decrypted = crypto.hasp_decrypt(ciphertext, key, 'AES')
+        assert decrypted == plaintext
 
-        # Create memory map
-        memory_size = 256
-        memory = emulator.create_dongle_memory(memory_size)
+    def test_crypto_engine_hasp_des_encryption(self):
+        """Test HASP DES encryption for legacy dongle support."""
+        crypto = CryptoEngine()
+        plaintext = b'TestData'
+        key = b'01234567'
 
-        assert memory is not None
-        assert len(memory) == memory_size
+        ciphertext = crypto.hasp_encrypt(plaintext, key, 'DES')
 
-        # Test write operation
-        offset = 0x10
-        data = b'TEST_DATA_123'
-        result = emulator.write_dongle_memory(memory, offset, data)
+        assert ciphertext is not None
+        assert ciphertext != plaintext
 
-        assert result is True
-        assert memory[offset:offset+len(data)] == data
+        decrypted = crypto.hasp_decrypt(ciphertext, key, 'DES')
+        assert decrypted == plaintext
 
-        # Test read operation
-        read_data = emulator.read_dongle_memory(memory, offset, len(data))
-        assert read_data == data
+    def test_crypto_engine_sentinel_challenge_response(self):
+        """Test Sentinel HMAC-based challenge-response."""
+        crypto = CryptoEngine()
+        challenge = b'CHALLENGE_DATA_123'
+        key = b'SECRET_KEY_123456789012345678901234'
 
-    def test_dongle_crypto_operations(self):
-        """Test dongle cryptographic operations."""
-        emulator = DongleEmulator()
+        response = crypto.sentinel_challenge_response(challenge, key)
 
-        # Test data
-        plaintext = b'This is test data for dongle crypto'
-        key = b'0123456789ABCDEF'  # 128-bit key
-
-        # Test HASP-style encryption
-        hasp_encrypted = emulator.hasp_encrypt(plaintext, key)
-        assert hasp_encrypted is not None
-        assert hasp_encrypted != plaintext
-
-        # Test decryption
-        hasp_decrypted = emulator.hasp_decrypt(hasp_encrypted, key)
-        assert hasp_decrypted == plaintext
-
-        # Test Sentinel-style algorithm
-        sentinel_result = emulator.sentinel_algorithm(
-            query=0x12345678,
-            algorithm_id=1,
-            seed=0xABCDEF
-        )
-        assert sentinel_result is not None
-        assert isinstance(sentinel_result, int)
-
-    def test_usb_dongle_enumeration(self, usb_devices):
-        """Test USB dongle detection and enumeration."""
-        emulator = DongleEmulator()
-
-        # Known dongle vendor IDs
-        dongle_vendors = {
-            0x0529: 'Aladdin/SafeNet',
-            0x04B9: 'Rainbow Technologies',
-            0x096E: 'Feitian',
-            0x1BC0: 'Sentinel',
-            0x064F: 'WIBU-SYSTEMS'
-        }
-
-        # Check for real dongles
-        detected_dongles = emulator.detect_dongles()
-
-        assert detected_dongles is not None
-        assert isinstance(detected_dongles, list)
-
-        # If real dongles present, verify detection
-        for device in usb_devices:
-            if device['vendor_id'] in dongle_vendors:
-                # Should be detected as dongle
-                assert any(d['vendor_id'] == device['vendor_id']
-                          for d in detected_dongles)
-
-    def test_parallel_port_dongle_emulation(self):
-        """Test parallel port (LPT) dongle emulation."""
-        emulator = DongleEmulator()
-
-        # Parallel port dongle config
-        lpt_config = {
-            'port': 'LPT1',
-            'base_address': 0x378,
-            'dongle_type': 'sentinel_superpro',
-            'response_delays': True
-        }
-
-        # Generate LPT emulation
-        lpt_emulation = emulator.emulate_parallel_dongle(lpt_config)
-
-        assert lpt_emulation is not None
-        assert 'port_hooks' in lpt_emulation
-        assert 'io_responses' in lpt_emulation
-
-        # Test I/O operations
-        test_value = 0xAA
-        response = emulator.parallel_port_io(
-            port=0x378,
-            value=test_value,
-            operation='write'
-        )
         assert response is not None
+        assert len(response) == 16
+        assert response != challenge
 
-    def test_network_dongle_emulation(self):
-        """Test network-based license dongle emulation."""
-        emulator = DongleEmulator()
+        expected_hmac = hmac.new(key, challenge, hashlib.sha256).digest()[:16]
+        assert response == expected_hmac
 
-        # Network dongle config (FlexLM style)
-        network_config = {
-            'server': 'localhost',
-            'port': 27000,
-            'vendor_daemon': 'vendor_daemon',
-            'features': ['feature1', 'feature2'],
-            'float_licenses': 10
-        }
+    def test_crypto_engine_wibukey_challenge_response(self):
+        """Test WibuKey custom challenge-response algorithm."""
+        crypto = CryptoEngine()
+        challenge = b'1234567890ABCDEF'
+        key = b'WIBU_KEY_SECRET_'
 
-        # Generate network license emulation
-        network_emulation = emulator.emulate_network_license(network_config)
+        response = crypto.wibukey_challenge_response(challenge, key)
 
-        assert network_emulation is not None
-        assert 'license_server' in network_emulation
-        assert 'checkout_responses' in network_emulation
-        assert 'heartbeat_handler' in network_emulation
+        assert response is not None
+        assert len(response) == 16
+        assert response != challenge
 
-    def test_dongle_driver_hooks(self):
-        """Test dongle driver hooking for emulation."""
-        emulator = DongleEmulator()
+    def test_dongle_memory_read_write(self):
+        """Test dongle memory operations with bounds checking."""
+        memory = DongleMemory()
 
-        # Generate driver hooks
-        drivers = [
-            'hasp_windows_x64.dll',
-            'haspdll.dll',
-            'SentinelKeys.dll',
-            'spromeps.dll',
-            'CmDongle.dll'
-        ]
+        test_data = b'MEMORY_TEST_DATA'
+        memory.write('ram', 0x100, test_data)
 
-        for driver in drivers:
-            hooks = emulator.generate_driver_hooks(driver)
+        read_data = memory.read('ram', 0x100, len(test_data))
+        assert read_data == test_data
 
-            assert hooks is not None
-            assert 'functions' in hooks
-            assert len(hooks['functions']) > 0
+    def test_dongle_memory_bounds_checking(self):
+        """Test that memory operations enforce bounds."""
+        memory = DongleMemory()
 
-            # Each hook should have address and detour
-            for hook in hooks['functions']:
-                assert 'name' in hook
-                assert 'original' in hook or 'address' in hook
-                assert 'detour' in hook
+        with pytest.raises(ValueError, match="beyond memory bounds"):
+            memory.read('ram', 5000, 100)
 
-    def test_dongle_time_based_features(self):
-        """Test time-based licensing features."""
-        emulator = DongleEmulator()
+        with pytest.raises(ValueError, match="beyond memory bounds"):
+            memory.write('ram', 5000, b'data')
 
-        # Time-limited license
-        time_config = {
-            'start_date': time.time() - 86400,  # Yesterday
-            'expiry_date': time.time() + 86400,  # Tomorrow
-            'grace_period': 7,  # days
-            'clock_tamper_detection': True
-        }
+    def test_dongle_memory_read_only_protection(self):
+        """Test read-only memory area protection."""
+        memory = DongleMemory()
+        memory.read_only_areas = [(0, 512)]
 
-        # Check license validity
-        is_valid = emulator.check_time_license(time_config)
-        assert is_valid is True
+        with pytest.raises(PermissionError, match="Cannot write to read-only"):
+            memory.write('rom', 100, b'data')
 
-        # Test expired license
-        expired_config = {
-            'start_date': time.time() - 172800,
-            'expiry_date': time.time() - 86400,  # Yesterday
-            'grace_period': 0
-        }
+    def test_hasp_dongle_creation(self):
+        """Test HASP dongle data structure initialization."""
+        dongle = HASPDongle()
 
-        is_expired = emulator.check_time_license(expired_config)
-        assert is_expired is False
+        assert dongle.hasp_id == 0x12345678
+        assert dongle.vendor_code == 0x1234
+        assert dongle.feature_id == 1
+        assert len(dongle.seed_code) == 16
+        assert len(dongle.aes_key) == 32
+        assert len(dongle.des_key) == 24
+        assert dongle.feature_id in dongle.feature_map
+        assert dongle.feature_map[1]['expiration'] == 0xFFFFFFFF
 
-    def test_dongle_feature_bits(self):
-        """Test dongle feature bit emulation."""
-        emulator = DongleEmulator()
+    def test_sentinel_dongle_creation(self):
+        """Test Sentinel dongle data structure initialization."""
+        dongle = SentinelDongle()
 
-        # Feature configuration
-        features = {
-            'basic': 0x0001,
-            'pro': 0x0002,
-            'enterprise': 0x0004,
-            'unlimited': 0x0008,
-            'export_enabled': 0x0010,
-            'debug_mode': 0x0020
-        }
+        assert dongle.device_id == 0x87654321
+        assert dongle.serial_number == "SN123456789ABCDEF"
+        assert dongle.firmware_version == "8.0.0"
+        assert len(dongle.cell_data) == 8
+        for i in range(8):
+            assert len(dongle.cell_data[i]) == 64
 
-        # Set features
-        feature_mask = features['pro'] | features['export_enabled']
-        emulator.set_feature_bits(feature_mask)
+    def test_wibukey_dongle_creation(self):
+        """Test WibuKey dongle data structure initialization."""
+        dongle = WibuKeyDongle()
 
-        # Check features
-        assert emulator.has_feature(features['pro']) is True
-        assert emulator.has_feature(features['enterprise']) is False
-        assert emulator.has_feature(features['export_enabled']) is True
+        assert dongle.firm_code == 101
+        assert dongle.product_code == 1000
+        assert dongle.feature_code == 1
+        assert dongle.serial_number == 1000001
+        assert dongle.version == "6.90"
+        assert 1 in dongle.license_entries
+        assert dongle.license_entries[1]['quantity'] == 100
+        assert dongle.license_entries[1]['expiration'] == 0xFFFFFFFF
 
-    def test_dongle_anti_debugging(self):
-        """Test anti-debugging bypass in dongle emulation."""
-        emulator = DongleEmulator()
-
-        # Generate anti-debug bypasses
-        bypasses = emulator.generate_antidbg_bypasses()
-
-        assert bypasses is not None
-        assert 'timing_checks' in bypasses
-        assert 'debugger_detection' in bypasses
-        assert 'integrity_checks' in bypasses
-
-    def test_dongle_communication_protocol(self):
-        """Test dongle communication protocol emulation."""
-        emulator = DongleEmulator()
-
-        # Test HASP protocol packet
-        hasp_packet = emulator.create_hasp_packet(
-            command=0x01,  # Login
-            dongle_id=0x12345678,
-            data=b'LOGIN_DATA'
+    def test_usb_descriptor_serialization(self):
+        """Test USB descriptor binary serialization."""
+        descriptor = USBDescriptor(
+            idVendor=0x0529,
+            idProduct=0x0001
         )
 
-        assert hasp_packet is not None
-        assert len(hasp_packet) >= 16  # Minimum packet size
+        binary = descriptor.to_bytes()
 
-        # Parse response
-        response = emulator.parse_hasp_response(hasp_packet)
+        assert len(binary) == 18
+        assert isinstance(binary, bytes)
+
+        unpacked = struct.unpack('<BBHBBBBHHHBBBB', binary)
+        assert unpacked[7] == 0x0529
+        assert unpacked[8] == 0x0001
+
+    def test_usb_emulator_control_transfer(self):
+        """Test USB control transfer handling."""
+        descriptor = USBDescriptor()
+        usb = USBEmulator(descriptor)
+
+        response = usb.control_transfer(0x80, 0x06, 0x0100, 0, b'')
+
         assert response is not None
-        assert 'status' in response
+        assert len(response) == 18
+        assert response == descriptor.to_bytes()
 
-    def test_virtual_usb_device_creation(self):
-        """Test virtual USB device creation for dongle emulation."""
-        emulator = DongleEmulator()
+    def test_usb_emulator_string_descriptor(self):
+        """Test USB string descriptor generation."""
+        descriptor = USBDescriptor()
+        usb = USBEmulator(descriptor)
 
-        # Virtual USB device descriptor
-        device_desc = emulator.create_virtual_usb_device({
-            'vendor_id': 0x0529,
-            'product_id': 0x0001,
-            'manufacturer': 'SafeNet Inc.',
-            'product': 'HASP HL 3.25',
-            'serial': '12-34567890'
-        })
+        manufacturer = usb.get_string_descriptor(1)
+        assert manufacturer is not None
+        assert b'SafeNet Inc.' in manufacturer
 
-        assert device_desc is not None
-        assert 'descriptor' in device_desc
-        assert 'endpoints' in device_desc
-        assert 'interfaces' in device_desc
+    def test_hasp_login_logout_protocol(self):
+        """Test HASP login/logout protocol implementation."""
+        emulator = HardwareDongleEmulator()
+        emulator.activate_dongle_emulation(['HASP'])
 
-    def test_dongle_clone_detection(self):
-        """Test dongle clone detection evasion."""
-        emulator = DongleEmulator()
+        login_data = struct.pack('<HH', 0x1234, 1)
+        login_response = emulator._hasp_login(login_data)
 
-        # Generate unique identifiers
-        clone_evasion = emulator.generate_clone_evasion({
-            'randomize_timing': True,
-            'unique_serial': True,
-            'hardware_fingerprint': True
-        })
+        assert len(login_response) == 8
+        status, handle = struct.unpack('<II', login_response)
+        assert status == HASPStatus.HASP_STATUS_OK
+        assert handle != 0
 
-        assert clone_evasion is not None
-        assert 'serial' in clone_evasion
-        assert 'timing_variance' in clone_evasion
-        assert 'fingerprint' in clone_evasion
+        logout_data = struct.pack('<I', handle)
+        logout_response = emulator._hasp_logout(logout_data)
 
-        # Serials should be unique
-        serial1 = clone_evasion['serial']
-        clone_evasion2 = emulator.generate_clone_evasion({
-            'unique_serial': True
-        })
-        serial2 = clone_evasion2['serial']
-        assert serial1 != serial2
+        assert len(logout_response) == 4
+        status = struct.unpack('<I', logout_response)[0]
+        assert status == HASPStatus.HASP_STATUS_OK
+
+    def test_hasp_encrypt_decrypt_protocol(self):
+        """Test HASP encryption/decryption protocol."""
+        emulator = HardwareDongleEmulator()
+        emulator.activate_dongle_emulation(['HASP'])
+
+        dongle = list(emulator.hasp_dongles.values())[0]
+        dongle.logged_in = True
+        dongle.session_handle = 0x12345678
+
+        plaintext = b'TestEncryptData!'
+        encrypt_data = struct.pack('<II', dongle.session_handle, len(plaintext)) + plaintext
+        encrypt_response = emulator._hasp_encrypt_command(encrypt_data)
+
+        status, length = struct.unpack('<II', encrypt_response[:8])
+        assert status == HASPStatus.HASP_STATUS_OK
+        assert length > 0
+        ciphertext = encrypt_response[8:]
+        assert ciphertext != plaintext
+
+    def test_hasp_memory_read_write_protocol(self):
+        """Test HASP memory read/write protocol."""
+        emulator = HardwareDongleEmulator()
+        emulator.activate_dongle_emulation(['HASP'])
+
+        dongle = list(emulator.hasp_dongles.values())[0]
+        dongle.logged_in = True
+        dongle.session_handle = 0x12345678
+
+        write_data = b'TEST_MEM_DATA'
+        write_cmd = struct.pack('<III', dongle.session_handle, 0x10, len(write_data)) + write_data
+        write_response = emulator._hasp_write_memory(write_cmd)
+
+        status = struct.unpack('<I', write_response)[0]
+        assert status == HASPStatus.HASP_STATUS_OK
+
+        read_cmd = struct.pack('<III', dongle.session_handle, 0x10, len(write_data))
+        read_response = emulator._hasp_read_memory(read_cmd)
+
+        status, length = struct.unpack('<II', read_response[:8])
+        assert status == HASPStatus.HASP_STATUS_OK
+        assert length == len(write_data)
+
+    def test_sentinel_query_protocol(self):
+        """Test Sentinel query protocol implementation."""
+        emulator = HardwareDongleEmulator()
+        emulator.activate_dongle_emulation(['Sentinel'])
+
+        query_response = emulator._sentinel_query(b'')
+
+        status = struct.unpack('<I', query_response)[0]
+        assert status == SentinelStatus.SP_SUCCESS
+
+        dongle = list(emulator.sentinel_dongles.values())[0]
+        response_data = bytes(dongle.response_buffer[:52])
+        device_id = struct.unpack('<I', response_data[:4])[0]
+        assert device_id == dongle.device_id
+
+    def test_sentinel_read_write_protocol(self):
+        """Test Sentinel cell read/write protocol."""
+        emulator = HardwareDongleEmulator()
+        emulator.activate_dongle_emulation(['Sentinel'])
+
+        cell_id = 0
+        test_data = b'SENTINEL_CELL_DATA' + b'\x00' * 46
+        write_cmd = struct.pack('<II', cell_id, len(test_data)) + test_data
+        write_response = emulator._sentinel_write(write_cmd)
+
+        status = struct.unpack('<I', write_response)[0]
+        assert status == SentinelStatus.SP_SUCCESS
+
+        read_cmd = struct.pack('<II', cell_id, 64)
+        read_response = emulator._sentinel_read(read_cmd)
+
+        status = struct.unpack('<I', read_response)[0]
+        assert status == SentinelStatus.SP_SUCCESS
+
+    def test_wibukey_access_protocol(self):
+        """Test WibuKey/CodeMeter access protocol."""
+        emulator = HardwareDongleEmulator()
+        emulator.activate_dongle_emulation(['CodeMeter'])
+
+        dongle = list(emulator.wibukey_dongles.values())[0]
+
+        access_cmd = struct.pack('<III', dongle.container_handle, 1, 1)
+        access_response = emulator._wibukey_access(access_cmd)
+
+        status = struct.unpack('<I', access_response)[0]
+        assert status == 0
+        assert 1 in dongle.active_licenses
+
+    def test_wibukey_challenge_response_protocol(self):
+        """Test WibuKey challenge-response protocol."""
+        emulator = HardwareDongleEmulator()
+        emulator.activate_dongle_emulation(['CodeMeter'])
+
+        dongle = list(emulator.wibukey_dongles.values())[0]
+
+        challenge = b'1234567890ABCDEF'
+        challenge_cmd = struct.pack('<II', dongle.container_handle, len(challenge)) + challenge
+        response = emulator._wibukey_challenge(challenge_cmd)
+
+        status, length = struct.unpack('<II', response[:8])
+        assert status == 0
+        assert length == 16
+        response_data = response[8:]
+        assert response_data != challenge
+
+    def test_process_hasp_challenge(self):
+        """Test HASP challenge processing with real crypto."""
+        emulator = HardwareDongleEmulator()
+        emulator.activate_dongle_emulation(['HASP'])
+
+        challenge = b'CHALLENGE_DATA_1234567890ABCDEF'
+        response = emulator.process_hasp_challenge(challenge, 1)
+
+        assert response is not None
+        assert len(response) == 16
+        assert response != challenge
+
+    def test_read_dongle_memory_api(self):
+        """Test public API for reading dongle memory."""
+        emulator = HardwareDongleEmulator()
+        emulator.activate_dongle_emulation(['HASP'])
+
+        data = emulator.read_dongle_memory('HASP', 1, 'ram', 0, 16)
+
+        assert data is not None
+        assert len(data) == 16
+
+    def test_write_dongle_memory_api(self):
+        """Test public API for writing dongle memory."""
+        emulator = HardwareDongleEmulator()
+        emulator.activate_dongle_emulation(['HASP'])
+
+        test_data = b'TEST_API_DATA'
+        success = emulator.write_dongle_memory('HASP', 1, 'ram', 0x100, test_data)
+
+        assert success is True
+
+        read_data = emulator.read_dongle_memory('HASP', 1, 'ram', 0x100, len(test_data))
+        assert read_data == test_data
+
+    def test_emulation_status(self):
+        """Test emulation status reporting."""
+        emulator = HardwareDongleEmulator()
+        emulator.activate_dongle_emulation(['HASP', 'Sentinel'])
+
+        status = emulator.get_emulation_status()
+
+        assert 'hooks_installed' in status
+        assert 'virtual_dongles_active' in status
+        assert 'hasp_dongles' in status
+        assert 'sentinel_dongles' in status
+        assert status['hasp_dongles'] > 0
+        assert status['sentinel_dongles'] > 0
+
+    def test_frida_script_generation(self):
+        """Test Frida hook script generation."""
+        emulator = HardwareDongleEmulator()
+        emulator.activate_dongle_emulation(['HASP'])
+
+        script = emulator.generate_emulation_script(['HASP'])
+
+        assert script is not None
+        assert 'hasp_login' in script
+        assert 'hasp_encrypt' in script
+        assert 'hasp_decrypt' in script
+        assert 'hasp_read' in script
+        assert 'Interceptor.attach' in script
+
+    def test_clear_emulation(self):
+        """Test clearing all emulation state."""
+        emulator = HardwareDongleEmulator()
+        emulator.activate_dongle_emulation(['HASP', 'Sentinel', 'CodeMeter'])
+
+        assert len(emulator.virtual_dongles) > 0
+        assert len(emulator.hasp_dongles) > 0
+
+        emulator.clear_emulation()
+
+        assert len(emulator.virtual_dongles) == 0
+        assert len(emulator.hasp_dongles) == 0
+        assert len(emulator.sentinel_dongles) == 0
+        assert len(emulator.wibukey_dongles) == 0
+
+    def test_binary_patching_identification(self):
+        """Test identification of dongle check patterns for patching."""
+        emulator = HardwareDongleEmulator()
+
+        class MockApp:
+            binary_path = None
+
+        emulator.app = MockApp()
+
+        emulator._patch_dongle_checks()
+
+        assert len(emulator.patches) == 0
+
+    def test_crypto_xor_fallback(self):
+        """Test XOR encryption fallback when PyCrypto unavailable."""
+        crypto = CryptoEngine()
+        plaintext = b'TestDataForXOR'
+        key = b'KEY123'
+
+        ciphertext = crypto._xor_encrypt(plaintext, key)
+
+        assert ciphertext is not None
+        assert ciphertext != plaintext
+
+        decrypted = crypto._xor_encrypt(ciphertext, key)
+        assert decrypted == plaintext
+
+    def test_hasp_status_codes(self):
+        """Test HASP status code enumeration."""
+        assert HASPStatus.HASP_STATUS_OK == 0
+        assert HASPStatus.HASP_MEM_RANGE == 1
+        assert HASPStatus.HASP_TOO_SHORT == 2
+        assert HASPStatus.HASP_INV_HND == 3
+        assert HASPStatus.HASP_KEYNOTFOUND == 7
+
+    def test_sentinel_status_codes(self):
+        """Test Sentinel status code enumeration."""
+        assert SentinelStatus.SP_SUCCESS == 0
+        assert SentinelStatus.SP_INVALID_FUNCTION_CODE == 1
+        assert SentinelStatus.SP_UNIT_NOT_FOUND == 2
+        assert SentinelStatus.SP_ACCESS_DENIED == 3
+
+    def test_multiple_hasp_dongles(self):
+        """Test creation of multiple HASP dongles."""
+        emulator = HardwareDongleEmulator()
+        emulator.activate_dongle_emulation(['HASP', 'HASP'])
+
+        assert len(emulator.hasp_dongles) >= 1
+
+        dongle_ids = [d.hasp_id for d in emulator.hasp_dongles.values()]
+        assert len(set(dongle_ids)) == len(dongle_ids)
+
+    def test_dongle_memory_protected_areas(self):
+        """Test protected memory area checking."""
+        memory = DongleMemory()
+        memory.protected_areas = [(0x100, 0x200)]
+
+        assert memory.is_protected(0x100, 50) is True
+        assert memory.is_protected(0x300, 50) is False
+
+    def test_usb_bulk_transfer(self):
+        """Test USB bulk transfer routing."""
+        descriptor = USBDescriptor()
+        usb = USBEmulator(descriptor)
+
+        handler_called = False
+
+        def test_handler(data):
+            nonlocal handler_called
+            handler_called = True
+            return b'RESPONSE'
+
+        usb.register_bulk_handler(0x81, test_handler)
+
+        response = usb.bulk_transfer(0x81, b'TEST')
+        assert handler_called is True
+        assert response == b'RESPONSE'
+
+    def test_hasp_login_invalid_vendor(self):
+        """Test HASP login with invalid vendor code."""
+        emulator = HardwareDongleEmulator()
+        emulator.activate_dongle_emulation(['HASP'])
+
+        login_data = struct.pack('<HH', 0xFFFF, 1)
+        login_response = emulator._hasp_login(login_data)
+
+        status = struct.unpack('<I', login_response)[0]
+        assert status == HASPStatus.HASP_KEYNOTFOUND
+
+    def test_hasp_operations_without_login(self):
+        """Test HASP operations fail without valid session."""
+        emulator = HardwareDongleEmulator()
+        emulator.activate_dongle_emulation(['HASP'])
+
+        invalid_session = 0xFFFFFFFF
+        plaintext = b'TestData'
+        encrypt_data = struct.pack('<II', invalid_session, len(plaintext)) + plaintext
+        encrypt_response = emulator._hasp_encrypt_command(encrypt_data)
+
+        status = struct.unpack('<I', encrypt_response)[0]
+        assert status == HASPStatus.HASP_INV_HND
+
+    def test_sentinel_encrypt_operation(self):
+        """Test Sentinel encryption operation."""
+        emulator = HardwareDongleEmulator()
+        emulator.activate_dongle_emulation(['Sentinel'])
+
+        plaintext = b'TEST_ENCRYPT_DATA'
+        encrypt_cmd = struct.pack('<I', len(plaintext)) + plaintext
+        encrypt_response = emulator._sentinel_encrypt(encrypt_cmd)
+
+        status = struct.unpack('<I', encrypt_response)[0]
+        assert status == SentinelStatus.SP_SUCCESS
+
+    def test_wibukey_open_operation(self):
+        """Test WibuKey container open operation."""
+        emulator = HardwareDongleEmulator()
+        emulator.activate_dongle_emulation(['CodeMeter'])
+
+        dongle = list(emulator.wibukey_dongles.values())[0]
+
+        open_cmd = struct.pack('<II', dongle.firm_code, dongle.product_code)
+        open_response = emulator._wibukey_open(open_cmd)
+
+        status, handle = struct.unpack('<II', open_response)
+        assert status == 0
+        assert handle == dongle.container_handle
+
+    def test_wibukey_encrypt_operation(self):
+        """Test WibuKey encryption operation."""
+        emulator = HardwareDongleEmulator()
+        emulator.activate_dongle_emulation(['CodeMeter'])
+
+        dongle = list(emulator.wibukey_dongles.values())[0]
+
+        plaintext = b'WIBU_TEST_DATA'
+        encrypt_cmd = struct.pack('<II', dongle.container_handle, len(plaintext)) + plaintext
+        encrypt_response = emulator._wibukey_encrypt(encrypt_cmd)
+
+        status, length = struct.unpack('<II', encrypt_response[:8])
+        assert status == 0
+        assert length > 0

@@ -1,9 +1,9 @@
-[package]
+["package"]
 name = "intellicrack-launcher"
 version = "0.1.0"
 edition = "2024"
 authors = ["Zach Flint"]
-description = "Sophisticated Rust launcher for Intellicrack binary analysis platform"
+description = "Rust launcher for Intellicrack binary analysis platform"
 license = "GPL-3.0"
 
 [lib]

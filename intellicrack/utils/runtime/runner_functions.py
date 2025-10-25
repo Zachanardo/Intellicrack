@@ -524,22 +524,22 @@ def run_distributed_processing(app_instance=None, **kwargs) -> dict[str, Any]:
     try:
         if app_instance:
             logger.debug(f"Using app instance: {type(app_instance)}")
-        logger.info("Starting distributed processing")
+        logger.info("Starting parallel processing")
 
         try:
-            from intellicrack.core.processing.distributed_manager import (
-                DistributedProcessingManager,
+            from intellicrack.core.processing.parallel_processing_manager import (
+                ParallelProcessingManager,
             )
 
-            manager = DistributedProcessingManager()
+            manager = ParallelProcessingManager()
             manager.start_processing()
-            return {"status": "success", "message": "Distributed processing started"}
+            return {"status": "success", "message": "Parallel processing started"}
         except ImportError:
-            logger.warning("DistributedProcessingManager not available")
-            return {"status": "error", "message": "Distributed processing not available"}
+            logger.warning("ParallelProcessingManager not available")
+            return {"status": "error", "message": "Parallel processing not available"}
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running distributed processing: %s", e)
+        logger.error("Error running parallel processing: %s", e)
         return {"status": "error", "message": str(e)}
 
 

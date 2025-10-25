@@ -21,7 +21,7 @@ except ImportError:
     LIEF_AVAILABLE = False
 
 try:
-    from capstone import Cs, CS_ARCH_X86, CS_MODE_32, CS_MODE_64
+    from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
     CAPSTONE_AVAILABLE = True
 except ImportError:
     CAPSTONE_AVAILABLE = False
@@ -33,6 +33,7 @@ logger = get_logger(__name__)
 
 class VMArchitecture(Enum):
     """Themida virtual machine architecture types."""
+
     CISC = "CISC"
     RISC = "RISC"
     FISH = "FISH"
@@ -41,6 +42,7 @@ class VMArchitecture(Enum):
 
 class ThemidaVersion(Enum):
     """Themida/WinLicense version detection."""
+
     THEMIDA_1X = "Themida 1.x"
     THEMIDA_2X = "Themida 2.x"
     THEMIDA_3X = "Themida 3.x"
@@ -53,6 +55,7 @@ class ThemidaVersion(Enum):
 @dataclass
 class VMHandler:
     """Virtual machine handler structure."""
+
     opcode: int
     address: int
     size: int
@@ -65,6 +68,7 @@ class VMHandler:
 @dataclass
 class VMContext:
     """Virtual machine context structure."""
+
     vm_entry: int
     vm_exit: int
     context_size: int
@@ -76,6 +80,7 @@ class VMContext:
 @dataclass
 class DevirtualizedCode:
     """Devirtualized code structure."""
+
     original_rva: int
     original_size: int
     vm_handlers_used: list[int]
@@ -87,6 +92,7 @@ class DevirtualizedCode:
 @dataclass
 class ThemidaAnalysisResult:
     """Complete Themida analysis result."""
+
     is_protected: bool
     version: ThemidaVersion
     vm_architecture: VMArchitecture
@@ -190,6 +196,7 @@ class ThemidaAnalyzer:
 
         Returns:
             Complete analysis result
+
         """
         logger.info(f"Starting Themida analysis on {binary_path}")
 
@@ -417,6 +424,7 @@ class ThemidaAnalyzer:
 
         Returns:
             Dictionary mapping opcode to handler information
+
         """
         handlers = {}
 
@@ -508,6 +516,7 @@ class ThemidaAnalyzer:
 
         Returns:
             List of (address, mnemonic, operands) tuples
+
         """
         if not CAPSTONE_AVAILABLE:
             return [(offset, "unknown", "disassembler not available")]
@@ -787,6 +796,7 @@ class ThemidaAnalyzer:
 
         Returns:
             List of devirtualized code sections
+
         """
         devirtualized = []
 
@@ -826,6 +836,7 @@ class ThemidaAnalyzer:
 
         Returns:
             (native_code, assembly_lines, handlers_used, confidence)
+
         """
         assembly = []
         native_code = bytearray()
@@ -928,6 +939,7 @@ class ThemidaAnalyzer:
 
         Returns:
             Dictionary containing formatted report
+
         """
         report = {
             "protection_detected": result.is_protected,

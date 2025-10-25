@@ -22,11 +22,23 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import json
 import logging
 import struct
-from dataclasses import dataclass
+import threading
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Union
 
-import r2pipe
+try:
+    import r2pipe  # noqa: F401
+
+    R2PIPE_AVAILABLE = True
+except ImportError:
+    R2PIPE_AVAILABLE = False
+
+from intellicrack.core.analysis.radare2_session_manager import (
+    R2SessionPool,
+    R2SessionWrapper,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -51,12 +63,7 @@ class ESILRegister:
     size: int
     symbolic: bool = False
     tainted: bool = False
-    constraints: List[str] = None
-
-    def __post_init__(self):
-        """Initialize constraints list if not provided."""
-        if self.constraints is None:
-            self.constraints = []
+    constraints: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -66,7 +73,7 @@ class ESILMemoryAccess:
     address: int
     size: int
     value: bytes
-    operation: str  # "read" or "write"
+    operation: str
     instruction_address: int
     register_state: Dict[str, int]
 
@@ -79,17 +86,64 @@ class ESILBreakpoint:
     condition: Optional[str] = None
     hit_count: int = 0
     enabled: bool = True
-    callback: Optional[callable] = None
+    callback: Optional[Callable] = None
 
 
 class RadareESILEmulator:
-    """Advanced ESIL emulation engine for dynamic binary analysis."""
+    """Advanced ESIL emulation engine for dynamic binary analysis.
 
-    def __init__(self, binary_path: str, base_address: int = 0x400000):
-        """Initialize ESIL emulator with binary."""
-        self.binary_path = binary_path
+    This emulator provides ESIL (Evaluable Strings Intermediate Language) VM
+    capabilities for analyzing binary behavior without execution. It integrates
+    with the R2SessionPool for efficient resource management.
+
+    Attributes:
+        binary_path: Path to the binary being analyzed
+        base_address: Base address for binary mapping
+        session: R2SessionWrapper for radare2 communication
+        state: Current emulation state
+        registers: Register state tracking
+        memory_map: Memory region tracking
+        breakpoints: Active breakpoints
+        memory_accesses: Logged memory operations
+        call_stack: Function call tracking
+
+    """
+
+    def __init__(
+        self,
+        binary_path: str,
+        base_address: int = 0x400000,
+        session_pool: Optional[R2SessionPool] = None,
+        auto_analyze: bool = True,
+        analysis_level: str = "aaa"
+    ):
+        """Initialize ESIL emulator with binary.
+
+        Args:
+            binary_path: Path to binary file to emulate
+            base_address: Base address for binary mapping
+            session_pool: Optional R2SessionPool for session management
+            auto_analyze: Whether to auto-analyze binary on load
+            analysis_level: radare2 analysis level (a, aa, aaa, aaaa)
+
+        Raises:
+            RuntimeError: If r2pipe is not available
+            FileNotFoundError: If binary file not found
+
+        """
+        if not R2PIPE_AVAILABLE:
+            raise RuntimeError("r2pipe not available - please install radare2-r2pipe")
+
+        self.binary_path = Path(binary_path)
+        if not self.binary_path.exists():
+            raise FileNotFoundError(f"Binary not found: {binary_path}")
+
         self.base_address = base_address
-        self.r2 = None
+        self.session_pool = session_pool
+        self.auto_analyze = auto_analyze
+        self.analysis_level = analysis_level
+
+        self.session: Optional[R2SessionWrapper] = None
         self.state = ESILState.READY
         self.registers: Dict[str, ESILRegister] = {}
         self.memory_map: Dict[int, bytes] = {}
@@ -102,309 +156,603 @@ class RadareESILEmulator:
         self.path_constraints: List[str] = []
         self.instruction_count = 0
         self.cycle_count = 0
+        self.arch = ""
+        self.bits = 64
+        self.entry_point = 0
 
-        self._initialize_r2()
+        self._lock = threading.RLock()
+        self._esil_hooks: Dict[str, List[Callable]] = {}
+
+        self._initialize_session()
         self._setup_esil_vm()
 
-    def _initialize_r2(self):
-        """Initialize r2pipe connection and analyze binary."""
-        try:
-            self.r2 = r2pipe.open(self.binary_path, ["-2", "-w"])
-            self.r2.cmd("aaa")  # Analyze all
-            self.r2.cmd("e io.va=true")  # Enable virtual addressing
-            self.r2.cmd("e asm.esil=true")  # Enable ESIL output
-            self.r2.cmd("e esil.stack.addr=0x100000")  # Set stack address
-            self.r2.cmd("e esil.stack.size=0x10000")  # Set stack size
+    def _initialize_session(self):
+        """Initialize r2pipe session from pool or create new one.
 
-            # Get architecture info
-            info = json.loads(self.r2.cmd("ij"))
+        Raises:
+            RuntimeError: If session initialization fails
+
+        """
+        try:
+            flags = ["-2", "-w"]
+            if not self.auto_analyze:
+                flags.append("-n")
+
+            if self.session_pool:
+                self.session = self.session_pool.get_session(
+                    str(self.binary_path),
+                    flags=flags
+                )
+            else:
+                self.session = R2SessionWrapper(
+                    binary_path=str(self.binary_path),
+                    session_id=f"esil_{id(self)}",
+                    flags=flags,
+                    auto_analyze=self.auto_analyze,
+                    analysis_level=self.analysis_level
+                )
+                if not self.session.connect():
+                    raise RuntimeError("Failed to connect session")
+
+            self.session.execute("e io.va=true")
+            self.session.execute("e asm.esil=true")
+            self.session.execute("e esil.stack.addr=0x100000")
+            self.session.execute("e esil.stack.size=0x10000")
+            self.session.execute("e esil.fillstack=true")
+            self.session.execute("e esil.nonull=false")
+
+            info = self.session.execute("ij", expect_json=True)
             self.arch = info.get("bin", {}).get("arch", "x86")
             self.bits = info.get("bin", {}).get("bits", 64)
 
-            logger.info(f"Initialized ESIL for {self.arch}-{self.bits} binary")
+            logger.info(f"Initialized ESIL emulator for {self.arch}-{self.bits} binary: {self.binary_path}")
 
         except Exception as e:
-            logger.error(f"Failed to initialize r2pipe: {e}")
-            raise
+            logger.error(f"Failed to initialize ESIL session: {e}")
+            raise RuntimeError(f"ESIL session initialization failed: {e}") from e
 
     def _setup_esil_vm(self):
-        """Set up ESIL virtual machine with initial state."""
-        # Initialize ESIL VM
-        self.r2.cmd("aei")  # Initialize ESIL VM
-        self.r2.cmd("aeim")  # Initialize ESIL VM memory
+        """Set up ESIL virtual machine with initial state.
 
-        # Setup register tracking
-        self._initialize_registers()
+        Raises:
+            RuntimeError: If ESIL VM setup fails
 
-        # Setup memory regions
-        self._setup_memory_regions()
+        """
+        try:
+            self.session.execute("aei")
+            self.session.execute("aeim")
+            self.session.execute("aeip")
 
-        # Set entry point
-        entry = json.loads(self.r2.cmd("iej"))
-        if entry and "vaddr" in entry[0]:
-            self.entry_point = entry[0]["vaddr"]
-            self.r2.cmd(f"s {self.entry_point}")
+            self._initialize_registers()
+            self._setup_memory_regions()
+
+            entry = self.session.execute("iej", expect_json=True)
+            if entry and isinstance(entry, list) and len(entry) > 0 and "vaddr" in entry[0]:
+                self.entry_point = entry[0]["vaddr"]
+                self.session.execute(f"s {self.entry_point}")
+                logger.debug(f"Set entry point to 0x{self.entry_point:x}")
+            else:
+                logger.warning("Could not determine entry point, using current address")
+                pc_info = self.session.execute("drj", expect_json=True)
+                if pc_info:
+                    for reg in pc_info:
+                        if reg.get("role") == "PC" or reg.get("name") in ["rip", "eip", "pc"]:
+                            self.entry_point = reg.get("value", 0)
+                            break
+
+        except Exception as e:
+            logger.error(f"Failed to setup ESIL VM: {e}")
+            raise RuntimeError(f"ESIL VM setup failed: {e}") from e
 
     def _initialize_registers(self):
-        """Initialize register tracking based on architecture."""
-        reg_info = json.loads(self.r2.cmd("drrj"))
+        """Initialize register tracking based on architecture.
 
-        for reg in reg_info:
-            name = reg.get("name", "")
-            size = reg.get("size", 8)
-            value = reg.get("value", 0)
+        Raises:
+            RuntimeError: If register initialization fails
 
-            self.registers[name] = ESILRegister(name=name, value=value, size=size)
+        """
+        try:
+            reg_info = self.session.execute("drrj", expect_json=True)
+            if not reg_info:
+                logger.warning("No register information available")
+                return
+
+            for reg in reg_info:
+                name = reg.get("name", "")
+                if not name:
+                    continue
+
+                size = reg.get("size", 8)
+                value = reg.get("value", 0)
+
+                self.registers[name] = ESILRegister(
+                    name=name,
+                    value=value,
+                    size=size
+                )
+
+            logger.debug(f"Initialized {len(self.registers)} registers")
+
+        except Exception as e:
+            logger.error(f"Failed to initialize registers: {e}")
+            raise RuntimeError(f"Register initialization failed: {e}") from e
 
     def _setup_memory_regions(self):
-        """Set up memory regions for emulation."""
-        # Map binary sections
-        sections = json.loads(self.r2.cmd("iSj"))
-        for section in sections:
-            if section.get("perm", "").find("r") >= 0:
-                addr = section.get("vaddr", 0)
-                size = section.get("vsize", 0)
-                if addr and size:
-                    self.r2.cmd(f"aeim {addr} {size} {section.get('name', 'section')}")
+        """Set up memory regions for emulation.
 
-        # Setup heap
-        self.r2.cmd("aeim 0x200000 0x100000 heap")
+        Raises:
+            RuntimeError: If memory setup fails
+
+        """
+        try:
+            sections = self.session.execute("iSj", expect_json=True)
+            if not sections:
+                logger.warning("No section information available")
+                return
+
+            for section in sections:
+                perm = section.get("perm", "")
+                if "r" in perm:
+                    addr = section.get("vaddr", 0)
+                    size = section.get("vsize", 0)
+                    name = section.get("name", "section")
+
+                    if addr and size:
+                        self.session.execute(f"aeim {addr} {size} {name}")
+                        logger.debug(f"Mapped memory region: {name} at 0x{addr:x} (size: 0x{size:x})")
+
+            self.session.execute("aeim 0x200000 0x100000 heap")
+            logger.debug("Mapped heap region at 0x200000")
+
+        except Exception as e:
+            logger.error(f"Failed to setup memory regions: {e}")
+            raise RuntimeError(f"Memory region setup failed: {e}") from e
+
+    def get_register(self, register: str) -> int:
+        """Get current register value.
+
+        Args:
+            register: Register name
+
+        Returns:
+            Current register value
+
+        Raises:
+            RuntimeError: If register read fails
+
+        """
+        with self._lock:
+            try:
+                result = self.session.execute(f"?v ${register}")
+                return int(result.strip(), 0)
+            except Exception as e:
+                logger.error(f"Failed to read register {register}: {e}")
+                raise RuntimeError(f"Register read failed: {e}") from e
 
     def set_register(self, register: str, value: Union[int, str], symbolic: bool = False):
-        """Set register value with optional symbolic marking."""
-        if symbolic:
-            # Create symbolic variable
-            sym_name = f"sym_{register}_{self.instruction_count}"
-            self.registers[register] = ESILRegister(
-                name=register,
-                value=value if isinstance(value, int) else 0,
-                size=self.registers[register].size if register in self.registers else 8,
-                symbolic=True,
-                constraints=[f"{sym_name} = {value}"],
-            )
-            self.r2.cmd(f"dr {register}={sym_name}")
-        else:
-            # Set concrete value
-            self.r2.cmd(f"dr {register}={value}")
-            if register in self.registers:
-                self.registers[register].value = value
-                self.registers[register].symbolic = False
+        """Set register value with optional symbolic marking.
+
+        Args:
+            register: Register name to set
+            value: Value to set (integer or symbolic expression)
+            symbolic: Whether to mark this as a symbolic value
+
+        Raises:
+            RuntimeError: If register set operation fails
+
+        """
+        with self._lock:
+            try:
+                if symbolic:
+                    sym_name = f"sym_{register}_{self.instruction_count}"
+                    self.registers[register] = ESILRegister(
+                        name=register,
+                        value=value if isinstance(value, int) else 0,
+                        size=self.registers.get(register, ESILRegister(register, 0, 8)).size,
+                        symbolic=True,
+                        constraints=[f"{sym_name} = {value}"]
+                    )
+                    self.session.execute(f"dr {register}={sym_name}")
+                else:
+                    self.session.execute(f"dr {register}={value}")
+                    if register in self.registers:
+                        self.registers[register].value = value if isinstance(value, int) else int(value)
+                        self.registers[register].symbolic = False
+
+                logger.debug(f"Set register {register} = {value} (symbolic={symbolic})")
+
+            except Exception as e:
+                logger.error(f"Failed to set register {register}: {e}")
+                raise RuntimeError(f"Register set failed: {e}") from e
+
+    def get_memory(self, address: int, size: int) -> bytes:
+        """Read memory at address.
+
+        Args:
+            address: Memory address to read
+            size: Number of bytes to read
+
+        Returns:
+            Memory contents as bytes
+
+        Raises:
+            RuntimeError: If memory read fails
+
+        """
+        with self._lock:
+            try:
+                result = self.session.execute(f"p8 {size} @ {address}")
+                return bytes.fromhex(result.strip())
+            except Exception as e:
+                logger.error(f"Failed to read memory at 0x{address:x}: {e}")
+                raise RuntimeError(f"Memory read failed: {e}") from e
 
     def set_memory(self, address: int, data: bytes, symbolic: bool = False):
-        """Write memory with optional symbolic marking."""
-        if symbolic:
-            # Store symbolic expression
-            for i, byte in enumerate(data):
-                sym_name = f"mem_{address + i:x}_{self.instruction_count}"
-                self.symbolic_memory[address + i] = sym_name
-                self.path_constraints.append(f"{sym_name} = {byte}")
+        """Write memory with optional symbolic marking.
 
-        # Write concrete data for emulation
-        hex_data = data.hex()
-        self.r2.cmd(f"wx {hex_data} @ {address}")
-        self.memory_map[address] = data
+        Args:
+            address: Memory address to write
+            data: Data to write
+            symbolic: Whether to mark as symbolic
 
-    def add_breakpoint(self, address: int, condition: Optional[str] = None, callback: Optional[callable] = None) -> ESILBreakpoint:
-        """Add conditional breakpoint with optional callback."""
-        bp = ESILBreakpoint(address=address, condition=condition, callback=callback)
-        self.breakpoints[address] = bp
-        self.r2.cmd(f"db {address}")
-        return bp
+        Raises:
+            RuntimeError: If memory write fails
+
+        """
+        with self._lock:
+            try:
+                if symbolic:
+                    for i, byte in enumerate(data):
+                        sym_name = f"mem_{address + i:x}_{self.instruction_count}"
+                        self.symbolic_memory[address + i] = sym_name
+                        self.path_constraints.append(f"{sym_name} = {byte}")
+
+                hex_data = data.hex()
+                self.session.execute(f"wx {hex_data} @ {address}")
+                self.memory_map[address] = data
+
+                logger.debug(f"Wrote {len(data)} bytes to 0x{address:x} (symbolic={symbolic})")
+
+            except Exception as e:
+                logger.error(f"Failed to write memory at 0x{address:x}: {e}")
+                raise RuntimeError(f"Memory write failed: {e}") from e
+
+    def add_breakpoint(
+        self,
+        address: int,
+        condition: Optional[str] = None,
+        callback: Optional[Callable] = None
+    ) -> ESILBreakpoint:
+        """Add conditional breakpoint with optional callback.
+
+        Args:
+            address: Address for breakpoint
+            condition: Optional condition expression
+            callback: Optional callback function(emulator, instruction_info)
+
+        Returns:
+            ESILBreakpoint object
+
+        Raises:
+            RuntimeError: If breakpoint creation fails
+
+        """
+        with self._lock:
+            try:
+                bp = ESILBreakpoint(address=address, condition=condition, callback=callback)
+                self.breakpoints[address] = bp
+                self.session.execute(f"db {address}")
+                logger.debug(f"Added breakpoint at 0x{address:x}")
+                return bp
+            except Exception as e:
+                logger.error(f"Failed to add breakpoint at 0x{address:x}: {e}")
+                raise RuntimeError(f"Breakpoint creation failed: {e}") from e
+
+    def remove_breakpoint(self, address: int):
+        """Remove breakpoint at address.
+
+        Args:
+            address: Address of breakpoint to remove
+
+        """
+        with self._lock:
+            if address in self.breakpoints:
+                del self.breakpoints[address]
+                try:
+                    self.session.execute(f"db- {address}")
+                    logger.debug(f"Removed breakpoint at 0x{address:x}")
+                except Exception as e:
+                    logger.warning(f"Failed to remove breakpoint: {e}")
+
+    def add_hook(self, hook_type: str, callback: Callable):
+        """Add ESIL operation hook.
+
+        Args:
+            hook_type: Type of operation to hook (e.g., 'mem_read', 'mem_write', 'reg_write')
+            callback: Callback function
+
+        """
+        with self._lock:
+            if hook_type not in self._esil_hooks:
+                self._esil_hooks[hook_type] = []
+            self._esil_hooks[hook_type].append(callback)
+            logger.debug(f"Added hook for {hook_type}")
 
     def add_taint_source(self, address: int, size: int = 8):
-        """Mark memory region as taint source for taint analysis."""
-        self.taint_sources.append(address)
-        # Mark registers that load from this address as tainted
-        for i in range(size):
-            self.r2.cmd(f"dte {address + i}")
+        """Mark memory region as taint source for taint analysis.
+
+        Args:
+            address: Starting address of taint source
+            size: Size of taint region in bytes
+
+        """
+        with self._lock:
+            self.taint_sources.append(address)
+            try:
+                for i in range(size):
+                    self.session.execute(f"dte {address + i}")
+                logger.debug(f"Added taint source at 0x{address:x} (size: {size})")
+            except Exception as e:
+                logger.warning(f"Failed to set taint source: {e}")
 
     def step_instruction(self) -> Dict[str, Any]:
-        """Execute single instruction and track state changes."""
-        # Save current state
-        prev_registers = self._get_register_state()
-        prev_pc = json.loads(self.r2.cmd("drj pc"))[0]["value"]
+        """Execute single instruction and track state changes.
 
-        # Get current instruction
-        inst_info = json.loads(self.r2.cmd("pdj 1"))[0]
-        inst_addr = inst_info.get("offset", 0)
-        inst_esil = inst_info.get("esil", "")
-        inst_opcode = inst_info.get("opcode", "")
+        Returns:
+            Dictionary containing execution step information
 
-        # Execute ESIL step
-        self.r2.cmd("aes")
-        self.instruction_count += 1
+        Raises:
+            RuntimeError: If step execution fails
 
-        # Get new state
-        new_registers = self._get_register_state()
-        new_pc = json.loads(self.r2.cmd("drj pc"))[0]["value"]
+        """
+        with self._lock:
+            try:
+                prev_registers = self._get_register_state()
+                prev_pc_info = self.session.execute("drj", expect_json=True)
+                prev_pc = next(
+                    (r["value"] for r in prev_pc_info if r.get("role") == "PC" or r.get("name") in ["rip", "eip", "pc"]),
+                    0
+                )
 
-        # Track register changes
-        changed_regs = {}
-        for reg, new_val in new_registers.items():
-            if reg in prev_registers and prev_registers[reg] != new_val:
-                changed_regs[reg] = {"old": prev_registers[reg], "new": new_val}
-                # Propagate taint
-                if self._is_register_tainted(reg):
-                    self.registers[reg].tainted = True
+                inst_info = self.session.execute("pdj 1", expect_json=True)
+                if not inst_info or len(inst_info) == 0:
+                    raise RuntimeError("No instruction at current address")
 
-        # Track memory accesses
-        mem_accesses = self._get_memory_accesses(inst_esil, inst_addr, new_registers)
-        self.memory_accesses.extend(mem_accesses)
+                inst = inst_info[0]
+                inst_addr = inst.get("offset", 0)
+                inst_esil = inst.get("esil", "")
+                inst_opcode = inst.get("opcode", "")
 
-        # Track control flow changes
-        control_flow_change = None
-        if new_pc != prev_pc + inst_info.get("size", 4):
-            control_flow_change = {
-                "from": prev_pc,
-                "to": new_pc,
-                "type": "jump" if "j" in inst_opcode.lower() else "call" if "call" in inst_opcode.lower() else "ret",
-            }
+                self.session.execute("aes")
+                self.instruction_count += 1
 
-        # Check breakpoints
-        if new_pc in self.breakpoints:
-            bp = self.breakpoints[new_pc]
-            bp.hit_count += 1
-            if bp.enabled:
-                if bp.condition:
-                    # Evaluate condition
-                    if self._evaluate_condition(bp.condition):
-                        self.state = ESILState.BREAKPOINT
-                        if bp.callback:
-                            bp.callback(self, inst_info)
-                else:
-                    self.state = ESILState.BREAKPOINT
-                    if bp.callback:
-                        bp.callback(self, inst_info)
+                new_registers = self._get_register_state()
+                new_pc_info = self.session.execute("drj", expect_json=True)
+                new_pc = next(
+                    (r["value"] for r in new_pc_info if r.get("role") == "PC" or r.get("name") in ["rip", "eip", "pc"]),
+                    prev_pc
+                )
 
-        # Track calls
-        if "call" in inst_opcode.lower():
-            self.call_stack.append(
-                {
-                    "from": inst_addr,
-                    "to": new_pc,
+                changed_regs = {}
+                for reg, new_val in new_registers.items():
+                    if reg in prev_registers and prev_registers[reg] != new_val:
+                        changed_regs[reg] = {"old": prev_registers[reg], "new": new_val}
+                        if self._is_register_tainted(reg):
+                            if reg in self.registers:
+                                self.registers[reg].tainted = True
+
+                mem_accesses = self._get_memory_accesses(inst_esil, inst_addr, new_registers)
+                self.memory_accesses.extend(mem_accesses)
+
+                control_flow_change = None
+                if new_pc != prev_pc + inst.get("size", 4):
+                    control_flow_change = {
+                        "from": prev_pc,
+                        "to": new_pc,
+                        "type": self._determine_control_flow_type(inst_opcode)
+                    }
+
+                if new_pc in self.breakpoints:
+                    bp = self.breakpoints[new_pc]
+                    bp.hit_count += 1
+                    if bp.enabled:
+                        if not bp.condition or self._evaluate_condition(bp.condition):
+                            self.state = ESILState.BREAKPOINT
+                            if bp.callback:
+                                bp.callback(self, inst)
+
+                if "call" in inst_opcode.lower():
+                    self.call_stack.append({
+                        "from": inst_addr,
+                        "to": new_pc,
+                        "instruction": inst_opcode,
+                        "stack_ptr": new_registers.get("rsp", new_registers.get("esp", 0))
+                    })
+                elif "ret" in inst_opcode.lower() and self.call_stack:
+                    self.call_stack.pop()
+
+                return {
+                    "address": inst_addr,
                     "instruction": inst_opcode,
-                    "stack_ptr": new_registers.get("rsp", new_registers.get("esp", 0)),
+                    "esil": inst_esil,
+                    "changed_registers": changed_regs,
+                    "memory_accesses": mem_accesses,
+                    "new_pc": new_pc,
+                    "call_depth": len(self.call_stack),
+                    "control_flow": control_flow_change
                 }
-            )
-        elif "ret" in inst_opcode.lower() and self.call_stack:
-            self.call_stack.pop()
 
-        return {
-            "address": inst_addr,
-            "instruction": inst_opcode,
-            "esil": inst_esil,
-            "changed_registers": changed_regs,
-            "memory_accesses": mem_accesses,
-            "new_pc": new_pc,
-            "call_depth": len(self.call_stack),
-            "control_flow": control_flow_change,
-        }
+            except Exception as e:
+                logger.error(f"Step instruction failed: {e}")
+                self.state = ESILState.ERROR
+                raise RuntimeError(f"Instruction step failed: {e}") from e
+
+    def _determine_control_flow_type(self, opcode: str) -> str:
+        """Determine control flow type from opcode.
+
+        Args:
+            opcode: Instruction opcode
+
+        Returns:
+            Control flow type string
+
+        """
+        opcode_lower = opcode.lower()
+        if "call" in opcode_lower:
+            return "call"
+        elif "ret" in opcode_lower:
+            return "ret"
+        elif any(j in opcode_lower for j in ["jmp", "je", "jne", "jz", "jnz", "jg", "jl", "ja", "jb"]):
+            return "jump"
+        else:
+            return "other"
 
     def _get_register_state(self) -> Dict[str, int]:
-        """Get current register values."""
-        regs = {}
-        reg_info = json.loads(self.r2.cmd("drj"))
-        for reg in reg_info:
-            regs[reg["name"]] = reg["value"]
-        return regs
+        """Get current register values.
+
+        Returns:
+            Dictionary mapping register names to values
+
+        """
+        try:
+            reg_info = self.session.execute("drj", expect_json=True)
+            regs = {}
+            for reg in reg_info:
+                name = reg.get("name", "")
+                if name:
+                    regs[name] = reg.get("value", 0)
+            return regs
+        except Exception as e:
+            logger.warning(f"Failed to get register state: {e}")
+            return {}
 
     def _is_register_tainted(self, register: str) -> bool:
-        """Check if register is tainted through data flow."""
-        # Check taint propagation through ESIL
-        taint_info = self.r2.cmd(f"dtg {register}")
-        return "tainted" in taint_info.lower()
+        """Check if register is tainted through data flow.
 
-    def _get_memory_accesses(self, esil: str, inst_addr: int, registers: Dict[str, int]) -> List[ESILMemoryAccess]:
-        """Extract memory accesses from ESIL expression."""
+        Args:
+            register: Register name to check
+
+        Returns:
+            True if register is tainted
+
+        """
+        try:
+            taint_info = self.session.execute(f"dtg {register}")
+            return "tainted" in taint_info.lower()
+        except Exception:
+            return False
+
+    def _get_memory_accesses(
+        self,
+        esil: str,
+        inst_addr: int,
+        registers: Dict[str, int]
+    ) -> List[ESILMemoryAccess]:
+        """Extract memory accesses from ESIL expression.
+
+        Args:
+            esil: ESIL expression
+            inst_addr: Instruction address
+            registers: Current register state
+
+        Returns:
+            List of memory accesses
+
+        """
         accesses = []
 
-        # Parse ESIL for memory operations
         if "[" in esil and "]" in esil:
-            # Memory read operation
             parts = esil.split(",")
-            for _i, part in enumerate(parts):
+            for part in parts:
                 if "]" in part:
-                    # Found memory dereference
                     addr_expr = part.replace("[", "").replace("]", "")
                     try:
-                        # Evaluate address
                         addr = self._evaluate_esil_expr(addr_expr, registers)
-                        if addr:
-                            # Read memory value
-                            mem_val = self.r2.cmd(f"pv @ {addr}")
-                            accesses.append(
-                                ESILMemoryAccess(
+                        if addr is not None and addr > 0x1000:
+                            try:
+                                mem_val = self.get_memory(addr, 8)
+                                accesses.append(ESILMemoryAccess(
                                     address=addr,
-                                    size=8,  # Default size
-                                    value=bytes.fromhex(mem_val.strip()),
+                                    size=8,
+                                    value=mem_val,
                                     operation="read",
                                     instruction_address=inst_addr,
-                                    register_state=registers.copy(),
-                                )
-                            )
-                    except (ValueError, TypeError, AttributeError):
-                        pass  # noqa: S110 - ESIL evaluation errors are expected with complex expressions
+                                    register_state=registers.copy()
+                                ))
+                            except Exception as e:
+                                logger.debug(f"Failed to read memory during access tracking: {e}")
+                    except Exception as e:
+                        logger.debug(f"Failed to track memory read operation: {e}")
 
         if "=[" in esil:
-            # Memory write operation
             parts = esil.split(",")
             for i, part in enumerate(parts):
-                if "=[" in part:
-                    if i > 0:
-                        # Previous part is the value
-                        value_expr = parts[i - 1]
-                        addr_expr = part.replace("=[", "").replace("]", "")
-                        try:
-                            addr = self._evaluate_esil_expr(addr_expr, registers)
-                            value = self._evaluate_esil_expr(value_expr, registers)
-                            if addr and value is not None:
-                                accesses.append(
-                                    ESILMemoryAccess(
-                                        address=addr,
-                                        size=8,
-                                        value=struct.pack("<Q", value)[:8],
-                                        operation="write",
-                                        instruction_address=inst_addr,
-                                        register_state=registers.copy(),
-                                    )
-                                )
-                        except (ValueError, TypeError, AttributeError):
-                            pass  # noqa: S110 - Memory access parsing errors are expected with malformed ESIL
+                if "=[" in part and i > 0:
+                    value_expr = parts[i - 1]
+                    addr_expr = part.replace("=[", "").replace("]", "")
+                    try:
+                        addr = self._evaluate_esil_expr(addr_expr, registers)
+                        value = self._evaluate_esil_expr(value_expr, registers)
+                        if addr is not None and value is not None and addr > 0x1000:
+                            accesses.append(ESILMemoryAccess(
+                                address=addr,
+                                size=8,
+                                value=struct.pack("<Q", value)[:8],
+                                operation="write",
+                                instruction_address=inst_addr,
+                                register_state=registers.copy()
+                            ))
+                    except Exception as e:
+                        logger.debug(f"Failed to track memory write operation: {e}")
 
         return accesses
 
     def _evaluate_esil_expr(self, expr: str, registers: Dict[str, int]) -> Optional[int]:
-        """Evaluate ESIL expression to concrete value."""
-        # Handle register references
+        """Evaluate ESIL expression to concrete value.
+
+        Args:
+            expr: ESIL expression
+            registers: Current register values
+
+        Returns:
+            Evaluated integer value or None
+
+        """
         if expr in registers:
             return registers[expr]
 
-        # Handle hex values
         if expr.startswith("0x"):
-            return int(expr, 16)
+            try:
+                return int(expr, 16)
+            except ValueError:
+                pass
 
-        # Handle decimal values
         try:
             return int(expr)
-        except (ValueError, TypeError, AttributeError):
-            pass  # noqa: S110 - Non-integer expressions need further evaluation
+        except ValueError:
+            pass
 
-        # Complex expression - use r2 to evaluate
         try:
-            result = self.r2.cmd(f"?v {expr}")
-            return int(result.strip())
-        except (ValueError, TypeError, AttributeError):
+            result = self.session.execute(f"?v {expr}")
+            return int(result.strip(), 0)
+        except Exception:
             return None
 
     def _evaluate_condition(self, condition: str) -> bool:
-        """Evaluate breakpoint condition."""
-        # Replace register names with values
+        """Evaluate breakpoint condition.
+
+        Args:
+            condition: Condition expression
+
+        Returns:
+            True if condition is met
+
+        """
         registers = self._get_register_state()
         for reg, val in registers.items():
             condition = condition.replace(reg, str(val))
 
         try:
-            # Safe evaluation
             import ast
 
             node = ast.parse(condition, mode="eval")
@@ -412,51 +760,56 @@ class RadareESILEmulator:
                 return False
 
             return self._eval_node(node.body)
-        except (SyntaxError, NameError, TypeError, ValueError):
+        except Exception:
             return False
 
     def _validate_ast_node(self, node) -> bool:
-        """Validate that the AST node contains only safe operations."""
+        """Validate that the AST node contains only safe operations.
+
+        Args:
+            node: AST node to validate
+
+        Returns:
+            True if node is safe
+
+        """
         import ast
 
         for subnode in ast.walk(node):
-            if not isinstance(
-                subnode,
-                (
-                    ast.Expression,
-                    ast.Compare,
-                    ast.BinOp,
-                    ast.UnaryOp,
-                    ast.Name,
-                    ast.Constant,
-                    ast.Load,
-                    ast.Eq,
-                    ast.NotEq,
-                    ast.Lt,
-                    ast.LtE,
-                    ast.Gt,
-                    ast.GtE,
-                ),
-            ):
+            if not isinstance(subnode, (
+                ast.Expression, ast.Compare, ast.BinOp, ast.UnaryOp,
+                ast.Name, ast.Constant, ast.Load, ast.Eq, ast.NotEq,
+                ast.Lt, ast.LtE, ast.Gt, ast.GtE, ast.Add, ast.Sub,
+                ast.Mult, ast.Div, ast.Mod, ast.Pow, ast.BitAnd,
+                ast.BitOr, ast.BitXor, ast.LShift, ast.RShift,
+                ast.UAdd, ast.USub, ast.Invert
+            )):
                 return False
         return True
 
     def _eval_node(self, node):
-        """Evaluate the parsed AST manually instead of using eval."""
+        """Evaluate the parsed AST manually instead of using eval.
+
+        Args:
+            node: AST node to evaluate
+
+        Returns:
+            Evaluation result
+
+        """
         import ast
 
         if isinstance(node, ast.Expression):
             return self._eval_node(node.body)
         elif isinstance(node, ast.Constant):
             return node.value
-        elif isinstance(node, ast.Num):  # For Python < 3.8 compatibility
+        elif isinstance(node, ast.Num):
             return node.n
-        elif isinstance(node, ast.Str):  # For Python < 3.8 compatibility
+        elif isinstance(node, ast.Str):
             return node.s
-        elif isinstance(node, ast.NameConstant):  # For Python < 3.8 compatibility
+        elif isinstance(node, ast.NameConstant):
             return node.value
         elif isinstance(node, ast.Name):
-            # Handle variable names (should not occur if register replacement worked properly)
             raise ValueError(f"Unexpected variable name: {node.id}")
         elif isinstance(node, ast.BinOp):
             return self._eval_binop(node)
@@ -467,7 +820,15 @@ class RadareESILEmulator:
         raise ValueError(f"Unsupported AST node type: {type(node)}")
 
     def _eval_binop(self, node):
-        """Evaluate binary operations."""
+        """Evaluate binary operations.
+
+        Args:
+            node: Binary operation AST node
+
+        Returns:
+            Operation result
+
+        """
         import ast
 
         left = self._eval_node(node.left)
@@ -479,11 +840,11 @@ class RadareESILEmulator:
         elif isinstance(node.op, ast.Mult):
             return left * right
         elif isinstance(node.op, ast.Div):
-            return left / right if right != 0 else 0  # Prevent division by zero
+            return left / right if right != 0 else 0
         elif isinstance(node.op, ast.Mod):
-            return left % right
+            return left % right if right != 0 else 0
         elif isinstance(node.op, ast.Pow):
-            return left**right
+            return left ** right
         elif isinstance(node.op, ast.BitAnd):
             return left & right
         elif isinstance(node.op, ast.BitOr):
@@ -494,9 +855,18 @@ class RadareESILEmulator:
             return left << right
         elif isinstance(node.op, ast.RShift):
             return left >> right
+        return 0
 
     def _eval_unaryop(self, node):
-        """Evaluate unary operations."""
+        """Evaluate unary operations.
+
+        Args:
+            node: Unary operation AST node
+
+        Returns:
+            Operation result
+
+        """
         import ast
 
         operand = self._eval_node(node.operand)
@@ -506,9 +876,18 @@ class RadareESILEmulator:
             return -operand
         elif isinstance(node.op, ast.Invert):
             return ~operand
+        return 0
 
     def _eval_compare(self, node):
-        """Evaluate comparison operations."""
+        """Evaluate comparison operations.
+
+        Args:
+            node: Comparison AST node
+
+        Returns:
+            Comparison result
+
+        """
         import ast
 
         left = self._eval_node(node.left)
@@ -527,113 +906,154 @@ class RadareESILEmulator:
                 result = result and (left > right)
             elif isinstance(op, ast.GtE):
                 result = result and (left >= right)
-            left = right  # For chaining comparisons like a < b < c
+            left = right
         return result
 
-    def run_until(self, target: Union[int, str], max_steps: int = 10000) -> List[Dict[str, Any]]:
-        """Run emulation until target address or condition."""
+    def run_until(
+        self,
+        target: Union[int, str],
+        max_steps: int = 10000
+    ) -> List[Dict[str, Any]]:
+        """Run emulation until target address or condition.
+
+        Args:
+            target: Target address or symbol name
+            max_steps: Maximum number of instructions to execute
+
+        Returns:
+            List of execution step information
+
+        Raises:
+            RuntimeError: If emulation fails
+
+        """
         trace = []
         self.state = ESILState.RUNNING
 
-        if isinstance(target, str):
-            # Symbol name - resolve to address
-            target_addr = json.loads(self.r2.cmd(f"?j {target}"))[0]["value"]
-        else:
-            target_addr = target
+        try:
+            if isinstance(target, str):
+                result = self.session.execute(f"?v {target}")
+                target_addr = int(result.strip(), 0)
+            else:
+                target_addr = target
 
-        for _ in range(max_steps):
-            if self.state != ESILState.RUNNING:
-                break
+            for _ in range(max_steps):
+                if self.state != ESILState.RUNNING:
+                    break
 
-            step = self.step_instruction()
-            trace.append(step)
+                step = self.step_instruction()
+                trace.append(step)
 
-            if step["new_pc"] == target_addr:
-                self.state = ESILState.COMPLETE
-                break
+                if step["new_pc"] == target_addr:
+                    self.state = ESILState.COMPLETE
+                    break
 
-            # Check for traps
-            if self._check_trap_conditions(step):
-                self.state = ESILState.TRAPPED
-                break
+                if self._check_trap_conditions(step):
+                    self.state = ESILState.TRAPPED
+                    break
 
-        return trace
+            return trace
+
+        except Exception as e:
+            logger.error(f"Emulation failed: {e}")
+            self.state = ESILState.ERROR
+            raise RuntimeError(f"Emulation failed: {e}") from e
 
     def _check_trap_conditions(self, step: Dict[str, Any]) -> bool:
-        """Check for trap conditions like invalid memory access."""
-        # Check for null pointer dereference
+        """Check for trap conditions like invalid memory access.
+
+        Args:
+            step: Execution step information
+
+        Returns:
+            True if trap condition detected
+
+        """
         for access in step.get("memory_accesses", []):
             if access.address < 0x1000:
                 logger.warning(f"Null pointer access at {step['address']:x}")
                 return True
 
-            # Check for unmapped memory
-            sections = json.loads(self.r2.cmd("iSj"))
-            mapped = False
-            for section in sections:
-                start = section.get("vaddr", 0)
-                end = start + section.get("vsize", 0)
-                if start <= access.address < end:
-                    mapped = True
-                    break
+            try:
+                sections = self.session.execute("iSj", expect_json=True)
+                mapped = False
+                for section in sections:
+                    start = section.get("vaddr", 0)
+                    end = start + section.get("vsize", 0)
+                    if start <= access.address < end:
+                        mapped = True
+                        break
 
-            if not mapped:
-                logger.warning(f"Unmapped memory access at {access.address:x}")
-                return True
+                if not mapped:
+                    logger.warning(f"Unmapped memory access at {access.address:x}")
+                    return True
+            except Exception as e:
+                logger.debug(f"Error checking trap condition: {e}")
 
         return False
 
     def extract_api_calls(self) -> List[Dict[str, Any]]:
-        """Extract API calls made during emulation."""
+        """Extract API calls made during emulation.
+
+        Returns:
+            List of API call information
+
+        """
         api_calls = []
 
-        imports = json.loads(self.r2.cmd("iij"))
-        import_addrs = {imp.get("plt", 0): imp.get("name", "") for imp in imports}
+        try:
+            imports = self.session.execute("iij", expect_json=True)
+            import_addrs = {imp.get("plt", 0): imp.get("name", "") for imp in imports}
 
-        for entry in self.call_stack:
-            if entry["to"] in import_addrs:
-                api_calls.append(
-                    {
+            for entry in self.call_stack:
+                if entry["to"] in import_addrs:
+                    api_calls.append({
                         "address": entry["from"],
                         "api": import_addrs[entry["to"]],
                         "stack_ptr": entry["stack_ptr"],
-                        "arguments": self._extract_call_arguments(entry["from"]),
-                    }
-                )
+                        "arguments": self._extract_call_arguments(entry["from"])
+                    })
+
+        except Exception as e:
+            logger.warning(f"Failed to extract API calls: {e}")
 
         return api_calls
 
     def _extract_call_arguments(self, call_addr: int) -> List[int]:
-        """Extract function call arguments based on calling convention."""
+        """Extract function call arguments based on calling convention.
+
+        Args:
+            call_addr: Address of call instruction
+
+        Returns:
+            List of argument values
+
+        """
         args = []
         registers = self._get_register_state()
 
         if self.arch == "x86":
             if self.bits == 64:
-                # x64 calling convention (System V AMD64 ABI)
                 arg_regs = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
                 for reg in arg_regs:
                     if reg in registers:
                         args.append(registers[reg])
             else:
-                # x86 stdcall/cdecl - args on stack
                 esp = registers.get("esp", 0)
                 for i in range(6):
                     try:
-                        arg_data = self.r2.cmd(f"pv @ {esp + 4 + i * 4}")
-                        args.append(int(arg_data.strip()))
-                    except (ValueError, TypeError, AttributeError):
+                        arg_data = self.get_memory(esp + 4 + i * 4, 4)
+                        args.append(struct.unpack("<I", arg_data)[0])
+                    except Exception:
                         break
 
         elif self.arch == "arm":
             if self.bits == 64:
-                # ARM64 calling convention
                 for i in range(8):
                     reg = f"x{i}"
                     if reg in registers:
                         args.append(registers[reg])
             else:
-                # ARM32 calling convention
                 for i in range(4):
                     reg = f"r{i}"
                     if reg in registers:
@@ -642,100 +1062,214 @@ class RadareESILEmulator:
         return args
 
     def find_license_checks(self) -> List[Dict[str, Any]]:
-        """Find potential license validation code through symbolic execution."""
-        license_patterns = []
+        """Find potential license validation code through symbolic execution.
 
-        # Common license check patterns
+        Returns:
+            List of potential license check locations
+
+        """
+        license_patterns = []
         patterns = [
-            "cmp.*0x.*",  # Comparisons with constants
-            "test.*",  # Test instructions
-            "je.*fail",  # Jump to failure
-            "jne.*success",  # Jump to success
+            "cmp.*0x.*",
+            "test.*",
+            "je.*",
+            "jne.*"
         ]
 
-        # Search for patterns
-        for pattern in patterns:
-            matches = json.loads(self.r2.cmd(f"/j {pattern}"))
-            for match in matches:
-                addr = match.get("offset", 0)
+        try:
+            for pattern in patterns:
+                matches = self.session.execute(f"/j {pattern}", expect_json=True)
+                if not matches:
+                    continue
 
-                # Analyze control flow around match
-                cfg = json.loads(self.r2.cmd(f"agj @ {addr}"))
-                if cfg:
-                    # Look for divergent paths (success/failure)
-                    blocks = cfg[0].get("blocks", [])
-                    for block in blocks:
-                        if block.get("offset", 0) == addr:
-                            if len(block.get("jump", [])) > 1:
-                                license_patterns.append(
-                                    {
-                                        "address": addr,
-                                        "type": "conditional_branch",
-                                        "pattern": pattern,
-                                        "true_path": block["jump"][0],
-                                        "false_path": block["jump"][1] if len(block["jump"]) > 1 else None,
-                                    }
-                                )
+                for match in matches:
+                    addr = match.get("offset", 0)
+                    if not addr:
+                        continue
+
+                    try:
+                        cfg = self.session.execute(f"agj @ {addr}", expect_json=True)
+                        if cfg and len(cfg) > 0:
+                            blocks = cfg[0].get("blocks", [])
+                            for block in blocks:
+                                if block.get("offset", 0) == addr:
+                                    jumps = block.get("jump", [])
+                                    if len(jumps) > 1:
+                                        license_patterns.append({
+                                            "address": addr,
+                                            "type": "conditional_branch",
+                                            "pattern": pattern,
+                                            "true_path": jumps[0],
+                                            "false_path": jumps[1] if len(jumps) > 1 else None
+                                        })
+                    except Exception as e:
+                        logger.debug(f"Failed to analyze license check pattern: {e}")
+
+        except Exception as e:
+            logger.warning(f"Failed to find license checks: {e}")
 
         return license_patterns
 
     def generate_path_constraints(self, target: int) -> List[str]:
-        """Generate path constraints to reach target address."""
+        """Generate path constraints to reach target address.
+
+        Args:
+            target: Target address
+
+        Returns:
+            List of path constraints
+
+        """
         constraints = []
 
-        # Run symbolic execution
-        self.path_constraints = []
-        trace = self.run_until(target)
+        try:
+            self.path_constraints = []
+            trace = self.run_until(target)
 
-        # Collect branch conditions
-        for step in trace:
-            inst = step.get("instruction", "")
+            for step in trace:
+                inst = step.get("instruction", "")
 
-            # Check for conditional branches
-            if any(cond in inst.lower() for cond in ["je", "jne", "jz", "jnz", "jg", "jl", "ja", "jb"]):
-                # Extract condition from ESIL
-                esil = step.get("esil", "")
-                if "?{" in esil:
-                    # Conditional execution in ESIL
-                    condition = esil.split("?{")[0]
+                if any(cond in inst.lower() for cond in ["je", "jne", "jz", "jnz", "jg", "jl", "ja", "jb"]):
+                    esil = step.get("esil", "")
+                    if "?{" in esil:
+                        condition = esil.split("?{")[0]
 
-                    # Add to constraints based on branch taken
-                    if step["new_pc"] == step["address"] + len(inst):
-                        # Branch not taken
-                        constraints.append(f"NOT({condition})")
-                    else:
-                        # Branch taken
-                        constraints.append(condition)
+                        if step["new_pc"] == step["address"] + len(inst):
+                            constraints.append(f"NOT({condition})")
+                        else:
+                            constraints.append(condition)
 
-        return constraints + self.path_constraints
+            constraints.extend(self.path_constraints)
+
+        except Exception as e:
+            logger.warning(f"Failed to generate path constraints: {e}")
+
+        return constraints
 
     def dump_execution_trace(self, output_path: str):
-        """Dump complete execution trace to JSON file."""
-        trace_data = {
-            "binary": self.binary_path,
-            "architecture": f"{self.arch}-{self.bits}",
-            "entry_point": self.entry_point,
-            "instruction_count": self.instruction_count,
-            "breakpoints_hit": [
-                {"address": addr, "hits": bp.hit_count, "condition": bp.condition}
-                for addr, bp in self.breakpoints.items()
-                if bp.hit_count > 0
-            ],
-            "api_calls": self.extract_api_calls(),
-            "memory_accesses": [
-                {"address": acc.address, "size": acc.size, "operation": acc.operation, "instruction": acc.instruction_address}
-                for acc in self.memory_accesses
-            ],
-            "tainted_registers": [reg for reg, state in self.registers.items() if state.tainted],
-            "path_constraints": self.path_constraints,
-            "call_stack_max_depth": max(len(self.call_stack), 1),
-        }
+        """Dump complete execution trace to JSON file.
 
-        with open(output_path, "w") as f:
-            json.dump(trace_data, f, indent=2)
+        Args:
+            output_path: Path to output file
+
+        Raises:
+            RuntimeError: If trace dump fails
+
+        """
+        try:
+            trace_data = {
+                "binary": str(self.binary_path),
+                "architecture": f"{self.arch}-{self.bits}",
+                "entry_point": self.entry_point,
+                "instruction_count": self.instruction_count,
+                "breakpoints_hit": [
+                    {
+                        "address": addr,
+                        "hits": bp.hit_count,
+                        "condition": bp.condition
+                    }
+                    for addr, bp in self.breakpoints.items()
+                    if bp.hit_count > 0
+                ],
+                "api_calls": self.extract_api_calls(),
+                "memory_accesses": [
+                    {
+                        "address": acc.address,
+                        "size": acc.size,
+                        "operation": acc.operation,
+                        "instruction": acc.instruction_address
+                    }
+                    for acc in self.memory_accesses
+                ],
+                "tainted_registers": [
+                    reg for reg, state in self.registers.items()
+                    if state.tainted
+                ],
+                "path_constraints": self.path_constraints,
+                "call_stack_max_depth": max(len(self.call_stack), 1)
+            }
+
+            with open(output_path, "w", encoding="utf-8") as f:
+                json.dump(trace_data, f, indent=2)
+
+            logger.info(f"Execution trace dumped to {output_path}")
+
+        except Exception as e:
+            logger.error(f"Failed to dump execution trace: {e}")
+            raise RuntimeError(f"Trace dump failed: {e}") from e
+
+    def reset(self):
+        """Reset emulator state to initial conditions.
+
+        Raises:
+            RuntimeError: If reset fails
+
+        """
+        with self._lock:
+            try:
+                self.state = ESILState.READY
+                self.memory_accesses.clear()
+                self.call_stack.clear()
+                self.path_constraints.clear()
+                self.instruction_count = 0
+                self.cycle_count = 0
+
+                self.session.execute("aei")
+                self.session.execute("aeim")
+                self.session.execute("aeip")
+
+                if self.entry_point:
+                    self.session.execute(f"s {self.entry_point}")
+
+                self._initialize_registers()
+
+                logger.info("Emulator state reset")
+
+            except Exception as e:
+                logger.error(f"Failed to reset emulator: {e}")
+                raise RuntimeError(f"Reset failed: {e}") from e
 
     def cleanup(self):
-        """Clean up resources."""
-        if self.r2:
-            self.r2.quit()
-            self.r2 = None
+        """Clean up resources.
+
+        This method should be called when done with the emulator to properly
+        release resources and return sessions to the pool.
+        """
+        with self._lock:
+            if self.session:
+                if self.session_pool:
+                    self.session_pool.return_session(self.session)
+                else:
+                    self.session.disconnect()
+                self.session = None
+
+            logger.info("ESIL emulator cleaned up")
+
+    def __enter__(self):
+        """Context manager entry.
+
+        Returns:
+            Self for context manager
+
+        """
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit.
+
+        Args:
+            exc_type: Exception type
+            exc_val: Exception value
+            exc_tb: Exception traceback
+
+        """
+        self.cleanup()
+
+
+__all__ = [
+    "ESILState",
+    "ESILRegister",
+    "ESILMemoryAccess",
+    "ESILBreakpoint",
+    "RadareESILEmulator"
+]

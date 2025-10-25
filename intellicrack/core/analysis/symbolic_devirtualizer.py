@@ -20,25 +20,25 @@ Licensed under GNU General Public License v3.0
 import struct
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple, Any
+from typing import Any, Dict, List, Optional, Tuple
 
 try:
     import angr
     import claripy
-    from angr import SimState, Project
+    from angr import Project, SimState
     from angr.exploration_techniques import DFS, ExplorationTechnique
     ANGR_AVAILABLE = True
 except ImportError:
     ANGR_AVAILABLE = False
 
 try:
-    from capstone import Cs, CS_ARCH_X86, CS_MODE_32, CS_MODE_64
+    from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
     CAPSTONE_AVAILABLE = True
 except ImportError:
     CAPSTONE_AVAILABLE = False
 
 try:
-    from keystone import Ks, KS_ARCH_X86, KS_MODE_32, KS_MODE_64
+    from keystone import KS_ARCH_X86, KS_MODE_32, KS_MODE_64, Ks
     KEYSTONE_AVAILABLE = True
 except ImportError:
     KEYSTONE_AVAILABLE = False

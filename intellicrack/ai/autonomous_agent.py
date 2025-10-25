@@ -31,6 +31,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
 
+from ..core.analysis.frida_script_manager import FridaScriptManager
 from ..core.logging import AuditEvent, AuditEventType, AuditSeverity, get_audit_logger
 from ..core.resources import get_resource_manager
 from ..utils.logger import get_logger
@@ -128,13 +129,18 @@ class AutonomousAgent:
         self.qemu_manager = None
 
         # VM lifecycle management
-        self._active_vms = {}  # Track active VMs by ID
-        self._vm_snapshots = {}  # Track VM snapshots
-        self._resource_manager = get_resource_manager()  # Resource manager for cleanup
-        self._audit_logger = get_audit_logger()  # Audit logger for tracking
+        self._active_vms = {}
+        self._vm_snapshots = {}
+        self._resource_manager = get_resource_manager()
+        self._audit_logger = get_audit_logger()
 
         # Agent identifier for session tracking
         self.agent_id = f"agent_{int(time.time())}_{id(self)}"
+
+        # Initialize Frida script manager with default scripts directory
+        scripts_dir = Path(__file__).parent.parent / "scripts" / "frida"
+        self.frida_manager = FridaScriptManager(scripts_dir)
+        logger.info(f"Initialized FridaScriptManager with {len(self.frida_manager.scripts)} scripts")
 
     def process_request(self, user_request: str) -> dict[str, Any]:
         """Process a user request autonomously, similar to Claude Code.
@@ -2056,21 +2062,190 @@ class AutonomousAgent:
         return success, output_lines, error_msg
 
     def _execute_frida_script(self, script: str, target_binary: str, temp_dir: str) -> tuple[bool, list[str]]:
-        """Execute Frida script."""
-        import subprocess
+        """Execute Frida script against target binary.
 
-        # Sanitize script input to prevent command injection
-        safe_script_part = script[:100].replace("'", "").replace('"', "").replace(";", "").replace("|", "").replace("&", "")
-        # Use full path to node executable to avoid partial path issue
-        node_path = shutil.which("node") or "node"
-        frida_cmd = [node_path, "-e", f"console.log('Testing script: {safe_script_part}...')"]
-        # Validate that frida_cmd contains only safe, expected commands
-        if not isinstance(frida_cmd, list) or not all(isinstance(arg, str) for arg in frida_cmd):
-            raise ValueError(f"Unsafe command: {frida_cmd}")
-        subprocess.run(frida_cmd, cwd=temp_dir, capture_output=True, text=True, timeout=15, shell=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
-        success = True
-        output_lines = ["✅ Frida script validation successful", f"   Script size: {len(script)} bytes", f"   Target: {target_binary}"]
-        return success, output_lines
+        Args:
+            script: Either a script name from the library or the full script content
+            target_binary: Path to the target binary to analyze
+            temp_dir: Temporary directory for any output files
+
+        Returns:
+            Tuple of (success, output_lines)
+
+        """
+        output_lines = []
+
+        try:
+            # Check if script is a name from the library or custom content
+            if script in self.frida_manager.scripts:
+                script_name = script
+                logger.info(f"Executing library script: {script_name}")
+                output_lines.append(f"📜 Executing library script: {script_name}")
+            else:
+                # Custom script content - save to temp file and execute
+                script_path = Path(temp_dir) / "custom_frida_script.js"
+                script_path.write_text(script, encoding='utf-8')
+                script_name = str(script_path)
+                logger.info(f"Executing custom script ({len(script)} bytes)")
+                output_lines.append(f"📜 Executing custom Frida script ({len(script)} bytes)")
+
+            # Validate target binary exists
+            if not os.path.exists(target_binary):
+                error_msg = f"Target binary not found: {target_binary}"
+                logger.error(error_msg)
+                output_lines.append(f"❌ {error_msg}")
+                return False, output_lines
+
+            output_lines.append(f"🎯 Target: {Path(target_binary).name}")
+
+            # Execute the script using FridaScriptManager
+            # Use spawn mode by default for license cracking scenarios
+            result = self.frida_manager.execute_script(
+                script_name=script_name if script in self.frida_manager.scripts else script_path.name,
+                target=target_binary,
+                mode="spawn",
+                parameters={}
+            )
+
+            # Process results
+            if result.success:
+                output_lines.append("✅ Frida script execution completed successfully")
+                output_lines.append(f"⏱️  Execution time: {result.execution_time_ms}ms")
+
+                # Add result output
+                if result.output:
+                    output_lines.append("\n📊 Script Output:")
+                    for line in result.output.split('\n')[:50]:  # Limit to 50 lines
+                        output_lines.append(f"   {line}")
+
+                    output_line_count = len(result.output.split('\n'))
+                    if output_line_count > 50:
+                        output_lines.append(f"   ... ({output_line_count - 50} more lines)")
+
+                # Add any intercepted data
+                if result.hooks_triggered:
+                    output_lines.append(f"\n🎣 Hooks triggered: {result.hooks_triggered}")
+
+                if result.data_collected:
+                    output_lines.append(f"📦 Data collected: {len(result.data_collected)} items")
+
+                logger.info(f"Frida script executed successfully: {result.execution_time_ms}ms")
+                return True, output_lines
+            else:
+                output_lines.append(f"❌ Frida script execution failed: {result.error}")
+                if result.output:
+                    output_lines.append("\n📋 Partial output:")
+                    for line in result.output.split('\n')[:20]:
+                        output_lines.append(f"   {line}")
+
+                logger.error(f"Frida script execution failed: {result.error}")
+                return False, output_lines
+
+        except Exception as e:
+            error_msg = f"Exception during Frida script execution: {e}"
+            logger.exception(error_msg)
+            output_lines.append(f"❌ {error_msg}")
+            return False, output_lines
+
+    def list_available_frida_scripts(self) -> dict[str, dict]:
+        """List all available Frida scripts from the library.
+
+        Returns:
+            Dictionary mapping script names to their metadata (category, description, etc.)
+
+        """
+        available_scripts = {}
+
+        for script_name, script_config in self.frida_manager.scripts.items():
+            available_scripts[script_name] = {
+                "category": script_config.category.value,
+                "description": script_config.description,
+                "parameters": script_config.parameters,
+                "example_usage": script_config.example_usage
+            }
+
+        return available_scripts
+
+    def execute_frida_library_script(
+        self,
+        script_name: str,
+        target_binary: str,
+        parameters: Optional[dict] = None,
+        mode: str = "spawn"
+    ) -> tuple[bool, list[str]]:
+        """Execute a Frida script from the library by name.
+
+        Args:
+            script_name: Name of the script from the library
+            target_binary: Path to the target binary
+            parameters: Optional parameters to pass to the script
+            mode: Execution mode ("spawn" or "attach")
+
+        Returns:
+            Tuple of (success, output_lines)
+
+        """
+        output_lines = []
+
+        try:
+            if script_name not in self.frida_manager.scripts:
+                available = ", ".join(self.frida_manager.scripts.keys())
+                error_msg = f"Script '{script_name}' not found. Available: {available}"
+                logger.error(error_msg)
+                output_lines.append(f"❌ {error_msg}")
+                return False, output_lines
+
+            # Validate target binary
+            if not os.path.exists(target_binary):
+                error_msg = f"Target binary not found: {target_binary}"
+                logger.error(error_msg)
+                output_lines.append(f"❌ {error_msg}")
+                return False, output_lines
+
+            logger.info(f"Executing library script '{script_name}' against {target_binary}")
+            output_lines.append(f"📜 Executing: {script_name}")
+            output_lines.append(f"🎯 Target: {Path(target_binary).name}")
+            output_lines.append(f"⚙️  Mode: {mode}")
+
+            # Execute the script
+            result = self.frida_manager.execute_script(
+                script_name=script_name,
+                target=target_binary,
+                mode=mode,
+                parameters=parameters or {}
+            )
+
+            # Process results
+            if result.success:
+                output_lines.append("✅ Execution successful")
+                output_lines.append(f"⏱️  Time: {result.execution_time_ms}ms")
+
+                if result.output:
+                    output_lines.append("\n📊 Output:")
+                    for line in result.output.split('\n')[:50]:
+                        output_lines.append(f"   {line}")
+
+                if result.hooks_triggered:
+                    output_lines.append(f"\n🎣 Hooks triggered: {result.hooks_triggered}")
+
+                if result.data_collected:
+                    output_lines.append(f"📦 Data collected: {len(result.data_collected)} items")
+
+                return True, output_lines
+            else:
+                output_lines.append(f"❌ Execution failed: {result.error}")
+                if result.output:
+                    output_lines.append("\n📋 Partial output:")
+                    for line in result.output.split('\n')[:20]:
+                        output_lines.append(f"   {line}")
+
+                return False, output_lines
+
+        except Exception as e:
+            error_msg = f"Exception executing script: {e}"
+            logger.exception(error_msg)
+            output_lines.append(f"❌ {error_msg}")
+            return False, output_lines
 
     def _validate_generic_script(self, target_binary: str, temp_dir: str) -> tuple[bool, list[str]]:
         """Validate generic script."""

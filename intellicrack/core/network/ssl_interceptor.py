@@ -82,17 +82,7 @@ class SSLTLSInterceptor:
         self.ca_cert = None
         self.ca_key = None
         self.traffic_log = []
-        self.response_templates = {}
         self.proxy_process = None
-
-        # Load response templates
-        self._load_response_templates()
-
-    def _load_response_templates(self):
-        """Load response templates for various license verification endpoints."""
-        from ...utils.templates.license_response_templates import get_all_response_templates
-
-        self.response_templates = get_all_response_templates()
 
     def generate_ca_certificate(self) -> tuple[bytes | None, bytes | None]:
         """Generate a CA certificate for SSL/TLS interception.
@@ -509,7 +499,6 @@ def response(flow: http.HTTPFlow) -> None:
         safe_config["status"] = {
             "running": self.proxy_process is not None,
             "traffic_captured": len(self.traffic_log),
-            "response_templates_loaded": len(self.response_templates),
             "ca_cert_exists": os.path.exists(self.config["ca_cert_path"]),
             "ca_key_exists": os.path.exists(self.config["ca_key_path"]),
         }

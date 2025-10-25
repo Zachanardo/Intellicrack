@@ -2,9 +2,9 @@
 description: Systematically reevaluate the previous response against the original request and standards
 ---
 
-You must systematically re-evaluate your previous response and all code changes against the original request and the critical standards defined in `GEMINI.md` and `CLAUDE.md`. This verification is mandatory for ensuring production readiness and real-world effectiveness.
+You must systematically re-evaluate your previous response and all code changes against the original request and the critical standards defined in `CLAUDE.md`. This verification is mandatory for ensuring production readiness and real-world effectiveness.
 
-Conduct a rigorous, line-by-line review of your implementation using the following checklist. For each point, you must explicitly confirm adherence or justify any deviation.
+Conduct a rigorous, line-by-line (you must read EVERY line of code that was added/changed) review of your implementation using the following checklist. For each point, you must explicitly confirm adherence or justify any deviation.
 
 **1. Scope and Purpose Verification:**
 ***(Apply this section only if the changes directly impact core cracking, analysis, or protection-defeating features.)***
@@ -28,7 +28,8 @@ Conduct a rigorous, line-by-line review of your implementation using the followi
    - [ ] **Exception Handling:** Is error handling comprehensive? Are `try/except` blocks used for potential failures like I/O, network requests, or import errors? Are fallbacks graceful and functional?
 
 **5. Verification and Testing:**
-   - [ ] **Testing:** Were new unit tests written to cover the changes? Do they validate both positive and negative cases?
+   - [ ] **Testing:** Were new unit tests written to cover the changes? Do they validate both positive and negative cases, and do they always fail if the code does not perform, in real world scenarios, the task it was written for?
+   - [ ] **Real Data:** Do the tests use real data? They must use only real data. No mock, fake, simulated data that does not effectively test the code's ability to perform.
    - [ ] **Test Execution:** Have all relevant tests been executed (`pytest`)? Confirm that all tests are passing.
    - [ ] **Linting and Static Analysis:** Has the code been checked with the project's linter (`ruff check .`)? Confirm there are no new warnings or errors.
 

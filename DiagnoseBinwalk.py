@@ -1,7 +1,8 @@
-import binwalk
-from binwalk.core.module import Modules
 import subprocess
 from pathlib import Path
+
+import binwalk
+from binwalk.core.module import Modules
 
 print("="*70)
 print("BINWALK3 DIAGNOSTIC")
@@ -52,7 +53,7 @@ try:
         timeout=5
     )
     print(f"  Exit code: {result.returncode}")
-    print(f"  First 3 lines of help:")
+    print("  First 3 lines of help:")
     lines = result.stdout.strip().split('\n')[:3]
     for line in lines:
         print(f"    {line}")
@@ -74,11 +75,11 @@ try:
     print(f"  stderr length: {len(result.stderr)} bytes")
 
     if result.stdout:
-        print(f"\n  First 500 chars of output:")
+        print("\n  First 500 chars of output:")
         print(f"  {result.stdout[:500]}")
 
     if result.stderr:
-        print(f"\n  Errors:")
+        print("\n  Errors:")
         print(f"  {result.stderr[:500]}")
 
 except Exception as e:

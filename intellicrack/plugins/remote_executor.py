@@ -337,7 +337,7 @@ class RemotePluginExecutor:
                         plugin_instance = plugin_class()
                     else:
                         # Look for common plugin class names
-                        for class_name in ["DemoPlugin", "CustomPlugin", "AnalysisPlugin"]:
+                        for class_name in ["CustomPlugin", "AnalysisPlugin"]:
                             if hasattr(plugin_module, class_name):
                                 plugin_class = getattr(plugin_module, class_name)
                                 plugin_instance = plugin_class()

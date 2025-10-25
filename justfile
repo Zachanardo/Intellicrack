@@ -3,6 +3,64 @@
 # Configure shell for Windows
 set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
 
+# ==================== INSTALLATION ====================
+
+# Complete installation with all post-install tasks
+install:
+    @echo "Installing Intellicrack dependencies..."
+    pixi install
+    @echo ""
+    @echo "Installing Rustup (if needed)..."
+    @just install-rustup
+    @echo ""
+    @echo "Updating Rust toolchain..."
+    rustup update stable
+    @echo ""
+    @echo "Installing JDK 21..."
+    @just install-jdk
+    @echo ""
+    @echo "Installing Ghidra..."
+    @just install-ghidra
+    @echo ""
+    @echo "Installing radare2..."
+    @just install-radare2
+    @echo ""
+    @echo "Installing QEMU..."
+    @just install-qemu
+    @echo ""
+    @echo "Installing Intel XPU PyTorch..."
+    pixi run install-intel-xpu
+    @echo ""
+    @echo "Installing linters..."
+    pixi run install-linters
+    @echo ""
+    @echo "Building Rust launcher..."
+    pixi run build-rust-launcher
+    @echo ""
+    @echo "Installation complete! ✓"
+
+# Install Rustup if not already installed
+install-rustup:
+    $rustupInstalled = & { try { rustup --version 2>&1 | Out-Null; $true } catch { $false } }; if ($rustupInstalled) { Write-Output "Rustup already installed" } else { Write-Output "Installing Rustup via winget..."; winget install --id Rustlang.Rustup -e --silent --accept-source-agreements --accept-package-agreements | Out-Null }; Write-Output "Rustup check complete"; exit 0
+
+# Install JDK 21 to system if not already installed
+install-jdk:
+    $javaVersion = & { try { java -version 2>&1 | Select-String -Pattern 'version' | ForEach-Object { $_.Line } } catch { $null } }; if ($javaVersion -match '21\.\d+\.\d+') { Write-Output "JDK 21 already installed: $javaVersion" } else { Write-Output "Installing JDK 21 via winget..."; winget install --id Oracle.JDK.21 -e --silent --accept-source-agreements --accept-package-agreements | Out-Null }; Write-Output "JDK 21 check complete"; exit 0
+
+# Install latest Ghidra to tools/ghidra directory
+install-ghidra:
+    if (!(Test-Path "tools")) { New-Item -ItemType Directory -Path "tools" | Out-Null }; $existingGhidra = Get-ChildItem -Path "tools" -Recurse -Filter "ghidraRun.bat" -ErrorAction SilentlyContinue | Select-Object -First 1; if ($existingGhidra) { Write-Output "Ghidra already installed at $($existingGhidra.DirectoryName)"; exit 0 }; Write-Output "Fetching latest Ghidra release..."; $release = Invoke-RestMethod -Uri "https://api.github.com/repos/NationalSecurityAgency/ghidra/releases/latest"; $asset = $release.assets | Where-Object { $_.name -match '\.zip$' -and $_.name -notmatch 'DEV' } | Select-Object -First 1; if (!$asset) { Write-Error "Could not find Ghidra release asset"; exit 1 }; $downloadUrl = $asset.browser_download_url; $fileName = $asset.name; $zipPath = Join-Path "tools" $fileName; Write-Output "Downloading $fileName..."; $ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest -Uri $downloadUrl -OutFile $zipPath; Write-Output "Extracting Ghidra..."; $tempExtract = Join-Path "tools" "ghidra_temp"; if (Test-Path $tempExtract) { Remove-Item $tempExtract -Recurse -Force }; Expand-Archive -Path $zipPath -DestinationPath $tempExtract; $extractedDir = Get-ChildItem -Path $tempExtract -Directory | Select-Object -First 1; if ($extractedDir) { Move-Item -Path $extractedDir.FullName -Destination (Join-Path "tools" "ghidra") }; Remove-Item $tempExtract -Recurse -Force -ErrorAction SilentlyContinue; Remove-Item $zipPath -Force; Write-Output "Ghidra installed to tools\ghidra ✓"
+
+# Install latest radare2 to tools/radare2 directory
+install-radare2:
+    if (!(Test-Path "tools")) { New-Item -ItemType Directory -Path "tools" | Out-Null }; $existingRadare2 = Get-ChildItem -Path "tools" -Recurse -Filter "radare2.exe" -ErrorAction SilentlyContinue | Select-Object -First 1; if (!$existingRadare2) { $existingRadare2 = Get-ChildItem -Path "tools" -Recurse -Filter "r2.exe" -ErrorAction SilentlyContinue | Select-Object -First 1 }; if ($existingRadare2) { Write-Output "radare2 already installed at $($existingRadare2.DirectoryName)"; exit 0 }; Write-Output "Fetching latest radare2 release..."; $release = Invoke-RestMethod -Uri "https://api.github.com/repos/radareorg/radare2/releases/latest"; $asset = $release.assets | Where-Object { $_.name -match 'w64\.zip$' -or $_.name -match 'windows.*\.zip$' } | Select-Object -First 1; if (!$asset) { Write-Error "Could not find radare2 Windows release asset"; exit 1 }; $downloadUrl = $asset.browser_download_url; $fileName = $asset.name; $zipPath = Join-Path "tools" $fileName; Write-Output "Downloading $fileName..."; $ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest -Uri $downloadUrl -OutFile $zipPath; Write-Output "Extracting radare2..."; $tempExtract = Join-Path "tools" "radare2_temp"; if (Test-Path $tempExtract) { Remove-Item $tempExtract -Recurse -Force }; Expand-Archive -Path $zipPath -DestinationPath $tempExtract; $extractedDir = Get-ChildItem -Path $tempExtract -Directory | Select-Object -First 1; if ($extractedDir) { Move-Item -Path $extractedDir.FullName -Destination (Join-Path "tools" "radare2") } else { Move-Item -Path $tempExtract -Destination (Join-Path "tools" "radare2") }; Remove-Item $tempExtract -Recurse -Force -ErrorAction SilentlyContinue; Remove-Item $zipPath -Force; Write-Output "radare2 installed to tools\radare2 ✓"
+
+# Install latest QEMU to tools/qemu directory
+install-qemu:
+    if (!(Test-Path "tools")) { New-Item -ItemType Directory -Path "tools" | Out-Null }; $existingQemu = Get-ChildItem -Path "tools" -Recurse -Filter "qemu-system-x86_64.exe" -ErrorAction SilentlyContinue | Select-Object -First 1; if (!$existingQemu) { $existingQemu = Get-ChildItem -Path "tools" -Recurse -Filter "qemu-img.exe" -ErrorAction SilentlyContinue | Select-Object -First 1 }; if ($existingQemu) { Write-Output "QEMU already installed at $($existingQemu.DirectoryName)"; exit 0 }; Write-Output "Fetching latest QEMU release..."; $html = Invoke-WebRequest -Uri "https://qemu.weilnetz.de/w64/" -UseBasicParsing; $links = $html.Links | Where-Object { $_.href -match 'qemu-w64-setup-.*\.exe$' } | Sort-Object { $_.href } -Descending | Select-Object -First 1; if (!$links) { Write-Error "Could not find QEMU installer"; exit 1 }; $installerUrl = "https://qemu.weilnetz.de/w64/$($links.href)"; $installerName = $links.href; $installerPath = Join-Path "tools" $installerName; Write-Output "Downloading $installerName..."; $ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest -Uri $installerUrl -OutFile $installerPath; Write-Output "Installing QEMU to tools\qemu..."; $installDir = Join-Path (Get-Location) "tools\qemu"; Start-Process -FilePath $installerPath -ArgumentList "/S", "/D=$installDir" -Wait -NoNewWindow; Remove-Item $installerPath -Force; Write-Output "QEMU installed to tools\qemu ✓"
+
+# ==================== TESTING ====================
+
 # Quick unit tests - validates REAL functionality
 test:
     pixi run pytest tests/unit -v --tb=short

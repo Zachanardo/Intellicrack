@@ -667,3 +667,371 @@ class FlexLMProtocolParser:
                 self.logger.debug(f"Error serializing field {key}: {e}")
 
         return bytes(serialized)
+
+    def add_custom_feature(
+        self,
+        name: str,
+        version: str,
+        vendor: str,
+        count: int = 100,
+        expiry: str = "31-dec-2025",
+        signature: str | None = None,
+    ) -> None:
+        """Add custom FlexLM feature to server.
+
+        Args:
+            name: Feature name
+            version: Feature version
+            vendor: Vendor daemon name
+            count: License count
+            expiry: Expiry date
+            signature: License signature (generated if None)
+
+        """
+        if signature is None:
+            signature = hashlib.sha256(f"{name}:{version}:{vendor}".encode()).hexdigest()[:40].upper()
+
+        self.server_features[name.upper()] = {
+            "version": version,
+            "expiry": expiry,
+            "count": count,
+            "vendor": vendor,
+            "signature": signature,
+        }
+        self.logger.info(f"Added custom FlexLM feature: {name}")
+
+    def remove_feature(self, name: str) -> None:
+        """Remove feature from server.
+
+        Args:
+            name: Feature name to remove
+
+        """
+        feature_key = name.upper()
+        if feature_key in self.server_features:
+            del self.server_features[feature_key]
+            self.logger.info(f"Removed FlexLM feature: {name}")
+
+    def get_active_checkouts(self) -> dict[str, dict[str, Any]]:
+        """Get all active license checkouts.
+
+        Returns:
+            Dictionary of active checkouts
+
+        """
+        return self.active_checkouts.copy()
+
+    def clear_checkouts(self) -> None:
+        """Clear all active checkouts."""
+        count = len(self.active_checkouts)
+        self.active_checkouts.clear()
+        self.logger.info(f"Cleared {count} active checkouts")
+
+    def get_server_statistics(self) -> dict[str, Any]:
+        """Get server statistics.
+
+        Returns:
+            Dictionary containing server statistics
+
+        """
+        return {
+            "total_features": len(self.server_features),
+            "active_checkouts": len(self.active_checkouts),
+            "features": list(self.server_features.keys()),
+            "server_version": "11.18.0",
+            "uptime": int(time.time()),
+        }
+
+
+class FlexLMTrafficCapture:
+    """FlexLM traffic capture and analysis engine."""
+
+    def __init__(self, parser: FlexLMProtocolParser):
+        """Initialize traffic capture engine.
+
+        Args:
+            parser: FlexLM protocol parser instance
+
+        """
+        self.logger = get_logger(__name__)
+        self.parser = parser
+        self.captured_requests: list[tuple[float, FlexLMRequest, bytes]] = []
+        self.captured_responses: list[tuple[float, FlexLMResponse, bytes]] = []
+        self.server_endpoints: set[tuple[str, int]] = set()
+        self.client_endpoints: set[tuple[str, int]] = set()
+
+    def capture_packet(self, data: bytes, source: tuple[str, int], dest: tuple[str, int], timestamp: float | None = None) -> bool:
+        """Capture FlexLM network packet.
+
+        Args:
+            data: Raw packet data
+            source: Source (IP, port) tuple
+            dest: Destination (IP, port) tuple
+            timestamp: Capture timestamp (current time if None)
+
+        Returns:
+            True if packet was successfully parsed and captured
+
+        """
+        if timestamp is None:
+            timestamp = time.time()
+
+        request = self.parser.parse_request(data)
+        if request:
+            self.captured_requests.append((timestamp, request, data))
+            self.client_endpoints.add(source)
+            self.server_endpoints.add(dest)
+            self.logger.debug(f"Captured FlexLM request from {source} to {dest}")
+            return True
+
+        return False
+
+    def analyze_traffic_patterns(self) -> dict[str, Any]:
+        """Analyze captured traffic patterns.
+
+        Returns:
+            Dictionary containing traffic analysis results
+
+        """
+        if not self.captured_requests:
+            return {"error": "No captured traffic to analyze"}
+
+        command_counts: dict[int, int] = {}
+        feature_requests: dict[str, int] = {}
+        hourly_distribution: dict[int, int] = {}
+
+        for timestamp, request, _ in self.captured_requests:
+            command_counts[request.command] = command_counts.get(request.command, 0) + 1
+
+            if request.feature:
+                feature_requests[request.feature] = feature_requests.get(request.feature, 0) + 1
+
+            hour = int(timestamp % 86400 / 3600)
+            hourly_distribution[hour] = hourly_distribution.get(hour, 0) + 1
+
+        top_commands = sorted(
+            [
+                (self.parser.FLEXLM_COMMANDS.get(cmd, f"UNKNOWN_{cmd:02X}"), count)
+                for cmd, count in command_counts.items()
+            ],
+            key=lambda x: x[1],
+            reverse=True,
+        )[:10]
+
+        top_features = sorted(feature_requests.items(), key=lambda x: x[1], reverse=True)[:10]
+
+        return {
+            "total_packets": len(self.captured_requests),
+            "unique_clients": len(self.client_endpoints),
+            "unique_servers": len(self.server_endpoints),
+            "command_distribution": dict(command_counts),
+            "top_commands": top_commands,
+            "top_features": top_features,
+            "hourly_distribution": hourly_distribution,
+            "capture_duration": max(ts for ts, _, _ in self.captured_requests) - min(ts for ts, _, _ in self.captured_requests) if len(self.captured_requests) > 1 else 0,
+        }
+
+    def extract_license_info(self) -> list[dict[str, Any]]:
+        """Extract license information from captured traffic.
+
+        Returns:
+            List of extracted license information dictionaries
+
+        """
+        licenses = []
+
+        for timestamp, request, _ in self.captured_requests:
+            if request.command == 0x01:
+                license_info = {
+                    "timestamp": timestamp,
+                    "feature": request.feature,
+                    "version": request.version_requested,
+                    "client": request.hostname,
+                    "username": request.username,
+                    "platform": request.platform,
+                    "client_id": request.client_id,
+                }
+                licenses.append(license_info)
+
+        return licenses
+
+    def detect_server_endpoints(self) -> list[dict[str, Any]]:
+        """Detect FlexLM server endpoints from captured traffic.
+
+        Returns:
+            List of detected server endpoint information
+
+        """
+        servers = []
+        for ip, port in self.server_endpoints:
+            server_info = {
+                "ip": ip,
+                "port": port,
+                "endpoint": f"{ip}:{port}",
+                "protocol": "FlexLM",
+            }
+            servers.append(server_info)
+
+        return servers
+
+    def export_capture(self, filepath: str) -> None:
+        """Export captured traffic to file.
+
+        Args:
+            filepath: Output file path
+
+        """
+        import json
+
+        capture_data = {
+            "capture_time": time.time(),
+            "total_packets": len(self.captured_requests),
+            "packets": [
+                {
+                    "timestamp": ts,
+                    "command": req.command,
+                    "command_name": self.parser.FLEXLM_COMMANDS.get(req.command, "UNKNOWN"),
+                    "feature": req.feature,
+                    "version": req.version_requested,
+                    "hostname": req.hostname,
+                    "username": req.username,
+                    "platform": req.platform,
+                    "sequence": req.sequence,
+                }
+                for ts, req, _ in self.captured_requests
+            ],
+            "analysis": self.analyze_traffic_patterns(),
+        }
+
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(capture_data, f, indent=2)
+
+        self.logger.info(f"Exported {len(self.captured_requests)} captured packets to {filepath}")
+
+
+class FlexLMLicenseGenerator:
+    """FlexLM license file generator."""
+
+    def __init__(self):
+        """Initialize license generator."""
+        self.logger = get_logger(__name__)
+
+    def generate_license_file(
+        self,
+        features: list[dict[str, Any]],
+        server_host: str,
+        server_port: int = 27000,
+        vendor_daemon: str = "vendor",
+        vendor_port: int = 27001,
+    ) -> str:
+        """Generate FlexLM license file content.
+
+        Args:
+            features: List of feature dictionaries
+            server_host: License server hostname
+            server_port: License server port
+            vendor_daemon: Vendor daemon name
+            vendor_port: Vendor daemon port
+
+        Returns:
+            License file content as string
+
+        """
+        lines = []
+
+        lines.append(f"SERVER {server_host} ANY {server_port}")
+        lines.append(f"VENDOR {vendor_daemon} PORT={vendor_port}")
+        lines.append("")
+
+        for feature in features:
+            name = feature.get("name", "FEATURE")
+            version = feature.get("version", "1.0")
+            vendor = feature.get("vendor", vendor_daemon)
+            expiry = feature.get("expiry", "31-dec-2025")
+            count = feature.get("count", 1)
+            signature = feature.get("signature", self._generate_signature(name, version))
+
+            license_line = (
+                f'FEATURE {name} {vendor} {version} {expiry} {count} '
+                f'HOSTID=ANY SIGN="{signature}"'
+            )
+            lines.append(license_line)
+
+        return "\n".join(lines)
+
+    def _generate_signature(self, feature: str, version: str) -> str:
+        """Generate license signature.
+
+        Args:
+            feature: Feature name
+            version: Version string
+
+        Returns:
+            Generated signature string
+
+        """
+        data = f"{feature}:{version}:{time.time()}"
+        return hashlib.sha256(data.encode()).hexdigest()[:40].upper()
+
+    def parse_license_file(self, content: str) -> dict[str, Any]:
+        """Parse FlexLM license file.
+
+        Args:
+            content: License file content
+
+        Returns:
+            Parsed license data dictionary
+
+        """
+        license_data: dict[str, Any] = {
+            "servers": [],
+            "vendors": [],
+            "features": [],
+        }
+
+        for line in content.split("\n"):
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+
+            parts = line.split()
+            if not parts:
+                continue
+
+            keyword = parts[0].upper()
+
+            if keyword == "SERVER":
+                if len(parts) >= 3:
+                    license_data["servers"].append({
+                        "hostname": parts[1],
+                        "hostid": parts[2],
+                        "port": int(parts[3]) if len(parts) > 3 else 27000,
+                    })
+
+            elif keyword == "VENDOR":
+                vendor_info = {"name": parts[1] if len(parts) > 1 else ""}
+                for part in parts[2:]:
+                    if "=" in part:
+                        key, value = part.split("=", 1)
+                        if key.upper() == "PORT":
+                            vendor_info["port"] = int(value)
+                license_data["vendors"].append(vendor_info)
+
+            elif keyword == "FEATURE" or keyword == "INCREMENT":
+                if len(parts) >= 5:
+                    feature_info = {
+                        "name": parts[1],
+                        "vendor": parts[2],
+                        "version": parts[3],
+                        "expiry": parts[4],
+                        "count": int(parts[5]) if len(parts) > 5 else 1,
+                    }
+
+                    for part in parts[6:]:
+                        if "=" in part:
+                            key, value = part.split("=", 1)
+                            feature_info[key.lower()] = value.strip('"')
+
+                    license_data["features"].append(feature_info)
+
+        return license_data

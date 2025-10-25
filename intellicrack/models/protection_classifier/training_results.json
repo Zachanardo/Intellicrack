@@ -1,0 +1,247 @@
+{
+  "train_accuracy": 1.0,
+  "test_accuracy": 0.7416666666666667,
+  "n_samples": 1200,
+  "n_features": 44,
+  "n_classes": 8,
+  "model_version": "1.0.0",
+  "cv_mean_accuracy": 0.7308333333333332,
+  "cv_std_accuracy": 0.015500896031448547,
+  "confusion_matrix": [
+    [
+      14,
+      7,
+      3,
+      0,
+      6,
+      0,
+      0,
+      0
+    ],
+    [
+      5,
+      21,
+      1,
+      0,
+      3,
+      0,
+      0,
+      0
+    ],
+    [
+      2,
+      2,
+      20,
+      0,
+      1,
+      1,
+      0,
+      4
+    ],
+    [
+      0,
+      0,
+      0,
+      30,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      3,
+      0,
+      5,
+      0,
+      15,
+      2,
+      1,
+      4
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      26,
+      0,
+      4
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      30,
+      0
+    ],
+    [
+      0,
+      0,
+      1,
+      0,
+      3,
+      4,
+      0,
+      22
+    ]
+  ],
+  "classification_report": {
+    "ASProtect": {
+      "precision": 0.5833333333333334,
+      "recall": 0.4666666666666667,
+      "f1-score": 0.5185185185185185,
+      "support": 30.0
+    },
+    "Armadillo": {
+      "precision": 0.7,
+      "recall": 0.7,
+      "f1-score": 0.7,
+      "support": 30.0
+    },
+    "Enigma": {
+      "precision": 0.6666666666666666,
+      "recall": 0.6666666666666666,
+      "f1-score": 0.6666666666666666,
+      "support": 30.0
+    },
+    "None": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 30.0
+    },
+    "Obsidium": {
+      "precision": 0.5357142857142857,
+      "recall": 0.5,
+      "f1-score": 0.5172413793103449,
+      "support": 30.0
+    },
+    "Themida": {
+      "precision": 0.7878787878787878,
+      "recall": 0.8666666666666667,
+      "f1-score": 0.8253968253968254,
+      "support": 30.0
+    },
+    "UPX": {
+      "precision": 0.967741935483871,
+      "recall": 1.0,
+      "f1-score": 0.9836065573770492,
+      "support": 30.0
+    },
+    "VMProtect": {
+      "precision": 0.6470588235294118,
+      "recall": 0.7333333333333333,
+      "f1-score": 0.6875,
+      "support": 30.0
+    },
+    "accuracy": 0.7416666666666667,
+    "macro avg": {
+      "precision": 0.7360492290757945,
+      "recall": 0.7416666666666667,
+      "f1-score": 0.7373662434086756,
+      "support": 240.0
+    },
+    "weighted avg": {
+      "precision": 0.7360492290757945,
+      "recall": 0.7416666666666667,
+      "f1-score": 0.7373662434086756,
+      "support": 240.0
+    }
+  },
+  "class_names": [
+    "ASProtect",
+    "Armadillo",
+    "Enigma",
+    "None",
+    "Obsidium",
+    "Themida",
+    "UPX",
+    "VMProtect"
+  ],
+  "top_features": [
+    [
+      "text_entropy",
+      0.10536413439749134
+    ],
+    [
+      "suspicious_import_count",
+      0.09029442861114272
+    ],
+    [
+      "unusual_section_names",
+      0.09014179311909051
+    ],
+    [
+      "high_entropy_section_count",
+      0.08179169849559291
+    ],
+    [
+      "overall_entropy",
+      0.06706250140378305
+    ],
+    [
+      "signature_enigma",
+      0.046672273291202215
+    ],
+    [
+      "signature_asprotect",
+      0.036138447634192765
+    ],
+    [
+      "signature_obsidium",
+      0.03581950081898822
+    ],
+    [
+      "signature_themida",
+      0.03535851989001175
+    ],
+    [
+      "signature_armadillo",
+      0.03409375684297424
+    ],
+    [
+      "signature_upx",
+      0.03316581367344627
+    ],
+    [
+      "signature_vmprotect",
+      0.02437942791870911
+    ],
+    [
+      "opcode_freq_07",
+      0.012256149066917153
+    ],
+    [
+      "opcode_freq_0a",
+      0.011901006519872309
+    ],
+    [
+      "max_section_entropy",
+      0.011627060080389183
+    ],
+    [
+      "opcode_freq_0b",
+      0.011277297913845503
+    ],
+    [
+      "rdata_entropy",
+      0.01126371067384364
+    ],
+    [
+      "opcode_freq_04",
+      0.011255446975789373
+    ],
+    [
+      "opcode_freq_09",
+      0.01117911989535564
+    ],
+    [
+      "opcode_freq_05",
+      0.011162405564883356
+    ]
+  ]
+}

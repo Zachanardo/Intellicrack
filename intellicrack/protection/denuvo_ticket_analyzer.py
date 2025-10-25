@@ -23,16 +23,12 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-import binascii
 import hashlib
 import hmac
-import json
 import os
 import struct
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from pathlib import Path
 from typing import Any
 
 from ..utils.logger import get_logger
@@ -41,9 +37,9 @@ logger = get_logger(__name__)
 
 try:
     from Crypto.Cipher import AES
+    from Crypto.Hash import SHA256
     from Crypto.PublicKey import RSA
     from Crypto.Signature import pkcs1_15
-    from Crypto.Hash import SHA256
     from Crypto.Util.Padding import pad, unpad
     CRYPTO_AVAILABLE = True
 except ImportError:
@@ -54,6 +50,7 @@ except ImportError:
 @dataclass
 class TicketHeader:
     """Denuvo ticket header structure."""
+
     magic: bytes
     version: int
     flags: int
@@ -69,6 +66,7 @@ class TicketHeader:
 @dataclass
 class MachineIdentifier:
     """Machine/Hardware identifier structure."""
+
     hwid_hash: bytes
     cpu_hash: bytes
     disk_hash: bytes
@@ -81,6 +79,7 @@ class MachineIdentifier:
 @dataclass
 class ActivationToken:
     """Activation token structure."""
+
     token_id: bytes
     game_id: bytes
     ticket_hash: bytes
@@ -96,6 +95,7 @@ class ActivationToken:
 @dataclass
 class TicketPayload:
     """Decrypted ticket payload."""
+
     game_id: bytes
     product_version: bytes
     machine_id: MachineIdentifier
@@ -108,6 +108,7 @@ class TicketPayload:
 @dataclass
 class DenuvoTicket:
     """Complete Denuvo ticket structure."""
+
     header: TicketHeader
     encrypted_payload: bytes
     signature: bytes
@@ -119,6 +120,7 @@ class DenuvoTicket:
 @dataclass
 class ActivationResponse:
     """Server activation response structure."""
+
     status_code: int
     response_id: bytes
     ticket: bytes

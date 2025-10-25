@@ -346,9 +346,12 @@ def create_app():
         before attempting to create the application instance.
 
     """
-    if IntellicrackApp is None:
+    global _IntellicrackApp
+    if _IntellicrackApp is None:
+        _lazy_import_app()
+    if _IntellicrackApp is None:
         raise ImportError("IntellicrackApp not available. Check dependencies.")
-    return IntellicrackApp()
+    return _IntellicrackApp()
 
 
 def run_app():
@@ -378,6 +381,7 @@ def run_app():
         configuration loading, and UI setup.
 
     """
+    main = _lazy_import_main()  # Ensure main is imported lazily
     if main is None:
         raise ImportError("Main function not available. Check dependencies.")
     return main()

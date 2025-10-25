@@ -12,18 +12,10 @@ intellicrack.core.processing.base\_snapshot\_handler module
    :show-inheritance:
    :undoc-members:
 
-intellicrack.core.processing.distributed\_analysis\_manager module
+intellicrack.core.processing.parallel\_processing\_manager module
 ------------------------------------------------------------------
 
-.. automodule:: intellicrack.core.processing.distributed_analysis_manager
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-intellicrack.core.processing.distributed\_manager module
---------------------------------------------------------
-
-.. automodule:: intellicrack.core.processing.distributed_manager
+.. automodule:: intellicrack.core.processing.parallel_processing_manager
    :members:
    :show-inheritance:
    :undoc-members:

@@ -57,7 +57,7 @@ if platform.system() == "Windows":
 
     intellicrack_root = Path(intellicrack.__file__).parent.parent
     dll_paths = [
-        str(intellicrack_root / ".pixi" / "envs" / "default" / "Lib" / "site-packages" / "die"),
+        str(intellicrack_root / ".pixi" / "envs" / "default" / "Lib" / "site-packages" / "icp_engine"),
         str(intellicrack_root / ".pixi" / "envs" / "default" / "DLLs"),
         os.path.dirname(sys.executable),
     ]
@@ -66,20 +66,20 @@ if platform.system() == "Windows":
             os.environ["PATH"] = path + os.pathsep + os.environ.get("PATH", "")
 
 try:
-    # Skip die import during testing to avoid Windows fatal exceptions
+    # Skip icp_engine import during testing to avoid Windows fatal exceptions
     if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
-        raise ImportError("Skipping die import during testing")
+        raise ImportError("Skipping icp_engine import during testing")
 
-    import die as _die_module
+    import icp_engine as _icp_module
 
-    DIE_AVAILABLE = True
-    DIE_VERSION = _die_module.__version__
+    ICP_AVAILABLE = True
+    ICP_VERSION = _icp_module.__version__
 except (ImportError, OSError):
     # ICP Engine has known issues with certain Windows configurations
     # This is not critical for most protection detection functionality
-    DIE_AVAILABLE = False
-    DIE_VERSION = None
-    _die_module = None
+    ICP_AVAILABLE = False
+    ICP_VERSION = None
+    _icp_module = None
 
 logger = get_logger(__name__)
 
@@ -369,13 +369,13 @@ class NativeICPLibrary:
                     logger.debug(f"Failed to load {lib_file}: {e}")
 
         # Fallback to Python module if available
-        if _die_module:
-            self.lib = _die_module
+        if _icp_module:
+            self.lib = _icp_module
             logger.info("Using Python ICP module as native interface")
 
     def _setup_functions(self):
         """Configure function prototypes for native library."""
-        if not self.lib or isinstance(self.lib, type(_die_module)):
+        if not self.lib or isinstance(self.lib, type(_icp_module)):
             return
 
         # Define function signatures
@@ -418,7 +418,7 @@ class NativeICPLibrary:
 
     def scan_file_native(self, file_path: str, flags: int = 0) -> str:
         """Scan file using native library call."""
-        if isinstance(self.lib, type(_die_module)):
+        if isinstance(self.lib, type(_icp_module)):
             # Use Python module
             return self.lib.scan_file(file_path, flags)
         elif "scan" in self.functions:
@@ -430,7 +430,7 @@ class NativeICPLibrary:
 
     def get_entropy_native(self, file_path: str, max_bytes: int = 0) -> float:
         """Get file entropy using native library call."""
-        if isinstance(self.lib, type(_die_module)):
+        if isinstance(self.lib, type(_icp_module)):
             # Calculate entropy using Python module or manual calculation
             return self._calculate_entropy_python(file_path, max_bytes)
         elif "entropy" in self.functions:
@@ -832,9 +832,9 @@ class ICPBackend:
         self.parallel_scanner = ParallelScanner(max_workers=4)
 
         # Use pre-imported module as fallback
-        if not self.native_lib.lib and _die_module:
-            self.icp_module = _die_module
-            logger.info(f"ICP Backend initialized with Python module v{DIE_VERSION}")
+        if not self.native_lib.lib and _icp_module:
+            self.icp_module = _icp_module
+            logger.info(f"ICP Backend initialized with Python module v{ICP_VERSION}")
         elif self.native_lib.lib:
             self.icp_module = self.native_lib
             logger.info("ICP Backend initialized with native library")

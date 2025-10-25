@@ -1,14 +1,6 @@
 intellicrack.ai package
 =======================
 
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 4
-
-   intellicrack.ai.templates
-
 Submodules
 ----------
 
@@ -424,14 +416,6 @@ intellicrack.ai.script\_generation\_prompts module
 --------------------------------------------------
 
 .. automodule:: intellicrack.ai.script_generation_prompts
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-intellicrack.ai.script\_templates module
-----------------------------------------
-
-.. automodule:: intellicrack.ai.script_templates
    :members:
    :show-inheritance:
    :undoc-members:

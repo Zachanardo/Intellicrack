@@ -1,5 +1,4 @@
 import hashlib
-import struct
 import zlib
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -86,7 +85,7 @@ class ConstraintExtractor:
         base_address = text_section.virtual_address
 
         validation_candidates = []
-        for i, instr in enumerate(self.disassembler.disasm(code, base_address)):
+        for _i, instr in enumerate(self.disassembler.disasm(code, base_address)):
             if self._is_validation_instruction(instr):
                 validation_candidates.append(instr.address)
 

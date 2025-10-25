@@ -122,6 +122,79 @@ except ImportError as e:
     logger.error("Import error in __init__: %s", e)
     SimilaritySearcher = None
 
+try:
+    from .control_flow_deobfuscation import (
+        BasicBlock,
+        ControlFlowDeobfuscator,
+        DeobfuscationResult,
+        DispatcherInfo,
+    )
+except ImportError as e:
+    logger.error("Import error in __init__: %s", e)
+    ControlFlowDeobfuscator = None
+    DeobfuscationResult = None
+    DispatcherInfo = None
+    BasicBlock = None
+
+try:
+    from .stalker_manager import (
+        APICallEvent,
+        CoverageEntry,
+        StalkerSession,
+        StalkerStats,
+        TraceEvent,
+    )
+except ImportError as e:
+    logger.error("Import error in __init__: %s", e)
+    StalkerSession = None
+    StalkerStats = None
+    TraceEvent = None
+    APICallEvent = None
+    CoverageEntry = None
+
+try:
+    from .starforce_analyzer import StarForceAnalysis, StarForceAnalyzer
+except ImportError as e:
+    logger.error("Import error in __init__: %s", e)
+    StarForceAnalyzer = None
+    StarForceAnalysis = None
+
+try:
+    from .securom_analyzer import (
+        ActivationMechanism,
+        ProductActivationKey,
+        SecuROMAnalysis,
+        SecuROMAnalyzer,
+        TriggerPoint,
+    )
+except ImportError as e:
+    logger.error("Import error in __init__: %s", e)
+    SecuROMAnalyzer = None
+    SecuROMAnalysis = None
+    ActivationMechanism = None
+    TriggerPoint = None
+    ProductActivationKey = None
+
+try:
+    from .polymorphic_analyzer import (
+        BehaviorPattern,
+        CodeBlock,
+        InstructionNode,
+        MutationType,
+        PolymorphicAnalysis,
+        PolymorphicAnalyzer,
+        PolymorphicEngine,
+    )
+except ImportError as e:
+    logger.error("Import error in __init__: %s", e)
+    PolymorphicAnalyzer = None
+    PolymorphicAnalysis = None
+    MutationType = None
+    PolymorphicEngine = None
+    BehaviorPattern = None
+    InstructionNode = None
+    CodeBlock = None
+
 __all__ = [
     # Core analysis functions
     "calculate_entropy",
@@ -141,6 +214,32 @@ __all__ = [
     "CFGExplorer",
     "IncrementalAnalysisManager",
     "SimilaritySearcher",
+    "ControlFlowDeobfuscator",
+    "DeobfuscationResult",
+    "DispatcherInfo",
+    "BasicBlock",
+    # Frida Stalker integration
+    "StalkerSession",
+    "StalkerStats",
+    "TraceEvent",
+    "APICallEvent",
+    "CoverageEntry",
+    # Protection-specific analyzers
+    "StarForceAnalyzer",
+    "StarForceAnalysis",
+    "SecuROMAnalyzer",
+    "SecuROMAnalysis",
+    "ActivationMechanism",
+    "TriggerPoint",
+    "ProductActivationKey",
+    # Polymorphic analysis
+    "PolymorphicAnalyzer",
+    "PolymorphicAnalysis",
+    "MutationType",
+    "PolymorphicEngine",
+    "BehaviorPattern",
+    "InstructionNode",
+    "CodeBlock",
 ]
 
 # Filter out None values from __all__

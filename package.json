@@ -1,0 +1,13 @@
+{
+  "name": "intellicrack",
+  "version": "0.1.0",
+  "description": "Intellicrack: Advanced Binary Analysis and Security Research Framework with AI-driven capabilities",
+  "devDependencies": {
+    "eslint": "^9.38.0",
+    "eslint-plugin-toml": "^0.12.0"
+  },
+  "scripts": {
+    "lint": "eslint . --ext .js,.toml",
+    "lint-toml": "eslint --ext .toml pixi.toml pyproject.toml"
+  }
+}

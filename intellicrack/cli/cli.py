@@ -2113,6 +2113,225 @@ def task(
         sys.exit(1)
 
 
+
+@cli.group()
+def frida():
+    """Frida script management and execution commands."""
+
+
+@frida.command("list")
+@click.option(
+    "--category",
+    type=str,
+    help="Filter by category (e.g., protection_bypass, memory_analysis)",
+)
+@click.option(
+    "--verbose", "-v",
+    is_flag=True,
+    help="Show detailed information about each script"
+)
+def frida_list(category: str | None, verbose: bool):
+    """List available Frida scripts from the library."""
+    try:
+        from pathlib import Path
+
+        from intellicrack.core.analysis.frida_script_manager import FridaScriptManager
+
+        scripts_dir = Path(__file__).parent.parent / "scripts" / "frida"
+        manager = FridaScriptManager(scripts_dir)
+
+        if not manager.scripts:
+            click.echo("No Frida scripts found in the library.")
+            return
+
+        # Filter by category if specified
+        scripts_to_show = manager.scripts
+        if category:
+            scripts_to_show = {
+                name: config for name, config in manager.scripts.items()
+                if config.category.value == category
+            }
+
+            if not scripts_to_show:
+                click.echo(f"No scripts found in category: {category}")
+                return
+
+        click.echo(f"\n📜 Available Frida Scripts ({len(scripts_to_show)}):\n")
+
+        for script_name, config in sorted(scripts_to_show.items()):
+            click.echo(f"  • {script_name}")
+            click.echo(f"    Category: {config.category.value}")
+
+            if verbose:
+                click.echo(f"    Description: {config.description}")
+
+                if config.parameters:
+                    click.echo(f"    Parameters: {', '.join(config.parameters.keys())}")
+
+                if config.example_usage:
+                    click.echo(f"    Example: {config.example_usage}")
+
+                click.echo()
+
+        click.echo("\n💡 Use 'intellicrack frida info <script_name>' for details")
+        click.echo("💡 Use 'intellicrack frida run <script_name> <binary>' to execute\n")
+
+    except Exception as e:
+        logger.error("Failed to list Frida scripts: %s", e, exc_info=True)
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+
+@frida.command("info")
+@click.argument("script_name")
+def frida_info(script_name: str):
+    """Show detailed information about a specific Frida script."""
+    try:
+        from pathlib import Path
+
+        from intellicrack.core.analysis.frida_script_manager import FridaScriptManager
+
+        scripts_dir = Path(__file__).parent.parent / "scripts" / "frida"
+        manager = FridaScriptManager(scripts_dir)
+
+        if script_name not in manager.scripts:
+            click.echo(f"Script '{script_name}' not found.")
+            click.echo(f"\nAvailable scripts: {', '.join(sorted(manager.scripts.keys()))}")
+            sys.exit(1)
+
+        config = manager.scripts[script_name]
+
+        click.echo(f"\n📜 Script: {script_name}\n")
+        click.echo(f"Category: {config.category.value}")
+        click.echo(f"Description: {config.description}")
+
+        if config.parameters:
+            click.echo("\nParameters:")
+            for param_name, param_desc in config.parameters.items():
+                click.echo(f"  • {param_name}: {param_desc}")
+
+        if config.example_usage:
+            click.echo(f"\nExample Usage:\n  {config.example_usage}")
+
+        if config.script_path.exists():
+            size_kb = config.script_path.stat().st_size / 1024
+            click.echo(f"\nScript Size: {size_kb:.2f} KB")
+            click.echo(f"Script Path: {config.script_path}")
+
+        click.echo()
+
+    except Exception as e:
+        logger.error("Failed to get script info: %s", e, exc_info=True)
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+
+@frida.command("run")
+@click.argument("script_name")
+@click.argument("binary_path")
+@click.option(
+    "--mode",
+    type=click.Choice(["spawn", "attach"]),
+    default="spawn",
+    help="Execution mode: spawn (launch process) or attach (attach to running process)",
+)
+@click.option(
+    "--params",
+    type=str,
+    help="JSON string of parameters to pass to the script (e.g., '{\"key\": \"value\"}')",
+)
+@click.option(
+    "--output",
+    type=click.Path(),
+    help="Save results to file",
+)
+def frida_run(script_name: str, binary_path: str, mode: str, params: str | None, output: str | None):
+    """Execute a Frida script from the library against a target binary."""
+    try:
+        import json
+        from pathlib import Path
+
+        from intellicrack.core.analysis.frida_script_manager import FridaScriptManager
+
+        scripts_dir = Path(__file__).parent.parent / "scripts" / "frida"
+        manager = FridaScriptManager(scripts_dir)
+
+        if script_name not in manager.scripts:
+            click.echo(f"❌ Script '{script_name}' not found.")
+            click.echo(f"\nAvailable scripts: {', '.join(sorted(manager.scripts.keys()))}")
+            sys.exit(1)
+
+        if not os.path.exists(binary_path):
+            click.echo(f"❌ Binary not found: {binary_path}")
+            sys.exit(1)
+
+        # Parse parameters if provided
+        parameters = {}
+        if params:
+            try:
+                parameters = json.loads(params)
+            except json.JSONDecodeError as e:
+                click.echo(f"❌ Invalid JSON parameters: {e}")
+                sys.exit(1)
+
+        click.echo(f"\n📜 Executing: {script_name}")
+        click.echo(f"🎯 Target: {Path(binary_path).name}")
+        click.echo(f"⚙️  Mode: {mode}")
+        if parameters:
+            click.echo(f"📦 Parameters: {parameters}")
+        click.echo()
+
+        # Execute the script
+        result = manager.execute_script(
+            script_name=script_name,
+            target=binary_path,
+            mode=mode,
+            parameters=parameters
+        )
+
+        # Display results
+        if result.success:
+            click.echo("✅ Execution successful!")
+            click.echo(f"⏱️  Execution time: {result.execution_time_ms}ms")
+
+            if result.output:
+                click.echo("\n📊 Script Output:")
+                click.echo(result.output)
+
+            if result.hooks_triggered:
+                click.echo(f"\n🎣 Hooks triggered: {result.hooks_triggered}")
+
+            if result.data_collected:
+                click.echo(f"\n📦 Data collected: {len(result.data_collected)} items")
+
+                # Show sample of collected data
+                for i, data_item in enumerate(list(result.data_collected)[:5]):
+                    click.echo(f"  [{i+1}] {data_item}")
+
+                if len(result.data_collected) > 5:
+                    click.echo(f"  ... and {len(result.data_collected) - 5} more items")
+
+            # Save results if output path specified
+            if output:
+                manager.export_results([result], output_path=output)
+                click.echo(f"\n💾 Results saved to: {output}")
+
+            click.echo()
+        else:
+            click.echo(f"❌ Execution failed: {result.error}")
+
+            if result.output:
+                click.echo("\n📋 Partial output:")
+                click.echo(result.output)
+
+            sys.exit(1)
+
+    except Exception as e:
+        logger.error("Failed to execute Frida script: %s", e, exc_info=True)
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+
 def main():
     """Run main entry point for CLI."""
     # Check for --gui flag in command line arguments

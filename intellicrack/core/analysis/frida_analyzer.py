@@ -21,17 +21,20 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 from threading import Thread
+from typing import Optional
 
 import frida
 
-# Import QInputDialog for a controlled, non-editable selection dialog
 from intellicrack.handlers.pyqt6_handler import QInputDialog
 
-# --- Frida Session Management ---
-active_frida_sessions = {}
+try:
+    from intellicrack.core.analysis.stalker_manager import StalkerSession
+except ImportError:
+    StalkerSession = None
 
-# --- Whitelist of Approved Analysis Scripts ---
-# To maintain stability and security, only scripts from this list are selectable.
+active_frida_sessions = {}
+active_stalker_sessions = {}
+
 ANALYSIS_SCRIPTS_WHITELIST = [
     "registry_monitor.js",
     "telemetry_blocker.js",
@@ -46,6 +49,7 @@ ANALYSIS_SCRIPTS_WHITELIST = [
     "ntp_blocker.js",
     "time_bomb_defuser.js",
     "virtualization_bypass.js",
+    "stalker_tracer.js",
 ]
 
 
@@ -157,3 +161,234 @@ def stop_frida_analysis(main_app):
             main_app.update_output.emit(f"[Frida Runner] Detach signal sent for {os.path.basename(binary_path)}.")
     else:
         main_app.update_output.emit("[Frida Runner] No active analysis found for this binary.")
+
+
+def start_stalker_session(main_app, output_dir: Optional[str] = None) -> bool:
+    """Start a Stalker tracing session for comprehensive dynamic analysis.
+
+    Args:
+        main_app: Main application instance
+        output_dir: Optional directory for trace output files
+
+    Returns:
+        True if session started successfully
+
+    """
+    if StalkerSession is None:
+        main_app.update_output.emit("[Stalker] Error: Stalker module not available.")
+        return False
+
+    if not main_app.current_binary:
+        main_app.update_output.emit("[Stalker] Error: No binary loaded.")
+        return False
+
+    binary_path = main_app.current_binary
+
+    if binary_path in active_stalker_sessions:
+        main_app.update_output.emit("[Stalker] Error: A Stalker session is already active for this binary.")
+        return False
+
+    try:
+        session = StalkerSession(
+            binary_path=binary_path,
+            output_dir=output_dir,
+            message_callback=lambda msg: main_app.update_output.emit(msg),
+        )
+
+        if session.start():
+            active_stalker_sessions[binary_path] = session
+            main_app.update_output.emit("[Stalker] Session started successfully.")
+            return True
+        else:
+            main_app.update_output.emit("[Stalker] Failed to start session.")
+            return False
+
+    except Exception as e:
+        main_app.update_output.emit(f"[Stalker] Error starting session: {e}")
+        return False
+
+
+def stop_stalker_session(main_app) -> bool:
+    """Stop active Stalker session and export results.
+
+    Args:
+        main_app: Main application instance
+
+    Returns:
+        True if session stopped successfully
+
+    """
+    if not main_app.current_binary:
+        main_app.update_output.emit("[Stalker] Error: No binary loaded.")
+        return False
+
+    binary_path = main_app.current_binary
+
+    if binary_path not in active_stalker_sessions:
+        main_app.update_output.emit("[Stalker] No active session for this binary.")
+        return False
+
+    try:
+        session = active_stalker_sessions[binary_path]
+        session.stop_stalking()
+
+        stats = session.get_stats()
+        main_app.update_output.emit(
+            f"[Stalker] Trace Statistics:\n"
+            f"  - Total Instructions: {stats.total_instructions:,}\n"
+            f"  - Unique Blocks: {stats.unique_blocks:,}\n"
+            f"  - Coverage Entries: {stats.coverage_entries:,}\n"
+            f"  - Licensing Routines: {stats.licensing_routines}\n"
+            f"  - API Calls: {stats.api_calls}\n"
+            f"  - Duration: {stats.trace_duration:.2f}s"
+        )
+
+        results_file = session.export_results()
+        main_app.update_output.emit(f"[Stalker] Results exported to: {results_file}")
+
+        session.cleanup()
+        del active_stalker_sessions[binary_path]
+
+        return True
+
+    except Exception as e:
+        main_app.update_output.emit(f"[Stalker] Error stopping session: {e}")
+        return False
+
+
+def trace_function_stalker(main_app, module_name: str, function_name: str) -> bool:
+    """Trace execution of a specific function using Stalker.
+
+    Args:
+        main_app: Main application instance
+        module_name: Name of module containing function
+        function_name: Name of function to trace
+
+    Returns:
+        True if trace started successfully
+
+    """
+    if not main_app.current_binary:
+        main_app.update_output.emit("[Stalker] Error: No binary loaded.")
+        return False
+
+    binary_path = main_app.current_binary
+
+    if binary_path not in active_stalker_sessions:
+        main_app.update_output.emit("[Stalker] Error: No active session. Start a session first.")
+        return False
+
+    try:
+        session = active_stalker_sessions[binary_path]
+        success = session.trace_function(module_name, function_name)
+
+        if success:
+            main_app.update_output.emit(f"[Stalker] Tracing function: {module_name}!{function_name}")
+        else:
+            main_app.update_output.emit(f"[Stalker] Failed to trace function: {module_name}!{function_name}")
+
+        return success
+
+    except Exception as e:
+        main_app.update_output.emit(f"[Stalker] Error tracing function: {e}")
+        return False
+
+
+def collect_module_coverage_stalker(main_app, module_name: str) -> bool:
+    """Collect code coverage for a specific module using Stalker.
+
+    Args:
+        main_app: Main application instance
+        module_name: Name of module to analyze
+
+    Returns:
+        True if coverage collection started
+
+    """
+    if not main_app.current_binary:
+        main_app.update_output.emit("[Stalker] Error: No binary loaded.")
+        return False
+
+    binary_path = main_app.current_binary
+
+    if binary_path not in active_stalker_sessions:
+        main_app.update_output.emit("[Stalker] Error: No active session. Start a session first.")
+        return False
+
+    try:
+        session = active_stalker_sessions[binary_path]
+        success = session.collect_module_coverage(module_name)
+
+        if success:
+            main_app.update_output.emit(f"[Stalker] Collecting coverage for module: {module_name}")
+        else:
+            main_app.update_output.emit(f"[Stalker] Failed to collect coverage for: {module_name}")
+
+        return success
+
+    except Exception as e:
+        main_app.update_output.emit(f"[Stalker] Error collecting coverage: {e}")
+        return False
+
+
+def get_stalker_stats(main_app) -> Optional[dict]:
+    """Get current Stalker statistics.
+
+    Args:
+        main_app: Main application instance
+
+    Returns:
+        Dictionary with statistics or None if no active session
+
+    """
+    if not main_app.current_binary:
+        return None
+
+    binary_path = main_app.current_binary
+
+    if binary_path not in active_stalker_sessions:
+        return None
+
+    try:
+        session = active_stalker_sessions[binary_path]
+        stats = session.get_stats()
+
+        return {
+            "total_instructions": stats.total_instructions,
+            "unique_blocks": stats.unique_blocks,
+            "coverage_entries": stats.coverage_entries,
+            "licensing_routines": stats.licensing_routines,
+            "api_calls": stats.api_calls,
+            "trace_duration": stats.trace_duration,
+        }
+
+    except Exception as e:
+        main_app.update_output.emit(f"[Stalker] Error getting stats: {e}")
+        return None
+
+
+def get_licensing_routines_stalker(main_app) -> Optional[list]:
+    """Get list of identified licensing routines from Stalker.
+
+    Args:
+        main_app: Main application instance
+
+    Returns:
+        List of licensing routine identifiers or None
+
+    """
+    if not main_app.current_binary:
+        return None
+
+    binary_path = main_app.current_binary
+
+    if binary_path not in active_stalker_sessions:
+        return None
+
+    try:
+        session = active_stalker_sessions[binary_path]
+        return session.get_licensing_routines()
+
+    except Exception as e:
+        main_app.update_output.emit(f"[Stalker] Error getting licensing routines: {e}")
+        return None

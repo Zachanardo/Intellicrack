@@ -62,12 +62,12 @@ from intellicrack.core.network.protocol_tool import (
     update_protocol_tool_description,
 )
 from intellicrack.core.patching.memory_patcher import setup_memory_patching
-from intellicrack.core.processing.distributed_manager import DistributedProcessingManager
 from intellicrack.core.processing.gpu_accelerator import GPUAccelerator
 from intellicrack.core.processing.memory_loader import (
     MemoryOptimizedBinaryLoader,
     run_memory_optimized_analysis,
 )
+from intellicrack.core.processing.parallel_processing_manager import ParallelProcessingManager
 from intellicrack.core.reporting.pdf_generator import PDFReportGenerator
 from intellicrack.core.reporting.report_generator import generate_report, view_report
 from intellicrack.core.task_manager import get_task_manager
@@ -151,7 +151,7 @@ class IntellicrackApp(QMainWindow):
             concolic_execution_engine: Concolic execution engine
             taint_analysis_engine: Taint analysis engine
             rop_chain_generator: Return-oriented programming chain generator
-            distributed_processing_manager: Distributed processing manager
+            parallel_processing_manager: Parallel processing manager
             gpu_accelerator: GPU-accelerated analysis engine
 
         Network Components:
@@ -564,10 +564,10 @@ class IntellicrackApp(QMainWindow):
             logger.warning("Failed to initialize ROPChainGenerator: %s", e)
 
         try:
-            self.distributed_processing_manager = DistributedProcessingManager() if DistributedProcessingManager else None
+            self.parallel_processing_manager = ParallelProcessingManager() if ParallelProcessingManager else None
         except (OSError, ValueError, RuntimeError) as e:
-            self.distributed_processing_manager = None
-            logger.warning("Failed to initialize DistributedProcessingManager: %s", e)
+            self.parallel_processing_manager = None
+            logger.warning("Failed to initialize ParallelProcessingManager: %s", e)
 
         try:
             self.gpu_accelerator = GPUAccelerator() if GPUAccelerator else None
