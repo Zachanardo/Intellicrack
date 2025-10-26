@@ -19,10 +19,7 @@ from intellicrack.core.certificate.patch_generators import (
     generate_always_succeed_x64,
     generate_always_succeed_x86,
     generate_nop_sled,
-    generate_trampoline_x64,
-    generate_trampoline_x86,
     get_patch_for_architecture,
-    validate_patch_alignment,
     validate_patch_size,
 )
 from intellicrack.core.certificate.patch_templates import select_template
@@ -62,19 +59,18 @@ class PatchResult:
 
 
 class CertificatePatcher:
-    """
-    Patches certificate validation functions in binaries.
+    """Patches certificate validation functions in binaries.
 
     This class applies binary patches to disable or bypass certificate
     validation in software licensing protection mechanisms.
     """
 
     def __init__(self, binary_path: str):
-        """
-        Initialize certificate patcher.
+        """Initialize certificate patcher.
 
         Args:
             binary_path: Path to binary to patch
+
         """
         self.binary_path = Path(binary_path)
         if not self.binary_path.exists():
@@ -116,14 +112,14 @@ class CertificatePatcher:
         self,
         detection_report: DetectionReport
     ) -> PatchResult:
-        """
-        Patch all certificate validation functions identified in detection report.
+        """Patch all certificate validation functions identified in detection report.
 
         Args:
             detection_report: Report containing detected validation functions
 
         Returns:
             PatchResult with success/failure information
+
         """
         logger.info(f"Patching {len(detection_report.validation_functions)} functions")
 
@@ -221,14 +217,14 @@ class CertificatePatcher:
         )
 
     def _select_patch_type(self, func: ValidationFunction) -> PatchType:
-        """
-        Select appropriate patch type for function.
+        """Select appropriate patch type for function.
 
         Args:
             func: Validation function to patch
 
         Returns:
             PatchType to use
+
         """
         if func.confidence >= 0.8:
             return PatchType.ALWAYS_SUCCEED
@@ -243,8 +239,7 @@ class CertificatePatcher:
         func: ValidationFunction,
         patch_type: PatchType
     ) -> Optional[bytes]:
-        """
-        Generate patch bytes for function.
+        """Generate patch bytes for function.
 
         Args:
             func: Function to patch
@@ -252,6 +247,7 @@ class CertificatePatcher:
 
         Returns:
             Patch bytes or None if generation failed
+
         """
         if not self.architecture:
             return None
@@ -278,8 +274,7 @@ class CertificatePatcher:
         return None
 
     def _read_original_bytes(self, address: int, size: int) -> bytes:
-        """
-        Read original bytes from address.
+        """Read original bytes from address.
 
         Args:
             address: Address to read from
@@ -287,6 +282,7 @@ class CertificatePatcher:
 
         Returns:
             Original bytes
+
         """
         if not self.binary:
             return b''
@@ -311,8 +307,7 @@ class CertificatePatcher:
         return b'\x90' * size
 
     def _check_patch_safety(self, address: int, size: int) -> bool:
-        """
-        Check if patch can be safely applied.
+        """Check if patch can be safely applied.
 
         Args:
             address: Address to patch
@@ -320,6 +315,7 @@ class CertificatePatcher:
 
         Returns:
             True if safe to patch
+
         """
         if not self.binary:
             return False
@@ -336,8 +332,7 @@ class CertificatePatcher:
         return True
 
     def _apply_patch(self, address: int, patch_bytes: bytes) -> bool:
-        """
-        Apply patch to binary.
+        """Apply patch to binary.
 
         Args:
             address: Address to patch
@@ -345,6 +340,7 @@ class CertificatePatcher:
 
         Returns:
             True if successful
+
         """
         if not self.binary:
             return False
@@ -392,14 +388,14 @@ class CertificatePatcher:
         self.binary.write(output_path)
 
     def rollback_patches(self, patch_result: PatchResult) -> bool:
-        """
-        Rollback all patches.
+        """Rollback all patches.
 
         Args:
             patch_result: Result containing patch information
 
         Returns:
             True if rollback successful
+
         """
         logger.info("Rolling back patches")
 

@@ -125,117 +125,117 @@
 ## PHASE 2: CERTIFICATE-SPECIFIC BINARY PATCHING (4-5 hours)
 
 ### patch_generators.py (300 lines)
-- [ ] Create `intellicrack/core/certificate/patch_generators.py`
-- [ ] Implement x86/x64 patch generators:
-  - [ ] `generate_always_succeed_x86() -> bytes` - Return `MOV EAX, 1; RET`
-  - [ ] `generate_always_succeed_x64() -> bytes` - Return `MOV RAX, 1; RET`
-  - [ ] `generate_conditional_invert_x86(original_bytes: bytes) -> bytes` - JNZ→JZ, JZ→JNZ
-  - [ ] `generate_conditional_invert_x64(original_bytes: bytes) -> bytes`
-  - [ ] `generate_nop_sled(size: int) -> bytes` - Fill with NOPs
-  - [ ] `generate_trampoline_x86(target_addr: int, hook_addr: int) -> bytes` - JMP hook
-  - [ ] `generate_trampoline_x64(target_addr: int, hook_addr: int) -> bytes`
-- [ ] Implement ARM patch generators:
-  - [ ] `generate_always_succeed_arm32() -> bytes` - `MOV R0, #1; BX LR`
-  - [ ] `generate_always_succeed_arm64() -> bytes` - `MOV X0, #1; RET`
-  - [ ] `generate_conditional_invert_arm(original_bytes: bytes) -> bytes`
-- [ ] Add calling convention handlers:
-  - [ ] `wrap_patch_stdcall(patch: bytes) -> bytes` - Preserve stack for stdcall
-  - [ ] `wrap_patch_cdecl(patch: bytes) -> bytes` - Handle cdecl cleanup
-  - [ ] `wrap_patch_fastcall(patch: bytes) -> bytes` - Preserve RCX/RDX
-  - [ ] `wrap_patch_x64_convention(patch: bytes) -> bytes` - Preserve RCX/RDX/R8/R9
-- [ ] Add register preservation:
-  - [ ] `generate_register_save() -> bytes` - Push all general-purpose registers
-  - [ ] `generate_register_restore() -> bytes` - Pop all registers
-- [ ] Add validation:
-  - [ ] `validate_patch_size(patch: bytes, max_size: int) -> bool`
-  - [ ] `validate_patch_alignment(patch: bytes, address: int) -> bool`
+- [x] Create `intellicrack/core/certificate/patch_generators.py`
+- [x] Implement x86/x64 patch generators:
+  - [x] `generate_always_succeed_x86() -> bytes` - Return `MOV EAX, 1; RET`
+  - [x] `generate_always_succeed_x64() -> bytes` - Return `MOV RAX, 1; RET`
+  - [x] `generate_conditional_invert_x86(original_bytes: bytes) -> bytes` - JNZ→JZ, JZ→JNZ
+  - [x] `generate_conditional_invert_x64(original_bytes: bytes) -> bytes`
+  - [x] `generate_nop_sled(size: int) -> bytes` - Fill with NOPs
+  - [x] `generate_trampoline_x86(target_addr: int, hook_addr: int) -> bytes` - JMP hook
+  - [x] `generate_trampoline_x64(target_addr: int, hook_addr: int) -> bytes`
+- [x] Implement ARM patch generators:
+  - [x] `generate_always_succeed_arm32() -> bytes` - `MOV R0, #1; BX LR`
+  - [x] `generate_always_succeed_arm64() -> bytes` - `MOV X0, #1; RET`
+  - [x] `generate_conditional_invert_arm(original_bytes: bytes) -> bytes`
+- [x] Add calling convention handlers:
+  - [x] `wrap_patch_stdcall(patch: bytes) -> bytes` - Preserve stack for stdcall
+  - [x] `wrap_patch_cdecl(patch: bytes) -> bytes` - Handle cdecl cleanup
+  - [x] `wrap_patch_fastcall(patch: bytes) -> bytes` - Preserve RCX/RDX
+  - [x] `wrap_patch_x64_convention(patch: bytes) -> bytes` - Preserve RCX/RDX/R8/R9
+- [x] Add register preservation:
+  - [x] `generate_register_save() -> bytes` - Push all general-purpose registers
+  - [x] `generate_register_restore() -> bytes` - Pop all registers
+- [x] Add validation:
+  - [x] `validate_patch_size(patch: bytes, max_size: int) -> bool`
+  - [x] `validate_patch_alignment(patch: bytes, address: int) -> bool`
 
 ### patch_templates.py (200 lines)
-- [ ] Create `intellicrack/core/certificate/patch_templates.py`
-- [ ] Define `PatchTemplate` class with:
-  - [ ] `name: str` - Template name
-  - [ ] `description: str` - What this template does
-  - [ ] `target_api: str` - Which API this patches
-  - [ ] `architecture: str` - x86/x64/ARM
-  - [ ] `patch_bytes: bytes` - The actual patch
-- [ ] Create WinHTTP templates:
-  - [ ] Template: `WINHTTP_IGNORE_ALL_CERT_ERRORS`
-    - [ ] Patch `WinHttpSetOption` to ignore all SECURITY_FLAGS
-    - [ ] x86 version
-    - [ ] x64 version
-  - [ ] Template: `WINHTTP_FORCE_SUCCESS`
-    - [ ] Patch `WinHttpSendRequest` to always succeed
-    - [ ] x86 version
-    - [ ] x64 version
-- [ ] Create OpenSSL templates:
-  - [ ] Template: `OPENSSL_DISABLE_VERIFY`
-    - [ ] Patch `SSL_CTX_set_verify` to set mode=SSL_VERIFY_NONE
-    - [ ] x86 version
-    - [ ] x64 version
-  - [ ] Template: `OPENSSL_ALWAYS_VALID`
-    - [ ] Patch `SSL_get_verify_result` to return X509_V_OK
-    - [ ] x86 version
-    - [ ] x64 version
-- [ ] Create Schannel templates:
-  - [ ] Template: `SCHANNEL_SKIP_VALIDATION`
-    - [ ] Patch `InitializeSecurityContext` to skip cert checks
-    - [ ] x64 version (Schannel is x64 only on modern Windows)
-  - [ ] Template: `SCHANNEL_FORCE_TRUST`
-    - [ ] Patch certificate policy to always trust
-    - [ ] x64 version
-- [ ] Create CryptoAPI templates:
-  - [ ] Template: `CRYPTOAPI_BYPASS_CHAIN_POLICY`
-    - [ ] Patch `CertVerifyCertificateChainPolicy` to return TRUE
-    - [ ] Set dwError = 0
-    - [ ] x86 version
-    - [ ] x64 version
-- [ ] Add template selection helper:
-  - [ ] `select_template(api_name: str, arch: str) -> Optional[PatchTemplate]`
-  - [ ] `get_all_templates() -> List[PatchTemplate]`
+- [x] Create `intellicrack/core/certificate/patch_templates.py`
+- [x] Define `PatchTemplate` class with:
+  - [x] `name: str` - Template name
+  - [x] `description: str` - What this template does
+  - [x] `target_api: str` - Which API this patches
+  - [x] `architecture: str` - x86/x64/ARM
+  - [x] `patch_bytes: bytes` - The actual patch
+- [x] Create WinHTTP templates:
+  - [x] Template: `WINHTTP_IGNORE_ALL_CERT_ERRORS`
+    - [x] Patch `WinHttpSetOption` to ignore all SECURITY_FLAGS
+    - [x] x86 version
+    - [x] x64 version
+  - [x] Template: `WINHTTP_FORCE_SUCCESS`
+    - [x] Patch `WinHttpSendRequest` to always succeed
+    - [x] x86 version
+    - [x] x64 version
+- [x] Create OpenSSL templates:
+  - [x] Template: `OPENSSL_DISABLE_VERIFY`
+    - [x] Patch `SSL_CTX_set_verify` to set mode=SSL_VERIFY_NONE
+    - [x] x86 version
+    - [x] x64 version
+  - [x] Template: `OPENSSL_ALWAYS_VALID`
+    - [x] Patch `SSL_get_verify_result` to return X509_V_OK
+    - [x] x86 version
+    - [x] x64 version
+- [x] Create Schannel templates:
+  - [x] Template: `SCHANNEL_SKIP_VALIDATION`
+    - [x] Patch `InitializeSecurityContext` to skip cert checks
+    - [x] x64 version (Schannel is x64 only on modern Windows)
+  - [x] Template: `SCHANNEL_FORCE_TRUST`
+    - [x] Patch certificate policy to always trust
+    - [x] x64 version
+- [x] Create CryptoAPI templates:
+  - [x] Template: `CRYPTOAPI_BYPASS_CHAIN_POLICY`
+    - [x] Patch `CertVerifyCertificateChainPolicy` to return TRUE
+    - [x] Set dwError = 0
+    - [x] x86 version
+    - [x] x64 version
+- [x] Add template selection helper:
+  - [x] `select_template(api_name: str, arch: str) -> Optional[PatchTemplate]`
+  - [x] `get_all_templates() -> List[PatchTemplate]`
 
 ### cert_patcher.py (350 lines)
-- [ ] Create `intellicrack/core/certificate/cert_patcher.py`
-- [ ] Implement `CertificatePatcher` class
-- [ ] Add main patching function:
-  - [ ] `patch_certificate_validation(detection_report: DetectionReport) -> PatchResult`
-- [ ] Implement patching workflow:
-  - [ ] Step 1: Validate detection report
-  - [ ] Step 2: For each ValidationFunction in report:
-    - [ ] Step 2a: Select appropriate patch template or generate custom patch
-    - [ ] Step 2b: Determine patch type (inline vs trampoline)
-    - [ ] Step 2c: Read original bytes from address
-    - [ ] Step 2d: Calculate required patch size
-    - [ ] Step 2e: Generate patch bytes
-    - [ ] Step 2f: Validate patch fits in available space
-    - [ ] Step 2g: Apply patch using memory_patcher or base_patcher
-    - [ ] Step 2h: Store original bytes for rollback
-    - [ ] Step 2i: Verify patch was written successfully
-  - [ ] Step 3: Test patched binary
-  - [ ] Step 4: Generate PatchResult report
-- [ ] Add patch type selection:
-  - [ ] `_select_patch_type(func: ValidationFunction) -> PatchType`
-  - [ ] Use INLINE if enough space (>=5 bytes for x86, >=14 for x64)
-  - [ ] Use TRAMPOLINE if insufficient space
-  - [ ] Use NOP_SLED for simple function replacement
-- [ ] Add safety checks:
-  - [ ] `_check_patch_safety(address: int, size: int) -> bool`
-  - [ ] Ensure not overwriting critical code
-  - [ ] Check for code cave availability for trampolines
-  - [ ] Verify no overlapping patches
-- [ ] Add rollback functionality:
-  - [ ] `rollback_patches(patch_result: PatchResult) -> bool`
-  - [ ] Restore all original bytes
-  - [ ] Flush instruction cache
-  - [ ] Verify restoration success
-- [ ] Define `PatchResult` dataclass:
-  - [ ] `success: bool` - Overall success
-  - [ ] `patched_functions: List[PatchedFunction]` - What was patched
-  - [ ] `failed_patches: List[FailedPatch]` - What failed
-  - [ ] `backup_data: bytes` - Original bytes for rollback
-  - [ ] `timestamp: datetime`
+- [x] Create `intellicrack/core/certificate/cert_patcher.py`
+- [x] Implement `CertificatePatcher` class
+- [x] Add main patching function:
+  - [x] `patch_certificate_validation(detection_report: DetectionReport) -> PatchResult`
+- [x] Implement patching workflow:
+  - [x] Step 1: Validate detection report
+  - [x] Step 2: For each ValidationFunction in report:
+    - [x] Step 2a: Select appropriate patch template or generate custom patch
+    - [x] Step 2b: Determine patch type (inline vs trampoline)
+    - [x] Step 2c: Read original bytes from address
+    - [x] Step 2d: Calculate required patch size
+    - [x] Step 2e: Generate patch bytes
+    - [x] Step 2f: Validate patch fits in available space
+    - [x] Step 2g: Apply patch using memory_patcher or base_patcher
+    - [x] Step 2h: Store original bytes for rollback
+    - [x] Step 2i: Verify patch was written successfully
+  - [x] Step 3: Test patched binary
+  - [x] Step 4: Generate PatchResult report
+- [x] Add patch type selection:
+  - [x] `_select_patch_type(func: ValidationFunction) -> PatchType`
+  - [x] Use INLINE if enough space (>=5 bytes for x86, >=14 for x64)
+  - [x] Use TRAMPOLINE if insufficient space
+  - [x] Use NOP_SLED for simple function replacement
+- [x] Add safety checks:
+  - [x] `_check_patch_safety(address: int, size: int) -> bool`
+  - [x] Ensure not overwriting critical code
+  - [x] Check for code cave availability for trampolines
+  - [x] Verify no overlapping patches
+- [x] Add rollback functionality:
+  - [x] `rollback_patches(patch_result: PatchResult) -> bool`
+  - [x] Restore all original bytes
+  - [x] Flush instruction cache
+  - [x] Verify restoration success
+- [x] Define `PatchResult` dataclass:
+  - [x] `success: bool` - Overall success
+  - [x] `patched_functions: List[PatchedFunction]` - What was patched
+  - [x] `failed_patches: List[FailedPatch]` - What failed
+  - [x] `backup_data: bytes` - Original bytes for rollback
+  - [x] `timestamp: datetime`
 
 ### Phase 2 Verification
-- [ ] Run `/verify` and review every single line of code written in Phase 2 according to the verify slash command parameters
+- [x] Run `/verify` and review every single line of code written in Phase 2 according to the verify slash command parameters
 
 ---
 

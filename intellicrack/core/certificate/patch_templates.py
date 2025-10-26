@@ -183,8 +183,7 @@ ALL_TEMPLATES = [
 
 
 def select_template(api_name: str, arch: Architecture) -> Optional[PatchTemplate]:
-    """
-    Select appropriate patch template for API and architecture.
+    """Select appropriate patch template for API and architecture.
 
     Args:
         api_name: Name of the API function to patch
@@ -192,6 +191,7 @@ def select_template(api_name: str, arch: Architecture) -> Optional[PatchTemplate
 
     Returns:
         PatchTemplate if found, None otherwise
+
     """
     for template in ALL_TEMPLATES:
         if template.target_api == api_name and template.architecture == arch:
@@ -200,36 +200,36 @@ def select_template(api_name: str, arch: Architecture) -> Optional[PatchTemplate
 
 
 def get_all_templates() -> list[PatchTemplate]:
-    """
-    Get all available patch templates.
+    """Get all available patch templates.
 
     Returns:
         List of all PatchTemplate objects
+
     """
     return ALL_TEMPLATES.copy()
 
 
 def get_templates_by_api(api_name: str) -> list[PatchTemplate]:
-    """
-    Get all templates for a specific API.
+    """Get all templates for a specific API.
 
     Args:
         api_name: Name of the API function
 
     Returns:
         List of templates targeting this API
+
     """
     return [t for t in ALL_TEMPLATES if t.target_api == api_name]
 
 
 def get_templates_by_arch(arch: Architecture) -> list[PatchTemplate]:
-    """
-    Get all templates for a specific architecture.
+    """Get all templates for a specific architecture.
 
     Args:
         arch: Target architecture
 
     Returns:
         List of templates for this architecture
+
     """
     return [t for t in ALL_TEMPLATES if t.architecture == arch]
