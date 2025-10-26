@@ -482,87 +482,87 @@
 ## PHASE 4: CERTIFICATE CHAIN GENERATOR (2-3 hours)
 
 ### cert_chain_generator.py (300 lines)
-- [ ] Create `intellicrack/core/certificate/cert_chain_generator.py`
-- [ ] Implement `CertificateChainGenerator` class
-- [ ] Add root CA generation:
-  - [ ] `generate_root_ca() -> x509.Certificate`
-  - [ ] Generate 4096-bit RSA key pair
-  - [ ] Set subject: CN="Intellicrack Root CA", O="Intellicrack", OU="Security Research"
-  - [ ] Set issuer same as subject (self-signed)
-  - [ ] Add extensions:
-    - [ ] basicConstraints: CA=TRUE, pathlen=2
-    - [ ] keyUsage: keyCertSign, cRLSign
-    - [ ] subjectKeyIdentifier: hash of public key
-  - [ ] Valid for 10 years
-  - [ ] Sign with SHA256
-- [ ] Add intermediate CA generation:
-  - [ ] `generate_intermediate_ca(root_ca: x509.Certificate, root_key: rsa.RSAPrivateKey) -> Tuple[x509.Certificate, rsa.RSAPrivateKey]`
-  - [ ] Generate 2048-bit RSA key pair
-  - [ ] Set subject: CN="Intellicrack Intermediate CA", O="Intellicrack"
-  - [ ] Set issuer from root_ca subject
-  - [ ] Add extensions:
-    - [ ] basicConstraints: CA=TRUE, pathlen=0
-    - [ ] keyUsage: keyCertSign, cRLSign, digitalSignature
-    - [ ] authorityKeyIdentifier: from root CA
-    - [ ] subjectKeyIdentifier: hash of public key
-  - [ ] Valid for 5 years
-  - [ ] Sign with root_key
-- [ ] Add leaf certificate generation:
-  - [ ] `generate_leaf_cert(domain: str, intermediate_ca: x509.Certificate, intermediate_key: rsa.RSAPrivateKey) -> Tuple[x509.Certificate, rsa.RSAPrivateKey]`
-  - [ ] Generate 2048-bit RSA key pair
-  - [ ] Set subject: CN=domain, O="Intellicrack"
-  - [ ] Set issuer from intermediate_ca subject
-  - [ ] Add extensions:
-    - [ ] basicConstraints: CA=FALSE
-    - [ ] keyUsage: digitalSignature, keyEncipherment
-    - [ ] extendedKeyUsage: serverAuth, clientAuth
-    - [ ] subjectAltName: DNS:domain, DNS:*.domain
-    - [ ] authorityKeyIdentifier: from intermediate CA
-    - [ ] subjectKeyIdentifier: hash of public key
-  - [ ] Valid for 1 year
-  - [ ] Sign with intermediate_key
-- [ ] Add chain assembly:
-  - [ ] `generate_full_chain(domain: str) -> CertificateChain`
-  - [ ] Returns: leaf cert, intermediate cert, root cert, all private keys
-- [ ] Add PEM export:
-  - [ ] `export_chain_pem(chain: CertificateChain) -> str`
-  - [ ] Format: leaf + intermediate + root in single PEM
-- [ ] Add DER export:
-  - [ ] `export_cert_der(cert: x509.Certificate) -> bytes`
-- [ ] Add key export:
-  - [ ] `export_private_key_pem(key: rsa.RSAPrivateKey) -> str`
-  - [ ] `export_public_key_pem(key: rsa.RSAPublicKey) -> str`
+- [x] Create `intellicrack/core/certificate/cert_chain_generator.py`
+- [x] Implement `CertificateChainGenerator` class
+- [x] Add root CA generation:
+  - [x] `generate_root_ca() -> x509.Certificate`
+  - [x] Generate 4096-bit RSA key pair
+  - [x] Set subject: CN="Intellicrack Root CA", O="Intellicrack", OU="Security Research"
+  - [x] Set issuer same as subject (self-signed)
+  - [x] Add extensions:
+    - [x] basicConstraints: CA=TRUE, pathlen=2
+    - [x] keyUsage: keyCertSign, cRLSign
+    - [x] subjectKeyIdentifier: hash of public key
+  - [x] Valid for 10 years
+  - [x] Sign with SHA256
+- [x] Add intermediate CA generation:
+  - [x] `generate_intermediate_ca(root_ca: x509.Certificate, root_key: rsa.RSAPrivateKey) -> Tuple[x509.Certificate, rsa.RSAPrivateKey]`
+  - [x] Generate 2048-bit RSA key pair
+  - [x] Set subject: CN="Intellicrack Intermediate CA", O="Intellicrack"
+  - [x] Set issuer from root_ca subject
+  - [x] Add extensions:
+    - [x] basicConstraints: CA=TRUE, pathlen=0
+    - [x] keyUsage: keyCertSign, cRLSign, digitalSignature
+    - [x] authorityKeyIdentifier: from root CA
+    - [x] subjectKeyIdentifier: hash of public key
+  - [x] Valid for 5 years
+  - [x] Sign with root_key
+- [x] Add leaf certificate generation:
+  - [x] `generate_leaf_cert(domain: str, intermediate_ca: x509.Certificate, intermediate_key: rsa.RSAPrivateKey) -> Tuple[x509.Certificate, rsa.RSAPrivateKey]`
+  - [x] Generate 2048-bit RSA key pair
+  - [x] Set subject: CN=domain, O="Intellicrack"
+  - [x] Set issuer from intermediate_ca subject
+  - [x] Add extensions:
+    - [x] basicConstraints: CA=FALSE
+    - [x] keyUsage: digitalSignature, keyEncipherment
+    - [x] extendedKeyUsage: serverAuth, clientAuth
+    - [x] subjectAltName: DNS:domain, DNS:*.domain
+    - [x] authorityKeyIdentifier: from intermediate CA
+    - [x] subjectKeyIdentifier: hash of public key
+  - [x] Valid for 1 year
+  - [x] Sign with intermediate_key
+- [x] Add chain assembly:
+  - [x] `generate_full_chain(domain: str) -> CertificateChain`
+  - [x] Returns: leaf cert, intermediate cert, root cert, all private keys
+- [x] Add PEM export:
+  - [x] `export_chain_pem(chain: CertificateChain) -> str`
+  - [x] Format: leaf + intermediate + root in single PEM
+- [x] Add DER export:
+  - [x] `export_cert_der(cert: x509.Certificate) -> bytes`
+- [x] Add key export:
+  - [x] `export_private_key_pem(key: rsa.RSAPrivateKey) -> str`
+  - [x] `export_public_key_pem(key: rsa.RSAPublicKey) -> str`
 
 ### cert_cache.py (150 lines)
-- [ ] Create `intellicrack/core/certificate/cert_cache.py`
-- [ ] Implement `CertificateCache` class
-- [ ] Add cache initialization:
-  - [ ] Create cache directory: `~/.intellicrack/cert_cache/`
-  - [ ] Create metadata file: `cache_metadata.json`
-- [ ] Add caching logic:
-  - [ ] `get_cached_cert(domain: str) -> Optional[CertificateChain]`
-  - [ ] Check if certificate exists for domain
-  - [ ] Check if certificate is still valid (not expired)
-  - [ ] Return cached certificate or None
-- [ ] Add cache storage:
-  - [ ] `store_cert(domain: str, chain: CertificateChain) -> bool`
-  - [ ] Save certificate to: `cert_cache/{domain_hash}/`
-  - [ ] Save: leaf.pem, intermediate.pem, root.pem, key.pem
-  - [ ] Update metadata with domain, creation time, expiration time
-- [ ] Add LRU eviction:
-  - [ ] `_evict_if_needed()`
-  - [ ] If cache has >1000 entries, remove least recently used
-  - [ ] Track access times in metadata
-- [ ] Add cache management:
-  - [ ] `clear_cache() -> bool` - Delete all cached certificates
-  - [ ] `get_cache_stats() -> Dict` - Return cache hit rate, size, etc.
-  - [ ] `remove_expired() -> int` - Remove expired certificates, return count
-- [ ] Add thread safety:
-  - [ ] Use threading.Lock for concurrent access
-  - [ ] Ensure atomic read/write operations
+- [x] Create `intellicrack/core/certificate/cert_cache.py`
+- [x] Implement `CertificateCache` class
+- [x] Add cache initialization:
+  - [x] Create cache directory: `~/.intellicrack/cert_cache/`
+  - [x] Create metadata file: `cache_metadata.json`
+- [x] Add caching logic:
+  - [x] `get_cached_cert(domain: str) -> Optional[CertificateChain]`
+  - [x] Check if certificate exists for domain
+  - [x] Check if certificate is still valid (not expired)
+  - [x] Return cached certificate or None
+- [x] Add cache storage:
+  - [x] `store_cert(domain: str, chain: CertificateChain) -> bool`
+  - [x] Save certificate to: `cert_cache/{domain_hash}/`
+  - [x] Save: leaf.pem, intermediate.pem, root.pem, key.pem
+  - [x] Update metadata with domain, creation time, expiration time
+- [x] Add LRU eviction:
+  - [x] `_evict_if_needed()`
+  - [x] If cache has >1000 entries, remove least recently used
+  - [x] Track access times in metadata
+- [x] Add cache management:
+  - [x] `clear_cache() -> bool` - Delete all cached certificates
+  - [x] `get_cache_stats() -> Dict` - Return cache hit rate, size, etc.
+  - [x] `remove_expired() -> int` - Remove expired certificates, return count
+- [x] Add thread safety:
+  - [x] Use threading.Lock for concurrent access
+  - [x] Ensure atomic read/write operations
 
 ### Phase 4 Verification
-- [ ] Run `/verify` and review every single line of code written in Phase 4 according to the verify slash command parameters
+- [x] Run `/verify` and review every single line of code written in Phase 4 according to the verify slash command parameters
 
 ---
 
