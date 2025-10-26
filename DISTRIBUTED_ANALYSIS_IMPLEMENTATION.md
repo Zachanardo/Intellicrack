@@ -14,18 +14,14 @@ Successfully implemented a comprehensive **Distributed Analysis Manager** for sc
 2. **Integration Tests** (400+ lines)
    - `tests/integration/test_distributed_manager.py` - Comprehensive test suite
 
-3. **Examples** (500+ lines)
-   - `examples/distributed_analysis_local.py` - Local multi-processing example
-   - `examples/distributed_analysis_cluster.py` - Network cluster example
-
-4. **Documentation** (1,000+ lines)
+3. **Documentation** (1,000+ lines)
    - `docs/DISTRIBUTED_ANALYSIS.md` - Complete reference documentation
    - `docs/DISTRIBUTED_QUICKSTART.md` - Quick start guide
 
-5. **Package Integration**
+4. **Package Integration**
    - Updated `intellicrack/core/processing/__init__.py` to export distributed manager classes
 
-### Total Lines of Code: ~3,400+
+### Total Lines of Code: ~2,900+
 
 ## Features Implemented
 
@@ -220,18 +216,22 @@ manager.shutdown()
 
 ### Cluster Mode (3-node setup)
 
-```bash
+```python
 # Node 1: Coordinator
-python examples/distributed_analysis_cluster.py coordinator --port 9876
+from intellicrack.core.processing import create_distributed_manager
 
-# Node 2: Worker
-python examples/distributed_analysis_cluster.py worker --host 192.168.1.100 --port 9876
+coordinator = create_distributed_manager(mode="cluster", enable_networking=True)
+coordinator.start_cluster(port=9876)
 
-# Node 3: Worker
-python examples/distributed_analysis_cluster.py worker --host 192.168.1.100 --port 9876
+# Node 2 & 3: Workers
+worker = create_distributed_manager(mode="worker", enable_networking=True)
+worker.connect_to_coordinator(host="192.168.1.100", port=9876)
 
 # Client: Submit job
-python examples/distributed_analysis_cluster.py analyze malware.exe --host 192.168.1.100
+manager = create_distributed_manager(mode="local", enable_networking=True)
+manager.connect_to_coordinator(host="192.168.1.100", port=9876)
+task_ids = manager.submit_binary_analysis("malware.exe", priority=TaskPriority.HIGH)
+manager.wait_for_completion(task_ids)
 ```
 
 ### Custom Task Submission

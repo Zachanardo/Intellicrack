@@ -31,6 +31,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
 
+from intellicrack.utils.project_paths import get_project_root
+
 from ..core.analysis.frida_script_manager import FridaScriptManager
 from ..core.logging import AuditEvent, AuditEventType, AuditSeverity, get_audit_logger
 from ..core.resources import get_resource_manager
@@ -355,39 +357,43 @@ class AutonomousAgent:
             if not self._validate_binary_path(binary_path):
                 return strings
 
-            license_related = [
-                "license",
-                "trial",
-                "demo",
-                "expire",
-                "activate",
-                "register",
-                "serial",
-                "key",
-                "validation",
-                "auth",
-                "check",
+            from ..core.analysis.binary_analyzer import BinaryAnalyzer
+
+            analyzer = BinaryAnalyzer(binary_path)
+            analysis_results = analyzer.analyze(analyses=['strings'])
+
+            strings_data = analysis_results.get('strings', {})
+            if isinstance(strings_data, dict):
+                all_strings = strings_data.get('strings', [])
+            elif isinstance(strings_data, list):
+                all_strings = strings_data
+            else:
+                all_strings = []
+
+            license_keywords = [
+                'license', 'trial', 'demo', 'expire', 'activate',
+                'register', 'serial', 'key', 'validation', 'auth', 'check'
             ]
 
-            # Try subprocess method first
-            strings.extend(self._extract_strings_with_command(binary_path, license_related))
+            for string_entry in all_strings:
+                if isinstance(string_entry, dict):
+                    string_value = string_entry.get('value', '')
+                elif isinstance(string_entry, str):
+                    string_value = string_entry
+                else:
+                    continue
 
-            # Fallback to direct file reading
-            if not strings:
-                strings.extend(self._extract_strings_from_file(binary_path, license_related))
+                string_lower = string_value.lower()
+                for keyword in license_keywords:
+                    if keyword in string_lower:
+                        strings.append(string_value)
+                        break
 
-            # Add default license-related strings
-            strings.extend(
-                [
-                    "License validation failed",
-                    "Trial period expired",
-                    "Please enter license key",
-                    "Registration required",
-                    "Demo version - limited functionality",
-                ]
-            )
+            logger.info(f"Extracted {len(strings)} license-related strings from {binary_path}")
 
-        except OSError as e:
+        except ImportError as e:
+            logger.error(f"Failed to import BinaryAnalyzer: {e}", exc_info=True)
+        except Exception as e:
             logger.error(f"String extraction failed: {e}", exc_info=True)
 
         return strings
@@ -521,76 +527,63 @@ class AutonomousAgent:
         """Analyze functions in the binary."""
         functions = []
         try:
-            # Check if binary exists and get basic info
             if not Path(binary_path).exists():
                 logger.warning(f"Binary path does not exist: {binary_path}")
                 return functions
 
-            # Get file size to determine analysis depth
-            file_size = Path(binary_path).stat().st_size
-            analysis_depth = "full" if file_size < 10 * 1024 * 1024 else "limited"  # 10MB threshold
+            from ..core.analysis.binary_analyzer import BinaryAnalyzer
 
-            # Extract filename for context-aware analysis
-            filename = Path(binary_path).name.lower()
+            analyzer = BinaryAnalyzer(binary_path)
+            analysis_results = analyzer.analyze(analyses=['functions'])
 
-            # Base license-related functions
-            license_functions = [
-                {
-                    "name": "CheckLicense",
-                    "address": "0x401000",
-                    "type": "license_check",
-                    "binary": filename,
-                },
-                {
-                    "name": "ValidateSerial",
-                    "address": "0x401200",
-                    "type": "license_check",
-                    "binary": filename,
-                },
-                {
-                    "name": "GetSystemTime",
-                    "address": "0x401400",
-                    "type": "time_check",
-                    "binary": filename,
-                },
-                {
-                    "name": "TrialExpired",
-                    "address": "0x401600",
-                    "type": "trial_check",
-                    "binary": filename,
-                },
+            functions_data = analysis_results.get('functions', [])
+
+            license_keywords = [
+                'license', 'serial', 'activation', 'registration', 'trial',
+                'expire', 'valid', 'key', 'unlock', 'authenticate',
+                'authorize', 'verify', 'check', 'eval', 'demo', 'install'
             ]
 
-            # Add context-specific functions based on filename patterns
-            if "trial" in filename or "demo" in filename:
-                license_functions.append(
-                    {
-                        "name": "CheckTrialPeriod",
-                        "address": "0x401800",
-                        "type": "trial_check",
-                        "binary": filename,
-                    },
-                )
+            time_keywords = ['time', 'date', 'clock', 'timer', 'expire', 'elapsed']
+            trial_keywords = ['trial', 'demo', 'eval', 'expire', 'period']
 
-            if "setup" in filename or "install" in filename:
-                license_functions.append(
-                    {
-                        "name": "ValidateInstallation",
-                        "address": "0x401A00",
-                        "type": "install_check",
-                        "binary": filename,
-                    },
-                )
+            if isinstance(functions_data, list):
+                for func_entry in functions_data:
+                    if isinstance(func_entry, dict):
+                        func_name = func_entry.get('name', '').lower()
+                        func_addr = func_entry.get('address', 0)
 
-            # Add analysis metadata
-            for func in license_functions:
-                func["analysis_depth"] = analysis_depth
-                func["file_size"] = file_size
+                        func_type = 'unknown'
+                        for keyword in license_keywords:
+                            if keyword in func_name:
+                                func_type = 'license_check'
+                                break
 
-            functions.extend(license_functions)
-            logger.info(f"Analyzed {len(functions)} functions in {binary_path} ({analysis_depth} analysis)")
+                        if func_type == 'unknown':
+                            for keyword in time_keywords:
+                                if keyword in func_name:
+                                    func_type = 'time_check'
+                                    break
 
-        except OSError as e:
+                        if func_type == 'unknown':
+                            for keyword in trial_keywords:
+                                if keyword in func_name:
+                                    func_type = 'trial_check'
+                                    break
+
+                        functions.append({
+                            'name': func_entry.get('name', 'unknown'),
+                            'address': hex(func_addr) if isinstance(func_addr, int) else func_addr,
+                            'type': func_type,
+                            'size': func_entry.get('size', 0),
+                            'binary': Path(binary_path).name
+                        })
+
+            logger.info(f"Analyzed {len(functions)} functions in {binary_path}")
+
+        except ImportError as e:
+            logger.error(f"Failed to import BinaryAnalyzer: {e}", exc_info=True)
+        except Exception as e:
             logger.error(f"Function analysis failed for {binary_path}: {e}", exc_info=True)
 
         return functions
@@ -599,7 +592,6 @@ class AutonomousAgent:
         """Analyze imported functions."""
         imports = []
         try:
-            # Verify binary exists
             if not os.path.isabs(binary_path):
                 logger.warning(f"Binary path is not absolute: {binary_path}")
                 return imports
@@ -608,70 +600,32 @@ class AutonomousAgent:
                 logger.warning(f"Binary path does not exist: {binary_path}")
                 return imports
 
-            # Get file extension to determine binary type
-            file_ext = os.path.splitext(binary_path)[1].lower()
-            filename = os.path.basename(binary_path).lower()
+            from ..core.analysis.binary_analyzer import BinaryAnalyzer
 
-            # Base protection imports
-            protection_imports = [
-                "GetSystemTime",
-                "GetTickCount",
-                "QueryPerformanceCounter",
-                "RegOpenKeyEx",
-                "RegQueryValueEx",
-                "RegSetValueEx",
-                "CryptVerifySignature",
-                "CryptHashData",
-                "InternetOpen",
-                "HttpSendRequest",
-            ]
+            analyzer = BinaryAnalyzer(binary_path)
+            analysis_results = analyzer.analyze(analyses=['imports'])
 
-            # Add platform-specific imports based on file type
-            if file_ext == ".exe" or file_ext == ".dll":
-                # Windows-specific imports
-                protection_imports.extend(
-                    [
-                        "CreateMutexA",
-                        "FindWindowA",
-                        "IsDebuggerPresent",
-                        "CheckRemoteDebuggerPresent",
-                        "OutputDebugStringA",
-                        "GetModuleHandleA",
-                        "GetProcAddress",
-                    ],
-                )
-            elif file_ext in [".so", ".elf"]:
-                # Linux-specific imports
-                protection_imports.extend(["dlopen", "dlsym", "ptrace", "prctl", "getpid", "getppid", "signal"])
+            imports_data = analysis_results.get('imports', [])
 
-            # Add context-aware imports based on filename
-            if "license" in filename or "trial" in filename:
-                protection_imports.extend(
-                    [
-                        "GetVolumeInformationA",
-                        "GetComputerNameA",
-                        "GetUserNameA",
-                        "CryptCreateHash",
-                    ],
-                )
+            if isinstance(imports_data, list):
+                for import_entry in imports_data:
+                    if isinstance(import_entry, dict):
+                        import_name = import_entry.get('name', '')
+                        dll_name = import_entry.get('dll', '')
 
-            if "network" in filename or "online" in filename:
-                protection_imports.extend(
-                    [
-                        "WSAStartup",
-                        "socket",
-                        "connect",
-                        "send",
-                        "recv",
-                        "gethostbyname",
-                        "inet_addr",
-                    ],
-                )
+                        if import_name:
+                            if dll_name:
+                                imports.append(f"{dll_name}:{import_name}")
+                            else:
+                                imports.append(import_name)
+                    elif isinstance(import_entry, str):
+                        imports.append(import_entry)
 
-            imports.extend(protection_imports)
-            logger.info(f"Analyzed {len(imports)} imports from {binary_path} ({file_ext} binary)")
+            logger.info(f"Analyzed {len(imports)} imports from {binary_path}")
 
-        except OSError as e:
+        except ImportError as e:
+            logger.error(f"Failed to import BinaryAnalyzer: {e}", exc_info=True)
+        except Exception as e:
             logger.error(f"Import analysis failed for {binary_path}: {e}", exc_info=True)
 
         return imports
@@ -680,92 +634,41 @@ class AutonomousAgent:
         """Detect protection mechanisms."""
         protections = []
         try:
-            # Verify binary exists
             if not Path(binary_path).exists():
                 logger.warning(f"Binary path does not exist: {binary_path}")
                 return protections
 
-            # Get binary metadata for context-aware detection
-            file_size = Path(binary_path).stat().st_size
-            filename = Path(binary_path).name.lower()
-            file_ext = Path(binary_path).suffix.lower()
+            from ..core.analysis.protection_scanner import EnhancedProtectionScanner as ProtectionScanner
 
-            # Base protection detection
-            detected_protections = [
-                {
-                    "type": "license_check",
-                    "confidence": 0.9,
-                    "description": "String comparison based license validation",
-                    "indicators": ["license", "validation", "strcmp"],
-                    "binary_path": binary_path,
-                    "binary_size": file_size,
-                },
-                {
-                    "type": "trial_timer",
-                    "confidence": 0.8,
-                    "description": "Time-based trial limitation",
-                    "indicators": ["trial", "expire", "GetSystemTime"],
-                    "binary_path": binary_path,
-                    "binary_size": file_size,
-                },
-            ]
+            scanner = ProtectionScanner()
+            scan_results = scanner.scan(binary_path)
 
-            # Enhanced detection based on file characteristics
-            # Large files (>5MB) likely have more protections
-            if file_size > 5 * 1024 * 1024:
-                detected_protections.append(
-                    {
-                        "type": "packer_detection",
-                        "confidence": 0.7,
-                        "description": "Large binary size suggests potential packing/obfuscation",
-                        "indicators": ["large_binary", "potential_packing"],
-                        "binary_path": binary_path,
-                        "binary_size": file_size,
-                    },
-                )
+            for protection_name, detection_data in scan_results.items():
+                if isinstance(detection_data, dict):
+                    if detection_data.get('detected', False):
+                        protections.append({
+                            'type': protection_name,
+                            'confidence': detection_data.get('confidence', 0.0),
+                            'description': detection_data.get('description', f'{protection_name} detected'),
+                            'indicators': detection_data.get('indicators', []),
+                            'binary_path': binary_path,
+                            'details': detection_data.get('details', {})
+                        })
+                elif detection_data:
+                    protections.append({
+                        'type': protection_name,
+                        'confidence': 1.0,
+                        'description': f'{protection_name} detected',
+                        'indicators': [],
+                        'binary_path': binary_path,
+                        'details': {}
+                    })
 
-            # Context-aware detection based on filename
-            if "setup" in filename or "install" in filename:
-                detected_protections.append(
-                    {
-                        "type": "installer_protection",
-                        "confidence": 0.8,
-                        "description": "Installer-specific validation mechanisms",
-                        "indicators": ["installer", "msi", "setup"],
-                        "binary_path": binary_path,
-                        "binary_size": file_size,
-                    },
-                )
-
-            if "trial" in filename or "demo" in filename:
-                detected_protections.append(
-                    {
-                        "type": "trial_restriction",
-                        "confidence": 0.9,
-                        "description": "Trial version restrictions and limitations",
-                        "indicators": ["trial", "demo", "time_limit"],
-                        "binary_path": binary_path,
-                        "binary_size": file_size,
-                    },
-                )
-
-            # Platform-specific protections
-            if file_ext in [".exe", ".dll"]:
-                detected_protections.append(
-                    {
-                        "type": "anti_debug",
-                        "confidence": 0.6,
-                        "description": "Windows anti-debugging mechanisms",
-                        "indicators": ["IsDebuggerPresent", "anti_debug"],
-                        "binary_path": binary_path,
-                        "binary_size": file_size,
-                    },
-                )
-
-            protections.extend(detected_protections)
             logger.info(f"Detected {len(protections)} protection mechanisms in {binary_path}")
 
-        except OSError as e:
+        except ImportError as e:
+            logger.error(f"Failed to import ProtectionScanner: {e}", exc_info=True)
+        except Exception as e:
             logger.error(f"Protection detection failed for {binary_path}: {e}", exc_info=True)
 
         return protections
@@ -2884,7 +2787,7 @@ class AutonomousAgent:
 
         """
         # Check for pre-configured images
-        images_dir = Path.home() / ".intellicrack" / "vm_images"
+        images_dir = get_project_root() / "data" / "vm_images"
 
         if arch == "x86_64":
             candidates = [

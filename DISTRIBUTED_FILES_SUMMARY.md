@@ -128,19 +128,24 @@ manager.export_results("results.json")
 manager.shutdown()
 ```
 
-### Command Line
-```bash
+### Python API
+```python
+from intellicrack.core.processing import create_distributed_manager, TaskPriority
+
 # Local analysis
-python examples/distributed_analysis_local.py C:\malware\sample.exe
+manager = create_distributed_manager(mode="local", enable_networking=False)
+manager.start_cluster()
+task_ids = manager.submit_binary_analysis("C:\\malware\\sample.exe", priority=TaskPriority.HIGH)
+manager.wait_for_completion(task_ids)
+manager.shutdown()
 
-# Cluster coordinator
-python examples/distributed_analysis_cluster.py coordinator --port 9876
+# Cluster mode
+coordinator = create_distributed_manager(mode="cluster", enable_networking=True)
+coordinator.start_cluster(port=9876)
 
-# Cluster worker
-python examples/distributed_analysis_cluster.py worker --host 192.168.1.100 --port 9876
-
-# Submit to cluster
-python examples/distributed_analysis_cluster.py analyze sample.exe --host 192.168.1.100
+# Worker connects to coordinator
+worker = create_distributed_manager(mode="worker", enable_networking=True)
+worker.connect_to_coordinator(host="192.168.1.100", port=9876)
 ```
 
 ## Testing
@@ -207,7 +212,6 @@ Summary:
 
 - **Main Documentation**: `docs/DISTRIBUTED_ANALYSIS.md` - Complete reference
 - **Quick Start**: `docs/DISTRIBUTED_QUICKSTART.md` - Get started in 5 minutes
-- **Examples**: `examples/` directory - Working code examples
 - **Tests**: `tests/integration/` - Test cases showing usage patterns
 - **Implementation Report**: `DISTRIBUTED_ANALYSIS_IMPLEMENTATION.md` - Technical details
 
@@ -215,7 +219,6 @@ Summary:
 
 For issues, questions, or contributions related to the distributed analysis manager:
 - Review documentation in `docs/` directory
-- Examine example scripts in `examples/` directory
 - Run tests in `tests/integration/` directory
 - Check implementation details in `DISTRIBUTED_ANALYSIS_IMPLEMENTATION.md`
 

@@ -287,7 +287,6 @@ ml/
 
 - **Main docs**: `docs/ML_PROTECTION_CLASSIFIER.md`
 - **Implementation summary**: `ML_IMPLEMENTATION_SUMMARY.md`
-- **Examples**: `examples/ml_classification_demo.py`
 
 ## Status
 

@@ -27,13 +27,6 @@ manager.export_results("results.json")
 manager.shutdown()
 ```
 
-### Run from Command Line
-
-```bash
-# Analyze any binary
-python examples/distributed_analysis_local.py C:\Windows\System32\notepad.exe
-```
-
 ## Common Tasks
 
 ### Find License Strings
@@ -154,31 +147,18 @@ manager.shutdown()
 
 ## Cluster Mode Setup
 
-### Step 1: Start Coordinator
+For cluster mode, you can implement a coordinator and worker system using the `DistributedManager` API:
 
-```bash
-# Terminal 1
-python examples/distributed_analysis_cluster.py coordinator --port 9876
-```
+```python
+# Coordinator setup
+from intellicrack.core.processing import create_distributed_manager
 
-### Step 2: Start Workers
+coordinator = create_distributed_manager(mode="cluster", enable_networking=True)
+coordinator.start_cluster(port=9876)
 
-```bash
-# Terminal 2 (local worker)
-python examples/distributed_analysis_cluster.py worker --host localhost --port 9876
-
-# Terminal 3 (another local worker)
-python examples/distributed_analysis_cluster.py worker --host localhost --port 9876
-
-# Remote worker (on another machine)
-python examples/distributed_analysis_cluster.py worker --host 192.168.1.100 --port 9876
-```
-
-### Step 3: Submit Analysis
-
-```bash
-# Terminal 4
-python examples/distributed_analysis_cluster.py analyze C:\malware\sample.exe --host localhost --port 9876
+# Worker setup (on same or different machine)
+worker = create_distributed_manager(mode="worker", enable_networking=True)
+worker.connect_to_coordinator(host="coordinator_ip", port=9876)
 ```
 
 ## Performance Tips
@@ -458,10 +438,9 @@ if __name__ == "__main__":
 ## Next Steps
 
 1. **Review full documentation**: See `DISTRIBUTED_ANALYSIS.md` for complete details
-2. **Explore examples**: Check `examples/` directory for more use cases
-3. **Run tests**: Execute integration tests with `pytest tests/integration/test_distributed_manager.py`
-4. **Configure cluster**: Set up multi-machine cluster for large-scale analysis
-5. **Integrate with tools**: Combine with Frida, radare2, angr for advanced analysis
+2. **Run tests**: Execute integration tests with `pytest tests/integration/test_distributed_manager.py`
+3. **Configure cluster**: Set up multi-machine cluster for large-scale analysis
+4. **Integrate with tools**: Combine with Frida, radare2, angr for advanced analysis
 
 ## Troubleshooting
 
@@ -498,6 +477,5 @@ task_ids = manager.submit_binary_analysis(
 
 For issues or questions:
 - Review documentation in `docs/DISTRIBUTED_ANALYSIS.md`
-- Check example scripts in `examples/`
 - Run tests to verify installation
 - Review logs for error messages

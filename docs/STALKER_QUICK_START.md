@@ -39,19 +39,6 @@ stats = get_stalker_stats(main_app)
 stop_stalker_session(main_app)
 ```
 
-### 3. Run Example Script
-
-```bash
-# From examples directory
-python stalker_usage_example.py "C:\App\target.exe" --mode comprehensive
-
-# Or targeted analysis
-python stalker_usage_example.py "C:\App\target.exe" --mode targeted --targets app.exe license.dll
-
-# Or function trace
-python stalker_usage_example.py "C:\App\target.exe" --mode function --module app.exe --function ValidateLicense
-```
-
 ## Common Use Cases
 
 ### Identify Licensing Routines
@@ -186,7 +173,6 @@ session.cleanup()
 ## Next Steps
 
 - Read full documentation: `docs/STALKER_INTEGRATION.md`
-- Review examples: `examples/stalker_usage_example.py`
 - Check JavaScript script: `intellicrack/scripts/frida/stalker_tracer.js`
 - Explore session manager: `intellicrack/core/analysis/stalker_manager.py`
 

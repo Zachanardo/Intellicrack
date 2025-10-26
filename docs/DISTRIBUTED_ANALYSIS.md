@@ -273,35 +273,52 @@ if result and "detections" in result:
         print(f"  {detection['algorithm']} at 0x{detection['offset']:08x}")
 ```
 
-## Command-Line Interface
+## Python API Usage
 
 ### Local Analysis
 
-```bash
-# Analyze binary using local multi-processing
-python examples/distributed_analysis_local.py C:\malware\sample.exe
+```python
+from intellicrack.core.processing import create_distributed_manager, TaskPriority
 
-# Output:
-# - Pattern matches
-# - Entropy analysis
-# - String extraction
-# - Crypto detection
-# - Import analysis
-# - Section analysis
-# - Results exported to sample.analysis.json
+# Analyze binary using local multi-processing
+manager = create_distributed_manager(mode="local", enable_networking=False)
+manager.start_cluster()
+
+task_ids = manager.submit_binary_analysis(
+    "C:\\malware\\sample.exe",
+    priority=TaskPriority.HIGH
+)
+
+# Wait for completion
+manager.wait_for_completion(task_ids, timeout=300.0)
+
+# Get results
+summary = manager.get_results_summary()
+print(f"Analysis complete: {summary['total_results']} results")
+
+# Export and cleanup
+manager.export_results("sample.analysis.json")
+manager.shutdown()
 ```
 
 ### Cluster Setup
 
-```bash
-# Terminal 1: Start coordinator
-python examples/distributed_analysis_cluster.py coordinator --port 9876
+```python
+from intellicrack.core.processing import create_distributed_manager, TaskPriority
 
-# Terminal 2-N: Start workers
-python examples/distributed_analysis_cluster.py worker --host localhost --port 9876
+# Node 1: Start coordinator
+coordinator = create_distributed_manager(mode="cluster", enable_networking=True)
+coordinator.start_cluster(port=9876)
 
-# Terminal N+1: Submit analysis job
-python examples/distributed_analysis_cluster.py analyze C:\malware\sample.exe --host localhost --port 9876
+# Node 2-N: Start workers
+worker = create_distributed_manager(mode="worker", enable_networking=True)
+worker.connect_to_coordinator(host="localhost", port=9876)
+
+# Client: Submit analysis job
+client = create_distributed_manager(mode="local", enable_networking=True)
+client.connect_to_coordinator(host="localhost", port=9876)
+task_ids = client.submit_binary_analysis("C:\\malware\\sample.exe")
+client.wait_for_completion(task_ids)
 ```
 
 ## Configuration
