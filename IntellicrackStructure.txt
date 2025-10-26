@@ -1,7 +1,7 @@
 INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: Sat, Oct 25, 2025 01:52:38 PM
+Generated: Sun, Oct 26, 2025 12:39:45 PM
 Directory: D:\Intellicrack\intellicrack
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -9,17 +9,19 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 
 ----------------------------------------
 
+├── __pycache__/
+│   └── __init__.cpython-314.pyc
 ├── ai/
 │   ├── __pycache__/
 │   │   ├── ai_file_tools.cpython-314.pyc
 │   │   └── model_sharding.cpython-314.pyc
 │   ├── __init__.py
+│   ├── ai_agent.py
 │   ├── ai_assistant_enhanced.py
 │   ├── ai_file_tools.py
 │   ├── ai_script_generator.py
 │   ├── ai_tools.py
 │   ├── api_provider_clients.py
-│   ├── ai_agent.py
 │   ├── background_loader.py
 │   ├── coordination_layer.py
 │   ├── enhanced_training_interface.py
@@ -63,12 +65,11 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── quantization_manager.py
 │   ├── README.md
 │   ├── realtime_adaptation_engine.py
+│   ├── resilience_self_healing.py
 │   ├── response_parser.py
 │   ├── script_editor.py
 │   ├── script_generation_prompts.py
 │   ├── semantic_code_analyzer.py
-│   ├── system_monitor.py
-│   ├── tool_schemas.py
 │   ├── visualization_analytics.py
 │   ├── vulnerability_research_integration.py
 │   └── vulnerability_research_integration_helper.py
@@ -244,6 +245,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 ├── core/
 │   ├── analysis/
 │   │   ├── __pycache__/
+│   │   │   ├── radare2_vulnerability_engine.cpython-314.pyc
 │   │   │   ├── streaming_crypto_detector.cpython-314.pyc
 │   │   │   ├── streaming_entropy_analyzer.cpython-314.pyc
 │   │   │   └── streaming_yara_scanner.cpython-314.pyc
@@ -340,6 +342,17 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── sandbox_detector.py
 │   │   ├── timing_attacks.py
 │   │   └── vm_detector.py
+│   ├── certificate/
+│   │   ├── frida_scripts/
+│   │   │   └── __init__.py
+│   │   ├── __init__.py
+│   │   ├── api_signatures.py
+│   │   ├── binary_scanner.py
+│   │   ├── cert_patcher.py
+│   │   ├── detection_report.py
+│   │   ├── patch_generators.py
+│   │   ├── patch_templates.py
+│   │   └── validation_detector.py
 │   ├── execution/
 │   │   ├── __init__.py
 │   │   └── script_execution_manager.py
@@ -429,7 +442,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── qiling_emulator.py
 │   │   ├── streaming_analysis_manager.py
 │   │   └── vm_workflow_manager.py
-│   ├── protection/
 │   ├── protection_bypass/
 │   │   ├── hooks/
 │   │   │   └── yubikey_hook.dll
@@ -592,12 +604,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── print_dialog.py
 │   ├── statistics.py
 │   └── statistics_dialog.py
-├── intellicrack/
-│   └── plugins/
-│       └── custom_modules/
-│           ├── binary_patcher_plugin.py
-│           ├── network_analysis_plugin.py
-│           └── simple_analysis_plugin.py
 ├── llm/
 │   ├── models/
 │   │   └── downloads/
@@ -674,7 +680,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── themida_analyzer.py
 │   └── unified_protection_engine.py
 ├── scripts/
-│   ├── ai_scripts/
 │   ├── frida/
 │   │   ├── ai_scripts/
 │   │   │   └── ai_3d72c547_20250817_041722.js
@@ -897,7 +902,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── analysis_stats.py
 │   │   ├── binary_analysis.py
 │   │   ├── entropy_utils.py
-│   │   ├── network_api_common.py
 │   │   ├── pattern_search.py
 │   │   └── security_analysis.py
 │   ├── binary/
@@ -988,11 +992,9 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   └── service_manager.py
 │   ├── __init__.py
 │   ├── api_client.py
-│   ├── cache.py
 │   ├── config.py
 │   ├── config_cleanup.py
 │   ├── constants.py
-│   ├── crypto.py
 │   ├── dependencies.py
 │   ├── dependency_fallbacks.py
 │   ├── deprecation_warnings.py
@@ -1006,7 +1008,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── log_message.py
 │   ├── logger.py
 │   ├── path_resolver.py
-│   ├── project_paths.py
 │   ├── protection_utils.py
 │   ├── qemu_image_discovery.py
 │   ├── report_generator.py

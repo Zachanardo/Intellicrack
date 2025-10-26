@@ -26,15 +26,15 @@ classifiers = [
 
 dependencies = [
     # Core ML/AI
-    # "accelerate",
+    "accelerate==1.11.0",
     "anthropic>=0.71.0,<0.72",
     "openai>=2.5.0,<3",
     "transformers>=4.57.1,<5",
     "huggingface-hub>=0.35.3,<0.36",
     "safetensors>=0.6.2,<0.7",
-    # "peft",
+    "peft==0.17.1",
     # "auto-gptq>=0.7.0",  # Requires NVIDIA CUDA - not compatible with Intel GPU
-    # "bitsandbytes",
+    "bitsandbytes==0.48.1",
 
     # Binary Analysis
     "angr>=9.2.180,<10",
@@ -80,10 +80,8 @@ dependencies = [
     "httpie>=3.2.4,<4",
 
     # ML Frameworks
-    # Intel XPU versions installed manually - see pixi.toml task "install-intel-xpu"
-    # "torch>=2.9.0,<3",
-    # "torchvision>=0.24.0,<0.25",
-    # "torchaudio>=2.9.0,<3",
+    # torch/torchvision/torchaudio defined in pixi.toml with Intel XPU index
+    # intel-extension-for-pytorch installed by install-intel-xpu task
     "pyopencl>=2025.2.6,<2026",
     "tensorflow>=2.20.0,<3",
     "numba==0.62.1",
