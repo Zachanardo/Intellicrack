@@ -27,6 +27,15 @@ class ContextInfo:
         surrounding_code: str = "",
         cross_references: Optional[List[int]] = None
     ):
+        """Initialize context information.
+
+        Args:
+            address: Memory address of the API call
+            function_name: Name of the function containing the call
+            surrounding_code: Disassembly around the call site
+            cross_references: List of addresses that reference this location
+
+        """
         self.address = address
         self.function_name = function_name
         self.surrounding_code = surrounding_code
@@ -54,7 +63,7 @@ class BinaryScanner:
             try:
                 self.binary = lief.parse(str(self.binary_path))
             except Exception as e:
-                raise RuntimeError(f"Failed to parse binary with LIEF: {e}")
+                raise RuntimeError(f"Failed to parse binary with LIEF: {e}") from e
 
     def scan_imports(self) -> List[str]:
         """Scan binary imports and return imported DLL/library names.
@@ -130,8 +139,9 @@ class BinaryScanner:
                 for m in matches
             ])
 
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).debug(f"Failed to extract strings: {e}")
 
         return list(set(strings))
 
@@ -309,12 +319,15 @@ class BinaryScanner:
         if self.r2_handle:
             try:
                 self.r2_handle.quit()
-            except Exception:
-                pass
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).debug(f"Failed to close radare2: {e}")
             self.r2_handle = None
 
     def __enter__(self):
+        """Enter context manager."""
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """Exit context manager."""
         self.close()

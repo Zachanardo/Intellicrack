@@ -6,6 +6,8 @@ from typing import List, Optional
 
 
 class CallingConvention(Enum):
+    """Calling conventions for API functions across platforms."""
+
     STDCALL = "stdcall"
     CDECL = "cdecl"
     FASTCALL = "fastcall"
@@ -14,6 +16,8 @@ class CallingConvention(Enum):
 
 
 class Platform(Enum):
+    """Target platforms for certificate validation APIs."""
+
     WINDOWS = "windows"
     LINUX = "linux"
     MACOS = "macos"
@@ -24,6 +28,8 @@ class Platform(Enum):
 
 @dataclass
 class APISignature:
+    """Signature information for a certificate validation API function."""
+
     name: str
     library: str
     platforms: List[Platform]

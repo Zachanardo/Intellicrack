@@ -90,7 +90,7 @@ class CertificateValidationDetector:
 
         except Exception as e:
             logger.error(f"Detection failed: {e}")
-            raise RuntimeError(f"Failed to detect certificate validation: {e}")
+            raise RuntimeError(f"Failed to detect certificate validation: {e}") from e
 
     def _find_validation_functions(
         self,

@@ -82,11 +82,12 @@ dependencies = [
     # ML Frameworks
     # torch/torchvision/torchaudio defined in pixi.toml with Intel XPU index
     # intel-extension-for-pytorch installed by install-intel-xpu task
+    "dpctl==0.20.2",
     "pyopencl>=2025.2.6,<2026",
     "tensorflow>=2.20.0,<3",
     "numba==0.62.1",
     "tf2onnx",
-    # "openvino>=2025.0.0",
+    "openvino==2025.3.0",
 
     # Database & Storage
     "pymongo>=4.15.3,<5",
