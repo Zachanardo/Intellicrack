@@ -40,43 +40,68 @@ try:
 except ImportError:
     # Fallback classes when PyQt6 is not available
     class QObject:
+        """Fallback QObject class when PyQt6 is not available."""
+
         pass
 
     class QRunnable:
+        """Fallback QRunnable class when PyQt6 is not available."""
+
         def run(self):
+            """Execute the runnable task."""
             pass
 
     class QThreadPool:
+        """Fallback QThreadPool class when PyQt6 is not available."""
+
         @staticmethod
         def globalInstance():
+            """Return the global thread pool instance."""
             return None
 
     def pyqtSignal(*args):
+        """Fallback pyqtSignal function when PyQt6 is not available."""
         return None
 
     # Fallback widget classes
     class QCheckBox:
+        """Fallback QCheckBox class when PyQt6 is not available."""
+
         pass
 
     class QComboBox:
+        """Fallback QComboBox class when PyQt6 is not available."""
+
         pass
 
     class QDialog:
+        """Fallback QDialog class when PyQt6 is not available."""
+
         pass
 
     class QFileDialog:
+        """Fallback QFileDialog class when PyQt6 is not available."""
+
         pass
 
     class QGroupBox:
+        """Fallback QGroupBox class when PyQt6 is not available."""
+
         pass
 
     class QHBoxLayout:
+        """Fallback QHBoxLayout class when PyQt6 is not available."""
+
         pass
 
     class QPushButton:
+        """Fallback QPushButton class when PyQt6 is not available."""
+
         pass
 
     class QVBoxLayout:
+        """Fallback QVBoxLayout class when PyQt6 is not available."""
+
         pass
 
     PYQT6_AVAILABLE = False

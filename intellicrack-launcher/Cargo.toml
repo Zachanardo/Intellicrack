@@ -26,6 +26,10 @@ harness = false
 name = "process_benchmarks"
 harness = false
 
+[[bench]]
+name = "startup_optimization_benchmarks"
+harness = false
+
 [build-dependencies]
 pyo3-build-config = "0.26"
 embed-resource = "2.4"
@@ -81,7 +85,7 @@ once_cell = "1.19"
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = [
     "winbase", "winuser", "winerror", "processenv", "wincon",
-    "handleapi", "synchapi", "processthreadsapi", "tlhelp32",
+    "handleapi", "synchapi", "processthreadsapi", "sysinfoapi", "tlhelp32",
     "libloaderapi", "memoryapi", "psapi", "shlobj"
 ] }
 windows = { version = "0.52", features = [

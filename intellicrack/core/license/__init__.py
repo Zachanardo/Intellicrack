@@ -1,3 +1,5 @@
+"""License cracking and key generation functionality."""
+
 from intellicrack.core.license.keygen import (
     ConstraintExtractor,
     ExtractedAlgorithm,

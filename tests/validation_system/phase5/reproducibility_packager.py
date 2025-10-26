@@ -138,8 +138,8 @@ class EnvironmentRecorder:
                     "memory_used": gpu.memoryUsed,
                     "temperature": gpu.temperature
                 })
-        except:
-            pass
+            except:
+                # WMI query may fail, continue with registry results
 
         # Network interfaces
         network_interfaces = []
@@ -224,16 +224,16 @@ class EnvironmentRecorder:
                                 "version": version,
                                 "publisher": publisher
                             })
-                        except:
-                            pass
+        except:
+            # Registry query may fail, continue with other methods
 
                         winreg.CloseKey(subkey)
                     except:
-                        pass
+                        # Subkey access may fail, continue with next subkey
 
                 winreg.CloseKey(key)
             except:
-                pass
+                # Registry key access may fail, continue with next path
 
         # Also check using WMI
         if self.wmi_client:
@@ -322,8 +322,8 @@ class EnvironmentRecorder:
                     virt["qemu"] = True
                 elif "xen" in brand:
                     virt["xen"] = True
-        except:
-            pass
+            except:
+                # WMI query may fail, continue with registry results
 
         # Windows-specific checks
         if platform.system() == "Windows" and self.wmi_client:
@@ -358,8 +358,8 @@ class EnvironmentRecorder:
             )
             if result.returncode == 0:
                 pip_packages = json.loads(result.stdout)
-        except:
-            pass
+            except:
+                # WMI query may fail, continue with registry results
 
         # Conda packages (if in conda environment)
         conda_packages = []
@@ -567,8 +567,8 @@ class ExecutionRecorder:
         try:
             process_info = psutil.Process(process.pid)
             memory_usage = process_info.memory_info().rss
-        except:
-            pass
+            except:
+                # WMI query may fail, continue with registry results
 
         # Store recording
         conn = sqlite3.connect(self.recordings_db)

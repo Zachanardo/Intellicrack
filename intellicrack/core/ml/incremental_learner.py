@@ -70,12 +70,7 @@ class IncrementalLearner:
     MIN_CONFIDENCE_FOR_AUTO_LEARNING = 0.85
     BUFFER_SIZE = 500
 
-    def __init__(
-        self,
-        classifier: ProtectionClassifier,
-        buffer_path: Path | None = None,
-        auto_retrain: bool = True
-    ):
+    def __init__(self, classifier: ProtectionClassifier, buffer_path: Path | None = None, auto_retrain: bool = True):
         """Initialize incremental learner.
 
         Args:
@@ -89,7 +84,7 @@ class IncrementalLearner:
         self.auto_retrain = auto_retrain
 
         if buffer_path is None:
-            buffer_path = classifier.model_path / 'sample_buffer.pkl'
+            buffer_path = classifier.model_path / "sample_buffer.pkl"
 
         self.buffer_path = Path(buffer_path)
         self.sample_buffer: list[TrainingSample] = []
@@ -103,7 +98,7 @@ class IncrementalLearner:
         protection_type: str,
         confidence: float = 1.0,
         source: str = "manual",
-        metadata: dict[str, Any] | None = None
+        metadata: dict[str, Any] | None = None,
     ) -> bool:
         """Add a new training sample to the buffer.
 
@@ -128,22 +123,18 @@ class IncrementalLearner:
                 feature_vector=feature_vector,
                 confidence=confidence,
                 source=source,
-                metadata=metadata or {}
+                metadata=metadata or {},
             )
 
             self.sample_buffer.append(sample)
             self.logger.info(
-                "Added sample %s (protection: %s, confidence: %.2f, source: %s)",
-                binary_path.name, protection_type, confidence, source
+                "Added sample %s (protection: %s, confidence: %.2f, source: %s)", binary_path.name, protection_type, confidence, source
             )
 
             self._save_buffer()
 
             if self.auto_retrain and len(self.sample_buffer) >= self.RETRAIN_THRESHOLD:
-                self.logger.info(
-                    "Buffer reached threshold (%d samples), triggering retrain",
-                    len(self.sample_buffer)
-                )
+                self.logger.info("Buffer reached threshold (%d samples), triggering retrain", len(self.sample_buffer))
                 self.retrain_incremental()
 
             return True
@@ -152,11 +143,7 @@ class IncrementalLearner:
             self.logger.error("Failed to add sample %s: %s", binary_path, e)
             return False
 
-    def retrain_incremental(
-        self,
-        use_all_history: bool = False,
-        n_estimators: int = 200
-    ) -> dict[str, Any]:
+    def retrain_incremental(self, use_all_history: bool = False, n_estimators: int = 200) -> dict[str, Any]:
         """Retrain model with buffered samples.
 
         Args:
@@ -171,21 +158,11 @@ class IncrementalLearner:
             self.logger.warning("No samples in buffer, skipping retrain")
             return {}
 
-        session = LearningSession(
-            session_id=f"session_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}",
-            start_time=datetime.now(UTC)
-        )
+        session = LearningSession(session_id=f"session_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}", start_time=datetime.now(UTC))
 
-        self.logger.info(
-            "Starting incremental learning session: %s (%d new samples)",
-            session.session_id,
-            len(self.sample_buffer)
-        )
+        self.logger.info("Starting incremental learning session: %s (%d new samples)", session.session_id, len(self.sample_buffer))
 
-        high_confidence_samples = [
-            s for s in self.sample_buffer
-            if s.confidence >= 0.5
-        ]
+        high_confidence_samples = [s for s in self.sample_buffer if s.confidence >= 0.5]
 
         if not high_confidence_samples:
             self.logger.warning("No high-confidence samples to learn from")
@@ -200,23 +177,14 @@ class IncrementalLearner:
         if use_all_history:
             self.logger.info("Performing full retraining with historical data")
 
-        results = self.classifier.train(
-            X=X_new,
-            y=y_new,
-            n_estimators=n_estimators,
-            cross_validate=True
-        )
+        results = self.classifier.train(X=X_new, y=y_new, n_estimators=n_estimators, cross_validate=True)
 
-        session.new_accuracy = results.get('test_accuracy', 0.0)
+        session.new_accuracy = results.get("test_accuracy", 0.0)
         session.retrain_triggered = True
 
         self.learning_history.append(session)
 
-        self.logger.info(
-            "Incremental learning complete: accuracy=%.4f, samples=%d",
-            session.new_accuracy,
-            session.samples_added
-        )
+        self.logger.info("Incremental learning complete: accuracy=%.4f, samples=%d", session.new_accuracy, session.samples_added)
 
         learned_samples = self.sample_buffer.copy()
         self.sample_buffer.clear()
@@ -237,10 +205,10 @@ class IncrementalLearner:
 
         """
         quality = {
-            'confidence': sample.confidence,
-            'source': sample.source,
-            'is_high_quality': sample.confidence >= 0.7,
-            'is_verified': sample.source in ['manual', 'verified'],
+            "confidence": sample.confidence,
+            "source": sample.source,
+            "is_high_quality": sample.confidence >= 0.7,
+            "is_verified": sample.source in ["manual", "verified"],
         }
 
         if self.classifier.model is not None:
@@ -252,22 +220,18 @@ class IncrementalLearner:
                 predicted_idx = np.argmax(probabilities)
                 predicted_class = self.classifier.label_encoder.classes_[predicted_idx]
 
-                quality['prediction_confidence'] = float(probabilities[predicted_idx])
-                quality['prediction_matches_label'] = (predicted_class == sample.protection_type)
-                quality['prediction'] = predicted_class
+                quality["prediction_confidence"] = float(probabilities[predicted_idx])
+                quality["prediction_matches_label"] = predicted_class == sample.protection_type
+                quality["prediction"] = predicted_class
 
-                quality['is_useful'] = not quality['prediction_matches_label']
+                quality["is_useful"] = not quality["prediction_matches_label"]
 
             except Exception as e:
                 self.logger.warning("Failed to evaluate sample quality: %s", e)
 
         return quality
 
-    def get_uncertain_predictions(
-        self,
-        min_uncertainty: float = 0.3,
-        max_count: int = 20
-    ) -> list[tuple[Path, dict[str, Any]]]:
+    def get_uncertain_predictions(self, min_uncertainty: float = 0.3, max_count: int = 20) -> list[tuple[Path, dict[str, Any]]]:
         """Identify samples where model is uncertain for active learning.
 
         Args:
@@ -283,18 +247,20 @@ class IncrementalLearner:
         for sample in self.sample_buffer:
             quality = self.evaluate_sample_quality(sample)
 
-            if quality.get('prediction_confidence', 1.0) < (1.0 - min_uncertainty):
-                uncertain.append((
-                    sample.binary_path,
-                    {
-                        'prediction': quality.get('prediction'),
-                        'confidence': quality.get('prediction_confidence', 0.0),
-                        'actual_label': sample.protection_type,
-                        'timestamp': sample.timestamp,
-                    }
-                ))
+            if quality.get("prediction_confidence", 1.0) < (1.0 - min_uncertainty):
+                uncertain.append(
+                    (
+                        sample.binary_path,
+                        {
+                            "prediction": quality.get("prediction"),
+                            "confidence": quality.get("prediction_confidence", 0.0),
+                            "actual_label": sample.protection_type,
+                            "timestamp": sample.timestamp,
+                        },
+                    )
+                )
 
-        uncertain.sort(key=lambda x: x[1]['confidence'])
+        uncertain.sort(key=lambda x: x[1]["confidence"])
         return uncertain[:max_count]
 
     def get_buffer_statistics(self) -> dict[str, Any]:
@@ -305,7 +271,7 @@ class IncrementalLearner:
 
         """
         if not self.sample_buffer:
-            return {'size': 0, 'classes': {}}
+            return {"size": 0, "classes": {}}
 
         class_counts: dict[str, int] = {}
         source_counts: dict[str, int] = {}
@@ -317,21 +283,21 @@ class IncrementalLearner:
             confidence_values.append(sample.confidence)
 
         return {
-            'size': len(self.sample_buffer),
-            'classes': class_counts,
-            'sources': source_counts,
-            'avg_confidence': float(np.mean(confidence_values)),
-            'min_confidence': float(np.min(confidence_values)),
-            'max_confidence': float(np.max(confidence_values)),
-            'ready_for_retrain': len(self.sample_buffer) >= self.RETRAIN_THRESHOLD,
+            "size": len(self.sample_buffer),
+            "classes": class_counts,
+            "sources": source_counts,
+            "avg_confidence": float(np.mean(confidence_values)),
+            "min_confidence": float(np.min(confidence_values)),
+            "max_confidence": float(np.max(confidence_values)),
+            "ready_for_retrain": len(self.sample_buffer) >= self.RETRAIN_THRESHOLD,
         }
 
     def _load_buffer(self) -> None:
         """Load sample buffer from disk."""
         if self.buffer_path.exists():
             try:
-                with open(self.buffer_path, 'rb') as f:
-                    self.sample_buffer = pickle.load(f)
+                with open(self.buffer_path, "rb") as f:
+                    self.sample_buffer = pickle.load(f)  # noqa: S301 - Loading internal ML sample data
                 self.logger.info("Loaded %d samples from buffer", len(self.sample_buffer))
             except Exception as e:
                 self.logger.error("Failed to load buffer: %s", e)
@@ -341,16 +307,12 @@ class IncrementalLearner:
         """Save sample buffer to disk."""
         try:
             self.buffer_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.buffer_path, 'wb') as f:
+            with open(self.buffer_path, "wb") as f:
                 pickle.dump(self.sample_buffer, f)
         except Exception as e:
             self.logger.error("Failed to save buffer: %s", e)
 
-    def _save_learned_samples(
-        self,
-        samples: list[TrainingSample],
-        session_id: str
-    ) -> None:
+    def _save_learned_samples(self, samples: list[TrainingSample], session_id: str) -> None:
         """Archive learned samples for future reference.
 
         Args:
@@ -359,11 +321,11 @@ class IncrementalLearner:
 
         """
         try:
-            archive_dir = self.classifier.model_path / 'learned_samples'
+            archive_dir = self.classifier.model_path / "learned_samples"
             archive_dir.mkdir(parents=True, exist_ok=True)
 
-            archive_file = archive_dir / f'{session_id}.pkl'
-            with open(archive_file, 'wb') as f:
+            archive_file = archive_dir / f"{session_id}.pkl"
+            with open(archive_file, "wb") as f:
                 pickle.dump(samples, f)
 
             self.logger.info("Archived %d learned samples to %s", len(samples), archive_file)

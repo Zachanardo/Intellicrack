@@ -5,6 +5,7 @@ protection driver services, querying status, and performing administrative opera
 """
 
 import ctypes
+import logging
 from ctypes import wintypes
 from dataclasses import dataclass
 from enum import IntEnum
@@ -58,33 +59,33 @@ class ServiceInfo:
     dependencies: List[str]
 
 
-class SERVICE_STATUS(ctypes.Structure):
+class ServiceStatus(ctypes.Structure):
     """SERVICE_STATUS structure."""
 
     _fields_ = [
-        ('dwServiceType', wintypes.DWORD),
-        ('dwCurrentState', wintypes.DWORD),
-        ('dwControlsAccepted', wintypes.DWORD),
-        ('dwWin32ExitCode', wintypes.DWORD),
-        ('dwServiceSpecificExitCode', wintypes.DWORD),
-        ('dwCheckPoint', wintypes.DWORD),
-        ('dwWaitHint', wintypes.DWORD),
+        ("dwServiceType", wintypes.DWORD),
+        ("dwCurrentState", wintypes.DWORD),
+        ("dwControlsAccepted", wintypes.DWORD),
+        ("dwWin32ExitCode", wintypes.DWORD),
+        ("dwServiceSpecificExitCode", wintypes.DWORD),
+        ("dwCheckPoint", wintypes.DWORD),
+        ("dwWaitHint", wintypes.DWORD),
     ]
 
 
-class QUERY_SERVICE_CONFIG(ctypes.Structure):
+class QueryServiceConfig(ctypes.Structure):
     """QUERY_SERVICE_CONFIG structure."""
 
     _fields_ = [
-        ('dwServiceType', wintypes.DWORD),
-        ('dwStartType', wintypes.DWORD),
-        ('dwErrorControl', wintypes.DWORD),
-        ('lpBinaryPathName', wintypes.LPWSTR),
-        ('lpLoadOrderGroup', wintypes.LPWSTR),
-        ('dwTagId', wintypes.DWORD),
-        ('lpDependencies', wintypes.LPWSTR),
-        ('lpServiceStartName', wintypes.LPWSTR),
-        ('lpDisplayName', wintypes.LPWSTR),
+        ("dwServiceType", wintypes.DWORD),
+        ("dwStartType", wintypes.DWORD),
+        ("dwErrorControl", wintypes.DWORD),
+        ("lpBinaryPathName", wintypes.LPWSTR),
+        ("lpLoadOrderGroup", wintypes.LPWSTR),
+        ("dwTagId", wintypes.DWORD),
+        ("lpDependencies", wintypes.LPWSTR),
+        ("lpServiceStartName", wintypes.LPWSTR),
+        ("lpDisplayName", wintypes.LPWSTR),
     ]
 
 
@@ -117,43 +118,36 @@ class WindowsServiceManager:
 
     def __init__(self):
         """Initialize Windows service manager."""
+        self.logger = logging.getLogger(__name__)
         self._advapi32 = None
         self._setup_winapi()
 
     def _setup_winapi(self) -> None:
-        """Setup Windows API functions."""
+        """Set up Windows API functions."""
         try:
-            self._advapi32 = ctypes.WinDLL('advapi32', use_last_error=True)
+            self._advapi32 = ctypes.WinDLL("advapi32", use_last_error=True)
 
-            self._advapi32.OpenSCManagerW.argtypes = [
-                wintypes.LPCWSTR, wintypes.LPCWSTR, wintypes.DWORD
-            ]
+            self._advapi32.OpenSCManagerW.argtypes = [wintypes.LPCWSTR, wintypes.LPCWSTR, wintypes.DWORD]
             self._advapi32.OpenSCManagerW.restype = wintypes.HANDLE
 
-            self._advapi32.OpenServiceW.argtypes = [
-                wintypes.HANDLE, wintypes.LPCWSTR, wintypes.DWORD
-            ]
+            self._advapi32.OpenServiceW.argtypes = [wintypes.HANDLE, wintypes.LPCWSTR, wintypes.DWORD]
             self._advapi32.OpenServiceW.restype = wintypes.HANDLE
 
-            self._advapi32.QueryServiceStatus.argtypes = [
-                wintypes.HANDLE, ctypes.POINTER(SERVICE_STATUS)
-            ]
+            self._advapi32.QueryServiceStatus.argtypes = [wintypes.HANDLE, ctypes.POINTER(ServiceStatus)]
             self._advapi32.QueryServiceStatus.restype = wintypes.BOOL
 
             self._advapi32.QueryServiceConfigW.argtypes = [
-                wintypes.HANDLE, ctypes.POINTER(QUERY_SERVICE_CONFIG),
-                wintypes.DWORD, ctypes.POINTER(wintypes.DWORD)
+                wintypes.HANDLE,
+                ctypes.POINTER(QueryServiceConfig),
+                wintypes.DWORD,
+                ctypes.POINTER(wintypes.DWORD),
             ]
             self._advapi32.QueryServiceConfigW.restype = wintypes.BOOL
 
-            self._advapi32.ControlService.argtypes = [
-                wintypes.HANDLE, wintypes.DWORD, ctypes.POINTER(SERVICE_STATUS)
-            ]
+            self._advapi32.ControlService.argtypes = [wintypes.HANDLE, wintypes.DWORD, ctypes.POINTER(ServiceStatus)]
             self._advapi32.ControlService.restype = wintypes.BOOL
 
-            self._advapi32.StartServiceW.argtypes = [
-                wintypes.HANDLE, wintypes.DWORD, ctypes.POINTER(wintypes.LPCWSTR)
-            ]
+            self._advapi32.StartServiceW.argtypes = [wintypes.HANDLE, wintypes.DWORD, ctypes.POINTER(wintypes.LPCWSTR)]
             self._advapi32.StartServiceW.restype = wintypes.BOOL
 
             self._advapi32.DeleteService.argtypes = [wintypes.HANDLE]
@@ -162,7 +156,8 @@ class WindowsServiceManager:
             self._advapi32.CloseServiceHandle.argtypes = [wintypes.HANDLE]
             self._advapi32.CloseServiceHandle.restype = wintypes.BOOL
 
-        except Exception:
+        except Exception as e:
+            self.logger.debug(f"Failed to setup Windows API functions: {e}")
             pass
 
     def get_service_info(self, service_name: str) -> Optional[ServiceInfo]:
@@ -185,30 +180,25 @@ class WindowsServiceManager:
 
             try:
                 service_handle = self._advapi32.OpenServiceW(
-                    sc_manager,
-                    service_name,
-                    self.SERVICE_QUERY_CONFIG | self.SERVICE_QUERY_STATUS
+                    sc_manager, service_name, self.SERVICE_QUERY_CONFIG | self.SERVICE_QUERY_STATUS
                 )
 
                 if not service_handle:
                     return None
 
                 try:
-                    status = SERVICE_STATUS()
+                    status = ServiceStatus()
                     if not self._advapi32.QueryServiceStatus(service_handle, ctypes.byref(status)):
                         return None
 
                     bytes_needed = wintypes.DWORD()
-                    self._advapi32.QueryServiceConfigW(
-                        service_handle, None, 0, ctypes.byref(bytes_needed)
-                    )
+                    self._advapi32.QueryServiceConfigW(service_handle, None, 0, ctypes.byref(bytes_needed))
 
                     buffer = ctypes.create_string_buffer(bytes_needed.value)
-                    config = ctypes.cast(buffer, ctypes.POINTER(QUERY_SERVICE_CONFIG)).contents
+                    config = ctypes.cast(buffer, ctypes.POINTER(QueryServiceConfig)).contents
 
                     if self._advapi32.QueryServiceConfigW(
-                        service_handle, ctypes.byref(config),
-                        bytes_needed.value, ctypes.byref(bytes_needed)
+                        service_handle, ctypes.byref(config), bytes_needed.value, ctypes.byref(bytes_needed)
                     ):
                         return ServiceInfo(
                             name=service_name,
@@ -216,8 +206,8 @@ class WindowsServiceManager:
                             state=ServiceState(status.dwCurrentState),
                             service_type=ServiceType(config.dwServiceType),
                             start_type=ServiceStartType(config.dwStartType),
-                            binary_path=config.lpBinaryPathName if config.lpBinaryPathName else '',
-                            dependencies=self._parse_dependencies(config.lpDependencies)
+                            binary_path=config.lpBinaryPathName if config.lpBinaryPathName else "",
+                            dependencies=self._parse_dependencies(config.lpDependencies),
                         )
 
                 finally:
@@ -226,7 +216,8 @@ class WindowsServiceManager:
             finally:
                 self._advapi32.CloseServiceHandle(sc_manager)
 
-        except Exception:
+        except Exception as e:
+            self.logger.debug(f"Error enumerating services: {e}")
             pass
 
         return None
@@ -245,7 +236,8 @@ class WindowsServiceManager:
                     break
                 dependencies.append(dep)
                 offset += len(dep) + 1
-        except Exception:
+        except Exception as e:
+            self.logger.debug(f"Error parsing dependencies: {e}")
             pass
 
         return dependencies
@@ -270,9 +262,7 @@ class WindowsServiceManager:
                 return False
 
             try:
-                service_handle = self._advapi32.OpenServiceW(
-                    sc_manager, service_name, self.SERVICE_START
-                )
+                service_handle = self._advapi32.OpenServiceW(sc_manager, service_name, self.SERVICE_START)
 
                 if not service_handle:
                     return False
@@ -296,7 +286,8 @@ class WindowsServiceManager:
             finally:
                 self._advapi32.CloseServiceHandle(sc_manager)
 
-        except Exception:
+        except Exception as e:
+            self.logger.debug(f"Error starting service {service_name}: {e}")
             pass
 
         return False
@@ -320,18 +311,14 @@ class WindowsServiceManager:
                 return False
 
             try:
-                service_handle = self._advapi32.OpenServiceW(
-                    sc_manager, service_name, self.SERVICE_STOP
-                )
+                service_handle = self._advapi32.OpenServiceW(sc_manager, service_name, self.SERVICE_STOP)
 
                 if not service_handle:
                     return False
 
                 try:
-                    status = SERVICE_STATUS()
-                    result = self._advapi32.ControlService(
-                        service_handle, self.SERVICE_CONTROL_STOP, ctypes.byref(status)
-                    )
+                    status = ServiceStatus()
+                    result = self._advapi32.ControlService(service_handle, self.SERVICE_CONTROL_STOP, ctypes.byref(status))
                     return bool(result)
 
                 finally:
@@ -340,7 +327,8 @@ class WindowsServiceManager:
             finally:
                 self._advapi32.CloseServiceHandle(sc_manager)
 
-        except Exception:
+        except Exception as e:
+            self.logger.debug(f"Error stopping service {service_name}: {e}")
             pass
 
         return False
@@ -364,18 +352,14 @@ class WindowsServiceManager:
                 return False
 
             try:
-                service_handle = self._advapi32.OpenServiceW(
-                    sc_manager, service_name, self.SERVICE_PAUSE_CONTINUE
-                )
+                service_handle = self._advapi32.OpenServiceW(sc_manager, service_name, self.SERVICE_PAUSE_CONTINUE)
 
                 if not service_handle:
                     return False
 
                 try:
-                    status = SERVICE_STATUS()
-                    result = self._advapi32.ControlService(
-                        service_handle, self.SERVICE_CONTROL_PAUSE, ctypes.byref(status)
-                    )
+                    status = ServiceStatus()
+                    result = self._advapi32.ControlService(service_handle, self.SERVICE_CONTROL_PAUSE, ctypes.byref(status))
                     return bool(result)
 
                 finally:
@@ -384,7 +368,8 @@ class WindowsServiceManager:
             finally:
                 self._advapi32.CloseServiceHandle(sc_manager)
 
-        except Exception:
+        except Exception as e:
+            self.logger.debug(f"Error pausing service {service_name}: {e}")
             pass
 
         return False
@@ -408,18 +393,14 @@ class WindowsServiceManager:
                 return False
 
             try:
-                service_handle = self._advapi32.OpenServiceW(
-                    sc_manager, service_name, self.SERVICE_PAUSE_CONTINUE
-                )
+                service_handle = self._advapi32.OpenServiceW(sc_manager, service_name, self.SERVICE_PAUSE_CONTINUE)
 
                 if not service_handle:
                     return False
 
                 try:
-                    status = SERVICE_STATUS()
-                    result = self._advapi32.ControlService(
-                        service_handle, self.SERVICE_CONTROL_CONTINUE, ctypes.byref(status)
-                    )
+                    status = ServiceStatus()
+                    result = self._advapi32.ControlService(service_handle, self.SERVICE_CONTROL_CONTINUE, ctypes.byref(status))
                     return bool(result)
 
                 finally:
@@ -428,7 +409,8 @@ class WindowsServiceManager:
             finally:
                 self._advapi32.CloseServiceHandle(sc_manager)
 
-        except Exception:
+        except Exception as e:
+            self.logger.debug(f"Error continuing service {service_name}: {e}")
             pass
 
         return False
@@ -453,9 +435,7 @@ class WindowsServiceManager:
 
             try:
                 DELETE = 0x00010000
-                service_handle = self._advapi32.OpenServiceW(
-                    sc_manager, service_name, DELETE
-                )
+                service_handle = self._advapi32.OpenServiceW(sc_manager, service_name, DELETE)
 
                 if not service_handle:
                     return False
@@ -470,7 +450,8 @@ class WindowsServiceManager:
             finally:
                 self._advapi32.CloseServiceHandle(sc_manager)
 
-        except Exception:
+        except Exception as e:
+            self.logger.debug(f"Error deleting service {service_name}: {e}")
             pass
 
         return False
@@ -494,15 +475,13 @@ class WindowsServiceManager:
                 return None
 
             try:
-                service_handle = self._advapi32.OpenServiceW(
-                    sc_manager, service_name, self.SERVICE_QUERY_STATUS
-                )
+                service_handle = self._advapi32.OpenServiceW(sc_manager, service_name, self.SERVICE_QUERY_STATUS)
 
                 if not service_handle:
                     return None
 
                 try:
-                    status = SERVICE_STATUS()
+                    status = ServiceStatus()
                     if self._advapi32.QueryServiceStatus(service_handle, ctypes.byref(status)):
                         return ServiceState(status.dwCurrentState)
 
@@ -512,7 +491,8 @@ class WindowsServiceManager:
             finally:
                 self._advapi32.CloseServiceHandle(sc_manager)
 
-        except Exception:
+        except Exception as e:
+            self.logger.debug(f"Error querying service status {service_name}: {e}")
             pass
 
         return None
@@ -530,12 +510,7 @@ class WindowsServiceManager:
         state = self.get_service_state(service_name)
         return state == ServiceState.RUNNING if state else False
 
-    def wait_for_state(
-        self,
-        service_name: str,
-        target_state: ServiceState,
-        timeout_ms: int = 30000
-    ) -> bool:
+    def wait_for_state(self, service_name: str, target_state: ServiceState, timeout_ms: int = 30000) -> bool:
         """Wait for service to reach target state.
 
         Args:

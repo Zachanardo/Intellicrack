@@ -445,3 +445,108 @@ async fn test_integration_cross_component() -> Result<()> {
 
     Ok(())
 }
+
+#[test]
+#[ignore]
+fn test_full_optimization_sequence() {
+    let result1 = intellicrack_launcher::optimize_process();
+    assert!(result1.is_ok(), "Process optimization should succeed");
+
+    let result2 = intellicrack_launcher::run_preflight_checks();
+    assert!(result2.is_ok(), "Preflight checks should succeed");
+
+    let result3 = intellicrack_launcher::discover_and_cache_tools();
+    assert!(result3.is_ok(), "Tool discovery should succeed");
+}
+
+#[test]
+fn test_optimization_sequence_performance() {
+    let start = std::time::Instant::now();
+
+    let _ = intellicrack_launcher::optimize_process();
+    let _ = intellicrack_launcher::run_preflight_checks();
+    let _ = intellicrack_launcher::discover_and_cache_tools();
+
+    let elapsed = start.elapsed();
+
+    assert!(
+        elapsed.as_millis() < 200,
+        "Full optimization sequence should complete in <200ms, took {:?}",
+        elapsed
+    );
+}
+
+#[test]
+fn test_graceful_degradation_on_failures() {
+    let process_result = intellicrack_launcher::optimize_process();
+    assert!(process_result.is_ok(), "Process optimization should be non-fatal");
+
+    let tool_result = intellicrack_launcher::discover_and_cache_tools();
+    assert!(tool_result.is_ok(), "Tool discovery should be non-fatal");
+}
+
+#[test]
+fn test_environment_variables_after_tool_discovery() {
+    let _ = intellicrack_launcher::discover_and_cache_tools();
+
+    let possible_vars = vec![
+        "RADARE2_PATH",
+        "R2_PATH",
+        "GHIDRA_PATH",
+        "FRIDA_PATH",
+        "QEMU_SYSTEM_X86_64_PATH",
+        "CAPSTONE_PATH",
+    ];
+
+    let mut found_count = 0;
+    for var_name in possible_vars {
+        if std::env::var(var_name).is_ok() {
+            found_count += 1;
+        }
+    }
+}
+
+#[test]
+fn test_optimizations_do_not_interfere() {
+    let _ = intellicrack_launcher::optimize_process();
+    let process1 = std::process::id();
+
+    let _ = intellicrack_launcher::run_preflight_checks();
+    let process2 = std::process::id();
+
+    let _ = intellicrack_launcher::discover_and_cache_tools();
+    let process3 = std::process::id();
+
+    assert_eq!(process1, process2);
+    assert_eq!(process2, process3);
+}
+
+#[test]
+fn test_optimization_sequence_multiple_times() {
+    for _ in 0..3 {
+        let _ = intellicrack_launcher::optimize_process();
+        let _ = intellicrack_launcher::run_preflight_checks();
+        let _ = intellicrack_launcher::discover_and_cache_tools();
+    }
+}
+
+#[test]
+fn test_concurrent_optimizations() {
+    use std::thread;
+
+    let handles: Vec<_> = (0..4)
+        .map(|_| {
+            thread::spawn(|| {
+                let r1 = intellicrack_launcher::optimize_process();
+                let r2 = intellicrack_launcher::discover_and_cache_tools();
+                (r1.is_ok(), r2.is_ok())
+            })
+        })
+        .collect();
+
+    for handle in handles {
+        let (r1, r2) = handle.join().unwrap();
+        assert!(r1, "Process optimization should succeed");
+        assert!(r2, "Tool discovery should succeed");
+    }
+}

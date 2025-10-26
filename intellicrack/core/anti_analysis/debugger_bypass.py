@@ -127,7 +127,7 @@ class DebuggerBypass:
 
             current_process = self.kernel32.GetCurrentProcess()
 
-            class PROCESS_BASIC_INFORMATION(ctypes.Structure):
+            class ProcessBasicInformation(ctypes.Structure):
                 _fields_ = [
                     ("Reserved1", ctypes.c_void_p),
                     ("PebBaseAddress", ctypes.c_void_p),
@@ -136,10 +136,8 @@ class DebuggerBypass:
                     ("Reserved3", ctypes.c_void_p),
                 ]
 
-            pbi = PROCESS_BASIC_INFORMATION()
-            status = self.ntdll.NtQueryInformationProcess(
-                current_process, 0, ctypes.byref(pbi), ctypes.sizeof(pbi), None
-            )
+            pbi = ProcessBasicInformation()
+            status = self.ntdll.NtQueryInformationProcess(current_process, 0, ctypes.byref(pbi), ctypes.sizeof(pbi), None)
 
             if status != 0:
                 return False
@@ -186,7 +184,7 @@ class DebuggerBypass:
 
             current_process = self.kernel32.GetCurrentProcess()
 
-            class PROCESS_BASIC_INFORMATION(ctypes.Structure):
+            class ProcessBasicInformation(ctypes.Structure):
                 _fields_ = [
                     ("Reserved1", ctypes.c_void_p),
                     ("PebBaseAddress", ctypes.c_void_p),
@@ -195,10 +193,8 @@ class DebuggerBypass:
                     ("Reserved3", ctypes.c_void_p),
                 ]
 
-            pbi = PROCESS_BASIC_INFORMATION()
-            status = self.ntdll.NtQueryInformationProcess(
-                current_process, 0, ctypes.byref(pbi), ctypes.sizeof(pbi), None
-            )
+            pbi = ProcessBasicInformation()
+            status = self.ntdll.NtQueryInformationProcess(current_process, 0, ctypes.byref(pbi), ctypes.sizeof(pbi), None)
 
             if status != 0:
                 return False
@@ -211,18 +207,14 @@ class DebuggerBypass:
             zero_byte = ctypes.c_ubyte(0)
             bytes_written = ctypes.c_size_t()
 
-            self.kernel32.WriteProcessMemory(
-                current_process, being_debugged_addr, ctypes.byref(zero_byte), 1, ctypes.byref(bytes_written)
-            )
+            self.kernel32.WriteProcessMemory(current_process, being_debugged_addr, ctypes.byref(zero_byte), 1, ctypes.byref(bytes_written))
 
             is_64bit = platform.machine().endswith("64")
             nt_global_flag_offset = 0xBC if is_64bit else 0x68
             nt_global_flag_addr = ctypes.c_void_p(peb_address.value + nt_global_flag_offset)
             zero_dword = ctypes.c_ulong(0)
 
-            self.kernel32.WriteProcessMemory(
-                current_process, nt_global_flag_addr, ctypes.byref(zero_dword), 4, ctypes.byref(bytes_written)
-            )
+            self.kernel32.WriteProcessMemory(current_process, nt_global_flag_addr, ctypes.byref(zero_dword), 4, ctypes.byref(bytes_written))
 
             heap_flags_offset = 0x30 if is_64bit else 0x18
             process_heap_addr = ctypes.c_void_p()
@@ -246,9 +238,7 @@ class DebuggerBypass:
                 normal_flags = ctypes.c_ulong(0x00000002)  # HEAP_GROWABLE
                 zero_flags = ctypes.c_ulong(0)
 
-                self.kernel32.WriteProcessMemory(
-                    current_process, flags_addr, ctypes.byref(normal_flags), 4, ctypes.byref(bytes_written)
-                )
+                self.kernel32.WriteProcessMemory(current_process, flags_addr, ctypes.byref(normal_flags), 4, ctypes.byref(bytes_written))
                 self.kernel32.WriteProcessMemory(
                     current_process, force_flags_addr, ctypes.byref(zero_flags), 4, ctypes.byref(bytes_written)
                 )
@@ -409,8 +399,8 @@ class DebuggerBypass:
             for offset in DR_OFFSETS:
                 try:
                     libc.ptrace(PTRACE_POKEUSER, pid, offset, 0)
-                except Exception:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Failed to clear debug register at offset {offset}: {e}")
 
             self.logger.debug("Linux debug registers cleared")
             return True
@@ -543,8 +533,8 @@ class DebuggerBypass:
                         proc.name = lambda: "explorer.exe"
                         self.logger.debug("Process name masked")
                         return True
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        self.logger.debug(f"Failed to mask process name: {e}")
 
             return False
 
@@ -570,7 +560,8 @@ class DebuggerBypass:
                     libc.ptrace(PTRACE_DETACH, 0, 0, 0)
                     self.logger.debug("Ptrace detached")
 
-            except Exception:
+            except Exception as e:
+                self.logger.debug(f"Ptrace detach failed: {e}")
                 pass
 
             return True
@@ -671,7 +662,7 @@ class DebuggerBypass:
 
 
 def install_anti_antidebug(methods: list[str] = None) -> dict[str, bool]:
-    """Convenience function to install anti-anti-debug bypasses.
+    """Install anti-anti-debug bypasses.
 
     Args:
         methods: List of specific methods to install, or None for all

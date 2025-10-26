@@ -796,7 +796,7 @@ class ForensicCollector:
                             "timestamp": datetime.now().isoformat()
                         })
                     except (psutil.NoSuchProcess, psutil.AccessDenied):
-                        pass
+                        # Process may have exited or access denied, continue with others
             else:
                 # Return simulated data if psutil is not available
                 process_list.append({

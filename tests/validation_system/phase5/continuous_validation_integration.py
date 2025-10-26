@@ -915,7 +915,7 @@ class ContinuousValidationIntegration:
                         data
                     )
                 except:
-                    pass
+                    # Message parsing may fail, continue processing other messages
 
     async def stop(self):
         """Stop continuous validation system."""

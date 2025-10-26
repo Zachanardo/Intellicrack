@@ -36,7 +36,7 @@ except ImportError as e:
     HAS_CRYPTOGRAPHY = False
 
     # Define dummy classes for type annotations when cryptography is not available
-    class x509:
+    class X509:
         class Certificate:
             pass
 

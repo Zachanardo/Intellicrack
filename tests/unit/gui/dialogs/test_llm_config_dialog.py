@@ -138,7 +138,7 @@ class TestLLMConfigDialog:
                     qtbot.wait(100)
                 except Exception:
                     # Handle any configuration errors gracefully
-                    pass
+                    # Continue with test even if configuration fails
 
     def test_connection_testing_real_api_calls(self, qtbot):
         """Test REAL connection testing functionality."""

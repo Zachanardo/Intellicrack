@@ -44,10 +44,10 @@ intellicrack.ai.api\_provider\_clients module
    :show-inheritance:
    :undoc-members:
 
-intellicrack.ai.autonomous\_agent module
-----------------------------------------
+intellicrack.ai.ai\_agent module
+--------------------------------
 
-.. automodule:: intellicrack.ai.autonomous_agent
+.. automodule:: intellicrack.ai.ai_agent
    :members:
    :show-inheritance:
    :undoc-members:

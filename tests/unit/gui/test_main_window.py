@@ -12,7 +12,6 @@ from unittest.mock import patch
 from intellicrack.ui.dialogs.common_imports import QApplication, QTest, Qt
 
 
-
 from intellicrack.ui.main_window import IntellicrackMainWindow
 from intellicrack.core.analysis.multi_format_analyzer import MultiFormatBinaryAnalyzer
 
@@ -33,11 +32,11 @@ class TestIntellicrackMainWindow:
         assert self.main_window.windowTitle() == "Intellicrack - Advanced Binary Analysis Framework"
         assert self.main_window.isVisible()
 
-        assert hasattr(self.main_window, 'tab_widget')
+        assert hasattr(self.main_window, "tab_widget")
         assert self.main_window.tab_widget is not None
         assert self.main_window.tab_widget.count() > 0
 
-        assert hasattr(self.main_window, 'analysis_orchestrator')
+        assert hasattr(self.main_window, "analysis_orchestrator")
         assert self.main_window.analysis_orchestrator is not None
 
     def test_tab_widget_real_tabs_created(self, qtbot):
@@ -55,24 +54,24 @@ class TestIntellicrackMainWindow:
 
     def test_file_selection_real_browse_button(self, qtbot):
         """Test REAL file selection button functionality."""
-        if hasattr(self.main_window, 'browse_button'):
+        if hasattr(self.main_window, "browse_button"):
             browse_button = self.main_window.browse_button
             assert browse_button.isEnabled()
             assert browse_button.text() == "Browse..."
 
-            with patch('PyQt6.QtWidgets.QFileDialog.getOpenFileName') as mock_dialog:
-                mock_dialog.return_value = ('C:\\test_binary.exe', '')
+            with patch("PyQt6.QtWidgets.QFileDialog.getOpenFileName") as mock_dialog:
+                mock_dialog.return_value = ("C:\\test_binary.exe", "")
                 qtbot.mouseClick(browse_button, Qt.MouseButton.LeftButton)
                 mock_dialog.assert_called_once()
 
     def test_analysis_buttons_real_state_management(self, qtbot):
         """Test REAL analysis button state management."""
-        if hasattr(self.main_window, 'analyze_button'):
+        if hasattr(self.main_window, "analyze_button"):
             analyze_button = self.main_window.analyze_button
             assert not analyze_button.isEnabled()  # Should be disabled initially
 
-            if hasattr(self.main_window, 'file_path_label'):
-                self.main_window.current_file_path = 'C:\\test_binary.exe'
+            if hasattr(self.main_window, "file_path_label"):
+                self.main_window.current_file_path = "C:\\test_binary.exe"
                 self.main_window._update_ui_state()
                 qtbot.wait(100)  # Allow UI to update
 
@@ -121,9 +120,9 @@ class TestIntellicrackMainWindow:
         self.main_window.update_output.emit(test_output)
         qtbot.wait(100)
 
-        if hasattr(self.main_window, 'analysis_output'):
+        if hasattr(self.main_window, "analysis_output"):
             analysis_output = self.main_window.analysis_output
-            if analysis_output and hasattr(analysis_output, 'toPlainText'):
+            if analysis_output and hasattr(analysis_output, "toPlainText"):
                 output_text = analysis_output.toPlainText()
                 assert test_output in output_text or output_text == ""
 
@@ -156,20 +155,20 @@ class TestIntellicrackMainWindow:
 
     def test_real_binary_file_loading_ui_updates(self, qtbot):
         """Test REAL binary file loading and UI state updates."""
-        with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as temp_file:
-            temp_file.write(b'MZ\x90\x00')  # Minimal PE header
+        with tempfile.NamedTemporaryFile(suffix=".exe", delete=False) as temp_file:
+            temp_file.write(b"MZ\x90\x00")  # Minimal PE header
             temp_file_path = temp_file.name
 
         try:
-            if hasattr(self.main_window, '_handle_file_selection'):
+            if hasattr(self.main_window, "_handle_file_selection"):
                 self.main_window._handle_file_selection(temp_file_path)
                 qtbot.wait(100)
 
-                if hasattr(self.main_window, 'file_path_label'):
+                if hasattr(self.main_window, "file_path_label"):
                     label_text = self.main_window.file_path_label.text()
                     assert temp_file_path in label_text or "selected" in label_text.lower()
 
-                if hasattr(self.main_window, 'analyze_button'):
+                if hasattr(self.main_window, "analyze_button"):
                     assert self.main_window.analyze_button.isEnabled()
         finally:
             os.unlink(temp_file_path)
@@ -179,21 +178,21 @@ class TestIntellicrackMainWindow:
         orchestrator = self.main_window.analysis_orchestrator
         assert orchestrator is not None
 
-        if hasattr(self.main_window, '_run_analysis'):
+        if hasattr(self.main_window, "_run_analysis"):
             try:
                 # Test with real orchestrator analysis
-                if hasattr(self.main_window, 'current_file_path'):
+                if hasattr(self.main_window, "current_file_path"):
                     # Create a real test file for analysis
-                    with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as temp_file:
+                    with tempfile.NamedTemporaryFile(suffix=".exe", delete=False) as temp_file:
                         # Write minimal PE data
-                        test_pe = b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00'
+                        test_pe = b"MZ\x90\x00" + b"\x00" * 60 + b"PE\x00\x00"
                         temp_file.write(test_pe)
                         self.main_window.current_file_path = temp_file.name
 
                 self.main_window._run_analysis()
             except Exception:
                 # Handle analysis errors gracefully
-                pass
+                # Continue with test even if analysis fails
                 qtbot.wait(100)
 
     def test_real_progress_updates_ui_feedback(self, qtbot):
@@ -204,14 +203,14 @@ class TestIntellicrackMainWindow:
             self.main_window.update_progress.emit(value)
             qtbot.wait(50)
 
-            if hasattr(self.main_window, 'progress_bar'):
+            if hasattr(self.main_window, "progress_bar"):
                 progress_bar = self.main_window.progress_bar
                 if progress_bar:
                     assert 0 <= progress_bar.value() <= 100
 
     def test_theme_and_styling_real_application(self, qtbot):
         """Test REAL theme and styling application."""
-        if hasattr(self.main_window, 'theme_manager'):
+        if hasattr(self.main_window, "theme_manager"):
             theme_manager = self.main_window.theme_manager
             if theme_manager:
                 original_stylesheet = self.main_window.styleSheet()
@@ -231,17 +230,17 @@ class TestIntellicrackMainWindow:
 
         assert not self.main_window.isVisible()
 
-        if hasattr(self.main_window, 'analysis_orchestrator'):
+        if hasattr(self.main_window, "analysis_orchestrator"):
             orchestrator = self.main_window.analysis_orchestrator
-            if hasattr(orchestrator, 'cleanup'):
-                assert hasattr(orchestrator, 'cleanup')
+            if hasattr(orchestrator, "cleanup"):
+                assert hasattr(orchestrator, "cleanup")
 
     def test_error_handling_real_user_feedback(self, qtbot):
         """Test REAL error handling with user feedback."""
-        if hasattr(self.main_window, '_handle_analysis_error'):
+        if hasattr(self.main_window, "_handle_analysis_error"):
             test_error = "Test analysis error"
 
-            with patch('PyQt6.QtWidgets.QMessageBox.critical') as mock_msgbox:
+            with patch("PyQt6.QtWidgets.QMessageBox.critical") as mock_msgbox:
                 self.main_window._handle_analysis_error(test_error)
                 qtbot.wait(100)
 
@@ -256,21 +255,21 @@ class TestIntellicrackMainWindow:
 
         assert widget.isVisible() or not widget.isEnabled()
 
-        if hasattr(widget, 'text'):
+        if hasattr(widget, "text"):
             text = widget.text()
             assert isinstance(text, str)
 
-        if hasattr(widget, 'isEnabled'):
+        if hasattr(widget, "isEnabled"):
             enabled = widget.isEnabled()
             assert isinstance(enabled, bool)
 
-        if hasattr(widget, 'parent'):
+        if hasattr(widget, "parent"):
             parent = widget.parent()
             assert parent is not None or widget == self.main_window
 
     def test_widget_interaction_real_mouse_keyboard(self, qtbot):
         """Test REAL widget interaction with mouse and keyboard."""
-        if hasattr(self.main_window, 'browse_button'):
+        if hasattr(self.main_window, "browse_button"):
             browse_button = self.main_window.browse_button
 
             original_enabled = browse_button.isEnabled()
@@ -284,19 +283,17 @@ class TestIntellicrackMainWindow:
 
     def test_real_data_validation_no_placeholder_content(self, qtbot):
         """Test that all UI elements contain REAL data, not placeholder content."""
+
         def check_for_placeholder_text(widget):
             """Recursively check for placeholder text in widgets."""
-            placeholder_indicators = [
-                "TODO", "PLACEHOLDER", "XXX", "FIXME",
-                "Not implemented", "Coming soon", "Mock data"
-            ]
+            placeholder_indicators = ["TODO", "PLACEHOLDER", "XXX", "FIXME", "Not implemented", "Coming soon", "Mock data"]
 
-            if hasattr(widget, 'text'):
+            if hasattr(widget, "text"):
                 text = widget.text()
                 for indicator in placeholder_indicators:
                     assert indicator not in text, f"Placeholder text found: {text}"
 
-            if hasattr(widget, 'toPlainText'):
+            if hasattr(widget, "toPlainText"):
                 text = widget.toPlainText()
                 for indicator in placeholder_indicators:
                     assert indicator not in text, f"Placeholder text found: {text}"

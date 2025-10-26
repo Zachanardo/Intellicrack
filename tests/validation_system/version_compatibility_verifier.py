@@ -325,7 +325,7 @@ class VersionCompatibilityVerifier:
                     binary_str = binary_data.decode('ascii', errors='ignore')
                     detected_version = self._pattern_match_version(binary_str.encode(), protection_name)
                 except Exception:
-                    pass
+                    # Pattern matching may fail, continue with other methods
 
             logger.info(f"Detected version: {detected_version if detected_version else 'Unknown'}")
             return detected_version

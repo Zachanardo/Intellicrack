@@ -39,52 +39,83 @@ try:
 except ImportError:
     # Fallback classes when PyQt6 is not available
     class QObject:
+        """Fallback QObject class when PyQt6 is not available."""
+
         pass
 
     class QRunnable:
+        """Fallback QRunnable class when PyQt6 is not available."""
+
         def run(self):
+            """Execute the runnable task."""
             pass
 
     class QThreadPool:
+        """Fallback QThreadPool class when PyQt6 is not available."""
+
         @staticmethod
         def globalInstance():
+            """Return the global thread pool instance."""
             return None
 
     class QTimer:
+        """Fallback QTimer class when PyQt6 is not available."""
+
         pass
 
     def pyqtSignal(*args):
+        """Fallback pyqtSignal function when PyQt6 is not available."""
         return None
 
     class QFont:
+        """Fallback QFont class when PyQt6 is not available."""
+
         pass
 
     class QTextDocument:
+        """Fallback QTextDocument class when PyQt6 is not available."""
+
         pass
 
     # Fallback widget classes
     class QDialog:
+        """Fallback QDialog class when PyQt6 is not available."""
+
         pass
 
     class QFileDialog:
+        """Fallback QFileDialog class when PyQt6 is not available."""
+
         pass
 
     class QHBoxLayout:
+        """Fallback QHBoxLayout class when PyQt6 is not available."""
+
         pass
 
     class QLabel:
+        """Fallback QLabel class when PyQt6 is not available."""
+
         pass
 
     class QMessageBox:
+        """Fallback QMessageBox class when PyQt6 is not available."""
+
         pass
 
     class QPushButton:
+        """Fallback QPushButton class when PyQt6 is not available."""
+
         pass
 
     class QTextEdit:
+        """Fallback QTextEdit class when PyQt6 is not available."""
+
         pass
 
     class QVBoxLayout:
+        """Fallback QVBoxLayout class when PyQt6 is not available."""
+
         pass
 
     PYQT6_AVAILABLE = False

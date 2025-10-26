@@ -29,8 +29,8 @@ from queue import Empty, Queue
 from typing import Any
 
 from ..utils.logger import get_logger
+from .ai_agent import AIAgent
 from .ai_script_generator import AIScriptGenerator
-from .autonomous_agent import AutonomousAgent
 from .intelligent_code_modifier import IntelligentCodeModifier
 from .llm_backends import LLMManager
 from .performance_monitor import performance_monitor, profile_ai_operation
@@ -212,7 +212,6 @@ Script Analysis:
         def _create_protected_binary(self, target_path):
             """Create a protected binary with real license checking for testing."""
             try:
-                import random
                 import struct
 
                 # Create real PE executable with license check
@@ -262,11 +261,20 @@ Script Analysis:
                 text_section += b"\x00" * 16  # Relocations and line numbers
                 text_section += struct.pack("<I", 0x60000020)  # Characteristics
 
-                # License validation code section
+                # License validation code section with real RVA calculations
+                # Entry point at RVA 0x1000, calculate offsets for .rdata (0x2000) and .idata (0x3000)
                 license_code = b"\x48\x83\xec\x28"  # sub rsp, 0x28
-                # Note: Using random module for generating dummy addresses in simulation code
-                license_code += b"\x48\x8d\x0d" + struct.pack("<I", random.randint(0x100, 0x1000))  # lea rcx, [license_key]  # noqa: S311
-                license_code += b"\xff\x15" + struct.pack("<I", random.randint(0x100, 0x1000))  # call [CheckLicense]  # noqa: S311
+
+                # Calculate RVA offset from current IP to license_key in .rdata section
+                # Current IP after this instruction = 0x1004, target = 0x2000, RVA = 0x2000 - (0x1004 + 7) = 0xFF5
+                license_key_rva = 0x2000 - (0x1000 + len(license_code) + 7)
+                license_code += b"\x48\x8d\x0d" + struct.pack("<i", license_key_rva)  # lea rcx, [rip+license_key]
+
+                # Calculate RVA offset from current IP to CheckLicense IAT entry in .idata
+                # Current IP after lea = 0x100B, target IAT = 0x3000, RVA = 0x3000 - (0x100B + 6) = 0x1FEF
+                check_license_rva = 0x3000 - (0x1000 + len(license_code) + 6)
+                license_code += b"\xff\x15" + struct.pack("<i", check_license_rva)  # call [rip+CheckLicense]
+
                 license_code += b"\x85\xc0"  # test eax, eax
                 license_code += b"\x74\x05"  # jz invalid_license
                 license_code += b"\x31\xc0"  # xor eax, eax
@@ -489,7 +497,7 @@ class IntegrationManager:
         # Initialize components
         self.script_generator = AIScriptGenerator()
         self.code_modifier = IntelligentCodeModifier(self.llm_manager)
-        self.autonomous_agent = AutonomousAgent(self.llm_manager)
+        self.ai_agent = AIAgent(self.llm_manager)
         self.qemu_manager = QEMUManager()
 
         # Task management
@@ -688,7 +696,7 @@ class IntegrationManager:
         task_config = task.input_data["task_config"]
 
         # Run autonomous agent
-        results = self.autonomous_agent.execute_autonomous_task(task_config)
+        results = self.ai_agent.execute_autonomous_task(task_config)
 
         return results
 

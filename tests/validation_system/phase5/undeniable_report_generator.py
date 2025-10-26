@@ -894,7 +894,7 @@ class UndeniableReportGenerator:
                     file_size = Path(evidence["path"]).stat().st_size
                     evidence_inventory["evidence_size_bytes"] += file_size
                 except:
-                    pass
+                    # File may not exist or be inaccessible, continue with other evidence
 
         return evidence_inventory
 

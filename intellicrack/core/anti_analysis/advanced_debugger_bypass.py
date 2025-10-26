@@ -85,7 +85,7 @@ class KernelHookManager:
             self.logger.error(f"Failed to initialize Linux kernel hooks: {e}")
 
     def hook_ntquery_information_process(self) -> bool:
-        """Hook NtQueryInformationProcess at kernel level to hide debugger."""
+        """Hide debugger by hooking NtQueryInformationProcess at kernel level."""
         try:
             if platform.system() != "Windows":
                 return False
@@ -159,7 +159,7 @@ class KernelHookManager:
         return bytes(shellcode)
 
     def hook_ntset_information_thread(self) -> bool:
-        """Hook NtSetInformationThread to prevent ThreadHideFromDebugger."""
+        """Prevent ThreadHideFromDebugger by hooking NtSetInformationThread."""
         try:
             if platform.system() != "Windows":
                 return False
@@ -210,7 +210,7 @@ class KernelHookManager:
         return bytes(shellcode)
 
     def hook_ntquery_system_information(self) -> bool:
-        """Hook NtQuerySystemInformation to hide debugger processes."""
+        """Hide debugger processes by hooking NtQuerySystemInformation."""
         try:
             if platform.system() != "Windows":
                 return False
@@ -269,9 +269,7 @@ class KernelHookManager:
             old_protect = ctypes.c_ulong()
             size = len(hook_code)
 
-            if not self.kernel32.VirtualProtect(
-                ctypes.c_void_p(target_addr), size, 0x40, ctypes.byref(old_protect)
-            ):
+            if not self.kernel32.VirtualProtect(ctypes.c_void_p(target_addr), size, 0x40, ctypes.byref(old_protect)):
                 return False
 
             bytes_written = ctypes.c_size_t()
@@ -307,9 +305,7 @@ class KernelHookManager:
             bytes_read = ctypes.c_size_t()
             current_process = self.kernel32.GetCurrentProcess()
 
-            if self.kernel32.ReadProcessMemory(
-                current_process, ctypes.c_void_p(address), buffer, size, ctypes.byref(bytes_read)
-            ):
+            if self.kernel32.ReadProcessMemory(current_process, ctypes.c_void_p(address), buffer, size, ctypes.byref(bytes_read)):
                 return buffer.raw[: bytes_read.value]
 
             return b""
@@ -342,9 +338,7 @@ class KernelHookManager:
             old_protect = ctypes.c_ulong()
             size = len(hook_info.original_bytes)
 
-            self.kernel32.VirtualProtect(
-                ctypes.c_void_p(hook_info.target_address), size, 0x40, ctypes.byref(old_protect)
-            )
+            self.kernel32.VirtualProtect(ctypes.c_void_p(hook_info.target_address), size, 0x40, ctypes.byref(old_protect))
 
             bytes_written = ctypes.c_size_t()
             current_process = self.kernel32.GetCurrentProcess()
@@ -357,9 +351,7 @@ class KernelHookManager:
                 ctypes.byref(bytes_written),
             )
 
-            self.kernel32.VirtualProtect(
-                ctypes.c_void_p(hook_info.target_address), size, old_protect.value, ctypes.byref(old_protect)
-            )
+            self.kernel32.VirtualProtect(ctypes.c_void_p(hook_info.target_address), size, old_protect.value, ctypes.byref(old_protect))
 
             self.kernel32.FlushInstructionCache(current_process, ctypes.c_void_p(hook_info.target_address), size)
 
@@ -473,7 +465,7 @@ class HypervisorDebugger:
             return 0
 
     def setup_vmcs_shadowing(self) -> bool:
-        """Setup VMCS shadowing to hide debugging VMCS structures."""
+        """Set up VMCS shadowing to hide debugging VMCS structures."""
         try:
             vt_support = self.check_virtualization_support()
 
@@ -490,7 +482,7 @@ class HypervisorDebugger:
             return False
 
     def setup_ept_hooks(self) -> bool:
-        """Setup Extended Page Table hooks for memory access monitoring."""
+        """Set up Extended Page Table hooks for memory access monitoring."""
         try:
             vt_support = self.check_virtualization_support()
 
@@ -573,7 +565,7 @@ class TimingNeutralizer:
             return 0
 
     def hook_query_performance_counter(self) -> bool:
-        """Hook QueryPerformanceCounter for consistent timing."""
+        """Provide consistent timing by hooking QueryPerformanceCounter."""
         try:
             if platform.system() != "Windows":
                 return False
@@ -595,7 +587,7 @@ class TimingNeutralizer:
             return False
 
     def hook_get_tick_count(self) -> bool:
-        """Hook GetTickCount/GetTickCount64 for consistent timing."""
+        """Provide consistent timing by hooking GetTickCount/GetTickCount64."""
         try:
             if platform.system() != "Windows":
                 return False
@@ -697,9 +689,7 @@ class AdvancedDebuggerBypass:
             results["overall_success"] = successful_bypasses > 0
             self.bypass_active = results["overall_success"]
 
-            self.logger.info(
-                f"Bypass installation complete: {successful_bypasses} techniques installed successfully"
-            )
+            self.logger.info(f"Bypass installation complete: {successful_bypasses} techniques installed successfully")
 
             return results
 
@@ -820,7 +810,7 @@ class AdvancedDebuggerBypass:
 
 
 def install_advanced_bypass(scyllahide_resistant: bool = True) -> dict[str, Any]:
-    """Convenience function to install advanced anti-anti-debug bypass.
+    """Install advanced anti-anti-debug bypass.
 
     Args:
         scyllahide_resistant: Use ScyllaHide-resistant techniques

@@ -27,18 +27,21 @@ try:
     import claripy
     from angr import Project, SimState
     from angr.exploration_techniques import DFS, ExplorationTechnique
+
     ANGR_AVAILABLE = True
 except ImportError:
     ANGR_AVAILABLE = False
 
 try:
     from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
+
     CAPSTONE_AVAILABLE = True
 except ImportError:
     CAPSTONE_AVAILABLE = False
 
 try:
     from keystone import KS_ARCH_X86, KS_MODE_32, KS_MODE_64, Ks
+
     KEYSTONE_AVAILABLE = True
 except ImportError:
     KEYSTONE_AVAILABLE = False
@@ -49,6 +52,8 @@ logger = get_logger(__name__)
 
 
 class ExplorationStrategy(Enum):
+    """Enumeration of VM exploration strategies."""
+
     DFS = "depth_first_search"
     BFS = "breadth_first_search"
     GUIDED = "guided_search"
@@ -56,6 +61,8 @@ class ExplorationStrategy(Enum):
 
 
 class VMType(Enum):
+    """Enumeration of supported VM protection types."""
+
     VMPROTECT = "vmprotect"
     THEMIDA = "themida"
     CODE_VIRTUALIZER = "code_virtualizer"
@@ -64,6 +71,8 @@ class VMType(Enum):
 
 
 class HandlerSemantic(Enum):
+    """Enumeration of VM handler semantics."""
+
     STACK_PUSH = "stack_push"
     STACK_POP = "stack_pop"
     ARITHMETIC_ADD = "arithmetic_add"
@@ -73,9 +82,6 @@ class HandlerSemantic(Enum):
     LOGICAL_AND = "logical_and"
     LOGICAL_OR = "logical_or"
     LOGICAL_XOR = "logical_xor"
-    LOGICAL_NOT = "logical_not"
-    SHIFT_LEFT = "shift_left"
-    SHIFT_RIGHT = "shift_right"
     BRANCH_CONDITIONAL = "branch_conditional"
     BRANCH_UNCONDITIONAL = "branch_unconditional"
     CALL = "call"
@@ -88,6 +94,8 @@ class HandlerSemantic(Enum):
 
 @dataclass
 class SymbolicVMContext:
+    """Context for symbolic VM execution state."""
+
     vm_ip_symbolic: Any
     vm_sp_symbolic: Any
     vm_stack_symbolic: Any
@@ -99,6 +107,8 @@ class SymbolicVMContext:
 
 @dataclass
 class LiftedHandler:
+    """Lifted VM handler with semantic information."""
+
     handler_address: int
     semantic: HandlerSemantic
     symbolic_effects: List[Tuple[str, Any]]
@@ -112,6 +122,8 @@ class LiftedHandler:
 
 @dataclass
 class DevirtualizedBlock:
+    """Devirtualized VM code block."""
+
     original_vm_entry: int
     original_vm_exit: int
     vm_bytecode: bytes
@@ -126,6 +138,8 @@ class DevirtualizedBlock:
 
 @dataclass
 class DevirtualizationResult:
+    """Result of VM devirtualization analysis."""
+
     vm_type: VMType
     architecture: str
     vm_entry_point: int
@@ -141,40 +155,48 @@ class DevirtualizationResult:
 
 
 class GuidedVMExploration(ExplorationTechnique):
+    """Guided exploration technique for VM devirtualization."""
+
     def __init__(self, vm_dispatcher: int, handler_table: int, max_depth: int = 100):
+        """Initialize guided VM exploration."""
         super().__init__()
         self.vm_dispatcher = vm_dispatcher
         self.handler_table = handler_table
         self.max_depth = max_depth
         self.visited_handlers = set()
 
-    def step(self, exploration_mgr, stash='active', **kwargs):
+    def step(self, exploration_mgr, stash="active", **kwargs):
+        """Perform guided exploration step."""
         exploration_mgr = exploration_mgr.step(stash=stash, **kwargs)
 
         if stash in exploration_mgr.stashes:
             for state in exploration_mgr.stashes[stash]:
                 if state.history.depth > self.max_depth:
                     exploration_mgr.stashes[stash].remove(state)
-                    if 'pruned' not in exploration_mgr.stashes:
-                        exploration_mgr.stashes['pruned'] = []
-                    exploration_mgr.stashes['pruned'].append(state)
+                    if "pruned" not in exploration_mgr.stashes:
+                        exploration_mgr.stashes["pruned"] = []
+                    exploration_mgr.stashes["pruned"].append(state)
 
         return exploration_mgr
 
 
 class PathExplosionMitigation(ExplorationTechnique):
+    """Mitigation technique for path explosion in symbolic execution."""
+
     def __init__(self, max_active: int = 50, max_total: int = 500):
+        """Initialize path explosion mitigation."""
         super().__init__()
         self.max_active = max_active
         self.max_total = max_total
         self.total_stepped = 0
 
-    def step(self, exploration_mgr, stash='active', **kwargs):
+    def step(self, exploration_mgr, stash="active", **kwargs):
+        """Perform path explosion mitigation step."""
         if self.total_stepped >= self.max_total:
             return exploration_mgr
 
         if stash in exploration_mgr.stashes and len(exploration_mgr.stashes[stash]) > self.max_active:
-            exploration_mgr.stashes[stash] = exploration_mgr.stashes[stash][:self.max_active]
+            exploration_mgr.stashes[stash] = exploration_mgr.stashes[stash][: self.max_active]
 
         exploration_mgr = exploration_mgr.step(stash=stash, **kwargs)
         self.total_stepped += 1
@@ -183,7 +205,10 @@ class PathExplosionMitigation(ExplorationTechnique):
 
 
 class SymbolicDevirtualizer:
+    """Symbolic devirtualizer for VM-protected code."""
+
     def __init__(self, binary_path: str):
+        """Initialize the symbolic devirtualizer."""
         if not ANGR_AVAILABLE:
             raise ImportError("angr framework required for symbolic devirtualization")
 
@@ -214,18 +239,16 @@ class SymbolicDevirtualizer:
         vm_type: VMType = VMType.UNKNOWN,
         exploration_strategy: ExplorationStrategy = ExplorationStrategy.GUIDED,
         max_paths: int = 500,
-        timeout_seconds: int = 300
+        timeout_seconds: int = 300,
     ) -> DevirtualizationResult:
+        """Perform symbolic devirtualization of VM-protected code."""
         import time
+
         start_time = time.time()
 
         logger.info(f"Starting symbolic devirtualization at entry point 0x{vm_entry_point:x}")
 
-        self.project = angr.Project(
-            self.binary_path,
-            auto_load_libs=False,
-            load_options={'main_opts': {'base_addr': 0}}
-        )
+        self.project = angr.Project(self.binary_path, auto_load_libs=False, load_options={"main_opts": {"base_addr": 0}})
 
         self.architecture = "x64" if self.project.arch.bits == 64 else "x86"
         self.vm_type = vm_type if vm_type != VMType.UNKNOWN else self._detect_vm_type()
@@ -248,12 +271,7 @@ class SymbolicDevirtualizer:
 
         logger.info(f"Lifted {len(self.lifted_handlers)} handlers with symbolic execution")
 
-        devirtualized_blocks = self._trace_vm_execution(
-            vm_entry_point,
-            exploration_strategy,
-            max_paths,
-            timeout_seconds
-        )
+        devirtualized_blocks = self._trace_vm_execution(vm_entry_point, exploration_strategy, max_paths, timeout_seconds)
 
         elapsed = time.time() - start_time
 
@@ -275,13 +293,13 @@ class SymbolicDevirtualizer:
             overall_confidence=overall_confidence,
             analysis_time_seconds=elapsed,
             technical_details={
-                'exploration_strategy': exploration_strategy.value,
-                'max_paths_limit': max_paths,
-                'timeout_limit': timeout_seconds,
-                'handlers_discovered': len(handler_addresses),
-                'handlers_lifted': len(self.lifted_handlers),
-                'blocks_devirtualized': len(devirtualized_blocks)
-            }
+                "exploration_strategy": exploration_strategy.value,
+                "max_paths_limit": max_paths,
+                "timeout_limit": timeout_seconds,
+                "handlers_discovered": len(handler_addresses),
+                "handlers_lifted": len(self.lifted_handlers),
+                "blocks_devirtualized": len(devirtualized_blocks),
+            },
         )
 
         logger.info(f"Devirtualization complete in {elapsed:.2f}s - Confidence: {overall_confidence:.1f}%")
@@ -289,14 +307,14 @@ class SymbolicDevirtualizer:
         return result
 
     def _detect_vm_type(self) -> VMType:
-        with open(self.binary_path, 'rb') as f:
+        with open(self.binary_path, "rb") as f:
             data = f.read()
 
-        if b'.vmp' in data or b'VMProtect' in data:
+        if b".vmp" in data or b"VMProtect" in data:
             return VMType.VMPROTECT
-        elif b'.themida' in data or b'Themida' in data or b'WinLicense' in data:
+        elif b".themida" in data or b"Themida" in data or b"WinLicense" in data:
             return VMType.THEMIDA
-        elif b'Code Virtualizer' in data or b'.cvirt' in data:
+        elif b"Code Virtualizer" in data or b".cvirt" in data:
             return VMType.CODE_VIRTUALIZER
 
         return VMType.GENERIC
@@ -307,11 +325,7 @@ class SymbolicDevirtualizer:
         exploration_manager = self.project.factory.simgr(initial_state)
 
         try:
-            exploration_manager.explore(
-                find=lambda s: self._is_dispatcher_state(s),
-                num_find=1,
-                n=100
-            )
+            exploration_manager.explore(find=lambda s: self._is_dispatcher_state(s), num_find=1, n=100)
 
             if exploration_manager.found:
                 dispatcher_addr = exploration_manager.found[0].addr
@@ -330,27 +344,20 @@ class SymbolicDevirtualizer:
 
         indirect_jumps = 0
         for insn in block.capstone.insns:
-            if insn.mnemonic == 'jmp' and '[' in insn.op_str:
+            if insn.mnemonic == "jmp" and "[" in insn.op_str:
                 indirect_jumps += 1
 
         return indirect_jumps >= 1
 
     def _find_dispatcher_pattern(self) -> Optional[int]:
-        with open(self.binary_path, 'rb') as f:
+        with open(self.binary_path, "rb") as f:
             data = f.read()
 
-        patterns_x86 = [
-            b'\xff\x24\x85',
-            b'\xff\x24\x8d'
-        ]
+        patterns_x86 = [b"\xff\x24\x85", b"\xff\x24\x8d"]
 
-        patterns_x64 = [
-            b'\xff\x24\xc5',
-            b'\xff\x24\xcd',
-            b'\x41\xff\x24\xc5'
-        ]
+        patterns_x64 = [b"\xff\x24\xc5", b"\xff\x24\xcd", b"\x41\xff\x24\xc5"]
 
-        patterns = patterns_x64 if self.architecture == 'x64' else patterns_x86
+        patterns = patterns_x64 if self.architecture == "x64" else patterns_x86
 
         for pattern in patterns:
             offset = data.find(pattern)
@@ -367,11 +374,12 @@ class SymbolicDevirtualizer:
             block = self.project.factory.block(self.vm_dispatcher)
 
             for insn in block.capstone.insns:
-                if insn.mnemonic == 'jmp' and '[' in insn.op_str:
+                if insn.mnemonic == "jmp" and "[" in insn.op_str:
                     operand_str = insn.op_str
 
                     import re
-                    addr_match = re.search(r'0x([0-9a-fA-F]+)', operand_str)
+
+                    addr_match = re.search(r"0x([0-9a-fA-F]+)", operand_str)
                     if addr_match:
                         table_addr = int(addr_match.group(1), 16)
                         logger.debug(f"Found handler table at 0x{table_addr:x}")
@@ -382,10 +390,10 @@ class SymbolicDevirtualizer:
         return self._scan_for_pointer_table()
 
     def _scan_for_pointer_table(self) -> Optional[int]:
-        with open(self.binary_path, 'rb') as f:
+        with open(self.binary_path, "rb") as f:
             data = f.read()
 
-        ptr_size = 8 if self.architecture == 'x64' else 4
+        ptr_size = 8 if self.architecture == "x64" else 4
         min_entries = 16
 
         for offset in range(0, len(data) - min_entries * ptr_size, ptr_size):
@@ -398,10 +406,10 @@ class SymbolicDevirtualizer:
                     break
 
                 if ptr_size == 4:
-                    ptr_val = struct.unpack('<I', data[ptr_offset:ptr_offset+4])[0]
+                    ptr_val = struct.unpack("<I", data[ptr_offset : ptr_offset + 4])[0]
                     valid = 0x1000 < ptr_val < 0x10000000
                 else:
-                    ptr_val = struct.unpack('<Q', data[ptr_offset:ptr_offset+8])[0]
+                    ptr_val = struct.unpack("<Q", data[ptr_offset : ptr_offset + 8])[0]
                     valid = 0x1000 < ptr_val < 0x7FFFFFFFFFFF
 
                 if valid:
@@ -428,10 +436,10 @@ class SymbolicDevirtualizer:
     def _read_handler_table(self) -> List[int]:
         handlers = []
 
-        with open(self.binary_path, 'rb') as f:
+        with open(self.binary_path, "rb") as f:
             f.seek(self.handler_table)
 
-            ptr_size = 8 if self.architecture == 'x64' else 4
+            ptr_size = 8 if self.architecture == "x64" else 4
             max_handlers = 256
 
             for _ in range(max_handlers):
@@ -440,10 +448,10 @@ class SymbolicDevirtualizer:
                     break
 
                 if ptr_size == 4:
-                    handler_addr = struct.unpack('<I', ptr_data)[0]
+                    handler_addr = struct.unpack("<I", ptr_data)[0]
                     valid = 0x1000 < handler_addr < 0x10000000
                 else:
-                    handler_addr = struct.unpack('<Q', ptr_data)[0]
+                    handler_addr = struct.unpack("<Q", ptr_data)[0]
                     valid = 0x1000 < handler_addr < 0x7FFFFFFFFFFF
 
                 if valid:
@@ -461,10 +469,7 @@ class SymbolicDevirtualizer:
 
             exec_manager = self.project.factory.simgr(state)
             target_dispatcher = self.vm_dispatcher
-            exec_manager.explore(
-                n=100,
-                find=lambda s: s.addr != target_dispatcher
-            )
+            exec_manager.explore(n=100, find=lambda s: s.addr != target_dispatcher)
 
             for found_state in exec_manager.found + exec_manager.active:
                 try:
@@ -472,7 +477,7 @@ class SymbolicDevirtualizer:
                     if 0x1000 < addr < 0x7FFFFFFFFFFF and addr not in handlers:
                         handlers.append(addr)
 
-                    if hasattr(found_state.regs, 'rip') and found_state.regs.rip.symbolic:
+                    if hasattr(found_state.regs, "rip") and found_state.regs.rip.symbolic:
                         solutions = found_state.solver.eval_upto(found_state.regs.rip, 10)
                         for solution in solutions:
                             if 0x1000 < solution < 0x7FFFFFFFFFFF and solution not in handlers:
@@ -497,11 +502,11 @@ class SymbolicDevirtualizer:
                 add_options={
                     angr.options.SYMBOLIC_WRITE_ADDRESSES,
                     angr.options.SYMBOLIC,
-                }
+                },
             )
 
-            vm_stack = claripy.BVS('vm_stack', 64 * 8)
-            vm_ip = claripy.BVS('vm_ip', self.project.arch.bits)
+            vm_stack = claripy.BVS("vm_stack", 64 * 8)
+            vm_ip = claripy.BVS("vm_ip", self.project.arch.bits)
 
             if self.project.arch.bits == 64:
                 state.regs.rip = vm_ip
@@ -531,7 +536,7 @@ class SymbolicDevirtualizer:
                             try:
                                 reg_val = final_state.registers.load(reg_name)
                                 if reg_val.symbolic:
-                                    symbolic_effects.append((f'reg_{reg_name}', reg_val))
+                                    symbolic_effects.append((f"reg_{reg_name}", reg_val))
                             except (KeyError, AttributeError, angr.errors.SimValueError) as e:
                                 logger.debug(f"Register {reg_name} not accessible: {e}")
                                 continue
@@ -540,18 +545,9 @@ class SymbolicDevirtualizer:
 
             semantic = self._infer_handler_semantic(handler_addr, symbolic_effects, constraints)
 
-            native_code, assembly = self._translate_handler_to_native(
-                handler_addr,
-                semantic,
-                symbolic_effects
-            )
+            native_code, assembly = self._translate_handler_to_native(handler_addr, semantic, symbolic_effects)
 
-            confidence = self._calculate_handler_confidence(
-                semantic,
-                symbolic_effects,
-                constraints,
-                native_code
-            )
+            confidence = self._calculate_handler_confidence(semantic, symbolic_effects, constraints, native_code)
 
             return LiftedHandler(
                 handler_address=handler_addr,
@@ -562,58 +558,53 @@ class SymbolicDevirtualizer:
                 assembly_code=assembly,
                 confidence=confidence,
                 operand_count=len(symbolic_effects),
-                operand_types=[type(effect[1]).__name__ for effect in symbolic_effects]
+                operand_types=[type(effect[1]).__name__ for effect in symbolic_effects],
             )
 
         except Exception as e:
             logger.debug(f"Handler lifting failed at 0x{handler_addr:x}: {e}")
             return None
 
-    def _infer_handler_semantic(
-        self,
-        handler_addr: int,
-        effects: List[Tuple[str, Any]],
-        constraints: List[Any]
-    ) -> HandlerSemantic:
+    def _infer_handler_semantic(self, handler_addr: int, effects: List[Tuple[str, Any]], constraints: List[Any]) -> HandlerSemantic:
         try:
             block = self.project.factory.block(handler_addr)
 
             mnemonics = [insn.mnemonic for insn in block.capstone.insns]
 
-            if 'push' in mnemonics:
+            if "push" in mnemonics:
                 return HandlerSemantic.STACK_PUSH
-            elif 'pop' in mnemonics:
+            elif "pop" in mnemonics:
                 return HandlerSemantic.STACK_POP
-            elif 'add' in mnemonics:
+            elif "add" in mnemonics:
                 return HandlerSemantic.ARITHMETIC_ADD
-            elif 'sub' in mnemonics:
+            elif "sub" in mnemonics:
                 return HandlerSemantic.ARITHMETIC_SUB
-            elif any(m in mnemonics for m in ['mul', 'imul']):
+            elif any(m in mnemonics for m in ["mul", "imul"]):
                 return HandlerSemantic.ARITHMETIC_MUL
-            elif any(m in mnemonics for m in ['div', 'idiv']):
+            elif any(m in mnemonics for m in ["div", "idiv"]):
                 return HandlerSemantic.ARITHMETIC_DIV
-            elif 'and' in mnemonics:
+            elif "and" in mnemonics:
                 return HandlerSemantic.LOGICAL_AND
-            elif 'or' in mnemonics:
+            elif "or" in mnemonics:
                 return HandlerSemantic.LOGICAL_OR
-            elif 'xor' in mnemonics:
+            elif "xor" in mnemonics:
                 return HandlerSemantic.LOGICAL_XOR
-            elif 'not' in mnemonics:
+            elif "not" in mnemonics:
                 return HandlerSemantic.LOGICAL_NOT
-            elif 'shl' in mnemonics or 'sal' in mnemonics:
+            elif "shl" in mnemonics or "sal" in mnemonics:
                 return HandlerSemantic.SHIFT_LEFT
-            elif 'shr' in mnemonics or 'sar' in mnemonics:
+            elif "shr" in mnemonics or "sar" in mnemonics:
                 return HandlerSemantic.SHIFT_RIGHT
-            elif any(m.startswith('j') for m in mnemonics if m != 'jmp'):
+            elif any(m.startswith("j") for m in mnemonics if m != "jmp"):
                 return HandlerSemantic.BRANCH_CONDITIONAL
-            elif 'jmp' in mnemonics:
+            elif "jmp" in mnemonics:
                 return HandlerSemantic.BRANCH_UNCONDITIONAL
-            elif 'call' in mnemonics:
+            elif "call" in mnemonics:
                 return HandlerSemantic.CALL
-            elif 'ret' in mnemonics:
+            elif "ret" in mnemonics:
                 return HandlerSemantic.RETURN
-            elif any(m in mnemonics for m in ['mov', 'movzx', 'movsx']) and '[' in str(block.capstone.insns):
-                if any('esp' in str(insn) or 'rsp' in str(insn) for insn in block.capstone.insns):
+            elif any(m in mnemonics for m in ["mov", "movzx", "movsx"]) and "[" in str(block.capstone.insns):
+                if any("esp" in str(insn) or "rsp" in str(insn) for insn in block.capstone.insns):
                     return HandlerSemantic.MEMORY_LOAD
                 else:
                     return HandlerSemantic.MEMORY_STORE
@@ -623,30 +614,27 @@ class SymbolicDevirtualizer:
         return HandlerSemantic.UNKNOWN
 
     def _translate_handler_to_native(
-        self,
-        handler_addr: int,
-        semantic: HandlerSemantic,
-        effects: List[Tuple[str, Any]]
+        self, handler_addr: int, semantic: HandlerSemantic, effects: List[Tuple[str, Any]]
     ) -> Tuple[Optional[bytes], List[str]]:
         semantic_to_asm = {
-            HandlerSemantic.STACK_PUSH: ("push eax", b'\x50'),
-            HandlerSemantic.STACK_POP: ("pop eax", b'\x58'),
-            HandlerSemantic.ARITHMETIC_ADD: ("add eax, ebx", b'\x01\xd8'),
-            HandlerSemantic.ARITHMETIC_SUB: ("sub eax, ebx", b'\x29\xd8'),
-            HandlerSemantic.ARITHMETIC_MUL: ("imul eax, ebx", b'\x0f\xaf\xc3'),
-            HandlerSemantic.ARITHMETIC_DIV: ("idiv ebx", b'\xf7\xfb'),
-            HandlerSemantic.LOGICAL_AND: ("and eax, ebx", b'\x21\xd8'),
-            HandlerSemantic.LOGICAL_OR: ("or eax, ebx", b'\x09\xd8'),
-            HandlerSemantic.LOGICAL_XOR: ("xor eax, ebx", b'\x31\xd8'),
-            HandlerSemantic.LOGICAL_NOT: ("not eax", b'\xf7\xd0'),
-            HandlerSemantic.SHIFT_LEFT: ("shl eax, cl", b'\xd3\xe0'),
-            HandlerSemantic.SHIFT_RIGHT: ("shr eax, cl", b'\xd3\xe8'),
-            HandlerSemantic.BRANCH_CONDITIONAL: ("jz 0x00", b'\x74\x00'),
-            HandlerSemantic.BRANCH_UNCONDITIONAL: ("jmp 0x00", b'\xeb\x00'),
-            HandlerSemantic.CALL: ("call 0x00000000", b'\xe8\x00\x00\x00\x00'),
-            HandlerSemantic.RETURN: ("ret", b'\xc3'),
-            HandlerSemantic.MEMORY_LOAD: ("mov eax, [ebx]", b'\x8b\x03'),
-            HandlerSemantic.MEMORY_STORE: ("mov [ebx], eax", b'\x89\x03'),
+            HandlerSemantic.STACK_PUSH: ("push eax", b"\x50"),
+            HandlerSemantic.STACK_POP: ("pop eax", b"\x58"),
+            HandlerSemantic.ARITHMETIC_ADD: ("add eax, ebx", b"\x01\xd8"),
+            HandlerSemantic.ARITHMETIC_SUB: ("sub eax, ebx", b"\x29\xd8"),
+            HandlerSemantic.ARITHMETIC_MUL: ("imul eax, ebx", b"\x0f\xaf\xc3"),
+            HandlerSemantic.ARITHMETIC_DIV: ("idiv ebx", b"\xf7\xfb"),
+            HandlerSemantic.LOGICAL_AND: ("and eax, ebx", b"\x21\xd8"),
+            HandlerSemantic.LOGICAL_OR: ("or eax, ebx", b"\x09\xd8"),
+            HandlerSemantic.LOGICAL_XOR: ("xor eax, ebx", b"\x31\xd8"),
+            HandlerSemantic.LOGICAL_NOT: ("not eax", b"\xf7\xd0"),
+            HandlerSemantic.SHIFT_LEFT: ("shl eax, cl", b"\xd3\xe0"),
+            HandlerSemantic.SHIFT_RIGHT: ("shr eax, cl", b"\xd3\xe8"),
+            HandlerSemantic.BRANCH_CONDITIONAL: ("jz 0x00", b"\x74\x00"),
+            HandlerSemantic.BRANCH_UNCONDITIONAL: ("jmp 0x00", b"\xeb\x00"),
+            HandlerSemantic.CALL: ("call 0x00000000", b"\xe8\x00\x00\x00\x00"),
+            HandlerSemantic.RETURN: ("ret", b"\xc3"),
+            HandlerSemantic.MEMORY_LOAD: ("mov eax, [ebx]", b"\x8b\x03"),
+            HandlerSemantic.MEMORY_STORE: ("mov [ebx], eax", b"\x89\x03"),
         }
 
         if semantic in semantic_to_asm:
@@ -662,11 +650,7 @@ class SymbolicDevirtualizer:
             return None, [f"unknown_handler_0x{handler_addr:x}"]
 
     def _calculate_handler_confidence(
-        self,
-        semantic: HandlerSemantic,
-        effects: List[Tuple[str, Any]],
-        constraints: List[Any],
-        native_code: Optional[bytes]
+        self, semantic: HandlerSemantic, effects: List[Tuple[str, Any]], constraints: List[Any], native_code: Optional[bytes]
     ) -> float:
         confidence = 50.0
 
@@ -685,11 +669,7 @@ class SymbolicDevirtualizer:
         return min(confidence, 100.0)
 
     def _trace_vm_execution(
-        self,
-        entry_point: int,
-        strategy: ExplorationStrategy,
-        max_paths: int,
-        timeout: int
+        self, entry_point: int, strategy: ExplorationStrategy, max_paths: int, timeout: int
     ) -> List[DevirtualizedBlock]:
         blocks = []
 
@@ -699,26 +679,15 @@ class SymbolicDevirtualizer:
                 add_options={
                     angr.options.SYMBOLIC,
                     angr.options.TRACK_CONSTRAINTS,
-                }
+                },
             )
 
             exploration_manager = self.project.factory.simgr(state)
 
             if self.vm_dispatcher and self.handler_table:
-                exploration_manager.use_technique(
-                    GuidedVMExploration(
-                        self.vm_dispatcher,
-                        self.handler_table,
-                        max_depth=max_paths
-                    )
-                )
+                exploration_manager.use_technique(GuidedVMExploration(self.vm_dispatcher, self.handler_table, max_depth=max_paths))
 
-            exploration_manager.use_technique(
-                PathExplosionMitigation(
-                    max_active=50,
-                    max_total=max_paths
-                )
-            )
+            exploration_manager.use_technique(PathExplosionMitigation(max_active=50, max_total=max_paths))
 
             if strategy == ExplorationStrategy.DFS:
                 exploration_manager.use_technique(DFS())
@@ -758,11 +727,7 @@ class SymbolicDevirtualizer:
 
         return blocks
 
-    def _reconstruct_block_from_state(
-        self,
-        state: SimState,
-        entry: int
-    ) -> Optional[DevirtualizedBlock]:
+    def _reconstruct_block_from_state(self, state: SimState, entry: int) -> Optional[DevirtualizedBlock]:
         try:
             path_addrs = [addr for addr in state.history.bbl_addrs]
 
@@ -786,21 +751,21 @@ class SymbolicDevirtualizer:
 
             cf_edges = []
             for i in range(len(path_addrs) - 1):
-                cf_edges.append((path_addrs[i], path_addrs[i+1]))
+                cf_edges.append((path_addrs[i], path_addrs[i + 1]))
 
             avg_confidence = sum(h.confidence for h in lifted_seq) / len(lifted_seq) if lifted_seq else 0.0
 
             return DevirtualizedBlock(
                 original_vm_entry=entry,
                 original_vm_exit=state.addr,
-                vm_bytecode=b'',
+                vm_bytecode=b"",
                 handlers_executed=handlers_exec,
                 lifted_semantics=lifted_seq,
                 native_code=bytes(native_code),
                 assembly=assembly,
                 control_flow_edges=cf_edges,
                 confidence=avg_confidence,
-                execution_paths=1
+                execution_paths=1,
             )
 
         except Exception as e:
@@ -823,36 +788,16 @@ class SymbolicDevirtualizer:
         return min(avg_confidence + bonus, 100.0)
 
 
-def devirtualize_vmprotect(
-    binary_path: str,
-    vm_entry_point: int,
-    max_paths: int = 500,
-    timeout: int = 300
-) -> DevirtualizationResult:
+def devirtualize_vmprotect(binary_path: str, vm_entry_point: int, max_paths: int = 500, timeout: int = 300) -> DevirtualizationResult:
+    """Devirtualize VMProtect-protected binary."""
     devirt = SymbolicDevirtualizer(binary_path)
-    return devirt.devirtualize(
-        vm_entry_point,
-        VMType.VMPROTECT,
-        ExplorationStrategy.GUIDED,
-        max_paths,
-        timeout
-    )
+    return devirt.devirtualize(vm_entry_point, VMType.VMPROTECT, ExplorationStrategy.GUIDED, max_paths, timeout)
 
 
-def devirtualize_themida(
-    binary_path: str,
-    vm_entry_point: int,
-    max_paths: int = 500,
-    timeout: int = 300
-) -> DevirtualizationResult:
+def devirtualize_themida(binary_path: str, vm_entry_point: int, max_paths: int = 500, timeout: int = 300) -> DevirtualizationResult:
+    """Devirtualize Themida-protected binary."""
     devirt = SymbolicDevirtualizer(binary_path)
-    return devirt.devirtualize(
-        vm_entry_point,
-        VMType.THEMIDA,
-        ExplorationStrategy.GUIDED,
-        max_paths,
-        timeout
-    )
+    return devirt.devirtualize(vm_entry_point, VMType.THEMIDA, ExplorationStrategy.GUIDED, max_paths, timeout)
 
 
 def devirtualize_generic(
@@ -860,13 +805,8 @@ def devirtualize_generic(
     vm_entry_point: int,
     exploration_strategy: ExplorationStrategy = ExplorationStrategy.DFS,
     max_paths: int = 500,
-    timeout: int = 300
+    timeout: int = 300,
 ) -> DevirtualizationResult:
+    """Devirtualize generically protected binary."""
     devirt = SymbolicDevirtualizer(binary_path)
-    return devirt.devirtualize(
-        vm_entry_point,
-        VMType.GENERIC,
-        exploration_strategy,
-        max_paths,
-        timeout
-    )
+    return devirt.devirtualize(vm_entry_point, VMType.GENERIC, exploration_strategy, max_paths, timeout)

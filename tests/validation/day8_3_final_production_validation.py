@@ -149,7 +149,7 @@ class FinalProductionValidator:
                 shellcode = gen.generate_shellcode("x86", "reverse_shell", {"host": "127.0.0.1", "port": 4444})
                 test_passed = True
             except AttributeError:
-                pass
+                # Method may not exist, try alternative methods
 
             # Try method 2: generate
             if not test_passed:
@@ -282,7 +282,7 @@ class FinalProductionValidator:
                         try:
                             result = {"technique": bypass.techniques[0] if hasattr(bypass, 'techniques') and bypass.techniques else "shadow_stack_pivot"}
                         except:
-                            pass
+                            # Technique access may fail, use default
 
             if result and isinstance(result, dict) and "technique" in result:
                 print(f"  ✅ CET bypass technique: {result['technique']}")

@@ -128,7 +128,7 @@ class TestAIAssistantTab:
                     qtbot.wait(300)
             except Exception:
                 # Handle AI generation errors gracefully
-                pass
+                # Continue with test even if generation fails
 
     def test_code_templates_real_presets(self, qtbot):
         """Test REAL code templates and preset functionality."""

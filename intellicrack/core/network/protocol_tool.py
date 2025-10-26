@@ -45,12 +45,12 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-PYQT6_AVAILABLE = True
-
 # Import protocol parsers for real functionality
 from intellicrack.core.network import protocols
 from intellicrack.core.network.protocol_fingerprinter import ProtocolFingerprinter
 from intellicrack.core.network.traffic_interception_engine import TrafficInterceptionEngine
+
+PYQT6_AVAILABLE = True
 
 logger = logging.getLogger(__name__)
 

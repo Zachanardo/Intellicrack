@@ -28,6 +28,7 @@ from typing import Any
 
 try:
     import capstone
+
     CAPSTONE_AVAILABLE = True
 except ImportError:
     CAPSTONE_AVAILABLE = False
@@ -35,6 +36,7 @@ except ImportError:
 
 try:
     import lief
+
     LIEF_AVAILABLE = True
 except ImportError:
     LIEF_AVAILABLE = False
@@ -42,6 +44,7 @@ except ImportError:
 
 try:
     import pefile
+
     PEFILE_AVAILABLE = True
 except ImportError:
     PEFILE_AVAILABLE = False
@@ -273,9 +276,7 @@ class ArxanAnalyzer:
 
         return result
 
-    def _analyze_tamper_checks(
-        self, binary_path: Path, binary_data: bytes
-    ) -> list[TamperCheckLocation]:
+    def _analyze_tamper_checks(self, binary_path: Path, binary_data: bytes) -> list[TamperCheckLocation]:
         """Analyze anti-tampering mechanisms."""
         tamper_checks = []
 
@@ -300,13 +301,11 @@ class ArxanAnalyzer:
                     )
                     tamper_checks.append(tamper_check)
 
-                    self.logger.debug(
-                        f"Found {check_type} tamper check at 0x{pos:x}"
-                    )
+                    self.logger.debug(f"Found {check_type} tamper check at 0x{pos:x}")
 
                     offset = pos + 1
 
-        if binary_path.suffix.lower() in ['.exe', '.dll', '.sys'] and PEFILE_AVAILABLE:
+        if binary_path.suffix.lower() in [".exe", ".dll", ".sys"] and PEFILE_AVAILABLE:
             try:
                 pe = pefile.PE(str(binary_path))
 
@@ -315,9 +314,7 @@ class ArxanAnalyzer:
                         section_data = section.get_data()
                         section_va = section.VirtualAddress
 
-                        self._scan_section_for_tamper_checks(
-                            section_data, section_va, tamper_checks
-                        )
+                        self._scan_section_for_tamper_checks(section_data, section_va, tamper_checks)
 
                 pe.close()
 
@@ -326,9 +323,7 @@ class ArxanAnalyzer:
 
         return tamper_checks
 
-    def _scan_section_for_tamper_checks(
-        self, section_data: bytes, section_va: int, tamper_checks: list[TamperCheckLocation]
-    ) -> None:
+    def _scan_section_for_tamper_checks(self, section_data: bytes, section_va: int, tamper_checks: list[TamperCheckLocation]) -> None:
         """Scan executable section for tamper check patterns."""
         memory_read_patterns = [
             b"\x8b\x45",
@@ -339,7 +334,7 @@ class ArxanAnalyzer:
         ]
 
         for i in range(0, len(section_data) - 20, 4):
-            chunk = section_data[i:i + 20]
+            chunk = section_data[i : i + 20]
 
             if any(pattern in chunk for pattern in memory_read_patterns):
                 if b"\x33" in chunk or b"\x35" in chunk:
@@ -353,9 +348,7 @@ class ArxanAnalyzer:
                     )
                     tamper_checks.append(tamper_check)
 
-    def _analyze_control_flow(
-        self, binary_path: Path, binary_data: bytes
-    ) -> ControlFlowAnalysis:
+    def _analyze_control_flow(self, binary_path: Path, binary_data: bytes) -> ControlFlowAnalysis:
         """Analyze control flow obfuscation."""
         analysis = ControlFlowAnalysis()
 
@@ -392,7 +385,7 @@ class ArxanAnalyzer:
             analysis.control_flow_flattening = True
 
         try:
-            if binary_path.suffix.lower() in ['.exe', '.dll', '.sys'] and PEFILE_AVAILABLE:
+            if binary_path.suffix.lower() in [".exe", ".dll", ".sys"] and PEFILE_AVAILABLE:
                 pe = pefile.PE(str(binary_path))
 
                 for section in pe.sections:
@@ -407,15 +400,9 @@ class ArxanAnalyzer:
             self.logger.debug(f"Control flow analysis error: {e}")
 
         total_instructions = len(binary_data) // 4
-        obfuscated_instructions = (
-            len(analysis.opaque_predicates)
-            + len(analysis.indirect_jumps)
-            + len(analysis.junk_code_blocks) * 10
-        )
+        obfuscated_instructions = len(analysis.opaque_predicates) + len(analysis.indirect_jumps) + len(analysis.junk_code_blocks) * 10
 
-        analysis.obfuscation_density = min(
-            obfuscated_instructions / max(total_instructions, 1), 1.0
-        )
+        analysis.obfuscation_density = min(obfuscated_instructions / max(total_instructions, 1), 1.0)
 
         return analysis
 
@@ -432,7 +419,7 @@ class ArxanAnalyzer:
         ]
 
         for i in range(0, len(section_data) - 50, 10):
-            chunk = section_data[i:i + 50]
+            chunk = section_data[i : i + 50]
 
             if any(pattern in chunk for pattern in junk_patterns):
                 junk_blocks.append((section_va + i, 50))
@@ -473,9 +460,7 @@ class ArxanAnalyzer:
                     )
                     rasp_mechanisms.append(rasp)
 
-                    self.logger.debug(
-                        f"Found RASP mechanism: {mechanism_type} at 0x{pos:x}"
-                    )
+                    self.logger.debug(f"Found RASP mechanism: {mechanism_type} at 0x{pos:x}")
 
                     offset = pos + 1
 
@@ -514,9 +499,7 @@ class ArxanAnalyzer:
 
         return handler_addresses
 
-    def _analyze_license_validation(
-        self, binary_path: Path, binary_data: bytes
-    ) -> list[LicenseValidationRoutine]:
+    def _analyze_license_validation(self, binary_path: Path, binary_data: bytes) -> list[LicenseValidationRoutine]:
         """Analyze license validation routines."""
         license_routines = []
 
@@ -552,18 +535,13 @@ class ArxanAnalyzer:
 
                     license_routines.append(routine)
 
-                    self.logger.debug(
-                        f"Found license routine: {validation_type} at 0x{pos:x}"
-                    )
+                    self.logger.debug(f"Found license routine: {validation_type} at 0x{pos:x}")
 
                     offset = pos + 1
 
         license_strings = self._find_license_strings(binary_data)
         for routine in license_routines:
-            nearby_strings = [
-                s for addr, s in license_strings
-                if abs(addr - routine.address) < 0x1000
-            ]
+            nearby_strings = [s for addr, s in license_strings if abs(addr - routine.address) < 0x1000]
             routine.string_references = nearby_strings
 
         return license_routines
@@ -597,16 +575,14 @@ class ArxanAnalyzer:
                     string_val = context.decode("utf-8", errors="ignore")
                     if string_val.strip():
                         found_strings.append((pos, string_val.strip()))
-                except Exception:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error decoding string at position {pos}: {e}")
 
                 offset = pos + 1
 
         return found_strings
 
-    def _analyze_integrity_checks(
-        self, binary_path: Path, binary_data: bytes
-    ) -> list[IntegrityCheckMechanism]:
+    def _analyze_integrity_checks(self, binary_path: Path, binary_data: bytes) -> list[IntegrityCheckMechanism]:
         """Analyze integrity check mechanisms."""
         integrity_checks = []
 
@@ -635,18 +611,14 @@ class ArxanAnalyzer:
                 offset = pos + 1
 
         try:
-            if binary_path.suffix.lower() in ['.exe', '.dll', '.sys'] and PEFILE_AVAILABLE:
+            if binary_path.suffix.lower() in [".exe", ".dll", ".sys"] and PEFILE_AVAILABLE:
                 pe = pefile.PE(str(binary_path))
 
                 if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
                     for entry in pe.DIRECTORY_ENTRY_IMPORT:
                         for imp in entry.imports:
                             if imp.name:
-                                func_name = (
-                                    imp.name.decode()
-                                    if isinstance(imp.name, bytes)
-                                    else imp.name
-                                )
+                                func_name = imp.name.decode() if isinstance(imp.name, bytes) else imp.name
 
                                 if func_name in ["CryptHashData", "CryptVerifySignature"]:
                                     check = IntegrityCheckMechanism(
@@ -696,7 +668,7 @@ class ArxanAnalyzer:
         tables = []
 
         for i in range(0, len(binary_data) - 2048, 256):
-            chunk = binary_data[i:i + 2048]
+            chunk = binary_data[i : i + 2048]
 
             unique_bytes = len(set(chunk))
 

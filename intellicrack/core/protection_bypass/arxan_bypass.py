@@ -30,6 +30,7 @@ from typing import Any
 
 try:
     import capstone
+
     CAPSTONE_AVAILABLE = True
 except ImportError:
     CAPSTONE_AVAILABLE = False
@@ -37,6 +38,7 @@ except ImportError:
 
 try:
     import frida
+
     FRIDA_AVAILABLE = True
 except ImportError:
     FRIDA_AVAILABLE = False
@@ -44,6 +46,7 @@ except ImportError:
 
 try:
     import keystone
+
     KEYSTONE_AVAILABLE = True
 except ImportError:
     KEYSTONE_AVAILABLE = False
@@ -51,6 +54,7 @@ except ImportError:
 
 try:
     import lief
+
     LIEF_AVAILABLE = True
 except ImportError:
     LIEF_AVAILABLE = False
@@ -58,6 +62,7 @@ except ImportError:
 
 try:
     import pefile
+
     PEFILE_AVAILABLE = True
 except ImportError:
     PEFILE_AVAILABLE = False
@@ -161,7 +166,7 @@ class ArxanBypass:
             raise FileNotFoundError(f"Binary not found: {binary_path}")
 
         if output_path is None:
-            output_path = binary_path.with_suffix('.arxan_bypassed' + binary_path.suffix)
+            output_path = binary_path.with_suffix(".arxan_bypassed" + binary_path.suffix)
         else:
             output_path = Path(output_path)
 
@@ -194,7 +199,7 @@ class ArxanBypass:
         self._decrypt_strings(binary_data, analysis_result.encrypted_strings, patches)
 
         try:
-            if binary_path.suffix.lower() in ['.exe', '.dll', '.sys'] and PEFILE_AVAILABLE:
+            if binary_path.suffix.lower() in [".exe", ".dll", ".sys"] and PEFILE_AVAILABLE:
                 pe = pefile.PE(data=bytes(binary_data))
 
                 for patch in patches:
@@ -235,15 +240,9 @@ class ArxanBypass:
 
         result.patches_applied = patches
         result.patched_binary_path = str(output_path)
-        result.license_checks_bypassed = len(
-            [p for p in patches if p.patch_type == "license_bypass"]
-        )
-        result.integrity_checks_neutralized = len(
-            [p for p in patches if p.patch_type == "integrity_bypass"]
-        )
-        result.rasp_mechanisms_defeated = len(
-            [p for p in patches if p.patch_type == "rasp_bypass"]
-        )
+        result.license_checks_bypassed = len([p for p in patches if p.patch_type == "license_bypass"])
+        result.integrity_checks_neutralized = len([p for p in patches if p.patch_type == "integrity_bypass"])
+        result.rasp_mechanisms_defeated = len([p for p in patches if p.patch_type == "rasp_bypass"])
 
         self.logger.info(f"Applied {len(patches)} patches to binary")
         self.logger.info(f"Patched binary saved: {output_path}")
@@ -286,7 +285,7 @@ class ArxanBypass:
                 patch_bytes = self.NOP_OPCODE * min(check.size, 20)
 
             if check.address < len(binary_data):
-                original_bytes = binary_data[check.address:check.address + len(patch_bytes)]
+                original_bytes = binary_data[check.address : check.address + len(patch_bytes)]
 
                 patch = BypassPatch(
                     address=check.address,
@@ -297,9 +296,7 @@ class ArxanBypass:
                 )
                 patches.append(patch)
 
-                self.logger.debug(
-                    f"Patching tamper check at 0x{check.address:x}: {check.algorithm}"
-                )
+                self.logger.debug(f"Patching tamper check at 0x{check.address:x}: {check.algorithm}")
 
     def _bypass_integrity_checks(
         self,
@@ -317,7 +314,7 @@ class ArxanBypass:
                 patch_bytes = self.NOP_OPCODE * 6
 
             if check.address < len(binary_data):
-                original_bytes = binary_data[check.address:check.address + len(patch_bytes)]
+                original_bytes = binary_data[check.address : check.address + len(patch_bytes)]
 
                 patch = BypassPatch(
                     address=check.address,
@@ -328,9 +325,7 @@ class ArxanBypass:
                 )
                 patches.append(patch)
 
-                self.logger.debug(
-                    f"Patching integrity check at 0x{check.address:x}: {check.hash_algorithm}"
-                )
+                self.logger.debug(f"Patching integrity check at 0x{check.address:x}: {check.hash_algorithm}")
 
     def _bypass_license_validation(
         self,
@@ -350,7 +345,7 @@ class ArxanBypass:
                 patch_bytes = b"\xb8\x01\x00\x00\x00\xc3"
 
             if routine.address < len(binary_data):
-                original_bytes = binary_data[routine.address:routine.address + len(patch_bytes)]
+                original_bytes = binary_data[routine.address : routine.address + len(patch_bytes)]
 
                 patch = BypassPatch(
                     address=routine.address,
@@ -361,9 +356,7 @@ class ArxanBypass:
                 )
                 patches.append(patch)
 
-                self.logger.debug(
-                    f"Patching license validation at 0x{routine.address:x}: {routine.validation_type}"
-                )
+                self.logger.debug(f"Patching license validation at 0x{routine.address:x}: {routine.validation_type}")
 
     def _neutralize_rasp(
         self,
@@ -385,7 +378,7 @@ class ArxanBypass:
                 patch_bytes = self.NOP_OPCODE * 6
 
             if rasp.address < len(binary_data):
-                original_bytes = binary_data[rasp.address:rasp.address + len(patch_bytes)]
+                original_bytes = binary_data[rasp.address : rasp.address + len(patch_bytes)]
 
                 patch = BypassPatch(
                     address=rasp.address,
@@ -396,9 +389,7 @@ class ArxanBypass:
                 )
                 patches.append(patch)
 
-                self.logger.debug(
-                    f"Patching RASP mechanism at 0x{rasp.address:x}: {rasp.mechanism_type}"
-                )
+                self.logger.debug(f"Patching RASP mechanism at 0x{rasp.address:x}: {rasp.mechanism_type}")
 
     def _decrypt_strings(
         self,
@@ -411,14 +402,12 @@ class ArxanBypass:
             if address + length > len(binary_data):
                 continue
 
-            encrypted_data = binary_data[address:address + length]
+            encrypted_data = binary_data[address : address + length]
 
             for xor_key in range(1, 256):
                 decrypted = bytes(b ^ xor_key for b in encrypted_data)
 
-                printable_ratio = sum(
-                    1 for b in decrypted if 32 <= b < 127
-                ) / len(decrypted)
+                printable_ratio = sum(1 for b in decrypted if 32 <= b < 127) / len(decrypted)
 
                 if printable_ratio > 0.7:
                     patch = BypassPatch(
@@ -430,9 +419,7 @@ class ArxanBypass:
                     )
                     patches.append(patch)
 
-                    self.logger.debug(
-                        f"Decrypting string at 0x{address:x} with XOR key {xor_key}"
-                    )
+                    self.logger.debug(f"Decrypting string at 0x{address:x} with XOR key {xor_key}")
                     break
 
     def _generate_frida_bypass_script(self, analysis_result) -> str:
@@ -442,104 +429,112 @@ class ArxanBypass:
             "",
         ]
 
-        script_parts.extend([
-            "// Anti-debugging bypass",
-            "var isDebuggerPresent = Module.findExportByName('kernel32.dll', 'IsDebuggerPresent');",
-            "if (isDebuggerPresent) {",
-            "    Interceptor.replace(isDebuggerPresent, new NativeCallback(function() {",
-            "        return 0;",
-            "    }, 'int', []));",
-            "    console.log('[Arxan] Bypassed IsDebuggerPresent');",
-            "}",
-            "",
-            "var checkRemoteDebugger = Module.findExportByName('kernel32.dll', 'CheckRemoteDebuggerPresent');",
-            "if (checkRemoteDebugger) {",
-            "    Interceptor.attach(checkRemoteDebugger, {",
-            "        onEnter: function(args) {",
-            "            this.pbDebuggerPresent = args[1];",
-            "        },",
-            "        onLeave: function(retval) {",
-            "            if (this.pbDebuggerPresent) {",
-            "                this.pbDebuggerPresent.writeU8(0);",
-            "            }",
-            "            retval.replace(1);",
-            "        }",
-            "    });",
-            "    console.log('[Arxan] Bypassed CheckRemoteDebuggerPresent');",
-            "}",
-            "",
-            "var ntQueryInfo = Module.findExportByName('ntdll.dll', 'NtQueryInformationProcess');",
-            "if (ntQueryInfo) {",
-            "    Interceptor.attach(ntQueryInfo, {",
-            "        onEnter: function(args) {",
-            "            this.infoClass = args[1].toInt32();",
-            "            this.info = args[2];",
-            "        },",
-            "        onLeave: function(retval) {",
-            "            if (this.infoClass === 7 || this.infoClass === 30 || this.infoClass === 31) {",
-            "                if (this.info) {",
-            "                    this.info.writePointer(ptr(0));",
-            "                }",
-            "                retval.replace(0);",
-            "            }",
-            "        }",
-            "    });",
-            "    console.log('[Arxan] Bypassed NtQueryInformationProcess');",
-            "}",
-            "",
-        ])
-
-        script_parts.extend([
-            "// Integrity check bypass",
-            "var cryptHashData = Module.findExportByName('Advapi32.dll', 'CryptHashData');",
-            "if (cryptHashData) {",
-            "    Interceptor.replace(cryptHashData, new NativeCallback(function(hHash, pbData, dwDataLen, dwFlags) {",
-            "        return 1;",
-            "    }, 'int', ['pointer', 'pointer', 'uint', 'uint']));",
-            "    console.log('[Arxan] Bypassed CryptHashData');",
-            "}",
-            "",
-            "var cryptVerifySig = Module.findExportByName('Advapi32.dll', 'CryptVerifySignature');",
-            "if (cryptVerifySig) {",
-            "    Interceptor.replace(cryptVerifySig, new NativeCallback(function() {",
-            "        return 1;",
-            "    }, 'int', ['pointer', 'pointer', 'uint', 'pointer', 'pointer', 'uint']));",
-            "    console.log('[Arxan] Bypassed CryptVerifySignature');",
-            "}",
-            "",
-        ])
-
-        for routine in analysis_result.license_routines[:5]:
-            script_parts.extend([
-                f"// License validation bypass at 0x{routine.address:x}",
-                f"var licenseFunc{routine.address:x} = ptr('0x{routine.address:x}');",
-                f"if (licenseFunc{routine.address:x}) {{",
-                "    try {",
-                f"        Interceptor.replace(licenseFunc{routine.address:x}, new NativeCallback(function() {{",
-                f"            console.log('[Arxan] Bypassed license check at 0x{routine.address:x}');",
-                "            return 1;",
-                "        }, 'int', []));",
-                "    } catch(e) {",
-                f"        console.log('[Arxan] Could not hook license function at 0x{routine.address:x}: ' + e);",
-                "    }",
+        script_parts.extend(
+            [
+                "// Anti-debugging bypass",
+                "var isDebuggerPresent = Module.findExportByName('kernel32.dll', 'IsDebuggerPresent');",
+                "if (isDebuggerPresent) {",
+                "    Interceptor.replace(isDebuggerPresent, new NativeCallback(function() {",
+                "        return 0;",
+                "    }, 'int', []));",
+                "    console.log('[Arxan] Bypassed IsDebuggerPresent');",
                 "}",
                 "",
-            ])
+                "var checkRemoteDebugger = Module.findExportByName('kernel32.dll', 'CheckRemoteDebuggerPresent');",
+                "if (checkRemoteDebugger) {",
+                "    Interceptor.attach(checkRemoteDebugger, {",
+                "        onEnter: function(args) {",
+                "            this.pbDebuggerPresent = args[1];",
+                "        },",
+                "        onLeave: function(retval) {",
+                "            if (this.pbDebuggerPresent) {",
+                "                this.pbDebuggerPresent.writeU8(0);",
+                "            }",
+                "            retval.replace(1);",
+                "        }",
+                "    });",
+                "    console.log('[Arxan] Bypassed CheckRemoteDebuggerPresent');",
+                "}",
+                "",
+                "var ntQueryInfo = Module.findExportByName('ntdll.dll', 'NtQueryInformationProcess');",
+                "if (ntQueryInfo) {",
+                "    Interceptor.attach(ntQueryInfo, {",
+                "        onEnter: function(args) {",
+                "            this.infoClass = args[1].toInt32();",
+                "            this.info = args[2];",
+                "        },",
+                "        onLeave: function(retval) {",
+                "            if (this.infoClass === 7 || this.infoClass === 30 || this.infoClass === 31) {",
+                "                if (this.info) {",
+                "                    this.info.writePointer(ptr(0));",
+                "                }",
+                "                retval.replace(0);",
+                "            }",
+                "        }",
+                "    });",
+                "    console.log('[Arxan] Bypassed NtQueryInformationProcess');",
+                "}",
+                "",
+            ]
+        )
 
-        script_parts.extend([
-            "// Memory protection bypass",
-            "var virtualProtect = Module.findExportByName('kernel32.dll', 'VirtualProtect');",
-            "if (virtualProtect) {",
-            "    Interceptor.attach(virtualProtect, {",
-            "        onLeave: function(retval) {",
-            "            retval.replace(1);",
-            "        }",
-            "    });",
-            "    console.log('[Arxan] Hooked VirtualProtect');",
-            "}",
-            "",
-            "console.log('[Arxan Bypass] All runtime hooks installed');",
-        ])
+        script_parts.extend(
+            [
+                "// Integrity check bypass",
+                "var cryptHashData = Module.findExportByName('Advapi32.dll', 'CryptHashData');",
+                "if (cryptHashData) {",
+                "    Interceptor.replace(cryptHashData, new NativeCallback(function(hHash, pbData, dwDataLen, dwFlags) {",
+                "        return 1;",
+                "    }, 'int', ['pointer', 'pointer', 'uint', 'uint']));",
+                "    console.log('[Arxan] Bypassed CryptHashData');",
+                "}",
+                "",
+                "var cryptVerifySig = Module.findExportByName('Advapi32.dll', 'CryptVerifySignature');",
+                "if (cryptVerifySig) {",
+                "    Interceptor.replace(cryptVerifySig, new NativeCallback(function() {",
+                "        return 1;",
+                "    }, 'int', ['pointer', 'pointer', 'uint', 'pointer', 'pointer', 'uint']));",
+                "    console.log('[Arxan] Bypassed CryptVerifySignature');",
+                "}",
+                "",
+            ]
+        )
+
+        for routine in analysis_result.license_routines[:5]:
+            script_parts.extend(
+                [
+                    f"// License validation bypass at 0x{routine.address:x}",
+                    f"var licenseFunc{routine.address:x} = ptr('0x{routine.address:x}');",
+                    f"if (licenseFunc{routine.address:x}) {{",
+                    "    try {",
+                    f"        Interceptor.replace(licenseFunc{routine.address:x}, new NativeCallback(function() {{",
+                    f"            console.log('[Arxan] Bypassed license check at 0x{routine.address:x}');",
+                    "            return 1;",
+                    "        }, 'int', []));",
+                    "    } catch(e) {",
+                    f"        console.log('[Arxan] Could not hook license function at 0x{routine.address:x}: ' + e);",
+                    "    }",
+                    "}",
+                    "",
+                ]
+            )
+
+        script_parts.extend(
+            [
+                "// Memory protection bypass",
+                "var virtualProtect = Module.findExportByName('kernel32.dll', 'VirtualProtect');",
+                "if (virtualProtect) {",
+                "    Interceptor.attach(virtualProtect, {",
+                "        onLeave: function(retval) {",
+                "            retval.replace(1);",
+                "        }",
+                "    });",
+                "    console.log('[Arxan] Hooked VirtualProtect');",
+                "}",
+                "",
+                "console.log('[Arxan Bypass] All runtime hooks installed');",
+            ]
+        )
 
         return "\n".join(script_parts)
 
@@ -556,9 +551,9 @@ class ArxanBypass:
 
         for i in range(0, len(binary_data), 4):
             if i + 4 <= len(binary_data):
-                dword = struct.unpack("<I", binary_data[i:i+4])[0]
+                dword = struct.unpack("<I", binary_data[i : i + 4])[0]
             elif i + 2 <= len(binary_data):
-                dword = struct.unpack("<H", binary_data[i:i+2])[0]
+                dword = struct.unpack("<H", binary_data[i : i + 2])[0]
             else:
                 dword = binary_data[i]
 
@@ -582,14 +577,14 @@ class ArxanBypass:
         if self.frida_script:
             try:
                 self.frida_script.unload()
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"Failed to unload Frida script: {e}")
 
         if self.frida_session:
             try:
                 self.frida_session.detach()
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"Failed to detach Frida session: {e}")
 
 
 def main():

@@ -432,10 +432,10 @@ def _identify_auto_generation_candidates(analysis_results: Dict[str, Any]) -> Li
 def _trigger_autonomous_script_generation(orchestrator, analysis_results: Dict[str, Any], binary_path: str):
     """Trigger autonomous script generation for high-confidence scenarios."""
     try:
-        from ...ai.autonomous_agent import AutonomousAgent
+        from ...ai.ai_agent import AIAgent
 
         # Create autonomous agent
-        agent = AutonomousAgent(orchestrator=orchestrator, cli_interface=None)
+        agent = AIAgent(orchestrator=orchestrator, cli_interface=None)
 
         # Build autonomous generation request
         suggestions = analysis_results["ai_integration"]["script_suggestions"]
@@ -1727,7 +1727,6 @@ def _get_pe_entry_point(binary_path: str) -> int:
             return getattr(pe.OPTIONAL_HEADER, "AddressOfEntryPoint", 0x1000)
     except Exception as e:
         logger.error("Exception in binary_analysis: %s", e)
-        pass
     return 0x1000  # Default
 
 
@@ -1740,7 +1739,6 @@ def _get_elf_entry_point(binary_path: str) -> int:
                 return elf.header["e_entry"]
     except Exception as e:
         logger.error("Exception in binary_analysis: %s", e)
-        pass
     return 0x1000  # Default
 
 

@@ -1,13 +1,13 @@
+"""License key generation and validation analysis."""
+
 import hashlib
+import logging
 import zlib
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
-import capstone
-import lief
 import z3
-from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64
 
 from intellicrack.core.serial_generator import (
     GeneratedSerial,
@@ -19,6 +19,8 @@ from intellicrack.core.serial_generator import (
 
 @dataclass
 class KeyConstraint:
+    """Represents a constraint on license key generation."""
+
     constraint_type: str
     description: str
     value: Any
@@ -29,6 +31,8 @@ class KeyConstraint:
 
 @dataclass
 class ValidationRoutine:
+    """Represents a license validation routine found in binary."""
+
     address: int
     size: int
     instructions: List[Tuple[int, str, str]]
@@ -41,6 +45,8 @@ class ValidationRoutine:
 
 @dataclass
 class ExtractedAlgorithm:
+    """Represents an extracted license validation algorithm."""
+
     algorithm_name: str
     parameters: Dict[str, Any]
     validation_function: Optional[Callable] = None
@@ -50,497 +56,26 @@ class ExtractedAlgorithm:
 
 
 class ConstraintExtractor:
+    """Extracts license key constraints from binary files."""
 
     def __init__(self, binary_path: Path):
-        self.binary_path = Path(binary_path)
-        self.binary = lief.parse(str(binary_path))
-        self.constraints: List[KeyConstraint] = []
-        self.validation_routines: List[ValidationRoutine] = []
-        self.disassembler = None
-        self._initialize_disassembler()
+        """Initialize the validation analyzer.
 
-    def _initialize_disassembler(self):
-        if self.binary.header.machine_type == lief.PE.MACHINE_TYPES.AMD64:
-            self.disassembler = capstone.Cs(CS_ARCH_X86, CS_MODE_64)
-        else:
-            self.disassembler = capstone.Cs(CS_ARCH_X86, CS_MODE_32)
-        self.disassembler.detail = True
+        Args:
+            binary_path: Path to the binary file to analyze
 
-    def extract_constraints(self) -> List[KeyConstraint]:
-        self._find_validation_routines()
-        self._analyze_string_references()
-        self._analyze_constants()
-        self._analyze_comparison_operations()
-        self._analyze_mathematical_operations()
-        self._detect_checksum_algorithms()
-        self._analyze_format_patterns()
-        return self.constraints
-
-    def _find_validation_routines(self):
-        text_section = self._get_text_section()
-        if not text_section:
-            return
-
-        code = bytes(text_section.content)
-        base_address = text_section.virtual_address
-
-        validation_candidates = []
-        for _i, instr in enumerate(self.disassembler.disasm(code, base_address)):
-            if self._is_validation_instruction(instr):
-                validation_candidates.append(instr.address)
-
-        for candidate_addr in validation_candidates:
-            routine = self._extract_routine(candidate_addr, code, base_address)
-            if routine:
-                self.validation_routines.append(routine)
-
-    def _get_text_section(self):
-        for section in self.binary.sections:
-            if section.name in [".text", "CODE", "__text"]:
-                return section
-        if self.binary.sections:
-            return self.binary.sections[0]
-        return None
-
-    def _is_validation_instruction(self, instr) -> bool:
-        validation_mnemonics = {"cmp", "test", "jz", "jnz", "je", "jne", "call"}
-        return instr.mnemonic in validation_mnemonics
-
-    def _extract_routine(
-        self, start_addr: int, code: bytes, base_address: int
-    ) -> Optional[ValidationRoutine]:
-        instructions = []
-        current_addr = start_addr
-        max_instructions = 500
-
-        code_offset = current_addr - base_address
-        if code_offset < 0 or code_offset >= len(code):
-            return None
-
-        for instr in self.disassembler.disasm(
-            code[code_offset:], current_addr
-        ):
-            instructions.append((instr.address, instr.mnemonic, instr.op_str))
-
-            if instr.mnemonic in {"ret", "retn"}:
-                break
-
-            if len(instructions) >= max_instructions:
-                break
-
-        if len(instructions) < 3:
-            return None
-
-        routine = ValidationRoutine(
-            address=start_addr,
-            size=len(instructions),
-            instructions=instructions,
-        )
-
-        self._analyze_routine_for_constraints(routine)
-        return routine
-
-    def _analyze_routine_for_constraints(self, routine: ValidationRoutine):
-        length_constraints = self._extract_length_constraints(routine)
-        routine.constraints.extend(length_constraints)
-
-        charset_constraints = self._extract_charset_constraints(routine)
-        routine.constraints.extend(charset_constraints)
-
-        checksum_indicators = self._detect_checksum_in_routine(routine)
-        routine.constraints.extend(checksum_indicators)
-
-        routine.algorithm_type = self._identify_algorithm_type(routine)
-        routine.confidence = self._calculate_routine_confidence(routine)
-
-    def _extract_length_constraints(
-        self, routine: ValidationRoutine
-    ) -> List[KeyConstraint]:
-        constraints = []
-
-        for addr, mnemonic, operands in routine.instructions:
-            if mnemonic == "cmp":
-                parts = operands.split(",")
-                if len(parts) == 2:
-                    try:
-                        value = int(parts[1].strip(), 0)
-                        if 4 <= value <= 256:
-                            constraints.append(
-                                KeyConstraint(
-                                    constraint_type="length",
-                                    description=f"Key length comparison with {value}",
-                                    value=value,
-                                    confidence=0.7,
-                                    source_address=addr,
-                                    assembly_context=f"{mnemonic} {operands}",
-                                )
-                            )
-                    except (ValueError, IndexError):
-                        continue
-
-        return constraints
-
-    def _extract_charset_constraints(
-        self, routine: ValidationRoutine
-    ) -> List[KeyConstraint]:
-        constraints = []
-        numeric_ranges = [(0x30, 0x39)]
-        uppercase_ranges = [(0x41, 0x5A)]
-        lowercase_ranges = [(0x61, 0x7A)]
-
-        for addr, mnemonic, operands in routine.instructions:
-            if mnemonic == "cmp":
-                parts = operands.split(",")
-                if len(parts) == 2:
-                    try:
-                        value = int(parts[1].strip(), 0)
-
-                        charset_type = None
-                        for low, high in numeric_ranges:
-                            if low <= value <= high:
-                                charset_type = "numeric"
-                                break
-                        if not charset_type:
-                            for low, high in uppercase_ranges:
-                                if low <= value <= high:
-                                    charset_type = "uppercase"
-                                    break
-                        if not charset_type:
-                            for low, high in lowercase_ranges:
-                                if low <= value <= high:
-                                    charset_type = "lowercase"
-                                    break
-
-                        if charset_type:
-                            constraints.append(
-                                KeyConstraint(
-                                    constraint_type="charset",
-                                    description=f"Character set validation: {charset_type}",
-                                    value=charset_type,
-                                    confidence=0.75,
-                                    source_address=addr,
-                                    assembly_context=f"{mnemonic} {operands}",
-                                )
-                            )
-                    except (ValueError, IndexError):
-                        continue
-
-        return constraints
-
-    def _detect_checksum_in_routine(
-        self, routine: ValidationRoutine
-    ) -> List[KeyConstraint]:
-        constraints = []
-
-        xor_count = sum(
-            1 for _, mnemonic, _ in routine.instructions if mnemonic == "xor"
-        )
-        add_count = sum(
-            1 for _, mnemonic, _ in routine.instructions if mnemonic == "add"
-        )
-        mul_count = sum(
-            1 for _, mnemonic, _ in routine.instructions if mnemonic in {"mul", "imul"}
-        )
-        shl_count = sum(
-            1 for _, mnemonic, _ in routine.instructions if mnemonic in {"shl", "shr"}
-        )
-
-        if xor_count > 5:
-            constraints.append(
-                KeyConstraint(
-                    constraint_type="checksum",
-                    description="XOR-based checksum detected",
-                    value="xor_chain",
-                    confidence=0.8,
-                    source_address=routine.address,
-                )
-            )
-
-        if add_count > 10 and mul_count > 2:
-            constraints.append(
-                KeyConstraint(
-                    constraint_type="checksum",
-                    description="Polynomial checksum detected",
-                    value="polynomial",
-                    confidence=0.7,
-                    source_address=routine.address,
-                )
-            )
-
-        if shl_count > 3 and xor_count > 3:
-            constraints.append(
-                KeyConstraint(
-                    constraint_type="checksum",
-                    description="CRC-like algorithm detected",
-                    value="crc",
-                    confidence=0.75,
-                    source_address=routine.address,
-                )
-            )
-
-        return constraints
-
-    def _identify_algorithm_type(self, routine: ValidationRoutine) -> Optional[str]:
-        instructions = [mnem for _, mnem, _ in routine.instructions]
-
-        if "div" in instructions and "mod" in str(routine.instructions):
-            return "modular_arithmetic"
-
-        if instructions.count("xor") > 8:
-            return "xor_cipher"
-
-        if "call" in instructions:
-            for _, mnemonic, operands in routine.instructions:
-                if mnemonic == "call":
-                    if "crc" in operands.lower():
-                        return "crc"
-                    if "md5" in operands.lower():
-                        return "md5"
-                    if "sha" in operands.lower():
-                        return "sha"
-
-        return "custom"
-
-    def _calculate_routine_confidence(self, routine: ValidationRoutine) -> float:
-        score = 0.5
-
-        if routine.constraints:
-            score += 0.2
-
-        if routine.algorithm_type and routine.algorithm_type != "custom":
-            score += 0.2
-
-        if routine.size > 20:
-            score += 0.1
-
-        return min(score, 1.0)
-
-    def _analyze_string_references(self):
-        strings = self._extract_strings()
-
-        for string_data in strings:
-            if self._is_key_format_pattern(string_data):
-                format_type = self._classify_format(string_data)
-                self.constraints.append(
-                    KeyConstraint(
-                        constraint_type="format",
-                        description=f"Key format pattern: {format_type}",
-                        value=string_data,
-                        confidence=0.85,
-                    )
-                )
-
-    def _extract_strings(self) -> List[str]:
-        strings = []
-        for section in self.binary.sections:
-            content = bytes(section.content)
-            current_string = bytearray()
-
-            for byte in content:
-                if 32 <= byte < 127:
-                    current_string.append(byte)
-                else:
-                    if len(current_string) >= 4:
-                        try:
-                            strings.append(current_string.decode("ascii"))
-                        except UnicodeDecodeError:
-                            current_string = bytearray()
-                            continue
-                    current_string = bytearray()
-
-            if len(current_string) >= 4:
-                try:
-                    strings.append(current_string.decode("ascii"))
-                except UnicodeDecodeError:
-                    current_string = bytearray()
-
-        return strings
-
-    def _is_key_format_pattern(self, string: str) -> bool:
-        patterns = [
-            r"^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$",
-            r"^[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$",
-            r"^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$",
-        ]
-
-        import re
-
-        return any(re.match(pattern, string) for pattern in patterns)
-
-    def _classify_format(self, string: str) -> str:
-        if "-" in string:
-            parts = string.split("-")
-            lengths = [len(p) for p in parts]
-
-            if lengths == [5, 5, 5, 5, 5]:
-                return "microsoft_style"
-            elif lengths == [4, 4, 4, 4]:
-                return "standard_grouped"
-            elif lengths == [8, 4, 4, 4, 12]:
-                return "uuid_style"
-
-        return "custom"
-
-    def _analyze_constants(self):
-        constants = self._extract_constants()
-
-        checksum_polynomials = {
-            0x04C11DB7: ("CRC32", 0.9),
-            0xEDB88320: ("CRC32_reversed", 0.9),
-            0x1021: ("CRC16_CCITT", 0.85),
-            0x8005: ("CRC16_IBM", 0.85),
-            0x1EDC6F41: ("CRC32C", 0.85),
-        }
-
-        for constant in constants:
-            if constant in checksum_polynomials:
-                algo_name, confidence = checksum_polynomials[constant]
-                self.constraints.append(
-                    KeyConstraint(
-                        constraint_type="algorithm",
-                        description=f"Checksum polynomial: {algo_name}",
-                        value=algo_name,
-                        confidence=confidence,
-                    )
-                )
-
-    def _extract_constants(self) -> Set[int]:
-        constants = set()
-        text_section = self._get_text_section()
-
-        if not text_section:
-            return constants
-
-        code = bytes(text_section.content)
-        base_address = text_section.virtual_address
-
-        for instr in self.disassembler.disasm(code, base_address):
-            if instr.mnemonic in {"mov", "xor", "add", "cmp"}:
-                for operand in instr.operands:
-                    if operand.type == capstone.CS_OP_IMM:
-                        value = operand.imm
-                        if 0x100 <= value <= 0xFFFFFFFF:
-                            constants.add(value)
-
-        return constants
-
-    def _analyze_comparison_operations(self):
-        for routine in self.validation_routines:
-            for addr, mnemonic, operands in routine.instructions:
-                if mnemonic in {"cmp", "test"}:
-                    parts = operands.split(",")
-                    if len(parts) == 2:
-                        try:
-                            value = int(parts[1].strip(), 0)
-                            if value not in {0, 1, -1}:
-                                self.constraints.append(
-                                    KeyConstraint(
-                                        constraint_type="validation_value",
-                                        description=f"Comparison value: {value}",
-                                        value=value,
-                                        confidence=0.6,
-                                        source_address=addr,
-                                    )
-                                )
-                        except (ValueError, IndexError):
-                            continue
-
-    def _analyze_mathematical_operations(self):
-        for routine in self.validation_routines:
-            mul_operations = []
-            div_operations = []
-
-            for addr, mnemonic, operands in routine.instructions:
-                if mnemonic in {"mul", "imul"}:
-                    mul_operations.append((addr, operands))
-                elif mnemonic in {"div", "idiv"}:
-                    div_operations.append((addr, operands))
-
-            if len(mul_operations) > 3:
-                self.constraints.append(
-                    KeyConstraint(
-                        constraint_type="algorithm",
-                        description="Multiplicative hash function detected",
-                        value="multiplicative_hash",
-                        confidence=0.7,
-                        source_address=routine.address,
-                    )
-                )
-
-            if len(div_operations) > 2:
-                self.constraints.append(
-                    KeyConstraint(
-                        constraint_type="algorithm",
-                        description="Modular arithmetic detected",
-                        value="modular",
-                        confidence=0.65,
-                        source_address=routine.address,
-                    )
-                )
-
-    def _detect_checksum_algorithms(self):
-        imports = self._get_imports()
-
-        crypto_imports = {
-            "CryptHashData": ("md5_or_sha", 0.85),
-            "CryptCreateHash": ("windows_crypto", 0.8),
-            "MD5Init": ("md5", 0.95),
-            "SHA1Init": ("sha1", 0.95),
-            "SHA256Init": ("sha256", 0.95),
-        }
-
-        for import_name in imports:
-            if import_name in crypto_imports:
-                algo_name, confidence = crypto_imports[import_name]
-                self.constraints.append(
-                    KeyConstraint(
-                        constraint_type="algorithm",
-                        description=f"Cryptographic function: {import_name}",
-                        value=algo_name,
-                        confidence=confidence,
-                    )
-                )
-
-    def _get_imports(self) -> List[str]:
-        imports = []
-        if hasattr(self.binary, "imports"):
-            for imported_lib in self.binary.imports:
-                for entry in imported_lib.entries:
-                    if entry.name:
-                        imports.append(entry.name)
-        return imports
-
-    def _analyze_format_patterns(self):
-        for routine in self.validation_routines:
-            separator_chars = {"-", " ", "_"}
-            separator_found = None
-
-            for _, _, operands in routine.instructions:
-                for sep_char in separator_chars:
-                    if f"0x{ord(sep_char):x}" in operands.lower():
-                        separator_found = sep_char
-                        break
-
-            if separator_found:
-                self.constraints.append(
-                    KeyConstraint(
-                        constraint_type="separator",
-                        description=f"Group separator: '{separator_found}'",
-                        value=separator_found,
-                        confidence=0.8,
-                        source_address=routine.address,
-                    )
-                )
-
-
-class ValidationAnalyzer:
-
-    def __init__(self, binary_path: Path):
+        """
         self.binary_path = Path(binary_path)
         self.extractor = ConstraintExtractor(binary_path)
         self.algorithms: List[ExtractedAlgorithm] = []
 
     def analyze_validation_algorithms(self) -> List[ExtractedAlgorithm]:
+        """Analyze and extract validation algorithms from constraints.
+
+        Returns:
+            List of extracted validation algorithms
+
+        """
         constraints = self.extractor.extract_constraints()
 
         algorithm_types = self._group_constraints_by_algorithm(constraints)
@@ -555,9 +90,7 @@ class ValidationAnalyzer:
 
         return self.algorithms
 
-    def _group_constraints_by_algorithm(
-        self, constraints: List[KeyConstraint]
-    ) -> Dict[str, List[KeyConstraint]]:
+    def _group_constraints_by_algorithm(self, constraints: List[KeyConstraint]) -> Dict[str, List[KeyConstraint]]:
         groups = {}
 
         for constraint in constraints:
@@ -568,15 +101,11 @@ class ValidationAnalyzer:
                 groups[algo_name].append(constraint)
 
         if "generic" not in groups:
-            groups["generic"] = [
-                c for c in constraints if c.constraint_type != "algorithm"
-            ]
+            groups["generic"] = [c for c in constraints if c.constraint_type != "algorithm"]
 
         return groups
 
-    def _build_algorithm(
-        self, algo_type: str, constraints: List[KeyConstraint]
-    ) -> Optional[ExtractedAlgorithm]:
+    def _build_algorithm(self, algo_type: str, constraints: List[KeyConstraint]) -> Optional[ExtractedAlgorithm]:
         if algo_type == "crc":
             return self._build_crc_algorithm(constraints)
         elif algo_type in {"md5", "sha1", "sha256"}:
@@ -588,9 +117,7 @@ class ValidationAnalyzer:
         else:
             return self._build_generic_algorithm(constraints)
 
-    def _build_crc_algorithm(
-        self, constraints: List[KeyConstraint]
-    ) -> ExtractedAlgorithm:
+    def _build_crc_algorithm(self, constraints: List[KeyConstraint]) -> ExtractedAlgorithm:
         polynomial = 0xEDB88320
 
         for constraint in constraints:
@@ -612,9 +139,7 @@ class ValidationAnalyzer:
             confidence=0.85,
         )
 
-    def _build_hash_algorithm(
-        self, algo_type: str, constraints: List[KeyConstraint]
-    ) -> ExtractedAlgorithm:
+    def _build_hash_algorithm(self, algo_type: str, constraints: List[KeyConstraint]) -> ExtractedAlgorithm:
         hash_functions = {
             "md5": hashlib.md5,
             "sha1": hashlib.sha1,
@@ -635,9 +160,7 @@ class ValidationAnalyzer:
             confidence=0.9,
         )
 
-    def _build_multiplicative_algorithm(
-        self, constraints: List[KeyConstraint]
-    ) -> ExtractedAlgorithm:
+    def _build_multiplicative_algorithm(self, constraints: List[KeyConstraint]) -> ExtractedAlgorithm:
         def multiplicative_validate(key: str) -> int:
             result = 0
             multiplier = 31
@@ -654,15 +177,11 @@ class ValidationAnalyzer:
             confidence=0.75,
         )
 
-    def _build_modular_algorithm(
-        self, constraints: List[KeyConstraint]
-    ) -> ExtractedAlgorithm:
+    def _build_modular_algorithm(self, constraints: List[KeyConstraint]) -> ExtractedAlgorithm:
         modulus = 97
 
         def modular_validate(key: str) -> int:
-            numeric = "".join(
-                c if c.isdigit() else str(ord(c) - ord("A") + 10) for c in key
-            )
+            numeric = "".join(c if c.isdigit() else str(ord(c) - ord("A") + 10) for c in key)
             return int(numeric) % modulus
 
         return ExtractedAlgorithm(
@@ -674,9 +193,7 @@ class ValidationAnalyzer:
             confidence=0.7,
         )
 
-    def _build_generic_algorithm(
-        self, constraints: List[KeyConstraint]
-    ) -> ExtractedAlgorithm:
+    def _build_generic_algorithm(self, constraints: List[KeyConstraint]) -> ExtractedAlgorithm:
         return ExtractedAlgorithm(
             algorithm_name="Generic",
             parameters={},
@@ -686,15 +203,16 @@ class ValidationAnalyzer:
             confidence=0.5,
         )
 
-    def _create_generic_algorithm(
-        self, constraints: List[KeyConstraint]
-    ) -> ExtractedAlgorithm:
+    def _create_generic_algorithm(self, constraints: List[KeyConstraint]) -> ExtractedAlgorithm:
         return self._build_generic_algorithm(constraints)
 
 
 class KeySynthesizer:
+    """Synthesizes license keys based on extracted algorithms."""
 
     def __init__(self):
+        """Initialize the key synthesizer."""
+        self.logger = logging.getLogger(__name__)
         self.generator = SerialNumberGenerator()
         self.solver = z3.Solver()
 
@@ -703,6 +221,7 @@ class KeySynthesizer:
         algorithm: ExtractedAlgorithm,
         target_data: Optional[Dict[str, Any]] = None,
     ) -> GeneratedSerial:
+        """Synthesize a license key from the extracted algorithm."""
         if algorithm.validation_function:
             return self._synthesize_with_validation(algorithm, target_data)
         else:
@@ -716,9 +235,7 @@ class KeySynthesizer:
         constraints = self._build_serial_constraints(algorithm)
 
         if target_data:
-            base_seed = hashlib.sha256(
-                str(target_data).encode()
-            ).hexdigest()[:16]
+            base_seed = hashlib.sha256(str(target_data).encode()).hexdigest()[:16]
             seed_value = int(base_seed, 16)
         else:
             seed_value = 0
@@ -733,7 +250,8 @@ class KeySynthesizer:
                     candidate.confidence = algorithm.confidence
                     candidate.algorithm = algorithm.algorithm_name
                     return candidate
-            except Exception:
+            except Exception as e:
+                self.logger.debug(f"Validation failed for candidate {candidate.serial}: {e}")
                 continue
 
         return self.generator.generate_serial(constraints)
@@ -751,9 +269,7 @@ class KeySynthesizer:
 
         return self.generator.generate_serial(constraints, seed=seed)
 
-    def _build_serial_constraints(
-        self, algorithm: ExtractedAlgorithm
-    ) -> SerialConstraints:
+    def _build_serial_constraints(self, algorithm: ExtractedAlgorithm) -> SerialConstraints:
         length = 16
         format_type = algorithm.key_format or SerialFormat.ALPHANUMERIC
         groups = 1
@@ -787,6 +303,17 @@ class KeySynthesizer:
         count: int,
         unique: bool = True,
     ) -> List[GeneratedSerial]:
+        """Synthesize a batch of license keys.
+
+        Args:
+            algorithm: The algorithm to use for key generation
+            count: Number of keys to generate
+            unique: Whether keys should be unique
+
+        Returns:
+            List of generated serial keys
+
+        """
         keys = []
         generated_set = set()
 
@@ -813,6 +340,18 @@ class KeySynthesizer:
         email: Optional[str] = None,
         hardware_id: Optional[str] = None,
     ) -> GeneratedSerial:
+        """Synthesize a license key for a specific user.
+
+        Args:
+            algorithm: The algorithm to use for key generation
+            username: Username for the license
+            email: Optional email address
+            hardware_id: Optional hardware identifier
+
+        Returns:
+            Generated serial key for the user
+
+        """
         user_data = {"username": username}
         if email:
             user_data["email"] = email
@@ -824,9 +363,8 @@ class KeySynthesizer:
 
         return key
 
-    def synthesize_with_z3(
-        self, constraints: List[KeyConstraint]
-    ) -> Optional[str]:
+    def synthesize_with_z3(self, constraints: List[KeyConstraint]) -> Optional[str]:
+        """Synthesize a key using Z3 constraint solver."""
         self.solver.reset()
 
         key_length = 16
@@ -872,21 +410,23 @@ class KeySynthesizer:
 
 
 class LicenseKeygen:
+    """Main license key generation engine."""
 
     def __init__(self, binary_path: Optional[Path] = None):
+        """Initialize the license key generator.
+
+        Args:
+            binary_path: Optional path to binary file for analysis
+
+        """
         self.binary_path = Path(binary_path) if binary_path else None
-        self.extractor = (
-            ConstraintExtractor(self.binary_path) if self.binary_path else None
-        )
-        self.analyzer = (
-            ValidationAnalyzer(self.binary_path) if self.binary_path else None
-        )
+        self.extractor = ConstraintExtractor(self.binary_path) if self.binary_path else None
+        self.analyzer = ConstraintExtractor(self.binary_path) if self.binary_path else None
         self.synthesizer = KeySynthesizer()
         self.generator = SerialNumberGenerator()
 
-    def crack_license_from_binary(
-        self, count: int = 1
-    ) -> List[GeneratedSerial]:
+    def crack_license_from_binary(self, count: int = 1) -> List[GeneratedSerial]:
+        """Crack license keys from binary analysis."""
         if not self.analyzer:
             raise ValueError("Binary path required for analysis")
 
@@ -897,15 +437,14 @@ class LicenseKeygen:
 
         best_algorithm = max(algorithms, key=lambda a: a.confidence)
 
-        return self.synthesizer.synthesize_batch(
-            best_algorithm, count, unique=True
-        )
+        return self.synthesizer.synthesize_batch(best_algorithm, count, unique=True)
 
     def generate_key_from_algorithm(
         self,
         algorithm_name: str,
         **kwargs: Any,
     ) -> GeneratedSerial:
+        """Generate a key from a known algorithm."""
         if algorithm_name == "microsoft":
             constraints = SerialConstraints(
                 length=25,
@@ -919,17 +458,13 @@ class LicenseKeygen:
             )
         elif algorithm_name == "luhn":
             return GeneratedSerial(
-                serial=self.generator._generate_luhn_serial(
-                    kwargs.get("length", 16)
-                ),
+                serial=self.generator._generate_luhn_serial(kwargs.get("length", 16)),
                 algorithm="luhn",
                 confidence=0.9,
             )
         elif algorithm_name == "crc32":
             return GeneratedSerial(
-                serial=self.generator._generate_crc32_serial(
-                    kwargs.get("length", 16)
-                ),
+                serial=self.generator._generate_crc32_serial(kwargs.get("length", 16)),
                 algorithm="crc32",
                 confidence=0.85,
             )
@@ -947,6 +482,7 @@ class LicenseKeygen:
         product_id: str,
         count: int = 100,
     ) -> List[GeneratedSerial]:
+        """Generate volume license keys."""
         from cryptography.hazmat.primitives.asymmetric import rsa
 
         private_key = rsa.generate_private_key(
@@ -971,6 +507,7 @@ class LicenseKeygen:
         hardware_id: str,
         product_id: str,
     ) -> GeneratedSerial:
+        """Generate a hardware-locked license key."""
         combined_data = f"{product_id}:{hardware_id}".encode()
         hash_result = hashlib.sha256(combined_data).hexdigest()
 
@@ -992,6 +529,7 @@ class LicenseKeygen:
         product_id: str,
         days_valid: int = 30,
     ) -> GeneratedSerial:
+        """Generate a time-limited license key."""
         import secrets
 
         secret_key = secrets.token_bytes(32)
@@ -1007,9 +545,8 @@ class LicenseKeygen:
         base_product: str,
         features: List[str],
     ) -> GeneratedSerial:
-        base_serial = self.generate_key_from_algorithm(
-            "alphanumeric", length=16, groups=4
-        ).serial
+        """Generate a feature-encoded license key."""
+        base_serial = self.generate_key_from_algorithm("alphanumeric", length=16, groups=4).serial
 
         return self.generator.generate_feature_encoded(
             base_serial,
@@ -1023,6 +560,7 @@ class LicenseKeygen:
         validation_func: Callable[[str], bool],
         charset: str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
     ) -> Optional[str]:
+        """Brute force a partial license key."""
         import itertools
 
         key_list = list(partial_key)
@@ -1047,6 +585,7 @@ class LicenseKeygen:
         valid_keys: List[str],
         invalid_keys: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
+        """Reverse engineer key generation algorithm."""
         return self.generator.reverse_engineer_algorithm(
             valid_keys,
             invalid_keys,

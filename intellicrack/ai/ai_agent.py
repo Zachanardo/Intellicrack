@@ -97,14 +97,14 @@ class TaskRequest:
     additional_params: dict[str, Any] = None
 
 
-class AutonomousAgent:
-    """Autonomous AI agent that can iteratively develop and test scripts.
+class AIAgent:
+    """AI agent that can iteratively develop and test scripts.
 
     Similar to Claude Code - takes a request and autonomously completes it.
     """
 
     def __init__(self, orchestrator: Optional[Any] = None, cli_interface: Optional[Any] = None) -> None:
-        """Initialize the autonomous agent with orchestrator and CLI interface.
+        """Initialize the AI agent with orchestrator and CLI interface.
 
         Args:
             orchestrator: The orchestrator instance for managing AI operations
@@ -502,6 +502,7 @@ class AutonomousAgent:
                 else:
                     data = content
         except (ImportError, AttributeError, KeyError):
+            # Content extraction may fail for various reasons, continue with fallback
             pass
 
         if data is None:
@@ -1780,7 +1781,7 @@ class AutonomousAgent:
                 self._log_to_user(f"OK Script deployed: {script_path}")
 
             except (OSError, AttributeError) as e:
-                logger.error("Error in autonomous_agent: %s", e)
+                logger.error("Error in ai_agent: %s", e)
                 deployment_results.append(
                     {
                         "script_id": script.metadata.script_id,
@@ -2364,7 +2365,7 @@ class AutonomousAgent:
                 AuditEvent(
                     event_type=AuditEventType.SYSTEM_START,
                     severity=AuditSeverity.INFO,
-                    description="QEMU manager initialized for autonomous agent",
+                    description="QEMU manager initialized for AI agent",
                     details={
                         "agent_id": self.agent_id,
                         "max_connections": 5,

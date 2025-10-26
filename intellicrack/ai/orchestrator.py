@@ -1046,11 +1046,11 @@ class AIOrchestrator:
 
         try:
             # Import autonomous agent
-            from .autonomous_agent import AutonomousAgent
+            from .ai_agent import AIAgent
 
             # Create autonomous agent
-            agent = AutonomousAgent(orchestrator=self, cli_interface=None)
-            components_used.append("autonomous_agent")
+            agent = AIAgent(orchestrator=self, cli_interface=None)
+            components_used.append("ai_agent")
 
             # Extract task parameters
             user_request = task.input_data.get("user_request", "")

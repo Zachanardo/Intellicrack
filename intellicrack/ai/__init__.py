@@ -268,7 +268,7 @@ except ImportError as e:
     PredictionType = PredictionConfidence = PredictionResult = predictive_intelligence = None
 
 try:
-    from .resilience_self_healing import (
+    from .system_monitor import (
         FailureType,
         HealthMonitor,
         HealthStatus,
@@ -279,7 +279,7 @@ try:
         resilience_system,
     )
 except ImportError as e:
-    logger.warning("Failed to import resilience_self_healing: %s", e)
+    logger.warning("Failed to import system_monitor: %s", e)
     ResilienceSelfHealingSystem = HealthMonitor = RecoverySystem = StateManager = None
     FailureType = RecoveryStrategy = HealthStatus = resilience_system = None
 
@@ -291,10 +291,10 @@ except ImportError as e:
     AIScriptGenerator = ScriptType = None
 
 try:
-    from .autonomous_agent import AutonomousAgent
+    from .ai_agent import AIAgent
 except ImportError as e:
-    logger.warning("Failed to import autonomous_agent: %s", e)
-    AutonomousAgent = None
+    logger.warning("Failed to import ai_agent: %s", e)
+    AIAgent = None
 
 try:
     from .intelligent_code_modifier import (
@@ -421,7 +421,7 @@ __all__ = [
     # From AI script generation system
     "AIScriptGenerator",
     "ScriptType",
-    "AutonomousAgent",
+    "AIAgent",
     "IntelligentCodeModifier",
     "CodeChange",
     "ModificationRequest",

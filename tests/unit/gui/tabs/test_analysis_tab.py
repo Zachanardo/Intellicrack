@@ -226,7 +226,7 @@ class TestAnalysisTab:
                 self.tab.detect_protection()
             except Exception:
                 # Handle any detection errors gracefully
-                pass
+                # Continue with test even if detection fails
             qtbot.wait(100)
 
     def test_export_functionality_real_data_output(self, qtbot):

@@ -28,8 +28,8 @@ from queue import Empty, Queue
 from typing import Any
 
 from ..utils.logger import get_logger
+from .ai_agent import AIAgent
 from .ai_script_generator import AIScriptGenerator
-from .autonomous_agent import AutonomousAgent
 from .intelligent_code_modifier import IntelligentCodeModifier
 from .llm_backends import LLMManager
 from .performance_monitor import performance_monitor, profile_ai_operation
@@ -226,7 +226,7 @@ class IntegrationManager:
         # Initialize components
         self.script_generator = AIScriptGenerator()
         self.code_modifier = IntelligentCodeModifier(self.llm_manager)
-        self.autonomous_agent = AutonomousAgent(self.llm_manager)
+        self.ai_agent = AIAgent(self.llm_manager)
         self.qemu_manager = QEMUManager()
 
         # Task management
@@ -425,7 +425,7 @@ class IntegrationManager:
         task_config = task.input_data["task_config"]
 
         # Run autonomous agent
-        results = self.autonomous_agent.execute_autonomous_task(task_config)
+        results = self.ai_agent.execute_autonomous_task(task_config)
 
         return results
 

@@ -291,7 +291,7 @@ class ProcessMonitor:
                                 logger.info(f"VM tool detected: {proc_name}")
 
                     except (psutil.NoSuchProcess, psutil.AccessDenied):
-                        pass
+                        # Process may have exited or access denied, continue monitoring
 
                 time.sleep(1)
 
@@ -752,7 +752,7 @@ class EnvironmentIsolationManager:
                     process.terminate()
                     process.wait(timeout=5)
                 except (psutil.NoSuchProcess, psutil.TimeoutExpired):
-                    pass
+                    # Process may have already exited or timeout occurred, continue cleanup
 
             self.isolation_active = False
             logger.info("Environment isolation deactivated")

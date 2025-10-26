@@ -9,8 +9,11 @@ Licensed under GNU General Public License v3.0
 */
 
 use anyhow::Result;
-use intellicrack_launcher::{IntellicrackLauncher, environment::PROJECT_ROOT, initialize_logging};
-use tracing::{error, info};
+use intellicrack_launcher::{
+    IntellicrackLauncher, environment::PROJECT_ROOT, initialize_logging,
+    optimize_process, discover_and_cache_tools, run_preflight_checks,
+};
+use tracing::{error, info, warn};
 
 use dotenv::dotenv;
 
@@ -27,6 +30,13 @@ async fn main() -> Result<()> {
         }
         // SEM_FAILCRITICALERRORS (0x0001)
         SetErrorMode(0x0001);
+    }
+
+    // OPTIMIZATION: Boost process priority and CPU affinity for better performance
+    let optimization_start = std::time::Instant::now();
+    if let Err(e) = optimize_process() {
+        // Non-fatal - log warning and continue with normal priority
+        eprintln!("Process optimization failed: {:?}", e);
     }
 
     dotenv().ok();
@@ -133,6 +143,12 @@ async fn main() -> Result<()> {
         }
     }
 
+    // CRITICAL: Validate environment before Python initialization
+    if let Err(e) = run_preflight_checks() {
+        eprintln!("Preflight checks failed:\n{}", e);
+        std::process::exit(1);
+    }
+
     // Initialize logging system
     if let Err(e) = initialize_logging().await {
         eprintln!("Failed to initialize logging: {e}");
@@ -140,6 +156,15 @@ async fn main() -> Result<()> {
     }
 
     info!("Intellicrack Launcher starting...");
+
+    // OPTIMIZATION: Discover and cache tool paths for Python
+    if let Err(e) = discover_and_cache_tools() {
+        warn!("Tool discovery failed: {:?}", e);
+        // Continue anyway - Python will do its own discovery
+    }
+
+    let optimization_elapsed = optimization_start.elapsed();
+    info!("Startup optimizations completed in {:?}", optimization_elapsed);
 
     // Set up panic hook for better error reporting
     std::panic::set_hook(Box::new(|panic_info| {

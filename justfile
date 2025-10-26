@@ -212,6 +212,16 @@ lint-all-fix:
     -@just lint-md-fix
     @echo "All auto-fixable linting issues resolved ✓"
 
+# ==================== GIT ====================
+
+# Quick WIP commit - skips hooks, auto timestamp message, pushes to origin
+git-commit:
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"; git add -A; git commit --no-verify -m "WIP: $timestamp"; git push origin HEAD
+
+# Full commit with hooks - prompts for message, runs pre-commit hooks, pushes to origin
+git-commit-hooks message:
+    git add -A; git commit -m "{{message}}"; git push origin HEAD
+
 # ==================== DOCUMENTATION ====================
 
 # Generate Sphinx documentation

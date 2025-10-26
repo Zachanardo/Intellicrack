@@ -41,6 +41,7 @@ try:
     from Crypto.PublicKey import RSA
     from Crypto.Signature import pkcs1_15
     from Crypto.Util.Padding import pad, unpad
+
     CRYPTO_AVAILABLE = True
 except ImportError:
     CRYPTO_AVAILABLE = False
@@ -184,8 +185,7 @@ class DenuvoTicketAnalyzer:
                 return None
 
             magic = ticket_data[:4]
-            if magic not in [self.TICKET_MAGIC_V4, self.TICKET_MAGIC_V5,
-                            self.TICKET_MAGIC_V6, self.TICKET_MAGIC_V7]:
+            if magic not in [self.TICKET_MAGIC_V4, self.TICKET_MAGIC_V5, self.TICKET_MAGIC_V6, self.TICKET_MAGIC_V7]:
                 logger.error(f"Invalid ticket magic: {magic.hex()}")
                 return None
 
@@ -193,10 +193,8 @@ class DenuvoTicketAnalyzer:
             if not header:
                 return None
 
-            encrypted_payload = ticket_data[
-                header.payload_offset:header.signature_offset
-            ]
-            signature = ticket_data[header.signature_offset:]
+            encrypted_payload = ticket_data[header.payload_offset : header.signature_offset]
+            signature = ticket_data[header.signature_offset :]
 
             ticket = DenuvoTicket(
                 header=header,
@@ -242,18 +240,16 @@ class DenuvoTicketAnalyzer:
                 return None
 
             offset = 4
-            token_id = token_data[offset:offset+16]
+            token_id = token_data[offset : offset + 16]
             offset += 16
-            game_id = token_data[offset:offset+16]
+            game_id = token_data[offset : offset + 16]
             offset += 16
-            ticket_hash = token_data[offset:offset+32]
+            ticket_hash = token_data[offset : offset + 32]
             offset += 32
-            machine_id = token_data[offset:offset+32]
+            machine_id = token_data[offset : offset + 32]
             offset += 32
 
-            activation_time, expiration_time, license_type, features = struct.unpack(
-                "<QQII", token_data[offset:offset+24]
-            )
+            activation_time, expiration_time, license_type, features = struct.unpack("<QQII", token_data[offset : offset + 24])
             offset += 24
 
             signature = token_data[offset:]
@@ -320,9 +316,7 @@ class DenuvoTicketAnalyzer:
                 expiration=expiration,
             )
 
-            server_signature = self._sign_response(
-                response_id, ticket, token, timestamp
-            )
+            server_signature = self._sign_response(response_id, ticket, token, timestamp)
 
             response = ActivationResponse(
                 status_code=200,
@@ -384,13 +378,15 @@ class DenuvoTicketAnalyzer:
             token_data.extend(game_id)
             token_data.extend(ticket_hash)
             token_data.extend(machine_id)
-            token_data.extend(struct.pack(
-                "<QQII",
-                activation_time,
-                expiration_time,
-                license_type,
-                features_enabled,
-            ))
+            token_data.extend(
+                struct.pack(
+                    "<QQII",
+                    activation_time,
+                    expiration_time,
+                    license_type,
+                    features_enabled,
+                )
+            )
 
             signature = self._sign_token(bytes(token_data))
             token_data.extend(signature)
@@ -523,7 +519,7 @@ class DenuvoTicketAnalyzer:
         sessions = []
 
         try:
-            with open(pcap_file, 'rb') as f:
+            with open(pcap_file, "rb") as f:
                 pcap = dpkt.pcap.Reader(f)
 
                 for timestamp, buf in pcap:
@@ -541,13 +537,12 @@ class DenuvoTicketAnalyzer:
                             continue
 
                         if self._is_activation_traffic(tcp.data):
-                            session = self._parse_activation_session(
-                                tcp.data, timestamp
-                            )
+                            session = self._parse_activation_session(tcp.data, timestamp)
                             if session:
                                 sessions.append(session)
 
-                    except Exception:
+                    except Exception as e:
+                        logger.debug(f"Error parsing activation session: {e}")
                         continue
 
             logger.info(f"Analyzed {len(sessions)} activation sessions")
@@ -615,7 +610,8 @@ class DenuvoTicketAnalyzer:
                         pkcs1_15.new(public_key).verify(h, ticket.signature)
                         logger.info("Signature verified with RSA key")
                         return True
-                    except Exception:
+                    except Exception as e:
+                        logger.debug(f"Failed to verify signature with RSA key: {e}")
                         continue
                 elif key_info["type"] == "hmac":
                     expected = hmac.new(
@@ -671,7 +667,8 @@ class DenuvoTicketAnalyzer:
                             ticket.decryption_key = key_info.get("aes_key")
                             return payload
 
-                except Exception:
+                except Exception as e:
+                    logger.debug(f"Failed to parse session data: {e}")
                     continue
 
             logger.warning("Failed to decrypt payload with known keys")
@@ -714,24 +711,24 @@ class DenuvoTicketAnalyzer:
         try:
             offset = 0
 
-            game_id = data[offset:offset+16]
+            game_id = data[offset : offset + 16]
             offset += 16
-            product_version = data[offset:offset+16]
+            product_version = data[offset : offset + 16]
             offset += 16
 
-            hwid_hash = data[offset:offset+32]
+            hwid_hash = data[offset : offset + 32]
             offset += 32
-            cpu_hash = data[offset:offset+32]
+            cpu_hash = data[offset : offset + 32]
             offset += 32
-            disk_hash = data[offset:offset+32]
+            disk_hash = data[offset : offset + 32]
             offset += 32
-            mac_hash = data[offset:offset+32]
+            mac_hash = data[offset : offset + 32]
             offset += 32
-            bios_hash = data[offset:offset+32]
+            bios_hash = data[offset : offset + 32]
             offset += 32
-            combined_hash = data[offset:offset+32]
+            combined_hash = data[offset : offset + 32]
             offset += 32
-            salt = data[offset:offset+16]
+            salt = data[offset : offset + 16]
             offset += 16
 
             machine_id = MachineIdentifier(
@@ -744,7 +741,7 @@ class DenuvoTicketAnalyzer:
                 salt=salt,
             )
 
-            token_data = data[offset:offset+128]
+            token_data = data[offset : offset + 128]
             token = self.parse_token(token_data)
             if not token:
                 token = ActivationToken(
@@ -760,14 +757,14 @@ class DenuvoTicketAnalyzer:
                 )
             offset += 128
 
-            license_type = struct.unpack("<I", data[offset:offset+4])[0]
+            license_type = struct.unpack("<I", data[offset : offset + 4])[0]
             offset += 4
-            expiration = struct.unpack("<Q", data[offset:offset+8])[0]
+            expiration = struct.unpack("<Q", data[offset : offset + 8])[0]
             offset += 8
 
-            encryption_key = data[offset:offset+32]
+            encryption_key = data[offset : offset + 32]
             offset += 32
-            integrity_seed = data[offset:offset+32]
+            integrity_seed = data[offset : offset + 32]
             offset += 32
 
             license_data = {
@@ -951,12 +948,15 @@ class DenuvoTicketAnalyzer:
         expiration: int,
     ) -> bytes:
         """Generate activation token."""
-        return self.forge_token(
-            game_id=game_id,
-            machine_id=machine_id,
-            license_type=license_type,
-            duration_days=(expiration - int(time.time())) // 86400,
-        ) or b"\x00" * 256
+        return (
+            self.forge_token(
+                game_id=game_id,
+                machine_id=machine_id,
+                license_type=license_type,
+                duration_days=(expiration - int(time.time())) // 86400,
+            )
+            or b"\x00" * 256
+        )
 
     def _sign_response(
         self,
@@ -1070,15 +1070,15 @@ class DenuvoTicketAnalyzer:
                 "type": "hmac",
                 "key": hashlib.sha256(b"denuvo_master_key_v7").digest(),
                 "aes_key": hashlib.sha256(b"denuvo_aes_key_v7_extended_master").digest(),
-                "iv": hashlib.md5(b"denuvo_iv_v7").digest(),
-                "nonce": hashlib.md5(b"denuvo_nonce_v7").digest()[:12],
+                "iv": hashlib.md5(b"denuvo_iv_v7").digest(),  # noqa: S324 - MD5 used for compatibility with existing license schemes
+                "nonce": hashlib.md5(b"denuvo_nonce_v7").digest()[:12],  # noqa: S324 - MD5 used for compatibility with existing license schemes
             },
             {
                 "type": "hmac",
                 "key": hashlib.sha256(b"denuvo_master_key_v6").digest(),
                 "aes_key": hashlib.sha256(b"denuvo_aes_key_v6_extended_master").digest(),
-                "iv": hashlib.md5(b"denuvo_iv_v6").digest(),
-                "nonce": hashlib.md5(b"denuvo_nonce_v6").digest()[:12],
+                "iv": hashlib.md5(b"denuvo_iv_v6").digest(),  # noqa: S324 - MD5 used for compatibility with existing license schemes
+                "nonce": hashlib.md5(b"denuvo_nonce_v6").digest()[:12],  # noqa: S324 - MD5 used for compatibility with existing license schemes
             },
             {
                 "type": "hmac",

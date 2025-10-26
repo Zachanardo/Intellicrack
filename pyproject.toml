@@ -7,7 +7,7 @@ authors = [
 description = "Intellicrack: Advanced Binary Analysis and Security Research Framework with AI-driven capabilities"
 readme = "README.md"
 license = "GPL-3.0-or-later"
-requires-python = ">=3.12,<3.14"
+requires-python = ">=3.12,<3.13"
 keywords = ["binary-analysis", "reverse-engineering", "security", "vulnerability-detection", "malware-analysis", "ai-security", "exploit-development"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -19,7 +19,6 @@ classifiers = [
     "Topic :: Software Development :: Debuggers",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
     "Operating System :: OS Independent",
     "Environment :: Console",
     "Environment :: X11 Applications :: Qt",
@@ -27,15 +26,15 @@ classifiers = [
 
 dependencies = [
     # Core ML/AI
-    "accelerate>=1.10.1,<2",
+    # "accelerate",
     "anthropic>=0.71.0,<0.72",
     "openai>=2.5.0,<3",
     "transformers>=4.57.1,<5",
     "huggingface-hub>=0.35.3,<0.36",
     "safetensors>=0.6.2,<0.7",
-    "peft>=0.17.1,<0.18",
+    # "peft",
     # "auto-gptq>=0.7.0",  # Requires NVIDIA CUDA - not compatible with Intel GPU
-    "bitsandbytes>=0.48.1,<0.49",
+    # "bitsandbytes",
 
     # Binary Analysis
     "angr>=9.2.180,<10",
@@ -43,6 +42,7 @@ dependencies = [
     "capstone>=5.0.3,<6",
     "keystone-engine>=0.9.2,<0.10",
     "binwalk3>=3.1.3,<4",
+    "python-magic>=0.4.27,<0.5",
 
     "volatility3>=2.26.2,<3",
     "yara-python>=4.5.4,<5",
@@ -73,20 +73,22 @@ dependencies = [
     "requests>=2.32.5,<3",
     "urllib3>=2.5.0,<3",
     "defusedxml>=0.7.1,<0.8",
+    "xmltodict",
     "boto3>=1.40.49,<2",
     "azure-storage-blob>=12.27.0,<13",
     "fastapi>=0.119.0,<0.120",
     "httpie>=3.2.4,<4",
 
     # ML Frameworks
-    "torch>=2.9.0,<3",
-    "torchvision>=0.24.0,<0.25",
-    "torchaudio>=2.9.0,<3",
-    # Intel XPU: Install manually with pip after pixi install:
-    # python -m pip install torch==2.7.0 torchvision==0.22.0 torchaudio==2.7.0 --index-url https://download.pytorch.org/whl/xpu
-    # python -m pip install intel-extension-for-pytorch==2.7.10+xpu --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/
+    # Intel XPU versions installed manually - see pixi.toml task "install-intel-xpu"
+    # "torch>=2.9.0,<3",
+    # "torchvision>=0.24.0,<0.25",
+    # "torchaudio>=2.9.0,<3",
     "pyopencl>=2025.2.6,<2026",
     "tensorflow>=2.20.0,<3",
+    "numba==0.62.1",
+    "tf2onnx",
+    # "openvino>=2025.0.0",
 
     # Database & Storage
     "pymongo>=4.15.3,<5",
@@ -97,7 +99,7 @@ dependencies = [
     "pyqt6>=6.9.1,<7",
     "pyqt6-sip>=13.10.2,<14",
     "pyqtgraph>=0.13.7,<0.14",
-    "pillow>=12.0.0,<13",  # IPEX requires 11.x - updated to allow newer versions
+    "pillow>=11.0.0,<13",
     "cairocffi>=1.7.1,<2",
     "graphviz>=0.21,<0.22",
 
@@ -107,6 +109,7 @@ dependencies = [
     "pyusb>=1.3.1,<2",
     "watchdog>=6.0.0,<7",
     "wmi>=1.5.1,<2",
+    "pyzmq",
 
     # Web & Document Processing
     "flask>=3.1.2,<4",
@@ -126,7 +129,7 @@ dependencies = [
     "scikit-learn>=1.7.2,<2",
     "scipy>=1.16.2,<2",
     "onnx>=1.19.1,<2",
-    "numpy>=2.3.4,<3",  # IPEX requires 2.1.x - removed upper limit for IPEX compatibility
+    "numpy>=2.2.6,<3",
     "seaborn>=0.13.2,<0.14",
     "onnxruntime>=1.23.1,<2",
     "joblib>=1.5.2,<2",
@@ -150,7 +153,7 @@ dependencies = [
     "tqdm>=4.67.1,<5",
     "cffi>=2.0.0,<3",
     "wheel>=0.45.1,<0.46",
-    "setuptools>=80.9.0,<81",  # Required for zope-event and build system - relaxed for IPEX compatibility
+    "setuptools>=70.0.0,<81",
 
     "jiter>=0.11.1,<0.12",
     "importlib-metadata>=8.7.0,<9",
@@ -202,7 +205,7 @@ dependencies = [
     "distro>=1.9.0,<2",
     "dnspython>=2.8.0,<3",
     "exceptiongroup",
-    "filelock>=3.20.0,<4",
+    "filelock",
     "fonttools>=4.60.1,<5",
     "frozenlist>=1.8.0,<2",
     "gitdb>=4.0.12,<5",
@@ -221,7 +224,7 @@ dependencies = [
     "lxml>=6.0.2,<7",
     "lz4>=4.4.4,<5",
     "markdown>=3.9,<4",
-    "markupsafe>=3.0.3,<4",
+    "markupsafe>=2.1.0,<4",
     "more-itertools>=10.8.0,<11",
     "msgpack>=1.1.1,<2",
     "multidict>=6.7.0,<7",
@@ -269,6 +272,9 @@ dependencies = [
 
     # Local AI/LLM support
     "llama-cpp-python>=0.3.16,<0.4",
+    "langchain",
+    "langchain-core",
+    "langchain-community",
 
     # Code Quality & Linting
     "black>=25.9.0,<26",
@@ -300,7 +306,7 @@ dependencies = [
     "pytest-env>=1.2.0,<2",
     "pytest-instafail>=0.5.0,<0.6",
     "hypothesis>=6.142.1,<7",
-    "tox>=4.31.0,<5",
+    "tox",
     "nox>=2025.10.16,<2026",
     "coverage",
     "freezegun>=1.5.5,<2",

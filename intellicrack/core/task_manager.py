@@ -49,6 +49,7 @@ class FallbackSignals:
     """Fallback signals implementation when PyQt6 is not available."""
 
     def __init__(self):
+        """Initialize fallback signals."""
         self.started = None
         self.progress = None
         self.result = None

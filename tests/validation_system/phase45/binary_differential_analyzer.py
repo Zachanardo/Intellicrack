@@ -262,7 +262,7 @@ class DisassemblyEngine:
             try:
                 return int(op_str, 16)
             except ValueError:
-                pass
+                # Hex parsing may fail, try other formats
 
         # Handle relative jumps
         try:

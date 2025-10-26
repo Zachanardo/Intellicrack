@@ -91,12 +91,13 @@ class LicensePathPrioritizer(ExplorationTechnique):
                 self.license_function_addrs.add(func.addr)
                 self.logger.debug(f"Identified license function: {func.name} at {hex(func.addr)}")
 
-        for string_ref in simgr._project.loader.main_object.sections_map.get('.rdata', []):
+        for string_ref in simgr._project.loader.main_object.sections_map.get(".rdata", []):
             try:
                 data = simgr._project.loader.memory.load(string_ref, 256)
                 if any(keyword in data.lower() for keyword in self.license_keywords):
                     self.logger.debug(f"Found license-related string at {hex(string_ref)}")
-            except Exception:
+            except Exception as e:
+                self.logger.debug(f"Error loading string data at {hex(string_ref)}: {e}")
                 continue
 
     def step(self, simgr, stash="active", **kwargs):
@@ -166,7 +167,7 @@ class LicensePathPrioritizer(ExplorationTechnique):
         else:
             score -= (constraint_count - 100) * 0.5
 
-        if hasattr(state, 'license_files') and state.license_files:
+        if hasattr(state, "license_files") and state.license_files:
             score += 150.0
 
         return max(score, 0.0)
@@ -200,7 +201,8 @@ class LicensePathPrioritizer(ExplorationTechnique):
             combined = f"{addr}_{constraint_count}_{''.join(sorted(constraint_strs))}"
 
             return hashlib.sha256(combined.encode()).hexdigest()[:16]
-        except Exception:
+        except Exception as e:
+            self.logger.debug(f"Error computing state hash: {e}")
             return hashlib.sha256(str(time.time()).encode()).hexdigest()[:16]
 
 
@@ -228,7 +230,7 @@ class ConstraintOptimizer(ExplorationTechnique):
     def setup(self, simgr):
         """Configure Z3 solver optimizations."""
         for state in simgr.active:
-            if hasattr(state.solver, '_solver'):
+            if hasattr(state.solver, "_solver"):
                 state.solver._solver.timeout = self.solver_timeout
 
         self.logger.info(f"Constraint optimizer configured (timeout: {self.solver_timeout}ms)")
@@ -327,7 +329,7 @@ class StateMerger(ExplorationTechnique):
         mergeable = []
         for _addr, group in addr_groups.items():
             if len(group) >= 2:
-                mergeable.append(group[:self.max_merge_count])
+                mergeable.append(group[: self.max_merge_count])
 
         return mergeable
 
@@ -340,10 +342,11 @@ class StateMerger(ExplorationTechnique):
 
         for state in states[1:]:
             try:
-                if hasattr(base_state, 'merge'):
+                if hasattr(base_state, "merge"):
                     base_state = base_state.merge(state)[0]
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"Error merging state: {e}")
+                # Continue with next state if merge fails
 
         return base_state
 
@@ -352,6 +355,7 @@ class WindowsLicensingSimProcedure(SimProcedure):
     """Base class for Windows licensing API simprocedures."""
 
     def __init__(self, *args, **kwargs):
+        """Initialize the Windows licensing simprocedure."""
         super().__init__(*args, **kwargs)
         self.logger = logging.getLogger(f"IntellicrackLogger.{self.__class__.__name__}")
 
@@ -431,7 +435,7 @@ class RegOpenKeyExW(WindowsLicensingSimProcedure):
     """Simprocedure for RegOpenKeyExW - always succeeds for license keys."""
 
     def run(self, hKey, lpSubKey, ulOptions, samDesired, phkResult):
-        """Always return success for registry key opens."""
+        """Return success for registry key opens."""
         self.logger.info(f"RegOpenKeyExW called at {hex(self.state.addr)}")
 
         if not self.state.solver.symbolic(phkResult):
@@ -600,9 +604,7 @@ class GetSystemTime(WindowsLicensingSimProcedure):
 
             symbolic_time = claripy.BVS("system_time", 128)
 
-            valid_year = claripy.And(
-                claripy.UGE(symbolic_time.get_bytes(0, 2), 2000), claripy.ULE(symbolic_time.get_bytes(0, 2), 2100)
-            )
+            valid_year = claripy.And(claripy.UGE(symbolic_time.get_bytes(0, 2), 2000), claripy.ULE(symbolic_time.get_bytes(0, 2), 2100))
             self.state.solver.add(valid_year)
 
             self.state.memory.store(time_ptr, symbolic_time, endness="Iend_LE")
@@ -712,7 +714,7 @@ class MessageBoxA(WindowsLicensingSimProcedure):
         return 1
 
 
-class socket(WindowsLicensingSimProcedure):
+class Socket(WindowsLicensingSimProcedure):
     """Simprocedure for socket - creates symbolic socket handle."""
 
     def run(self, af, type, protocol):
@@ -721,7 +723,7 @@ class socket(WindowsLicensingSimProcedure):
         return claripy.BVS(f"socket_{hex(self.state.addr)}", 32)
 
 
-class connect(WindowsLicensingSimProcedure):
+class Connect(WindowsLicensingSimProcedure):
     """Simprocedure for connect - always succeeds for license server connections."""
 
     def run(self, s, name, namelen):
@@ -730,7 +732,7 @@ class connect(WindowsLicensingSimProcedure):
         return 0
 
 
-class send(WindowsLicensingSimProcedure):
+class Send(WindowsLicensingSimProcedure):
     """Simprocedure for send - tracks outgoing license validation data."""
 
     def run(self, s, buf, len, flags):
@@ -744,7 +746,7 @@ class send(WindowsLicensingSimProcedure):
         return claripy.BVS(f"bytes_sent_{hex(self.state.addr)}", 32)
 
 
-class recv(WindowsLicensingSimProcedure):
+class Recv(WindowsLicensingSimProcedure):
     """Simprocedure for recv - returns symbolic license server response."""
 
     def run(self, s, buf, len, flags):
@@ -800,16 +802,16 @@ def install_license_simprocedures(project):
         "NtQueryInformationProcess": NtQueryInformationProcess,
         "MessageBoxA": MessageBoxA,
         "MessageBoxW": MessageBoxA,
-        "socket": socket,
-        "connect": connect,
-        "send": send,
-        "recv": recv,
+        "socket": Socket,
+        "connect": Connect,
+        "send": Send,
+        "recv": Recv,
     }
 
     installed_count = 0
     for func_name, simprocedure_class in simprocedures.items():
         try:
-            if hasattr(project.loader.main_object, 'imports') and func_name in project.loader.main_object.imports:
+            if hasattr(project.loader.main_object, "imports") and func_name in project.loader.main_object.imports:
                 addr = project.loader.main_object.imports[func_name].rebased_addr
                 project.hook(addr, simprocedure_class())
                 logger.debug(f"Hooked {func_name} at {hex(addr)}")
@@ -831,6 +833,7 @@ class LicenseValidationDetector:
     """Detect license validation routines in symbolic execution paths."""
 
     def __init__(self):
+        """Initialize the license validation detector."""
         self.logger = logging.getLogger("IntellicrackLogger.LicenseValidationDetector")
         self.validation_patterns = {
             "serial_check": [b"serial", b"product key", b"license key", b"cd key"],
@@ -871,9 +874,7 @@ class LicenseValidationDetector:
         results["confidence"] = min(results["confidence"], 1.0)
 
         if results["validation_type"]:
-            self.logger.info(
-                f"Detected {results['validation_type']} validation " f"(confidence: {results['confidence']:.2f})"
-            )
+            self.logger.info(f"Detected {results['validation_type']} validation (confidence: {results['confidence']:.2f})")
 
         return results
 
@@ -888,7 +889,8 @@ class LicenseValidationDetector:
                         concrete_data = state.solver.eval(data, cast_to=bytes)
                         if pattern.lower() in concrete_data.lower():
                             matches.append(f"Found at {hex(region_start)}")
-                except Exception:
+                except Exception as e:
+                    self.logger.warning(f"Error checking pattern at {hex(region_start)}: {e}")
                     continue
         except Exception as e:
             self.logger.debug(f"Memory pattern search error: {e}")
@@ -971,10 +973,10 @@ __all__ = [
     "VirtualFree",
     "NtQueryInformationProcess",
     "MessageBoxA",
-    "socket",
-    "connect",
-    "send",
-    "recv",
+    "Socket",
+    "Connect",
+    "Send",
+    "Recv",
     "install_license_simprocedures",
     "LicenseValidationDetector",
     "create_enhanced_simgr",

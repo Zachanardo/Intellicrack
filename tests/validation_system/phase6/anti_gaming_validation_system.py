@@ -646,7 +646,7 @@ class AntiGamingValidationSystem:
                 if domain in hostname:
                     return True
         except Exception:
-            pass
+            # Domain resolution may fail, continue checking
 
         return False
 
@@ -700,7 +700,7 @@ class AntiGamingValidationSystem:
                     if dll.path and dll.path.endswith('.dll'):
                         loaded_dlls.append(dll.path.lower())
             except (psutil.AccessDenied, psutil.NoSuchProcess):
-                pass
+                # Process may have exited or access denied, continue
 
             # Check for suspicious DLLs
             system_dll_paths = [

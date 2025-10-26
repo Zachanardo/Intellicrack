@@ -1,7 +1,7 @@
 INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: Sat, Oct 25, 2025 01:52:06 PM
+Generated: Sat, Oct 25, 2025 01:52:38 PM
 Directory: D:\Intellicrack\intellicrack
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -19,7 +19,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── ai_script_generator.py
 │   ├── ai_tools.py
 │   ├── api_provider_clients.py
-│   ├── autonomous_agent.py
+│   ├── ai_agent.py
 │   ├── background_loader.py
 │   ├── coordination_layer.py
 │   ├── enhanced_training_interface.py

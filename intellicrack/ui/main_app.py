@@ -139,7 +139,7 @@ class IntellicrackApp(QMainWindow):
             task_manager: Task management and coordination
             model_manager: AI/ML model management
             ai_orchestrator: AI-powered analysis orchestration
-            autonomous_agent: Autonomous analysis agent
+            ai_agent: AI-powered autonomous analysis agent
             theme_manager: UI theming and styling
             icon_manager: Icon management system
             dashboard_manager: Dashboard monitoring and metrics
@@ -521,13 +521,13 @@ class IntellicrackApp(QMainWindow):
 
         # Initialize AI components
         try:
-            from ..ai.autonomous_agent import AutonomousAgent
+            from ..ai.ai_agent import AIAgent
 
-            self.autonomous_agent = AutonomousAgent()
-            logger.info("AutonomousAgent initialized successfully")
+            self.ai_agent = AIAgent()
+            logger.info("AIAgent initialized successfully")
         except (OSError, ValueError, RuntimeError) as e:
-            self.autonomous_agent = None
-            logger.warning("Failed to initialize AutonomousAgent: %s", e)
+            self.ai_agent = None
+            logger.warning("Failed to initialize AIAgent: %s", e)
 
         try:
             self.memory_optimized_loader = MemoryOptimizedBinaryLoader() if MemoryOptimizedBinaryLoader else None
@@ -683,7 +683,7 @@ class IntellicrackApp(QMainWindow):
             print("[INIT] Icon manager initialized successfully")
         except Exception as e:
             print(f"[INIT] Failed to apply theme: {e}")
-            pass
+            # Continue initialization even if theme application fails
 
         print("[INIT] Setting additional tab properties...")
         self.tabs.setTabPosition(QTabWidget.TabPosition.North)
@@ -996,6 +996,7 @@ class IntellicrackApp(QMainWindow):
             try:
                 self.assistant_status.setText(status)
             except AttributeError:
+                # UI element may not be initialized yet, continue gracefully
                 pass
         self.logger.info(f"Assistant status: {status}")
 
@@ -1005,6 +1006,7 @@ class IntellicrackApp(QMainWindow):
             try:
                 self.chat_display.append(message)
             except AttributeError:
+                # UI element may not be initialized yet, continue gracefully
                 pass
         self.logger.info(f"Chat: {message}")
 
