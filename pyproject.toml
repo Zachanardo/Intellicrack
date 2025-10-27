@@ -142,6 +142,8 @@ dependencies = [
     "onnxruntime>=1.23.1,<2",
     "joblib>=1.5.2,<2",
     "networkx>=3.5,<4",
+    "plotly==6.3.1",
+    "pyarrow==22.0.0",
 
     # Data Validation & APIs
     "pydantic>=2.12.3,<3",
@@ -165,6 +167,7 @@ dependencies = [
 
     "jiter>=0.11.1,<0.12",
     "importlib-metadata>=8.7.0,<9",
+    "importlib-resources==6.5.2",
     "idna>=3.11,<4",
     "keyring>=25.6.0,<26",
     "jmespath>=1.0.1,<2",
@@ -182,7 +185,15 @@ dependencies = [
 
     # Task Management
     "click>=8.1.7,<9",
+    "click-didyoumean==0.3.1",
+    "click-plugins==1.1.1.2",
+    "click-repl==0.3.0",
     "python-dotenv>=1.1.1,<2",
+
+    # Distributed Computing & Task Queue
+    "celery==5.5.3",
+    "dask==2025.10.0",
+    "distributed==2025.10.0",
 
     # Additional Core Dependencies
     "pwntools>=4.14.1,<5",

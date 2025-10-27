@@ -54,6 +54,8 @@ except ImportError:
     SCIPY_AVAILABLE = False
     # Fallback implementations will be defined below
 
+from pathlib import Path
+
 from intellicrack.handlers.numpy_handler import numpy as np
 from intellicrack.handlers.sqlite3_handler import sqlite3
 
@@ -608,8 +610,10 @@ class QLearningAgent:
 class PatternStorage:
     """SQLite-based pattern storage with versioning."""
 
-    def __init__(self, db_path: str = "pattern_evolution.db"):
+    def __init__(self, db_path: str | None = None):
         """Initialize pattern storage with SQLite database and thread safety."""
+        if db_path is None:
+            db_path = str(Path(__file__).parent.parent / "data" / "database" / "pattern_evolution.db")
         self.db_path = db_path
         self.conn = sqlite3.connect(db_path, check_same_thread=False)
         self.lock = threading.Lock()
@@ -982,7 +986,7 @@ class PatternEvolutionTracker:
 
     def __init__(
         self,
-        db_path: str = "pattern_evolution.db",
+        db_path: str | None = None,
         population_size: int = 100,
         elite_size: int = 10,
         mutation_rate: float = 0.1,
