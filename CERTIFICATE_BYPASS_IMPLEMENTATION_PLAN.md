@@ -571,101 +571,101 @@
 ### bypass_strategy.py (200 lines)
 - [x] Create `intellicrack/core/certificate/bypass_strategy.py`
 - [x] Define `BypassMethod` enum:
-  - [ ] BINARY_PATCH - Patch binary on disk
-  - [ ] FRIDA_HOOK - Runtime hooking with Frida
-  - [ ] HYBRID - Combination of patching and hooking
-  - [ ] MITM_PROXY - Proxy with certificate injection
-  - [ ] NONE - No bypass possible
+  - [x] BINARY_PATCH - Patch binary on disk
+  - [x] FRIDA_HOOK - Runtime hooking with Frida
+  - [x] HYBRID - Combination of patching and hooking
+  - [x] MITM_PROXY - Proxy with certificate injection
+  - [x] NONE - No bypass possible
 - [x] Implement `BypassStrategySelector` class
 - [x] Add strategy selection logic:
-  - [ ] `select_optimal_strategy(detection_report: DetectionReport, target_state: str) -> BypassMethod`
-  - [ ] If target_state == "static" (not running):
-    - [ ] Prefer BINARY_PATCH if validation is simple
-    - [ ] Use HYBRID if validation is complex
-  - [ ] If target_state == "running":
-    - [ ] Prefer FRIDA_HOOK for running processes
-    - [ ] Use MITM_PROXY if network-based licensing
-  - [ ] If detection_report indicates packed binary:
-    - [ ] Prefer FRIDA_HOOK (avoids unpacking)
-  - [ ] If detection_report indicates multiple validation layers:
-    - [ ] Use HYBRID approach
+  - [x] `select_optimal_strategy(detection_report: DetectionReport, target_state: str) -> BypassMethod`
+  - [x] If target_state == "static" (not running):
+    - [x] Prefer BINARY_PATCH if validation is simple
+    - [x] Use HYBRID if validation is complex
+  - [x] If target_state == "running":
+    - [x] Prefer FRIDA_HOOK for running processes
+    - [x] Use MITM_PROXY if network-based licensing
+  - [x] If detection_report indicates packed binary:
+    - [x] Prefer FRIDA_HOOK (avoids unpacking)
+  - [x] If detection_report indicates multiple validation layers:
+    - [x] Use HYBRID approach
 - [x] Add risk assessment:
-  - [ ] `assess_patch_risk(detection_report: DetectionReport) -> str`
-  - [ ] Return "low", "medium", or "high"
-  - [ ] High risk: Critical validation in tight loop
-  - [ ] Medium risk: Validation with side effects
-  - [ ] Low risk: Standalone validation function
+  - [x] `assess_patch_risk(detection_report: DetectionReport) -> str`
+  - [x] Return "low", "medium", or "high"
+  - [x] High risk: Critical validation in tight loop
+  - [x] Medium risk: Validation with side effects
+  - [x] Low risk: Standalone validation function
 - [x] Add fallback logic:
-  - [ ] `get_fallback_strategy(failed_method: BypassMethod) -> Optional[BypassMethod]`
-  - [ ] If BINARY_PATCH fails → try FRIDA_HOOK
-  - [ ] If FRIDA_HOOK fails → try MITM_PROXY
-  - [ ] If all fail → return NONE
+  - [x] `get_fallback_strategy(failed_method: BypassMethod) -> Optional[BypassMethod]`
+  - [x] If BINARY_PATCH fails → try FRIDA_HOOK
+  - [x] If FRIDA_HOOK fails → try MITM_PROXY
+  - [x] If all fail → return NONE
 
 ### bypass_orchestrator.py (400 lines)
 - [x] Create `intellicrack/core/certificate/bypass_orchestrator.py`
 - [x] Implement `CertificateBypassOrchestrator` class
 - [x] Add main bypass function:
-  - [ ] `bypass(target: str, method: Optional[BypassMethod] = None) -> BypassResult`
+  - [x] `bypass(target: str, method: Optional[BypassMethod] = None) -> BypassResult`
 - [x] Implement bypass workflow:
-  - [ ] **Step 1: Target Analysis**
-    - [ ] Determine if target is file path or process name/PID
-    - [ ] Check if process is running
-    - [ ] Validate target exists and is accessible
-  - [ ] **Step 2: Detection**
-    - [ ] Call `CertificateValidationDetector.detect_certificate_validation(target)`
-    - [ ] Get DetectionReport
-    - [ ] If no validation found, return early with "no bypass needed"
-  - [ ] **Step 3: Strategy Selection**
-    - [ ] If method parameter provided, use it
-    - [ ] Otherwise, call `BypassStrategySelector.select_optimal_strategy()`
-    - [ ] Get recommended BypassMethod
-  - [ ] **Step 4: Execute Bypass**
-    - [ ] If method == BINARY_PATCH:
-      - [ ] Call `CertificatePatcher.patch_certificate_validation()`
-      - [ ] Get PatchResult
-    - [ ] If method == FRIDA_HOOK:
-      - [ ] Call `FridaCertificateHooks.attach(target)`
-      - [ ] Call `FridaCertificateHooks.inject_universal_bypass()`
-      - [ ] Get bypass status
-    - [ ] If method == HYBRID:
-      - [ ] Execute BINARY_PATCH first
-      - [ ] Then execute FRIDA_HOOK for runtime protection
-    - [ ] If method == MITM_PROXY:
-      - [ ] Start mitmproxy instance
-      - [ ] Install Intellicrack CA certificate
-      - [ ] Inject certificate chain generator
-  - [ ] **Step 5: Verification**
-    - [ ] Test bypass success
-    - [ ] Attempt HTTPS connection
-    - [ ] Verify no certificate errors
-  - [ ] **Step 6: Generate Result**
-    - [ ] Create BypassResult with success/failure
-    - [ ] Include detailed logs
-    - [ ] Include rollback data
+  - [x] **Step 1: Target Analysis**
+    - [x] Determine if target is file path or process name/PID
+    - [x] Check if process is running
+    - [x] Validate target exists and is accessible
+  - [x] **Step 2: Detection**
+    - [x] Call `CertificateValidationDetector.detect_certificate_validation(target)`
+    - [x] Get DetectionReport
+    - [x] If no validation found, return early with "no bypass needed"
+  - [x] **Step 3: Strategy Selection**
+    - [x] If method parameter provided, use it
+    - [x] Otherwise, call `BypassStrategySelector.select_optimal_strategy()`
+    - [x] Get recommended BypassMethod
+  - [x] **Step 4: Execute Bypass**
+    - [x] If method == BINARY_PATCH:
+      - [x] Call `CertificatePatcher.patch_certificate_validation()`
+      - [x] Get PatchResult
+    - [x] If method == FRIDA_HOOK:
+      - [x] Call `FridaCertificateHooks.attach(target)`
+      - [x] Call `FridaCertificateHooks.inject_universal_bypass()`
+      - [x] Get bypass status
+    - [x] If method == HYBRID:
+      - [x] Execute BINARY_PATCH first
+      - [x] Then execute FRIDA_HOOK for runtime protection
+    - [x] If method == MITM_PROXY:
+      - [x] Start mitmproxy instance
+      - [x] Install Intellicrack CA certificate
+      - [x] Inject certificate chain generator
+  - [x] **Step 5: Verification**
+    - [x] Test bypass success
+    - [x] Attempt HTTPS connection
+    - [x] Verify no certificate errors
+  - [x] **Step 6: Generate Result**
+    - [x] Create BypassResult with success/failure
+    - [x] Include detailed logs
+    - [x] Include rollback data
 - [x] Add error handling:
-  - [ ] Handle permission errors
-  - [ ] Handle process crashes
-  - [ ] Handle Frida detection
-  - [ ] Automatic fallback to alternative methods
+  - [x] Handle permission errors
+  - [x] Handle process crashes
+  - [x] Handle Frida detection
+  - [x] Automatic fallback to alternative methods
 - [x] Add rollback:
-  - [ ] `rollback(bypass_result: BypassResult) -> bool`
-  - [ ] Restore original binary
-  - [ ] Detach Frida hooks
-  - [ ] Stop MITM proxy
+  - [x] `rollback(bypass_result: BypassResult) -> bool`
+  - [x] Restore original binary
+  - [x] Detach Frida hooks
+  - [x] Stop MITM proxy
 - [x] Add logging:
-  - [ ] Log all bypass steps
-  - [ ] Log success/failure reasons
-  - [ ] Export logs to file
+  - [x] Log all bypass steps
+  - [x] Log success/failure reasons
+  - [x] Export logs to file
 - [x] Define `BypassResult` dataclass:
-  - [ ] `success: bool` - Overall success
-  - [ ] `method_used: BypassMethod` - Which method was used
-  - [ ] `detection_report: DetectionReport` - What was detected
-  - [ ] `patch_result: Optional[PatchResult]` - If patching was used
-  - [ ] `frida_status: Optional[Dict]` - If Frida was used
-  - [ ] `verification_passed: bool` - Did verification test pass
-  - [ ] `errors: List[str]` - Any errors encountered
-  - [ ] `rollback_data: bytes` - Data needed for rollback
-  - [ ] `timestamp: datetime`
+  - [x] `success: bool` - Overall success
+  - [x] `method_used: BypassMethod` - Which method was used
+  - [x] `detection_report: DetectionReport` - What was detected
+  - [x] `patch_result: Optional[PatchResult]` - If patching was used
+  - [x] `frida_status: Optional[Dict]` - If Frida was used
+  - [x] `verification_passed: bool` - Did verification test pass
+  - [x] `errors: List[str]` - Any errors encountered
+  - [x] `rollback_data: bytes` - Data needed for rollback
+  - [x] `timestamp: datetime`
 
 ### Phase 5 Verification
 - [x] Run `/verify` and review every single line of code written in Phase 5 according to the verify slash command parameters
@@ -675,63 +675,63 @@
 ## PHASE 6: ANTI-DETECTION & EVASION (3-4 hours)
 
 ### frida_stealth.py (250 lines)
-- [ ] Create `intellicrack/core/certificate/frida_stealth.py`
-- [ ] Implement `FridaStealth` class
-- [ ] Add Frida detection bypass:
-  - [ ] `detect_anti_frida() -> List[str]` - Detect anti-Frida techniques in target
-  - [ ] Check for: thread enumeration, D-Bus detection, port scanning
-- [ ] Add thread name randomization:
-  - [ ] `randomize_frida_threads() -> bool`
-  - [ ] Rename "gmain", "gdbus", "gum-js-loop" to benign names
-  - [ ] Use common Windows/Linux thread names
-- [ ] Add D-Bus hiding:
-  - [ ] `hide_dbus_presence() -> bool`
-  - [ ] Block D-Bus communication detection
-  - [ ] Spoof D-Bus responses
-- [ ] Add memory artifact hiding:
-  - [ ] `hide_frida_artifacts() -> bool`
-  - [ ] Remove Frida module signatures from memory
-  - [ ] Obfuscate Frida strings in memory
-- [ ] Add syscall direct calling:
-  - [ ] `enable_syscall_mode() -> bool`
-  - [ ] Use direct syscalls instead of ntdll.dll APIs
-  - [ ] Bypass inline API hooks
-- [ ] Add anti-debugging bypass for Frida:
-  - [ ] Detect if target is checking for Frida
-  - [ ] Apply counter-measures
-- [ ] Export stealth status:
-  - [ ] `get_stealth_status() -> Dict` - Return which stealth techniques are active
+- [x] Create `intellicrack/core/certificate/frida_stealth.py`
+- [x] Implement `FridaStealth` class
+- [x] Add Frida detection bypass:
+  - [x] `detect_anti_frida() -> List[str]` - Detect anti-Frida techniques in target
+  - [x] Check for: thread enumeration, D-Bus detection, port scanning
+- [x] Add thread name randomization:
+  - [x] `randomize_frida_threads() -> bool`
+  - [x] Rename "gmain", "gdbus", "gum-js-loop" to benign names
+  - [x] Use common Windows/Linux thread names
+- [x] Add D-Bus hiding:
+  - [x] `hide_dbus_presence() -> bool`
+  - [x] Block D-Bus communication detection
+  - [x] Spoof D-Bus responses
+- [x] Add memory artifact hiding:
+  - [x] `hide_frida_artifacts() -> bool`
+  - [x] Remove Frida module signatures from memory
+  - [x] Obfuscate Frida strings in memory
+- [x] Add syscall direct calling:
+  - [x] `enable_syscall_mode() -> bool`
+  - [x] Use direct syscalls instead of ntdll.dll APIs
+  - [x] Bypass inline API hooks
+- [x] Add anti-debugging bypass for Frida:
+  - [x] Detect if target is checking for Frida
+  - [x] Apply counter-measures
+- [x] Export stealth status:
+  - [x] `get_stealth_status() -> Dict` - Return which stealth techniques are active
 
 ### hook_obfuscation.py (200 lines)
-- [ ] Create `intellicrack/core/certificate/hook_obfuscation.py`
-- [ ] Implement `HookObfuscator` class
-- [ ] Add callback name randomization:
-  - [ ] `generate_random_callback_name() -> str`
-  - [ ] Use benign-looking names: "process_data", "handle_response"
-- [ ] Add indirect hooking:
-  - [ ] `create_indirect_hook(target: int, handler: int) -> bool`
-  - [ ] Use function pointers instead of direct Interceptor.attach
-  - [ ] Chain multiple trampolines to hide true destination
-- [ ] Add hook integrity monitoring:
-  - [ ] `monitor_hook_integrity() -> None`
-  - [ ] Periodically check if hooks are still active
-  - [ ] Re-apply hooks if removed by target
-  - [ ] Log hook tampering attempts
-- [ ] Add hardware breakpoint hooks:
-  - [ ] `install_hwbp_hook(address: int, handler: Callable) -> bool`
-  - [ ] Use DR0-DR3 debug registers
-  - [ ] Alternative to inline hooks (harder to detect)
-- [ ] Add code cave utilization:
-  - [ ] `find_code_caves(module: str) -> List[int]`
-  - [ ] Use empty code sections for hook trampolines
-  - [ ] Avoid allocating new memory (detectable)
-- [ ] Add hook rotation:
-  - [ ] `rotate_hooks() -> bool`
-  - [ ] Periodically move hooks to different locations
-  - [ ] Prevent signature-based detection
+- [x] Create `intellicrack/core/certificate/hook_obfuscation.py`
+- [x] Implement `HookObfuscator` class
+- [x] Add callback name randomization:
+  - [x] `generate_random_callback_name() -> str`
+  - [x] Use benign-looking names: "process_data", "handle_response"
+- [x] Add indirect hooking:
+  - [x] `create_indirect_hook(target: int, handler: int) -> bool`
+  - [x] Use function pointers instead of direct Interceptor.attach
+  - [x] Chain multiple trampolines to hide true destination
+- [x] Add hook integrity monitoring:
+  - [x] `monitor_hook_integrity() -> None`
+  - [x] Periodically check if hooks are still active
+  - [x] Re-apply hooks if removed by target
+  - [x] Log hook tampering attempts
+- [x] Add hardware breakpoint hooks:
+  - [x] `install_hwbp_hook(address: int, handler: Callable) -> bool`
+  - [x] Use DR0-DR3 debug registers
+  - [x] Alternative to inline hooks (harder to detect)
+- [x] Add code cave utilization:
+  - [x] `find_code_caves(module: str) -> List[int]`
+  - [x] Use empty code sections for hook trampolines
+  - [x] Avoid allocating new memory (detectable)
+- [x] Add hook rotation:
+  - [x] `rotate_hooks() -> bool`
+  - [x] Periodically move hooks to different locations
+  - [x] Prevent signature-based detection
 
 ### Phase 6 Verification
-- [ ] Run `/verify` and review every single line of code written in Phase 6 according to the verify slash command parameters
+- [x] Run `/verify` and review every single line of code written in Phase 6 according to the verify slash command parameters
 
 ---
 
