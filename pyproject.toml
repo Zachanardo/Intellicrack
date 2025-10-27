@@ -46,6 +46,8 @@ dependencies = [
 
     "volatility3>=2.26.2,<3",
     "yara-python>=4.5.4,<5",
+    "ppdeep==20250625",
+    "py-tlsh==4.7.2",
     "lief>=0.17.0,<0.18",
     "pefile>=2024.8.26,<2025",
     "pyelftools>=0.32,<0.33",
@@ -88,6 +90,10 @@ dependencies = [
     "numba==0.62.1",
     "tf2onnx",
     "openvino==2025.3.0",
+    # "cupy>=13.0.0,<14",  # NVIDIA CUDA only - not compatible with Intel XPU
+    # "pycuda>=2024.1,<2025",  # NVIDIA CUDA only - not compatible with Intel XPU
+    # "pynvml>=11.5.0,<12",  # NVIDIA GPU monitoring - not compatible with Intel XPU
+    # "torch-directml>=0.2.0,<0.3",  # DirectML backend - using Intel XPU instead
 
     # Database & Storage
     "pymongo>=4.15.3,<5",
