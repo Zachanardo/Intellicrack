@@ -9,16 +9,15 @@ Supported libraries: WinHTTP, Schannel, CryptoAPI, OpenSSL, BoringSSL, NSS, Andr
 OkHttp3, Android TrustManager, iOS SecTrust, iOS NSURLSession.
 """
 
-import frida
-import sys
-import os
-import time
+import logging
 import threading
-from pathlib import Path
-from typing import Union, Optional, Dict, List, Any, Callable
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
-import logging
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+
+import frida
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +31,7 @@ class FridaMessage:
         message_type: Type of message (log, certificate, bypass_success, etc.).
         payload: The message data payload.
         level: Log level (info, warning, error).
+
     """
 
     timestamp: datetime
@@ -53,6 +53,7 @@ class BypassStatus:
         message_count: Total messages received from Frida scripts.
         errors: List of error messages encountered during bypass.
         intercepted_data: Dictionary containing intercepted certificates and connections.
+
     """
 
     active: bool
@@ -82,6 +83,7 @@ class FridaCertificateHooks:
         >>> hooks.inject_universal_bypass()
         >>> status = hooks.get_bypass_status()
         >>> hooks.detach()
+
     """
 
     SCRIPT_DIR = Path(__file__).parent / "frida_scripts"
@@ -125,6 +127,7 @@ class FridaCertificateHooks:
         Raises:
             ValueError: If script_name is not in AVAILABLE_SCRIPTS.
             FileNotFoundError: If the script file doesn't exist on disk.
+
         """
         if script_name not in self.AVAILABLE_SCRIPTS:
             raise ValueError(
@@ -156,6 +159,7 @@ class FridaCertificateHooks:
 
         Raises:
             TypeError: If target is neither int nor str.
+
         """
         if self._attached:
             logger.warning("Already attached to a process. Detach first.")
@@ -207,6 +211,7 @@ class FridaCertificateHooks:
 
         Returns:
             True if injection succeeded, False otherwise.
+
         """
         if not self._attached or self.session is None:
             logger.error("Not attached to any process. Call attach() first.")
@@ -239,6 +244,7 @@ class FridaCertificateHooks:
 
         Returns:
             True if injection succeeded, False otherwise.
+
         """
         logger.info("Injecting universal SSL bypass")
 
@@ -266,6 +272,7 @@ class FridaCertificateHooks:
 
         Returns:
             True if injection succeeded, False otherwise.
+
         """
         if library not in self.AVAILABLE_SCRIPTS:
             error_msg = f"Unknown library bypass: {library}"
@@ -300,6 +307,7 @@ class FridaCertificateHooks:
         Args:
             message: Message dictionary from Frida with 'type' and 'payload' keys.
             data: Optional binary data accompanying the message.
+
         """
         with self._message_lock:
             msg_type = message.get("type")
@@ -321,6 +329,7 @@ class FridaCertificateHooks:
         Args:
             payload: Message payload containing type and data.
             data: Optional binary data.
+
         """
         if not isinstance(payload, dict):
             logger.debug(f"Non-dict payload: {payload}")
@@ -386,6 +395,7 @@ class FridaCertificateHooks:
 
         Args:
             message: Error message dictionary with description, stack, and location.
+
         """
         description = message.get("description", "Unknown error")
         stack = message.get("stack", "")
@@ -407,6 +417,7 @@ class FridaCertificateHooks:
         Args:
             reason: Reason for detachment.
             crash: Crash information if process crashed, None otherwise.
+
         """
         logger.warning(f"Detached from process. Reason: {reason}")
         if crash:
@@ -422,6 +433,7 @@ class FridaCertificateHooks:
 
         Returns:
             BypassStatus object containing comprehensive bypass state information.
+
         """
         if not self._script_loaded or self.script is None:
             return BypassStatus(
@@ -467,6 +479,7 @@ class FridaCertificateHooks:
 
         Returns:
             List of dictionaries containing intercepted certificate information.
+
         """
         return self.intercepted_certificates.copy()
 
@@ -475,6 +488,7 @@ class FridaCertificateHooks:
 
         Returns:
             List of dictionaries containing bypassed connection information.
+
         """
         return self.bypassed_connections.copy()
 
@@ -490,6 +504,7 @@ class FridaCertificateHooks:
 
         Raises:
             RuntimeError: If no script is loaded or RPC function not found.
+
         """
         if not self._script_loaded or self.script is None:
             raise RuntimeError("Script not loaded. Inject a script first.")
@@ -499,10 +514,10 @@ class FridaCertificateHooks:
             result = self.script.exports_sync[function_name](*args)
             logger.debug(f"RPC call result: {result}")
             return result
-        except AttributeError:
+        except AttributeError as e:
             error_msg = f"RPC function not found: {function_name}"
             logger.error(error_msg)
-            raise RuntimeError(error_msg)
+            raise RuntimeError(error_msg) from e
         except Exception as e:
             error_msg = f"RPC call failed for {function_name}: {e}"
             logger.error(error_msg)
@@ -516,6 +531,7 @@ class FridaCertificateHooks:
 
         Returns:
             True always (cleanup is best-effort).
+
         """
         logger.info("Detaching from process")
 
@@ -545,6 +561,7 @@ class FridaCertificateHooks:
 
         Returns:
             True if scripts were unloaded successfully, False otherwise.
+
         """
         if not self._script_loaded or self.script is None:
             logger.warning("No scripts to unload")
@@ -569,6 +586,7 @@ class FridaCertificateHooks:
 
         Returns:
             List of FridaMessage objects.
+
         """
         with self._message_lock:
             if count is None:
@@ -583,6 +601,7 @@ class FridaCertificateHooks:
 
         Returns:
             True if cleanup succeeded.
+
         """
         with self._message_lock:
             self.messages.clear()
@@ -604,6 +623,7 @@ class FridaCertificateHooks:
 
         Returns:
             True if attached, False otherwise.
+
         """
         return self._attached
 
@@ -612,12 +632,15 @@ class FridaCertificateHooks:
 
         Returns:
             True if script is loaded, False otherwise.
+
         """
         return self._script_loaded
 
     def __enter__(self):
+        """Enter context manager."""
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """Exit context manager and detach from process."""
         self.detach()
         return False
