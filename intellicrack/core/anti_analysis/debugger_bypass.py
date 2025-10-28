@@ -28,10 +28,30 @@ from typing import Any
 
 
 class DebuggerBypass:
-    """Comprehensive anti-anti-debug bypass using kernel hooks and timing neutralization."""
+    """Comprehensive anti-anti-debug bypass using user-mode techniques and timing neutralization.
+
+    This class provides various bypass techniques for common anti-debugging checks:
+    - PEB flag manipulation (BeingDebugged, NtGlobalFlag)
+    - Debug API hooking (IsDebuggerPresent, CheckRemoteDebuggerPresent)
+    - Hardware breakpoint clearing
+    - Timing attack neutralization
+    - Exception handling bypass
+    - Window and process detection bypass
+
+    Limitations:
+        - All techniques operate in user-mode (Ring 3), not kernel-mode (Ring 0)
+        - Cannot bypass kernel-mode anti-debugging mechanisms
+        - Can be detected by sophisticated integrity checks
+        - Some hooks may be ineffective against protected binaries
+        - For kernel-level interception, a Windows kernel driver is required
+
+    Note:
+        These bypasses modify the current process only and cannot affect
+        system-wide behavior or kernel-level detection mechanisms.
+    """
 
     def __init__(self):
-        """Initialize debugger bypass system."""
+        """Initialize user-mode debugger bypass system."""
         self.logger = logging.getLogger("IntellicrackLogger.DebuggerBypass")
         self.hooks_installed = False
         self.original_functions = {}
@@ -84,7 +104,10 @@ class DebuggerBypass:
             self.logger.error(f"Failed to initialize Linux bypass: {e}")
 
     def install_bypasses(self, methods: list[str] = None) -> dict[str, bool]:
-        """Install anti-anti-debug bypasses.
+        """Install anti-anti-debug bypasses using user-mode techniques.
+
+        All bypasses operate in user-mode and modify the current process only.
+        They cannot affect kernel-level debugging detection or system-wide behavior.
 
         Args:
             methods: List of specific bypass methods to install, or None for all
@@ -259,7 +282,7 @@ class DebuggerBypass:
             return False
 
     def _bypass_debug_port(self) -> bool:
-        """Bypass debug port detection via NtQueryInformationProcess hooking."""
+        """Bypass debug port detection via user-mode NtQueryInformationProcess hooking."""
         try:
             if platform.system() != "Windows":
                 return False
@@ -598,7 +621,12 @@ class DebuggerBypass:
             return False
 
     def enable_hypervisor_debugging(self) -> bool:
-        """Enable hypervisor-based debugging for stealth."""
+        """Enable hypervisor-based debugging for stealth.
+
+        Note:
+            This checks for hypervisor support but does not install actual
+            kernel-mode hypervisor hooks, which would require a kernel driver.
+        """
         try:
             if not self._check_hypervisor_support():
                 self.logger.warning("Hypervisor not supported on this system")
@@ -662,7 +690,10 @@ class DebuggerBypass:
 
 
 def install_anti_antidebug(methods: list[str] = None) -> dict[str, bool]:
-    """Install anti-anti-debug bypasses.
+    """Install anti-anti-debug bypasses using user-mode techniques.
+
+    All bypasses operate in user-mode (Ring 3) and modify only the current process.
+    Kernel-mode anti-debugging mechanisms require a kernel driver to bypass.
 
     Args:
         methods: List of specific methods to install, or None for all

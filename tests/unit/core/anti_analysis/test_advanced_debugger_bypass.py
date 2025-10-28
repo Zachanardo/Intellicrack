@@ -26,18 +26,18 @@ import pytest
 from intellicrack.core.anti_analysis.advanced_debugger_bypass import (
     AdvancedDebuggerBypass,
     HypervisorDebugger,
-    KernelHookManager,
+    UserModeNTAPIHooker,
     TimingNeutralizer,
     install_advanced_bypass,
 )
 
 
-class TestKernelHookManager(unittest.TestCase):
-    """Test kernel hook manager functionality."""
+class TestUserModeNTAPIHooker(unittest.TestCase):
+    """Test user-mode NT API hooker functionality."""
 
     def setUp(self):
         """Set up test fixtures."""
-        self.hook_manager = KernelHookManager()
+        self.hook_manager = UserModeNTAPIHooker()
 
     @pytest.mark.skipif(platform.system() != "Windows", reason="Windows-specific test")
     def test_initialization_windows(self):

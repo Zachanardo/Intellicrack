@@ -44,23 +44,38 @@ class HookInfo:
     active: bool = True
 
 
-class KernelHookManager:
-    """Manager for kernel-mode hooks to bypass anti-debug checks."""
+class UserModeNTAPIHooker:
+    """User-mode NT API inline hooks (not kernel-mode).
+
+    This class installs inline hooks on NT API functions (ntdll.dll) from user-mode
+    to bypass anti-debug checks. These are user-mode hooks that modify function
+    prologues in the current process address space.
+
+    Limitations:
+        - Only operates in user-mode (Ring 3), not kernel-mode (Ring 0)
+        - For actual kernel-mode interception, a Windows kernel driver is required
+        - Can be detected by sophisticated anti-debugging that checks code integrity
+        - Does not protect against kernel-mode anti-debug mechanisms
+
+    Note:
+        These hooks modify ntdll.dll functions in the current process only and
+        cannot affect system-wide behavior or kernel-level detection mechanisms.
+    """
 
     def __init__(self):
-        """Initialize kernel hook manager."""
-        self.logger = logging.getLogger("IntellicrackLogger.KernelHookManager")
+        """Initialize user-mode NT API hooker."""
+        self.logger = logging.getLogger("IntellicrackLogger.UserModeNTAPIHooker")
         self.hooks: dict[str, HookInfo] = {}
         self.ntdll_base = None
         self.kernel32_base = None
 
         if platform.system() == "Windows":
-            self._init_windows_kernel_hooks()
+            self._init_windows_ntapi_hooks()
         else:
-            self._init_linux_kernel_hooks()
+            self._init_linux_usermode_hooks()
 
-    def _init_windows_kernel_hooks(self):
-        """Initialize Windows kernel hook infrastructure."""
+    def _init_windows_ntapi_hooks(self):
+        """Initialize Windows user-mode NT API hook infrastructure."""
         try:
             self.ntdll = ctypes.windll.ntdll
             self.kernel32 = ctypes.windll.kernel32
@@ -68,24 +83,24 @@ class KernelHookManager:
             self.ntdll_base = ctypes.windll.kernel32.GetModuleHandleW("ntdll.dll")
             self.kernel32_base = ctypes.windll.kernel32.GetModuleHandleW("kernel32.dll")
 
-            self.logger.info("Windows kernel hook infrastructure initialized")
+            self.logger.info("Windows user-mode NT API hook infrastructure initialized")
 
         except Exception as e:
-            self.logger.error(f"Failed to initialize Windows kernel hooks: {e}")
+            self.logger.error(f"Failed to initialize Windows user-mode NT API hooks: {e}")
 
-    def _init_linux_kernel_hooks(self):
-        """Initialize Linux kernel hook infrastructure."""
+    def _init_linux_usermode_hooks(self):
+        """Initialize Linux user-mode hook infrastructure."""
         try:
             libc_path = ctypes.util.find_library("c")
             if libc_path:
                 self.libc = ctypes.CDLL(libc_path)
-                self.logger.info("Linux kernel hook infrastructure initialized")
+                self.logger.info("Linux user-mode hook infrastructure initialized")
 
         except Exception as e:
-            self.logger.error(f"Failed to initialize Linux kernel hooks: {e}")
+            self.logger.error(f"Failed to initialize Linux user-mode hooks: {e}")
 
     def hook_ntquery_information_process(self) -> bool:
-        """Hide debugger by hooking NtQueryInformationProcess at kernel level."""
+        """Hide debugger by hooking NtQueryInformationProcess in user-mode."""
         try:
             if platform.system() != "Windows":
                 return False
@@ -322,7 +337,7 @@ class KernelHookManager:
                     self._remove_hook(hook_info)
 
             self.hooks.clear()
-            self.logger.info("All kernel hooks removed")
+            self.logger.info("All user-mode hooks removed")
             return True
 
         except Exception as e:
@@ -640,31 +655,48 @@ class TimingNeutralizer:
 
 
 class AdvancedDebuggerBypass:
-    """Advanced anti-anti-debug bypass system with kernel hooks, hypervisor support, and timing neutralization."""
+    """Advanced anti-anti-debug bypass system with user-mode NT API hooks, hypervisor support, and timing neutralization.
+
+    This system provides multiple bypass techniques:
+    - User-mode inline hooks on NT API functions
+    - Hypervisor-based debugging (requires hardware virtualization support)
+    - Timing attack neutralization
+
+    Note:
+        The NT API hooks operate in user-mode only. For kernel-level interception,
+        a Windows kernel driver would be required, which is not included in this module.
+    """
 
     def __init__(self):
         """Initialize advanced debugger bypass system."""
         self.logger = logging.getLogger("IntellicrackLogger.AdvancedDebuggerBypass")
-        self.kernel_hooks = KernelHookManager()
+        self.kernel_hooks = UserModeNTAPIHooker()
         self.hypervisor = HypervisorDebugger()
         self.timing_neutralizer = TimingNeutralizer()
         self.bypass_active = False
 
     def install_full_bypass(self) -> dict[str, Any]:
-        """Install complete anti-anti-debug bypass suite."""
+        """Install complete anti-anti-debug bypass suite.
+
+        This installs user-mode NT API hooks, hypervisor-based debugging features
+        (if supported), and timing attack neutralization.
+
+        Returns:
+            Dictionary containing results of each bypass technique installation
+        """
         results = {
-            "kernel_hooks": {},
+            "usermode_ntapi_hooks": {},
             "hypervisor": {},
             "timing": {},
             "overall_success": False,
         }
 
         try:
-            self.logger.info("Installing full anti-anti-debug bypass suite")
+            self.logger.info("Installing full anti-anti-debug bypass suite (user-mode)")
 
-            results["kernel_hooks"]["NtQueryInformationProcess"] = self.kernel_hooks.hook_ntquery_information_process()
-            results["kernel_hooks"]["NtSetInformationThread"] = self.kernel_hooks.hook_ntset_information_thread()
-            results["kernel_hooks"]["NtQuerySystemInformation"] = self.kernel_hooks.hook_ntquery_system_information()
+            results["usermode_ntapi_hooks"]["NtQueryInformationProcess"] = self.kernel_hooks.hook_ntquery_information_process()
+            results["usermode_ntapi_hooks"]["NtSetInformationThread"] = self.kernel_hooks.hook_ntset_information_thread()
+            results["usermode_ntapi_hooks"]["NtQuerySystemInformation"] = self.kernel_hooks.hook_ntquery_system_information()
 
             vt_support = self.hypervisor.check_virtualization_support()
             results["hypervisor"]["support"] = vt_support
@@ -699,13 +731,20 @@ class AdvancedDebuggerBypass:
             return results
 
     def install_scyllahide_resistant_bypass(self) -> dict[str, bool]:
-        """Install bypass techniques specifically designed to defeat ScyllaHide."""
+        """Install bypass techniques specifically designed to defeat ScyllaHide.
+
+        Uses user-mode NT API hooks combined with timing neutralization to bypass
+        ScyllaHide's anti-debugging protections.
+
+        Returns:
+            Dictionary of bypass technique names and their installation status
+        """
         results = {}
 
         try:
-            self.logger.info("Installing ScyllaHide-resistant bypass techniques")
+            self.logger.info("Installing ScyllaHide-resistant bypass techniques (user-mode)")
 
-            results["deep_kernel_hooks"] = self.kernel_hooks.hook_ntquery_information_process()
+            results["usermode_ntapi_hooks"] = self.kernel_hooks.hook_ntquery_information_process()
 
             results["hypervisor_mode"] = False
             vt_support = self.hypervisor.check_virtualization_support()
@@ -714,9 +753,9 @@ class AdvancedDebuggerBypass:
 
             results["timing_normalization"] = self.timing_neutralizer.neutralize_rdtsc()
 
-            results["kernel_thread_hide"] = self.kernel_hooks.hook_ntset_information_thread()
+            results["thread_hide_usermode"] = self.kernel_hooks.hook_ntset_information_thread()
 
-            results["system_info_spoof"] = self.kernel_hooks.hook_ntquery_system_information()
+            results["system_info_spoof_usermode"] = self.kernel_hooks.hook_ntquery_system_information()
 
             self.logger.info(f"ScyllaHide-resistant bypass: {sum(results.values())}/{len(results)} techniques active")
 
@@ -796,11 +835,16 @@ class AdvancedDebuggerBypass:
             return False
 
     def get_bypass_status(self) -> dict[str, Any]:
-        """Get current bypass status and installed techniques."""
+        """Get current bypass status and installed techniques.
+
+        Returns:
+            Dictionary containing status of all bypass techniques including
+            user-mode hooks, hypervisor features, and timing neutralization
+        """
         return {
             "active": self.bypass_active,
-            "kernel_hooks": len(self.kernel_hooks.hooks),
-            "kernel_hook_details": {name: hook.active for name, hook in self.kernel_hooks.hooks.items()},
+            "usermode_ntapi_hooks_count": len(self.kernel_hooks.hooks),
+            "usermode_ntapi_hook_details": {name: hook.active for name, hook in self.kernel_hooks.hooks.items()},
             "hypervisor_vmx": self.hypervisor.vmx_enabled,
             "hypervisor_ept": self.hypervisor.ept_enabled,
             "hypervisor_vmcs_shadowing": self.hypervisor.vmcs_shadowing,
@@ -810,13 +854,20 @@ class AdvancedDebuggerBypass:
 
 
 def install_advanced_bypass(scyllahide_resistant: bool = True) -> dict[str, Any]:
-    """Install advanced anti-anti-debug bypass.
+    """Install advanced anti-anti-debug bypass using user-mode techniques.
+
+    This function installs various bypass techniques including user-mode NT API hooks,
+    hypervisor-based debugging (if supported), and timing attack neutralization.
 
     Args:
         scyllahide_resistant: Use ScyllaHide-resistant techniques
 
     Returns:
         Dict with installation results and status
+
+    Note:
+        All hooks operate in user-mode (Ring 3). Kernel-mode interception would
+        require a Windows kernel driver, which is not included.
 
     """
     bypass = AdvancedDebuggerBypass()

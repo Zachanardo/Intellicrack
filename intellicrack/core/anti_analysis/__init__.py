@@ -20,7 +20,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 from .advanced_debugger_bypass import (
     AdvancedDebuggerBypass,
     HypervisorDebugger,
-    KernelHookManager,
+    UserModeNTAPIHooker,
     TimingNeutralizer,
     install_advanced_bypass,
 )
@@ -71,7 +71,7 @@ __all__ = [
     "DebuggerBypass",
     "DebuggerDetector",
     "HypervisorDebugger",
-    "KernelHookManager",
+    "UserModeNTAPIHooker",
     "SandboxDetector",
     "TimingAttackDefense",
     "TimingNeutralizer",

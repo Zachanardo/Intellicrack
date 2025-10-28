@@ -8,7 +8,7 @@ The Advanced Anti-Debug Bypass system provides production-ready bypass technique
 
 ### Components
 
-1. **KernelHookManager** - Kernel-level hooks for core Windows NTDLL functions
+1. **UserModeNTAPIHooker** - User-mode inline hooks for core Windows NTDLL functions (Ring 3 only, not kernel-mode)
 2. **HypervisorDebugger** - Hardware virtualization support for stealth debugging
 3. **TimingNeutralizer** - Advanced timing attack defeat mechanisms
 4. **AdvancedDebuggerBypass** - Main orchestrator integrating all bypass techniques
@@ -21,7 +21,9 @@ The Advanced Anti-Debug Bypass system provides production-ready bypass technique
 
 ## Features
 
-### 1. Kernel-Mode Hooks
+### 1. User-Mode NT API Hooks
+
+**Note:** These hooks operate in user-mode (Ring 3) only. For actual kernel-mode interception, a Windows kernel driver would be required.
 
 #### NtQueryInformationProcess Hook
 Defeats the following ProcessInformationClass checks:
