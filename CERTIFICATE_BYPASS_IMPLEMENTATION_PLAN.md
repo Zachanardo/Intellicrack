@@ -804,79 +804,79 @@
 ## PHASE 8: MULTI-LAYER BYPASS SUPPORT (3-4 hours)
 
 ### layer_detector.py (200 lines)
-- [ ] Create `intellicrack/core/certificate/layer_detector.py`
-- [ ] Implement `ValidationLayerDetector` class
-- [ ] Define `ValidationLayer` enum:
-  - [ ] OS_LEVEL - CryptoAPI, Schannel, system trust store
-  - [ ] LIBRARY_LEVEL - OpenSSL, NSS, BoringSSL in application
-  - [ ] APPLICATION_LEVEL - Custom pinning, hardcoded certs
-  - [ ] SERVER_LEVEL - Server-side certificate validation
-- [ ] Add layer detection:
-  - [ ] `detect_validation_layers(target: str) -> List[ValidationLayer]`
-  - [ ] Detect OS-level validation (imports from crypt32.dll, sspicli.dll)
-  - [ ] Detect library-level validation (OpenSSL, NSS imports)
-  - [ ] Detect application-level pinning (hardcoded hashes, custom logic)
-  - [ ] Detect server-level validation (network traffic analysis)
-- [ ] Add dependency analysis:
-  - [ ] `build_layer_dependency_graph(layers: List[ValidationLayer]) -> DependencyGraph`
-  - [ ] Determine which layers depend on others
-  - [ ] Example: APPLICATION_LEVEL depends on LIBRARY_LEVEL
-  - [ ] Return topologically sorted layers
-- [ ] Define `LayerInfo` dataclass:
-  - [ ] `layer_type: ValidationLayer`
-  - [ ] `confidence: float`
-  - [ ] `evidence: List[str]` - What indicated this layer
-  - [ ] `dependencies: List[ValidationLayer]` - Required layers
+- [x] Create `intellicrack/core/certificate/layer_detector.py`
+- [x] Implement `ValidationLayerDetector` class
+- [x] Define `ValidationLayer` enum:
+  - [x] OS_LEVEL - CryptoAPI, Schannel, system trust store
+  - [x] LIBRARY_LEVEL - OpenSSL, NSS, BoringSSL in application
+  - [x] APPLICATION_LEVEL - Custom pinning, hardcoded certs
+  - [x] SERVER_LEVEL - Server-side certificate validation
+- [x] Add layer detection:
+  - [x] `detect_validation_layers(target: str) -> List[ValidationLayer]`
+  - [x] Detect OS-level validation (imports from crypt32.dll, sspicli.dll)
+  - [x] Detect library-level validation (OpenSSL, NSS imports)
+  - [x] Detect application-level pinning (hardcoded hashes, custom logic)
+  - [x] Detect server-level validation (network traffic analysis)
+- [x] Add dependency analysis:
+  - [x] `build_layer_dependency_graph(layers: List[ValidationLayer]) -> DependencyGraph`
+  - [x] Determine which layers depend on others
+  - [x] Example: APPLICATION_LEVEL depends on LIBRARY_LEVEL
+  - [x] Return topologically sorted layers
+- [x] Define `LayerInfo` dataclass:
+  - [x] `layer_type: ValidationLayer`
+  - [x] `confidence: float`
+  - [x] `evidence: List[str]` - What indicated this layer
+  - [x] `dependencies: List[ValidationLayer]` - Required layers
 
 ### multilayer_bypass.py (300 lines)
-- [ ] Create `intellicrack/core/certificate/multilayer_bypass.py`
-- [ ] Implement `MultiLayerBypass` class
-- [ ] Add multi-layer bypass execution:
-  - [ ] `bypass_all_layers(target: str, layers: List[LayerInfo]) -> MultiLayerResult`
-- [ ] Implement staged bypass:
-  - [ ] **Stage 1: OS-Level Bypass**
-    - [ ] If OS_LEVEL detected:
-      - [ ] Patch CryptoAPI validation
-      - [ ] Hook Schannel
-      - [ ] Install Intellicrack CA in system trust store
-    - [ ] Verify Stage 1 success before proceeding
-  - [ ] **Stage 2: Library-Level Bypass**
-    - [ ] If LIBRARY_LEVEL detected:
-      - [ ] Hook OpenSSL functions
-      - [ ] Hook NSS functions
-      - [ ] Hook BoringSSL functions
-    - [ ] Verify Stage 2 success
-  - [ ] **Stage 3: Application-Level Bypass**
-    - [ ] If APPLICATION_LEVEL detected:
-      - [ ] Hook custom pinning logic
-      - [ ] Patch hardcoded certificate checks
-      - [ ] Replace pinned hashes with our CA hash
-    - [ ] Verify Stage 3 success
-  - [ ] **Stage 4: Server-Level Bypass**
-    - [ ] If SERVER_LEVEL detected:
-      - [ ] Start MITM proxy
-      - [ ] Intercept server validation requests
-      - [ ] Inject fake validation responses
-- [ ] Add dependency handling:
-  - [ ] Check dependency graph before each stage
-  - [ ] If required layer failed, skip dependent layers
-  - [ ] Report dependency failures clearly
-- [ ] Add rollback on failure:
-  - [ ] If any stage fails, rollback previous stages
-  - [ ] Restore original state
-- [ ] Add verification between stages:
-  - [ ] `verify_layer_bypassed(layer: ValidationLayer) -> bool`
-  - [ ] Test that layer is actually bypassed
-  - [ ] Prevent false positives
-- [ ] Define `MultiLayerResult` dataclass:
-  - [ ] `overall_success: bool`
-  - [ ] `bypassed_layers: List[ValidationLayer]`
-  - [ ] `failed_layers: List[Tuple[ValidationLayer, str]]` - Layer and error
-  - [ ] `stage_results: Dict[int, bool]` - Success per stage
-  - [ ] `verification_results: Dict[ValidationLayer, bool]`
+- [x] Create `intellicrack/core/certificate/multilayer_bypass.py`
+- [x] Implement `MultiLayerBypass` class
+- [x] Add multi-layer bypass execution:
+  - [x] `bypass_all_layers(target: str, layers: List[LayerInfo]) -> MultiLayerResult`
+- [x] Implement staged bypass:
+  - [x] **Stage 1: OS-Level Bypass**
+    - [x] If OS_LEVEL detected:
+      - [x] Patch CryptoAPI validation
+      - [x] Hook Schannel
+      - [x] Install Intellicrack CA in system trust store
+    - [x] Verify Stage 1 success before proceeding
+  - [x] **Stage 2: Library-Level Bypass**
+    - [x] If LIBRARY_LEVEL detected:
+      - [x] Hook OpenSSL functions
+      - [x] Hook NSS functions
+      - [x] Hook BoringSSL functions
+    - [x] Verify Stage 2 success
+  - [x] **Stage 3: Application-Level Bypass**
+    - [x] If APPLICATION_LEVEL detected:
+      - [x] Hook custom pinning logic
+      - [x] Patch hardcoded certificate checks
+      - [x] Replace pinned hashes with our CA hash
+    - [x] Verify Stage 3 success
+  - [x] **Stage 4: Server-Level Bypass**
+    - [x] If SERVER_LEVEL detected:
+      - [x] Start MITM proxy
+      - [x] Intercept server validation requests
+      - [x] Inject fake validation responses
+- [x] Add dependency handling:
+  - [x] Check dependency graph before each stage
+  - [x] If required layer failed, skip dependent layers
+  - [x] Report dependency failures clearly
+- [x] Add rollback on failure:
+  - [x] If any stage fails, rollback previous stages
+  - [x] Restore original state
+- [x] Add verification between stages:
+  - [x] `verify_layer_bypassed(layer: ValidationLayer) -> bool`
+  - [x] Test that layer is actually bypassed
+  - [x] Prevent false positives
+- [x] Define `MultiLayerResult` dataclass:
+  - [x] `overall_success: bool`
+  - [x] `bypassed_layers: List[ValidationLayer]`
+  - [x] `failed_layers: List[Tuple[ValidationLayer, str]]` - Layer and error
+  - [x] `stage_results: Dict[int, bool]` - Success per stage
+  - [x] `verification_results: Dict[ValidationLayer, bool]`
 
 ### Phase 8 Verification
-- [ ] Run `/verify` and review every single line of code written in Phase 8 according to the verify slash command parameters
+- [x] Run `/verify` and review every single line of code written in Phase 8 according to the verify slash command parameters
 
 ---
 
