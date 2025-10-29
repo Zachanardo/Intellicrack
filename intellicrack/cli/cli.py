@@ -86,6 +86,17 @@ except ImportError as e:
     logger.error("Import error in cli: %s", e)
     ADVANCED_MODULES_AVAILABLE = False
 
+# Import certificate bypass modules
+try:
+    from intellicrack.core.certificate.bypass_orchestrator import CertificateBypassOrchestrator
+    from intellicrack.core.certificate.detection_report import BypassMethod
+    from intellicrack.core.certificate.validation_detector import CertificateValidationDetector
+
+    CERT_BYPASS_AVAILABLE = True
+except ImportError as e:
+    logger.error("Import error in cli (certificate bypass): %s", e)
+    CERT_BYPASS_AVAILABLE = False
+
 # Initialize logger before it's used
 logger = logging.getLogger("IntellicrackLogger.CLI")
 
@@ -2330,6 +2341,449 @@ def frida_run(script_name: str, binary_path: str, mode: str, params: str | None,
         logger.error("Failed to execute Frida script: %s", e, exc_info=True)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
+
+
+@cli.command("cert-detect")
+@click.argument("target")
+@click.option("--report", "-r", help="Export detection report to file (JSON format)")
+@click.option("--verbose", "-v", is_flag=True, help="Display detailed detection information")
+@click.option("--min-confidence", "-c", type=float, default=0.3, help="Minimum confidence threshold (0.0-1.0)")
+def cert_detect(target: str, report: str | None, verbose: bool, min_confidence: float):
+    """Detect certificate validation in binary or process.
+
+    TARGET can be a file path or process name/PID.
+
+    Examples:
+        intellicrack cert-detect target.exe
+        intellicrack cert-detect /path/to/app --report detection.json
+        intellicrack cert-detect 1234 --min-confidence 0.5
+
+    """
+    if not CERT_BYPASS_AVAILABLE:
+        click.echo("Error: Certificate bypass modules not available", err=True)
+        sys.exit(1)
+
+    try:
+        click.echo(f"🔍 Detecting certificate validation in: {target}")
+        click.echo()
+
+        detector = CertificateValidationDetector()
+        detector.min_confidence = min_confidence
+
+        detection_report = detector.detect_certificate_validation(target)
+
+        click.echo("✅ Detection complete")
+        click.echo()
+        click.echo("📊 Results:")
+        click.echo(f"  Binary: {detection_report.binary_path}")
+        click.echo(f"  Detected libraries: {len(detection_report.detected_libraries)}")
+
+        for lib in detection_report.detected_libraries:
+            click.echo(f"    - {lib}")
+
+        click.echo(f"  Validation functions: {len(detection_report.validation_functions)}")
+
+        if detection_report.validation_functions:
+            click.echo()
+            click.echo("📍 Detected validation functions:")
+
+            for func in detection_report.validation_functions:
+                confidence_icon = "🟢" if func.confidence > 0.7 else "🟡" if func.confidence > 0.4 else "🔴"
+                click.echo(f"  {confidence_icon} {func.api_name} at 0x{func.address:x}")
+                click.echo(f"     Library: {func.library}")
+                click.echo(f"     Confidence: {func.confidence:.2f}")
+
+                if verbose and func.context:
+                    click.echo(f"     Context: {func.context[:100]}...")
+
+                if verbose and func.references:
+                    click.echo(f"     References: {len(func.references)} callers")
+
+                click.echo()
+        else:
+            click.echo()
+            click.echo("  ℹ️  No certificate validation detected")
+
+        click.echo(f"💡 Recommended method: {detection_report.recommended_method.value}")
+        click.echo(f"⚠️  Risk level: {detection_report.risk_level}")
+
+        if report:
+            report_json = detection_report.to_json()
+            with open(report, 'w', encoding='utf-8') as f:
+                f.write(report_json)
+            click.echo()
+            click.echo(f"💾 Report saved to: {report}")
+
+    except FileNotFoundError as e:
+        click.echo(f"❌ Error: Target not found - {e}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        logger.error("Certificate detection failed: %s", e, exc_info=True)
+        click.echo(f"❌ Error: {e}", err=True)
+        sys.exit(1)
+
+
+@cli.command("cert-bypass")
+@click.argument("target")
+@click.option("--method", "-m",
+              type=click.Choice(["auto", "patch", "frida", "hybrid", "mitm"], case_sensitive=False),
+              default="auto",
+              help="Bypass method to use")
+@click.option("--verify", "-v", is_flag=True, help="Run verification after bypass")
+@click.option("--report", "-r", help="Export bypass report to file (JSON format)")
+@click.option("--force", "-f", is_flag=True, help="Force bypass even on high-risk targets")
+def cert_bypass(target: str, method: str, verify: bool, report: str | None, force: bool):
+    """Execute certificate validation bypass on target.
+
+    TARGET can be a file path or process name/PID.
+
+    Methods:
+        auto   - Automatically select optimal method (default)
+        patch  - Binary patching (permanent, requires file access)
+        frida  - Runtime hooking (temporary, requires running process)
+        hybrid - Combination of patch and frida
+        mitm   - MITM proxy with certificate injection
+
+    Examples:
+        intellicrack cert-bypass target.exe
+        intellicrack cert-bypass app.exe --method frida --verify
+        intellicrack cert-bypass 1234 --method patch --report bypass.json
+
+    """
+    if not CERT_BYPASS_AVAILABLE:
+        click.echo("Error: Certificate bypass modules not available", err=True)
+        sys.exit(1)
+
+    try:
+        click.echo(f"🎯 Executing certificate bypass on: {target}")
+        click.echo(f"   Method: {method}")
+        click.echo()
+
+        orchestrator = CertificateBypassOrchestrator()
+
+        bypass_method = None
+        if method != "auto":
+            method_map = {
+                "patch": BypassMethod.BINARY_PATCH,
+                "frida": BypassMethod.FRIDA_HOOK,
+                "hybrid": BypassMethod.HYBRID,
+                "mitm": BypassMethod.MITM_PROXY
+            }
+            bypass_method = method_map.get(method.lower())
+
+        click.echo("🔍 Step 1: Detecting certificate validation...")
+        result = orchestrator.bypass(target, method=bypass_method)
+
+        if result.success:
+            click.echo()
+            click.echo("✅ Bypass successful!")
+            click.echo()
+            click.echo("📊 Results:")
+            click.echo(f"  Method used: {result.method_used.value}")
+            click.echo(f"  Detected libraries: {', '.join(result.detection_report.detected_libraries)}")
+            click.echo(f"  Functions bypassed: {len(result.detection_report.validation_functions)}")
+
+            if result.patch_result:
+                click.echo(f"  Patches applied: {len(result.patch_result.patched_functions)}")
+
+                if result.patch_result.patched_functions:
+                    click.echo()
+                    click.echo("🔧 Patched functions:")
+                    for patched in result.patch_result.patched_functions:
+                        click.echo(f"    - {patched.api_name} at 0x{patched.address:x}")
+                        click.echo(f"      Patch type: {patched.patch_type.value}")
+                        click.echo(f"      Patch size: {patched.patch_size} bytes")
+
+            if result.frida_status:
+                click.echo()
+                click.echo("🪝  Frida hooks:")
+                click.echo(f"  Active scripts: {result.frida_status.get('active_scripts', 0)}")
+                click.echo(f"  Hooked functions: {result.frida_status.get('hooked_functions', 0)}")
+
+            if verify:
+                click.echo()
+                click.echo("🧪 Running verification...")
+                verification_passed = result.verification_passed
+
+                if verification_passed:
+                    click.echo("  ✅ Verification passed - bypass is working")
+                else:
+                    click.echo("  ⚠️  Verification failed - bypass may not be effective")
+
+            click.echo()
+            click.echo("💡 Tip: Use 'intellicrack cert-rollback' to restore original state")
+
+        else:
+            click.echo()
+            click.echo("❌ Bypass failed")
+            click.echo()
+            click.echo("Errors:")
+            for error in result.errors:
+                click.echo(f"  - {error}")
+
+            sys.exit(1)
+
+        if report:
+            result_dict = result.to_dict()
+            with open(report, 'w', encoding='utf-8') as f:
+                json.dump(result_dict, f, indent=2)
+            click.echo()
+            click.echo(f"💾 Report saved to: {report}")
+
+    except FileNotFoundError as e:
+        click.echo(f"❌ Error: Target not found - {e}", err=True)
+        sys.exit(1)
+    except PermissionError as e:
+        click.echo(f"❌ Error: Permission denied - {e}", err=True)
+        click.echo("   Try running with administrator/root privileges", err=True)
+        sys.exit(1)
+    except Exception as e:
+        logger.error("Certificate bypass failed: %s", e, exc_info=True)
+        click.echo(f"❌ Error: {e}", err=True)
+        sys.exit(1)
+
+
+@cli.command("cert-test")
+@click.argument("target")
+@click.option("--url", "-u", default="https://www.google.com", help="HTTPS URL to test")
+@click.option("--timeout", "-t", type=int, default=10, help="Connection timeout in seconds")
+def cert_test(target: str, url: str, timeout: int):
+    """Test if certificate bypass is working for target.
+
+    TARGET can be a file path or process name/PID.
+
+    This command attempts an HTTPS connection to verify that
+    certificate validation has been successfully bypassed.
+
+    Examples:
+        intellicrack cert-test target.exe
+        intellicrack cert-test app.exe --url https://example.com
+        intellicrack cert-test 1234 --timeout 30
+
+    """
+    if not CERT_BYPASS_AVAILABLE:
+        click.echo("Error: Certificate bypass modules not available", err=True)
+        sys.exit(1)
+
+    try:
+        click.echo(f"🧪 Testing certificate bypass for: {target}")
+        click.echo(f"   Test URL: {url}")
+        click.echo()
+
+        import ssl
+        import urllib.request
+        from pathlib import Path
+
+        target_path = Path(target)
+        if target_path.exists():
+            click.echo("Target type: File")
+        else:
+            try:
+                pid = int(target)
+                click.echo(f"Target type: Process (PID: {pid})")
+            except ValueError:
+                click.echo(f"Target type: Process (Name: {target})")
+
+        click.echo()
+        click.echo("🔍 Checking bypass status...")
+
+        detector = CertificateValidationDetector()
+
+        detection_report = detector.detect_certificate_validation(target)
+
+        if not detection_report.validation_functions:
+            click.echo("  ℹ️  No certificate validation detected in target")
+            click.echo("  Bypass not needed - target does not validate certificates")
+            return
+
+        click.echo(f"  Found {len(detection_report.validation_functions)} validation functions")
+
+        click.echo()
+        click.echo(f"🌐 Testing HTTPS connection to {url}...")
+
+        try:
+            context = ssl.create_default_context()
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
+
+            req = urllib.request.Request(url, headers={'User-Agent': 'Intellicrack-Test/1.0'})  # noqa: S310
+
+            with urllib.request.urlopen(req, context=context, timeout=timeout) as response:  # noqa: S310
+                status_code = response.getcode()
+
+                if status_code == 200:
+                    click.echo()
+                    click.echo("✅ Test PASSED")
+                    click.echo(f"   Successfully connected to {url}")
+                    click.echo(f"   Status code: {status_code}")
+                    click.echo()
+                    click.echo("💡 Certificate bypass appears to be working")
+                else:
+                    click.echo()
+                    click.echo(f"⚠️  Test completed with status code: {status_code}")
+                    click.echo("   Bypass may be partially effective")
+
+        except urllib.error.URLError as e:
+            click.echo()
+            click.echo("❌ Test FAILED")
+            click.echo(f"   Connection error: {e.reason}")
+            click.echo()
+            click.echo("💡 This could indicate:")
+            click.echo("   - Certificate bypass is not active or not effective")
+            click.echo("   - Target is not using bypassed validation")
+            click.echo("   - Network connectivity issues")
+            sys.exit(1)
+
+    except FileNotFoundError as e:
+        click.echo(f"❌ Error: Target not found - {e}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        logger.error("Certificate test failed: %s", e, exc_info=True)
+        click.echo(f"❌ Error: {e}", err=True)
+        sys.exit(1)
+
+
+@cli.command("cert-rollback")
+@click.argument("target")
+@click.option("--force", "-f", is_flag=True, help="Force rollback even if no backup found")
+def cert_rollback(target: str, force: bool):
+    """Rollback certificate bypass and restore original state.
+
+    TARGET can be a file path or process name/PID.
+
+    This command will:
+    - Restore original binary from backup (if patched)
+    - Detach Frida hooks (if using runtime hooking)
+    - Remove injected certificates
+    - Restore system state
+
+    Examples:
+        intellicrack cert-rollback target.exe
+        intellicrack cert-rollback app.exe --force
+        intellicrack cert-rollback 1234
+
+    """
+    if not CERT_BYPASS_AVAILABLE:
+        click.echo("Error: Certificate bypass modules not available", err=True)
+        sys.exit(1)
+
+    try:
+        click.echo(f"🔄 Rolling back certificate bypass for: {target}")
+        click.echo()
+
+        from pathlib import Path
+
+        target_path = Path(target)
+        backup_path = Path(str(target_path) + ".intellicrack_backup")
+
+        click.echo("🔍 Checking for bypass artifacts...")
+
+        rollback_success = False
+
+        if backup_path.exists():
+            click.echo("  ✅ Found binary backup")
+            click.echo()
+            click.echo("📝 Restoring original binary...")
+
+            import shutil
+            shutil.copy2(backup_path, target_path)
+
+            click.echo("  ✅ Original binary restored")
+            backup_path.unlink()
+            click.echo("  🗑️  Backup file removed")
+
+            rollback_success = True
+        else:
+            if not force:
+                click.echo("  ⚠️  No backup file found")
+                click.echo()
+                click.echo("💡 Possible reasons:")
+                click.echo("   - Binary was not patched (Frida hooks only)")
+                click.echo("   - Backup was manually deleted")
+                click.echo("   - Bypass was not applied to this target")
+                click.echo()
+                click.echo("Use --force to attempt rollback anyway")
+
+        click.echo()
+        click.echo("🪝 Checking for active Frida hooks...")
+
+        try:
+            import psutil
+
+            target_pid = None
+            if target_path.exists():
+                for proc in psutil.process_iter(['pid', 'name', 'exe']):
+                    try:
+                        if proc.info['exe'] == str(target_path.absolute()):
+                            target_pid = proc.info['pid']
+                            break
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        continue
+            else:
+                try:
+                    target_pid = int(target)
+                except ValueError:
+                    for proc in psutil.process_iter(['pid', 'name']):
+                        try:
+                            if proc.info['name'] == target:
+                                target_pid = proc.info['pid']
+                                break
+                        except (psutil.NoSuchProcess, psutil.AccessDenied):
+                            continue
+
+            if target_pid:
+                click.echo(f"  Found running process: PID {target_pid}")
+                click.echo("  🔓 Detaching Frida hooks...")
+
+                from intellicrack.core.certificate.frida_cert_hooks import FridaCertificateHooks
+
+                hooks = FridaCertificateHooks()
+                if hooks.attach(target_pid):
+                    hooks.detach()
+                    click.echo("  ✅ Frida hooks detached")
+                    rollback_success = True
+                else:
+                    click.echo("  ℹ️  No active Frida hooks found")
+            else:
+                click.echo("  ℹ️  Target process not running")
+
+        except ImportError:
+            click.echo("  ⚠️  psutil not available, skipping process check")
+        except Exception as hook_error:
+            logger.warning("Failed to detach hooks: %s", hook_error)
+            click.echo(f"  ⚠️  Hook detachment failed: {hook_error}")
+
+        click.echo()
+
+        if rollback_success or force:
+            click.echo("✅ Rollback complete")
+            click.echo()
+            click.echo("💡 Next steps:")
+            click.echo("   - Verify target runs correctly")
+            click.echo("   - Certificate validation should now be active")
+        else:
+            click.echo("❌ Rollback incomplete")
+            click.echo("   No changes were made")
+            sys.exit(1)
+
+    except FileNotFoundError as e:
+        click.echo(f"❌ Error: Target not found - {e}", err=True)
+        sys.exit(1)
+    except PermissionError as e:
+        click.echo(f"❌ Error: Permission denied - {e}", err=True)
+        click.echo("   Try running with administrator/root privileges", err=True)
+        sys.exit(1)
+    except Exception as e:
+        logger.error("Certificate rollback failed: %s", e, exc_info=True)
+        click.echo(f"❌ Error: {e}", err=True)
+        sys.exit(1)
+
+
+# Command aliases
+cli.add_command(cert_detect, name="cd")
+cli.add_command(cert_bypass, name="cb")
+cli.add_command(cert_test, name="ct")
+cli.add_command(cert_rollback, name="cr")
 
 
 def main():

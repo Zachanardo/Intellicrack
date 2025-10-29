@@ -1,13 +1,83 @@
-"""Android APK certificate pinning analysis module.
+"""Android APK certificate pinning analysis module with comprehensive static analysis.
 
-This module provides comprehensive analysis of Android APK files to detect
-certificate pinning configurations including:
-- Android Network Security Config (network_security_config.xml)
-- OkHttp CertificatePinner usage
-- Hardcoded certificates in assets and code
-- Custom pinning implementations
+CAPABILITIES:
+- APK extraction and decompilation (via apktool)
+- Network Security Config XML parsing (network_security_config.xml)
+- OkHttp3 CertificatePinner detection and certificate extraction
+- Hardcoded certificate detection (.pem, .crt, .der files in assets/)
+- Base64-encoded certificate detection in code
+- SHA-256/SHA-1 certificate hash extraction
+- Domain-specific pinning configuration analysis
+- Debug override detection
+- Pin-set analysis with expiration dates
 
-Supports real APK file analysis with decompilation and static code analysis.
+LIMITATIONS:
+- Requires apktool for APK decompilation (external dependency)
+- Cannot analyze encrypted/obfuscated APKs without decryption
+- Limited effectiveness on apps with native code pinning
+- No runtime pinning detection (static analysis only)
+- Cannot detect dynamically generated pins
+- May miss custom pinning implementations
+- Requires valid APK file structure
+
+USAGE EXAMPLES:
+    # Basic APK analysis
+    from intellicrack.core.certificate.apk_analyzer import APKAnalyzer
+
+    analyzer = APKAnalyzer()
+    network_config = analyzer.parse_network_security_config("app.apk")
+
+    if network_config:
+        for domain_config in network_config.domain_configs:
+            print(f"Domain: {domain_config.domains}")
+            for pin in domain_config.pins:
+                print(f"  Pin: {pin.digest_algorithm} - {pin.hash_value}")
+
+    # Detect OkHttp pinning
+    pinning_info = analyzer.detect_okhttp_pinning("app.apk")
+    for info in pinning_info:
+        print(f"Domain: {info.domain}")
+        print(f"Hashes: {info.certificate_hashes}")
+
+    # Find hardcoded certificates
+    certs = analyzer.find_hardcoded_certs("app.apk")
+    for cert_path in certs:
+        print(f"Found certificate: {cert_path}")
+
+    # Extract APK and analyze
+    extract_dir = analyzer.extract_apk("app.apk")
+    # Analyze decompiled code...
+
+RELATED MODULES:
+- pinning_detector.py: Uses APK analyzer for Android pinning detection
+- frida_scripts/android_pinning.js: Runtime bypass for detected pins
+- multilayer_bypass.py: May use APK analysis for comprehensive bypass
+
+NETWORK SECURITY CONFIG FORMAT:
+    <?xml version="1.0" encoding="utf-8"?>
+    <network-security-config>
+        <domain-config>
+            <domain includeSubdomains="true">example.com</domain>
+            <pin-set expiration="2026-01-01">
+                <pin digest="SHA-256">base64+hash+here==</pin>
+            </pin-set>
+        </domain-config>
+    </network-security-config>
+
+OKHTTP PINNING PATTERNS:
+    CertificatePinner.Builder()
+        .add("example.com", "sha256/AAAA...")
+        .add("*.example.com", "sha256/BBBB...")
+        .build()
+
+DETECTION STRATEGIES:
+    1. Parse network_security_config.xml from res/xml/
+    2. Decompile APK with apktool
+    3. Search for CertificatePinner usage in smali code
+    4. Extract certificate hashes from code
+    5. Scan assets/ for .pem/.crt/.der files
+    6. Search for Base64-encoded certificates
+    7. Build PinningInfo for each detected pin
 """
 
 import base64

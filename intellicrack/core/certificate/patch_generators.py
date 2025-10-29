@@ -1,4 +1,112 @@
-"""Binary patch generation for certificate validation bypass."""
+"""Binary patch generation for certificate validation bypass across multiple architectures.
+
+CAPABILITIES:
+- x86/x64 patch generation (always-succeed, conditional invert, NOP sleds, trampolines)
+- ARM32/ARM64 patch generation (always-succeed, conditional invert)
+- Calling convention wrappers (stdcall, cdecl, fastcall, x64 Microsoft)
+- Register preservation code generation (push/pop all GPRs)
+- Patch size and alignment validation
+- Trampoline generation for far jumps
+- Conditional jump inversion (JZ↔JNZ, JE↔JNE, etc.)
+- NOP sled generation for arbitrary sizes
+- Architecture-specific machine code generation
+- Proper return value handling for different conventions
+
+LIMITATIONS:
+- No automatic architecture detection (must be specified)
+- No support for vectorized instructions (SSE, AVX, NEON)
+- No support for x86 real mode or 16-bit code
+- Limited ARM Thumb mode support
+- No automatic stack frame adjustment
+- Cannot generate patches for inline assembly
+- No support for position-independent code adjustments
+- Register preservation assumes standard calling conventions
+
+USAGE EXAMPLES:
+    # Generate simple always-succeed patch
+    from intellicrack.core.certificate.patch_generators import (
+        generate_always_succeed_x64
+    )
+
+    patch = generate_always_succeed_x64()
+    print(f"Patch size: {len(patch)} bytes")
+    print(f"Bytes: {patch.hex()}")
+
+    # Generate conditional invert patch
+    from intellicrack.core.certificate.patch_generators import (
+        generate_conditional_invert_x86
+    )
+
+    # Original: JZ +0x10 (74 10)
+    original = bytes([0x74, 0x10])
+    inverted = generate_conditional_invert_x86(original)
+    # Result: JNZ +0x10 (75 10)
+
+    # Generate NOP sled
+    from intellicrack.core.certificate.patch_generators import generate_nop_sled
+
+    nops = generate_nop_sled(20)  # 20 bytes of NOPs
+    assert len(nops) == 20
+
+    # Generate trampoline
+    from intellicrack.core.certificate.patch_generators import (
+        generate_trampoline_x64
+    )
+
+    target = 0x140001000
+    hook = 0x140050000
+    trampoline = generate_trampoline_x64(target, hook)
+
+    # Wrap patch with calling convention
+    from intellicrack.core.certificate.patch_generators import (
+        wrap_patch_stdcall,
+        generate_always_succeed_x86
+    )
+
+    base_patch = generate_always_succeed_x86()
+    stdcall_patch = wrap_patch_stdcall(base_patch)
+
+    # Validate patch
+    from intellicrack.core.certificate.patch_generators import (
+        validate_patch_size,
+        validate_patch_alignment
+    )
+
+    if validate_patch_size(patch, max_size=32):
+        print("Patch fits in available space")
+
+    if validate_patch_alignment(patch, address=0x140001000):
+        print("Patch is properly aligned")
+
+RELATED MODULES:
+- patch_templates.py: Uses these generators for pre-built templates
+- cert_patcher.py: Applies generated patches to binaries
+- bypass_orchestrator.py: Selects appropriate patch generators
+- api_signatures.py: Provides calling convention information
+
+PATCH TYPES:
+    ALWAYS_SUCCEED:
+        - x86: MOV EAX, 1; RET (6 bytes)
+        - x64: MOV RAX, 1; RET (8 bytes)
+        - ARM32: MOV R0, #1; BX LR (8 bytes)
+        - ARM64: MOV X0, #1; RET (8 bytes)
+
+    CONDITIONAL_INVERT:
+        - Flips conditional jumps (JZ↔JNZ, JE↔JNE, etc.)
+        - Preserves jump offset
+        - Supports short and near jumps
+
+    NOP_SLED:
+        - x86/x64: 0x90 (NOP) repeated
+        - ARM32: 0xE1A00000 (MOV R0, R0)
+        - ARM64: 0xD503201F (NOP)
+
+    TRAMPOLINE:
+        - x86: JMP rel32 (5 bytes)
+        - x64: JMP [RIP+0]; QWORD addr (14 bytes)
+        - ARM32: LDR PC, [PC, #-4]; ADDR (8 bytes)
+        - ARM64: LDR X16, #8; BR X16; ADDR (16 bytes)
+"""
 
 from enum import Enum
 from typing import Optional

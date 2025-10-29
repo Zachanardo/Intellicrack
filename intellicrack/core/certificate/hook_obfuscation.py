@@ -1,4 +1,117 @@
-"""Hook obfuscation techniques to prevent detection and maintain integrity."""
+"""Hook obfuscation and integrity monitoring to prevent detection and tampering.
+
+CAPABILITIES:
+- Random benign callback name generation (blend with normal code)
+- Indirect hooking via function pointer chains
+- Hook integrity monitoring with automatic restoration
+- Hardware breakpoint hooks (DR0-DR3 debug registers)
+- Code cave discovery and utilization for trampolines
+- Hook rotation to avoid signature-based detection
+- Tamper detection and logging
+- Thread-safe hook management
+- Hook integrity hash calculation and verification
+
+LIMITATIONS:
+- Hardware breakpoints limited to 4 concurrent hooks (DR0-DR3)
+- Code cave availability varies by binary
+- Hook rotation has performance overhead
+- Integrity monitoring runs in separate thread (CPU cost)
+- Indirect hooks increase call latency
+- Cannot prevent kernel-level hook detection
+- Hook rotation may cause brief windows of vulnerability
+
+USAGE EXAMPLES:
+    # Generate random callback name
+    from intellicrack.core.certificate.hook_obfuscation import HookObfuscator
+
+    obfuscator = HookObfuscator()
+    name = obfuscator.generate_random_callback_name()
+    print(name)  # "process_data_handler", "validate_network_response", etc.
+
+    # Create indirect hook
+    target_addr = 0x140001000
+    handler_addr = 0x140050000
+    obfuscator.create_indirect_hook(target_addr, handler_addr)
+
+    # Enable integrity monitoring
+    obfuscator.monitor_hook_integrity()
+    # Runs in background, auto-restores tampered hooks
+
+    # Install hardware breakpoint hook (stealth)
+    def my_handler():
+        print("Hook triggered")
+
+    obfuscator.install_hwbp_hook(0x140001234, my_handler)
+
+    # Find code caves for trampolines
+    caves = obfuscator.find_code_caves("target.exe")
+    print(f"Found {len(caves)} code caves")
+
+    # Enable hook rotation
+    obfuscator.rotate_hooks()
+    # Periodically moves hooks to new locations
+
+    # Check for tampered hooks
+    tampered = [addr for addr, info in obfuscator.installed_hooks.items()
+                if info.tamper_count > 0]
+    if tampered:
+        print(f"Tampered hooks: {[hex(a) for a in tampered]}")
+
+RELATED MODULES:
+- frida_stealth.py: Complementary anti-detection techniques
+- frida_cert_hooks.py: Uses obfuscation for certificate hooks
+- bypass_orchestrator.py: Enables obfuscation for sensitive hooks
+
+OBFUSCATION TECHNIQUES:
+    Callback Name Randomization:
+        - Generates benign-looking names
+        - Examples: "process_data", "handle_response", "update_state"
+        - Blends with normal application code
+        - Makes signature detection harder
+
+    Indirect Hooking:
+        - Uses function pointer chains
+        - Hook → Proxy1 → Proxy2 → Handler
+        - Hides true hook destination
+        - Increases analysis difficulty
+
+    Hardware Breakpoints:
+        - Uses DR0-DR3 debug registers
+        - No code modification required
+        - Harder to detect than inline hooks
+        - Limited to 4 concurrent hooks
+
+    Code Cave Utilization:
+        - Uses empty code sections
+        - Avoids allocating new memory (detectable)
+        - More stealthy than VirtualAlloc
+        - Requires finding suitable caves
+
+    Hook Rotation:
+        - Periodically changes hook locations
+        - Prevents signature-based detection
+        - Maintains functionality during rotation
+        - CPU overhead trade-off
+
+INTEGRITY MONITORING:
+    - Calculates SHA-256 hash of hook bytes
+    - Periodically checks if hash changed
+    - Automatically restores tampered hooks
+    - Logs tampering attempts with timestamps
+    - Thread-safe with lock protection
+
+HOOK TYPES:
+    - Inline: Direct code modification (most common)
+    - Trampoline: Jump to code cave with full handler
+    - Hardware Breakpoint: Uses debug registers (stealth)
+    - Indirect: Function pointer chain (obfuscated)
+
+PERFORMANCE IMPACT:
+    - Indirect hooks: +10-20% latency per hook
+    - Integrity monitoring: ~1-2% CPU usage
+    - Hook rotation: Brief spikes during rotation
+    - Hardware breakpoints: Minimal overhead
+"""
 
 import ctypes
 import hashlib

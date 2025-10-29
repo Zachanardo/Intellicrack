@@ -1,4 +1,85 @@
-"""Main certificate validation detector module."""
+"""Main certificate validation detector module for comprehensive binary analysis.
+
+CAPABILITIES:
+- Automated certificate validation detection in PE/ELF/Mach-O binaries
+- Multi-stage detection workflow (imports → APIs → context → scoring)
+- Support for all major TLS libraries (WinHTTP, Schannel, OpenSSL, NSS, etc.)
+- Confidence scoring with configurable threshold (default: 0.3)
+- Context-aware analysis (licensing code detection)
+- Risk assessment for patch safety (low/medium/high)
+- Bypass method recommendation based on target characteristics
+- Comprehensive DetectionReport generation
+- Packed binary detection and warning
+- Error handling for corrupted or invalid binaries
+- Logging support for debugging and analysis
+
+LIMITATIONS:
+- Requires LIEF for binary parsing (detection fails without it)
+- Radare2 required for call location analysis (optional but recommended)
+- Cannot detect custom/proprietary validation implementations
+- Limited accuracy on heavily obfuscated code
+- May miss validation in virtualized sections
+- Confidence scoring is heuristic-based (not ML-based)
+- No support for .NET or Java bytecode analysis
+- Licensing context detection is pattern-based (may have false positives)
+
+USAGE EXAMPLES:
+    # Basic detection
+    from intellicrack.core.certificate.validation_detector import (
+        CertificateValidationDetector
+    )
+
+    detector = CertificateValidationDetector()
+    report = detector.detect_certificate_validation("C:/target.exe")
+
+    print(f"Found {len(report.validation_functions)} validation functions")
+    print(f"Recommended method: {report.recommended_method.value}")
+    print(f"Risk level: {report.risk_level}")
+
+    # Access detected functions
+    for func in report.validation_functions:
+        print(f"{func.api_name} at 0x{func.address:x} (confidence: {func.confidence:.2f})")
+
+    # Custom confidence threshold
+    detector = CertificateValidationDetector()
+    detector.min_confidence = 0.5  # Higher threshold
+    report = detector.detect_certificate_validation("C:/target.exe")
+
+    # Export results
+    with open("report.json", "w") as f:
+        f.write(report.to_json())
+
+    # Check for high-confidence detections
+    high_conf = [f for f in report.validation_functions if f.confidence > 0.8]
+    if high_conf:
+        print(f"Found {len(high_conf)} high-confidence validation functions")
+
+RELATED MODULES:
+- binary_scanner.py: Performs low-level binary scanning
+- api_signatures.py: Provides API signature database
+- detection_report.py: Defines output data structures
+- bypass_orchestrator.py: Uses detection results for bypass
+- bypass_strategy.py: Uses detection for strategy selection
+- cert_patcher.py: Patches locations identified by detector
+
+DETECTION WORKFLOW:
+    1. Load binary with LIEF
+    2. Scan imports for TLS libraries
+    3. Get relevant API signatures for detected libraries
+    4. Find all calls to certificate validation APIs
+    5. Analyze each call location for context
+    6. Calculate confidence scores based on context
+    7. Filter out low-confidence results (<0.3)
+    8. Determine recommended bypass method
+    9. Assess risk level for patching
+    10. Generate DetectionReport
+
+CONFIDENCE SCORING:
+- High (0.7-1.0): Direct call to cert API in clear licensing context
+- Medium (0.4-0.6): Call exists, some licensing indicators
+- Low (0.3-0.4): Possible false positive, weak indicators
+- Filtered (<0.3): Likely false positive, excluded from report
+"""
 
 import logging
 from pathlib import Path

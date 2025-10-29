@@ -1,4 +1,135 @@
-"""Main orchestrator for certificate validation bypass operations."""
+"""Main orchestrator coordinating complete certificate validation bypass workflow.
+
+CAPABILITIES:
+- End-to-end bypass workflow orchestration
+- Target analysis (file vs process, running state detection)
+- Automatic detection of certificate validation
+- Strategy selection integration
+- Multi-method bypass execution (patch, Frida, hybrid, MITM)
+- Bypass verification with HTTPS connection testing
+- Comprehensive error handling with fallback
+- Rollback functionality for all bypass types
+- Detailed logging of all operations
+- Result reporting with success metrics
+
+LIMITATIONS:
+- Requires administrator/root privileges for some operations
+- Cannot bypass kernel-mode certificate validation
+- Limited effectiveness against hypervisor-based protection
+- No automatic retry logic (single attempt per method)
+- Verification requires network connectivity
+- No partial bypass support (all-or-nothing)
+- Cannot handle time-delayed validation failures
+
+USAGE EXAMPLES:
+    # Complete bypass workflow
+    from intellicrack.core.certificate.bypass_orchestrator import (
+        CertificateBypassOrchestrator
+    )
+
+    orchestrator = CertificateBypassOrchestrator()
+    result = orchestrator.bypass("C:/target.exe")
+
+    if result.success:
+        print(f"Bypass successful using {result.method_used.value}")
+        print(f"Verification: {'passed' if result.verification_passed else 'failed'}")
+    else:
+        print(f"Bypass failed: {result.errors}")
+
+    # Specify bypass method
+    result = orchestrator.bypass(
+        "target.exe",
+        method=BypassMethod.FRIDA_HOOK
+    )
+
+    # Bypass running process
+    result = orchestrator.bypass(1234)  # PID
+
+    # Rollback bypass
+    if result.success:
+        rollback_ok = orchestrator.rollback(result)
+        print(f"Rollback: {'success' if rollback_ok else 'failed'}")
+
+    # Access detailed results
+    print(f"Method: {result.method_used.value}")
+    print(f"Libraries detected: {result.detection_report.detected_libraries}")
+    print(f"Functions bypassed: {len(result.detection_report.validation_functions)}")
+    if result.patch_result:
+        print(f"Patches applied: {len(result.patch_result.patched_functions)}")
+    if result.frida_status:
+        print(f"Frida status: {result.frida_status}")
+
+    # Export results
+    result_dict = result.to_dict()
+    import json
+    with open("bypass_result.json", "w") as f:
+        json.dump(result_dict, f, indent=2)
+
+RELATED MODULES:
+- validation_detector.py: Performs detection (Step 2)
+- bypass_strategy.py: Selects optimal method (Step 3)
+- cert_patcher.py: Executes binary patching (Step 4a)
+- frida_cert_hooks.py: Executes Frida hooking (Step 4b)
+- cert_chain_generator.py: Generates certs for MITM (Step 4c)
+- multilayer_bypass.py: Handles multi-layer scenarios
+
+BYPASS WORKFLOW:
+    Step 1: Target Analysis
+        - Determine if target is file path or process name/PID
+        - Check if process is running
+        - Validate target exists and is accessible
+
+    Step 2: Detection
+        - Call CertificateValidationDetector.detect_certificate_validation(target)
+        - Get DetectionReport
+        - If no validation found, return early with "no bypass needed"
+
+    Step 3: Strategy Selection
+        - If method parameter provided, use it
+        - Otherwise, call BypassStrategySelector.select_optimal_strategy()
+        - Get recommended BypassMethod
+
+    Step 4: Execute Bypass
+        BINARY_PATCH:
+            - Call CertificatePatcher.patch_certificate_validation()
+            - Get PatchResult
+
+        FRIDA_HOOK:
+            - Call FridaCertificateHooks.attach(target)
+            - Call FridaCertificateHooks.inject_universal_bypass()
+            - Get bypass status
+
+        HYBRID:
+            - Execute BINARY_PATCH first
+            - Then execute FRIDA_HOOK for runtime protection
+
+        MITM_PROXY:
+            - Start mitmproxy instance
+            - Install Intellicrack CA certificate
+            - Inject certificate chain generator
+
+    Step 5: Verification
+        - Test bypass success
+        - Attempt HTTPS connection
+        - Verify no certificate errors
+
+    Step 6: Generate Result
+        - Create BypassResult with success/failure
+        - Include detailed logs
+        - Include rollback data
+
+ERROR HANDLING:
+    - Permission errors → fallback to non-privileged method
+    - Process crashes → retry with safer method
+    - Frida detection → enable stealth mode and retry
+    - Automatic fallback to alternative methods on failure
+
+ROLLBACK SUPPORT:
+    - BINARY_PATCH: Restore original binary from backup
+    - FRIDA_HOOK: Detach hooks and unload scripts
+    - MITM_PROXY: Stop proxy and remove CA certificate
+    - Flush instruction cache after restoration
+"""
 
 import logging
 from dataclasses import dataclass, field

@@ -1,4 +1,71 @@
-"""Binary scanner for detecting certificate validation APIs and references."""
+"""Binary scanner for detecting certificate validation APIs and references in executable files.
+
+CAPABILITIES:
+- Import table analysis for PE, ELF, and Mach-O binaries (via LIEF)
+- TLS/SSL library detection (WinHTTP, Schannel, OpenSSL, NSS, etc.)
+- String extraction using ASCII and UTF-16LE pattern matching
+- Certificate-related string identification (keywords, hashes, paths)
+- API call location finding using radare2 disassembly
+- Cross-reference analysis for API usage patterns
+- Context extraction (surrounding code, function names)
+- Confidence scoring for detected certificate validation
+- Support for Windows PE, Linux ELF, and macOS Mach-O formats
+
+LIMITATIONS:
+- Requires LIEF library for import table parsing
+- Requires radare2/r2pipe for call location analysis
+- Cannot detect obfuscated or encrypted strings
+- May miss dynamically loaded libraries (LoadLibrary, dlopen)
+- Limited accuracy on packed or protected binaries
+- String extraction is pattern-based, may have false positives
+- Radare2 analysis can be slow on large binaries (>50MB)
+- No support for virtualized or emulated code sections
+
+USAGE EXAMPLES:
+    # Basic import scanning
+    from intellicrack.core.certificate.binary_scanner import BinaryScanner
+
+    scanner = BinaryScanner("target.exe")
+    imports = scanner.scan_imports()
+    print(f"Imports: {imports}")
+
+    # Detect TLS libraries
+    tls_libs = scanner.detect_tls_libraries()
+    print(f"TLS libraries: {tls_libs}")
+
+    # Find certificate-related strings
+    cert_strings = scanner.find_certificate_references()
+    for s in cert_strings[:10]:
+        print(f"Found: {s}")
+
+    # Find specific API calls
+    api_calls = scanner.find_api_calls("WinHttpSetOption")
+    print(f"Found {len(api_calls)} calls at: {[hex(addr) for addr in api_calls]}")
+
+    # Analyze call context
+    if api_calls:
+        context = scanner.analyze_call_context(api_calls[0])
+        print(f"Function: {context.function_name}")
+        print(f"Surrounding code: {context.surrounding_code}")
+
+    # Calculate confidence score
+    confidence = scanner.calculate_confidence(context)
+    print(f"Confidence: {confidence:.2f}")
+
+RELATED MODULES:
+- api_signatures.py: Provides API signatures for detection
+- validation_detector.py: Uses this scanner for comprehensive detection
+- detection_report.py: Stores results from binary scanning
+- cert_patcher.py: Uses scan results to locate patch targets
+- pinning_detector.py: Uses string scanning to find hardcoded certificates
+
+PERFORMANCE NOTES:
+- Import scanning: Fast (<1s for most binaries)
+- String extraction: Moderate (1-5s depending on size)
+- radare2 analysis: Slow (10-60s for full analysis)
+- Consider using caching for repeated analyses
+- Disable radare2 analysis for quick scans (imports/strings only)
+"""
 
 import re
 from pathlib import Path

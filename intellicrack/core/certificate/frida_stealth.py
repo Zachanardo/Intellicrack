@@ -1,4 +1,107 @@
-"""Frida stealth techniques for bypassing anti-debugging and detection."""
+"""Frida stealth techniques for bypassing anti-debugging and anti-Frida detection mechanisms.
+
+CAPABILITIES:
+- Anti-Frida technique detection (thread enumeration, D-Bus, port scanning)
+- Thread name randomization (hides gmain, gdbus, gum-js-loop)
+- D-Bus presence hiding and response spoofing
+- Memory artifact removal (Frida signatures, module names)
+- Frida string obfuscation in process memory
+- Direct syscall mode (bypass ntdll.dll API hooks)
+- Anti-debugging countermeasures
+- Stealth status reporting and monitoring
+- Cross-platform support (Windows, Linux, Android)
+
+LIMITATIONS:
+- Cannot defeat all anti-Frida techniques
+- Some techniques require administrator/root privileges
+- Direct syscall mode is Windows-only
+- Memory artifact hiding is partial (cannot hide all traces)
+- D-Bus hiding may affect legitimate D-Bus communication
+- Thread randomization doesn't prevent TID-based detection
+- No protection against kernel-level Frida detection
+- Hardware-based detection (hypervisor) cannot be bypassed
+
+USAGE EXAMPLES:
+    # Detect anti-Frida techniques in target
+    from intellicrack.core.certificate.frida_stealth import FridaStealth
+
+    stealth = FridaStealth()
+    detected = stealth.detect_anti_frida(pid=1234)
+
+    if detected:
+        print(f"Detected techniques: {detected}")
+        # ['thread_enumeration', 'port_scanning']
+
+    # Apply stealth techniques
+    stealth.randomize_frida_threads()
+    stealth.hide_dbus_presence()
+    stealth.hide_frida_artifacts()
+
+    # Enable all stealth techniques
+    stealth.enable_syscall_mode()
+
+    # Get stealth status
+    status = stealth.get_stealth_status()
+    print(f"Active techniques: {[k for k, v in status.items() if v]}")
+    # ['thread_randomization', 'dbus_hiding', 'artifact_hiding']
+
+    # Use with Frida hooks
+    from intellicrack.core.certificate.frida_cert_hooks import (
+        FridaCertificateHooks
+    )
+
+    stealth = FridaStealth()
+    stealth.randomize_frida_threads()
+    stealth.hide_frida_artifacts()
+
+    hooks = FridaCertificateHooks()
+    hooks.attach("protected_app.exe")
+    # Now less likely to be detected
+
+RELATED MODULES:
+- frida_cert_hooks.py: Uses stealth techniques to avoid detection
+- hook_obfuscation.py: Additional stealth for individual hooks
+- bypass_orchestrator.py: Enables stealth mode on Frida detection
+
+DETECTION TECHNIQUES BYPASSED:
+    Thread Enumeration:
+        - Renames Frida threads to common names
+        - "gmain" → "ThreadPoolWorker"
+        - "gdbus" → "NetworkThread"
+        - "gum-js-loop" → "TimerQueue"
+
+    D-Bus Detection:
+        - Blocks D-Bus communication monitoring
+        - Spoofs D-Bus responses to look normal
+        - Hides frida-server D-Bus presence
+
+    Memory Scanning:
+        - Removes "frida" strings from memory
+        - Obfuscates module names
+        - Patches Frida signatures
+
+    Port Scanning:
+        - Frida server port detection (27042, 27043)
+        - Cannot be fully hidden (consider firewall rules)
+
+    Named Pipe Detection:
+        - Frida uses pipes like "frida-*"
+        - Detection via handle enumeration
+        - Limited mitigation available
+
+SYSCALL MODE (Windows):
+    - Bypasses inline API hooks in ntdll.dll
+    - Uses direct syscall instructions
+    - Requires knowing syscall numbers (version-specific)
+    - More stealthy but platform-dependent
+    - May trigger PatchGuard on Windows
+
+EFFECTIVENESS:
+    - Basic anti-Frida: 80-90% effective
+    - Advanced anti-Frida: 50-70% effective
+    - Kernel-level detection: Not effective
+    - Hypervisor detection: Not effective
+"""
 
 import ctypes
 import logging

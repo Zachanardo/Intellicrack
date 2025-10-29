@@ -1,7 +1,65 @@
-"""Multi-layer certificate validation detection module.
+"""Multi-layer certificate validation detection for comprehensive bypass planning.
 
-This module detects different layers of certificate validation within a target binary
-or process, enabling comprehensive bypass strategies that address all validation layers.
+CAPABILITIES:
+- Detects multiple validation layers (OS, library, application, server)
+- Builds dependency graphs between layers
+- Topological sorting for staged bypass
+- Layer confidence scoring
+- Evidence tracking for each layer
+- Hierarchical layer analysis
+
+LIMITATIONS:
+- Heuristic-based layer detection (may have false positives)
+- Cannot detect all custom layer implementations
+- Dependency graph assumes standard architectures
+- No runtime layer detection
+- Limited server-level detection (requires network analysis)
+
+USAGE EXAMPLES:
+    # Detect validation layers
+    from intellicrack.core.certificate.layer_detector import (
+        ValidationLayerDetector
+    )
+
+    detector = ValidationLayerDetector()
+    layers = detector.detect_validation_layers("target.exe")
+
+    for layer_info in layers:
+        print(f"Layer: {layer_info.layer_type.value}")
+        print(f"Confidence: {layer_info.confidence:.2f}")
+        print(f"Evidence: {layer_info.evidence}")
+        print(f"Dependencies: {[d.value for d in layer_info.dependencies]}")
+
+    # Build dependency graph
+    graph = detector.build_layer_dependency_graph(layers)
+    sorted_layers = graph.topological_sort()
+    print(f"Bypass order: {[l.value for l in sorted_layers]}")
+
+RELATED MODULES:
+- multilayer_bypass.py: Executes staged bypasses using detected layers
+- validation_detector.py: Detects specific validation functions
+- bypass_orchestrator.py: Coordinates multi-layer bypass execution
+
+VALIDATION LAYERS:
+    OS_LEVEL:
+        - CryptoAPI (crypt32.dll)
+        - Schannel (sspicli.dll)
+        - System trust store validation
+
+    LIBRARY_LEVEL:
+        - OpenSSL (libssl.so)
+        - NSS (libnss3.so)
+        - BoringSSL (Android)
+
+    APPLICATION_LEVEL:
+        - Custom pinning logic
+        - Hardcoded certificate checks
+        - Application-specific validation
+
+    SERVER_LEVEL:
+        - Server-side certificate validation
+        - Mutual TLS authentication
+        - Online activation checks
 """
 
 import logging

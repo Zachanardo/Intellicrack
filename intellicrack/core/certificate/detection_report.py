@@ -1,4 +1,90 @@
-"""Data structures for certificate validation detection reports."""
+"""Data structures for certificate validation detection reports and results.
+
+CAPABILITIES:
+- Structured storage of certificate validation detection results
+- ValidationFunction dataclass with address, API name, library, confidence
+- DetectionReport dataclass aggregating all detection findings
+- BypassMethod enum for recommended bypass strategies
+- JSON export functionality for report persistence
+- Dictionary export for programmatic access
+- Human-readable text report generation
+- Timestamp tracking for detection operations
+- Risk level assessment storage (low/medium/high)
+- Cross-reference tracking for validation functions
+
+LIMITATIONS:
+- No built-in report comparison or diffing
+- No automatic report versioning or history
+- Limited query capabilities (no filtering/sorting built-in)
+- Text export format is basic (not customizable)
+- No report compression for large result sets
+- No encryption for sensitive detection data
+
+USAGE EXAMPLES:
+    # Create a validation function entry
+    from intellicrack.core.certificate.detection_report import ValidationFunction
+
+    func = ValidationFunction(
+        address=0x140001234,
+        api_name="WinHttpSetOption",
+        library="winhttp.dll",
+        confidence=0.95,
+        context="Located in licensing check routine",
+        references=[0x140005678, 0x14000abcd]
+    )
+    print(func)  # Human-readable representation
+
+    # Create a detection report
+    from intellicrack.core.certificate.detection_report import (
+        DetectionReport,
+        BypassMethod
+    )
+
+    report = DetectionReport(
+        binary_path="C:/Program Files/App/target.exe",
+        detected_libraries=["winhttp.dll", "crypt32.dll"],
+        validation_functions=[func],
+        recommended_method=BypassMethod.BINARY_PATCH,
+        risk_level="low"
+    )
+
+    # Export to JSON
+    json_str = report.to_json()
+    with open("detection_results.json", "w") as f:
+        f.write(json_str)
+
+    # Export to dictionary
+    data = report.to_dict()
+    print(f"Found {len(data['validation_functions'])} functions")
+
+    # Generate text report
+    text = report.to_text()
+    print(text)
+
+RELATED MODULES:
+- validation_detector.py: Generates DetectionReport objects
+- binary_scanner.py: Provides raw detection data
+- bypass_orchestrator.py: Consumes DetectionReport for bypass execution
+- bypass_strategy.py: Uses DetectionReport to select optimal strategy
+- cert_patcher.py: Uses ValidationFunction data for patching
+
+DATA STRUCTURE:
+    ValidationFunction:
+        - address: int (memory address)
+        - api_name: str (API function name)
+        - library: str (DLL/SO name)
+        - confidence: float (0.0-1.0)
+        - context: str (surrounding code info)
+        - references: List[int] (caller addresses)
+
+    DetectionReport:
+        - binary_path: str
+        - detected_libraries: List[str]
+        - validation_functions: List[ValidationFunction]
+        - recommended_method: BypassMethod
+        - risk_level: str (low/medium/high)
+        - timestamp: datetime
+"""
 
 import json
 from dataclasses import asdict, dataclass, field

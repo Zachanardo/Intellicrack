@@ -1,4 +1,111 @@
-"""Certificate chain generation for MITM certificate bypass."""
+"""Certificate chain generation for MITM certificate bypass and trust injection.
+
+CAPABILITIES:
+- Complete certificate chain generation (root CA → intermediate CA → leaf cert)
+- RSA key pair generation (4096-bit root, 2048-bit intermediate/leaf)
+- X.509 v3 certificate creation with proper extensions
+- Self-signed root CA with CA=TRUE, pathlen=2
+- Intermediate CA with proper constraints and authority identifiers
+- Leaf certificates with Subject Alternative Names (SAN)
+- Wildcard certificate support (*.domain.com)
+- PEM/DER export for certificates and keys
+- SHA-256 signature algorithm
+- Proper validity periods (10 years root, 5 years intermediate, 1 year leaf)
+- Correct key usage and extended key usage extensions
+
+LIMITATIONS:
+- Only RSA keys (no ECDSA/Ed25519 support yet)
+- Fixed key sizes (no customization)
+- No certificate revocation list (CRL) generation
+- No OCSP responder support
+- No custom certificate extensions
+- Validity periods are fixed (not configurable)
+- No certificate pinning hash generation
+- Cannot import existing CA keys
+
+USAGE EXAMPLES:
+    # Generate complete certificate chain
+    from intellicrack.core.certificate.cert_chain_generator import (
+        CertificateChainGenerator
+    )
+
+    generator = CertificateChainGenerator()
+    chain = generator.generate_full_chain("example.com")
+
+    print(f"Leaf: {chain.leaf_cert.subject}")
+    print(f"Intermediate: {chain.intermediate_cert.subject}")
+    print(f"Root: {chain.root_cert.subject}")
+
+    # Export to PEM format
+    pem_chain = generator.export_chain_pem(chain)
+    with open("certificate_chain.pem", "w") as f:
+        f.write(pem_chain)
+
+    # Export individual components
+    leaf_pem = generator.export_cert_pem(chain.leaf_cert)
+    key_pem = generator.export_private_key_pem(chain.leaf_key)
+
+    with open("server.crt", "w") as f:
+        f.write(leaf_pem)
+    with open("server.key", "w") as f:
+        f.write(key_pem)
+
+    # Generate DER format (for binary import)
+    cert_der = generator.export_cert_der(chain.leaf_cert)
+    with open("certificate.der", "wb") as f:
+        f.write(cert_der)
+
+    # Generate wildcard certificate
+    wildcard_chain = generator.generate_full_chain("*.example.com")
+    # Works for any subdomain: test.example.com, api.example.com, etc.
+
+    # Generate for multiple domains
+    multi_chain = generator.generate_leaf_cert(
+        "example.com",
+        chain.intermediate_cert,
+        chain.intermediate_key,
+        alt_names=["www.example.com", "api.example.com"]
+    )
+
+RELATED MODULES:
+- cert_cache.py: Caches generated certificate chains
+- bypass_orchestrator.py: Uses generated certs for MITM bypass
+- frida_cert_hooks.py: May inject generated certificates
+
+CERTIFICATE HIERARCHY:
+    Root CA (Intellicrack Root CA)
+      ↓ signs
+    Intermediate CA (Intellicrack Intermediate CA)
+      ↓ signs
+    Leaf Certificate (target domain)
+
+CERTIFICATE EXTENSIONS:
+    Root CA:
+        - basicConstraints: CA=TRUE, pathlen=2
+        - keyUsage: keyCertSign, cRLSign
+        - subjectKeyIdentifier: hash of public key
+
+    Intermediate CA:
+        - basicConstraints: CA=TRUE, pathlen=0
+        - keyUsage: keyCertSign, cRLSign, digitalSignature
+        - authorityKeyIdentifier: from root CA
+        - subjectKeyIdentifier: hash of public key
+
+    Leaf Certificate:
+        - basicConstraints: CA=FALSE
+        - keyUsage: digitalSignature, keyEncipherment
+        - extendedKeyUsage: serverAuth, clientAuth
+        - subjectAltName: DNS:domain, DNS:*.domain
+        - authorityKeyIdentifier: from intermediate CA
+        - subjectKeyIdentifier: hash of public key
+
+USAGE IN BYPASS:
+    1. Generate certificate chain for target domain
+    2. Install root CA in system trust store
+    3. Use leaf cert+key for MITM proxy (mitmproxy)
+    4. Target application trusts our certificates
+    5. Intercept and modify HTTPS traffic
+"""
 
 import datetime
 from dataclasses import dataclass

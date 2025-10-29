@@ -1,4 +1,117 @@
-"""Certificate caching for efficient MITM certificate generation."""
+"""Thread-safe LRU certificate cache for efficient MITM certificate generation.
+
+CAPABILITIES:
+- Thread-safe LRU (Least Recently Used) cache for certificate chains
+- Persistent cache storage in ~/.intellicrack/cert_cache/
+- Automatic cache directory creation and initialization
+- Domain-based cache lookup with hash-based file naming
+- Certificate expiration checking (auto-invalidate expired certs)
+- Cache metadata tracking (creation time, expiration, access time)
+- LRU eviction when cache exceeds max entries (default: 1000)
+- Cache statistics (hit rate, size, entry count)
+- Expired certificate removal
+- Full cache clearing
+- Atomic read/write operations with threading.Lock
+
+LIMITATIONS:
+- No cache compression (each domain stores ~12KB)
+- No distributed cache support (local filesystem only)
+- Cache invalidation is manual or expiration-based
+- No cache encryption (stored in plaintext PEM)
+- LRU eviction is simple (no advanced replacement policies)
+- No cache warming or prefetching
+- Metadata file grows over time (no automatic cleanup)
+- No cache size limits (only entry count limits)
+
+USAGE EXAMPLES:
+    # Initialize cache with defaults
+    from intellicrack.core.certificate.cert_cache import CertificateCache
+
+    cache = CertificateCache()  # Uses ~/.intellicrack/cert_cache/
+
+    # Check for cached certificate
+    chain = cache.get_cached_cert("example.com")
+    if chain:
+        print("Using cached certificate")
+    else:
+        print("Generating new certificate")
+        # Generate certificate chain...
+        # chain = generator.generate_full_chain("example.com")
+        cache.store_cert("example.com", chain)
+
+    # Custom cache directory and size
+    cache = CertificateCache(
+        cache_dir=Path("/custom/cache/path"),
+        max_entries=500
+    )
+
+    # Get cache statistics
+    stats = cache.get_cache_stats()
+    print(f"Total entries: {stats['total_entries']}")
+    print(f"Cache hits: {stats['hits']}")
+    print(f"Cache misses: {stats['misses']}")
+    print(f"Hit rate: {stats['hit_rate']:.2%}")
+    print(f"Oldest entry: {stats['oldest_entry']}")
+    print(f"Newest entry: {stats['newest_entry']}")
+
+    # Remove expired certificates
+    removed_count = cache.remove_expired()
+    print(f"Removed {removed_count} expired certificates")
+
+    # Clear entire cache
+    cache.clear_cache()
+    print("Cache cleared")
+
+    # Thread-safe usage in concurrent environment
+    import threading
+
+    def worker(domain):
+        cache = CertificateCache()
+        chain = cache.get_cached_cert(domain)
+        # Use chain...
+
+    threads = [threading.Thread(target=worker, args=(f"example{i}.com",))
+               for i in range(10)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+RELATED MODULES:
+- cert_chain_generator.py: Generates certificates stored in cache
+- bypass_orchestrator.py: Uses cache for MITM bypass
+- frida_cert_hooks.py: May use cached certificates
+
+CACHE STRUCTURE:
+    ~/.intellicrack/cert_cache/
+    ├── cache_metadata.json (access times, expiration, creation dates)
+    ├── {domain_hash_1}/
+    │   ├── leaf.pem
+    │   ├── intermediate.pem
+    │   ├── root.pem
+    │   └── key.pem (leaf private key)
+    ├── {domain_hash_2}/
+    │   └── ...
+    └── ...
+
+CACHE METADATA FORMAT:
+    {
+      "domain.com": {
+        "hash": "sha256_of_domain",
+        "created": "2025-01-15T10:30:00",
+        "expires": "2026-01-15T10:30:00",
+        "last_accessed": "2025-01-20T14:22:00",
+        "access_count": 42
+      }
+    }
+
+LRU EVICTION POLICY:
+    - Triggered when cache exceeds max_entries
+    - Removes least recently accessed entry
+    - Deletes all files in domain directory
+    - Updates metadata
+    - Thread-safe with lock
+"""
 
 import hashlib
 import json

@@ -1,12 +1,117 @@
-"""Frida-based certificate validation bypass integration layer.
+"""Frida-based certificate validation bypass integration layer for runtime hooking.
 
-This module provides Python integration for Frida scripts that bypass certificate
-validation in TLS/SSL libraries across Windows, Linux, macOS, Android, and iOS platforms.
-It enables runtime hooking of certificate validation APIs to defeat licensing protection
-mechanisms that rely on certificate pinning or validation.
+CAPABILITIES:
+- Runtime hooking of certificate validation APIs without binary modification
+- Cross-platform support (Windows, Linux, macOS, Android, iOS)
+- Universal SSL bypass (auto-detects and hooks all TLS libraries)
+- Library-specific bypass scripts (WinHTTP, Schannel, OpenSSL, NSS, etc.)
+- Android certificate pinning bypass (OkHttp3, TrustManager, WebView)
+- iOS certificate pinning bypass (SecTrust, NSURLSession, AFNetworking)
+- Process attachment by name or PID
+- Script injection with error handling
+- Message handling from Frida scripts (logs, certificates, status)
+- RPC call support to injected scripts
+- Certificate interception and logging
+- Bypass status monitoring
+- Automatic hook restoration if removed
+- Thread-safe operation
 
-Supported libraries: WinHTTP, Schannel, CryptoAPI, OpenSSL, BoringSSL, NSS, Android
-OkHttp3, Android TrustManager, iOS SecTrust, iOS NSURLSession.
+LIMITATIONS:
+- Requires Frida runtime library and frida-server on target device
+- May be detected by anti-Frida checks (use frida_stealth.py to mitigate)
+- Cannot hook before process initialization (spawn mode required)
+- Some apps detect Frida via thread enumeration or D-Bus
+- Limited effectiveness against kernel-level protection
+- Hooks may be removed by self-protection mechanisms
+- Android/iOS require root/jailbreak for system apps
+- Script injection may fail on heavily protected applications
+
+USAGE EXAMPLES:
+    # Attach and inject universal bypass
+    from intellicrack.core.certificate.frida_cert_hooks import (
+        FridaCertificateHooks
+    )
+
+    hooks = FridaCertificateHooks()
+    success = hooks.attach("target.exe")  # or PID: hooks.attach(1234)
+
+    if success:
+        hooks.inject_universal_bypass()
+        print("Universal bypass injected")
+
+    # Inject library-specific bypass
+    hooks.inject_specific_bypass("openssl")
+
+    # Get bypass status
+    status = hooks.get_bypass_status()
+    print(f"Active bypasses: {status['active_scripts']}")
+    print(f"Detected libraries: {status['detected_libraries']}")
+
+    # Get intercepted certificates
+    certs = hooks.get_intercepted_certificates()
+    for cert in certs:
+        print(f"Certificate: {cert['subject']}")
+        print(f"  Issuer: {cert['issuer']}")
+        print(f"  Valid: {cert['not_before']} - {cert['not_after']}")
+
+    # Call RPC function in injected script
+    result = hooks.call_rpc("getOpenSSLConnections")
+    print(f"Active SSL connections: {len(result)}")
+
+    # Detach when done
+    hooks.detach()
+
+RELATED MODULES:
+- frida_scripts/: Contains JavaScript bypass scripts for each library
+- frida_stealth.py: Provides anti-detection for Frida
+- bypass_orchestrator.py: Uses this for runtime bypass strategy
+- hook_obfuscation.py: Additional stealth techniques for hooks
+- detection_report.py: Identifies which libraries need hooking
+
+SUPPORTED LIBRARIES:
+    Windows:
+        - WinHTTP (winhttp.dll)
+        - Schannel (sspicli.dll)
+        - CryptoAPI (crypt32.dll)
+        - OpenSSL (libssl-1_1-x64.dll, libssl-1_1.dll)
+
+    Linux/Unix:
+        - OpenSSL (libssl.so)
+        - NSS (libnss3.so, libssl3.so)
+
+    Android:
+        - OpenSSL/BoringSSL (libssl.so)
+        - OkHttp3 CertificatePinner
+        - TrustManagerImpl
+        - NetworkSecurityTrustManager
+        - Custom X509TrustManager implementations
+
+    iOS/macOS:
+        - SecTrust (Security framework)
+        - NSURLSession (CFNetwork)
+        - AFNetworking
+        - Alamofire
+
+ARCHITECTURE:
+    Python Layer (this file):
+        - Process attachment/detachment
+        - Script loading and injection
+        - Message routing and handling
+        - RPC interface
+        - Status monitoring
+
+    JavaScript Layer (frida_scripts/):
+        - API hooking (Interceptor.attach)
+        - Return value manipulation
+        - Certificate interception
+        - Logging and reporting
+
+MESSAGE TYPES FROM SCRIPTS:
+    - log: Informational messages
+    - error: Error messages
+    - certificate: Intercepted certificate data
+    - bypass_success: Bypass successfully applied
+    - bypass_failure: Bypass failed
 """
 
 import logging

@@ -1,4 +1,101 @@
-"""Certificate validation binary patcher."""
+"""Certificate validation binary patcher for permanent on-disk bypass.
+
+CAPABILITIES:
+- Apply binary patches to certificate validation functions
+- Support for PE, ELF, and Mach-O binary formats (via LIEF)
+- Template-based patching for known APIs
+- Custom patch generation for unknown APIs
+- Patch type selection (inline, trampoline, NOP sled)
+- Safety checks before patching (overlap detection, critical code protection)
+- Backup and rollback functionality
+- Instruction cache flushing after patching
+- Patch verification after application
+- Multi-function patching in single operation
+- Detailed patch result reporting
+
+LIMITATIONS:
+- Requires LIEF library for binary manipulation
+- Cannot patch code-signed binaries without breaking signature
+- May fail on packed or protected binaries
+- No automatic unpacking of compressed executables
+- Limited support for self-modifying code
+- Cannot patch code in read-only memory sections at runtime
+- Trampoline patching requires available code caves
+- No support for kernel-mode drivers
+- Patch validation is basic (doesn't execute code)
+
+USAGE EXAMPLES:
+    # Basic patching from detection report
+    from intellicrack.core.certificate.cert_patcher import CertificatePatcher
+    from intellicrack.core.certificate.validation_detector import (
+        CertificateValidationDetector
+    )
+
+    # Detect validation functions
+    detector = CertificateValidationDetector()
+    report = detector.detect_certificate_validation("target.exe")
+
+    # Patch detected functions
+    patcher = CertificatePatcher()
+    result = patcher.patch_certificate_validation(report)
+
+    if result.success:
+        print(f"Successfully patched {len(result.patched_functions)} functions")
+        for func in result.patched_functions:
+            print(f"  - {func.api_name} at 0x{func.address:x}")
+    else:
+        print("Patching failed")
+        for fail in result.failed_patches:
+            print(f"  - {fail.api_name}: {fail.error}")
+
+    # Rollback patches
+    if result.success:
+        rollback_success = patcher.rollback_patches(result)
+        print(f"Rollback: {'success' if rollback_success else 'failed'}")
+
+    # Custom patch application
+    from intellicrack.core.certificate.patch_generators import (
+        generate_always_succeed_x64
+    )
+
+    custom_patch = generate_always_succeed_x64()
+    # Apply at specific address...
+
+RELATED MODULES:
+- detection_report.py: Provides input data (ValidationFunction list)
+- patch_generators.py: Generates raw patch bytes
+- patch_templates.py: Provides pre-built API-specific patches
+- bypass_orchestrator.py: Calls this patcher as part of bypass workflow
+- validation_detector.py: Generates DetectionReport consumed by patcher
+
+PATCHING WORKFLOW:
+    1. Validate detection report has valid functions
+    2. For each ValidationFunction in report:
+       a. Select patch template or generate custom patch
+       b. Determine patch type (inline vs trampoline)
+       c. Read original bytes from address
+       d. Calculate required patch size
+       e. Generate patch bytes
+       f. Validate patch fits in available space
+       g. Apply patch using LIEF
+       h. Store original bytes for rollback
+       i. Verify patch was written successfully
+    3. Save modified binary
+    4. Test patched binary (optional)
+    5. Generate PatchResult report
+
+PATCH TYPES:
+    INLINE: Direct overwrite of function code (requires >=5 bytes)
+    TRAMPOLINE: Jump to code cave with full patch (for tight spaces)
+    NOP_SLED: Fill function with NOPs (for simple removal)
+
+SAFETY CHECKS:
+    - Verify not overwriting critical code (exception handlers, etc.)
+    - Check for code cave availability for trampolines
+    - Verify no overlapping patches
+    - Ensure patch doesn't cross section boundaries
+    - Validate instruction alignment
+"""
 
 import logging
 from dataclasses import dataclass, field

@@ -1,13 +1,97 @@
-"""Certificate pinning detection module.
+r"""Certificate pinning detection via comprehensive static analysis across platforms.
 
-This module provides comprehensive static analysis to detect certificate pinning
-implementations across different platforms and frameworks:
-- Android (OkHttp, custom implementations)
-- iOS (AFNetworking, Alamofire, SecTrustEvaluate)
-- Windows (WinHTTP, Schannel with custom validation)
-- Cross-platform (OpenSSL, BoringSSL, NSS)
+CAPABILITIES:
+- Multi-platform pinning detection (Android, iOS, Windows, Linux)
+- Certificate hash extraction (SHA-256, SHA-1, Base64-encoded)
+- Framework-specific detection (OkHttp, AFNetworking, Alamofire)
+- Bytecode analysis for pinning logic
+- Cross-reference analysis for hash usage
+- Confidence scoring for detections
+- Bypass strategy recommendations
+- PinningReport generation with detailed findings
 
-Analyzes binaries to find certificate hashes, pinning logic, and validation code.
+LIMITATIONS:
+- Static analysis only (no runtime detection)
+- May miss obfuscated or encrypted hashes
+- Cannot detect dynamically generated pins
+- Limited effectiveness on native code obfuscation
+- No support for proprietary pinning frameworks
+- Requires LIEF for binary parsing
+- Android/iOS detection requires specialized tools
+
+USAGE EXAMPLES:
+    # Detect pinning in any binary
+    from intellicrack.core.certificate.pinning_detector import PinningDetector
+
+    detector = PinningDetector()
+    report = detector.generate_pinning_report("app.exe")
+
+    if report.has_pinning:
+        print(f"Found {len(report.detected_pins)} pinned certificates")
+        for pin in report.detected_pins:
+            print(f"  Domain: {pin.domain}")
+            print(f"  Hash: {pin.certificate_hashes[0]}")
+
+        print(f"\\nPinning methods: {report.pinning_methods}")
+        print(f"Confidence: {report.confidence:.2f}")
+        print(f"\\nBypass recommendations:")
+        for rec in report.bypass_recommendations:
+            print(f"  - {rec}")
+
+    # Scan for certificate hashes
+    hashes = detector.scan_for_certificate_hashes("app.exe")
+    print(f"Found {len(hashes)} certificate hashes")
+
+    # Detect framework-specific pinning
+    okhttp = detector.detect_okhttp_pinning("app.apk")
+    afnet = detector.detect_afnetworking_pinning("app.ipa")
+
+    # Find pinning cross-references
+    cross_refs = detector.find_pinning_cross_refs("app.exe")
+    for hash_val, addresses in cross_refs.items():
+        print(f"Hash {hash_val} used at: {[hex(a) for a in addresses]}")
+
+RELATED MODULES:
+- apk_analyzer.py: Android-specific APK analysis
+- frida_scripts/android_pinning.js: Runtime Android pinning bypass
+- frida_scripts/ios_pinning.js: Runtime iOS pinning bypass
+- multilayer_bypass.py: Uses pinning detection for comprehensive bypass
+
+DETECTION METHODS:
+    String Scanning:
+        - Extract all strings from binary
+        - Find SHA-256 hashes (64 hex characters)
+        - Find SHA-1 hashes (40 hex characters)
+        - Find Base64-encoded certificates
+
+    Bytecode Analysis:
+        - Android: Decompile DEX, search for certificate comparison
+        - iOS: Analyze Mach-O for SecTrustEvaluate patterns
+        - Windows: Search for CertGetCertificateChain + hash comparison
+
+    Framework Detection:
+        - OkHttp: Search for CertificatePinner.Builder usage
+        - AFNetworking: Search for AFSecurityPolicy patterns
+        - Alamofire: Search for server trust evaluation
+
+    Cross-Reference:
+        - Find all references to detected certificate hashes
+        - Map hash → function addresses that use it
+        - Identify pinning validation functions
+
+PINNING REPORT STRUCTURE:
+    - binary_path: Target file path
+    - detected_pins: List[PinningInfo] (domain, hashes, method)
+    - pinning_locations: List[PinningLocation] (address, function, type)
+    - pinning_methods: List[str] (OkHttp, custom, etc.)
+    - bypass_recommendations: List[str]
+    - confidence: float (0.0-1.0)
+    - platform: str (Android/iOS/Windows/Linux)
+
+CONFIDENCE SCORING:
+    - High (0.8-1.0): Framework-detected + hashes found + clear validation logic
+    - Medium (0.5-0.7): Hashes found + some validation indicators
+    - Low (0.3-0.4): Only hashes found, validation unclear
 """
 
 import logging

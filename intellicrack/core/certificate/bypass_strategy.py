@@ -1,4 +1,93 @@
-"""Strategy selection for certificate validation bypass."""
+"""Intelligent strategy selection for certificate validation bypass operations.
+
+CAPABILITIES:
+- Automatic bypass method selection based on detection results
+- Target state awareness (static binary vs running process)
+- Risk-based strategy selection (low/medium/high risk)
+- Multi-library handling (selects appropriate method for complexity)
+- Packed binary detection and strategy adjustment
+- Fallback strategy recommendation on failure
+- Network-based licensing detection for MITM proxy selection
+- Hybrid strategy selection for complex validation layers
+
+LIMITATIONS:
+- Strategy selection is heuristic-based (not ML-based)
+- No learning from past bypass attempts
+- Limited consideration of performance impact
+- No cost-benefit analysis (time vs success rate)
+- Cannot predict success rate accurately
+- No user preference incorporation
+- Static rule-based decision making
+
+USAGE EXAMPLES:
+    # Basic strategy selection
+    from intellicrack.core.certificate.bypass_strategy import (
+        BypassStrategySelector
+    )
+    from intellicrack.core.certificate.validation_detector import (
+        CertificateValidationDetector
+    )
+
+    detector = CertificateValidationDetector()
+    report = detector.detect_certificate_validation("target.exe")
+
+    selector = BypassStrategySelector()
+    method = selector.select_optimal_strategy(report, target_state="static")
+    print(f"Recommended method: {method.value}")
+
+    # For running process
+    method = selector.select_optimal_strategy(report, target_state="running")
+    # Will prefer FRIDA_HOOK for running targets
+
+    # Risk assessment
+    risk = selector.assess_patch_risk(report)
+    print(f"Patch risk level: {risk}")
+    # high/medium/low
+
+    # Fallback on failure
+    fallback = selector.get_fallback_strategy(BypassMethod.BINARY_PATCH)
+    print(f"Fallback method: {fallback.value if fallback else 'None'}")
+    # BINARY_PATCH → FRIDA_HOOK → MITM_PROXY → None
+
+RELATED MODULES:
+- detection_report.py: Provides input detection results
+- bypass_orchestrator.py: Uses selected strategy for bypass execution
+- cert_patcher.py: Used for BINARY_PATCH strategy
+- frida_cert_hooks.py: Used for FRIDA_HOOK strategy
+
+STRATEGY DECISION LOGIC:
+    Static Target (binary not running):
+        - Simple validation (1-2 functions, low risk) → BINARY_PATCH
+        - Complex validation (3+ functions) → HYBRID
+        - Packed binary detected → FRIDA_HOOK (avoid unpacking)
+        - High risk (critical code) → FRIDA_HOOK (reversible)
+
+    Running Target:
+        - Any configuration → FRIDA_HOOK (runtime patching)
+        - Network licensing detected → MITM_PROXY
+        - Multiple validation layers → HYBRID
+
+    Fallback Chain:
+        BINARY_PATCH → FRIDA_HOOK → MITM_PROXY → NONE
+
+RISK ASSESSMENT:
+    High Risk:
+        - Validation in tight loop
+        - Validation with side effects
+        - Multiple cross-references to validation
+        - Validation in exception handler
+
+    Medium Risk:
+        - Validation with some side effects
+        - Moderate cross-reference count
+        - Validation near critical code
+
+    Low Risk:
+        - Standalone validation function
+        - Single call site
+        - Clear return value check
+        - No side effects detected
+"""
 
 import logging
 from typing import Optional

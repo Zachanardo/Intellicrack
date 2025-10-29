@@ -1,4 +1,99 @@
-"""Predefined patch templates for certificate validation APIs."""
+"""Predefined patch templates for common certificate validation APIs across platforms.
+
+CAPABILITIES:
+- Pre-built patch templates for WinHTTP APIs (x86/x64)
+- Pre-built patch templates for OpenSSL APIs (x86/x64)
+- Pre-built patch templates for Schannel APIs (x64)
+- Pre-built patch templates for CryptoAPI (x86/x64)
+- Template selection by API name and architecture
+- Ready-to-apply machine code bytes
+- Comprehensive template descriptions
+- Architecture-specific implementations
+- Tested against real applications
+
+LIMITATIONS:
+- Fixed set of templates (no dynamic generation)
+- Templates assume standard function prologues
+- May not work with heavily optimized binaries
+- No templates for custom/proprietary APIs
+- Limited ARM template coverage
+- Assumes standard calling conventions
+- No auto-adjustment for different library versions
+- Templates require manual testing for new targets
+
+USAGE EXAMPLES:
+    # Get template by API and architecture
+    from intellicrack.core.certificate.patch_templates import (
+        select_template,
+        Architecture
+    )
+
+    template = select_template("WinHttpSetOption", "x64")
+    if template:
+        print(f"Template: {template.name}")
+        print(f"Description: {template.description}")
+        print(f"Patch bytes: {template.patch_bytes.hex()}")
+
+    # Get all available templates
+    from intellicrack.core.certificate.patch_templates import get_all_templates
+
+    templates = get_all_templates()
+    print(f"Available templates: {len(templates)}")
+
+    for t in templates:
+        print(f"- {t.name} ({t.target_api}, {t.architecture.value})")
+
+    # Use template for patching
+    from intellicrack.core.certificate.patch_templates import (
+        WINHTTP_IGNORE_ALL_CERT_ERRORS_X64
+    )
+
+    template = WINHTTP_IGNORE_ALL_CERT_ERRORS_X64
+    patch_bytes = template.patch_bytes
+    # Apply patch_bytes at detected API location
+
+    # Get templates for specific library
+    templates = get_all_templates()
+    winhttp_templates = [t for t in templates if "WinHttp" in t.target_API]
+    openssl_templates = [t for t in templates if "SSL" in t.target_api]
+
+RELATED MODULES:
+- patch_generators.py: Provides low-level patch generation functions
+- cert_patcher.py: Applies templates to actual binaries
+- api_signatures.py: Identifies target APIs for template matching
+- validation_detector.py: Detects which APIs need patching
+- bypass_orchestrator.py: Selects appropriate templates
+
+TEMPLATE COVERAGE:
+    WinHTTP (Windows):
+        - WINHTTP_IGNORE_ALL_CERT_ERRORS (x86/x64)
+        - WINHTTP_FORCE_SUCCESS (x86/x64)
+
+    OpenSSL (Linux/Windows/Android):
+        - OPENSSL_DISABLE_VERIFY (x86/x64)
+        - OPENSSL_ALWAYS_VALID (x86/x64)
+
+    Schannel (Windows):
+        - SCHANNEL_SKIP_VALIDATION (x64)
+        - SCHANNEL_FORCE_TRUST (x64)
+
+    CryptoAPI (Windows):
+        - CRYPTOAPI_BYPASS_CHAIN_POLICY (x86/x64)
+
+TEMPLATE DETAILS:
+    Each template includes:
+    - name: Unique identifier
+    - description: What the patch does
+    - target_api: API function it patches
+    - architecture: CPU architecture (x86/x64/ARM)
+    - patch_bytes: Ready-to-apply machine code
+
+    Templates are designed to:
+    - Minimize patch size
+    - Preserve calling convention
+    - Handle return values correctly
+    - Avoid crashes from side effects
+"""
 
 from dataclasses import dataclass
 from typing import Optional

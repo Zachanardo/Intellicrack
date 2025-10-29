@@ -1,7 +1,104 @@
-"""Multi-layer certificate validation bypass module.
+"""Multi-layer certificate validation bypass with staged execution and dependency handling.
 
-This module provides comprehensive bypass capabilities for targets with multiple
-layers of certificate validation, executing staged bypasses with dependency handling.
+CAPABILITIES:
+- Staged bypass execution (4 stages: OS → Library → Application → Server)
+- Dependency-aware bypass order
+- Per-stage verification
+- Rollback on failure
+- Multi-layer result tracking
+- Stage-specific bypass techniques
+- Failed layer reporting with reasons
+
+LIMITATIONS:
+- No parallel layer bypass (sequential only)
+- Limited retry logic per stage
+- Cannot handle circular dependencies
+- No partial bypass support (all-or-nothing per layer)
+- Requires all previous stages to succeed
+- No adaptive strategy per layer failure
+
+USAGE EXAMPLES:
+    # Multi-layer bypass
+    from intellicrack.core.certificate.multilayer_bypass import (
+        MultiLayerBypass
+    )
+    from intellicrack.core.certificate.layer_detector import (
+        ValidationLayerDetector
+    )
+
+    # Detect layers
+    detector = ValidationLayerDetector()
+    layers = detector.detect_validation_layers("target.exe")
+
+    # Execute multi-layer bypass
+    bypasser = MultiLayerBypass()
+    result = bypasser.bypass_all_layers("target.exe", layers)
+
+    if result.overall_success:
+        print(f"Successfully bypassed {len(result.bypassed_layers)} layers")
+        for layer in result.bypassed_layers:
+            print(f"  - {layer.value}")
+    else:
+        print("Multi-layer bypass failed")
+        for layer, error in result.failed_layers:
+            print(f"  - {layer.value}: {error}")
+
+    # Check stage results
+    for stage_num, stage_result in result.stage_results.items():
+        print(f"Stage {stage_num}: {stage_result.layer.value}")
+        print(f"  Success: {stage_result.success}")
+        if stage_result.bypassed_functions:
+            print(f"  Functions: {stage_result.bypassed_functions}")
+
+RELATED MODULES:
+- layer_detector.py: Detects layers and builds dependency graph
+- cert_patcher.py: Used for OS/library level patching
+- frida_cert_hooks.py: Used for runtime hooking
+- bypass_orchestrator.py: May delegate to multi-layer bypass
+
+STAGED BYPASS WORKFLOW:
+    Stage 1 - OS-Level:
+        - Patch CryptoAPI validation
+        - Hook Schannel
+        - Install Intellicrack CA in system trust store
+        - Verify Stage 1 success
+
+    Stage 2 - Library-Level:
+        - Hook OpenSSL functions
+        - Hook NSS functions
+        - Hook BoringSSL functions
+        - Verify Stage 2 success
+
+    Stage 3 - Application-Level:
+        - Hook custom pinning logic
+        - Patch hardcoded certificate checks
+        - Replace pinned hashes
+        - Verify Stage 3 success
+
+    Stage 4 - Server-Level:
+        - Start MITM proxy
+        - Intercept server validation requests
+        - Inject crafted validation responses with valid signatures
+        - Verify Stage 4 success
+
+DEPENDENCY HANDLING:
+    - Check dependency graph before each stage
+    - If required layer failed, skip dependent layers
+    - Report dependency failures clearly
+    - Example: APPLICATION_LEVEL depends on LIBRARY_LEVEL
+
+ROLLBACK STRATEGY:
+    - If any stage fails, rollback previous stages
+    - Restore original binary state
+    - Detach Frida hooks
+    - Remove system modifications
+    - Report rollback success/failure
+
+VERIFICATION:
+    - Test each layer after bypass
+    - Verify no validation errors
+    - Prevent false positives
+    - Example: HTTPS connection test per layer
 """
 
 import logging

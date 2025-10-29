@@ -1,4 +1,68 @@
-"""API signatures for certificate validation functions across different libraries."""
+"""API signatures for certificate validation functions across different TLS/SSL libraries.
+
+CAPABILITIES:
+- Comprehensive database of certificate validation API signatures
+- Support for Windows (WinHTTP, Schannel, CryptoAPI)
+- Support for Linux/Unix (OpenSSL, NSS)
+- Support for Android (BoringSSL, OpenSSL)
+- Support for iOS/macOS (Security framework)
+- Platform-specific calling convention information
+- Function return type specifications for proper hooking/patching
+- Library type detection from DLL/SO names
+
+LIMITATIONS:
+- Does not detect custom certificate validation implementations
+- Limited to known TLS/SSL library APIs
+- May not include all API variants across different library versions
+- Signature database requires manual updates for new APIs
+- No automatic signature discovery from unknown libraries
+
+USAGE EXAMPLES:
+    # Get all signatures for a specific library
+    from intellicrack.core.certificate.api_signatures import get_signatures_by_library
+
+    winhttp_sigs = get_signatures_by_library("winhttp.dll")
+    for sig in winhttp_sigs:
+        print(f"{sig.name}: {sig.description}")
+
+    # Get signature for a specific function
+    from intellicrack.core.certificate.api_signatures import get_signature_by_name
+
+    sig = get_signature_by_name("SSL_CTX_set_verify")
+    if sig:
+        print(f"Library: {sig.library}, Convention: {sig.calling_convention}")
+
+    # Get all signatures for a platform
+    from intellicrack.core.certificate.api_signatures import (
+        get_signatures_by_platform,
+        Platform
+    )
+
+    windows_sigs = get_signatures_by_platform(Platform.WINDOWS)
+    print(f"Found {len(windows_sigs)} Windows certificate APIs")
+
+    # Determine library type
+    from intellicrack.core.certificate.api_signatures import get_library_type
+
+    lib_type = get_library_type("libssl.so.1.1")
+    print(f"Library type: {lib_type}")  # Output: openssl
+
+RELATED MODULES:
+- validation_detector.py: Uses these signatures to detect cert validation in binaries
+- binary_scanner.py: Scans binaries for imports matching these signatures
+- cert_patcher.py: Uses calling conventions to generate proper patches
+- frida_cert_hooks.py: Uses signatures to hook these APIs at runtime
+- patch_templates.py: References these APIs in pre-built patch templates
+
+DATABASE COVERAGE:
+- WinHTTP: 4 APIs (WinHttpSetOption, WinHttpSendRequest, etc.)
+- Schannel: 6 APIs (InitializeSecurityContext, QueryContextAttributes, etc.)
+- CryptoAPI: 5 APIs (CertVerifyCertificateChainPolicy, CertGetCertificateChain, etc.)
+- OpenSSL: 9 APIs (SSL_CTX_set_verify, SSL_get_verify_result, etc.)
+- NSS (Firefox): 4 APIs (CERT_VerifyCertificate, CERT_PKIXVerifyCert, etc.)
+- BoringSSL (Chrome/Android): 2 APIs (SSL_set_custom_verify, etc.)
+- iOS/macOS: 3 APIs (SecTrustEvaluate, SSLHandshake, etc.)
+"""
 
 from dataclasses import dataclass
 from enum import Enum
