@@ -248,34 +248,19 @@ class IntellicrackApp(QMainWindow):
         """Initialize all UI-related attributes to None."""
         print("[INIT] Initializing UI attributes...")
 
-        # UI component attributes
+        # UI component attributes (only attributes that are actually used)
         self.activity_log = None
         self.assistant_status = None
-        self.assistant_tab = None
         self.binary_info_group = None
-        self.binary_tool_file_info = None
-        self.binary_tool_file_label = None
-        self.binary_tool_stack = None
         self.capture_thread = None
         self.chat_display = None
-        self.debug_check = None
         self.disasm_text = None
-        self.edit_current_btn = None
-        self.error_check = None
-        self.info_check = None
-        self.last_log_accessed = None
         self.log_filter = None
         self.log_output = None
-        self.notifications_list = None
-        self.packet_update_timer = None
-        self.plugin_name_label = None
         self.program_info = None
         self.recent_files_list = None
         self.report_viewer = None
         self.traffic_analyzer = None
-        self.user_input = None
-        self.view_current_btn = None
-        self.warning_check = None
 
         # Collection attributes
         self._hex_viewer_dialogs = []
@@ -1157,18 +1142,75 @@ class IntellicrackApp(QMainWindow):
         self.logger.info(f"Theme changed to: {theme_name}")
 
     def load_available_plugins(self):
-        """Load available plugins from plugin directory with comprehensive error handling."""
+        """Load available plugins from plugin directory with caching for performance.
+
+        Uses a cache file to avoid rescanning the filesystem on every startup. Cache is
+        invalidated when plugin files are added, removed, or modified.
+
+        Returns:
+            dict: Dictionary containing lists of plugins by type (custom, frida, ghidra)
+
+        """
+        import json
+        from pathlib import Path
+
+        cache_dir = Path.home() / ".intellicrack"
+        cache_file = cache_dir / "plugin_cache.json"
+
+        plugin_base_dir = os.path.join(os.path.dirname(__file__), "..", "plugins")
+        plugin_directories = {
+            "custom": os.path.join(plugin_base_dir, "custom_modules"),
+            "frida": os.path.join(plugin_base_dir, "frida_scripts"),
+            "ghidra": os.path.join(plugin_base_dir, "ghidra_scripts"),
+        }
+
+        def is_cache_valid():
+            """Check if cache exists and is still valid."""
+            if not cache_file.exists():
+                return False
+
+            try:
+                with open(cache_file, "r", encoding="utf-8") as f:
+                    cached_data = json.load(f)
+
+                for plugin_type, plugin_dir in plugin_directories.items():
+                    if not os.path.exists(plugin_dir):
+                        continue
+
+                    cached_plugins = cached_data.get("plugins", {}).get(plugin_type, [])
+                    cached_paths = {p["path"]: p["modified"] for p in cached_plugins}
+
+                    for file_path in os.listdir(plugin_dir):
+                        full_path = os.path.join(plugin_dir, file_path)
+                        if os.path.isfile(full_path):
+                            current_mtime = os.path.getmtime(full_path)
+                            if full_path not in cached_paths or cached_paths[full_path] != current_mtime:
+                                return False
+
+                            del cached_paths[full_path]
+
+                    if cached_paths:
+                        return False
+
+                return True
+
+            except (json.JSONDecodeError, KeyError, OSError) as e:
+                self.logger.debug(f"Cache validation failed: {e}")
+                return False
+
+        if is_cache_valid():
+            try:
+                with open(cache_file, "r", encoding="utf-8") as f:
+                    cached_data = json.load(f)
+                    plugins = cached_data.get("plugins", {"custom": [], "frida": [], "ghidra": []})
+                    self.logger.info(f"Loaded {sum(len(p) for p in plugins.values())} plugins from cache")
+                    return plugins
+            except (json.JSONDecodeError, OSError) as e:
+                self.logger.warning(f"Failed to load plugin cache, rescanning: {e}")
+
         plugins = {"custom": [], "frida": [], "ghidra": []}
 
         try:
-            # Get plugin directories from configuration
-            plugin_base_dir = os.path.join(os.path.dirname(__file__), "..", "plugins")
-            plugin_directories = {
-                "custom": os.path.join(plugin_base_dir, "custom_modules"),
-                "frida": os.path.join(plugin_base_dir, "frida_scripts"),
-                "ghidra": os.path.join(plugin_base_dir, "ghidra_scripts"),
-            }
-
             for plugin_type, plugin_dir in plugin_directories.items():
                 try:
                     if not os.path.exists(plugin_dir):
@@ -1176,7 +1218,6 @@ class IntellicrackApp(QMainWindow):
                         os.makedirs(plugin_dir, exist_ok=True)
                         continue
 
-                    # Scan for plugin files
                     plugin_extensions = {"custom": [".py", ".pyd", ".dll"], "frida": [".js", ".ts"], "ghidra": [".py", ".java", ".jar"]}
 
                     for file_path in os.listdir(plugin_dir):
@@ -1185,9 +1226,8 @@ class IntellicrackApp(QMainWindow):
                             file_ext = os.path.splitext(file_path)[1].lower()
                             if file_ext in plugin_extensions.get(plugin_type, []):
                                 try:
-                                    # Validate plugin file
                                     with open(full_path, "r", encoding="utf-8", errors="ignore") as f:
-                                        f.read(512)  # Read first 512 chars for validation
+                                        f.read(512)
 
                                     plugin_info = {
                                         "name": os.path.splitext(file_path)[0],
@@ -1202,7 +1242,6 @@ class IntellicrackApp(QMainWindow):
 
                                 except (OSError, UnicodeDecodeError, PermissionError) as file_error:
                                     self.logger.warning(f"Failed to validate plugin {file_path}: {file_error}")
-                                    # Add as invalid plugin for debugging
                                     plugins[plugin_type].append(
                                         {
                                             "name": os.path.splitext(file_path)[0],
@@ -1216,9 +1255,16 @@ class IntellicrackApp(QMainWindow):
                 except (OSError, PermissionError) as dir_error:
                     self.logger.error(f"Error accessing plugin directory {plugin_dir}: {dir_error}")
 
+            try:
+                cache_dir.mkdir(parents=True, exist_ok=True)
+                with open(cache_file, "w", encoding="utf-8") as f:
+                    json.dump({"plugins": plugins, "cache_version": "1.0"}, f, indent=2)
+                self.logger.debug(f"Plugin cache saved to {cache_file}")
+            except (OSError, IOError) as cache_error:
+                self.logger.warning(f"Failed to save plugin cache: {cache_error}")
+
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error(f"Critical error loading plugins: {e}")
-            # Return empty structure on critical failure
             return {"custom": [], "frida": [], "ghidra": []}
 
         self.logger.info(f"Loaded {sum(len(p) for p in plugins.values())} plugins across {len(plugins)} categories")

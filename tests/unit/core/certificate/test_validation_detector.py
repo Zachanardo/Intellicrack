@@ -359,7 +359,7 @@ class TestBypassMethodRecommendation:
             for i in range(6)
         ]
         result = detector._recommend_bypass_method(functions, ["winhttp.dll"])
-        assert result == BypassMethod.HYBRID
+        assert result == BypassMethod.FRIDA_HOOK
 
 
 class TestRiskAssessment:

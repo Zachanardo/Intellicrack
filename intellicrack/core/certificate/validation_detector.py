@@ -159,7 +159,7 @@ class CertificateValidationDetector:
                 logger.debug(f"Assessed risk level: {risk_level}")
 
                 report = DetectionReport(
-                    binary_path=str(binary_path_obj),
+                    binary_path=binary_path,
                     detected_libraries=tls_libraries,
                     validation_functions=filtered_functions,
                     recommended_method=recommended_method,
