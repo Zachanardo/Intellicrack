@@ -26,8 +26,13 @@ def _preload_critical_dlls(dll_dirs):
 
     This is required for esimd_kernels.dll and unified runtime adapters to load successfully.
     """
+    if os.environ.get("INTELLICRACK_TEST_MODE") or os.environ.get("INTELLICRACK_DISABLE_GPU"):
+        logger.debug("Skipping DLL preload in test/disabled mode")
+        return False
+
     try:
         import ctypes
+        import ctypes.util
 
         dll_load_order = [
             "libiomp5md.dll",
@@ -51,10 +56,16 @@ def _preload_critical_dlls(dll_dirs):
                 dll_path = Path(dll_dir) / dll_name
                 if dll_path.exists():
                     try:
-                        ctypes.CDLL(str(dll_path))
+                        dll_handle = ctypes.CDLL(str(dll_path), winmode=0)
                         logger.debug("Pre-loaded %s", dll_name)
                         break
-                    except (OSError, Exception) as e:
+                    except OSError as os_err:
+                        error_code = getattr(os_err, 'winerror', None)
+                        if error_code == 0xc0000139:
+                            logger.debug("DLL %s missing entry point (0xc0000139) - skipping", dll_name)
+                        else:
+                            logger.debug("Could not pre-load %s: %s", dll_name, os_err)
+                    except Exception as e:
                         logger.debug("Could not pre-load %s: %s", dll_name, e)
 
         return True
@@ -179,8 +190,11 @@ def _setup_ipex_dll_paths():
         return False
 
 
-if os.environ.get("PYTEST_CURRENT_TEST") or os.environ.get("CI"):
-    logger.debug("Skipping IPEX initialization in test/CI environment")
+if (os.environ.get("PYTEST_CURRENT_TEST") or
+    os.environ.get("CI") or
+    os.environ.get("INTELLICRACK_TEST_MODE") or
+    os.environ.get("INTELLICRACK_DISABLE_GPU")):
+    logger.debug("Skipping IPEX initialization in test/CI/disabled environment")
     dll_paths_configured = False
 else:
     dll_paths_configured = _setup_ipex_dll_paths()
