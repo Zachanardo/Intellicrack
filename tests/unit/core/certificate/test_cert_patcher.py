@@ -112,9 +112,12 @@ class TestPatcherInitialization:
         mock_lief.PE.MACHINE_TYPES = Mock()
         mock_lief.PE.MACHINE_TYPES.AMD64 = 0x8664
 
+        mock_lief.ELF = Mock()
+        mock_lief.ELF.Binary = type("DummyELF", (), {})
+
         patcher = CertificatePatcher("test.exe")
 
-        assert patcher.binary_path == Path("test.exe")
+        assert patcher.binary_path == "test.exe"
         assert patcher.binary is not None
         assert patcher.architecture == Architecture.X64
 
@@ -160,6 +163,9 @@ class TestArchitectureDetection:
         mock_lief.PE.MACHINE_TYPES = Mock()
         mock_lief.PE.MACHINE_TYPES.I386 = 0x14C
 
+        mock_lief.ELF = Mock()
+        mock_lief.ELF.Binary = type("DummyELF", (), {})
+
         patcher = CertificatePatcher("test.exe")
 
         assert patcher.architecture == Architecture.X86
@@ -176,6 +182,10 @@ class TestArchitectureDetection:
         binary.header.machine_type = 0x3E
 
         mock_lief.parse.return_value = binary
+
+        mock_lief.PE = Mock()
+        mock_lief.PE.Binary = type("DummyPE", (), {})
+
         mock_lief.ELF = Mock()
         mock_lief.ELF.Binary = type(binary)
         mock_lief.ELF.ARCH = Mock()
@@ -197,6 +207,10 @@ class TestArchitectureDetection:
         binary.header.machine_type = 0xB7
 
         mock_lief.parse.return_value = binary
+
+        mock_lief.PE = Mock()
+        mock_lief.PE.Binary = type("DummyPE", (), {})
+
         mock_lief.ELF = Mock()
         mock_lief.ELF.Binary = type(binary)
         mock_lief.ELF.ARCH = Mock()

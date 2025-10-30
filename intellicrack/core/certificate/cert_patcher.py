@@ -169,16 +169,17 @@ class CertificatePatcher:
             binary_path: Path to binary to patch
 
         """
-        self.binary_path = Path(binary_path)
-        if not self.binary_path.exists():
+        binary_path_obj = Path(binary_path)
+        if not binary_path_obj.exists():
             raise FileNotFoundError(f"Binary not found: {binary_path}")
 
+        self.binary_path = binary_path
         self.binary: Optional[lief.Binary] = None
         self.architecture: Optional[Architecture] = None
 
         if LIEF_AVAILABLE:
             try:
-                self.binary = lief.parse(str(self.binary_path))
+                self.binary = lief.parse(binary_path)
                 self._detect_architecture()
             except Exception as e:
                 raise RuntimeError(f"Failed to parse binary: {e}") from e
