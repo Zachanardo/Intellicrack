@@ -180,11 +180,16 @@ class TestProcessAttachment:
         assert success is True
         mock_frida.attach.assert_called_once_with(1234)
 
-    @patch("intellicrack.core.certificate.frida_cert_hooks.frida")
-    def test_attach_fails_when_process_not_found(self, mock_frida, hooks):
+    def test_attach_fails_when_process_not_found(self, hooks):
         """Test attach fails gracefully when process doesn't exist."""
-        mock_frida.attach.side_effect = mock_frida.ProcessNotFoundError("Not found")
-        mock_frida.ProcessNotFoundError = Exception
+        import sys
+        mock_frida = sys.modules["frida"]
+
+        class ProcessNotFoundError(Exception):
+            pass
+
+        mock_frida.ProcessNotFoundError = ProcessNotFoundError
+        mock_frida.attach.side_effect = ProcessNotFoundError("Not found")
 
         success = hooks.attach(9999)
 
@@ -192,17 +197,26 @@ class TestProcessAttachment:
         assert hooks._attached is False
         assert len(hooks.errors) > 0
 
-    @patch("intellicrack.core.certificate.frida_cert_hooks.frida")
-    def test_attach_fails_when_permission_denied(self, mock_frida, hooks):
+        mock_frida.attach.side_effect = None
+
+    def test_attach_fails_when_permission_denied(self, hooks):
         """Test attach fails when permission is denied."""
-        mock_frida.attach.side_effect = mock_frida.PermissionDeniedError("Access denied")
-        mock_frida.PermissionDeniedError = Exception
+        import sys
+        mock_frida = sys.modules["frida"]
+
+        class PermissionDeniedError(Exception):
+            pass
+
+        mock_frida.PermissionDeniedError = PermissionDeniedError
+        mock_frida.attach.side_effect = PermissionDeniedError("Access denied")
 
         success = hooks.attach(1234)
 
         assert success is False
         assert hooks._attached is False
         assert len(hooks.errors) > 0
+
+        mock_frida.attach.side_effect = None
 
     def test_attach_prevents_double_attachment(self, hooks, mock_frida_session):
         """Test that attaching when already attached returns False."""

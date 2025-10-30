@@ -47,3 +47,21 @@ sys.modules["intellicrack.utils.patching.patch_utils"] = MagicMock()
 # Mock matplotlib
 sys.modules["matplotlib"] = MagicMock()
 sys.modules["matplotlib.pyplot"] = MagicMock()
+
+# Mock frida with proper exception classes
+frida_mock = MagicMock()
+frida_mock.__version__ = "16.0.0"
+frida_mock.ProcessNotFoundError = type("ProcessNotFoundError", (Exception,), {})
+frida_mock.PermissionDeniedError = type("PermissionDeniedError", (Exception,), {})
+frida_mock.InvalidArgumentError = type("InvalidArgumentError", (Exception,), {})
+frida_mock.InvalidOperationError = type("InvalidOperationError", (Exception,), {})
+frida_mock.ServerNotRunningError = type("ServerNotRunningError", (Exception,), {})
+sys.modules["frida"] = frida_mock
+
+# Mock psutil with proper exception classes
+psutil_mock = MagicMock()
+psutil_mock.__version__ = "5.9.0"
+psutil_mock.NoSuchProcess = type("NoSuchProcess", (Exception,), {})
+psutil_mock.AccessDenied = type("AccessDenied", (Exception,), {})
+psutil_mock.TimeoutExpired = type("TimeoutExpired", (Exception,), {})
+sys.modules["psutil"] = psutil_mock

@@ -619,7 +619,7 @@ class FridaCertificateHooks:
             result = self.script.exports_sync[function_name](*args)
             logger.debug(f"RPC call result: {result}")
             return result
-        except AttributeError as e:
+        except (KeyError, AttributeError) as e:
             error_msg = f"RPC function not found: {function_name}"
             logger.error(error_msg)
             raise RuntimeError(error_msg) from e
