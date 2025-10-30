@@ -119,10 +119,12 @@ class TestTargetAnalysis:
         assert is_running is True
         mock_psutil.Process.assert_called_once_with(1234)
 
-    @patch("intellicrack.core.certificate.bypass_orchestrator.psutil")
     @patch("intellicrack.core.certificate.bypass_orchestrator.Path")
-    def test_analyze_process_name_target(self, mock_path, mock_psutil, orchestrator):
+    def test_analyze_process_name_target(self, mock_path, orchestrator):
         """Test analyzing target by process name."""
+        import sys
+        mock_psutil = sys.modules["psutil"]
+
         mock_path_instance = Mock()
         mock_path_instance.exists.return_value = False
         mock_path.return_value = mock_path_instance
@@ -137,6 +139,8 @@ class TestTargetAnalysis:
         target_path, is_running = orchestrator._analyze_target("target.exe")
 
         assert is_running is True
+
+        mock_psutil.process_iter.return_value = []
 
     @patch("intellicrack.core.certificate.bypass_orchestrator.psutil")
     def test_is_process_running_when_running(self, mock_psutil, orchestrator):
@@ -345,10 +349,10 @@ class TestBypassExecution:
             mock_hooks = Mock()
             mock_hooks.attach.return_value = True
             mock_hooks.inject_universal_bypass.return_value = True
-            mock_hooks.get_bypass_status.return_value = Mock(
-                active=True,
-                active_hooks=["SSL_verify"],
-            )
+            mock_hooks.get_bypass_status.return_value = {
+                "active": True,
+                "active_hooks": ["SSL_verify"],
+            }
             mock_hooks_cls.return_value = mock_hooks
 
             orchestrator.frida_hooks = None
@@ -378,8 +382,8 @@ class TestBypassExecution:
         """Test successful MITM proxy execution."""
         mock_extract.return_value = ["license.example.com"]
 
-        with patch("intellicrack.core.certificate.bypass_orchestrator.CertificateCache") as mock_cache_cls:
-            with patch("intellicrack.core.certificate.bypass_orchestrator.CertificateChainGenerator") as mock_gen_cls:
+        with patch("intellicrack.core.certificate.cert_cache.CertificateCache") as mock_cache_cls:
+            with patch("intellicrack.core.certificate.cert_chain_generator.CertificateChainGenerator") as mock_gen_cls:
                 mock_cache = Mock()
                 mock_cache.get_cached_cert.return_value = None
 
@@ -408,7 +412,7 @@ class TestBypassExecution:
 class TestDomainExtraction:
     """Tests for licensing domain extraction."""
 
-    @patch("intellicrack.core.certificate.bypass_orchestrator.BinaryScanner")
+    @patch("intellicrack.core.certificate.binary_scanner.BinaryScanner")
     @patch("intellicrack.core.certificate.bypass_orchestrator.Path")
     def test_extract_licensing_domains_from_binary(
         self, mock_path_cls, mock_scanner_cls, orchestrator
@@ -618,7 +622,7 @@ class TestBypassResult:
         result_dict = result.to_dict()
 
         assert result_dict["success"] is True
-        assert result_dict["method_used"] == "BINARY_PATCH"
+        assert result_dict["method_used"] == "binary_patch"
         assert result_dict["verification_passed"] is True
         assert "detection_summary" in result_dict
 
