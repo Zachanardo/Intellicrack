@@ -1164,6 +1164,16 @@ class IntellicrackApp(QMainWindow):
             "ghidra": os.path.join(plugin_base_dir, "ghidra_scripts"),
         }
 
+        def is_path_safe(file_path: str, plugin_dir: str) -> bool:
+            """Validate that reconstructed path is within allowed plugin directory."""
+            try:
+                real_plugin_dir = os.path.realpath(plugin_dir)
+                real_file_path = os.path.realpath(file_path)
+                common_path = os.path.commonpath([real_plugin_dir, real_file_path])
+                return common_path == real_plugin_dir
+            except (ValueError, OSError):
+                return False
+
         def is_cache_valid():
             """Check if cache exists and is still valid."""
             if not cache_file.exists():
@@ -1178,18 +1188,18 @@ class IntellicrackApp(QMainWindow):
                         continue
 
                     cached_plugins = cached_data.get("plugins", {}).get(plugin_type, [])
-                    cached_paths = {p["path"]: p["modified"] for p in cached_plugins}
+                    cached_filenames = {p["filename"]: p["modified"] for p in cached_plugins}
 
-                    for file_path in os.listdir(plugin_dir):
-                        full_path = os.path.join(plugin_dir, file_path)
+                    for file_name in os.listdir(plugin_dir):
+                        full_path = os.path.join(plugin_dir, file_name)
                         if os.path.isfile(full_path):
                             current_mtime = os.path.getmtime(full_path)
-                            if full_path not in cached_paths or cached_paths[full_path] != current_mtime:
+                            if file_name not in cached_filenames or cached_filenames[file_name] != current_mtime:
                                 return False
 
-                            del cached_paths[full_path]
+                            del cached_filenames[file_name]
 
-                    if cached_paths:
+                    if cached_filenames:
                         return False
 
                 return True
@@ -1202,7 +1212,32 @@ class IntellicrackApp(QMainWindow):
             try:
                 with open(cache_file, "r", encoding="utf-8") as f:
                     cached_data = json.load(f)
-                    plugins = cached_data.get("plugins", {"custom": [], "frida": [], "ghidra": []})
+                    cached_plugins = cached_data.get("plugins", {"custom": [], "frida": [], "ghidra": []})
+
+                    plugins = {"custom": [], "frida": [], "ghidra": []}
+                    for plugin_type, plugin_list in cached_plugins.items():
+                        if plugin_type not in plugin_directories:
+                            continue
+
+                        plugin_dir = plugin_directories[plugin_type]
+                        for plugin_info in plugin_list:
+                            filename = plugin_info.get("filename")
+                            if not filename:
+                                continue
+
+                            reconstructed_path = os.path.join(plugin_dir, filename)
+
+                            if not is_path_safe(reconstructed_path, plugin_dir):
+                                self.logger.warning(f"Rejecting potentially malicious plugin path: {filename}")
+                                continue
+
+                            if not os.path.exists(reconstructed_path):
+                                continue
+
+                            plugin_info_with_path = plugin_info.copy()
+                            plugin_info_with_path["path"] = reconstructed_path
+                            plugins[plugin_type].append(plugin_info_with_path)
+
                     self.logger.info(f"Loaded {sum(len(p) for p in plugins.values())} plugins from cache")
                     return plugins
             except (json.JSONDecodeError, OSError) as e:
@@ -1231,6 +1266,7 @@ class IntellicrackApp(QMainWindow):
 
                                     plugin_info = {
                                         "name": os.path.splitext(file_path)[0],
+                                        "filename": file_path,
                                         "path": full_path,
                                         "type": plugin_type,
                                         "extension": file_ext,
@@ -1245,6 +1281,7 @@ class IntellicrackApp(QMainWindow):
                                     plugins[plugin_type].append(
                                         {
                                             "name": os.path.splitext(file_path)[0],
+                                            "filename": file_path,
                                             "path": full_path,
                                             "type": plugin_type,
                                             "valid": False,

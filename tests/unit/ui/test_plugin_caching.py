@@ -60,6 +60,16 @@ class MockIntellicrackApp:
             "ghidra": os.path.join(plugin_base_dir, "ghidra_scripts"),
         }
 
+        def is_path_safe(file_path: str, plugin_dir: str) -> bool:
+            """Validate that reconstructed path is within allowed plugin directory."""
+            try:
+                real_plugin_dir = os.path.realpath(plugin_dir)
+                real_file_path = os.path.realpath(file_path)
+                common_path = os.path.commonpath([real_plugin_dir, real_file_path])
+                return common_path == real_plugin_dir
+            except (ValueError, OSError):
+                return False
+
         def is_cache_valid():
             """Check if cache exists and is still valid."""
             if not cache_file.exists():
@@ -74,18 +84,18 @@ class MockIntellicrackApp:
                         continue
 
                     cached_plugins = cached_data.get("plugins", {}).get(plugin_type, [])
-                    cached_paths = {p["path"]: p["modified"] for p in cached_plugins}
+                    cached_filenames = {p["filename"]: p["modified"] for p in cached_plugins}
 
-                    for file_path in os.listdir(plugin_dir):
-                        full_path = os.path.join(plugin_dir, file_path)
+                    for file_name in os.listdir(plugin_dir):
+                        full_path = os.path.join(plugin_dir, file_name)
                         if os.path.isfile(full_path):
                             current_mtime = os.path.getmtime(full_path)
-                            if full_path not in cached_paths or cached_paths[full_path] != current_mtime:
+                            if file_name not in cached_filenames or cached_filenames[file_name] != current_mtime:
                                 return False
 
-                            del cached_paths[full_path]
+                            del cached_filenames[file_name]
 
-                    if cached_paths:
+                    if cached_filenames:
                         return False
 
                 return True
@@ -98,7 +108,32 @@ class MockIntellicrackApp:
             try:
                 with open(cache_file, "r", encoding="utf-8") as f:
                     cached_data = json.load(f)
-                    plugins = cached_data.get("plugins", {"custom": [], "frida": [], "ghidra": []})
+                    cached_plugins = cached_data.get("plugins", {"custom": [], "frida": [], "ghidra": []})
+
+                    plugins = {"custom": [], "frida": [], "ghidra": []}
+                    for plugin_type, plugin_list in cached_plugins.items():
+                        if plugin_type not in plugin_directories:
+                            continue
+
+                        plugin_dir = plugin_directories[plugin_type]
+                        for plugin_info in plugin_list:
+                            filename = plugin_info.get("filename")
+                            if not filename:
+                                continue
+
+                            reconstructed_path = os.path.join(plugin_dir, filename)
+
+                            if not is_path_safe(reconstructed_path, plugin_dir):
+                                self.logger.warning(f"Rejecting potentially malicious plugin path: {filename}")
+                                continue
+
+                            if not os.path.exists(reconstructed_path):
+                                continue
+
+                            plugin_info_with_path = plugin_info.copy()
+                            plugin_info_with_path["path"] = reconstructed_path
+                            plugins[plugin_type].append(plugin_info_with_path)
+
                     self.logger.info(f"Loaded {sum(len(p) for p in plugins.values())} plugins from cache")
                     return plugins
             except (json.JSONDecodeError, OSError) as e:
@@ -127,6 +162,7 @@ class MockIntellicrackApp:
 
                                     plugin_info = {
                                         "name": os.path.splitext(file_path)[0],
+                                        "filename": file_path,
                                         "path": full_path,
                                         "type": plugin_type,
                                         "extension": file_ext,
@@ -141,6 +177,7 @@ class MockIntellicrackApp:
                                     plugins[plugin_type].append(
                                         {
                                             "name": os.path.splitext(file_path)[0],
+                                            "filename": file_path,
                                             "path": full_path,
                                             "type": plugin_type,
                                             "valid": False,
@@ -451,3 +488,60 @@ class TestPluginCaching:
         assert len(plugins["custom"]) >= 1
         assert len(plugins["frida"]) >= 2
         assert len(plugins["ghidra"]) >= 2
+
+    def test_malicious_cache_path_rejected(self, mock_app, temp_plugin_dir, cache_file, caplog):
+        """Test that malicious paths injected into cache are rejected.
+
+        Security test for path injection vulnerability (CRITICAL).
+        Verifies that if a malicious actor modifies the cache file to inject
+        arbitrary file paths outside plugin directories, they are rejected.
+        """
+        create_real_plugin_file(
+            os.path.join(temp_plugin_dir, "custom_modules"),
+            "legitimate_plugin.py",
+            "# Legitimate plugin"
+        )
+
+        plugins = mock_app.load_available_plugins()
+        assert len(plugins["custom"]) == 1
+        assert cache_file.exists()
+
+        with open(cache_file, "r", encoding="utf-8") as f:
+            cache_data = json.load(f)
+
+        malicious_paths = [
+            "..\\..\\..\\Windows\\System32\\calc.exe",
+            "/tmp/malicious.py",
+            "C:\\evil\\malware.py",
+            "../../../etc/passwd",
+        ]
+
+        for malicious_path in malicious_paths:
+            cache_data["plugins"]["custom"].append({
+                "name": "malicious",
+                "filename": malicious_path,
+                "type": "custom",
+                "extension": ".py",
+                "size": 1024,
+                "modified": time.time(),
+                "valid": True,
+            })
+
+        with open(cache_file, "w", encoding="utf-8") as f:
+            json.dump(cache_data, f)
+
+        caplog.set_level(logging.WARNING)
+        caplog.clear()
+
+        plugins_after = mock_app.load_available_plugins()
+
+        assert len(plugins_after["custom"]) == 1, "Malicious plugins were loaded from cache"
+        assert plugins_after["custom"][0]["name"] == "legitimate_plugin", "Wrong plugin loaded"
+
+        for malicious_path in malicious_paths:
+            assert not any(malicious_path in p.get("path", "") for p in plugins_after["custom"]), \
+                f"Malicious path {malicious_path} was loaded"
+
+        assert "Rejecting potentially malicious plugin path" in caplog.text or \
+               len(plugins_after["custom"]) == 1, \
+               "Malicious paths were not properly rejected or logged"
