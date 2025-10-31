@@ -155,12 +155,13 @@ This file tracks all the identified issues and areas for improvement in the Inte
   - **Recommendation:** Refactor to use `pathlib.Path` consistently. Replace `os.path.join()` with Path `/` operator, `os.path.exists()` with `Path.exists()`, `os.path.getmtime()` with `Path.stat().st_mtime`, etc. This improves readability and aligns with modern Python best practices.
   - **Status:** COMPLETED - Refactored all path operations in `load_available_plugins()`, `_check_file_modifications()`, `_validate_plugin_directory_cache()`, and `is_path_safe()` to use `pathlib.Path` consistently. Replaced `os.path.join()` with `/` operator, `os.listdir()` with `Path.iterdir()`, `os.path.exists()` with `Path.exists()`, `os.path.getmtime()` with `Path.stat().st_mtime`, `os.path.getsize()` with `Path.stat().st_size`, `os.path.splitext()` with `Path.stem` and `Path.suffix`, `os.path.isfile()` with `Path.is_file()`, `os.makedirs()` with `Path.mkdir()`, and `os.path.commonpath()` with `Path.is_relative_to()`. All 14 tests passing.
 
-- **[ ] main_app.py: Nested function definition reduces testability**
+- **[x] main_app.py: Nested function definition reduces testability**
   - **File:** `intellicrack/ui/main_app.py`
   - **Line:** 1173-1208
   - **Severity:** LOW
   - **Description:** The `is_cache_valid()` function is defined inside `load_available_plugins()`, making the parent method overly long (100+ lines) and the nested function untestable in isolation. This violates the Single Responsibility Principle and makes unit testing more difficult.
   - **Recommendation:** Extract as a private class method `_is_plugin_cache_valid(cache_file: Path, plugin_directories: dict) -> bool`. This allows direct unit testing of cache validation logic and reduces the size of `load_available_plugins()`.
+  - **Status:** COMPLETED - Extracted nested `is_cache_valid()` function as private class method `_is_plugin_cache_valid()` at lines 1226-1246. Method accepts `cache_file` and `plugin_directories` as parameters, reducing coupling and improving testability. The `load_available_plugins()` method now calls `self._is_plugin_cache_valid(cache_file, plugin_directories)` at line 1296. All 14 tests passing, zero linting errors.
 
 - **[ ] main_app.py: Magic string literals for plugin types**
   - **File:** `intellicrack/ui/main_app.py`

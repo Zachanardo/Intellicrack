@@ -1223,6 +1223,28 @@ class IntellicrackApp(QMainWindow):
 
         return len(remaining) == 0
 
+    def _is_plugin_cache_valid(self, cache_file, plugin_directories):
+        """Check if plugin cache exists and is still valid.
+
+        Args:
+            cache_file: Path to cache file (Path object)
+            plugin_directories: Dict mapping plugin types to their directories
+
+        Returns:
+            tuple: (is_valid, cached_data) where is_valid is True if cache is valid,
+                   and cached_data contains the loaded cache or None if invalid
+
+        """
+        cached_data = self._load_cache_data(cache_file)
+        if cached_data is None:
+            return False, None
+
+        for plugin_type, plugin_dir in plugin_directories.items():
+            if not self._validate_plugin_directory_cache(plugin_type, plugin_dir, cached_data):
+                return False, None
+
+        return True, cached_data
+
     def load_available_plugins(self):
         """Load available plugins from plugin directory with caching for performance.
 
@@ -1269,27 +1291,9 @@ class IntellicrackApp(QMainWindow):
             except (ValueError, OSError):
                 return False
 
-        def is_cache_valid():
-            """Check if cache exists and is still valid.
-
-            Returns:
-                tuple: (is_valid, cached_data) where is_valid is True if cache is valid,
-                       and cached_data contains the loaded cache or None if invalid
-
-            """
-            cached_data = self._load_cache_data(cache_file)
-            if cached_data is None:
-                return False, None
-
-            for plugin_type, plugin_dir in plugin_directories.items():
-                if not self._validate_plugin_directory_cache(plugin_type, plugin_dir, cached_data):
-                    return False, None
-
-            return True, cached_data
-
         lock = FileLock(str(cache_lock_file), timeout=10)
 
-        cache_is_valid, cached_data = is_cache_valid()
+        cache_is_valid, cached_data = self._is_plugin_cache_valid(cache_file, plugin_directories)
         if cache_is_valid:
             try:
                 cached_plugins = cached_data.get("plugins", {"custom": [], "frida": [], "ghidra": []})
