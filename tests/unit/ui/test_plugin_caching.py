@@ -83,10 +83,13 @@ class MockIntellicrackApp:
                     cached_data = json.load(f)
 
                 for plugin_type, plugin_dir in plugin_directories.items():
+                    cached_plugins = cached_data.get("plugins", {}).get(plugin_type, [])
+
                     if not os.path.exists(plugin_dir):
+                        if cached_plugins:
+                            return False
                         continue
 
-                    cached_plugins = cached_data.get("plugins", {}).get(plugin_type, [])
                     cached_filenames = {p["filename"]: p["modified"] for p in cached_plugins}
 
                     for file_name in os.listdir(plugin_dir):
@@ -622,3 +625,42 @@ class TestPluginCaching:
                     "Cache plugins is not a dictionary"
         except json.JSONDecodeError:
             pytest.fail("Cache file corrupted after concurrent access")
+
+    def test_cache_invalidation_on_directory_deletion(self, mock_app, temp_plugin_dir, cache_file, caplog):
+        """Test that cache is invalidated when entire plugin directory is deleted.
+
+        Security test for stale cache entries (HIGH).
+        Verifies that if a plugin directory is deleted after cache creation,
+        the cache is invalidated and rescanning occurs without errors.
+        """
+        create_real_plugin_file(
+            os.path.join(temp_plugin_dir, "custom_modules"),
+            "dir_test_plugin.py",
+            "# Plugin in directory that will be deleted"
+        )
+        create_real_plugin_file(
+            os.path.join(temp_plugin_dir, "frida_scripts"),
+            "dir_test_script.js",
+            "// Script in directory that will be deleted"
+        )
+
+        first_plugins = mock_app.load_available_plugins()
+        assert len(first_plugins["custom"]) == 1, "Should have 1 custom plugin"
+        assert len(first_plugins["frida"]) == 1, "Should have 1 frida script"
+        assert cache_file.exists(), "Cache should exist after first load"
+
+        shutil.rmtree(os.path.join(temp_plugin_dir, "custom_modules"))
+
+        caplog.set_level(logging.INFO)
+        caplog.clear()
+
+        second_plugins = mock_app.load_available_plugins()
+
+        assert "Loaded 2 plugins from cache" not in caplog.text, \
+            "Cache should have been invalidated due to deleted directory"
+        assert len(second_plugins["custom"]) == 0, \
+            "Should have 0 custom plugins after directory deletion"
+        assert len(second_plugins["frida"]) == 1, \
+            "Should still have 1 frida script (directory not deleted)"
+
+        os.makedirs(os.path.join(temp_plugin_dir, "custom_modules"), exist_ok=True)

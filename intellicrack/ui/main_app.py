@@ -1187,10 +1187,13 @@ class IntellicrackApp(QMainWindow):
                     cached_data = json.load(f)
 
                 for plugin_type, plugin_dir in plugin_directories.items():
+                    cached_plugins = cached_data.get("plugins", {}).get(plugin_type, [])
+
                     if not os.path.exists(plugin_dir):
+                        if cached_plugins:
+                            return False
                         continue
 
-                    cached_plugins = cached_data.get("plugins", {}).get(plugin_type, [])
                     cached_filenames = {p["filename"]: p["modified"] for p in cached_plugins}
 
                     for file_name in os.listdir(plugin_dir):
