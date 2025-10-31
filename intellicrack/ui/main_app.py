@@ -1153,9 +1153,11 @@ class IntellicrackApp(QMainWindow):
         """
         import json
         from pathlib import Path
+        from filelock import FileLock
 
         cache_dir = Path.home() / ".intellicrack"
         cache_file = cache_dir / "plugin_cache.json"
+        cache_lock_file = cache_dir / "plugin_cache.json.lock"
 
         plugin_base_dir = os.path.join(os.path.dirname(__file__), "..", "plugins")
         plugin_directories = {
@@ -1208,38 +1210,41 @@ class IntellicrackApp(QMainWindow):
                 self.logger.debug(f"Cache validation failed: {e}")
                 return False
 
+        lock = FileLock(str(cache_lock_file), timeout=10)
+
         if is_cache_valid():
             try:
-                with open(cache_file, "r", encoding="utf-8") as f:
-                    cached_data = json.load(f)
-                    cached_plugins = cached_data.get("plugins", {"custom": [], "frida": [], "ghidra": []})
+                with lock:
+                    with open(cache_file, "r", encoding="utf-8") as f:
+                        cached_data = json.load(f)
+                        cached_plugins = cached_data.get("plugins", {"custom": [], "frida": [], "ghidra": []})
 
-                    plugins = {"custom": [], "frida": [], "ghidra": []}
-                    for plugin_type, plugin_list in cached_plugins.items():
-                        if plugin_type not in plugin_directories:
-                            continue
-
-                        plugin_dir = plugin_directories[plugin_type]
-                        for plugin_info in plugin_list:
-                            filename = plugin_info.get("filename")
-                            if not filename:
+                        plugins = {"custom": [], "frida": [], "ghidra": []}
+                        for plugin_type, plugin_list in cached_plugins.items():
+                            if plugin_type not in plugin_directories:
                                 continue
 
-                            reconstructed_path = os.path.join(plugin_dir, filename)
+                            plugin_dir = plugin_directories[plugin_type]
+                            for plugin_info in plugin_list:
+                                filename = plugin_info.get("filename")
+                                if not filename:
+                                    continue
 
-                            if not is_path_safe(reconstructed_path, plugin_dir):
-                                self.logger.warning(f"Rejecting potentially malicious plugin path: {filename}")
-                                continue
+                                reconstructed_path = os.path.join(plugin_dir, filename)
 
-                            if not os.path.exists(reconstructed_path):
-                                continue
+                                if not is_path_safe(reconstructed_path, plugin_dir):
+                                    self.logger.warning(f"Rejecting potentially malicious plugin path: {filename}")
+                                    continue
 
-                            plugin_info_with_path = plugin_info.copy()
-                            plugin_info_with_path["path"] = reconstructed_path
-                            plugins[plugin_type].append(plugin_info_with_path)
+                                if not os.path.exists(reconstructed_path):
+                                    continue
 
-                    self.logger.info(f"Loaded {sum(len(p) for p in plugins.values())} plugins from cache")
-                    return plugins
+                                plugin_info_with_path = plugin_info.copy()
+                                plugin_info_with_path["path"] = reconstructed_path
+                                plugins[plugin_type].append(plugin_info_with_path)
+
+                        self.logger.info(f"Loaded {sum(len(p) for p in plugins.values())} plugins from cache")
+                        return plugins
             except (json.JSONDecodeError, OSError) as e:
                 self.logger.warning(f"Failed to load plugin cache, rescanning: {e}")
 
@@ -1294,9 +1299,10 @@ class IntellicrackApp(QMainWindow):
 
             try:
                 cache_dir.mkdir(parents=True, exist_ok=True)
-                with open(cache_file, "w", encoding="utf-8") as f:
-                    json.dump({"plugins": plugins, "cache_version": "1.0"}, f, indent=2)
-                self.logger.debug(f"Plugin cache saved to {cache_file}")
+                with lock:
+                    with open(cache_file, "w", encoding="utf-8") as f:
+                        json.dump({"plugins": plugins, "cache_version": "1.0"}, f, indent=2)
+                    self.logger.debug(f"Plugin cache saved to {cache_file}")
             except (OSError, IOError) as cache_error:
                 self.logger.warning(f"Failed to save plugin cache: {cache_error}")
 

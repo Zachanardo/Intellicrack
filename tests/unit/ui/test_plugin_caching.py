@@ -50,8 +50,11 @@ class MockIntellicrackApp:
 
         This is the actual implementation from main_app.py for testing purposes.
         """
+        from filelock import FileLock
+
         cache_dir = Path.home() / ".intellicrack"
         cache_file = cache_dir / "plugin_cache.json"
+        cache_lock_file = cache_dir / "plugin_cache.json.lock"
 
         plugin_base_dir = self.plugin_base_dir
         plugin_directories = {
@@ -104,38 +107,41 @@ class MockIntellicrackApp:
                 self.logger.debug(f"Cache validation failed: {e}")
                 return False
 
+        lock = FileLock(str(cache_lock_file), timeout=10)
+
         if is_cache_valid():
             try:
-                with open(cache_file, "r", encoding="utf-8") as f:
-                    cached_data = json.load(f)
-                    cached_plugins = cached_data.get("plugins", {"custom": [], "frida": [], "ghidra": []})
+                with lock:
+                    with open(cache_file, "r", encoding="utf-8") as f:
+                        cached_data = json.load(f)
+                        cached_plugins = cached_data.get("plugins", {"custom": [], "frida": [], "ghidra": []})
 
-                    plugins = {"custom": [], "frida": [], "ghidra": []}
-                    for plugin_type, plugin_list in cached_plugins.items():
-                        if plugin_type not in plugin_directories:
-                            continue
-
-                        plugin_dir = plugin_directories[plugin_type]
-                        for plugin_info in plugin_list:
-                            filename = plugin_info.get("filename")
-                            if not filename:
+                        plugins = {"custom": [], "frida": [], "ghidra": []}
+                        for plugin_type, plugin_list in cached_plugins.items():
+                            if plugin_type not in plugin_directories:
                                 continue
 
-                            reconstructed_path = os.path.join(plugin_dir, filename)
+                            plugin_dir = plugin_directories[plugin_type]
+                            for plugin_info in plugin_list:
+                                filename = plugin_info.get("filename")
+                                if not filename:
+                                    continue
 
-                            if not is_path_safe(reconstructed_path, plugin_dir):
-                                self.logger.warning(f"Rejecting potentially malicious plugin path: {filename}")
-                                continue
+                                reconstructed_path = os.path.join(plugin_dir, filename)
 
-                            if not os.path.exists(reconstructed_path):
-                                continue
+                                if not is_path_safe(reconstructed_path, plugin_dir):
+                                    self.logger.warning(f"Rejecting potentially malicious plugin path: {filename}")
+                                    continue
 
-                            plugin_info_with_path = plugin_info.copy()
-                            plugin_info_with_path["path"] = reconstructed_path
-                            plugins[plugin_type].append(plugin_info_with_path)
+                                if not os.path.exists(reconstructed_path):
+                                    continue
 
-                    self.logger.info(f"Loaded {sum(len(p) for p in plugins.values())} plugins from cache")
-                    return plugins
+                                plugin_info_with_path = plugin_info.copy()
+                                plugin_info_with_path["path"] = reconstructed_path
+                                plugins[plugin_type].append(plugin_info_with_path)
+
+                        self.logger.info(f"Loaded {sum(len(p) for p in plugins.values())} plugins from cache")
+                        return plugins
             except (json.JSONDecodeError, OSError) as e:
                 self.logger.warning(f"Failed to load plugin cache, rescanning: {e}")
 
@@ -190,9 +196,10 @@ class MockIntellicrackApp:
 
             try:
                 cache_dir.mkdir(parents=True, exist_ok=True)
-                with open(cache_file, "w", encoding="utf-8") as f:
-                    json.dump({"plugins": plugins, "cache_version": "1.0"}, f, indent=2)
-                self.logger.debug(f"Plugin cache saved to {cache_file}")
+                with lock:
+                    with open(cache_file, "w", encoding="utf-8") as f:
+                        json.dump({"plugins": plugins, "cache_version": "1.0"}, f, indent=2)
+                    self.logger.debug(f"Plugin cache saved to {cache_file}")
             except (OSError, IOError) as cache_error:
                 self.logger.warning(f"Failed to save plugin cache: {cache_error}")
 
@@ -254,6 +261,21 @@ def create_real_plugin_file(plugin_dir, filename, content="# Test plugin\nprint(
     with open(file_path, "w", encoding="utf-8") as f:
         f.write(content)
     return file_path
+
+
+def load_plugins_worker(plugin_base_dir):
+    """Worker function to load plugins in separate process for concurrency testing."""
+    try:
+        app = MockIntellicrackApp(plugin_base_dir)
+        plugins = app.load_available_plugins()
+        return {
+            "success": True,
+            "plugin_count": sum(len(p) for p in plugins.values()),
+            "has_custom": len(plugins.get("custom", [])),
+            "has_frida": len(plugins.get("frida", [])),
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 
 class TestPluginCaching:
@@ -545,3 +567,60 @@ class TestPluginCaching:
         assert "Rejecting potentially malicious plugin path" in caplog.text or \
                len(plugins_after["custom"]) == 1, \
                "Malicious paths were not properly rejected or logged"
+
+    def test_concurrent_cache_access(self, temp_plugin_dir, cache_file):
+        """Test that concurrent cache access doesn't corrupt cache file.
+
+        Security test for race condition (HIGH).
+        Verifies that multiple Intellicrack instances can load plugins
+        simultaneously without corrupting the cache file or causing crashes.
+        """
+        from concurrent.futures import ProcessPoolExecutor, as_completed
+
+        create_real_plugin_file(
+            os.path.join(temp_plugin_dir, "custom_modules"),
+            "concurrent_test.py",
+            "# Concurrent access test plugin"
+        )
+        create_real_plugin_file(
+            os.path.join(temp_plugin_dir, "frida_scripts"),
+            "concurrent_test.js",
+            "// Concurrent access test script"
+        )
+
+        num_concurrent_processes = 5
+        results = []
+
+        with ProcessPoolExecutor(max_workers=num_concurrent_processes) as executor:
+            futures = [
+                executor.submit(load_plugins_worker, temp_plugin_dir)
+                for _ in range(num_concurrent_processes)
+            ]
+
+            for future in as_completed(futures):
+                result = future.result(timeout=30)
+                results.append(result)
+
+        assert len(results) == num_concurrent_processes, \
+            f"Expected {num_concurrent_processes} results, got {len(results)}"
+
+        for i, result in enumerate(results):
+            assert result["success"], \
+                f"Process {i} failed: {result.get('error', 'Unknown error')}"
+            assert result["plugin_count"] == 2, \
+                f"Process {i} loaded {result['plugin_count']} plugins instead of 2"
+            assert result["has_custom"] == 1, \
+                f"Process {i} loaded {result['has_custom']} custom plugins instead of 1"
+            assert result["has_frida"] == 1, \
+                f"Process {i} loaded {result['has_frida']} frida plugins instead of 1"
+
+        assert cache_file.exists(), "Cache file doesn't exist after concurrent access"
+
+        try:
+            with open(cache_file, "r", encoding="utf-8") as f:
+                cache_data = json.load(f)
+                assert "plugins" in cache_data, "Cache file missing 'plugins' key"
+                assert isinstance(cache_data["plugins"], dict), \
+                    "Cache plugins is not a dictionary"
+        except json.JSONDecodeError:
+            pytest.fail("Cache file corrupted after concurrent access")
