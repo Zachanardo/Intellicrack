@@ -5,21 +5,19 @@ coverage of patching operations, safety checks, architecture detection, and roll
 Tests use mocking to avoid dependencies on real binaries and LIEF.
 """
 
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
-from pathlib import Path
-from unittest.mock import Mock, MagicMock, patch, PropertyMock
-from dataclasses import dataclass
 
 from intellicrack.core.certificate.cert_patcher import (
     CertificatePatcher,
-    PatchResult,
     PatchedFunction,
-    FailedPatch,
+    PatchResult,
 )
 from intellicrack.core.certificate.detection_report import (
+    BypassMethod,
     DetectionReport,
     ValidationFunction,
-    BypassMethod,
 )
 from intellicrack.core.certificate.patch_generators import (
     Architecture,
@@ -105,7 +103,11 @@ class TestPatcherInitialization:
     @patch("intellicrack.core.certificate.cert_patcher.lief")
     def test_patcher_initializes_with_valid_binary(self, mock_lief, mock_path, mock_lief_pe_binary):
         """Test patcher initializes successfully with valid binary."""
-        mock_path.return_value.exists.return_value = True
+        mock_path_instance = MagicMock()
+        mock_path_instance.exists.return_value = True
+        mock_path_instance.__str__.return_value = "test.exe"
+        mock_path.return_value = mock_path_instance
+
         mock_lief.parse.return_value = mock_lief_pe_binary
         mock_lief.PE = Mock()
         mock_lief.PE.Binary = type(mock_lief_pe_binary)
@@ -117,7 +119,7 @@ class TestPatcherInitialization:
 
         patcher = CertificatePatcher("test.exe")
 
-        assert patcher.binary_path == "test.exe"
+        assert str(patcher.binary_path) == "test.exe"
         assert patcher.binary is not None
         assert patcher.architecture == Architecture.X64
 

@@ -183,9 +183,10 @@ This file tracks all the identified issues and areas for improvement in the Inte
 
 ### Low
 
-- **[ ] cert_patcher.py: Inconsistent pathlib usage**
+- **[x] cert_patcher.py: Inconsistent pathlib usage**
   - **File:** `intellicrack/core/certificate/cert_patcher.py`
   - **Line:** 165-187 (__init__ method), _save_patched_binary method
   - **Severity:** LOW
   - **Description:** The `__init__` method creates a `pathlib.Path` object to check file existence, but then stores `self.binary_path` as a string. The `_save_patched_binary` method then defensively casts to string with `str(self.binary_path)` before string concatenation, highlighting the inconsistency. This mixes pathlib and string-based path manipulation unnecessarily.
   - **Recommendation:** Store `self.binary_path` as a `pathlib.Path` object consistently. Update `_save_patched_binary` to use pathlib's path manipulation methods instead of string concatenation. Example: `output_path = self.binary_path.with_stem(self.binary_path.stem + "_patched")`. This aligns with modern Python best practices and improves code clarity.
+  - **Status:** COMPLETED - Refactored `__init__` to store `self.binary_path` as Path object (line 176). Updated `lief.parse()` call to convert to string: `lief.parse(str(self.binary_path))` (line 182). Refactored `_save_patched_binary()` to use pathlib: `output_path = self.binary_path.parent / (self.binary_path.name + ".patched")` (line 485). Updated test to properly mock Path object behavior. All 14 tests passing, zero linting errors.

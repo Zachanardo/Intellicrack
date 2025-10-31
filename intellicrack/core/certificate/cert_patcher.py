@@ -173,13 +173,13 @@ class CertificatePatcher:
         if not binary_path_obj.exists():
             raise FileNotFoundError(f"Binary not found: {binary_path}")
 
-        self.binary_path = binary_path
+        self.binary_path = binary_path_obj
         self.binary: Optional[lief.Binary] = None
         self.architecture: Optional[Architecture] = None
 
         if LIEF_AVAILABLE:
             try:
-                self.binary = lief.parse(binary_path)
+                self.binary = lief.parse(str(self.binary_path))
                 self._detect_architecture()
             except Exception as e:
                 raise RuntimeError(f"Failed to parse binary: {e}") from e
@@ -482,8 +482,8 @@ class CertificatePatcher:
         if not self.binary:
             return
 
-        output_path = str(self.binary_path) + ".patched"
-        self.binary.write(output_path)
+        output_path = self.binary_path.parent / (self.binary_path.name + ".patched")
+        self.binary.write(str(output_path))
 
     def rollback_patches(self, patch_result: PatchResult) -> bool:
         """Rollback all patches.
