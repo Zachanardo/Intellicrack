@@ -189,7 +189,10 @@ fn get_cache_path() -> Result<PathBuf> {
     let cache_base = cache_dir()
         .or_else(|| {
             let fallback = PathBuf::from(".cache");
-            debug!("Platform cache_dir unavailable, using fallback: {}", fallback.display());
+            debug!(
+                "Platform cache_dir unavailable, using fallback: {}",
+                fallback.display()
+            );
             Some(fallback)
         })
         .ok_or(ToolDiscoveryError::CacheDirectoryError)?;
@@ -320,18 +323,29 @@ fn is_cache_valid(cache: &ToolCache) -> bool {
     let age_hours = (now - cache.timestamp) / 3600;
 
     if age_hours > CACHE_VALIDITY_HOURS {
-        debug!("Cache expired: {} hours old (max: {})", age_hours, CACHE_VALIDITY_HOURS);
+        debug!(
+            "Cache expired: {} hours old (max: {})",
+            age_hours, CACHE_VALIDITY_HOURS
+        );
         return false;
     }
 
     for (name, info) in &cache.tools {
         if !info.path.exists() {
-            warn!("Cached path for '{}' no longer exists: {}", name, info.path.display());
+            warn!(
+                "Cached path for '{}' no longer exists: {}",
+                name,
+                info.path.display()
+            );
             return false;
         }
     }
 
-    debug!("Tool cache is valid (age: {} hours, {} tools)", age_hours, cache.tools.len());
+    debug!(
+        "Tool cache is valid (age: {} hours, {} tools)",
+        age_hours,
+        cache.tools.len()
+    );
     true
 }
 
@@ -381,7 +395,11 @@ fn discover_tool(name: &str) -> Option<ToolInfo> {
 
     for candidate_path in common_paths {
         if candidate_path.exists() && candidate_path.is_file() {
-            debug!("Found '{}' at common location: {}", name, candidate_path.display());
+            debug!(
+                "Found '{}' at common location: {}",
+                name,
+                candidate_path.display()
+            );
             let version = get_tool_version(&candidate_path, name);
             return Some(ToolInfo::new(candidate_path, version));
         }
@@ -408,25 +426,51 @@ fn get_common_tool_paths(tool_name: &str) -> Vec<PathBuf> {
         let exe_name = format!("{}.exe", tool_name);
 
         if let Some(program_files) = std::env::var_os("ProgramFiles") {
-            paths.push(PathBuf::from(&program_files).join(tool_name).join("bin").join(&exe_name));
-            paths.push(PathBuf::from(&program_files).join(tool_name).join(&exe_name));
+            paths.push(
+                PathBuf::from(&program_files)
+                    .join(tool_name)
+                    .join("bin")
+                    .join(&exe_name),
+            );
+            paths.push(
+                PathBuf::from(&program_files)
+                    .join(tool_name)
+                    .join(&exe_name),
+            );
         }
 
         paths.push(PathBuf::from(format!("C:\\{}", tool_name)).join(&exe_name));
-        paths.push(PathBuf::from(format!("C:\\{}", tool_name)).join("bin").join(&exe_name));
+        paths.push(
+            PathBuf::from(format!("C:\\{}", tool_name))
+                .join("bin")
+                .join(&exe_name),
+        );
 
         if let Some(home) = dirs::home_dir() {
             paths.push(home.join(format!(".{}", tool_name)).join(&exe_name));
-            paths.push(home.join(format!(".{}", tool_name)).join("bin").join(&exe_name));
+            paths.push(
+                home.join(format!(".{}", tool_name))
+                    .join("bin")
+                    .join(&exe_name),
+            );
         }
     }
 
     #[cfg(not(target_os = "windows"))]
     {
-        paths.push(PathBuf::from(format!("/opt/{}/bin/{}", tool_name, tool_name)));
+        paths.push(PathBuf::from(format!(
+            "/opt/{}/bin/{}",
+            tool_name, tool_name
+        )));
         paths.push(PathBuf::from(format!("/opt/{}/{}", tool_name, tool_name)));
-        paths.push(PathBuf::from(format!("/usr/local/{}/bin/{}", tool_name, tool_name)));
-        paths.push(PathBuf::from(format!("/usr/local/{}/{}", tool_name, tool_name)));
+        paths.push(PathBuf::from(format!(
+            "/usr/local/{}/bin/{}",
+            tool_name, tool_name
+        )));
+        paths.push(PathBuf::from(format!(
+            "/usr/local/{}/{}",
+            tool_name, tool_name
+        )));
 
         if let Some(home) = dirs::home_dir() {
             paths.push(home.join(format!(".{}/bin/{}", tool_name, tool_name)));
@@ -458,9 +502,7 @@ fn get_common_tool_paths(tool_name: &str) -> Vec<PathBuf> {
 fn get_tool_version(tool_path: &Path, tool_name: &str) -> Option<String> {
     use std::process::Command;
 
-    let output = Command::new(tool_path)
-        .arg("--version")
-        .output();
+    let output = Command::new(tool_path).arg("--version").output();
 
     match output {
         Ok(output) if output.status.success() => {
@@ -510,7 +552,11 @@ fn discover_all_tools() -> HashMap<String, ToolInfo> {
         }
     }
 
-    info!("Discovered {} of {} required tools", tools.len(), REQUIRED_TOOLS.len());
+    info!(
+        "Discovered {} of {} required tools",
+        tools.len(),
+        REQUIRED_TOOLS.len()
+    );
     tools
 }
 
@@ -545,7 +591,10 @@ fn discover_all_tools() -> HashMap<String, ToolInfo> {
 ///
 /// Negligible (< 1ms) for typical tool counts (5-10 tools).
 fn set_tool_env_vars(tools: &HashMap<String, ToolInfo>) {
-    info!("Setting environment variables for {} discovered tools", tools.len());
+    info!(
+        "Setting environment variables for {} discovered tools",
+        tools.len()
+    );
 
     for (name, info) in tools {
         if let Some(parent_dir) = info.path.parent() {
@@ -568,12 +617,19 @@ fn set_tool_env_vars(tools: &HashMap<String, ToolInfo>) {
                     unsafe {
                         std::env::set_var("GHIDRA_PATH", parent_dir);
                     }
-                    debug!("Set GHIDRA_PATH = {} (alias for ghidraRun)", parent_dir.display());
+                    debug!(
+                        "Set GHIDRA_PATH = {} (alias for ghidraRun)",
+                        parent_dir.display()
+                    );
                 }
                 _ => {}
             }
         } else {
-            warn!("Could not determine parent directory for '{}': {}", name, info.path.display());
+            warn!(
+                "Could not determine parent directory for '{}': {}",
+                name,
+                info.path.display()
+            );
         }
     }
 
@@ -638,13 +694,19 @@ pub fn discover_and_cache_tools() -> Result<()> {
         }
         Ok(Some(cache)) => {
             info!("Cache exists but is invalid, performing fresh discovery");
-            debug!("Cache age: {} hours", (Utc::now().timestamp() - cache.timestamp) / 3600);
+            debug!(
+                "Cache age: {} hours",
+                (Utc::now().timestamp() - cache.timestamp) / 3600
+            );
             let fresh_tools = discover_all_tools();
 
             if !fresh_tools.is_empty() {
                 let new_cache = ToolCache::with_tools(fresh_tools.clone());
                 if let Err(e) = save_cache(&new_cache) {
-                    warn!("Failed to save tool cache: {}. Will regenerate next time.", e);
+                    warn!(
+                        "Failed to save tool cache: {}. Will regenerate next time.",
+                        e
+                    );
                 }
             }
 
@@ -657,7 +719,10 @@ pub fn discover_and_cache_tools() -> Result<()> {
             if !fresh_tools.is_empty() {
                 let new_cache = ToolCache::with_tools(fresh_tools.clone());
                 if let Err(e) = save_cache(&new_cache) {
-                    warn!("Failed to save tool cache: {}. Will regenerate next time.", e);
+                    warn!(
+                        "Failed to save tool cache: {}. Will regenerate next time.",
+                        e
+                    );
                 }
             }
 
@@ -670,7 +735,10 @@ pub fn discover_and_cache_tools() -> Result<()> {
             if !fresh_tools.is_empty() {
                 let new_cache = ToolCache::with_tools(fresh_tools.clone());
                 if let Err(e) = save_cache(&new_cache) {
-                    warn!("Failed to save tool cache: {}. Will regenerate next time.", e);
+                    warn!(
+                        "Failed to save tool cache: {}. Will regenerate next time.",
+                        e
+                    );
                 }
             }
 
