@@ -589,7 +589,7 @@ class TestPluginCaching:
 
         malicious_paths = [
             "..\\..\\..\\Windows\\System32\\calc.exe",
-            "/tmp/malicious.py",
+            "/tmp/malicious.py",  # noqa: S108 - Intentional test path for security validation
             "C:\\evil\\malware.py",
             "../../../etc/passwd",
         ]
