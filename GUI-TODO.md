@@ -128,12 +128,13 @@ This file tracks all the identified issues and areas for improvement in the Inte
   - **Recommendation:** Refactor into smaller, single-purpose helper methods. Extract logic into separate methods: `_load_cache_data()`, `_validate_plugin_directory_cache()`, `_check_file_modifications()`. This improves testability and readability while reducing cognitive load.
   - **Status:** COMPLETED - Refactored `is_cache_valid()` into three helper methods: `_load_cache_data()` (lines 1144-1161), `_check_file_modifications()` (lines 1163-1189), and `_validate_plugin_directory_cache()` (lines 1191-1213). Reduced complexity from 35+ lines with nested loops to 11 lines. All 14 tests passing.
 
-- **[ ] main_app.py: Redundant file I/O in cache operations**
+- **[x] main_app.py: Redundant file I/O in cache operations**
   - **File:** `intellicrack/ui/main_app.py`
   - **Line:** 1211-1217
   - **Severity:** MEDIUM
   - **Description:** The cache file is read twice unnecessarily. The `is_cache_valid()` function reads and parses the cache file to validate it (lines 1182-1183). If validation succeeds, the code immediately re-opens and re-reads the same file to load plugin data (lines 1213-1215). This doubles I/O operations and JSON parsing overhead.
   - **Recommendation:** Modify `is_cache_valid()` to return a tuple `(is_valid: bool, cached_data: dict)`. Reuse the cached_data if valid, avoiding redundant file read and JSON parse. Example: `is_valid, cached_data = is_cache_valid(); if is_valid: return cached_data.get("plugins", {})`
+  - **Status:** COMPLETED - Modified `is_cache_valid()` to return tuple `(bool, Optional[dict])` instead of just `bool`. Updated calling code to unpack tuple and reuse cached_data, eliminating redundant file read and JSON parse operations. Removed unnecessary `with lock, open(...)` block. Changed exception handling from `json.JSONDecodeError` to `KeyError` since JSON parsing now happens in `_load_cache_data()`. All 14 tests passing.
 
 - **[ ] main_app.py: Binary files opened in text mode**
   - **File:** `intellicrack/ui/main_app.py`

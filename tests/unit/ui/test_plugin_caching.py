@@ -145,52 +145,56 @@ class MockIntellicrackApp:
                 return False
 
         def is_cache_valid():
-            """Check if cache exists and is still valid."""
+            """Check if cache exists and is still valid.
+
+            Returns:
+                tuple: (is_valid, cached_data) where is_valid is True if cache is valid,
+                       and cached_data contains the loaded cache or None if invalid
+            """
             cached_data = self._load_cache_data(cache_file)
             if cached_data is None:
-                return False
+                return False, None
 
             for plugin_type, plugin_dir in plugin_directories.items():
                 if not self._validate_plugin_directory_cache(plugin_type, plugin_dir, cached_data):
-                    return False
+                    return False, None
 
-            return True
+            return True, cached_data
 
         lock = FileLock(str(cache_lock_file), timeout=10)
 
-        if is_cache_valid():
+        cache_is_valid, cached_data = is_cache_valid()
+        if cache_is_valid:
             try:
-                with lock, open(cache_file, "r", encoding="utf-8") as f:
-                    cached_data = json.load(f)
-                    cached_plugins = cached_data.get("plugins", {"custom": [], "frida": [], "ghidra": []})
+                cached_plugins = cached_data.get("plugins", {"custom": [], "frida": [], "ghidra": []})
 
-                    plugins = {"custom": [], "frida": [], "ghidra": []}
-                    for plugin_type, plugin_list in cached_plugins.items():
-                        if plugin_type not in plugin_directories:
+                plugins = {"custom": [], "frida": [], "ghidra": []}
+                for plugin_type, plugin_list in cached_plugins.items():
+                    if plugin_type not in plugin_directories:
+                        continue
+
+                    plugin_dir = plugin_directories[plugin_type]
+                    for plugin_info in plugin_list:
+                        filename = plugin_info.get("filename")
+                        if not filename:
                             continue
 
-                        plugin_dir = plugin_directories[plugin_type]
-                        for plugin_info in plugin_list:
-                            filename = plugin_info.get("filename")
-                            if not filename:
-                                continue
+                        reconstructed_path = os.path.join(plugin_dir, filename)
 
-                            reconstructed_path = os.path.join(plugin_dir, filename)
+                        if not is_path_safe(reconstructed_path, plugin_dir):
+                            self.logger.warning(f"Rejecting potentially malicious plugin path: {filename}")
+                            continue
 
-                            if not is_path_safe(reconstructed_path, plugin_dir):
-                                self.logger.warning(f"Rejecting potentially malicious plugin path: {filename}")
-                                continue
+                        if not os.path.exists(reconstructed_path):
+                            continue
 
-                            if not os.path.exists(reconstructed_path):
-                                continue
+                        plugin_info_with_path = plugin_info.copy()
+                        plugin_info_with_path["path"] = reconstructed_path
+                        plugins[plugin_type].append(plugin_info_with_path)
 
-                            plugin_info_with_path = plugin_info.copy()
-                            plugin_info_with_path["path"] = reconstructed_path
-                            plugins[plugin_type].append(plugin_info_with_path)
-
-                    self.logger.info(f"Loaded {sum(len(p) for p in plugins.values())} plugins from cache")
-                    return plugins
-            except (json.JSONDecodeError, OSError) as e:
+                self.logger.info(f"Loaded {sum(len(p) for p in plugins.values())} plugins from cache")
+                return plugins
+            except (KeyError, OSError) as e:
                 self.logger.warning(f"Failed to load plugin cache, rescanning: {e}")
 
         plugins = {"custom": [], "frida": [], "ghidra": []}
