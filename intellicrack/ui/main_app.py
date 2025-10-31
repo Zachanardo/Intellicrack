@@ -1141,6 +1141,77 @@ class IntellicrackApp(QMainWindow):
             self.theme_manager.set_theme(theme_name)
         self.logger.info(f"Theme changed to: {theme_name}")
 
+    def _load_cache_data(self, cache_file):
+        """Load and parse cache data from file.
+
+        Args:
+            cache_file: Path to cache file
+
+        Returns:
+            dict: Parsed cache data, or None if loading fails
+        """
+        if not cache_file.exists():
+            return None
+
+        try:
+            with open(cache_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, OSError) as e:
+            self.logger.debug(f"Failed to load cache data: {e}")
+            return None
+
+    def _check_file_modifications(self, plugin_dir, cached_filenames):
+        """Check if files in directory have been modified compared to cache.
+
+        Args:
+            plugin_dir: Path to plugin directory
+            cached_filenames: Dict mapping filenames to cached modification times
+
+        Returns:
+            tuple: (is_valid, remaining_cached_files) where is_valid indicates if
+                   all files match cache, and remaining_cached_files contains files
+                   that were in cache but not found in directory
+        """
+        remaining = dict(cached_filenames)
+
+        try:
+            for file_name in os.listdir(plugin_dir):
+                full_path = os.path.join(plugin_dir, file_name)
+                if os.path.isfile(full_path):
+                    current_mtime = os.path.getmtime(full_path)
+                    if file_name not in remaining or remaining[file_name] != current_mtime:
+                        return False, {}
+                    del remaining[file_name]
+        except OSError as e:
+            self.logger.debug(f"Error checking file modifications: {e}")
+            return False, {}
+
+        return True, remaining
+
+    def _validate_plugin_directory_cache(self, plugin_type, plugin_dir, cached_data):
+        """Validate cache for a specific plugin directory.
+
+        Args:
+            plugin_type: Type of plugin (custom, frida, ghidra)
+            plugin_dir: Path to plugin directory
+            cached_data: Complete cached data dictionary
+
+        Returns:
+            bool: True if cache is valid for this directory, False otherwise
+        """
+        cached_plugins = cached_data.get("plugins", {}).get(plugin_type, [])
+
+        if not os.path.exists(plugin_dir):
+            return not cached_plugins
+
+        cached_filenames = {p["filename"]: p["modified"] for p in cached_plugins}
+        is_valid, remaining = self._check_file_modifications(plugin_dir, cached_filenames)
+
+        if not is_valid:
+            return False
+
+        return len(remaining) == 0
+
     def load_available_plugins(self):
         """Load available plugins from plugin directory with caching for performance.
 
@@ -1179,40 +1250,15 @@ class IntellicrackApp(QMainWindow):
 
         def is_cache_valid():
             """Check if cache exists and is still valid."""
-            if not cache_file.exists():
+            cached_data = self._load_cache_data(cache_file)
+            if cached_data is None:
                 return False
 
-            try:
-                with open(cache_file, "r", encoding="utf-8") as f:
-                    cached_data = json.load(f)
+            for plugin_type, plugin_dir in plugin_directories.items():
+                if not self._validate_plugin_directory_cache(plugin_type, plugin_dir, cached_data):
+                    return False
 
-                for plugin_type, plugin_dir in plugin_directories.items():
-                    cached_plugins = cached_data.get("plugins", {}).get(plugin_type, [])
-
-                    if not os.path.exists(plugin_dir):
-                        if cached_plugins:
-                            return False
-                        continue
-
-                    cached_filenames = {p["filename"]: p["modified"] for p in cached_plugins}
-
-                    for file_name in os.listdir(plugin_dir):
-                        full_path = os.path.join(plugin_dir, file_name)
-                        if os.path.isfile(full_path):
-                            current_mtime = os.path.getmtime(full_path)
-                            if file_name not in cached_filenames or cached_filenames[file_name] != current_mtime:
-                                return False
-
-                            del cached_filenames[file_name]
-
-                    if cached_filenames:
-                        return False
-
-                return True
-
-            except (json.JSONDecodeError, KeyError, OSError) as e:
-                self.logger.debug(f"Cache validation failed: {e}")
-                return False
+            return True
 
         lock = FileLock(str(cache_lock_file), timeout=10)
 
