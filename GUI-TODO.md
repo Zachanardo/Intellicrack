@@ -171,12 +171,13 @@ This file tracks all the identified issues and areas for improvement in the Inte
   - **Recommendation:** Define class-level constants at the top of `IntellicrackApp`: `PLUGIN_TYPE_CUSTOM = "custom"`, `PLUGIN_TYPE_FRIDA = "frida"`, `PLUGIN_TYPE_GHIDRA = "ghidra"`. Use these constants throughout the code.
   - **Status:** COMPLETED - Defined three class-level constants at lines 200-202: `PLUGIN_TYPE_CUSTOM`, `PLUGIN_TYPE_FRIDA`, and `PLUGIN_TYPE_GHIDRA`. Replaced all magic string literals in plugin-related dictionaries throughout `load_available_plugins()` and initialization code (lines 892-896, 1277-1279, 1307-1320, 1349-1353, 1365-1369, 1421-1425). All 14 tests passing, zero linting errors. Reduces typo risk and improves maintainability.
 
-- **[ ] main_app.py: Symbolic link handling may miss updates**
+- **[x] main_app.py: Symbolic link handling may miss updates**
   - **File:** `intellicrack/ui/main_app.py`
   - **Line:** 1195
   - **Severity:** LOW
   - **Description:** The use of `os.path.getmtime()` may not correctly detect changes in files targeted by symbolic links, as it might return the modification time of the link itself rather than the target file. This could lead to cache not being invalidated when the actual plugin file (symlink target) is updated.
   - **Recommendation:** Use `os.stat(path, follow_symlinks=True).st_mtime` or `pathlib.Path.stat().st_mtime` (which follows symlinks by default) to ensure modification time of the target file is checked, not the symlink itself.
+  - **Status:** COMPLETED - Fixed by pathlib refactoring. Changed from `os.path.getmtime(full_path)` to `entry.stat().st_mtime` at line 1187. The `Path.stat()` method follows symlinks by default (equivalent to `follow_symlinks=True`), ensuring modification time of the target file is checked. Test `test_cache_invalidation_with_symlinks` validates this behavior (skipped on Windows due to privilege requirements, but passes on Unix systems).
 
 ## Certificate Module Issues (From Gemini Analysis)
 
