@@ -163,12 +163,13 @@ This file tracks all the identified issues and areas for improvement in the Inte
   - **Recommendation:** Extract as a private class method `_is_plugin_cache_valid(cache_file: Path, plugin_directories: dict) -> bool`. This allows direct unit testing of cache validation logic and reduces the size of `load_available_plugins()`.
   - **Status:** COMPLETED - Extracted nested `is_cache_valid()` function as private class method `_is_plugin_cache_valid()` at lines 1226-1246. Method accepts `cache_file` and `plugin_directories` as parameters, reducing coupling and improving testability. The `load_available_plugins()` method now calls `self._is_plugin_cache_valid(cache_file, plugin_directories)` at line 1296. All 14 tests passing, zero linting errors.
 
-- **[ ] main_app.py: Magic string literals for plugin types**
+- **[x] main_app.py: Magic string literals for plugin types**
   - **File:** `intellicrack/ui/main_app.py`
   - **Line:** Throughout load_available_plugins()
   - **Severity:** LOW
   - **Description:** Plugin type strings (`"custom"`, `"frida"`, `"ghidra"`) are repeated as magic literals throughout the code (lines 1166-1168, 1215, 1220, etc.). This increases the risk of typos and makes refactoring plugin types more error-prone.
   - **Recommendation:** Define class-level constants at the top of `IntellicrackApp`: `PLUGIN_TYPE_CUSTOM = "custom"`, `PLUGIN_TYPE_FRIDA = "frida"`, `PLUGIN_TYPE_GHIDRA = "ghidra"`. Use these constants throughout the code.
+  - **Status:** COMPLETED - Defined three class-level constants at lines 200-202: `PLUGIN_TYPE_CUSTOM`, `PLUGIN_TYPE_FRIDA`, and `PLUGIN_TYPE_GHIDRA`. Replaced all magic string literals in plugin-related dictionaries throughout `load_available_plugins()` and initialization code (lines 892-896, 1277-1279, 1307-1320, 1349-1353, 1365-1369, 1421-1425). All 14 tests passing, zero linting errors. Reduces typo risk and improves maintainability.
 
 - **[ ] main_app.py: Symbolic link handling may miss updates**
   - **File:** `intellicrack/ui/main_app.py`

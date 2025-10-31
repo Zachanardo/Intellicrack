@@ -197,6 +197,10 @@ class IntellicrackApp(QMainWindow):
     switch_tab = pyqtSignal(int)
     generate_key_signal = pyqtSignal()
 
+    PLUGIN_TYPE_CUSTOM = "custom"
+    PLUGIN_TYPE_FRIDA = "frida"
+    PLUGIN_TYPE_GHIDRA = "ghidra"
+
     def __init__(self):
         """Initialize the main Intellicrack application window.
 
@@ -885,7 +889,11 @@ class IntellicrackApp(QMainWindow):
             )
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.warning(f"Failed to initialize plugins: {e}")
-            self.available_plugins = {"custom": [], "frida": [], "ghidra": []}
+            self.available_plugins = {
+                self.PLUGIN_TYPE_CUSTOM: [],
+                self.PLUGIN_TYPE_FRIDA: [],
+                self.PLUGIN_TYPE_GHIDRA: [],
+            }
 
         self.logger.info("IntellicrackApp.__init__ completed successfully")
         print("[INIT] UI initialization finalized")
@@ -1266,9 +1274,9 @@ class IntellicrackApp(QMainWindow):
 
         plugin_base_dir = Path(__file__).parent.parent / "plugins"
         plugin_directories = {
-            "custom": plugin_base_dir / "custom_modules",
-            "frida": plugin_base_dir / "frida_scripts",
-            "ghidra": plugin_base_dir / "ghidra_scripts",
+            self.PLUGIN_TYPE_CUSTOM: plugin_base_dir / "custom_modules",
+            self.PLUGIN_TYPE_FRIDA: plugin_base_dir / "frida_scripts",
+            self.PLUGIN_TYPE_GHIDRA: plugin_base_dir / "ghidra_scripts",
         }
 
         def is_path_safe(file_path, plugin_dir) -> bool:
@@ -1296,9 +1304,20 @@ class IntellicrackApp(QMainWindow):
         cache_is_valid, cached_data = self._is_plugin_cache_valid(cache_file, plugin_directories)
         if cache_is_valid:
             try:
-                cached_plugins = cached_data.get("plugins", {"custom": [], "frida": [], "ghidra": []})
+                cached_plugins = cached_data.get(
+                    "plugins",
+                    {
+                        self.PLUGIN_TYPE_CUSTOM: [],
+                        self.PLUGIN_TYPE_FRIDA: [],
+                        self.PLUGIN_TYPE_GHIDRA: [],
+                    },
+                )
 
-                plugins = {"custom": [], "frida": [], "ghidra": []}
+                plugins = {
+                    self.PLUGIN_TYPE_CUSTOM: [],
+                    self.PLUGIN_TYPE_FRIDA: [],
+                    self.PLUGIN_TYPE_GHIDRA: [],
+                }
                 for plugin_type, plugin_list in cached_plugins.items():
                     if plugin_type not in plugin_directories:
                         continue
@@ -1327,7 +1346,11 @@ class IntellicrackApp(QMainWindow):
             except (KeyError, OSError) as e:
                 self.logger.warning(f"Failed to load plugin cache, rescanning: {e}")
 
-        plugins = {"custom": [], "frida": [], "ghidra": []}
+        plugins = {
+            self.PLUGIN_TYPE_CUSTOM: [],
+            self.PLUGIN_TYPE_FRIDA: [],
+            self.PLUGIN_TYPE_GHIDRA: [],
+        }
 
         BINARY_EXTENSIONS = {".pyd", ".dll", ".jar"}
 
@@ -1339,7 +1362,11 @@ class IntellicrackApp(QMainWindow):
                         plugin_dir.mkdir(parents=True, exist_ok=True)
                         continue
 
-                    plugin_extensions = {"custom": [".py", ".pyd", ".dll"], "frida": [".js", ".ts"], "ghidra": [".py", ".java", ".jar"]}
+                    plugin_extensions = {
+                        self.PLUGIN_TYPE_CUSTOM: [".py", ".pyd", ".dll"],
+                        self.PLUGIN_TYPE_FRIDA: [".js", ".ts"],
+                        self.PLUGIN_TYPE_GHIDRA: [".py", ".java", ".jar"],
+                    }
 
                     for entry in plugin_dir.iterdir():
                         if entry.is_file():
@@ -1391,7 +1418,11 @@ class IntellicrackApp(QMainWindow):
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error(f"Critical error loading plugins: {e}")
-            return {"custom": [], "frida": [], "ghidra": []}
+            return {
+                self.PLUGIN_TYPE_CUSTOM: [],
+                self.PLUGIN_TYPE_FRIDA: [],
+                self.PLUGIN_TYPE_GHIDRA: [],
+            }
 
         self.logger.info(f"Loaded {sum(len(p) for p in plugins.values())} plugins across {len(plugins)} categories")
         return plugins
