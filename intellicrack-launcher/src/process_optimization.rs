@@ -34,6 +34,17 @@
 use anyhow::{Context, Result};
 use tracing::{debug, info, warn};
 
+#[cfg(target_os = "windows")]
+use winapi::shared::minwindef::DWORD;
+#[cfg(target_os = "windows")]
+use winapi::um::processthreadsapi::{GetCurrentProcess, SetPriorityClass};
+#[cfg(target_os = "windows")]
+use winapi::um::sysinfoapi::GetLogicalProcessorInformationEx;
+#[cfg(target_os = "windows")]
+use winapi::um::winbase::{ABOVE_NORMAL_PRIORITY_CLASS, SetProcessAffinityMask};
+#[cfg(target_os = "windows")]
+use winapi::um::winnt::{RelationProcessorCore, SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX};
+
 /// Errors that can occur during process optimization operations.
 ///
 /// These errors are informational and non-fatal. The launcher will continue
@@ -120,9 +131,6 @@ impl CpuTopology {
 /// ```
 #[cfg(target_os = "windows")]
 pub fn optimize_process_priority() -> Result<()> {
-    use winapi::um::processthreadsapi::{GetCurrentProcess, SetPriorityClass};
-    use winapi::um::winbase::ABOVE_NORMAL_PRIORITY_CLASS;
-
     info!("Optimizing process priority for better performance...");
 
     unsafe {
@@ -149,26 +157,28 @@ pub fn optimize_process_priority() -> Result<()> {
 
 #[cfg(target_os = "windows")]
 fn detect_cpu_topology() -> Result<CpuTopology> {
-    use std::alloc::{alloc, dealloc, Layout};
+    use std::alloc::{Layout, alloc, dealloc};
     use std::mem;
-    use winapi::shared::minwindef::DWORD;
-    use winapi::um::sysinfoapi::GetLogicalProcessorInformationEx;
-    use winapi::um::winnt::{
-        RelationProcessorCore, SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX,
-    };
 
     debug!("Detecting CPU topology...");
 
     unsafe {
         let mut buffer_length: DWORD = 0;
-        GetLogicalProcessorInformationEx(RelationProcessorCore, std::ptr::null_mut(), &mut buffer_length);
+        GetLogicalProcessorInformationEx(
+            RelationProcessorCore,
+            std::ptr::null_mut(),
+            &mut buffer_length,
+        );
 
         if buffer_length == 0 {
             warn!("Failed to get buffer size for CPU topology, using fallback");
             return Ok(create_fallback_topology());
         }
 
-        let layout = Layout::from_size_align_unchecked(buffer_length as usize, mem::align_of::<SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX>());
+        let layout = Layout::from_size_align_unchecked(
+            buffer_length as usize,
+            mem::align_of::<SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX>(),
+        );
         let buffer = alloc(layout);
 
         if buffer.is_null() {
@@ -197,6 +207,9 @@ fn detect_cpu_topology() -> Result<CpuTopology> {
 
             if info.Relationship == RelationProcessorCore {
                 let processor_info = &info.u.Processor();
+                // EfficiencyClass: Higher values = higher performance (P-cores)
+                // On hybrid CPUs: P-cores have EfficiencyClass >= 1, E-cores have EfficiencyClass = 0
+                // On non-hybrid CPUs: All cores typically have EfficiencyClass = 0
                 let efficiency_class = processor_info.EfficiencyClass;
 
                 let group_mask = &processor_info.GroupMask[0];
@@ -205,7 +218,7 @@ fn detect_cpu_topology() -> Result<CpuTopology> {
 
                 while mask != 0 {
                     if mask & 1 != 0 {
-                        if efficiency_class > 0 {
+                        if efficiency_class >= 1 {
                             p_cores.push(core_index);
                         } else {
                             e_cores.push(core_index);
@@ -232,7 +245,11 @@ fn detect_cpu_topology() -> Result<CpuTopology> {
             return Ok(CpuTopology::new(p_cores, e_cores));
         }
 
-        debug!("CPU topology: {} P-cores, {} E-cores", p_cores.len(), e_cores.len());
+        debug!(
+            "CPU topology: {} P-cores, {} E-cores",
+            p_cores.len(),
+            e_cores.len()
+        );
         Ok(CpuTopology::new(p_cores, e_cores))
     }
 }
@@ -253,10 +270,29 @@ fn detect_cpu_topology() -> Result<CpuTopology> {
     Ok(CpuTopology::new(p_cores, Vec::new()))
 }
 
+/// Sets CPU affinity to pin the process to P-cores only (on hybrid CPUs).
+///
+/// On hybrid CPUs, E-cores are slower and less suitable for latency-sensitive workloads.
+/// This function pins the process to P-cores only for better performance.
+///
+/// On non-hybrid CPUs, this is a no-op.
+///
+/// # Arguments
+///
+/// * `topology` - CPU topology information from `detect_cpu_topology()`
+///
+/// # Limitations
+///
+/// Due to DWORD (u32) size constraints in the Windows API wrapper, CPU affinity is limited
+/// to the first 32 logical processors. This is sufficient for all consumer CPUs as of 2025,
+/// including high-end gaming and workstation processors (e.g., Intel i9-14900K has 32 threads,
+/// AMD Ryzen 9 7950X3D has 32 threads). Systems with >32 cores are rare in consumer markets.
+///
+/// # Errors
+///
+/// Returns an error if setting affinity fails, but this is non-fatal.
 #[cfg(target_os = "windows")]
 fn set_cpu_affinity(topology: &CpuTopology) -> Result<()> {
-    use winapi::um::processthreadsapi::GetCurrentProcess;
-
     if !topology.is_hybrid {
         debug!("Non-hybrid CPU, skipping affinity masking");
         return Ok(());
@@ -281,15 +317,9 @@ fn set_cpu_affinity(topology: &CpuTopology) -> Result<()> {
 
     unsafe {
         let handle = GetCurrentProcess();
-
-        unsafe extern "system" {
-            fn SetProcessAffinityMask(
-                hProcess: winapi::shared::ntdef::HANDLE,
-                dwProcessAffinityMask: usize,
-            ) -> i32;
-        }
-
-        let result = SetProcessAffinityMask(handle, mask);
+        // SetProcessAffinityMask expects DWORD (u32) in winapi crate
+        // This limits affinity to first 32 cores, which is sufficient for most consumer CPUs
+        let result = SetProcessAffinityMask(handle, mask as u32);
 
         if result == 0 {
             let error = std::io::Error::last_os_error();
