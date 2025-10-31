@@ -1167,7 +1167,7 @@ class IntellicrackApp(QMainWindow):
         """Check if files in directory have been modified compared to cache.
 
         Args:
-            plugin_dir: Path to plugin directory
+            plugin_dir: Path to plugin directory (Path object or string)
             cached_filenames: Dict mapping filenames to cached modification times
 
         Returns:
@@ -1176,13 +1176,16 @@ class IntellicrackApp(QMainWindow):
                    that were in cache but not found in directory
 
         """
+        from pathlib import Path
+
+        plugin_dir = Path(plugin_dir)
         remaining = dict(cached_filenames)
 
         try:
-            for file_name in os.listdir(plugin_dir):
-                full_path = os.path.join(plugin_dir, file_name)
-                if os.path.isfile(full_path):
-                    current_mtime = os.path.getmtime(full_path)
+            for entry in plugin_dir.iterdir():
+                if entry.is_file():
+                    current_mtime = entry.stat().st_mtime
+                    file_name = entry.name
                     if file_name not in remaining or remaining[file_name] != current_mtime:
                         return False, {}
                     del remaining[file_name]
@@ -1197,16 +1200,19 @@ class IntellicrackApp(QMainWindow):
 
         Args:
             plugin_type: Type of plugin (custom, frida, ghidra)
-            plugin_dir: Path to plugin directory
+            plugin_dir: Path to plugin directory (Path object or string)
             cached_data: Complete cached data dictionary
 
         Returns:
             bool: True if cache is valid for this directory, False otherwise
 
         """
+        from pathlib import Path
+
+        plugin_dir = Path(plugin_dir)
         cached_plugins = cached_data.get("plugins", {}).get(plugin_type, [])
 
-        if not os.path.exists(plugin_dir):
+        if not plugin_dir.exists():
             return not cached_plugins
 
         cached_filenames = {p["filename"]: p["modified"] for p in cached_plugins}
@@ -1236,20 +1242,30 @@ class IntellicrackApp(QMainWindow):
         cache_file = cache_dir / "plugin_cache.json"
         cache_lock_file = cache_dir / "plugin_cache.json.lock"
 
-        plugin_base_dir = os.path.join(os.path.dirname(__file__), "..", "plugins")
+        plugin_base_dir = Path(__file__).parent.parent / "plugins"
         plugin_directories = {
-            "custom": os.path.join(plugin_base_dir, "custom_modules"),
-            "frida": os.path.join(plugin_base_dir, "frida_scripts"),
-            "ghidra": os.path.join(plugin_base_dir, "ghidra_scripts"),
+            "custom": plugin_base_dir / "custom_modules",
+            "frida": plugin_base_dir / "frida_scripts",
+            "ghidra": plugin_base_dir / "ghidra_scripts",
         }
 
-        def is_path_safe(file_path: str, plugin_dir: str) -> bool:
-            """Validate that reconstructed path is within allowed plugin directory."""
+        def is_path_safe(file_path, plugin_dir) -> bool:
+            """Validate that reconstructed path is within allowed plugin directory.
+
+            Args:
+                file_path: Path to validate (Path object or string)
+                plugin_dir: Expected parent directory (Path object or string)
+
+            Returns:
+                bool: True if file_path is within plugin_dir, False otherwise
+
+            """
             try:
-                real_plugin_dir = os.path.realpath(plugin_dir)
-                real_file_path = os.path.realpath(file_path)
-                common_path = os.path.commonpath([real_plugin_dir, real_file_path])
-                return common_path == real_plugin_dir
+                file_path = Path(file_path)
+                plugin_dir = Path(plugin_dir)
+                real_plugin_dir = plugin_dir.resolve()
+                real_file_path = file_path.resolve()
+                return real_file_path.is_relative_to(real_plugin_dir)
             except (ValueError, OSError):
                 return False
 
@@ -1289,17 +1305,17 @@ class IntellicrackApp(QMainWindow):
                         if not filename:
                             continue
 
-                        reconstructed_path = os.path.join(plugin_dir, filename)
+                        reconstructed_path = plugin_dir / filename
 
                         if not is_path_safe(reconstructed_path, plugin_dir):
                             self.logger.warning(f"Rejecting potentially malicious plugin path: {filename}")
                             continue
 
-                        if not os.path.exists(reconstructed_path):
+                        if not reconstructed_path.exists():
                             continue
 
                         plugin_info_with_path = plugin_info.copy()
-                        plugin_info_with_path["path"] = reconstructed_path
+                        plugin_info_with_path["path"] = str(reconstructed_path)
                         plugins[plugin_type].append(plugin_info_with_path)
 
                 self.logger.info(f"Loaded {sum(len(p) for p in plugins.values())} plugins from cache")
@@ -1314,45 +1330,44 @@ class IntellicrackApp(QMainWindow):
         try:
             for plugin_type, plugin_dir in plugin_directories.items():
                 try:
-                    if not os.path.exists(plugin_dir):
+                    if not plugin_dir.exists():
                         self.logger.info(f"Plugin directory not found, creating: {plugin_dir}")
-                        os.makedirs(plugin_dir, exist_ok=True)
+                        plugin_dir.mkdir(parents=True, exist_ok=True)
                         continue
 
                     plugin_extensions = {"custom": [".py", ".pyd", ".dll"], "frida": [".js", ".ts"], "ghidra": [".py", ".java", ".jar"]}
 
-                    for file_path in os.listdir(plugin_dir):
-                        full_path = os.path.join(plugin_dir, file_path)
-                        if os.path.isfile(full_path):
-                            file_ext = os.path.splitext(file_path)[1].lower()
+                    for entry in plugin_dir.iterdir():
+                        if entry.is_file():
+                            file_ext = entry.suffix.lower()
                             if file_ext in plugin_extensions.get(plugin_type, []):
                                 try:
                                     if file_ext in BINARY_EXTENSIONS:
-                                        with open(full_path, "rb") as f:
+                                        with open(entry, "rb") as f:
                                             f.read(512)
                                     else:
-                                        with open(full_path, "r", encoding="utf-8") as f:
+                                        with open(entry, "r", encoding="utf-8") as f:
                                             f.read(512)
 
                                     plugin_info = {
-                                        "name": os.path.splitext(file_path)[0],
-                                        "filename": file_path,
-                                        "path": full_path,
+                                        "name": entry.stem,
+                                        "filename": entry.name,
+                                        "path": str(entry),
                                         "type": plugin_type,
                                         "extension": file_ext,
-                                        "size": os.path.getsize(full_path),
-                                        "modified": os.path.getmtime(full_path),
+                                        "size": entry.stat().st_size,
+                                        "modified": entry.stat().st_mtime,
                                         "valid": True,
                                     }
                                     plugins[plugin_type].append(plugin_info)
 
                                 except (OSError, UnicodeDecodeError, PermissionError) as file_error:
-                                    self.logger.warning(f"Failed to validate plugin {file_path}: {file_error}")
+                                    self.logger.warning(f"Failed to validate plugin {entry.name}: {file_error}")
                                     plugins[plugin_type].append(
                                         {
-                                            "name": os.path.splitext(file_path)[0],
-                                            "filename": file_path,
-                                            "path": full_path,
+                                            "name": entry.stem,
+                                            "filename": entry.name,
+                                            "path": str(entry),
                                             "type": plugin_type,
                                             "valid": False,
                                             "error": str(file_error),

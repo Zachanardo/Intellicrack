@@ -35,12 +35,6 @@ This file tracks all the identified issues and areas for improvement in the Inte
 
 ## Medium
 
-- **[ ] main_app.py: Overwhelming number of tabs**
-  - **File:** `intellicrack/ui/main_app.py`
-  - **Line:** 445
-  - **Description:** The application has a large number of tabs, which can be overwhelming for new users.
-  - **Recommendation:** Consider organizing the tabs into a more hierarchical structure, or using a different UI paradigm such as a side navigation bar.
-
 - **[x] main_app.py: Fixed `QSplitter` ratio**
   - **File:** `intellicrack/ui/main_app.py`
   - **Line:** 455
@@ -144,20 +138,22 @@ This file tracks all the identified issues and areas for improvement in the Inte
   - **Recommendation:** Detect file type before opening. Open binary extensions (`.pyd`, `.dll`, `.jar`) with `'rb'` mode, text extensions (`.py`, `.js`, `.ts`, `.java`) with `'rt'` mode. Example: `mode = 'rb' if file_ext in ['.pyd', '.dll', '.jar'] else 'rt'`. Remove `errors="ignore"` to catch real encoding issues early.
   - **Status:** COMPLETED - Implemented binary vs text file detection. Added BINARY_EXTENSIONS constant containing {'.pyd', '.dll', '.jar'}. Binary files now opened with 'rb' mode, text files with 'r' mode and encoding='utf-8'. Removed errors="ignore" parameter to expose real encoding issues. Updated both main_app.py (lines 1312, 1330-1335) and test_plugin_caching.py (lines 207, 225-230). All 14 tests passing. Prevents unnecessary UnicodeDecodeError exceptions and improves error detection.
 
-- **[ ] test_plugin_caching.py: Missing symlink handling test**
+- **[x] test_plugin_caching.py: Missing symlink handling test**
   - **File:** `tests/unit/ui/test_plugin_caching.py`
   - **Severity:** MEDIUM
   - **Description:** No tests verify cache invalidation when plugin files are symlinks and their targets are modified. Current implementation may not detect changes to symlink targets.
   - **Recommendation:** Add test case `test_cache_invalidation_with_symlinks` that: (1) Creates real plugin file, (2) Creates symlink to it in plugin directory, (3) Generates cache, (4) Modifies original file (symlink target), (5) Verifies cache is invalidated and new mtime detected.
+  - **Status:** COMPLETED - Added test_cache_invalidation_with_symlinks test case (lines 729-791). Test creates external temp file, symlinks it in plugin dir, modifies target, and verifies cache invalidation. Includes proper cleanup with try-finally and pytest.skip() for Windows privilege errors. All 14 tests passing, 1 skipped on Windows.
 
 ### Low
 
-- **[ ] main_app.py: Inconsistent path handling (pathlib vs os.path)**
+- **[x] main_app.py: Inconsistent path handling (pathlib vs os.path)**
   - **File:** `intellicrack/ui/main_app.py`
   - **Line:** Throughout load_available_plugins()
   - **Severity:** LOW
   - **Description:** The code mixes modern `pathlib.Path` (lines 1161-1162 for cache file) with older `os.path` module for most other path operations (lines 1166-1267). This inconsistency reduces code clarity and makes path manipulation less intuitive than using pathlib's object-oriented interface throughout.
   - **Recommendation:** Refactor to use `pathlib.Path` consistently. Replace `os.path.join()` with Path `/` operator, `os.path.exists()` with `Path.exists()`, `os.path.getmtime()` with `Path.stat().st_mtime`, etc. This improves readability and aligns with modern Python best practices.
+  - **Status:** COMPLETED - Refactored all path operations in `load_available_plugins()`, `_check_file_modifications()`, `_validate_plugin_directory_cache()`, and `is_path_safe()` to use `pathlib.Path` consistently. Replaced `os.path.join()` with `/` operator, `os.listdir()` with `Path.iterdir()`, `os.path.exists()` with `Path.exists()`, `os.path.getmtime()` with `Path.stat().st_mtime`, `os.path.getsize()` with `Path.stat().st_size`, `os.path.splitext()` with `Path.stem` and `Path.suffix`, `os.path.isfile()` with `Path.is_file()`, `os.makedirs()` with `Path.mkdir()`, and `os.path.commonpath()` with `Path.is_relative_to()`. All 14 tests passing.
 
 - **[ ] main_app.py: Nested function definition reduces testability**
   - **File:** `intellicrack/ui/main_app.py`
