@@ -1309,6 +1309,8 @@ class IntellicrackApp(QMainWindow):
 
         plugins = {"custom": [], "frida": [], "ghidra": []}
 
+        BINARY_EXTENSIONS = {".pyd", ".dll", ".jar"}
+
         try:
             for plugin_type, plugin_dir in plugin_directories.items():
                 try:
@@ -1325,8 +1327,12 @@ class IntellicrackApp(QMainWindow):
                             file_ext = os.path.splitext(file_path)[1].lower()
                             if file_ext in plugin_extensions.get(plugin_type, []):
                                 try:
-                                    with open(full_path, "r", encoding="utf-8", errors="ignore") as f:
-                                        f.read(512)
+                                    if file_ext in BINARY_EXTENSIONS:
+                                        with open(full_path, "rb") as f:
+                                            f.read(512)
+                                    else:
+                                        with open(full_path, "r", encoding="utf-8") as f:
+                                            f.read(512)
 
                                     plugin_info = {
                                         "name": os.path.splitext(file_path)[0],

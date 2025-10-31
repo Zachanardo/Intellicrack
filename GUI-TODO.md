@@ -136,12 +136,13 @@ This file tracks all the identified issues and areas for improvement in the Inte
   - **Recommendation:** Modify `is_cache_valid()` to return a tuple `(is_valid: bool, cached_data: dict)`. Reuse the cached_data if valid, avoiding redundant file read and JSON parse. Example: `is_valid, cached_data = is_cache_valid(); if is_valid: return cached_data.get("plugins", {})`
   - **Status:** COMPLETED - Modified `is_cache_valid()` to return tuple `(bool, Optional[dict])` instead of just `bool`. Updated calling code to unpack tuple and reuse cached_data, eliminating redundant file read and JSON parse operations. Removed unnecessary `with lock, open(...)` block. Changed exception handling from `json.JSONDecodeError` to `KeyError` since JSON parsing now happens in `_load_cache_data()`. All 14 tests passing.
 
-- **[ ] main_app.py: Binary files opened in text mode**
+- **[x] main_app.py: Binary files opened in text mode**
   - **File:** `intellicrack/ui/main_app.py`
   - **Line:** 1240
   - **Severity:** MEDIUM
   - **Description:** All plugin files are opened with text mode (`"r"`, `encoding="utf-8"`) for validation (line 1240), including binary plugins like `.pyd`, `.dll`, and `.jar` files. This can raise `UnicodeDecodeError` for binary content (though caught by the exception handler), and uses `errors="ignore"` which masks underlying encoding problems that could surface later.
   - **Recommendation:** Detect file type before opening. Open binary extensions (`.pyd`, `.dll`, `.jar`) with `'rb'` mode, text extensions (`.py`, `.js`, `.ts`, `.java`) with `'rt'` mode. Example: `mode = 'rb' if file_ext in ['.pyd', '.dll', '.jar'] else 'rt'`. Remove `errors="ignore"` to catch real encoding issues early.
+  - **Status:** COMPLETED - Implemented binary vs text file detection. Added BINARY_EXTENSIONS constant containing {'.pyd', '.dll', '.jar'}. Binary files now opened with 'rb' mode, text files with 'r' mode and encoding='utf-8'. Removed errors="ignore" parameter to expose real encoding issues. Updated both main_app.py (lines 1312, 1330-1335) and test_plugin_caching.py (lines 207, 225-230). All 14 tests passing. Prevents unnecessary UnicodeDecodeError exceptions and improves error detection.
 
 - **[ ] test_plugin_caching.py: Missing symlink handling test**
   - **File:** `tests/unit/ui/test_plugin_caching.py`
