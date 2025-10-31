@@ -1149,7 +1149,10 @@ class IntellicrackApp(QMainWindow):
 
         Returns:
             dict: Parsed cache data, or None if loading fails
+
         """
+        import json
+
         if not cache_file.exists():
             return None
 
@@ -1171,6 +1174,7 @@ class IntellicrackApp(QMainWindow):
             tuple: (is_valid, remaining_cached_files) where is_valid indicates if
                    all files match cache, and remaining_cached_files contains files
                    that were in cache but not found in directory
+
         """
         remaining = dict(cached_filenames)
 
@@ -1198,6 +1202,7 @@ class IntellicrackApp(QMainWindow):
 
         Returns:
             bool: True if cache is valid for this directory, False otherwise
+
         """
         cached_plugins = cached_data.get("plugins", {}).get(plugin_type, [])
 
@@ -1254,6 +1259,7 @@ class IntellicrackApp(QMainWindow):
             Returns:
                 tuple: (is_valid, cached_data) where is_valid is True if cache is valid,
                        and cached_data contains the loaded cache or None if invalid
+
             """
             cached_data = self._load_cache_data(cache_file)
             if cached_data is None:
