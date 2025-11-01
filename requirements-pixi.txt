@@ -301,7 +301,7 @@ pkginfo==1.12.1.2
 platformdirs==4.5.0
 plotly==6.3.1
 pluggy==1.6.0
-plumbum==1.9.0
+plumbum==1.10.0
 ply==3.11
 poetry==2.2.1
 poetry-core==2.2.1
