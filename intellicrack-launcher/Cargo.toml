@@ -32,7 +32,7 @@ harness = false
 
 [build-dependencies]
 pyo3-build-config = "0.26"
-embed-resource = "2.4"
+embed-resource = "3.0"
 
 [dependencies]
 # Python Integration
