@@ -352,7 +352,7 @@ pymongo==4.15.3
 PyNaCl==1.6.0
 pynput==1.8.1
 pyopencl==2025.2.6
-pyOpenSSL==25.1.0
+pyOpenSSL==25.3.0
 pyparsing==3.2.5
 pypcode==3.3.3
 pyperclip==1.9.0
