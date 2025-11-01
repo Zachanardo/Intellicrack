@@ -162,7 +162,7 @@ installer==0.7.0
 intel-cmplr-lib-rt==2025.1.1
 intel-cmplr-lib-ur==2025.1.1
 intel-cmplr-lic-rt==2025.1.1
-intel-opencl-rt==2025.1.1
+intel-opencl-rt==2025.3.0
 intel-openmp==2025.1.1
 intel-pti==0.12.3
 intel-sycl-rt==2025.1.1
