@@ -1364,12 +1364,12 @@ public class AdvancedAnalysis extends GhidraScript {
 
   private void calculateFunctionComplexity() throws Exception {
     println("Calculating function complexity...");
-    functionComplexity = new HashMap<>();
+    functionComplexity = new HashMap<Long, Long>();
 
     for (GhidraFunction func : functions.values()) {
       Function currentFunction = getFunctionAt(toAddr(func.address));
       if (currentFunction != null) {
-        int complexity = 0;
+        long complexity = 0;
         try {
           // More sophisticated complexity metrics
           complexity += currentFunction.getBody().getNumAddresses();
