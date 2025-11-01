@@ -40,7 +40,7 @@ pyo3 = { version = "0.26", features = ["auto-initialize"] }
 libloading = "0.8"
 
 # System Integration
-sysinfo = "0.30"
+sysinfo = "0.37"
 which = "6.0"
 dirs = "5.0"
 num_cpus = "1.16"
