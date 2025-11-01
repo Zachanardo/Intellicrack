@@ -109,7 +109,7 @@ tempfile = "3.8"
 serial_test = "3.0"
 criterion = { version = "0.5", features = ["html_reports"] }
 tokio-test = "0.4"
-mockall = "0.12"
+mockall = "0.13"
 proptest = "1.4"
 
 # Build Optimization
