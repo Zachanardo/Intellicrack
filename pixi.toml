@@ -37,7 +37,16 @@ setup = { depends-on = ["install-intel-xpu", "install-linters", "build-rust-laun
 install-intel-xpu = '''python -m pip install --force-reinstall torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/xpu ; python -m pip install intel-extension-for-pytorch==2.8.10+xpu --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/ ; python -c "print('\\033[1;91m\\n=== Running Intel XPU Sanity Test ===\\033[0m'); import torch; import intel_extension_for_pytorch as ipex; print(f'\\033[92mTorch version: {torch.__version__}\\033[0m'); print(f'\\033[92mIPEX version: {ipex.__version__}\\033[0m'); print(f'\\033[93mXPU devices detected: {torch.xpu.device_count()}\\033[0m'); [print(f'\\033[96m[Device {i}]: {torch.xpu.get_device_properties(i)}\\033[0m') for i in range(torch.xpu.device_count())]; print('\\033[1;92m=== Sanity Test Passed ✓ ===\\033[0m\\n')"'''
 
 # Rust launcher build
-build-rust-launcher = { cmd = "cargo build --release", cwd = "intellicrack-launcher" }
+build-rust-launcher = '''
+cargo build --release --manifest-path intellicrack-launcher/Cargo.toml
+$WshShell = New-Object -ComObject WScript.Shell
+$Shortcut = $WshShell.CreateShortcut("$PWD\Intellicrack.lnk")
+$Shortcut.TargetPath = "$PWD\intellicrack-launcher\target\release\Intellicrack.exe"
+$Shortcut.IconLocation = "$PWD\intellicrack\assets\icon.ico"
+$Shortcut.WorkingDirectory = "$PWD"
+$Shortcut.Save()
+Write-Output "Shortcut created: Intellicrack.lnk"
+'''
 
 # Linter installation (Node.js based)
 install-linters = { depends-on = ["install-eslint", "install-markdownlint"] }

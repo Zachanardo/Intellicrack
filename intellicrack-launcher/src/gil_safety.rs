@@ -99,7 +99,7 @@ impl GilSafetyManager {
         Python::attach(|py| -> Result<()> {
             debug!("Configuring Python threading settings");
 
-            // Set thread check interval if available (replicates launch_intellicrack.py)
+            // Set thread check interval if available (sets Python thread check interval)
             if let Ok(sys) = py.import("sys") {
                 if sys.hasattr("setcheckinterval")? {
                     sys.call_method1("setcheckinterval", (10000,))?;

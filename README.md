@@ -150,8 +150,8 @@ Intellicrack automatically manages dependencies for Windows 11:
 Launch the graphical interface:
 
 ```bash
-# Using the launcher script
-python launch_intellicrack.py
+# Using the Rust launcher (recommended)
+./intellicrack-launcher/target/release/Intellicrack.exe
 
 # Using module mode
 python -m intellicrack --gui

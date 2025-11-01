@@ -59,6 +59,42 @@ install-radare2:
 install-qemu:
     if (!(Test-Path "tools")) { New-Item -ItemType Directory -Path "tools" | Out-Null }; $existingQemu = Get-ChildItem -Path "tools" -Recurse -Filter "qemu-system-x86_64.exe" -ErrorAction SilentlyContinue | Select-Object -First 1; if (!$existingQemu) { $existingQemu = Get-ChildItem -Path "tools" -Recurse -Filter "qemu-img.exe" -ErrorAction SilentlyContinue | Select-Object -First 1 }; if ($existingQemu) { Write-Output "QEMU already installed at $($existingQemu.DirectoryName)"; exit 0 }; Write-Output "Fetching latest QEMU release..."; $html = Invoke-WebRequest -Uri "https://qemu.weilnetz.de/w64/" -UseBasicParsing; $links = $html.Links | Where-Object { $_.href -match 'qemu-w64-setup-.*\.exe$' } | Sort-Object { $_.href } -Descending | Select-Object -First 1; if (!$links) { Write-Error "Could not find QEMU installer"; exit 1 }; $installerUrl = "https://qemu.weilnetz.de/w64/$($links.href)"; $installerName = $links.href; $installerPath = Join-Path "tools" $installerName; Write-Output "Downloading $installerName..."; $ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest -Uri $installerUrl -OutFile $installerPath; Write-Output "Installing QEMU to tools\qemu..."; $installDir = Join-Path (Get-Location) "tools\qemu"; Start-Process -FilePath $installerPath -ArgumentList "/S", "/D=$installDir" -Wait -NoNewWindow; Remove-Item $installerPath -Force; Write-Output "QEMU installed to tools\qemu ✓"
 
+# ==================== BUILD ====================
+
+# Build Rust launcher in release mode
+build-rust:
+    @echo "Building Rust launcher..."
+    cargo build --release --manifest-path intellicrack-launcher/Cargo.toml
+    @echo "Creating shortcut with icon..."
+    $WshShell = New-Object -ComObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut("$PWD\Intellicrack.lnk"); $Shortcut.TargetPath = "$PWD\intellicrack-launcher\target\release\Intellicrack.exe"; $Shortcut.IconLocation = "$PWD\intellicrack\assets\icon.ico"; $Shortcut.WorkingDirectory = "$PWD"; $Shortcut.Save()
+    @echo "Rust launcher built ✓"
+    @echo "Shortcut created: Intellicrack.lnk"
+
+# Build Rust launcher in debug mode
+build-rust-debug:
+    @echo "Building Rust launcher (debug)..."
+    cargo build --manifest-path intellicrack-launcher/Cargo.toml
+    @echo "Rust launcher debug build complete ✓"
+
+# Clean Rust build artifacts
+build-rust-clean:
+    @echo "Cleaning Rust build artifacts..."
+    cargo clean --manifest-path intellicrack-launcher/Cargo.toml
+    @echo "Rust build artifacts cleaned ✓"
+
+# Build and run Rust tests
+build-rust-test:
+    @echo "Building and testing Rust launcher..."
+    cargo test --manifest-path intellicrack-launcher/Cargo.toml
+    @echo "Rust tests complete ✓"
+
+# Build Rust launcher with optimizations and copy to project root
+build-rust-optimized:
+    @echo "Building optimized Rust launcher..."
+    cargo build --release --manifest-path intellicrack-launcher/Cargo.toml
+    Copy-Item -Path "intellicrack-launcher\target\release\intellicrack-launcher.exe" -Destination "intellicrack-launcher.exe" -Force
+    @echo "Optimized launcher copied to project root ✓"
+
 # ==================== TESTING ====================
 
 # Quick unit tests - validates REAL functionality

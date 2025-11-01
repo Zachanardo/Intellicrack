@@ -19,6 +19,35 @@ use crate::platform::{GpuVendor, OsType, PlatformInfo};
 pub static PROJECT_ROOT: std::sync::LazyLock<String> =
     std::sync::LazyLock::new(|| env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string()));
 
+/// Set threading environment variables for all numerical libraries
+///
+/// Configures single-threaded operation for OpenMP, MKL, NumExpr, OpenBLAS,
+/// VecLib, and BLIS to prevent thread conflicts with PyO3 and ensure
+/// predictable performance in the embedded Python environment.
+pub fn set_threading_environment_variables() {
+    unsafe {
+        env::set_var("OMP_NUM_THREADS", "1");
+        env::set_var("MKL_NUM_THREADS", "1");
+        env::set_var("NUMEXPR_NUM_THREADS", "1");
+        env::set_var("OPENBLAS_NUM_THREADS", "1");
+        env::set_var("VECLIB_MAXIMUM_THREADS", "1");
+        env::set_var("BLIS_NUM_THREADS", "1");
+    }
+    info!("Threading environment configured for single-threaded operation");
+}
+
+/// Set PyTorch-specific environment variables for stability
+///
+/// Disables CUDNN batch normalization and enables CUDA launch blocking
+/// to improve stability and debugging capabilities in the PyTorch runtime.
+pub fn set_pytorch_environment_variables() {
+    unsafe {
+        env::set_var("PYTORCH_DISABLE_CUDNN_BATCH_NORM", "1");
+        env::set_var("CUDA_LAUNCH_BLOCKING", "1");
+    }
+    info!("PyTorch environment configured");
+}
+
 pub struct EnvironmentManager {
     platform: PlatformInfo,
 }
@@ -97,7 +126,7 @@ impl EnvironmentManager {
         Ok(())
     }
 
-    /// Set threading environment variables (from `launch_intellicrack.py`)
+    /// Set threading environment variables 
     fn set_threading_environment(&self) -> Result<()> {
         debug!("Setting threading environment variables");
 
@@ -116,7 +145,7 @@ impl EnvironmentManager {
         Ok(())
     }
 
-    /// Set `PyBind11` GIL safety environment (from `launch_intellicrack.py`)
+    /// Set `PyBind11` GIL safety environment 
     fn set_pybind11_environment(&self) -> Result<()> {
         debug!("Setting PyBind11 GIL safety environment");
 
@@ -472,7 +501,7 @@ impl EnvironmentManager {
         Ok(())
     }
 
-    /// Set `PyTorch` specific environment variables (from `launch_intellicrack.py`)
+    /// Set `PyTorch` specific environment variables 
     pub fn set_pytorch_environment(&self) -> Result<()> {
         debug!("Setting PyTorch environment variables");
 

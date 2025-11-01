@@ -98,6 +98,10 @@ impl IntellicrackLauncher {
     pub async fn launch(&mut self) -> Result<i32> {
         tracing::info!("Starting Intellicrack launcher");
 
+        // Set threading and PyTorch environment variables FIRST
+        environment::set_threading_environment_variables();
+        environment::set_pytorch_environment_variables();
+
         // CRITICAL: Configure environment BEFORE Python initialization
         self.environment.configure_complete_environment()?;
         tracing::info!(
@@ -147,12 +151,11 @@ impl IntellicrackLauncher {
                 .ok_or_else(|| anyhow::anyhow!("Python not initialized"))?
                 .run_environment_test()?
         } else {
-            // Launch main application directly via Python integration
-            // This eliminates the circular dependency of calling launch_intellicrack.py
+            // Launch main application directly via embedded Python interpreter
             self.python
                 .as_ref()
                 .ok_or_else(|| anyhow::anyhow!("Python not initialized"))?
-                .run_intellicrack_main()?
+                .run_intellicrack_main_embedded()?
         };
 
         tracing::info!(

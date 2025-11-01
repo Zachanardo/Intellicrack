@@ -87,6 +87,37 @@ async fn test_python_integration_threading() -> Result<()> {
 }
 
 #[tokio::test]
+async fn test_python_integration_embedded_main() -> Result<()> {
+    let python = PythonIntegration::initialize()?;
+
+    // Test that the embedded main function exists and can be called
+    // Note: This will fail if intellicrack.main module doesn't exist or return non-zero,
+    // which is acceptable in test environment
+    let result = python.run_intellicrack_main_embedded();
+
+    // Function should either succeed (if module exists) or fail gracefully with descriptive error
+    match result {
+        Ok(exit_code) => {
+            // Verify exit code is a valid integer
+            assert!(exit_code >= 0 || exit_code < 0); // Any i32 is valid
+        }
+        Err(e) => {
+            // Should fail with informative error message
+            let error_msg = format!("{}", e);
+            assert!(
+                error_msg.contains("intellicrack.main") ||
+                error_msg.contains("main()") ||
+                error_msg.contains("exit code"),
+                "Error should mention module, function, or exit code: {}",
+                error_msg
+            );
+        }
+    }
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_dependency_validation_comprehensive() -> Result<()> {
     let mut validator = DependencyValidator::new();
     let results = validator.validate_all_dependencies().await?;

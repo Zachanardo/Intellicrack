@@ -15,10 +15,8 @@ use libloading::Library;
 use pyo3::prelude::*;
 use std::env;
 use std::ffi::CString;
-use std::os::windows::process::CommandExt;
 use std::path::PathBuf;
 use tracing::{debug, error, info, warn};
-use winapi::um::winbase::CREATE_NEW_PROCESS_GROUP;
 
 pub struct PythonIntegration {
     interpreter_path: PathBuf,
@@ -31,6 +29,12 @@ impl PythonIntegration {
     pub fn initialize() -> Result<Self> {
         println!("DEBUG: PythonIntegration::initialize() starting");
         info!("Initializing Python integration with PyO3 embedding");
+
+        // CRITICAL: Set PyBind11 GIL safety BEFORE Python::attach
+        unsafe {
+            env::set_var("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1");
+        }
+        info!("PyBind11 GIL safety configured");
 
         // Debug environment variables
         println!("DEBUG: PYO3_PYTHON = {:?}", env::var("PYO3_PYTHON"));
@@ -74,6 +78,12 @@ impl PythonIntegration {
             // Test Python functionality
             integration.test_python_functionality(py)?;
             info!("Python functionality test passed");
+
+            // Suppress pkg_resources warnings
+            integration.suppress_pkg_resources_warnings(py)?;
+
+            // Verify Tkinter availability
+            integration.verify_tkinter(py)?;
 
             Ok(())
         })?;
@@ -206,6 +216,66 @@ impl PythonIntegration {
         Ok(())
     }
 
+    /// Suppress pkg_resources deprecation warnings
+    ///
+    /// # Arguments
+    /// * `py` - Python GIL token for executing Python code
+    fn suppress_pkg_resources_warnings(&self, py: Python) -> Result<()> {
+        debug!("Suppressing pkg_resources deprecation warnings");
+
+        py.run(
+            c"import warnings; warnings.filterwarnings('ignore', category=UserWarning, module='pkg_resources')",
+            None,
+            None,
+        )?;
+
+        py.run(
+            c"import warnings; warnings.filterwarnings('ignore', message='.*pkg_resources is deprecated.*')",
+            None,
+            None,
+        )?;
+
+        info!("pkg_resources warnings suppressed");
+        Ok(())
+    }
+
+    /// Verify Tkinter availability and test basic functionality
+    ///
+    /// # Arguments
+    /// * `py` - Python GIL token for executing Python code
+    fn verify_tkinter(&self, py: Python) -> Result<()> {
+        debug!("Verifying Tkinter availability");
+
+        let importlib_util = py.import("importlib.util")
+            .context("Failed to import importlib.util")?;
+
+        let tkinter_spec = importlib_util.call_method1("find_spec", ("_tkinter",))
+            .context("Failed to check for _tkinter module")?;
+
+        if tkinter_spec.is_none() {
+            anyhow::bail!("_tkinter module is not available. Tkinter functionality will be limited.");
+        }
+
+        match py.import("tkinter") {
+            Ok(tk) => {
+                let root = tk.call_method0("Tk")
+                    .context("Failed to create Tk root window")?;
+
+                root.call_method0("withdraw")
+                    .context("Failed to withdraw Tk window")?;
+
+                root.call_method0("destroy")
+                    .context("Failed to destroy Tk window")?;
+
+                info!("Tkinter verification successful");
+                Ok(())
+            }
+            Err(e) => {
+                anyhow::bail!("Failed to import tkinter: {}. Tkinter functionality will be limited.", e);
+            }
+        }
+    }
+
     /// Validate Python environment and paths
     pub fn validate_python_environment(&self) -> Result<()> {
         info!("Validating Python environment");
@@ -247,295 +317,40 @@ impl PythonIntegration {
         Ok(())
     }
 
-    /// Execute Intellicrack main module using `PyO3` embedding
-    pub fn run_intellicrack_main(&self) -> Result<i32> {
-        self.run_via_subprocess()
+    /// Run Intellicrack main module directly in the embedded Python interpreter
+    ///
+    /// This method calls `intellicrack.main.main()` directly using PyO3,
+    /// eliminating the need for subprocess launch and the `launch_intellicrack.py` script.
+    ///
+    /// # Returns
+    /// Exit code from the Intellicrack main function (0 for success, non-zero for errors)
+    ///
+    /// # Errors
+    /// Returns error if:
+    /// - Failed to import `intellicrack.main` module
+    /// - Failed to call `main()` function
+    /// - Failed to extract integer exit code from return value
+    pub fn run_intellicrack_main_embedded(&self) -> Result<i32> {
+        info!("Running Intellicrack main module in embedded Python interpreter");
+
+        Python::attach(|py| -> Result<i32> {
+            let main_module = py.import("intellicrack.main")
+                .context("Failed to import intellicrack.main module")?;
+
+            let result = main_module.call_method0("main")
+                .context("Failed to call main() function in intellicrack.main")?;
+
+            let exit_code: i32 = result.extract()
+                .context("Failed to extract exit code from main() return value")?;
+
+            info!("Intellicrack main completed with exit code: {}", exit_code);
+            Ok(exit_code)
+        }).map_err(|e: anyhow::Error| {
+            error!("Error running Intellicrack main in embedded mode: {}", e);
+            e
+        })
     }
 
-    /// Run via subprocess (primary mode for launcher)
-    fn run_via_subprocess(&self) -> Result<i32> {
-        use std::process::Command;
-
-        info!("Running Intellicrack main module via subprocess");
-
-        // CRITICAL: Log the exact Python interpreter being used
-        info!("Using Python interpreter: {:?}", self.interpreter_path);
-        info!("Python version: {:?}", self.interpreter_path.display());
-
-        // Verify the interpreter exists
-        if !self.interpreter_path.exists() {
-            error!(
-                "Python interpreter not found at: {:?}",
-                self.interpreter_path
-            );
-            return Err(anyhow::anyhow!(
-                "Python interpreter not found: {:?}",
-                self.interpreter_path
-            ));
-        }
-
-        let python_launcher_path = PathBuf::from(&*PROJECT_ROOT).join("launch_intellicrack.py");
-        info!(
-            "Executing Python launcher: {:?}",
-            python_launcher_path.display()
-        );
-
-        // On Windows, DLL search paths are configured via PATH environment variable below
-        // CREATE_NEW_PROCESS_GROUP is imported from winapi crate
-
-        // Use absolute path explicitly
-        let mut cmd = Command::new(&self.interpreter_path);
-        cmd.arg(&python_launcher_path);
-        cmd.creation_flags(CREATE_NEW_PROCESS_GROUP);
-
-        // Set working directory to launcher directory for DLL loading
-        // This ensures _tkinter can find tcl86t.dll and tk86t.dll in the target/release directory
-        // CRITICAL: The subprocess must run from the launcher's directory where the bundled DLLs are located
-        if let Ok(exe_path) = std::env::current_exe()
-            && let Some(exe_dir) = exe_path.parent()
-        {
-            cmd.current_dir(exe_dir);
-            info!(
-                "Set subprocess working directory to launcher directory: {}",
-                exe_dir.display()
-            );
-        }
-
-        // Set environment for subprocess with ABSOLUTE PATHS
-        cmd.env("PYTHONPATH", PROJECT_ROOT.clone());
-        cmd.env("PYTHONIOENCODING", "utf-8");
-        cmd.env("PYTHONDONTWRITEBYTECODE", "1");
-        cmd.env("PYTHONUNBUFFERED", "1");
-
-        // Set conda environment variables
-        cmd.env(
-            "PIXI_PREFIX",
-            format!("{}/.pixi/envs/default", &*PROJECT_ROOT),
-        );
-        cmd.env(
-            "PIXI_PYTHON_EXE",
-            format!("{}/.pixi/envs/default/python.exe", &*PROJECT_ROOT),
-        );
-        cmd.env(
-            "PYTHONHOME",
-            format!("{}/.pixi/envs/default", &*PROJECT_ROOT),
-        );
-        // Set TCL/TK library paths for _tkinter functionality
-        // CRITICAL: Point to launcher's copied directories since working directory is set to launcher
-        // This ensures _tkinter.pyd can find the runtime scripts in the same directory as the DLLs
-        let tcl_lib_path = if let Ok(exe_path) = std::env::current_exe() {
-            if let Some(exe_dir) = exe_path.parent() {
-                info!("Subprocess: Executable directory: {}", exe_dir.display());
-                let path = exe_dir.join("tcl8.6");
-                info!("Subprocess: Proposed TCL_LIBRARY path: {}", path.display());
-                path
-            } else {
-                warn!("Subprocess: Could not get parent directory of executable");
-                PathBuf::from(&*PROJECT_ROOT).join(".pixi/envs/default/Library/lib/tcl8.6")
-            }
-        } else {
-            warn!("Subprocess: Could not get current executable path");
-            PathBuf::from(&*PROJECT_ROOT).join(".pixi/envs/default/Library/lib/tcl8.6")
-        };
-
-        let tk_lib_path = if let Ok(exe_path) = std::env::current_exe() {
-            if let Some(exe_dir) = exe_path.parent() {
-                let path = exe_dir.join("tk8.6");
-                info!("Subprocess: Proposed TK_LIBRARY path: {}", path.display());
-                path
-            } else {
-                PathBuf::from(&*PROJECT_ROOT).join(".pixi/envs/default/Library/lib/tk8.6")
-            }
-        } else {
-            PathBuf::from(&*PROJECT_ROOT).join(".pixi/envs/default/Library/lib/tk8.6")
-        };
-
-        if tcl_lib_path.exists() {
-            cmd.env("TCL_LIBRARY", tcl_lib_path.to_string_lossy().as_ref());
-            info!(
-                "Subprocess: Set TCL_LIBRARY to launcher path: {}",
-                tcl_lib_path.display()
-            );
-
-            // DEBUG: Check if init.tcl exists
-            let init_tcl = tcl_lib_path.join("init.tcl");
-            if init_tcl.exists() {
-                info!(
-                    "Subprocess: Confirmed init.tcl exists at: {}",
-                    init_tcl.display()
-                );
-            } else {
-                warn!("Subprocess: init.tcl NOT FOUND at: {}", init_tcl.display());
-            }
-        } else {
-            warn!(
-                "Subprocess: TCL_LIBRARY path does not exist: {}",
-                tcl_lib_path.display()
-            );
-        }
-
-        if tk_lib_path.exists() {
-            cmd.env("TK_LIBRARY", tk_lib_path.to_string_lossy().as_ref());
-            info!(
-                "Subprocess: Set TK_LIBRARY to launcher path: {}",
-                tk_lib_path.display()
-            );
-
-            // DEBUG: Check if tk.tcl exists
-            let tk_tcl = tk_lib_path.join("tk.tcl");
-            if tk_tcl.exists() {
-                info!(
-                    "Subprocess: Confirmed tk.tcl exists at: {}",
-                    tk_tcl.display()
-                );
-            } else {
-                warn!("Subprocess: tk.tcl NOT FOUND at: {}", tk_tcl.display());
-            }
-        } else {
-            warn!(
-                "Subprocess: TK_LIBRARY path does not exist: {}",
-                tk_lib_path.display()
-            );
-        }
-
-        // Also check for launcher's directories as fallback
-        if let Ok(exe_path) = std::env::current_exe()
-            && let Some(exe_dir) = exe_path.parent()
-        {
-            if !tcl_lib_path.exists() {
-                let launcher_tcl = exe_dir.join("tcl8.6");
-                if launcher_tcl.exists() {
-                    cmd.env("TCL_LIBRARY", launcher_tcl.to_string_lossy().as_ref());
-                    info!(
-                        "Subprocess: Fallback TCL_LIBRARY to launcher: {}",
-                        launcher_tcl.display()
-                    );
-                }
-            }
-
-            if !tk_lib_path.exists() {
-                let launcher_tk = exe_dir.join("tk8.6");
-                if launcher_tk.exists() {
-                    cmd.env("TK_LIBRARY", launcher_tk.to_string_lossy().as_ref());
-                    info!(
-                        "Subprocess: Fallback TK_LIBRARY to launcher: {}",
-                        launcher_tk.display()
-                    );
-                }
-            }
-
-            // CRITICAL: Build PATH with LAUNCHER directory FIRST for DLL loading
-            // This ensures _tkinter finds the launcher's Tcl/Tk DLLs that match TCL_LIBRARY/TK_LIBRARY paths
-            let system_path = std::env::var_os("PATH").unwrap_or_default();
-            let exe_dir_str = exe_dir.to_string_lossy();
-
-            let python_base_dir = PathBuf::from(&*PROJECT_ROOT).join(".pixi/envs/default");
-            let python_dll_dir = PathBuf::from(&*PROJECT_ROOT).join(".pixi/envs/default/DLLs");
-            let python_lib_bin_dir =
-                PathBuf::from(&*PROJECT_ROOT).join(".pixi/envs/default/Library/bin");
-
-            // Build PATH: launcher_dir;pixi_env\DLLs;pixi_env;pixi_env\Library\bin;system_path
-            // Add launcher directory FIRST so _tkinter finds the bundled Tcl/Tk DLLs that match TCL/TK_LIBRARY
-            let mut final_path = exe_dir_str.to_string();
-            info!("Subprocess: PATH starts with launcher directory for bundled Tcl/Tk DLLs");
-
-            // Add Python DLLs directory for Python extension modules
-            if python_dll_dir.exists() {
-                final_path = format!("{};{}", final_path, python_dll_dir.display());
-                info!("Subprocess: Added Python DLLs directory to PATH");
-            }
-
-            // Add Python base directory for core Python DLL
-            if python_base_dir.exists() {
-                final_path = format!("{};{}", final_path, python_base_dir.display());
-                info!("Subprocess: Added Python base directory to PATH");
-            }
-
-            // Add Library\bin directory for additional dependencies
-            if python_lib_bin_dir.exists() {
-                final_path = format!("{};{}", final_path, python_lib_bin_dir.display());
-                info!("Subprocess: Added Python Library\\bin to PATH");
-            }
-
-            // Add system PATH last
-            if !system_path.is_empty() {
-                final_path = format!("{};{}", final_path, system_path.to_string_lossy());
-            }
-
-            cmd.env("PATH", final_path);
-            info!(
-                "Subprocess: PATH order - launcher first (for Tcl/Tk DLLs), then Python dirs, then system"
-            );
-
-            // Also add to PYTHONPATH to help Python find the DLLs
-            let current_pythonpath = std::env::var("PYTHONPATH").unwrap_or_default();
-            let new_pythonpath = if current_pythonpath.is_empty() {
-                exe_dir_str.to_string()
-            } else {
-                format!("{exe_dir_str};{current_pythonpath}")
-            };
-            cmd.env("PYTHONPATH", &new_pythonpath);
-            info!(
-                "Subprocess: Added {} to PYTHONPATH for DLL discovery",
-                exe_dir_str
-            );
-
-            // Set DLL directory hint for Windows to launcher directory where DLLs are bundled
-            // This helps launch_intellicrack.py add the correct directory to DLL search path
-            // CRITICAL: Must point to target/release where tcl86t.dll and tk86t.dll are located
-            cmd.env("INTEL_LAUNCHER_DLL_DIR", exe_dir_str.as_ref());
-            info!(
-                "Subprocess: Set INTEL_LAUNCHER_DLL_DIR to launcher directory ({}) for Windows DLL loading",
-                exe_dir_str
-            );
-        }
-        cmd.env_remove("PYTHONSTARTUP");
-        cmd.env_remove("PYTHONUSERBASE");
-        cmd.env_remove("PYTHONEXECUTABLE");
-
-        // Execute and wait for completion
-        let output = cmd
-            .output()
-            .context("Failed to execute Python launcher subprocess")?;
-
-        // Print output
-        if !output.stdout.is_empty() {
-            let stdout = String::from_utf8_lossy(&output.stdout);
-            for line in stdout.lines() {
-                println!("{line}");
-            }
-        }
-
-        if !output.stderr.is_empty() {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            for line in stderr.lines() {
-                eprintln!("{line}");
-            }
-        }
-
-        // Get exit code
-        let exit_code = output.status.code().unwrap_or(1);
-
-        if exit_code != 0 {
-            error!("Intellicrack launcher exited with code: {}", exit_code);
-
-            eprintln!("\n========================================");
-            eprintln!("Intellicrack crashed with exit code: {exit_code}");
-            eprintln!("========================================");
-            eprintln!("Press Enter to close this window...");
-
-            use std::io::{self, BufRead};
-            let stdin = io::stdin();
-            let mut lines = stdin.lock().lines();
-            let _ = lines.next();
-        }
-
-        info!(
-            "Intellicrack launcher completed with exit code: {}",
-            exit_code
-        );
-        Ok(exit_code)
-    }
 
     /* Original PyO3 approach - keeping for reference
     Python::with_gil(|py| -> Result<i32> {
