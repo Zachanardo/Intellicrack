@@ -159,7 +159,7 @@ importlib_metadata==8.7.0
 importlib_resources==6.5.2
 iniconfig==2.3.0
 installer==0.7.0
-intel-cmplr-lib-rt==2025.1.1
+intel-cmplr-lib-rt==2025.3.0
 intel-cmplr-lib-ur==2025.1.1
 intel-cmplr-lic-rt==2025.1.1
 intel-opencl-rt==2025.1.1
