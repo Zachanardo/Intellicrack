@@ -1,7 +1,7 @@
 INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: Sat, Nov 01, 2025 12:10:31 AM
+Generated: Sat, Nov 01, 2025 02:17:04 AM
 Directory: D:\Intellicrack\intellicrack
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -559,8 +559,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── signatures/
 │   │   ├── README.md
 │   │   └── sample_signatures.sg
-│   ├── templates/
-│   │   └── README.md
 │   ├── visualizations/
 │   ├── yara_rules/
 │   │   ├── antidebug.yar
@@ -579,6 +577,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── cryptography_handler.py
 │   ├── frida_handler.py
 │   ├── ipex_handler.py
+│   ├── keystone_handler.py
 │   ├── lief_handler.py
 │   ├── matplotlib_handler.py
 │   ├── numpy_handler.py
