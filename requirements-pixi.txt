@@ -527,7 +527,7 @@ xenon==0.9.3
 xlsxwriter==3.2.9
 xmltodict==1.0.2
 xxhash==3.6.0
-xyzservices==2025.4.0
+xyzservices==2025.10.0
 yamale==5.2.1
 yapf==0.43.0
 yara-python==4.5.4
