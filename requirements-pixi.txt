@@ -266,7 +266,7 @@ nvidia-ml-py==13.580.82
 oauthlib==3.3.1
 onemkl-sycl-blas==2025.1.0
 onemkl-sycl-dft==2025.1.0
-onemkl-sycl-lapack==2025.1.0
+onemkl-sycl-lapack==2025.3.0
 onemkl-sycl-rng==2025.1.0
 onemkl-sycl-sparse==2025.1.0
 onnx==1.19.1
