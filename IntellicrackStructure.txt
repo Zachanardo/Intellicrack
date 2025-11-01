@@ -1,7 +1,7 @@
 INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: Sun, Oct 26, 2025 12:39:45 PM
+Generated: Fri, Oct 31, 2025 10:21:25 PM
 Directory: D:\Intellicrack\intellicrack
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -65,7 +65,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── quantization_manager.py
 │   ├── README.md
 │   ├── realtime_adaptation_engine.py
-│   ├── resilience_self_healing.py
 │   ├── response_parser.py
 │   ├── script_editor.py
 │   ├── script_generation_prompts.py
@@ -344,14 +343,32 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   └── vm_detector.py
 │   ├── certificate/
 │   │   ├── frida_scripts/
-│   │   │   └── __init__.py
+│   │   │   ├── __init__.py
+│   │   │   ├── android_pinning.js
+│   │   │   ├── cryptoapi_bypass.js
+│   │   │   ├── ios_pinning.js
+│   │   │   ├── openssl_bypass.js
+│   │   │   ├── schannel_bypass.js
+│   │   │   ├── universal_ssl_bypass.js
+│   │   │   └── winhttp_bypass.js
 │   │   ├── __init__.py
 │   │   ├── api_signatures.py
+│   │   ├── apk_analyzer.py
 │   │   ├── binary_scanner.py
+│   │   ├── bypass_orchestrator.py
+│   │   ├── bypass_strategy.py
+│   │   ├── cert_cache.py
+│   │   ├── cert_chain_generator.py
 │   │   ├── cert_patcher.py
 │   │   ├── detection_report.py
+│   │   ├── frida_cert_hooks.py
+│   │   ├── frida_stealth.py
+│   │   ├── hook_obfuscation.py
+│   │   ├── layer_detector.py
+│   │   ├── multilayer_bypass.py
 │   │   ├── patch_generators.py
 │   │   ├── patch_templates.py
+│   │   ├── pinning_detector.py
 │   │   └── validation_detector.py
 │   ├── execution/
 │   │   ├── __init__.py
@@ -532,19 +549,19 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── visualization_renderer.py
 │   └── websocket_stream.py
 ├── data/
-│   ├── data/
-│   │   ├── cache/
-│   │   │   └── ghidra_scripts_cache.json
-│   │   ├── logs/
-│   │   ├── output/
-│   │   ├── plugin_cache/
-│   │   ├── reports/
-│   │   └── visualizations/
+│   ├── cache/
+│   │   └── ghidra_scripts_cache.json
+│   ├── database/
+│   │   └── pattern_evolution.db
+│   ├── output/
+│   ├── plugin_cache/
+│   ├── reports/
 │   ├── signatures/
 │   │   ├── README.md
 │   │   └── sample_signatures.sg
 │   ├── templates/
 │   │   └── README.md
+│   ├── visualizations/
 │   ├── yara_rules/
 │   │   ├── antidebug.yar
 │   │   ├── compilers.yar
@@ -894,6 +911,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── theme_manager.py
 │   ├── tooltip_helper.py
 │   ├── traffic_analyzer.py
+│   ├── ui_manager.py
 │   └── window_sizing.py
 ├── utils/
 │   ├── analysis/
