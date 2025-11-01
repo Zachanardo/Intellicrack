@@ -41,7 +41,7 @@ libloading = "0.8"
 
 # System Integration
 sysinfo = "0.37"
-which = "6.0"
+which = "8.0"
 dirs = "6.0"
 num_cpus = "1.16"
 
