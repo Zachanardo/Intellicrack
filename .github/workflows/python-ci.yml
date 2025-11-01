@@ -39,43 +39,43 @@ jobs:
       with:
         workspaces: intellicrack-launcher
 
-    - name: Install dependencies
+    - name: Install dependencies (CI environment without Intel XPU)
       run: |
-        pixi install
+        pixi install --environment ci
 
     - name: Rust - Check compilation
       run: |
         cd intellicrack-launcher
-        pixi run cargo check --all-features --all-targets
+        pixi run --environment ci cargo check --all-features --all-targets
 
     - name: Rust - Format check
       run: |
         cd intellicrack-launcher
-        pixi run cargo fmt -- --check
+        pixi run --environment ci cargo fmt -- --check
 
     - name: Rust - Clippy linting
       run: |
         cd intellicrack-launcher
-        pixi run cargo clippy --all-features --all-targets -- -D warnings
+        pixi run --environment ci cargo clippy --all-features --all-targets -- -D warnings
 
     - name: Rust - Run tests
       run: |
         cd intellicrack-launcher
-        pixi run cargo test --all-features --verbose
+        pixi run --environment ci cargo test --all-features --verbose
 
     - name: Rust - Build release
       run: |
         cd intellicrack-launcher
-        pixi run cargo build --release --all-features
+        pixi run --environment ci cargo build --release --all-features
 
     - name: Lint with ruff
       run: |
-        pixi run ruff check intellicrack/ tests/ --output-format=github
-        pixi run ruff format --check intellicrack/ tests/
+        pixi run --environment ci ruff check intellicrack/ tests/ --output-format=github
+        pixi run --environment ci ruff format --check intellicrack/ tests/
 
     - name: Test with pytest
       run: |
-        pixi run pytest tests/ -v --cov=intellicrack --cov-report=xml --cov-report=html --junitxml=test-results.xml
+        pixi run --environment ci pytest tests/ -v --cov=intellicrack --cov-report=xml --cov-report=html --junitxml=test-results.xml
       env:
         PYTHONDONTWRITEBYTECODE: 1
 
