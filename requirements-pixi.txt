@@ -463,7 +463,7 @@ sphinxcontrib-qthelp==2.0.0
 sphinxcontrib-serializinghtml==2.0.0
 SQLAlchemy==2.0.44
 stack-data==0.6.3
-starlette==0.48.0
+starlette==0.49.1
 stevedore==5.5.0
 structlog==25.4.0
 sympy==1.14.0
