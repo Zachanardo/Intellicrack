@@ -459,7 +459,6 @@ include-package-data = true
 intellicrack = [
     "assets/*",
     "data/signatures/*",
-    "data/templates/*",
     "plugins/custom_modules/*.py",
     "models/*.pkl",
     "models/*.joblib",

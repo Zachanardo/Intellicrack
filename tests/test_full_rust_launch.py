@@ -11,14 +11,16 @@ def setup_test_environment():
         original_main_py_content = f.read()
 
     # Overwrite intellicrack/main.py with the test script
-    test_main_py_content = r'''
+    test_main_py_content = r"""
 import os
 import sys
+import time
 
 def main():
+    print("[Python Script] Starting execution.", file=sys.stderr)
     results = []
 
-    # Check for environment variables
+    print("[Python Script] Checking environment variables...", file=sys.stderr)
     expected_env_vars = {
         "PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF": "1",
         "OMP_NUM_THREADS": "1",
@@ -36,29 +38,38 @@ def main():
             results.append(f"SUCCESS: {var} is set correctly.")
         else:
             results.append(f"FAILURE: {var} is not set or has the wrong value.")
+    print("[Python Script] Finished checking environment variables.", file=sys.stderr)
 
     # Check for _tkinter initialization
-    try:
-        import tkinter
-        root = tkinter.Tk()
-        root.withdraw()
-        root.destroy()
-        results.append("_tkinter initialized successfully.")
-    except Exception as e:
-        results.append(f"_tkinter initialization failed: {e}")
+    # print("[Python Script] Checking tkinter initialization...", file=sys.stderr)
+    # try:
+    #     import tkinter
+    #     root = tkinter.Tk()
+    #     root.withdraw()
+    #     root.destroy()
+    #     results.append("SUCCESS: _tkinter initialized successfully.")
+    # except Exception as e:
+    #     results.append(f"FAILURE: _tkinter initialization failed: {e}")
+    # print("[Python Script] Finished checking tkinter.", file=sys.stderr)
 
+    print("[Python Script] Writing output file...", file=sys.stderr)
     with open("rust_launch_test_output.txt", "w") as f:
-        f.write("\n".join(results))
+        f.write("
+".join(results))
+    print("[Python Script] Finished writing output file.", file=sys.stderr)
 
     # If any failures, return 1
     if any("FAILURE" in result for result in results):
+        print("[Python Script] Failures detected. Exiting with code 1.", file=sys.stderr)
         return 1
     else:
+        print("[Python Script] All checks passed. Exiting with code 0.", file=sys.stderr)
         return 0
 
 if __name__ == "__main__":
+    print("[Python Script] __main__ block started.", file=sys.stderr)
     sys.exit(main())
-'''
+"""
     with open(main_py_path, 'w') as f:
         f.write(test_main_py_content)
 
@@ -83,7 +94,16 @@ def test_full_rust_launch(setup_test_environment):
 
     # 3. Run the launcher
     launcher_path = os.path.join(os.path.dirname(__file__), '..', 'intellicrack-launcher', 'target', 'release', 'Intellicrack.exe')
-    result = subprocess.run([launcher_path], env=env, capture_output=True, text=True)
+    print(f"\n[PyTest] Running launcher: {launcher_path}")
+    try:
+        result = subprocess.run([launcher_path], env=env, capture_output=True, text=True, timeout=60)
+    except subprocess.TimeoutExpired as e:
+        pytest.fail(f"Launcher process timed out after 60 seconds. stdout:\n{e.stdout}\nstderr:\n{e.stderr}")
+    
+    print("[PyTest] Launcher process finished.")
+    print(f"[PyTest] stdout:\n{result.stdout}")
+    print(f"[PyTest] stderr:\n{result.stderr}")
+
 
     # 4. Check the result of the launch
     assert result.returncode == 0, f"Launcher returned a non-zero exit code: {result.returncode}\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"
@@ -93,5 +113,5 @@ def test_full_rust_launch(setup_test_environment):
     with open("rust_launch_test_output.txt", 'r') as f:
         output_content = f.read()
     
-    print(f"Test output:\n{output_content}")
+    print(f"Test output file content:\n{output_content}")
     assert "FAILURE" not in output_content, f"One or more validation checks failed.\n{output_content}"

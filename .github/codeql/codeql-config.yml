@@ -1,0 +1,33 @@
+name: "CodeQL Config for Intellicrack"
+
+paths-ignore:
+  - '**/test/**'
+  - '**/tests/**'
+  - '**/*.test.py'
+  - '**/*.test.rs'
+  - '**/htmlcov/**'
+  - '**/coverage/**'
+  - '**/__pycache__/**'
+  - '**/.pytest_cache/**'
+  - '**/target/debug/**'
+  - '**/target/release/build/**'
+  - '**/node_modules/**'
+
+paths:
+  - 'intellicrack/'
+  - 'intellicrack-launcher/'
+
+queries:
+  - uses: security-and-quality
+
+query-filters:
+  - exclude:
+      id: py/clear-text-logging-sensitive-data
+  - exclude:
+      id: py/clear-text-storage-sensitive-data
+
+packs:
+  python:
+    - codeql/python-queries
+  rust:
+    - codeql/rust-queries

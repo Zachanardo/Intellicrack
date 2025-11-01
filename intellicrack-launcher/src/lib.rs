@@ -96,6 +96,7 @@ impl IntellicrackLauncher {
 
     /// Execute the complete launch sequence
     pub async fn launch(&mut self) -> Result<i32> {
+        let total_launch_start = std::time::Instant::now();
         tracing::info!("Starting Intellicrack launcher");
 
         // Set threading and PyTorch environment variables FIRST
@@ -103,19 +104,22 @@ impl IntellicrackLauncher {
         environment::set_pytorch_environment_variables();
 
         // CRITICAL: Configure environment BEFORE Python initialization
+        let env_config_start = std::time::Instant::now();
         self.environment.configure_complete_environment()?;
-        tracing::info!(
-            "Environment configured for platform: {:?}",
-            self.platform.os_type
-        );
+        let env_config_duration = env_config_start.elapsed();
+        tracing::info!("Environment configuration completed in {:.2?}", env_config_duration);
 
         // Initialize GIL safety BEFORE Python initialization
-        // This ensures all GIL-related environment variables are set before PyO3 starts
+        let gil_safety_start = std::time::Instant::now();
         GilSafetyManager::initialize_gil_safety()?;
+        let gil_safety_duration = gil_safety_start.elapsed();
+        tracing::info!("GIL safety initialization completed in {:.2?}", gil_safety_duration);
 
         // NOW initialize Python with the correct environment and GIL safety
-        tracing::info!("Initializing Python with configured environment and GIL safety");
+        let python_init_start = std::time::Instant::now();
         let mut python = PythonIntegration::initialize()?;
+        let python_init_duration = python_init_start.elapsed();
+        tracing::info!("Python integration initialized in {:.2?}", python_init_duration);
 
         // Configure PyBind11 compatibility
         python.configure_pybind11_compatibility()?;
@@ -143,7 +147,11 @@ impl IntellicrackLauncher {
         // Display startup summary
         self.display_startup_summary(&_validation_results);
 
+        let rust_setup_duration = total_launch_start.elapsed();
+        tracing::info!("Total Rust setup completed in {:.2?}", rust_setup_duration);
+
         // Check for test mode
+        let main_exec_start = std::time::Instant::now();
         let exit_code = if std::env::var("RUST_LAUNCHER_TEST_MODE").is_ok() {
             tracing::info!("Test mode enabled - running environment verification");
             self.python
@@ -157,6 +165,11 @@ impl IntellicrackLauncher {
                 .ok_or_else(|| anyhow::anyhow!("Python not initialized"))?
                 .run_intellicrack_main_embedded()?
         };
+        let main_exec_duration = main_exec_start.elapsed();
+        tracing::info!("Python main execution completed in {:.2?}", main_exec_duration);
+
+        let total_launch_duration = total_launch_start.elapsed();
+        tracing::info!("Total launch time: {:.2?}", total_launch_duration);
 
         tracing::info!(
             "Intellicrack launcher completed with exit code: {}",
