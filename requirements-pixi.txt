@@ -485,7 +485,7 @@ tomlkit==0.13.3
 toolz==1.1.0
 torch==2.8.0+xpu
 torchaudio==2.8.0+xpu
-torchvision==0.23.0+xpu
+torchvision==0.24.0
 tornado==6.5.2
 tox==4.32.0
 tqdm==4.67.1
