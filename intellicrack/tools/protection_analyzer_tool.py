@@ -27,7 +27,7 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List
 
-from ..ai.ai_assistant_enhanced import IntellicrackAIAssistant
+from ..ai.interactive_assistant import IntellicrackAIAssistant
 from ..ai.ai_file_tools import get_ai_file_tools
 from ..protection import (
     DetectionResult,

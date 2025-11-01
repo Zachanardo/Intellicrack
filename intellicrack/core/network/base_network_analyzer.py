@@ -63,7 +63,7 @@ class BaseNetworkAnalyzer:
 
             try:
                 # Check if it's a TCP packet with IP layer
-                from ...utils.templates.network_api_common import get_scapy_layers
+                from ...utils.binary.network_api_analysis import get_scapy_layers
 
                 layers = get_scapy_layers(scapy_module)
                 if not layers:

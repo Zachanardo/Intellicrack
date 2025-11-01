@@ -1,7 +1,6 @@
 use intellicrack_launcher::tool_discovery::{ToolCache, ToolInfo};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use tempfile::NamedTempFile;
 
 #[test]
 fn test_tool_info_creation() {

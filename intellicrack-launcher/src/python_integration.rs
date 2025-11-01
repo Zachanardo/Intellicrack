@@ -413,7 +413,8 @@ impl PythonIntegration {
             // sys.path is already configured during initialization
 
             // Run the test script to verify environment setup
-            let test_script = std::fs::read_to_string("test_rust_launcher_env.py")
+            let test_script_path = std::path::Path::new("tests/launcher/test_rust_launcher_env.py");
+            let test_script = std::fs::read_to_string(test_script_path)
                 .context("Failed to read test script")?;
 
             let c_test_script =

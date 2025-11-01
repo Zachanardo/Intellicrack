@@ -15,7 +15,7 @@ import json
 import time
 from pathlib import Path
 
-from intellicrack.ai.ai_assistant_enhanced import IntellicrackAIAssistant
+from intellicrack.ai.interactive_assistant import IntellicrackAIAssistant
 from intellicrack.ai.llm_backends import LLMManager
 from intellicrack.ai.model_manager_module import ModelManager
 from intellicrack.ai.multi_agent_system import MultiAgentSystem

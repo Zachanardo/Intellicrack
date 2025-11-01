@@ -16,7 +16,7 @@ import os
 import time
 from pathlib import Path
 
-from intellicrack.ai.ai_assistant_enhanced import AIAssistantEnhanced
+from intellicrack.ai.interactive_assistant import AIAssistantEnhanced
 from intellicrack.ai.ai_script_generator import AIScriptGenerator
 from intellicrack.ai.coordination_layer import CoordinationLayer
 from intellicrack.ai.multi_agent_system import MultiAgentSystem

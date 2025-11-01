@@ -45,7 +45,7 @@ from intellicrack.handlers.pyqt6_handler import (
     pyqtSignal,
 )
 
-from ..ai.ai_assistant_enhanced import IntellicrackAIAssistant, create_ai_assistant_widget
+from ..ai.interactive_assistant import IntellicrackAIAssistant, create_ai_assistant_widget
 from ..analysis.analysis_result_orchestrator import AnalysisResultOrchestrator
 from ..analysis.handlers.llm_handler import LLMHandler
 from ..analysis.handlers.report_generation_handler import ReportGenerationHandler
@@ -413,7 +413,7 @@ class IntellicrackMainWindow(QMainWindow):
 
     def _setup_ai_assistant_tab(self):
         """Set up the AI assistant tab."""
-        # Create the AI assistant widget using the function from ai_assistant_enhanced.py
+        # Create the AI assistant widget using the function from interactive_assistant.py
         ai_widget = create_ai_assistant_widget()
 
         # Store reference to the AI widget for potential future use

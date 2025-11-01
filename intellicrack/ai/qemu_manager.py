@@ -50,7 +50,7 @@ from intellicrack.core.resources.resource_manager import VMResource, get_resourc
 from intellicrack.utils.logger import get_logger
 
 from ..utils.secrets_manager import get_secret, set_secret
-from .ai_agent import ExecutionResult
+from .script_generation_agent import ExecutionResult
 
 logger = get_logger(__name__)
 audit_logger = get_audit_logger()

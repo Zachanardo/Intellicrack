@@ -29,7 +29,7 @@ from queue import Empty, Queue
 from typing import Any
 
 from ..utils.logger import get_logger
-from .ai_agent import AIAgent
+from .script_generation_agent import AIAgent
 from .ai_script_generator import AIScriptGenerator
 from .intelligent_code_modifier import IntelligentCodeModifier
 from .llm_backends import LLMManager
@@ -406,7 +406,7 @@ Script Analysis:
                 }
 
             except Exception as native_error:
-                raise Exception(f"Native execution failed: {native_error}") from native_error
+                raise RuntimeError(f"Native execution failed: {native_error}") from native_error
 
         def _perform_script_validation(self, script, script_file, target_file):
             """Perform script validation and static analysis."""

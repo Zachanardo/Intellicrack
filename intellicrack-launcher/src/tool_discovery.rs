@@ -633,6 +633,11 @@ fn set_tool_env_vars(tools: &HashMap<String, ToolInfo>) {
         }
     }
 
+    unsafe {
+        std::env::set_var("INTELLICRACK_TOOLS_DISCOVERED", "1");
+    }
+    debug!("Set INTELLICRACK_TOOLS_DISCOVERED=1 to skip Python tool discovery");
+
     info!("Environment variables set for {} tools", tools.len());
 }
 

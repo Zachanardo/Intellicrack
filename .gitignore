@@ -427,9 +427,7 @@ vcruntime*.dll
 # Compiled Frida scripts
 frida_compiled/
 
-# Ghidra, IDA, etc.
-ghidra/
-
+# IDA Pro
 ida/
 
 # ==============================================================================

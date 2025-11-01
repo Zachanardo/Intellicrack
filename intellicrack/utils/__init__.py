@@ -438,13 +438,13 @@ except ImportError as e:
 
 # Import network API common functions
 try:
-    from .templates.network_api_common import (
+    from .binary.network_api_analysis import (
         analyze_network_apis,
         get_network_api_categories,
         summarize_network_capabilities,
     )
 except ImportError as e:
-    _init_logger.warning("Failed to import network_api_common functions: %s", e)
+    _init_logger.warning("Failed to import network_api_analysis functions: %s", e)
 
 # Import common utility modules
 try:

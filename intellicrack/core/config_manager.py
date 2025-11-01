@@ -802,6 +802,48 @@ class IntellicrackConfig:
             Space: O(n)
 
         """
+        if os.environ.get("INTELLICRACK_TOOLS_DISCOVERED") == "1":
+            logger.info("Tools already discovered by Rust launcher - using env vars")
+            import time
+
+            tools = {}
+            tool_mapping = {
+                "GHIDRA_PATH": "ghidra",
+                "RADARE2_PATH": "radare2",
+                "FRIDA_PATH": "frida",
+                "QEMU_PATH": "qemu",
+            }
+
+            for env_var, tool_name in tool_mapping.items():
+                tool_path = os.environ.get(env_var)
+                if tool_path:
+                    tools[tool_name] = {
+                        "available": True,
+                        "path": tool_path,
+                        "version": None,
+                        "auto_discovered": True,
+                        "last_check": time.time(),
+                    }
+                else:
+                    tools[tool_name] = {
+                        "available": False,
+                        "path": None,
+                        "version": None,
+                        "auto_discovered": True,
+                        "last_check": None,
+                    }
+
+            tools["python3"] = {
+                "available": True,
+                "path": sys.executable,
+                "version": None,
+                "auto_discovered": True,
+                "last_check": time.time(),
+            }
+
+            logger.info(f"Loaded {len([t for t in tools.values() if t['available']])} tools from environment")
+            return tools
+
         logger.info("Auto-discovering tools...")
         tools = {}
 

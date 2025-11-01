@@ -55,7 +55,7 @@ from intellicrack.handlers.pyqt6_handler import (
 )
 from intellicrack.utils.subprocess_security import secure_run
 
-from ...ai.ai_tools import AIAssistant
+from ...ai.code_analysis_tools import AIAssistant
 from ...utils.logger import get_logger
 from ..widgets.syntax_highlighters import JavaScriptHighlighter, PythonHighlighter
 

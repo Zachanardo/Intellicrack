@@ -1420,7 +1420,7 @@ def ai_generate(
             click.echo(f"Binary file not found: {binary_path}", err=True)
             sys.exit(1)
 
-        from intellicrack.ai.ai_agent import AIAgent
+        from intellicrack.ai.script_generation_agent import AIAgent
         from intellicrack.ai.orchestrator import get_orchestrator
 
         # Get AI orchestrator
@@ -1820,7 +1820,7 @@ def autonomous(
 ):
     """Run autonomous AI workflow for complex tasks."""
     try:
-        from intellicrack.ai.ai_agent import AIAgent
+        from intellicrack.ai.script_generation_agent import AIAgent
         from intellicrack.ai.orchestrator import get_orchestrator
 
         click.echo("🤖 Starting autonomous AI workflow...")
@@ -1915,7 +1915,7 @@ def autonomous(
 def save_session(binary_path: str, output: str | None, include_ui: bool):
     """Save AI session data including conversation history."""
     try:
-        from intellicrack.ai.ai_agent import AIAgent
+        from intellicrack.ai.script_generation_agent import AIAgent
 
         click.echo("💾 Saving AI session data...")
 
@@ -1994,7 +1994,7 @@ def save_session(binary_path: str, output: str | None, include_ui: bool):
 def reset(confirm: bool):
     """Reset AI agent state for new analysis."""
     try:
-        from intellicrack.ai.ai_agent import AIAgent
+        from intellicrack.ai.script_generation_agent import AIAgent
 
         if not confirm:
             if not click.confirm("WARNING️  Reset AI agent? This will clear all conversation history."):
@@ -2049,7 +2049,7 @@ def task(
 ):
     """Execute specific autonomous AI task."""
     try:
-        from intellicrack.ai.ai_agent import AIAgent
+        from intellicrack.ai.script_generation_agent import AIAgent
 
         click.echo(f"🤖 Executing {task_type} task...")
         click.echo(f"🎯 Target: {os.path.basename(binary_path)}")

@@ -23,14 +23,19 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import gc
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     import torch
+    TorchDtype = torch.dtype
+else:
+    TorchDtype = Any
 
 from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+APPLIED_GPU_OPTIMIZATIONS_MSG = "Applied GPU optimizations to model"
 
 # Try importing PyTorch
 try:
@@ -99,7 +104,18 @@ class ModelShardingManager:
 
     def __init__(self):
         """Initialize the model sharding manager."""
-        # Use unified GPU system if available
+        self._initialize_gpu_info()
+        self.device_properties = {}
+        self.shard_configs = {}
+
+        if self.device_count > 0 and HAS_TORCH:
+            self._initialize_device_properties()
+            logger.info(f"Initialized sharding manager with {self.device_count} {self.gpu_type} devices")
+        else:
+            logger.info("No GPUs detected, sharding disabled")
+
+    def _initialize_gpu_info(self):
+        """Initialize GPU device information."""
         if GPU_AUTOLOADER_AVAILABLE:
             gpu_info = get_gpu_info()
             self.device_count = gpu_info["info"].get("device_count", 0) if gpu_info["available"] else 0
@@ -110,39 +126,39 @@ class ModelShardingManager:
             self.gpu_type = "cuda" if self.device_count > 0 else "cpu"
             self.unified_device = None
 
-        self.device_properties = {}
-        self.shard_configs = {}
+    def _initialize_device_properties(self):
+        """Initialize properties for all available devices."""
+        for i in range(self.device_count):
+            if self.gpu_type == "nvidia_cuda":
+                self._initialize_nvidia_device_properties(i)
+            elif self.gpu_type == "intel_xpu" and hasattr(torch, "xpu"):
+                self._initialize_intel_xpu_device_properties(i)
 
-        if self.device_count > 0 and HAS_TORCH:
-            for i in range(self.device_count):
-                if self.gpu_type == "nvidia_cuda":
-                    props = torch.cuda.get_device_properties(i)
-                    self.device_properties[i] = {
-                        "name": props.name,
-                        "total_memory": props.total_memory,
-                        "major": props.major,
-                        "minor": props.minor,
-                        "multi_processor_count": props.multi_processor_count,
-                    }
-                elif self.gpu_type == "intel_xpu" and hasattr(torch, "xpu"):
-                    # Intel XPU properties
-                    self.device_properties[i] = {
-                        "name": torch.xpu.get_device_name(i) if hasattr(torch.xpu, "get_device_name") else f"Intel XPU {i}",
-                        "total_memory": 0,  # Will be filled if available
-                        "device_type": "xpu",
-                    }
-                    # Try to get memory info
-                    if hasattr(torch.xpu, "get_device_properties"):
-                        try:
-                            props = torch.xpu.get_device_properties(i)
-                            if hasattr(props, "total_memory"):
-                                self.device_properties[i]["total_memory"] = props.total_memory
-                        except (AttributeError, RuntimeError):
-                            pass
+    def _initialize_nvidia_device_properties(self, device_id: int):
+        """Initialize NVIDIA CUDA device properties."""
+        props = torch.cuda.get_device_properties(device_id)
+        self.device_properties[device_id] = {
+            "name": props.name,
+            "total_memory": props.total_memory,
+            "major": props.major,
+            "minor": props.minor,
+            "multi_processor_count": props.multi_processor_count,
+        }
 
-            logger.info(f"Initialized sharding manager with {self.device_count} {self.gpu_type} devices")
-        else:
-            logger.info("No GPUs detected, sharding disabled")
+    def _initialize_intel_xpu_device_properties(self, device_id: int):
+        """Initialize Intel XPU device properties."""
+        self.device_properties[device_id] = {
+            "name": torch.xpu.get_device_name(device_id) if hasattr(torch.xpu, "get_device_name") else f"Intel XPU {device_id}",
+            "total_memory": 0,
+            "device_type": "xpu",
+        }
+        if hasattr(torch.xpu, "get_device_properties"):
+            try:
+                props = torch.xpu.get_device_properties(device_id)
+                if hasattr(props, "total_memory"):
+                    self.device_properties[device_id]["total_memory"] = props.total_memory
+            except (AttributeError, RuntimeError):
+                pass
 
     def get_sharding_info(self) -> dict[str, Any]:
         """Get information about current sharding configuration."""
@@ -154,23 +170,34 @@ class ModelShardingManager:
             "accelerate_available": HAS_ACCELERATE,
         }
 
-        # Add memory info
         if self.device_count > 0 and HAS_TORCH:
-            for i in range(self.device_count):
-                if self.gpu_type == "nvidia_cuda":
-                    torch.cuda.set_device(i)
-                    info["devices"][i]["allocated_memory"] = torch.cuda.memory_allocated(i)
-                    info["devices"][i]["reserved_memory"] = torch.cuda.memory_reserved(i)
-                    info["devices"][i]["free_memory"] = info["devices"][i]["total_memory"] - torch.cuda.memory_allocated(i)
-                elif self.gpu_type == "intel_xpu" and hasattr(torch, "xpu"):
-                    if hasattr(torch.xpu, "set_device"):
-                        torch.xpu.set_device(i)
-                    if hasattr(torch.xpu, "memory_allocated"):
-                        info["devices"][i]["allocated_memory"] = torch.xpu.memory_allocated(i)
-                    if hasattr(torch.xpu, "memory_reserved"):
-                        info["devices"][i]["reserved_memory"] = torch.xpu.memory_reserved(i)
+            self._add_memory_info_to_devices(info)
 
         return info
+
+    def _add_memory_info_to_devices(self, info: dict[str, Any]):
+        """Add memory information to device info."""
+        for i in range(self.device_count):
+            if self.gpu_type == "nvidia_cuda":
+                self._add_nvidia_memory_info(info, i)
+            elif self.gpu_type == "intel_xpu" and hasattr(torch, "xpu"):
+                self._add_intel_xpu_memory_info(info, i)
+
+    def _add_nvidia_memory_info(self, info: dict[str, Any], device_id: int):
+        """Add NVIDIA CUDA memory information to device info."""
+        torch.cuda.set_device(device_id)
+        info["devices"][device_id]["allocated_memory"] = torch.cuda.memory_allocated(device_id)
+        info["devices"][device_id]["reserved_memory"] = torch.cuda.memory_reserved(device_id)
+        info["devices"][device_id]["free_memory"] = info["devices"][device_id]["total_memory"] - torch.cuda.memory_allocated(device_id)
+
+    def _add_intel_xpu_memory_info(self, info: dict[str, Any], device_id: int):
+        """Add Intel XPU memory information to device info."""
+        if hasattr(torch.xpu, "set_device"):
+            torch.xpu.set_device(device_id)
+        if hasattr(torch.xpu, "memory_allocated"):
+            info["devices"][device_id]["allocated_memory"] = torch.xpu.memory_allocated(device_id)
+        if hasattr(torch.xpu, "memory_reserved"):
+            info["devices"][device_id]["reserved_memory"] = torch.xpu.memory_reserved(device_id)
 
     def _get_current_device(self) -> int:
         """Get current device index."""
@@ -192,7 +219,7 @@ class ModelShardingManager:
         model_config_or_path: str | dict,
         max_memory: dict[int, str] | None = None,
         no_split_module_classes: list[str] | None = None,
-        dtype: Optional["torch.dtype"] = None,
+        dtype: TorchDtype | None = None,
     ) -> dict[str, Any]:
         """Create a device map for model sharding.
 
@@ -302,36 +329,46 @@ class ModelShardingManager:
 
         """
         if not HAS_ACCELERATE:
-            logger.warning("Accelerate not available, model not sharded")
-            if GPU_AUTOLOADER_AVAILABLE:
-                # Apply GPU optimizations before moving to device
-                if optimize_for_gpu:
-                    optimized = optimize_for_gpu(model)
-                    if optimized is not None:
-                        model = optimized
-                        logger.info("Applied GPU optimizations to model")
-                return to_device(model)
-            return model
+            return self._shard_model_without_accelerate(model)
 
         if self.device_count <= 1:
-            logger.info("Single GPU - no sharding needed")
-            if GPU_AUTOLOADER_AVAILABLE:
-                # Apply GPU optimizations for single GPU
-                if optimize_for_gpu:
-                    optimized = optimize_for_gpu(model)
-                    if optimized is not None:
-                        model = optimized
-                        logger.info("Applied GPU optimizations to model")
-                return to_device(model)
-            if self.device_count == 1:
-                return model.to(0) if torch.cuda.is_available() else model
-            return model
+            return self._shard_model_single_device(model)
 
-        # Create device map if not provided
         if device_map is None:
             device_map = self._create_simple_device_map()
 
-        # Apply GPU optimization before sharding
+        model = self._apply_pre_sharding_optimizations(model)
+
+        return self._dispatch_model_across_devices(model, device_map, max_memory, offload_folder, offload_state_dict)
+
+    def _shard_model_without_accelerate(self, model: Any) -> Any:
+        """Shard model without accelerate library."""
+        logger.warning("Accelerate not available, model not sharded")
+        if GPU_AUTOLOADER_AVAILABLE:
+            if optimize_for_gpu:
+                optimized = optimize_for_gpu(model)
+                if optimized is not None:
+                    model = optimized
+                    logger.info(APPLIED_GPU_OPTIMIZATIONS_MSG)
+            return to_device(model)
+        return model
+
+    def _shard_model_single_device(self, model: Any) -> Any:
+        """Shard model for single device."""
+        logger.info("Single GPU - no sharding needed")
+        if GPU_AUTOLOADER_AVAILABLE:
+            if optimize_for_gpu:
+                optimized = optimize_for_gpu(model)
+                if optimized is not None:
+                    model = optimized
+                    logger.info(APPLIED_GPU_OPTIMIZATIONS_MSG)
+            return to_device(model)
+        if self.device_count == 1:
+            return model.to(0) if torch.cuda.is_available() else model
+        return model
+
+    def _apply_pre_sharding_optimizations(self, model: Any) -> Any:
+        """Apply optimizations before sharding."""
         if GPU_AUTOLOADER_AVAILABLE and optimize_for_gpu:
             try:
                 optimized = optimize_for_gpu(model)
@@ -340,8 +377,17 @@ class ModelShardingManager:
                     logger.info("Applied GPU optimizations before sharding")
             except Exception as e:
                 logger.debug(f"Could not optimize model before sharding: {e}")
+        return model
 
-        # Dispatch model
+    def _dispatch_model_across_devices(
+        self,
+        model: Any,
+        device_map: dict[str, Any],
+        max_memory: dict[int, str] | None,
+        offload_folder: str | None,
+        offload_state_dict: bool,
+    ) -> Any:
+        """Dispatch model across multiple devices."""
         try:
             model = dispatch_model(
                 model,
@@ -351,24 +397,22 @@ class ModelShardingManager:
                 offload_state_dict=offload_state_dict,
             )
             logger.info("Model successfully sharded across devices")
-
-            # Apply autoloader optimizations after sharding
-            if GPU_AUTOLOADER_AVAILABLE and gpu_autoloader:
-                try:
-                    optimized = gpu_autoloader(model)
-                    if optimized is not None:
-                        model = optimized
-                        logger.info("Applied autoloader optimizations after sharding")
-                except Exception as e:
-                    logger.debug(f"Could not apply autoloader optimizations: {e}")
-
-            return model
-
+            return self._apply_post_sharding_optimizations(model)
         except Exception as e:
             logger.error(f"Failed to shard model: {e}")
-            if GPU_AUTOLOADER_AVAILABLE:
-                return to_device(model)
-            return model
+            return to_device(model) if GPU_AUTOLOADER_AVAILABLE else model
+
+    def _apply_post_sharding_optimizations(self, model: Any) -> Any:
+        """Apply optimizations after sharding."""
+        if GPU_AUTOLOADER_AVAILABLE and gpu_autoloader:
+            try:
+                optimized = gpu_autoloader(model)
+                if optimized is not None:
+                    model = optimized
+                    logger.info("Applied autoloader optimizations after sharding")
+            except Exception as e:
+                logger.debug(f"Could not apply autoloader optimizations: {e}")
+        return model
 
     def load_sharded_checkpoint(
         self,
@@ -377,55 +421,48 @@ class ModelShardingManager:
         device_map: dict[str, Any] | None = None,
         max_memory: dict[int, str] | None = None,
         no_split_module_classes: list[str] | None = None,
-        dtype: Optional["torch.dtype"] = None,
+        dtype: TorchDtype | None = None,
     ) -> Any:
-        """Load a checkpoint and shard it across devices.
-
-        Args:
-            model: Model architecture
-            checkpoint: Path to checkpoint
-            device_map: Custom device map
-            max_memory: Maximum memory per device
-            no_split_module_classes: Module classes that shouldn't be split
-            dtype: Model dtype
-
-        Returns:
-            Loaded and sharded model
-
-        """
+        """Load a checkpoint and shard it across devices."""
         if not HAS_ACCELERATE:
-            logger.warning("Accelerate not available, loading normally")
-            if HAS_TORCH:
-                model.load_state_dict(torch.load(checkpoint))
-                if GPU_AUTOLOADER_AVAILABLE:
-                    # Apply GPU optimizations after loading
-                    if optimize_for_gpu:
-                        optimized = optimize_for_gpu(model)
-                        if optimized is not None:
-                            model = optimized
-                            logger.info("Applied GPU optimizations to loaded model")
-                    return to_device(model)
-            return model
+            return self._load_checkpoint_without_accelerate(model, checkpoint)
 
         if self.device_count <= 1:
-            logger.info("Single GPU - loading normally")
-            if HAS_TORCH:
-                model.load_state_dict(torch.load(checkpoint))
-                if GPU_AUTOLOADER_AVAILABLE:
-                    # Apply GPU optimizations for single GPU
-                    if optimize_for_gpu:
-                        optimized = optimize_for_gpu(model)
-                        if optimized is not None:
-                            model = optimized
-                            logger.info("Applied GPU optimizations to loaded model")
-                    return to_device(model)
-            return model
+            return self._load_checkpoint_single_device(model, checkpoint)
 
-        # Create device map if not provided
         if device_map is None:
             device_map = self._create_simple_device_map()
 
-        # Load and dispatch checkpoint
+        return self._load_and_dispatch_checkpoint(
+            model, checkpoint, device_map, max_memory, no_split_module_classes, dtype
+        )
+
+    def _load_checkpoint_without_accelerate(self, model: Any, checkpoint: str | Path) -> Any:
+        """Load checkpoint without accelerate."""
+        logger.warning("Accelerate not available, loading normally")
+        if HAS_TORCH:
+            model.load_state_dict(torch.load(checkpoint))
+            return self._apply_gpu_optimizations(model)
+        return model
+
+    def _load_checkpoint_single_device(self, model: Any, checkpoint: str | Path) -> Any:
+        """Load checkpoint for a single device."""
+        logger.info("Single GPU - loading normally")
+        if HAS_TORCH:
+            model.load_state_dict(torch.load(checkpoint))
+            return self._apply_gpu_optimizations(model)
+        return model
+
+    def _load_and_dispatch_checkpoint(
+        self,
+        model: Any,
+        checkpoint: str | Path,
+        device_map: dict[str, Any],
+        max_memory: dict[int, str] | None,
+        no_split_module_classes: list[str] | None,
+        dtype: TorchDtype | None,
+    ) -> Any:
+        """Load and dispatch checkpoint across devices."""
         try:
             model = load_checkpoint_and_dispatch(
                 model,
@@ -436,36 +473,46 @@ class ModelShardingManager:
                 dtype=dtype,
             )
             logger.info("Checkpoint loaded and sharded across devices")
-
-            # Apply autoloader optimizations after loading sharded checkpoint
-            if GPU_AUTOLOADER_AVAILABLE and gpu_autoloader:
-                try:
-                    optimized = gpu_autoloader(model)
-                    if optimized is not None:
-                        model = optimized
-                        logger.info("Applied autoloader optimizations to sharded checkpoint")
-                except Exception as e:
-                    logger.debug(f"Could not apply autoloader optimizations: {e}")
-
-            return model
-
+            return self._apply_autoloader_optimizations(model)
         except Exception as e:
             logger.error(f"Failed to load sharded checkpoint: {e}")
-            if HAS_TORCH:
-                model.load_state_dict(torch.load(checkpoint))
-                if GPU_AUTOLOADER_AVAILABLE:
-                    # Apply optimizations even on fallback
-                    if optimize_for_gpu:
-                        optimized = optimize_for_gpu(model)
-                        if optimized is not None:
-                            model = optimized
-                    return to_device(model)
-            return model
+            return self._fallback_checkpoint_load(model, checkpoint)
+
+    def _apply_gpu_optimizations(self, model: Any) -> Any:
+        """Apply GPU optimizations to the model."""
+        if GPU_AUTOLOADER_AVAILABLE and optimize_for_gpu:
+            try:
+                optimized = optimize_for_gpu(model)
+                if optimized is not None:
+                    model = optimized
+                    logger.info(APPLIED_GPU_OPTIMIZATIONS_MSG)
+            except Exception as e:
+                logger.debug(f"Could not optimize model: {e}")
+        return to_device(model) if GPU_AUTOLOADER_AVAILABLE else model
+
+    def _apply_autoloader_optimizations(self, model: Any) -> Any:
+        """Apply autoloader optimizations after sharding."""
+        if GPU_AUTOLOADER_AVAILABLE and gpu_autoloader:
+            try:
+                optimized = gpu_autoloader(model)
+                if optimized is not None:
+                    model = optimized
+                    logger.info("Applied autoloader optimizations to sharded checkpoint")
+            except Exception as e:
+                logger.debug(f"Could not apply autoloader optimizations: {e}")
+        return model
+
+    def _fallback_checkpoint_load(self, model: Any, checkpoint: str | Path) -> Any:
+        """Fallback checkpoint loading in case of failure."""
+        if HAS_TORCH:
+            model.load_state_dict(torch.load(checkpoint))
+            return self._apply_gpu_optimizations(model)
+        return model
 
     def estimate_model_memory(
         self,
         model_config: dict[str, Any],
-        dtype: Optional["torch.dtype"] = None,
+        dtype: TorchDtype | None = None,
     ) -> dict[str, Any]:
         """Estimate memory requirements for a model.
 
@@ -586,31 +633,44 @@ class ModelShardingManager:
 
         for i in range(self.device_count):
             if self.gpu_type == "nvidia_cuda":
-                allocated = torch.cuda.memory_allocated(i) / (1024**3)
-                reserved = torch.cuda.memory_reserved(i) / (1024**3)
-                total = self.device_properties[i]["total_memory"] / (1024**3)
-
-                memory_info[i] = {
-                    "allocated_gb": allocated,
-                    "reserved_gb": reserved,
-                    "free_gb": total - allocated,
-                    "total_gb": total,
-                    "usage_percent": (allocated / total) * 100,
-                }
+                memory_info[i] = self._get_nvidia_memory_usage(i)
             elif self.gpu_type == "intel_xpu" and hasattr(torch, "xpu"):
-                memory_info[i] = {"device_type": "xpu", "device_id": i}
-                if hasattr(torch.xpu, "memory_allocated"):
-                    allocated = torch.xpu.memory_allocated(i) / (1024**3)
-                    memory_info[i]["allocated_gb"] = allocated
-                if hasattr(torch.xpu, "memory_reserved"):
-                    reserved = torch.xpu.memory_reserved(i) / (1024**3)
-                    memory_info[i]["reserved_gb"] = reserved
-                if i in self.device_properties and self.device_properties[i].get("total_memory"):
-                    total = self.device_properties[i]["total_memory"] / (1024**3)
-                    memory_info[i]["total_gb"] = total
-                    if "allocated_gb" in memory_info[i]:
-                        memory_info[i]["free_gb"] = total - memory_info[i]["allocated_gb"]
-                        memory_info[i]["usage_percent"] = (memory_info[i]["allocated_gb"] / total) * 100
+                memory_info[i] = self._get_intel_xpu_memory_usage(i)
+
+        return memory_info
+
+    def _get_nvidia_memory_usage(self, device_id: int) -> dict[str, float]:
+        """Get NVIDIA CUDA memory usage for a device."""
+        allocated = torch.cuda.memory_allocated(device_id) / (1024**3)
+        reserved = torch.cuda.memory_reserved(device_id) / (1024**3)
+        total = self.device_properties[device_id]["total_memory"] / (1024**3)
+
+        return {
+            "allocated_gb": allocated,
+            "reserved_gb": reserved,
+            "free_gb": total - allocated,
+            "total_gb": total,
+            "usage_percent": (allocated / total) * 100,
+        }
+
+    def _get_intel_xpu_memory_usage(self, device_id: int) -> dict[str, float]:
+        """Get Intel XPU memory usage for a device."""
+        memory_info = {"device_type": "xpu", "device_id": device_id}
+
+        if hasattr(torch.xpu, "memory_allocated"):
+            allocated = torch.xpu.memory_allocated(device_id) / (1024**3)
+            memory_info["allocated_gb"] = allocated
+
+        if hasattr(torch.xpu, "memory_reserved"):
+            reserved = torch.xpu.memory_reserved(device_id) / (1024**3)
+            memory_info["reserved_gb"] = reserved
+
+        if device_id in self.device_properties and self.device_properties[device_id].get("total_memory"):
+            total = self.device_properties[device_id]["total_memory"] / (1024**3)
+            memory_info["total_gb"] = total
+            if "allocated_gb" in memory_info:
+                memory_info["free_gb"] = total - memory_info["allocated_gb"]
+                memory_info["usage_percent"] = (memory_info["allocated_gb"] / total) * 100
 
         return memory_info
 
@@ -647,7 +707,7 @@ class ModelShardingManager:
 
         # Count modules per device
         device_counts = {}
-        for _module, device in device_map.items():
+        for device in device_map.values():
             if isinstance(device, int):
                 device_counts[device] = device_counts.get(device, 0) + 1
 
@@ -731,92 +791,117 @@ class ModelShardingManager:
 
         logger.info(f"Profiling model distribution over {num_iterations} iterations")
 
-        # Warmup
-        if GPU_AUTOLOADER_AVAILABLE:
-            inputs = to_device(sample_input)
-        else:
-            device_type = self.gpu_type.split("_")[0] if "_" in self.gpu_type else "cuda"
-            if hasattr(sample_input, "to") and self.device_count > 0:
-                inputs = sample_input.to(device_type)
-            else:
-                inputs = sample_input
+        inputs = self._prepare_inputs_for_profiling(sample_input)
+        self._warmup_model(model, inputs)
 
+        forward_times = []
+        memory_usage = []
+        start_memory = self._get_initial_memory()
+
+        for i in range(num_iterations):
+            iteration_results = self._profile_single_iteration(model, inputs, i)
+            forward_times.append(iteration_results["forward_time"])
+            memory_usage.append(iteration_results["memory_info"])
+
+        end_memory, peak_memory = self._get_final_memory(start_memory)
+
+        return self._compile_profiling_results(
+            device_map, forward_times, memory_usage, start_memory, end_memory, peak_memory
+        )
+
+    def _prepare_inputs_for_profiling(self, sample_input: Any) -> Any:
+        """Prepare inputs for profiling by moving to appropriate device."""
+        if GPU_AUTOLOADER_AVAILABLE:
+            return to_device(sample_input)
+        device_type = self.gpu_type.split("_")[0] if "_" in self.gpu_type else "cuda"
+        if hasattr(sample_input, "to") and self.device_count > 0:
+            return sample_input.to(device_type)
+        return sample_input
+
+    def _warmup_model(self, model: Any, inputs: Any):
+        """Warmup model with a few iterations."""
         for _ in range(3):
             with torch.no_grad():
                 _ = model(inputs)
 
-        # Profile
-        forward_times = []
-        memory_usage = []
-
+    def _get_initial_memory(self) -> int:
+        """Get initial memory usage before profiling."""
         if self.gpu_type == "nvidia_cuda":
             torch.cuda.synchronize()
-            start_memory = sum(torch.cuda.memory_allocated(i) for i in range(self.device_count))
-        else:
-            start_memory = 0
+            return sum(torch.cuda.memory_allocated(i) for i in range(self.device_count))
+        return 0
 
-        for i in range(num_iterations):
-            # Measure memory before forward pass
-            if self.gpu_type == "nvidia_cuda":
-                iter_start_memory = sum(torch.cuda.memory_allocated(j) for j in range(self.device_count))
-            else:
-                iter_start_memory = 0
+    def _profile_single_iteration(self, model: Any, inputs: Any, iteration: int) -> dict[str, Any]:
+        """Profile a single forward pass iteration."""
+        iter_start_memory = self._measure_memory_before_forward()
+        forward_time = self._measure_forward_pass(model, inputs)
+        iter_end_memory, per_device_memory = self._measure_memory_after_forward()
 
-            # Forward pass
-            if self.gpu_type == "nvidia_cuda":
-                torch.cuda.synchronize()
-            elif self.gpu_type == "intel_xpu" and hasattr(torch.xpu, "synchronize"):
-                torch.xpu.synchronize()
+        return {
+            "forward_time": forward_time,
+            "memory_info": {
+                "iteration": iteration,
+                "memory_before": iter_start_memory,
+                "memory_after": iter_end_memory,
+                "memory_delta": iter_end_memory - iter_start_memory,
+                "per_device": per_device_memory,
+            },
+        }
 
-            start_time = time.time()
+    def _measure_memory_before_forward(self) -> int:
+        """Measure memory usage before forward pass."""
+        if self.gpu_type == "nvidia_cuda":
+            return sum(torch.cuda.memory_allocated(j) for j in range(self.device_count))
+        return 0
 
-            with torch.no_grad():
-                _ = model(inputs)
+    def _measure_forward_pass(self, model: Any, inputs: Any) -> float:
+        """Measure forward pass execution time."""
+        self._synchronize_devices()
+        start_time = time.time()
 
-            if self.gpu_type == "nvidia_cuda":
-                torch.cuda.synchronize()
-            elif self.gpu_type == "intel_xpu" and hasattr(torch.xpu, "synchronize"):
-                torch.xpu.synchronize()
+        with torch.no_grad():
+            _ = model(inputs)
 
-            forward_times.append((time.time() - start_time) * 1000)
+        self._synchronize_devices()
+        return (time.time() - start_time) * 1000
 
-            # Measure memory after forward pass
-            if self.gpu_type == "nvidia_cuda":
-                iter_end_memory = sum(torch.cuda.memory_allocated(j) for j in range(self.device_count))
-                memory_usage.append(
-                    {
-                        "iteration": i,
-                        "memory_before": iter_start_memory,
-                        "memory_after": iter_end_memory,
-                        "memory_delta": iter_end_memory - iter_start_memory,
-                        "per_device": [torch.cuda.memory_allocated(j) for j in range(self.device_count)],
-                    }
-                )
-            else:
-                memory_usage.append(
-                    {
-                        "iteration": i,
-                        "memory_before": iter_start_memory,
-                        "memory_after": iter_start_memory,
-                        "memory_delta": 0,
-                        "per_device": [],
-                    }
-                )
+    def _synchronize_devices(self):
+        """Synchronize all devices before timing measurements."""
+        if self.gpu_type == "nvidia_cuda":
+            torch.cuda.synchronize()
+        elif self.gpu_type == "intel_xpu" and hasattr(torch.xpu, "synchronize"):
+            torch.xpu.synchronize()
 
-        # Calculate memory usage
+    def _measure_memory_after_forward(self) -> tuple[int, list[int]]:
+        """Measure memory usage after forward pass."""
+        if self.gpu_type == "nvidia_cuda":
+            total_memory = sum(torch.cuda.memory_allocated(j) for j in range(self.device_count))
+            per_device = [torch.cuda.memory_allocated(j) for j in range(self.device_count)]
+            return total_memory, per_device
+        return 0, []
+
+    def _get_final_memory(self, start_memory: int) -> tuple[int, int]:
+        """Get final and peak memory usage after profiling."""
         if self.gpu_type == "nvidia_cuda":
             end_memory = sum(torch.cuda.memory_allocated(i) for i in range(self.device_count))
             peak_memory = sum(torch.cuda.max_memory_allocated(i) for i in range(self.device_count))
-        else:
-            end_memory = start_memory
-            peak_memory = start_memory
+            return end_memory, peak_memory
+        return start_memory, start_memory
 
-        # Calculate statistics
+    def _compile_profiling_results(
+        self,
+        device_map: dict[str, Any],
+        forward_times: list[float],
+        memory_usage: list[dict[str, Any]],
+        start_memory: int,
+        end_memory: int,
+        peak_memory: int,
+    ) -> dict[str, Any]:
+        """Compile all profiling results into a comprehensive report."""
         avg_time = sum(forward_times) / len(forward_times)
         min_time = min(forward_times)
         max_time = max(forward_times)
 
-        # Calculate memory usage statistics
         memory_deltas = [usage["memory_delta"] for usage in memory_usage]
         avg_memory_delta = sum(memory_deltas) / len(memory_deltas) if memory_deltas else 0
         max_memory_delta = max(memory_deltas) if memory_deltas else 0

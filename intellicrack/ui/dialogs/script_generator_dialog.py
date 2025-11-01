@@ -19,7 +19,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import os
 import time
 
-from intellicrack.ai.ai_tools import AIAssistant
+from intellicrack.ai.code_analysis_tools import AIAssistant
 from intellicrack.handlers.pyqt6_handler import (
     QApplication,
     QCheckBox,

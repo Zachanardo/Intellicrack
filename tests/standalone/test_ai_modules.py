@@ -234,7 +234,7 @@ def run_test_ai_tools():
     print("\n=== Running AI Tools Test ===")
 
     try:
-        from intellicrack.ai.ai_tools import AITools
+        from intellicrack.ai.code_analysis_tools import AITools
 
         # Create tools instance
         tools = AITools()

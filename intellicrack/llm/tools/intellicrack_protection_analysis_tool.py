@@ -10,7 +10,7 @@ Licensed under GNU General Public License v3.0
 import os
 from typing import Any, Dict, List
 
-from ...ai.ai_assistant_enhanced import IntellicrackAIAssistant
+from ...ai.interactive_assistant import IntellicrackAIAssistant
 from ...protection import get_protection_detector
 from ...protection.intellicrack_protection_advanced import (
     AdvancedProtectionAnalysis,

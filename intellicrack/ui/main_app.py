@@ -510,7 +510,7 @@ class IntellicrackApp(QMainWindow):
 
         # Initialize AI components
         try:
-            from ..ai.ai_agent import AIAgent
+            from ..ai.script_generation_agent import AIAgent
 
             self.ai_agent = AIAgent()
             logger.info("AIAgent initialized successfully")

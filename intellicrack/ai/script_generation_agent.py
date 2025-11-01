@@ -362,32 +362,8 @@ class AIAgent:
             analyzer = BinaryAnalyzer(binary_path)
             analysis_results = analyzer.analyze(analyses=['strings'])
 
-            strings_data = analysis_results.get('strings', {})
-            if isinstance(strings_data, dict):
-                all_strings = strings_data.get('strings', [])
-            elif isinstance(strings_data, list):
-                all_strings = strings_data
-            else:
-                all_strings = []
-
-            license_keywords = [
-                'license', 'trial', 'demo', 'expire', 'activate',
-                'register', 'serial', 'key', 'validation', 'auth', 'check'
-            ]
-
-            for string_entry in all_strings:
-                if isinstance(string_entry, dict):
-                    string_value = string_entry.get('value', '')
-                elif isinstance(string_entry, str):
-                    string_value = string_entry
-                else:
-                    continue
-
-                string_lower = string_value.lower()
-                for keyword in license_keywords:
-                    if keyword in string_lower:
-                        strings.append(string_value)
-                        break
+            all_strings = self._normalize_strings_data(analysis_results.get('strings', {}))
+            strings = self._filter_license_related_strings(all_strings)
 
             logger.info(f"Extracted {len(strings)} license-related strings from {binary_path}")
 
@@ -397,6 +373,42 @@ class AIAgent:
             logger.error(f"String extraction failed: {e}", exc_info=True)
 
         return strings
+
+    def _normalize_strings_data(self, strings_data: Any) -> list[str]:
+        """Normalize strings data from various formats to a list of strings."""
+        if isinstance(strings_data, dict):
+            return strings_data.get('strings', [])
+        elif isinstance(strings_data, list):
+            return strings_data
+        return []
+
+    def _filter_license_related_strings(self, all_strings: list) -> list[str]:
+        """Filter strings for license-related content based on keywords."""
+        license_keywords = [
+            'license', 'trial', 'demo', 'expire', 'activate',
+            'register', 'serial', 'key', 'validation', 'auth', 'check'
+        ]
+
+        filtered_strings = []
+        for string_entry in all_strings:
+            string_value = self._extract_string_value(string_entry)
+            if string_value and self._contains_license_keyword(string_value, license_keywords):
+                filtered_strings.append(string_value)
+
+        return filtered_strings
+
+    def _extract_string_value(self, string_entry: Any) -> str:
+        """Extract string value from entry (dict or str)."""
+        if isinstance(string_entry, dict):
+            return string_entry.get('value', '')
+        elif isinstance(string_entry, str):
+            return string_entry
+        return ''
+
+    def _contains_license_keyword(self, string_value: str, keywords: list[str]) -> bool:
+        """Check if string contains any license-related keyword."""
+        string_lower = string_value.lower()
+        return any(keyword in string_lower for keyword in keywords)
 
     def _validate_binary_path(self, binary_path: str) -> bool:
         """Validate binary path for security."""
@@ -536,49 +548,10 @@ class AIAgent:
 
             analyzer = BinaryAnalyzer(binary_path)
             analysis_results = analyzer.analyze(analyses=['functions'])
-
             functions_data = analysis_results.get('functions', [])
 
-            license_keywords = [
-                'license', 'serial', 'activation', 'registration', 'trial',
-                'expire', 'valid', 'key', 'unlock', 'authenticate',
-                'authorize', 'verify', 'check', 'eval', 'demo', 'install'
-            ]
-
-            time_keywords = ['time', 'date', 'clock', 'timer', 'expire', 'elapsed']
-            trial_keywords = ['trial', 'demo', 'eval', 'expire', 'period']
-
             if isinstance(functions_data, list):
-                for func_entry in functions_data:
-                    if isinstance(func_entry, dict):
-                        func_name = func_entry.get('name', '').lower()
-                        func_addr = func_entry.get('address', 0)
-
-                        func_type = 'unknown'
-                        for keyword in license_keywords:
-                            if keyword in func_name:
-                                func_type = 'license_check'
-                                break
-
-                        if func_type == 'unknown':
-                            for keyword in time_keywords:
-                                if keyword in func_name:
-                                    func_type = 'time_check'
-                                    break
-
-                        if func_type == 'unknown':
-                            for keyword in trial_keywords:
-                                if keyword in func_name:
-                                    func_type = 'trial_check'
-                                    break
-
-                        functions.append({
-                            'name': func_entry.get('name', 'unknown'),
-                            'address': hex(func_addr) if isinstance(func_addr, int) else func_addr,
-                            'type': func_type,
-                            'size': func_entry.get('size', 0),
-                            'binary': Path(binary_path).name
-                        })
+                functions = self._process_function_entries(functions_data, binary_path)
 
             logger.info(f"Analyzed {len(functions)} functions in {binary_path}")
 
@@ -589,38 +562,66 @@ class AIAgent:
 
         return functions
 
+    def _process_function_entries(self, functions_data: list, binary_path: str) -> list[dict[str, Any]]:
+        """Process function entries and classify them."""
+        functions = []
+        for func_entry in functions_data:
+            if isinstance(func_entry, dict):
+                processed_func = self._create_function_info(func_entry, binary_path)
+                functions.append(processed_func)
+        return functions
+
+    def _create_function_info(self, func_entry: dict, binary_path: str) -> dict[str, Any]:
+        """Create function information dictionary with type classification."""
+        func_name = func_entry.get('name', '').lower()
+        func_addr = func_entry.get('address', 0)
+        func_type = self._classify_function_type(func_name)
+
+        return {
+            'name': func_entry.get('name', 'unknown'),
+            'address': hex(func_addr) if isinstance(func_addr, int) else func_addr,
+            'type': func_type,
+            'size': func_entry.get('size', 0),
+            'binary': Path(binary_path).name
+        }
+
+    def _classify_function_type(self, func_name: str) -> str:
+        """Classify function type based on name keywords."""
+        license_keywords = [
+            'license', 'serial', 'activation', 'registration', 'trial',
+            'expire', 'valid', 'key', 'unlock', 'authenticate',
+            'authorize', 'verify', 'check', 'eval', 'demo', 'install'
+        ]
+        time_keywords = ['time', 'date', 'clock', 'timer', 'expire', 'elapsed']
+        trial_keywords = ['trial', 'demo', 'eval', 'expire', 'period']
+
+        if self._contains_any_keyword(func_name, license_keywords):
+            return 'license_check'
+        if self._contains_any_keyword(func_name, time_keywords):
+            return 'time_check'
+        if self._contains_any_keyword(func_name, trial_keywords):
+            return 'trial_check'
+        return 'unknown'
+
+    def _contains_any_keyword(self, text: str, keywords: list[str]) -> bool:
+        """Check if text contains any of the keywords."""
+        return any(keyword in text for keyword in keywords)
+
     def _analyze_imports(self, binary_path: str) -> list[str]:
         """Analyze imported functions."""
         imports = []
         try:
-            if not os.path.isabs(binary_path):
-                logger.warning(f"Binary path is not absolute: {binary_path}")
-                return imports
-
-            if not os.path.exists(binary_path):
-                logger.warning(f"Binary path does not exist: {binary_path}")
+            if not self._validate_import_binary_path(binary_path):
                 return imports
 
             from ..core.analysis.binary_analyzer import BinaryAnalyzer
 
             analyzer = BinaryAnalyzer(binary_path)
             analysis_results = analyzer.analyze(analyses=['imports'])
-
             imports_data = analysis_results.get('imports', [])
 
             if isinstance(imports_data, list):
-                for import_entry in imports_data:
-                    if isinstance(import_entry, dict):
-                        import_name = import_entry.get('name', '')
-                        dll_name = import_entry.get('dll', '')
-
-                        if import_name:
-                            if dll_name:
-                                imports.append(f"{dll_name}:{import_name}")
-                            else:
-                                imports.append(import_name)
-                    elif isinstance(import_entry, str):
-                        imports.append(import_entry)
+                imports = self._process_import_entries(imports_data)
 
             logger.info(f"Analyzed {len(imports)} imports from {binary_path}")
 
@@ -630,6 +631,36 @@ class AIAgent:
             logger.error(f"Import analysis failed for {binary_path}: {e}", exc_info=True)
 
         return imports
+
+    def _validate_import_binary_path(self, binary_path: str) -> bool:
+        """Validate binary path for import analysis."""
+        if not os.path.isabs(binary_path):
+            logger.warning(f"Binary path is not absolute: {binary_path}")
+            return False
+        if not os.path.exists(binary_path):
+            logger.warning(f"Binary path does not exist: {binary_path}")
+            return False
+        return True
+
+    def _process_import_entries(self, imports_data: list) -> list[str]:
+        """Process import entries from analysis data."""
+        imports = []
+        for import_entry in imports_data:
+            import_string = self._format_import_entry(import_entry)
+            if import_string:
+                imports.append(import_string)
+        return imports
+
+    def _format_import_entry(self, import_entry: Any) -> str:
+        """Format import entry to string."""
+        if isinstance(import_entry, dict):
+            import_name = import_entry.get('name', '')
+            dll_name = import_entry.get('dll', '')
+            if import_name:
+                return f"{dll_name}:{import_name}" if dll_name else import_name
+        elif isinstance(import_entry, str):
+            return import_entry
+        return ''
 
     def _detect_protections(self, binary_path: str) -> list[dict[str, Any]]:
         """Detect protection mechanisms."""
@@ -930,9 +961,10 @@ class AIAgent:
         import re
 
         url_patterns = [
-            r'https?://[^\s<>"{}|\\^`\[\]]+',  # HTTP(S) URLs
-            r'ftp://[^\s<>"{}|\\^`\[\]]+',  # FTP URLs
-            r'ws[s]?://[^\s<>"{}|\\^`\[\]]+',  # WebSocket URLs
+            r'https?://[^\s<>"{}|\\^`\[\]]+',
+            r's?ftp://[^\s<>"{}|\\^`\[\]]+',
+            r'ftps://[^\s<>"{}|\\^`\[\]]+',
+            r'ws[s]?://[^\s<>"{}|\\^`\[\]]+',
         ]
         for pattern in url_patterns:
             matches = re.findall(pattern, text_content, re.IGNORECASE)
@@ -1950,7 +1982,7 @@ class AIAgent:
         qemu_cmd_sanitized = [arg.replace(str(target_path), target_path_clean) for arg in qemu_cmd]
         result = subprocess.run(qemu_cmd_sanitized, cwd=temp_dir, capture_output=True, text=True, timeout=30, shell=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
         success = result.returncode == 0 or "executed" in result.stdout.lower()
-        output_lines = ["✅ QEMU execution successful"] if success else []
+        output_lines = ["QEMU execution successful"] if success else []
         return success, output_lines
 
     def _try_native_execution(self, script: str, target_binary: str, temp_dir: str) -> tuple[bool, list[str], str]:
@@ -1980,76 +2012,90 @@ class AIAgent:
         output_lines = []
 
         try:
-            # Check if script is a name from the library or custom content
-            if script in self.frida_manager.scripts:
-                script_name = script
-                logger.info(f"Executing library script: {script_name}")
-                output_lines.append(f"📜 Executing library script: {script_name}")
-            else:
-                # Custom script content - save to temp file and execute
-                script_path = Path(temp_dir) / "custom_frida_script.js"
-                script_path.write_text(script, encoding='utf-8')
-                script_name = str(script_path)
-                logger.info(f"Executing custom script ({len(script)} bytes)")
-                output_lines.append(f"📜 Executing custom Frida script ({len(script)} bytes)")
+            script_name = self._prepare_frida_script(script, temp_dir, output_lines)
 
-            # Validate target binary exists
-            if not os.path.exists(target_binary):
-                error_msg = f"Target binary not found: {target_binary}"
-                logger.error(error_msg)
-                output_lines.append(f"❌ {error_msg}")
+            if not self._validate_frida_target(target_binary, output_lines):
                 return False, output_lines
 
-            output_lines.append(f"🎯 Target: {Path(target_binary).name}")
+            output_lines.append(f"Target: {Path(target_binary).name}")
 
-            # Execute the script using FridaScriptManager
-            # Use spawn mode by default for license cracking scenarios
             result = self.frida_manager.execute_script(
-                script_name=script_name if script in self.frida_manager.scripts else script_path.name,
+                script_name=script_name if script in self.frida_manager.scripts else Path(script_name).name,
                 target=target_binary,
                 mode="spawn",
                 parameters={}
             )
 
-            # Process results
-            if result.success:
-                output_lines.append("✅ Frida script execution completed successfully")
-                output_lines.append(f"⏱️  Execution time: {result.execution_time_ms}ms")
-
-                # Add result output
-                if result.output:
-                    output_lines.append("\n📊 Script Output:")
-                    for line in result.output.split('\n')[:50]:  # Limit to 50 lines
-                        output_lines.append(f"   {line}")
-
-                    output_line_count = len(result.output.split('\n'))
-                    if output_line_count > 50:
-                        output_lines.append(f"   ... ({output_line_count - 50} more lines)")
-
-                # Add any intercepted data
-                if result.hooks_triggered:
-                    output_lines.append(f"\n🎣 Hooks triggered: {result.hooks_triggered}")
-
-                if result.data_collected:
-                    output_lines.append(f"📦 Data collected: {len(result.data_collected)} items")
-
-                logger.info(f"Frida script executed successfully: {result.execution_time_ms}ms")
-                return True, output_lines
-            else:
-                output_lines.append(f"❌ Frida script execution failed: {result.error}")
-                if result.output:
-                    output_lines.append("\n📋 Partial output:")
-                    for line in result.output.split('\n')[:20]:
-                        output_lines.append(f"   {line}")
-
-                logger.error(f"Frida script execution failed: {result.error}")
-                return False, output_lines
+            return self._process_frida_result(result, output_lines)
 
         except Exception as e:
             error_msg = f"Exception during Frida script execution: {e}"
             logger.exception(error_msg)
-            output_lines.append(f"❌ {error_msg}")
+            output_lines.append(f"ERROR: {error_msg}")
             return False, output_lines
+
+    def _prepare_frida_script(self, script: str, temp_dir: str, output_lines: list[str]) -> str:
+        """Prepare Frida script for execution (library or custom)."""
+        if script in self.frida_manager.scripts:
+            logger.info(f"Executing library script: {script}")
+            output_lines.append(f"Executing library script: {script}")
+            return script
+
+        script_path = Path(temp_dir) / "custom_frida_script.js"
+        script_path.write_text(script, encoding='utf-8')
+        logger.info(f"Executing custom script ({len(script)} bytes)")
+        output_lines.append(f"Executing custom Frida script ({len(script)} bytes)")
+        return str(script_path)
+
+    def _validate_frida_target(self, target_binary: str, output_lines: list[str]) -> bool:
+        """Validate target binary exists for Frida execution."""
+        if not os.path.exists(target_binary):
+            error_msg = f"Target binary not found: {target_binary}"
+            logger.error(error_msg)
+            output_lines.append(f"ERROR: {error_msg}")
+            return False
+        return True
+
+    def _process_frida_result(self, result: Any, output_lines: list[str]) -> tuple[bool, list[str]]:
+        """Process Frida script execution result."""
+        if result.success:
+            self._append_frida_success_output(result, output_lines)
+            logger.info(f"Frida script executed successfully: {result.execution_time_ms}ms")
+            return True, output_lines
+
+        self._append_frida_failure_output(result, output_lines)
+        logger.error(f"Frida script execution failed: {result.error}")
+        return False, output_lines
+
+    def _append_frida_success_output(self, result: Any, output_lines: list[str]) -> None:
+        """Append success output from Frida execution."""
+        output_lines.append("Frida script execution completed successfully")
+        output_lines.append(f"Execution time: {result.execution_time_ms}ms")
+
+        if result.output:
+            self._append_frida_script_output(result.output, output_lines, max_lines=50)
+
+        if result.hooks_triggered:
+            output_lines.append(f"\nHooks triggered: {result.hooks_triggered}")
+
+        if result.data_collected:
+            output_lines.append(f"Data collected: {len(result.data_collected)} items")
+
+    def _append_frida_failure_output(self, result: Any, output_lines: list[str]) -> None:
+        """Append failure output from Frida execution."""
+        output_lines.append(f"ERROR: Frida script execution failed: {result.error}")
+        if result.output:
+            self._append_frida_script_output(result.output, output_lines, max_lines=20, prefix="Partial output:")
+
+    def _append_frida_script_output(self, output: str, output_lines: list[str], max_lines: int, prefix: str = "Script Output:") -> None:
+        """Append Frida script output with line limit."""
+        output_lines.append(f"\n{prefix}")
+        lines = output.split('\n')
+        for line in lines[:max_lines]:
+            output_lines.append(f"   {line}")
+
+        if len(lines) > max_lines:
+            output_lines.append(f"   ... ({len(lines) - max_lines} more lines)")
 
     def list_available_frida_scripts(self) -> dict[str, dict]:
         """List all available Frida scripts from the library.
@@ -2092,26 +2138,14 @@ class AIAgent:
         output_lines = []
 
         try:
-            if script_name not in self.frida_manager.scripts:
-                available = ", ".join(self.frida_manager.scripts.keys())
-                error_msg = f"Script '{script_name}' not found. Available: {available}"
-                logger.error(error_msg)
-                output_lines.append(f"❌ {error_msg}")
+            if not self._validate_library_script(script_name, output_lines):
                 return False, output_lines
 
-            # Validate target binary
-            if not os.path.exists(target_binary):
-                error_msg = f"Target binary not found: {target_binary}"
-                logger.error(error_msg)
-                output_lines.append(f"❌ {error_msg}")
+            if not self._validate_frida_target(target_binary, output_lines):
                 return False, output_lines
 
-            logger.info(f"Executing library script '{script_name}' against {target_binary}")
-            output_lines.append(f"📜 Executing: {script_name}")
-            output_lines.append(f"🎯 Target: {Path(target_binary).name}")
-            output_lines.append(f"⚙️  Mode: {mode}")
+            self._log_library_script_execution(script_name, target_binary, mode, output_lines)
 
-            # Execute the script
             result = self.frida_manager.execute_script(
                 script_name=script_name,
                 target=target_binary,
@@ -2119,43 +2153,65 @@ class AIAgent:
                 parameters=parameters or {}
             )
 
-            # Process results
-            if result.success:
-                output_lines.append("✅ Execution successful")
-                output_lines.append(f"⏱️  Time: {result.execution_time_ms}ms")
-
-                if result.output:
-                    output_lines.append("\n📊 Output:")
-                    for line in result.output.split('\n')[:50]:
-                        output_lines.append(f"   {line}")
-
-                if result.hooks_triggered:
-                    output_lines.append(f"\n🎣 Hooks triggered: {result.hooks_triggered}")
-
-                if result.data_collected:
-                    output_lines.append(f"📦 Data collected: {len(result.data_collected)} items")
-
-                return True, output_lines
-            else:
-                output_lines.append(f"❌ Execution failed: {result.error}")
-                if result.output:
-                    output_lines.append("\n📋 Partial output:")
-                    for line in result.output.split('\n')[:20]:
-                        output_lines.append(f"   {line}")
-
-                return False, output_lines
+            return self._process_library_script_result(result, output_lines)
 
         except Exception as e:
             error_msg = f"Exception executing script: {e}"
             logger.exception(error_msg)
-            output_lines.append(f"❌ {error_msg}")
+            output_lines.append(f"ERROR: {error_msg}")
             return False, output_lines
+
+    def _validate_library_script(self, script_name: str, output_lines: list[str]) -> bool:
+        """Validate that library script exists."""
+        if script_name not in self.frida_manager.scripts:
+            available = ", ".join(self.frida_manager.scripts.keys())
+            error_msg = f"Script '{script_name}' not found. Available: {available}"
+            logger.error(error_msg)
+            output_lines.append(f"ERROR: {error_msg}")
+            return False
+        return True
+
+    def _log_library_script_execution(self, script_name: str, target_binary: str, mode: str, output_lines: list[str]) -> None:
+        """Log library script execution details."""
+        logger.info(f"Executing library script '{script_name}' against {target_binary}")
+        output_lines.append(f"Executing: {script_name}")
+        output_lines.append(f"Target: {Path(target_binary).name}")
+        output_lines.append(f"Mode: {mode}")
+
+    def _process_library_script_result(self, result: Any, output_lines: list[str]) -> tuple[bool, list[str]]:
+        """Process library script execution result."""
+        if result.success:
+            self._append_library_script_success(result, output_lines)
+            return True, output_lines
+
+        self._append_library_script_failure(result, output_lines)
+        return False, output_lines
+
+    def _append_library_script_success(self, result: Any, output_lines: list[str]) -> None:
+        """Append success output for library script execution."""
+        output_lines.append("Execution successful")
+        output_lines.append(f"Time: {result.execution_time_ms}ms")
+
+        if result.output:
+            self._append_frida_script_output(result.output, output_lines, max_lines=50, prefix="Output:")
+
+        if result.hooks_triggered:
+            output_lines.append(f"\nHooks triggered: {result.hooks_triggered}")
+
+        if result.data_collected:
+            output_lines.append(f"Data collected: {len(result.data_collected)} items")
+
+    def _append_library_script_failure(self, result: Any, output_lines: list[str]) -> None:
+        """Append failure output for library script execution."""
+        output_lines.append(f"ERROR: Execution failed: {result.error}")
+        if result.output:
+            self._append_frida_script_output(result.output, output_lines, max_lines=20, prefix="Partial output:")
 
     def _validate_generic_script(self, target_binary: str, temp_dir: str) -> tuple[bool, list[str]]:
         """Validate generic script."""
         success = True
         output_lines = [
-            "✅ Script syntax validation successful",
+            "Script syntax validation successful",
             "   Script analyzed and validated",
             f"   Target binary: {target_binary}",
             f"   Test environment: {temp_dir}",
@@ -2209,19 +2265,19 @@ class AIAgent:
         ]
 
         if "Java" in script or "frida" in script.lower():
-            analysis_output.append("✅ Frida JavaScript detected")
+            analysis_output.append("Frida JavaScript detected")
         if "Memory" in script or "patch" in script.lower():
-            analysis_output.append("✅ Memory manipulation patterns detected")
+            analysis_output.append("Memory manipulation patterns detected")
         if "hook" in script.lower() or "intercept" in script.lower():
-            analysis_output.append("✅ Function hooking patterns detected")
+            analysis_output.append("Function hooking patterns detected")
 
         script_lines = script.split("\n")
         analysis_output.append(f"Script contains {len(script_lines)} lines")
 
         if len(script) > 1000:
-            analysis_output.append("✅ Complex script detected")
+            analysis_output.append("Complex script detected")
 
-        analysis_output.append("WARNING️  VM execution not available - analysis only")
+        analysis_output.append("WARNING: VM execution not available - analysis only")
         return analysis_output
 
     def execute_autonomous_task(self, task_config: dict[str, Any]) -> dict[str, Any]:

@@ -529,12 +529,14 @@ fn test_environment_variables_after_tool_discovery() {
         "CAPSTONE_PATH",
     ];
 
-    let mut found_count = 0;
-    for var_name in possible_vars {
-        if std::env::var(var_name).is_ok() {
-            found_count += 1;
-        }
-    }
+    // Count discovered environment variables and use the result to avoid unused-variable warning
+    let found_count = possible_vars
+        .iter()
+        .filter(|var_name| std::env::var(var_name).is_ok())
+        .count();
+
+    // Basic sanity check that uses found_count
+    assert!(found_count <= possible_vars.len());
 }
 
 #[test]

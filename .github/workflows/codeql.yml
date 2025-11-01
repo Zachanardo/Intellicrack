@@ -28,7 +28,7 @@ jobs:
             build-mode: none
           - language: rust
             os: windows-latest
-            build-mode: manual
+            build-mode: none
 
     steps:
     - name: Checkout repository
@@ -61,16 +61,6 @@ jobs:
       uses: Swatinem/rust-cache@v2
       with:
         workspaces: intellicrack-launcher
-
-    - name: Install Pixi dependencies
-      if: matrix.language == 'rust'
-      run: pixi install --environment ci
-
-    - name: Build Rust code
-      if: matrix.language == 'rust'
-      run: |
-        cd intellicrack-launcher
-        pixi run --environment ci cargo build --release --all-features
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3

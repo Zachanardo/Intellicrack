@@ -1716,7 +1716,7 @@ def run_network_analysis(app_instance=None, binary_path: str | None = None, **kw
                 pe = pefile.PE(binary_path)
 
                 # Define network API categories
-                from ..templates.network_api_common import analyze_network_apis
+                from ..binary.network_api_analysis import analyze_network_apis, process_network_api_results
 
                 network_apis = {
                     "basic": ["socket", "connect", "bind", "listen", "accept", "send", "recv"],
@@ -1726,7 +1726,6 @@ def run_network_analysis(app_instance=None, binary_path: str | None = None, **kw
                 }
 
                 detected_apis = analyze_network_apis(pe, network_apis)
-                from ..templates.network_api_common import process_network_api_results
 
                 api_results = process_network_api_results(detected_apis)
                 results["static_analysis"].update(api_results)

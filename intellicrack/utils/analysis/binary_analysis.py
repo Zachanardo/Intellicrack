@@ -432,7 +432,7 @@ def _identify_auto_generation_candidates(analysis_results: Dict[str, Any]) -> Li
 def _trigger_autonomous_script_generation(orchestrator, analysis_results: Dict[str, Any], binary_path: str):
     """Trigger autonomous script generation for high-confidence scenarios."""
     try:
-        from ...ai.ai_agent import AIAgent
+        from ...ai.script_generation_agent import AIAgent
 
         # Create autonomous agent
         agent = AIAgent(orchestrator=orchestrator, cli_interface=None)

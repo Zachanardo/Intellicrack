@@ -65,9 +65,7 @@ fn test_concurrent_preflight_checks() {
 #[test]
 #[cfg(target_os = "windows")]
 fn test_python_path_structure_windows() {
-    use std::path::PathBuf;
-
-    let expected_python_exe = PathBuf::from(".pixi/envs/default/python.exe");
+    let expected_python_exe = std::path::PathBuf::from(".pixi/envs/default/python.exe");
 
     assert!(
         expected_python_exe.to_string_lossy().ends_with("python.exe"),
@@ -78,9 +76,7 @@ fn test_python_path_structure_windows() {
 #[test]
 #[cfg(not(target_os = "windows"))]
 fn test_python_path_structure_unix() {
-    use std::path::PathBuf;
-
-    let expected_python = PathBuf::from(".pixi/envs/default/bin/python");
+    let expected_python = std::path::PathBuf::from(".pixi/envs/default/bin/python");
 
     assert!(
         expected_python.to_string_lossy().contains("bin/python"),
@@ -110,9 +106,6 @@ fn test_preflight_performance_multiple_runs() {
 #[test]
 #[ignore]
 fn test_missing_python_returns_helpful_error() {
-    use std::path::PathBuf;
-    use std::fs;
-
     let project_root = std::env::current_dir().unwrap();
     let python_path = project_root.join(".pixi/envs/default/python.exe");
 

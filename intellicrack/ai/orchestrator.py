@@ -36,7 +36,7 @@ from ..utils.logger import get_logger
 # Local imports
 try:
     from ..hexview.ai_bridge import AIBinaryBridge
-    from .ai_assistant_enhanced import IntellicrackAIAssistant
+    from .interactive_assistant import IntellicrackAIAssistant
     from .llm_backends import LLMManager, LLMMessage, LLMResponse, get_llm_manager
     from .model_manager_module import ModelManager
 except ImportError as e:
@@ -1046,7 +1046,7 @@ class AIOrchestrator:
 
         try:
             # Import autonomous agent
-            from .ai_agent import AIAgent
+            from .script_generation_agent import AIAgent
 
             # Create autonomous agent
             agent = AIAgent(orchestrator=self, cli_interface=None)

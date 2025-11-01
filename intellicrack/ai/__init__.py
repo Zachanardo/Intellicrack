@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 # Import AI modules with error handling - explicit imports to avoid F403/F405
 try:
-    from .ai_tools import (
+    from .code_analysis_tools import (
         AIAssistant,
         CodeAnalyzer,
         analyze_with_ai,
@@ -33,7 +33,7 @@ try:
         get_ai_suggestions,
     )
 except ImportError as e:
-    logger.warning("Failed to import ai_tools: %s", e)
+    logger.warning("Failed to import code_analysis_tools: %s", e)
     AIAssistant = CodeAnalyzer = analyze_with_ai = None
     get_ai_suggestions = explain_code = None
 
@@ -145,9 +145,9 @@ except ImportError as e:
     CoordinatedResult = quick_vulnerability_scan = comprehensive_analysis = None
 
 try:
-    from .ai_assistant_enhanced import IntellicrackAIAssistant, Tool, ToolCategory
+    from .interactive_assistant import IntellicrackAIAssistant, Tool, ToolCategory
 except ImportError as e:
-    logger.warning("Failed to import ai_assistant_enhanced: %s", e)
+    logger.warning("Failed to import interactive_assistant: %s", e)
     IntellicrackAIAssistant = Tool = ToolCategory = None
 
 try:
@@ -291,9 +291,9 @@ except ImportError as e:
     AIScriptGenerator = ScriptType = None
 
 try:
-    from .ai_agent import AIAgent
+    from .script_generation_agent import AIAgent
 except ImportError as e:
-    logger.warning("Failed to import ai_agent: %s", e)
+    logger.warning("Failed to import script_generation_agent: %s", e)
     AIAgent = None
 
 try:
@@ -355,7 +355,7 @@ except ImportError as e:
 
 # Define package exports
 __all__ = [
-    # From ai_tools
+    # From code_analysis_tools
     "AIAssistant",
     "CodeAnalyzer",
     "analyze_with_ai",
@@ -390,7 +390,7 @@ __all__ = [
     "AnalysisStrategy",
     "quick_vulnerability_scan",
     "comprehensive_analysis",
-    # From ai_assistant_enhanced
+    # From interactive_assistant
     "IntellicrackAIAssistant",
     "Tool",
     "ToolCategory",

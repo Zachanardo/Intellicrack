@@ -4,7 +4,7 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
-from intellicrack.ai.ai_assistant_enhanced import IntellicrackAIAssistant
+from intellicrack.ai.interactive_assistant import IntellicrackAIAssistant
 from intellicrack.handlers.pyqt6_handler import (
     QApplication,
     QComboBox,

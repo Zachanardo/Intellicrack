@@ -133,7 +133,7 @@ class AITerminalChat:
         except Exception as e:
             # Initialize minimal AI tools as final fallback
             try:
-                from intellicrack.ai.ai_tools import AIAssistant
+                from intellicrack.ai.code_analysis_tools import AIAssistant
 
                 self.ai_backend = AIAssistant()
 
@@ -936,7 +936,7 @@ class AITerminalChat:
         except Exception as e:
             # Fall back to AIAssistant if available
             try:
-                from intellicrack.ai.ai_tools import AIAssistant
+                from intellicrack.ai.code_analysis_tools import AIAssistant
 
                 self.ai_backend = AIAssistant()
 

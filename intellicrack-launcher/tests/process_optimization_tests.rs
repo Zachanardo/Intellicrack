@@ -104,7 +104,6 @@ fn test_optimization_does_not_crash_on_errors() {
 
 #[test]
 fn test_multiple_concurrent_optimizations() {
-    use std::sync::Arc;
     use std::thread;
 
     let handles: Vec<_> = (0..4)

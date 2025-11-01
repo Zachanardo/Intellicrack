@@ -126,11 +126,9 @@ impl IntellicrackLauncher {
 
         self.python = Some(python);
 
-        // Initialize security enforcement
-        {
-            let mut security = self.security.lock().unwrap();
-            security.initialize_security_enforcement()?;
-        }
+        // Security initialization will be handled by Python subprocess to avoid embedded Python issues
+        // The Rust launcher just sets up the environment - Python does the actual security init
+        tracing::info!("Security initialization deferred to Python subprocess");
 
         // Skip comprehensive dependency validation for faster startup
         // Just do minimal Python validation
@@ -159,11 +157,9 @@ impl IntellicrackLauncher {
                 .ok_or_else(|| anyhow::anyhow!("Python not initialized"))?
                 .run_environment_test()?
         } else {
-            // Launch main application directly via embedded Python interpreter
-            self.python
-                .as_ref()
-                .ok_or_else(|| anyhow::anyhow!("Python not initialized"))?
-                .run_intellicrack_main_embedded()?
+            // Launch main application via subprocess to avoid embedded Python issues
+            tracing::info!("Launching Intellicrack via subprocess");
+            self.launch_intellicrack_subprocess()?
         };
         let main_exec_duration = main_exec_start.elapsed();
         tracing::info!("Python main execution completed in {:.2?}", main_exec_duration);
@@ -208,6 +204,67 @@ impl IntellicrackLauncher {
                 println!("\nSome dependencies unavailable - functionality may be limited\n");
             }
         }
+    }
+
+    fn launch_intellicrack_subprocess(&self) -> Result<i32> {
+        use std::process::Command;
+        use anyhow::Context;
+
+        tracing::info!("Launching Intellicrack as subprocess");
+
+        // Get Python executable path from environment
+        let python_exe = std::env::var("PYTHON_SYS_EXECUTABLE")
+            .or_else(|_| std::env::var("PYTHONEXECUTABLE"))
+            .unwrap_or_else(|_| {
+                // Fallback to finding python in PATH
+                if cfg!(windows) {
+                    "python.exe".to_string()
+                } else {
+                    "python3".to_string()
+                }
+            });
+
+        tracing::info!("Using Python executable: {}", python_exe);
+
+        // Build command with clean environment (no Cygwin/MSYS variables)
+        let mut cmd = Command::new(&python_exe);
+        cmd.arg("-c")
+            .arg("import sys; import intellicrack.main; sys.exit(intellicrack.main.main())");
+
+        // Clear Cygwin/MSYS environment variables to prevent threading conflicts
+        cmd.env_remove("CYGWIN")
+            .env_remove("MSYS")
+            .env_remove("MSYSTEM")
+            .env_remove("MSYS2_PATH_TYPE")
+            .env_remove("ORIGINAL_PATH")
+            .env_remove("ORIGINAL_TEMP")
+            .env_remove("ORIGINAL_TMP");
+
+        // Redirect stdout/stderr to debug file for troubleshooting
+        use std::fs::File;
+        let debug_log = File::create("D:\\Intellicrack\\logs\\python_subprocess_debug.log")
+            .context("Failed to create debug log file")?;
+        cmd.stdout(std::process::Stdio::from(debug_log.try_clone().unwrap()))
+            .stderr(std::process::Stdio::from(debug_log));
+
+        // On Windows, create a new process group to detach from Cygwin
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            const CREATE_NEW_PROCESS_GROUP: u32 = 0x00000200;
+            cmd.creation_flags(CREATE_NEW_PROCESS_GROUP);
+        }
+
+        // Launch Python subprocess to run intellicrack.main
+        let child = cmd.spawn()
+            .context("Failed to spawn Python subprocess")?;
+
+        tracing::info!("Python subprocess spawned (PID: {})", child.id());
+        tracing::info!("Intellicrack GUI launched - launcher exiting");
+
+        // Don't wait for GUI to exit - it runs in the background
+        // Return success immediately
+        Ok(0)
     }
 }
 
