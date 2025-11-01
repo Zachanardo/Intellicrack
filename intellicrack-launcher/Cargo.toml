@@ -31,7 +31,7 @@ name = "startup_optimization_benchmarks"
 harness = false
 
 [build-dependencies]
-pyo3-build-config = "0.26"
+pyo3-build-config = "0.27"
 embed-resource = "3.0"
 
 [dependencies]
