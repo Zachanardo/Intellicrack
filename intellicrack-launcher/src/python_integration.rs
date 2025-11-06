@@ -55,6 +55,10 @@ impl PythonIntegration {
         // PyO3 auto-initialize feature will handle Python initialization
         info!("PyO3 will auto-initialize with standard GIL-enabled Python");
 
+        // CRITICAL: Initialize Python BEFORE attempting to use it
+        Python::initialize();
+        println!("DEBUG: Python initialized via Python::initialize()");
+
         // Create initial integration struct
         let mut integration = Self {
             interpreter_path,

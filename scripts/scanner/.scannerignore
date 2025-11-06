@@ -1,0 +1,29 @@
+# .scannerignore - Paths to exclude from Intellicrack production scanner
+# Lines starting with # are comments, one path per line
+
+# IDE configs
+D:\Intellicrack\.idea
+D:\Intellicrack\.vscode
+
+# Build artifacts and caches
+D:\Intellicrack\.aider.tags.cache.v4
+D:\Intellicrack\.benchmarks
+D:\Intellicrack\.mypy_cache
+D:\Intellicrack\.pixi
+D:\Intellicrack\.pytest_cache
+D:\Intellicrack\.ruff_cache
+
+# Version control
+D:\Intellicrack\.git
+D:\Intellicrack\.github
+
+# Tool directories
+D:\Intellicrack\.claude
+D:\Intellicrack\.qodo
+D:\Intellicrack\.roo
+D:\Intellicrack\.serena
+D:\Intellicrack\tools
+
+# Test and script directories
+D:\Intellicrack\scripts
+D:\Intellicrack\tests
