@@ -20,8 +20,8 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 from .advanced_debugger_bypass import (
     AdvancedDebuggerBypass,
     HypervisorDebugger,
-    UserModeNTAPIHooker,
     TimingNeutralizer,
+    UserModeNTAPIHooker,
     install_advanced_bypass,
 )
 from .api_obfuscation import APIObfuscator

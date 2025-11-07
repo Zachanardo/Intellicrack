@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<intellicrack_scan_results>
+  <summary>
+    <total_issues>7</total_issues>
+    <total_languages>2</total_languages>
+    <critical>5</critical>
+    <high>1</high>
+    <medium>1</medium>
+    <low>0</low>
+  </summary>
+  <languages>
+    <language name="Python">
+      <file path="scripts/scanner\test_weak_code.py" issue_count="6">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>patch_binary</function_name>
+          <line>12</line>
+          <column>1</column>
+          <severity>CRITICAL</severity>
+          <confidence>385</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>8 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+75">
+              CRITICAL: Patcher without conditionals (blindly patches - dangerous)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 0% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-60">
+              Deductions for production patterns (-60 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>analyze_protection</function_name>
+          <line>29</line>
+          <column>1</column>
+          <severity>CRITICAL</severity>
+          <confidence>165</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>6 production issues detected</description>
+          <evidence>
+            <item points="+30">
+              Function name implies complex operation (&apos;analyze&apos;) but has ≤3 lines and low complexity
+            </item>
+            <item points="+30">
+              Function name implies external tool usage but no subprocess/tool calls detected
+            </item>
+            <item points="+45">
+              Processing function with no local variables (no actual computation)
+            </item>
+            <item points="+20">
+              Low complexity for analysis function (may be stub)
+            </item>
+            <item points="+15">
+              Very short function (≤3 LOC) for non-getter/setter
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="3" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>validate_license</function_name>
+          <line>8</line>
+          <column>1</column>
+          <severity>CRITICAL</severity>
+          <confidence>120</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>4 production issues detected</description>
+          <evidence>
+            <item points="+30">
+              Function name implies complex operation (&apos;validate&apos;) but has ≤3 lines and low complexity
+            </item>
+            <item points="+50">
+              Validation/check function without conditional logic (always returns same value)
+            </item>
+            <item points="+15">
+              Very short function (≤3 LOC) for non-getter/setter
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="4" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>process_data</function_name>
+          <line>24</line>
+          <column>1</column>
+          <severity>CRITICAL</severity>
+          <confidence>115</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>4 production issues detected</description>
+          <evidence>
+            <item points="+30">
+              Function name implies complex operation (&apos;process&apos;) but has ≤3 lines and low complexity
+            </item>
+            <item points="+45">
+              Processing function with no local variables (no actual computation)
+            </item>
+            <item points="+15">
+              Very short function (≤3 LOC) for non-getter/setter
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="5" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>keygen_simple</function_name>
+          <line>4</line>
+          <column>1</column>
+          <severity>HIGH</severity>
+          <confidence>95</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>4 production issues detected</description>
+          <evidence>
+            <item points="+25">
+              All returns are hardcoded strings
+            </item>
+            <item points="+30">
+              &apos;Simple&apos; implementation confirmed: no iteration logic
+            </item>
+            <item points="+15">
+              Very short function (≤3 LOC) for non-getter/setter
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+          </evidence>
+          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
+        </issue>
+        <issue id="6" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>search_patterns</function_name>
+          <line>18</line>
+          <column>1</column>
+          <severity>MEDIUM</severity>
+          <confidence>70</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>2 production issues detected</description>
+          <evidence>
+            <item points="+45">
+              Search/scan function without iteration logic (single-element only)
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+    </language>
+    <language name="JavaScript">
+      <file path="scripts/scanner\test_weak_js.js" issue_count="1">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>simpleKeygen</function_name>
+          <line>3</line>
+          <column>1</column>
+          <severity>CRITICAL</severity>
+          <confidence>100</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>4 production issues detected</description>
+          <evidence>
+            <item points="+25">
+              All returns are hardcoded strings
+            </item>
+            <item points="+35">
+              Keygen function without crypto or random number generation
+            </item>
+            <item points="+15">
+              Very short function (≤3 LOC) for non-getter/setter
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+          </evidence>
+          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
+        </issue>
+      </file>
+    </language>
+  </languages>
+</intellicrack_scan_results>

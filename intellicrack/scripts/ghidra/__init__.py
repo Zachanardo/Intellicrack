@@ -1,5 +1,6 @@
-"""This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+"""Intellicrack Ghidra Scripts Package.
+
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

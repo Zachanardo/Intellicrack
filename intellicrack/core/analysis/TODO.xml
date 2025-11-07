@@ -1,0 +1,4484 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<intellicrack_scan_results>
+  <summary>
+    <total_issues>169</total_issues>
+    <total_languages>1</total_languages>
+    <critical>75</critical>
+    <high>27</high>
+    <medium>67</medium>
+    <low>0</low>
+  </summary>
+  <languages>
+    <language name="Python">
+      <file path="intellicrack/core/analysis\automated_patch_agent.py" issue_count="5">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>run_automated_patch_agent</function_name>
+          <line>406</line>
+          <column>1</column>
+          <severity>CRITICAL</severity>
+          <confidence>250</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 35% (DANGEROUS - will break on updates)
+            </item>
+            <item points="-35">
+              Deductions for production patterns (-35 points)
+            </item>
+          </evidence>
+          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>apply_patch</function_name>
+          <line>233</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>195</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>7 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 25% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+15">
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="-165">
+              Deductions for production patterns (-165 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="3" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>apply_patch</function_name>
+          <line>233</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>195</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>7 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 25% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+15">
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="-165">
+              Deductions for production patterns (-165 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="4" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>generate_keygen</function_name>
+          <line>267</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>170</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+75">
+              CRITICAL: Keygen without loops or conditionals (linear execution only)
+            </item>
+            <item points="+50">
+              Keygen with trivial complexity (insufficient for production)
+            </item>
+            <item points="+45">
+              Keygen with minimal local state (incomplete implementation)
+            </item>
+            <item points="+70">
+              Keygen sophistication score: 13% (INSUFFICIENT)
+            </item>
+            <item points="-70">
+              Deductions for production patterns (-70 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="5" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>generate_keygen</function_name>
+          <line>267</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>170</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+75">
+              CRITICAL: Keygen without loops or conditionals (linear execution only)
+            </item>
+            <item points="+50">
+              Keygen with trivial complexity (insufficient for production)
+            </item>
+            <item points="+45">
+              Keygen with minimal local state (incomplete implementation)
+            </item>
+            <item points="+70">
+              Keygen sophistication score: 13% (INSUFFICIENT)
+            </item>
+            <item points="-70">
+              Deductions for production patterns (-70 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\behavioral_analysis.py" issue_count="2">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>__init__</function_name>
+          <line>327</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>70</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>2 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+15">
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>__init__</function_name>
+          <line>327</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>70</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>2 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+15">
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\binary_similarity_search.py" issue_count="3">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>create_similarity_search</function_name>
+          <line>1148</line>
+          <column>1</column>
+          <severity>CRITICAL</severity>
+          <confidence>115</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>4 production issues detected</description>
+          <evidence>
+            <item points="+45">
+              Search/scan function without iteration logic (single-element only)
+            </item>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>find_similar</function_name>
+          <line>1134</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>110</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>4 production issues detected</description>
+          <evidence>
+            <item points="+45">
+              Search/scan function without iteration logic (single-element only)
+            </item>
+            <item points="+20">
+              Simple regex extraction (won&apos;t find obfuscated data)
+            </item>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="3" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>find_similar</function_name>
+          <line>1134</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>110</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>4 production issues detected</description>
+          <evidence>
+            <item points="+45">
+              Search/scan function without iteration logic (single-element only)
+            </item>
+            <item points="+20">
+              Simple regex extraction (won&apos;t find obfuscated data)
+            </item>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\cfg_explorer.py" issue_count="3">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>analyze</function_name>
+          <line>1001</line>
+          <column>5</column>
+          <severity>HIGH</severity>
+          <confidence>85</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>4 production issues detected</description>
+          <evidence>
+            <item points="+30">
+              Function name implies external tool usage but no subprocess/tool calls detected
+            </item>
+            <item points="+45">
+              Processing function with no local variables (no actual computation)
+            </item>
+            <item points="+20">
+              Low complexity for analysis function (may be stub)
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>analyze</function_name>
+          <line>1001</line>
+          <column>5</column>
+          <severity>HIGH</severity>
+          <confidence>85</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>4 production issues detected</description>
+          <evidence>
+            <item points="+30">
+              Function name implies external tool usage but no subprocess/tool calls detected
+            </item>
+            <item points="+45">
+              Processing function with no local variables (no actual computation)
+            </item>
+            <item points="+20">
+              Low complexity for analysis function (may be stub)
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="3" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>draw_networkx</function_name>
+          <line>448</line>
+          <column>9</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+30">
+              &apos;Simple&apos; implementation confirmed: no iteration logic
+            </item>
+            <item points="-30">
+              Deductions for production patterns (-30 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\concolic_obfuscation_handler.py" issue_count="11">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>is_dispatcher_block</function_name>
+          <line>756</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>535</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>10 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+75">
+              CRITICAL: Patcher without conditionals (blindly patches - dangerous)
+            </item>
+            <item points="+45">
+              Patcher with no offset/pattern storage (incomplete)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 0% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>is_dispatcher_block</function_name>
+          <line>756</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>535</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>10 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+75">
+              CRITICAL: Patcher without conditionals (blindly patches - dangerous)
+            </item>
+            <item points="+45">
+              Patcher with no offset/pattern storage (incomplete)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 0% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="3" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>get_dispatcher_blocks</function_name>
+          <line>273</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>495</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>8 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+75">
+              CRITICAL: Patcher without conditionals (blindly patches - dangerous)
+            </item>
+            <item points="+45">
+              Patcher with no offset/pattern storage (incomplete)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 15% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="4" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>get_dispatcher_blocks</function_name>
+          <line>273</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>495</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>8 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+75">
+              CRITICAL: Patcher without conditionals (blindly patches - dangerous)
+            </item>
+            <item points="+45">
+              Patcher with no offset/pattern storage (incomplete)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 15% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="5" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>analyze_obfuscation</function_name>
+          <line>786</line>
+          <column>5</column>
+          <severity>HIGH</severity>
+          <confidence>95</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>4 production issues detected</description>
+          <evidence>
+            <item points="+30">
+              Function name implies external tool usage but no subprocess/tool calls detected
+            </item>
+            <item points="+45">
+              Processing function with no local variables (no actual computation)
+            </item>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="-35">
+              Deductions for production patterns (-35 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="6" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>analyze_obfuscation</function_name>
+          <line>786</line>
+          <column>5</column>
+          <severity>HIGH</severity>
+          <confidence>95</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>4 production issues detected</description>
+          <evidence>
+            <item points="+30">
+              Function name implies external tool usage but no subprocess/tool calls detected
+            </item>
+            <item points="+45">
+              Processing function with no local variables (no actual computation)
+            </item>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="-35">
+              Deductions for production patterns (-35 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="7" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>create_obfuscation_aware_engine</function_name>
+          <line>812</line>
+          <column>1</column>
+          <severity>HIGH</severity>
+          <confidence>80</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>2 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="8" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>record_state_transition</function_name>
+          <line>246</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>70</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="9" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>record_state_transition</function_name>
+          <line>246</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>70</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="10" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>clear_detected_opaques</function_name>
+          <line>157</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>Trivial implementation: no loops, conditionals, or local vars despite multiple lines</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="11" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>clear_detected_opaques</function_name>
+          <line>157</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>Trivial implementation: no loops, conditionals, or local vars despite multiple lines</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\control_flow_deobfuscation.py" issue_count="2">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>apply_patches</function_name>
+          <line>1412</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>70</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>6 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+50">
+              Patcher sophistication: 45% (FRAGILE - limited reliability)
+            </item>
+            <item points="+25">
+              Many local variables (12) - consider refactoring
+            </item>
+            <item points="-210">
+              Deductions for production patterns (-210 points)
+            </item>
+          </evidence>
+          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>apply_patches</function_name>
+          <line>1412</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>70</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>6 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+50">
+              Patcher sophistication: 45% (FRAGILE - limited reliability)
+            </item>
+            <item points="+25">
+              Many local variables (12) - consider refactoring
+            </item>
+            <item points="-210">
+              Deductions for production patterns (-210 points)
+            </item>
+          </evidence>
+          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\cross_tool_orchestrator.py" issue_count="13">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>get_status</function_name>
+          <line>356</line>
+          <column>5</column>
+          <severity>HIGH</severity>
+          <confidence>85</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>4 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+15">
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>get_status</function_name>
+          <line>356</line>
+          <column>5</column>
+          <severity>HIGH</severity>
+          <confidence>85</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>4 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+15">
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="3" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>schedule_tool</function_name>
+          <line>691</line>
+          <column>5</column>
+          <severity>HIGH</severity>
+          <confidence>85</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>4 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+15">
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="4" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>schedule_tool</function_name>
+          <line>691</line>
+          <column>5</column>
+          <severity>HIGH</severity>
+          <confidence>85</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>4 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+15">
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="5" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>create_orchestrator</function_name>
+          <line>1814</line>
+          <column>1</column>
+          <severity>HIGH</severity>
+          <confidence>85</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>4 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+15">
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="6" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>__init__</function_name>
+          <line>281</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>70</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>2 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+15">
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="7" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>__init__</function_name>
+          <line>281</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>70</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>2 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+15">
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="8" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>reset_retry_count</function_name>
+          <line>448</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>60</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+15">
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="9" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>reset_retry_count</function_name>
+          <line>448</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>60</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+15">
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="10" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>get_failure_history</function_name>
+          <line>457</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>60</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+15">
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="11" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>get_failure_history</function_name>
+          <line>457</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>60</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+15">
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="12" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>add_resolution_rule</function_name>
+          <line>478</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>60</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+15">
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="13" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>add_resolution_rule</function_name>
+          <line>478</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>60</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+15">
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\cryptographic_routine_detector.py" issue_count="2">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>__init__</function_name>
+          <line>228</line>
+          <column>5</column>
+          <severity>HIGH</severity>
+          <confidence>80</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>2 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>__init__</function_name>
+          <line>228</line>
+          <column>5</column>
+          <severity>HIGH</severity>
+          <confidence>80</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>2 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\dynamic_analyzer.py" issue_count="1">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>create_dynamic_analyzer</function_name>
+          <line>1489</line>
+          <column>1</column>
+          <severity>CRITICAL</severity>
+          <confidence>150</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>6 production issues detected</description>
+          <evidence>
+            <item points="+30">
+              Function name implies external tool usage but no subprocess/tool calls detected
+            </item>
+            <item points="+45">
+              Processing function with no local variables (no actual computation)
+            </item>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+15">
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="+15">
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\firmware_analyzer.py" issue_count="4">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>critical_findings</function_name>
+          <line>207</line>
+          <column>5</column>
+          <severity>HIGH</severity>
+          <confidence>75</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+45">
+              Search/scan function without iteration logic (single-element only)
+            </item>
+            <item points="+15">
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="+15">
+              Very short function (≤3 LOC) for non-getter/setter
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>text_files</function_name>
+          <line>183</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+15">
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="+15">
+              Very short function (≤3 LOC) for non-getter/setter
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="3" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>is_binwalk_available</function_name>
+          <line>1036</line>
+          <column>1</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+15">
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="+15">
+              Very short function (≤3 LOC) for non-getter/setter
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="4" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>analyze_firmware_file</function_name>
+          <line>1041</line>
+          <column>1</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>4 production issues detected</description>
+          <evidence>
+            <item points="+30">
+              Function name implies external tool usage but no subprocess/tool calls detected
+            </item>
+            <item points="+15">
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="+20">
+              Low complexity for analysis function (may be stub)
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\frida_advanced_hooks.py" issue_count="8">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>restore_function</function_name>
+          <line>1075</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>100</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+35">
+              Function name implies file I/O but no file operations detected
+            </item>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+15">
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-30">
+              Deductions for production patterns (-30 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>restore_function</function_name>
+          <line>1075</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>100</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+35">
+              Function name implies file I/O but no file operations detected
+            </item>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+15">
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-30">
+              Deductions for production patterns (-30 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="3" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>init_all</function_name>
+          <line>1502</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>70</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>2 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+15">
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="4" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>init_all</function_name>
+          <line>1502</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>70</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>2 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+15">
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="5" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>replace_function</function_name>
+          <line>1067</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>65</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>4 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+15">
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-30">
+              Deductions for production patterns (-30 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="6" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>replace_function</function_name>
+          <line>1067</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>65</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>4 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+15">
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-30">
+              Deductions for production patterns (-30 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="7" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>clear_exceptions</function_name>
+          <line>898</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+15">
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="+15">
+              Very short function (≤3 LOC) for non-getter/setter
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="8" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>clear_exceptions</function_name>
+          <line>898</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+15">
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="+15">
+              Very short function (≤3 LOC) for non-getter/setter
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\frida_gui_integration.py" issue_count="13">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>validate_script</function_name>
+          <line>1076</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>185</confidence>
+          <issue_type>empty_function</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Validator with no verification calls (ineffective validation)
+            </item>
+            <item points="+45">
+              Validator with single return (no error differentiation)
+            </item>
+            <item points="+70">
+              Validator sophistication: 20% (WEAK - bypassed easily)
+            </item>
+            <item points="+30">
+              &apos;Simple&apos; implementation confirmed: no iteration logic
+            </item>
+            <item points="-45">
+              Deductions for production patterns (-45 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual logic for &apos;validate_script&apos;</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>validate_script</function_name>
+          <line>1076</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>185</confidence>
+          <issue_type>empty_function</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Validator with no verification calls (ineffective validation)
+            </item>
+            <item points="+45">
+              Validator with single return (no error differentiation)
+            </item>
+            <item points="+70">
+              Validator sophistication: 20% (WEAK - bypassed easily)
+            </item>
+            <item points="+30">
+              &apos;Simple&apos; implementation confirmed: no iteration logic
+            </item>
+            <item points="-45">
+              Deductions for production patterns (-45 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual logic for &apos;validate_script&apos;</suggested_fix>
+        </issue>
+        <issue id="3" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>output_callback</function_name>
+          <line>1204</line>
+          <column>25</column>
+          <severity>HIGH</severity>
+          <confidence>80</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+50">
+              Function has no meaningful content (≤1 line)
+            </item>
+            <item points="+15">
+              Very short function (≤3 LOC) for non-getter/setter
+            </item>
+            <item points="+15">
+              Function has only 1 caller and &lt;3 lines (may be stub)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="4" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>test_script</function_name>
+          <line>1099</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>65</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>2 production issues detected</description>
+          <evidence>
+            <item points="+50">
+              Validation/check function without conditional logic (always returns same value)
+            </item>
+            <item points="+15">
+              Very short function (≤3 LOC) for non-getter/setter
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="5" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>test_script</function_name>
+          <line>1099</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>65</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>2 production issues detected</description>
+          <evidence>
+            <item points="+50">
+              Validation/check function without conditional logic (always returns same value)
+            </item>
+            <item points="+15">
+              Very short function (≤3 LOC) for non-getter/setter
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="6" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>__init__</function_name>
+          <line>318</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>Trivial implementation: no loops, conditionals, or local vars despite multiple lines</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="7" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>__init__</function_name>
+          <line>318</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>Trivial implementation: no loops, conditionals, or local vars despite multiple lines</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="8" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>update_data_tree</function_name>
+          <line>488</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>Trivial implementation: no loops, conditionals, or local vars despite multiple lines</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="9" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>update_data_tree</function_name>
+          <line>488</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>Trivial implementation: no loops, conditionals, or local vars despite multiple lines</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="10" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>__init__</function_name>
+          <line>550</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>Trivial implementation: no loops, conditionals, or local vars despite multiple lines</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="11" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>__init__</function_name>
+          <line>550</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>Trivial implementation: no loops, conditionals, or local vars despite multiple lines</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="12" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>__init__</function_name>
+          <line>659</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>Trivial implementation: no loops, conditionals, or local vars despite multiple lines</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="13" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>__init__</function_name>
+          <line>659</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>Trivial implementation: no loops, conditionals, or local vars despite multiple lines</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\frida_script_manager.py" issue_count="1">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>on_message</function_name>
+          <line>387</line>
+          <column>13</column>
+          <severity>HIGH</severity>
+          <confidence>95</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>4 production issues detected</description>
+          <evidence>
+            <item points="+50">
+              Function has no meaningful content (≤1 line)
+            </item>
+            <item points="+15">
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="+15">
+              Very short function (≤3 LOC) for non-getter/setter
+            </item>
+            <item points="+15">
+              Function has only 1 caller and &lt;3 lines (may be stub)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\ghidra_binary_integration.py" issue_count="10">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>generate_keygen_template</function_name>
+          <line>152</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>225</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>6 production issues detected</description>
+          <evidence>
+            <item points="+90">
+              CRITICAL: Keygen lacks cryptographic operations (insufficient for production)
+            </item>
+            <item points="+75">
+              CRITICAL: Keygen without loops or conditionals (linear execution only)
+            </item>
+            <item points="+50">
+              Keygen with trivial complexity (insufficient for production)
+            </item>
+            <item points="+45">
+              Keygen with minimal local state (incomplete implementation)
+            </item>
+            <item points="+70">
+              Keygen sophistication score: 0% (INSUFFICIENT)
+            </item>
+            <item points="-105">
+              Deductions for production patterns (-105 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>generate_keygen_template</function_name>
+          <line>152</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>225</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>6 production issues detected</description>
+          <evidence>
+            <item points="+90">
+              CRITICAL: Keygen lacks cryptographic operations (insufficient for production)
+            </item>
+            <item points="+75">
+              CRITICAL: Keygen without loops or conditionals (linear execution only)
+            </item>
+            <item points="+50">
+              Keygen with trivial complexity (insufficient for production)
+            </item>
+            <item points="+45">
+              Keygen with minimal local state (incomplete implementation)
+            </item>
+            <item points="+70">
+              Keygen sophistication score: 0% (INSUFFICIENT)
+            </item>
+            <item points="-105">
+              Deductions for production patterns (-105 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="3" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>analyze_license_validation</function_name>
+          <line>34</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>155</confidence>
+          <issue_type>naive_implementation</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+60">
+              Protection analyzer without signature database (weak detection)
+            </item>
+            <item points="+75">
+              CRITICAL: Analyzer without binary format parsing (string matching only)
+            </item>
+            <item points="+55">
+              Analyzer without loops (single pattern check only)
+            </item>
+            <item points="+70">
+              Analyzer sophistication: 25% (WEAK - misses most protections)
+            </item>
+            <item points="-105">
+              Deductions for production patterns (-105 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="4" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>analyze_license_validation</function_name>
+          <line>34</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>155</confidence>
+          <issue_type>naive_implementation</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+60">
+              Protection analyzer without signature database (weak detection)
+            </item>
+            <item points="+75">
+              CRITICAL: Analyzer without binary format parsing (string matching only)
+            </item>
+            <item points="+55">
+              Analyzer without loops (single pattern check only)
+            </item>
+            <item points="+70">
+              Analyzer sophistication: 25% (WEAK - misses most protections)
+            </item>
+            <item points="-105">
+              Deductions for production patterns (-105 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="5" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>detect_protections</function_name>
+          <line>69</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>130</confidence>
+          <issue_type>naive_implementation</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+60">
+              Protection analyzer without signature database (weak detection)
+            </item>
+            <item points="+75">
+              CRITICAL: Analyzer without binary format parsing (string matching only)
+            </item>
+            <item points="+55">
+              Analyzer without loops (single pattern check only)
+            </item>
+            <item points="+70">
+              Analyzer sophistication: 25% (WEAK - misses most protections)
+            </item>
+            <item points="-130">
+              Deductions for production patterns (-130 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="6" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>detect_protections</function_name>
+          <line>69</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>130</confidence>
+          <issue_type>naive_implementation</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+60">
+              Protection analyzer without signature database (weak detection)
+            </item>
+            <item points="+75">
+              CRITICAL: Analyzer without binary format parsing (string matching only)
+            </item>
+            <item points="+55">
+              Analyzer without loops (single pattern check only)
+            </item>
+            <item points="+70">
+              Analyzer sophistication: 25% (WEAK - misses most protections)
+            </item>
+            <item points="-130">
+              Deductions for production patterns (-130 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="7" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>get_available_scripts</function_name>
+          <line>418</line>
+          <column>5</column>
+          <severity>HIGH</severity>
+          <confidence>80</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>2 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="8" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>get_available_scripts</function_name>
+          <line>418</line>
+          <column>5</column>
+          <severity>HIGH</severity>
+          <confidence>80</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>2 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="9" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>refresh_scripts</function_name>
+          <line>450</line>
+          <column>5</column>
+          <severity>HIGH</severity>
+          <confidence>80</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>2 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="10" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>refresh_scripts</function_name>
+          <line>450</line>
+          <column>5</column>
+          <severity>HIGH</severity>
+          <confidence>80</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>2 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\ghidra_output_parser.py" issue_count="2">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>__init__</function_name>
+          <line>90</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-25">
+              Deductions for production patterns (-25 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>__init__</function_name>
+          <line>90</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-25">
+              Deductions for production patterns (-25 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\ghidra_script_runner.py" issue_count="2">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>validate_script</function_name>
+          <line>420</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>70</confidence>
+          <issue_type>empty_function</issue_type>
+          <description>6 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Validator with no verification calls (ineffective validation)
+            </item>
+            <item points="+70">
+              Validator sophistication: 35% (WEAK - bypassed easily)
+            </item>
+            <item points="+30">
+              &apos;Simple&apos; implementation confirmed: no iteration logic
+            </item>
+            <item points="+15">
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-155">
+              Deductions for production patterns (-155 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual logic for &apos;validate_script&apos;</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>validate_script</function_name>
+          <line>420</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>70</confidence>
+          <issue_type>empty_function</issue_type>
+          <description>6 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Validator with no verification calls (ineffective validation)
+            </item>
+            <item points="+70">
+              Validator sophistication: 35% (WEAK - bypassed easily)
+            </item>
+            <item points="+30">
+              &apos;Simple&apos; implementation confirmed: no iteration logic
+            </item>
+            <item points="+15">
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-155">
+              Deductions for production patterns (-155 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual logic for &apos;validate_script&apos;</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\memory_forensics_engine.py" issue_count="3">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>analyze_memory_dump_file</function_name>
+          <line>1661</line>
+          <column>1</column>
+          <severity>HIGH</severity>
+          <confidence>90</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+35">
+              Function name implies file I/O but no file operations detected
+            </item>
+            <item points="+30">
+              Function name implies external tool usage but no subprocess/tool calls detected
+            </item>
+            <item points="+15">
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="+20">
+              Low complexity for analysis function (may be stub)
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>has_suspicious_activity</function_name>
+          <line>155</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>70</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>2 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+15">
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="3" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>is_volatility3_available</function_name>
+          <line>1656</line>
+          <column>1</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+15">
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="+15">
+              Very short function (≤3 LOC) for non-getter/setter
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\multi_format_analyzer.py" issue_count="2">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>analyze_java</function_name>
+          <line>563</line>
+          <column>5</column>
+          <severity>HIGH</severity>
+          <confidence>95</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>4 production issues detected</description>
+          <evidence>
+            <item points="+30">
+              Function name implies external tool usage but no subprocess/tool calls detected
+            </item>
+            <item points="+45">
+              Processing function with no local variables (no actual computation)
+            </item>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="-35">
+              Deductions for production patterns (-35 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>analyze_java</function_name>
+          <line>563</line>
+          <column>5</column>
+          <severity>HIGH</severity>
+          <confidence>95</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>4 production issues detected</description>
+          <evidence>
+            <item points="+30">
+              Function name implies external tool usage but no subprocess/tool calls detected
+            </item>
+            <item points="+45">
+              Processing function with no local variables (no actual computation)
+            </item>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="-35">
+              Deductions for production patterns (-35 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\protection_scanner.py" issue_count="4">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>__init__</function_name>
+          <line>1143</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>Trivial implementation: no loops, conditionals, or local vars despite multiple lines</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>__init__</function_name>
+          <line>1143</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>Trivial implementation: no loops, conditionals, or local vars despite multiple lines</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="3" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>__init__</function_name>
+          <line>1225</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>Trivial implementation: no loops, conditionals, or local vars despite multiple lines</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="4" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>__init__</function_name>
+          <line>1225</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>Trivial implementation: no loops, conditionals, or local vars despite multiple lines</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\radare2_advanced_patcher.py" issue_count="12">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>apply_patch</function_name>
+          <line>1090</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>470</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>9 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+75">
+              CRITICAL: Patcher without conditionals (blindly patches - dangerous)
+            </item>
+            <item points="+45">
+              Patcher with no offset/pattern storage (incomplete)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 0% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="-50">
+              Deductions for production patterns (-50 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>apply_patch</function_name>
+          <line>1090</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>470</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>9 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+75">
+              CRITICAL: Patcher without conditionals (blindly patches - dangerous)
+            </item>
+            <item points="+45">
+              Patcher with no offset/pattern storage (incomplete)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 0% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="-50">
+              Deductions for production patterns (-50 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="3" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>revert_patch</function_name>
+          <line>1100</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>470</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>9 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+75">
+              CRITICAL: Patcher without conditionals (blindly patches - dangerous)
+            </item>
+            <item points="+45">
+              Patcher with no offset/pattern storage (incomplete)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 0% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="-50">
+              Deductions for production patterns (-50 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="4" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>revert_patch</function_name>
+          <line>1100</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>470</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>9 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+75">
+              CRITICAL: Patcher without conditionals (blindly patches - dangerous)
+            </item>
+            <item points="+45">
+              Patcher with no offset/pattern storage (incomplete)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 0% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="-50">
+              Deductions for production patterns (-50 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="5" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>generate_patch_script</function_name>
+          <line>1179</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>290</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>6 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 15% (DANGEROUS - will break on updates)
+            </item>
+            <item points="-55">
+              Deductions for production patterns (-55 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="6" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>generate_patch_script</function_name>
+          <line>1179</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>290</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>6 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 15% (DANGEROUS - will break on updates)
+            </item>
+            <item points="-55">
+              Deductions for production patterns (-55 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="7" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>patch_function_prologue</function_name>
+          <line>182</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>260</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>6 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 15% (DANGEROUS - will break on updates)
+            </item>
+            <item points="-85">
+              Deductions for production patterns (-85 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="8" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>patch_function_prologue</function_name>
+          <line>182</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>260</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>6 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 15% (DANGEROUS - will break on updates)
+            </item>
+            <item points="-85">
+              Deductions for production patterns (-85 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="9" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>patch_function_epilogue</function_name>
+          <line>247</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>260</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>6 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 25% (DANGEROUS - will break on updates)
+            </item>
+            <item points="-85">
+              Deductions for production patterns (-85 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="10" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>patch_function_epilogue</function_name>
+          <line>247</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>260</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>6 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 25% (DANGEROUS - will break on updates)
+            </item>
+            <item points="-85">
+              Deductions for production patterns (-85 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="11" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>load_patches</function_name>
+          <line>1147</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>60</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 35% (DANGEROUS - will break on updates)
+            </item>
+            <item points="-225">
+              Deductions for production patterns (-225 points)
+            </item>
+          </evidence>
+          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
+        </issue>
+        <issue id="12" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>load_patches</function_name>
+          <line>1147</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>60</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 35% (DANGEROUS - will break on updates)
+            </item>
+            <item points="-225">
+              Deductions for production patterns (-225 points)
+            </item>
+          </evidence>
+          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\radare2_enhanced_integration.py" issue_count="1">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>create_enhanced_r2_integration</function_name>
+          <line>833</line>
+          <column>1</column>
+          <severity>MEDIUM</severity>
+          <confidence>70</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\radare2_graph_view.py" issue_count="1">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>create_graph_generator</function_name>
+          <line>544</line>
+          <column>1</column>
+          <severity>MEDIUM</severity>
+          <confidence>70</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\radare2_patch_engine.py" issue_count="20">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>patch_function_prologue</function_name>
+          <line>662</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>385</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>7 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+75">
+              CRITICAL: Patcher without conditionals (blindly patches - dangerous)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 0% (DANGEROUS - will break on updates)
+            </item>
+            <item points="-35">
+              Deductions for production patterns (-35 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>patch_function_prologue</function_name>
+          <line>662</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>385</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>7 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+75">
+              CRITICAL: Patcher without conditionals (blindly patches - dangerous)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 0% (DANGEROUS - will break on updates)
+            </item>
+            <item points="-35">
+              Deductions for production patterns (-35 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="3" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>patch_function_epilogue</function_name>
+          <line>684</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>385</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>7 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+75">
+              CRITICAL: Patcher without conditionals (blindly patches - dangerous)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 10% (DANGEROUS - will break on updates)
+            </item>
+            <item points="-35">
+              Deductions for production patterns (-35 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="4" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>patch_function_epilogue</function_name>
+          <line>684</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>385</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>7 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+75">
+              CRITICAL: Patcher without conditionals (blindly patches - dangerous)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 10% (DANGEROUS - will break on updates)
+            </item>
+            <item points="-35">
+              Deductions for production patterns (-35 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="5" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>create_patch_set</function_name>
+          <line>861</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>385</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>7 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+75">
+              CRITICAL: Patcher without conditionals (blindly patches - dangerous)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 10% (DANGEROUS - will break on updates)
+            </item>
+            <item points="-35">
+              Deductions for production patterns (-35 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="6" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>create_patch_set</function_name>
+          <line>861</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>385</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>7 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+75">
+              CRITICAL: Patcher without conditionals (blindly patches - dangerous)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 10% (DANGEROUS - will break on updates)
+            </item>
+            <item points="-35">
+              Deductions for production patterns (-35 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="7" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>revert_patch</function_name>
+          <line>835</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>295</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>7 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 15% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-75">
+              Deductions for production patterns (-75 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="8" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>revert_patch</function_name>
+          <line>835</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>295</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>7 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 15% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-75">
+              Deductions for production patterns (-75 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="9" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>create_inline_patch</function_name>
+          <line>745</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>290</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>6 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 15% (DANGEROUS - will break on updates)
+            </item>
+            <item points="-55">
+              Deductions for production patterns (-55 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="10" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>create_inline_patch</function_name>
+          <line>745</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>290</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>6 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 15% (DANGEROUS - will break on updates)
+            </item>
+            <item points="-55">
+              Deductions for production patterns (-55 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="11" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>apply_patch</function_name>
+          <line>776</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>270</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>6 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 15% (DANGEROUS - will break on updates)
+            </item>
+            <item points="-75">
+              Deductions for production patterns (-75 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="12" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>apply_patch</function_name>
+          <line>776</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>270</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>6 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 15% (DANGEROUS - will break on updates)
+            </item>
+            <item points="-75">
+              Deductions for production patterns (-75 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="13" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>export_patch_set</function_name>
+          <line>883</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>230</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>7 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 15% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-140">
+              Deductions for production patterns (-140 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="14" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>export_patch_set</function_name>
+          <line>883</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>230</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>7 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 15% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-140">
+              Deductions for production patterns (-140 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="15" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>create_jump_table_patch</function_name>
+          <line>710</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>200</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+50">
+              Patcher sophistication: 45% (FRAGILE - limited reliability)
+            </item>
+            <item points="-55">
+              Deductions for production patterns (-55 points)
+            </item>
+          </evidence>
+          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
+        </issue>
+        <issue id="16" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>create_jump_table_patch</function_name>
+          <line>710</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>200</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+50">
+              Patcher sophistication: 45% (FRAGILE - limited reliability)
+            </item>
+            <item points="-55">
+              Deductions for production patterns (-55 points)
+            </item>
+          </evidence>
+          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
+        </issue>
+        <issue id="17" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>apply_patch_set</function_name>
+          <line>802</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>150</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+50">
+              Patcher sophistication: 45% (FRAGILE - limited reliability)
+            </item>
+            <item points="-105">
+              Deductions for production patterns (-105 points)
+            </item>
+          </evidence>
+          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
+        </issue>
+        <issue id="18" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>apply_patch_set</function_name>
+          <line>802</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>150</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+50">
+              Patcher sophistication: 45% (FRAGILE - limited reliability)
+            </item>
+            <item points="-105">
+              Deductions for production patterns (-105 points)
+            </item>
+          </evidence>
+          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
+        </issue>
+        <issue id="19" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>patch_return_value</function_name>
+          <line>395</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>145</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>7 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 35% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+20">
+              Very long function (229 lines total)
+            </item>
+            <item points="+40">
+              Excessive local variables (17) - high complexity
+            </item>
+            <item points="-200">
+              Deductions for production patterns (-200 points)
+            </item>
+          </evidence>
+          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
+        </issue>
+        <issue id="20" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>patch_return_value</function_name>
+          <line>395</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>145</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>7 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 35% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+20">
+              Very long function (229 lines total)
+            </item>
+            <item points="+40">
+              Excessive local variables (17) - high complexity
+            </item>
+            <item points="-200">
+              Deductions for production patterns (-200 points)
+            </item>
+          </evidence>
+          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\radare2_performance_metrics.py" issue_count="1">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>create_performance_monitor</function_name>
+          <line>455</line>
+          <column>1</column>
+          <severity>MEDIUM</severity>
+          <confidence>70</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\radare2_realtime_analyzer.py" issue_count="5">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>create_realtime_analyzer</function_name>
+          <line>1497</line>
+          <column>1</column>
+          <severity>CRITICAL</severity>
+          <confidence>155</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>7 production issues detected</description>
+          <evidence>
+            <item points="+30">
+              Function name implies complex operation (&apos;create&apos;) but has ≤3 lines and low complexity
+            </item>
+            <item points="+30">
+              Function name implies external tool usage but no subprocess/tool calls detected
+            </item>
+            <item points="+45">
+              Processing function with no local variables (no actual computation)
+            </item>
+            <item points="+20">
+              Low complexity for analysis function (may be stub)
+            </item>
+            <item points="+15">
+              Very short function (≤3 LOC) for non-getter/setter
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>on_created</function_name>
+          <line>73</line>
+          <column>9</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-25">
+              Deductions for production patterns (-25 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="3" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>on_created</function_name>
+          <line>73</line>
+          <column>9</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-25">
+              Deductions for production patterns (-25 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="4" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>get_status</function_name>
+          <line>1235</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-25">
+              Deductions for production patterns (-25 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="5" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>get_status</function_name>
+          <line>1235</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-25">
+              Deductions for production patterns (-25 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\radare2_scripting.py" issue_count="2">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>create_automated_patcher_script</function_name>
+          <line>467</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>295</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>7 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+75">
+              CRITICAL: Patcher without conditionals (blindly patches - dangerous)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 30% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+15">
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="-80">
+              Deductions for production patterns (-80 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>create_automated_patcher_script</function_name>
+          <line>467</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>295</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>7 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+75">
+              CRITICAL: Patcher without conditionals (blindly patches - dangerous)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 30% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+15">
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+            </item>
+            <item points="-80">
+              Deductions for production patterns (-80 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\radare2_session_helpers.py" issue_count="2">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>add_command</function_name>
+          <line>249</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>70</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>add_command</function_name>
+          <line>249</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>70</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-10">
+              Deductions for production patterns (-10 points)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\radare2_session_manager.py" issue_count="4">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>last_used</function_name>
+          <line>226</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>Trivial implementation: no loops, conditionals, or local vars despite multiple lines</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>idle_time</function_name>
+          <line>237</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>Trivial implementation: no loops, conditionals, or local vars despite multiple lines</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="3" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>get_session_metrics</function_name>
+          <line>557</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>Trivial implementation: no loops, conditionals, or local vars despite multiple lines</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="4" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>get_session_metrics</function_name>
+          <line>557</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>Trivial implementation: no loops, conditionals, or local vars despite multiple lines</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\simconcolic.py" issue_count="3">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>all_states</function_name>
+          <line>383</line>
+          <column>5</column>
+          <severity>HIGH</severity>
+          <confidence>80</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>2 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>abandon</function_name>
+          <line>182</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>Trivial implementation: no loops, conditionals, or local vars despite multiple lines</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="3" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>abandon</function_name>
+          <line>182</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>Trivial implementation: no loops, conditionals, or local vars despite multiple lines</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\stalker_manager.py" issue_count="2">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>get_licensing_routines</function_name>
+          <line>461</line>
+          <column>5</column>
+          <severity>HIGH</severity>
+          <confidence>80</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>2 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>get_licensing_routines</function_name>
+          <line>461</line>
+          <column>5</column>
+          <severity>HIGH</severity>
+          <confidence>80</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>2 production issues detected</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\taint_analyzer.py" issue_count="2">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>get_results</function_name>
+          <line>836</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>Trivial implementation: no loops, conditionals, or local vars despite multiple lines</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>get_results</function_name>
+          <line>836</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>55</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>Trivial implementation: no loops, conditionals, or local vars despite multiple lines</description>
+          <evidence>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+      <file path="intellicrack/core/analysis\yara_scanner.py" issue_count="23">
+        <issue id="1" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>initialize_patch_database</function_name>
+          <line>2555</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>390</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>9 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+75">
+              CRITICAL: Patcher without conditionals (blindly patches - dangerous)
+            </item>
+            <item points="+45">
+              Patcher with no offset/pattern storage (incomplete)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 0% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="-130">
+              Deductions for production patterns (-130 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="2" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>initialize_patch_database</function_name>
+          <line>2555</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>390</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>9 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+75">
+              CRITICAL: Patcher without conditionals (blindly patches - dangerous)
+            </item>
+            <item points="+45">
+              Patcher with no offset/pattern storage (incomplete)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 0% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="-130">
+              Deductions for production patterns (-130 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="3" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>validate_patch</function_name>
+          <line>2958</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>380</confidence>
+          <issue_type>empty_function</issue_type>
+          <description>9 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Validator with no verification calls (ineffective validation)
+            </item>
+            <item points="+70">
+              Validator sophistication: 35% (WEAK - bypassed easily)
+            </item>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 15% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-145">
+              Deductions for production patterns (-145 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="4" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>validate_patch</function_name>
+          <line>2958</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>380</confidence>
+          <issue_type>empty_function</issue_type>
+          <description>9 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Validator with no verification calls (ineffective validation)
+            </item>
+            <item points="+70">
+              Validator sophistication: 35% (WEAK - bypassed easily)
+            </item>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 15% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-145">
+              Deductions for production patterns (-145 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="5" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>track_patch_effectiveness</function_name>
+          <line>3060</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>380</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>8 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+45">
+              Patcher with no offset/pattern storage (incomplete)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 15% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-35">
+              Deductions for production patterns (-35 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="6" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>track_patch_effectiveness</function_name>
+          <line>3060</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>380</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>8 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+45">
+              Patcher with no offset/pattern storage (incomplete)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 15% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-35">
+              Deductions for production patterns (-35 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="7" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>validate_rule_syntax</function_name>
+          <line>2428</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>340</confidence>
+          <issue_type>empty_function</issue_type>
+          <description>7 production issues detected</description>
+          <evidence>
+            <item points="+50">
+              Validation/check function without conditional logic (always returns same value)
+            </item>
+            <item points="+85">
+              CRITICAL: Validator with no verification calls (ineffective validation)
+            </item>
+            <item points="+95">
+              CRITICAL: Validator without conditionals (always same result)
+            </item>
+            <item points="+40">
+              Validator with no local validation state (too simple)
+            </item>
+            <item points="+70">
+              Validator sophistication: 15% (WEAK - bypassed easily)
+            </item>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="-55">
+              Deductions for production patterns (-55 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual logic for &apos;validate_rule_syntax&apos;</suggested_fix>
+        </issue>
+        <issue id="8" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>validate_rule_syntax</function_name>
+          <line>2428</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>340</confidence>
+          <issue_type>empty_function</issue_type>
+          <description>7 production issues detected</description>
+          <evidence>
+            <item points="+50">
+              Validation/check function without conditional logic (always returns same value)
+            </item>
+            <item points="+85">
+              CRITICAL: Validator with no verification calls (ineffective validation)
+            </item>
+            <item points="+95">
+              CRITICAL: Validator without conditionals (always same result)
+            </item>
+            <item points="+40">
+              Validator with no local validation state (too simple)
+            </item>
+            <item points="+70">
+              Validator sophistication: 15% (WEAK - bypassed easily)
+            </item>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="-55">
+              Deductions for production patterns (-55 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual logic for &apos;validate_rule_syntax&apos;</suggested_fix>
+        </issue>
+        <issue id="9" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>get_patch_metrics</function_name>
+          <line>3082</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>325</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>7 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 15% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-45">
+              Deductions for production patterns (-45 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="10" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>get_patch_metrics</function_name>
+          <line>3082</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>325</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>7 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 15% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-45">
+              Deductions for production patterns (-45 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="11" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>add_category_patches</function_name>
+          <line>2927</line>
+          <column>9</column>
+          <severity>CRITICAL</severity>
+          <confidence>270</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>6 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 35% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+30">
+              Weak encryption detected (XOR, character-by-character)
+            </item>
+            <item points="-45">
+              Deductions for production patterns (-45 points)
+            </item>
+          </evidence>
+          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
+        </issue>
+        <issue id="12" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>rollback_patch</function_name>
+          <line>3034</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>245</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>6 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 30% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-75">
+              Deductions for production patterns (-75 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="13" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>rollback_patch</function_name>
+          <line>3034</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>245</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>6 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 30% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+            <item points="-75">
+              Deductions for production patterns (-75 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="14" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>recommend_patch_sequence</function_name>
+          <line>2895</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>205</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>6 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 35% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+30">
+              Weak encryption detected (XOR, character-by-character)
+            </item>
+            <item points="-110">
+              Deductions for production patterns (-110 points)
+            </item>
+          </evidence>
+          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
+        </issue>
+        <issue id="15" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>recommend_patch_sequence</function_name>
+          <line>2895</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>205</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>6 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 35% (DANGEROUS - will break on updates)
+            </item>
+            <item points="+30">
+              Weak encryption detected (XOR, character-by-character)
+            </item>
+            <item points="-110">
+              Deductions for production patterns (-110 points)
+            </item>
+          </evidence>
+          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
+        </issue>
+        <issue id="16" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>get_patch_suggestions</function_name>
+          <line>2704</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>195</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 35% (DANGEROUS - will break on updates)
+            </item>
+            <item points="-90">
+              Deductions for production patterns (-90 points)
+            </item>
+          </evidence>
+          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
+        </issue>
+        <issue id="17" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>get_patch_suggestions</function_name>
+          <line>2704</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>195</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+50">
+              Patcher without backup capability (destructive without safety)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 35% (DANGEROUS - will break on updates)
+            </item>
+            <item points="-90">
+              Deductions for production patterns (-90 points)
+            </item>
+          </evidence>
+          <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
+        </issue>
+        <issue id="18" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>get_scan_progress</function_name>
+          <line>1905</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>125</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+45">
+              Search/scan function without iteration logic (single-element only)
+            </item>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="19" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>get_scan_progress</function_name>
+          <line>1905</line>
+          <column>5</column>
+          <severity>CRITICAL</severity>
+          <confidence>125</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>3 production issues detected</description>
+          <evidence>
+            <item points="+45">
+              Search/scan function without iteration logic (single-element only)
+            </item>
+            <item points="+55">
+              Trivial implementation: no loops, conditionals, or local vars despite multiple lines
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="20" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>apply_patch</function_name>
+          <line>2989</line>
+          <column>5</column>
+          <severity>HIGH</severity>
+          <confidence>85</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 30% (DANGEROUS - will break on updates)
+            </item>
+            <item points="-210">
+              Deductions for production patterns (-210 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="21" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>apply_patch</function_name>
+          <line>2989</line>
+          <column>5</column>
+          <severity>HIGH</severity>
+          <confidence>85</confidence>
+          <issue_type>hardcoded_return</issue_type>
+          <description>5 production issues detected</description>
+          <evidence>
+            <item points="+85">
+              CRITICAL: Patcher without pattern search (hardcoded offsets only)
+            </item>
+            <item points="+70">
+              Patcher without format parsing (not PE/ELF aware - dangerous)
+            </item>
+            <item points="+60">
+              Patcher without loops (single-target/single-patch only)
+            </item>
+            <item points="+80">
+              Patcher sophistication: 30% (DANGEROUS - will break on updates)
+            </item>
+            <item points="-210">
+              Deductions for production patterns (-210 points)
+            </item>
+          </evidence>
+          <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
+        </issue>
+        <issue id="22" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>set_scan_progress_callback</function_name>
+          <line>1915</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>70</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>2 production issues detected</description>
+          <evidence>
+            <item points="+45">
+              Search/scan function without iteration logic (single-element only)
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+        <issue id="23" completed="false">
+          <checkbox>[ ]</checkbox>
+          <function_name>set_scan_progress_callback</function_name>
+          <line>1915</line>
+          <column>5</column>
+          <severity>MEDIUM</severity>
+          <confidence>70</confidence>
+          <issue_type>stub_detection</issue_type>
+          <description>2 production issues detected</description>
+          <evidence>
+            <item points="+45">
+              Search/scan function without iteration logic (single-element only)
+            </item>
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
+            </item>
+          </evidence>
+          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
+        </issue>
+      </file>
+    </language>
+  </languages>
+</intellicrack_scan_results>

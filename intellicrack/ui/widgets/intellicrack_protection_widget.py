@@ -33,9 +33,9 @@ from intellicrack.handlers.pyqt6_handler import (
     pyqtSignal,
 )
 
-from ...ai.interactive_assistant import IntellicrackAIAssistant
 from ...ai.ai_file_tools import get_ai_file_tools
 from ...ai.code_analysis_tools import AIAssistant
+from ...ai.interactive_assistant import IntellicrackAIAssistant
 from ...protection.intellicrack_protection_core import (
     IntellicrackProtectionCore,
     ProtectionAnalysis,

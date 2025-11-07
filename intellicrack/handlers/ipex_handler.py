@@ -56,7 +56,7 @@ def _preload_critical_dlls(dll_dirs):
                 dll_path = Path(dll_dir) / dll_name
                 if dll_path.exists():
                     try:
-                        dll_handle = ctypes.CDLL(str(dll_path), winmode=0)
+                        ctypes.CDLL(str(dll_path), winmode=0)
                         logger.debug("Pre-loaded %s", dll_name)
                         break
                     except OSError as os_err:

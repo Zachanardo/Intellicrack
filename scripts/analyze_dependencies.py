@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Intellicrack Dependency Analyzer
+"""Intellicrack Dependency Analyzer.
 
 Scans the entire codebase to identify third-party imports and cross-references
 them with installed packages to detect missing dependencies.
@@ -8,16 +7,17 @@ them with installed packages to detect missing dependencies.
 
 import ast
 import sys
-from pathlib import Path
 from collections import defaultdict
-from importlib.metadata import distributions, PackageNotFoundError
-from typing import Set, Dict, List, Tuple
+from importlib.metadata import distributions
+from pathlib import Path
+from typing import Dict, List, Set, Tuple
 
 
 class DependencyAnalyzer:
     """Analyzes Python code to identify and validate third-party dependencies."""
 
     def __init__(self, project_root: Path):
+        """Initialize the dependency analyzer with project root path."""
         self.project_root = project_root
         self.local_modules = self._discover_local_modules()
         self.installed_packages = self._get_installed_packages()
@@ -43,7 +43,7 @@ class DependencyAnalyzer:
 
             # Build module hierarchy
             for i in range(len(parts)):
-                module_name = ".".join(parts[:i+1])
+                module_name = ".".join(parts[: i + 1])
                 local_modules.add(module_name)
 
         # Also find individual .py files in intellicrack/ directory
@@ -92,31 +92,211 @@ class DependencyAnalyzer:
         """Get standard library module names."""
         stdlib = {
             # Common stdlib modules
-            "abc", "aifc", "argparse", "array", "ast", "asynchat", "asyncio", "asyncore",
-            "atexit", "audioop", "base64", "bdb", "binascii", "binhex", "bisect", "builtins",
-            "bz2", "calendar", "cgi", "cgitb", "chunk", "cmath", "cmd", "code", "codecs",
-            "codeop", "collections", "colorsys", "compileall", "concurrent", "configparser",
-            "contextlib", "contextvars", "copy", "copyreg", "crypt", "csv", "ctypes", "curses",
-            "dataclasses", "datetime", "dbm", "decimal", "difflib", "dis", "distutils", "doctest",
-            "email", "encodings", "enum", "errno", "faulthandler", "fcntl", "filecmp", "fileinput",
-            "fnmatch", "fractions", "ftplib", "functools", "gc", "getopt", "getpass", "gettext",
-            "glob", "graphlib", "grp", "gzip", "hashlib", "heapq", "hmac", "html", "http", "idlelib",
-            "imaplib", "imghdr", "imp", "importlib", "inspect", "io", "ipaddress", "itertools",
-            "json", "keyword", "lib2to3", "linecache", "locale", "logging", "lzma", "mailbox",
-            "mailcap", "marshal", "math", "mimetypes", "mmap", "modulefinder", "msilib", "msvcrt",
-            "multiprocessing", "netrc", "nis", "nntplib", "numbers", "operator", "optparse", "os",
-            "ossaudiodev", "parser", "pathlib", "pdb", "pickle", "pickletools", "pipes", "pkgutil",
-            "platform", "plistlib", "poplib", "posix", "posixpath", "pprint", "profile", "pstats",
-            "pty", "pwd", "py_compile", "pyclbr", "pydoc", "queue", "quopri", "random", "re",
-            "readline", "reprlib", "resource", "rlcompleter", "runpy", "sched", "secrets", "select",
-            "selectors", "shelve", "shlex", "shutil", "signal", "site", "smtpd", "smtplib", "sndhdr",
-            "socket", "socketserver", "spwd", "sqlite3", "ssl", "stat", "statistics", "string",
-            "stringprep", "struct", "subprocess", "sunau", "symtable", "sys", "sysconfig", "syslog",
-            "tabnanny", "tarfile", "telnetlib", "tempfile", "termios", "test", "textwrap", "threading",
-            "time", "timeit", "tkinter", "token", "tokenize", "tomllib", "trace", "traceback",
-            "tracemalloc", "tty", "turtle", "turtledemo", "types", "typing", "unicodedata", "unittest",
-            "urllib", "uu", "uuid", "venv", "warnings", "wave", "weakref", "webbrowser", "winreg",
-            "winsound", "wsgiref", "xdrlib", "xml", "xmlrpc", "zipapp", "zipfile", "zipimport", "zlib",
+            "abc",
+            "aifc",
+            "argparse",
+            "array",
+            "ast",
+            "asynchat",
+            "asyncio",
+            "asyncore",
+            "atexit",
+            "audioop",
+            "base64",
+            "bdb",
+            "binascii",
+            "binhex",
+            "bisect",
+            "builtins",
+            "bz2",
+            "calendar",
+            "cgi",
+            "cgitb",
+            "chunk",
+            "cmath",
+            "cmd",
+            "code",
+            "codecs",
+            "codeop",
+            "collections",
+            "colorsys",
+            "compileall",
+            "concurrent",
+            "configparser",
+            "contextlib",
+            "contextvars",
+            "copy",
+            "copyreg",
+            "crypt",
+            "csv",
+            "ctypes",
+            "curses",
+            "dataclasses",
+            "datetime",
+            "dbm",
+            "decimal",
+            "difflib",
+            "dis",
+            "distutils",
+            "doctest",
+            "email",
+            "encodings",
+            "enum",
+            "errno",
+            "faulthandler",
+            "fcntl",
+            "filecmp",
+            "fileinput",
+            "fnmatch",
+            "fractions",
+            "ftplib",
+            "functools",
+            "gc",
+            "getopt",
+            "getpass",
+            "gettext",
+            "glob",
+            "graphlib",
+            "grp",
+            "gzip",
+            "hashlib",
+            "heapq",
+            "hmac",
+            "html",
+            "http",
+            "idlelib",
+            "imaplib",
+            "imghdr",
+            "imp",
+            "importlib",
+            "inspect",
+            "io",
+            "ipaddress",
+            "itertools",
+            "json",
+            "keyword",
+            "lib2to3",
+            "linecache",
+            "locale",
+            "logging",
+            "lzma",
+            "mailbox",
+            "mailcap",
+            "marshal",
+            "math",
+            "mimetypes",
+            "mmap",
+            "modulefinder",
+            "msilib",
+            "msvcrt",
+            "multiprocessing",
+            "netrc",
+            "nis",
+            "nntplib",
+            "numbers",
+            "operator",
+            "optparse",
+            "os",
+            "ossaudiodev",
+            "parser",
+            "pathlib",
+            "pdb",
+            "pickle",
+            "pickletools",
+            "pipes",
+            "pkgutil",
+            "platform",
+            "plistlib",
+            "poplib",
+            "posix",
+            "posixpath",
+            "pprint",
+            "profile",
+            "pstats",
+            "pty",
+            "pwd",
+            "py_compile",
+            "pyclbr",
+            "pydoc",
+            "queue",
+            "quopri",
+            "random",
+            "re",
+            "readline",
+            "reprlib",
+            "resource",
+            "rlcompleter",
+            "runpy",
+            "sched",
+            "secrets",
+            "select",
+            "selectors",
+            "shelve",
+            "shlex",
+            "shutil",
+            "signal",
+            "site",
+            "smtpd",
+            "smtplib",
+            "sndhdr",
+            "socket",
+            "socketserver",
+            "spwd",
+            "sqlite3",
+            "ssl",
+            "stat",
+            "statistics",
+            "string",
+            "stringprep",
+            "struct",
+            "subprocess",
+            "sunau",
+            "symtable",
+            "sys",
+            "sysconfig",
+            "syslog",
+            "tabnanny",
+            "tarfile",
+            "telnetlib",
+            "tempfile",
+            "termios",
+            "test",
+            "textwrap",
+            "threading",
+            "time",
+            "timeit",
+            "tkinter",
+            "token",
+            "tokenize",
+            "tomllib",
+            "trace",
+            "traceback",
+            "tracemalloc",
+            "tty",
+            "turtle",
+            "turtledemo",
+            "types",
+            "typing",
+            "unicodedata",
+            "unittest",
+            "urllib",
+            "uu",
+            "uuid",
+            "venv",
+            "warnings",
+            "wave",
+            "weakref",
+            "webbrowser",
+            "winreg",
+            "winsound",
+            "wsgiref",
+            "xdrlib",
+            "xml",
+            "xmlrpc",
+            "zipapp",
+            "zipfile",
+            "zipimport",
+            "zlib",
         }
         return stdlib
 
@@ -145,8 +325,8 @@ class DependencyAnalyzer:
         return imports
 
     def classify_import(self, import_name: str) -> Tuple[str, str]:
-        """
-        Classify an import as 'local', 'stdlib', 'installed', or 'missing'.
+        """Classify an import as 'local', 'stdlib', 'installed', or 'missing'.
+
         Returns (classification, package_name).
         """
         # Check if it's a local module
@@ -221,10 +401,10 @@ class DependencyAnalyzer:
 
         # Local modules
         print(f"\033[1;96m📦 Local Modules:\033[0m {len(all_imports.get('local', set()))}")
-        if all_imports.get('local'):
-            for module in sorted(all_imports['local'])[:10]:
+        if all_imports.get("local"):
+            for module in sorted(all_imports["local"])[:10]:
                 print(f"  • {module}")
-            if len(all_imports['local']) > 10:
+            if len(all_imports["local"]) > 10:
                 print(f"  ... and {len(all_imports['local']) - 10} more")
         print()
 
@@ -233,7 +413,7 @@ class DependencyAnalyzer:
         print()
 
         # Installed packages
-        installed = all_imports.get('installed', set())
+        installed = all_imports.get("installed", set())
         print(f"\033[1;92m✓ Installed Third-Party Packages:\033[0m {len(installed)}")
         if installed:
             for package in sorted(installed)[:15]:
@@ -244,14 +424,14 @@ class DependencyAnalyzer:
         print()
 
         # Missing packages
-        missing = all_imports.get('missing', set())
+        missing = all_imports.get("missing", set())
         if missing:
             print(f"\033[1;91m✗ MISSING DEPENDENCIES:\033[0m {len(missing)}")
             print("\033[1;91m" + "=" * 80 + "\033[0m")
 
             # Group by file
             missing_by_file = defaultdict(list)
-            for import_name, file_path in results.get('missing', []):
+            for import_name, file_path in results.get("missing", []):
                 missing_by_file[file_path].append(import_name)
 
             for file_path, imports in sorted(missing_by_file.items()):
@@ -264,12 +444,12 @@ class DependencyAnalyzer:
             print(f"\n\033[1;93m⚠ Action Required:\033[0m Install {len(missing)} missing packages")
             print(f"\033[93mMissing packages:\033[0m {', '.join(sorted(missing))}")
         else:
-            print(f"\033[1;92m✓ ALL DEPENDENCIES SATISFIED!\033[0m")
+            print("\033[1;92m✓ ALL DEPENDENCIES SATISFIED!\033[0m")
             print("\033[1;92m" + "=" * 80 + "\033[0m")
 
 
 def main():
-    """Main entry point."""
+    """Run the dependency analysis."""
     project_root = Path(__file__).parent.parent
 
     analyzer = DependencyAnalyzer(project_root)

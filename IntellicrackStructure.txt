@@ -1,7 +1,7 @@
 INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: Sat, Nov 01, 2025 02:17:04 AM
+Generated: Wed, Nov 05, 2025 09:25:56 PM
 Directory: D:\Intellicrack\intellicrack
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -9,28 +9,21 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 
 ----------------------------------------
 
-├── __pycache__/
-│   └── __init__.cpython-314.pyc
 ├── ai/
-│   ├── __pycache__/
-│   │   ├── ai_file_tools.cpython-314.pyc
-│   │   └── model_sharding.cpython-314.pyc
 │   ├── __init__.py
-│   ├── ai_agent.py
-│   ├── ai_assistant_enhanced.py
 │   ├── ai_file_tools.py
 │   ├── ai_script_generator.py
-│   ├── ai_tools.py
 │   ├── api_provider_clients.py
 │   ├── background_loader.py
+│   ├── code_analysis_tools.py
 │   ├── coordination_layer.py
 │   ├── enhanced_training_interface.py
 │   ├── file_reading_helper.py
 │   ├── gpu_integration.py
 │   ├── headless_training_interface.py
 │   ├── integration_manager.py
-│   ├── integration_manager_temp.py
 │   ├── intelligent_code_modifier.py
+│   ├── interactive_assistant.py
 │   ├── lazy_model_loader.py
 │   ├── learning_engine.py
 │   ├── learning_engine_simple.py
@@ -67,6 +60,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── realtime_adaptation_engine.py
 │   ├── response_parser.py
 │   ├── script_editor.py
+│   ├── script_generation_agent.py
 │   ├── script_generation_prompts.py
 │   ├── semantic_code_analyzer.py
 │   ├── visualization_analytics.py
@@ -243,11 +237,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   └── tutorial_system.py
 ├── core/
 │   ├── analysis/
-│   │   ├── __pycache__/
-│   │   │   ├── radare2_vulnerability_engine.cpython-314.pyc
-│   │   │   ├── streaming_crypto_detector.cpython-314.pyc
-│   │   │   ├── streaming_entropy_analyzer.cpython-314.pyc
-│   │   │   └── streaming_yara_scanner.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── analysis_orchestrator.py
 │   │   ├── angr_enhancements.py
@@ -330,8 +319,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── yara_pattern_engine.py
 │   │   └── yara_scanner.py
 │   ├── anti_analysis/
-│   │   ├── __pycache__/
-│   │   │   └── sandbox_detector.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── advanced_debugger_bypass.py
 │   │   ├── api_obfuscation.py
@@ -383,8 +370,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── intelligent_correlation.py
 │   │   └── real_tool_communication.py
 │   ├── license/
-│   │   ├── __pycache__/
-│   │   │   └── keygen.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── keygen.py
 │   │   └── README.md
@@ -444,9 +429,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── radare2_patch_integration.py
 │   │   └── windows_activator.py
 │   ├── processing/
-│   │   ├── __pycache__/
-│   │   │   ├── distributed_manager.cpython-314.pyc
-│   │   │   └── streaming_analysis_manager.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── base_snapshot_handler.py
 │   │   ├── distributed_manager.py
@@ -506,6 +488,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── research_manager.py
 │   │   └── vulnerability_analyzer.py
 │   ├── __init__.py
+│   ├── __init__.py.backup
 │   ├── adobe_injector_integration.py
 │   ├── ai_model_manager.py
 │   ├── app_context.py
@@ -594,8 +577,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── torch_handler.py
 │   └── wmi_handler.py
 ├── hexview/
-│   ├── __pycache__/
-│   │   └── advanced_search.cpython-314.pyc
 │   ├── __init__.py
 │   ├── advanced_search.py
 │   ├── ai_bridge.py
@@ -697,6 +678,12 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   └── unified_protection_engine.py
 ├── scripts/
 │   ├── frida/
+│   │   ├── .idea/
+│   │   │   ├── .gitignore
+│   │   │   ├── frida.iml
+│   │   │   ├── modules.xml
+│   │   │   ├── vcs.xml
+│   │   │   └── workspace.xml
 │   │   ├── ai_scripts/
 │   │   │   └── ai_3d72c547_20250817_041722.js
 │   │   ├── advanced_anti_debug_bypass.js
@@ -744,8 +731,15 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── wasm_protection_bypass.js
 │   │   └── websocket_interceptor.js
 │   ├── ghidra/
+│   │   ├── .idea/
+│   │   │   ├── .gitignore
+│   │   │   ├── misc.xml
+│   │   │   ├── modules.xml
+│   │   │   ├── vcs.xml
+│   │   │   └── workspace.xml
 │   │   ├── __init__.py
 │   │   ├── AdvancedAnalysis.java
+│   │   ├── anti_analysis_detector.py
 │   │   ├── AntiAnalysisDetector.py
 │   │   ├── AutomatedUnpacker.java
 │   │   ├── ControlFlowDeobfuscator.java
@@ -753,6 +747,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── EnhancedLicensingAnalysisScript.java
 │   │   ├── FindCryptoSignatures.java
 │   │   ├── FunctionLister.java
+│   │   ├── ghidra.iml
 │   │   ├── KeygenTemplateGenerator.java
 │   │   ├── LicenseValidationAnalyzer.java
 │   │   ├── LicensingAnalysisScript.java
@@ -928,6 +923,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── certificate_extractor.py
 │   │   ├── elf_analyzer.py
 │   │   ├── hex_utils.py
+│   │   ├── network_api_analysis.py
 │   │   ├── pe_analysis_common.py
 │   │   └── pe_common.py
 │   ├── core/

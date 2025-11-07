@@ -29,11 +29,11 @@ from queue import Empty, Queue
 from typing import Any
 
 from ..utils.logger import get_logger
-from .script_generation_agent import AIAgent
 from .ai_script_generator import AIScriptGenerator
 from .intelligent_code_modifier import IntelligentCodeModifier
 from .llm_backends import LLMManager
 from .performance_monitor import performance_monitor, profile_ai_operation
+from .script_generation_agent import AIAgent
 
 logger = get_logger(__name__)
 

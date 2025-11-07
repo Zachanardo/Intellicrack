@@ -1420,8 +1420,8 @@ def ai_generate(
             click.echo(f"Binary file not found: {binary_path}", err=True)
             sys.exit(1)
 
-        from intellicrack.ai.script_generation_agent import AIAgent
         from intellicrack.ai.orchestrator import get_orchestrator
+        from intellicrack.ai.script_generation_agent import AIAgent
 
         # Get AI orchestrator
         click.echo("🤖 Initializing AI script generator...")
@@ -1820,8 +1820,8 @@ def autonomous(
 ):
     """Run autonomous AI workflow for complex tasks."""
     try:
-        from intellicrack.ai.script_generation_agent import AIAgent
         from intellicrack.ai.orchestrator import get_orchestrator
+        from intellicrack.ai.script_generation_agent import AIAgent
 
         click.echo("🤖 Starting autonomous AI workflow...")
         click.echo(f"📝 Request: {request}")

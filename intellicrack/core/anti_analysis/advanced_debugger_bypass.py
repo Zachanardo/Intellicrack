@@ -60,6 +60,7 @@ class UserModeNTAPIHooker:
     Note:
         These hooks modify ntdll.dll functions in the current process only and
         cannot affect system-wide behavior or kernel-level detection mechanisms.
+
     """
 
     def __init__(self):
@@ -665,6 +666,7 @@ class AdvancedDebuggerBypass:
     Note:
         The NT API hooks operate in user-mode only. For kernel-level interception,
         a Windows kernel driver would be required, which is not included in this module.
+
     """
 
     def __init__(self):
@@ -683,6 +685,7 @@ class AdvancedDebuggerBypass:
 
         Returns:
             Dictionary containing results of each bypass technique installation
+
         """
         results = {
             "usermode_ntapi_hooks": {},
@@ -738,6 +741,7 @@ class AdvancedDebuggerBypass:
 
         Returns:
             Dictionary of bypass technique names and their installation status
+
         """
         results = {}
 
@@ -840,6 +844,7 @@ class AdvancedDebuggerBypass:
         Returns:
             Dictionary containing status of all bypass techniques including
             user-mode hooks, hypervisor features, and timing neutralization
+
         """
         return {
             "active": self.bypass_active,

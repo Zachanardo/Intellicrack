@@ -1995,8 +1995,8 @@ class FridaManagerDialog(QDialog):
         """Start AI script generation process."""
         try:
             # Import AI components
-            from ...ai.script_generation_agent import AIAgent
             from ...ai.orchestrator import get_orchestrator
+            from ...ai.script_generation_agent import AIAgent
 
             # Get AI orchestrator
             orchestrator = get_orchestrator()

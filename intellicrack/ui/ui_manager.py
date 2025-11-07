@@ -56,6 +56,7 @@ class UIManager:
 
         Args:
             main_window: The main application window.
+
         """
         self.main_window = main_window
         self.theme_manager = get_theme_manager()

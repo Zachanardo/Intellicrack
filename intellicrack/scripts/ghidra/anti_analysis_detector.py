@@ -1,4 +1,4 @@
-"""File is part of Intellicrack.
+"""Intellicrack - Anti-Analysis Technique Detector.
 
 Copyright (C) 2025 Zachary Flint.
 
@@ -31,7 +31,7 @@ try:
     from ghidra.app.script import GhidraScript
 
     # Ghidra API functions available in script environment:
-    # currentProgram, getReferencesTo, createBookmark, findBytes
+    # current_program, get_references_to, create_bookmark, find_bytes
     GHIDRA_AVAILABLE = True
 except ImportError:
     # Running outside Ghidra environment
@@ -278,7 +278,7 @@ def get_current_program():
     """Get current program, avoiding pylint errors."""
     if not GHIDRA_AVAILABLE:
         return None
-    return globals().get("currentProgram")
+    return globals().get("current_program")
 
 
 class AntiAnalysisDetector(GhidraScript):

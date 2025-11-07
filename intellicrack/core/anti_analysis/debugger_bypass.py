@@ -48,6 +48,7 @@ class DebuggerBypass:
     Note:
         These bypasses modify the current process only and cannot affect
         system-wide behavior or kernel-level detection mechanisms.
+
     """
 
     def __init__(self):
@@ -626,6 +627,7 @@ class DebuggerBypass:
         Note:
             This checks for hypervisor support but does not install actual
             kernel-mode hypervisor hooks, which would require a kernel driver.
+
         """
         try:
             if not self._check_hypervisor_support():

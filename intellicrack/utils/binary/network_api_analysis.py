@@ -33,6 +33,7 @@ def analyze_network_apis(pe_binary, network_apis, logger_func=None):
 
     Returns:
         dict: Dictionary of category -> list of detected APIs
+
     """
     detected_apis = defaultdict(list)
 
@@ -61,6 +62,7 @@ def process_network_api_results(detected_apis: dict[str, list[str]]) -> dict[str
 
     Returns:
         Dictionary with processed results including counts and security checks
+
     """
     results = {}
 
@@ -87,6 +89,7 @@ def get_scapy_layers(scapy_module) -> tuple | None:
 
     Returns:
         Tuple of (IP, TCP) classes or None if import failed
+
     """
     try:
         IP_LAYER = scapy_module.IP
@@ -114,6 +117,7 @@ def detect_network_apis(pe_binary, network_apis, logger_func=None):
 
     Returns:
         dict: Dictionary of category -> list of detected APIs
+
     """
     return analyze_network_apis(pe_binary, network_apis, logger_func)
 
@@ -123,6 +127,7 @@ def get_network_api_categories():
 
     Returns:
         dict: Dictionary of category -> list of API names
+
     """
     return {
         "basic": ["socket", "WSASocket", "bind", "listen", "accept", "connect", "send", "recv"],
@@ -140,6 +145,7 @@ def summarize_network_capabilities(detected_apis):
 
     Returns:
         dict: Summary statistics
+
     """
     summary = {cat: len(apis) for cat, apis in detected_apis.items() if apis}
 

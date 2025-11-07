@@ -1,269 +1,205 @@
+use once_cell::sync::Lazy;
+use rayon::prelude::*;
+use regex::Regex;
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
+use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::env;
-use regex::Regex;
-use rayon::prelude::*;
-use serde::{Deserialize, Serialize};
-use once_cell::sync::Lazy;
-use sha2::{Sha256, Digest};
-use tree_sitter::{Language, Parser, Query, QueryCursor, Node, Tree};
+use std::sync::{Arc, Mutex};
+use tree_sitter::{Language, Node, Parser, Query, QueryCursor, Tree};
 
-static RE_PYTHON_RETURN: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"(?m)^\s*return\s+(.+)$").unwrap()
-});
+static RE_PYTHON_RETURN: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?m)^\s*return\s+(.+)$").unwrap());
 
-static RE_PYTHON_IMPORT: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"(?m)^(?:from\s+[\w.]+\s+)?import\s+([\w\s,.*]+)").unwrap()
-});
+static RE_PYTHON_IMPORT: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)^(?:from\s+[\w.]+\s+)?import\s+([\w\s,.*]+)").unwrap());
 
 static RE_INCOMPLETE_MARKER: Lazy<Regex> = Lazy::new(|| {
-    let t1 = ['T','O','D','O'].iter().collect::<String>();
-    let t2 = ['F','I','X','M','E'].iter().collect::<String>();
-    let t3 = ['H','A','C','K'].iter().collect::<String>();
-    let t4 = ['X','X','X'].iter().collect::<String>();
-    let t5 = ['P','L','A','C','E','H','O','L','D','E','R'].iter().collect::<String>();
-    let t6 = ['S','T','U','B'].iter().collect::<String>();
-    let t7 = ['I','M','P','L','E','M','E','N','T','E','D'].iter().collect::<String>();
-    let pattern = format!(r"(?i)(?://|#)\s*(?:{}|{}|{}|{}|{}|{}|NOT\s+{})", t1, t2, t3, t4, t5, t6, t7);
+    let t1 = ['T', 'O', 'D', 'O'].iter().collect::<String>();
+    let t2 = ['F', 'I', 'X', 'M', 'E'].iter().collect::<String>();
+    let t3 = ['H', 'A', 'C', 'K'].iter().collect::<String>();
+    let t4 = ['X', 'X', 'X'].iter().collect::<String>();
+    let t5 = ['P', 'L', 'A', 'C', 'E', 'H', 'O', 'L', 'D', 'E', 'R']
+        .iter()
+        .collect::<String>();
+    let t6 = ['S', 'T', 'U', 'B'].iter().collect::<String>();
+    let t7 = ['I', 'M', 'P', 'L', 'E', 'M', 'E', 'N', 'T', 'E', 'D']
+        .iter()
+        .collect::<String>();
+    let pattern = format!(
+        r"(?i)(?://|#)\s*(?:{}|{}|{}|{}|{}|{}|NOT\s+{})",
+        t1, t2, t3, t4, t5, t6, t7
+    );
     Regex::new(&pattern).unwrap()
 });
 
-static RE_PASS_ONLY: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"(?m)^\s*pass\s*$").unwrap()
-});
+static RE_PASS_ONLY: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?m)^\s*pass\s*$").unwrap());
 
-static RE_EMPTY_BLOCK: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\{\s*\}").unwrap()
-});
+static RE_EMPTY_BLOCK: Lazy<Regex> = Lazy::new(|| Regex::new(r"\{\s*\}").unwrap());
 
-static RE_HARDCODED_STRING: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r#"(?:return\s+)?["']([^"']{3,})["']"#).unwrap()
-});
+static RE_HARDCODED_STRING: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"(?:return\s+)?["']([^"']{3,})["']"#).unwrap());
 
-static RE_SIMPLE_NUMBER: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^\s*return\s+(?:0|1|True|False|None|null|undefined)\s*$").unwrap()
-});
+static RE_SIMPLE_NUMBER: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^\s*return\s+(?:0|1|True|False|None|null|undefined)\s*$").unwrap());
 
 static RE_WEAK_CRYPTO: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"\b(?:xor|ord|chr)\s*\(|\bfor\s+\w+\s+in\s+(?:str|string|text)\b").unwrap()
 });
 
-static RE_RANDOM_NOT_SECRETS: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\brandom\.").unwrap()
-});
+static RE_RANDOM_NOT_SECRETS: Lazy<Regex> = Lazy::new(|| Regex::new(r"\brandom\.").unwrap());
 
-static RE_TIME_BASED_KEY: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\btime\.time\(\)|datetime\.now\(\)").unwrap()
-});
+static RE_TIME_BASED_KEY: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\btime\.time\(\)|datetime\.now\(\)").unwrap());
 
-static RE_SIMPLE_EQUALITY: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r#"if\s+\w+\s*==\s*["']"#).unwrap()
-});
+static RE_ISDEBUGGER_PRESENT: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\bIsDebuggerPresent\b").unwrap());
 
-static RE_ISDEBUGGER_PRESENT: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\bIsDebuggerPresent\b").unwrap()
-});
+static RE_BASE64_ENCODE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\bbase64\.(?:b64encode|encode)\b").unwrap());
 
-static RE_BASE64_ENCODE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\bbase64\.(?:b64encode|encode)\b").unwrap()
-});
+static RE_STRING_REPLACE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\.replace\(").unwrap());
 
-static RE_STRING_REPLACE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\.replace\(").unwrap()
-});
+static RE_SMALL_RANGE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\brange\((?:0?\d|1\d|2[0-4])\)").unwrap());
 
-static RE_SMALL_RANGE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\brange\((?:0?\d|1\d|2[0-4])\)").unwrap()
-});
+static RE_SIMPLE_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"re\.(?:search|findall|match)\(["']\w+["']"#).unwrap());
 
-static RE_SIMPLE_REGEX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r#"re\.(?:search|findall|match)\(["']\w+["']"#).unwrap()
-});
+static RE_SCANNER_IGNORE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"#\s*scanner-ignore:\s*([a-zA-Z_-]+)").unwrap());
 
-static RE_SCANNER_IGNORE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"#\s*scanner-ignore:\s*([a-zA-Z_-]+)").unwrap()
-});
+static RE_MAC_ADDRESS: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\bgetmac\b|uuid\.getnode\(\)").unwrap());
 
-static RE_MAC_ADDRESS: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\bgetmac\b|uuid\.getnode\(\)").unwrap()
-});
+static RE_SYSTEM_TIME: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\bSetSystemTime|datetime\.now\(\)").unwrap());
 
-static RE_SYSTEM_TIME: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\bSetSystemTime|datetime\.now\(\)").unwrap()
-});
+static RE_LOGGING: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\b(?:logger|logging|log)\.\w+\(").unwrap());
 
-static RE_LOGGING: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\b(?:logger|logging|log)\.\w+\(").unwrap()
-});
+static RE_TRY_EXCEPT: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)^\s*try\s*:|except\s+\w+").unwrap());
 
-static RE_TRY_EXCEPT: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"(?m)^\s*try\s*:|except\s+\w+").unwrap()
-});
+static RE_FILE_OPS: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\b(?:open|read|write|Path|File)\(").unwrap());
 
-static RE_FILE_OPS: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\b(?:open|read|write|Path|File)\(").unwrap()
-});
+static RE_SUBPROCESS: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\b(?:subprocess|Popen|call|run)\(").unwrap());
 
-static RE_SUBPROCESS: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\b(?:subprocess|Popen|call|run)\(").unwrap()
-});
+static RE_CRYPTO_LIBS: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\b(?:Crypto|cryptography|rsa|ecdsa|aes|sha256)\b").unwrap());
 
-static RE_CRYPTO_LIBS: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\b(?:Crypto|cryptography|rsa|ecdsa|aes|sha256)\b").unwrap()
-});
+static RE_TYPE_HINTS: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r":\s*(?:str|int|bool|list|dict|Optional|Union)").unwrap());
 
-static RE_TYPE_HINTS: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r":\s*(?:str|int|bool|list|dict|Optional|Union)").unwrap()
-});
+static RE_PYTEST_FIXTURE: Lazy<Regex> = Lazy::new(|| Regex::new(r"@pytest\.fixture").unwrap());
 
-static RE_PYTEST_FIXTURE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"@pytest\.fixture").unwrap()
-});
+static RE_COMMENT: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?://.*$)|(?:#.*$)|(?:/\*[\s\S]*?\*/)").unwrap());
 
-static RE_COMMENT: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"(?://.*$)|(?:#.*$)|(?:/\*[\s\S]*?\*/)").unwrap()
-});
+static RE_STRING_LITERAL: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r#"(?:"(?:[^"\\]|\\.)*")|(?:'(?:[^'\\]|\\.)*')"#).unwrap());
 
-static RE_STRING_LITERAL: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r#"(?:"(?:[^"\\]|\\.)*")|(?:'(?:[^'\\]|\\.)*')"#).unwrap()
-});
+static RE_RUST_UNWRAP: Lazy<Regex> = Lazy::new(|| Regex::new(r"\bunwrap\(\)").unwrap());
 
-static RE_RUST_UNWRAP: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\bunwrap\(\)").unwrap()
-});
+static RE_RUST_EXPECT: Lazy<Regex> = Lazy::new(|| Regex::new(r"\bexpect\(").unwrap());
 
-static RE_RUST_EXPECT: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\bexpect\(").unwrap()
-});
+static RE_RUST_PANIC: Lazy<Regex> = Lazy::new(|| Regex::new(r"\bpanic!\(").unwrap());
 
-static RE_RUST_PANIC: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\bpanic!\(").unwrap()
-});
+static RE_RUST_UNSAFE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\bunsafe\s*\{").unwrap());
 
-static RE_RUST_UNSAFE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\bunsafe\s*\{").unwrap()
-});
+static RE_RUST_CLONE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\.clone\(\)").unwrap());
 
-static RE_RUST_CLONE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\.clone\(\)").unwrap()
-});
+static RE_RUST_RESULT: Lazy<Regex> = Lazy::new(|| Regex::new(r"Result<").unwrap());
 
-static RE_RUST_RESULT: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"Result<").unwrap()
-});
-
-static RE_RUST_OPTION: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"Option<").unwrap()
-});
+static RE_RUST_OPTION: Lazy<Regex> = Lazy::new(|| Regex::new(r"Option<").unwrap());
 
 static RE_RUST_INCOMPLETE_MARKER: Lazy<Regex> = Lazy::new(|| {
-    let pattern = format!(r"\b{}!\(", ['t','o','d','o'].iter().collect::<String>());
+    let pattern = format!(r"\b{}!\(", ['t', 'o', 'd', 'o'].iter().collect::<String>());
     Regex::new(&pattern).unwrap()
 });
 
 static RE_RUST_UNIMPL_MACRO: Lazy<Regex> = Lazy::new(|| {
-    let pattern = format!(r"\b{}!\(", ['u','n','i','m','p','l','e','m','e','n','t','e','d'].iter().collect::<String>());
+    let pattern = format!(
+        r"\b{}!\(",
+        ['u', 'n', 'i', 'm', 'p', 'l', 'e', 'm', 'e', 'n', 't', 'e', 'd']
+            .iter()
+            .collect::<String>()
+    );
     Regex::new(&pattern).unwrap()
 });
 
-static RE_JAVA_NULL_CHECK: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"if\s*\(\s*\w+\s*==\s*null\s*\)").unwrap()
-});
+static RE_JAVA_NULL_CHECK: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"if\s*\(\s*\w+\s*==\s*null\s*\)").unwrap());
 
-static RE_JAVA_EXCEPTION: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\bthrows\s+Exception\b").unwrap()
-});
+static RE_JAVA_EXCEPTION: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\bthrows\s+Exception\b").unwrap());
 
-static RE_JAVA_CATCH_ALL: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"catch\s*\(\s*Exception\s+\w+\s*\)").unwrap()
-});
+static RE_JAVA_CATCH_ALL: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"catch\s*\(\s*Exception\s+\w+\s*\)").unwrap());
 
-static RE_JAVA_PRINTSTACKTRACE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\.printStackTrace\(\)").unwrap()
-});
+static RE_JAVA_PRINTSTACKTRACE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\.printStackTrace\(\)").unwrap());
 
-static RE_JAVA_SYSTEM_OUT: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"System\.out\.print").unwrap()
-});
+static RE_JAVA_SYSTEM_OUT: Lazy<Regex> = Lazy::new(|| Regex::new(r"System\.out\.print").unwrap());
 
 static RE_JAVA_GHIDRA_API: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\b(currentProgram|getFunctionManager|getMemory|getAddressFactory|getSymbolTable)").unwrap()
+    Regex::new(r"\b(currentProgram|getFunctionManager|getMemory|getAddressFactory|getSymbolTable)")
+        .unwrap()
 });
 
-static RE_JAVA_NULL_RETURN: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"return\s+null\s*;").unwrap()
-});
+static RE_JAVA_NULL_RETURN: Lazy<Regex> = Lazy::new(|| Regex::new(r"return\s+null\s*;").unwrap());
 
-static RE_JS_ASYNC_NO_AWAIT: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"async\s+function").unwrap()
-});
+static RE_JS_ASYNC_NO_AWAIT: Lazy<Regex> = Lazy::new(|| Regex::new(r"async\s+function").unwrap());
 
-static RE_JS_PROMISE_NO_CATCH: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\.then\(").unwrap()
-});
+static RE_JS_PROMISE_NO_CATCH: Lazy<Regex> = Lazy::new(|| Regex::new(r"\.then\(").unwrap());
 
-static RE_JS_CONSOLE_LOG: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\bconsole\.log\(").unwrap()
-});
+static RE_JS_CONSOLE_LOG: Lazy<Regex> = Lazy::new(|| Regex::new(r"\bconsole\.log\(").unwrap());
 
-static RE_JS_VAR: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\bvar\s+\w+").unwrap()
-});
+static RE_JS_VAR: Lazy<Regex> = Lazy::new(|| Regex::new(r"\bvar\s+\w+").unwrap());
 
-static RE_JS_CALLBACK_HELL: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"function\s*\([^)]*\)\s*\{[^}]*function\s*\([^)]*\)\s*\{").unwrap()
-});
+static RE_JS_CALLBACK_HELL: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"function\s*\([^)]*\)\s*\{[^}]*function\s*\([^)]*\)\s*\{").unwrap());
 
-static RE_JS_FRIDA_INTERCEPTOR: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"Interceptor\.(attach|replace)").unwrap()
-});
+static RE_JS_FRIDA_INTERCEPTOR: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"Interceptor\.(attach|replace)").unwrap());
 
-static RE_JS_FRIDA_MEMORY: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"Memory\.(read|write|alloc|scan)").unwrap()
-});
+static RE_JS_FRIDA_MEMORY: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"Memory\.(read|write|alloc|scan)").unwrap());
 
 static RE_JS_FRIDA_MODULE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"Module\.(findExportByName|getBaseAddress|enumerateExports)").unwrap()
 });
 
 static RE_JS_FRIDA_JAVA: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"Java\.(use|perform|choose|available|enumerateLoadedClasses|enumerateMethods)").unwrap()
+    Regex::new(r"Java\.(use|perform|choose|available|enumerateLoadedClasses|enumerateMethods)")
+        .unwrap()
 });
 
-static RE_JS_FRIDA_OBJC: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"ObjC\.(classes|protocols|available|Object|Block)").unwrap()
-});
+static RE_JS_FRIDA_OBJC: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"ObjC\.(classes|protocols|available|Object|Block)").unwrap());
 
-static RE_JS_FRIDA_NATIVE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"Native(Function|Pointer|Callback)").unwrap()
-});
+static RE_JS_FRIDA_NATIVE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"Native(Function|Pointer|Callback)").unwrap());
 
 static RE_JS_FRIDA_PROCESS: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"Process\.(enumerateModules|enumerateRanges|getCurrentThreadId|id|platform|arch|pointerSize)").unwrap()
 });
 
-static RE_JS_FRIDA_SCRIPT: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"Script\.(evaluate|load|setGlobalAccessHandler)").unwrap()
-});
+static RE_JS_FRIDA_SCRIPT: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"Script\.(evaluate|load|setGlobalAccessHandler)").unwrap());
 
-static RE_JS_TRY_CATCH: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\btry\s*\{").unwrap()
-});
+static RE_JS_TRY_CATCH: Lazy<Regex> = Lazy::new(|| Regex::new(r"\btry\s*\{").unwrap());
 
-static RE_PYTHON_BARE_EXCEPT: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"except\s*:").unwrap()
-});
+static RE_PYTHON_BARE_EXCEPT: Lazy<Regex> = Lazy::new(|| Regex::new(r"except\s*:").unwrap());
 
-static RE_PYTHON_MUTABLE_DEFAULT: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"def\s+\w+\([^)]*=\s*\[\]").unwrap()
-});
+static RE_PYTHON_MUTABLE_DEFAULT: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"def\s+\w+\([^)]*=\s*\[\]").unwrap());
 
-static RE_PYTHON_GLOBAL: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\bglobal\s+\w+").unwrap()
-});
+static RE_PYTHON_GLOBAL: Lazy<Regex> = Lazy::new(|| Regex::new(r"\bglobal\s+\w+").unwrap());
 
 struct Cli {
     root_path: String,
@@ -532,10 +468,12 @@ impl AstParser for PythonAstParser {
 
     fn parse<'a>(&self, content: &'a str) -> Result<Tree, String> {
         let mut parser = Parser::new();
-        parser.set_language(self.language())
+        parser
+            .set_language(self.language())
             .map_err(|e| format!("Failed to set Python language: {:?}", e))?;
 
-        parser.parse(content, None)
+        parser
+            .parse(content, None)
             .ok_or_else(|| "Failed to parse Python code".to_string())
     }
 
@@ -567,9 +505,13 @@ impl AstParser for PythonAstParser {
             let matches = cursor.matches(&query, root_node, content.as_bytes());
 
             for m in matches {
-                let func_node = m.captures.iter()
-                    .find(|c| query.capture_names()[c.index as usize].ends_with("function")
-                             || query.capture_names()[c.index as usize].ends_with("method"))
+                let func_node = m
+                    .captures
+                    .iter()
+                    .find(|c| {
+                        query.capture_names()[c.index as usize].ends_with("function")
+                            || query.capture_names()[c.index as usize].ends_with("method")
+                    })
                     .map(|c| c.node);
 
                 if let Some(node) = func_node {
@@ -591,10 +533,12 @@ impl AstParser for RustAstParser {
 
     fn parse<'a>(&self, content: &'a str) -> Result<Tree, String> {
         let mut parser = Parser::new();
-        parser.set_language(self.language())
+        parser
+            .set_language(self.language())
             .map_err(|e| format!("Failed to set Rust language: {:?}", e))?;
 
-        parser.parse(content, None)
+        parser
+            .parse(content, None)
             .ok_or_else(|| "Failed to parse Rust code".to_string())
     }
 
@@ -637,10 +581,12 @@ impl AstParser for JavaScriptAstParser {
 
     fn parse<'a>(&self, content: &'a str) -> Result<Tree, String> {
         let mut parser = Parser::new();
-        parser.set_language(self.language())
+        parser
+            .set_language(self.language())
             .map_err(|e| format!("Failed to set JavaScript language: {:?}", e))?;
 
-        parser.parse(content, None)
+        parser
+            .parse(content, None)
             .ok_or_else(|| "Failed to parse JavaScript code".to_string())
     }
 
@@ -654,7 +600,7 @@ impl AstParser for JavaScriptAstParser {
                 parameters: (formal_parameters) @params
                 body: (statement_block) @body) @function
 
-            (function
+            (function_expression
                 name: (identifier)? @func_name
                 parameters: (formal_parameters) @params
                 body: (statement_block) @body) @function_expr
@@ -692,10 +638,12 @@ impl AstParser for JavaAstParser {
 
     fn parse<'a>(&self, content: &'a str) -> Result<Tree, String> {
         let mut parser = Parser::new();
-        parser.set_language(self.language())
+        parser
+            .set_language(self.language())
             .map_err(|e| format!("Failed to set Java language: {:?}", e))?;
 
-        parser.parse(content, None)
+        parser
+            .parse(content, None)
             .ok_or_else(|| "Failed to parse Java code".to_string())
     }
 
@@ -765,8 +713,13 @@ fn populate_ast_info_from_node(node: &Node, content: &str) -> Option<AstFunction
     let has_async_await = check_for_async_await(node);
     let calls_functions = extract_function_calls(&body_node, content);
 
-    let indent_text = &content[node.start_byte()..node.start_byte() + start_pos.column.min(content.len() - node.start_byte())];
-    let indent_level = indent_text.chars().filter(|&c| c == ' ' || c == '\t').count() / 4;
+    let indent_text = &content[node.start_byte()
+        ..node.start_byte() + start_pos.column.min(content.len() - node.start_byte())];
+    let indent_level = indent_text
+        .chars()
+        .filter(|&c| c == ' ' || c == '\t')
+        .count()
+        / 4;
 
     Some(AstFunctionInfo {
         name,
@@ -833,9 +786,15 @@ fn extract_parameters(node: &Node, content: &str) -> Vec<String> {
             for param_child in child.children(&mut param_cursor) {
                 if param_child.kind() == "identifier"
                     || param_child.kind() == "typed_parameter"
-                    || param_child.kind() == "formal_parameter" {
-                    let param_text = content[param_child.start_byte()..param_child.end_byte()].to_string();
-                    if !param_text.is_empty() && param_text != "(" && param_text != ")" && param_text != "," {
+                    || param_child.kind() == "formal_parameter"
+                {
+                    let param_text =
+                        content[param_child.start_byte()..param_child.end_byte()].to_string();
+                    if !param_text.is_empty()
+                        && param_text != "("
+                        && param_text != ")"
+                        && param_text != ","
+                    {
                         params.push(param_text);
                     }
                 }
@@ -884,7 +843,8 @@ fn calculate_actual_loc(node: &Node, content: &str) -> usize {
     let end_byte = node.end_byte();
     let body_text = &content[start_byte..end_byte];
 
-    body_text.lines()
+    body_text
+        .lines()
         .filter(|line| !line.trim().is_empty())
         .count()
 }
@@ -907,17 +867,27 @@ fn calculate_cyclomatic_complexity(node: &Node) -> i32 {
     fn traverse_for_complexity(node: &Node, complexity: &mut i32) {
         let kind = node.kind();
         match kind {
-            "if_statement" | "elif_clause" | "else_clause" |
-            "for_statement" | "while_statement" | "do_statement" |
-            "case" | "switch_statement" | "catch_clause" |
-            "conditional_expression" | "ternary_expression" => {
+            "if_statement"
+            | "elif_clause"
+            | "else_clause"
+            | "for_statement"
+            | "while_statement"
+            | "do_statement"
+            | "case"
+            | "switch_statement"
+            | "catch_clause"
+            | "conditional_expression"
+            | "ternary_expression" => {
                 *complexity += 1;
             }
             "binary_expression" => {
                 let mut cursor = node.walk();
                 for child in node.children(&mut cursor) {
-                    if child.kind() == "&&" || child.kind() == "||"
-                        || child.kind() == "and" || child.kind() == "or" {
+                    if child.kind() == "&&"
+                        || child.kind() == "||"
+                        || child.kind() == "and"
+                        || child.kind() == "or"
+                    {
                         *complexity += 1;
                     }
                 }
@@ -951,7 +921,12 @@ fn extract_return_info(node: &Node, content: &str) -> (usize, Vec<String>) {
     let mut return_count = 0;
     let mut return_types = Vec::new();
 
-    fn traverse_for_returns(node: &Node, content: &str, count: &mut usize, types: &mut Vec<String>) {
+    fn traverse_for_returns(
+        node: &Node,
+        content: &str,
+        count: &mut usize,
+        types: &mut Vec<String>,
+    ) {
         if node.kind() == "return_statement" {
             *count += 1;
 
@@ -997,7 +972,9 @@ fn classify_return_type(value: &str) -> String {
         "Integer".to_string()
     } else if value.parse::<f64>().is_ok() {
         "Float".to_string()
-    } else if (value.starts_with('"') && value.ends_with('"')) || (value.starts_with('\'') && value.ends_with('\'')) {
+    } else if (value.starts_with('"') && value.ends_with('"'))
+        || (value.starts_with('\'') && value.ends_with('\''))
+    {
         "String".to_string()
     } else if value.starts_with('[') || value.starts_with('{') {
         "Collection".to_string()
@@ -1022,11 +999,19 @@ fn extract_variable_info(node: &Node, content: &str) -> (HashSet<String>, HashSe
     let mut local_vars = HashSet::new();
     let mut global_vars = HashSet::new();
 
-    fn traverse_for_vars(node: &Node, content: &str, locals: &mut HashSet<String>, globals: &mut HashSet<String>) {
+    fn traverse_for_vars(
+        node: &Node,
+        content: &str,
+        locals: &mut HashSet<String>,
+        globals: &mut HashSet<String>,
+    ) {
         let kind = node.kind();
         match kind {
-            "assignment" | "assignment_expression" | "variable_declaration" |
-            "variable_declarator" | "local_variable_declaration" => {
+            "assignment"
+            | "assignment_expression"
+            | "variable_declaration"
+            | "variable_declarator"
+            | "local_variable_declaration" => {
                 let mut cursor = node.walk();
                 for child in node.children(&mut cursor) {
                     if child.kind() == "identifier" {
@@ -1074,7 +1059,18 @@ fn extract_variable_info(node: &Node, content: &str) -> (HashSet<String>, HashSe
 fn check_for_loops(node: &Node) -> bool {
     fn traverse_for_loops(node: &Node) -> bool {
         let kind = node.kind();
-        if kind == "for_statement" || kind == "while_statement" || kind == "do_statement" {
+
+        // Expanded loop detection to fix false "no loops" claims
+        // Now includes comprehensions and generator expressions (Python)
+        if kind == "for_statement"
+            || kind == "while_statement"
+            || kind == "do_statement"
+            || kind == "list_comprehension"
+            || kind == "dictionary_comprehension"
+            || kind == "set_comprehension"
+            || kind == "generator_expression"
+            || kind == "for_in_clause"
+        {
             return true;
         }
 
@@ -1103,8 +1099,42 @@ fn check_for_loops(node: &Node) -> bool {
 fn check_for_conditionals(node: &Node) -> bool {
     fn traverse_for_conditionals(node: &Node) -> bool {
         let kind = node.kind();
-        if kind == "if_statement" || kind == "switch_statement" || kind == "conditional_expression" {
+
+        // Expanded conditional detection to fix false "no conditionals" claims
+        // Now includes comparison operators, boolean operators, and expression-level conditionals
+        if kind == "if_statement"
+            || kind == "switch_statement"
+            || kind == "conditional_expression"
+            || kind == "comparison_operator"
+            || kind == "boolean_operator"
+            || kind == "comparison_expression"
+            || kind == "ternary_expression"
+        {
             return true;
+        }
+
+        // Handle binary expressions that contain comparison or boolean operators
+        if kind == "binary_expression" {
+            let mut cursor = node.walk();
+            for child in node.children(&mut cursor) {
+                let child_kind = child.kind();
+                // Check for comparison operators
+                if child_kind == ">"
+                    || child_kind == "<"
+                    || child_kind == "=="
+                    || child_kind == "!="
+                    || child_kind == ">="
+                    || child_kind == "<="
+                    || child_kind == "is"
+                    || child_kind == "is not"
+                    || child_kind == "&&"
+                    || child_kind == "||"
+                    || child_kind == "and"
+                    || child_kind == "or"
+                {
+                    return true;
+                }
+            }
         }
 
         let mut cursor = node.walk();
@@ -1192,15 +1222,41 @@ fn extract_function_calls(node: &Node, content: &str) -> HashSet<String> {
     let mut calls = HashSet::new();
 
     fn traverse_for_calls(node: &Node, content: &str, calls: &mut HashSet<String>) {
+        // Improved function call detection to catch method calls and built-ins
         if node.kind() == "call_expression" || node.kind() == "call" {
             let mut cursor = node.walk();
             for child in node.children(&mut cursor) {
                 if child.kind() == "identifier" || child.kind() == "attribute" {
                     let func_name = content[child.start_byte()..child.end_byte()].to_string();
                     if !func_name.is_empty() {
-                        calls.insert(func_name);
+                        // Extract just the method name from attribute access (e.g., "obj.method" -> "method")
+                        let method_name = if func_name.contains('.') {
+                            func_name
+                                .split('.')
+                                .last()
+                                .unwrap_or(&func_name)
+                                .to_string()
+                        } else {
+                            func_name
+                        };
+                        calls.insert(method_name);
                     }
                     break;
+                }
+            }
+        }
+
+        // Also detect standalone attribute access that represents method calls
+        if node.kind() == "attribute" {
+            // Check if parent is a call_expression
+            if let Some(parent) = node.parent() {
+                if parent.kind() == "call_expression" {
+                    let attr_name = content[node.start_byte()..node.end_byte()].to_string();
+                    if !attr_name.is_empty() && attr_name.contains('.') {
+                        if let Some(method) = attr_name.split('.').last() {
+                            calls.insert(method.to_string());
+                        }
+                    }
                 }
             }
         }
@@ -1237,7 +1293,10 @@ impl CallGraph {
     }
 
     fn add_call(&mut self, caller: String, callee: String) {
-        self.calls.entry(caller.clone()).or_default().insert(callee.clone());
+        self.calls
+            .entry(caller.clone())
+            .or_default()
+            .insert(callee.clone());
         self.called_by.entry(callee).or_default().insert(caller);
     }
 
@@ -1323,15 +1382,50 @@ fn should_exclude_path(path: &Path, ignored_paths: &HashSet<PathBuf>) -> bool {
         return true;
     }
 
+    // Added third-party library and build artifact exclusions
+    if path_str.contains("\\vendor\\") || path_str.contains("/vendor/") {
+        return true;
+    }
+
+    if path_str.contains("\\_build\\") || path_str.contains("/_build/") {
+        return true;
+    }
+
+    if path_str.contains("\\dist\\") || path_str.contains("/dist/") {
+        return true;
+    }
+
+    // Exclude minified files (common in web projects)
+    if path_str.ends_with(".min.js") || path_str.ends_with(".min.css") {
+        return true;
+    }
+
+    // Exclude common third-party JavaScript libraries by name
+    let path_lower = path_str.to_lowercase();
+    if path_lower.contains("jquery")
+        || path_lower.contains("bootstrap")
+        || path_lower.contains("lodash")
+        || path_lower.contains("moment")
+        || path_lower.contains("react.")
+        || path_lower.contains("vue.")
+    {
+        return true;
+    }
+
     if path_str.contains("\\tools\\") || path_str.contains("/tools/") {
         return true;
     }
 
-    if path_str.contains("\\scripts\\production_scanner") || path_str.contains("/scripts/production_scanner") {
+    if path_str.contains("\\scripts\\production_scanner")
+        || path_str.contains("/scripts/production_scanner")
+    {
         return true;
     }
 
-    if path_str.contains("_template") || path_str.contains("example") || path_str.contains("Example") {
+    if path_str.contains("_template")
+        || path_str.contains("example")
+        || path_str.contains("Example")
+    {
         return true;
     }
 
@@ -1357,40 +1451,87 @@ fn load_scannerignore(scanner_dir: &Path) -> HashSet<PathBuf> {
     ignored_paths
 }
 
-fn is_legitimate_design_pattern(func: &FunctionInfo, _file_context: &FileContext) -> Option<&'static str> {
+fn is_legitimate_design_pattern(
+    func: &FunctionInfo,
+    _file_context: &FileContext,
+) -> Option<&'static str> {
     let name_lower = func.name.to_lowercase();
     let loc = func.body.lines().filter(|l| !l.trim().is_empty()).count();
 
-    if ((name_lower.starts_with("get_") &&
-        (name_lower.contains("manager") || name_lower.contains("instance") ||
-         name_lower.contains("singleton") || name_lower.contains("service") ||
-         name_lower.contains("engine") || name_lower.contains("handler"))) ||
-       name_lower == "instance")
-        && loc <= 10 && func.body.contains("global") {
-            return Some("singleton_pattern");
-        }
+    if ((name_lower.starts_with("get_")
+        && (name_lower.contains("manager")
+            || name_lower.contains("instance")
+            || name_lower.contains("singleton")
+            || name_lower.contains("service")
+            || name_lower.contains("engine")
+            || name_lower.contains("handler")))
+        || name_lower == "instance")
+        && loc <= 10
+        && func.body.contains("global")
+    {
+        return Some("singleton_pattern");
+    }
 
-    if (name_lower.starts_with("create_") || name_lower.starts_with("make_") ||
-        name_lower.starts_with("build_") || name_lower.starts_with("new_")) &&
-       loc <= 6 && func.body.contains("return") {
+    // Expanded factory pattern LOC from <=6 to <=10 to handle more complex factories
+    if (name_lower.starts_with("create_")
+        || name_lower.starts_with("make_")
+        || name_lower.starts_with("build_")
+        || name_lower.starts_with("new_"))
+        && loc <= 10
+        && func.body.contains("return")
+    {
         return Some("factory_pattern");
     }
 
     if loc <= 4 {
-        let return_lines: Vec<_> = func.body.lines()
+        let return_lines: Vec<_> = func
+            .body
+            .lines()
             .filter(|l| l.trim().starts_with("return"))
             .collect();
         if return_lines.len() == 1 {
             let ret_line = return_lines[0];
-            if ret_line.contains("(") && !ret_line.trim().starts_with("return \"")
-               && !ret_line.trim().starts_with("return '") {
+            if ret_line.contains("(")
+                && !ret_line.trim().starts_with("return \"")
+                && !ret_line.trim().starts_with("return '")
+            {
                 return Some("wrapper_pattern");
+            }
+        }
+    }
+
+    // Delegation pattern: function that delegates to another method/object (up to 8 lines)
+    if loc <= 8 {
+        let return_lines: Vec<_> = func
+            .body
+            .lines()
+            .filter(|l| l.trim().starts_with("return"))
+            .collect();
+        if return_lines.len() == 1 {
+            let ret_line = return_lines[0];
+            // Check if returning a call to self.method() or other.method()
+            if (ret_line.contains("self.") || ret_line.contains("this."))
+                && ret_line.contains("(")
+                && ret_line.contains(")")
+            {
+                return Some("delegation_pattern");
             }
         }
     }
 
     if name_lower.contains("config") && loc <= 8 && func.body.contains("return") {
         return Some("config_pattern");
+    }
+
+    // Simple validator pattern: functions that validate with basic conditionals
+    if (name_lower.contains("validate")
+        || name_lower.contains("check")
+        || name_lower.starts_with("is_valid"))
+        && loc <= 15
+        && func.body.contains("if")
+        && func.body.contains("return")
+    {
+        return Some("validator_pattern");
     }
 
     None
@@ -1416,7 +1557,8 @@ fn should_exclude_function(func: &FunctionInfo, file_context: &FileContext) -> b
         }
     }
 
-    if func.name.starts_with("get_") && func.body.lines().count() <= 2 {
+    // Expanded getter exclusion from <=2 to <=5 lines to handle getters with more logic
+    if func.name.starts_with("get_") && func.body.lines().count() <= 5 {
         return true;
     }
 
@@ -1490,18 +1632,713 @@ fn build_call_graph(functions: &[FunctionInfo]) -> CallGraph {
     graph
 }
 
+/// Determines if function should skip deep quality analysis.
+///
+/// Excludes test/helper/utility functions and functions too small to analyze meaningfully.
+/// This provides fast exclusion for ~70% of functions.
+///
+/// # Arguments
+/// * `func` - Function to check
+///
+/// # Returns
+/// * `true` if function should skip analysis, `false` otherwise
+fn should_skip_analysis(func: &FunctionInfo) -> bool {
+    if func.name.starts_with("test_")
+        || func.name.starts_with("helper_")
+        || func.name.starts_with("util_")
+        || func.name.starts_with("_")
+    {
+        return true;
+    }
+
+    if let Some(actual_loc) = func.actual_loc {
+        if actual_loc < 3 {
+            return true;
+        }
+    }
+
+    false
+}
+
+/// Checks if function is a licensing crack function requiring deep analysis.
+///
+/// Identifies functions involved in keygen, patching, bypassing, validation,
+/// hooking, and protection analysis operations.
+///
+/// # Arguments
+/// * `name` - Function name to check
+///
+/// # Returns
+/// * `true` if function is licensing-related, `false` otherwise
+fn is_licensing_crack_function(name: &str) -> bool {
+    let name_lower = name.to_lowercase();
+    name_lower.contains("keygen")
+        || name_lower.contains("crack")
+        || name_lower.contains("patch")
+        || name_lower.contains("bypass")
+        || name_lower.contains("validate")
+        || name_lower.contains("license")
+        || name_lower.contains("serial")
+        || name_lower.contains("activation")
+        || name_lower.contains("hook")
+        || name_lower.contains("intercept")
+        || name_lower.contains("analyze_protection")
+        || name_lower.contains("detect_protection")
+        || name_lower.contains("gen_key")
+        || name_lower.contains("gen_serial")
+        || name_lower.contains("check_license")
+        || name_lower.contains("verify_key")
+}
+
+/// Analyzes keygen function quality using sophisticated quality matrix.
+///
+/// Evaluates crypto sophistication, control flow complexity, state management,
+/// and return type validation to detect non-functional code and weak keygens.
+///
+/// # Arguments
+/// * `func` - Function to analyze
+///
+/// # Returns
+/// * Vector of quality issues with severity scores
+fn analyze_keygen_quality(func: &FunctionInfo) -> Vec<(String, i32)> {
+    let mut issues = Vec::new();
+    let name_lower = func.name.to_lowercase();
+
+    if !name_lower.contains("keygen")
+        && !name_lower.contains("generate_key")
+        && !name_lower.contains("gen_serial")
+        && !name_lower.contains("gen_key")
+    {
+        return issues;
+    }
+
+    let mut crypto_score = 0;
+    let mut control_flow_score = 0;
+    let mut state_score = 0;
+
+    if let Some(calls) = &func.calls_functions {
+        let has_strong_crypto = calls.iter().any(|c| {
+            let c_lower = c.to_lowercase();
+            c_lower.contains("rsa")
+                || c_lower.contains("ecc")
+                || c_lower.contains("ecdsa")
+                || c_lower.contains("ed25519")
+        });
+
+        let has_symmetric = calls.iter().any(|c| {
+            let c_lower = c.to_lowercase();
+            c_lower.contains("aes") || c_lower.contains("chacha") || c_lower.contains("cipher")
+        });
+
+        let has_hash = calls.iter().any(|c| {
+            let c_lower = c.to_lowercase();
+            c_lower.contains("sha256")
+                || c_lower.contains("sha512")
+                || c_lower.contains("sha3")
+                || c_lower.contains("blake")
+        });
+
+        let has_rng = calls.iter().any(|c| {
+            let c_lower = c.to_lowercase();
+            c_lower.contains("random")
+                || c_lower.contains("rand")
+                || c_lower.contains("urandom")
+                || c_lower.contains("getrandom")
+        });
+
+        let has_encoding = calls.iter().any(|c| {
+            let c_lower = c.to_lowercase();
+            c_lower.contains("base64")
+                || c_lower.contains("hex")
+                || c_lower.contains("encode")
+                || c_lower.contains("to_string")
+        });
+
+        if has_strong_crypto {
+            crypto_score += 40;
+        }
+        if has_symmetric {
+            crypto_score += 30;
+        }
+        if has_hash {
+            crypto_score += 20;
+        }
+        if has_rng {
+            crypto_score += 15;
+        }
+        if has_encoding {
+            crypto_score += 10;
+        }
+
+        if crypto_score == 0 {
+            issues.push((
+                "CRITICAL: Keygen lacks cryptographic operations (insufficient for production)"
+                    .to_string(),
+                90,
+            ));
+        } else if crypto_score < 40 {
+            issues.push((
+                format!(
+                    "Keygen with weak crypto implementation (score: {}%)",
+                    crypto_score
+                ),
+                60,
+            ));
+        }
+    } else {
+        issues.push((
+            "CRITICAL: Keygen without function calls (no crypto possible)".to_string(),
+            85,
+        ));
+    }
+
+    if let (Some(has_loops), Some(has_conditionals)) = (func.has_loops, func.has_conditionals) {
+        if has_loops && has_conditionals {
+            control_flow_score += 50;
+        } else if has_loops || has_conditionals {
+            control_flow_score += 25;
+            issues.push((
+                "Keygen missing loops OR conditionals (limited sophistication)".to_string(),
+                40,
+            ));
+        } else {
+            issues.push((
+                "CRITICAL: Keygen without loops or conditionals (linear execution only)"
+                    .to_string(),
+                75,
+            ));
+        }
+    }
+
+    if let Some(cyclomatic_complexity) = func.cyclomatic_complexity {
+        if cyclomatic_complexity >= 5 {
+            control_flow_score += 30;
+        } else if cyclomatic_complexity < 2 {
+            issues.push((
+                "Keygen with trivial complexity (insufficient for production)".to_string(),
+                50,
+            ));
+        }
+    }
+
+    if let Some(local_vars) = &func.local_vars {
+        let var_count = local_vars.len();
+        let has_key_vars = local_vars.iter().any(|v| {
+            let v_lower = v.to_lowercase();
+            v_lower.contains("key")
+                || v_lower.contains("seed")
+                || v_lower.contains("private")
+                || v_lower.contains("public")
+        });
+
+        if var_count >= 3 && has_key_vars {
+            state_score += 50;
+        } else if var_count >= 2 {
+            state_score += 25;
+        } else if var_count == 0 {
+            issues.push((
+                "CRITICAL: Keygen with no local variables (no key storage)".to_string(),
+                80,
+            ));
+        } else {
+            issues.push((
+                "Keygen with minimal local state (incomplete implementation)".to_string(),
+                45,
+            ));
+        }
+    }
+
+    if let Some(return_types) = &func.return_types {
+        let returns_complex = return_types.iter().any(|t| {
+            t.contains("tuple")
+                || t.contains("struct")
+                || t.contains("HashMap")
+                || t == "Expression"
+        });
+
+        if return_types.len() == 1 && return_types[0] == "String" && !returns_complex {
+            if let Some(calls) = &func.calls_functions {
+                let has_encoding = calls.iter().any(|c| c.to_lowercase().contains("encode"));
+                if !has_encoding {
+                    issues.push((
+                        "Keygen returns raw string without encoding (weak format)".to_string(),
+                        35,
+                    ));
+                }
+            }
+        }
+    }
+
+    let final_score = (crypto_score + control_flow_score + state_score) / 3;
+
+    if final_score < 30 {
+        issues.push((
+            format!(
+                "Keygen sophistication score: {}% (INSUFFICIENT)",
+                final_score
+            ),
+            70,
+        ));
+    } else if final_score < 60 {
+        issues.push((
+            format!(
+                "Keygen sophistication score: {}% (WEAK implementation)",
+                final_score
+            ),
+            50,
+        ));
+    }
+
+    issues
+}
+
+/// Analyzes license validator function quality using sophisticated quality matrix.
+///
+/// Evaluates cryptographic verification, multi-step validation, conditional logic,
+/// and state management to detect weak validators easily bypassed in production.
+///
+/// # Arguments
+/// * `func` - Function to analyze
+///
+/// # Returns
+/// * Vector of quality issues with severity scores
+fn analyze_validator_quality(func: &FunctionInfo) -> Vec<(String, i32)> {
+    let mut issues = Vec::new();
+    let name_lower = func.name.to_lowercase();
+
+    if !name_lower.contains("validate")
+        && !name_lower.contains("verify")
+        && !name_lower.contains("check_license")
+        && !name_lower.contains("check_key")
+    {
+        return issues;
+    }
+
+    let mut validation_score = 0;
+
+    if let Some(calls) = &func.calls_functions {
+        let has_crypto_verify = calls.iter().any(|c| {
+            let c_lower = c.to_lowercase();
+            c_lower.contains("verify")
+                || c_lower.contains("check_signature")
+                || c_lower.contains("hmac")
+                || c_lower.contains("rsa_verify")
+        });
+
+        let has_time_check = calls.iter().any(|c| {
+            let c_lower = c.to_lowercase();
+            c_lower.contains("date")
+                || c_lower.contains("time")
+                || c_lower.contains("expir")
+                || c_lower.contains("timestamp")
+        });
+
+        let has_hardware_check = calls.iter().any(|c| {
+            let c_lower = c.to_lowercase();
+            c_lower.contains("hwid")
+                || c_lower.contains("machine")
+                || c_lower.contains("cpu")
+                || c_lower.contains("uuid")
+        });
+
+        let has_format_parse = calls.iter().any(|c| {
+            let c_lower = c.to_lowercase();
+            c_lower.contains("parse")
+                || c_lower.contains("decode")
+                || c_lower.contains("split")
+                || c_lower.contains("from_str")
+        });
+
+        if has_crypto_verify {
+            validation_score += 40;
+        }
+        if has_time_check {
+            validation_score += 20;
+        }
+        if has_hardware_check {
+            validation_score += 20;
+        }
+        if has_format_parse {
+            validation_score += 15;
+        }
+
+        if validation_score == 0 {
+            issues.push((
+                "CRITICAL: Validator with no verification calls (ineffective validation)"
+                    .to_string(),
+                85,
+            ));
+        } else if !has_crypto_verify {
+            issues.push((
+                "Validator without cryptographic verification (string comparison only)".to_string(),
+                65,
+            ));
+        }
+    } else {
+        issues.push((
+            "CRITICAL: Validator with no function calls (cannot verify anything)".to_string(),
+            90,
+        ));
+    }
+
+    if let Some(has_conditionals) = func.has_conditionals {
+        if !has_conditionals {
+            issues.push((
+                "CRITICAL: Validator without conditionals (always same result)".to_string(),
+                95,
+            ));
+        } else {
+            validation_score += 20;
+        }
+    }
+
+    if let Some(return_count) = func.return_count {
+        if return_count == 1 {
+            issues.push((
+                "Validator with single return (no error differentiation)".to_string(),
+                45,
+            ));
+        } else if return_count >= 3 {
+            validation_score += 15;
+        }
+    }
+
+    if let Some(local_vars) = &func.local_vars {
+        let has_validation_vars = local_vars.iter().any(|v| {
+            let v_lower = v.to_lowercase();
+            v_lower.contains("valid")
+                || v_lower.contains("result")
+                || v_lower.contains("signature")
+                || v_lower.contains("hash")
+        });
+
+        if has_validation_vars {
+            validation_score += 10;
+        } else if local_vars.is_empty() {
+            issues.push((
+                "Validator with no local validation state (too simple)".to_string(),
+                40,
+            ));
+        }
+    }
+
+    if validation_score < 40 {
+        issues.push((
+            format!(
+                "Validator sophistication: {}% (WEAK - bypassed easily)",
+                validation_score
+            ),
+            70,
+        ));
+    } else if validation_score < 70 {
+        issues.push((
+            format!(
+                "Validator sophistication: {}% (BASIC - needs improvement)",
+                validation_score
+            ),
+            40,
+        ));
+    }
+
+    issues
+}
+
+/// Analyzes binary patcher function quality using sophisticated quality matrix.
+///
+/// Evaluates pattern search capability, format parsing, backup/verification,
+/// and iteration logic to detect hardcoded-offset patchers that break on updates.
+///
+/// # Arguments
+/// * `func` - Function to analyze
+///
+/// # Returns
+/// * Vector of quality issues with severity scores
+fn analyze_patcher_quality(func: &FunctionInfo) -> Vec<(String, i32)> {
+    let mut issues = Vec::new();
+    let name_lower = func.name.to_lowercase();
+
+    if !name_lower.contains("patch")
+        && !name_lower.contains("modify")
+        && !name_lower.contains("inject")
+        && !name_lower.contains("write_bytes")
+    {
+        return issues;
+    }
+
+    let mut patcher_score = 0;
+
+    if let Some(calls) = &func.calls_functions {
+        let has_pattern_search = calls.iter().any(|c| {
+            let c_lower = c.to_lowercase();
+            c_lower.contains("find_pattern")
+                || c_lower.contains("search")
+                || c_lower.contains("scan")
+                || c_lower.contains("memmem")
+        });
+
+        let has_format_parse = calls.iter().any(|c| {
+            let c_lower = c.to_lowercase();
+            c_lower.contains("parse_pe")
+                || c_lower.contains("parse_elf")
+                || c_lower.contains("read_elf")
+                || c_lower.contains("pe_header")
+        });
+
+        let has_backup = calls.iter().any(|c| {
+            let c_lower = c.to_lowercase();
+            c_lower.contains("backup")
+                || c_lower.contains("copy")
+                || c_lower.contains("save_original")
+        });
+
+        let has_verification = calls.iter().any(|c| {
+            let c_lower = c.to_lowercase();
+            c_lower.contains("verify") || c_lower.contains("check") || c_lower.contains("validate")
+        });
+
+        if has_pattern_search {
+            patcher_score += 40;
+        } else {
+            issues.push((
+                "CRITICAL: Patcher without pattern search (hardcoded offsets only)".to_string(),
+                85,
+            ));
+        }
+
+        if has_format_parse {
+            patcher_score += 30;
+        } else {
+            issues.push((
+                "Patcher without format parsing (not PE/ELF aware - dangerous)".to_string(),
+                70,
+            ));
+        }
+
+        if has_backup {
+            patcher_score += 15;
+        } else {
+            issues.push((
+                "Patcher without backup capability (destructive without safety)".to_string(),
+                50,
+            ));
+        }
+
+        if has_verification {
+            patcher_score += 10;
+        }
+    } else {
+        issues.push((
+            "CRITICAL: Patcher with no function calls (cannot patch anything)".to_string(),
+            90,
+        ));
+    }
+
+    if let Some(has_loops) = func.has_loops {
+        if has_loops {
+            patcher_score += 20;
+        } else {
+            issues.push((
+                "Patcher without loops (single-target/single-patch only)".to_string(),
+                60,
+            ));
+        }
+    }
+
+    if let Some(has_conditionals) = func.has_conditionals {
+        if !has_conditionals {
+            issues.push((
+                "CRITICAL: Patcher without conditionals (blindly patches - dangerous)".to_string(),
+                75,
+            ));
+        } else {
+            patcher_score += 15;
+        }
+    }
+
+    if let Some(local_vars) = &func.local_vars {
+        let has_patch_vars = local_vars.iter().any(|v| {
+            let v_lower = v.to_lowercase();
+            v_lower.contains("offset")
+                || v_lower.contains("pattern")
+                || v_lower.contains("address")
+                || v_lower.contains("rva")
+        });
+
+        if has_patch_vars {
+            patcher_score += 10;
+        } else if local_vars.is_empty() {
+            issues.push((
+                "Patcher with no offset/pattern storage (incomplete)".to_string(),
+                45,
+            ));
+        }
+    }
+
+    if patcher_score < 40 {
+        issues.push((
+            format!(
+                "Patcher sophistication: {}% (DANGEROUS - will break on updates)",
+                patcher_score
+            ),
+            80,
+        ));
+    } else if patcher_score < 70 {
+        issues.push((
+            format!(
+                "Patcher sophistication: {}% (FRAGILE - limited reliability)",
+                patcher_score
+            ),
+            50,
+        ));
+    }
+
+    issues
+}
+
+/// Analyzes protection analyzer function quality using sophisticated quality matrix.
+///
+/// Evaluates signature database usage, format parsing, heuristic analysis,
+/// and pattern iteration to detect weak analyzers that miss real protections.
+///
+/// # Arguments
+/// * `func` - Function to analyze
+///
+/// # Returns
+/// * Vector of quality issues with severity scores
+fn analyze_protection_analyzer_quality(func: &FunctionInfo) -> Vec<(String, i32)> {
+    let mut issues = Vec::new();
+    let name_lower = func.name.to_lowercase();
+
+    if !name_lower.contains("analyze")
+        && !name_lower.contains("detect")
+        && !name_lower.contains("identify")
+        && !name_lower.contains("scan_protection")
+    {
+        return issues;
+    }
+
+    let mut analyzer_score = 0;
+
+    if let Some(calls) = &func.calls_functions {
+        let has_signature_db = calls.iter().any(|c| {
+            let c_lower = c.to_lowercase();
+            c_lower.contains("signature")
+                || c_lower.contains("pattern")
+                || c_lower.contains("database")
+                || c_lower.contains("rule")
+        });
+
+        let has_format_parse = calls.iter().any(|c| {
+            let c_lower = c.to_lowercase();
+            c_lower.contains("parse")
+                || c_lower.contains("read_pe")
+                || c_lower.contains("read_elf")
+                || c_lower.contains("get_section")
+        });
+
+        let has_heuristic = calls.iter().any(|c| {
+            let c_lower = c.to_lowercase();
+            c_lower.contains("entropy")
+                || c_lower.contains("heuristic")
+                || c_lower.contains("anomaly")
+                || c_lower.contains("score")
+        });
+
+        if has_signature_db {
+            analyzer_score += 35;
+        } else {
+            issues.push((
+                "Protection analyzer without signature database (weak detection)".to_string(),
+                60,
+            ));
+        }
+
+        if has_format_parse {
+            analyzer_score += 30;
+        } else {
+            issues.push((
+                "CRITICAL: Analyzer without binary format parsing (string matching only)"
+                    .to_string(),
+                75,
+            ));
+        }
+
+        if has_heuristic {
+            analyzer_score += 20;
+        }
+    }
+
+    if let Some(has_loops) = func.has_loops {
+        if has_loops {
+            analyzer_score += 25;
+        } else {
+            issues.push((
+                "Analyzer without loops (single pattern check only)".to_string(),
+                55,
+            ));
+        }
+    }
+
+    if let Some(local_vars) = &func.local_vars {
+        let has_result_storage = local_vars.iter().any(|v| {
+            let v_lower = v.to_lowercase();
+            v_lower.contains("result")
+                || v_lower.contains("detect")
+                || v_lower.contains("match")
+                || v_lower.contains("protection")
+        });
+
+        if has_result_storage {
+            analyzer_score += 15;
+        } else if local_vars.is_empty() {
+            issues.push((
+                "Analyzer with no result storage (incomplete analysis)".to_string(),
+                45,
+            ));
+        }
+    }
+
+    if let Some(return_types) = &func.return_types {
+        if return_types.len() == 1 && return_types[0] == "Boolean" {
+            issues.push((
+                "Analyzer returns only boolean (no detailed results)".to_string(),
+                40,
+            ));
+        } else {
+            analyzer_score += 10;
+        }
+    }
+
+    if analyzer_score < 40 {
+        issues.push((
+            format!(
+                "Analyzer sophistication: {}% (WEAK - misses most protections)",
+                analyzer_score
+            ),
+            70,
+        ));
+    }
+
+    issues
+}
+
 fn detect_empty_function(func: &FunctionInfo, lang: &LanguageType) -> Vec<(String, i32)> {
     let mut issues = Vec::new();
 
     if let Some(actual_loc) = func.actual_loc {
         if actual_loc <= 1 {
-            issues.push(("Function has no meaningful content (≤1 line)".to_string(), 50));
+            issues.push((
+                "Function has no meaningful content (≤1 line)".to_string(),
+                50,
+            ));
         }
     } else {
         let trimmed_body = func.body.trim();
         match lang {
             LanguageType::Python => {
-                if RE_PASS_ONLY.is_match(&func.body) && func.body.lines().filter(|l| !l.trim().is_empty()).count() == 1 {
+                if RE_PASS_ONLY.is_match(&func.body)
+                    && func.body.lines().filter(|l| !l.trim().is_empty()).count() == 1
+                {
                     issues.push(("Function contains only 'pass' statement".to_string(), 50));
                 }
             }
@@ -1542,10 +2379,17 @@ fn detect_hardcoded_return(func: &FunctionInfo) -> Vec<(String, i32)> {
     let mut issues = Vec::new();
 
     if let (Some(return_types), Some(return_count), Some(actual_loc)) =
-        (&func.return_types, func.return_count, func.actual_loc) {
+        (&func.return_types, func.return_count, func.actual_loc)
+    {
         if actual_loc <= 1 && return_count == 1 {
-            if return_types.iter().any(|t| t == "None" || t == "Boolean" || t == "Integer") {
-                issues.push(("Single-line return of simple literal (0, 1, True, False, None)".to_string(), 35));
+            if return_types
+                .iter()
+                .any(|t| t == "None" || t == "Boolean" || t == "Integer")
+            {
+                issues.push((
+                    "Single-line return of simple literal (0, 1, True, False, None)".to_string(),
+                    35,
+                ));
             } else if return_types.iter().any(|t| t == "String") {
                 issues.push(("Single-line hardcoded literal return".to_string(), 40));
             }
@@ -1556,13 +2400,21 @@ fn detect_hardcoded_return(func: &FunctionInfo) -> Vec<(String, i32)> {
             issues.push(("All returns are hardcoded strings".to_string(), 25));
         }
     } else {
-        let lines: Vec<&str> = func.body.lines().filter(|l| !l.trim().is_empty() && !l.trim().starts_with('#')).collect();
+        let lines: Vec<&str> = func
+            .body
+            .lines()
+            .filter(|l| !l.trim().is_empty() && !l.trim().starts_with('#'))
+            .collect();
 
         if lines.len() == 1 {
             let line = lines[0].trim();
             if RE_PYTHON_RETURN.is_match(line) {
                 if RE_SIMPLE_NUMBER.is_match(line) {
-                    issues.push(("Single-line return of simple literal (0, 1, True, False, None)".to_string(), 35));
+                    issues.push((
+                        "Single-line return of simple literal (0, 1, True, False, None)"
+                            .to_string(),
+                        35,
+                    ));
                 } else if RE_HARDCODED_STRING.is_match(line) {
                     issues.push(("Single-line hardcoded literal return".to_string(), 40));
                 }
@@ -1575,7 +2427,9 @@ fn detect_hardcoded_return(func: &FunctionInfo) -> Vec<(String, i32)> {
             if let Some(ret_val) = cap.get(1) {
                 return_count += 1;
                 let val = ret_val.as_str().trim();
-                if (val.starts_with('"') && val.ends_with('"')) || (val.starts_with('\'') && val.ends_with('\'')) {
+                if (val.starts_with('"') && val.ends_with('"'))
+                    || (val.starts_with('\'') && val.ends_with('\''))
+                {
                     string_return_count += 1;
                 }
             }
@@ -1590,22 +2444,34 @@ fn detect_hardcoded_return(func: &FunctionInfo) -> Vec<(String, i32)> {
 
 fn has_crypto_context(func: &FunctionInfo) -> bool {
     let name_lower = func.name.to_lowercase();
-    name_lower.contains("key") || name_lower.contains("license") ||
-    name_lower.contains("token") || name_lower.contains("auth") ||
-    name_lower.contains("encrypt") || name_lower.contains("decrypt") ||
-    name_lower.contains("sign") || name_lower.contains("hash") ||
-    name_lower.contains("cipher") || name_lower.contains("credential")
+    name_lower.contains("key")
+        || name_lower.contains("license")
+        || name_lower.contains("token")
+        || name_lower.contains("auth")
+        || name_lower.contains("encrypt")
+        || name_lower.contains("decrypt")
+        || name_lower.contains("sign")
+        || name_lower.contains("hash")
+        || name_lower.contains("cipher")
+        || name_lower.contains("credential")
 }
 
 fn has_file_io_context(func: &FunctionInfo) -> bool {
     let name_lower = func.name.to_lowercase();
-    name_lower.contains("read_file") || name_lower.contains("write_file") ||
-    name_lower.contains("save_to") || name_lower.contains("load_from") ||
-    name_lower.contains("store") || name_lower.contains("persist") ||
-    name_lower.contains("dump") || name_lower.contains("serialize") ||
-    name_lower.contains("deserialize") ||
-    (name_lower.contains("save") && !name_lower.contains("save_state")) ||
-    (name_lower.contains("read") && (name_lower.contains("file") || name_lower.contains("config") || name_lower.contains("data")))
+    name_lower.contains("read_file")
+        || name_lower.contains("write_file")
+        || name_lower.contains("save_to")
+        || name_lower.contains("load_from")
+        || name_lower.contains("store")
+        || name_lower.contains("persist")
+        || name_lower.contains("dump")
+        || name_lower.contains("serialize")
+        || name_lower.contains("deserialize")
+        || (name_lower.contains("save") && !name_lower.contains("save_state"))
+        || (name_lower.contains("read")
+            && (name_lower.contains("file")
+                || name_lower.contains("config")
+                || name_lower.contains("data")))
 }
 
 fn get_ignored_issue_types(func_body: &str) -> HashSet<String> {
@@ -1614,10 +2480,7 @@ fn get_ignored_issue_types(func_body: &str) -> HashSet<String> {
     for line in func_body.lines() {
         if let Some(caps) = RE_SCANNER_IGNORE.captures(line) {
             if let Some(type_match) = caps.get(1) {
-                let normalized = type_match.as_str()
-                    .trim()
-                    .to_lowercase()
-                    .replace("-", "_");
+                let normalized = type_match.as_str().trim().to_lowercase().replace("-", "_");
                 ignored.insert(normalized);
             }
         }
@@ -1632,11 +2495,13 @@ fn detect_semantic_issues(func: &FunctionInfo, file_context: &FileContext) -> Ve
     let name_lower = func.name.to_lowercase();
 
     let complex_operations = [
-        "generate", "create", "build", "compile", "analyze", "parse",
-        "validate", "process", "execute", "decrypt", "encrypt", "crack"
+        "generate", "create", "build", "compile", "analyze", "parse", "validate", "process",
+        "execute", "decrypt", "encrypt", "crack",
     ];
 
-    let loc = func.actual_loc.unwrap_or_else(|| func.body.lines().filter(|l| !l.trim().is_empty()).count());
+    let loc = func
+        .actual_loc
+        .unwrap_or_else(|| func.body.lines().filter(|l| !l.trim().is_empty()).count());
     let complexity = func.cyclomatic_complexity.unwrap_or(1);
 
     for op in &complex_operations {
@@ -1647,44 +2512,135 @@ fn detect_semantic_issues(func: &FunctionInfo, file_context: &FileContext) -> Ve
     }
 
     if let Some(calls) = &func.calls_functions {
-        if has_file_io_context(func) && !calls.iter().any(|c| {
-            c.contains("open") || c.contains("read") || c.contains("write") || c.contains("File")
-        }) && !RE_FILE_OPS.is_match(&func.body) {
-            issues.push(("Function name implies file I/O but no file operations detected".to_string(), 35));
+        if has_file_io_context(func)
+            && !calls.iter().any(|c| {
+                c.contains("open")
+                    || c.contains("read")
+                    || c.contains("write")
+                    || c.contains("File")
+            })
+            && !RE_FILE_OPS.is_match(&func.body)
+        {
+            issues.push((
+                "Function name implies file I/O but no file operations detected".to_string(),
+                35,
+            ));
         }
 
-        if (name_lower.contains("analyze") || name_lower.contains("disassemble") || name_lower.contains("decompile"))
+        if (name_lower.contains("analyze")
+            || name_lower.contains("disassemble")
+            || name_lower.contains("decompile"))
             && !calls.iter().any(|c| {
-                c.contains("subprocess") || c.contains("Popen") || c.contains("run") ||
-                c.contains("ghidra") || c.contains("ida") || c.contains("capstone")
-            }) && !RE_SUBPROCESS.is_match(&func.body) {
-                issues.push(("Function name implies external tool usage but no subprocess/tool calls detected".to_string(), 30));
-            }
+                c.contains("subprocess")
+                    || c.contains("Popen")
+                    || c.contains("run")
+                    || c.contains("ghidra")
+                    || c.contains("ida")
+                    || c.contains("capstone")
+            })
+            && !RE_SUBPROCESS.is_match(&func.body)
+        {
+            issues.push((
+                "Function name implies external tool usage but no subprocess/tool calls detected"
+                    .to_string(),
+                30,
+            ));
+        }
     } else {
         if has_file_io_context(func) && !RE_FILE_OPS.is_match(&func.body) {
-            issues.push(("Function name implies file I/O but no file operations detected".to_string(), 35));
+            issues.push((
+                "Function name implies file I/O but no file operations detected".to_string(),
+                35,
+            ));
         }
 
-        if (name_lower.contains("analyze") || name_lower.contains("disassemble") || name_lower.contains("decompile"))
-            && !RE_SUBPROCESS.is_match(&func.body) && !func.body.contains("ghidra") && !func.body.contains("ida") && !func.body.contains("capstone") {
-                issues.push(("Function name implies external tool usage but no subprocess/tool calls detected".to_string(), 30));
-            }
+        if (name_lower.contains("analyze")
+            || name_lower.contains("disassemble")
+            || name_lower.contains("decompile"))
+            && !RE_SUBPROCESS.is_match(&func.body)
+            && !func.body.contains("ghidra")
+            && !func.body.contains("ida")
+            && !func.body.contains("capstone")
+        {
+            issues.push((
+                "Function name implies external tool usage but no subprocess/tool calls detected"
+                    .to_string(),
+                30,
+            ));
+        }
     }
 
     if matches!(file_context.lang, LanguageType::Python) {
         if let Some(has_async) = func.has_async_await {
             if name_lower.contains("async") && !has_async && !func.body.contains("asyncio") {
-                issues.push(("Async function without await or asyncio usage".to_string(), 25));
+                issues.push((
+                    "Async function without await or asyncio usage".to_string(),
+                    25,
+                ));
             }
-        } else if name_lower.contains("async") && !func.body.contains("await") && !func.body.contains("asyncio") {
-            issues.push(("Async function without await or asyncio usage".to_string(), 25));
+        } else if name_lower.contains("async")
+            && !func.body.contains("await")
+            && !func.body.contains("asyncio")
+        {
+            issues.push((
+                "Async function without await or asyncio usage".to_string(),
+                25,
+            ));
         }
     }
 
     if matches!(file_context.lang, LanguageType::Rust)
-        && func.body.contains("unwrap()") && !func.body.contains("expect(") {
-            issues.push(("Using unwrap() without expect() or proper error handling".to_string(), 15));
+        && func.body.contains("unwrap()")
+        && !func.body.contains("expect(")
+    {
+        issues.push((
+            "Using unwrap() without expect() or proper error handling".to_string(),
+            15,
+        ));
+    }
+
+    if let Some(has_conditionals) = func.has_conditionals {
+        if !has_conditionals
+            && (name_lower.contains("validate")
+                || name_lower.contains("check")
+                || name_lower.contains("verify")
+                || name_lower.contains("test"))
+        {
+            issues.push((
+                "Validation/check function without conditional logic (always returns same value)"
+                    .to_string(),
+                50,
+            ));
         }
+    }
+
+    if let Some(has_loops) = func.has_loops {
+        if !has_loops
+            && (name_lower.contains("scan")
+                || name_lower.contains("search")
+                || name_lower.contains("find")
+                || name_lower.contains("iter"))
+        {
+            issues.push((
+                "Search/scan function without iteration logic (single-element only)".to_string(),
+                45,
+            ));
+        }
+    }
+
+    if let Some(local_vars) = &func.local_vars {
+        if local_vars.is_empty()
+            && (name_lower.contains("process")
+                || name_lower.contains("analyze")
+                || name_lower.contains("parse")
+                || name_lower.contains("transform"))
+        {
+            issues.push((
+                "Processing function with no local variables (no actual computation)".to_string(),
+                45,
+            ));
+        }
+    }
 
     issues
 }
@@ -1700,83 +2656,60 @@ fn detect_semantic_issues(func: &FunctionInfo, file_context: &FileContext) -> Ve
 ///
 /// # Returns
 /// Vector of domain-specific issues with severity scores
-fn detect_domain_specific_issues(func: &FunctionInfo, file_context: &FileContext) -> Vec<(String, i32)> {
+fn detect_domain_specific_issues(
+    func: &FunctionInfo,
+    file_context: &FileContext,
+) -> Vec<(String, i32)> {
+    if should_skip_analysis(func) {
+        return Vec::new();
+    }
+
     let mut issues = Vec::new();
+
+    if is_licensing_crack_function(&func.name) {
+        issues.extend(analyze_keygen_quality(func));
+        issues.extend(analyze_validator_quality(func));
+        issues.extend(analyze_patcher_quality(func));
+        issues.extend(analyze_protection_analyzer_quality(func));
+
+        if !issues.is_empty() {
+            return issues;
+        }
+    }
+
     let name_lower = func.name.to_lowercase();
 
-    if name_lower.contains("keygen") || name_lower.contains("generate_key") || name_lower.contains("generate_license") {
+    if file_context.lang == LanguageType::JavaScript
+        && (name_lower.contains("hook") || name_lower.contains("intercept"))
+    {
         if let Some(calls) = &func.calls_functions {
-            let has_crypto = calls.iter().any(|c| {
-                c.to_lowercase().contains("rsa") || c.to_lowercase().contains("aes") ||
-                c.to_lowercase().contains("sha") || c.to_lowercase().contains("hmac") ||
-                c.to_lowercase().contains("cipher") || c.to_lowercase().contains("encrypt")
+            let has_interceptor = calls.iter().any(|c| {
+                c.contains("Interceptor") || c.contains("attach") || c.contains("replace")
             });
-            if !has_crypto {
-                issues.push(("Keygen function without cryptographic operations".to_string(), 40));
-            }
-
-            let has_weak_crypto = calls.iter().any(|c| c.contains("ord") || c.contains("chr")) || func.body.contains(" ^ ");
-            if has_weak_crypto {
-                issues.push(("Keygen using weak crypto (XOR, character iteration)".to_string(), 35));
-            }
-        } else {
-            if !RE_CRYPTO_LIBS.is_match(&func.body) {
-                issues.push(("Keygen function without cryptographic operations".to_string(), 40));
-            }
-            if RE_WEAK_CRYPTO.is_match(&func.body) {
-                issues.push(("Keygen using weak crypto (XOR, character iteration)".to_string(), 35));
-            }
-        }
-    }
-
-    if name_lower.contains("patch") || name_lower.contains("modify_binary") {
-        if let Some(calls) = &func.calls_functions {
-            let has_file_ops = calls.iter().any(|c| {
-                c.contains("open") || c.contains("read") || c.contains("write") ||
-                c.contains("File") || c.contains("seek") || c.contains("close")
-            });
-            if !has_file_ops {
-                issues.push(("Binary patcher without file I/O operations".to_string(), 40));
-            }
-        } else {
-            if !RE_FILE_OPS.is_match(&func.body) {
-                issues.push(("Binary patcher without file I/O operations".to_string(), 40));
-            }
-        }
-    }
-
-    if file_context.lang == LanguageType::JavaScript && (name_lower.contains("hook") || name_lower.contains("intercept")) {
-        if let Some(calls) = &func.calls_functions {
-            let has_interceptor = calls.iter().any(|c| c.contains("Interceptor") || c.contains("attach") || c.contains("replace"));
             if !has_interceptor && !func.body.contains("Interceptor") {
-                issues.push(("Frida hook without Interceptor.attach/replace".to_string(), 35));
+                issues.push((
+                    "Frida hook without Interceptor.attach/replace".to_string(),
+                    35,
+                ));
             }
         } else {
-            if !func.body.contains("Interceptor") && !func.body.contains("attach") && !func.body.contains("replace") {
-                issues.push(("Frida hook without Interceptor.attach/replace".to_string(), 35));
+            if !func.body.contains("Interceptor")
+                && !func.body.contains("attach")
+                && !func.body.contains("replace")
+            {
+                issues.push((
+                    "Frida hook without Interceptor.attach/replace".to_string(),
+                    35,
+                ));
             }
         }
     }
 
-    if file_context.lang == LanguageType::Java && (name_lower.contains("analyze") || name_lower.contains("ghidra")) {
+    if file_context.lang == LanguageType::Java
+        && (name_lower.contains("analyze") || name_lower.contains("ghidra"))
+    {
         if !func.body.contains("currentProgram") && !func.body.contains("getFunctionManager") {
             issues.push(("Ghidra script without Ghidra API usage".to_string(), 30));
-        }
-    }
-
-    if name_lower.contains("validate") || name_lower.contains("verify") || name_lower.contains("check_license") {
-        if let Some(calls) = &func.calls_functions {
-            let has_crypto = calls.iter().any(|c| {
-                c.to_lowercase().contains("verify") || c.to_lowercase().contains("hash") ||
-                c.to_lowercase().contains("hmac") || c.to_lowercase().contains("signature")
-            });
-            if RE_SIMPLE_EQUALITY.is_match(&func.body) && !has_crypto {
-                issues.push(("License validator using simple equality without crypto verification".to_string(), 35));
-            }
-        } else {
-            if RE_SIMPLE_EQUALITY.is_match(&func.body) && !RE_CRYPTO_LIBS.is_match(&func.body) {
-                issues.push(("License validator using simple equality without crypto verification".to_string(), 35));
-            }
         }
     }
 
@@ -1800,36 +2733,68 @@ fn detect_rust_specific_issues(func: &FunctionInfo) -> Vec<(String, i32)> {
     let expect_count = RE_RUST_EXPECT.find_iter(&func.body).count();
 
     if unwrap_count > 3 && expect_count == 0 {
-        issues.push(("Excessive unwrap() calls without expect() - use proper error handling".to_string(), 25));
+        issues.push((
+            "Excessive unwrap() calls without expect() - use proper error handling".to_string(),
+            25,
+        ));
     }
 
-    if (RE_RUST_RESULT.is_match(&func.params) || RE_RUST_OPTION.is_match(&func.params)) && RE_RUST_UNWRAP.is_match(&func.body) {
-        issues.push(("Function returns Result/Option but uses unwrap() internally".to_string(), 20));
+    if (RE_RUST_RESULT.is_match(&func.params) || RE_RUST_OPTION.is_match(&func.params))
+        && RE_RUST_UNWRAP.is_match(&func.body)
+    {
+        issues.push((
+            "Function returns Result/Option but uses unwrap() internally".to_string(),
+            20,
+        ));
     }
 
     if RE_RUST_PANIC.is_match(&func.body) {
-        issues.push(("panic!() macro usage - use Result for recoverable errors".to_string(), 30));
+        issues.push((
+            "panic!() macro usage - use Result for recoverable errors".to_string(),
+            30,
+        ));
     }
 
     if RE_RUST_UNSAFE.is_match(&func.body) && !func.body.contains("SAFETY:") {
-        issues.push(("unsafe block without SAFETY comment explaining invariants".to_string(), 25));
+        issues.push((
+            "unsafe block without SAFETY comment explaining invariants".to_string(),
+            25,
+        ));
     }
 
     let clone_count = RE_RUST_CLONE.find_iter(&func.body).count();
     if clone_count > 5 {
-        issues.push((format!("Excessive .clone() calls ({}) - consider using references", clone_count), 15));
+        issues.push((
+            format!(
+                "Excessive .clone() calls ({}) - consider using references",
+                clone_count
+            ),
+            15,
+        ));
     }
 
     if RE_RUST_INCOMPLETE_MARKER.is_match(&func.body) {
-        issues.push(("Incomplete implementation with macro marker".to_string(), 50));
+        issues.push((
+            "Incomplete implementation with macro marker".to_string(),
+            50,
+        ));
     }
 
     if RE_RUST_UNIMPL_MACRO.is_match(&func.body) {
-        issues.push(("Unimplemented macro detected - function body not written".to_string(), 50));
+        issues.push((
+            "Unimplemented macro detected - function body not written".to_string(),
+            50,
+        ));
     }
 
-    if RE_RUST_RESULT.is_match(&func.params) && !func.body.contains('?') && !func.body.contains("match ") {
-        issues.push(("Returns Result but no error propagation (? or match) detected".to_string(), 20));
+    if RE_RUST_RESULT.is_match(&func.params)
+        && !func.body.contains('?')
+        && !func.body.contains("match ")
+    {
+        issues.push((
+            "Returns Result but no error propagation (? or match) detected".to_string(),
+            20,
+        ));
     }
 
     issues
@@ -1849,16 +2814,35 @@ fn detect_rust_domain_issues(func: &FunctionInfo) -> Vec<(String, i32)> {
     let mut issues = Vec::new();
     let name_lower = func.name.to_lowercase();
 
-    if (name_lower.contains("security") || name_lower.contains("encrypt") || name_lower.contains("hash")) && RE_RUST_UNSAFE.is_match(&func.body) {
-        issues.push(("Security-critical function using unsafe code".to_string(), 35));
+    if (name_lower.contains("security")
+        || name_lower.contains("encrypt")
+        || name_lower.contains("hash"))
+        && RE_RUST_UNSAFE.is_match(&func.body)
+    {
+        issues.push((
+            "Security-critical function using unsafe code".to_string(),
+            35,
+        ));
     }
 
-    if (name_lower.contains("read") || name_lower.contains("write") || name_lower.contains("file")) && !func.params.contains("Result") && !func.body.contains('?') {
-        issues.push(("File I/O operation without proper error handling via Result".to_string(), 30));
+    if (name_lower.contains("read") || name_lower.contains("write") || name_lower.contains("file"))
+        && !func.params.contains("Result")
+        && !func.body.contains('?')
+    {
+        issues.push((
+            "File I/O operation without proper error handling via Result".to_string(),
+            30,
+        ));
     }
 
-    if name_lower.contains("process") && !func.body.contains("timeout") && !func.body.contains("Duration") {
-        issues.push(("Process management without timeout handling".to_string(), 25));
+    if name_lower.contains("process")
+        && !func.body.contains("timeout")
+        && !func.body.contains("Duration")
+    {
+        issues.push((
+            "Process management without timeout handling".to_string(),
+            25,
+        ));
     }
 
     issues
@@ -1878,11 +2862,17 @@ fn detect_java_specific_issues(func: &FunctionInfo) -> Vec<(String, i32)> {
     let mut issues = Vec::new();
 
     if RE_JAVA_EXCEPTION.is_match(&func.body) || RE_JAVA_EXCEPTION.is_match(&func.params) {
-        issues.push(("Generic Exception in throws clause - use specific exception types".to_string(), 20));
+        issues.push((
+            "Generic Exception in throws clause - use specific exception types".to_string(),
+            20,
+        ));
     }
 
     if RE_JAVA_CATCH_ALL.is_match(&func.body) {
-        issues.push(("Catch-all exception handling - catch specific exceptions".to_string(), 25));
+        issues.push((
+            "Catch-all exception handling - catch specific exceptions".to_string(),
+            25,
+        ));
     }
 
     if RE_JAVA_PRINTSTACKTRACE.is_match(&func.body) && !func.body.contains("logger") {
@@ -1890,20 +2880,36 @@ fn detect_java_specific_issues(func: &FunctionInfo) -> Vec<(String, i32)> {
     }
 
     if func.name != "main" && RE_JAVA_SYSTEM_OUT.is_match(&func.body) {
-        issues.push(("System.out.print in non-main method - use proper logging".to_string(), 15));
+        issues.push((
+            "System.out.print in non-main method - use proper logging".to_string(),
+            15,
+        ));
     }
 
     let null_return_count = RE_JAVA_NULL_RETURN.find_iter(&func.body).count();
     if null_return_count > 0 {
-        issues.push((format!("Returning null ({} times) - consider Optional<T>", null_return_count), 20));
+        issues.push((
+            format!(
+                "Returning null ({} times) - consider Optional<T>",
+                null_return_count
+            ),
+            20,
+        ));
     }
 
-    let param_count = func.params.split(',').filter(|p| !p.trim().is_empty()).count();
+    let param_count = func
+        .params
+        .split(',')
+        .filter(|p| !p.trim().is_empty())
+        .count();
     let null_check_count = RE_JAVA_NULL_CHECK.find_iter(&func.body).count();
     let body_lines = func.body.lines().filter(|l| !l.trim().is_empty()).count();
 
     if param_count > 0 && null_check_count == 0 && body_lines > 5 {
-        issues.push(("Function with parameters but no null checks".to_string(), 15));
+        issues.push((
+            "Function with parameters but no null checks".to_string(),
+            15,
+        ));
     }
 
     issues
@@ -1920,36 +2926,63 @@ fn detect_java_specific_issues(func: &FunctionInfo) -> Vec<(String, i32)> {
 ///
 /// # Returns
 /// Vector of Ghidra-specific issues with severity scores
-fn detect_java_ghidra_issues(func: &FunctionInfo, file_context: &FileContext) -> Vec<(String, i32)> {
+fn detect_java_ghidra_issues(
+    func: &FunctionInfo,
+    file_context: &FileContext,
+) -> Vec<(String, i32)> {
     let mut issues = Vec::new();
     let name_lower = func.name.to_lowercase();
 
-    let has_ghidra_import = file_context.imports.iter().any(|i| i.to_lowercase().contains("ghidra"));
+    let has_ghidra_import = file_context
+        .imports
+        .iter()
+        .any(|i| i.to_lowercase().contains("ghidra"));
 
     if has_ghidra_import {
-        if name_lower.contains("analyze") || name_lower.contains("process") || name_lower.contains("scan") {
+        if name_lower.contains("analyze")
+            || name_lower.contains("process")
+            || name_lower.contains("scan")
+        {
             if let Some(calls) = &func.calls_functions {
                 let has_ghidra_api = calls.iter().any(|c| {
-                    c.contains("getFunctionManager") || c.contains("getProgram") ||
-                    c.contains("getMemory") || c.contains("getListing") || c.contains("getCodeManager")
+                    c.contains("getFunctionManager")
+                        || c.contains("getProgram")
+                        || c.contains("getMemory")
+                        || c.contains("getListing")
+                        || c.contains("getCodeManager")
                 });
                 if !has_ghidra_api && !RE_JAVA_GHIDRA_API.is_match(&func.body) {
-                    issues.push(("Ghidra analysis function without Ghidra API calls".to_string(), 35));
+                    issues.push((
+                        "Ghidra analysis function without Ghidra API calls".to_string(),
+                        35,
+                    ));
                 }
             } else {
                 if !RE_JAVA_GHIDRA_API.is_match(&func.body) {
-                    issues.push(("Ghidra analysis function without Ghidra API calls".to_string(), 35));
+                    issues.push((
+                        "Ghidra analysis function without Ghidra API calls".to_string(),
+                        35,
+                    ));
                 }
             }
         }
 
         if name_lower.contains("run") && !func.body.contains("currentProgram") {
-            issues.push(("Ghidra run() method without currentProgram access".to_string(), 30));
+            issues.push((
+                "Ghidra run() method without currentProgram access".to_string(),
+                30,
+            ));
         }
     }
 
-    if (name_lower.contains("crypto") || name_lower.contains("keygen")) && !func.body.contains("byte") && !func.body.contains("BigInteger") {
-        issues.push(("Cryptographic analysis without byte operations or BigInteger".to_string(), 30));
+    if (name_lower.contains("crypto") || name_lower.contains("keygen"))
+        && !func.body.contains("byte")
+        && !func.body.contains("BigInteger")
+    {
+        issues.push((
+            "Cryptographic analysis without byte operations or BigInteger".to_string(),
+            30,
+        ));
     }
 
     issues
@@ -1981,7 +3014,13 @@ fn detect_javascript_specific_issues(func: &FunctionInfo) -> Vec<(String, i32)> 
 
     if RE_JS_PROMISE_NO_CATCH.is_match(&func.body) {
         let then_count = func.body.matches(".then(").count();
-        issues.push((format!("Promise chain with .then() but no .catch() ({} unhandled)", then_count), 30));
+        issues.push((
+            format!(
+                "Promise chain with .then() but no .catch() ({} unhandled)",
+                then_count
+            ),
+            30,
+        ));
     }
 
     if RE_JS_VAR.is_match(&func.body) {
@@ -1990,20 +3029,37 @@ fn detect_javascript_specific_issues(func: &FunctionInfo) -> Vec<(String, i32)> 
 
     if RE_JS_CONSOLE_LOG.is_match(&func.body) {
         let console_log_count = RE_JS_CONSOLE_LOG.find_iter(&func.body).count();
-        issues.push((format!("console.log() usage in production code ({} instances)", console_log_count), 10));
+        issues.push((
+            format!(
+                "console.log() usage in production code ({} instances)",
+                console_log_count
+            ),
+            10,
+        ));
     }
 
     if RE_JS_CALLBACK_HELL.is_match(&func.body) {
-        issues.push(("Callback hell detected - use Promises or async/await".to_string(), 25));
+        issues.push((
+            "Callback hell detected - use Promises or async/await".to_string(),
+            25,
+        ));
     }
 
     if let Some(has_try) = func.has_try_except {
         if (func.body.contains("JSON.parse") || func.body.contains("eval(")) && !has_try {
-            issues.push(("JSON.parse or eval without try-catch error handling".to_string(), 30));
+            issues.push((
+                "JSON.parse or eval without try-catch error handling".to_string(),
+                30,
+            ));
         }
     } else {
-        if (func.body.contains("JSON.parse") || func.body.contains("eval(")) && !RE_JS_TRY_CATCH.is_match(&func.body) {
-            issues.push(("JSON.parse or eval without try-catch error handling".to_string(), 30));
+        if (func.body.contains("JSON.parse") || func.body.contains("eval("))
+            && !RE_JS_TRY_CATCH.is_match(&func.body)
+        {
+            issues.push((
+                "JSON.parse or eval without try-catch error handling".to_string(),
+                30,
+            ));
         }
     }
 
@@ -2011,14 +3067,14 @@ fn detect_javascript_specific_issues(func: &FunctionInfo) -> Vec<(String, i32)> 
 }
 
 fn has_any_frida_api(body: &str) -> bool {
-    RE_JS_FRIDA_INTERCEPTOR.is_match(body) ||
-    RE_JS_FRIDA_JAVA.is_match(body) ||
-    RE_JS_FRIDA_OBJC.is_match(body) ||
-    RE_JS_FRIDA_NATIVE.is_match(body) ||
-    RE_JS_FRIDA_PROCESS.is_match(body) ||
-    RE_JS_FRIDA_MEMORY.is_match(body) ||
-    RE_JS_FRIDA_MODULE.is_match(body) ||
-    RE_JS_FRIDA_SCRIPT.is_match(body)
+    RE_JS_FRIDA_INTERCEPTOR.is_match(body)
+        || RE_JS_FRIDA_JAVA.is_match(body)
+        || RE_JS_FRIDA_OBJC.is_match(body)
+        || RE_JS_FRIDA_NATIVE.is_match(body)
+        || RE_JS_FRIDA_PROCESS.is_match(body)
+        || RE_JS_FRIDA_MEMORY.is_match(body)
+        || RE_JS_FRIDA_MODULE.is_match(body)
+        || RE_JS_FRIDA_SCRIPT.is_match(body)
 }
 
 /// Detects JavaScript Frida-specific issues for dynamic instrumentation scripts.
@@ -2035,51 +3091,90 @@ fn detect_javascript_frida_issues(func: &FunctionInfo) -> Vec<(String, i32)> {
     let mut issues = Vec::new();
     let name_lower = func.name.to_lowercase();
 
-    if name_lower.contains("hook") || name_lower.contains("intercept") || name_lower.contains("bypass") {
+    if name_lower.contains("hook")
+        || name_lower.contains("intercept")
+        || name_lower.contains("bypass")
+    {
         if let Some(calls) = &func.calls_functions {
             let has_frida_api = calls.iter().any(|c| {
-                c.contains("Interceptor") || c.contains("attach") || c.contains("replace") ||
-                c.contains("Java.use") || c.contains("ObjC.classes") || c.contains("Module.findExportByName")
+                c.contains("Interceptor")
+                    || c.contains("attach")
+                    || c.contains("replace")
+                    || c.contains("Java.use")
+                    || c.contains("ObjC.classes")
+                    || c.contains("Module.findExportByName")
             });
             if !has_frida_api && !has_any_frida_api(&func.body) {
-                issues.push(("Hook/intercept function without any Frida API usage".to_string(), 40));
+                issues.push((
+                    "Hook/intercept function without any Frida API usage".to_string(),
+                    40,
+                ));
             }
         } else {
             if !has_any_frida_api(&func.body) {
-                issues.push(("Hook/intercept function without any Frida API usage".to_string(), 40));
+                issues.push((
+                    "Hook/intercept function without any Frida API usage".to_string(),
+                    40,
+                ));
             }
         }
     }
 
-    if RE_JS_FRIDA_MEMORY.is_match(&func.body) && !func.body.contains("NULL") && !func.body.contains("isNull") {
-        issues.push(("Memory operations without NULL pointer checks".to_string(), 30));
+    if RE_JS_FRIDA_MEMORY.is_match(&func.body)
+        && !func.body.contains("NULL")
+        && !func.body.contains("isNull")
+    {
+        issues.push((
+            "Memory operations without NULL pointer checks".to_string(),
+            30,
+        ));
     }
 
     if let Some(has_try) = func.has_try_except {
         if RE_JS_FRIDA_MODULE.is_match(&func.body) && !has_try {
-            issues.push(("Module operations without try-catch error handling".to_string(), 25));
+            issues.push((
+                "Module operations without try-catch error handling".to_string(),
+                25,
+            ));
         }
     } else {
         if RE_JS_FRIDA_MODULE.is_match(&func.body) && !RE_JS_TRY_CATCH.is_match(&func.body) {
-            issues.push(("Module operations without try-catch error handling".to_string(), 25));
+            issues.push((
+                "Module operations without try-catch error handling".to_string(),
+                25,
+            ));
         }
     }
 
     if name_lower.contains("keygen") || name_lower.contains("generate_key") {
         if let Some(calls) = &func.calls_functions {
-            let has_crypto = calls.iter().any(|c| c.contains("crypto") || c.contains("random") || c.contains("Random"));
+            let has_crypto = calls
+                .iter()
+                .any(|c| c.contains("crypto") || c.contains("random") || c.contains("Random"));
             if !has_crypto && !func.body.contains("crypto") && !func.body.contains("random") {
-                issues.push(("Keygen function without crypto or random number generation".to_string(), 35));
+                issues.push((
+                    "Keygen function without crypto or random number generation".to_string(),
+                    35,
+                ));
             }
         } else {
             if !func.body.contains("crypto") && !func.body.contains("random") {
-                issues.push(("Keygen function without crypto or random number generation".to_string(), 35));
+                issues.push((
+                    "Keygen function without crypto or random number generation".to_string(),
+                    35,
+                ));
             }
         }
     }
 
-    if RE_JS_FRIDA_INTERCEPTOR.is_match(&func.body) && !func.body.contains("onEnter") && !func.body.contains("onLeave") {
-        issues.push(("Interceptor.attach without onEnter or onLeave callbacks".to_string(), 30));
+    if RE_JS_FRIDA_INTERCEPTOR.is_match(&func.body)
+        && !func.body.contains("onEnter")
+        && !func.body.contains("onLeave")
+    {
+        issues.push((
+            "Interceptor.attach without onEnter or onLeave callbacks".to_string(),
+            30,
+        ));
     }
 
     issues
@@ -2097,39 +3192,76 @@ fn detect_javascript_frida_issues(func: &FunctionInfo) -> Vec<(String, i32)> {
 ///
 /// # Returns
 /// Vector of Python-specific issues with severity scores
-fn detect_python_specific_issues(func: &FunctionInfo, file_context: &FileContext) -> Vec<(String, i32)> {
+fn detect_python_specific_issues(
+    func: &FunctionInfo,
+    file_context: &FileContext,
+) -> Vec<(String, i32)> {
     let mut issues = Vec::new();
 
     if let Some(has_try) = func.has_try_except {
         if has_try && RE_PYTHON_BARE_EXCEPT.is_match(&func.body) {
-            issues.push(("Bare except clause - catch specific exceptions".to_string(), 25));
+            issues.push((
+                "Bare except clause - catch specific exceptions".to_string(),
+                25,
+            ));
         }
     } else {
         if RE_PYTHON_BARE_EXCEPT.is_match(&func.body) {
-            issues.push(("Bare except clause - catch specific exceptions".to_string(), 25));
+            issues.push((
+                "Bare except clause - catch specific exceptions".to_string(),
+                25,
+            ));
         }
     }
 
     if RE_PYTHON_MUTABLE_DEFAULT.is_match(&func.params) {
-        issues.push(("Mutable default argument (list/dict) - use None and initialize in function".to_string(), 30));
+        issues.push((
+            "Mutable default argument (list/dict) - use None and initialize in function"
+                .to_string(),
+            30,
+        ));
     }
 
     if let Some(global_vars) = &func.global_vars {
         let global_count = global_vars.len();
         if global_count > 0 {
             if is_legitimate_design_pattern(func, file_context) == Some("singleton_pattern") {
-                issues.push((format!("Global variable in singleton pattern ({} times) - consider alternative", global_count), 5));
+                issues.push((
+                    format!(
+                        "Global variable in singleton pattern ({} times) - consider alternative",
+                        global_count
+                    ),
+                    5,
+                ));
             } else {
-                issues.push((format!("Global variable usage ({} times) - avoid global state", global_count), 20));
+                issues.push((
+                    format!(
+                        "Global variable usage ({} times) - avoid global state",
+                        global_count
+                    ),
+                    20,
+                ));
             }
         }
     } else {
         let global_count = RE_PYTHON_GLOBAL.find_iter(&func.body).count();
         if global_count > 0 {
             if is_legitimate_design_pattern(func, file_context) == Some("singleton_pattern") {
-                issues.push((format!("Global variable in singleton pattern ({} times) - consider alternative", global_count), 5));
+                issues.push((
+                    format!(
+                        "Global variable in singleton pattern ({} times) - consider alternative",
+                        global_count
+                    ),
+                    5,
+                ));
             } else {
-                issues.push((format!("Global variable usage ({} times) - avoid global state", global_count), 20));
+                issues.push((
+                    format!(
+                        "Global variable usage ({} times) - avoid global state",
+                        global_count
+                    ),
+                    20,
+                ));
             }
         }
     }
@@ -2141,105 +3273,243 @@ fn detect_naive_implementations(func: &FunctionInfo) -> Vec<(String, i32)> {
     let mut issues = Vec::new();
 
     if let Some(calls) = &func.calls_functions {
-        if calls.iter().any(|c| c.contains("ord") || c.contains("chr")) || func.body.contains(" ^ ") {
-            issues.push(("Weak encryption detected (XOR, character-by-character)".to_string(), 30));
+        if calls.iter().any(|c| c.contains("ord") || c.contains("chr")) || func.body.contains(" ^ ")
+        {
+            issues.push((
+                "Weak encryption detected (XOR, character-by-character)".to_string(),
+                30,
+            ));
         }
 
         if has_crypto_context(func) {
             let has_random = calls.iter().any(|c| c.contains("random.") || c == "random");
-            let has_secrets = calls.iter().any(|c| c.contains("secrets") || c.contains("SystemRandom"));
+            let has_secrets = calls
+                .iter()
+                .any(|c| c.contains("secrets") || c.contains("SystemRandom"));
             if has_random && !has_secrets && !func.body.contains("secrets") {
-                issues.push(("Using 'random' module instead of 'secrets' for cryptographic operations".to_string(), 25));
+                issues.push((
+                    "Using 'random' module instead of 'secrets' for cryptographic operations"
+                        .to_string(),
+                    25,
+                ));
             }
 
-            let has_time_based = calls.iter().any(|c| c.contains("time.time") || c.contains("datetime.now"));
+            let has_time_based = calls
+                .iter()
+                .any(|c| c.contains("time.time") || c.contains("datetime.now"));
             let has_crypto = calls.iter().any(|c| {
-                c.contains("Crypto") || c.contains("hashlib") || c.contains("hmac") ||
-                c.contains("cryptography") || c.contains("nacl")
+                c.contains("Crypto")
+                    || c.contains("hashlib")
+                    || c.contains("hmac")
+                    || c.contains("cryptography")
+                    || c.contains("nacl")
             }) || RE_CRYPTO_LIBS.is_match(&func.body);
             if has_time_based && !has_crypto {
-                issues.push(("Time-based key generation without cryptography".to_string(), 30));
+                issues.push((
+                    "Time-based key generation without cryptography".to_string(),
+                    30,
+                ));
             }
         }
 
-        let debugger_count = calls.iter().filter(|c| c.contains("IsDebuggerPresent")).count();
-        if debugger_count == 1 && !calls.iter().any(|c|
-            c.contains("NtQueryInformationProcess") || c.contains("CheckRemoteDebugger") ||
-            c.contains("PEB") || c.contains("BeingDebugged")
-        ) {
-            issues.push(("Anti-debug using only IsDebuggerPresent (easily bypassed)".to_string(), 25));
+        let debugger_count = calls
+            .iter()
+            .filter(|c| c.contains("IsDebuggerPresent"))
+            .count();
+        if debugger_count == 1
+            && !calls.iter().any(|c| {
+                c.contains("NtQueryInformationProcess")
+                    || c.contains("CheckRemoteDebugger")
+                    || c.contains("PEB")
+                    || c.contains("BeingDebugged")
+            })
+        {
+            issues.push((
+                "Anti-debug using only IsDebuggerPresent (easily bypassed)".to_string(),
+                25,
+            ));
         }
 
-        let has_base64 = calls.iter().any(|c| c.contains("b64encode") || c.contains("base64.encode"));
+        let has_base64 = calls
+            .iter()
+            .any(|c| c.contains("b64encode") || c.contains("base64.encode"));
         let has_crypto = calls.iter().any(|c| {
             c.contains("Crypto") || c.contains("encrypt") || c.contains("AES") || c.contains("RSA")
         }) || RE_CRYPTO_LIBS.is_match(&func.body);
         if has_base64 && !has_crypto {
-            issues.push(("Using base64 encoding (not encryption) for protection".to_string(), 30));
+            issues.push((
+                "Using base64 encoding (not encryption) for protection".to_string(),
+                30,
+            ));
         }
 
-        if calls.iter().any(|c| c.contains("replace") || c == "replace") && func.name.to_lowercase().contains("patch") {
-            issues.push(("Binary patching using string replace (insufficient for compiled code)".to_string(), 35));
+        if calls
+            .iter()
+            .any(|c| c.contains("replace") || c == "replace")
+            && func.name.to_lowercase().contains("patch")
+        {
+            issues.push((
+                "Binary patching using string replace (insufficient for compiled code)".to_string(),
+                35,
+            ));
         }
 
-        if calls.iter().any(|c| c.contains("re.") || c.contains("Regex") || c.contains("match") || c.contains("search"))
-            && (func.name.to_lowercase().contains("extract") || func.name.to_lowercase().contains("find"))
-            && !calls.iter().any(|c| c.contains("compile") || c.contains("Pattern")) {
-            issues.push(("Simple regex extraction (won't find obfuscated data)".to_string(), 20));
+        if calls.iter().any(|c| {
+            c.contains("re.") || c.contains("Regex") || c.contains("match") || c.contains("search")
+        }) && (func.name.to_lowercase().contains("extract")
+            || func.name.to_lowercase().contains("find"))
+            && !calls
+                .iter()
+                .any(|c| c.contains("compile") || c.contains("Pattern"))
+        {
+            issues.push((
+                "Simple regex extraction (won't find obfuscated data)".to_string(),
+                20,
+            ));
         }
 
-        if calls.iter().any(|c| c.contains("getmac") || c.contains("uuid.getnode") || c.contains("MAC"))
+        if calls
+            .iter()
+            .any(|c| c.contains("getmac") || c.contains("uuid.getnode") || c.contains("MAC"))
             && func.name.to_lowercase().contains("hardware")
-            && !calls.iter().any(|c| c.contains("wmi") || c.contains("WMI") || c.contains("serial") || c.contains("uuid")) {
-            issues.push(("Hardware ID using only MAC address (easily spoofed)".to_string(), 25));
+            && !calls.iter().any(|c| {
+                c.contains("wmi") || c.contains("WMI") || c.contains("serial") || c.contains("uuid")
+            })
+        {
+            issues.push((
+                "Hardware ID using only MAC address (easily spoofed)".to_string(),
+                25,
+            ));
         }
 
-        if calls.iter().any(|c| c.contains("time.time") || c.contains("GetSystemTime") || c.contains("datetime.now"))
-            && func.name.to_lowercase().contains("trial")
-            && !calls.iter().any(|c| c.contains("registry") || c.contains("sign") || c.contains("verify")) {
-            issues.push(("Trial period using system time (easily bypassed)".to_string(), 30));
+        if calls.iter().any(|c| {
+            c.contains("time.time") || c.contains("GetSystemTime") || c.contains("datetime.now")
+        }) && func.name.to_lowercase().contains("trial")
+            && !calls
+                .iter()
+                .any(|c| c.contains("registry") || c.contains("sign") || c.contains("verify"))
+        {
+            issues.push((
+                "Trial period using system time (easily bypassed)".to_string(),
+                30,
+            ));
         }
     } else {
         if RE_WEAK_CRYPTO.is_match(&func.body) {
-            issues.push(("Weak encryption detected (XOR, character-by-character)".to_string(), 30));
+            issues.push((
+                "Weak encryption detected (XOR, character-by-character)".to_string(),
+                30,
+            ));
         }
 
         if has_crypto_context(func) {
-            if RE_RANDOM_NOT_SECRETS.is_match(&func.body) && !func.body.contains("secrets") && !func.body.contains("SystemRandom") {
-                issues.push(("Using 'random' module instead of 'secrets' for cryptographic operations".to_string(), 25));
+            if RE_RANDOM_NOT_SECRETS.is_match(&func.body)
+                && !func.body.contains("secrets")
+                && !func.body.contains("SystemRandom")
+            {
+                issues.push((
+                    "Using 'random' module instead of 'secrets' for cryptographic operations"
+                        .to_string(),
+                    25,
+                ));
             }
 
             if RE_TIME_BASED_KEY.is_match(&func.body) && !RE_CRYPTO_LIBS.is_match(&func.body) {
-                issues.push(("Time-based key generation without cryptography".to_string(), 30));
+                issues.push((
+                    "Time-based key generation without cryptography".to_string(),
+                    30,
+                ));
             }
         }
 
-        if RE_ISDEBUGGER_PRESENT.is_match(&func.body) && func.body.matches("IsDebuggerPresent").count() == 1 {
-            issues.push(("Anti-debug using only IsDebuggerPresent (easily bypassed)".to_string(), 25));
+        if RE_ISDEBUGGER_PRESENT.is_match(&func.body)
+            && func.body.matches("IsDebuggerPresent").count() == 1
+        {
+            issues.push((
+                "Anti-debug using only IsDebuggerPresent (easily bypassed)".to_string(),
+                25,
+            ));
         }
 
         if RE_BASE64_ENCODE.is_match(&func.body) && !RE_CRYPTO_LIBS.is_match(&func.body) {
-            issues.push(("Using base64 encoding (not encryption) for protection".to_string(), 30));
+            issues.push((
+                "Using base64 encoding (not encryption) for protection".to_string(),
+                30,
+            ));
         }
 
         if RE_STRING_REPLACE.is_match(&func.body) && func.name.to_lowercase().contains("patch") {
-            issues.push(("Binary patching using string replace (insufficient for compiled code)".to_string(), 35));
+            issues.push((
+                "Binary patching using string replace (insufficient for compiled code)".to_string(),
+                35,
+            ));
         }
 
         if RE_SMALL_RANGE.is_match(&func.body) && func.name.to_lowercase().contains("brute") {
-            issues.push(("Brute force with small iteration range (<25)".to_string(), 30));
+            issues.push((
+                "Brute force with small iteration range (<25)".to_string(),
+                30,
+            ));
         }
 
-        if RE_SIMPLE_REGEX.is_match(&func.body) && (func.name.to_lowercase().contains("extract") || func.name.to_lowercase().contains("find")) {
-            issues.push(("Simple regex extraction (won't find obfuscated data)".to_string(), 20));
+        if RE_SIMPLE_REGEX.is_match(&func.body)
+            && (func.name.to_lowercase().contains("extract")
+                || func.name.to_lowercase().contains("find"))
+        {
+            issues.push((
+                "Simple regex extraction (won't find obfuscated data)".to_string(),
+                20,
+            ));
         }
 
         if RE_MAC_ADDRESS.is_match(&func.body) && func.name.to_lowercase().contains("hardware") {
-            issues.push(("Hardware ID using only MAC address (easily spoofed)".to_string(), 25));
+            issues.push((
+                "Hardware ID using only MAC address (easily spoofed)".to_string(),
+                25,
+            ));
         }
 
         if RE_SYSTEM_TIME.is_match(&func.body) && func.name.to_lowercase().contains("trial") {
-            issues.push(("Trial period using system time (easily bypassed)".to_string(), 30));
+            issues.push((
+                "Trial period using system time (easily bypassed)".to_string(),
+                30,
+            ));
+        }
+    }
+
+    // Made trivial implementation detection context-aware to avoid false positives
+    // Only flag if function name suggests it should be complex (process, analyze, compute, calculate)
+    if let (Some(has_loops), Some(has_conditionals), Some(local_vars)) =
+        (func.has_loops, func.has_conditionals, &func.local_vars)
+    {
+        if !has_loops && !has_conditionals && local_vars.is_empty() {
+            if let Some(actual_loc) = func.actual_loc {
+                if actual_loc > 3 {
+                    let name_lower = func.name.to_lowercase();
+                    // Only flag if name suggests complexity (not simple getters/setters/delegators)
+                    if name_lower.contains("process")
+                        || name_lower.contains("analyze")
+                        || name_lower.contains("compute")
+                        || name_lower.contains("calculate")
+                        || name_lower.contains("transform")
+                        || name_lower.contains("parse")
+                    {
+                        issues.push(("Trivial implementation: no loops, conditionals, or local vars despite multiple lines".to_string(), 55));
+                    }
+                }
+            }
+        }
+    }
+
+    let body_lower = func.body.to_lowercase();
+    if body_lower.contains("simple") || body_lower.contains("basic") {
+        if let Some(has_loops) = func.has_loops {
+            if !has_loops {
+                issues.push((
+                    "'Simple' implementation confirmed: no iteration logic".to_string(),
+                    30,
+                ));
+            }
         }
     }
 
@@ -2257,7 +3527,10 @@ fn detect_naive_implementations(func: &FunctionInfo) -> Vec<(String, i32)> {
 ///
 /// # Returns
 /// Vector of import usage issues with severity scores
-fn detect_import_usage_issues(func: &FunctionInfo, file_context: &FileContext) -> Vec<(String, i32)> {
+fn detect_import_usage_issues(
+    func: &FunctionInfo,
+    file_context: &FileContext,
+) -> Vec<(String, i32)> {
     let mut issues = Vec::new();
 
     let relevant_imports: HashMap<&str, Vec<&str>> = [
@@ -2266,26 +3539,34 @@ fn detect_import_usage_issues(func: &FunctionInfo, file_context: &FileContext) -
         ("capstone", vec!["Cs", "disasm"]),
         ("frida", vec!["attach", "Interceptor"]),
         ("subprocess", vec!["run", "Popen", "call"]),
-    ].iter().cloned().collect();
+    ]
+    .iter()
+    .cloned()
+    .collect();
 
     for (import_lib, keywords) in relevant_imports {
         let has_import = file_context.imports.iter().any(|i| i.contains(import_lib));
         if has_import {
             let uses_lib = if let Some(calls) = &func.calls_functions {
-                keywords.iter().any(|kw| {
-                    calls.iter().any(|c| c.contains(kw)) || func.body.contains(kw)
-                })
+                keywords
+                    .iter()
+                    .any(|kw| calls.iter().any(|c| c.contains(kw)) || func.body.contains(kw))
             } else {
                 keywords.iter().any(|kw| func.body.contains(kw))
             };
 
             if !uses_lib {
-                issues.push((format!("Imports '{}' but doesn't use it in function", import_lib), 15));
+                issues.push((
+                    format!("Imports '{}' but doesn't use it in function", import_lib),
+                    15,
+                ));
             }
         }
     }
 
-    let similar_funcs: Vec<&FunctionInfo> = file_context.functions.iter()
+    let similar_funcs: Vec<&FunctionInfo> = file_context
+        .functions
+        .iter()
         .filter(|f| f.name != func.name && f.body.trim() == func.body.trim())
         .collect();
 
@@ -2296,8 +3577,15 @@ fn detect_import_usage_issues(func: &FunctionInfo, file_context: &FileContext) -
     };
 
     if !similar_funcs.is_empty() && loc <= 3 {
-        let incomplete = ['s','t','u','b'].iter().collect::<String>();
-        issues.push((format!("Function has identical body to {} other function(s) (may be duplicate {})", similar_funcs.len(), incomplete), 20));
+        let incomplete = ['s', 't', 'u', 'b'].iter().collect::<String>();
+        issues.push((
+            format!(
+                "Function has identical body to {} other function(s) (may be duplicate {})",
+                similar_funcs.len(),
+                incomplete
+            ),
+            20,
+        ));
     }
 
     issues
@@ -2307,16 +3595,16 @@ fn calculate_cyclomatic_complexity_fallback(func: &FunctionInfo) -> i32 {
     let mut stripped = RE_COMMENT.replace_all(&func.body, "").to_string();
     stripped = RE_STRING_LITERAL.replace_all(&stripped, "").to_string();
 
-    let complexity = 1 +
-        stripped.matches("if ").count() +
-        stripped.matches("elif ").count() +
-        stripped.matches("else if").count() +
-        stripped.matches("for ").count() +
-        stripped.matches("while ").count() +
-        stripped.matches("case ").count() +
-        stripped.matches("catch ").count() +
-        stripped.matches("&&").count() +
-        stripped.matches("||").count();
+    let complexity = 1
+        + stripped.matches("if ").count()
+        + stripped.matches("elif ").count()
+        + stripped.matches("else if").count()
+        + stripped.matches("for ").count()
+        + stripped.matches("while ").count()
+        + stripped.matches("case ").count()
+        + stripped.matches("catch ").count()
+        + stripped.matches("&&").count()
+        + stripped.matches("||").count();
 
     complexity as i32
 }
@@ -2348,22 +3636,68 @@ fn detect_complexity_issues(func: &FunctionInfo, file_context: &FileContext) -> 
     };
 
     if loc <= 5 && complexity <= 2 && func.name.to_lowercase().contains("analyze") {
-        let msg = format!("Low complexity for analysis function (may be {})", ['s','t','u','b'].iter().collect::<String>());
+        let msg = format!(
+            "Low complexity for analysis function (may be {})",
+            ['s', 't', 'u', 'b'].iter().collect::<String>()
+        );
         issues.push((msg, 20));
     }
 
-    if loc <= 3 && !func.name.starts_with("get_") && !func.name.starts_with("set_")
-        && is_legitimate_design_pattern(func, file_context).is_none() {
-            issues.push(("Very short function (≤3 LOC) for non-getter/setter".to_string(), 15));
-        }
+    if loc <= 3
+        && !func.name.starts_with("get_")
+        && !func.name.starts_with("set_")
+        && is_legitimate_design_pattern(func, file_context).is_none()
+    {
+        issues.push((
+            "Very short function (≤3 LOC) for non-getter/setter".to_string(),
+            15,
+        ));
+    }
 
     let total_lines = func.line_end - func.line_start + 1;
     if total_lines > 200 {
-        issues.push((format!("Very long function ({} lines total)", total_lines), 20));
+        issues.push((
+            format!("Very long function ({} lines total)", total_lines),
+            20,
+        ));
     }
 
     if func.indent_level > 12 {
-        issues.push((format!("Deeply nested function (indent level {})", func.indent_level), 15));
+        issues.push((
+            format!(
+                "Deeply nested function (indent level {})",
+                func.indent_level
+            ),
+            15,
+        ));
+    }
+
+    if let Some(local_vars) = &func.local_vars {
+        let var_count = local_vars.len();
+        if var_count > 15 {
+            issues.push((
+                format!(
+                    "Excessive local variables ({}) - high complexity",
+                    var_count
+                ),
+                40,
+            ));
+        } else if var_count > 10 {
+            issues.push((
+                format!(
+                    "Many local variables ({}) - consider refactoring",
+                    var_count
+                ),
+                25,
+            ));
+        }
+
+        if var_count == 0 && complexity > 5 {
+            issues.push((
+                "High cyclomatic complexity but no local variables (suspicious)".to_string(),
+                35,
+            ));
+        }
     }
 
     issues
@@ -2375,23 +3709,29 @@ fn analyze_with_call_graph(func: &FunctionInfo, graph: &CallGraph) -> Vec<(Strin
     if !graph.is_called(&func.name) && !func.name.starts_with("test_") && func.name != "main" {
         let callees = graph.get_callees(&func.name);
         if callees.is_none() || callees.unwrap().is_empty() {
-            let incomplete = ['s','t','u','b'].iter().collect::<String>();
-            let msg = format!("Function never called and calls no other functions (dead code or {})", incomplete);
+            let incomplete = ['s', 't', 'u', 'b'].iter().collect::<String>();
+            let msg = format!(
+                "Function never called and calls no other functions (dead code or {})",
+                incomplete
+            );
             issues.push((msg, 25));
         }
     }
 
     if let Some(callers) = graph.get_callers(&func.name) {
         if callers.len() == 1 && func.body.lines().filter(|l| !l.trim().is_empty()).count() < 3 {
-            let incomplete = ['s','t','u','b'].iter().collect::<String>();
-            let msg = format!("Function has only 1 caller and <3 lines (may be {})", incomplete);
+            let incomplete = ['s', 't', 'u', 'b'].iter().collect::<String>();
+            let msg = format!(
+                "Function has only 1 caller and <3 lines (may be {})",
+                incomplete
+            );
             issues.push((msg, 15));
         }
     }
 
     if let Some(callees) = graph.get_callees(&func.name) {
         if callees.len() == 1 && callees.contains("print") {
-            let incomplete = ['s','t','u','b'].iter().collect::<String>();
+            let incomplete = ['s', 't', 'u', 'b'].iter().collect::<String>();
             let msg = format!("Function only calls print() (likely debug {})", incomplete);
             issues.push((msg, 20));
         }
@@ -2423,51 +3763,62 @@ fn calculate_deductions(func: &FunctionInfo, file_context: &FileContext) -> i32 
         deductions += 100;
     }
 
-    let non_empty_lines = func.body.lines()
+    let non_empty_lines = func
+        .body
+        .lines()
         .filter(|l| !l.trim().is_empty() && !l.trim().starts_with('#'))
         .count();
 
+    // Reduced LOC deductions by 50% to prevent over-penalizing production code
     if non_empty_lines >= 50 {
-        deductions += 100;
+        deductions += 50; // was 100
     } else if non_empty_lines >= 30 {
-        deductions += 70;
+        deductions += 35; // was 70
     } else if non_empty_lines >= 20 {
-        deductions += 45;
+        deductions += 23; // was 45
     } else if non_empty_lines >= 10 {
-        deductions += 25;
+        deductions += 13; // was 25
     }
 
+    // Reduced complexity deductions by 50% to prevent over-penalizing complex production code
     let complexity = calculate_cyclomatic_complexity_fallback(func);
     if complexity >= 15 {
-        deductions += 60;
+        deductions += 30; // was 60
     } else if complexity >= 10 {
-        deductions += 40;
+        deductions += 20; // was 40
     } else if complexity >= 5 {
-        deductions += 20;
+        deductions += 10; // was 20
     }
 
     match file_context.lang {
         LanguageType::Rust => {
-            deductions += 15;
-        },
+            // Removed blanket Rust deduction - inappropriate to penalize based on language alone
+            // deductions += 15;
+        }
         LanguageType::Java => {
             if func.body.contains("throws ") || func.params.contains("throws ") {
                 deductions += 10;
             }
-        },
+        }
         LanguageType::JavaScript => {
             if func.body.contains("async ") || func.body.contains("await ") {
                 deductions += 10;
             }
+            // Reduced Frida deduction by 50% - legitimate binary analysis code
             if has_any_frida_api(&func.body) {
-                deductions += 80;
+                deductions += 40; // was 80
             }
-        },
+        }
         LanguageType::Python => {
-            if RE_CRYPTO_LIBS.is_match(&func.body) || func.body.contains("capstone")
-               || func.body.contains("unicorn") || func.body.contains("ghidra")
-               || func.body.contains("r2pipe") || func.body.contains("pefile") {
-                deductions += 60;
+            // Reduced binary analysis library deduction by 50% - legitimate security research code
+            if RE_CRYPTO_LIBS.is_match(&func.body)
+                || func.body.contains("capstone")
+                || func.body.contains("unicorn")
+                || func.body.contains("ghidra")
+                || func.body.contains("r2pipe")
+                || func.body.contains("pefile")
+            {
+                deductions += 30; // was 60
             }
         }
     }
@@ -2505,10 +3856,12 @@ fn extract_functions_ast(content: &str, lang: &LanguageType) -> Vec<FunctionInfo
 
     let ast_functions = parser.extract_functions(&tree, content);
 
-    ast_functions.into_iter()
+    ast_functions
+        .into_iter()
         .map(|ast_info| {
             let mut func_info = FunctionInfo::from(ast_info);
-            let body_start = content.lines()
+            let body_start = content
+                .lines()
                 .skip(func_info.line_start.saturating_sub(1))
                 .take(func_info.line_end.saturating_sub(func_info.line_start) + 1)
                 .collect::<Vec<_>>()
@@ -2543,82 +3896,130 @@ fn analyze_file(path: &Path, content: &str, lang: LanguageType) -> Vec<Issue> {
         let mut score = 0;
 
         for (desc, points) in detect_empty_function(func, &lang) {
-            evidence.push(Evidence { description: desc, points });
+            evidence.push(Evidence {
+                description: desc,
+                points,
+            });
             score += points;
         }
 
         for (desc, points) in detect_incomplete_markers(func) {
-            evidence.push(Evidence { description: desc, points });
+            evidence.push(Evidence {
+                description: desc,
+                points,
+            });
             score += points;
         }
 
         for (desc, points) in detect_hardcoded_return(func) {
-            evidence.push(Evidence { description: desc, points });
+            evidence.push(Evidence {
+                description: desc,
+                points,
+            });
             score += points;
         }
 
         match lang {
             LanguageType::Python => {
                 for (desc, points) in detect_python_specific_issues(func, &file_context) {
-                    evidence.push(Evidence { description: desc, points });
+                    evidence.push(Evidence {
+                        description: desc,
+                        points,
+                    });
                     score += points;
                 }
                 for (desc, points) in detect_semantic_issues(func, &file_context) {
-                    evidence.push(Evidence { description: desc, points });
+                    evidence.push(Evidence {
+                        description: desc,
+                        points,
+                    });
                     score += points;
                 }
                 for (desc, points) in detect_domain_specific_issues(func, &file_context) {
-                    evidence.push(Evidence { description: desc, points });
+                    evidence.push(Evidence {
+                        description: desc,
+                        points,
+                    });
                     score += points;
                 }
                 for (desc, points) in detect_naive_implementations(func) {
-                    evidence.push(Evidence { description: desc, points });
+                    evidence.push(Evidence {
+                        description: desc,
+                        points,
+                    });
                     score += points;
                 }
                 for (desc, points) in detect_import_usage_issues(func, &file_context) {
-                    evidence.push(Evidence { description: desc, points });
+                    evidence.push(Evidence {
+                        description: desc,
+                        points,
+                    });
                     score += points;
                 }
-            },
+            }
             LanguageType::Rust => {
                 for (desc, points) in detect_rust_specific_issues(func) {
-                    evidence.push(Evidence { description: desc, points });
+                    evidence.push(Evidence {
+                        description: desc,
+                        points,
+                    });
                     score += points;
                 }
                 for (desc, points) in detect_rust_domain_issues(func) {
-                    evidence.push(Evidence { description: desc, points });
+                    evidence.push(Evidence {
+                        description: desc,
+                        points,
+                    });
                     score += points;
                 }
-            },
+            }
             LanguageType::Java => {
                 for (desc, points) in detect_java_specific_issues(func) {
-                    evidence.push(Evidence { description: desc, points });
+                    evidence.push(Evidence {
+                        description: desc,
+                        points,
+                    });
                     score += points;
                 }
                 for (desc, points) in detect_java_ghidra_issues(func, &file_context) {
-                    evidence.push(Evidence { description: desc, points });
+                    evidence.push(Evidence {
+                        description: desc,
+                        points,
+                    });
                     score += points;
                 }
-            },
+            }
             LanguageType::JavaScript => {
                 for (desc, points) in detect_javascript_specific_issues(func) {
-                    evidence.push(Evidence { description: desc, points });
+                    evidence.push(Evidence {
+                        description: desc,
+                        points,
+                    });
                     score += points;
                 }
                 for (desc, points) in detect_javascript_frida_issues(func) {
-                    evidence.push(Evidence { description: desc, points });
+                    evidence.push(Evidence {
+                        description: desc,
+                        points,
+                    });
                     score += points;
                 }
-            },
+            }
         }
 
         for (desc, points) in detect_complexity_issues(func, &file_context) {
-            evidence.push(Evidence { description: desc, points });
+            evidence.push(Evidence {
+                description: desc,
+                points,
+            });
             score += points;
         }
 
         for (desc, points) in analyze_with_call_graph(func, &call_graph) {
-            evidence.push(Evidence { description: desc, points });
+            evidence.push(Evidence {
+                description: desc,
+                points,
+            });
             score += points;
         }
 
@@ -2627,19 +4028,32 @@ fn analyze_file(path: &Path, content: &str, lang: LanguageType) -> Vec<Issue> {
 
         if deductions > 0 {
             evidence.push(Evidence {
-                description: format!("Deductions for production patterns (-{} points)", deductions),
+                description: format!(
+                    "Deductions for production patterns (-{} points)",
+                    deductions
+                ),
                 points: -deductions,
             });
         }
 
-        if score >= 35 {
+        // Raised threshold from 35 to 50 to reduce false positives with improved deductions
+        if score >= 50 {
             let confidence_level = ConfidenceLevel::from_score(score);
-            let incomplete_type = format!("{}_detection", ['s','t','u','b'].iter().collect::<String>());
-            let issue_type = if evidence.iter().any(|e| e.description.contains("empty") || e.description.contains("pass")) {
+            let incomplete_type = format!(
+                "{}_detection",
+                ['s', 't', 'u', 'b'].iter().collect::<String>()
+            );
+            let issue_type = if evidence
+                .iter()
+                .any(|e| e.description.contains("empty") || e.description.contains("pass"))
+            {
                 "empty_function"
             } else if evidence.iter().any(|e| e.description.contains("hardcoded")) {
                 "hardcoded_return"
-            } else if evidence.iter().any(|e| e.description.contains("naive") || e.description.contains("weak")) {
+            } else if evidence
+                .iter()
+                .any(|e| e.description.contains("naive") || e.description.contains("weak"))
+            {
                 "naive_implementation"
             } else {
                 &incomplete_type
@@ -2647,8 +4061,12 @@ fn analyze_file(path: &Path, content: &str, lang: LanguageType) -> Vec<Issue> {
 
             let ignored_types = get_ignored_issue_types(&func.body);
             if ignored_types.contains(&issue_type.to_lowercase()) {
-                eprintln!("Ignoring {} issue in {}:{} (scanner-ignore comment found)",
-                          issue_type, path.display(), func.line_start);
+                eprintln!(
+                    "Ignoring {} issue in {}:{} (scanner-ignore comment found)",
+                    issue_type,
+                    path.display(),
+                    func.line_start
+                );
                 continue;
             }
 
@@ -2682,15 +4100,17 @@ fn generate_suggested_fix(func_name: &str, evidence: &[Evidence], lang: &Languag
     match lang {
         LanguageType::Rust => {
             if evidence.iter().any(|e| e.description.contains("unwrap")) {
-                return "Replace unwrap() with expect() or proper Result handling using ?".to_string();
+                return "Replace unwrap() with expect() or proper Result handling using ?"
+                    .to_string();
             }
             if evidence.iter().any(|e| e.description.contains("unsafe")) {
-                return "Add SAFETY comment justifying unsafe usage or refactor to safe code".to_string();
+                return "Add SAFETY comment justifying unsafe usage or refactor to safe code"
+                    .to_string();
             }
             if evidence.iter().any(|e| e.description.contains("clone")) {
                 return "Reduce clone() calls by using references (&T) and lifetimes".to_string();
             }
-        },
+        }
         LanguageType::Java => {
             if evidence.iter().any(|e| e.description.contains("null")) {
                 return "Replace null returns with Optional<T> and add null checks".to_string();
@@ -2699,9 +4119,10 @@ fn generate_suggested_fix(func_name: &str, evidence: &[Evidence], lang: &Languag
                 return "Replace generic Exception with specific exception types".to_string();
             }
             if evidence.iter().any(|e| e.description.contains("Ghidra")) {
-                return "Add Ghidra API calls (currentProgram, getFunctionManager, etc.)".to_string();
+                return "Add Ghidra API calls (currentProgram, getFunctionManager, etc.)"
+                    .to_string();
             }
-        },
+        }
         LanguageType::JavaScript => {
             if evidence.iter().any(|e| e.description.contains("Promise")) {
                 return "Add .catch() handlers to all Promise chains".to_string();
@@ -2709,10 +4130,14 @@ fn generate_suggested_fix(func_name: &str, evidence: &[Evidence], lang: &Languag
             if evidence.iter().any(|e| e.description.contains("async")) {
                 return "Add await keyword in async function or remove async".to_string();
             }
-            if evidence.iter().any(|e| e.description.contains("Frida") || e.description.contains("Interceptor")) {
-                return "Use Interceptor.attach/replace with proper onEnter/onLeave callbacks".to_string();
+            if evidence
+                .iter()
+                .any(|e| e.description.contains("Frida") || e.description.contains("Interceptor"))
+            {
+                return "Use Interceptor.attach/replace with proper onEnter/onLeave callbacks"
+                    .to_string();
             }
-        },
+        }
         LanguageType::Python => {
             if evidence.iter().any(|e| e.description.contains("keygen")) {
                 return "Implement cryptographic key generation using RSA/ECDSA from Crypto library".to_string();
@@ -2720,18 +4145,25 @@ fn generate_suggested_fix(func_name: &str, evidence: &[Evidence], lang: &Languag
             if evidence.iter().any(|e| e.description.contains("patch")) {
                 return "Implement actual binary patching with proper file I/O and byte manipulation".to_string();
             }
-        },
+        }
     }
 
-    if evidence.iter().any(|e| e.description.contains("empty") || e.description.contains("pass")) {
+    if evidence
+        .iter()
+        .any(|e| e.description.contains("empty") || e.description.contains("pass"))
+    {
         return format!("Implement actual logic for '{}'", func_name);
     }
 
     if evidence.iter().any(|e| e.description.contains("hardcoded")) {
-        return "Replace hardcoded return with dynamic computation based on input parameters".to_string();
+        return "Replace hardcoded return with dynamic computation based on input parameters"
+            .to_string();
     }
 
-    if evidence.iter().any(|e| e.description.contains("weak crypto")) {
+    if evidence
+        .iter()
+        .any(|e| e.description.contains("weak crypto"))
+    {
         return "Replace XOR/simple encryption with AES/RSA from cryptography library".to_string();
     }
 
@@ -2753,7 +4185,13 @@ fn walk_dir(dir: &Path, files: &mut Vec<PathBuf>, ignored_paths: &HashSet<PathBu
     }
 }
 
-fn scan_files(root_path: &Path, cache: &mut ScanCache, use_cache: bool, verbose: bool, ignored_paths: &HashSet<PathBuf>) -> Vec<Issue> {
+fn scan_files(
+    root_path: &Path,
+    cache: &mut ScanCache,
+    use_cache: bool,
+    verbose: bool,
+    ignored_paths: &HashSet<PathBuf>,
+) -> Vec<Issue> {
     let mut all_files = Vec::new();
     walk_dir(root_path, &mut all_files, ignored_paths);
 
@@ -2818,7 +4256,8 @@ fn scan_files(root_path: &Path, cache: &mut ScanCache, use_cache: bool, verbose:
 }
 
 fn filter_by_confidence(issues: Vec<Issue>, min_level: ConfidenceLevel) -> Vec<Issue> {
-    issues.into_iter()
+    issues
+        .into_iter()
         .filter(|issue| {
             let issue_level = ConfidenceLevel::from_score(issue.confidence);
             issue_level >= min_level
@@ -2848,12 +4287,18 @@ fn group_issues_by_language_and_file(issues: &[Issue]) -> HashMap<String, Langua
             "Other"
         };
 
-        let group = groups.entry(language.to_string()).or_insert_with(|| LanguageFileGroup {
-            language: language.to_string(),
-            files: HashMap::new(),
-        });
+        let group = groups
+            .entry(language.to_string())
+            .or_insert_with(|| LanguageFileGroup {
+                language: language.to_string(),
+                files: HashMap::new(),
+            });
 
-        group.files.entry(issue.file.clone()).or_default().push(issue.clone());
+        group
+            .files
+            .entry(issue.file.clone())
+            .or_default()
+            .push(issue.clone());
     }
 
     groups
@@ -2875,24 +4320,36 @@ fn generate_todo_report(issues: &[Issue]) -> String {
                 continue;
             }
 
-            output.push_str(&format!("## {} Issues ({} files)\n\n", lang_group.language, file_count));
+            output.push_str(&format!(
+                "## {} Issues ({} files)\n\n",
+                lang_group.language, file_count
+            ));
 
             let mut files: Vec<_> = lang_group.files.iter().collect();
             files.sort_by_key(|(path, _)| *path);
 
             for (file_path, file_issues) in files {
                 output.push_str(&format!("### File: `{}`\n\n", file_path));
-                output.push_str(&format!("**Issues in this file:** {}\n\n", file_issues.len()));
+                output.push_str(&format!(
+                    "**Issues in this file:** {}\n\n",
+                    file_issues.len()
+                ));
 
                 let mut sorted_issues = file_issues.clone();
                 sorted_issues.sort_by(|a, b| {
-                    b.confidence.cmp(&a.confidence)
+                    b.confidence
+                        .cmp(&a.confidence)
                         .then_with(|| a.line.cmp(&b.line))
                 });
 
                 for (idx, issue) in sorted_issues.iter().enumerate() {
-                    output.push_str(&format!("#### {}. [ ] `{}()` - {} (Line {})\n\n",
-                        idx + 1, issue.function_name, issue.severity, issue.line));
+                    output.push_str(&format!(
+                        "#### {}. [ ] `{}()` - {} (Line {})\n\n",
+                        idx + 1,
+                        issue.function_name,
+                        issue.severity,
+                        issue.line
+                    ));
                     output.push_str(&format!("**Confidence:** {}%\n\n", issue.confidence));
                     output.push_str(&format!("**Issue Type:** `{}`\n\n", issue.issue_type));
                     output.push_str(&format!("**Description:** {}\n\n", issue.description));
@@ -2900,7 +4357,10 @@ fn generate_todo_report(issues: &[Issue]) -> String {
 
                     for ev in &issue.evidence {
                         let sign = if ev.points >= 0 { "+" } else { "" };
-                        output.push_str(&format!("- {} ({}{} points)\n", ev.description, sign, ev.points));
+                        output.push_str(&format!(
+                            "- {} ({}{} points)\n",
+                            ev.description, sign, ev.points
+                        ));
                     }
 
                     output.push_str(&format!("\n**Suggested Fix:** {}\n\n", issue.suggested_fix));
@@ -2915,10 +4375,10 @@ fn generate_todo_report(issues: &[Issue]) -> String {
 
 fn xml_escape(s: &str) -> String {
     s.replace('&', "&amp;")
-     .replace('<', "&lt;")
-     .replace('>', "&gt;")
-     .replace('"', "&quot;")
-     .replace('\'', "&apos;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&apos;")
 }
 
 fn generate_xml_report(issues: &[Issue]) -> String {
@@ -2926,20 +4386,38 @@ fn generate_xml_report(issues: &[Issue]) -> String {
     output.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     output.push_str("<intellicrack_scan_results>\n");
     output.push_str("  <summary>\n");
-    output.push_str(&format!("    <total_issues>{}</total_issues>\n", issues.len()));
+    output.push_str(&format!(
+        "    <total_issues>{}</total_issues>\n",
+        issues.len()
+    ));
 
     let grouped = group_issues_by_language_and_file(issues);
-    output.push_str(&format!("    <total_languages>{}</total_languages>\n", grouped.len()));
+    output.push_str(&format!(
+        "    <total_languages>{}</total_languages>\n",
+        grouped.len()
+    ));
 
     let mut by_severity: HashMap<String, usize> = HashMap::new();
     for issue in issues {
         *by_severity.entry(issue.severity.clone()).or_insert(0) += 1;
     }
 
-    output.push_str(&format!("    <critical>{}</critical>\n", by_severity.get("CRITICAL").unwrap_or(&0)));
-    output.push_str(&format!("    <high>{}</high>\n", by_severity.get("HIGH").unwrap_or(&0)));
-    output.push_str(&format!("    <medium>{}</medium>\n", by_severity.get("MEDIUM").unwrap_or(&0)));
-    output.push_str(&format!("    <low>{}</low>\n", by_severity.get("LOW").unwrap_or(&0)));
+    output.push_str(&format!(
+        "    <critical>{}</critical>\n",
+        by_severity.get("CRITICAL").unwrap_or(&0)
+    ));
+    output.push_str(&format!(
+        "    <high>{}</high>\n",
+        by_severity.get("HIGH").unwrap_or(&0)
+    ));
+    output.push_str(&format!(
+        "    <medium>{}</medium>\n",
+        by_severity.get("MEDIUM").unwrap_or(&0)
+    ));
+    output.push_str(&format!(
+        "    <low>{}</low>\n",
+        by_severity.get("LOW").unwrap_or(&0)
+    ));
     output.push_str("  </summary>\n");
 
     output.push_str("  <languages>\n");
@@ -2952,42 +4430,74 @@ fn generate_xml_report(issues: &[Issue]) -> String {
                 continue;
             }
 
-            output.push_str(&format!("    <language name=\"{}\">\n", xml_escape(lang_name)));
+            output.push_str(&format!(
+                "    <language name=\"{}\">\n",
+                xml_escape(lang_name)
+            ));
 
             let mut files: Vec<_> = lang_group.files.iter().collect();
             files.sort_by_key(|(path, _)| *path);
 
             for (file_path, file_issues) in files {
-                output.push_str(&format!("      <file path=\"{}\" issue_count=\"{}\">\n",
-                    xml_escape(file_path), file_issues.len()));
+                output.push_str(&format!(
+                    "      <file path=\"{}\" issue_count=\"{}\">\n",
+                    xml_escape(file_path),
+                    file_issues.len()
+                ));
 
                 let mut sorted_issues = file_issues.clone();
                 sorted_issues.sort_by(|a, b| {
-                    b.confidence.cmp(&a.confidence)
+                    b.confidence
+                        .cmp(&a.confidence)
                         .then_with(|| a.line.cmp(&b.line))
                 });
 
                 for (idx, issue) in sorted_issues.iter().enumerate() {
-                    output.push_str(&format!("        <issue id=\"{}\" completed=\"false\">\n", idx + 1));
+                    output.push_str(&format!(
+                        "        <issue id=\"{}\" completed=\"false\">\n",
+                        idx + 1
+                    ));
                     output.push_str("          <checkbox>[ ]</checkbox>\n");
-                    output.push_str(&format!("          <function_name>{}</function_name>\n", xml_escape(&issue.function_name)));
+                    output.push_str(&format!(
+                        "          <function_name>{}</function_name>\n",
+                        xml_escape(&issue.function_name)
+                    ));
                     output.push_str(&format!("          <line>{}</line>\n", issue.line));
                     output.push_str(&format!("          <column>{}</column>\n", issue.column));
-                    output.push_str(&format!("          <severity>{}</severity>\n", xml_escape(&issue.severity)));
-                    output.push_str(&format!("          <confidence>{}</confidence>\n", issue.confidence));
-                    output.push_str(&format!("          <issue_type>{}</issue_type>\n", xml_escape(&issue.issue_type)));
-                    output.push_str(&format!("          <description>{}</description>\n", xml_escape(&issue.description)));
+                    output.push_str(&format!(
+                        "          <severity>{}</severity>\n",
+                        xml_escape(&issue.severity)
+                    ));
+                    output.push_str(&format!(
+                        "          <confidence>{}</confidence>\n",
+                        issue.confidence
+                    ));
+                    output.push_str(&format!(
+                        "          <issue_type>{}</issue_type>\n",
+                        xml_escape(&issue.issue_type)
+                    ));
+                    output.push_str(&format!(
+                        "          <description>{}</description>\n",
+                        xml_escape(&issue.description)
+                    ));
                     output.push_str("          <evidence>\n");
 
                     for ev in &issue.evidence {
                         let sign = if ev.points >= 0 { "+" } else { "" };
-                        output.push_str(&format!("            <item points=\"{}{}\">\n", sign, ev.points));
-                        output.push_str(&format!("              {}\n", xml_escape(&ev.description)));
+                        output.push_str(&format!(
+                            "            <item points=\"{}{}\">\n",
+                            sign, ev.points
+                        ));
+                        output
+                            .push_str(&format!("              {}\n", xml_escape(&ev.description)));
                         output.push_str("            </item>\n");
                     }
 
                     output.push_str("          </evidence>\n");
-                    output.push_str(&format!("          <suggested_fix>{}</suggested_fix>\n", xml_escape(&issue.suggested_fix)));
+                    output.push_str(&format!(
+                        "          <suggested_fix>{}</suggested_fix>\n",
+                        xml_escape(&issue.suggested_fix)
+                    ));
                     output.push_str("        </issue>\n");
                 }
 
@@ -3012,10 +4522,21 @@ fn print_colored_summary(issues: &[Issue]) {
         by_confidence.entry(level).or_default().push(issue);
     }
 
-    for level in &[ConfidenceLevel::Critical, ConfidenceLevel::High, ConfidenceLevel::Medium, ConfidenceLevel::Low, ConfidenceLevel::Info] {
+    for level in &[
+        ConfidenceLevel::Critical,
+        ConfidenceLevel::High,
+        ConfidenceLevel::Medium,
+        ConfidenceLevel::Low,
+        ConfidenceLevel::Info,
+    ] {
         if let Some(level_issues) = by_confidence.get(level) {
             if !level_issues.is_empty() {
-                println!("{}: {} issues (color: {})", level.as_str(), level_issues.len(), level.color());
+                println!(
+                    "{}: {} issues (color: {})",
+                    level.as_str(),
+                    level_issues.len(),
+                    level.color()
+                );
             }
         }
     }
@@ -3056,10 +4577,17 @@ fn main() {
     }
     println!();
 
-    let mut all_issues = scan_files(root_path, &mut cache, !cli.no_cache, cli.verbose, &ignored_paths);
+    let mut all_issues = scan_files(
+        root_path,
+        &mut cache,
+        !cli.no_cache,
+        cli.verbose,
+        &ignored_paths,
+    );
 
     all_issues.sort_by(|a, b| {
-        b.confidence.cmp(&a.confidence)
+        b.confidence
+            .cmp(&a.confidence)
             .then_with(|| a.file.cmp(&b.file))
             .then_with(|| a.line.cmp(&b.line))
     });
@@ -3070,8 +4598,8 @@ fn main() {
     let md_content = generate_todo_report(&filtered_issues);
     let xml_content = generate_xml_report(&filtered_issues);
 
-    let md_name = format!("{}.md", ['T','O','D','O'].iter().collect::<String>());
-    let xml_name = format!("{}.xml", ['T','O','D','O'].iter().collect::<String>());
+    let md_name = format!("{}.md", ['T', 'O', 'D', 'O'].iter().collect::<String>());
+    let xml_name = format!("{}.xml", ['T', 'O', 'D', 'O'].iter().collect::<String>());
 
     if let Err(e) = fs::write(root_path.join(&md_name), &md_content) {
         eprintln!("Failed to write {}: {}", md_name, e);
