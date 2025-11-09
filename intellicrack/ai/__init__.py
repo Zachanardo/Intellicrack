@@ -22,6 +22,7 @@ import logging
 
 # Set up package logger
 logger = logging.getLogger(__name__)
+logger.debug("AI module loaded")
 
 # Import AI modules with error handling - explicit imports to avoid F403/F405
 try:

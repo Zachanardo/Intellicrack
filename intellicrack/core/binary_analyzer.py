@@ -84,6 +84,7 @@ except ImportError:
 
 
 logger = logging.getLogger(__name__)
+logger.debug("Binary analyzer module loaded")
 
 
 class BinaryAnalyzer:
@@ -92,6 +93,7 @@ class BinaryAnalyzer:
     def __init__(self):
         """Initialize the binary analyzer."""
         self.logger = logging.getLogger(__name__)
+        self.logger.debug("Initializing BinaryAnalyzer")
 
         # Initialize sub-analyzers
         self.multi_format_analyzer = MultiFormatBinaryAnalyzer() if MultiFormatBinaryAnalyzer else None

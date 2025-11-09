@@ -19,6 +19,11 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 from enum import Enum
 
+from intellicrack.utils.logger import get_logger
+
+logger = get_logger(__name__)
+logger.debug("Frida constants module loaded")
+
 """
 Frida Constants Module
 

@@ -1091,7 +1091,7 @@ class CrossToolOrchestrator:
                         "-import",
                         self.binary_path,
                         "-scriptPath",
-                        os.path.join(os.path.dirname(__file__), "ghidra_scripts"),
+                        str(get_ghidra_scripts_dir()),
                         "-postScript",
                         "ExportAnalysisData.java",
                         "-overwrite",

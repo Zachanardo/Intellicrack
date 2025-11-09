@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <intellicrack_scan_results>
   <summary>
-    <total_issues>671</total_issues>
-    <total_languages>3</total_languages>
-    <critical>330</critical>
-    <high>126</high>
-    <medium>215</medium>
+    <total_issues>617</total_issues>
+    <total_languages>2</total_languages>
+    <critical>327</critical>
+    <high>102</high>
+    <medium>188</medium>
     <low>0</low>
   </summary>
   <languages>
     <language name="Python">
-      <file path=".\intellicrack\ai\code_analysis_tools.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\ai\code_analysis_tools.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>analyze_code</function_name>
@@ -62,7 +62,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ai\gpu_integration.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\ai\gpu_integration.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>synchronize</function_name>
@@ -108,7 +108,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ai\interactive_assistant.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\ai\interactive_assistant.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>analyze_license_patterns</function_name>
@@ -166,7 +166,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ai\lazy_model_loader.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\ai\lazy_model_loader.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>should_preload</function_name>
@@ -190,7 +190,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ai\llm_backends.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\ai\llm_backends.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>analyze_protection_patterns</function_name>
@@ -254,7 +254,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ai\llm_config_as_code.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\ai\llm_config_as_code.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate</function_name>
@@ -284,7 +284,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ai\performance_monitor.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\ai\performance_monitor.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>decorator</function_name>
@@ -305,7 +305,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ai\response_parser.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\ai\response_parser.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>parse_ai_response_sections</function_name>
@@ -329,7 +329,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\analysis\analysis_result_orchestrator.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\analysis\analysis_result_orchestrator.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_icp_result</function_name>
@@ -393,7 +393,7 @@
           <suggested_fix>Implement actual logic for &apos;validate_icp_result&apos;</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\analysis\protection_workflow.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\analysis\protection_workflow.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>analyze_and_bypass</function_name>
@@ -451,7 +451,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\cli\ai_integration.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\cli\ai_integration.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>handle_tool_call</function_name>
@@ -478,7 +478,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\cli\cli.py" issue_count="7">
+      <file path="D:\Intellicrack\intellicrack\cli\cli.py" issue_count="7">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>patch</function_name>
@@ -634,7 +634,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\cli\interactive_mode.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\cli\interactive_mode.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>do_patch</function_name>
@@ -704,7 +704,7 @@
           <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\cli\pipeline.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\cli\pipeline.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>process</function_name>
@@ -731,7 +731,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\cli\run_analysis_cli.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\cli\run_analysis_cli.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_binary_path</function_name>
@@ -758,7 +758,7 @@
           <suggested_fix>Implement actual logic for &apos;validate_binary_path&apos;</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\analysis\automated_patch_agent.py" issue_count="5">
+      <file path="D:\Intellicrack\intellicrack\core\analysis\automated_patch_agent.py" issue_count="5">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>run_automated_patch_agent</function_name>
@@ -912,7 +912,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\analysis\binary_similarity_search.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\core\analysis\binary_similarity_search.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>find_similar</function_name>
@@ -958,7 +958,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\analysis\cfg_explorer.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\core\analysis\cfg_explorer.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>analyze</function_name>
@@ -1010,7 +1010,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\analysis\concolic_obfuscation_handler.py" issue_count="4">
+      <file path="D:\Intellicrack\intellicrack\core\analysis\concolic_obfuscation_handler.py" issue_count="4">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>is_dispatcher_block</function_name>
@@ -1136,7 +1136,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\analysis\control_flow_deobfuscation.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\core\analysis\control_flow_deobfuscation.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>apply_patches</function_name>
@@ -1200,7 +1200,7 @@
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\analysis\firmware_analyzer.py" issue_count="3">
+      <file path="D:\Intellicrack\intellicrack\core\analysis\firmware_analyzer.py" issue_count="3">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>text_files</function_name>
@@ -1271,7 +1271,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\analysis\frida_advanced_hooks.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\core\analysis\frida_advanced_hooks.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>clear_exceptions</function_name>
@@ -1317,7 +1317,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\analysis\frida_gui_integration.py" issue_count="5">
+      <file path="D:\Intellicrack\intellicrack\core\analysis\frida_gui_integration.py" issue_count="5">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_script</function_name>
@@ -1435,7 +1435,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\analysis\frida_script_manager.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\core\analysis\frida_script_manager.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>on_message</function_name>
@@ -1462,7 +1462,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\analysis\ghidra_binary_integration.py" issue_count="6">
+      <file path="D:\Intellicrack\intellicrack\core\analysis\ghidra_binary_integration.py" issue_count="6">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>generate_keygen_template</function_name>
@@ -1638,7 +1638,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\analysis\ghidra_script_runner.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\core\analysis\ghidra_script_runner.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_script</function_name>
@@ -1702,7 +1702,7 @@
           <suggested_fix>Implement actual logic for &apos;validate_script&apos;</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\analysis\memory_forensics_engine.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\core\analysis\memory_forensics_engine.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>analyze_memory_dump_file</function_name>
@@ -1754,7 +1754,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\analysis\multi_format_analyzer.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\core\analysis\multi_format_analyzer.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>analyze_java</function_name>
@@ -1806,7 +1806,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\analysis\radare2_advanced_patcher.py" issue_count="14">
+      <file path="D:\Intellicrack\intellicrack\core\analysis\radare2_advanced_patcher.py" issue_count="14">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>apply_patch</function_name>
@@ -2254,7 +2254,7 @@
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\analysis\radare2_decompiler.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\core\analysis\radare2_decompiler.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>analyze_license_functions</function_name>
@@ -2312,7 +2312,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\analysis\radare2_patch_engine.py" issue_count="20">
+      <file path="D:\Intellicrack\intellicrack\core\analysis\radare2_patch_engine.py" issue_count="20">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>patch_function_prologue</function_name>
@@ -2952,7 +2952,7 @@
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\analysis\radare2_scripting.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\core\analysis\radare2_scripting.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>create_automated_patcher_script</function_name>
@@ -3022,7 +3022,7 @@
           <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\analysis\yara_scanner.py" issue_count="21">
+      <file path="D:\Intellicrack\intellicrack\core\analysis\yara_scanner.py" issue_count="21">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_patch</function_name>
@@ -3672,7 +3672,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\anti_analysis\sandbox_detector.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\core\anti_analysis\sandbox_detector.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>width</function_name>
@@ -3724,20 +3724,17 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\certificate\bypass_strategy.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\core\certificate\bypass_strategy.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>assess_patch_risk</function_name>
           <line>262</line>
           <column>5</column>
           <severity>CRITICAL</severity>
-          <confidence>250</confidence>
+          <confidence>225</confidence>
           <issue_type>hardcoded_return</issue_type>
-          <description>7 production issues detected</description>
+          <description>6 production issues detected</description>
           <evidence>
-            <item points="+25">
-              All returns are hardcoded strings
-            </item>
             <item points="+85">
               CRITICAL: Patcher without pattern search (hardcoded offsets only)
             </item>
@@ -3765,13 +3762,10 @@
           <line>262</line>
           <column>5</column>
           <severity>CRITICAL</severity>
-          <confidence>250</confidence>
+          <confidence>225</confidence>
           <issue_type>hardcoded_return</issue_type>
-          <description>7 production issues detected</description>
+          <description>6 production issues detected</description>
           <evidence>
-            <item points="+25">
-              All returns are hardcoded strings
-            </item>
             <item points="+85">
               CRITICAL: Patcher without pattern search (hardcoded offsets only)
             </item>
@@ -3794,7 +3788,7 @@
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\certificate\cert_patcher.py" issue_count="4">
+      <file path="D:\Intellicrack\intellicrack\core\certificate\cert_patcher.py" issue_count="4">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>rollback_patches</function_name>
@@ -3920,7 +3914,7 @@
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\certificate\frida_cert_hooks.py" issue_count="4">
+      <file path="D:\Intellicrack\intellicrack\core\certificate\frida_cert_hooks.py" issue_count="4">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>inject_universal_bypass</function_name>
@@ -4058,7 +4052,7 @@
           <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\certificate\patch_generators.py" issue_count="7">
+      <file path="D:\Intellicrack\intellicrack\core\certificate\patch_generators.py" issue_count="7">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>wrap_patch_cdecl</function_name>
@@ -4274,7 +4268,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\config_migration_handler.py" issue_count="3">
+      <file path="D:\Intellicrack\intellicrack\core\config_migration_handler.py" issue_count="3">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_structure</function_name>
@@ -4351,7 +4345,7 @@
           <suggested_fix>Implement actual logic for &apos;validate_migration_result&apos;</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\debugging_engine.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\core\debugging_engine.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>generate_dynamic_patch</function_name>
@@ -4427,7 +4421,7 @@
           <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\exploitation\automated_unpacker.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\core\exploitation\automated_unpacker.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>hook_mem_write</function_name>
@@ -4451,7 +4445,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\exploitation\keygen_generator.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\core\exploitation\keygen_generator.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>generate_keygen</function_name>
@@ -4497,7 +4491,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\integration\real_tool_communication.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\core\integration\real_tool_communication.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>message_handler</function_name>
@@ -4518,7 +4512,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\license\keygen.py" issue_count="3">
+      <file path="D:\Intellicrack\intellicrack\core\license\keygen.py" issue_count="3">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>reverse_engineer_keygen</function_name>
@@ -4622,7 +4616,7 @@
           <suggested_fix>Implement actual logic for &apos;multiplicative_validate&apos;</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\monitoring\monitoring_session.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\core\monitoring\monitoring_session.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>clear_history</function_name>
@@ -4668,7 +4662,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\network\protocols\__init__.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\core\network\protocols\__init__.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>get_parser</function_name>
@@ -4692,7 +4686,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\orchestration\tool_communication_bridge.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\core\orchestration\tool_communication_bridge.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>coordinate_patch_operation</function_name>
@@ -4750,20 +4744,17 @@
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\patching\license_check_remover.py" issue_count="6">
+      <file path="D:\Intellicrack\intellicrack\core\patching\license_check_remover.py" issue_count="6">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>assess_patch_risk</function_name>
           <line>1052</line>
           <column>5</column>
           <severity>CRITICAL</severity>
-          <confidence>347</confidence>
+          <confidence>322</confidence>
           <issue_type>hardcoded_return</issue_type>
-          <description>7 production issues detected</description>
+          <description>6 production issues detected</description>
           <evidence>
-            <item points="+25">
-              All returns are hardcoded strings
-            </item>
             <item points="+85">
               CRITICAL: Patcher without pattern search (hardcoded offsets only)
             </item>
@@ -4791,13 +4782,10 @@
           <line>1052</line>
           <column>5</column>
           <severity>CRITICAL</severity>
-          <confidence>347</confidence>
+          <confidence>322</confidence>
           <issue_type>hardcoded_return</issue_type>
-          <description>7 production issues detected</description>
+          <description>6 production issues detected</description>
           <evidence>
-            <item points="+25">
-              All returns are hardcoded strings
-            </item>
             <item points="+85">
               CRITICAL: Patcher without pattern search (hardcoded offsets only)
             </item>
@@ -4944,7 +4932,7 @@
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\patching\memory_patcher.py" issue_count="3">
+      <file path="D:\Intellicrack\intellicrack\core\patching\memory_patcher.py" issue_count="3">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>patch_memory_direct</function_name>
@@ -5039,7 +5027,7 @@
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\patching\radare2_patch_integration.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\core\patching\radare2_patch_integration.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>generate_integrated_patches</function_name>
@@ -5109,7 +5097,7 @@
           <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\patching\windows_activator.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\core\patching\windows_activator.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>check_windows_activation</function_name>
@@ -5130,7 +5118,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\process_manipulation.py" issue_count="8">
+      <file path="D:\Intellicrack\intellicrack\core\process_manipulation.py" issue_count="8">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>patch_license_check</function_name>
@@ -5326,7 +5314,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\processing\qiling_emulator.py" issue_count="5">
+      <file path="D:\Intellicrack\intellicrack\core\processing\qiling_emulator.py" issue_count="5">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>apply_patches</function_name>
@@ -5471,7 +5459,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\processing\streaming_analysis_manager.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\core\processing\streaming_analysis_manager.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>analyze_chunk</function_name>
@@ -5495,7 +5483,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\protection_bypass\cloud_license_analyzer.py" issue_count="3">
+      <file path="D:\Intellicrack\intellicrack\core\protection_bypass\cloud_license_analyzer.py" issue_count="3">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>verify_license</function_name>
@@ -5522,10 +5510,10 @@
               Validator sophistication: 20% (WEAK - bypassed easily)
             </item>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="-13">
               Deductions for production patterns (-13 points)
@@ -5544,10 +5532,10 @@
           <description>3 production issues detected</description>
           <evidence>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="+25">
               Function never called and calls no other functions (dead code or stub)
@@ -5566,10 +5554,10 @@
           <description>3 production issues detected</description>
           <evidence>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+25">
               Function never called and calls no other functions (dead code or stub)
@@ -5578,7 +5566,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\protection_bypass\integrity_check_defeat.py" issue_count="12">
+      <file path="D:\Intellicrack\intellicrack\core\protection_bypass\integrity_check_defeat.py" issue_count="12">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>recalculate_for_patched_binary</function_name>
@@ -5682,10 +5670,10 @@
               Patcher sophistication: 35% (DANGEROUS - will break on updates)
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;capstone&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;capstone&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+25">
               Function never called and calls no other functions (dead code or stub)
@@ -5719,10 +5707,10 @@
               Patcher sophistication: 35% (DANGEROUS - will break on updates)
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;capstone&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;capstone&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+25">
               Function never called and calls no other functions (dead code or stub)
@@ -5790,10 +5778,10 @@
               Patcher sophistication: 55% (FRAGILE - limited reliability)
             </item>
             <item points="+15">
-              Imports &apos;capstone&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;capstone&apos; but doesn&apos;t use it in function
             </item>
             <item points="-220">
               Deductions for production patterns (-220 points)
@@ -5815,10 +5803,10 @@
               Weak encryption detected (XOR, character-by-character)
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;capstone&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;capstone&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
@@ -5837,10 +5825,10 @@
               Weak encryption detected (XOR, character-by-character)
             </item>
             <item points="+15">
-              Imports &apos;capstone&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;capstone&apos; but doesn&apos;t use it in function
             </item>
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
@@ -5881,10 +5869,10 @@
               Weak encryption detected (XOR, character-by-character)
             </item>
             <item points="+15">
-              Imports &apos;capstone&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;capstone&apos; but doesn&apos;t use it in function
             </item>
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
@@ -5922,10 +5910,10 @@
           <description>3 production issues detected</description>
           <evidence>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;capstone&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;capstone&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+25">
               Function never called and calls no other functions (dead code or stub)
@@ -5934,7 +5922,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\protection_bypass\tpm_bypass.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\core\protection_bypass\tpm_bypass.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>inject_tpm_command_interceptor</function_name>
@@ -5998,7 +5986,7 @@
           <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\protection_bypass\tpm_secure_enclave_bypass.py" issue_count="4">
+      <file path="D:\Intellicrack\intellicrack\core\protection_bypass\tpm_secure_enclave_bypass.py" issue_count="4">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>bypass_remote_attestation</function_name>
@@ -6035,10 +6023,10 @@
               Validation/check function without conditional logic (always returns same value)
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
@@ -6094,7 +6082,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\protection_bypass\vm_bypass.py" issue_count="3">
+      <file path="D:\Intellicrack\intellicrack\core\protection_bypass\vm_bypass.py" issue_count="3">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>bypass_vm_detection</function_name>
@@ -6180,7 +6168,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\resources\resource_manager.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\core\resources\resource_manager.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_external_dependencies</function_name>
@@ -6207,7 +6195,7 @@
           <suggested_fix>Implement actual logic for &apos;validate_external_dependencies&apos;</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\security_enforcement.py" issue_count="4">
+      <file path="D:\Intellicrack\intellicrack\core\security_enforcement.py" issue_count="4">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>block_size</function_name>
@@ -6300,7 +6288,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\security_utils.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\core\security_utils.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_file_path</function_name>
@@ -6333,11 +6321,11 @@
           <suggested_fix>Implement actual logic for &apos;validate_file_path&apos;</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\serial_generator.py" issue_count="3">
+      <file path="D:\Intellicrack\intellicrack\core\serial_generator.py" issue_count="3">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>analyze_serial_algorithm</function_name>
-          <line>107</line>
+          <line>112</line>
           <column>5</column>
           <severity>HIGH</severity>
           <confidence>92</confidence>
@@ -6359,7 +6347,7 @@
         <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>analyze_serial_algorithm</function_name>
-          <line>107</line>
+          <line>112</line>
           <column>5</column>
           <severity>HIGH</severity>
           <confidence>92</confidence>
@@ -6381,7 +6369,7 @@
         <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>feistel_round</function_name>
-          <line>728</line>
+          <line>733</line>
           <column>9</column>
           <severity>MEDIUM</severity>
           <confidence>60</confidence>
@@ -6407,7 +6395,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\shared\bypass_config.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\core\shared\bypass_config.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>analyze_bypass_capabilities</function_name>
@@ -6434,7 +6422,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\startup_checks.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\core\startup_checks.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_tensorflow_models</function_name>
@@ -6461,7 +6449,7 @@
           <suggested_fix>Implement actual logic for &apos;validate_tensorflow_models&apos;</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\subscription_validation_bypass.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\core\subscription_validation_bypass.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>synthesize_subscription_check</function_name>
@@ -6507,7 +6495,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\task_manager.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\core\task_manager.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>execute</function_name>
@@ -6531,7 +6519,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\tool_discovery.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\core\tool_discovery.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_radare2</function_name>
@@ -6561,7 +6549,7 @@
           <suggested_fix>Implement actual logic for &apos;validate_radare2&apos;</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\trial_reset_engine.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\core\trial_reset_engine.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>inject_time_hooks</function_name>
@@ -6597,7 +6585,7 @@
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\vulnerability_research\binary_differ.py" issue_count="4">
+      <file path="D:\Intellicrack\intellicrack\core\vulnerability_research\binary_differ.py" issue_count="4">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>analyze_patch</function_name>
@@ -6741,7 +6729,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\vulnerability_research\patch_analyzer.py" issue_count="6">
+      <file path="D:\Intellicrack\intellicrack\core\vulnerability_research\patch_analyzer.py" issue_count="6">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>analyze_patch_file</function_name>
@@ -6977,7 +6965,7 @@
           <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\core\vulnerability_research\vulnerability_analyzer.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\core\vulnerability_research\vulnerability_analyzer.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>clear_analysis_cache</function_name>
@@ -7023,7 +7011,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\dashboard\websocket_stream.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\dashboard\websocket_stream.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>patch_applied</function_name>
@@ -7099,7 +7087,7 @@
           <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\handlers\cryptography_handler.py" issue_count="12">
+      <file path="D:\Intellicrack\intellicrack\handlers\cryptography_handler.py" issue_count="12">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>__init__</function_name>
@@ -7329,7 +7317,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\handlers\frida_handler.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\handlers\frida_handler.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>get_process</function_name>
@@ -7369,7 +7357,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\handlers\psutil_handler.py" issue_count="4">
+      <file path="D:\Intellicrack\intellicrack\handlers\psutil_handler.py" issue_count="4">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>net_connections</function_name>
@@ -7459,7 +7447,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\handlers\pyqt6_handler.py" issue_count="10">
+      <file path="D:\Intellicrack\intellicrack\handlers\pyqt6_handler.py" issue_count="10">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>isEnabled</function_name>
@@ -7663,7 +7651,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\handlers\tensorflow_handler.py" issue_count="8">
+      <file path="D:\Intellicrack\intellicrack\handlers\tensorflow_handler.py" issue_count="8">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>__init__</function_name>
@@ -7817,22 +7805,19 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\handlers\torch_handler.py" issue_count="4">
+      <file path="D:\Intellicrack\intellicrack\handlers\torch_handler.py" issue_count="4">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>is_available</function_name>
           <line>173</line>
           <column>9</column>
-          <severity>CRITICAL</severity>
-          <confidence>125</confidence>
+          <severity>HIGH</severity>
+          <confidence>90</confidence>
           <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
+          <description>3 production issues detected</description>
           <evidence>
             <item points="+50">
               Function has no meaningful content (≤1 line)
-            </item>
-            <item points="+35">
-              Single-line return of simple literal (0, 1, True, False, None)
             </item>
             <item points="+15">
               Very short function (≤3 LOC) for non-getter/setter
@@ -7848,16 +7833,13 @@
           <function_name>device_count</function_name>
           <line>177</line>
           <column>9</column>
-          <severity>CRITICAL</severity>
-          <confidence>125</confidence>
+          <severity>HIGH</severity>
+          <confidence>90</confidence>
           <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
+          <description>3 production issues detected</description>
           <evidence>
             <item points="+50">
               Function has no meaningful content (≤1 line)
-            </item>
-            <item points="+35">
-              Single-line return of simple literal (0, 1, True, False, None)
             </item>
             <item points="+15">
               Very short function (≤3 LOC) for non-getter/setter
@@ -7907,7 +7889,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\handlers\wmi_handler.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\handlers\wmi_handler.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>__init__</function_name>
@@ -7959,7 +7941,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\hexview\ai_bridge.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\hexview\ai_bridge.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>__init__</function_name>
@@ -8005,7 +7987,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\hexview\checksums.py" issue_count="3">
+      <file path="D:\Intellicrack\intellicrack\hexview\checksums.py" issue_count="3">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>calculate_crc32</function_name>
@@ -8055,7 +8037,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\hexview\compare_dialog.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\hexview\compare_dialog.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_selection</function_name>
@@ -8107,7 +8089,7 @@
           <suggested_fix>Implement actual logic for &apos;validate_selection&apos;</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ml\license_protection_neural_network.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\ml\license_protection_neural_network.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate</function_name>
@@ -8153,7 +8135,7 @@
           <suggested_fix>Implement actual logic for &apos;validate&apos;</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\models\model_manager.py" issue_count="4">
+      <file path="D:\Intellicrack\intellicrack\models\model_manager.py" issue_count="4">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>__init__</function_name>
@@ -8243,7 +8225,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\plugins\custom_modules\anti_anti_debug_suite.py" issue_count="10">
+      <file path="D:\Intellicrack\intellicrack\plugins\custom_modules\anti_anti_debug_suite.py" issue_count="10">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>patch_being_debugged_flag</function_name>
@@ -8543,7 +8525,7 @@
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\plugins\custom_modules\binary_patcher_plugin.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\plugins\custom_modules\binary_patcher_plugin.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>patch</function_name>
@@ -8601,7 +8583,7 @@
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\plugins\custom_modules\hardware_dongle_emulator.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\plugins\custom_modules\hardware_dongle_emulator.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>process_hasp_command</function_name>
@@ -8647,7 +8629,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\plugins\custom_modules\intellicrack_core_engine.py" issue_count="5">
+      <file path="D:\Intellicrack\intellicrack\plugins\custom_modules\intellicrack_core_engine.py" issue_count="5">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>execute_operation</function_name>
@@ -8771,7 +8753,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\plugins\custom_modules\license_server_emulator.py" issue_count="9">
+      <file path="D:\Intellicrack\intellicrack\plugins\custom_modules\license_server_emulator.py" issue_count="9">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_adobe_license</function_name>
@@ -8829,10 +8811,10 @@
               Validator sophistication: 20% (WEAK - bypassed easily)
             </item>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="-83">
               Deductions for production patterns (-83 points)
@@ -8894,10 +8876,10 @@
               Validator sophistication: 50% (BASIC - needs improvement)
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+25">
               Function never called and calls no other functions (dead code or stub)
@@ -8953,10 +8935,10 @@
               Validator sophistication: 20% (WEAK - bypassed easily)
             </item>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="-73">
               Deductions for production patterns (-73 points)
@@ -8997,10 +8979,10 @@
           <description>5 production issues detected</description>
           <evidence>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;cryptography&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
               Very short function (≤3 LOC) for non-getter/setter
@@ -9043,7 +9025,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\plugins\custom_modules\simple_analysis_plugin.py" issue_count="4">
+      <file path="D:\Intellicrack\intellicrack\plugins\custom_modules\simple_analysis_plugin.py" issue_count="4">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>analyze</function_name>
@@ -9133,7 +9115,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\plugins\custom_modules\success_rate_analyzer.py" issue_count="3">
+      <file path="D:\Intellicrack\intellicrack\plugins\custom_modules\success_rate_analyzer.py" issue_count="3">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>detect_serial_protection</function_name>
@@ -9210,7 +9192,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\plugins\custom_modules\ui_enhancement_module.py" issue_count="11">
+      <file path="D:\Intellicrack\intellicrack\plugins\custom_modules\ui_enhancement_module.py" issue_count="11">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>analyze_file</function_name>
@@ -9475,11 +9457,11 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\plugins\plugin_base.py" issue_count="4">
+      <file path="D:\Intellicrack\intellicrack\plugins\plugin_base.py" issue_count="4">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>calculate_entropy</function_name>
-          <line>191</line>
+          <line>193</line>
           <column>5</column>
           <severity>HIGH</severity>
           <confidence>80</confidence>
@@ -9498,7 +9480,7 @@
         <issue id="2" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>calculate_entropy</function_name>
-          <line>191</line>
+          <line>193</line>
           <column>5</column>
           <severity>HIGH</severity>
           <confidence>80</confidence>
@@ -9517,7 +9499,7 @@
         <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_binary</function_name>
-          <line>148</line>
+          <line>150</line>
           <column>5</column>
           <severity>MEDIUM</severity>
           <confidence>62</confidence>
@@ -9539,7 +9521,7 @@
         <issue id="4" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_binary</function_name>
-          <line>148</line>
+          <line>150</line>
           <column>5</column>
           <severity>MEDIUM</severity>
           <confidence>62</confidence>
@@ -9559,7 +9541,7 @@
           <suggested_fix>Implement actual logic for &apos;validate_binary&apos;</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\plugins\plugin_system.py" issue_count="3">
+      <file path="D:\Intellicrack\intellicrack\plugins\plugin_system.py" issue_count="3">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>create_sample_plugins</function_name>
@@ -9621,10 +9603,10 @@
           <description>5 production issues detected</description>
           <evidence>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+35">
               High cyclomatic complexity but no local variables (suspicious)
@@ -9639,7 +9621,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\protection\icp_backend.py" issue_count="6">
+      <file path="D:\Intellicrack\intellicrack\protection\icp_backend.py" issue_count="6">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>invalidate</function_name>
@@ -9803,7 +9785,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\protection\intellicrack_protection_core.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\protection\intellicrack_protection_core.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>detect_protections</function_name>
@@ -9867,14 +9849,14 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\protection\protection_detector.py" issue_count="4">
+      <file path="D:\Intellicrack\intellicrack\protection\protection_detector.py" issue_count="4">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>detect_protections</function_name>
           <line>65</line>
           <column>5</column>
           <severity>CRITICAL</severity>
-          <confidence>237</confidence>
+          <confidence>207</confidence>
           <issue_type>naive_implementation</issue_type>
           <description>5 production issues detected</description>
           <evidence>
@@ -9890,8 +9872,8 @@
             <item points="+70">
               Analyzer sophistication: 25% (WEAK - misses most protections)
             </item>
-            <item points="-23">
-              Deductions for production patterns (-23 points)
+            <item points="-53">
+              Deductions for production patterns (-53 points)
             </item>
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
@@ -9902,7 +9884,7 @@
           <line>65</line>
           <column>5</column>
           <severity>CRITICAL</severity>
-          <confidence>237</confidence>
+          <confidence>207</confidence>
           <issue_type>naive_implementation</issue_type>
           <description>5 production issues detected</description>
           <evidence>
@@ -9918,8 +9900,8 @@
             <item points="+70">
               Analyzer sophistication: 25% (WEAK - misses most protections)
             </item>
-            <item points="-23">
-              Deductions for production patterns (-23 points)
+            <item points="-53">
+              Deductions for production patterns (-53 points)
             </item>
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
@@ -9927,7 +9909,7 @@
         <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>analyze</function_name>
-          <line>88</line>
+          <line>89</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>107</confidence>
@@ -9952,7 +9934,7 @@
         <issue id="4" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>analyze</function_name>
-          <line>88</line>
+          <line>89</line>
           <column>5</column>
           <severity>CRITICAL</severity>
           <confidence>107</confidence>
@@ -9975,7 +9957,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\protection\unified_protection_engine.py" issue_count="6">
+      <file path="D:\Intellicrack\intellicrack\protection\unified_protection_engine.py" issue_count="6">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>invalidate_cache_for_file</function_name>
@@ -10133,47 +10115,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\scripts\ghidra\anti_analysis_detector.py" issue_count="2">
-        <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>isCancelled</function_name>
-          <line>225</line>
-          <column>9</column>
-          <severity>MEDIUM</severity>
-          <confidence>60</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>2 production issues detected</description>
-          <evidence>
-            <item points="+45">
-              Search/scan function without iteration logic (single-element only)
-            </item>
-            <item points="+15">
-              Very short function (≤3 LOC) for non-getter/setter
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="2" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>isCancelled</function_name>
-          <line>225</line>
-          <column>9</column>
-          <severity>MEDIUM</severity>
-          <confidence>60</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>2 production issues detected</description>
-          <evidence>
-            <item points="+45">
-              Search/scan function without iteration logic (single-element only)
-            </item>
-            <item points="+15">
-              Very short function (≤3 LOC) for non-getter/setter
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-      </file>
-      <file path=".\intellicrack\scripts\radare2\radare2_keygen_assistant.py" issue_count="6">
+      <file path="D:\Intellicrack\intellicrack\scripts\radare2\radare2_keygen_assistant.py" issue_count="6">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>analyze_from_license_functions</function_name>
@@ -10337,7 +10279,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\scripts\radare2\radare2_license_analyzer.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\scripts\radare2\radare2_license_analyzer.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>analyze</function_name>
@@ -10389,7 +10331,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\__init__.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\ui\__init__.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>cleanup_integration</function_name>
@@ -10413,7 +10355,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\dialogs\ai_coding_assistant_dialog.py" issue_count="4">
+      <file path="D:\Intellicrack\intellicrack\ui\dialogs\ai_coding_assistant_dialog.py" issue_count="4">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>open_patch_assistant</function_name>
@@ -10533,7 +10475,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\dialogs\common_imports.py" issue_count="8">
+      <file path="D:\Intellicrack\intellicrack\ui\dialogs\common_imports.py" issue_count="8">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>setValue</function_name>
@@ -10705,7 +10647,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\dialogs\distributed_config_dialog.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\ui\dialogs\distributed_config_dialog.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_config</function_name>
@@ -10763,7 +10705,7 @@
           <suggested_fix>Implement actual logic for &apos;validate_config&apos;</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\dialogs\frida_bypass_wizard_dialog.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\ui\dialogs\frida_bypass_wizard_dialog.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_process_input</function_name>
@@ -10815,7 +10757,7 @@
           <suggested_fix>Implement actual logic for &apos;validate_process_input&apos;</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\dialogs\frida_manager_dialog.py" issue_count="18">
+      <file path="D:\Intellicrack\intellicrack\ui\dialogs\frida_manager_dialog.py" issue_count="18">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>refresh_processes</function_name>
@@ -10833,10 +10775,10 @@
               Trivial implementation: no loops, conditionals, or local vars despite multiple lines
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
@@ -10858,10 +10800,10 @@
               Trivial implementation: no loops, conditionals, or local vars despite multiple lines
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
@@ -10877,10 +10819,10 @@
           <description>4 production issues detected</description>
           <evidence>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
               Very short function (≤3 LOC) for non-getter/setter
@@ -10902,10 +10844,10 @@
           <description>4 production issues detected</description>
           <evidence>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
               Very short function (≤3 LOC) for non-getter/setter
@@ -10980,10 +10922,10 @@
               Search/scan function without iteration logic (single-element only)
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="-10">
               Deductions for production patterns (-10 points)
@@ -11005,10 +10947,10 @@
               Search/scan function without iteration logic (single-element only)
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="-10">
               Deductions for production patterns (-10 points)
@@ -11055,10 +10997,10 @@
               Processing function with no local variables (no actual computation)
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="-13">
               Deductions for production patterns (-13 points)
@@ -11153,10 +11095,10 @@
           <description>3 production issues detected</description>
           <evidence>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+25">
               Function never called and calls no other functions (dead code or stub)
@@ -11219,10 +11161,10 @@
           <description>3 production issues detected</description>
           <evidence>
             <item points="+15">
-              Imports &apos;frida&apos; but doesn&apos;t use it in function
+              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
             </item>
             <item points="+15">
-              Imports &apos;subprocess&apos; but doesn&apos;t use it in function
+              Imports &apos;frida&apos; but doesn&apos;t use it in function
             </item>
             <item points="+25">
               Function never called and calls no other functions (dead code or stub)
@@ -11231,7 +11173,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\dialogs\guided_workflow_wizard.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\ui\dialogs\guided_workflow_wizard.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>create_patching_options_page</function_name>
@@ -11301,7 +11243,7 @@
           <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\dialogs\help_documentation_widget.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\ui\dialogs\help_documentation_widget.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>populate_patching_tutorials</function_name>
@@ -11365,7 +11307,7 @@
           <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\dialogs\keygen_dialog.py" issue_count="6">
+      <file path="D:\Intellicrack\intellicrack\ui\dialogs\keygen_dialog.py" issue_count="6">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>auto_analyze_binary</function_name>
@@ -11511,7 +11453,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\dialogs\llm_config_dialog.py" issue_count="4">
+      <file path="D:\Intellicrack\intellicrack\ui\dialogs\llm_config_dialog.py" issue_count="4">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_all_api_keys</function_name>
@@ -11601,7 +11543,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\dialogs\offline_activation_dialog.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\ui\dialogs\offline_activation_dialog.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_license_file</function_name>
@@ -11653,7 +11595,7 @@
           <suggested_fix>Implement actual logic for &apos;validate_license_file&apos;</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\dialogs\plugin_creation_wizard.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\ui\dialogs\plugin_creation_wizard.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_code</function_name>
@@ -11705,7 +11647,7 @@
           <suggested_fix>Implement actual logic for &apos;validate_code&apos;</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\dialogs\plugin_manager_dialog.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\ui\dialogs\plugin_manager_dialog.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>show</function_name>
@@ -11745,7 +11687,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\dialogs\preferences_dialog.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\ui\dialogs\preferences_dialog.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_preferences</function_name>
@@ -11791,7 +11733,7 @@
           <suggested_fix>Implement actual logic for &apos;validate_preferences&apos;</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\dialogs\qemu_test_results_dialog.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\ui\dialogs\qemu_test_results_dialog.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>output_callback</function_name>
@@ -11818,7 +11760,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\dialogs\script_generator_dialog.py" issue_count="8">
+      <file path="D:\Intellicrack\intellicrack\ui\dialogs\script_generator_dialog.py" issue_count="8">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>analyze_bypass_effectiveness</function_name>
@@ -12026,7 +11968,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\dialogs\serial_generator_dialog.py" issue_count="4">
+      <file path="D:\Intellicrack\intellicrack\ui\dialogs\serial_generator_dialog.py" issue_count="4">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>analyze_serials</function_name>
@@ -12134,7 +12076,7 @@
           <suggested_fix>Implement actual logic for &apos;validate_serial&apos;</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\dialogs\signature_editor_dialog.py" issue_count="4">
+      <file path="D:\Intellicrack\intellicrack\ui\dialogs\signature_editor_dialog.py" issue_count="4">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_signature_syntax</function_name>
@@ -12224,7 +12166,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\dialogs\system_utilities_dialog.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\ui\dialogs\system_utilities_dialog.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>get_process_list</function_name>
@@ -12270,7 +12212,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\dialogs\test_generator_dialog.py" issue_count="4">
+      <file path="D:\Intellicrack\intellicrack\ui\dialogs\test_generator_dialog.py" issue_count="4">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>generate_test_network</function_name>
@@ -12348,7 +12290,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\dialogs\text_editor_dialog.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\ui\dialogs\text_editor_dialog.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>find_next</function_name>
@@ -12388,7 +12330,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\dialogs\visual_patch_editor.py" issue_count="16">
+      <file path="D:\Intellicrack\intellicrack\ui\dialogs\visual_patch_editor.py" issue_count="16">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>clear_patch_form</function_name>
@@ -12868,7 +12810,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\distributed_processing.py" issue_count="12">
+      <file path="D:\Intellicrack\intellicrack\ui\distributed_processing.py" issue_count="12">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>setVisible</function_name>
@@ -13134,7 +13076,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\main_app.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\ui\main_app.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>setup_patching_exploitation_tab</function_name>
@@ -13210,7 +13152,7 @@
           <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\tabs\adobe_injector_tab.py" issue_count="8">
+      <file path="D:\Intellicrack\intellicrack\ui\tabs\adobe_injector_tab.py" issue_count="8">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>scan_in_terminal</function_name>
@@ -13388,7 +13330,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\tabs\base_tab.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\ui\tabs\base_tab.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>setup_content</function_name>
@@ -13434,7 +13376,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\tabs\exploitation_tab.py" issue_count="19">
+      <file path="D:\Intellicrack\intellicrack\ui\tabs\exploitation_tab.py" issue_count="19">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_patches</function_name>
@@ -14010,7 +13952,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\widgets\ai_assistant_widget.py" issue_count="8">
+      <file path="D:\Intellicrack\intellicrack\ui\widgets\ai_assistant_widget.py" issue_count="8">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>copy_keygen</function_name>
@@ -14230,7 +14172,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\widgets\icp_analysis_widget.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\ui\widgets\icp_analysis_widget.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>on_analyze_clicked</function_name>
@@ -14257,7 +14199,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\widgets\intellicrack_protection_widget.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\ui\widgets\intellicrack_protection_widget.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>on_analyze_clicked</function_name>
@@ -14303,7 +14245,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\widgets\pe_file_model.py" issue_count="3">
+      <file path="D:\Intellicrack\intellicrack\ui\widgets\pe_file_model.py" issue_count="3">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>parse_file</function_name>
@@ -14380,7 +14322,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\ui\widgets\plugin_editor.py" issue_count="4">
+      <file path="D:\Intellicrack\intellicrack\ui\widgets\plugin_editor.py" issue_count="4">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_structure</function_name>
@@ -14488,7 +14430,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\utils\analysis\entropy_utils.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\utils\analysis\entropy_utils.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>calculate_byte_entropy</function_name>
@@ -14506,7 +14448,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\utils\binary\binary_utils.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\utils\binary\binary_utils.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_binary_path</function_name>
@@ -14533,7 +14475,7 @@
           <suggested_fix>Implement actual logic for &apos;validate_binary_path&apos;</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\utils\binary\hex_utils.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\utils\binary\hex_utils.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>patch_bytes</function_name>
@@ -14591,7 +14533,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\utils\binary\pe_analysis_common.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\utils\binary\pe_analysis_common.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>analyze_pe_imports</function_name>
@@ -14618,7 +14560,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\utils\core\core_utilities.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\utils\core\core_utilities.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>dispatch_tool</function_name>
@@ -14648,7 +14590,7 @@
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\utils\core\final_utilities.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\utils\core\final_utilities.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>patches_reordered</function_name>
@@ -14693,7 +14635,7 @@
           <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\utils\core\type_validation.py" issue_count="6">
+      <file path="D:\Intellicrack\intellicrack\utils\core\type_validation.py" issue_count="6">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_process_id</function_name>
@@ -14863,7 +14805,7 @@
           <suggested_fix>Implement actual logic for &apos;validate_file_path&apos;</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\utils\dependency_fallbacks.py" issue_count="8">
+      <file path="D:\Intellicrack\intellicrack\utils\dependency_fallbacks.py" issue_count="8">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>__init__</function_name>
@@ -15029,7 +14971,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\utils\exploitation\exploitation.py" issue_count="5">
+      <file path="D:\Intellicrack\intellicrack\utils\exploitation\exploitation.py" issue_count="5">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>analyze_for_patches</function_name>
@@ -15222,7 +15164,7 @@
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\utils\exploitation\patch_engine.py" issue_count="3">
+      <file path="D:\Intellicrack\intellicrack\utils\exploitation\patch_engine.py" issue_count="3">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>run_patch_validation</function_name>
@@ -15311,7 +15253,7 @@
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\utils\log_message.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\utils\log_message.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>log_binary_processing</function_name>
@@ -15338,7 +15280,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\utils\patching\patch_generator.py" issue_count="3">
+      <file path="D:\Intellicrack\intellicrack\utils\patching\patch_generator.py" issue_count="3">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_patch</function_name>
@@ -15481,7 +15423,7 @@
           <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\utils\patching\patch_utils.py" issue_count="4">
+      <file path="D:\Intellicrack\intellicrack\utils\patching\patch_utils.py" issue_count="4">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>create_nop_patch</function_name>
@@ -15616,7 +15558,7 @@
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\utils\patching\patch_verification.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\utils\patching\patch_verification.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>verify_patches</function_name>
@@ -15655,7 +15597,7 @@
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\utils\protection_utils.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\utils\protection_utils.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>inject_comprehensive_api_hooks</function_name>
@@ -15694,7 +15636,7 @@
           <suggested_fix>Implement actual binary patching with proper file I/O and byte manipulation</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\utils\qemu_image_discovery.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\utils\qemu_image_discovery.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>invalidate_cache</function_name>
@@ -15776,7 +15718,7 @@
           <suggested_fix>Implement actual logic for &apos;invalidate_cache&apos;</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\utils\runtime\additional_runners.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\utils\runtime\additional_runners.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>run_generate_patch_suggestions</function_name>
@@ -15840,7 +15782,7 @@
           <suggested_fix>Implement actual logic for &apos;validate_dataset&apos;</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\utils\runtime\runner_functions.py" issue_count="7">
+      <file path="D:\Intellicrack\intellicrack\utils\runtime\runner_functions.py" issue_count="7">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>run_memory_patching</function_name>
@@ -16056,7 +15998,7 @@
           <suggested_fix>Replace hardcoded return with dynamic computation based on input parameters</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\utils\subprocess_security.py" issue_count="3">
+      <file path="D:\Intellicrack\intellicrack\utils\subprocess_security.py" issue_count="3">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_argument</function_name>
@@ -16142,7 +16084,7 @@
           <suggested_fix>Implement actual logic for &apos;validate_executable&apos;</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\utils\system\process_helpers.py" issue_count="2">
+      <file path="D:\Intellicrack\intellicrack\utils\system\process_helpers.py" issue_count="2">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>run_process_with_output</function_name>
@@ -16188,7 +16130,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\utils\system\snapshot_common.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\utils\system\snapshot_common.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_snapshots</function_name>
@@ -16212,7 +16154,7 @@
           <suggested_fix>Implement actual logic for &apos;validate_snapshots&apos;</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\utils\system\system_utils.py" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack\utils\system\system_utils.py" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>get_process_list</function_name>
@@ -16239,28 +16181,25 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\utils\ui\ui_setup_functions.py" issue_count="21">
+      <file path="D:\Intellicrack\intellicrack\utils\ui\ui_setup_functions.py" issue_count="19">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
-          <function_name>method</function_name>
-          <line>97</line>
-          <column>13</column>
-          <severity>CRITICAL</severity>
-          <confidence>115</confidence>
+          <function_name>show</function_name>
+          <line>66</line>
+          <column>9</column>
+          <severity>HIGH</severity>
+          <confidence>90</confidence>
           <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
+          <description>3 production issues detected</description>
           <evidence>
             <item points="+50">
               Function has no meaningful content (≤1 line)
             </item>
-            <item points="+35">
-              Single-line return of simple literal (0, 1, True, False, None)
-            </item>
             <item points="+15">
               Very short function (≤3 LOC) for non-getter/setter
             </item>
-            <item points="+15">
-              Function has only 1 caller and &lt;3 lines (may be stub)
+            <item points="+25">
+              Function never called and calls no other functions (dead code or stub)
             </item>
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
@@ -16289,8 +16228,8 @@
         </issue>
         <issue id="3" completed="false">
           <checkbox>[ ]</checkbox>
-          <function_name>show</function_name>
-          <line>66</line>
+          <function_name>hide</function_name>
+          <line>69</line>
           <column>9</column>
           <severity>HIGH</severity>
           <confidence>90</confidence>
@@ -16333,8 +16272,8 @@
         </issue>
         <issue id="5" completed="false">
           <checkbox>[ ]</checkbox>
-          <function_name>hide</function_name>
-          <line>69</line>
+          <function_name>setSpacing</function_name>
+          <line>110</line>
           <column>9</column>
           <severity>HIGH</severity>
           <confidence>90</confidence>
@@ -16377,8 +16316,8 @@
         </issue>
         <issue id="7" completed="false">
           <checkbox>[ ]</checkbox>
-          <function_name>setSpacing</function_name>
-          <line>110</line>
+          <function_name>setContentsMargins</function_name>
+          <line>113</line>
           <column>9</column>
           <severity>HIGH</severity>
           <confidence>90</confidence>
@@ -16421,8 +16360,8 @@
         </issue>
         <issue id="9" completed="false">
           <checkbox>[ ]</checkbox>
-          <function_name>setContentsMargins</function_name>
-          <line>113</line>
+          <function_name>setSingleShot</function_name>
+          <line>135</line>
           <column>9</column>
           <severity>HIGH</severity>
           <confidence>90</confidence>
@@ -16465,11 +16404,11 @@
         </issue>
         <issue id="11" completed="false">
           <checkbox>[ ]</checkbox>
-          <function_name>setSingleShot</function_name>
-          <line>135</line>
+          <function_name>setEnabled</function_name>
+          <line>72</line>
           <column>9</column>
           <severity>HIGH</severity>
-          <confidence>90</confidence>
+          <confidence>80</confidence>
           <issue_type>stub_detection</issue_type>
           <description>3 production issues detected</description>
           <evidence>
@@ -16479,8 +16418,8 @@
             <item points="+15">
               Very short function (≤3 LOC) for non-getter/setter
             </item>
-            <item points="+25">
-              Function never called and calls no other functions (dead code or stub)
+            <item points="+15">
+              Function has only 1 caller and &lt;3 lines (may be stub)
             </item>
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
@@ -16509,8 +16448,8 @@
         </issue>
         <issue id="13" completed="false">
           <checkbox>[ ]</checkbox>
-          <function_name>setEnabled</function_name>
-          <line>72</line>
+          <function_name>setValue</function_name>
+          <line>81</line>
           <column>9</column>
           <severity>HIGH</severity>
           <confidence>80</confidence>
@@ -16553,9 +16492,9 @@
         </issue>
         <issue id="15" completed="false">
           <checkbox>[ ]</checkbox>
-          <function_name>setValue</function_name>
-          <line>81</line>
-          <column>9</column>
+          <function_name>method</function_name>
+          <line>97</line>
+          <column>13</column>
           <severity>HIGH</severity>
           <confidence>80</confidence>
           <issue_type>stub_detection</issue_type>
@@ -16619,50 +16558,6 @@
         </issue>
         <issue id="18" completed="false">
           <checkbox>[ ]</checkbox>
-          <function_name>setInterval</function_name>
-          <line>132</line>
-          <column>9</column>
-          <severity>HIGH</severity>
-          <confidence>80</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+50">
-              Function has no meaningful content (≤1 line)
-            </item>
-            <item points="+15">
-              Very short function (≤3 LOC) for non-getter/setter
-            </item>
-            <item points="+15">
-              Function has only 1 caller and &lt;3 lines (may be stub)
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="19" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>setInterval</function_name>
-          <line>132</line>
-          <column>9</column>
-          <severity>HIGH</severity>
-          <confidence>80</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+50">
-              Function has no meaningful content (≤1 line)
-            </item>
-            <item points="+15">
-              Very short function (≤3 LOC) for non-getter/setter
-            </item>
-            <item points="+15">
-              Function has only 1 caller and &lt;3 lines (may be stub)
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="20" completed="false">
-          <checkbox>[ ]</checkbox>
           <function_name>setText</function_name>
           <line>75</line>
           <column>9</column>
@@ -16680,7 +16575,7 @@
           </evidence>
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
-        <issue id="21" completed="false">
+        <issue id="19" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>setText</function_name>
           <line>75</line>
@@ -16700,7 +16595,7 @@
           <suggested_fix>Review and implement production-ready functionality</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack\utils\validation\import_validator.py" issue_count="4">
+      <file path="D:\Intellicrack\intellicrack\utils\validation\import_validator.py" issue_count="4">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>validate_imports</function_name>
@@ -16828,7 +16723,7 @@
       </file>
     </language>
     <language name="Rust">
-      <file path=".\intellicrack-launcher\benches\process_benchmarks.rs" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack-launcher\benches\process_benchmarks.rs" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>benchmark_python_subprocess_execution</function_name>
@@ -16855,11 +16750,11 @@
           <suggested_fix>Replace unwrap() with expect() or proper Result handling using ?</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack-launcher\src\environment.rs" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack-launcher\src\environment.rs" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_threading_environment_configuration</function_name>
-          <line>673</line>
+          <line>701</line>
           <column>5</column>
           <severity>MEDIUM</severity>
           <confidence>57</confidence>
@@ -16882,7 +16777,7 @@
           <suggested_fix>Replace unwrap() with expect() or proper Result handling using ?</suggested_fix>
         </issue>
       </file>
-      <file path=".\intellicrack-launcher\src\security.rs" issue_count="1">
+      <file path="D:\Intellicrack\intellicrack-launcher\src\security.rs" issue_count="1">
         <issue id="1" completed="false">
           <checkbox>[ ]</checkbox>
           <function_name>test_security_environment_configuration</function_name>
@@ -16907,1238 +16802,6 @@
             </item>
           </evidence>
           <suggested_fix>Replace unwrap() with expect() or proper Result handling using ?</suggested_fix>
-        </issue>
-      </file>
-    </language>
-    <language name="Java">
-      <file path=".\intellicrack\scripts\ghidra\AdvancedAnalysis.java" issue_count="7">
-        <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeCodeObfuscation</function_name>
-          <line>4830</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>75</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+25">
-              Catch-all exception handling - catch specific exceptions
-            </item>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-        <issue id="2" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeVirtualizedCode</function_name>
-          <line>5112</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>75</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+25">
-              Catch-all exception handling - catch specific exceptions
-            </item>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-        <issue id="3" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeEnvironmentChecks</function_name>
-          <line>6442</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>75</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+25">
-              Catch-all exception handling - catch specific exceptions
-            </item>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-        <issue id="4" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeAntiAnalysisTechniques</function_name>
-          <line>4965</line>
-          <column>5</column>
-          <severity>MEDIUM</severity>
-          <confidence>62</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+25">
-              Catch-all exception handling - catch specific exceptions
-            </item>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="-13">
-              Deductions for production patterns (-13 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-        <issue id="5" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeMonitoringEvasion</function_name>
-          <line>6348</line>
-          <column>5</column>
-          <severity>MEDIUM</severity>
-          <confidence>62</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+25">
-              Catch-all exception handling - catch specific exceptions
-            </item>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="-13">
-              Deductions for production patterns (-13 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-        <issue id="6" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>getFunctionBody</function_name>
-          <line>1556</line>
-          <column>3</column>
-          <severity>MEDIUM</severity>
-          <confidence>60</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+20">
-              Returning null (1 times) - consider Optional&lt;T&gt;
-            </item>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+25">
-              Function never called and calls no other functions (dead code or stub)
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-        <issue id="7" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeCryptoConstants</function_name>
-          <line>2873</line>
-          <column>5</column>
-          <severity>MEDIUM</severity>
-          <confidence>57</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="+30">
-              Cryptographic analysis without byte operations or BigInteger
-            </item>
-            <item points="-23">
-              Deductions for production patterns (-23 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-      </file>
-      <file path=".\intellicrack\scripts\ghidra\AutomatedUnpacker.java" issue_count="18">
-        <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeVMExitTarget</function_name>
-          <line>2217</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>90</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+20">
-              Returning null (1 times) - consider Optional&lt;T&gt;
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="+20">
-              Low complexity for analysis function (may be stub)
-            </item>
-            <item points="+15">
-              Very short function (≤3 LOC) for non-getter/setter
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-        <issue id="2" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>patchTimingChecks</function_name>
-          <line>2229</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>90</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+50">
-              Function has no meaningful content (≤1 line)
-            </item>
-            <item points="+20">
-              Generic Exception in throws clause - use specific exception types
-            </item>
-            <item points="+15">
-              Very short function (≤3 LOC) for non-getter/setter
-            </item>
-            <item points="+15">
-              Function has only 1 caller and &lt;3 lines (may be stub)
-            </item>
-            <item points="-10">
-              Deductions for production patterns (-10 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace generic Exception with specific exception types</suggested_fix>
-        </issue>
-        <issue id="3" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>patchMemoryChecks</function_name>
-          <line>2231</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>90</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+50">
-              Function has no meaningful content (≤1 line)
-            </item>
-            <item points="+20">
-              Generic Exception in throws clause - use specific exception types
-            </item>
-            <item points="+15">
-              Very short function (≤3 LOC) for non-getter/setter
-            </item>
-            <item points="+15">
-              Function has only 1 caller and &lt;3 lines (may be stub)
-            </item>
-            <item points="-10">
-              Deductions for production patterns (-10 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace generic Exception with specific exception types</suggested_fix>
-        </issue>
-        <issue id="4" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>bypassThemidaAntiDebug</function_name>
-          <line>2429</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>90</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+50">
-              Function has no meaningful content (≤1 line)
-            </item>
-            <item points="+20">
-              Generic Exception in throws clause - use specific exception types
-            </item>
-            <item points="+15">
-              Very short function (≤3 LOC) for non-getter/setter
-            </item>
-            <item points="+15">
-              Function has only 1 caller and &lt;3 lines (may be stub)
-            </item>
-            <item points="-10">
-              Deductions for production patterns (-10 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace generic Exception with specific exception types</suggested_fix>
-        </issue>
-        <issue id="5" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>bypassThemidaVMDetection</function_name>
-          <line>2431</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>90</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+50">
-              Function has no meaningful content (≤1 line)
-            </item>
-            <item points="+20">
-              Generic Exception in throws clause - use specific exception types
-            </item>
-            <item points="+15">
-              Very short function (≤3 LOC) for non-getter/setter
-            </item>
-            <item points="+15">
-              Function has only 1 caller and &lt;3 lines (may be stub)
-            </item>
-            <item points="-10">
-              Deductions for production patterns (-10 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace generic Exception with specific exception types</suggested_fix>
-        </issue>
-        <issue id="6" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>bypassThemidaCRC</function_name>
-          <line>2433</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>90</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+50">
-              Function has no meaningful content (≤1 line)
-            </item>
-            <item points="+20">
-              Generic Exception in throws clause - use specific exception types
-            </item>
-            <item points="+15">
-              Very short function (≤3 LOC) for non-getter/setter
-            </item>
-            <item points="+15">
-              Function has only 1 caller and &lt;3 lines (may be stub)
-            </item>
-            <item points="-10">
-              Deductions for production patterns (-10 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace generic Exception with specific exception types</suggested_fix>
-        </issue>
-        <issue id="7" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>bypassThemidaIntegrityChecks</function_name>
-          <line>2435</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>90</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+50">
-              Function has no meaningful content (≤1 line)
-            </item>
-            <item points="+20">
-              Generic Exception in throws clause - use specific exception types
-            </item>
-            <item points="+15">
-              Very short function (≤3 LOC) for non-getter/setter
-            </item>
-            <item points="+15">
-              Function has only 1 caller and &lt;3 lines (may be stub)
-            </item>
-            <item points="-10">
-              Deductions for production patterns (-10 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace generic Exception with specific exception types</suggested_fix>
-        </issue>
-        <issue id="8" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeObsidiumExitTarget</function_name>
-          <line>2543</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>90</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+20">
-              Returning null (1 times) - consider Optional&lt;T&gt;
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="+20">
-              Low complexity for analysis function (may be stub)
-            </item>
-            <item points="+15">
-              Very short function (≤3 LOC) for non-getter/setter
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-        <issue id="9" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>bypassObsidiumAntiDebug</function_name>
-          <line>2547</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>90</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+50">
-              Function has no meaningful content (≤1 line)
-            </item>
-            <item points="+20">
-              Generic Exception in throws clause - use specific exception types
-            </item>
-            <item points="+15">
-              Very short function (≤3 LOC) for non-getter/setter
-            </item>
-            <item points="+15">
-              Function has only 1 caller and &lt;3 lines (may be stub)
-            </item>
-            <item points="-10">
-              Deductions for production patterns (-10 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace generic Exception with specific exception types</suggested_fix>
-        </issue>
-        <issue id="10" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>bypassObsidiumCRCChecks</function_name>
-          <line>2549</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>90</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+50">
-              Function has no meaningful content (≤1 line)
-            </item>
-            <item points="+20">
-              Generic Exception in throws clause - use specific exception types
-            </item>
-            <item points="+15">
-              Very short function (≤3 LOC) for non-getter/setter
-            </item>
-            <item points="+15">
-              Function has only 1 caller and &lt;3 lines (may be stub)
-            </item>
-            <item points="-10">
-              Deductions for production patterns (-10 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace generic Exception with specific exception types</suggested_fix>
-        </issue>
-        <issue id="11" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>bypassObsidiumVMChecks</function_name>
-          <line>2551</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>90</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+50">
-              Function has no meaningful content (≤1 line)
-            </item>
-            <item points="+20">
-              Generic Exception in throws clause - use specific exception types
-            </item>
-            <item points="+15">
-              Very short function (≤3 LOC) for non-getter/setter
-            </item>
-            <item points="+15">
-              Function has only 1 caller and &lt;3 lines (may be stub)
-            </item>
-            <item points="-10">
-              Deductions for production patterns (-10 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace generic Exception with specific exception types</suggested_fix>
-        </issue>
-        <issue id="12" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>bypassAntiUnpacking</function_name>
-          <line>2848</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>80</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+50">
-              Function has no meaningful content (≤1 line)
-            </item>
-            <item points="+15">
-              Very short function (≤3 LOC) for non-getter/setter
-            </item>
-            <item points="+15">
-              Function has only 1 caller and &lt;3 lines (may be stub)
-            </item>
-          </evidence>
-          <suggested_fix>Review and implement production-ready functionality</suggested_fix>
-        </issue>
-        <issue id="13" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>patchPatternWithNops</function_name>
-          <line>2233</line>
-          <column>5</column>
-          <severity>HIGH</severity>
-          <confidence>75</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+50">
-              Function has no meaningful content (≤1 line)
-            </item>
-            <item points="+20">
-              Generic Exception in throws clause - use specific exception types
-            </item>
-            <item points="+15">
-              Very short function (≤3 LOC) for non-getter/setter
-            </item>
-            <item points="-10">
-              Deductions for production patterns (-10 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace generic Exception with specific exception types</suggested_fix>
-        </issue>
-        <issue id="14" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeHighFunctionComplexity</function_name>
-          <line>907</line>
-          <column>3</column>
-          <severity>MEDIUM</severity>
-          <confidence>62</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+25">
-              Catch-all exception handling - catch specific exceptions
-            </item>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="-13">
-              Deductions for production patterns (-13 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-        <issue id="15" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzePcodeComplexity</function_name>
-          <line>940</line>
-          <column>3</column>
-          <severity>MEDIUM</severity>
-          <confidence>62</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+25">
-              Catch-all exception handling - catch specific exceptions
-            </item>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="-13">
-              Deductions for production patterns (-13 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-        <issue id="16" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>findThemidaOEP</function_name>
-          <line>2394</line>
-          <column>5</column>
-          <severity>MEDIUM</severity>
-          <confidence>60</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+25">
-              Catch-all exception handling - catch specific exceptions
-            </item>
-            <item points="+20">
-              Returning null (1 times) - consider Optional&lt;T&gt;
-            </item>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-        <issue id="17" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeDynamicImportCall</function_name>
-          <line>5290</line>
-          <column>5</column>
-          <severity>MEDIUM</severity>
-          <confidence>55</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>2 production issues detected</description>
-          <evidence>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="+20">
-              Low complexity for analysis function (may be stub)
-            </item>
-          </evidence>
-          <suggested_fix>Add Ghidra API calls (currentProgram, getFunctionManager, etc.)</suggested_fix>
-        </issue>
-        <issue id="18" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeTrampoline</function_name>
-          <line>5295</line>
-          <column>5</column>
-          <severity>MEDIUM</severity>
-          <confidence>55</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>2 production issues detected</description>
-          <evidence>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="+20">
-              Low complexity for analysis function (may be stub)
-            </item>
-          </evidence>
-          <suggested_fix>Add Ghidra API calls (currentProgram, getFunctionManager, etc.)</suggested_fix>
-        </issue>
-      </file>
-      <file path=".\intellicrack\scripts\ghidra\CryptoRoutineIdentifier.java" issue_count="4">
-        <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>identifyCryptoConstant</function_name>
-          <line>2027</line>
-          <column>3</column>
-          <severity>HIGH</severity>
-          <confidence>95</confidence>
-          <issue_type>hardcoded_return</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+25">
-              All returns are hardcoded strings
-            </item>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+30">
-              Cryptographic analysis without byte operations or BigInteger
-            </item>
-            <item points="+35">
-              High cyclomatic complexity but no local variables (suspicious)
-            </item>
-            <item points="-10">
-              Deductions for production patterns (-10 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-        <issue id="2" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeCryptoDataInFunction</function_name>
-          <line>1718</line>
-          <column>3</column>
-          <severity>HIGH</severity>
-          <confidence>80</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="+30">
-              Cryptographic analysis without byte operations or BigInteger
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-        <issue id="3" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeCryptoEnum</function_name>
-          <line>1775</line>
-          <column>3</column>
-          <severity>MEDIUM</severity>
-          <confidence>67</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="+30">
-              Cryptographic analysis without byte operations or BigInteger
-            </item>
-            <item points="-13">
-              Deductions for production patterns (-13 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-        <issue id="4" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeCustomCrypto</function_name>
-          <line>1013</line>
-          <column>3</column>
-          <severity>MEDIUM</severity>
-          <confidence>65</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>2 production issues detected</description>
-          <evidence>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="+30">
-              Cryptographic analysis without byte operations or BigInteger
-            </item>
-          </evidence>
-          <suggested_fix>Add Ghidra API calls (currentProgram, getFunctionManager, etc.)</suggested_fix>
-        </issue>
-      </file>
-      <file path=".\intellicrack\scripts\ghidra\FindCryptoSignatures.java" issue_count="12">
-        <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeOperandTypesForCrypto</function_name>
-          <line>1127</line>
-          <column>3</column>
-          <severity>HIGH</severity>
-          <confidence>85</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="+30">
-              Cryptographic analysis without byte operations or BigInteger
-            </item>
-            <item points="+20">
-              Low complexity for analysis function (may be stub)
-            </item>
-          </evidence>
-          <suggested_fix>Add Ghidra API calls (currentProgram, getFunctionManager, etc.)</suggested_fix>
-        </issue>
-        <issue id="2" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeRegisterValuesForCrypto</function_name>
-          <line>1132</line>
-          <column>3</column>
-          <severity>HIGH</severity>
-          <confidence>85</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="+30">
-              Cryptographic analysis without byte operations or BigInteger
-            </item>
-            <item points="+20">
-              Low complexity for analysis function (may be stub)
-            </item>
-          </evidence>
-          <suggested_fix>Add Ghidra API calls (currentProgram, getFunctionManager, etc.)</suggested_fix>
-        </issue>
-        <issue id="3" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeGlobalCryptoPatterns</function_name>
-          <line>1014</line>
-          <column>3</column>
-          <severity>HIGH</severity>
-          <confidence>80</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="+30">
-              Cryptographic analysis without byte operations or BigInteger
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-        <issue id="4" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeRegisterCryptoUsage</function_name>
-          <line>1120</line>
-          <column>3</column>
-          <severity>HIGH</severity>
-          <confidence>80</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="+30">
-              Cryptographic analysis without byte operations or BigInteger
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-        <issue id="5" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeCryptoEnum</function_name>
-          <line>1825</line>
-          <column>3</column>
-          <severity>HIGH</severity>
-          <confidence>80</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="+30">
-              Cryptographic analysis without byte operations or BigInteger
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-        <issue id="6" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeLicenseValidationCrypto</function_name>
-          <line>1000</line>
-          <column>3</column>
-          <severity>MEDIUM</severity>
-          <confidence>67</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="+30">
-              Cryptographic analysis without byte operations or BigInteger
-            </item>
-            <item points="-13">
-              Deductions for production patterns (-13 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-        <issue id="7" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeCryptoInstruction</function_name>
-          <line>1022</line>
-          <column>3</column>
-          <severity>MEDIUM</severity>
-          <confidence>67</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="+30">
-              Cryptographic analysis without byte operations or BigInteger
-            </item>
-            <item points="-13">
-              Deductions for production patterns (-13 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-        <issue id="8" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeCryptoSymbolReferences</function_name>
-          <line>1083</line>
-          <column>3</column>
-          <severity>MEDIUM</severity>
-          <confidence>67</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="+30">
-              Cryptographic analysis without byte operations or BigInteger
-            </item>
-            <item points="-13">
-              Deductions for production patterns (-13 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-        <issue id="9" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeCryptoStructure</function_name>
-          <line>1807</line>
-          <column>3</column>
-          <severity>MEDIUM</severity>
-          <confidence>67</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="+30">
-              Cryptographic analysis without byte operations or BigInteger
-            </item>
-            <item points="-13">
-              Deductions for production patterns (-13 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-        <issue id="10" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeCryptoDataReference</function_name>
-          <line>1036</line>
-          <column>3</column>
-          <severity>MEDIUM</severity>
-          <confidence>57</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="+30">
-              Cryptographic analysis without byte operations or BigInteger
-            </item>
-            <item points="-23">
-              Deductions for production patterns (-23 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-        <issue id="11" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeLicenseSymbolCrypto</function_name>
-          <line>1097</line>
-          <column>3</column>
-          <severity>MEDIUM</severity>
-          <confidence>57</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="+30">
-              Cryptographic analysis without byte operations or BigInteger
-            </item>
-            <item points="-23">
-              Deductions for production patterns (-23 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-        <issue id="12" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeGlobalReferencePatterns</function_name>
-          <line>1115</line>
-          <column>3</column>
-          <severity>MEDIUM</severity>
-          <confidence>55</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>2 production issues detected</description>
-          <evidence>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="+20">
-              Low complexity for analysis function (may be stub)
-            </item>
-          </evidence>
-          <suggested_fix>Add Ghidra API calls (currentProgram, getFunctionManager, etc.)</suggested_fix>
-        </issue>
-      </file>
-      <file path=".\intellicrack\scripts\ghidra\KeygenTemplateGenerator.java" issue_count="3">
-        <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeDataUnitForCryptoPatterns</function_name>
-          <line>2689</line>
-          <column>3</column>
-          <severity>HIGH</severity>
-          <confidence>80</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>3 production issues detected</description>
-          <evidence>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="+30">
-              Cryptographic analysis without byte operations or BigInteger
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-        <issue id="2" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeCryptoOperations</function_name>
-          <line>1131</line>
-          <column>3</column>
-          <severity>MEDIUM</severity>
-          <confidence>57</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+25">
-              Catch-all exception handling - catch specific exceptions
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="+30">
-              Cryptographic analysis without byte operations or BigInteger
-            </item>
-            <item points="-33">
-              Deductions for production patterns (-33 points)
-            </item>
-          </evidence>
-          <suggested_fix>Add Ghidra API calls (currentProgram, getFunctionManager, etc.)</suggested_fix>
-        </issue>
-        <issue id="3" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeInstructionForCryptoPatterns</function_name>
-          <line>2675</line>
-          <column>3</column>
-          <severity>MEDIUM</severity>
-          <confidence>57</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="+30">
-              Cryptographic analysis without byte operations or BigInteger
-            </item>
-            <item points="-23">
-              Deductions for production patterns (-23 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-      </file>
-      <file path=".\intellicrack\scripts\ghidra\ModernPackerDetector.java" issue_count="2">
-        <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeSectionsWithPEStructures</function_name>
-          <line>3782</line>
-          <column>3</column>
-          <severity>MEDIUM</severity>
-          <confidence>62</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+25">
-              Catch-all exception handling - catch specific exceptions
-            </item>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="-13">
-              Deductions for production patterns (-13 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-        <issue id="2" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>performAdvancedSignatureScanning</function_name>
-          <line>402</line>
-          <column>3</column>
-          <severity>MEDIUM</severity>
-          <confidence>60</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+20">
-              Generic Exception in throws clause - use specific exception types
-            </item>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="-10">
-              Deductions for production patterns (-10 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-      </file>
-      <file path=".\intellicrack\scripts\ghidra\QuickStringDump.java" issue_count="2">
-        <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeStringForLicensingPatterns</function_name>
-          <line>1811</line>
-          <column>3</column>
-          <severity>HIGH</severity>
-          <confidence>87</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>5 production issues detected</description>
-          <evidence>
-            <item points="+25">
-              Catch-all exception handling - catch specific exceptions
-            </item>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="+35">
-              High cyclomatic complexity but no local variables (suspicious)
-            </item>
-            <item points="-23">
-              Deductions for production patterns (-23 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-        <issue id="2" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeString</function_name>
-          <line>731</line>
-          <column>3</column>
-          <severity>MEDIUM</severity>
-          <confidence>57</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+20">
-              Returning null (1 times) - consider Optional&lt;T&gt;
-            </item>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="-13">
-              Deductions for production patterns (-13 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-      </file>
-      <file path=".\intellicrack\scripts\ghidra\SimpleStringExtractor.java" issue_count="2">
-        <issue id="1" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeStrings</function_name>
-          <line>301</line>
-          <column>3</column>
-          <severity>MEDIUM</severity>
-          <confidence>60</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>4 production issues detected</description>
-          <evidence>
-            <item points="+20">
-              Generic Exception in throws clause - use specific exception types
-            </item>
-            <item points="+15">
-              Function with parameters but no null checks
-            </item>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="-10">
-              Deductions for production patterns (-10 points)
-            </item>
-          </evidence>
-          <suggested_fix>Replace null returns with Optional&lt;T&gt; and add null checks</suggested_fix>
-        </issue>
-        <issue id="2" completed="false">
-          <checkbox>[ ]</checkbox>
-          <function_name>analyzeMemoryContext</function_name>
-          <line>1019</line>
-          <column>5</column>
-          <severity>MEDIUM</severity>
-          <confidence>55</confidence>
-          <issue_type>stub_detection</issue_type>
-          <description>2 production issues detected</description>
-          <evidence>
-            <item points="+35">
-              Ghidra analysis function without Ghidra API calls
-            </item>
-            <item points="+20">
-              Low complexity for analysis function (may be stub)
-            </item>
-          </evidence>
-          <suggested_fix>Add Ghidra API calls (currentProgram, getFunctionManager, etc.)</suggested_fix>
         </issue>
       </file>
     </language>

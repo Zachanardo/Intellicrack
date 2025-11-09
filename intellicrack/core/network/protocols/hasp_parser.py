@@ -675,8 +675,8 @@ class HASPSentinelParser:
 
         Returns:
             Parsed HASPRequest object or None if invalid
-
         """
+        self.logger.debug(f"Starting HASP request parsing, data length: {len(data)}")
         try:
             if len(data) < 24:
                 self.logger.warning("HASP request too short")
@@ -964,10 +964,7 @@ class HASPSentinelParser:
         if request.vendor_code != feature.vendor_code:
             return self._create_error_response(request, HASPStatusCode.INVALID_VENDOR_CODE)
 
-        active_users = len([
-            s for s in self.active_sessions.values()
-            if s.feature_id == request.feature_id
-        ])
+        active_users = len([s for s in self.active_sessions.values() if s.feature_id == request.feature_id])
 
         if feature.concurrent_limit > 0 and active_users >= feature.concurrent_limit:
             return self._create_error_response(request, HASPStatusCode.TOO_MANY_USERS)
@@ -1516,15 +1513,17 @@ class HASPSentinelParser:
         """
         sessions = []
         for _session_id, session in self.active_sessions.items():
-            sessions.append({
-                "session_id": session.session_id,
-                "vendor_code": session.vendor_code,
-                "feature_id": session.feature_id,
-                "login_time": session.login_time,
-                "last_heartbeat": session.last_heartbeat,
-                "client_info": session.client_info,
-                "uptime": int(time.time() - session.login_time),
-            })
+            sessions.append(
+                {
+                    "session_id": session.session_id,
+                    "vendor_code": session.vendor_code,
+                    "feature_id": session.feature_id,
+                    "login_time": session.login_time,
+                    "last_heartbeat": session.last_heartbeat,
+                    "client_info": session.client_info,
+                    "uptime": int(time.time() - session.login_time),
+                }
+            )
         return sessions
 
     def export_license_data(self, output_path: Path) -> None:
@@ -1741,11 +1740,13 @@ class HASPPacketAnalyzer:
                 license_info["encryption_types"].add(req.encryption_type)
 
                 if req.feature_id not in [f["feature_id"] for f in license_info["discovered_features"]]:
-                    license_info["discovered_features"].append({
-                        "feature_id": req.feature_id,
-                        "vendor_code": req.vendor_code,
-                        "scope": req.scope,
-                    })
+                    license_info["discovered_features"].append(
+                        {
+                            "feature_id": req.feature_id,
+                            "vendor_code": req.vendor_code,
+                            "scope": req.scope,
+                        }
+                    )
 
         license_info["vendor_codes"] = list(license_info["vendor_codes"])
         license_info["session_ids"] = list(license_info["session_ids"])
@@ -1816,13 +1817,15 @@ class HASPPacketAnalyzer:
         for packet in self.captured_packets:
             packet_type_counts[packet.packet_type] = packet_type_counts.get(packet.packet_type, 0) + 1
 
-            analysis["timeline"].append({
-                "timestamp": packet.timestamp,
-                "source": f"{packet.source_ip}:{packet.source_port}",
-                "dest": f"{packet.dest_ip}:{packet.dest_port}",
-                "protocol": packet.protocol,
-                "type": packet.packet_type,
-            })
+            analysis["timeline"].append(
+                {
+                    "timestamp": packet.timestamp,
+                    "source": f"{packet.source_ip}:{packet.source_port}",
+                    "dest": f"{packet.dest_ip}:{packet.dest_port}",
+                    "protocol": packet.protocol,
+                    "type": packet.packet_type,
+                }
+            )
 
         analysis["packet_types"] = packet_type_counts
 

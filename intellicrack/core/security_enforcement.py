@@ -521,6 +521,12 @@ def _monkey_patch_hashlib():
 
 def initialize_security():
     """Initialize all security patches."""
+    global _security
+
+    # Lazy initialization to avoid import-time hang
+    if _security is None:
+        _security = SecurityEnforcement()
+
     logger.info("Initializing Intellicrack security enforcement")
 
     try:
@@ -547,6 +553,12 @@ def initialize_security():
 
 def get_security_status() -> dict[str, Any]:
     """Get current security enforcement status."""
+    global _security
+
+    # Return uninitialized status if not yet created
+    if _security is None:
+        return {"initialized": False, "bypass_enabled": False, "config": {}, "patches_applied": {}}
+
     return {
         "initialized": bool(_security._original_functions),
         "bypass_enabled": _security._bypass_security,

@@ -19,11 +19,14 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
+import sys
 
 # Set up package logger
 logger = logging.getLogger(__name__)
 
 # Import patching modules with error handling
+print("[DEBUG patching/__init__] Importing windows_activator...")
+sys.stdout.flush()
 try:
     from .windows_activator import (
         ActivationMethod,
@@ -45,16 +48,26 @@ try:
         activator = create_windows_activator()
         return activator.activate_windows_in_terminal()
 
+    print("[DEBUG patching/__init__] windows_activator imported OK")
+    sys.stdout.flush()
 except ImportError as e:
     logger.warning("Failed to import windows_activator: %s", e)
 
+print("[DEBUG patching/__init__] Importing memory_patcher...")
+sys.stdout.flush()
 try:
     from .memory_patcher import generate_launcher_script, setup_memory_patching
+    print("[DEBUG patching/__init__] memory_patcher imported OK")
+    sys.stdout.flush()
 except ImportError as e:
     logger.warning("Failed to import memory_patcher: %s", e)
 
+print("[DEBUG patching/__init__] Importing radare2_patch_integration...")
+sys.stdout.flush()
 try:
     from .radare2_patch_integration import R2PatchIntegrator
+    print("[DEBUG patching/__init__] radare2_patch_integration imported OK")
+    sys.stdout.flush()
 except ImportError as e:
     logger.warning("Failed to import radare2_patch_integration: %s", e)
     R2PatchIntegrator = None

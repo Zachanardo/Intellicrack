@@ -45,11 +45,36 @@ try:
 
     # Try to get specific sklearn components
     try:
+        import sys
+        print("[DEBUG radare2_ai_integration] Importing joblib...")
+        sys.stdout.flush()
         import joblib
+        print("[DEBUG radare2_ai_integration] joblib imported OK")
+        sys.stdout.flush()
+
+        print("[DEBUG radare2_ai_integration] Importing DBSCAN...")
+        sys.stdout.flush()
         from sklearn.cluster import DBSCAN
+        print("[DEBUG radare2_ai_integration] DBSCAN imported OK")
+        sys.stdout.flush()
+
+        print("[DEBUG radare2_ai_integration] Importing IsolationForest, RandomForestClassifier...")
+        sys.stdout.flush()
         from sklearn.ensemble import IsolationForest, RandomForestClassifier
+        print("[DEBUG radare2_ai_integration] sklearn.ensemble imported OK")
+        sys.stdout.flush()
+
+        print("[DEBUG radare2_ai_integration] Importing TfidfVectorizer...")
+        sys.stdout.flush()
         from sklearn.feature_extraction.text import TfidfVectorizer
+        print("[DEBUG radare2_ai_integration] TfidfVectorizer imported OK")
+        sys.stdout.flush()
+
+        print("[DEBUG radare2_ai_integration] Importing StandardScaler...")
+        sys.stdout.flush()
         from sklearn.preprocessing import StandardScaler
+        print("[DEBUG radare2_ai_integration] StandardScaler imported OK")
+        sys.stdout.flush()
 
         SKLEARN_AVAILABLE = True
     except ImportError:

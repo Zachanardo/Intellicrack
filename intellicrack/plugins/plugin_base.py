@@ -23,6 +23,8 @@ from typing import Any
 
 from intellicrack.utils.logger import logger
 
+logger.debug("Plugin base module loaded")
+
 from ..utils.analysis.entropy_utils import calculate_byte_entropy
 
 """Base plugin interface for Intellicrack plugin system."""

@@ -23,6 +23,8 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 
 from intellicrack.utils.logger import logger
 
+logger.debug("Core analysis module loaded")
+
 """
 Advanced binary analysis engines for Intellicrack.
 
@@ -104,24 +106,40 @@ except ImportError as e:
     logger.error("Import error in __init__: %s", e)
     MultiFormatBinaryAnalyzer = None
 
+import sys
+
+print("[DEBUG analysis/__init__] Importing CFGExplorer...")
+sys.stdout.flush()
 try:
     from .cfg_explorer import CFGExplorer
+    print("[DEBUG analysis/__init__] CFGExplorer imported OK")
+    sys.stdout.flush()
 except ImportError as e:
     logger.error("Import error in __init__: %s", e)
     CFGExplorer = None
 
+print("[DEBUG analysis/__init__] Importing IncrementalAnalysisManager...")
+sys.stdout.flush()
 try:
     from .incremental_manager import IncrementalAnalysisManager
+    print("[DEBUG analysis/__init__] IncrementalAnalysisManager imported OK")
+    sys.stdout.flush()
 except ImportError as e:
     logger.error("Import error in __init__: %s", e)
     IncrementalAnalysisManager = None
 
+print("[DEBUG analysis/__init__] Importing SimilaritySearcher...")
+sys.stdout.flush()
 try:
     from .similarity_searcher import SimilaritySearcher
+    print("[DEBUG analysis/__init__] SimilaritySearcher imported OK")
+    sys.stdout.flush()
 except ImportError as e:
     logger.error("Import error in __init__: %s", e)
     SimilaritySearcher = None
 
+print("[DEBUG analysis/__init__] Importing control_flow_deobfuscation...")
+sys.stdout.flush()
 try:
     from .control_flow_deobfuscation import (
         BasicBlock,
@@ -129,6 +147,8 @@ try:
         DeobfuscationResult,
         DispatcherInfo,
     )
+    print("[DEBUG analysis/__init__] control_flow_deobfuscation imported OK")
+    sys.stdout.flush()
 except ImportError as e:
     logger.error("Import error in __init__: %s", e)
     ControlFlowDeobfuscator = None
@@ -136,6 +156,8 @@ except ImportError as e:
     DispatcherInfo = None
     BasicBlock = None
 
+print("[DEBUG analysis/__init__] Importing stalker_manager...")
+sys.stdout.flush()
 try:
     from .stalker_manager import (
         APICallEvent,
@@ -144,6 +166,8 @@ try:
         StalkerStats,
         TraceEvent,
     )
+    print("[DEBUG analysis/__init__] stalker_manager imported OK")
+    sys.stdout.flush()
 except ImportError as e:
     logger.error("Import error in __init__: %s", e)
     StalkerSession = None
@@ -152,13 +176,19 @@ except ImportError as e:
     APICallEvent = None
     CoverageEntry = None
 
+print("[DEBUG analysis/__init__] Importing starforce_analyzer...")
+sys.stdout.flush()
 try:
     from .starforce_analyzer import StarForceAnalysis, StarForceAnalyzer
+    print("[DEBUG analysis/__init__] starforce_analyzer imported OK")
+    sys.stdout.flush()
 except ImportError as e:
     logger.error("Import error in __init__: %s", e)
     StarForceAnalyzer = None
     StarForceAnalysis = None
 
+print("[DEBUG analysis/__init__] Importing securom_analyzer...")
+sys.stdout.flush()
 try:
     from .securom_analyzer import (
         ActivationMechanism,
@@ -167,6 +197,8 @@ try:
         SecuROMAnalyzer,
         TriggerPoint,
     )
+    print("[DEBUG analysis/__init__] securom_analyzer imported OK")
+    sys.stdout.flush()
 except ImportError as e:
     logger.error("Import error in __init__: %s", e)
     SecuROMAnalyzer = None
@@ -175,6 +207,8 @@ except ImportError as e:
     TriggerPoint = None
     ProductActivationKey = None
 
+print("[DEBUG analysis/__init__] Importing polymorphic_analyzer...")
+sys.stdout.flush()
 try:
     from .polymorphic_analyzer import (
         BehaviorPattern,
@@ -185,6 +219,8 @@ try:
         PolymorphicAnalyzer,
         PolymorphicEngine,
     )
+    print("[DEBUG analysis/__init__] polymorphic_analyzer imported OK")
+    sys.stdout.flush()
 except ImportError as e:
     logger.error("Import error in __init__: %s", e)
     PolymorphicAnalyzer = None

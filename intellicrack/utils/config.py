@@ -19,4 +19,9 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 # Import the main configuration
 from ..config import CONFIG, DEFAULT_CONFIG, ConfigManager, get_config, load_config, save_config
 
+from intellicrack.utils.logger import get_logger
+
+logger = get_logger(__name__)
+logger.debug("Config utils module loaded")
+
 __all__ = ["CONFIG", "DEFAULT_CONFIG", "ConfigManager", "get_config", "load_config", "save_config"]

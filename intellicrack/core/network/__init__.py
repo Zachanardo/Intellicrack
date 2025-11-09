@@ -6,6 +6,8 @@ C2 infrastructure, and network-based analysis capabilities.
 
 from intellicrack.utils.logger import logger
 
+logger.debug("Network core module loaded")
+
 """
 Network analysis and protocol handling for Intellicrack.
 

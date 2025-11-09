@@ -41,10 +41,12 @@ def get_resource_path(resource_path: str) -> str:
         base_path = sys._MEIPASS
         return os.path.join(base_path, resource_path.replace("/", os.sep))
 
-    # Normal Python environment
-    import intellicrack
-
-    package_dir = os.path.dirname(intellicrack.__file__)
+    # Normal Python environment - use __file__ to avoid importing intellicrack package
+    # This file is in intellicrack/utils/resource_helper.py
+    # Go up two levels: utils -> intellicrack
+    current_file = os.path.abspath(__file__)
+    utils_dir = os.path.dirname(current_file)
+    package_dir = os.path.dirname(utils_dir)
 
     # The assets folder is inside the intellicrack package directory
     # So we just join the package_dir with the resource_path

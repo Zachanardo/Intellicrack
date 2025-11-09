@@ -22,6 +22,7 @@ import logging
 
 # Set up package logger
 logger = logging.getLogger(__name__)
+logger.debug("Processing core module loaded")
 
 # Import processing modules with error handling
 try:

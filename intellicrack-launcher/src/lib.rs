@@ -117,7 +117,52 @@ impl IntellicrackLauncher {
 
         // NOW initialize Python with the correct environment and GIL safety
         let python_init_start = std::time::Instant::now();
-        let mut python = PythonIntegration::initialize()?;
+        let mut python = match PythonIntegration::initialize() {
+            Ok(py) => py,
+            Err(e) => {
+                tracing::error!("Python initialization failed: {}", e);
+                #[cfg(target_os = "windows")]
+                {
+                    use std::ffi::OsStr;
+                    use std::os::windows::ffi::OsStrExt;
+
+                    let error_msg = format!(
+                        "Failed to initialize Python interpreter.\n\n\
+                         Error: {}\n\n\
+                         This may be caused by:\n\
+                         1. Missing or corrupted DLL files\n\
+                         2. Intel MKL version conflicts (system vs pixi)\n\
+                         3. Entry point errors in mkl_sycl_blas.5.dll\n\n\
+                         Run scripts/dll_diagnostics.py for detailed analysis.\n\n\
+                         Press OK to exit safely.",
+                        e
+                    );
+
+                    let wide: Vec<u16> = OsStr::new(&error_msg)
+                        .encode_wide()
+                        .chain(std::iter::once(0))
+                        .collect();
+                    let title: Vec<u16> = OsStr::new("Intellicrack - Python Initialization Failed")
+                        .encode_wide()
+                        .chain(std::iter::once(0))
+                        .collect();
+
+                    unsafe {
+                        winapi::um::winuser::MessageBoxW(
+                            std::ptr::null_mut(),
+                            wide.as_ptr(),
+                            title.as_ptr(),
+                            winapi::um::winuser::MB_OK | winapi::um::winuser::MB_ICONERROR,
+                        );
+                    }
+                }
+                eprintln!("\n❌ FATAL: Python initialization failed");
+                eprintln!("Error: {}", e);
+                eprintln!("\nRun: pixi run python scripts/dll_diagnostics.py");
+                eprintln!("To diagnose DLL loading issues.");
+                std::process::exit(1);
+            }
+        };
         let python_init_duration = python_init_start.elapsed();
         tracing::info!("Python integration initialized in {:.2?}", python_init_duration);
 
@@ -278,9 +323,11 @@ impl IntellicrackLauncher {
                 return Ok(exit_code);
             }
             Ok(None) => {
-                tracing::info!("✓ Intellicrack GUI launched successfully");
-                println!("\n✓ Intellicrack GUI launched successfully!");
+                tracing::info!("Python subprocess started (PID: {})", child.id());
+                println!("\n✓ Python subprocess started successfully");
                 println!("PID: {}", child.id());
+                println!("\nNote: Process survival after 500ms does NOT guarantee GUI appeared.");
+                println!("Check for GUI window or monitor process output for actual launch confirmation.");
                 Ok(0)
             }
             Err(e) => {

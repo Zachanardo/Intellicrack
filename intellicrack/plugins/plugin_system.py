@@ -26,6 +26,7 @@ import signal
 import sys
 import tempfile
 import traceback
+from intellicrack.utils.core.plugin_paths import get_frida_scripts_dir, get_ghidra_scripts_dir
 from typing import Any
 
 from PyQt6.QtWidgets import QInputDialog, QMessageBox
@@ -1250,7 +1251,7 @@ class PluginSystem:
                 return plugin_file
 
         # Check other plugin directories
-        for subdir in ["frida_scripts", "ghidra_scripts"]:
+        # Check centralized script directories
             plugin_path = os.path.join(self.plugin_dir, subdir)
             if os.path.exists(plugin_path):
                 for ext in [".js", ".py"]:
@@ -1295,7 +1296,7 @@ class PluginSystem:
                     discovered.append(file[:-3])
 
         # Check other plugin directories
-        for subdir in ["frida_scripts", "ghidra_scripts"]:
+        # Check centralized script directories
             plugin_path = os.path.join(self.plugin_dir, subdir)
             if os.path.exists(plugin_path):
                 for file in os.listdir(plugin_path):
@@ -1353,10 +1354,10 @@ class PluginSystem:
 
                 # Determine destination directory based on file extension
                 if filename.endswith(".js"):
-                    dest_dir = os.path.join(self.plugin_dir, "frida_scripts")
+                    dest_dir = str(get_frida_scripts_dir())
                 elif filename.endswith(".py"):
                     if "ghidra" in filename.lower():
-                        dest_dir = os.path.join(self.plugin_dir, "ghidra_scripts")
+                        dest_dir = str(get_ghidra_scripts_dir())
                     else:
                         dest_dir = os.path.join(self.plugin_dir, "custom_modules")
                 else:
@@ -1390,10 +1391,10 @@ class PluginSystem:
 
                 # Determine destination based on file type
                 if filename.endswith(".js"):
-                    dest_dir = os.path.join(self.plugin_dir, "frida_scripts")
+                    dest_dir = str(get_frida_scripts_dir())
                 elif filename.endswith(".py"):
                     if "ghidra" in filename.lower():
-                        dest_dir = os.path.join(self.plugin_dir, "ghidra_scripts")
+                        dest_dir = str(get_ghidra_scripts_dir())
                     else:
                         dest_dir = os.path.join(self.plugin_dir, "custom_modules")
                 else:

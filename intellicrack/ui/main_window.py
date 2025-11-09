@@ -90,6 +90,7 @@ class IntellicrackMainWindow(QMainWindow):
 
         # Initialize logger
         self.logger = logger
+        self.logger.debug("Main window module loaded")
         self.logger.info("Initializing main application window")
 
         # Initialize core attributes

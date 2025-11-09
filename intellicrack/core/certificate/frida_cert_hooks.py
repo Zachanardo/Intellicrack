@@ -124,6 +124,8 @@ from typing import Any, Dict, List, Optional, Union
 
 import frida
 
+from intellicrack.utils.core.plugin_paths import get_frida_scripts_dir
+
 logger = logging.getLogger(__name__)
 
 
@@ -191,7 +193,7 @@ class FridaCertificateHooks:
 
     """
 
-    SCRIPT_DIR = Path(__file__).parent / "frida_scripts"
+    SCRIPT_DIR = get_frida_scripts_dir()
 
     AVAILABLE_SCRIPTS = {
         "winhttp": "winhttp_bypass.js",

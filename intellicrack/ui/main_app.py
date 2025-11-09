@@ -88,6 +88,7 @@ from intellicrack.handlers.pyqt6_handler import (
 )
 from intellicrack.hexview.integration import TOOL_REGISTRY
 from intellicrack.plugins import run_frida_plugin_from_file, run_ghidra_plugin_from_file
+from intellicrack.utils.core.plugin_paths import get_frida_scripts_dir, get_ghidra_scripts_dir
 from intellicrack.plugins.custom_modules.license_server_emulator import run_network_license_emulator
 from intellicrack.ui.cfg_explorer_inner import CfgExplorerInner
 from intellicrack.ui.dashboard_manager import DashboardManager
@@ -1275,8 +1276,8 @@ class IntellicrackApp(QMainWindow):
         plugin_base_dir = Path(__file__).parent.parent / "plugins"
         plugin_directories = {
             self.PLUGIN_TYPE_CUSTOM: plugin_base_dir / "custom_modules",
-            self.PLUGIN_TYPE_FRIDA: plugin_base_dir / "frida_scripts",
-            self.PLUGIN_TYPE_GHIDRA: plugin_base_dir / "ghidra_scripts",
+            self.PLUGIN_TYPE_FRIDA: get_frida_scripts_dir(),
+            self.PLUGIN_TYPE_GHIDRA: get_ghidra_scripts_dir(),
         }
 
         def is_path_safe(file_path, plugin_dir) -> bool:

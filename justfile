@@ -8,7 +8,12 @@ set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
 # Complete installation with all post-install tasks
 install:
     @echo "Installing Intellicrack dependencies..."
+    if (Test-Path "pixi.lock") { Remove-Item -Force "pixi.lock"; Write-Output "Removed existing pixi.lock" }
+    @echo "Installing dependencies with pixi..."
     pixi install
+    @echo "Generating requirements.txt for Dependabot..."
+    pixi list --environment ci --json | python -c "import json, sys; data = json.load(sys.stdin); pypi_packages = [p for p in data if p.get('kind') == 'pypi']; [print(f\"{pkg['name']}=={pkg.get('version', '')}\") if pkg.get('version') else print(pkg['name']) for pkg in sorted(pypi_packages, key=lambda x: x['name'])]" > requirements.txt
+    @echo "requirements.txt generated ✓"
     @echo ""
     @echo "Installing Rustup (if needed)..."
     @just install-rustup

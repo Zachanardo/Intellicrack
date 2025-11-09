@@ -77,6 +77,7 @@ class ProtectionDetector:
 
         """
         if not os.path.exists(file_path):
+            logger.warning(f"File not found: {file_path}")
             raise FileNotFoundError(f"File not found: {file_path}")
 
         # Use unified engine
@@ -122,8 +123,8 @@ class ProtectionDetector:
 
         Returns:
             List of ProtectionAnalysis results
-
         """
+        logger.info(f"Starting directory analysis: {directory}, recursive={recursive}, deep_scan={deep_scan}")
         results = []
         extensions = [".exe", ".dll", ".sys", ".ocx", ".scr", ".com", ".so", ".dylib"]
 
@@ -148,6 +149,7 @@ class ProtectionDetector:
                         except Exception as e:
                             logger.error(f"Error analyzing {file_path}: {e}")
 
+        logger.info(f"Completed directory analysis: {len(results)} files analyzed successfully")
         return results
 
     def get_bypass_strategies(self, file_path: str) -> list[dict[str, Any]]:
@@ -507,7 +509,7 @@ class ProtectionDetector:
 
             if isinstance(ticket_data, str):
                 if os.path.exists(ticket_data):
-                    with open(ticket_data, 'rb') as f:
+                    with open(ticket_data, "rb") as f:
                         data = f.read()
                 else:
                     logger.error(f"Ticket file not found: {ticket_data}")
@@ -521,19 +523,21 @@ class ProtectionDetector:
                     "type": "ticket",
                     "valid": ticket.is_valid,
                     "version": ticket.header.version,
-                    "magic": ticket.header.magic.decode('latin-1'),
+                    "magic": ticket.header.magic.decode("latin-1"),
                     "timestamp": ticket.header.timestamp,
                     "encryption_type": ticket.header.encryption_type,
                     "decrypted": ticket.payload is not None,
                 }
 
                 if ticket.payload:
-                    result.update({
-                        "game_id": ticket.payload.game_id.hex(),
-                        "machine_id": ticket.payload.machine_id.combined_hash.hex()[:32],
-                        "license_type": ticket.payload.license_data.get("type"),
-                        "expiration": ticket.payload.license_data.get("expiration"),
-                    })
+                    result.update(
+                        {
+                            "game_id": ticket.payload.game_id.hex(),
+                            "machine_id": ticket.payload.machine_id.combined_hash.hex()[:32],
+                            "license_type": ticket.payload.license_data.get("type"),
+                            "expiration": ticket.payload.license_data.get("expiration"),
+                        }
+                    )
 
                 return result
             else:
@@ -1086,8 +1090,10 @@ class ProtectionDetector:
             Entropy value (0-8)
 
         """
-        if not data:
-            return 0.0
+
+    if not data:
+        logger.warning("Empty data provided for entropy calculation")
+        return 0.0
 
         # Calculate frequency of each byte
         frequency = {}
@@ -1115,8 +1121,8 @@ class ProtectionDetector:
 
         Returns:
             Combined detection results
-
         """
+        logger.info(f"Starting comprehensive protection detection for {binary_path}")
         results = {
             "file_path": binary_path,
             "virtualization": self.detect_virtualization_protection(binary_path),
@@ -1153,7 +1159,7 @@ class ProtectionDetector:
                 ]
             ),
         }
-
+        logger.info(f"Completed comprehensive protection detection: {results['summary']['protection_count']} protections found")
         return results
 
 

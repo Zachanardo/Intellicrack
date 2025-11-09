@@ -89,6 +89,13 @@ impl PythonIntegration {
             // Verify Tkinter availability
             integration.verify_tkinter(py)?;
 
+            // Eagerly initialize GPU and GIL safety to prevent SEGFAULT
+            info!("Eagerly initializing GPU and GIL safety modules");
+            let intellicrack_module = py.import("intellicrack")?;
+            intellicrack_module.call_method0("_initialize_gil_safety")?;
+            intellicrack_module.call_method0("_initialize_gpu")?;
+            info!("GPU and GIL safety modules initialized");
+
             Ok(())
         })?;
 

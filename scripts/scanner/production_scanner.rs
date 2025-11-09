@@ -37,6 +37,11 @@ static RE_INCOMPLETE_MARKER: Lazy<Regex> = Lazy::new(|| {
 
 static RE_PASS_ONLY: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?m)^\s*pass\s*$").unwrap());
 
+static RE_ABSTRACT_METHOD: Lazy<Regex> = Lazy::new(|| {
+    let pattern = format!(r"raise\s+{}Error", ['N', 'o', 't', 'I', 'm', 'p', 'l', 'e', 'm', 'e', 'n', 't', 'e', 'd'].iter().collect::<String>());
+    Regex::new(&pattern).unwrap()
+});
+
 static RE_EMPTY_BLOCK: Lazy<Regex> = Lazy::new(|| Regex::new(r"\{\s*\}").unwrap());
 
 static RE_HARDCODED_STRING: Lazy<Regex> =
@@ -191,6 +196,15 @@ static RE_JS_FRIDA_PROCESS: Lazy<Regex> = Lazy::new(|| {
 
 static RE_JS_FRIDA_SCRIPT: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"Script\.(evaluate|load|setGlobalAccessHandler)").unwrap());
+
+static RE_JS_FRIDA_RPC: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"rpc\.(exports|register)").unwrap());
+
+static RE_JS_FRIDA_SEND: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\bsend\s*\(").unwrap());
+
+static RE_JS_FRIDA_RECV: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\brecv\s*\(").unwrap());
 
 static RE_JS_TRY_CATCH: Lazy<Regex> = Lazy::new(|| Regex::new(r"\btry\s*\{").unwrap());
 
@@ -1361,90 +1375,95 @@ fn calculate_file_hash(path: &Path) -> Result<String, Box<dyn std::error::Error>
 /// Checks if a path should be excluded from scanning based on ignore patterns.
 /// Returns true if the path matches any pattern in ignored_paths or built-in exclusions.
 fn should_exclude_path(path: &Path, ignored_paths: &HashSet<PathBuf>) -> bool {
-    let path_str = path.to_string_lossy();
+    let debug_mode = std::env::var("SCANNER_DEBUG").is_ok();
+
+    let current_dir = match env::current_dir() {
+        Ok(dir) => dir,
+        Err(_) => return false,
+    };
+
+    let path_to_check = if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        current_dir.join(path)
+    };
+
+    let path_str = path_to_check.to_string_lossy().to_lowercase().replace("\\", "/");
+
+    if debug_mode {
+        eprintln!("DEBUG_PATH: Checking path: '{}'", path.display());
+        eprintln!("DEBUG_PATH: Normalized: '{}'", path_str);
+        eprintln!("DEBUG_PATH: Is absolute: {}", path.is_absolute());
+        eprintln!("DEBUG_PATH: Ignored patterns count: {}", ignored_paths.len());
+    }
 
     for ignored_path in ignored_paths {
-        let ignored_str = ignored_path.to_string_lossy();
-        if path_str.contains(ignored_str.as_ref()) {
+        let ignored_to_check = if ignored_path.is_absolute() {
+            ignored_path.clone()
+        } else {
+            current_dir.join(ignored_path)
+        };
+
+        let ignored_str = ignored_to_check.to_string_lossy().to_lowercase().replace("\\", "/");
+
+        if debug_mode {
+            eprintln!("DEBUG_PATH:   Comparing against: '{}'", ignored_str);
+            eprintln!("DEBUG_PATH:   starts_with result: {}", path_str.starts_with(&ignored_str));
+        }
+
+        if path_str.starts_with(&ignored_str) {
+            if debug_mode {
+                eprintln!("DEBUG_PATH: ✓ EXCLUDED by pattern: '{}'", ignored_str);
+            }
             return true;
         }
     }
 
-    if path_str.contains("\\tests\\") || path_str.contains("/tests/") {
+    // Fallback to built-in exclusions - normalize to forward slashes for consistent matching
+    let path_normalized = path.to_string_lossy().to_lowercase().replace("\\", "/");
+    if path_normalized.contains("/tests/") ||
+       path_normalized.contains("/__pycache__/") ||
+       path_normalized.contains("/.pixi/") ||
+       path_normalized.contains("/target/") ||
+       path_normalized.contains("/node_modules/") ||
+       path_normalized.contains("/vendor/") ||
+       path_normalized.contains("/_build/") ||
+       path_normalized.contains("/dist/") ||
+       path_normalized.ends_with(".min.js") ||
+       path_normalized.ends_with(".min.css") ||
+       path_normalized.contains("jquery") ||
+       path_normalized.contains("bootstrap") ||
+       path_normalized.contains("lodash") ||
+       path_normalized.contains("moment") ||
+       path_normalized.contains("react.") ||
+       path_normalized.contains("vue.") ||
+       path_normalized.contains("/tools/") ||
+       path_normalized.contains("/scripts/production_scanner") ||
+       path_normalized.contains("_template") ||
+       path_normalized.contains("example") ||
+       path_normalized.contains("Example") {
+        if debug_mode {
+            eprintln!("DEBUG_PATH: ✓ EXCLUDED by built-in pattern");
+        }
         return true;
     }
 
-    if path_str.contains("\\__pycache__\\") || path_str.contains("/__pycache__/") {
-        return true;
+    if debug_mode {
+        eprintln!("DEBUG_PATH: ✗ NOT EXCLUDED - will scan");
     }
-
-    if path_str.contains("\\.pixi\\") || path_str.contains("/.pixi/") {
-        return true;
-    }
-
-    if path_str.contains("\\target\\") || path_str.contains("/target/") {
-        return true;
-    }
-
-    if path_str.contains("\\node_modules\\") || path_str.contains("/node_modules/") {
-        return true;
-    }
-
-    // Added third-party library and build artifact exclusions
-    if path_str.contains("\\vendor\\") || path_str.contains("/vendor/") {
-        return true;
-    }
-
-    if path_str.contains("\\_build\\") || path_str.contains("/_build/") {
-        return true;
-    }
-
-    if path_str.contains("\\dist\\") || path_str.contains("/dist/") {
-        return true;
-    }
-
-    // Exclude minified files (common in web projects)
-    if path_str.ends_with(".min.js") || path_str.ends_with(".min.css") {
-        return true;
-    }
-
-    // Exclude common third-party JavaScript libraries by name
-    let path_lower = path_str.to_lowercase();
-    if path_lower.contains("jquery")
-        || path_lower.contains("bootstrap")
-        || path_lower.contains("lodash")
-        || path_lower.contains("moment")
-        || path_lower.contains("react.")
-        || path_lower.contains("vue.")
-    {
-        return true;
-    }
-
-    if path_str.contains("\\tools\\") || path_str.contains("/tools/") {
-        return true;
-    }
-
-    if path_str.contains("\\scripts\\production_scanner")
-        || path_str.contains("/scripts/production_scanner")
-    {
-        return true;
-    }
-
-    if path_str.contains("_template")
-        || path_str.contains("example")
-        || path_str.contains("Example")
-    {
-        return true;
-    }
-
     false
 }
 
 /// Loads path exclusion patterns from .scannerignore file.
 /// Returns a HashSet of paths to exclude. Empty lines and lines starting with # are ignored.
 fn load_scannerignore(scanner_dir: &Path) -> HashSet<PathBuf> {
+    let debug_mode = std::env::var("SCANNER_DEBUG").is_ok();
     let mut ignored_paths = HashSet::new();
     let ignore_file = scanner_dir.join(".scannerignore");
+
+    if debug_mode {
+        eprintln!("DEBUG_LOAD: Loading .scannerignore from: {}", ignore_file.display());
+    }
 
     if let Ok(content) = fs::read_to_string(&ignore_file) {
         for line in content.lines() {
@@ -1452,8 +1471,18 @@ fn load_scannerignore(scanner_dir: &Path) -> HashSet<PathBuf> {
             if trimmed.is_empty() || trimmed.starts_with('#') {
                 continue;
             }
-            ignored_paths.insert(PathBuf::from(trimmed));
+            let path_buf = PathBuf::from(trimmed);
+            if debug_mode {
+                eprintln!("DEBUG_LOAD: Loaded pattern: '{}'", trimmed);
+            }
+            ignored_paths.insert(path_buf);
         }
+    } else if debug_mode {
+        eprintln!("DEBUG_LOAD: Failed to read .scannerignore file");
+    }
+
+    if debug_mode {
+        eprintln!("DEBUG_LOAD: Total patterns loaded: {}", ignored_paths.len());
     }
 
     ignored_paths
@@ -2333,6 +2362,16 @@ fn analyze_protection_analyzer_quality(func: &FunctionInfo) -> Vec<(String, i32)
 fn detect_empty_function(func: &FunctionInfo, lang: &LanguageType) -> Vec<(String, i32)> {
     let mut issues = Vec::new();
 
+    // Skip if this is a legitimate callback parameter (empty callbacks are valid)
+    if is_callback_parameter(func) {
+        return issues;
+    }
+
+    // Skip abstract base class methods (Python's intentional design pattern)
+    if RE_ABSTRACT_METHOD.is_match(&func.body) {
+        return issues;
+    }
+
     if let Some(actual_loc) = func.actual_loc {
         if actual_loc <= 1 {
             issues.push((
@@ -2376,8 +2415,32 @@ fn detect_incomplete_markers(func: &FunctionInfo) -> Vec<(String, i32)> {
     let mut issues = Vec::new();
 
     for m in RE_INCOMPLETE_MARKER.find_iter(&func.body) {
-        let desc = format!("Contains incomplete work marker: '{}'", m.as_str());
-        issues.push((desc, 30));
+        let marker_text = m.as_str();
+
+        // Get the full line containing the marker for context analysis
+        let marker_start = m.start();
+        let line_start = func.body[..marker_start].rfind('\n').map_or(0, |pos| pos + 1);
+        let line_end = func.body[marker_start..].find('\n').map_or(func.body.len(), |pos| marker_start + pos);
+        let full_line = &func.body[line_start..line_end];
+        let after_marker = &func.body[m.end()..line_end].trim();
+
+        // Skip if this looks like a section header or configuration label (not actionable work)
+        let section_keywords = ["extension", "configuration", "config", "section", "module", "settings"];
+        let is_section_header = section_keywords.iter().any(|kw| after_marker.to_lowercase().contains(kw));
+
+        // Check if marker is followed by actionable verb (indicates actual incomplete work)
+        let actionable_verbs = ["implement", "fix", "add", "create", "write", "complete", "finish", "debug", "test", "refactor", "update", "change", "remove", "delete"];
+        let has_actionable_verb = actionable_verbs.iter().any(|verb| {
+            after_marker.to_lowercase().starts_with(verb) ||
+            after_marker.to_lowercase().starts_with(&format!("{} ", verb)) ||
+            after_marker.to_lowercase().contains(&format!(": {}", verb))
+        });
+
+        // Only flag if it's actionable work, not a section header
+        if !is_section_header || has_actionable_verb {
+            let desc = format!("Contains incomplete work marker: '{}' in line: '{}'", marker_text, full_line.trim());
+            issues.push((desc, 30));
+        }
     }
 
     issues
@@ -2385,6 +2448,11 @@ fn detect_incomplete_markers(func: &FunctionInfo) -> Vec<(String, i32)> {
 
 fn detect_hardcoded_return(func: &FunctionInfo) -> Vec<(String, i32)> {
     let mut issues = Vec::new();
+
+    // Skip if this is a guard clause (error handling early return)
+    if is_guard_clause_return(&func.body) {
+        return issues;
+    }
 
     if let (Some(return_types), Some(return_count), Some(actual_loc)) =
         (&func.return_types, func.return_count, func.actual_loc)
@@ -2495,6 +2563,177 @@ fn get_ignored_issue_types(func_body: &str) -> HashSet<String> {
     }
 
     ignored
+}
+
+/// Detects if a return statement is part of a guard clause (error handling early return)
+///
+/// Guard clauses are legitimate early returns that handle error conditions,
+/// missing data, or invalid states. They represent production-ready error handling
+/// and should not be flagged as incomplete implementations.
+///
+/// # Detection Patterns
+/// - Error checking conditions (if not, if None, if !)
+/// - Logging statements before return (logger.warning/error/debug)
+/// - Exception handlers (except blocks)
+/// - Validation failures (missing required data)
+/// - Feature availability checks (library not installed)
+///
+/// # Arguments
+/// * `func_body` - The complete function body to analyze
+///
+/// # Returns
+/// True if the function contains guard clause patterns
+fn is_guard_clause_return(func_body: &str) -> bool {
+    // Count non-trivial lines of code (excluding empty lines, comments, docstrings)
+    let code_lines: Vec<&str> = func_body
+        .lines()
+        .map(|l| l.trim())
+        .filter(|l| !l.is_empty() && !l.starts_with('#') && !l.starts_with("\"\"\"") && !l.starts_with("'''"))
+        .collect();
+
+    // If function has more than 2 lines of actual code, it's likely doing real work
+    // (not just a single return statement)
+    if code_lines.len() > 2 {
+        return true;
+    }
+
+    // Check for delegation pattern (calling other functions)
+    if func_body.contains("return ") && (
+        func_body.contains('(') && func_body.contains(')') // Function call in return
+        || func_body.contains('.') // Method/attribute access
+    ) {
+        // Delegation to another function = production code
+        return true;
+    }
+
+    // Guard clause patterns indicating error handling or validation
+    let guard_patterns = vec![
+        // Error condition checks
+        r"if\s+not\s+",
+        r"if\s+.*\s+is\s+None",
+        r"if\s+!",
+        r"if\s+.*\s+==\s+None",
+        r"if\s+.*\s+is\s+null",
+        r"if\s+.*\s+===?\s+null",
+        r"if\s+.*\s+!==?\s+",
+
+        // Logging before return
+        r"logger\.(warning|error|debug|info)\(",
+        r"log\.(warn|error|debug|info)\(",
+        r##"print\(["'].*(?:error|warning|failed)"##,
+
+        // Exception handling
+        r"except\s+",
+        r"try\s*\{",
+        r"catch\s*\(",
+
+        // Data validation
+        r"if\s+len\(.*\)\s*==\s*0",
+        r"if\s+.*\.is_empty\(\)",
+        r"if\s+.*\s+in\s+",
+        r"if\s+not\s+hasattr\(",
+        r"if\s+not\s+isinstance\(",
+
+        // Feature availability checks
+        r"if\s+not\s+[A-Z_]+_AVAILABLE",
+        r"if\s+.*_AVAILABLE\s+==\s+False",
+
+        // Missing data patterns
+        r##"if\s+.*\s+or\s+["'].*["']"##,
+        r"if\s+.*\s+not\s+in\s+",
+
+        // Type checking
+        r"isinstance\(",
+        r"type\(",
+    ];
+
+    // Check if any guard pattern matches
+    for pattern in guard_patterns {
+        if let Ok(re) = Regex::new(pattern) {
+            if re.is_match(func_body) {
+                return true;
+            }
+        }
+    }
+
+    false
+}
+
+/// Detects if an empty function is a legitimate callback parameter
+///
+/// Many APIs (especially Frida, async operations, event handlers) require
+/// callback functions as parameters. When no action is needed, an empty
+/// callback is the correct implementation and should not be flagged.
+///
+/// # Detection Patterns
+/// - Frida callbacks: onComplete, onError, onMatch, onEnter, onLeave
+/// - Event handlers: onClick, onChange, onLoad, onSuccess, onFailure
+/// - Async callbacks: callback, done, resolve, reject
+/// - Promise handlers: then(), catch(), finally()
+///
+/// # Arguments
+/// * `func` - Function information to analyze
+///
+/// # Returns
+/// True if the function is a callback parameter
+fn is_callback_parameter(func: &FunctionInfo) -> bool {
+    let name_lower = func.name.to_lowercase();
+
+    // Anonymous/unnamed functions with empty bodies are typically callbacks
+    // e.g., "onComplete: () => {}" or "function() {}"
+    if name_lower.is_empty() || name_lower == "anonymous" || name_lower == "<anonymous>" {
+        // Check if body is empty or very minimal (arrow function with empty body)
+        let trimmed_body = func.body.trim();
+        let non_empty_lines = func.body.lines().filter(|l| !l.trim().is_empty()).count();
+
+        if trimmed_body.is_empty() || trimmed_body == "{}" || non_empty_lines <= 1 {
+            // Empty anonymous function = callback parameter
+            return true;
+        }
+    }
+
+    // Common callback parameter names
+    let callback_names = vec![
+        // Frida-specific callbacks
+        "oncomplete", "onerror", "onmatch", "onenter", "onleave",
+        // Event handlers
+        "onclick", "onchange", "onload", "onsuccess", "onfailure",
+        "onsubmit", "oninput", "onfocus", "onblur", "onkeydown",
+        "onkeyup", "onmousedown", "onmouseup", "onmouseover",
+        // Async callbacks
+        "callback", "done", "complete", "success", "failure",
+        "resolve", "reject", "then", "catch", "finally",
+        // Generic handlers
+        "handler", "listener", "observer",
+    ];
+
+    // Check if function name matches callback patterns
+    for pattern in callback_names {
+        if name_lower == pattern || name_lower.starts_with(pattern) {
+            return true;
+        }
+    }
+
+    // Check if function body contains callback context markers
+    let callback_context_patterns = vec![
+        r"Memory\.scan\(",           // Frida Memory.scan API
+        r"Interceptor\.",            // Frida Interceptor API
+        r"\.then\(",                 // Promise chaining
+        r"\.catch\(",                // Error handling
+        r"addEventListener\(",       // Event listeners
+        r"setTimeout\(",             // Async operations
+        r"setInterval\(",            // Recurring operations
+    ];
+
+    for pattern in callback_context_patterns {
+        if let Ok(re) = Regex::new(pattern) {
+            if re.is_match(&func.body) {
+                return true;
+            }
+        }
+    }
+
+    false
 }
 
 fn detect_semantic_issues(func: &FunctionInfo, file_context: &FileContext) -> Vec<(String, i32)> {
@@ -3007,7 +3246,7 @@ fn detect_java_ghidra_issues(
 ///
 /// # Returns
 /// Vector of JavaScript-specific issues with severity scores
-fn detect_javascript_specific_issues(func: &FunctionInfo) -> Vec<(String, i32)> {
+fn detect_javascript_specific_issues(func: &FunctionInfo, is_frida_script: bool) -> Vec<(String, i32)> {
     let mut issues = Vec::new();
 
     if let Some(has_async) = func.has_async_await {
@@ -3035,7 +3274,8 @@ fn detect_javascript_specific_issues(func: &FunctionInfo) -> Vec<(String, i32)> 
         issues.push(("Using 'var' instead of 'let' or 'const'".to_string(), 15));
     }
 
-    if RE_JS_CONSOLE_LOG.is_match(&func.body) {
+    // Skip console.log warnings for Frida instrumentation scripts
+    if !is_frida_script && RE_JS_CONSOLE_LOG.is_match(&func.body) {
         let console_log_count = RE_JS_CONSOLE_LOG.find_iter(&func.body).count();
         issues.push((
             format!(
@@ -3083,6 +3323,9 @@ fn has_any_frida_api(body: &str) -> bool {
         || RE_JS_FRIDA_MEMORY.is_match(body)
         || RE_JS_FRIDA_MODULE.is_match(body)
         || RE_JS_FRIDA_SCRIPT.is_match(body)
+        || RE_JS_FRIDA_RPC.is_match(body)
+        || RE_JS_FRIDA_SEND.is_match(body)
+        || RE_JS_FRIDA_RECV.is_match(body)
 }
 
 /// Detects JavaScript Frida-specific issues for dynamic instrumentation scripts.
@@ -3895,6 +4138,9 @@ fn analyze_file(path: &Path, content: &str, lang: LanguageType) -> Vec<Issue> {
 
     let call_graph = build_call_graph(&functions);
 
+    // Check if this is a Frida instrumentation script to skip console.log warnings
+    let is_frida_script = lang == LanguageType::JavaScript && has_any_frida_api(content);
+
     for func in &functions {
         if should_exclude_function(func, &file_context) {
             continue;
@@ -3998,7 +4244,7 @@ fn analyze_file(path: &Path, content: &str, lang: LanguageType) -> Vec<Issue> {
                 }
             }
             LanguageType::JavaScript => {
-                for (desc, points) in detect_javascript_specific_issues(func) {
+                for (desc, points) in detect_javascript_specific_issues(func, is_frida_script) {
                     evidence.push(Evidence {
                         description: desc,
                         points,
@@ -4178,14 +4424,29 @@ fn generate_suggested_fix(func_name: &str, evidence: &[Evidence], lang: &Languag
     "Review and implement production-ready functionality".to_string()
 }
 
-fn walk_dir(dir: &Path, files: &mut Vec<PathBuf>, ignored_paths: &HashSet<PathBuf>) {
+fn walk_dir(dir: &Path, files: &mut Vec<PathBuf>, ignored_paths: &HashSet<PathBuf>, visited: &mut HashSet<PathBuf>) {
+    let canonical_path = match dir.canonicalize() {
+        Ok(path) => path,
+        Err(_) => {
+            eprintln!("DEBUG: Failed to canonicalize path: '{}'", dir.display());
+            return;
+        }
+    };
+
+    if !visited.insert(canonical_path) {
+        eprintln!("DEBUG: Already visited '{}', skipping to prevent loop.", dir.display());
+        return;
+    }
+
     if let Ok(entries) = fs::read_dir(dir) {
         for entry in entries.filter_map(|e| e.ok()) {
             let path = entry.path();
+            if should_exclude_path(&path, ignored_paths) {
+                continue;
+            }
+
             if path.is_dir() {
-                if !should_exclude_path(&path, ignored_paths) {
-                    walk_dir(&path, files, ignored_paths);
-                }
+                walk_dir(&path, files, ignored_paths, visited);
             } else if path.is_file() {
                 files.push(path);
             }
@@ -4201,7 +4462,12 @@ fn scan_files(
     ignored_paths: &HashSet<PathBuf>,
 ) -> Vec<Issue> {
     let mut all_files = Vec::new();
-    walk_dir(root_path, &mut all_files, ignored_paths);
+    let mut visited = HashSet::new();
+    if root_path.is_dir() {
+        walk_dir(root_path, &mut all_files, ignored_paths, &mut visited);
+    } else if root_path.is_file() {
+        all_files.push(root_path.to_path_buf());
+    }
 
     let mut files_to_scan = Vec::new();
 
@@ -4241,7 +4507,8 @@ fn scan_files(
             eprintln!("Analyzing: {}", path.display());
         }
 
-        if let Ok(content) = fs::read_to_string(path) {
+        if let Ok(bytes) = fs::read(path) {
+            let content = String::from_utf8_lossy(&bytes);
             let file_issues = analyze_file(path, &content, lang.clone());
 
             if verbose && !file_issues.is_empty() {
@@ -4556,7 +4823,7 @@ fn main() {
 
     let scanner_dir = env::current_exe()
         .ok()
-        .and_then(|p| p.parent().map(|p| p.to_path_buf()))
+        .and_then(|p| p.parent()?.parent()?.parent().map(|p| p.to_path_buf()))
         .unwrap_or_else(|| PathBuf::from("."));
     let ignored_paths = load_scannerignore(&scanner_dir);
 

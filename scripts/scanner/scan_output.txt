@@ -1,0 +1,111 @@
+
+Starting Intellicrack production-readiness scan...
+Root: D:\Intellicrack
+Format: text
+Min Confidence: medium
+Verbose: enabled
+
+Scanning 765 files...
+Analyzing: D:\Intellicrack\intellicrack\ai\lazy_model_loader.py
+Analyzing: D:\Intellicrack\intellicrack\ai\model_comparison.py
+Analyzing: D:\Intellicrack\intellicrack\ai\llm_fallback_chains.py
+Analyzing: D:\Intellicrack\intellicrack\utils\exploitation\__init__.py
+Analyzing: D:\Intellicrack\intellicrack\ai\model_sharding.py
+Analyzing: D:\Intellicrack\intellicrack\core\analysis\angr_enhancements.py
+Analyzing: D:\Intellicrack\intellicrack\scripts\frida\telemetry_blocker.js
+Analyzing: D:\Intellicrack\intellicrack\ui\radare2_integration_ui.py
+Analyzing: D:\Intellicrack\intellicrack\hexview\file_handler.py
+Analyzing: D:\Intellicrack\intellicrack\plugins\plugin_system.py
+Analyzing: D:\Intellicrack\intellicrack\utils\system\windows_structures.py
+Analyzing: D:\Intellicrack\.claude\hooks\post-tool-use.js
+Analyzing: D:\Intellicrack\intellicrack\core\certificate\cert_cache.py
+Analyzing: D:\Intellicrack\intellicrack\ui\widgets\terminal_session_widget.py
+Analyzing: D:\Intellicrack\intellicrack\ai\performance_monitor.py
+Analyzing: D:\Intellicrack\intellicrack\utils\config_cleanup.py
+Analyzing: D:\Intellicrack\intellicrack\ui\widgets\batch_analysis_widget.py
+Analyzing: D:\Intellicrack\intellicrack\utils\runtime\additional_runners.py
+Analyzing: D:\Intellicrack\intellicrack\analysis\__init__.py
+Analyzing: D:\Intellicrack\intellicrack\utils\patching\__init__.py
+Analyzing: D:\Intellicrack\intellicrack\ai\lora_adapter_manager.py
+Analyzing: D:\Intellicrack\intellicrack\cli\interactive_mode.py
+Analyzing: D:\Intellicrack\intellicrack\utils\font_manager.py
+Analyzing: D:\Intellicrack\.claude\hooks\principles.js
+Analyzing: D:\Intellicrack\intellicrack\utils\path_resolver.py
+Analyzing: D:\Intellicrack\intellicrack\cli\advanced_export.py
+Analyzing: D:\Intellicrack\.claude\hooks\sessionstart.js
+Analyzing: D:\Intellicrack\intellicrack\ui\widgets\unified_protection_widget.py
+Analyzing: D:\Intellicrack\intellicrack\core\certificate\cert_chain_generator.py
+Analyzing: D:\Intellicrack\intellicrack\utils\protection\certificate_common.py
+Analyzing: D:\Intellicrack\intellicrack\utils\system\__init__.py
+Analyzing: D:\Intellicrack\intellicrack\utils\constants.py
+Analyzing: D:\Intellicrack\.claude\statusline.js
+Analyzing: D:\Intellicrack\intellicrack\ai\model_discovery_service.py
+  Found 1 issues in D:\Intellicrack\intellicrack\ai\lazy_model_loader.py
+Analyzing: D:\Intellicrack\intellicrack\ai\learning_engine.py
+Analyzing: D:\Intellicrack\intellicrack\scripts\frida\test_binary_patcher.js
+Analyzing: D:\Intellicrack\intellicrack\ai\llm_types.py
+Analyzing: D:\Intellicrack\intellicrack\utils\ghidra_common.py
+Analyzing: D:\Intellicrack\intellicrack\utils\torch_gil_safety.py
+Analyzing: D:\Intellicrack\intellicrack\utils\core\core_utilities.py
+Analyzing: D:\Intellicrack\intellicrack\utils\protection\certificate_utils.py
+  Found 2 issues in D:\Intellicrack\intellicrack\cli\interactive_mode.py
+Analyzing: D:\Intellicrack\intellicrack\cli\pipeline.py
+Analyzing: D:\Intellicrack\intellicrack\ai\local_gguf_server.py
+Analyzing: D:\Intellicrack\intellicrack\core\certificate\cert_patcher.py
+Analyzing: D:\Intellicrack\backups\icp_engine_pre_rebrand\icp-engine-wrapper.py
+Analyzing: D:\Intellicrack\intellicrack\scripts\frida\test_structured_messaging.js
+Analyzing: D:\Intellicrack\intellicrack\utils\ui\ui_button_common.py
+Analyzing: D:\Intellicrack\intellicrack\utils\protection\protection_helpers.py
+Analyzing: D:\Intellicrack\intellicrack\utils\gpu_autoloader.py
+Analyzing: D:\Intellicrack\intellicrack\ai\multi_agent_system.py
+Analyzing: D:\Intellicrack\intellicrack\ai\model_download_manager.py
+Analyzing: D:\Intellicrack\intellicrack\utils\ui\ui_common.py
+Analyzing: D:\Intellicrack\docs\source\conf.py
+Analyzing: D:\Intellicrack\intellicrack\ai\model_batch_tester.py
+Analyzing: D:\Intellicrack\intellicrack\ui\radare2_ui_manager.py
+  Found 1 issues in D:\Intellicrack\intellicrack\utils\core\core_utilities.py
+Analyzing: D:\Intellicrack\intellicrack\utils\core\dependency_feedback.py
+Analyzing: D:\Intellicrack\intellicrack\utils\protection\__init__.py
+Analyzing: D:\Intellicrack\intellicrack\hexview\hex_commands.py
+  Found 1 issues in D:\Intellicrack\intellicrack\ai\performance_monitor.py
+Analyzing: D:\Intellicrack\intellicrack\ai\performance_monitor_simple.py
+  Found 4 issues in D:\Intellicrack\intellicrack\core\certificate\cert_patcher.py
+Analyzing: D:\Intellicrack\intellicrack\core\certificate\detection_report.py
+Analyzing: D:\Intellicrack\intellicrack\scripts\frida\time_bomb_defuser.js
+Analyzing: D:\Intellicrack\intellicrack\utils\ui\ui_helpers.py
+Analyzing: D:\Intellicrack\intellicrack\utils\protection_utils.py
+Analyzing: D:\Intellicrack\intellicrack\core\analysis\arxan_analyzer.py
+Analyzing: D:\Intellicrack\intellicrack\ui\widgets\cache_management_widget.py
+Analyzing: D:\Intellicrack\eslint.config.js
+  Found 1 issues in D:\Intellicrack\intellicrack\cli\pipeline.py
+Analyzing: D:\Intellicrack\intellicrack\cli\progress_manager.py
+Analyzing: D:\Intellicrack\intellicrack\ai\performance_optimization_layer.py
+Analyzing: D:\Intellicrack\intellicrack\core\certificate\frida_cert_hooks.py
+Analyzing: D:\Intellicrack\intellicrack\utils\ui\ui_setup_functions.py
+Analyzing: D:\Intellicrack\htmlcov\coverage_html_cb_497bf287.js
+Progress: 50/765
+Analyzing: D:\Intellicrack\intellicrack\ui\shared_ui_layouts.py
+Analyzing: D:\Intellicrack\intellicrack\ai\model_format_converter.py
+Analyzing: D:\Intellicrack\intellicrack\scripts\frida\tpm_command_interceptor.js
+Analyzing: D:\Intellicrack\intellicrack\ui\style_manager.py
+Analyzing: D:\Intellicrack\intellicrack\utils\gpu_benchmark.py
+Analyzing: D:\Intellicrack\intellicrack\utils\core\exception_utils.py
+Analyzing: D:\Intellicrack\intellicrack\ui\widgets\widget_factory.py
+Analyzing: D:\Intellicrack\htmlcov\coverage_html_cb_df357c50.js
+Analyzing: D:\Intellicrack\intellicrack\scripts\frida\tpm_emulator.js
+Analyzing: D:\Intellicrack\intellicrack\ui\style_utils.py
+Analyzing: D:\Intellicrack\intellicrack\ai\model_cache_manager.py
+Analyzing: D:\Intellicrack\intellicrack\core\analysis\automated_patch_agent.py
+Analyzing: D:\Intellicrack\intellicrack\hexview\hex_dialog.py
+Analyzing: D:\Intellicrack\intellicrack\models\repositories\factory.py
+Analyzing: D:\Intellicrack\intellicrack\ui\widgets\__init__.py
+  Found 1 issues in D:\Intellicrack\intellicrack\utils\protection_utils.py
+Analyzing: D:\Intellicrack\intellicrack\utils\qemu_image_discovery.py
+Analyzing: D:\Intellicrack\intellicrack\cli\ai_chat_interface.py
+Analyzing: D:\Intellicrack\intellicrack\utils\core\final_utilities.py
+Analyzing: D:\Intellicrack\intellicrack\ui\symbolic_execution.py
+Analyzing: D:\Intellicrack\intellicrack\utils\http_utils.py
+Analyzing: D:\Intellicrack\intellicrack\ui\widgets\console_widget.py
+Analyzing: D:\Intellicrack\intellicrack\ui\window_sizing.py
+  Found 3 issues in D:\Intellicrack\intellicrack\plugins\plugin_system.py
+Analyzing: D:\Intellicrack\intellicrack\plugins\remote_executor.py

@@ -134,10 +134,17 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
                 logger.error(f"Binary file not found: {file_path}")
                 return False
 
+            try:
+                stat_info = path.stat()
+                file_size = stat_info.st_size
+            except OSError as e:
+                self.logger.error(f"Failed to get file stats for {file_path}: {e}")
+                return False
+
             binary_info = {
                 "path": str(path.absolute()),
                 "name": path.name,
-                "size": path.stat().st_size,
+                "size": file_size,
                 "loaded_at": datetime.now().isoformat(),
                 "metadata": metadata or {},
             }
@@ -200,8 +207,15 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
                 logger.error(f"Project file not found: {project_path}")
                 return False
 
-            with open(path) as f:
-                project_data = json.load(f)
+            try:
+                with open(path) as f:
+                    project_data = json.load(f)
+            except json.JSONDecodeError as e:
+                logger.error(f"Invalid project JSON in {project_path}: {e}")
+                return False
+            except IOError as e:
+                logger.error(f"Failed to read project file {project_path}: {e}")
+                return False
 
             project_info = {
                 "path": str(path.absolute()),
@@ -241,10 +255,18 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
             }
 
             path = Path(project_path)
-            path.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                path.parent.mkdir(parents=True, exist_ok=True)
+            except OSError as e:
+                logger.error(f"Failed to create project directory {path.parent}: {e}")
+                return False
 
-            with open(path, "w") as f:
-                json.dump(project_data, f, indent=2)
+            try:
+                with open(path, "w") as f:
+                    json.dump(project_data, f, indent=2)
+            except (IOError, OSError) as e:
+                logger.error(f"Failed to save project to {path}: {e}")
+                return False
 
             self._state["current_project"] = {
                 "path": str(path.absolute()),

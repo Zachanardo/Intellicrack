@@ -127,8 +127,12 @@ class ProtectionAnalyzer:
             self.logger.info(f"Starting protection analysis for: {file_path}")
 
             # Read file data
-            with open(file_path, "rb") as f:
-                file_data = f.read()
+            try:
+                with open(file_path, "rb") as f:
+                    file_data = f.read()
+            except IOError as e:
+                self.logger.error(f"Failed to read file {file_path}: {e}")
+                return {"error": f"Failed to read file: {e}"}
 
             # Basic file info
             file_info = self._get_file_info(file_path, file_data)
@@ -172,6 +176,7 @@ class ProtectionAnalyzer:
 
     def _get_file_info(self, file_path: Path, file_data: bytes) -> Dict[str, Any]:
         """Get basic file information."""
+        self.logger.debug(f"Computing file hashes for {file_path}")
         return {
             "filename": file_path.name,
             "filepath": str(file_path),
@@ -301,6 +306,7 @@ class ProtectionAnalyzer:
         for i in range(0, len(file_data), block_size):
             block = file_data[i : i + block_size]
             if len(block) < 64:
+                self.logger.warning("Skipping short block in entropy analysis")
                 continue
 
             # Calculate Shannon entropy
@@ -381,7 +387,11 @@ class ProtectionAnalyzer:
     def _analyze_pe_sections(self, file_path: Path) -> Dict[str, Any]:
         """Analyze PE file sections."""
         try:
-            pe = pefile.PE(str(file_path))
+            try:
+                pe = pefile.PE(str(file_path))
+            except pefile.PEFormatError as e:
+                self.logger.error(f"Invalid PE format in {file_path}: {e}")
+                return {"error": f"Invalid PE format: {e}"}
             sections = []
 
             for section in pe.sections:
@@ -473,11 +483,14 @@ class ProtectionAnalyzer:
                             functions.append({"name": func_name, "address": hex(imp.address) if imp.address else "N/A"})
 
                             # Check for suspicious functions
-                            for category, sus_funcs in suspicious_api_patterns.items():
-                                if func_name in sus_funcs:
-                                    suspicious_functions.add((category, func_name))
+                    for category, sus_funcs in suspicious_api_patterns.items():
+                        if func_name in sus_funcs:
+                            suspicious_functions.add((category, func_name))
 
                     imports[dll_name] = functions
+
+            if suspicious_functions:
+                self.logger.info(f"Found {len(suspicious_functions)} suspicious APIs in {file_path}")
 
             pe.close()
 

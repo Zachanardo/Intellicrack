@@ -22,6 +22,8 @@ import logging
 
 from intellicrack.utils.logger import logger
 
+logger.debug("Core module loaded")
+
 # Import security enforcement early to apply patches
 try:
     from . import security_enforcement
@@ -33,45 +35,75 @@ except ImportError as e:
     SECURITY_ENFORCEMENT_AVAILABLE = False
 
 # Import all core modules with error handling
+import sys
+
+print("[DEBUG core/__init__] Importing analysis...")
+sys.stdout.flush()
 try:
     from . import analysis
+    print("[DEBUG core/__init__] analysis imported OK")
+    sys.stdout.flush()
 except ImportError as e:
     logger.warning(f"Analysis module not available: {e}")
     analysis = None
 
+print("[DEBUG core/__init__] Importing network...")
+sys.stdout.flush()
 try:
     from . import network
+    print("[DEBUG core/__init__] network imported OK")
+    sys.stdout.flush()
 except ImportError as e:
     logger.warning(f"Network module not available: {e}")
     network = None
 
+print("[DEBUG core/__init__] Importing patching...")
+sys.stdout.flush()
 try:
     from . import patching
+    print("[DEBUG core/__init__] patching imported OK")
+    sys.stdout.flush()
 except ImportError as e:
     logger.warning(f"Patching module not available: {e}")
     patching = None
 
+print("[DEBUG core/__init__] Importing processing...")
+sys.stdout.flush()
 try:
     from . import processing
+    print("[DEBUG core/__init__] processing imported OK")
+    sys.stdout.flush()
 except ImportError as e:
     logger.warning(f"Processing module not available: {e}")
     processing = None
 
+print("[DEBUG core/__init__] Importing protection_bypass...")
+sys.stdout.flush()
 try:
     from . import protection_bypass
+    print("[DEBUG core/__init__] protection_bypass imported OK")
+    sys.stdout.flush()
 except ImportError as e:
     logger.warning(f"Protection bypass module not available: {e}")
     protection_bypass = None
 
+print("[DEBUG core/__init__] Importing reporting...")
+sys.stdout.flush()
 try:
     from . import reporting
+    print("[DEBUG core/__init__] reporting imported OK")
+    sys.stdout.flush()
 except ImportError as e:
     logger.warning(f"Reporting module not available: {e}")
     reporting = None
 
 # Import protection analyzer
+print("[DEBUG core/__init__] Importing ProtectionAnalyzer...")
+sys.stdout.flush()
 try:
     from .protection_analyzer import ProtectionAnalyzer
+    print("[DEBUG core/__init__] ProtectionAnalyzer imported OK")
+    sys.stdout.flush()
 
     PROTECTION_ANALYZER_AVAILABLE = True
 except ImportError as e:

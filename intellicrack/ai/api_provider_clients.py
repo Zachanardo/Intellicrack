@@ -94,6 +94,7 @@ class OpenAIProviderClient(BaseProviderClient):
             logger.warning("No API key provided for OpenAI")
             return self._get_fallback_models()
 
+        logger.info("Fetching models from OpenAI")
         url = f"{self.base_url}/models"
         data = self._make_request("GET", url)
 
@@ -151,6 +152,7 @@ class OpenAIProviderClient(BaseProviderClient):
             if key in model_id:
                 return length
 
+        logger.warning(f"Unknown model {model_id}, defaulting context length to 4096")
         return 4096
 
     def _get_capabilities(self, model_id: str) -> list[str]:

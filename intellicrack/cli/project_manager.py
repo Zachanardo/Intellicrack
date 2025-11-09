@@ -31,6 +31,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from intellicrack.utils.logger import get_logger
 
 logger = get_logger(__name__)
+logger.debug("Project manager module loaded")
 
 
 class ProjectManager:
@@ -39,6 +40,7 @@ class ProjectManager:
     def __init__(self):
         """Initialize project manager."""
         self.projects_dir = Path.home() / ".intellicrack" / "projects"
+        logger.debug(f"Projects directory: {self.projects_dir}")
         self.projects_dir.mkdir(parents=True, exist_ok=True)
         self.current_project = None
 

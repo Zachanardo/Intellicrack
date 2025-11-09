@@ -1,0 +1,10 @@
+{
+  "file_hashes": {
+    ".\\production_scanner.rs": "77e70222e0240a2f54b7a0c374eeef28bc6007a2fbb8db967c6fc8e13a14291c",
+    ".\\analyze_results.py": "a68b7bcd0a3b2fb067c9233bb0fc04a23a7830b372441372989b6e6386e9f9e5",
+    ".\\enhanced_analyzer.py": "d3bf33f65118506cf42c91ab1d7a8c7a75c5776db646f48e21414f2eead74116",
+    ".\\generate_report.py": "80ffe71395b68ad6b07ff3abc512fa72b608b27a717ddfc40c601a09a214b898",
+    ".\\build.rs": "0b34647e2d59728d1539608dc40fb5adac87d9601d125f97fa7ada54c695e061"
+  },
+  "issues": []
+}

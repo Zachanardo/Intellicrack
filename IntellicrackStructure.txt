@@ -1,7 +1,7 @@
 INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: Wed, Nov 05, 2025 09:25:56 PM
+Generated: Sat, Nov 08, 2025 06:49:48 PM
 Directory: D:\Intellicrack\intellicrack
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -63,6 +63,8 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── script_generation_agent.py
 │   ├── script_generation_prompts.py
 │   ├── semantic_code_analyzer.py
+│   ├── TODO.md
+│   ├── TODO.xml
 │   ├── visualization_analytics.py
 │   ├── vulnerability_research_integration.py
 │   └── vulnerability_research_integration_helper.py
@@ -314,6 +316,8 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── symbolic_devirtualizer.py
 │   │   ├── symbolic_executor.py
 │   │   ├── taint_analyzer.py
+│   │   ├── TODO.md
+│   │   ├── TODO.xml
 │   │   ├── vmprotect_detector.py
 │   │   ├── vulnerability_engine.py
 │   │   ├── yara_pattern_engine.py
@@ -517,6 +521,8 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── subscription_validation_bypass.py
 │   ├── task_manager.py
 │   ├── terminal_manager.py
+│   ├── TODO.md
+│   ├── TODO.xml
 │   ├── tool_discovery.py
 │   └── trial_reset_engine.py
 ├── dashboard/
@@ -538,11 +544,9 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   └── pattern_evolution.db
 │   ├── output/
 │   ├── plugin_cache/
-│   ├── reports/
 │   ├── signatures/
 │   │   ├── README.md
 │   │   └── sample_signatures.sg
-│   ├── visualizations/
 │   ├── yara_rules/
 │   │   ├── antidebug.yar
 │   │   ├── compilers.yar
@@ -740,7 +744,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── __init__.py
 │   │   ├── AdvancedAnalysis.java
 │   │   ├── anti_analysis_detector.py
-│   │   ├── AntiAnalysisDetector.py
 │   │   ├── AutomatedUnpacker.java
 │   │   ├── ControlFlowDeobfuscator.java
 │   │   ├── CryptoRoutineIdentifier.java
@@ -756,7 +759,9 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── QuickStringDump.java
 │   │   ├── README.md
 │   │   ├── SimpleStringExtractor.java
-│   │   └── StringDecryptionAutomator.java
+│   │   ├── StringDecryptionAutomator.java
+│   │   ├── TODO.md
+│   │   └── TODO.xml
 │   ├── radare2/
 │   │   ├── radare2_keygen_assistant.py
 │   │   └── radare2_license_analyzer.py
@@ -1032,9 +1037,12 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── severity_levels.py
 │   ├── subprocess_security.py
 │   └── torch_gil_safety.py
+├── .intellicrack_scan_cache.json
 ├── __init__.py
 ├── __main__.py
 ├── Claude.md
 ├── config.py
 ├── main.py
-└── README.md
+├── README.md
+├── TODO.md
+└── TODO.xml

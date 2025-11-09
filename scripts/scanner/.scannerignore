@@ -27,3 +27,7 @@ D:\Intellicrack\tools
 # Test and script directories
 D:\Intellicrack\scripts
 D:\Intellicrack\tests
+
+# Frida and Ghidra scripts (instrumentation/analysis scripts with legitimate console.log/debug output)
+D:\Intellicrack\intellicrack\scripts\frida
+D:\Intellicrack\intellicrack\scripts\ghidra

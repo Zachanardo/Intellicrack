@@ -67,7 +67,7 @@ def get_frida_scripts_dir() -> Path:
         Path: Absolute path to the Frida scripts directory
 
     """
-    return Path(get_resource_path("intellicrack/intellicrack/scripts/frida"))
+    return Path(get_resource_path("scripts/frida"))
 
 
 def get_ghidra_scripts_dir() -> Path:
@@ -77,7 +77,7 @@ def get_ghidra_scripts_dir() -> Path:
         Path: Absolute path to the Ghidra scripts directory
 
     """
-    return Path(get_resource_path("intellicrack/intellicrack/scripts/ghidra"))
+    return Path(get_resource_path("scripts/ghidra"))
 
 
 def get_plugin_modules_dir() -> Path:

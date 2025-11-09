@@ -280,8 +280,20 @@ impl EnvironmentManager {
     fn configure_windows_dll_search_paths(&self) -> Result<()> {
         debug!("Configuring Windows DLL search paths");
 
-        // Critical DLL directories for Ray and other native modules
         let dll_directories = [
+            format!("{}/.pixi/envs/default/Library/bin", &*PROJECT_ROOT),
+            format!(
+                "{}/.pixi/envs/default/Lib/site-packages/torch/lib",
+                &*PROJECT_ROOT
+            ),
+            format!(
+                "{}/.pixi/envs/default/Lib/site-packages/intel_extension_for_pytorch/bin",
+                &*PROJECT_ROOT
+            ),
+            format!(
+                "{}/.pixi/envs/default/Lib/site-packages/numpy.libs",
+                &*PROJECT_ROOT
+            ),
             format!(
                 "{}/.pixi/envs/default/Lib/site-packages/h5py",
                 &*PROJECT_ROOT
@@ -292,19 +304,35 @@ impl EnvironmentManager {
             ),
             format!("{}/.pixi/envs/default/Scripts", &*PROJECT_ROOT),
             format!("{}/.pixi/envs/default/DLLs", &*PROJECT_ROOT),
-            format!("{}/.pixi/envs/default/Library/bin", &*PROJECT_ROOT),
             format!("{}/.pixi/envs/default", &*PROJECT_ROOT),
         ];
 
-        let new_path = dll_directories.join(";");
         let old_path = env::var("PATH").unwrap_or_default();
+
+        let safe_system_paths: Vec<&str> = old_path
+            .split(';')
+            .filter(|p| {
+                let p_lower = p.to_lowercase();
+                !p_lower.contains("intel")
+                && !p_lower.contains("oneapi")
+                && !p_lower.contains("mkl")
+            })
+            .collect();
+
+        let mut final_path_parts = dll_directories.to_vec();
+        final_path_parts.extend(safe_system_paths.iter().map(|s| s.to_string()));
+
+        let final_path = final_path_parts.join(";");
+
         unsafe {
-            env::set_var("PATH", format!("{new_path};{old_path}"));
+            env::set_var("PATH", final_path);
         }
 
+        let blocked_count = old_path.split(';').count() - safe_system_paths.len();
         info!(
-            "Configured Windows DLL search paths for {} directories",
-            dll_directories.len()
+            "Configured Windows DLL search paths: {} pixi directories, {} system Intel/oneAPI paths blocked",
+            dll_directories.len(),
+            blocked_count
         );
         Ok(())
     }

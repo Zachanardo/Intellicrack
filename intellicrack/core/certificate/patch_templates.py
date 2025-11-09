@@ -104,6 +104,11 @@ from intellicrack.core.certificate.patch_generators import (
     generate_always_succeed_x86,
 )
 
+from intellicrack.utils.logger import get_logger
+
+logger = get_logger(__name__)
+logger.debug("Certificate patch templates module loaded")
+
 
 @dataclass
 class PatchTemplate:
@@ -121,14 +126,33 @@ WINHTTP_IGNORE_ALL_CERT_ERRORS_X86 = PatchTemplate(
     description="Patch WinHttpSetOption to ignore all certificate errors (x86)",
     target_api="WinHttpSetOption",
     architecture=Architecture.X86,
-    patch_bytes=bytes([
-        0x83, 0x7C, 0x24, 0x08, 0x1F,
-        0x75, 0x10,
-        0x8B, 0x44, 0x24, 0x0C,
-        0x81, 0x08, 0x00, 0x33, 0x00, 0x00,
-        0xB8, 0x01, 0x00, 0x00, 0x00,
-        0xC3
-    ])
+    patch_bytes=bytes(
+        [
+            0x83,
+            0x7C,
+            0x24,
+            0x08,
+            0x1F,
+            0x75,
+            0x10,
+            0x8B,
+            0x44,
+            0x24,
+            0x0C,
+            0x81,
+            0x08,
+            0x00,
+            0x33,
+            0x00,
+            0x00,
+            0xB8,
+            0x01,
+            0x00,
+            0x00,
+            0x00,
+            0xC3,
+        ]
+    ),
 )
 
 WINHTTP_IGNORE_ALL_CERT_ERRORS_X64 = PatchTemplate(
@@ -136,13 +160,7 @@ WINHTTP_IGNORE_ALL_CERT_ERRORS_X64 = PatchTemplate(
     description="Patch WinHttpSetOption to ignore all certificate errors (x64)",
     target_api="WinHttpSetOption",
     architecture=Architecture.X64,
-    patch_bytes=bytes([
-        0x83, 0xFA, 0x1F,
-        0x75, 0x10,
-        0x81, 0x08, 0x00, 0x33, 0x00, 0x00,
-        0x48, 0xC7, 0xC0, 0x01, 0x00, 0x00, 0x00,
-        0xC3
-    ])
+    patch_bytes=bytes([0x83, 0xFA, 0x1F, 0x75, 0x10, 0x81, 0x08, 0x00, 0x33, 0x00, 0x00, 0x48, 0xC7, 0xC0, 0x01, 0x00, 0x00, 0x00, 0xC3]),
 )
 
 WINHTTP_FORCE_SUCCESS_X86 = PatchTemplate(
@@ -150,7 +168,7 @@ WINHTTP_FORCE_SUCCESS_X86 = PatchTemplate(
     description="Patch WinHttpSendRequest to always succeed (x86)",
     target_api="WinHttpSendRequest",
     architecture=Architecture.X86,
-    patch_bytes=generate_always_succeed_x86()
+    patch_bytes=generate_always_succeed_x86(),
 )
 
 WINHTTP_FORCE_SUCCESS_X64 = PatchTemplate(
@@ -158,7 +176,7 @@ WINHTTP_FORCE_SUCCESS_X64 = PatchTemplate(
     description="Patch WinHttpSendRequest to always succeed (x64)",
     target_api="WinHttpSendRequest",
     architecture=Architecture.X64,
-    patch_bytes=generate_always_succeed_x64()
+    patch_bytes=generate_always_succeed_x64(),
 )
 
 OPENSSL_DISABLE_VERIFY_X86 = PatchTemplate(
@@ -166,11 +184,7 @@ OPENSSL_DISABLE_VERIFY_X86 = PatchTemplate(
     description="Patch SSL_CTX_set_verify to set mode=SSL_VERIFY_NONE (x86)",
     target_api="SSL_CTX_set_verify",
     architecture=Architecture.X86,
-    patch_bytes=bytes([
-        0x8B, 0x44, 0x24, 0x04,
-        0xC7, 0x44, 0x24, 0x08, 0x00, 0x00, 0x00, 0x00,
-        0xC3
-    ])
+    patch_bytes=bytes([0x8B, 0x44, 0x24, 0x04, 0xC7, 0x44, 0x24, 0x08, 0x00, 0x00, 0x00, 0x00, 0xC3]),
 )
 
 OPENSSL_DISABLE_VERIFY_X64 = PatchTemplate(
@@ -178,11 +192,7 @@ OPENSSL_DISABLE_VERIFY_X64 = PatchTemplate(
     description="Patch SSL_CTX_set_verify to set mode=SSL_VERIFY_NONE (x64)",
     target_api="SSL_CTX_set_verify",
     architecture=Architecture.X64,
-    patch_bytes=bytes([
-        0x48, 0x89, 0xC8,
-        0x31, 0xD2,
-        0xC3
-    ])
+    patch_bytes=bytes([0x48, 0x89, 0xC8, 0x31, 0xD2, 0xC3]),
 )
 
 OPENSSL_ALWAYS_VALID_X86 = PatchTemplate(
@@ -190,10 +200,7 @@ OPENSSL_ALWAYS_VALID_X86 = PatchTemplate(
     description="Patch SSL_get_verify_result to return X509_V_OK (x86)",
     target_api="SSL_get_verify_result",
     architecture=Architecture.X86,
-    patch_bytes=bytes([
-        0x31, 0xC0,
-        0xC3
-    ])
+    patch_bytes=bytes([0x31, 0xC0, 0xC3]),
 )
 
 OPENSSL_ALWAYS_VALID_X64 = PatchTemplate(
@@ -201,10 +208,7 @@ OPENSSL_ALWAYS_VALID_X64 = PatchTemplate(
     description="Patch SSL_get_verify_result to return X509_V_OK (x64)",
     target_api="SSL_get_verify_result",
     architecture=Architecture.X64,
-    patch_bytes=bytes([
-        0x31, 0xC0,
-        0xC3
-    ])
+    patch_bytes=bytes([0x31, 0xC0, 0xC3]),
 )
 
 SCHANNEL_SKIP_VALIDATION_X64 = PatchTemplate(
@@ -212,11 +216,7 @@ SCHANNEL_SKIP_VALIDATION_X64 = PatchTemplate(
     description="Patch InitializeSecurityContext to skip cert checks (x64)",
     target_api="InitializeSecurityContext",
     architecture=Architecture.X64,
-    patch_bytes=bytes([
-        0x81, 0x21, 0x00, 0x00, 0x10, 0x00,
-        0x48, 0xC7, 0xC0, 0x00, 0x00, 0x00, 0x00,
-        0xC3
-    ])
+    patch_bytes=bytes([0x81, 0x21, 0x00, 0x00, 0x10, 0x00, 0x48, 0xC7, 0xC0, 0x00, 0x00, 0x00, 0x00, 0xC3]),
 )
 
 SCHANNEL_FORCE_TRUST_X64 = PatchTemplate(
@@ -224,12 +224,7 @@ SCHANNEL_FORCE_TRUST_X64 = PatchTemplate(
     description="Patch certificate policy to always trust (x64)",
     target_api="QueryContextAttributes",
     architecture=Architecture.X64,
-    patch_bytes=bytes([
-        0x48, 0x83, 0xFA, 0x53,
-        0x75, 0x08,
-        0x48, 0xC7, 0xC0, 0x00, 0x00, 0x00, 0x00,
-        0xC3
-    ])
+    patch_bytes=bytes([0x48, 0x83, 0xFA, 0x53, 0x75, 0x08, 0x48, 0xC7, 0xC0, 0x00, 0x00, 0x00, 0x00, 0xC3]),
 )
 
 CRYPTOAPI_BYPASS_CHAIN_POLICY_X86 = PatchTemplate(
@@ -237,14 +232,40 @@ CRYPTOAPI_BYPASS_CHAIN_POLICY_X86 = PatchTemplate(
     description="Patch CertVerifyCertificateChainPolicy to return TRUE (x86)",
     target_api="CertVerifyCertificateChainPolicy",
     architecture=Architecture.X86,
-    patch_bytes=bytes([
-        0x8B, 0x44, 0x24, 0x10,
-        0xC7, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0xC7, 0x40, 0x04, 0x00, 0x00, 0x00, 0x00,
-        0xC7, 0x40, 0x08, 0x00, 0x00, 0x00, 0x00,
-        0xB8, 0x01, 0x00, 0x00, 0x00,
-        0xC3
-    ])
+    patch_bytes=bytes(
+        [
+            0x8B,
+            0x44,
+            0x24,
+            0x10,
+            0xC7,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0xC7,
+            0x40,
+            0x04,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0xC7,
+            0x40,
+            0x08,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0xB8,
+            0x01,
+            0x00,
+            0x00,
+            0x00,
+            0xC3,
+        ]
+    ),
 )
 
 CRYPTOAPI_BYPASS_CHAIN_POLICY_X64 = PatchTemplate(
@@ -252,13 +273,41 @@ CRYPTOAPI_BYPASS_CHAIN_POLICY_X64 = PatchTemplate(
     description="Patch CertVerifyCertificateChainPolicy to return TRUE (x64)",
     target_api="CertVerifyCertificateChainPolicy",
     architecture=Architecture.X64,
-    patch_bytes=bytes([
-        0x49, 0xC7, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x49, 0xC7, 0x40, 0x04, 0x00, 0x00, 0x00, 0x00,
-        0x49, 0xC7, 0x40, 0x08, 0x00, 0x00, 0x00, 0x00,
-        0x48, 0xC7, 0xC0, 0x01, 0x00, 0x00, 0x00,
-        0xC3
-    ])
+    patch_bytes=bytes(
+        [
+            0x49,
+            0xC7,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x49,
+            0xC7,
+            0x40,
+            0x04,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x49,
+            0xC7,
+            0x40,
+            0x08,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x48,
+            0xC7,
+            0xC0,
+            0x01,
+            0x00,
+            0x00,
+            0x00,
+            0xC3,
+        ]
+    ),
 )
 
 ALL_TEMPLATES = [

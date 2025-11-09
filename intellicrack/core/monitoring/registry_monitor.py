@@ -22,6 +22,8 @@ from intellicrack.core.monitoring.base_monitor import (
     ProcessInfo,
 )
 
+from intellicrack.utils.logger import get_logger
+
 advapi32 = ctypes.windll.advapi32
 kernel32 = ctypes.windll.kernel32
 
