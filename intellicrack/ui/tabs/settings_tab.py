@@ -1020,7 +1020,12 @@ class SettingsTab(BaseTab):
 
             # Save to centralized config
             for key, value in self.settings.items():
-                self.config.set(f"ui.{key}", value, save=False)
+                # Tool paths and directory paths should be saved at root level for tool discovery
+                if key.endswith("_path") or key.endswith("_directory"):
+                    self.config.set(key, value, save=False)
+                else:
+                    # Other UI settings go under ui prefix
+                    self.config.set(f"ui.{key}", value, save=False)
 
             # Save config to disk
             self.config.save()

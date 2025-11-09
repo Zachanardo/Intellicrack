@@ -121,8 +121,8 @@ class SecurityEnforcement:
         logger.info("Security bypass disabled")
 
 
-# Global instance
-_security = SecurityEnforcement()
+# Global instance - lazy loaded to avoid import-time hang
+_security = None
 
 
 # Subprocess Protection

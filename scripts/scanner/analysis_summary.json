@@ -1,0 +1,30 @@
+{
+  "total": 2573,
+  "severity_counts": {
+    "critical": 434,
+    "high": 1101,
+    "medium": 1038
+  },
+  "findings_by_type": {
+    "console_log": 702,
+    "development_marker": 476,
+    "empty_list_return": 280,
+    "hardcoded_credentials": 8,
+    "artificial_delay": 317,
+    "empty_dict_return": 149,
+    "not_implemented": 149,
+    "always_true": 13,
+    "alert_statement": 12,
+    "debugger_statement": 1,
+    "empty_arrow_function": 7,
+    "debug_print": 6,
+    "assertion_failure": 6,
+    "minimal_function": 178,
+    "empty_class": 83,
+    "empty_function": 178,
+    "debugger_import": 2,
+    "debugger_breakpoint": 1,
+    "hardcoded_password": 1,
+    "development_comment": 4
+  }
+}

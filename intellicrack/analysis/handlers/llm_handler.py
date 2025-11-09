@@ -21,7 +21,8 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-from typing import Any, Optional
+from __future__ import annotations
+from typing import Any, Optional, TYPE_CHECKING
 
 try:
     from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal
@@ -65,10 +66,8 @@ try:
 except ImportError:
     ICPAnalysisTool = None
 
-try:
+if TYPE_CHECKING:
     from ...protection.unified_protection_engine import UnifiedProtectionResult
-except ImportError:
-    UnifiedProtectionResult = None
 
 try:
     from ...utils.logger import get_logger
@@ -103,7 +102,7 @@ class LLMWorkerSignals(QObject):
 class LLMAnalysisWorker(QRunnable):
     """Worker thread for LLM analysis operations."""
 
-    def __init__(self, operation: str, analysis_result: UnifiedProtectionResult, **kwargs):
+    def __init__(self, operation: str, analysis_result: "UnifiedProtectionResult", **kwargs):
         """Initialize the LLM analysis worker.
 
         Args:
@@ -155,7 +154,7 @@ class LLMAnalysisWorker(QRunnable):
         finally:
             self.signals.finished.emit()
 
-    def _build_llm_context(self, result: UnifiedProtectionResult) -> dict[str, Any]:
+    def _build_llm_context(self, result: "UnifiedProtectionResult") -> dict[str, Any]:
         """Build context dictionary for LLM."""
         context = {
             "file_path": result.file_path,
@@ -190,7 +189,7 @@ class LLMAnalysisWorker(QRunnable):
 
         return context
 
-    def _build_summary_prompt(self, result: UnifiedProtectionResult) -> str:
+    def _build_summary_prompt(self, result: "UnifiedProtectionResult") -> str:
         """Build prompt for protection summary."""
         prompt = f"""Analyze the following protection analysis results and provide a concise summary:
 
@@ -218,7 +217,7 @@ Please provide:
 """
         return prompt
 
-    def _build_bypass_prompt(self, result: UnifiedProtectionResult) -> str:
+    def _build_bypass_prompt(self, result: "UnifiedProtectionResult") -> str:
         """Build prompt for bypass suggestions."""
         prompt = """Based on the following protection analysis, suggest bypass strategies:
 
@@ -278,7 +277,7 @@ class LLMHandler(QObject):
         except Exception as e:
             logger.error(f"Failed to register LLM tool: {e}")
 
-    def on_analysis_complete(self, result: UnifiedProtectionResult):
+    def on_analysis_complete(self, result: "UnifiedProtectionResult"):
         """Handle slot when protection analysis completes.
 
         This method runs in the main thread and kicks off background

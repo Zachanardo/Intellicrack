@@ -54,7 +54,7 @@ except ImportError:
         """Fallback QThreadPool class when PyQt6 is not available."""
 
         @staticmethod
-        def globalInstance():
+        def global_instance():
             """Return the global thread pool instance."""
             return None
 
@@ -482,7 +482,7 @@ class ScriptGenerationHandler(QObject):
 
         """
         super().__init__(parent)
-        self.thread_pool = QThreadPool.globalInstance()
+        self.thread_pool = QThreadPool.global_instance()
         self.current_result: UnifiedProtectionResult | None = None
         self.parent_widget = parent
 

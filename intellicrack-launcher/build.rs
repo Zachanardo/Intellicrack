@@ -77,7 +77,25 @@ fn main() {
 
             if !rc_compiled {
                 let empty_macros: &[&str] = &[];
-                embed_resource::compile("intellicrack.rc", empty_macros);
+                use embed_resource::CompilationResult;
+
+                match embed_resource::compile("intellicrack.rc", empty_macros) {
+                    CompilationResult::Ok => {
+                        println!("cargo:warning=Successfully compiled Windows resource file with embed-resource");
+                    }
+                    CompilationResult::NotWindows => {
+                        println!("cargo:warning=Not building for Windows, skipping resource compilation");
+                    }
+                    CompilationResult::NotAttempted(reason) => {
+                        println!("cargo:warning=Resource compilation not attempted: {}", reason);
+                        println!("cargo:warning=Continuing without Windows manifest (non-critical)");
+                    }
+                    CompilationResult::Failed(reason) => {
+                        eprintln!("cargo:warning=CRITICAL: Failed to compile Windows resource file: {}", reason);
+                        eprintln!("cargo:warning=Windows manifest will be missing from executable");
+                        panic!("Resource compilation failed: {}. This may cause runtime issues on Windows.", reason);
+                    }
+                }
             }
             println!("cargo:warning=Windows manifest embedded");
         }

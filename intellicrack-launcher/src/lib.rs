@@ -158,7 +158,6 @@ impl IntellicrackLauncher {
                 .run_environment_test()?
         } else {
             // Launch main application via subprocess to avoid embedded Python issues
-            tracing::info!("Launching Intellicrack via subprocess");
             self.launch_intellicrack_subprocess()?
         };
         let main_exec_duration = main_exec_start.elapsed();
@@ -183,14 +182,9 @@ impl IntellicrackLauncher {
         );
         println!("GPU Vendor: {:?}", self.platform.gpu_vendor);
 
-        // Debug: Check what's in the dependencies HashMap
         tracing::debug!("Dependencies HashMap size: {}", results.dependencies.len());
 
-        // Only show dependency status if we actually validated dependencies
-        if results.dependencies.is_empty() {
-            // Fast launch mode - skipped dependency validation
-            println!("\nFast launch mode - launching Intellicrack...\n");
-        } else {
+        if !results.dependencies.is_empty() {
             println!("\nDependency Status:");
             for (name, status) in &results.dependencies {
                 let status_symbol = if status.available { "OK" } else { "MISSING" };
@@ -199,24 +193,25 @@ impl IntellicrackLauncher {
             }
 
             if results.all_critical_available() {
-                println!("\nAll critical dependencies available - launching Intellicrack...\n");
+                println!("\nAll critical dependencies available\n");
             } else {
                 println!("\nSome dependencies unavailable - functionality may be limited\n");
             }
         }
+
+        println!("Launching Intellicrack...\n");
     }
 
     fn launch_intellicrack_subprocess(&self) -> Result<i32> {
         use std::process::Command;
-        use anyhow::Context;
+        use std::time::Duration;
+        use std::thread;
 
         tracing::info!("Launching Intellicrack as subprocess");
 
-        // Get Python executable path from environment
         let python_exe = std::env::var("PYTHON_SYS_EXECUTABLE")
             .or_else(|_| std::env::var("PYTHONEXECUTABLE"))
             .unwrap_or_else(|_| {
-                // Fallback to finding python in PATH
                 if cfg!(windows) {
                     "python.exe".to_string()
                 } else {
@@ -226,12 +221,10 @@ impl IntellicrackLauncher {
 
         tracing::info!("Using Python executable: {}", python_exe);
 
-        // Build command with clean environment (no Cygwin/MSYS variables)
         let mut cmd = Command::new(&python_exe);
         cmd.arg("-c")
             .arg("import sys; import intellicrack.main; sys.exit(intellicrack.main.main())");
 
-        // Clear Cygwin/MSYS environment variables to prevent threading conflicts
         cmd.env_remove("CYGWIN")
             .env_remove("MSYS")
             .env_remove("MSYSTEM")
@@ -240,31 +233,62 @@ impl IntellicrackLauncher {
             .env_remove("ORIGINAL_TEMP")
             .env_remove("ORIGINAL_TMP");
 
-        // Redirect stdout/stderr to debug file for troubleshooting
-        use std::fs::File;
-        let debug_log = File::create("D:\\Intellicrack\\logs\\python_subprocess_debug.log")
-            .context("Failed to create debug log file")?;
-        cmd.stdout(std::process::Stdio::from(debug_log.try_clone().unwrap()))
-            .stderr(std::process::Stdio::from(debug_log));
-
-        // On Windows, create a new process group to detach from Cygwin
         #[cfg(windows)]
         {
             use std::os::windows::process::CommandExt;
             const CREATE_NEW_PROCESS_GROUP: u32 = 0x00000200;
+
             cmd.creation_flags(CREATE_NEW_PROCESS_GROUP);
         }
 
-        // Launch Python subprocess to run intellicrack.main
-        let child = cmd.spawn()
-            .context("Failed to spawn Python subprocess")?;
+        let mut child = match cmd.spawn() {
+            Ok(child) => {
+                tracing::info!("Python subprocess spawned (PID: {})", child.id());
+                child
+            }
+            Err(e) => {
+                tracing::error!("Failed to spawn Python subprocess: {}", e);
+                eprintln!("\n❌ ERROR: Failed to spawn Python subprocess!");
+                eprintln!("Error: {}", e);
+                eprintln!("\nPossible causes:");
+                eprintln!("  1. Python executable not found: {}", python_exe);
+                eprintln!("  2. Permission denied");
+                eprintln!("  3. Resource limits (too many processes)");
+                eprintln!("  4. Another instance is already running");
+                eprintln!("\nVerify Python is accessible:");
+                eprintln!("  {} --version", python_exe);
+                return Err(anyhow::anyhow!("Subprocess spawn failed: {}", e));
+            }
+        };
 
-        tracing::info!("Python subprocess spawned (PID: {})", child.id());
-        tracing::info!("Intellicrack GUI launched - launcher exiting");
+        thread::sleep(Duration::from_millis(500));
 
-        // Don't wait for GUI to exit - it runs in the background
-        // Return success immediately
-        Ok(0)
+        match child.try_wait() {
+            Ok(Some(status)) => {
+                let exit_code = status.code().unwrap_or(1);
+                tracing::error!("GUI process exited immediately with code: {}", exit_code);
+                eprintln!("\n❌ ERROR: Intellicrack GUI failed to start!");
+                eprintln!("Exit code: {}", exit_code);
+                eprintln!("\nPossible causes:");
+                eprintln!("  1. Missing Python dependencies (run: pixi install)");
+                eprintln!("  2. Qt display issues");
+                eprintln!("  3. Import errors in Python code");
+                eprintln!("\nTo diagnose, run manually:");
+                eprintln!("  {} -c \"import sys; import intellicrack.main; sys.exit(intellicrack.main.main())\"", python_exe);
+                return Ok(exit_code);
+            }
+            Ok(None) => {
+                tracing::info!("✓ Intellicrack GUI launched successfully");
+                println!("\n✓ Intellicrack GUI launched successfully!");
+                println!("PID: {}", child.id());
+                Ok(0)
+            }
+            Err(e) => {
+                tracing::error!("Failed to check process status: {}", e);
+                eprintln!("Warning: Could not verify process status: {}", e);
+                Ok(0)
+            }
+        }
     }
 }
 

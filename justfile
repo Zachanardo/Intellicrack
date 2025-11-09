@@ -285,6 +285,18 @@ docs-pdf:
     pixi run sphinx-build -b latex docs/source docs/build/latex
     Write-Output "LaTeX files generated in docs/build/latex/"
 
+# Scanner recipes
+
+build-scanner:
+    @echo "Building scanner with maximum optimization..."
+    Set-Location scripts/scanner; $env:RUSTFLAGS="-C target-cpu=native -C opt-level=3 -C codegen-units=1 -C strip=symbols"; cargo build --release; Set-Location ../..
+    @echo "Creating Scanner shortcut..."
+    $WshShell = New-Object -ComObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut("$PWD\Scanner.lnk"); $Shortcut.TargetPath = "$PWD\scripts\scanner\target\release\scanner.exe"; $Shortcut.WorkingDirectory = "$PWD"; $Shortcut.IconLocation = "C:\Windows\System32\shell32.dll,22"; $Shortcut.Save()
+    @echo "Scanner shortcut created ✓"
+
+scan:
+    ./scripts/scanner/target/release/scanner.exe -d intellicrack --format console
+
 # Check documentation links
 docs-linkcheck:
     pixi run sphinx-build -b linkcheck docs/source docs/build/linkcheck

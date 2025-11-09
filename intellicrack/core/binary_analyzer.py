@@ -642,7 +642,7 @@ class BinaryAnalyzer:
 
         results["recommendations"] = recommendations
 
-    def create_binary_info(self, file_path: Union[str, Path]) -> Optional["BinaryInfo"]:
+    def create_binary_info(self, file_path: Union[str, Path]) -> Optional[Any]:
         """Create BinaryInfo object from file analysis."""
         if not BinaryInfo:
             return None

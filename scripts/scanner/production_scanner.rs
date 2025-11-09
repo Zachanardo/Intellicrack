@@ -214,8 +214,8 @@ impl Cli {
     fn parse() -> Self {
         let args: Vec<String> = env::args().collect();
 
-        let mut root_path = String::from("D:\\Intellicrack");
-        let mut format = String::from("console");
+        let mut root_path = String::from(".");
+        let mut format = String::from("text");
         let mut confidence = String::from("medium");
         let mut verbose = false;
         let mut no_cache = false;
@@ -224,6 +224,14 @@ impl Cli {
         let mut i = 1;
         while i < args.len() {
             match args[i].as_str() {
+                "-d" | "--directory" => {
+                    if i + 1 < args.len() {
+                        root_path = args[i + 1].clone();
+                        i += 2;
+                    } else {
+                        i += 1;
+                    }
+                }
                 "-f" | "--format" => {
                     if i + 1 < args.len() {
                         format = args[i + 1].clone();
@@ -253,7 +261,7 @@ impl Cli {
                     i += 1;
                 }
                 _ => {
-                    if !args[i].starts_with('-') && i == 1 {
+                    if !args[i].starts_with('-') && root_path == "." {
                         root_path = args[i].clone();
                     }
                     i += 1;
@@ -4546,8 +4554,11 @@ fn print_colored_summary(issues: &[Issue]) {
 fn main() {
     let cli = Cli::parse();
 
-    let scanner_dir = Path::new("D:\\Intellicrack\\scripts\\scanner");
-    let ignored_paths = load_scannerignore(scanner_dir);
+    let scanner_dir = env::current_exe()
+        .ok()
+        .and_then(|p| p.parent().map(|p| p.to_path_buf()))
+        .unwrap_or_else(|| PathBuf::from("."));
+    let ignored_paths = load_scannerignore(&scanner_dir);
 
     let root_path = Path::new(&cli.root_path);
     if !root_path.exists() {

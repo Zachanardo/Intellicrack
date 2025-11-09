@@ -47,6 +47,7 @@ use anyhow::{Context, Result};
 use chrono::Utc;
 use dirs::cache_dir;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -349,16 +350,79 @@ fn is_cache_valid(cache: &ToolCache) -> bool {
     true
 }
 
-/// Discovers a single tool by searching PATH and common installation locations.
+/// Load custom tool paths from the Intellicrack configuration file.
+///
+/// Reads `config/intellicrack_config.json` and extracts custom tool paths.
+///
+/// # Returns
+///
+/// A HashMap of tool names to their configured paths.
+fn load_custom_tool_paths() -> HashMap<String, PathBuf> {
+    let mut custom_paths = HashMap::new();
+
+    let config_path = PathBuf::from("config").join("intellicrack_config.json");
+
+    if !config_path.exists() {
+        debug!("Config file not found at: {}", config_path.display());
+        return custom_paths;
+    }
+
+    let config_content = match fs::read_to_string(&config_path) {
+        Ok(content) => content,
+        Err(e) => {
+            warn!("Failed to read config file: {}", e);
+            return custom_paths;
+        }
+    };
+
+    let config: Value = match serde_json::from_str(&config_content) {
+        Ok(cfg) => cfg,
+        Err(e) => {
+            warn!("Failed to parse config file: {}", e);
+            return custom_paths;
+        }
+    };
+
+    let tool_mappings = [
+        ("ghidra_path", "ghidra"),
+        ("radare2_path", "radare2"),
+        ("radare2_path", "r2"),
+        ("frida_path", "frida"),
+        ("qemu_path", "qemu-system-x86_64"),
+        ("nasm_path", "nasm"),
+    ];
+
+    for (config_key, tool_name) in &tool_mappings {
+        if let Some(path_str) = config.get(config_key).and_then(|v| v.as_str()) {
+            if !path_str.is_empty() {
+                let path = PathBuf::from(path_str);
+                if path.exists() {
+                    debug!("Loaded custom path for '{}': {}", tool_name, path.display());
+                    custom_paths.insert(tool_name.to_string(), path);
+                } else {
+                    warn!("Custom path for '{}' does not exist: {}", tool_name, path.display());
+                }
+            }
+        }
+    }
+
+    debug!("Loaded {} custom tool paths from config", custom_paths.len());
+    custom_paths
+}
+
+/// Discovers a single tool by searching custom config, PATH, and common installation locations.
 ///
 /// Search strategy:
-/// 1. Try `which` to find tool in PATH (fastest)
-/// 2. Check platform-specific common installation directories
-/// 3. Attempt to extract version information (non-fatal if fails)
+/// 1. Check config file for custom tool path (highest priority)
+/// 2. Try `which` to find tool in PATH
+/// 3. Check project's `tools/` directory
+/// 4. Check platform-specific common installation directories
+/// 5. Attempt to extract version information (non-fatal if fails)
 ///
 /// # Arguments
 ///
 /// - `name`: The tool name to search for (e.g., "radare2", "ghidra")
+/// - `custom_paths`: HashMap of custom tool paths from config
 ///
 /// # Returns
 ///
@@ -367,24 +431,35 @@ fn is_cache_valid(cache: &ToolCache) -> bool {
 /// # Platform-Specific Search Paths
 ///
 /// **Windows:**
+/// - `tools/{tool}/{tool}.exe` (project tools directory)
 /// - `C:\Program Files\{tool}\bin\{tool}.exe`
 /// - `C:\{tool}\{tool}.exe`
 /// - `%USERPROFILE%\.{tool}\{tool}.exe`
 ///
 /// **Unix (Linux/macOS):**
+/// - `tools/{tool}/{tool}` (project tools directory)
 /// - `/opt/{tool}/bin/{tool}`
 /// - `/usr/local/{tool}/bin/{tool}`
 /// - `~/.{tool}/{tool}`
 ///
 /// # Performance
 ///
-/// Typically 5-15ms per tool on cold search, <1ms if tool is in PATH.
-fn discover_tool(name: &str) -> Option<ToolInfo> {
+/// Typically 5-15ms per tool on cold search, <1ms if tool is in PATH or config.
+fn discover_tool_with_config(name: &str, custom_paths: &HashMap<String, PathBuf>) -> Option<ToolInfo> {
     debug!("Discovering tool: {}", name);
+
+    if let Some(custom_path) = custom_paths.get(name) {
+        if custom_path.exists() {
+            debug!("Found '{}' in config at: {}", name, custom_path.display());
+            let version = get_tool_version(custom_path, name);
+            return Some(ToolInfo::new(custom_path.clone(), version));
+        } else {
+            warn!("Custom path for '{}' in config does not exist: {}", name, custom_path.display());
+        }
+    }
 
     if let Ok(tool_path) = which(name) {
         debug!("Found '{}' in PATH at: {}", name, tool_path.display());
-
         let version = get_tool_version(&tool_path, name);
         return Some(ToolInfo::new(tool_path, version));
     }
@@ -409,6 +484,23 @@ fn discover_tool(name: &str) -> Option<ToolInfo> {
     None
 }
 
+/// Discovers a single tool by searching PATH and common installation locations.
+///
+/// This is a wrapper around `discover_tool_with_config` for backward compatibility.
+///
+/// # Arguments
+///
+/// - `name`: The tool name to search for (e.g., "radare2", "ghidra")
+///
+/// # Returns
+///
+/// `Some(ToolInfo)` if the tool is found, `None` if not found anywhere.
+#[allow(dead_code)]
+fn discover_tool(name: &str) -> Option<ToolInfo> {
+    let custom_paths = load_custom_tool_paths();
+    discover_tool_with_config(name, &custom_paths)
+}
+
 /// Returns a list of common installation paths to check for a tool.
 ///
 /// # Arguments
@@ -421,9 +513,31 @@ fn discover_tool(name: &str) -> Option<ToolInfo> {
 fn get_common_tool_paths(tool_name: &str) -> Vec<PathBuf> {
     let mut paths = Vec::new();
 
+    let project_root = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    let tools_dir = project_root.join("tools");
+
     #[cfg(target_os = "windows")]
     {
         let exe_name = format!("{}.exe", tool_name);
+
+        if tools_dir.exists() {
+            paths.push(tools_dir.join(tool_name).join(&exe_name));
+            paths.push(tools_dir.join(tool_name).join("bin").join(&exe_name));
+
+            if tool_name == "ghidra" || tool_name == "ghidraRun" {
+                paths.push(tools_dir.join("ghidra").join("ghidraRun.bat"));
+                paths.push(tools_dir.join("ghidra").join("support").join("launch.bat"));
+            }
+
+            if tool_name == "qemu-system-x86_64" {
+                paths.push(tools_dir.join("qemu").join("qemu-system-x86_64.exe"));
+                paths.push(tools_dir.join("qemu").join("bin").join("qemu-system-x86_64.exe"));
+            }
+
+            if tool_name == "nasm" {
+                paths.push(tools_dir.join("NASM").join("nasm.exe"));
+            }
+        }
 
         if let Some(program_files) = std::env::var_os("ProgramFiles") {
             paths.push(
@@ -458,6 +572,16 @@ fn get_common_tool_paths(tool_name: &str) -> Vec<PathBuf> {
 
     #[cfg(not(target_os = "windows"))]
     {
+        if tools_dir.exists() {
+            paths.push(tools_dir.join(tool_name).join(tool_name));
+            paths.push(tools_dir.join(tool_name).join("bin").join(tool_name));
+
+            if tool_name == "ghidra" || tool_name == "ghidraRun" {
+                paths.push(tools_dir.join("ghidra").join("ghidraRun"));
+                paths.push(tools_dir.join("ghidra").join("support").join("launch.sh"));
+            }
+        }
+
         paths.push(PathBuf::from(format!(
             "/opt/{}/bin/{}",
             tool_name, tool_name
@@ -502,6 +626,12 @@ fn get_common_tool_paths(tool_name: &str) -> Vec<PathBuf> {
 fn get_tool_version(tool_path: &Path, tool_name: &str) -> Option<String> {
     use std::process::Command;
 
+    // Skip version check for tools that don't support --version or launch GUIs
+    if tool_name == "ghidra" || tool_name == "ghidraRun" {
+        debug!("Skipping version check for '{}' (launches GUI)", tool_name);
+        return None;
+    }
+
     let output = Command::new(tool_path).arg("--version").output();
 
     match output {
@@ -540,14 +670,16 @@ fn get_tool_version(tool_path: &Path, tool_name: &str) -> Option<String> {
 /// # Performance
 ///
 /// - Cold discovery (no cache): 50-100ms for ~8 tools
-/// - Only tools found in PATH or common locations are included
+/// - Only tools found in config, PATH, or common locations are included
 /// - Missing tools don't slow down the process (fail fast)
 fn discover_all_tools() -> HashMap<String, ToolInfo> {
     info!("Discovering analysis tools...");
     let mut tools = HashMap::new();
 
+    let custom_paths = load_custom_tool_paths();
+
     for &tool_name in REQUIRED_TOOLS {
-        if let Some(tool_info) = discover_tool(tool_name) {
+        if let Some(tool_info) = discover_tool_with_config(tool_name, &custom_paths) {
             tools.insert(tool_name.to_string(), tool_info);
         }
     }
@@ -750,6 +882,26 @@ pub fn discover_and_cache_tools() -> Result<()> {
             fresh_tools
         }
     };
+
+    // Display detailed tool list (whether from cache or fresh discovery)
+    info!(
+        "Tool Status: {} of {} required tools available",
+        tools.len(),
+        REQUIRED_TOOLS.len()
+    );
+
+    for &tool_name in REQUIRED_TOOLS {
+        if let Some(tool_info) = tools.get(tool_name) {
+            let version_str = tool_info
+                .version
+                .as_ref()
+                .map(|v| format!(" ({})", v))
+                .unwrap_or_default();
+            info!("  ✓ {} found at: {}{}", tool_name, tool_info.path.display(), version_str);
+        } else {
+            warn!("  ✗ {} NOT FOUND", tool_name);
+        }
+    }
 
     if !tools.is_empty() {
         set_tool_env_vars(&tools);
