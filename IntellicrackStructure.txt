@@ -1,7 +1,7 @@
 INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: Sun, Nov 09, 2025 03:34:36 AM
+Generated: Sun, Nov 09, 2025 07:46:01 PM
 Directory: D:\Intellicrack\intellicrack
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -9,7 +9,68 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 
 ----------------------------------------
 
+├── __pycache__/
+│   ├── __init__.cpython-314.pyc
+│   ├── __main__.cpython-314.pyc
+│   ├── config.cpython-314.pyc
+│   └── main.cpython-314.pyc
 ├── ai/
+│   ├── __pycache__/
+│   │   ├── __init__.cpython-314.pyc
+│   │   ├── ai_file_tools.cpython-314.pyc
+│   │   ├── ai_script_generator.cpython-314.pyc
+│   │   ├── api_provider_clients.cpython-314.pyc
+│   │   ├── background_loader.cpython-314.pyc
+│   │   ├── code_analysis_tools.cpython-314.pyc
+│   │   ├── coordination_layer.cpython-314.pyc
+│   │   ├── enhanced_training_interface.cpython-314.pyc
+│   │   ├── file_reading_helper.cpython-314.pyc
+│   │   ├── gpu_integration.cpython-314.pyc
+│   │   ├── headless_training_interface.cpython-314.pyc
+│   │   ├── integration_manager.cpython-314.pyc
+│   │   ├── intelligent_code_modifier.cpython-314.pyc
+│   │   ├── interactive_assistant.cpython-314.pyc
+│   │   ├── lazy_model_loader.cpython-314.pyc
+│   │   ├── learning_engine.cpython-314.pyc
+│   │   ├── learning_engine_simple.cpython-314.pyc
+│   │   ├── llm_backends.cpython-314.pyc
+│   │   ├── llm_config_as_code.cpython-314.pyc
+│   │   ├── llm_config_manager.cpython-314.pyc
+│   │   ├── llm_fallback_chains.cpython-314.pyc
+│   │   ├── llm_types.cpython-314.pyc
+│   │   ├── local_gguf_server.cpython-314.pyc
+│   │   ├── lora_adapter_manager.cpython-314.pyc
+│   │   ├── model_batch_tester.cpython-314.pyc
+│   │   ├── model_cache_manager.cpython-314.pyc
+│   │   ├── model_comparison.cpython-314.pyc
+│   │   ├── model_discovery_service.cpython-314.pyc
+│   │   ├── model_download_manager.cpython-314.pyc
+│   │   ├── model_format_converter.cpython-314.pyc
+│   │   ├── model_manager_module.cpython-314.pyc
+│   │   ├── model_performance_monitor.cpython-314.pyc
+│   │   ├── model_sharding.cpython-314.pyc
+│   │   ├── multi_agent_system.cpython-314.pyc
+│   │   ├── optimization_config.cpython-314.pyc
+│   │   ├── orchestrator.cpython-314.pyc
+│   │   ├── parsing_utils.cpython-314.pyc
+│   │   ├── pattern_library.cpython-314.pyc
+│   │   ├── performance_monitor.cpython-314.pyc
+│   │   ├── performance_monitor_simple.cpython-314.pyc
+│   │   ├── performance_optimization_layer.cpython-314.pyc
+│   │   ├── predictive_intelligence.cpython-314.pyc
+│   │   ├── protection_aware_script_gen.cpython-314.pyc
+│   │   ├── qemu_manager.cpython-314.pyc
+│   │   ├── qemu_test_manager_enhanced.cpython-314.pyc
+│   │   ├── quantization_manager.cpython-314.pyc
+│   │   ├── realtime_adaptation_engine.cpython-314.pyc
+│   │   ├── response_parser.cpython-314.pyc
+│   │   ├── script_editor.cpython-314.pyc
+│   │   ├── script_generation_agent.cpython-314.pyc
+│   │   ├── script_generation_prompts.cpython-314.pyc
+│   │   ├── semantic_code_analyzer.cpython-314.pyc
+│   │   ├── visualization_analytics.cpython-314.pyc
+│   │   ├── vulnerability_research_integration.cpython-314.pyc
+│   │   └── vulnerability_research_integration_helper.cpython-314.pyc
 │   ├── __init__.py
 │   ├── ai_file_tools.py
 │   ├── ai_script_generator.py
@@ -69,7 +130,16 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── vulnerability_research_integration.py
 │   └── vulnerability_research_integration_helper.py
 ├── analysis/
+│   ├── __pycache__/
+│   │   ├── __init__.cpython-314.pyc
+│   │   ├── analysis_result_orchestrator.cpython-314.pyc
+│   │   └── protection_workflow.cpython-314.pyc
 │   ├── handlers/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── llm_handler.cpython-314.pyc
+│   │   │   ├── report_generation_handler.cpython-314.pyc
+│   │   │   └── script_generation_handler.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── llm_handler.py
 │   │   ├── report_generation_handler.py
@@ -215,6 +285,26 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── stop.png
 │   └── system-search.png
 ├── cli/
+│   ├── __pycache__/
+│   │   ├── __init__.cpython-314.pyc
+│   │   ├── advanced_export.cpython-314.pyc
+│   │   ├── ai_chat_interface.cpython-314.pyc
+│   │   ├── ai_integration.cpython-314.pyc
+│   │   ├── ai_wrapper.cpython-314.pyc
+│   │   ├── analysis_cli.cpython-314.pyc
+│   │   ├── ascii_charts.cpython-314.pyc
+│   │   ├── cli.cpython-314.pyc
+│   │   ├── config_manager.cpython-314.pyc
+│   │   ├── config_profiles.cpython-314.pyc
+│   │   ├── enhanced_runner.cpython-314.pyc
+│   │   ├── hex_viewer_cli.cpython-314.pyc
+│   │   ├── interactive_mode.cpython-314.pyc
+│   │   ├── pipeline.cpython-314.pyc
+│   │   ├── progress_manager.cpython-314.pyc
+│   │   ├── project_manager.cpython-314.pyc
+│   │   ├── run_analysis_cli.cpython-314.pyc
+│   │   ├── terminal_dashboard.cpython-314.pyc
+│   │   └── tutorial_system.cpython-314.pyc
 │   ├── __init__.py
 │   ├── advanced_export.py
 │   ├── ai_chat_interface.py
@@ -238,7 +328,120 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── terminal_dashboard.py
 │   └── tutorial_system.py
 ├── core/
+│   ├── __pycache__/
+│   │   ├── __init__.cpython-314.pyc
+│   │   ├── adobe_injector_integration.cpython-314.pyc
+│   │   ├── ai_model_manager.cpython-314.pyc
+│   │   ├── app_context.cpython-314.pyc
+│   │   ├── binary_analyzer.cpython-314.pyc
+│   │   ├── config_manager.cpython-314.pyc
+│   │   ├── config_migration_handler.cpython-314.pyc
+│   │   ├── debugging_engine.cpython-314.pyc
+│   │   ├── exceptions.cpython-314.pyc
+│   │   ├── frida_bypass_wizard.cpython-314.pyc
+│   │   ├── frida_constants.cpython-314.pyc
+│   │   ├── frida_manager.cpython-314.pyc
+│   │   ├── frida_presets.cpython-314.pyc
+│   │   ├── gpu_acceleration.cpython-314.pyc
+│   │   ├── hardware_spoofer.cpython-314.pyc
+│   │   ├── license_snapshot.cpython-314.pyc
+│   │   ├── license_validation_bypass.cpython-314.pyc
+│   │   ├── network_capture.cpython-314.pyc
+│   │   ├── offline_activation_emulator.cpython-314.pyc
+│   │   ├── process_manipulation.cpython-314.pyc
+│   │   ├── protection_analyzer.cpython-314.pyc
+│   │   ├── security_enforcement.cpython-314.pyc
+│   │   ├── security_utils.cpython-314.pyc
+│   │   ├── serial_generator.cpython-314.pyc
+│   │   ├── startup_checks.cpython-314.pyc
+│   │   ├── subscription_validation_bypass.cpython-314.pyc
+│   │   ├── task_manager.cpython-314.pyc
+│   │   ├── terminal_manager.cpython-314.pyc
+│   │   ├── tool_discovery.cpython-314.pyc
+│   │   └── trial_reset_engine.cpython-314.pyc
 │   ├── analysis/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── analysis_orchestrator.cpython-314.pyc
+│   │   │   ├── angr_enhancements.cpython-314.pyc
+│   │   │   ├── arxan_analyzer.cpython-314.pyc
+│   │   │   ├── automated_patch_agent.cpython-314.pyc
+│   │   │   ├── behavioral_analysis.cpython-314.pyc
+│   │   │   ├── binary_analyzer.cpython-314.pyc
+│   │   │   ├── binary_pattern_detector.cpython-314.pyc
+│   │   │   ├── binary_similarity_search.cpython-314.pyc
+│   │   │   ├── cfg_explorer.cpython-314.pyc
+│   │   │   ├── commercial_license_analyzer.cpython-314.pyc
+│   │   │   ├── concolic_executor.cpython-314.pyc
+│   │   │   ├── concolic_executor_fixed.cpython-314.pyc
+│   │   │   ├── concolic_obfuscation_handler.cpython-314.pyc
+│   │   │   ├── control_flow_deobfuscation.cpython-314.pyc
+│   │   │   ├── core_analysis.cpython-314.pyc
+│   │   │   ├── cross_tool_orchestrator.cpython-314.pyc
+│   │   │   ├── cryptographic_routine_detector.cpython-314.pyc
+│   │   │   ├── dynamic_analyzer.cpython-314.pyc
+│   │   │   ├── dynamic_instrumentation.cpython-314.pyc
+│   │   │   ├── entropy_analyzer.cpython-314.pyc
+│   │   │   ├── firmware_analyzer.cpython-314.pyc
+│   │   │   ├── frida_advanced_hooks.cpython-314.pyc
+│   │   │   ├── frida_analyzer.cpython-314.pyc
+│   │   │   ├── frida_gui_integration.cpython-314.pyc
+│   │   │   ├── frida_protection_bypass.cpython-314.pyc
+│   │   │   ├── frida_script_manager.cpython-314.pyc
+│   │   │   ├── ghidra_advanced_analyzer.cpython-314.pyc
+│   │   │   ├── ghidra_analyzer.cpython-314.pyc
+│   │   │   ├── ghidra_binary_integration.cpython-314.pyc
+│   │   │   ├── ghidra_output_parser.cpython-314.pyc
+│   │   │   ├── ghidra_project_manager.cpython-314.pyc
+│   │   │   ├── ghidra_script_runner.cpython-314.pyc
+│   │   │   ├── incremental_analyzer.cpython-314.pyc
+│   │   │   ├── incremental_manager.cpython-314.pyc
+│   │   │   ├── memory_forensics_engine.cpython-314.pyc
+│   │   │   ├── multi_format_analyzer.cpython-314.pyc
+│   │   │   ├── network_forensics_engine.cpython-314.pyc
+│   │   │   ├── opaque_predicate_analyzer.cpython-314.pyc
+│   │   │   ├── polymorphic_analyzer.cpython-314.pyc
+│   │   │   ├── protection_scanner.cpython-314.pyc
+│   │   │   ├── radare2_advanced_patcher.cpython-314.pyc
+│   │   │   ├── radare2_ai_integration.cpython-314.pyc
+│   │   │   ├── radare2_binary_diff.cpython-314.pyc
+│   │   │   ├── radare2_bypass_generator.cpython-314.pyc
+│   │   │   ├── radare2_decompiler.cpython-314.pyc
+│   │   │   ├── radare2_emulator.cpython-314.pyc
+│   │   │   ├── radare2_enhanced_integration.cpython-314.pyc
+│   │   │   ├── radare2_error_handler.cpython-314.pyc
+│   │   │   ├── radare2_esil.cpython-314.pyc
+│   │   │   ├── radare2_esil_emulator.cpython-314.pyc
+│   │   │   ├── radare2_graph_view.cpython-314.pyc
+│   │   │   ├── radare2_imports.cpython-314.pyc
+│   │   │   ├── radare2_json_standardizer.cpython-314.pyc
+│   │   │   ├── radare2_patch_engine.cpython-314.pyc
+│   │   │   ├── radare2_performance_metrics.cpython-314.pyc
+│   │   │   ├── radare2_performance_optimizer.cpython-314.pyc
+│   │   │   ├── radare2_realtime_analyzer.cpython-314.pyc
+│   │   │   ├── radare2_scripting.cpython-314.pyc
+│   │   │   ├── radare2_session_helpers.cpython-314.pyc
+│   │   │   ├── radare2_session_manager.cpython-314.pyc
+│   │   │   ├── radare2_signature_detector.cpython-314.pyc
+│   │   │   ├── radare2_signatures.cpython-314.pyc
+│   │   │   ├── radare2_strings.cpython-314.pyc
+│   │   │   ├── radare2_vulnerability_engine.cpython-314.pyc
+│   │   │   ├── rop_generator.cpython-314.pyc
+│   │   │   ├── securom_analyzer.cpython-314.pyc
+│   │   │   ├── simconcolic.cpython-314.pyc
+│   │   │   ├── similarity_searcher.cpython-314.pyc
+│   │   │   ├── stalker_manager.cpython-314.pyc
+│   │   │   ├── starforce_analyzer.cpython-314.pyc
+│   │   │   ├── streaming_crypto_detector.cpython-314.pyc
+│   │   │   ├── streaming_entropy_analyzer.cpython-314.pyc
+│   │   │   ├── streaming_yara_scanner.cpython-314.pyc
+│   │   │   ├── symbolic_devirtualizer.cpython-314.pyc
+│   │   │   ├── symbolic_executor.cpython-314.pyc
+│   │   │   ├── taint_analyzer.cpython-314.pyc
+│   │   │   ├── vmprotect_detector.cpython-314.pyc
+│   │   │   ├── vulnerability_engine.cpython-314.pyc
+│   │   │   ├── yara_pattern_engine.cpython-314.pyc
+│   │   │   └── yara_scanner.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── analysis_orchestrator.py
 │   │   ├── angr_enhancements.py
@@ -323,6 +526,16 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── yara_pattern_engine.py
 │   │   └── yara_scanner.py
 │   ├── anti_analysis/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── advanced_debugger_bypass.cpython-314.pyc
+│   │   │   ├── api_obfuscation.cpython-314.pyc
+│   │   │   ├── base_detector.cpython-314.pyc
+│   │   │   ├── debugger_bypass.cpython-314.pyc
+│   │   │   ├── debugger_detector.cpython-314.pyc
+│   │   │   ├── sandbox_detector.cpython-314.pyc
+│   │   │   ├── timing_attacks.cpython-314.pyc
+│   │   │   └── vm_detector.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── advanced_debugger_bypass.py
 │   │   ├── api_obfuscation.py
@@ -333,7 +546,29 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── timing_attacks.py
 │   │   └── vm_detector.py
 │   ├── certificate/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── api_signatures.cpython-314.pyc
+│   │   │   ├── apk_analyzer.cpython-314.pyc
+│   │   │   ├── binary_scanner.cpython-314.pyc
+│   │   │   ├── bypass_orchestrator.cpython-314.pyc
+│   │   │   ├── bypass_strategy.cpython-314.pyc
+│   │   │   ├── cert_cache.cpython-314.pyc
+│   │   │   ├── cert_chain_generator.cpython-314.pyc
+│   │   │   ├── cert_patcher.cpython-314.pyc
+│   │   │   ├── detection_report.cpython-314.pyc
+│   │   │   ├── frida_cert_hooks.cpython-314.pyc
+│   │   │   ├── frida_stealth.cpython-314.pyc
+│   │   │   ├── hook_obfuscation.cpython-314.pyc
+│   │   │   ├── layer_detector.cpython-314.pyc
+│   │   │   ├── multilayer_bypass.cpython-314.pyc
+│   │   │   ├── patch_generators.cpython-314.pyc
+│   │   │   ├── patch_templates.cpython-314.pyc
+│   │   │   ├── pinning_detector.cpython-314.pyc
+│   │   │   └── validation_detector.cpython-314.pyc
 │   │   ├── frida_scripts/
+│   │   │   ├── __pycache__/
+│   │   │   │   └── __init__.cpython-314.pyc
 │   │   │   ├── __init__.py
 │   │   │   ├── android_pinning.js
 │   │   │   ├── cryptoapi_bypass.js
@@ -362,25 +597,50 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── pinning_detector.py
 │   │   └── validation_detector.py
 │   ├── execution/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   └── script_execution_manager.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   └── script_execution_manager.py
 │   ├── exploitation/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── automated_unpacker.cpython-314.pyc
+│   │   │   ├── bypass_engine.cpython-314.pyc
+│   │   │   ├── crypto_key_extractor.cpython-314.pyc
+│   │   │   └── keygen_generator.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── automated_unpacker.py
 │   │   ├── bypass_engine.py
 │   │   ├── crypto_key_extractor.py
 │   │   └── keygen_generator.py
 │   ├── integration/
+│   │   ├── __pycache__/
+│   │   │   ├── intelligent_correlation.cpython-314.pyc
+│   │   │   └── real_tool_communication.cpython-314.pyc
 │   │   ├── intelligent_correlation.py
 │   │   └── real_tool_communication.py
 │   ├── license/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   └── keygen.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── keygen.py
 │   │   └── README.md
 │   ├── logging/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   └── audit_logger.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   └── audit_logger.py
 │   ├── ml/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── feature_extraction.cpython-314.pyc
+│   │   │   ├── incremental_learner.cpython-314.pyc
+│   │   │   ├── ml_integration.cpython-314.pyc
+│   │   │   ├── protection_classifier.cpython-314.pyc
+│   │   │   └── sample_database.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── feature_extraction.py
 │   │   ├── incremental_learner.py
@@ -389,6 +649,17 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── README.md
 │   │   └── sample_database.py
 │   ├── monitoring/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── api_monitor.cpython-314.pyc
+│   │   │   ├── base_monitor.cpython-314.pyc
+│   │   │   ├── event_aggregator.cpython-314.pyc
+│   │   │   ├── file_monitor.cpython-314.pyc
+│   │   │   ├── frida_server_manager.cpython-314.pyc
+│   │   │   ├── memory_monitor.cpython-314.pyc
+│   │   │   ├── monitoring_session.cpython-314.pyc
+│   │   │   ├── network_monitor.cpython-314.pyc
+│   │   │   └── registry_monitor.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── api_monitor.py
 │   │   ├── base_monitor.py
@@ -400,11 +671,29 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── network_monitor.py
 │   │   └── registry_monitor.py
 │   ├── network/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── base_network_analyzer.cpython-314.pyc
+│   │   │   ├── cloud_license_hooker.cpython-314.pyc
+│   │   │   ├── dynamic_response_generator.cpython-314.pyc
+│   │   │   ├── generic_protocol_handler.cpython-314.pyc
+│   │   │   ├── license_protocol_handler.cpython-314.pyc
+│   │   │   ├── protocol_fingerprinter.cpython-314.pyc
+│   │   │   ├── protocol_tool.cpython-314.pyc
+│   │   │   ├── ssl_interceptor.cpython-314.pyc
+│   │   │   ├── traffic_analyzer.cpython-314.pyc
+│   │   │   └── traffic_interception_engine.cpython-314.pyc
 │   │   ├── certs/
 │   │   │   ├── README.md
 │   │   │   ├── server.crt
 │   │   │   └── server.key
 │   │   ├── protocols/
+│   │   │   ├── __pycache__/
+│   │   │   │   ├── __init__.cpython-314.pyc
+│   │   │   │   ├── autodesk_parser.cpython-314.pyc
+│   │   │   │   ├── codemeter_parser.cpython-314.pyc
+│   │   │   │   ├── flexlm_parser.cpython-314.pyc
+│   │   │   │   └── hasp_parser.cpython-314.pyc
 │   │   │   ├── __init__.py
 │   │   │   ├── autodesk_parser.py
 │   │   │   ├── codemeter_parser.py
@@ -422,10 +711,21 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── traffic_analyzer.py
 │   │   └── traffic_interception_engine.py
 │   ├── orchestration/
+│   │   ├── __pycache__/
+│   │   │   ├── intelligent_correlation_engine.cpython-314.pyc
+│   │   │   ├── result_serialization_protocol.cpython-314.pyc
+│   │   │   └── tool_communication_bridge.cpython-314.pyc
 │   │   ├── intelligent_correlation_engine.py
 │   │   ├── result_serialization_protocol.py
 │   │   └── tool_communication_bridge.py
 │   ├── patching/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── base_patcher.cpython-314.pyc
+│   │   │   ├── license_check_remover.cpython-314.pyc
+│   │   │   ├── memory_patcher.cpython-314.pyc
+│   │   │   ├── radare2_patch_integration.cpython-314.pyc
+│   │   │   └── windows_activator.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── base_patcher.py
 │   │   ├── license_check_remover.py
@@ -433,6 +733,19 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── radare2_patch_integration.py
 │   │   └── windows_activator.py
 │   ├── processing/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── base_snapshot_handler.cpython-314.pyc
+│   │   │   ├── distributed_manager.cpython-314.pyc
+│   │   │   ├── emulator_manager.cpython-314.pyc
+│   │   │   ├── gpu_accelerator.cpython-314.pyc
+│   │   │   ├── memory_loader.cpython-314.pyc
+│   │   │   ├── memory_optimizer.cpython-314.pyc
+│   │   │   ├── parallel_processing_manager.cpython-314.pyc
+│   │   │   ├── qemu_emulator.cpython-314.pyc
+│   │   │   ├── qiling_emulator.cpython-314.pyc
+│   │   │   ├── streaming_analysis_manager.cpython-314.pyc
+│   │   │   └── vm_workflow_manager.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── base_snapshot_handler.py
 │   │   ├── distributed_manager.py
@@ -446,6 +759,20 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── streaming_analysis_manager.py
 │   │   └── vm_workflow_manager.py
 │   ├── protection_bypass/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── arxan_bypass.cpython-314.pyc
+│   │   │   ├── cloud_license.cpython-314.pyc
+│   │   │   ├── cloud_license_analyzer.cpython-314.pyc
+│   │   │   ├── dongle_emulator.cpython-314.pyc
+│   │   │   ├── hardware_id_spoofer.cpython-314.pyc
+│   │   │   ├── hardware_token.cpython-314.pyc
+│   │   │   ├── integrity_check_defeat.cpython-314.pyc
+│   │   │   ├── securom_bypass.cpython-314.pyc
+│   │   │   ├── starforce_bypass.cpython-314.pyc
+│   │   │   ├── tpm_bypass.cpython-314.pyc
+│   │   │   ├── tpm_secure_enclave_bypass.cpython-314.pyc
+│   │   │   └── vm_bypass.cpython-314.pyc
 │   │   ├── hooks/
 │   │   │   └── yubikey_hook.dll
 │   │   ├── __init__.py
@@ -462,26 +789,56 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── tpm_secure_enclave_bypass.py
 │   │   └── vm_bypass.py
 │   ├── protection_detection/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── arxan_detector.cpython-314.pyc
+│   │   │   ├── securom_detector.cpython-314.pyc
+│   │   │   └── starforce_detector.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── arxan_detector.py
 │   │   ├── securom_detector.py
 │   │   └── starforce_detector.py
 │   ├── reporting/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── pdf_generator.cpython-314.pyc
+│   │   │   └── report_generator.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── pdf_generator.py
 │   │   └── report_generator.py
 │   ├── resources/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   └── resource_manager.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   └── resource_manager.py
 │   ├── security/
+│   │   ├── __pycache__/
+│   │   │   └── __init__.cpython-314.pyc
 │   │   └── __init__.py
 │   ├── shared/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── bypass_config.cpython-314.pyc
+│   │   │   ├── result_types.cpython-314.pyc
+│   │   │   └── result_utils.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── bypass_config.py
 │   │   ├── result_types.py
 │   │   └── result_utils.py
 │   ├── vulnerability_research/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── base_analyzer.cpython-314.pyc
+│   │   │   ├── binary_differ.cpython-314.pyc
+│   │   │   ├── common_enums.cpython-314.pyc
+│   │   │   ├── fuzzing_engine.cpython-314.pyc
+│   │   │   ├── patch_analyzer.cpython-314.pyc
+│   │   │   ├── research_manager.cpython-314.pyc
+│   │   │   └── vulnerability_analyzer.cpython-314.pyc
 │   │   ├── exploit_developer/
+│   │   │   ├── __pycache__/
+│   │   │   │   └── __init__.cpython-314.pyc
 │   │   │   └── __init__.py
 │   │   ├── __init__.py
 │   │   ├── base_analyzer.py
@@ -526,6 +883,15 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── tool_discovery.py
 │   └── trial_reset_engine.py
 ├── dashboard/
+│   ├── __pycache__/
+│   │   ├── __init__.cpython-314.pyc
+│   │   ├── dashboard_integration.cpython-314.pyc
+│   │   ├── dashboard_manager.cpython-314.pyc
+│   │   ├── dashboard_widgets.cpython-314.pyc
+│   │   ├── live_data_pipeline.cpython-314.pyc
+│   │   ├── real_time_dashboard.cpython-314.pyc
+│   │   ├── visualization_renderer.cpython-314.pyc
+│   │   └── websocket_stream.cpython-314.pyc
 │   ├── static/
 │   │   └── js/
 │   │       └── graph_visualization.js
@@ -538,6 +904,9 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── visualization_renderer.py
 │   └── websocket_stream.py
 ├── data/
+│   ├── __pycache__/
+│   │   ├── __init__.cpython-314.pyc
+│   │   └── signature_templates.cpython-314.pyc
 │   ├── cache/
 │   │   └── ghidra_scripts_cache.json
 │   ├── database/
@@ -558,6 +927,29 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── README.md
 │   └── signature_templates.py
 ├── handlers/
+│   ├── __pycache__/
+│   │   ├── __init__.cpython-314.pyc
+│   │   ├── aiohttp_handler.cpython-314.pyc
+│   │   ├── capstone_handler.cpython-314.pyc
+│   │   ├── cryptography_handler.cpython-314.pyc
+│   │   ├── frida_handler.cpython-314.pyc
+│   │   ├── ipex_handler.cpython-314.pyc
+│   │   ├── keystone_handler.cpython-314.pyc
+│   │   ├── lief_handler.cpython-314.pyc
+│   │   ├── matplotlib_handler.cpython-314.pyc
+│   │   ├── numpy_handler.cpython-314.pyc
+│   │   ├── opencl_handler.cpython-314.pyc
+│   │   ├── pdfkit_handler.cpython-314.pyc
+│   │   ├── pefile_handler.cpython-314.pyc
+│   │   ├── psutil_handler.cpython-314.pyc
+│   │   ├── pyelftools_handler.cpython-314.pyc
+│   │   ├── pyqt6_handler.cpython-314.pyc
+│   │   ├── requests_handler.cpython-314.pyc
+│   │   ├── sqlite3_handler.cpython-314.pyc
+│   │   ├── tensorflow_handler.cpython-314.pyc
+│   │   ├── tkinter_handler.cpython-314.pyc
+│   │   ├── torch_handler.cpython-314.pyc
+│   │   └── wmi_handler.cpython-314.pyc
 │   ├── __init__.py
 │   ├── aiohttp_handler.py
 │   ├── capstone_handler.py
@@ -581,6 +973,31 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── torch_handler.py
 │   └── wmi_handler.py
 ├── hexview/
+│   ├── __pycache__/
+│   │   ├── __init__.cpython-314.pyc
+│   │   ├── advanced_search.cpython-314.pyc
+│   │   ├── ai_bridge.cpython-314.pyc
+│   │   ├── api.cpython-314.pyc
+│   │   ├── checksum_dialog.cpython-314.pyc
+│   │   ├── checksums.cpython-314.pyc
+│   │   ├── compare_dialog.cpython-314.pyc
+│   │   ├── config_defaults.cpython-314.pyc
+│   │   ├── data_inspector.cpython-314.pyc
+│   │   ├── export_dialog.cpython-314.pyc
+│   │   ├── file_compare.cpython-314.pyc
+│   │   ├── file_handler.cpython-314.pyc
+│   │   ├── hex_commands.cpython-314.pyc
+│   │   ├── hex_dialog.cpython-314.pyc
+│   │   ├── hex_highlighter.cpython-314.pyc
+│   │   ├── hex_renderer.cpython-314.pyc
+│   │   ├── hex_widget.cpython-314.pyc
+│   │   ├── integration.cpython-314.pyc
+│   │   ├── intellicrack_hex_protection_integration.cpython-314.pyc
+│   │   ├── large_file_handler.cpython-314.pyc
+│   │   ├── performance_monitor.cpython-314.pyc
+│   │   ├── print_dialog.cpython-314.pyc
+│   │   ├── statistics.cpython-314.pyc
+│   │   └── statistics_dialog.cpython-314.pyc
 │   ├── __init__.py
 │   ├── advanced_search.py
 │   ├── ai_bridge.py
@@ -610,6 +1027,14 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   └── downloads/
 │   │       └── .gitkeep
 │   └── tools/
+│       ├── __pycache__/
+│       │   ├── __init__.cpython-314.pyc
+│       │   ├── binary_analysis_tool.cpython-314.pyc
+│       │   ├── firmware_analysis_tool.cpython-314.pyc
+│       │   ├── intellicrack_protection_analysis_tool.cpython-314.pyc
+│       │   ├── memory_forensics_tool.cpython-314.pyc
+│       │   ├── script_generation_tool.cpython-314.pyc
+│       │   └── yara_pattern_analysis_tool.cpython-314.pyc
 │       ├── __init__.py
 │       ├── binary_analysis_tool.py
 │       ├── firmware_analysis_tool.py
@@ -618,11 +1043,20 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │       ├── script_generation_tool.py
 │       └── yara_pattern_analysis_tool.py
 ├── ml/
+│   ├── __pycache__/
+│   │   ├── __init__.cpython-314.pyc
+│   │   ├── binary_feature_extractor.cpython-314.pyc
+│   │   ├── license_protection_neural_network.cpython-314.pyc
+│   │   └── pattern_evolution_tracker.cpython-314.pyc
 │   ├── __init__.py
 │   ├── binary_feature_extractor.py
 │   ├── license_protection_neural_network.py
 │   └── pattern_evolution_tracker.py
 ├── models/
+│   ├── __pycache__/
+│   │   ├── __init__.cpython-314.pyc
+│   │   ├── model_manager.cpython-314.pyc
+│   │   └── protection_knowledge_base.cpython-314.pyc
 │   ├── protection_classifier/
 │   │   ├── encoder.pkl
 │   │   ├── metadata.json
@@ -631,6 +1065,17 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── scaler.pkl
 │   │   └── training_results.json
 │   ├── repositories/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── anthropic_repository.cpython-314.pyc
+│   │   │   ├── base.cpython-314.pyc
+│   │   │   ├── factory.cpython-314.pyc
+│   │   │   ├── google_repository.cpython-314.pyc
+│   │   │   ├── interface.cpython-314.pyc
+│   │   │   ├── lmstudio_repository.cpython-314.pyc
+│   │   │   ├── local_repository.cpython-314.pyc
+│   │   │   ├── openai_repository.cpython-314.pyc
+│   │   │   └── openrouter_repository.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── anthropic_repository.py
 │   │   ├── base.py
@@ -646,7 +1091,27 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── model_manager.py
 │   └── protection_knowledge_base.py
 ├── plugins/
+│   ├── __pycache__/
+│   │   ├── __init__.cpython-314.pyc
+│   │   ├── plugin_base.cpython-314.pyc
+│   │   ├── plugin_config.cpython-314.pyc
+│   │   ├── plugin_system.cpython-314.pyc
+│   │   └── remote_executor.cpython-314.pyc
 │   ├── custom_modules/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── anti_anti_debug_suite.cpython-314.pyc
+│   │   │   ├── binary_patcher_plugin.cpython-314.pyc
+│   │   │   ├── cloud_license_interceptor.cpython-314.pyc
+│   │   │   ├── hardware_dongle_emulator.cpython-314.pyc
+│   │   │   ├── intellicrack_core_engine.cpython-314.pyc
+│   │   │   ├── license_server_emulator.cpython-314.pyc
+│   │   │   ├── network_analysis_plugin.cpython-314.pyc
+│   │   │   ├── performance_optimizer.cpython-314.pyc
+│   │   │   ├── simple_analysis_plugin.cpython-314.pyc
+│   │   │   ├── success_rate_analyzer.cpython-314.pyc
+│   │   │   ├── ui_enhancement_module.cpython-314.pyc
+│   │   │   └── vm_protection_unwrapper.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── anti_anti_debug_suite.py
 │   │   ├── binary_patcher_plugin.py
@@ -668,6 +1133,19 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── plugin_system.py
 │   └── remote_executor.py
 ├── protection/
+│   ├── __pycache__/
+│   │   ├── __init__.cpython-314.pyc
+│   │   ├── analysis_cache.cpython-314.pyc
+│   │   ├── commercial_protectors_database.cpython-314.pyc
+│   │   ├── denuvo_analyzer.cpython-314.pyc
+│   │   ├── denuvo_ticket_analyzer.cpython-314.pyc
+│   │   ├── icp_backend.cpython-314.pyc
+│   │   ├── icp_report_generator.cpython-314.pyc
+│   │   ├── intellicrack_protection_advanced.cpython-314.pyc
+│   │   ├── intellicrack_protection_core.cpython-314.pyc
+│   │   ├── protection_detector.cpython-314.pyc
+│   │   ├── themida_analyzer.cpython-314.pyc
+│   │   └── unified_protection_engine.cpython-314.pyc
 │   ├── __init__.py
 │   ├── analysis_cache.py
 │   ├── commercial_protectors_database.py
@@ -681,6 +1159,9 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── themida_analyzer.py
 │   └── unified_protection_engine.py
 ├── scripts/
+│   ├── __pycache__/
+│   │   ├── __init__.cpython-314.pyc
+│   │   └── run_analysis_cli.cpython-314.pyc
 │   ├── frida/
 │   │   ├── .idea/
 │   │   │   ├── .gitignore
@@ -741,6 +1222,9 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   │   ├── modules.xml
 │   │   │   ├── vcs.xml
 │   │   │   └── workspace.xml
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   └── anti_analysis_detector.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── AdvancedAnalysis.java
 │   │   ├── anti_analysis_detector.py
@@ -763,9 +1247,14 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── TODO.md
 │   │   └── TODO.xml
 │   ├── radare2/
+│   │   ├── __pycache__/
+│   │   │   ├── radare2_keygen_assistant.cpython-314.pyc
+│   │   │   └── radare2_license_analyzer.cpython-314.pyc
 │   │   ├── radare2_keygen_assistant.py
 │   │   └── radare2_license_analyzer.py
 │   ├── setup/
+│   │   ├── __pycache__/
+│   │   │   └── __init__.cpython-314.pyc
 │   │   └── __init__.py
 │   ├── Windows_Patch/
 │   │   └── WindowsActivator.cmd
@@ -777,6 +1266,16 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── ca.key
 │   └── README.md
 ├── tools/
+│   ├── __pycache__/
+│   │   ├── __init__.cpython-314.pyc
+│   │   ├── classify_protection.cpython-314.pyc
+│   │   ├── deobfuscate_cfg.cpython-314.pyc
+│   │   ├── ml_manager.cpython-314.pyc
+│   │   ├── plugin_ci_cd.cpython-314.pyc
+│   │   ├── plugin_debugger.cpython-314.pyc
+│   │   ├── plugin_test_generator.cpython-314.pyc
+│   │   ├── protection_analyzer_tool.cpython-314.pyc
+│   │   └── train_classifier.cpython-314.pyc
 │   ├── __init__.py
 │   ├── classify_protection.py
 │   ├── deobfuscate_cfg.py
@@ -787,7 +1286,85 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── protection_analyzer_tool.py
 │   └── train_classifier.py
 ├── ui/
+│   ├── __pycache__/
+│   │   ├── __init__.cpython-314.pyc
+│   │   ├── cfg_explorer_inner.cpython-314.pyc
+│   │   ├── comprehensive_integration.cpython-314.pyc
+│   │   ├── config_manager.cpython-314.pyc
+│   │   ├── dashboard_manager.cpython-314.pyc
+│   │   ├── dialog_utils.cpython-314.pyc
+│   │   ├── distributed_processing.cpython-314.pyc
+│   │   ├── emulator_ui_enhancements.cpython-314.pyc
+│   │   ├── enhanced_ui_integration.cpython-314.pyc
+│   │   ├── exploitation_handlers.cpython-314.pyc
+│   │   ├── gpu_analysis.cpython-314.pyc
+│   │   ├── icon_manager.cpython-314.pyc
+│   │   ├── integrate_radare2.cpython-314.pyc
+│   │   ├── main_app.cpython-314.pyc
+│   │   ├── main_window.cpython-314.pyc
+│   │   ├── menu_utils.cpython-314.pyc
+│   │   ├── protection_detection_handlers.cpython-314.pyc
+│   │   ├── radare2_integration_ui.cpython-314.pyc
+│   │   ├── radare2_ui_manager.cpython-314.pyc
+│   │   ├── shared_ui_layouts.cpython-314.pyc
+│   │   ├── style_manager.cpython-314.pyc
+│   │   ├── style_utils.cpython-314.pyc
+│   │   ├── symbolic_execution.cpython-314.pyc
+│   │   ├── syntax_highlighter.cpython-314.pyc
+│   │   ├── theme_manager.cpython-314.pyc
+│   │   ├── tooltip_helper.cpython-314.pyc
+│   │   ├── traffic_analyzer.cpython-314.pyc
+│   │   ├── ui_manager.cpython-314.pyc
+│   │   └── window_sizing.cpython-314.pyc
 │   ├── dialogs/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── ai_coding_assistant_dialog.cpython-314.pyc
+│   │   │   ├── base_dialog.cpython-314.pyc
+│   │   │   ├── ci_cd_dialog.cpython-314.pyc
+│   │   │   ├── code_modification_dialog.cpython-314.pyc
+│   │   │   ├── common_imports.cpython-314.pyc
+│   │   │   ├── debugger_dialog.cpython-314.pyc
+│   │   │   ├── dialog_base_utils.cpython-314.pyc
+│   │   │   ├── distributed_config_dialog.cpython-314.pyc
+│   │   │   ├── event_handler_utils.cpython-314.pyc
+│   │   │   ├── export_dialog.cpython-314.pyc
+│   │   │   ├── first_run_setup.cpython-314.pyc
+│   │   │   ├── frida_bypass_wizard_dialog.cpython-314.pyc
+│   │   │   ├── frida_manager_dialog.cpython-314.pyc
+│   │   │   ├── ghidra_script_selector.cpython-314.pyc
+│   │   │   ├── guided_workflow_wizard.cpython-314.pyc
+│   │   │   ├── hardware_spoofer_dialog.cpython-314.pyc
+│   │   │   ├── help_documentation_widget.cpython-314.pyc
+│   │   │   ├── keygen_dialog.cpython-314.pyc
+│   │   │   ├── llm_config_dialog.cpython-314.pyc
+│   │   │   ├── model_finetuning_dialog.cpython-314.pyc
+│   │   │   ├── model_loading_dialog.cpython-314.pyc
+│   │   │   ├── model_manager_dialog.cpython-314.pyc
+│   │   │   ├── nodejs_setup_dialog.cpython-314.pyc
+│   │   │   ├── offline_activation_dialog.cpython-314.pyc
+│   │   │   ├── plugin_browser_utils.cpython-314.pyc
+│   │   │   ├── plugin_creation_wizard.cpython-314.pyc
+│   │   │   ├── plugin_dialog_base.cpython-314.pyc
+│   │   │   ├── plugin_editor_dialog.cpython-314.pyc
+│   │   │   ├── plugin_manager_dialog.cpython-314.pyc
+│   │   │   ├── preferences_dialog.cpython-314.pyc
+│   │   │   ├── program_selector_dialog.cpython-314.pyc
+│   │   │   ├── qemu_test_dialog.cpython-314.pyc
+│   │   │   ├── qemu_test_results_dialog.cpython-314.pyc
+│   │   │   ├── report_manager_dialog.cpython-314.pyc
+│   │   │   ├── script_generator_dialog.cpython-314.pyc
+│   │   │   ├── serial_generator_dialog.cpython-314.pyc
+│   │   │   ├── signature_editor_dialog.cpython-314.pyc
+│   │   │   ├── similarity_search_dialog.cpython-314.pyc
+│   │   │   ├── smart_program_selector_dialog.cpython-314.pyc
+│   │   │   ├── splash_screen.cpython-314.pyc
+│   │   │   ├── system_utilities_dialog.cpython-314.pyc
+│   │   │   ├── test_generator_dialog.cpython-314.pyc
+│   │   │   ├── text_editor_dialog.cpython-314.pyc
+│   │   │   ├── trial_reset_dialog.cpython-314.pyc
+│   │   │   ├── visual_patch_editor.cpython-314.pyc
+│   │   │   └── vm_manager_dialog.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── ai_coding_assistant_dialog.py
 │   │   ├── base_dialog.py
@@ -840,6 +1417,19 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── dark_theme.qss
 │   │   └── light_theme.qss
 │   ├── tabs/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── adobe_injector_tab.cpython-314.pyc
+│   │   │   ├── ai_assistant_tab.cpython-314.pyc
+│   │   │   ├── analysis_tab.cpython-314.pyc
+│   │   │   ├── base_tab.cpython-314.pyc
+│   │   │   ├── dashboard_tab.cpython-314.pyc
+│   │   │   ├── exploitation_tab.cpython-314.pyc
+│   │   │   ├── project_workspace_tab.cpython-314.pyc
+│   │   │   ├── settings_tab.cpython-314.pyc
+│   │   │   ├── terminal_tab.cpython-314.pyc
+│   │   │   ├── tools_tab.cpython-314.pyc
+│   │   │   └── workspace_tab.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── adobe_injector_tab.py
 │   │   ├── ai_assistant_tab.py
@@ -853,6 +1443,36 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── tools_tab.py
 │   │   └── workspace_tab.py
 │   ├── widgets/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── ai_assistant_widget.cpython-314.pyc
+│   │   │   ├── batch_analysis_widget.cpython-314.pyc
+│   │   │   ├── cache_management_widget.cpython-314.pyc
+│   │   │   ├── console_widget.cpython-314.pyc
+│   │   │   ├── cpu_status_widget.cpython-314.pyc
+│   │   │   ├── drop_zone_widget.cpython-314.pyc
+│   │   │   ├── embedded_terminal_widget.cpython-314.pyc
+│   │   │   ├── entropy_graph_widget.cpython-314.pyc
+│   │   │   ├── entropy_visualizer.cpython-314.pyc
+│   │   │   ├── file_metadata_widget.cpython-314.pyc
+│   │   │   ├── gpu_status_widget.cpython-314.pyc
+│   │   │   ├── hex_viewer.cpython-314.pyc
+│   │   │   ├── hex_viewer_widget.cpython-314.pyc
+│   │   │   ├── icp_analysis_widget.cpython-314.pyc
+│   │   │   ├── intellicrack_advanced_protection_widget.cpython-314.pyc
+│   │   │   ├── intellicrack_protection_widget.cpython-314.pyc
+│   │   │   ├── memory_dumper.cpython-314.pyc
+│   │   │   ├── model_loading_progress_widget.cpython-314.pyc
+│   │   │   ├── pe_file_model.cpython-314.pyc
+│   │   │   ├── pe_structure_model.cpython-314.pyc
+│   │   │   ├── plugin_editor.cpython-314.pyc
+│   │   │   ├── string_extraction_widget.cpython-314.pyc
+│   │   │   ├── structure_visualizer.cpython-314.pyc
+│   │   │   ├── syntax_highlighters.cpython-314.pyc
+│   │   │   ├── system_monitor_widget.cpython-314.pyc
+│   │   │   ├── terminal_session_widget.cpython-314.pyc
+│   │   │   ├── unified_protection_widget.cpython-314.pyc
+│   │   │   └── widget_factory.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── ai_assistant_widget.py
 │   │   ├── batch_analysis_widget.py
@@ -913,7 +1533,45 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── ui_manager.py
 │   └── window_sizing.py
 ├── utils/
+│   ├── __pycache__/
+│   │   ├── __init__.cpython-314.pyc
+│   │   ├── api_client.cpython-314.pyc
+│   │   ├── config.cpython-314.pyc
+│   │   ├── config_cleanup.cpython-314.pyc
+│   │   ├── constants.cpython-314.pyc
+│   │   ├── dependencies.cpython-314.pyc
+│   │   ├── dependency_fallbacks.cpython-314.pyc
+│   │   ├── deprecation_warnings.cpython-314.pyc
+│   │   ├── env_file_manager.cpython-314.pyc
+│   │   ├── font_manager.cpython-314.pyc
+│   │   ├── ghidra_common.cpython-314.pyc
+│   │   ├── gpu_autoloader.cpython-314.pyc
+│   │   ├── gpu_benchmark.cpython-314.pyc
+│   │   ├── http_utils.cpython-314.pyc
+│   │   ├── json_utils.cpython-314.pyc
+│   │   ├── log_message.cpython-314.pyc
+│   │   ├── logger.cpython-314.pyc
+│   │   ├── path_resolver.cpython-314.pyc
+│   │   ├── protection_utils.cpython-314.pyc
+│   │   ├── qemu_image_discovery.cpython-314.pyc
+│   │   ├── report_generator.cpython-314.pyc
+│   │   ├── resource_helper.cpython-314.pyc
+│   │   ├── secrets_manager.cpython-314.pyc
+│   │   ├── security_mitigations.cpython-314.pyc
+│   │   ├── service_health_checker.cpython-314.pyc
+│   │   ├── service_utils.cpython-314.pyc
+│   │   ├── severity_levels.cpython-314.pyc
+│   │   ├── subprocess_security.cpython-314.pyc
+│   │   └── torch_gil_safety.cpython-314.pyc
 │   ├── analysis/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── analysis_exporter.cpython-314.pyc
+│   │   │   ├── analysis_stats.cpython-314.pyc
+│   │   │   ├── binary_analysis.cpython-314.pyc
+│   │   │   ├── entropy_utils.cpython-314.pyc
+│   │   │   ├── pattern_search.cpython-314.pyc
+│   │   │   └── security_analysis.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── analysis_exporter.py
 │   │   ├── analysis_stats.py
@@ -922,6 +1580,16 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── pattern_search.py
 │   │   └── security_analysis.py
 │   ├── binary/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── binary_io.cpython-314.pyc
+│   │   │   ├── binary_utils.cpython-314.pyc
+│   │   │   ├── certificate_extractor.cpython-314.pyc
+│   │   │   ├── elf_analyzer.cpython-314.pyc
+│   │   │   ├── hex_utils.cpython-314.pyc
+│   │   │   ├── network_api_analysis.cpython-314.pyc
+│   │   │   ├── pe_analysis_common.cpython-314.pyc
+│   │   │   └── pe_common.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── binary_io.py
 │   │   ├── binary_utils.py
@@ -932,6 +1600,21 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── pe_analysis_common.py
 │   │   └── pe_common.py
 │   ├── core/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── core_utilities.cpython-314.pyc
+│   │   │   ├── dependency_feedback.cpython-314.pyc
+│   │   │   ├── exception_utils.cpython-314.pyc
+│   │   │   ├── final_utilities.cpython-314.pyc
+│   │   │   ├── import_checks.cpython-314.pyc
+│   │   │   ├── import_patterns.cpython-314.pyc
+│   │   │   ├── internal_helpers.cpython-314.pyc
+│   │   │   ├── misc_utils.cpython-314.pyc
+│   │   │   ├── path_discovery.cpython-314.pyc
+│   │   │   ├── plugin_paths.cpython-314.pyc
+│   │   │   ├── siphash24_replacement.cpython-314.pyc
+│   │   │   ├── string_utils.cpython-314.pyc
+│   │   │   └── type_validation.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── core_utilities.py
 │   │   ├── dependency_feedback.py
@@ -947,32 +1630,74 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── string_utils.py
 │   │   └── type_validation.py
 │   ├── exploitation/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── exploitation.cpython-314.pyc
+│   │   │   ├── logger.cpython-314.pyc
+│   │   │   ├── patch_engine.cpython-314.pyc
+│   │   │   └── payload_result_handler.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── exploitation.py
 │   │   ├── logger.py
 │   │   ├── patch_engine.py
 │   │   └── payload_result_handler.py
 │   ├── patching/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── patch_generator.cpython-314.pyc
+│   │   │   ├── patch_utils.cpython-314.pyc
+│   │   │   └── patch_verification.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── patch_generator.py
 │   │   ├── patch_utils.py
 │   │   └── patch_verification.py
 │   ├── protection/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── certificate_common.cpython-314.pyc
+│   │   │   ├── certificate_utils.cpython-314.pyc
+│   │   │   └── protection_helpers.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── certificate_common.py
 │   │   ├── certificate_utils.py
 │   │   └── protection_helpers.py
 │   ├── reporting/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── html_templates.cpython-314.pyc
+│   │   │   └── report_common.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── html_templates.py
 │   │   └── report_common.py
 │   ├── runtime/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── additional_runners.cpython-314.pyc
+│   │   │   ├── distributed_processing.cpython-314.pyc
+│   │   │   ├── performance_optimizer.cpython-314.pyc
+│   │   │   └── runner_functions.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── additional_runners.py
 │   │   ├── distributed_processing.py
 │   │   ├── performance_optimizer.py
 │   │   └── runner_functions.py
 │   ├── system/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── driver_utils.cpython-314.pyc
+│   │   │   ├── file_resolution.cpython-314.pyc
+│   │   │   ├── os_detection.cpython-314.pyc
+│   │   │   ├── os_detection_mixin.cpython-314.pyc
+│   │   │   ├── process_common.cpython-314.pyc
+│   │   │   ├── process_helpers.cpython-314.pyc
+│   │   │   ├── process_utils.cpython-314.pyc
+│   │   │   ├── program_discovery.cpython-314.pyc
+│   │   │   ├── snapshot_common.cpython-314.pyc
+│   │   │   ├── snapshot_utils.cpython-314.pyc
+│   │   │   ├── subprocess_utils.cpython-314.pyc
+│   │   │   ├── system_utils.cpython-314.pyc
+│   │   │   ├── windows_common.cpython-314.pyc
+│   │   │   └── windows_structures.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── driver_utils.py
 │   │   ├── file_resolution.py
@@ -989,6 +1714,13 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── windows_common.py
 │   │   └── windows_structures.py
 │   ├── tools/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── ghidra_script_manager.cpython-314.pyc
+│   │   │   ├── ghidra_utils.cpython-314.pyc
+│   │   │   ├── pcapy_compat.cpython-314.pyc
+│   │   │   ├── radare2_utils.cpython-314.pyc
+│   │   │   └── tool_wrappers.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── ghidra_script_manager.py
 │   │   ├── ghidra_utils.py
@@ -996,6 +1728,13 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── radare2_utils.py
 │   │   └── tool_wrappers.py
 │   ├── ui/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   ├── ui_button_common.cpython-314.pyc
+│   │   │   ├── ui_common.cpython-314.pyc
+│   │   │   ├── ui_helpers.cpython-314.pyc
+│   │   │   ├── ui_setup_functions.cpython-314.pyc
+│   │   │   └── ui_utils.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── ui_button_common.py
 │   │   ├── ui_common.py
@@ -1003,9 +1742,15 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── ui_setup_functions.py
 │   │   └── ui_utils.py
 │   ├── validation/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   └── import_validator.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   └── import_validator.py
 │   ├── windows/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
+│   │   │   └── service_manager.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   └── service_manager.py
 │   ├── __init__.py
