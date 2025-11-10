@@ -37,7 +37,7 @@ embed-resource = "3.0"
 [dependencies]
 # Python Integration
 pyo3 = { version = "0.26", features = ["auto-initialize"] }
-libloading = "0.8"
+libloading = "0.9"
 
 # System Integration
 sysinfo = "0.37"
