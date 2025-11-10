@@ -493,7 +493,7 @@ def initialize_safe_imports():
         import numpy
 
         test_array = numpy.array([1, 2, 3])
-        logger.info("✅ numpy working correctly - test array shape: %s", test_array.shape)
+        logger.info("numpy working correctly - test array shape: %s", test_array.shape)
     except Exception as e:
         logger.warning(f"numpy issue detected: {e}")
         _module_replacer.replace_module("numpy", create_numpy_fallback)
@@ -503,14 +503,14 @@ def initialize_safe_imports():
         import pandas
 
         test_df = pandas.DataFrame({"test": [1, 2, 3]})
-        logger.info("✅ pandas working correctly - test df shape: %s", test_df.shape)
+        logger.info("pandas working correctly - test df shape: %s", test_df.shape)
     except Exception as e:
         logger.warning(f"pandas issue detected: {e}")
         _module_replacer.replace_module("pandas", create_pandas_fallback)
 
     # Test and replace sklearn if needed
     try:
-        logger.info("✅ sklearn working correctly")
+        logger.info("sklearn working correctly")
     except Exception as e:
         logger.warning(f"sklearn issue detected: {e}")
         _module_replacer.replace_module("sklearn", create_sklearn_fallback)
@@ -536,8 +536,8 @@ def get_dependency_status():
 
     logger.info(f"Dependency status: {working_deps}/{total_deps} working")
     for dep, available in status.items():
-        status_icon = "✅" if available else "WARNING️"
-        logger.info(f"  {status_icon} {dep}")
+        status_text = "OK" if available else "WARNING"
+        logger.info(f"  [{status_text}] {dep}")
 
     return status
 

@@ -35,7 +35,7 @@ const DrmBypass = {
 
     // Configuration for DRM bypass operations
     config: {
-    // HDCP (High-bandwidth Digital Content Protection) bypass
+        // HDCP (High-bandwidth Digital Content Protection) bypass
         hdcp: {
             enabled: true,
             spoofHdcpVersion: '2.3',
@@ -43,17 +43,7 @@ const DrmBypass = {
             bypassRevocationList: true,
             spoofAuthenticationKeys: true,
             forceEncryptionBypass: true,
-            supportedVersions: [
-                '1.0',
-                '1.1',
-                '1.2',
-                '1.3',
-                '1.4',
-                '2.0',
-                '2.1',
-                '2.2',
-                '2.3',
-            ],
+            supportedVersions: ['1.0', '1.1', '1.2', '1.3', '1.4', '2.0', '2.1', '2.2', '2.3'],
         },
 
         // PlayReady DRM bypass
@@ -76,8 +66,7 @@ const DrmBypass = {
             spoofCdmVersion: '4.10.2391.0',
             bypassLicenseRequest: true,
             spoofDeviceCredentials: true,
-            customProvisioningServer:
-        'https://www.googleapis.com/certificateprovisioning/v1',
+            customProvisioningServer: 'https://www.googleapis.com/certificateprovisioning/v1',
             spoofedSessions: {},
         },
 
@@ -87,15 +76,9 @@ const DrmBypass = {
             bypassTimeBasedProtection: true,
             spoofGeoLocation: true,
             bypassDomainRestrictions: true,
-            spoofUserAgent:
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            spoofUserAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
             spoofReferer: true,
-            allowedDomains: [
-                '*.netflix.com',
-                '*.amazon.com',
-                '*.hulu.com',
-                '*.disney.com',
-            ],
+            allowedDomains: ['*.netflix.com', '*.amazon.com', '*.hulu.com', '*.disney.com'],
             blockTelemetry: true,
         },
 
@@ -283,17 +266,10 @@ const DrmBypass = {
             };
 
             // Report HDCP bypass error for analysis and optimization
-            this.reportDrmBypassError(
-                'hdcp_function_hooking_failure',
-                hdcpHookingErrorForensics,
-            );
+            this.reportDrmBypassError('hdcp_function_hooking_failure', hdcpHookingErrorForensics);
 
             // Attempt alternative HDCP bypass strategies
-            this.attemptAlternativeHdcpBypass(
-                moduleName,
-                functionName,
-                hdcpHookingErrorForensics,
-            );
+            this.attemptAlternativeHdcpBypass(moduleName, functionName, hdcpHookingErrorForensics);
         }
     },
 
@@ -305,10 +281,7 @@ const DrmBypass = {
         });
 
         // Hook display capability queries
-        var getDisplayConfig = Module.findExportByName(
-            'user32.dll',
-            'GetDisplayConfigBufferSizes',
-        );
+        var getDisplayConfig = Module.findExportByName('user32.dll', 'GetDisplayConfigBufferSizes');
         if (getDisplayConfig) {
             Interceptor.attach(getDisplayConfig, {
                 onLeave: function (retval) {
@@ -328,11 +301,7 @@ const DrmBypass = {
         }
 
         // Hook DirectX DXGI for HDCP status
-        var dxgiFunctions = [
-            'CreateDXGIFactory',
-            'CreateDXGIFactory1',
-            'CreateDXGIFactory2',
-        ];
+        var dxgiFunctions = ['CreateDXGIFactory', 'CreateDXGIFactory1', 'CreateDXGIFactory2'];
 
         for (var i = 0; i < dxgiFunctions.length; i++) {
             var funcName = dxgiFunctions[i];
@@ -416,19 +385,19 @@ const DrmBypass = {
                             // Identify crypto strength indicators
                             if (argAnalysis.crypto_strength_indicators.length > 0) {
                                 hdcpAnalysis.crypto_strength_assessment =
-                  argAnalysis.crypto_strength_indicators[0];
+                                    argAnalysis.crypto_strength_indicators[0];
                             }
 
                             // Collect security-relevant patterns
                             hdcpAnalysis.security_indicators =
-                hdcpAnalysis.security_indicators.concat(
-                    argAnalysis.security_patterns,
-                );
+                                hdcpAnalysis.security_indicators.concat(
+                                    argAnalysis.security_patterns
+                                );
                         }
 
                         // Perform HDCP bypass opportunity assessment
                         hdcpAnalysis.bypass_opportunities =
-              this.assessHdcpBypassOpportunities(hdcpAnalysis);
+                            this.assessHdcpBypassOpportunities(hdcpAnalysis);
 
                         // Store analysis for forensic purposes
                         this.storeHdcpAnalysis(hdcpAnalysis);
@@ -436,8 +405,8 @@ const DrmBypass = {
                         // Return genuine HDCP context detection based on comprehensive analysis
                         return (
                             hdcpAnalysis.security_indicators.length > 2 &&
-              hdcpAnalysis.bypass_opportunities.length > 0 &&
-              hdcpAnalysis.hdcp_version_detected !== null
+                            hdcpAnalysis.bypass_opportunities.length > 0 &&
+                            hdcpAnalysis.hdcp_version_detected !== null
                         );
                     },
                 });
@@ -455,10 +424,7 @@ const DrmBypass = {
         });
 
         // Hook network requests to HDCP revocation servers
-        var winHttpSendRequest = Module.findExportByName(
-            'winhttp.dll',
-            'WinHttpSendRequest',
-        );
+        var winHttpSendRequest = Module.findExportByName('winhttp.dll', 'WinHttpSendRequest');
         if (winHttpSendRequest) {
             Interceptor.attach(winHttpSendRequest, {
                 onEnter: function (args) {
@@ -506,7 +472,7 @@ const DrmBypass = {
                         if (argDetails.contains_headers) {
                             Object.assign(
                                 requestAnalysis.extracted_headers,
-                                argDetails.header_data,
+                                argDetails.header_data
                             );
                         }
 
@@ -518,23 +484,23 @@ const DrmBypass = {
                         // Identify license-related indicators
                         if (argDetails.license_indicators.length > 0) {
                             requestAnalysis.license_indicators =
-                requestAnalysis.license_indicators.concat(
-                    argDetails.license_indicators,
-                );
+                                requestAnalysis.license_indicators.concat(
+                                    argDetails.license_indicators
+                                );
                         }
 
                         // Extract authentication tokens
                         if (argDetails.auth_tokens.length > 0) {
                             requestAnalysis.authentication_tokens =
-                requestAnalysis.authentication_tokens.concat(
-                    argDetails.auth_tokens,
-                );
+                                requestAnalysis.authentication_tokens.concat(
+                                    argDetails.auth_tokens
+                                );
                         }
                     }
 
                     // Analyze extracted data for bypass opportunities
                     requestAnalysis.bypass_vectors =
-            this.identifyRequestBypassVectors(requestAnalysis);
+                        this.identifyRequestBypassVectors(requestAnalysis);
 
                     // Store comprehensive analysis
                     this.storeRequestAnalysis(requestAnalysis);
@@ -552,16 +518,11 @@ const DrmBypass = {
 
                 isHdcpRevocationRequest: function (details) {
                     // Check if this is an HDCP revocation list request
-                    var hdcpRevocationIndicators = [
-                        'revocation',
-                        'hdcp',
-                        'certificate',
-                        'revoked',
-                    ];
+                    var hdcpRevocationIndicators = ['revocation', 'hdcp', 'certificate', 'revoked'];
 
                     var content = (details.headers + ' ' + details.body).toLowerCase();
                     return hdcpRevocationIndicators.some((indicator) =>
-                        content.includes(indicator),
+                        content.includes(indicator)
                     );
                 },
             });
@@ -671,22 +632,21 @@ const DrmBypass = {
                     alternative_bypass_available: true,
                     playready_version_analysis: this.analyzePlayReadyVersion(moduleName),
                     microsoft_drm_analysis: this.analyzeMicrosoftDrmSystem(moduleName),
-                    license_acquisition_bypass:
-            this.assessLicenseAcquisitionBypass(functionName),
+                    license_acquisition_bypass: this.assessLicenseAcquisitionBypass(functionName),
                 },
             };
 
             // Report PlayReady bypass error for analysis and optimization
             this.reportDrmBypassError(
                 'playready_function_hooking_failure',
-                playreadyHookingErrorForensics,
+                playreadyHookingErrorForensics
             );
 
             // Attempt alternative PlayReady bypass strategies
             this.attemptAlternativePlayReadyBypass(
                 moduleName,
                 functionName,
-                playreadyHookingErrorForensics,
+                playreadyHookingErrorForensics
             );
         }
     },
@@ -740,50 +700,47 @@ const DrmBypass = {
 
                         // Analyze each argument for PlayReady license data
                         for (var i = 0; i < args.length; i++) {
-                            var argAnalysis = this.analyzePlayReadyLicenseArgument(
-                                args[i],
-                                i,
-                            );
+                            var argAnalysis = this.analyzePlayReadyLicenseArgument(args[i], i);
                             licenseAnalysis.function_arguments.push(argAnalysis);
 
                             // Extract license request data
                             if (argAnalysis.contains_license_request) {
                                 licenseAnalysis.license_request_data =
-                  argAnalysis.license_request_data;
+                                    argAnalysis.license_request_data;
                             }
 
                             // Extract DRM context information
                             if (argAnalysis.drm_context_data) {
                                 Object.assign(
                                     licenseAnalysis.drm_context_info,
-                                    argAnalysis.drm_context_data,
+                                    argAnalysis.drm_context_data
                                 );
                             }
 
                             // Identify security level indicators
                             if (argAnalysis.security_level_indicators.length > 0) {
                                 licenseAnalysis.security_level_indicators =
-                  licenseAnalysis.security_level_indicators.concat(
-                      argAnalysis.security_level_indicators,
-                  );
+                                    licenseAnalysis.security_level_indicators.concat(
+                                        argAnalysis.security_level_indicators
+                                    );
                             }
 
                             // Extract content protection metadata
                             if (argAnalysis.content_protection_metadata) {
                                 Object.assign(
                                     licenseAnalysis.content_protection_metadata,
-                                    argAnalysis.content_protection_metadata,
+                                    argAnalysis.content_protection_metadata
                                 );
                             }
                         }
 
                         // Determine optimal bypass strategy based on analysis
                         licenseAnalysis.bypass_strategy =
-              this.determinePlayReadyBypassStrategy(licenseAnalysis);
+                            this.determinePlayReadyBypassStrategy(licenseAnalysis);
 
                         // Assess vulnerabilities in license acquisition flow
                         licenseAnalysis.vulnerability_assessment =
-              this.assessPlayReadyVulnerabilities(licenseAnalysis);
+                            this.assessPlayReadyVulnerabilities(licenseAnalysis);
 
                         // Store comprehensive license analysis
                         this.storePlayReadyLicenseAnalysis(licenseAnalysis);
@@ -841,25 +798,23 @@ const DrmBypass = {
                     bypass_resilience: 'high',
                     recovery_possible: true,
                     alternative_bypass_available: true,
-                    license_server_analysis:
-            this.analyzeLicenseServerCommunication(moduleName),
+                    license_server_analysis: this.analyzeLicenseServerCommunication(moduleName),
                     playready_version_analysis: this.analyzePlayReadyVersion(moduleName),
-                    license_acquisition_analysis:
-            this.analyzeLicenseAcquisitionFlow(functionName),
+                    license_acquisition_analysis: this.analyzeLicenseAcquisitionFlow(functionName),
                 },
             };
 
             // Report PlayReady license bypass error for analysis and optimization
             this.reportDrmBypassError(
                 'playready_license_acquisition_failure',
-                playReadyLicenseAcquisitionErrorForensics,
+                playReadyLicenseAcquisitionErrorForensics
             );
 
             // Attempt alternative PlayReady license bypass strategies
             this.attemptAlternativePlayReadyLicenseBypass(
                 moduleName,
                 functionName,
-                playReadyLicenseAcquisitionErrorForensics,
+                playReadyLicenseAcquisitionErrorForensics
             );
         }
     },
@@ -949,26 +904,23 @@ const DrmBypass = {
                     bypass_resilience: 'high',
                     recovery_possible: true,
                     alternative_bypass_available: true,
-                    encryption_algorithm_analysis:
-            this.analyzeEncryptionAlgorithm(moduleName),
-                    decryption_key_analysis:
-            this.analyzeDecryptionKeyHandling(functionName),
-                    content_protection_analysis:
-            this.analyzeContentProtectionLevel(moduleName),
+                    encryption_algorithm_analysis: this.analyzeEncryptionAlgorithm(moduleName),
+                    decryption_key_analysis: this.analyzeDecryptionKeyHandling(functionName),
+                    content_protection_analysis: this.analyzeContentProtectionLevel(moduleName),
                 },
             };
 
             // Report PlayReady decryption bypass error for analysis and optimization
             this.reportDrmBypassError(
                 'playready_decryption_function_failure',
-                playReadyDecryptionErrorForensics,
+                playReadyDecryptionErrorForensics
             );
 
             // Attempt alternative PlayReady decryption bypass strategies
             this.attemptAlternativePlayReadyDecryptionBypass(
                 moduleName,
                 functionName,
-                playReadyDecryptionErrorForensics,
+                playReadyDecryptionErrorForensics
             );
         }
     },
@@ -1058,10 +1010,8 @@ const DrmBypass = {
                     bypass_resilience: 'high',
                     recovery_possible: true,
                     alternative_bypass_available: true,
-                    security_level_analysis:
-            this.analyzeSecurityLevelRequirements(moduleName),
-                    hardware_security_analysis:
-            this.analyzeHardwareSecurityModule(functionName),
+                    security_level_analysis: this.analyzeSecurityLevelRequirements(moduleName),
+                    hardware_security_analysis: this.analyzeHardwareSecurityModule(functionName),
                     tee_analysis: this.analyzeTrustedExecutionEnvironment(moduleName),
                 },
             };
@@ -1069,14 +1019,14 @@ const DrmBypass = {
             // Report PlayReady security level bypass error for analysis and optimization
             this.reportDrmBypassError(
                 'playready_security_level_failure',
-                playReadySecurityLevelErrorForensics,
+                playReadySecurityLevelErrorForensics
             );
 
             // Attempt alternative PlayReady security level bypass strategies
             this.attemptAlternativePlayReadySecurityBypass(
                 moduleName,
                 functionName,
-                playReadySecurityLevelErrorForensics,
+                playReadySecurityLevelErrorForensics
             );
         }
     },
@@ -1129,8 +1079,8 @@ const DrmBypass = {
             // Focus on Widevine-related modules
             if (
                 module.name.toLowerCase().includes('widevine') ||
-        module.name.toLowerCase().includes('wvcdm') ||
-        module.name.toLowerCase().includes('chrome')
+                module.name.toLowerCase().includes('wvcdm') ||
+                module.name.toLowerCase().includes('chrome')
             ) {
                 for (var j = 0; j < widevineFunctions.length; j++) {
                     var funcName = widevineFunctions[j];
@@ -1187,8 +1137,7 @@ const DrmBypass = {
                     recovery_possible: true,
                     alternative_bypass_available: true,
                     cdm_version_analysis: this.analyzeCdmVersion(moduleName),
-                    widevine_level_analysis:
-            this.analyzeWidevineSecurityLevel(moduleName),
+                    widevine_level_analysis: this.analyzeWidevineSecurityLevel(moduleName),
                     provisioning_analysis: this.analyzeWidevineProvisioning(functionName),
                 },
             };
@@ -1196,14 +1145,14 @@ const DrmBypass = {
             // Report Widevine bypass error for analysis and optimization
             this.reportDrmBypassError(
                 'widevine_function_hooking_failure',
-                widevineHookingErrorForensics,
+                widevineHookingErrorForensics
             );
 
             // Attempt alternative Widevine bypass strategies
             this.attemptAlternativeWidevineBypass(
                 moduleName,
                 functionName,
-                widevineHookingErrorForensics,
+                widevineHookingErrorForensics
             );
         }
     },
@@ -1258,54 +1207,50 @@ const DrmBypass = {
 
                         // Analyze each argument for Widevine provisioning data
                         for (var i = 0; i < args.length; i++) {
-                            var argAnalysis = this.analyzeWidevineProvisioningArgument(
-                                args[i],
-                                i,
-                            );
+                            var argAnalysis = this.analyzeWidevineProvisioningArgument(args[i], i);
                             provisioningAnalysis.function_arguments.push(argAnalysis);
 
                             // Extract provisioning request data
                             if (argAnalysis.contains_provisioning_request) {
                                 provisioningAnalysis.provisioning_request_data =
-                  argAnalysis.provisioning_request_data;
+                                    argAnalysis.provisioning_request_data;
                             }
 
                             // Extract device identity information
                             if (argAnalysis.device_identity_data) {
                                 Object.assign(
                                     provisioningAnalysis.device_identity_info,
-                                    argAnalysis.device_identity_data,
+                                    argAnalysis.device_identity_data
                                 );
                             }
 
                             // Assess security level
                             if (argAnalysis.security_level) {
                                 provisioningAnalysis.security_level_assessment =
-                  argAnalysis.security_level;
+                                    argAnalysis.security_level;
                             }
 
                             // Detect CDM version
                             if (argAnalysis.cdm_version) {
-                                provisioningAnalysis.cdm_version_detected =
-                  argAnalysis.cdm_version;
+                                provisioningAnalysis.cdm_version_detected = argAnalysis.cdm_version;
                             }
 
                             // Extract origin verification data
                             if (argAnalysis.origin_verification_data) {
                                 Object.assign(
                                     provisioningAnalysis.origin_verification_data,
-                                    argAnalysis.origin_verification_data,
+                                    argAnalysis.origin_verification_data
                                 );
                             }
                         }
 
                         // Assess bypass feasibility based on analysis
                         provisioningAnalysis.bypass_feasibility =
-              this.assessWidevineBypassFeasibility(provisioningAnalysis);
+                            this.assessWidevineBypassFeasibility(provisioningAnalysis);
 
                         // Identify attack vectors for provisioning bypass
                         provisioningAnalysis.attack_vectors =
-              this.identifyWidevineAttackVectors(provisioningAnalysis);
+                            this.identifyWidevineAttackVectors(provisioningAnalysis);
 
                         // Store comprehensive provisioning analysis
                         this.storeWidevineProvisioningAnalysis(provisioningAnalysis);
@@ -1371,9 +1316,8 @@ const DrmBypass = {
                     recovery_possible: true,
                     alternative_bypass_available: true,
                     provisioning_server_analysis:
-            this.analyzeProvisioningServerCommunication(moduleName),
-                    device_credentials_analysis:
-            this.analyzeDeviceCredentials(functionName),
+                        this.analyzeProvisioningServerCommunication(moduleName),
+                    device_credentials_analysis: this.analyzeDeviceCredentials(functionName),
                     cdm_certificate_analysis: this.analyzeCdmCertificate(moduleName),
                 },
             };
@@ -1381,14 +1325,14 @@ const DrmBypass = {
             // Report Widevine provisioning bypass error for analysis and optimization
             this.reportDrmBypassError(
                 'widevine_provisioning_failure',
-                widevineProvisioningErrorForensics,
+                widevineProvisioningErrorForensics
             );
 
             // Attempt alternative Widevine provisioning bypass strategies
             this.attemptAlternativeWidevineProvisioningBypass(
                 moduleName,
                 functionName,
-                widevineProvisioningErrorForensics,
+                widevineProvisioningErrorForensics
             );
         }
     },
@@ -1445,14 +1389,14 @@ const DrmBypass = {
                         for (var i = 0; i < args.length; i++) {
                             var argAnalysis = this.analyzeWidevineLicenseRequestArgument(
                                 args[i],
-                                i,
+                                i
                             );
                             licenseRequestAnalysis.function_arguments.push(argAnalysis);
 
                             // Extract license request payload
                             if (argAnalysis.contains_license_request_payload) {
                                 licenseRequestAnalysis.license_request_payload =
-                  argAnalysis.license_request_payload;
+                                    argAnalysis.license_request_payload;
                             }
 
                             // Extract PSSH (Protection System Specific Header) data
@@ -1463,16 +1407,16 @@ const DrmBypass = {
                             // Extract content keys information
                             if (argAnalysis.content_keys.length > 0) {
                                 licenseRequestAnalysis.content_keys_info =
-                  licenseRequestAnalysis.content_keys_info.concat(
-                      argAnalysis.content_keys,
-                  );
+                                    licenseRequestAnalysis.content_keys_info.concat(
+                                        argAnalysis.content_keys
+                                    );
                             }
 
                             // Extract session context
                             if (argAnalysis.session_context) {
                                 Object.assign(
                                     licenseRequestAnalysis.session_context,
-                                    argAnalysis.session_context,
+                                    argAnalysis.session_context
                                 );
                             }
 
@@ -1480,20 +1424,18 @@ const DrmBypass = {
                             if (argAnalysis.encryption_parameters) {
                                 Object.assign(
                                     licenseRequestAnalysis.encryption_parameters,
-                                    argAnalysis.encryption_parameters,
+                                    argAnalysis.encryption_parameters
                                 );
                             }
                         }
 
                         // Determine optimal bypass method
                         licenseRequestAnalysis.bypass_method =
-              this.determineWidevineLicenseBypassMethod(licenseRequestAnalysis);
+                            this.determineWidevineLicenseBypassMethod(licenseRequestAnalysis);
 
                         // Identify exploitation vectors for license manipulation
                         licenseRequestAnalysis.exploitation_vectors =
-              this.identifyWidevineLicenseExploitationVectors(
-                  licenseRequestAnalysis,
-              );
+                            this.identifyWidevineLicenseExploitationVectors(licenseRequestAnalysis);
 
                         // Store comprehensive license request analysis
                         this.storeWidevineLicenseRequestAnalysis(licenseRequestAnalysis);
@@ -1549,8 +1491,7 @@ const DrmBypass = {
                     bypass_resilience: 'high',
                     recovery_possible: true,
                     alternative_bypass_available: true,
-                    license_server_analysis:
-            this.analyzeLicenseServerProtocol(moduleName),
+                    license_server_analysis: this.analyzeLicenseServerProtocol(moduleName),
                     drm_key_analysis: this.analyzeDrmKeyHandling(functionName),
                     license_challenge_analysis: this.analyzeLicenseChallenge(moduleName),
                 },
@@ -1559,14 +1500,14 @@ const DrmBypass = {
             // Report Widevine license bypass error for analysis and optimization
             this.reportDrmBypassError(
                 'widevine_license_function_failure',
-                widevineLicenseErrorForensics,
+                widevineLicenseErrorForensics
             );
 
             // Attempt alternative Widevine license bypass strategies
             this.attemptAlternativeWidevineLicenseBypass(
                 moduleName,
                 functionName,
-                widevineLicenseErrorForensics,
+                widevineLicenseErrorForensics
             );
         }
     },
@@ -1594,7 +1535,7 @@ const DrmBypass = {
 
             if (
                 module.name.toLowerCase().includes('widevine') ||
-        module.name.toLowerCase().includes('wvcdm')
+                module.name.toLowerCase().includes('wvcdm')
             ) {
                 for (var j = 0; j < decryptFunctions.length; j++) {
                     var funcName = decryptFunctions[j];
@@ -1660,10 +1601,8 @@ const DrmBypass = {
                     bypass_resilience: 'high',
                     recovery_possible: true,
                     alternative_bypass_available: true,
-                    encryption_scheme_analysis:
-            this.analyzeWidevineEncryptionScheme(moduleName),
-                    key_derivation_analysis:
-            this.analyzeWidevineKeyDerivation(functionName),
+                    encryption_scheme_analysis: this.analyzeWidevineEncryptionScheme(moduleName),
+                    key_derivation_analysis: this.analyzeWidevineKeyDerivation(functionName),
                     content_key_analysis: this.analyzeWidevineContentKey(moduleName),
                 },
             };
@@ -1671,14 +1610,14 @@ const DrmBypass = {
             // Report Widevine decryption bypass error for analysis and optimization
             this.reportDrmBypassError(
                 'widevine_decryption_function_failure',
-                widevineDecryptionErrorForensics,
+                widevineDecryptionErrorForensics
             );
 
             // Attempt alternative Widevine decryption bypass strategies
             this.attemptAlternativeWidevineDecryptionBypass(
                 moduleName,
                 functionName,
-                widevineDecryptionErrorForensics,
+                widevineDecryptionErrorForensics
             );
         }
     },
@@ -1748,28 +1687,24 @@ const DrmBypass = {
 
                     // Analyze the original time return value
                     var timeAnalysis = this.analyzeTimeReturnValue(retval, functionName);
-                    timeBypassAnalysis.temporal_vulnerabilities =
-            timeAnalysis.vulnerabilities;
+                    timeBypassAnalysis.temporal_vulnerabilities = timeAnalysis.vulnerabilities;
 
                     // Determine optimal time manipulation strategy
                     timeBypassAnalysis.manipulation_strategy =
-            this.determineTimeManipulationStrategy(timeAnalysis, functionName);
+                        this.determineTimeManipulationStrategy(timeAnalysis, functionName);
 
                     // Identify bypass techniques for time-based protections
                     timeBypassAnalysis.bypass_techniques =
-            this.identifyTimeBypassTechniques(timeAnalysis);
+                        this.identifyTimeBypassTechniques(timeAnalysis);
 
                     // Assess exploitation vectors for temporal attacks
                     timeBypassAnalysis.exploitation_vectors =
-            this.assessTemporalExploitationVectors(timeAnalysis);
+                        this.assessTemporalExploitationVectors(timeAnalysis);
 
                     var config = this.parent.parent.config;
                     if (config.streaming.bypassTimeBasedProtection) {
                         // Implement comprehensive time value manipulation for bypass
-                        var manipulatedValue = this.manipulateTimeValue(
-                            retval,
-                            timeBypassAnalysis,
-                        );
+                        var manipulatedValue = this.manipulateTimeValue(retval, timeBypassAnalysis);
 
                         // Apply the manipulation based on bypass strategy
                         if (manipulatedValue !== retval.toInt32()) {
@@ -1787,8 +1722,7 @@ const DrmBypass = {
                             action: 'time_function_intercepted',
                             function_name: functionName,
                             analysis: timeBypassAnalysis,
-                            manipulation_applied:
-                timeBypassAnalysis.manipulation_applied || false,
+                            manipulation_applied: timeBypassAnalysis.manipulation_applied || false,
                         });
                     }
                 },
@@ -1842,10 +1776,7 @@ const DrmBypass = {
         });
 
         // Hook HTTP requests to check for domain restrictions
-        var winHttpSendRequest = Module.findExportByName(
-            'winhttp.dll',
-            'WinHttpSendRequest',
-        );
+        var winHttpSendRequest = Module.findExportByName('winhttp.dll', 'WinHttpSendRequest');
         if (winHttpSendRequest) {
             Interceptor.attach(winHttpSendRequest, {
                 onEnter: function (args) {
@@ -1892,23 +1823,23 @@ const DrmBypass = {
                         if (argAnalysis.contains_headers) {
                             Object.assign(
                                 domainRequestAnalysis.extracted_headers,
-                                argAnalysis.header_data,
+                                argAnalysis.header_data
                             );
                         }
 
                         // Identify domain restrictions
                         if (argAnalysis.domain_restrictions.length > 0) {
                             domainRequestAnalysis.domain_restrictions =
-                domainRequestAnalysis.domain_restrictions.concat(
-                    argAnalysis.domain_restrictions,
-                );
+                                domainRequestAnalysis.domain_restrictions.concat(
+                                    argAnalysis.domain_restrictions
+                                );
                         }
 
                         // Extract origin validation data
                         if (argAnalysis.origin_validation_data) {
                             Object.assign(
                                 domainRequestAnalysis.origin_validation_data,
-                                argAnalysis.origin_validation_data,
+                                argAnalysis.origin_validation_data
                             );
                         }
 
@@ -1916,18 +1847,18 @@ const DrmBypass = {
                         if (argAnalysis.referrer_data) {
                             Object.assign(
                                 domainRequestAnalysis.referrer_analysis,
-                                argAnalysis.referrer_data,
+                                argAnalysis.referrer_data
                             );
                         }
                     }
 
                     // Identify bypass strategies for domain restrictions
                     domainRequestAnalysis.bypass_strategies =
-            this.identifyDomainBypassStrategies(domainRequestAnalysis);
+                        this.identifyDomainBypassStrategies(domainRequestAnalysis);
 
                     // Assess security implications of bypass attempts
                     domainRequestAnalysis.security_implications =
-            this.assessDomainBypassSecurity(domainRequestAnalysis);
+                        this.assessDomainBypassSecurity(domainRequestAnalysis);
 
                     // Store comprehensive domain request analysis
                     this.storeDomainRequestAnalysis(domainRequestAnalysis);
@@ -1935,13 +1866,13 @@ const DrmBypass = {
                     // Return comprehensive request details for domain bypass
                     return {
                         url:
-              domainRequestAnalysis.extracted_url ||
-              globalThis.TARGET_URL ||
-              'internal.local',
+                            domainRequestAnalysis.extracted_url ||
+                            globalThis.TARGET_URL ||
+                            'internal.local',
                         headers:
-              domainRequestAnalysis.extracted_headers.length > 0
-                  ? domainRequestAnalysis.extracted_headers
-                  : { 'User-Agent': 'Browser' },
+                            domainRequestAnalysis.extracted_headers.length > 0
+                                ? domainRequestAnalysis.extracted_headers
+                                : { 'User-Agent': 'Browser' },
                         domain_restrictions: domainRequestAnalysis.domain_restrictions,
                         bypass_strategies: domainRequestAnalysis.bypass_strategies,
                         origin_validation: domainRequestAnalysis.origin_validation_data,
@@ -1955,7 +1886,7 @@ const DrmBypass = {
 
                     // Check if request is to streaming services
                     return allowedDomains.some((domain) =>
-                        details.url.includes(domain.replace('*.', '')),
+                        details.url.includes(domain.replace('*.', ''))
                     );
                 },
             });
@@ -1972,11 +1903,7 @@ const DrmBypass = {
         });
 
         // Hook telemetry/analytics requests
-        var httpFunctions = [
-            'WinHttpSendRequest',
-            'HttpSendRequestW',
-            'InternetReadFile',
-        ];
+        var httpFunctions = ['WinHttpSendRequest', 'HttpSendRequestW', 'InternetReadFile'];
 
         for (var i = 0; i < httpFunctions.length; i++) {
             var funcName = httpFunctions[i];
@@ -2057,73 +1984,72 @@ const DrmBypass = {
                         var argAnalysis = this.analyzeTelemetryArgument(
                             args[i],
                             i,
-                            telemetryIndicators,
+                            telemetryIndicators
                         );
                         telemetryAnalysis.function_arguments.push(argAnalysis);
 
                         // Collect telemetry indicators found in arguments
                         if (argAnalysis.telemetry_indicators.length > 0) {
                             telemetryAnalysis.telemetry_indicators_detected =
-                telemetryAnalysis.telemetry_indicators_detected.concat(
-                    argAnalysis.telemetry_indicators,
-                );
+                                telemetryAnalysis.telemetry_indicators_detected.concat(
+                                    argAnalysis.telemetry_indicators
+                                );
                         }
 
                         // Identify data collection vectors
                         if (argAnalysis.data_collection_vectors.length > 0) {
                             telemetryAnalysis.data_collection_vectors =
-                telemetryAnalysis.data_collection_vectors.concat(
-                    argAnalysis.data_collection_vectors,
-                );
+                                telemetryAnalysis.data_collection_vectors.concat(
+                                    argAnalysis.data_collection_vectors
+                                );
                         }
 
                         // Assess privacy implications
                         if (argAnalysis.privacy_implications.length > 0) {
                             telemetryAnalysis.privacy_implications =
-                telemetryAnalysis.privacy_implications.concat(
-                    argAnalysis.privacy_implications,
-                );
+                                telemetryAnalysis.privacy_implications.concat(
+                                    argAnalysis.privacy_implications
+                                );
                         }
 
                         // Identify tracking mechanisms
                         if (argAnalysis.tracking_mechanisms.length > 0) {
                             telemetryAnalysis.tracking_mechanisms =
-                telemetryAnalysis.tracking_mechanisms.concat(
-                    argAnalysis.tracking_mechanisms,
-                );
+                                telemetryAnalysis.tracking_mechanisms.concat(
+                                    argAnalysis.tracking_mechanisms
+                                );
                         }
                     }
 
                     // Determine bypass methods for telemetry blocking
                     telemetryAnalysis.bypass_methods =
-            this.determineTelemetryBypassMethods(telemetryAnalysis);
+                        this.determineTelemetryBypassMethods(telemetryAnalysis);
 
                     // Develop blocking strategies
                     telemetryAnalysis.blocking_strategies =
-            this.developTelemetryBlockingStrategies(telemetryAnalysis);
+                        this.developTelemetryBlockingStrategies(telemetryAnalysis);
 
                     // Store comprehensive telemetry analysis
                     this.storeTelemetryAnalysis(telemetryAnalysis);
 
                     // Determine if this is genuine telemetry based on comprehensive analysis
                     var isTelemetryDetected =
-            telemetryAnalysis.telemetry_indicators_detected.length > 2 ||
-            telemetryAnalysis.data_collection_vectors.length > 1 ||
-            telemetryAnalysis.tracking_mechanisms.length > 0;
+                        telemetryAnalysis.telemetry_indicators_detected.length > 2 ||
+                        telemetryAnalysis.data_collection_vectors.length > 1 ||
+                        telemetryAnalysis.tracking_mechanisms.length > 0;
 
                     return {
                         isTelemetry: isTelemetryDetected,
                         analysis: telemetryAnalysis,
-                        indicators_count:
-              telemetryAnalysis.telemetry_indicators_detected.length,
+                        indicators_count: telemetryAnalysis.telemetry_indicators_detected.length,
                         bypass_methods: telemetryAnalysis.bypass_methods,
                         blocking_strategies: telemetryAnalysis.blocking_strategies,
                         privacy_risk_level:
-              telemetryAnalysis.privacy_implications.length > 2
-                  ? 'high'
-                  : telemetryAnalysis.privacy_implications.length > 0
-                      ? 'medium'
-                      : 'low',
+                            telemetryAnalysis.privacy_implications.length > 2
+                                ? 'high'
+                                : telemetryAnalysis.privacy_implications.length > 0
+                                    ? 'medium'
+                                    : 'low',
                     };
                 },
             });
@@ -2243,7 +2169,7 @@ const DrmBypass = {
         // Hook CPU security features
         var isProcessorFeaturePresent = Module.findExportByName(
             'kernel32.dll',
-            'IsProcessorFeaturePresent',
+            'IsProcessorFeaturePresent'
         );
         if (isProcessorFeaturePresent) {
             Interceptor.attach(isProcessorFeaturePresent, {
@@ -2326,8 +2252,8 @@ const DrmBypass = {
             // Look for Chrome/Chromium EME implementation
             if (
                 module.name.toLowerCase().includes('chrome') ||
-        module.name.toLowerCase().includes('blink') ||
-        module.name.toLowerCase().includes('content')
+                module.name.toLowerCase().includes('blink') ||
+                module.name.toLowerCase().includes('content')
             ) {
                 for (var j = 0; j < emeFunctions.length; j++) {
                     var funcName = emeFunctions[j];
@@ -2358,29 +2284,27 @@ const DrmBypass = {
 
                         // Analyze the original EME return value
                         var emeAnalysis = this.analyzeEmeReturnValue(retval, functionName);
-                        emeBypassAnalysis.media_key_vulnerabilities =
-              emeAnalysis.vulnerabilities;
+                        emeBypassAnalysis.media_key_vulnerabilities = emeAnalysis.vulnerabilities;
                         emeBypassAnalysis.access_control_weaknesses =
-              emeAnalysis.access_control_issues;
+                            emeAnalysis.access_control_issues;
 
                         // Determine optimal EME manipulation strategy
                         emeBypassAnalysis.manipulation_strategy =
-              this.determineEmeManipulationStrategy(emeAnalysis, functionName);
+                            this.determineEmeManipulationStrategy(emeAnalysis, functionName);
 
                         // Identify bypass techniques for EME operations
                         emeBypassAnalysis.bypass_techniques =
-              this.identifyEmeBypassTechniques(emeAnalysis);
+                            this.identifyEmeBypassTechniques(emeAnalysis);
 
                         var config = this.parent.parent.config;
 
                         if (functionName === 'RequestMediaKeySystemAccess') {
                             if (config.eme.spoofMediaKeySystemAccess) {
                                 // Comprehensive media key system access manipulation
-                                var manipulatedAccessValue =
-                  this.manipulateMediaKeySystemAccess(
-                      retval,
-                      emeBypassAnalysis,
-                  );
+                                var manipulatedAccessValue = this.manipulateMediaKeySystemAccess(
+                                    retval,
+                                    emeBypassAnalysis
+                                );
 
                                 if (manipulatedAccessValue !== retval.toInt32()) {
                                     retval.replace(manipulatedAccessValue);
@@ -2400,7 +2324,7 @@ const DrmBypass = {
                             // Comprehensive manipulation for other EME operations
                             var manipulatedValue = this.manipulateEmeOperation(
                                 retval,
-                                emeBypassAnalysis,
+                                emeBypassAnalysis
                             );
 
                             if (manipulatedValue !== retval.toInt32()) {
@@ -2449,24 +2373,16 @@ const DrmBypass = {
                     recovery_possible: true,
                     alternative_bypass_available: true,
                     media_key_system_analysis: this.analyzeMediaKeySystem(moduleName),
-                    browser_eme_analysis:
-            this.analyzeBrowserEmeImplementation(functionName),
+                    browser_eme_analysis: this.analyzeBrowserEmeImplementation(functionName),
                     key_session_analysis: this.analyzeKeySessionHandling(moduleName),
                 },
             };
 
             // Report EME bypass error for analysis and optimization
-            this.reportDrmBypassError(
-                'eme_function_hooking_failure',
-                emeHookingErrorForensics,
-            );
+            this.reportDrmBypassError('eme_function_hooking_failure', emeHookingErrorForensics);
 
             // Attempt alternative EME bypass strategies
-            this.attemptAlternativeEmeBypass(
-                moduleName,
-                functionName,
-                emeHookingErrorForensics,
-            );
+            this.attemptAlternativeEmeBypass(moduleName, functionName, emeHookingErrorForensics);
         }
     },
 
@@ -2510,8 +2426,7 @@ const DrmBypass = {
                             context: 'key_session_retval_manipulation',
                             function_name: functionName,
                             original_return_value: retval.toInt32(),
-                            session_operation_type:
-                this.classifyKeySessionOperation(functionName),
+                            session_operation_type: this.classifyKeySessionOperation(functionName),
                             manipulation_strategy: null,
                             bypass_techniques: [],
                             session_vulnerabilities: [],
@@ -2519,29 +2434,27 @@ const DrmBypass = {
                         };
 
                         // Analyze the original key session return value
-                        var sessionAnalysis = this.analyzeKeySessionRetval(
-                            retval,
-                            functionName,
-                        );
+                        var sessionAnalysis = this.analyzeKeySessionRetval(retval, functionName);
                         keySessionAnalysis.session_vulnerabilities =
-              sessionAnalysis.vulnerabilities;
-                        keySessionAnalysis.license_weaknesses =
-              sessionAnalysis.license_issues;
+                            sessionAnalysis.vulnerabilities;
+                        keySessionAnalysis.license_weaknesses = sessionAnalysis.license_issues;
 
                         // Determine optimal key session manipulation strategy
-                        keySessionAnalysis.manipulation_strategy =
-              this.determineKeySessionStrategy(sessionAnalysis, functionName);
+                        keySessionAnalysis.manipulation_strategy = this.determineKeySessionStrategy(
+                            sessionAnalysis,
+                            functionName
+                        );
 
                         // Identify bypass techniques for key sessions
                         keySessionAnalysis.bypass_techniques =
-              this.identifySessionBypassTechniques(sessionAnalysis);
+                            this.identifySessionBypassTechniques(sessionAnalysis);
 
                         var config = this.parent.parent.config;
                         if (config.eme.bypassKeySessionLimits) {
                             // Comprehensive key session manipulation
                             var manipulatedSessionValue = this.manipulateKeySessionRetval(
                                 retval,
-                                keySessionAnalysis,
+                                keySessionAnalysis
                             );
 
                             if (manipulatedSessionValue !== retval.toInt32()) {
@@ -2593,22 +2506,18 @@ const DrmBypass = {
                     alternative_bypass_available: true,
                     session_limit_analysis: this.analyzeSessionLimits(moduleName),
                     key_rotation_analysis: this.analyzeKeyRotation(functionName),
-                    session_persistence_analysis:
-            this.analyzeSessionPersistence(moduleName),
+                    session_persistence_analysis: this.analyzeSessionPersistence(moduleName),
                 },
             };
 
             // Report key session bypass error for analysis and optimization
-            this.reportDrmBypassError(
-                'key_session_function_failure',
-                keySessionErrorForensics,
-            );
+            this.reportDrmBypassError('key_session_function_failure', keySessionErrorForensics);
 
             // Attempt alternative key session bypass strategies
             this.attemptAlternativeKeySessionBypass(
                 moduleName,
                 functionName,
-                keySessionErrorForensics,
+                keySessionErrorForensics
             );
         }
     },
@@ -2694,24 +2603,24 @@ const DrmBypass = {
                             // Analyze the original decryption return value
                             var decryptAnalysis = this.analyzeDecryptionRetval(retval);
                             decryptionAnalysis.decryption_vulnerabilities =
-                decryptAnalysis.vulnerabilities;
+                                decryptAnalysis.vulnerabilities;
                             decryptionAnalysis.content_protection_weaknesses =
-                decryptAnalysis.protection_issues;
+                                decryptAnalysis.protection_issues;
 
                             // Determine optimal decryption manipulation strategy
                             decryptionAnalysis.manipulation_strategy =
-                this.determineDecryptionStrategy(decryptAnalysis);
+                                this.determineDecryptionStrategy(decryptAnalysis);
 
                             // Identify bypass techniques for decryption operations
                             decryptionAnalysis.bypass_techniques =
-                this.identifyDecryptionBypassTechniques(decryptAnalysis);
+                                this.identifyDecryptionBypassTechniques(decryptAnalysis);
 
                             var config = this.parent.parent.config;
                             if (config.decryption.interceptEncryptedContent) {
                                 // Comprehensive decryption manipulation
                                 var manipulatedDecryptValue = this.manipulateDecryptionRetval(
                                     retval,
-                                    decryptionAnalysis,
+                                    decryptionAnalysis
                                 );
 
                                 if (manipulatedDecryptValue !== retval.toInt32()) {
@@ -2755,52 +2664,52 @@ const DrmBypass = {
                             // Detect encryption algorithms in use
                             if (argAnalysis.encryption_algorithms.length > 0) {
                                 decryptionAnalysis.encryption_algorithms_detected =
-                  decryptionAnalysis.encryption_algorithms_detected.concat(
-                      argAnalysis.encryption_algorithms,
-                  );
+                                    decryptionAnalysis.encryption_algorithms_detected.concat(
+                                        argAnalysis.encryption_algorithms
+                                    );
                             }
 
                             // Identify key material (encrypted keys, IVs, etc.)
                             if (argAnalysis.key_material.length > 0) {
                                 decryptionAnalysis.key_material_identified =
-                  decryptionAnalysis.key_material_identified.concat(
-                      argAnalysis.key_material,
-                  );
+                                    decryptionAnalysis.key_material_identified.concat(
+                                        argAnalysis.key_material
+                                    );
                             }
 
                             // Detect content protection indicators
                             if (argAnalysis.protection_indicators.length > 0) {
                                 decryptionAnalysis.content_protection_indicators =
-                  decryptionAnalysis.content_protection_indicators.concat(
-                      argAnalysis.protection_indicators,
-                  );
+                                    decryptionAnalysis.content_protection_indicators.concat(
+                                        argAnalysis.protection_indicators
+                                    );
                             }
 
                             // Extract decryption context information
                             if (argAnalysis.decryption_context) {
                                 Object.assign(
                                     decryptionAnalysis.decryption_context,
-                                    argAnalysis.decryption_context,
+                                    argAnalysis.decryption_context
                                 );
                             }
                         }
 
                         // Identify bypass opportunities based on analysis
                         decryptionAnalysis.bypass_opportunities =
-              this.identifyDecryptionBypassOpportunities(decryptionAnalysis);
+                            this.identifyDecryptionBypassOpportunities(decryptionAnalysis);
 
                         // Assess vulnerabilities in the decryption process
                         decryptionAnalysis.vulnerability_assessment =
-              this.assessDecryptionVulnerabilities(decryptionAnalysis);
+                            this.assessDecryptionVulnerabilities(decryptionAnalysis);
 
                         // Store comprehensive decryption analysis
                         this.storeDrmDecryptionAnalysis(decryptionAnalysis);
 
                         // Return genuine DRM decryption detection based on comprehensive analysis
                         var isDrmDecryption =
-              decryptionAnalysis.encryption_algorithms_detected.length > 0 ||
-              decryptionAnalysis.key_material_identified.length > 0 ||
-              decryptionAnalysis.content_protection_indicators.length > 1;
+                            decryptionAnalysis.encryption_algorithms_detected.length > 0 ||
+                            decryptionAnalysis.key_material_identified.length > 0 ||
+                            decryptionAnalysis.content_protection_indicators.length > 1;
 
                         return isDrmDecryption;
                     },
@@ -2823,9 +2732,7 @@ const DrmBypass = {
 
         for (var i = 0; i < kdfFunctions.length; i++) {
             var funcName = kdfFunctions[i];
-            var module = funcName.startsWith('BCrypt')
-                ? 'bcrypt.dll'
-                : 'advapi32.dll';
+            var module = funcName.startsWith('BCrypt') ? 'bcrypt.dll' : 'advapi32.dll';
 
             var kdfFunc = Module.findExportByName(module, funcName);
             if (kdfFunc) {
@@ -2846,25 +2753,21 @@ const DrmBypass = {
                         // Analyze the original key derivation return value
                         var kdfRetvalAnalysis = this.analyzeKdfRetval(retval);
                         kdfAnalysis.key_derivation_vulnerabilities =
-              kdfRetvalAnalysis.vulnerabilities;
-                        kdfAnalysis.cryptographic_weaknesses =
-              kdfRetvalAnalysis.crypto_issues;
+                            kdfRetvalAnalysis.vulnerabilities;
+                        kdfAnalysis.cryptographic_weaknesses = kdfRetvalAnalysis.crypto_issues;
 
                         // Determine optimal key derivation manipulation strategy
                         kdfAnalysis.manipulation_strategy =
-              this.determineKdfManipulationStrategy(kdfRetvalAnalysis);
+                            this.determineKdfManipulationStrategy(kdfRetvalAnalysis);
 
                         // Identify bypass techniques for key derivation operations
                         kdfAnalysis.bypass_techniques =
-              this.identifyKdfBypassTechniques(kdfRetvalAnalysis);
+                            this.identifyKdfBypassTechniques(kdfRetvalAnalysis);
 
                         var config = this.parent.parent.config;
                         if (config.decryption.spoofDecryptionKeys) {
                             // Comprehensive key derivation manipulation
-                            var manipulatedKdfValue = this.manipulateKdfRetval(
-                                retval,
-                                kdfAnalysis,
-                            );
+                            var manipulatedKdfValue = this.manipulateKdfRetval(retval, kdfAnalysis);
 
                             if (manipulatedKdfValue !== retval.toInt32()) {
                                 retval.replace(manipulatedKdfValue);
@@ -2928,51 +2831,51 @@ const DrmBypass = {
                             // Extract key handles
                             if (argAnalysis.key_handles.length > 0) {
                                 keySessionAnalysis.key_handles_detected =
-                  keySessionAnalysis.key_handles_detected.concat(
-                      argAnalysis.key_handles,
-                  );
+                                    keySessionAnalysis.key_handles_detected.concat(
+                                        argAnalysis.key_handles
+                                    );
                             }
 
                             // Identify crypto providers
                             if (argAnalysis.crypto_providers.length > 0) {
                                 keySessionAnalysis.crypto_providers_identified =
-                  keySessionAnalysis.crypto_providers_identified.concat(
-                      argAnalysis.crypto_providers,
-                  );
+                                    keySessionAnalysis.crypto_providers_identified.concat(
+                                        argAnalysis.crypto_providers
+                                    );
                             }
 
                             // Analyze key operations
                             if (argAnalysis.key_operations.length > 0) {
                                 keySessionAnalysis.key_operations_analyzed =
-                  keySessionAnalysis.key_operations_analyzed.concat(
-                      argAnalysis.key_operations,
-                  );
+                                    keySessionAnalysis.key_operations_analyzed.concat(
+                                        argAnalysis.key_operations
+                                    );
                             }
 
                             // Extract security attributes
                             if (argAnalysis.security_attributes) {
                                 Object.assign(
                                     keySessionAnalysis.security_attributes,
-                                    argAnalysis.security_attributes,
+                                    argAnalysis.security_attributes
                                 );
                             }
 
                             // Identify access permissions
                             if (argAnalysis.access_permissions.length > 0) {
                                 keySessionAnalysis.access_permissions =
-                  keySessionAnalysis.access_permissions.concat(
-                      argAnalysis.access_permissions,
-                  );
+                                    keySessionAnalysis.access_permissions.concat(
+                                        argAnalysis.access_permissions
+                                    );
                             }
                         }
 
                         // Identify bypass techniques for key operations
                         keySessionAnalysis.bypass_techniques =
-              this.identifyKeySessionBypassTechniques(keySessionAnalysis);
+                            this.identifyKeySessionBypassTechniques(keySessionAnalysis);
 
                         // Assess exploitation vectors for key extraction
                         keySessionAnalysis.exploitation_vectors =
-              this.assessKeyExtractionVectors(keySessionAnalysis);
+                            this.assessKeyExtractionVectors(keySessionAnalysis);
 
                         // Store comprehensive key session analysis
                         this.storeWindowsKeySessionAnalysis(keySessionAnalysis);
@@ -3036,10 +2939,7 @@ const DrmBypass = {
         });
 
         // Hook HTTP requests to DRM servers
-        var winHttpSendRequest = Module.findExportByName(
-            'winhttp.dll',
-            'WinHttpSendRequest',
-        );
+        var winHttpSendRequest = Module.findExportByName('winhttp.dll', 'WinHttpSendRequest');
         if (winHttpSendRequest) {
             Interceptor.attach(winHttpSendRequest, {
                 onEnter: function (args) {
@@ -3099,23 +2999,23 @@ const DrmBypass = {
                         if (argAnalysis.contains_headers) {
                             Object.assign(
                                 requestAnalysis.extracted_headers,
-                                argAnalysis.header_data,
+                                argAnalysis.header_data
                             );
                         }
 
                         // Identify DRM service indicators
                         if (argAnalysis.drm_indicators.length > 0) {
                             requestAnalysis.drm_service_indicators =
-                requestAnalysis.drm_service_indicators.concat(
-                    argAnalysis.drm_indicators,
-                );
+                                requestAnalysis.drm_service_indicators.concat(
+                                    argAnalysis.drm_indicators
+                                );
                         }
 
                         // Extract content protection metadata
                         if (argAnalysis.protection_metadata) {
                             Object.assign(
                                 requestAnalysis.content_protection_metadata,
-                                argAnalysis.protection_metadata,
+                                argAnalysis.protection_metadata
                             );
                         }
 
@@ -3123,18 +3023,18 @@ const DrmBypass = {
                         if (argAnalysis.auth_data) {
                             Object.assign(
                                 requestAnalysis.authentication_data,
-                                argAnalysis.auth_data,
+                                argAnalysis.auth_data
                             );
                         }
                     }
 
                     // Identify bypass insertion points in the request
                     requestAnalysis.bypass_insertion_points =
-            this.identifyRequestBypassPoints(requestAnalysis);
+                        this.identifyRequestBypassPoints(requestAnalysis);
 
                     // Assess manipulation opportunities for DRM bypass
                     requestAnalysis.manipulation_opportunities =
-            this.assessRequestManipulationOpportunities(requestAnalysis);
+                        this.assessRequestManipulationOpportunities(requestAnalysis);
 
                     // Store comprehensive request analysis
                     this.storeDrmRequestAnalysis(requestAnalysis);
@@ -3143,11 +3043,10 @@ const DrmBypass = {
                     return {
                         url: requestAnalysis.extracted_url || 'example-drm-server.com',
                         headers:
-              Object.keys(requestAnalysis.extracted_headers).length > 0
-                  ? requestAnalysis.extracted_headers
-                  : { 'Content-Type': 'application/octet-stream' },
-                        drm_service_type:
-              requestAnalysis.drm_service_indicators[0] || 'unknown',
+                            Object.keys(requestAnalysis.extracted_headers).length > 0
+                                ? requestAnalysis.extracted_headers
+                                : { 'Content-Type': 'application/octet-stream' },
+                        drm_service_type: requestAnalysis.drm_service_indicators[0] || 'unknown',
                         protection_metadata: requestAnalysis.content_protection_metadata,
                         authentication_context: requestAnalysis.authentication_data,
                         bypass_points: requestAnalysis.bypass_insertion_points,
@@ -3171,12 +3070,10 @@ const DrmBypass = {
 
                     var requestContent = (
                         requestDetails.url +
-            ' ' +
-            requestDetails.headers
+                        ' ' +
+                        requestDetails.headers
                     ).toLowerCase();
-                    return drmIndicators.some((indicator) =>
-                        requestContent.includes(indicator),
-                    );
+                    return drmIndicators.some((indicator) => requestContent.includes(indicator));
                 },
 
                 shouldBlockDrmRequest: function (requestDetails) {
@@ -3196,15 +3093,13 @@ const DrmBypass = {
                     // Analyze request details for DRM characteristics
                     var requestAnalysis = this.analyzeDrmRequestDetails(requestDetails);
                     drmRequestAnalysis.analysis_factors = requestAnalysis.factors;
-                    drmRequestAnalysis.security_implications =
-            requestAnalysis.security_issues;
-                    drmRequestAnalysis.bypass_opportunities =
-            requestAnalysis.bypass_vectors;
+                    drmRequestAnalysis.security_implications = requestAnalysis.security_issues;
+                    drmRequestAnalysis.bypass_opportunities = requestAnalysis.bypass_vectors;
 
                     // Determine blocking strategy based on comprehensive analysis
                     var blockingStrategy = this.determineDrmBlockingStrategy(
                         requestAnalysis,
-                        requestDetails,
+                        requestDetails
                     );
                     drmRequestAnalysis.blocking_decision = blockingStrategy.should_block;
                     drmRequestAnalysis.blocking_rationale = blockingStrategy.rationale;
@@ -3363,24 +3258,22 @@ const DrmBypass = {
                     recovery_possible: true,
                     alternative_bypass_available: true,
                     license_type_analysis: this.analyzeLicenseType(moduleName),
-                    validation_algorithm_analysis:
-            this.analyzeValidationAlgorithm(functionName),
-                    license_server_analysis:
-            this.analyzeLicenseServerInteraction(moduleName),
+                    validation_algorithm_analysis: this.analyzeValidationAlgorithm(functionName),
+                    license_server_analysis: this.analyzeLicenseServerInteraction(moduleName),
                 },
             };
 
             // Report license validation bypass error for analysis and optimization
             this.reportDrmBypassError(
                 'license_validation_function_failure',
-                licenseValidationErrorForensics,
+                licenseValidationErrorForensics
             );
 
             // Attempt alternative license validation bypass strategies
             this.attemptAlternativeLicenseValidationBypass(
                 moduleName,
                 functionName,
-                licenseValidationErrorForensics,
+                licenseValidationErrorForensics
             );
         }
     },
@@ -3411,9 +3304,7 @@ const DrmBypass = {
                         ];
 
                         if (
-                            licenseFileIndicators.some((indicator) =>
-                                fileName.includes(indicator),
-                            )
+                            licenseFileIndicators.some((indicator) => fileName.includes(indicator))
                         ) {
                             send({
                                 type: 'bypass',
@@ -3451,10 +3342,7 @@ const DrmBypass = {
         });
 
         // Hook registry access for license information
-        var regQueryValue = Module.findExportByName(
-            'advapi32.dll',
-            'RegQueryValueExW',
-        );
+        var regQueryValue = Module.findExportByName('advapi32.dll', 'RegQueryValueExW');
         if (regQueryValue) {
             Interceptor.attach(regQueryValue, {
                 onEnter: function (args) {
@@ -3471,9 +3359,7 @@ const DrmBypass = {
                             'drm',
                         ];
 
-                        if (
-                            licenseRegistryValues.some((value) => valueName.includes(value))
-                        ) {
+                        if (licenseRegistryValues.some((value) => valueName.includes(value))) {
                             send({
                                 type: 'bypass',
                                 target: 'drm_bypass',
@@ -3513,7 +3399,7 @@ const DrmBypass = {
         // Hook certificate validation for DRM
         var certVerifyChain = Module.findExportByName(
             'crypt32.dll',
-            'CertVerifyCertificateChainPolicy',
+            'CertVerifyCertificateChainPolicy'
         );
         if (certVerifyChain) {
             Interceptor.attach(certVerifyChain, {
@@ -3533,8 +3419,8 @@ const DrmBypass = {
                 onLeave: function (retval) {
                     if (
                         retval.toInt32() !== 0 &&
-            this.policyStatus &&
-            !this.policyStatus.isNull()
+                        this.policyStatus &&
+                        !this.policyStatus.isNull()
                     ) {
                         // Force certificate validation to succeed
                         this.policyStatus.writeU32(0); // No errors
@@ -3575,52 +3461,52 @@ const DrmBypass = {
                     categories['HDCP Protection']++;
                 } else if (
                     hook.includes('PlayReady') ||
-          hook.includes('PR_') ||
-          hook.includes('DRM_')
+                    hook.includes('PR_') ||
+                    hook.includes('DRM_')
                 ) {
                     categories['PlayReady DRM']++;
                 } else if (
                     hook.includes('Widevine') ||
-          hook.includes('WV_') ||
-          hook.includes('CDM')
+                    hook.includes('WV_') ||
+                    hook.includes('CDM')
                 ) {
                     categories['Widevine DRM']++;
                 } else if (
                     hook.includes('Time') ||
-          hook.includes('Geo') ||
-          hook.includes('Domain') ||
-          hook.includes('Telemetry')
+                    hook.includes('Geo') ||
+                    hook.includes('Domain') ||
+                    hook.includes('Telemetry')
                 ) {
                     categories['Streaming DRM']++;
                 } else if (
                     hook.includes('Tpm') ||
-          hook.includes('TEE') ||
-          hook.includes('Hardware')
+                    hook.includes('TEE') ||
+                    hook.includes('Hardware')
                 ) {
                     categories['Hardware DRM']++;
                 } else if (
                     hook.includes('EME') ||
-          hook.includes('MediaKey') ||
-          hook.includes('Session')
+                    hook.includes('MediaKey') ||
+                    hook.includes('Session')
                 ) {
                     categories['EME APIs']++;
                 } else if (
                     hook.includes('Decrypt') ||
-          hook.includes('Content') ||
-          hook.includes('Key') ||
-          hook.includes('KDF')
+                    hook.includes('Content') ||
+                    hook.includes('Key') ||
+                    hook.includes('KDF')
                 ) {
                     categories['Content Decryption']++;
                 } else if (
                     hook.includes('Network') ||
-          hook.includes('Communication') ||
-          hook.includes('Service')
+                    hook.includes('Communication') ||
+                    hook.includes('Service')
                 ) {
                     categories['DRM Communication']++;
                 } else if (
                     hook.includes('License') ||
-          hook.includes('Registry') ||
-          hook.includes('Validation')
+                    hook.includes('Registry') ||
+                    hook.includes('Validation')
                 ) {
                     categories['License Validation']++;
                 } else if (hook.includes('Cert') || hook.includes('Certificate')) {
@@ -4180,16 +4066,10 @@ const DrmBypass = {
 
     generatePostQuantumKeys: function () {
         return {
-            latticeKeys: new Array(256)
-                .fill(0)
-                .map(() => Math.floor(Math.random() * 256)),
-            codeBasedKeys: new Array(128)
-                .fill(0)
-                .map(() => Math.floor(Math.random() * 2)),
+            latticeKeys: new Array(256).fill(0).map(() => Math.floor(Math.random() * 256)),
+            codeBasedKeys: new Array(128).fill(0).map(() => Math.floor(Math.random() * 2)),
             multivariateKeys: new Array(512).fill(0).map(() => Math.random()),
-            hashBasedKeys: new Array(64)
-                .fill(0)
-                .map(() => Math.floor(Math.random() * 256)),
+            hashBasedKeys: new Array(64).fill(0).map(() => Math.floor(Math.random() * 256)),
         };
     },
 
@@ -4232,22 +4112,21 @@ const DrmBypass = {
                         alternative_bypass_available: true,
                         platform_analysis: this.analyzeStreamingPlatform(platform),
                         api_availability_analysis: this.analyzeApiAvailability(apiName),
-                        streaming_protocol_analysis:
-              this.analyzeStreamingProtocol(platform),
+                        streaming_protocol_analysis: this.analyzeStreamingProtocol(platform),
                     },
                 };
 
                 // Report streaming API bypass error for analysis and optimization
                 this.reportDrmBypassError(
                     'streaming_api_hooking_failure',
-                    streamingApiErrorForensics,
+                    streamingApiErrorForensics
                 );
 
                 // Attempt alternative streaming API bypass strategies
                 this.attemptAlternativeStreamingApiBypass(
                     platform,
                     apiName,
-                    streamingApiErrorForensics,
+                    streamingApiErrorForensics
                 );
             }
         }
@@ -4289,25 +4168,17 @@ const DrmBypass = {
                         recovery_possible: true,
                         alternative_bypass_available: true,
                         codec_version_analysis: this.analyzeCodecVersion(codecName),
-                        hardware_acceleration_analysis:
-              this.analyzeHardwareAcceleration(funcName),
+                        hardware_acceleration_analysis: this.analyzeHardwareAcceleration(funcName),
                         codec_drm_implementation_analysis:
-              this.analyzeCodecDrmImplementation(codecName),
+                            this.analyzeCodecDrmImplementation(codecName),
                     },
                 };
 
                 // Report codec DRM bypass error for analysis and optimization
-                this.reportDrmBypassError(
-                    'codec_drm_function_failure',
-                    codecDrmErrorForensics,
-                );
+                this.reportDrmBypassError('codec_drm_function_failure', codecDrmErrorForensics);
 
                 // Attempt alternative codec DRM bypass strategies
-                this.attemptAlternativeCodecDrmBypass(
-                    codecName,
-                    funcName,
-                    codecDrmErrorForensics,
-                );
+                this.attemptAlternativeCodecDrmBypass(codecName, funcName, codecDrmErrorForensics);
             }
         }
     },

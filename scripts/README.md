@@ -1,10 +1,13 @@
 # Intellicrack Production-Readiness Scanner
 
-A sophisticated Rust-based code analysis tool that detects non-production code, stubs, mocks, placeholders, and naive implementations across the Intellicrack codebase.
+A sophisticated Rust-based code analysis tool that detects non-production code,
+stubs, mocks, placeholders, and naive implementations across the Intellicrack
+codebase.
 
 ## Features
 
 ### Multi-Language Support
+
 - **Python** - Primary analysis with full AST parsing
 - **JavaScript** - Frida script analysis
 - **Java** - Ghidra script analysis
@@ -13,27 +16,32 @@ A sophisticated Rust-based code analysis tool that detects non-production code, 
 ### Detection Capabilities
 
 #### Pass 1: Syntactic Stub Detection
+
 - Empty function bodies (`pass`, `{}`)
 - TODO/FIXME/PLACEHOLDER/STUB comments
 - Single-line hardcoded returns
 
 #### Pass 2: Semantic Analysis
+
 - Function name vs implementation mismatch
 - Missing file I/O for binary operations
 - Missing external tool calls for analysis functions
 - Domain-specific violations (keygen without crypto, etc.)
 
 #### Pass 3: Data Flow Analysis
+
 - Return value origin tracking
 - Hardcoded data detection
 - Input parameter usage validation
 
 #### Pass 4: Call Graph Analysis
+
 - Cross-function dependency analysis
 - Stub detection through caller context
 - Test vs production code separation
 
 #### Pass 5: Domain-Specific Analysis (Intellicrack)
+
 - **Keygen functions**: Must use RSA/ECDSA/cryptographic operations
 - **Binary patchers**: Must perform actual file modifications
 - **Frida hooks**: Must use Interceptor.attach/replace
@@ -41,23 +49,28 @@ A sophisticated Rust-based code analysis tool that detects non-production code, 
 - **License analyzers**: Must parse and validate data
 
 #### Pass 6: Import-Usage Correlation
+
 - Detects imported but unused libraries
 - Flags functions with relevant imports that aren't used
 
 #### Pass 7: Complexity Metrics
+
 - Cyclomatic complexity analysis
 - Lines of code vs function purpose
 - Halstead metrics
 
 #### Pass 8: Naive Implementation Detection
+
 Detects simple implementations that won't work against real-world protection:
 
 - **Weak Encryption**: XOR instead of AES/RSA, character-by-character encryption
-- **Insecure Key Generation**: `random` instead of `secrets`, time-based keys without crypto
+- **Insecure Key Generation**: `random` instead of `secrets`, time-based keys
+  without crypto
 - **Trivial Validation**: Simple equality checks, no cryptographic verification
 - **Bypassable Anti-Debug**: Simple IsDebuggerPresent, naive VM detection
 - **Ineffective Obfuscation**: Base64 encoding (not encryption)
-- **Inadequate Binary Patching**: String replace on compiled code, NOP without alignment
+- **Inadequate Binary Patching**: String replace on compiled code, NOP without
+  alignment
 - **Weak Brute Force**: Small iteration ranges
 - **Missing Disassembly Framework**: Decompilation without Capstone/IDA/Ghidra
 - **Insufficient Unpacking**: Relying only on UPX for commercial packers
@@ -68,6 +81,7 @@ Detects simple implementations that won't work against real-world protection:
 ### Exclusion System (Minimizes False Positives)
 
 **Automatically excludes**:
+
 - Test files (in `tests/` directory)
 - Example/template code
 - Fallback classes (PyQt6 import fallbacks)
@@ -77,6 +91,7 @@ Detects simple implementations that won't work against real-world protection:
 - Intentional error handlers
 
 **Deduction scoring**:
+
 - Has logging statements (-30 points)
 - Has proper error handling (-20 points)
 - Uses external tools/binary ops (-60 points)
@@ -94,6 +109,7 @@ Detects simple implementations that won't work against real-world protection:
 ## Installation
 
 ### Prerequisites
+
 - Rust toolchain (1.70+): https://rustup.rs/
 - Windows with MSYS/Git Bash
 
@@ -105,6 +121,7 @@ scan.bat
 ```
 
 This will:
+
 1. Check for Rust toolchain
 2. Compile the scanner with maximum optimization
 3. Run full scan on Intellicrack codebase
@@ -123,21 +140,25 @@ Binary location: `target/release/scanner.exe`
 ## Usage
 
 ### Basic Scan
+
 ```bash
 scanner.exe D:\Intellicrack
 ```
 
 ### Console Output (default)
+
 ```bash
 scanner.exe D:\Intellicrack --format console --confidence medium
 ```
 
 ### JSON Export
+
 ```bash
 scanner.exe D:\Intellicrack --format json --confidence high > results.json
 ```
 
 ### Verbose Mode (includes LOW confidence)
+
 ```bash
 scanner.exe D:\Intellicrack --format console --confidence low --verbose
 ```
@@ -145,6 +166,7 @@ scanner.exe D:\Intellicrack --format console --confidence low --verbose
 ## Output Format
 
 ### Console Output
+
 ```
 ╔══════════════════════════════════════════════════════════════╗
 ║    INTELLICRACK PRODUCTION-READINESS SCAN RESULTS            ║
@@ -171,6 +193,7 @@ intellicrack/core/keygen_generator.py:145
 ```
 
 ### JSON Output
+
 ```json
 {
   "scan_info": {
@@ -217,11 +240,13 @@ const MAX_THREADS: usize = 16; // or num_cpus::get()
 ## Architecture
 
 ### Single-File Monolith
+
 - **Total**: ~1,500 lines of production Rust
 - **No external files**: Everything in `production_scanner.rs`
 - **Self-contained**: Tree-sitter queries embedded
 
 ### Modules (within single file)
+
 - `file_scanner`: Directory traversal, file classification
 - `ast_parser`: Tree-sitter integration
 - `extractors`: Function/import/call extraction
@@ -235,6 +260,7 @@ const MAX_THREADS: usize = 16; // or num_cpus::get()
 ### Build Errors
 
 **"cargo not found"**
+
 ```bash
 # Install Rust
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
@@ -242,6 +268,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
 **"linking with `link.exe` failed"**
+
 ```bash
 # Install Visual Studio Build Tools
 # Or use MSYS2/MinGW toolchain
@@ -250,16 +277,19 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ### Runtime Errors
 
 **"tree-sitter parse failed"**
+
 - Check file encoding (must be UTF-8)
 - Some generated files may have syntax errors
 
 **"Permission denied"**
+
 - Run from directory with read access
 - Don't scan locked/system directories
 
 ### False Positives
 
 If legitimate code is flagged:
+
 1. Check if it matches exclusion rules
 2. Add deduction patterns in `calculate_deductions()`
 3. Adjust scoring thresholds
@@ -267,6 +297,7 @@ If legitimate code is flagged:
 ### False Negatives
 
 If stubs aren't detected:
+
 1. Add pattern to relevant detection pass
 2. Check function extraction is working
 3. Verify imports are being tracked
@@ -290,6 +321,7 @@ fn detect_new_pattern(func: &FunctionInfo) -> Vec<(String, i32)> {
 ```
 
 Then add to `analyze_file()`:
+
 ```rust
 for (pattern, points) in detect_new_pattern(func) {
     evidence.push(Evidence { ... });
@@ -300,6 +332,7 @@ for (pattern, points) in detect_new_pattern(func) {
 ### Adjusting Scores
 
 Edit detection functions:
+
 ```rust
 ("Pattern description".to_string(), 40) // Change score here
 ```
@@ -314,20 +347,22 @@ Edit detection functions:
 ## CI/CD Integration
 
 ### GitHub Actions
+
 ```yaml
 - name: Run Production Scanner
   run: |
-    cd scripts
-    cargo build --release
-    ../target/release/scanner.exe . --format json > scan-results.json
+      cd scripts
+      cargo build --release
+      ../target/release/scanner.exe . --format json > scan-results.json
 
 - name: Check Critical Issues
   run: |
-    CRITICAL=$(jq '.issues[] | select(.severity=="critical") | length' scan-results.json)
-    if [ "$CRITICAL" -gt 0 ]; then exit 1; fi
+      CRITICAL=$(jq '.issues[] | select(.severity=="critical") | length' scan-results.json)
+      if [ "$CRITICAL" -gt 0 ]; then exit 1; fi
 ```
 
 ### Pre-commit Hook
+
 ```bash
 #!/bin/bash
 scripts/target/release/scanner.exe . --format console --confidence critical
@@ -339,11 +374,13 @@ fi
 
 ## License
 
-Part of the Intellicrack project - for authorized security research and defensive security purposes only.
+Part of the Intellicrack project - for authorized security research and
+defensive security purposes only.
 
 ## Support
 
 For issues or questions:
+
 1. Check this README
 2. Review hook validation log: `F:\Temp\hook-validation.log`
 3. Check Rust compilation errors

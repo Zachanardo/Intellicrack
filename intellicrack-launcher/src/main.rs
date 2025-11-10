@@ -10,8 +10,8 @@ Licensed under GNU General Public License v3.0
 
 use anyhow::Result;
 use intellicrack_launcher::{
-    IntellicrackLauncher, environment::PROJECT_ROOT, initialize_logging,
-    optimize_process, discover_and_cache_tools, run_preflight_checks,
+    IntellicrackLauncher, discover_and_cache_tools, environment::PROJECT_ROOT, initialize_logging,
+    optimize_process, run_preflight_checks,
 };
 use tracing::{error, info, warn};
 
@@ -164,7 +164,10 @@ async fn main() -> Result<()> {
     }
 
     let optimization_elapsed = optimization_start.elapsed();
-    info!("Startup optimizations completed in {:?}", optimization_elapsed);
+    info!(
+        "Startup optimizations completed in {:?}",
+        optimization_elapsed
+    );
 
     // Set up panic hook for better error reporting
     std::panic::set_hook(Box::new(|panic_info| {

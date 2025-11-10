@@ -1,9 +1,7 @@
 {
   "findings": [
     {
-      "adjustment_reasons": [
-        "Production code issue detected"
-      ],
+      "adjustment_reasons": ["Production code issue detected"],
       "confidence": 70,
       "context": "  66:     # Pattern 8: Collection emptiness checks\n  67:     if re.search(r'if\\s+(not\\s+)?len\\(', prev_line) or 'if not ' in prev_line:\n  68:         if 'return []' in code_line or 'return {}' in code_line:\n  69:             return True, \"Valid: empty collection check\"\n  70: ",
       "description": "Returns empty dictionary",
@@ -15,9 +13,7 @@
       "snippet": "if 'return []' in code_line or 'return {}' in code_line:"
     },
     {
-      "adjustment_reasons": [
-        "Production code issue detected"
-      ],
+      "adjustment_reasons": ["Production code issue detected"],
       "confidence": 70,
       "context": "  66:     # Pattern 8: Collection emptiness checks\n  67:     if re.search(r'if\\s+(not\\s+)?len\\(', prev_line) or 'if not ' in prev_line:\n  68:         if 'return []' in code_line or 'return {}' in code_line:\n  69:             return True, \"Valid: empty collection check\"\n  70: ",
       "description": "Returns empty list",

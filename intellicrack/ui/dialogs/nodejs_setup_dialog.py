@@ -148,9 +148,9 @@ class NodeJSSetupDialog(BaseDialog):
             "<h3>Node.js Required for AdobeLicenseX</h3>\n"
             "AdobeLicenseX requires Node.js to compile the Frida bypass script into a standalone executable.\n\n"
             "<b>Why Node.js is needed:</b>\n"
-            "• Compiles JavaScript bypasses into Windows executables\n"
-            "• Enables automatic process monitoring and injection\n"
-            "• Required for the pkg compilation toolchain"
+            " Compiles JavaScript bypasses into Windows executables\n"
+            " Enables automatic process monitoring and injection\n"
+            " Required for the pkg compilation toolchain"
         )
         header_label.setWordWrap(True)
         layout.addWidget(header_label)
@@ -165,7 +165,7 @@ class NodeJSSetupDialog(BaseDialog):
         options_layout.addWidget(self.auto_install_radio)
 
         auto_install_desc = QLabel(
-            "  • Downloads and installs Node.js v20.15.1 LTS\n  • Uses winget, chocolatey, or direct download\n  • Requires administrator privileges"
+            "   Downloads and installs Node.js v20.15.1 LTS\n   Uses winget, chocolatey, or direct download\n   Requires administrator privileges"
         )
         auto_install_desc.setObjectName("descriptionLabel")
         options_layout.addWidget(auto_install_desc)

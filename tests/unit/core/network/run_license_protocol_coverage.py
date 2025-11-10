@@ -74,9 +74,9 @@ def main():
     """Main function."""
     success = run_coverage_analysis()
     if success:
-        print("\n✅ Coverage analysis completed successfully")
+        print("\nOK Coverage analysis completed successfully")
     else:
-        print("\n❌ Coverage analysis failed")
+        print("\nFAIL Coverage analysis failed")
     return 0 if success else 1
 
 if __name__ == "__main__":

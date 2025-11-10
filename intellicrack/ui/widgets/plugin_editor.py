@@ -117,7 +117,7 @@ class PluginEditor(QWidget):
         open_action = toolbar.addAction("📂 Open")
         open_action.triggered.connect(self.open_file)
 
-        save_action = toolbar.addAction("💾 Save")
+        save_action = toolbar.addAction(" Save")
         save_action.setShortcut(QKeySequence.Save)
         save_action.triggered.connect(self.save_file)
 
@@ -344,7 +344,7 @@ class PluginEditor(QWidget):
                 self.validation_list.addItem(item)
 
         if self.validation_list.count() == 0:
-            item = QListWidgetItem("✅ Validation passed!")
+            item = QListWidgetItem("OK Validation passed!")
             item.setForeground(QColor(0, 255, 0))
             self.validation_list.addItem(item)
 
@@ -369,17 +369,17 @@ class PluginEditor(QWidget):
 
             for node in ast.walk(tree):
                 if isinstance(node, ast.ClassDef):
-                    item = QListWidgetItem(f"📦 {node.name}")
+                    item = QListWidgetItem(f" {node.name}")
                     self.outline_list.addItem(item)
 
                     # Add methods
                     for item in node.body:
                         if isinstance(item, ast.FunctionDef):
-                            method_item = QListWidgetItem(f"  🔧 {item.name}")
+                            method_item = QListWidgetItem(f"   {item.name}")
                             self.outline_list.addItem(method_item)
 
                 elif isinstance(node, ast.FunctionDef) and node.col_offset == 0:
-                    item = QListWidgetItem(f"🔧 {node.name}")
+                    item = QListWidgetItem(f" {node.name}")
                     self.outline_list.addItem(item)
 
         except Exception as e:

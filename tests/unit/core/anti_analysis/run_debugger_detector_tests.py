@@ -65,10 +65,10 @@ def run_coverage_analysis():
         # Analyze coverage for 80%+ requirement
         if total_coverage:
             if total_coverage >= 80.0:
-                print(f"\n✓ SUCCESS: Coverage target achieved! ({total_coverage:.1f}% >= 80%)")
+                print(f"\nOK SUCCESS: Coverage target achieved! ({total_coverage:.1f}% >= 80%)")
                 return True
             else:
-                print(f"\n✗ WARNING: Coverage below target ({total_coverage:.1f}% < 80%)")
+                print(f"\nFAIL WARNING: Coverage below target ({total_coverage:.1f}% < 80%)")
                 return False
 
         return True
@@ -87,8 +87,8 @@ if __name__ == "__main__":
     success = run_coverage_analysis()
 
     if success:
-        print("\n✓ Test and coverage analysis completed successfully!")
+        print("\nOK Test and coverage analysis completed successfully!")
         sys.exit(0)
     else:
-        print("\n✗ Test or coverage analysis failed!")
+        print("\nFAIL Test or coverage analysis failed!")
         sys.exit(1)

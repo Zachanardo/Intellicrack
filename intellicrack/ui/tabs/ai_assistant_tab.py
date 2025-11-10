@@ -234,7 +234,7 @@ class APIKeyConfigDialog(QDialog):
         if model.capabilities:
             info_parts.append(f"Capabilities: {', '.join(model.capabilities)}")
 
-        self.model_info_label.setText(" • ".join(info_parts))
+        self.model_info_label.setText("  ".join(info_parts))
 
         if model.context_length:
             self.max_tokens_spin.setMaximum(min(model.context_length, 200000))
@@ -633,7 +633,7 @@ class AIAssistantTab(BaseTab):
                 logger.warning(f"Could not load repository models: {e}")
 
             if not available_models:
-                self.model_combo.addItem("⚠️ No models configured - Click 'Configure' to add")
+                self.model_combo.addItem("WARNING No models configured - Click 'Configure' to add")
                 self.model_combo.setEnabled(False)
                 logger.warning("No AI models found - user needs to configure models")
             else:
@@ -643,7 +643,7 @@ class AIAssistantTab(BaseTab):
 
         except Exception as e:
             logger.error(f"Failed to load available models: {e}")
-            self.model_combo.addItem("❌ Error loading models - Check configuration")
+            self.model_combo.addItem("FAIL Error loading models - Check configuration")
             self.model_combo.setEnabled(False)
 
     def upload_local_model(self):

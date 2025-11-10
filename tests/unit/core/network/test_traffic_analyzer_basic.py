@@ -14,10 +14,10 @@ def test_basic_imports():
     """Test basic imports work."""
     try:
         from intellicrack.core.network.traffic_analyzer import NetworkTrafficAnalyzer
-        print("✓ Successfully imported NetworkTrafficAnalyzer")
+        print("OK Successfully imported NetworkTrafficAnalyzer")
         return True
     except Exception as e:
-        print(f"✗ Failed to import NetworkTrafficAnalyzer: {e}")
+        print(f"FAIL Failed to import NetworkTrafficAnalyzer: {e}")
         traceback.print_exc()
         return False
 
@@ -28,7 +28,7 @@ def test_basic_initialization():
 
         # Test with default config
         analyzer = NetworkTrafficAnalyzer()
-        print("✓ Successfully created analyzer with default config")
+        print("OK Successfully created analyzer with default config")
 
         # Test with custom config
         config = {
@@ -39,35 +39,35 @@ def test_basic_initialization():
         }
 
         analyzer2 = NetworkTrafficAnalyzer(config=config)
-        print("✓ Successfully created analyzer with custom config")
+        print("OK Successfully created analyzer with custom config")
 
         # Test key attributes exist
         required_attrs = ['start_capture', 'stop_capture', 'analyze_traffic', 'get_results', 'generate_report']
         for attr in required_attrs:
             if hasattr(analyzer, attr):
-                print(f"✓ Has required method: {attr}")
+                print(f"OK Has required method: {attr}")
             else:
-                print(f"✗ Missing required method: {attr}")
+                print(f"FAIL Missing required method: {attr}")
                 return False
 
         # Test license patterns loaded
         if hasattr(analyzer, 'license_patterns') and len(analyzer.license_patterns) > 0:
-            print(f"✓ License patterns loaded: {len(analyzer.license_patterns)} patterns")
+            print(f"OK License patterns loaded: {len(analyzer.license_patterns)} patterns")
         else:
-            print("✗ License patterns not loaded")
+            print("FAIL License patterns not loaded")
             return False
 
         # Test license ports loaded
         if hasattr(analyzer, 'license_ports') and len(analyzer.license_ports) > 0:
-            print(f"✓ License ports loaded: {len(analyzer.license_ports)} ports")
+            print(f"OK License ports loaded: {len(analyzer.license_ports)} ports")
         else:
-            print("✗ License ports not loaded")
+            print("FAIL License ports not loaded")
             return False
 
         return True
 
     except Exception as e:
-        print(f"✗ Failed basic initialization: {e}")
+        print(f"FAIL Failed basic initialization: {e}")
         traceback.print_exc()
         return False
 
@@ -81,23 +81,23 @@ def test_packet_processing():
         # Test packet processing with license pattern
         test_packet = b"\x00" * 20 + b"FLEXLM_LICENSE_CHECK" + b"\x00" * 50
         analyzer._process_captured_packet(test_packet)
-        print("✓ Successfully processed packet with license pattern")
+        print("OK Successfully processed packet with license pattern")
 
         # Test analysis functionality
         results = analyzer.analyze_traffic()
         if results is not None:
-            print("✓ Traffic analysis completed successfully")
+            print("OK Traffic analysis completed successfully")
             print(f"  - Total packets: {results.get('total_packets', 0)}")
             print(f"  - Total connections: {results.get('total_connections', 0)}")
             print(f"  - License connections: {results.get('license_connections', 0)}")
         else:
-            print("✗ Traffic analysis returned None")
+            print("FAIL Traffic analysis returned None")
             return False
 
         return True
 
     except Exception as e:
-        print(f"✗ Failed packet processing test: {e}")
+        print(f"FAIL Failed packet processing test: {e}")
         traceback.print_exc()
         return False
 
@@ -140,14 +140,14 @@ def test_results_functionality():
         results = analyzer.get_results()
 
         if results is not None:
-            print("✓ get_results() returned valid data")
+            print("OK get_results() returned valid data")
 
             required_keys = ['packets_analyzed', 'protocols_detected', 'suspicious_traffic', 'statistics']
             for key in required_keys:
                 if key in results:
-                    print(f"✓ Results contain key: {key}")
+                    print(f"OK Results contain key: {key}")
                 else:
-                    print(f"✗ Results missing key: {key}")
+                    print(f"FAIL Results missing key: {key}")
                     return False
 
             # Check statistics
@@ -155,18 +155,18 @@ def test_results_functionality():
             expected_stats = ['capture_duration', 'packets_per_second', 'total_bytes', 'unique_ips']
             for stat in expected_stats:
                 if stat in stats:
-                    print(f"✓ Statistics contain: {stat}")
+                    print(f"OK Statistics contain: {stat}")
                 else:
-                    print(f"✗ Statistics missing: {stat}")
+                    print(f"FAIL Statistics missing: {stat}")
 
         else:
-            print("✗ get_results() returned None")
+            print("FAIL get_results() returned None")
             return False
 
         return True
 
     except Exception as e:
-        print(f"✗ Failed results functionality test: {e}")
+        print(f"FAIL Failed results functionality test: {e}")
         traceback.print_exc()
         return False
 
@@ -191,13 +191,13 @@ def main():
 
         try:
             if test_func():
-                print(f"✓ {test_name} PASSED")
+                print(f"OK {test_name} PASSED")
                 passed += 1
             else:
-                print(f"✗ {test_name} FAILED")
+                print(f"FAIL {test_name} FAILED")
                 failed += 1
         except Exception as e:
-            print(f"✗ {test_name} FAILED with exception: {e}")
+            print(f"FAIL {test_name} FAILED with exception: {e}")
             failed += 1
 
     print("\n" + "=" * 60)

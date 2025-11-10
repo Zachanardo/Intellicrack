@@ -4,48 +4,48 @@
 
 # File patterns - paths that legitimately contain non-production code
 file_patterns:
-  - "tests/**"      # <1% risk - legitimate test files
-  - "test_*"        # <1% risk - test files by naming convention
-  - "*_test.py"     # <1% risk - test files by naming convention
-  - "conftest.py"   # <1% risk - pytest configuration file
-  - "docs/**"       # <2% risk - documentation directory
-  - "*.md"          # <3% risk - markdown documentation files
-  - "*.rst"         # <3% risk - reStructuredText documentation
+  - 'tests/**' # <1% risk - legitimate test files
+  - 'test_*' # <1% risk - test files by naming convention
+  - '*_test.py' # <1% risk - test files by naming convention
+  - 'conftest.py' # <1% risk - pytest configuration file
+  - 'docs/**' # <2% risk - documentation directory
+  - '*.md' # <3% risk - markdown documentation files
+  - '*.rst' # <3% risk - reStructuredText documentation
 
 # Directory patterns - directories that legitimately contain non-production code
 directory_patterns:
-  - "tests"         # <1% risk - test directories
-  - "test_files"    # <1% risk - test file directories
-  - "fixtures"      # <2% risk - test fixtures directory
-  - "docs"          # <2% risk - documentation directory
-  - ".pixi"     # <1% risk - pixi environment directory (EXCLUDED)
-  - "dev"           # <1% risk - development tools and scripts directory (EXCLUDED)
-  - "tools"         # <1% risk - third-party tools and dependencies directory (EXCLUDED)
-  - "tools/**"      # <1% risk - all subdirectories in tools (EXCLUDED)
-  - "dev/**"        # <1% risk - all subdirectories in dev (EXCLUDED)
+  - 'tests' # <1% risk - test directories
+  - 'test_files' # <1% risk - test file directories
+  - 'fixtures' # <2% risk - test fixtures directory
+  - 'docs' # <2% risk - documentation directory
+  - '.pixi' # <1% risk - pixi environment directory (EXCLUDED)
+  - 'dev' # <1% risk - development tools and scripts directory (EXCLUDED)
+  - 'tools' # <1% risk - third-party tools and dependencies directory (EXCLUDED)
+  - 'tools/**' # <1% risk - all subdirectories in tools (EXCLUDED)
+  - 'dev/**' # <1% risk - all subdirectories in dev (EXCLUDED)
 
 # Code patterns - specific code constructs that are legitimate
 code_patterns:
   # String representation methods (<5% risk)
   - pattern: "def\\s+__str__\\s*\\([^)]*\\).*return\\s+[\"'].*[\"']"
-    context: "__str__ methods"
-    reason: "String representation methods legitimately return formatted strings"
+    context: '__str__ methods'
+    reason: 'String representation methods legitimately return formatted strings'
 
   # Object representation methods (<5% risk)
   - pattern: "def\\s+__repr__\\s*\\([^)]*\\).*return\\s+[\"'].*[\"']"
-    context: "__repr__ methods"
-    reason: "Object representation methods legitimately return object descriptions"
+    context: '__repr__ methods'
+    reason: 'Object representation methods legitimately return object descriptions'
 
 # Comment-based exceptions (<1% risk - explicit developer overrides)
 comment_exceptions:
-  - "# AUDIT_IGNORE:"     # Developer explicitly marks as safe
-  - "# PRODUCTION_READY"  # Developer confirms production readiness
-  - "# CONFIG_VALUE"      # Developer marks as legitimate configuration
+  - '# AUDIT_IGNORE:' # Developer explicitly marks as safe
+  - '# PRODUCTION_READY' # Developer confirms production readiness
+  - '# CONFIG_VALUE' # Developer marks as legitimate configuration
 
 # Method exceptions (<5% risk - specific method types)
 method_exceptions:
-  - "__str__"      # String representation methods
-  - "__repr__"     # Object representation methods
+  - '__str__' # String representation methods
+  - '__repr__' # Object representation methods
 
 # REMOVED PATTERNS (Too risky - >5% chance of missing real violations):
 #

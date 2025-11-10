@@ -23,16 +23,44 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 
 import re
 import struct
+import sys
 import time
 from pathlib import Path
 from typing import Any
 
-from ...utils.logger import get_logger
-from ..network.protocol_fingerprinter import ProtocolFingerprinter
-from ..network.protocols.flexlm_parser import FlexLMProtocolParser
-from ..protection_bypass.dongle_emulator import HardwareDongleEmulator
+print("[DEBUG commercial_license_analyzer] Starting imports...")
+sys.stdout.flush()
 
+print("[DEBUG commercial_license_analyzer] Importing get_logger...")
+sys.stdout.flush()
+from ...utils.logger import get_logger
+
+print("[DEBUG commercial_license_analyzer] get_logger imported OK")
+sys.stdout.flush()
+
+print("[DEBUG commercial_license_analyzer] Using lazy imports to avoid circular dependencies")
+sys.stdout.flush()
+
+def _get_protocol_fingerprinter():
+    """Lazy import ProtocolFingerprinter to avoid circular import."""
+    from ..network.protocol_fingerprinter import ProtocolFingerprinter
+    return ProtocolFingerprinter
+
+def _get_flexlm_parser():
+    """Lazy import FlexLMProtocolParser to avoid circular import."""
+    from ..network.protocols.flexlm_parser import FlexLMProtocolParser
+    return FlexLMProtocolParser
+
+def _get_dongle_emulator():
+    """Lazy import HardwareDongleEmulator to avoid circular import."""
+    from ..protection_bypass.dongle_emulator import HardwareDongleEmulator
+    return HardwareDongleEmulator
+
+print("[DEBUG commercial_license_analyzer] Getting logger...")
+sys.stdout.flush()
 logger = get_logger(__name__)
+print("[DEBUG commercial_license_analyzer] logger obtained OK")
+sys.stdout.flush()
 
 
 class CommercialLicenseAnalyzer:
@@ -46,9 +74,9 @@ class CommercialLicenseAnalyzer:
 
         """
         self.binary_path = binary_path
-        self.flexlm_parser = FlexLMProtocolParser()
-        self.dongle_emulator = HardwareDongleEmulator()
-        self.protocol_fingerprinter = ProtocolFingerprinter()
+        self._flexlm_parser = None  # Lazy loaded
+        self._dongle_emulator = None  # Lazy loaded
+        self._protocol_fingerprinter = None  # Lazy loaded
 
         # Detection results
         self.detected_systems = []
@@ -57,6 +85,30 @@ class CommercialLicenseAnalyzer:
 
         # Bypass strategies
         self.bypass_strategies = {}
+
+    @property
+    def flexlm_parser(self):
+        """Lazy load FlexLMProtocolParser."""
+        if self._flexlm_parser is None:
+            FlexLMProtocolParser = _get_flexlm_parser()
+            self._flexlm_parser = FlexLMProtocolParser()
+        return self._flexlm_parser
+
+    @property
+    def dongle_emulator(self):
+        """Lazy load HardwareDongleEmulator."""
+        if self._dongle_emulator is None:
+            HardwareDongleEmulator = _get_dongle_emulator()
+            self._dongle_emulator = HardwareDongleEmulator()
+        return self._dongle_emulator
+
+    @property
+    def protocol_fingerprinter(self):
+        """Lazy load ProtocolFingerprinter."""
+        if self._protocol_fingerprinter is None:
+            ProtocolFingerprinter = _get_protocol_fingerprinter()
+            self._protocol_fingerprinter = ProtocolFingerprinter()
+        return self._protocol_fingerprinter
 
     def analyze_binary(self, binary_path: str | None = None) -> dict[str, Any]:
         """Analyze binary for commercial license protections.
@@ -3009,13 +3061,13 @@ console.log("[CodeMeter] Box Serial: 0x" + session_data.box_serial.toString(16))
         report += "DETECTED SYSTEMS:\n"
         report += "-" * 30 + "\n"
         for system in analysis["detected_systems"]:
-            report += f"  • {system}\n"
+            report += f"   {system}\n"
 
         if analysis["license_servers"]:
             report += "\nLICENSE SERVERS:\n"
             report += "-" * 30 + "\n"
             for server in analysis["license_servers"]:
-                report += f"  • Type: {server['type']}\n"
+                report += f"   Type: {server['type']}\n"
                 report += f"    Port: {server['port']}\n"
                 report += f"    Host: {server['hostname']}\n"
 

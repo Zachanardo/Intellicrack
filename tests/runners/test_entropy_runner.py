@@ -42,6 +42,6 @@ if __name__ == '__main__':
                 coverage_percent = ((len(lines) - len(missing)) / len(lines)) * 100
                 print(f"\nOverall Coverage: {coverage_percent:.1f}%")
                 if coverage_percent >= 90:
-                    print("✅ COVERAGE TARGET ACHIEVED (90%+)")
+                    print("OK COVERAGE TARGET ACHIEVED (90%+)")
                 else:
-                    print(f"❌ Coverage below target: {coverage_percent:.1f}% < 90%")
+                    print(f"FAIL Coverage below target: {coverage_percent:.1f}% < 90%")

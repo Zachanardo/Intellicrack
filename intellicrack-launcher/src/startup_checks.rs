@@ -429,7 +429,9 @@ impl StartupValidator {
                 Duration::from_secs(10),
                 Command::new(cmd).arg("--version").output(),
             )
-            .await && output.status.success() {
+            .await
+                && output.status.success()
+            {
                 python_found = true;
                 python_executable = (*cmd).to_string();
                 python_version = String::from_utf8_lossy(&output.stdout).trim().to_string();

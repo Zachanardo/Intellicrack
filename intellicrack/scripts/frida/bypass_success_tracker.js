@@ -30,13 +30,12 @@
 
 const BypassSuccessTracker = {
     name: 'Bypass Success Rate Tracker',
-    description:
-    'Comprehensive bypass success rate tracking and analytics system',
+    description: 'Comprehensive bypass success rate tracking and analytics system',
     version: '3.0.0',
 
     // Configuration for success rate tracking
     config: {
-    // Tracking settings
+        // Tracking settings
         tracking: {
             enabled: true,
             enableDetailedAnalysis: true,
@@ -352,11 +351,7 @@ const BypassSuccessTracker = {
         });
 
         // Track integrity check bypass attempts
-        var integrityAPIs = [
-            'CryptHashData',
-            'CryptVerifySignature',
-            'MapFileAndCheckSum',
-        ];
+        var integrityAPIs = ['CryptHashData', 'CryptVerifySignature', 'MapFileAndCheckSum'];
 
         for (var i = 0; i < integrityAPIs.length; i++) {
             this.trackBypassAPI('integrityBypass', integrityAPIs[i], 'advapi32.dll');
@@ -397,11 +392,7 @@ const BypassSuccessTracker = {
         });
 
         // Track hardware-related bypass attempts
-        var hardwareAPIs = [
-            'GetSystemInfo',
-            'IsProcessorFeaturePresent',
-            'DeviceIoControl',
-        ];
+        var hardwareAPIs = ['GetSystemInfo', 'IsProcessorFeaturePresent', 'DeviceIoControl'];
 
         for (var i = 0; i < hardwareAPIs.length; i++) {
             this.trackBypassAPI('hardwareBypass', hardwareAPIs[i], 'kernel32.dll');
@@ -418,11 +409,7 @@ const BypassSuccessTracker = {
         });
 
         // Track network-related bypass attempts
-        var networkAPIs = [
-            'WinHttpSendRequest',
-            'HttpSendRequestW',
-            'InternetReadFile',
-        ];
+        var networkAPIs = ['WinHttpSendRequest', 'HttpSendRequestW', 'InternetReadFile'];
 
         for (var i = 0; i < networkAPIs.length; i++) {
             this.trackBypassAPI('networkBypass', networkAPIs[i], 'winhttp.dll');
@@ -440,12 +427,7 @@ const BypassSuccessTracker = {
         });
 
         // Track cryptographic bypass attempts
-        var cryptoAPIs = [
-            'CryptEncrypt',
-            'CryptDecrypt',
-            'BCryptEncrypt',
-            'BCryptDecrypt',
-        ];
+        var cryptoAPIs = ['CryptEncrypt', 'CryptDecrypt', 'BCryptEncrypt', 'BCryptDecrypt'];
 
         for (var i = 0; i < cryptoAPIs.length; i++) {
             this.trackBypassAPI('cryptographyBypass', cryptoAPIs[i], 'advapi32.dll');
@@ -519,7 +501,7 @@ const BypassSuccessTracker = {
                         this.method,
                         this.args,
                         retval,
-                        duration,
+                        duration
                     );
 
                     // Record bypass result
@@ -528,7 +510,7 @@ const BypassSuccessTracker = {
                         this.method,
                         success,
                         duration,
-                        retval,
+                        retval
                     );
                 },
             });
@@ -546,7 +528,7 @@ const BypassSuccessTracker = {
     },
 
     trackGenericBypass: function (category, methodName) {
-    // Register generic bypass method for tracking
+        // Register generic bypass method for tracking
         var trackingKey = category + ':' + methodName;
 
         if (!this.tracker.bypassMethods.has(trackingKey)) {
@@ -608,13 +590,7 @@ const BypassSuccessTracker = {
         });
     },
 
-    recordBypassResult: function (
-        category,
-        method,
-        success,
-        duration,
-        returnValue,
-    ) {
+    recordBypassResult: function (category, method, success, duration, returnValue) {
         var timestamp = Date.now();
         var resultKey = category + ':' + method + ':' + timestamp;
 
@@ -647,8 +623,7 @@ const BypassSuccessTracker = {
 
             // Calculate success rate
             if (categoryStats.attempts > 0) {
-                categoryStats.successRate =
-          categoryStats.successes / categoryStats.attempts;
+                categoryStats.successRate = categoryStats.successes / categoryStats.attempts;
             }
 
             categoryStats.lastUpdated = timestamp;
@@ -666,12 +641,11 @@ const BypassSuccessTracker = {
 
             // Calculate success rate and average duration
             if (bypassMethod.attempts > 0) {
-                bypassMethod.successRate =
-          bypassMethod.successes / bypassMethod.attempts;
+                bypassMethod.successRate = bypassMethod.successes / bypassMethod.attempts;
 
                 // Update average duration
                 var totalDuration =
-          bypassMethod.avgDuration * (bypassMethod.attempts - 1) + duration;
+                    bypassMethod.avgDuration * (bypassMethod.attempts - 1) + duration;
                 bypassMethod.avgDuration = totalDuration / bypassMethod.attempts;
             }
         }
@@ -679,8 +653,7 @@ const BypassSuccessTracker = {
         // Update overall success rate
         if (this.statistics.overall.totalAttempts > 0) {
             this.statistics.overall.overallSuccessRate =
-        this.statistics.overall.totalSuccesses /
-        this.statistics.overall.totalAttempts;
+                this.statistics.overall.totalSuccesses / this.statistics.overall.totalAttempts;
         }
 
         // Add to time series
@@ -700,25 +673,11 @@ const BypassSuccessTracker = {
         });
     },
 
-    evaluateBypassSuccess: function (
-        category,
-        method,
-        args,
-        returnValue,
-        duration,
-    ) {
-    // Heuristic evaluation of bypass success based on category and method
-    // Track performance for optimization
+    evaluateBypassSuccess: function (category, method, args, returnValue, duration) {
+        // Heuristic evaluation of bypass success based on category and method
+        // Track performance for optimization
         if (duration && duration > 1000) {
-            send(
-                '[Tracker] Slow bypass: ' +
-          category +
-          '.' +
-          method +
-          ' took ' +
-          duration +
-          'ms',
-            );
+            send('[Tracker] Slow bypass: ' + category + '.' + method + ' took ' + duration + 'ms');
         }
 
         try {
@@ -765,7 +724,7 @@ const BypassSuccessTracker = {
     },
 
     evaluateAntiDebugSuccess: function (method, _args, returnValue) {
-    // Anti-debug bypass is successful if debugger presence is hidden
+        // Anti-debug bypass is successful if debugger presence is hidden
         switch (method) {
         case 'IsDebuggerPresent':
             return returnValue === 0; // FALSE = no debugger detected
@@ -782,18 +741,18 @@ const BypassSuccessTracker = {
     },
 
     evaluateLicensingSuccess: function (_method, _args, returnValue) {
-    // Licensing bypass is successful if validation returns positive
+        // Licensing bypass is successful if validation returns positive
         var successValues = [1, true, 0]; // Various success indicators
         return successValues.includes(returnValue);
     },
 
     evaluateDrmSuccess: function (_method, _args, returnValue) {
-    // DRM bypass is successful if operations complete without errors
+        // DRM bypass is successful if operations complete without errors
         return returnValue === 0 || returnValue === 1;
     },
 
     evaluateIntegritySuccess: function (method, _args, returnValue) {
-    // Integrity bypass is successful if checks pass or are bypassed
+        // Integrity bypass is successful if checks pass or are bypassed
         switch (method) {
         case 'CryptHashData':
         case 'CryptVerifySignature':
@@ -808,32 +767,32 @@ const BypassSuccessTracker = {
     },
 
     evaluateVirtualizationSuccess: function (_method, _args, returnValue) {
-    // Virtualization bypass is successful if VM is not detected
+        // Virtualization bypass is successful if VM is not detected
         return returnValue === 0; // No VM detected
     },
 
     evaluateHardwareSuccess: function (_method, _args, returnValue) {
-    // Hardware bypass is successful if spoofed values are returned
+        // Hardware bypass is successful if spoofed values are returned
         return returnValue !== 0; // Non-zero typically indicates success
     },
 
     evaluateNetworkSuccess: function (_method, _args, returnValue) {
-    // Network bypass is successful if requests complete or are intercepted
+        // Network bypass is successful if requests complete or are intercepted
         return returnValue !== 0 && returnValue !== -1;
     },
 
     evaluateCryptographySuccess: function (_method, _args, returnValue) {
-    // Cryptography bypass is successful if operations complete
+        // Cryptography bypass is successful if operations complete
         return returnValue !== 0; // Non-zero = success
     },
 
     evaluateMemorySuccess: function (_method, _args, returnValue) {
-    // Memory bypass is successful if operations complete
+        // Memory bypass is successful if operations complete
         return returnValue !== 0; // Non-zero = success
     },
 
     evaluateRegistrySuccess: function (_method, _args, returnValue) {
-    // Registry bypass is successful if operations complete without errors
+        // Registry bypass is successful if operations complete without errors
         return returnValue === 0; // ERROR_SUCCESS
     },
 
@@ -858,10 +817,7 @@ const BypassSuccessTracker = {
         if (!this.config.reporting.alertOnLowSuccessRate) return;
 
         var categoryStats = this.statistics.byCategory.get(category);
-        if (
-            categoryStats &&
-      categoryStats.attempts >= this.config.thresholds.minimumAttempts
-        ) {
+        if (categoryStats && categoryStats.attempts >= this.config.thresholds.minimumAttempts) {
             if (categoryStats.successRate < this.config.reporting.alertThreshold) {
                 this.generateAlert('low_success_rate', {
                     category: category,
@@ -914,12 +870,12 @@ const BypassSuccessTracker = {
         case 'low_success_rate':
             return (
                 'Low success rate detected for ' +
-          data.category +
-          ': ' +
-          (data.successRate * 100).toFixed(1) +
-          '% (' +
-          data.attempts +
-          ' attempts)'
+                    data.category +
+                    ': ' +
+                    (data.successRate * 100).toFixed(1) +
+                    '% (' +
+                    data.attempts +
+                    ' attempts)'
             );
         default:
             return 'Alert: ' + alertType;
@@ -1010,7 +966,7 @@ const BypassSuccessTracker = {
 
         // Filter time series data for this timeframe
         var relevantData = this.tracker.timeSeriesData.filter(
-            (point) => point.timestamp >= cutoffTime,
+            (point) => point.timestamp >= cutoffTime
         );
 
         // Calculate statistics for this timeframe
@@ -1028,10 +984,7 @@ const BypassSuccessTracker = {
             stats.successRate = stats.totalSuccesses / stats.totalAttempts;
 
             // Calculate average duration
-            var totalDuration = relevantData.reduce(
-                (sum, point) => sum + point.duration,
-                0,
-            );
+            var totalDuration = relevantData.reduce((sum, point) => sum + point.duration, 0);
             stats.avgDuration = totalDuration / stats.totalAttempts;
 
             // Count categories and methods
@@ -1066,12 +1019,12 @@ const BypassSuccessTracker = {
                 var confidenceInterval = this.calculateConfidenceInterval(
                     methodData.successes,
                     methodData.attempts,
-                    this.config.thresholds.confidenceInterval,
+                    this.config.thresholds.confidenceInterval
                 );
 
                 methodData.confidenceInterval = confidenceInterval;
                 methodData.isStatisticallySignificant =
-          methodData.attempts >= this.config.thresholds.minimumAttempts;
+                    methodData.attempts >= this.config.thresholds.minimumAttempts;
 
                 this.statistics.byMethod.set(methodKey, methodData);
             }
@@ -1093,7 +1046,7 @@ const BypassSuccessTracker = {
     },
 
     getZScore: function (confidence) {
-    // Z-scores for common confidence levels
+        // Z-scores for common confidence levels
         var zScores = {
             0.9: 1.645,
             0.95: 1.96,
@@ -1118,7 +1071,7 @@ const BypassSuccessTracker = {
     },
 
     calculateTrend: function (category) {
-    // Get recent time series data for this category
+        // Get recent time series data for this category
         var recentData = this.tracker.timeSeriesData
             .filter((point) => point.category === category)
             .slice(-20); // Last 20 data points
@@ -1139,18 +1092,11 @@ const BypassSuccessTracker = {
         if (movingAverages.length < 2) return 'stable';
 
         // Calculate trend direction
-        var firstHalf = movingAverages.slice(
-            0,
-            Math.floor(movingAverages.length / 2),
-        );
-        var secondHalf = movingAverages.slice(
-            Math.floor(movingAverages.length / 2),
-        );
+        var firstHalf = movingAverages.slice(0, Math.floor(movingAverages.length / 2));
+        var secondHalf = movingAverages.slice(Math.floor(movingAverages.length / 2));
 
-        var firstAvg =
-      firstHalf.reduce((sum, val) => sum + val, 0) / firstHalf.length;
-        var secondAvg =
-      secondHalf.reduce((sum, val) => sum + val, 0) / secondHalf.length;
+        var firstAvg = firstHalf.reduce((sum, val) => sum + val, 0) / firstHalf.length;
+        var secondAvg = secondHalf.reduce((sum, val) => sum + val, 0) / secondHalf.length;
 
         var difference = secondAvg - firstAvg;
 
@@ -1196,7 +1142,7 @@ const BypassSuccessTracker = {
 
                 if (
                     stats1.attempts >= this.config.thresholds.minimumAttempts &&
-          stats2.attempts >= this.config.thresholds.minimumAttempts
+                    stats2.attempts >= this.config.thresholds.minimumAttempts
                 ) {
                     var comparison = this.performStatisticalTest(stats1, stats2);
                     comparison.category1 = cat1;
@@ -1211,7 +1157,7 @@ const BypassSuccessTracker = {
     },
 
     performStatisticalTest: function (stats1, stats2) {
-    // Perform two-proportion z-test
+        // Perform two-proportion z-test
         var p1 = stats1.successRate;
         var p2 = stats2.successRate;
         var n1 = stats1.attempts;
@@ -1232,21 +1178,15 @@ const BypassSuccessTracker = {
     },
 
     normalCDF: function (x) {
-    // Approximation of the normal cumulative distribution function
+        // Approximation of the normal cumulative distribution function
         return (1 + Math.erf(x / Math.sqrt(2))) / 2;
     },
 
     performCorrelationAnalysis: function () {
-    // Analyze correlations between success rates and other factors
+        // Analyze correlations between success rates and other factors
         var correlations = {
-            successRateVsDuration: this.calculateCorrelation(
-                'successRate',
-                'duration',
-            ),
-            successRateVsAttempts: this.calculateCorrelation(
-                'successRate',
-                'attempts',
-            ),
+            successRateVsDuration: this.calculateCorrelation('successRate', 'duration'),
+            successRateVsAttempts: this.calculateCorrelation('successRate', 'attempts'),
             successRateVsTime: this.calculateCorrelation('successRate', 'timestamp'),
         };
 
@@ -1255,7 +1195,7 @@ const BypassSuccessTracker = {
 
     calculateCorrelation: function (factor1, factor2) {
         var data = Array.from(this.statistics.byMethod.values()).filter(
-            (method) => method.attempts >= this.config.thresholds.minimumAttempts,
+            (method) => method.attempts >= this.config.thresholds.minimumAttempts
         );
 
         if (data.length < 3) return 0;
@@ -1292,9 +1232,7 @@ const BypassSuccessTracker = {
         var sumY2 = y.reduce((sum, val) => sum + val * val, 0);
 
         var numerator = n * sumXY - sumX * sumY;
-        var denominator = Math.sqrt(
-            (n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY),
-        );
+        var denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
 
         return denominator === 0 ? 0 : numerator / denominator;
     },
@@ -1332,9 +1270,7 @@ const BypassSuccessTracker = {
         // Analyze method effectiveness
         this.statistics.byMethod.forEach((methodStats, methodKey) => {
             if (methodStats.attempts >= this.config.thresholds.minimumAttempts) {
-                if (
-                    methodStats.successRate < this.config.thresholds.warningSuccessRate
-                ) {
+                if (methodStats.successRate < this.config.thresholds.warningSuccessRate) {
                     recommendations.push({
                         type: 'improve_method',
                         priority: 'medium',
@@ -1363,7 +1299,7 @@ const BypassSuccessTracker = {
 
         // Clean up old time series data
         this.tracker.timeSeriesData = this.tracker.timeSeriesData.filter(
-            (point) => point.timestamp >= cutoffTime,
+            (point) => point.timestamp >= cutoffTime
         );
 
         // Clean up old attempts and results
@@ -1386,9 +1322,7 @@ const BypassSuccessTracker = {
         });
 
         // Clean up old alerts
-        this.reports.alerts = this.reports.alerts.filter(
-            (alert) => alert.timestamp >= cutoffTime,
-        );
+        this.reports.alerts = this.reports.alerts.filter((alert) => alert.timestamp >= cutoffTime);
     },
 
     // === MACHINE LEARNING ===
@@ -1502,14 +1436,12 @@ const BypassSuccessTracker = {
                     this.getSystemLoad(),
                     methodStats.confidenceInterval
                         ? methodStats.confidenceInterval.upper -
-              methodStats.confidenceInterval.lower
+                          methodStats.confidenceInterval.lower
                         : 0,
                 ];
 
                 var label =
-          methodStats.successRate > this.config.thresholds.minimumSuccessRate
-              ? 1
-              : 0;
+                    methodStats.successRate > this.config.thresholds.minimumSuccessRate ? 1 : 0;
 
                 trainingData.push({
                     features: features,
@@ -1540,7 +1472,7 @@ const BypassSuccessTracker = {
     },
 
     getMethodComplexity: function (method) {
-    // Simplified complexity estimation based on method name
+        // Simplified complexity estimation based on method name
         if (method.includes('Crypt') || method.includes('Hash')) return 0.8;
         if (method.includes('Network') || method.includes('Http')) return 0.7;
         if (method.includes('Registry') || method.includes('Memory')) return 0.6;
@@ -1553,12 +1485,12 @@ const BypassSuccessTracker = {
     },
 
     getSystemLoad: function () {
-    // Simplified system load estimation
+        // Simplified system load estimation
         return Math.random() * 0.5 + 0.25; // 0.25-0.75
     },
 
     trainSuccessPredictor: function (trainingData) {
-    // Simplified neural network training
+        // Simplified neural network training
         var predictor = this.mlComponents.successPredictor;
 
         for (var epoch = 0; epoch < 10; epoch++) {
@@ -1581,7 +1513,7 @@ const BypassSuccessTracker = {
 
                     var currentWeight = predictor.weights.get(weightKey);
                     var newWeight =
-            currentWeight - predictor.learningRate * error * sample.features[j];
+                        currentWeight - predictor.learningRate * error * sample.features[j];
                     predictor.weights.set(weightKey, newWeight);
                 }
             }
@@ -1772,11 +1704,9 @@ const BypassSuccessTracker = {
             trendAnalysis: this.generateTrendSummary(),
             topPerformers: this.getTopPerformingMethods(10),
             bottomPerformers: this.getBottomPerformingMethods(5),
-            criticalAlerts: this.reports.alerts.filter(
-                (alert) => alert.severity === 'critical',
-            ),
+            criticalAlerts: this.reports.alerts.filter((alert) => alert.severity === 'critical'),
             highPriorityRecommendations: this.reports.recommendations.filter(
-                (rec) => rec.priority === 'high',
+                (rec) => rec.priority === 'high'
             ),
             statisticalSummary: this.generateStatisticalSummary(),
             mlModelStatus: this.getMachineLearningStatus(),
@@ -1833,9 +1763,9 @@ const BypassSuccessTracker = {
             .filter(([category, stats]) => {
                 // Use category to filter out test/debug categories and focus on real bypass attempts
                 var isRealCategory =
-          !category.startsWith('test_') &&
-          !category.startsWith('debug_') &&
-          !category.includes('synthetic');
+                    !category.startsWith('test_') &&
+                    !category.startsWith('debug_') &&
+                    !category.includes('synthetic');
                 return stats.attempts > 0 && isRealCategory;
             })
             .map(([category, stats]) => ({
@@ -1934,9 +1864,7 @@ const BypassSuccessTracker = {
 
     generateStatisticalSummary: function () {
         var comparisons = this.statistics.comparisons || [];
-        var significantDifferences = comparisons.filter(
-            (comp) => comp.isSignificant,
-        );
+        var significantDifferences = comparisons.filter((comp) => comp.isSignificant);
 
         return {
             totalComparisons: comparisons.length,
@@ -1969,18 +1897,10 @@ const BypassSuccessTracker = {
 
         return {
             enabled: true,
-            successPredictorStatus: this.mlComponents.successPredictor
-                ? 'active'
-                : 'inactive',
-            anomalyDetectorStatus: this.mlComponents.anomalyDetector
-                ? 'active'
-                : 'inactive',
-            patternClassifierStatus: this.mlComponents.patternClassifier
-                ? 'active'
-                : 'inactive',
-            optimizationEngineStatus: this.mlComponents.optimizationEngine
-                ? 'active'
-                : 'inactive',
+            successPredictorStatus: this.mlComponents.successPredictor ? 'active' : 'inactive',
+            anomalyDetectorStatus: this.mlComponents.anomalyDetector ? 'active' : 'inactive',
+            patternClassifierStatus: this.mlComponents.patternClassifier ? 'active' : 'inactive',
+            optimizationEngineStatus: this.mlComponents.optimizationEngine ? 'active' : 'inactive',
             modelAccuracy: this.mlComponents.modelAccuracy,
             lastUpdate: Date.now(),
         };
@@ -2016,22 +1936,18 @@ const BypassSuccessTracker = {
                 declining: report.trendAnalysis.declining,
                 stable: report.trendAnalysis.stable,
             },
-            top_performers: report.topPerformers
-                .slice(0, 3)
-                .map(function (performer) {
-                    return {
-                        method: performer.method,
-                        success_rate: performer.successRate,
-                    };
-                }),
+            top_performers: report.topPerformers.slice(0, 3).map(function (performer) {
+                return {
+                    method: performer.method,
+                    success_rate: performer.successRate,
+                };
+            }),
             critical_alerts: report.criticalAlerts.map(function (alert) {
                 return alert.message;
             }),
-            high_priority_recommendations: report.highPriorityRecommendations.map(
-                function (rec) {
-                    return rec.suggestion;
-                },
-            ),
+            high_priority_recommendations: report.highPriorityRecommendations.map(function (rec) {
+                return rec.suggestion;
+            }),
         };
 
         if (report.mlModelStatus.enabled) {
@@ -2091,13 +2007,7 @@ const BypassSuccessTracker = {
 
         // Record as if it was tracked automatically
         this.recordBypassAttempt(category, method, {});
-        this.recordBypassResult(
-            category,
-            method,
-            success,
-            duration,
-            success ? 1 : 0,
-        );
+        this.recordBypassResult(category, method, success, duration, success ? 1 : 0);
 
         send({
             type: success ? 'success' : 'info',
@@ -2149,8 +2059,7 @@ const BypassSuccessTracker = {
                     success_predictor: 'Neural Network',
                     anomaly_detection: 'Baseline Tracking',
                     pattern_classifier: 'Feature Analysis',
-                    model_update_interval_s:
-            this.config.analytics.modelUpdateInterval / 1000,
+                    model_update_interval_s: this.config.analytics.modelUpdateInterval / 1000,
                 };
             }
 
@@ -2170,10 +2079,8 @@ const BypassSuccessTracker = {
                 reporting_settings: {
                     realtime_reports: this.config.reporting.enableAutoReporting,
                     report_interval_s: this.config.reporting.reportInterval / 1000,
-                    detailed_interval_s:
-            this.config.reporting.detailedReportInterval / 1000,
-                    summary_interval_s:
-            this.config.reporting.summaryReportInterval / 1000,
+                    detailed_interval_s: this.config.reporting.detailedReportInterval / 1000,
+                    summary_interval_s: this.config.reporting.summaryReportInterval / 1000,
                     alert_threshold: this.config.reporting.alertThreshold,
                 },
                 machine_learning: mlStatus,
@@ -2186,7 +2093,7 @@ const BypassSuccessTracker = {
                 },
                 status: 'ACTIVE',
                 description:
-          'Bypass success rate tracking system is now actively monitoring and analyzing bypass effectiveness',
+                    'Bypass success rate tracking system is now actively monitoring and analyzing bypass effectiveness',
             };
 
             send(summaryData);
@@ -2637,14 +2544,12 @@ const BypassSuccessTracker = {
             competitive_analysis: {
                 market_position: this.competitiveIntelligence.competitive_positioning,
                 benchmarking: this.competitiveIntelligence.market_analysis,
-                strategic_insights:
-          this.competitiveIntelligence.strategic_recommendations,
+                strategic_insights: this.competitiveIntelligence.strategic_recommendations,
             },
 
             real_time_status: this.performanceMonitor.real_time_metrics,
 
-            quantum_readiness:
-        this.quantumReadiness.post_quantum_cryptography.assessment,
+            quantum_readiness: this.quantumReadiness.post_quantum_cryptography.assessment,
 
             recommendations: this.generateStrategicRecommendations(),
 
@@ -2655,15 +2560,14 @@ const BypassSuccessTracker = {
     },
 
     detectAnomalies: function () {
-    // Implement statistical anomaly detection
+        // Implement statistical anomaly detection
         const anomalies = [];
         const recentData = this.getRecentSuccessData(100);
 
         if (recentData.length > 10) {
             const mean = recentData.reduce((a, b) => a + b) / recentData.length;
             const variance =
-        recentData.reduce((a, b) => a + Math.pow(b - mean, 2)) /
-        recentData.length;
+                recentData.reduce((a, b) => a + Math.pow(b - mean, 2)) / recentData.length;
             const stdDev = Math.sqrt(variance);
 
             recentData.forEach((value, index) => {
@@ -2688,8 +2592,7 @@ const BypassSuccessTracker = {
         const suggestions = [];
 
         // Analyze current performance
-        const currentRate =
-      this.performanceMonitor.real_time_metrics.current_success_rate;
+        const currentRate = this.performanceMonitor.real_time_metrics.current_success_rate;
 
         if (currentRate < 0.8) {
             suggestions.push({
@@ -2701,9 +2604,7 @@ const BypassSuccessTracker = {
             });
         }
 
-        if (
-            this.performanceMonitor.real_time_metrics.trend_direction === 'degrading'
-        ) {
+        if (this.performanceMonitor.real_time_metrics.trend_direction === 'degrading') {
             suggestions.push({
                 type: 'trend_correction',
                 priority: 'medium',
@@ -2743,12 +2644,12 @@ const BypassSuccessTracker = {
     },
 
     getRecentSuccessData: function (count) {
-    // Return recent success rate data for analysis
+        // Return recent success rate data for analysis
         return this.successHistory.slice(-count).map((entry) => entry.rate || 0);
     },
 
     performMLTraining: function () {
-    // Implement machine learning model training
+        // Implement machine learning model training
         if (this.mlModels.successPrediction.trainingData.length > 100) {
             send({
                 type: 'info',
@@ -2758,18 +2659,12 @@ const BypassSuccessTracker = {
                 timestamp: Date.now(),
             });
 
-            this.mlMetrics.model_accuracy = Math.min(
-                0.95,
-                this.mlMetrics.model_accuracy + 0.01,
-            );
-            this.mlMetrics.precision = Math.min(
-                0.92,
-                this.mlMetrics.precision + 0.008,
-            );
+            this.mlMetrics.model_accuracy = Math.min(0.95, this.mlMetrics.model_accuracy + 0.01);
+            this.mlMetrics.precision = Math.min(0.92, this.mlMetrics.precision + 0.008);
             this.mlMetrics.recall = Math.min(0.89, this.mlMetrics.recall + 0.007);
             this.mlMetrics.f1_score =
-        (2 * (this.mlMetrics.precision * this.mlMetrics.recall)) /
-        (this.mlMetrics.precision + this.mlMetrics.recall);
+                (2 * (this.mlMetrics.precision * this.mlMetrics.recall)) /
+                (this.mlMetrics.precision + this.mlMetrics.recall);
         }
     },
 };

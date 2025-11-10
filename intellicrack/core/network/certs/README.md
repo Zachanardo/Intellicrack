@@ -1,6 +1,7 @@
 # SSL Certificates
 
-This directory contains SSL certificates for the license server emulation and traffic interception features.
+This directory contains SSL certificates for the license server emulation and
+traffic interception features.
 
 ## Files:
 
@@ -9,4 +10,5 @@ This directory contains SSL certificates for the license server emulation and tr
 
 ## Security Note:
 
-These are self-signed certificates for testing purposes only. In production environments, use properly signed certificates from a trusted CA.
+These are self-signed certificates for testing purposes only. In production
+environments, use properly signed certificates from a trusted CA.

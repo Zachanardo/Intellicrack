@@ -24,11 +24,12 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+import logging
 from pathlib import Path
 
-from intellicrack.utils.logger import logger
-
 from ..resource_helper import get_resource_path
+
+_logger = logging.getLogger(__name__)
 
 
 def get_project_root() -> Path:
@@ -43,7 +44,7 @@ def get_project_root() -> Path:
         intellicrack_root = Path(get_resource_path(""))
         return intellicrack_root.parent
     except Exception as e:
-        logger.error("Exception in plugin_paths: %s", e)
+        _logger.error("Exception in plugin_paths: %s", e)
         # Fallback to relative path calculation
         current_file = Path(__file__)
         # Go up from utils -> intellicrack -> project root
@@ -91,42 +92,34 @@ def get_plugin_modules_dir() -> Path:
 
 
 def get_config_dir() -> Path:
-    """Get the configuration directory using modern config system.
+    """Get the configuration directory.
 
     Returns:
         Path: Absolute path to the configuration directory
 
-    """
-    try:
-        from intellicrack.core.config_manager import get_config
+    Note:
+        This function provides a standalone path without importing config_manager
+        to avoid circular imports. Config manager will use its own path resolution.
 
-        config = get_config()
-        return config.config_dir
-    except ImportError as e:
-        logger.error("Import error in plugin_paths: %s", e)
-        # Fallback to standard config location
-        project_root = get_project_root()
-        config_dir = project_root / "config"
-        config_dir.mkdir(parents=True, exist_ok=True)
-        return config_dir
+    """
+    project_root = get_project_root()
+    config_dir = project_root / "config"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    return config_dir
 
 
 def get_main_config_file() -> Path:
-    """Get the main configuration file path using modern config system.
+    """Get the main configuration file path.
 
     Returns:
         Path: Absolute path to main config file
 
-    """
-    try:
-        from intellicrack.core.config_manager import get_config
+    Note:
+        This function provides a standalone path without importing config_manager
+        to avoid circular imports. Config manager will use its own path resolution.
 
-        config = get_config()
-        return config.config_file
-    except ImportError as e:
-        logger.error("Import error in plugin_paths: %s", e)
-        # Fallback to legacy behavior
-        return get_config_dir() / "intellicrack_config.json"
+    """
+    return get_config_dir() / "intellicrack_config.json"
 
 
 def get_tests_dir() -> Path:

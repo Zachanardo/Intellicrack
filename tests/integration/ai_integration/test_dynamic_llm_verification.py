@@ -18,7 +18,7 @@ def verify_dynamic_discovery():
     interface = LLMScriptInterface()
 
     if interface.llm_backend:
-        print("✅ Successfully discovered and initialized an LLM backend!")
+        print("OK Successfully discovered and initialized an LLM backend!")
         print(f"Backend type: {type(interface.llm_backend).__name__}")
 
         # Show which API keys were checked
@@ -28,7 +28,7 @@ def verify_dynamic_discovery():
         print("  - Local model endpoints")
 
         # Demonstrate that ANY provider works
-        print("\n🔧 The system now supports:")
+        print("\n The system now supports:")
         print("  - ANY OpenAI-compatible API")
         print("  - ANY Anthropic-compatible API")
         print("  - ANY local/self-hosted model")
@@ -36,7 +36,7 @@ def verify_dynamic_discovery():
         print("  - No hardcoded limitations!")
 
     else:
-        print("⚠️ No LLM backend discovered.")
+        print("WARNING No LLM backend discovered.")
         print("\nTo use the system, set ANY of these environment variables:")
         print("  - OPENAI_API_KEY")
         print("  - ANTHROPIC_API_KEY")
@@ -45,7 +45,7 @@ def verify_dynamic_discovery():
         print("  - Or ANY variable ending in _API_KEY or _API_TOKEN")
         print("\nThe system will automatically discover and use it!")
 
-    print("\n✨ Dynamic LLM discovery is fully functional!")
+    print("\n Dynamic LLM discovery is fully functional!")
     print("Users can now import ANY AI model and it will work without code changes.")
 
 if __name__ == "__main__":

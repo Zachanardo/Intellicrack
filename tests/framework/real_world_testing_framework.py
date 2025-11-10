@@ -623,11 +623,11 @@ class RealWorldTestingFramework:
 
                 # Print result
                 if result.get("status") == "SUCCESS":
-                    print(f"    ✓ Bypass successful in {result.get('bypass_time', 0):.2f}s")
+                    print(f"    OK Bypass successful in {result.get('bypass_time', 0):.2f}s")
                 elif result.get("status") == "PARTIAL":
                     print(f"    ⚠ Partial bypass in {result.get('bypass_time', 0):.2f}s")
                 else:
-                    print(f"    ✗ Bypass failed: {result.get('error', 'Unknown error')}")
+                    print(f"    FAIL Bypass failed: {result.get('error', 'Unknown error')}")
 
         except ImportError as e:
             print(f"[!] Import error: {e}")

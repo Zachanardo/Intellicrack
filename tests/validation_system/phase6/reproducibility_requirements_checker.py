@@ -1329,10 +1329,9 @@ def main():
     )
 
     # Initialize checker
+    from intellicrack.utils.path_resolver import get_project_root
     checker = ReproducibilityRequirementsChecker(
-        from intellicrack.utils.path_resolver import get_project_root
-
-output_path=get_project_root() / "tests/validation_system/phase6/reproducibility",
+        output_path=get_project_root() / "tests/validation_system/phase6/reproducibility",
         packages_path=get_project_root() / "tests/validation_system/phase6/packages"
     )
 

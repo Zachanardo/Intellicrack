@@ -28,18 +28,18 @@ def main():
         )
         base_detector_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(base_detector_module)
-        print("✓ Successfully imported base_detector module")
+        print("OK Successfully imported base_detector module")
     except Exception as e:
-        print(f"✗ Failed to import base_detector: {e}")
+        print(f"FAIL Failed to import base_detector: {e}")
         return 1
 
     # Check if test file exists
     test_file = os.path.join(project_root, "tests", "unit", "core", "anti_analysis", "test_base_detector.py")
     if not os.path.exists(test_file):
-        print(f"✗ Test file not found: {test_file}")
+        print(f"FAIL Test file not found: {test_file}")
         return 1
 
-    print(f"✓ Test file found: {test_file}")
+    print(f"OK Test file found: {test_file}")
 
     # Try to run tests with unittest
     print("\n=== Running Tests ===")
@@ -111,9 +111,9 @@ def main():
         print(f"\nTotal Coverage: {total_coverage:.2f}%")
 
         if total_coverage >= 80:
-            print("✓ Coverage requirement met (80%+)")
+            print("OK Coverage requirement met (80%+)")
         else:
-            print("✗ Coverage requirement not met (need 80%+)")
+            print("FAIL Coverage requirement not met (need 80%+)")
 
     except ImportError:
         print("Coverage module not available, skipping coverage analysis")

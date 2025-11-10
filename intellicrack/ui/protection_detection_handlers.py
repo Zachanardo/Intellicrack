@@ -71,7 +71,7 @@ class ProtectionDetectionHandlers:
                 output += f"Found {len(results['protections_found'])} commercial protections:\n\n"
                 for _protection in results["protections_found"]:
                     confidence = results.get("confidence_scores", {}).get(_protection, 0.0)
-                    output += f"• {_protection} (Confidence: {confidence:.1%})\n"
+                    output += f" {_protection} (Confidence: {confidence:.1%})\n"
 
                 output += "\nDetection Indicators:\n"
                 for _indicator in results.get("indicators", []):
@@ -182,7 +182,7 @@ class ProtectionDetectionHandlers:
                 if results.get("algorithms_found"):
                     output += "Hash Algorithms Found:\n"
                     for _algo in results["algorithms_found"]:
-                        output += f"  • {_algo}\n"
+                        output += f"   {_algo}\n"
 
                 if results.get("indicators"):
                     output += "\nDetection Indicators:\n"
@@ -228,7 +228,7 @@ class ProtectionDetectionHandlers:
                 if results.get("techniques"):
                     output += "Techniques Found:\n"
                     for _technique in results["techniques"]:
-                        output += f"  • {_technique}\n"
+                        output += f"   {_technique}\n"
 
                 if results.get("indicators"):
                     output += "\nAPI Indicators:\n"
@@ -277,7 +277,7 @@ class ProtectionDetectionHandlers:
             if results.get("methods_applied"):
                 output += "Methods Applied:\n"
                 for _method in results["methods_applied"]:
-                    output += f"  • {_method}\n"
+                    output += f"   {_method}\n"
 
             if results.get("errors"):
                 output += "\nErrors Encountered:\n"
@@ -324,7 +324,7 @@ class ProtectionDetectionHandlers:
             if results.get("methods_applied"):
                 output += "Methods Applied:\n"
                 for _method in results["methods_applied"]:
-                    output += f"  • {_method}\n"
+                    output += f"   {_method}\n"
 
             if results.get("errors"):
                 output += "\nErrors Encountered:\n"
@@ -367,13 +367,13 @@ class ProtectionDetectionHandlers:
             if results.get("emulated_dongles"):
                 output += "Emulated Dongle Types:\n"
                 for _dongle in results["emulated_dongles"]:
-                    output += f"  • {_dongle}\n"
+                    output += f"   {_dongle}\n"
                 output += "\n"
 
             if results.get("methods_applied"):
                 output += "Methods Applied:\n"
                 for _method in results["methods_applied"]:
-                    output += f"  • {_method}\n"
+                    output += f"   {_method}\n"
                 output += "\n"
 
             if results.get("errors"):

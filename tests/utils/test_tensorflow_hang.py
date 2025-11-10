@@ -22,22 +22,22 @@ sys.stdout.flush()
 
 try:
     import tensorflow as tf
-    print(f"✓ TensorFlow {tf.__version__} imported successfully")
+    print(f"OK TensorFlow {tf.__version__} imported successfully")
 
     # Try to disable GPU
     print("Disabling GPU devices...")
     tf.config.set_visible_devices([], 'GPU')
-    print("✓ GPU disabled")
+    print("OK GPU disabled")
 
     # Test basic operation
     print("Testing basic tensor operation...")
     test_tensor = tf.constant([1, 2, 3])
-    print(f"✓ Created tensor: {test_tensor}")
+    print(f"OK Created tensor: {test_tensor}")
 
 except ImportError as e:
-    print(f"✗ TensorFlow not available: {e}")
+    print(f"FAIL TensorFlow not available: {e}")
 except Exception as e:
-    print(f"✗ Error during TensorFlow operations: {e}")
+    print(f"FAIL Error during TensorFlow operations: {e}")
     import traceback
     traceback.print_exc()
 

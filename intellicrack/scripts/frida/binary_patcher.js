@@ -207,10 +207,7 @@ const BinaryPatcher = {
                 try {
                     // Save original bytes for rollback
                     const originalBytes = Memory.readByteArray(address, bytes.length);
-                    BinaryPatcher.state.rollbackData.set(
-                        address.toString(),
-                        originalBytes,
-                    );
+                    BinaryPatcher.state.rollbackData.set(address.toString(), originalBytes);
 
                     // Suspend all threads except current
                     const threads = Process.enumerateThreads();
@@ -313,7 +310,7 @@ const BinaryPatcher = {
                 }
 
                 const originalBytes = BinaryPatcher.state.rollbackData.get(
-                    patch.address.toString(),
+                    patch.address.toString()
                 );
                 if (!originalBytes) {
                     return false;
@@ -437,9 +434,7 @@ const BinaryPatcher = {
 
                     // Pad with NOPs if needed
                     const originalSize =
-            Memory.readU8(address.add(bytes.length - 1)) === 0xc3
-                ? bytes.length
-                : 10;
+                        Memory.readU8(address.add(bytes.length - 1)) === 0xc3 ? bytes.length : 10;
                     while (bytes.length < originalSize) {
                         bytes.push(0x90); // NOP
                     }
@@ -536,11 +531,7 @@ const BinaryPatcher = {
 
                 // Patch WASM function to return constant
                 patchFunction: function (_funcIndex, returnValue) {
-                    return [
-                        0x41,
-                        returnValue,
-                        0x0f,
-                    ];
+                    return [0x41, returnValue, 0x0f];
                 },
 
                 // Generate NOP in WASM
@@ -598,7 +589,7 @@ const BinaryPatcher = {
                     const sections = this.parseSections(
                         buffer,
                         dos.e_lfanew,
-                        nt.FileHeader.NumberOfSections,
+                        nt.FileHeader.NumberOfSections
                     );
 
                     return {
@@ -657,8 +648,7 @@ const BinaryPatcher = {
                 parseSections: function (buffer, ntOffset, count) {
                     const sections = [];
                     const view = new DataView(buffer);
-                    const sectionOffset =
-            ntOffset + 24 + view.getUint16(ntOffset + 20, true);
+                    const sectionOffset = ntOffset + 24 + view.getUint16(ntOffset + 20, true);
 
                     for (let i = 0; i < count; i++) {
                         const offset = sectionOffset + i * 40;
@@ -744,7 +734,7 @@ const BinaryPatcher = {
                     for (const section of sections) {
                         if (
                             rva >= section.VirtualAddress &&
-              rva < section.VirtualAddress + section.VirtualSize
+                            rva < section.VirtualAddress + section.VirtualSize
                         ) {
                             return rva - section.VirtualAddress + section.PointerToRawData;
                         }
@@ -924,7 +914,7 @@ const BinaryPatcher = {
                         buffer,
                         loc.start,
                         loc.end,
-                        loc.algorithm,
+                        loc.algorithm
                     );
 
                     const view = new DataView(buffer);
@@ -1104,7 +1094,7 @@ const BinaryPatcher = {
                         // Randomly insert junk
                         if (Math.random() < 0.2) {
                             const junk =
-                junkPatterns[Math.floor(Math.random() * junkPatterns.length)];
+                                junkPatterns[Math.floor(Math.random() * junkPatterns.length)];
                             result.push(...junk);
                         }
                     }
@@ -1132,7 +1122,7 @@ const BinaryPatcher = {
                         BinaryPatcher.patchingEngine.hotPatch(
                             target.module,
                             target.offset,
-                            patchData,
+                            patchData
                         );
                     }, delay);
                 },
@@ -1144,7 +1134,7 @@ const BinaryPatcher = {
                             BinaryPatcher.patchingEngine.hotPatch(
                                 target.module,
                                 target.offset,
-                                patchData,
+                                patchData
                             );
                         } else {
                             setTimeout(checkCondition, 100);
@@ -1178,18 +1168,18 @@ const BinaryPatcher = {
 
                                     if (
                                         targetAddr.compare(patchEnd) < 0 &&
-                    targetEnd.compare(address) > 0
+                                        targetEnd.compare(address) > 0
                                     ) {
                                         // Calculate overlap
                                         const overlapStart =
-                      targetAddr.compare(address) > 0 ? targetAddr : address;
+                                            targetAddr.compare(address) > 0 ? targetAddr : address;
                                         const overlapEnd =
-                      targetEnd.compare(patchEnd) < 0 ? targetEnd : patchEnd;
+                                            targetEnd.compare(patchEnd) < 0 ? targetEnd : patchEnd;
                                         const overlapSize = overlapEnd.sub(overlapStart).toInt32();
 
                                         // Redirect to original bytes
                                         const original = BinaryPatcher.state.rollbackData.get(
-                                            address.toString(),
+                                            address.toString()
                                         );
                                         if (original && overlapSize > 0) {
                                             const tempBuffer = Memory.alloc(targetSize);
@@ -1197,7 +1187,7 @@ const BinaryPatcher = {
                                             Memory.copy(
                                                 tempBuffer.add(overlapStart.sub(targetAddr)),
                                                 Memory.allocUtf8String(original).add(offset),
-                                                overlapSize,
+                                                overlapSize
                                             );
                                             args[1] = tempBuffer;
                                         }
@@ -1258,7 +1248,7 @@ const BinaryPatcher = {
                     const result = BinaryPatcher.patchingEngine.hotPatch(
                         task.module,
                         task.offset,
-                        task.data,
+                        task.data
                     );
 
                     task.resolve(result);
@@ -1284,7 +1274,7 @@ const BinaryPatcher = {
                     // Evict if necessary
                     while (
                         this.currentCacheSize + size > this.maxCacheSize &&
-            this.cache.size > 0
+                        this.cache.size > 0
                     ) {
                         const firstKey = this.cache.keys().next().value;
                         const firstValue = this.cache.get(firstKey);
@@ -1381,10 +1371,7 @@ const BinaryPatcher = {
 
         try {
             // Read current bytes at patch location
-            const currentBytes = Memory.readByteArray(
-                patch.address,
-                patch.data.length,
-            );
+            const currentBytes = Memory.readByteArray(patch.address, patch.data.length);
 
             // Compare with expected patch data
             for (let i = 0; i < patch.data.length; i++) {
@@ -1474,9 +1461,7 @@ const BinaryPatcher = {
                 if (criteria.tags) {
                     const patchTags = new Set(patch.tags || []);
                     const searchTags = new Set(criteria.tags);
-                    const intersection = new Set(
-                        [...patchTags].filter((x) => searchTags.has(x)),
-                    );
+                    const intersection = new Set([...patchTags].filter((x) => searchTags.has(x)));
                     if (intersection.size === 0) {
                         match = false;
                     }
@@ -1567,7 +1552,7 @@ const BinaryPatcher = {
                     const result = BinaryPatcher.patchingEngine.hotPatch(
                         patchData.module,
                         patchData.offset,
-                        patchData.data,
+                        patchData.data
                     );
 
                     resolve({
@@ -1603,8 +1588,8 @@ const BinaryPatcher = {
 
         // Update average time
         metrics.averagePatchTime =
-      (metrics.averagePatchTime * (metrics.totalPatches - 1) + patchTime) /
-      metrics.totalPatches;
+            (metrics.averagePatchTime * (metrics.totalPatches - 1) + patchTime) /
+            metrics.totalPatches;
     },
 
     // === PUBLIC API ===
@@ -1643,10 +1628,7 @@ const BinaryPatcher = {
             let patchData;
 
             if (arch === 'x64' || arch === 'ia32') {
-                patchData = this.architectures.x86_64.patchReturn(
-                    preparedTarget.address,
-                    1,
-                );
+                patchData = this.architectures.x86_64.patchReturn(preparedTarget.address, 1);
             } else if (arch === 'arm64') {
                 patchData = this.architectures.arm64.generateReturn(1);
             } else {
@@ -1665,7 +1647,7 @@ const BinaryPatcher = {
             const patchId = this.patchingEngine.hotPatch(
                 preparedTarget.module,
                 preparedTarget.offset,
-                patchData,
+                patchData
             );
 
             // Verify patch
@@ -1675,10 +1657,7 @@ const BinaryPatcher = {
 
             // Hide patch if stealth mode
             if (this.config.antiDetection.stealthMode) {
-                this.antiDetection.stealth.hidePatch(
-                    preparedTarget.address,
-                    patchData.length,
-                );
+                this.antiDetection.stealth.hidePatch(preparedTarget.address, patchData.length);
             }
 
             const elapsed = Date.now() - startTime;

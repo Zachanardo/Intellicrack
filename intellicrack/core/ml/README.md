@@ -2,7 +2,10 @@
 
 ## Overview
 
-Production-ready machine learning system for automated classification of software protection schemes. This system uses Random Forest classification with 44+ features extracted from PE binaries to identify protectors like VMProtect, Themida, UPX, and others.
+Production-ready machine learning system for automated classification of
+software protection schemes. This system uses Random Forest classification with
+44+ features extracted from PE binaries to identify protectors like VMProtect,
+Themida, UPX, and others.
 
 ## Components
 
@@ -12,7 +15,8 @@ Extracts 44 sophisticated features from PE binaries:
 
 - **Entropy Features** (7): Overall, section-specific, max/min/avg
 - **PE Structure** (8): Sections, imports, overlays, resources
-- **Protection Signatures** (7): VMProtect, Themida, Enigma, Obsidium, ASProtect, Armadillo, UPX
+- **Protection Signatures** (7): VMProtect, Themida, Enigma, Obsidium,
+  ASProtect, Armadillo, UPX
 - **Opcode Patterns** (16): Frequency distribution of instruction bytes
 - **Code Analysis** (6): Cyclomatic complexity, unusual sections, packed imports
 
@@ -174,7 +178,8 @@ Multi-factor detection with weighted scoring:
 
 ### Opcode Patterns
 
-Frequency distribution of first nibble (upper 4 bits) of opcodes in executable sections:
+Frequency distribution of first nibble (upper 4 bits) of opcodes in executable
+sections:
 
 - `opcode_freq_00` through `opcode_freq_0f`: Normalized frequencies
 - Used to detect obfuscation patterns and unusual instruction distributions
@@ -182,11 +187,13 @@ Frequency distribution of first nibble (upper 4 bits) of opcodes in executable s
 ## Model Performance
 
 **Synthetic Data (800 samples)**:
+
 - Train accuracy: ~99%
 - Test accuracy: ~95%
 - CV accuracy: ~93% (±3%)
 
 **Real-World Expected**:
+
 - Test accuracy: 80-90%
 - High confidence (>0.75): ~95% accuracy
 - Medium confidence (0.50-0.75): ~85% accuracy
@@ -200,6 +207,7 @@ pytest tests/unit/core/ml/ -v
 ```
 
 Tests cover:
+
 - Feature extraction accuracy
 - Classification performance
 - Model persistence
@@ -246,25 +254,26 @@ ml/
 ## Dependencies
 
 ### Core (No dependencies)
+
 - `feature_extraction.py` - Uses only Python stdlib
 
 ### ML Components
+
 - `numpy` - Array operations
 - `sklearn` - Random Forest classifier
 - `joblib` - Model persistence
 
 ### Optional
+
 - `pandas` - Data manipulation (for analysis)
 - `matplotlib` - Visualization (for analysis)
 
 ## Code Quality
 
-✅ **Zero placeholders** - Every function fully implemented
-✅ **Zero stubs** - All methods contain real functionality
-✅ **Zero mocks** - No simulated responses
-✅ **Type hints** - Full type annotations
-✅ **Logging** - Production-ready logging
-✅ **Error handling** - Comprehensive try/except blocks
+✅ **Zero placeholders** - Every function fully implemented ✅ **Zero stubs** -
+All methods contain real functionality ✅ **Zero mocks** - No simulated
+responses ✅ **Type hints** - Full type annotations ✅ **Logging** -
+Production-ready logging ✅ **Error handling** - Comprehensive try/except blocks
 ✅ **Docstrings** - PEP 257-compliant documentation
 
 ## Known Limitations
@@ -291,6 +300,7 @@ ml/
 ## Status
 
 ✅ **PRODUCTION-READY**
+
 - All components fully functional
 - Comprehensive testing
 - Complete documentation
@@ -299,7 +309,5 @@ ml/
 
 ---
 
-**Last Updated**: October 24, 2025
-**Version**: 1.0.0
-**Lines of Code**: 3,800+
+**Last Updated**: October 24, 2025 **Version**: 1.0.0 **Lines of Code**: 3,800+
 **Test Coverage**: 55+ tests

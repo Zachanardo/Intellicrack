@@ -81,19 +81,34 @@ fn main() {
 
                 match embed_resource::compile("intellicrack.rc", empty_macros) {
                     CompilationResult::Ok => {
-                        println!("cargo:warning=Successfully compiled Windows resource file with embed-resource");
+                        println!(
+                            "cargo:warning=Successfully compiled Windows resource file with embed-resource"
+                        );
                     }
                     CompilationResult::NotWindows => {
-                        println!("cargo:warning=Not building for Windows, skipping resource compilation");
+                        println!(
+                            "cargo:warning=Not building for Windows, skipping resource compilation"
+                        );
                     }
                     CompilationResult::NotAttempted(reason) => {
-                        println!("cargo:warning=Resource compilation not attempted: {}", reason);
-                        println!("cargo:warning=Continuing without Windows manifest (non-critical)");
+                        println!(
+                            "cargo:warning=Resource compilation not attempted: {}",
+                            reason
+                        );
+                        println!(
+                            "cargo:warning=Continuing without Windows manifest (non-critical)"
+                        );
                     }
                     CompilationResult::Failed(reason) => {
-                        eprintln!("cargo:warning=CRITICAL: Failed to compile Windows resource file: {}", reason);
+                        eprintln!(
+                            "cargo:warning=CRITICAL: Failed to compile Windows resource file: {}",
+                            reason
+                        );
                         eprintln!("cargo:warning=Windows manifest will be missing from executable");
-                        panic!("Resource compilation failed: {}. This may cause runtime issues on Windows.", reason);
+                        panic!(
+                            "Resource compilation failed: {}. This may cause runtime issues on Windows.",
+                            reason
+                        );
                     }
                 }
             }
@@ -239,11 +254,15 @@ fn main() {
         let project_root_path = PathBuf::from(&project_root);
         let pixi_env_path = project_root_path.join(".pixi/envs/default");
 
-        // Define search paths within the pixi environment
         let search_paths = vec![
             pixi_env_path.clone(),
             pixi_env_path.join("Library/bin"),
             pixi_env_path.join("DLLs"),
+            pixi_env_path.join("Lib/site-packages/torchvision"),
+            pixi_env_path.join("Lib/site-packages/torch/lib"),
+            pixi_env_path.join("Lib/site-packages/numpy.libs"),
+            pixi_env_path.join("Lib/site-packages/scipy.libs"),
+            pixi_env_path.join("Lib/site-packages/PyQt6/Qt6/bin"),
         ];
 
         // --- Critical DLLs that MUST exist, otherwise the build fails ---
@@ -256,7 +275,6 @@ fn main() {
             "vcruntime140_1.dll",
         ];
 
-        // --- Standard DLLs, warn if not found ---
         let standard_dlls = [
             "msvcp140.dll",
             "ucrtbase.dll",
@@ -275,7 +293,6 @@ fn main() {
             "liblapacke.dll",
             "tbb12.dll",
             "tbbmalloc.dll",
-            // Intel MKL - optional for enhanced performance
             "mkl_rt.2.dll",
             "mkl_core.2.dll",
             "mkl_intel_thread.2.dll",

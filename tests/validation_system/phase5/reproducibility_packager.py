@@ -138,8 +138,8 @@ class EnvironmentRecorder:
                     "memory_used": gpu.memoryUsed,
                     "temperature": gpu.temperature
                 })
-            except:
-                # WMI query may fail, continue with registry results
+        except:
+            pass
 
         # Network interfaces
         network_interfaces = []
@@ -208,32 +208,27 @@ class EnvironmentRecorder:
         for reg_path in reg_paths:
             try:
                 key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, reg_path)
-
                 for i in range(winreg.QueryInfoKey(key)[0]):
                     try:
                         subkey_name = winreg.EnumKey(key, i)
                         subkey = winreg.OpenKey(key, subkey_name)
-
                         try:
                             name = winreg.QueryValueEx(subkey, "DisplayName")[0]
                             version = winreg.QueryValueEx(subkey, "DisplayVersion")[0]
                             publisher = winreg.QueryValueEx(subkey, "Publisher")[0]
-
                             software_list.append({
                                 "name": name,
                                 "version": version,
                                 "publisher": publisher
                             })
-        except:
-            # Registry query may fail, continue with other methods
-
+                        except:
+                            pass
                         winreg.CloseKey(subkey)
                     except:
-                        # Subkey access may fail, continue with next subkey
-
+                        pass
                 winreg.CloseKey(key)
             except:
-                # Registry key access may fail, continue with next path
+                pass
 
         # Also check using WMI
         if self.wmi_client:
@@ -322,8 +317,8 @@ class EnvironmentRecorder:
                     virt["qemu"] = True
                 elif "xen" in brand:
                     virt["xen"] = True
-            except:
-                # WMI query may fail, continue with registry results
+        except:
+            pass
 
         # Windows-specific checks
         if platform.system() == "Windows" and self.wmi_client:
@@ -358,8 +353,8 @@ class EnvironmentRecorder:
             )
             if result.returncode == 0:
                 pip_packages = json.loads(result.stdout)
-            except:
-                # WMI query may fail, continue with registry results
+        except:
+            pass
 
         # Conda packages (if in conda environment)
         conda_packages = []
@@ -567,8 +562,8 @@ class ExecutionRecorder:
         try:
             process_info = psutil.Process(process.pid)
             memory_usage = process_info.memory_info().rss
-            except:
-                # WMI query may fail, continue with registry results
+        except:
+            pass
 
         # Store recording
         conn = sqlite3.connect(self.recordings_db)
@@ -724,7 +719,7 @@ class ReproducibilityPackager:
         )
         (package_path / "REPRODUCE.md").write_text(instructions)
 
-        print(f"✓ Reproducibility package created: {archive_path}")
+        print(f"OK Reproducibility package created: {archive_path}")
 
         return archive_path
 
@@ -968,16 +963,16 @@ def validate_reproduction():
                 actual_hash = hashlib.sha256(f.read()).hexdigest()
             if actual_hash != expected_hash:
                 mismatches.append(file_path)
-                print(f"  ✗ {file_path}: Hash mismatch")
+                print(f"  FAIL {file_path}: Hash mismatch")
         else:
             mismatches.append(file_path)
-            print(f"  ✗ {file_path}: File missing")
+            print(f"  FAIL {file_path}: File missing")
 
     if mismatches:
-        print(f"\\n✗ Validation failed: {len(mismatches)} mismatches")
+        print(f"\\nFAIL Validation failed: {len(mismatches)} mismatches")
         return False
     else:
-        print("\\n✓ Validation successful: All files match")
+        print("\\nOK Validation successful: All files match")
         return True
 
 if __name__ == "__main__":

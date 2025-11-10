@@ -855,10 +855,9 @@ class EvidenceRequirementsValidator:
 
 def main():
     """Example usage of EvidenceRequirementsValidator."""
+    from intellicrack.utils.path_resolver import get_project_root
     validator = EvidenceRequirementsValidator(
-        from intellicrack.utils.path_resolver import get_project_root
-
-evidence_path=get_project_root() / "tests/validation_system/evidence",
+        evidence_path=get_project_root() / "tests/validation_system/evidence",
         gpg_key_id="test-key@example.com"
     )
 

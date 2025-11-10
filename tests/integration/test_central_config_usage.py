@@ -165,7 +165,7 @@ class TestCentralConfigUsage(IntellicrackTestBase):
             for v in violations[:10]:  # Show first 10
                 print(f"  - {v['file']}:{v['line']} - {v['issue']}")
         else:
-            print(f"\n✅ No direct config file access found in {checked_files} files")
+            print(f"\nOK No direct config file access found in {checked_files} files")
 
         # This should pass as we've migrated to central config
         assert len(violations) == 0, f"Found {len(violations)} direct config file accesses"
@@ -208,7 +208,7 @@ class TestCentralConfigUsage(IntellicrackTestBase):
             for v in violations[:5]:
                 print(f"  - {v['file']}:{v['line']} - {v['issue']}")
         else:
-            print("\n✅ No QSettings usage found")
+            print("\nOK No QSettings usage found")
 
         # We removed QSettings imports, so this should pass
         assert len(violations) == 0, f"Found {len(violations)} QSettings references"
@@ -248,7 +248,7 @@ class TestCentralConfigUsage(IntellicrackTestBase):
 
                 if has_central_import or uses_get_config or uses_config_get or uses_config_set:
                     proper_usage_count += 1
-                    print(f"✅ {file_path.name} uses central config properly")
+                    print(f"OK {file_path.name} uses central config properly")
                 else:
                     # Check if file needs config at all
                     if any(term in content.lower() for term in ['config', 'setting', 'preference']):
@@ -324,7 +324,7 @@ class TestCentralConfigUsage(IntellicrackTestBase):
                 method = getattr(manager, method_name)
                 # Check if method has deprecation decorator
                 if hasattr(method, '__wrapped__'):
-                    print(f"✅ {method_name} has deprecation wrapper")
+                    print(f"OK {method_name} has deprecation wrapper")
                 else:
                     # Method might use warnings internally
                     print(f"⚠ {method_name} may not have deprecation wrapper")
@@ -371,7 +371,7 @@ class TestCentralConfigUsage(IntellicrackTestBase):
             for v in violations[:5]:
                 print(f"  - {v['file']}:{v['line']} matches pattern {v['pattern']}")
         else:
-            print("\n✅ No hardcoded configuration paths found")
+            print("\nOK No hardcoded configuration paths found")
 
         assert len(violations) == 0, f"Found {len(violations)} hardcoded config paths"
 
@@ -412,4 +412,4 @@ class TestCentralConfigUsage(IntellicrackTestBase):
         assert write_time < 0.5, f"Write performance too slow: {write_time:.3f}s"
         assert nested_time < 0.5, f"Nested access too slow: {nested_time:.3f}s"
 
-        print("\n✅ Task 20.1.2 COMPLETED: All configuration access verified to use central system")
+        print("\nOK Task 20.1.2 COMPLETED: All configuration access verified to use central system")

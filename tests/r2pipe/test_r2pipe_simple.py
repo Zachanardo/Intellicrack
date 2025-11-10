@@ -24,7 +24,7 @@ def test_radare2_direct():
         )
 
         if result.returncode == 0:
-            print("✓ Radare2 binary execution successful")
+            print("OK Radare2 binary execution successful")
             print(f"Version: {result.stdout.strip()}")
             return True
         else:
@@ -52,8 +52,8 @@ def test_r2pipe_simple():
         # Test basic command
         info = r2.cmd('i')
         if info and len(info.strip()) > 0:
-            print("✓ r2pipe integration successful")
-            print("✓ Binary information retrieved")
+            print("OK r2pipe integration successful")
+            print("OK Binary information retrieved")
             r2.quit()
             return True
         else:
@@ -79,7 +79,7 @@ def main():
     if not test_r2pipe_simple():
         return False
 
-    print("\n✓ ALL TESTS PASSED - Radare2 integration verified")
+    print("\nOK ALL TESTS PASSED - Radare2 integration verified")
     return True
 
 if __name__ == "__main__":

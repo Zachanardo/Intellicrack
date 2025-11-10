@@ -656,6 +656,7 @@ class NegativeControlValidator:
                     # Registry query timed out, continue with other checks
                     pass
                 except Exception:
+                    pass
                     # Registry access may fail, continue with other checks
 
         except Exception as reg_error:
@@ -687,6 +688,7 @@ class NegativeControlValidator:
                                 license_error_detected = True
                                 break
                         except Exception:
+                            pass
                             # File access may fail, continue checking other files
 
         except Exception as temp_error:
@@ -799,6 +801,7 @@ class NegativeControlValidator:
                     process.terminate()
                     process.wait(timeout=5)
             except (subprocess.TimeoutExpired, ProcessLookupError):
+                pass
                 # Process cleanup may fail if already terminated
 
         test_end_time = datetime.now().isoformat()

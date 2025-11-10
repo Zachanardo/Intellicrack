@@ -402,8 +402,8 @@ class TestTPMBypassRealWorld(TestCase):
 
         print(f"\nPCR Manipulation Precision:")
         print(f"  PCRs Set: {len(test_pcrs)}")
-        print(f"  SHA256 Bank: ✓")
-        print(f"  SHA1 Bank: ✓")
+        print(f"  SHA256 Bank: OK")
+        print(f"  SHA1 Bank: OK")
 
     def test_command_virtualization_completeness(self):
         """Test completeness of virtualized TPM command processing."""
@@ -434,7 +434,7 @@ class TestTPMBypassRealWorld(TestCase):
 
         print(f"\nVirtualized Command Processing:")
         print(f"  Commands Tested: {len(test_commands)}")
-        print(f"  All Responded: ✓")
+        print(f"  All Responded: OK")
 
     def test_real_world_software_bypass_execution(self):
         """Execute bypass of real software using TPM protection."""

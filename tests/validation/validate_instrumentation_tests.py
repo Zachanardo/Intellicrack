@@ -47,7 +47,7 @@ def analyze_test_coverage():
     print(f"Test File: {test_file.name}")
     print("\n" + "=" * 70)
 
-    print("\n📊 TEST METRICS:")
+    print("\n TEST METRICS:")
     print(f"  - Test Classes: {len(test_classes)}")
     print(f"  - Test Methods: {len(test_methods)}")
     print(f"  - Source Functions: {len(source_functions)}")
@@ -55,18 +55,18 @@ def analyze_test_coverage():
     print("\n📋 TEST CLASSES:")
     for cls in test_classes:
         cls_methods = [m for m in test_methods if m.startswith(cls)]
-        print(f"  ✓ {cls} ({len(cls_methods)} tests)")
+        print(f"  OK {cls} ({len(cls_methods)} tests)")
 
-    print("\n🎯 SOURCE FUNCTIONS TESTED:")
+    print("\n SOURCE FUNCTIONS TESTED:")
     for func in source_functions:
-        print(f"  ✓ {func}")
+        print(f"  OK {func}")
 
-    print("\n📈 COVERAGE BREAKDOWN:")
+    print("\n COVERAGE BREAKDOWN:")
     print(f"  - on_message: Multiple test scenarios")
     print(f"  - run_instrumentation_thread: Comprehensive testing")
     print(f"  - run_dynamic_instrumentation: Full entry point coverage")
 
-    print("\n🔍 TEST CATEGORIES COVERED:")
+    print("\n TEST CATEGORIES COVERED:")
     categories = [
         "Message handling (send/error types)",
         "Process spawning and attachment",
@@ -86,15 +86,15 @@ def analyze_test_coverage():
     ]
 
     for category in categories:
-        print(f"  ✓ {category}")
+        print(f"  OK {category}")
 
-    print("\n📊 ESTIMATED COVERAGE: 90-95%")
+    print("\n ESTIMATED COVERAGE: 90-95%")
     print("  - All public functions: 100%")
     print("  - Error paths: 95%")
     print("  - Edge cases: 90%")
     print("  - Integration scenarios: 95%")
 
-    print("\n✅ PRODUCTION READINESS VALIDATION:")
+    print("\nOK PRODUCTION READINESS VALIDATION:")
     validation_items = [
         "Real Frida integration tested with mocks",
         "Windows and Unix platform hooks validated",
@@ -108,13 +108,13 @@ def analyze_test_coverage():
     ]
 
     for item in validation_items:
-        print(f"  ✓ {item}")
+        print(f"  OK {item}")
 
     print("\n" + "=" * 70)
     print("🎉 TEST SUITE VALIDATION COMPLETE!")
     print(f"Total test methods: {len(test_methods)}")
-    print("Coverage target: 85%+ ACHIEVED ✅")
-    print("Production readiness: VALIDATED ✅")
+    print("Coverage target: 85%+ ACHIEVED OK")
+    print("Production readiness: VALIDATED OK")
     print("=" * 70)
 
 if __name__ == "__main__":

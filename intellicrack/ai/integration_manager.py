@@ -422,7 +422,7 @@ Script Analysis:
                     if script_file.suffix == ".js":
                         # Basic JavaScript validation
                         if "function" in script or "var " in script or "let " in script:
-                            validation_results.append("✅ JavaScript syntax patterns detected")
+                            validation_results.append("OK JavaScript syntax patterns detected")
                         else:
                             validation_results.append("WARNING️  No clear JavaScript patterns found")
 
@@ -430,9 +430,9 @@ Script Analysis:
                     security_patterns = ["hook", "patch", "memory", "bypass", "inject"]
                     found_patterns = [p for p in security_patterns if p in script.lower()]
                     if found_patterns:
-                        validation_results.append(f"✅ Security patterns detected: {', '.join(found_patterns)}")
+                        validation_results.append(f"OK Security patterns detected: {', '.join(found_patterns)}")
 
-                    validation_results.append("✅ Script validation completed successfully")
+                    validation_results.append("OK Script validation completed successfully")
 
                 except Exception as validation_error:
                     validation_results.append(f"WARNING️  Validation warning: {validation_error}")

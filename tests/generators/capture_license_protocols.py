@@ -447,7 +447,7 @@ def generate_all_protocol_captures(output_dir: Path) -> dict[str, Path]:
         write_pcap_file(filename, packets)
         generated_files[protocol_name] = filename
 
-        print(f"✓ Created {protocol_name} protocol capture: {filename}")
+        print(f"OK Created {protocol_name} protocol capture: {filename}")
 
         # Create variant with different IPs
         alt_client = "10.0.0.50"
@@ -457,7 +457,7 @@ def generate_all_protocol_captures(output_dir: Path) -> dict[str, Path]:
         alt_filename = output_dir / f"{protocol_name}_capture_alt.pcap"
         write_pcap_file(alt_filename, alt_packets)
 
-        print(f"✓ Created {protocol_name} protocol capture (alternate): {alt_filename}")
+        print(f"OK Created {protocol_name} protocol capture (alternate): {alt_filename}")
 
     # Create a mixed capture with multiple protocols
     mixed_packets = []
@@ -470,7 +470,7 @@ def generate_all_protocol_captures(output_dir: Path) -> dict[str, Path]:
 
     mixed_filename = output_dir / "mixed_protocols_capture.pcap"
     write_pcap_file(mixed_filename, mixed_packets)
-    print(f"✓ Created mixed protocol capture: {mixed_filename}")
+    print(f"OK Created mixed protocol capture: {mixed_filename}")
 
     return generated_files
 
@@ -486,7 +486,7 @@ def main():
 
     generated = generate_all_protocol_captures(output_dir)
 
-    print(f"\n✓ Generated {len(generated)} protocol captures")
+    print(f"\nOK Generated {len(generated)} protocol captures")
     print("\nProtocol captures include:")
     print("- FlexLM license server handshake")
     print("- HASP/Sentinel dongle emulation")

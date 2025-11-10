@@ -37,7 +37,7 @@ def validate_entropy_analyzer():
     print(f"   Two bytes: {entropy:.6f} (expected: ~1.0)")
     assert 0.99 < entropy <= 1.01
 
-    print("   ✅ Basic entropy calculations PASSED")
+    print("   OK Basic entropy calculations PASSED")
 
     # Test 2: Classification
     print("\n2. Testing entropy classification...")
@@ -46,7 +46,7 @@ def validate_entropy_analyzer():
     assert analyzer._classify_entropy(6.0) == "medium"
     assert analyzer._classify_entropy(7.5) == "high"
 
-    print("   ✅ Entropy classification PASSED")
+    print("   OK Entropy classification PASSED")
 
     # Test 3: File analysis
     print("\n3. Testing file analysis...")
@@ -69,14 +69,14 @@ def validate_entropy_analyzer():
 
         os.unlink(tf.name)
 
-    print("   ✅ File analysis PASSED")
+    print("   OK File analysis PASSED")
 
     # Test 4: Error handling
     print("\n4. Testing error handling...")
 
     result = analyzer.analyze_entropy("nonexistent_file.bin")
     assert "error" in result
-    print("   ✅ Error handling PASSED")
+    print("   OK Error handling PASSED")
 
     # Test 5: Real-world data patterns
     print("\n5. Testing real-world patterns...")
@@ -96,10 +96,10 @@ def validate_entropy_analyzer():
     print(f"   Random data: {entropy:.3f}")
     assert entropy > 7.0
 
-    print("   ✅ Real-world patterns PASSED")
+    print("   OK Real-world patterns PASSED")
 
     print("\n=== ALL VALIDATIONS PASSED ===")
-    print("✅ Entropy analyzer is working correctly!")
+    print("OK Entropy analyzer is working correctly!")
 
     return True
 
@@ -108,7 +108,7 @@ if __name__ == "__main__":
         validate_entropy_analyzer()
         print("\n🎉 ENTROPY ANALYZER VALIDATION COMPLETE")
     except Exception as e:
-        print(f"\n❌ VALIDATION FAILED: {e}")
+        print(f"\nFAIL VALIDATION FAILED: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

@@ -336,7 +336,7 @@ class StatisticsDialog(QDialog):
         if "file_type_hints" in results and results["file_type_hints"]:
             file_type += "Detected Characteristics:\n"
             for hint in results["file_type_hints"]:
-                file_type += f"  • {hint}\n"
+                file_type += f"   {hint}\n"
         else:
             file_type += "No specific file type characteristics detected.\n"
 

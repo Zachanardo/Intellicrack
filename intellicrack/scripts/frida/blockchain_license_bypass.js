@@ -35,7 +35,7 @@ const BlockchainLicenseBypass = {
 
     // Configuration
     config: {
-    // Target blockchain providers
+        // Target blockchain providers
         providers: {
             ethereum: ['web3.js', 'ethers.js', 'web3modal', 'wagmi'],
             binance: ['bsc', 'bnb', 'pancake'],
@@ -154,7 +154,7 @@ const BlockchainLicenseBypass = {
 
     // Hook Web3 libraries
     hookWeb3Libraries: function () {
-    // Hook web3.js
+        // Hook web3.js
         this.hookWeb3JS();
 
         // Hook ethers.js
@@ -232,17 +232,10 @@ const BlockchainLicenseBypass = {
     hookWeb3Call: function () {
         try {
             // Find and hook eth_call RPC method
-            const patterns = [
-                'eth_call',
-                'eth_sendTransaction',
-                'eth_sendRawTransaction',
-            ];
+            const patterns = ['eth_call', 'eth_sendTransaction', 'eth_sendRawTransaction'];
 
             patterns.forEach((pattern) => {
-                const matches = Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                );
+                const matches = Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern);
 
                 matches.forEach((match) => {
                     send({
@@ -271,17 +264,10 @@ const BlockchainLicenseBypass = {
     hookEthersJS: function () {
         try {
             // Hook ethers.Contract
-            const ethersPatterns = [
-                'ethers.Contract',
-                'BaseContract',
-                'Contract.prototype.call',
-            ];
+            const ethersPatterns = ['ethers.Contract', 'BaseContract', 'Contract.prototype.call'];
 
             ethersPatterns.forEach((pattern) => {
-                const matches = Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                );
+                const matches = Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern);
 
                 matches.forEach((match) => {
                     send({
@@ -326,9 +312,7 @@ const BlockchainLicenseBypass = {
                         target: 'blockchain_license_bypass',
                         action: 'ethers_contract_call',
                         contractAddress: contractAddr ? contractAddr.toString() : 'unknown',
-                        methodSelector: methodSelector
-                            ? methodSelector.toString()
-                            : 'unknown',
+                        methodSelector: methodSelector ? methodSelector.toString() : 'unknown',
                         hasCallData: callData !== null,
                     });
 
@@ -363,7 +347,7 @@ const BlockchainLicenseBypass = {
 
     // Hook contract calls generically
     hookContractCalls: function () {
-    // Common contract call patterns
+        // Common contract call patterns
         const patterns = {
             // Solidity function signatures
             'isLicensed()': '0x1e0263b7',
@@ -389,7 +373,7 @@ const BlockchainLicenseBypass = {
             // Search for function signature in memory
             const matches = Memory.scanSync(
                 Process.enumerateRanges('r-x'),
-                'hex:' + signature.replace('0x', ''),
+                'hex:' + signature.replace('0x', '')
             );
 
             matches.forEach((match) => {
@@ -410,9 +394,7 @@ const BlockchainLicenseBypass = {
                                 const val = args[i].readUtf8String();
                                 argValues.push(val);
                             } catch (e) {
-                                console.log(
-                                    '[Contract] Arg ' + i + ' not a string: ' + e.message,
-                                );
+                                console.log('[Contract] Arg ' + i + ' not a string: ' + e.message);
                                 argValues.push(args[i].toString());
                             }
                         }
@@ -466,7 +448,7 @@ const BlockchainLicenseBypass = {
 
     // Hook generic contract calls
     hookGenericContractCalls: function () {
-    // Hook JSON-RPC calls
+        // Hook JSON-RPC calls
         this.hookJSONRPC();
 
         // Hook ABI encoding/decoding
@@ -478,7 +460,7 @@ const BlockchainLicenseBypass = {
 
     // Hook JSON-RPC communication
     hookJSONRPC: function () {
-    // Hook XMLHttpRequest
+        // Hook XMLHttpRequest
         const xhr_send = XMLHttpRequest.prototype.send;
         XMLHttpRequest.prototype.send = function (data) {
             if (data && typeof data === 'string') {
@@ -486,10 +468,7 @@ const BlockchainLicenseBypass = {
                     const json = JSON.parse(data);
 
                     // Check for eth_call or eth_sendTransaction
-                    if (
-                        json.method === 'eth_call' ||
-            json.method === 'eth_sendTransaction'
-                    ) {
+                    if (json.method === 'eth_call' || json.method === 'eth_sendTransaction') {
                         send({
                             type: 'info',
                             target: 'blockchain_license_bypass',
@@ -552,7 +531,7 @@ const BlockchainLicenseBypass = {
                                 {
                                     status: 200,
                                     headers: { 'Content-Type': 'application/json' },
-                                },
+                                }
                             );
                         }
                     } catch (e) {
@@ -586,13 +565,10 @@ const BlockchainLicenseBypass = {
                         });
 
                         // Return modified response
-                        return new Response(
-                            JSON.stringify(this.modifyLicenseResponse(data)),
-                            {
-                                status: 200,
-                                headers: response.headers,
-                            },
-                        );
+                        return new Response(JSON.stringify(this.modifyLicenseResponse(data)), {
+                            status: 200,
+                            headers: response.headers,
+                        });
                     }
                 } catch (e) {
                     console.log('[RPC] Data is not valid JSON: ' + e.message);
@@ -605,7 +581,7 @@ const BlockchainLicenseBypass = {
 
     // Hook blockchain providers
     hookProviders: function () {
-    // MetaMask
+        // MetaMask
         this.hookMetaMask();
 
         // WalletConnect
@@ -665,7 +641,7 @@ const BlockchainLicenseBypass = {
 
     // Hook wallet APIs
     hookWalletAPIs: function () {
-    // Hook wallet signature verification
+        // Hook wallet signature verification
         this.hookSignatureVerification();
 
         // Hook NFT ownership checks
@@ -677,7 +653,7 @@ const BlockchainLicenseBypass = {
 
     // Hook signature verification
     hookSignatureVerification: function () {
-    // Common signature verification patterns
+        // Common signature verification patterns
         const sigPatterns = [
             'ecrecover',
             'verify',
@@ -687,10 +663,7 @@ const BlockchainLicenseBypass = {
         ];
 
         sigPatterns.forEach((pattern) => {
-            const matches = Memory.scanSync(
-                Process.enumerateRanges('r-x'),
-                'utf8:' + pattern,
-            );
+            const matches = Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern);
 
             matches.forEach((match) => {
                 send({
@@ -717,7 +690,7 @@ const BlockchainLicenseBypass = {
 
     // Hook NFT ownership checks
     hookNFTOwnership: function () {
-    // ERC-721 ownerOf
+        // ERC-721 ownerOf
         this.hookContractMethod('ownerOf', function (retval) {
             // Return user's address
             send({
@@ -742,11 +715,9 @@ const BlockchainLicenseBypass = {
 
     // Check if a call is license-related
     isLicenseCall: function (method, params) {
-    // Check method name
+        // Check method name
         if (
-            this.config.contract_patterns.validation_functions.some((func) =>
-                method.includes(func),
-            )
+            this.config.contract_patterns.validation_functions.some((func) => method.includes(func))
         ) {
             return true;
         }
@@ -808,7 +779,7 @@ const BlockchainLicenseBypass = {
             return '0x0000000000000000000000000000000000000000000000000000000000000001';
 
         default:
-        // Generic success
+            // Generic success
             return '0x0000000000000000000000000000000000000000000000000000000000000001';
         }
     },
@@ -819,11 +790,11 @@ const BlockchainLicenseBypass = {
             // Ensure positive/true result
             if (
                 response.result === '0x0' ||
-        response.result ===
-          '0x0000000000000000000000000000000000000000000000000000000000000000'
+                response.result ===
+                    '0x0000000000000000000000000000000000000000000000000000000000000000'
             ) {
                 response.result =
-          '0x0000000000000000000000000000000000000000000000000000000000000001';
+                    '0x0000000000000000000000000000000000000000000000000000000000000001';
             }
         }
 
@@ -832,16 +803,11 @@ const BlockchainLicenseBypass = {
 
     // Get bypass value for function
     getBypassValue: function (functionName) {
-    // Return appropriate value based on function type
+        // Return appropriate value based on function type
         if (functionName.includes('balance') || functionName.includes('Balance')) {
             // Return max uint256
-            return ptr(
-                '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-            );
-        } else if (
-            functionName.includes('owner') ||
-      functionName.includes('Owner')
-        ) {
+            return ptr('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
+        } else if (functionName.includes('owner') || functionName.includes('Owner')) {
             // Return current user address
             return this.getUserAddress();
         } else {
@@ -852,7 +818,7 @@ const BlockchainLicenseBypass = {
 
     // Get current user address
     getUserAddress: function () {
-    // Try to get from various sources
+        // Try to get from various sources
         if (window.ethereum && window.ethereum.selectedAddress) {
             return ptr(window.ethereum.selectedAddress);
         }
@@ -894,9 +860,7 @@ const BlockchainLicenseBypass = {
                 }
             }
         } catch (e) {
-            console.log(
-                '[FunctionFinder] Memory access error at address: ' + e.message,
-            );
+            console.log('[FunctionFinder] Memory access error at address: ' + e.message);
         }
 
         return null;
@@ -915,7 +879,7 @@ const BlockchainLicenseBypass = {
         ];
 
         return prologues.some((prologue) =>
-            bytes.slice(0, prologue.length).every((byte, i) => byte === prologue[i]),
+            bytes.slice(0, prologue.length).every((byte, i) => byte === prologue[i])
         );
     },
 
@@ -944,20 +908,11 @@ const BlockchainLicenseBypass = {
 
     // Monitor contract creation
     monitorContractCreation: function () {
-    // Hook contract deployment patterns
-        const deployPatterns = [
-            'deploy',
-            'Deploy',
-            'ContractFactory',
-            'create2',
-            'CREATE2',
-        ];
+        // Hook contract deployment patterns
+        const deployPatterns = ['deploy', 'Deploy', 'ContractFactory', 'create2', 'CREATE2'];
 
         deployPatterns.forEach((pattern) => {
-            const matches = Memory.scanSync(
-                Process.enumerateRanges('r-x'),
-                'utf8:' + pattern,
-            );
+            const matches = Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern);
 
             matches.forEach((match) => {
                 send({
@@ -999,10 +954,7 @@ const BlockchainLicenseBypass = {
 
     // Helper function to hook contract methods
     hookContractMethod: function (methodName, callback) {
-        const matches = Memory.scanSync(
-            Process.enumerateRanges('r-x'),
-            'utf8:' + methodName,
-        );
+        const matches = Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + methodName);
 
         matches.forEach((match) => {
             const funcAddr = this.findNearestFunction(match.address);
@@ -1047,26 +999,25 @@ const BlockchainLicenseBypass = {
             ];
 
             kyberPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'kyber_key_exchange_bypassed',
-                                });
-                                self.state.quantumResistantProtocolsBypassed++;
-                                // Force success return for quantum key operations
-                                retval.replace(ptr(0)); // Success code
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'kyber_key_exchange_bypassed',
+                                    });
+                                    self.state.quantumResistantProtocolsBypassed++;
+                                    // Force success return for quantum key operations
+                                    retval.replace(ptr(0)); // Success code
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook CRYSTALS-Dilithium signature verification
@@ -1080,85 +1031,72 @@ const BlockchainLicenseBypass = {
             ];
 
             dilithiumPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'dilithium_signature_verification_bypassed',
-                                });
-                                self.state.quantumResistantProtocolsBypassed++;
-                                retval.replace(ptr(1)); // Valid signature
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'dilithium_signature_verification_bypassed',
+                                    });
+                                    self.state.quantumResistantProtocolsBypassed++;
+                                    retval.replace(ptr(1)); // Valid signature
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook Falcon signature scheme
-            var falconPatterns = [
-                'falcon_sign',
-                'falcon_verify',
-                'falcon_keygen',
-                'FALCON_sign',
-            ];
+            var falconPatterns = ['falcon_sign', 'falcon_verify', 'falcon_keygen', 'FALCON_sign'];
 
             falconPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'falcon_signature_bypassed',
-                                });
-                                self.state.quantumResistantProtocolsBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'falcon_signature_bypassed',
+                                    });
+                                    self.state.quantumResistantProtocolsBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook NTRU lattice-based cryptography
-            var ntruPatterns = [
-                'ntru_encrypt',
-                'ntru_decrypt',
-                'ntru_keygen',
-                'NTRU_encrypt',
-            ];
+            var ntruPatterns = ['ntru_encrypt', 'ntru_decrypt', 'ntru_keygen', 'NTRU_encrypt'];
 
             ntruPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'ntru_encryption_bypassed',
-                                });
-                                self.state.quantumResistantProtocolsBypassed++;
-                                retval.replace(ptr(0)); // Success
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'ntru_encryption_bypassed',
+                                    });
+                                    self.state.quantumResistantProtocolsBypassed++;
+                                    retval.replace(ptr(0)); // Success
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             send({
@@ -1200,25 +1138,24 @@ const BlockchainLicenseBypass = {
             ];
 
             arbitrumPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'arbitrum_validation_bypassed',
-                                });
-                                self.state.layer2SolutionsBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'arbitrum_validation_bypassed',
+                                    });
+                                    self.state.layer2SolutionsBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook Optimism fraud proof validation
@@ -1232,25 +1169,24 @@ const BlockchainLicenseBypass = {
             ];
 
             optimismPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'optimism_fraud_proof_bypassed',
-                                });
-                                self.state.layer2SolutionsBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'optimism_fraud_proof_bypassed',
+                                    });
+                                    self.state.layer2SolutionsBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook Polygon zkEVM validation
@@ -1264,25 +1200,24 @@ const BlockchainLicenseBypass = {
             ];
 
             polygonZkevmPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'polygon_zkevm_validation_bypassed',
-                                });
-                                self.state.layer2SolutionsBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'polygon_zkevm_validation_bypassed',
+                                    });
+                                    self.state.layer2SolutionsBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook StarkNet Cairo program validation
@@ -1296,25 +1231,24 @@ const BlockchainLicenseBypass = {
             ];
 
             starknetPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'starknet_cairo_validation_bypassed',
-                                });
-                                self.state.layer2SolutionsBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'starknet_cairo_validation_bypassed',
+                                    });
+                                    self.state.layer2SolutionsBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             send({
@@ -1356,25 +1290,24 @@ const BlockchainLicenseBypass = {
             ];
 
             zkSnarksPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'zksnark_verification_bypassed',
-                                });
-                                self.state.zkProofSystemsBypassed++;
-                                retval.replace(ptr(1)); // Valid proof
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'zksnark_verification_bypassed',
+                                    });
+                                    self.state.zkProofSystemsBypassed++;
+                                    retval.replace(ptr(1)); // Valid proof
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook zkSTARKs verification
@@ -1388,25 +1321,24 @@ const BlockchainLicenseBypass = {
             ];
 
             zkStarksPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'zkstark_verification_bypassed',
-                                });
-                                self.state.zkProofSystemsBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'zkstark_verification_bypassed',
+                                    });
+                                    self.state.zkProofSystemsBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook Bulletproofs verification
@@ -1419,25 +1351,24 @@ const BlockchainLicenseBypass = {
             ];
 
             bulletproofsPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'bulletproof_verification_bypassed',
-                                });
-                                self.state.zkProofSystemsBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'bulletproof_verification_bypassed',
+                                    });
+                                    self.state.zkProofSystemsBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook PLONK universal setup verification
@@ -1450,25 +1381,24 @@ const BlockchainLicenseBypass = {
             ];
 
             plonkPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'plonk_verification_bypassed',
-                                });
-                                self.state.zkProofSystemsBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'plonk_verification_bypassed',
+                                    });
+                                    self.state.zkProofSystemsBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             send({
@@ -1510,25 +1440,24 @@ const BlockchainLicenseBypass = {
             ];
 
             chainlinkCcipPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'chainlink_ccip_validation_bypassed',
-                                });
-                                self.state.crossChainBridgesBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'chainlink_ccip_validation_bypassed',
+                                    });
+                                    self.state.crossChainBridgesBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook LayerZero endpoint validation
@@ -1543,25 +1472,24 @@ const BlockchainLicenseBypass = {
             ];
 
             layerZeroPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'layerzero_endpoint_validation_bypassed',
-                                });
-                                self.state.crossChainBridgesBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'layerzero_endpoint_validation_bypassed',
+                                    });
+                                    self.state.crossChainBridgesBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook Wormhole guardian validation
@@ -1576,25 +1504,24 @@ const BlockchainLicenseBypass = {
             ];
 
             wormholePatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'wormhole_guardian_validation_bypassed',
-                                });
-                                self.state.crossChainBridgesBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'wormhole_guardian_validation_bypassed',
+                                    });
+                                    self.state.crossChainBridgesBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook Multichain (formerly Anyswap) validation
@@ -1609,25 +1536,24 @@ const BlockchainLicenseBypass = {
             ];
 
             multichainPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'multichain_validation_bypassed',
-                                });
-                                self.state.crossChainBridgesBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'multichain_validation_bypassed',
+                                    });
+                                    self.state.crossChainBridgesBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             send({
@@ -1669,25 +1595,24 @@ const BlockchainLicenseBypass = {
             ];
 
             diamondPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'diamond_pattern_validation_bypassed',
-                                });
-                                self.state.advancedSmartContractsBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'diamond_pattern_validation_bypassed',
+                                    });
+                                    self.state.advancedSmartContractsBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook Proxy Upgrade Pattern (ERC-1967) validation
@@ -1702,25 +1627,24 @@ const BlockchainLicenseBypass = {
             ];
 
             proxyPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'proxy_upgrade_validation_bypassed',
-                                });
-                                self.state.advancedSmartContractsBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'proxy_upgrade_validation_bypassed',
+                                    });
+                                    self.state.advancedSmartContractsBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook Minimal Proxy Pattern (ERC-1167) validation
@@ -1734,25 +1658,24 @@ const BlockchainLicenseBypass = {
             ];
 
             minimalProxyPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'minimal_proxy_validation_bypassed',
-                                });
-                                self.state.advancedSmartContractsBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'minimal_proxy_validation_bypassed',
+                                    });
+                                    self.state.advancedSmartContractsBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook Access Control patterns (OpenZeppelin)
@@ -1767,25 +1690,24 @@ const BlockchainLicenseBypass = {
             ];
 
             accessControlPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'access_control_validation_bypassed',
-                                });
-                                self.state.advancedSmartContractsBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'access_control_validation_bypassed',
+                                    });
+                                    self.state.advancedSmartContractsBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             send({
@@ -1827,25 +1749,24 @@ const BlockchainLicenseBypass = {
             ];
 
             didPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'w3c_did_validation_bypassed',
-                                });
-                                self.state.decentralizedIdentityBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'w3c_did_validation_bypassed',
+                                    });
+                                    self.state.decentralizedIdentityBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook ENS (Ethereum Name Service) domain validation
@@ -1860,25 +1781,24 @@ const BlockchainLicenseBypass = {
             ];
 
             ensPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'ens_domain_validation_bypassed',
-                                });
-                                self.state.decentralizedIdentityBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'ens_domain_validation_bypassed',
+                                    });
+                                    self.state.decentralizedIdentityBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook Verifiable Credentials (VC) validation
@@ -1892,25 +1812,24 @@ const BlockchainLicenseBypass = {
             ];
 
             vcPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'verifiable_credential_validation_bypassed',
-                                });
-                                self.state.decentralizedIdentityBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'verifiable_credential_validation_bypassed',
+                                    });
+                                    self.state.decentralizedIdentityBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook Self-Sovereign Identity (SSI) validation
@@ -1924,25 +1843,24 @@ const BlockchainLicenseBypass = {
             ];
 
             ssiPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'self_sovereign_identity_validation_bypassed',
-                                });
-                                self.state.decentralizedIdentityBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'self_sovereign_identity_validation_bypassed',
+                                    });
+                                    self.state.decentralizedIdentityBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             send({
@@ -1984,25 +1902,24 @@ const BlockchainLicenseBypass = {
             ];
 
             posPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'proof_of_stake_validation_bypassed',
-                                });
-                                self.state.consensusMechanismsBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'proof_of_stake_validation_bypassed',
+                                    });
+                                    self.state.consensusMechanismsBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook Delegated Proof of Stake validation
@@ -2017,25 +1934,24 @@ const BlockchainLicenseBypass = {
             ];
 
             dposPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'delegated_pos_validation_bypassed',
-                                });
-                                self.state.consensusMechanismsBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'delegated_pos_validation_bypassed',
+                                    });
+                                    self.state.consensusMechanismsBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook Proof of History validation
@@ -2050,25 +1966,24 @@ const BlockchainLicenseBypass = {
             ];
 
             pohPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'proof_of_history_validation_bypassed',
-                                });
-                                self.state.consensusMechanismsBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'proof_of_history_validation_bypassed',
+                                    });
+                                    self.state.consensusMechanismsBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook Tendermint consensus validation
@@ -2083,25 +1998,24 @@ const BlockchainLicenseBypass = {
             ];
 
             tendermintPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'tendermint_consensus_validation_bypassed',
-                                });
-                                self.state.consensusMechanismsBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'tendermint_consensus_validation_bypassed',
+                                    });
+                                    self.state.consensusMechanismsBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             send({
@@ -2143,25 +2057,24 @@ const BlockchainLicenseBypass = {
             ];
 
             flashbotsPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'flashbots_protection_bypassed',
-                                });
-                                self.state.mevProtectionBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'flashbots_protection_bypassed',
+                                    });
+                                    self.state.mevProtectionBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook MEV-Boost validation
@@ -2175,25 +2088,24 @@ const BlockchainLicenseBypass = {
             ];
 
             mevBoostPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'mev_boost_validation_bypassed',
-                                });
-                                self.state.mevProtectionBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'mev_boost_validation_bypassed',
+                                    });
+                                    self.state.mevProtectionBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook Private Mempool validation
@@ -2207,25 +2119,24 @@ const BlockchainLicenseBypass = {
             ];
 
             privateMempoolPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'private_mempool_protection_bypassed',
-                                });
-                                self.state.mevProtectionBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'private_mempool_protection_bypassed',
+                                    });
+                                    self.state.mevProtectionBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook Bundle validation
@@ -2239,25 +2150,24 @@ const BlockchainLicenseBypass = {
             ];
 
             bundlePatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'bundle_validation_bypassed',
-                                });
-                                self.state.mevProtectionBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'bundle_validation_bypassed',
+                                    });
+                                    self.state.mevProtectionBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             send({
@@ -2299,25 +2209,24 @@ const BlockchainLicenseBypass = {
             ];
 
             erc4337Patterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'erc4337_validation_bypassed',
-                                });
-                                self.state.accountAbstractionBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'erc4337_validation_bypassed',
+                                    });
+                                    self.state.accountAbstractionBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook Smart Contract Wallet validation
@@ -2332,25 +2241,24 @@ const BlockchainLicenseBypass = {
             ];
 
             smartWalletPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'smart_wallet_validation_bypassed',
-                                });
-                                self.state.accountAbstractionBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'smart_wallet_validation_bypassed',
+                                    });
+                                    self.state.accountAbstractionBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook Meta-Transaction validation
@@ -2365,25 +2273,24 @@ const BlockchainLicenseBypass = {
             ];
 
             metaTransactionPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'meta_transaction_validation_bypassed',
-                                });
-                                self.state.accountAbstractionBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'meta_transaction_validation_bypassed',
+                                    });
+                                    self.state.accountAbstractionBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook Paymaster validation
@@ -2398,25 +2305,24 @@ const BlockchainLicenseBypass = {
             ];
 
             paymasterPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'paymaster_validation_bypassed',
-                                });
-                                self.state.accountAbstractionBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'paymaster_validation_bypassed',
+                                    });
+                                    self.state.accountAbstractionBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             send({
@@ -2458,25 +2364,24 @@ const BlockchainLicenseBypass = {
             ];
 
             ipfsPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'ipfs_content_verification_bypassed',
-                                });
-                                self.state.decentralizedStorageBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'ipfs_content_verification_bypassed',
+                                    });
+                                    self.state.decentralizedStorageBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook Arweave permanent storage validation
@@ -2491,25 +2396,24 @@ const BlockchainLicenseBypass = {
             ];
 
             arweavePatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'arweave_storage_verification_bypassed',
-                                });
-                                self.state.decentralizedStorageBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'arweave_storage_verification_bypassed',
+                                    });
+                                    self.state.decentralizedStorageBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook Filecoin storage validation
@@ -2524,25 +2428,24 @@ const BlockchainLicenseBypass = {
             ];
 
             filecoinPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'filecoin_storage_verification_bypassed',
-                                });
-                                self.state.decentralizedStorageBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'filecoin_storage_verification_bypassed',
+                                    });
+                                    self.state.decentralizedStorageBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             // Hook Swarm distributed storage validation
@@ -2557,25 +2460,24 @@ const BlockchainLicenseBypass = {
             ];
 
             swarmPatterns.forEach((pattern) => {
-                Memory.scanSync(
-                    Process.enumerateRanges('r-x'),
-                    'utf8:' + pattern,
-                ).forEach((match) => {
-                    var funcAddr = this.findNearestFunction(match.address);
-                    if (funcAddr) {
-                        Interceptor.attach(funcAddr, {
-                            onLeave: function (retval) {
-                                send({
-                                    type: 'bypass',
-                                    target: 'blockchain_license_bypass',
-                                    action: 'swarm_storage_verification_bypassed',
-                                });
-                                self.state.decentralizedStorageBypassed++;
-                                retval.replace(ptr(1));
-                            },
-                        });
+                Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + pattern).forEach(
+                    (match) => {
+                        var funcAddr = this.findNearestFunction(match.address);
+                        if (funcAddr) {
+                            Interceptor.attach(funcAddr, {
+                                onLeave: function (retval) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'blockchain_license_bypass',
+                                        action: 'swarm_storage_verification_bypassed',
+                                    });
+                                    self.state.decentralizedStorageBypassed++;
+                                    retval.replace(ptr(1));
+                                },
+                            });
+                        }
                     }
-                });
+                );
             });
 
             send({

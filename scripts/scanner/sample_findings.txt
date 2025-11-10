@@ -1,0 +1,28 @@
+#### 1. [ ] `analyze_code()` - CRITICAL (Line 431)
+
+**Confidence:** 120%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 4 production issues detected
+
+**Evidence:**
+
+- Function name implies external tool usage but no subprocess/tool calls detected (+30 points)
+- Processing function with no local variables (no actual computation) (+45 points)
+- Trivial implementation: no loops, conditionals, or local vars despite multiple lines (+55 points)
+- Deductions for production patterns (-10 points) (-10 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+--
+#### 2. [ ] `analyze_code()` - CRITICAL (Line 431)
+
+**Confidence:** 120%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 4 production issues detected
+
+**Evidence:**
+
+- Function name implies external tool usage

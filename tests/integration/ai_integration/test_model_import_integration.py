@@ -11,21 +11,20 @@ def test_bridge_function():
     """Test that the bridge function exists and can be imported."""
     print("Testing bridge function...")
     try:
-from intellicrack.utils.path_resolver import get_project_root
-
+        from intellicrack.utils.path_resolver import get_project_root
         with open(get_project_root() / "intellicrack/ai/llm_backends.py", 'r', encoding='utf-8') as f:
             content = f.read()
 
         # Check if get_llm_backend function exists
         if "def get_llm_backend() -> LLMManager:" in content:
-            print("✅ Bridge function get_llm_backend() exists")
+            print("OK Bridge function get_llm_backend() exists")
             return True
         else:
-            print("❌ Bridge function get_llm_backend() missing")
+            print("FAIL Bridge function get_llm_backend() missing")
             return False
 
     except Exception as e:
-        print(f"❌ Bridge function test failed: {e}")
+        print(f"FAIL Bridge function test failed: {e}")
         return False
 
 def test_onnx_backend_generation():
@@ -40,42 +39,38 @@ def test_onnx_backend_generation():
         if "class ONNXLLMBackend" in content:
             # Check for iterative generation markers
             if "for _ in range(max_new_tokens)" in content and "Iterative generation loop" in content:
-                print("✅ ONNX backend has iterative generation implementation")
+                print("OK ONNX backend has iterative generation implementation")
                 return True
             else:
-                print("❌ ONNX backend missing iterative generation")
+                print("FAIL ONNX backend missing iterative generation")
                 return False
         else:
-            print("❌ ONNXLLMBackend class not found")
+            print("FAIL ONNXLLMBackend class not found")
             return False
 
     except Exception as e:
-        print(f"❌ ONNX backend test failed: {e}")
+        print(f"FAIL ONNX backend test failed: {e}")
         return False
 
 def test_model_discovery_methods():
     """Test that model discovery methods exist in ai_script_generator."""
     with open(get_project_root() / "intellicrack/ai/ai_script_generator.py", 'r', encoding='utf-8') as f:
-            content = f.read()
+        content = f.read()
 
-        # Check for discovery methods
-        methods_found = []
-        if "def _discover_local_model_files" in content:
-            methods_found.append("_discover_local_model_files")
-        if "def _detect_model_format" in content:
-            methods_found.append("_detect_model_format")
-        if "def _initialize_from_model_path" in content:
-            methods_found.append("_initialize_from_model_path")
+    # Check for discovery methods
+    methods_found = []
+    if "def _discover_local_model_files" in content:
+        methods_found.append("_discover_local_model_files")
+    if "def _detect_model_format" in content:
+        methods_found.append("_detect_model_format")
+    if "def _initialize_from_model_path" in content:
+        methods_found.append("_initialize_from_model_path")
 
-        if len(methods_found) == 3:
-            print(f"✅ All model discovery methods exist: {methods_found}")
-            return True
-        else:
-            print(f"❌ Missing methods. Found: {methods_found}")
-            return False
-
-    except Exception as e:
-        print(f"❌ Model discovery test failed: {e}")
+    if len(methods_found) == 3:
+        print(f"OK All model discovery methods exist: {methods_found}")
+        return True
+    else:
+        print(f"FAIL Missing methods. Found: {methods_found}")
         return False
 
 def test_model_path_parameters():
@@ -102,14 +97,14 @@ def test_model_path_parameters():
             checks.append("DynamicScriptGenerator_usage")
 
         if len(checks) >= 2:
-            print(f"✅ Model path parameters found in: {checks}")
+            print(f"OK Model path parameters found in: {checks}")
             return True
         else:
-            print(f"❌ Missing model_path parameters. Found: {checks}")
+            print(f"FAIL Missing model_path parameters. Found: {checks}")
             return False
 
     except Exception as e:
-        print(f"❌ Model path parameter test failed: {e}")
+        print(f"FAIL Model path parameter test failed: {e}")
         return False
 
 def test_file_extensions():
@@ -129,15 +124,15 @@ def test_file_extensions():
                 found_extensions.append(ext)
 
         if len(found_extensions) == len(required_extensions):
-            print(f"✅ All required file extensions supported: {found_extensions}")
+            print(f"OK All required file extensions supported: {found_extensions}")
             return True
         else:
             missing = set(required_extensions) - set(found_extensions)
-            print(f"❌ Missing extensions: {missing}. Found: {found_extensions}")
+            print(f"FAIL Missing extensions: {missing}. Found: {found_extensions}")
             return False
 
     except Exception as e:
-        print(f"❌ File extension test failed: {e}")
+        print(f"FAIL File extension test failed: {e}")
         return False
 
 def main():
@@ -162,19 +157,19 @@ def main():
         print()
 
     print("=" * 60)
-    print(f"✅ {passed}/{total} tests passed")
+    print(f"OK {passed}/{total} tests passed")
 
     if passed == total:
         print("🎉 ALL TESTS PASSED - Model import implementation is complete!")
         print("\n📋 Implementation Summary:")
-        print("• Bridge function added to resolve import errors")
-        print("• ONNX backend fixed with iterative generation")
-        print("• Local model discovery implemented")
-        print("• Model path configuration support added")
-        print("• All major model formats supported (.pth/.pt/.h5/.onnx/.safetensors)")
+        print(" Bridge function added to resolve import errors")
+        print(" ONNX backend fixed with iterative generation")
+        print(" Local model discovery implemented")
+        print(" Model path configuration support added")
+        print(" All major model formats supported (.pth/.pt/.h5/.onnx/.safetensors)")
         return True
     else:
-        print(f"❌ {total - passed} tests failed")
+        print(f"FAIL {total - passed} tests failed")
         return False
 
 if __name__ == "__main__":

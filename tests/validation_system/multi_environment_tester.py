@@ -878,7 +878,7 @@ def run_multi_environment_testing():
 
     print("\n[*] Compatibility with test environments:")
     for compat in compat_report['compatibility_matrix']:
-        status = "✓" if compat['compatible'] else "✗"
+        status = "OK" if compat['compatible'] else "FAIL"
         print(f"  {status} {compat['environment']}")
         if compat['errors']:
             for error in compat['errors']:

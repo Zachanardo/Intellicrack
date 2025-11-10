@@ -1,46 +1,55 @@
 # Protection Classifier Model
 
-This directory contains the trained machine learning model for classifying software protection schemes.
+This directory contains the trained machine learning model for classifying
+software protection schemes.
 
 ## Model Architecture
 
 - **Algorithm**: Random Forest Classifier (200 trees)
 - **Features**: 44 engineered features extracted from PE binaries
-- **Classes**: VMProtect, Themida, Enigma, Obsidium, ASProtect, Armadillo, UPX, None
+- **Classes**: VMProtect, Themida, Enigma, Obsidium, ASProtect, Armadillo, UPX,
+  None
 - **Framework**: scikit-learn 1.7.2
 
 ## Feature Categories
 
 ### Entropy Features (7)
+
 - Overall entropy, section-specific entropy (text, data, rdata)
 - Max/min/average section entropy
 - High entropy section count
 
 ### PE Structure Features (4)
+
 - TLS callbacks presence
 - Overlay size
 - Resource section size
 - Entry point section index
 
 ### Section Features (4)
+
 - Section count
 - Executable section count
 - Unusual section names count
 - Virtual-to-raw size ratio
 
 ### Import Table Features (4)
+
 - Total import count
 - Unique DLL count
 - Suspicious import count
 - Packed import table indicator
 
 ### Signature Features (7)
+
 - Binary presence of known protector strings (VMProtect, Themida, Enigma, etc.)
 
 ### Opcode Features (16)
+
 - Frequency distribution of instruction opcodes in executable sections
 
 ### Code Complexity Features (2)
+
 - Cyclomatic complexity estimate
 - Unusual section naming patterns
 
@@ -55,6 +64,7 @@ This directory contains the trained machine learning model for classifying softw
 ## Performance
 
 Expected performance on test set:
+
 - **Accuracy**: >85%
 - **Cross-validation**: >80% mean accuracy
 
@@ -67,6 +77,7 @@ pixi run python -m intellicrack.tools.train_classifier --synthetic --samples-per
 ```
 
 With real data:
+
 ```bash
 pixi run python -m intellicrack.tools.train_classifier --data-dir /path/to/labeled/samples
 ```
@@ -96,6 +107,7 @@ Current version: 1.0.0
 ## Training Data Requirements
 
 For optimal performance, training data should include:
+
 - At least 50 samples per protection class
 - Diverse software types (applications, games, utilities)
 - Multiple versions of each protector
@@ -104,6 +116,7 @@ For optimal performance, training data should include:
 ## Retraining
 
 The model should be retrained when:
+
 - New protector versions are released
 - Classification accuracy drops below 80%
 - New protection schemes need to be added
@@ -112,6 +125,7 @@ The model should be retrained when:
 ## Feature Importance
 
 Top features for classification (example):
+
 1. `signature_vmprotect`: Direct VMProtect string detection
 2. `overall_entropy`: Overall file entropy
 3. `text_entropy`: Code section entropy

@@ -219,7 +219,7 @@ class DependencyFeedback:
     def _generate_feedback_message(self, name: str, info: Dict, available: bool) -> str:
         """Generate comprehensive feedback message for a dependency."""
         if available:
-            return f"✅ {info['name']} is available and ready to use."
+            return f"OK {info['name']} is available and ready to use."
 
         message_parts = []
         message_parts.append(f"ERROR {info['name']} is not available.")
@@ -230,13 +230,13 @@ class DependencyFeedback:
             commands = info["install_commands"][self.system]
             message_parts.append(f"   Installation for {self.system}:")
             for cmd in commands:
-                message_parts.append(f"     • {cmd}")
+                message_parts.append(f"      {cmd}")
 
         # Alternatives
         if info["alternatives"]:
             message_parts.append("   Alternatives:")
             for alt in info["alternatives"]:
-                message_parts.append(f"     • {alt}")
+                message_parts.append(f"      {alt}")
 
         # Criticality
         if info["critical"]:
@@ -313,7 +313,7 @@ class DependencyFeedback:
     def generate_missing_dependency_report(self, missing_deps: List[str]) -> str:
         """Generate comprehensive report for missing dependencies."""
         if not missing_deps:
-            return "✅ All required dependencies are available!"
+            return "OK All required dependencies are available!"
 
         report_lines = ["📋 MISSING DEPENDENCY REPORT", "=" * 50, ""]
 
@@ -369,12 +369,12 @@ class DependencyFeedback:
             return f"No alternatives available for {info['name']}."
 
         suggestion_lines = [
-            f"💡 ALTERNATIVES FOR {info['name'].upper()}:",
+            f" ALTERNATIVES FOR {info['name'].upper()}:",
             f"Since {info['name']} is not available" + (f" for {task_context}" if task_context else "") + ", try:",
         ]
 
         for alt in alternatives:
-            suggestion_lines.append(f"  • {alt}")
+            suggestion_lines.append(f"   {alt}")
 
         # Add category-specific alternatives
         category_alts = self.get_category_alternatives(info.get("category", ""))
@@ -410,7 +410,7 @@ class DependencyFeedback:
         if not status["available"]:
             alternatives = status.get("alternatives", [])
             if alternatives:
-                error_lines.append(f"💡 QUICK FIX: Try using {alternatives[0]} instead")
+                error_lines.append(f" QUICK FIX: Try using {alternatives[0]} instead")
                 error_lines.append(f"   Or install {dep_name} using the commands above")
 
         return "\n".join(error_lines)

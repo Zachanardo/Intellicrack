@@ -443,7 +443,7 @@
                         this.debuggerPtr = args[1];
                     } else if (
                         funcName === 'NtQueryInformationProcess' &&
-            args[1].toInt32() === 7
+                        args[1].toInt32() === 7
                     ) {
                         this.shouldFake = true;
                     }
@@ -471,10 +471,7 @@
         }
 
         try {
-            const NtQueryObject = Module.findExportByName(
-                'ntdll.dll',
-                'NtQueryObject',
-            );
+            const NtQueryObject = Module.findExportByName('ntdll.dll', 'NtQueryObject');
             if (!NtQueryObject) return null;
 
             const ObjectNameInformation = 1;
@@ -532,8 +529,7 @@
     }
 
     function formatRegData(type, dataPtr, dataSize, truncate = false) {
-        if (!dataPtr || dataPtr.isNull() || dataSize <= 0)
-            return { formatted: null, raw: null };
+        if (!dataPtr || dataPtr.isNull() || dataSize <= 0) return { formatted: null, raw: null };
 
         const maxSize = truncate ? 256 : dataSize;
         const actualSize = Math.min(dataSize, maxSize);
@@ -546,20 +542,20 @@
 
             case 3: // REG_BINARY
                 const bytes = dataPtr.readByteArray(actualSize);
-                const hex = Array.from(bytes, (b) =>
-                    ('0' + b.toString(16)).slice(-2),
-                ).join(' ');
+                const hex = Array.from(bytes, (b) => ('0' + b.toString(16)).slice(-2)).join(
+                    ' '
+                );
                 return { formatted: null, raw: hex };
 
             case 4: // REG_DWORD
                 if (dataSize >= 4) {
                     return {
                         formatted:
-                '0x' +
-                dataPtr.readU32().toString(16) +
-                ' (' +
-                dataPtr.readU32() +
-                ')',
+                                '0x' +
+                                dataPtr.readU32().toString(16) +
+                                ' (' +
+                                dataPtr.readU32() +
+                                ')',
                     };
                 }
                 break;
@@ -567,11 +563,11 @@
             case 5: // REG_DWORD_BIG_ENDIAN
                 if (dataSize >= 4) {
                     const val =
-              ((dataPtr.readU8() << 24) |
-                (dataPtr.add(1).readU8() << 16) |
-                (dataPtr.add(2).readU8() << 8) |
-                dataPtr.add(3).readU8()) >>>
-              0;
+                            ((dataPtr.readU8() << 24) |
+                                (dataPtr.add(1).readU8() << 16) |
+                                (dataPtr.add(2).readU8() << 8) |
+                                dataPtr.add(3).readU8()) >>>
+                            0;
                     return { formatted: '0x' + val.toString(16) + ' (' + val + ')' };
                 }
                 break;
@@ -691,8 +687,7 @@
     function sendEvent(evt, includeBacktrace = false) {
         if (config.collectStatistics) {
             stats.totalCalls++;
-            stats.byFunction[evt.function] =
-        (stats.byFunction[evt.function] || 0) + 1;
+            stats.byFunction[evt.function] = (stats.byFunction[evt.function] || 0) + 1;
 
             if (evt.key_path) {
                 const keyBase = evt.key_path.split('\\').slice(0, 3).join('\\');
@@ -771,9 +766,7 @@
         }
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(evt.key_path, null);
+            config.includeBacktraceOnMatch && success && matchesFilters(evt.key_path, null);
         sendEvent(evt, includeBt);
     }
 
@@ -824,9 +817,7 @@
         if (success) {
             if (this.dispositionPtr && !this.dispositionPtr.isNull()) {
                 evt.disposition =
-          this.dispositionPtr.readU32() === 1
-              ? 'created_new'
-              : 'opened_existing';
+                    this.dispositionPtr.readU32() === 1 ? 'created_new' : 'opened_existing';
             }
 
             if (this.args && this.args[0]) {
@@ -841,9 +832,7 @@
         }
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(evt.key_path, null);
+            config.includeBacktraceOnMatch && success && matchesFilters(evt.key_path, null);
         sendEvent(evt, includeBt);
     }
 
@@ -874,9 +863,7 @@
         };
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, null);
+            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -967,9 +954,9 @@
         }
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, this.valueName);
+            config.includeBacktraceOnMatch &&
+            success &&
+            matchesFilters(this.keyPath, this.valueName);
         sendEvent(evt, includeBt);
     }
 
@@ -1021,9 +1008,9 @@
         }
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, this.valueName);
+            config.includeBacktraceOnMatch &&
+            success &&
+            matchesFilters(this.keyPath, this.valueName);
         sendEvent(evt, includeBt);
     }
 
@@ -1051,9 +1038,7 @@
         }
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, null);
+            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -1081,9 +1066,9 @@
         };
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, this.valueName);
+            config.includeBacktraceOnMatch &&
+            success &&
+            matchesFilters(this.keyPath, this.valueName);
         sendEvent(evt, includeBt);
     }
 
@@ -1148,9 +1133,7 @@
         }
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, null);
+            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -1248,9 +1231,9 @@
         }
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, evt.value_name);
+            config.includeBacktraceOnMatch &&
+            success &&
+            matchesFilters(this.keyPath, evt.value_name);
         sendEvent(evt, includeBt);
     }
 
@@ -1285,9 +1268,7 @@
         };
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, null);
+            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -1321,9 +1302,7 @@
         };
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, null);
+            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -1351,9 +1330,7 @@
         };
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, null);
+            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -1427,9 +1404,7 @@
         };
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, null);
+            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -1458,9 +1433,7 @@
         };
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, null);
+            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -1509,9 +1482,9 @@
         }
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(evt.key_path || this.subKey, null);
+            config.includeBacktraceOnMatch &&
+            success &&
+            matchesFilters(evt.key_path || this.subKey, null);
         sendEvent(evt, includeBt);
     }
 
@@ -1556,9 +1529,9 @@
         }
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(evt.key_path || this.subKey, null);
+            config.includeBacktraceOnMatch &&
+            success &&
+            matchesFilters(evt.key_path || this.subKey, null);
         sendEvent(evt, includeBt);
     }
 
@@ -1602,9 +1575,7 @@
         if (success) {
             if (this.dispositionPtr && !this.dispositionPtr.isNull()) {
                 evt.disposition =
-          this.dispositionPtr.readU32() === 1
-              ? 'created_new'
-              : 'opened_existing';
+                    this.dispositionPtr.readU32() === 1 ? 'created_new' : 'opened_existing';
             }
 
             if (this.resultPtr && !this.resultPtr.isNull()) {
@@ -1619,9 +1590,9 @@
         }
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(evt.key_path || this.subKey, null);
+            config.includeBacktraceOnMatch &&
+            success &&
+            matchesFilters(evt.key_path || this.subKey, null);
         sendEvent(evt, includeBt);
     }
 
@@ -1665,9 +1636,7 @@
         if (success) {
             if (this.dispositionPtr && !this.dispositionPtr.isNull()) {
                 evt.disposition =
-          this.dispositionPtr.readU32() === 1
-              ? 'created_new'
-              : 'opened_existing';
+                    this.dispositionPtr.readU32() === 1 ? 'created_new' : 'opened_existing';
             }
 
             if (this.resultPtr && !this.resultPtr.isNull()) {
@@ -1682,9 +1651,9 @@
         }
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(evt.key_path || this.subKey, null);
+            config.includeBacktraceOnMatch &&
+            success &&
+            matchesFilters(evt.key_path || this.subKey, null);
         sendEvent(evt, includeBt);
     }
 
@@ -1697,9 +1666,7 @@
         const lpcbData = args[5];
 
         this.hKey = hKey;
-        this.valueName = lpValueName.isNull()
-            ? null
-            : lpValueName.readUtf16String();
+        this.valueName = lpValueName.isNull() ? null : lpValueName.readUtf16String();
         this.lpType = lpType;
         this.lpData = lpData;
         this.lpcbData = lpcbData;
@@ -1731,18 +1698,8 @@
                     const dataSize = this.lpcbData.readU32();
                     evt.data_size = dataSize;
 
-                    if (
-                        this.lpData &&
-            !this.lpData.isNull() &&
-            dataSize > 0 &&
-            regType != null
-                    ) {
-                        const formatted = formatRegData(
-                            regType,
-                            this.lpData,
-                            dataSize,
-                            true,
-                        );
+                    if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
+                        const formatted = formatRegData(regType, this.lpData, dataSize, true);
                         if (formatted.formatted) evt.data_formatted = formatted.formatted;
                         if (formatted.raw) evt.data_preview_hex = formatted.raw;
 
@@ -1755,9 +1712,9 @@
         }
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, this.valueName);
+            config.includeBacktraceOnMatch &&
+            success &&
+            matchesFilters(this.keyPath, this.valueName);
         sendEvent(evt, includeBt);
     }
 
@@ -1802,18 +1759,8 @@
                     const dataSize = this.lpcbData.readU32();
                     evt.data_size = dataSize;
 
-                    if (
-                        this.lpData &&
-            !this.lpData.isNull() &&
-            dataSize > 0 &&
-            regType != null
-                    ) {
-                        const formatted = formatRegData(
-                            regType,
-                            this.lpData,
-                            dataSize,
-                            true,
-                        );
+                    if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
+                        const formatted = formatRegData(regType, this.lpData, dataSize, true);
                         if (formatted.formatted) evt.data_formatted = formatted.formatted;
                         if (formatted.raw) evt.data_preview_hex = formatted.raw;
 
@@ -1826,9 +1773,9 @@
         }
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, this.valueName);
+            config.includeBacktraceOnMatch &&
+            success &&
+            matchesFilters(this.keyPath, this.valueName);
         sendEvent(evt, includeBt);
     }
 
@@ -1841,9 +1788,7 @@
         const cbData = args[5] ? args[5].toInt32() : 0;
 
         this.hKey = hKey;
-        this.valueName = lpValueName.isNull()
-            ? null
-            : lpValueName.readUtf16String();
+        this.valueName = lpValueName.isNull() ? null : lpValueName.readUtf16String();
         this.dataType = dwType;
         this.dataSize = cbData;
 
@@ -1884,9 +1829,9 @@
         }
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, this.valueName);
+            config.includeBacktraceOnMatch &&
+            success &&
+            matchesFilters(this.keyPath, this.valueName);
         sendEvent(evt, includeBt);
     }
 
@@ -1940,9 +1885,9 @@
         }
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, this.valueName);
+            config.includeBacktraceOnMatch &&
+            success &&
+            matchesFilters(this.keyPath, this.valueName);
         sendEvent(evt, includeBt);
     }
 
@@ -1972,9 +1917,7 @@
         };
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, this.subKey);
+            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, this.subKey);
         sendEvent(evt, includeBt);
     }
 
@@ -2004,9 +1947,7 @@
         };
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, this.subKey);
+            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, this.subKey);
         sendEvent(evt, includeBt);
     }
 
@@ -2015,9 +1956,7 @@
         const lpValueName = args[1];
 
         this.hKey = hKey;
-        this.valueName = lpValueName.isNull()
-            ? null
-            : lpValueName.readUtf16String();
+        this.valueName = lpValueName.isNull() ? null : lpValueName.readUtf16String();
 
         const keyPath = getKeyPath(hKey);
         this.keyPath = keyPath || handleTracker.get(hKey.toString());
@@ -2038,9 +1977,9 @@
         };
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, this.valueName);
+            config.includeBacktraceOnMatch &&
+            success &&
+            matchesFilters(this.keyPath, this.valueName);
         sendEvent(evt, includeBt);
     }
 
@@ -2070,9 +2009,9 @@
         };
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, this.valueName);
+            config.includeBacktraceOnMatch &&
+            success &&
+            matchesFilters(this.keyPath, this.valueName);
         sendEvent(evt, includeBt);
     }
 
@@ -2114,9 +2053,9 @@
         }
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, evt.subkey_name);
+            config.includeBacktraceOnMatch &&
+            success &&
+            matchesFilters(this.keyPath, evt.subkey_name);
         sendEvent(evt, includeBt);
     }
 
@@ -2158,9 +2097,9 @@
         }
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, evt.subkey_name);
+            config.includeBacktraceOnMatch &&
+            success &&
+            matchesFilters(this.keyPath, evt.subkey_name);
         sendEvent(evt, includeBt);
     }
 
@@ -2213,18 +2152,8 @@
                     const dataSize = this.lpcbData.readU32();
                     evt.data_size = dataSize;
 
-                    if (
-                        this.lpData &&
-            !this.lpData.isNull() &&
-            dataSize > 0 &&
-            regType != null
-                    ) {
-                        const formatted = formatRegData(
-                            regType,
-                            this.lpData,
-                            dataSize,
-                            true,
-                        );
+                    if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
+                        const formatted = formatRegData(regType, this.lpData, dataSize, true);
                         if (formatted.formatted) evt.data_formatted = formatted.formatted;
                         if (formatted.raw) evt.data_preview_hex = formatted.raw;
                     }
@@ -2233,9 +2162,9 @@
         }
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, evt.value_name);
+            config.includeBacktraceOnMatch &&
+            success &&
+            matchesFilters(this.keyPath, evt.value_name);
         sendEvent(evt, includeBt);
     }
 
@@ -2288,18 +2217,8 @@
                     const dataSize = this.lpcbData.readU32();
                     evt.data_size = dataSize;
 
-                    if (
-                        this.lpData &&
-            !this.lpData.isNull() &&
-            dataSize > 0 &&
-            regType != null
-                    ) {
-                        const formatted = formatRegData(
-                            regType,
-                            this.lpData,
-                            dataSize,
-                            true,
-                        );
+                    if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
+                        const formatted = formatRegData(regType, this.lpData, dataSize, true);
                         if (formatted.formatted) evt.data_formatted = formatted.formatted;
                         if (formatted.raw) evt.data_preview_hex = formatted.raw;
                     }
@@ -2308,9 +2227,9 @@
         }
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, evt.value_name);
+            config.includeBacktraceOnMatch &&
+            success &&
+            matchesFilters(this.keyPath, evt.value_name);
         sendEvent(evt, includeBt);
     }
 
@@ -2347,9 +2266,7 @@
         };
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, null);
+            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -2380,9 +2297,7 @@
         };
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, null);
+            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -2413,9 +2328,7 @@
         };
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, null);
+            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -2448,9 +2361,7 @@
         };
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, null);
+            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -2483,9 +2394,7 @@
         };
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, null);
+            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -2621,9 +2530,7 @@
         };
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, null);
+            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -2649,9 +2556,7 @@
         };
 
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(this.keyPath, null);
+            config.includeBacktraceOnMatch && success && matchesFilters(this.keyPath, null);
         sendEvent(evt, includeBt);
     }
 
@@ -2701,18 +2606,8 @@
                     const dataSize = this.lpcbData.readU32();
                     evt.data_size = dataSize;
 
-                    if (
-                        this.lpData &&
-            !this.lpData.isNull() &&
-            dataSize > 0 &&
-            regType != null
-                    ) {
-                        const formatted = formatRegData(
-                            regType,
-                            this.lpData,
-                            dataSize,
-                            true,
-                        );
+                    if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
+                        const formatted = formatRegData(regType, this.lpData, dataSize, true);
                         if (formatted.formatted) evt.data_formatted = formatted.formatted;
                         if (formatted.raw) evt.data_preview_hex = formatted.raw;
                     }
@@ -2722,9 +2617,7 @@
 
         const keyPath = this.keyPath + (this.subKey ? '\\' + this.subKey : '');
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(keyPath, this.valueName);
+            config.includeBacktraceOnMatch && success && matchesFilters(keyPath, this.valueName);
         sendEvent(evt, includeBt);
     }
 
@@ -2774,18 +2667,8 @@
                     const dataSize = this.lpcbData.readU32();
                     evt.data_size = dataSize;
 
-                    if (
-                        this.lpData &&
-            !this.lpData.isNull() &&
-            dataSize > 0 &&
-            regType != null
-                    ) {
-                        const formatted = formatRegData(
-                            regType,
-                            this.lpData,
-                            dataSize,
-                            true,
-                        );
+                    if (this.lpData && !this.lpData.isNull() && dataSize > 0 && regType != null) {
+                        const formatted = formatRegData(regType, this.lpData, dataSize, true);
                         if (formatted.formatted) evt.data_formatted = formatted.formatted;
                         if (formatted.raw) evt.data_preview_hex = formatted.raw;
                     }
@@ -2795,9 +2678,7 @@
 
         const keyPath = this.keyPath + (this.subKey ? '\\' + this.subKey : '');
         const includeBt =
-      config.includeBacktraceOnMatch &&
-      success &&
-      matchesFilters(keyPath, this.valueName);
+            config.includeBacktraceOnMatch && success && matchesFilters(keyPath, this.valueName);
         sendEvent(evt, includeBt);
     }
 

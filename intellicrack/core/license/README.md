@@ -53,12 +53,14 @@ print(f"Generated samples: {analysis['generated_samples']}")
 ## Advanced Features
 
 ### Volume Licensing
+
 ```python
 # Generate 1000 enterprise licenses
 licenses = keygen.generate_volume_license("Product-2024", count=1000)
 ```
 
 ### Feature Encoding
+
 ```python
 # Generate key with specific features
 key = keygen.generate_feature_key(
@@ -68,6 +70,7 @@ key = keygen.generate_feature_key(
 ```
 
 ### Brute Force Recovery
+
 ```python
 # Recover full key from partial
 partial = "ABCD-****-EFGH-5678"
@@ -104,6 +107,7 @@ recovered = keygen.brute_force_key(partial, missing, validate)
 ## Data Structures
 
 All generated keys return `GeneratedSerial` objects with:
+
 - `serial` - The license key string
 - `algorithm` - Algorithm used
 - `confidence` - Reliability score (0.0 to 1.0)
@@ -114,6 +118,7 @@ All generated keys return `GeneratedSerial` objects with:
 ## Windows Compatibility
 
 All functionality is designed for Windows as the primary platform:
+
 - PE format analysis optimized
 - Windows path handling
 - Registry analysis support
@@ -122,6 +127,7 @@ All functionality is designed for Windows as the primary platform:
 ## Dependencies
 
 Required external libraries:
+
 - `lief` - Binary parsing
 - `capstone` - Disassembly
 - `z3-solver` - Constraint solving

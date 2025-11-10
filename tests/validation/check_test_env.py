@@ -15,23 +15,23 @@ print("Checking imports...")
 
 try:
     import pytest
-    print(f"✓ pytest {pytest.__version__}")
+    print(f"OK pytest {pytest.__version__}")
 except ImportError:
-    print("✗ pytest not found")
+    print("FAIL pytest not found")
 
 try:
     import coverage
-    print(f"✓ coverage {coverage.__version__}")
+    print(f"OK coverage {coverage.__version__}")
 except ImportError:
-    print("✗ coverage not found")
+    print("FAIL coverage not found")
 
 try:
     from intellicrack.core.mitigation_bypass.cfi_bypass import CFIBypass
-    print("✓ CFIBypass import successful")
+    print("OK CFIBypass import successful")
 
     # Test instantiation
     cfi = CFIBypass()
-    print("✓ CFIBypass instance created")
+    print("OK CFIBypass instance created")
 
     # Check available methods
     methods = [m for m in dir(cfi) if not m.startswith('_')]
@@ -40,9 +40,9 @@ try:
         print(f"  - {method}")
 
 except ImportError as e:
-    print(f"✗ CFIBypass import failed: {e}")
+    print(f"FAIL CFIBypass import failed: {e}")
 except Exception as e:
-    print(f"✗ Error creating instance: {e}")
+    print(f"FAIL Error creating instance: {e}")
 
 print("\n" + "=" * 80)
 print("Environment check complete.")

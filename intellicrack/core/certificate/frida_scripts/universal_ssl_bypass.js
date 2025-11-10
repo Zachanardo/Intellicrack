@@ -8,7 +8,7 @@ function log(message, level = 'info') {
     const entry = {
         timestamp: new Date().toISOString(),
         level: level,
-        message: message
+        message: message,
     };
     send({ type: 'log', data: entry });
     activity.push(entry);
@@ -26,15 +26,24 @@ const TLS_LIBRARY_SIGNATURES = {
     schannel: ['sspicli.dll', 'secur32.dll'],
     cryptoapi: ['crypt32.dll'],
     openssl: [
-        'libssl.so', 'libssl.so.1.1', 'libssl.so.1.0.0', 'libssl.so.3',
-        'libssl.dylib', 'libssl.1.1.dylib', 'libssl.1.0.0.dylib',
-        'libssl-1_1-x64.dll', 'libssl-1_1.dll', 'libssl-3-x64.dll', 'libssl-3.dll',
-        'ssleay32.dll', 'libeay32.dll'
+        'libssl.so',
+        'libssl.so.1.1',
+        'libssl.so.1.0.0',
+        'libssl.so.3',
+        'libssl.dylib',
+        'libssl.1.1.dylib',
+        'libssl.1.0.0.dylib',
+        'libssl-1_1-x64.dll',
+        'libssl-1_1.dll',
+        'libssl-3-x64.dll',
+        'libssl-3.dll',
+        'ssleay32.dll',
+        'libeay32.dll',
     ],
     boringssl: ['libboringssl.so', 'libboringssl.dylib', 'boringssl.dll'],
     nss: ['libnss3.so', 'libnss3.dylib', 'nss3.dll'],
     gnutls: ['libgnutls.so', 'libgnutls.dylib', 'gnutls.dll'],
-    mbedtls: ['libmbedtls.so', 'libmbedtls.dylib', 'mbedtls.dll']
+    mbedtls: ['libmbedtls.so', 'libmbedtls.dylib', 'mbedtls.dll'],
 };
 
 function detectTLSLibraries() {
@@ -45,14 +54,14 @@ function detectTLSLibraries() {
 
     for (let [libType, signatures] of Object.entries(TLS_LIBRARY_SIGNATURES)) {
         for (let signature of signatures) {
-            const module = modules.find(m => m.name.toLowerCase() === signature.toLowerCase());
+            const module = modules.find((m) => m.name.toLowerCase() === signature.toLowerCase());
             if (module) {
                 const detectionInfo = {
                     type: libType,
                     name: module.name,
                     path: module.path,
                     base: module.base.toString(),
-                    size: module.size
+                    size: module.size,
                 };
                 detected.push(detectionInfo);
                 detectedLibraries.push(detectionInfo);
@@ -106,7 +115,7 @@ function activateBypassForLibrary(libType) {
         ios: 'ios_pinning.js',
         nss: 'generic_ssl_bypass',
         gnutls: 'generic_ssl_bypass',
-        mbedtls: 'generic_ssl_bypass'
+        mbedtls: 'generic_ssl_bypass',
     };
 
     const bypassScript = bypassMapping[libType];
@@ -129,47 +138,67 @@ function activateGenericBypass() {
     log('Activating generic SSL bypass (pattern-based)');
 
     const commonValidationPatterns = [
-        'verify', 'Verify', 'VERIFY',
-        'check', 'Check', 'CHECK',
-        'validate', 'Validate', 'VALIDATE',
-        'cert', 'Cert', 'CERT',
-        'trust', 'Trust', 'TRUST',
-        'ssl', 'SSL', 'Ssl',
-        'tls', 'TLS', 'Tls'
+        'verify',
+        'Verify',
+        'VERIFY',
+        'check',
+        'Check',
+        'CHECK',
+        'validate',
+        'Validate',
+        'VALIDATE',
+        'cert',
+        'Cert',
+        'CERT',
+        'trust',
+        'Trust',
+        'TRUST',
+        'ssl',
+        'SSL',
+        'Ssl',
+        'tls',
+        'TLS',
+        'Tls',
     ];
 
     let hooksInstalled = 0;
 
-    Process.enumerateModules().forEach(function(module) {
+    Process.enumerateModules().forEach(function (module) {
         try {
             const exports = module.enumerateExports();
-            exports.forEach(function(exp) {
+            exports.forEach(function (exp) {
                 if (exp.type === 'function') {
                     const name = exp.name;
 
-                    const isLikelyCertFunc = commonValidationPatterns.some(pattern =>
-                        name.includes(pattern) && (
-                            name.includes('cert') || name.includes('Cert') ||
-                            name.includes('ssl') || name.includes('SSL') ||
-                            name.includes('tls') || name.includes('TLS') ||
-                            name.includes('trust') || name.includes('Trust')
-                        )
+                    const isLikelyCertFunc = commonValidationPatterns.some(
+                        (pattern) =>
+                            name.includes(pattern) &&
+                            (name.includes('cert') ||
+                                name.includes('Cert') ||
+                                name.includes('ssl') ||
+                                name.includes('SSL') ||
+                                name.includes('tls') ||
+                                name.includes('TLS') ||
+                                name.includes('trust') ||
+                                name.includes('Trust'))
                     );
 
                     if (isLikelyCertFunc) {
                         try {
                             Interceptor.attach(exp.address, {
-                                onEnter: function(args) {
+                                onEnter: function (args) {
                                     this.funcName = name;
                                 },
-                                onLeave: function(retval) {
+                                onLeave: function (retval) {
                                     const originalRet = retval.toInt32();
 
                                     if (originalRet === 0 || originalRet < 0) {
-                                        log(`Generic bypass: ${this.funcName} returned ${originalRet}, forcing success`);
+                                        log(
+                                            `Generic bypass: ${this.funcName} returned ${originalRet}, forcing success`
+                                        );
                                         retval.replace(ptr(1));
                                     }
-                                }
+                                },
                             });
 
                             hooksInstalled++;
@@ -178,8 +207,7 @@ function activateGenericBypass() {
                             if (hooksInstalled >= 50) {
                                 return;
                             }
-                        } catch (e) {
-                        }
+                        } catch (e) {}
                     }
                 }
             });
@@ -196,12 +224,12 @@ function activateGenericBypass() {
 function monitorNewModules() {
     log('Starting runtime module monitoring...');
 
-    const loadedModules = new Set(Process.enumerateModules().map(m => m.name.toLowerCase()));
+    const loadedModules = new Set(Process.enumerateModules().map((m) => m.name.toLowerCase()));
 
-    setInterval(function() {
+    setInterval(function () {
         const currentModules = Process.enumerateModules();
 
-        currentModules.forEach(function(module) {
+        currentModules.forEach(function (module) {
             const moduleName = module.name.toLowerCase();
 
             if (!loadedModules.has(moduleName)) {
@@ -209,7 +237,7 @@ function monitorNewModules() {
                 log(`New module loaded: ${module.name}`);
 
                 for (let [libType, signatures] of Object.entries(TLS_LIBRARY_SIGNATURES)) {
-                    if (signatures.some(sig => sig.toLowerCase() === moduleName)) {
+                    if (signatures.some((sig) => sig.toLowerCase() === moduleName)) {
                         log(`Newly loaded module is TLS library: ${libType}`);
                         const detectionInfo = {
                             type: libType,
@@ -217,7 +245,7 @@ function monitorNewModules() {
                             path: module.path,
                             base: module.base.toString(),
                             size: module.size,
-                            loadedAtRuntime: true
+                            loadedAtRuntime: true,
                         };
                         detectedLibraries.push(detectionInfo);
                         send({ type: 'runtime_library_detected', data: detectionInfo });
@@ -239,14 +267,15 @@ function performSelfTest() {
         detectedLibraries: detectedLibraries.length,
         activeBypasses: activeBypasses.length,
         hooksActive: true,
-        testPassed: false
+        testPassed: false,
     };
 
     if (detectedLibraries.length > 0 && activeBypasses.length > 0) {
         testResults.testPassed = true;
         testResults.status = 'All systems operational';
     } else if (detectedLibraries.length > 0 && activeBypasses.length === 0) {
-        testResults.status = 'Libraries detected but bypasses not loaded - may need external script injection';
+        testResults.status =
+            'Libraries detected but bypasses not loaded - may need external script injection';
     } else {
         testResults.status = 'No TLS libraries detected - target may not use SSL/TLS';
     }
@@ -266,14 +295,14 @@ function initialize() {
         log('No specific TLS libraries found - activating generic bypass');
         activateGenericBypass();
     } else {
-        detected.forEach(function(lib) {
+        detected.forEach(function (lib) {
             activateBypassForLibrary(lib.type);
         });
     }
 
     monitorNewModules();
 
-    setTimeout(function() {
+    setTimeout(function () {
         performSelfTest();
     }, 1000);
 
@@ -282,50 +311,50 @@ function initialize() {
 }
 
 rpc.exports = {
-    getDetectedLibraries: function() {
+    getDetectedLibraries: function () {
         return detectedLibraries;
     },
-    getActiveBypass: function() {
+    getActiveBypass: function () {
         return activeBypasses;
     },
-    getAllCertificates: function() {
+    getAllCertificates: function () {
         return allCertificates;
     },
-    getBypassStatus: function() {
+    getBypassStatus: function () {
         return {
             active: true,
             detectedLibraryCount: detectedLibraries.length,
             activeBypassCount: activeBypasses.length,
-            detectedLibraries: detectedLibraries.map(lib => lib.type),
+            detectedLibraries: detectedLibraries.map((lib) => lib.type),
             activeBypasses: activeBypasses,
-            platform: Java.available ? 'Android' : (ObjC.available ? 'iOS' : 'Desktop')
+            platform: Java.available ? 'Android' : ObjC.available ? 'iOS' : 'Desktop',
         };
     },
-    testBypass: function() {
+    testBypass: function () {
         return performSelfTest();
     },
-    forceGenericBypass: function() {
+    forceGenericBypass: function () {
         log('Forcing generic bypass activation (manual override)');
         return activateGenericBypass();
     },
-    rescan: function() {
+    rescan: function () {
         log('Rescanning for TLS libraries (manual trigger)');
         const detected = detectTLSLibraries();
         return {
             success: true,
             newlyDetected: detected.length,
-            libraries: detected
+            libraries: detected,
         };
     },
-    getActivity: function() {
+    getActivity: function () {
         return activity;
     },
-    clearLogs: function() {
+    clearLogs: function () {
         activity.length = 0;
         allCertificates.length = 0;
         log('Activity logs cleared');
         return true;
-    }
+    },
 };
 
 initialize();

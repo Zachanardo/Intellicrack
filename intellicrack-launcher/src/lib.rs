@@ -24,21 +24,23 @@ Licensed under GNU General Public License v3.0
 use anyhow::Result;
 use std::sync::{Arc, Mutex};
 
-// Public modules
 pub mod dependencies;
 pub mod diagnostics;
 pub mod environment;
 pub mod flask_validator;
 pub mod gil_safety;
 pub mod platform;
-pub mod process_manager;
 pub mod preflight_checks;
+pub mod process_manager;
 pub mod process_optimization;
 pub mod python_integration;
 pub mod security;
 pub mod startup_checks;
 pub mod tensorflow_validator;
 pub mod tool_discovery;
+
+#[cfg(target_os = "windows")]
+pub mod intel_gpu;
 
 // Re-exports for convenience
 pub use dependencies::{DependencyStatus, DependencyValidator, ValidationSummary};
@@ -107,13 +109,19 @@ impl IntellicrackLauncher {
         let env_config_start = std::time::Instant::now();
         self.environment.configure_complete_environment()?;
         let env_config_duration = env_config_start.elapsed();
-        tracing::info!("Environment configuration completed in {:.2?}", env_config_duration);
+        tracing::info!(
+            "Environment configuration completed in {:.2?}",
+            env_config_duration
+        );
 
         // Initialize GIL safety BEFORE Python initialization
         let gil_safety_start = std::time::Instant::now();
         GilSafetyManager::initialize_gil_safety()?;
         let gil_safety_duration = gil_safety_start.elapsed();
-        tracing::info!("GIL safety initialization completed in {:.2?}", gil_safety_duration);
+        tracing::info!(
+            "GIL safety initialization completed in {:.2?}",
+            gil_safety_duration
+        );
 
         // NOW initialize Python with the correct environment and GIL safety
         let python_init_start = std::time::Instant::now();
@@ -164,7 +172,10 @@ impl IntellicrackLauncher {
             }
         };
         let python_init_duration = python_init_start.elapsed();
-        tracing::info!("Python integration initialized in {:.2?}", python_init_duration);
+        tracing::info!(
+            "Python integration initialized in {:.2?}",
+            python_init_duration
+        );
 
         // Configure PyBind11 compatibility
         python.configure_pybind11_compatibility()?;
@@ -206,7 +217,10 @@ impl IntellicrackLauncher {
             self.launch_intellicrack_subprocess()?
         };
         let main_exec_duration = main_exec_start.elapsed();
-        tracing::info!("Python main execution completed in {:.2?}", main_exec_duration);
+        tracing::info!(
+            "Python main execution completed in {:.2?}",
+            main_exec_duration
+        );
 
         let total_launch_duration = total_launch_start.elapsed();
         tracing::info!("Total launch time: {:.2?}", total_launch_duration);
@@ -249,8 +263,8 @@ impl IntellicrackLauncher {
 
     fn launch_intellicrack_subprocess(&self) -> Result<i32> {
         use std::process::Command;
-        use std::time::Duration;
         use std::thread;
+        use std::time::Duration;
 
         tracing::info!("Launching Intellicrack as subprocess");
 
@@ -319,15 +333,20 @@ impl IntellicrackLauncher {
                 eprintln!("  2. Qt display issues");
                 eprintln!("  3. Import errors in Python code");
                 eprintln!("\nTo diagnose, run manually:");
-                eprintln!("  {} -c \"import sys; import intellicrack.main; sys.exit(intellicrack.main.main())\"", python_exe);
-                return Ok(exit_code);
+                eprintln!(
+                    "  {} -c \"import sys; import intellicrack.main; sys.exit(intellicrack.main.main())\"",
+                    python_exe
+                );
+                Ok(exit_code)
             }
             Ok(None) => {
                 tracing::info!("Python subprocess started (PID: {})", child.id());
                 println!("\n✓ Python subprocess started successfully");
                 println!("PID: {}", child.id());
                 println!("\nNote: Process survival after 500ms does NOT guarantee GUI appeared.");
-                println!("Check for GUI window or monitor process output for actual launch confirmation.");
+                println!(
+                    "Check for GUI window or monitor process output for actual launch confirmation."
+                );
                 Ok(0)
             }
             Err(e) => {

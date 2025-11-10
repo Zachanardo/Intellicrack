@@ -92,11 +92,11 @@ def test_complete_workflow():
         )
 
         if result and result.success:
-            logger.info("✓ Analysis orchestration successful")
+            logger.info("OK Analysis orchestration successful")
             results["passed"] += 1
         else:
             error = f"Analysis orchestration failed: {result.errors if result else 'No result'}"
-            logger.error(f"✗ {error}")
+            logger.error(f"FAIL {error}")
             results["errors"].append(error)
             results["failed"] += 1
 
@@ -109,14 +109,14 @@ def test_complete_workflow():
             license_info = analyzer.analyze()
 
             if license_info:
-                logger.info("✓ Commercial license analysis completed")
+                logger.info("OK Commercial license analysis completed")
                 results["passed"] += 1
             else:
-                logger.error("✗ No license info returned")
+                logger.error("FAIL No license info returned")
                 results["failed"] += 1
         except Exception as e:
             error = f"Commercial license analysis error: {e}"
-            logger.error(f"✗ {error}")
+            logger.error(f"FAIL {error}")
             results["errors"].append(error)
             results["failed"] += 1
 
@@ -138,14 +138,14 @@ def test_complete_workflow():
             bypass = bypass_gen.generate_bypass(test_license_info)
 
             if bypass and "method" in bypass:
-                logger.info("✓ Bypass generation successful")
+                logger.info("OK Bypass generation successful")
                 results["passed"] += 1
             else:
-                logger.error("✗ Invalid bypass structure")
+                logger.error("FAIL Invalid bypass structure")
                 results["failed"] += 1
         except Exception as e:
             error = f"Bypass generation error: {e}"
-            logger.error(f"✗ {error}")
+            logger.error(f"FAIL {error}")
             results["errors"].append(error)
             results["failed"] += 1
 
@@ -158,14 +158,14 @@ def test_complete_workflow():
             vulnerabilities = vuln_engine.find_vulnerabilities()
 
             if vulnerabilities is not None:
-                logger.info(f"✓ Vulnerability scan completed, found {len(vulnerabilities)} items")
+                logger.info(f"OK Vulnerability scan completed, found {len(vulnerabilities)} items")
                 results["passed"] += 1
             else:
-                logger.error("✗ Vulnerability scan returned None")
+                logger.error("FAIL Vulnerability scan returned None")
                 results["failed"] += 1
         except Exception as e:
             error = f"Vulnerability detection error: {e}"
-            logger.error(f"✗ {error}")
+            logger.error(f"FAIL {error}")
             results["errors"].append(error)
             results["failed"] += 1
 
@@ -184,14 +184,14 @@ def test_complete_workflow():
             )
 
             if shellcode and isinstance(shellcode, bytes) and len(shellcode) > 0:
-                logger.info(f"✓ Shellcode generated: {len(shellcode)} bytes")
+                logger.info(f"OK Shellcode generated: {len(shellcode)} bytes")
                 results["passed"] += 1
             else:
-                logger.error("✗ Invalid shellcode generated")
+                logger.error("FAIL Invalid shellcode generated")
                 results["failed"] += 1
         except Exception as e:
             error = f"Shellcode generation error: {e}"
-            logger.error(f"✗ {error}")
+            logger.error(f"FAIL {error}")
             results["errors"].append(error)
             results["failed"] += 1
 
@@ -204,14 +204,14 @@ def test_complete_workflow():
             cet_exploit = cet_bypass.generate_bypass()
 
             if cet_exploit and "technique" in cet_exploit:
-                logger.info("✓ CET bypass generated")
+                logger.info("OK CET bypass generated")
                 results["passed"] += 1
             else:
-                logger.error("✗ Invalid CET bypass structure")
+                logger.error("FAIL Invalid CET bypass structure")
                 results["failed"] += 1
         except Exception as e:
             error = f"CET bypass error: {e}"
-            logger.error(f"✗ {error}")
+            logger.error(f"FAIL {error}")
             results["errors"].append(error)
             results["failed"] += 1
 
@@ -231,11 +231,11 @@ def test_complete_workflow():
         elapsed = time.time() - start_time
 
         if elapsed < 30:  # Should complete basic analysis in 30 seconds
-            logger.info(f"✓ Performance test passed: {elapsed:.2f}s")
+            logger.info(f"OK Performance test passed: {elapsed:.2f}s")
             results["passed"] += 1
         else:
             error = f"Performance test failed: {elapsed:.2f}s exceeds 30s limit"
-            logger.error(f"✗ {error}")
+            logger.error(f"FAIL {error}")
             results["errors"].append(error)
             results["failed"] += 1
 
@@ -257,11 +257,11 @@ def test_complete_workflow():
         peak_mb = peak / 1024 / 1024
 
         if peak_mb < 500:  # Should use less than 500MB
-            logger.info(f"✓ Memory test passed: {peak_mb:.2f}MB")
+            logger.info(f"OK Memory test passed: {peak_mb:.2f}MB")
             results["passed"] += 1
         else:
             error = f"Memory test failed: {peak_mb:.2f}MB exceeds 500MB limit"
-            logger.error(f"✗ {error}")
+            logger.error(f"FAIL {error}")
             results["errors"].append(error)
             results["failed"] += 1
 

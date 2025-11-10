@@ -178,7 +178,7 @@ def create_upx_packed_binary(output_path: Path) -> None:
             text=True,
         )
         if result.returncode == 0:
-            print(f"✓ Created UPX packed binary: {output_path}")
+            print(f"OK Created UPX packed binary: {output_path}")
         else:
             # If UPX not available, create a simulated UPX-like binary
             create_simulated_upx_binary(output_path)
@@ -237,7 +237,7 @@ def create_simulated_upx_binary(output_path: Path) -> None:
     pe_data[0x400:0x400 + len(compressed_section)] = compressed_section
 
     output_path.write_bytes(pe_data)
-    print(f"✓ Created simulated UPX packed binary: {output_path}")
+    print(f"OK Created simulated UPX packed binary: {output_path}")
 
 
 def create_net_assembly(output_path: Path) -> None:
@@ -268,7 +268,7 @@ def create_net_assembly(output_path: Path) -> None:
     pe_data[0x1C8:0x1D0] = b".reloc\x00\x00"
 
     output_path.write_bytes(pe_data)
-    print(f"✓ Created .NET assembly: {output_path}")
+    print(f"OK Created .NET assembly: {output_path}")
 
 
 def create_themida_style_binary(output_path: Path) -> None:
@@ -318,7 +318,7 @@ def create_themida_style_binary(output_path: Path) -> None:
     pe_data[0x5000:0x5008] = b"Themida\x00"
 
     output_path.write_bytes(pe_data)
-    print(f"✓ Created Themida-style protected binary: {output_path}")
+    print(f"OK Created Themida-style protected binary: {output_path}")
 
 
 def create_vmprotect_style_binary(output_path: Path) -> None:
@@ -354,7 +354,7 @@ def create_vmprotect_style_binary(output_path: Path) -> None:
     pe_data[0x8100:0x8110] = b"VMProtectEnd\x00\x00\x00\x00"
 
     output_path.write_bytes(pe_data)
-    print(f"✓ Created VMProtect-style protected binary: {output_path}")
+    print(f"OK Created VMProtect-style protected binary: {output_path}")
 
 
 def create_custom_packed_binary(output_path: Path, packer_name: str) -> None:
@@ -380,7 +380,7 @@ def create_custom_packed_binary(output_path: Path, packer_name: str) -> None:
         pe_data[i] = random.randint(0, 255)
 
     output_path.write_bytes(pe_data)
-    print(f"✓ Created {packer_name} packed binary: {output_path}")
+    print(f"OK Created {packer_name} packed binary: {output_path}")
 
 
 def create_elf_binary(output_path: Path, arch: str = "x64") -> None:
@@ -450,7 +450,7 @@ def create_elf_binary(output_path: Path, arch: str = "x64") -> None:
         )
 
     output_path.write_bytes(elf_data)
-    print(f"✓ Created ELF {arch} binary: {output_path}")
+    print(f"OK Created ELF {arch} binary: {output_path}")
 
 
 def generate_all_protected_binaries(output_dir: Path) -> dict[str, list[Path]]:
@@ -521,7 +521,7 @@ def main():
 
     generated = generate_all_protected_binaries(output_dir)
 
-    print("\n✓ Generated binaries summary:")
+    print("\nOK Generated binaries summary:")
     for category, files in generated.items():
         print(f"  {category}: {len(files)} files")
         for file in files:

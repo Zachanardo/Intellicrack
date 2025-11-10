@@ -15,46 +15,46 @@ def main():
     try:
         print("Testing debugger_detector.py import...")
         from intellicrack.core.anti_analysis.debugger_detector import DebuggerDetector
-        print("✓ Successfully imported DebuggerDetector")
+        print("OK Successfully imported DebuggerDetector")
 
         print("\nTesting DebuggerDetector initialization...")
         detector = DebuggerDetector()
-        print("✓ Successfully initialized DebuggerDetector")
+        print("OK Successfully initialized DebuggerDetector")
 
         print("\nTesting detection methods availability...")
         methods = detector.detection_methods
-        print(f"✓ Found {len(methods)} detection methods")
+        print(f"OK Found {len(methods)} detection methods")
 
         print("\nTesting basic detection functionality...")
         results = detector.detect_debugger(aggressive=False)
-        print(f"✓ Detection completed with results: {type(results)}")
+        print(f"OK Detection completed with results: {type(results)}")
 
         # Validate results structure
         required_fields = ["is_debugged", "confidence", "debugger_type", "detections", "anti_debug_score"]
         for field in required_fields:
             if field in results:
-                print(f"✓ Found required field: {field}")
+                print(f"OK Found required field: {field}")
             else:
-                print(f"✗ Missing required field: {field}")
+                print(f"FAIL Missing required field: {field}")
 
         print("\nTesting debugger signatures...")
         signatures = detector.debugger_signatures
-        print(f"✓ Found signatures for {len(signatures)} platforms")
+        print(f"OK Found signatures for {len(signatures)} platforms")
 
         print("\nTesting anti-debug code generation...")
         code = detector.generate_antidebug_code()
-        print(f"✓ Generated anti-debug code ({len(code)} characters)")
+        print(f"OK Generated anti-debug code ({len(code)} characters)")
 
         print("\n" + "="*60)
         print("BASIC FUNCTIONALITY VALIDATION COMPLETE")
         print("="*60)
-        print("✓ All basic tests passed!")
-        print("✓ DebuggerDetector is functional and ready for comprehensive testing")
+        print("OK All basic tests passed!")
+        print("OK DebuggerDetector is functional and ready for comprehensive testing")
 
         return True
 
     except Exception as e:
-        print(f"\n✗ Error during testing: {e}")
+        print(f"\nFAIL Error during testing: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -66,8 +66,8 @@ if __name__ == "__main__":
     success = main()
 
     if success:
-        print("\n✓ All tests completed successfully!")
+        print("\nOK All tests completed successfully!")
     else:
-        print("\n✗ Some tests failed!")
+        print("\nFAIL Some tests failed!")
 
     sys.exit(0 if success else 1)

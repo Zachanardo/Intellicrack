@@ -10,11 +10,11 @@ print("=== DENUVO TICKET/TOKEN ANALYZER VERIFICATION ===\n")
 print("1. Checking module existence...")
 analyzer_path = "D:/Intellicrack/intellicrack/protection/denuvo_ticket_analyzer.py"
 if os.path.exists(analyzer_path):
-    print(f"   ✓ File found: {analyzer_path}")
+    print(f"   OK File found: {analyzer_path}")
     file_size = os.path.getsize(analyzer_path)
-    print(f"   ✓ File size: {file_size:,} bytes")
+    print(f"   OK File size: {file_size:,} bytes")
 else:
-    print("   ✗ File not found!")
+    print("   FAIL File not found!")
     sys.exit(1)
 
 print("\n2. Checking syntax...")
@@ -22,9 +22,9 @@ try:
     import ast
     with open(analyzer_path, 'r', encoding='utf-8') as f:
         ast.parse(f.read())
-    print("   ✓ Python syntax valid")
+    print("   OK Python syntax valid")
 except SyntaxError as e:
-    print(f"   ✗ Syntax error: {e}")
+    print(f"   FAIL Syntax error: {e}")
     sys.exit(1)
 
 print("\n3. Checking imports...")
@@ -38,21 +38,21 @@ try:
         DenuvoTicket,
         ActivationResponse,
     )
-    print("   ✓ All data structures import successfully")
-    print("   ✓ DenuvoTicketAnalyzer imports successfully")
+    print("   OK All data structures import successfully")
+    print("   OK DenuvoTicketAnalyzer imports successfully")
 except ImportError as e:
-    print(f"   ✗ Import failed: {e}")
+    print(f"   FAIL Import failed: {e}")
     sys.exit(1)
 
 print("\n4. Checking analyzer initialization...")
 try:
     analyzer = DenuvoTicketAnalyzer()
-    print("   ✓ Analyzer instantiated")
-    print(f"   ✓ Crypto available: {analyzer.crypto_available}")
-    print(f"   ✓ Known keys: {len(analyzer.known_keys)}")
-    print(f"   ✓ Server endpoints: {len(analyzer.server_endpoints)}")
+    print("   OK Analyzer instantiated")
+    print(f"   OK Crypto available: {analyzer.crypto_available}")
+    print(f"   OK Known keys: {len(analyzer.known_keys)}")
+    print(f"   OK Server endpoints: {len(analyzer.server_endpoints)}")
 except Exception as e:
-    print(f"   ✗ Initialization failed: {e}")
+    print(f"   FAIL Initialization failed: {e}")
     sys.exit(1)
 
 print("\n5. Checking constants...")
@@ -71,9 +71,9 @@ constants = {
 
 for name, value in constants.items():
     if value is not None:
-        print(f"   ✓ {name} defined: {value if isinstance(value, int) else value.decode('latin-1')}")
+        print(f"   OK {name} defined: {value if isinstance(value, int) else value.decode('latin-1')}")
     else:
-        print(f"   ✗ {name} not defined")
+        print(f"   FAIL {name} not defined")
 
 print("\n6. Checking core methods...")
 methods = [
@@ -89,9 +89,9 @@ methods = [
 
 for method_name in methods:
     if hasattr(analyzer, method_name):
-        print(f"   ✓ {method_name}() method exists")
+        print(f"   OK {method_name}() method exists")
     else:
-        print(f"   ✗ {method_name}() method missing")
+        print(f"   FAIL {method_name}() method missing")
 
 print("\n7. Testing token forging...")
 try:
@@ -106,11 +106,11 @@ try:
     )
 
     if token and len(token) > 128:
-        print(f"   ✓ Token forged successfully: {len(token)} bytes")
-        print(f"   ✓ Token magic: {token[:4]}")
-        print(f"   ✓ Token sample: {token.hex()[:64]}...")
+        print(f"   OK Token forged successfully: {len(token)} bytes")
+        print(f"   OK Token magic: {token[:4]}")
+        print(f"   OK Token sample: {token.hex()[:64]}...")
     else:
-        print("   ✗ Token forging failed or returned invalid data")
+        print("   FAIL Token forging failed or returned invalid data")
 except Exception as e:
     print(f"   ⚠ Token forging error: {e}")
 
@@ -125,12 +125,12 @@ try:
     )
 
     if response:
-        print(f"   ✓ Response generated successfully")
-        print(f"   ✓ Response ID: {response.response_id.hex()[:32]}...")
-        print(f"   ✓ Ticket size: {len(response.ticket)} bytes")
-        print(f"   ✓ Token size: {len(response.token)} bytes")
-        print(f"   ✓ Timestamp: {response.timestamp}")
-        print(f"   ✓ Expiration: {response.expiration}")
+        print(f"   OK Response generated successfully")
+        print(f"   OK Response ID: {response.response_id.hex()[:32]}...")
+        print(f"   OK Ticket size: {len(response.ticket)} bytes")
+        print(f"   OK Token size: {len(response.token)} bytes")
+        print(f"   OK Timestamp: {response.timestamp}")
+        print(f"   OK Expiration: {response.expiration}")
     else:
         print("   ⚠ Response generation returned None (crypto may not be available)")
 except Exception as e:
@@ -148,10 +148,10 @@ try:
     ticket = analyzer.parse_ticket(bytes(test_ticket))
 
     if ticket:
-        print(f"   ✓ Ticket parsed successfully")
-        print(f"   ✓ Magic: {ticket.header.magic.decode('latin-1')}")
-        print(f"   ✓ Version: {ticket.header.version}")
-        print(f"   ✓ Valid signature: {ticket.is_valid}")
+        print(f"   OK Ticket parsed successfully")
+        print(f"   OK Magic: {ticket.header.magic.decode('latin-1')}")
+        print(f"   OK Version: {ticket.header.version}")
+        print(f"   OK Valid signature: {ticket.is_valid}")
     else:
         print("   ⚠ Ticket parsing returned None (expected for test data)")
 except Exception as e:
@@ -171,25 +171,25 @@ if os.path.exists(detector_path):
 
     for method in integration_methods:
         if method in detector_content:
-            print(f"   ✓ {method}() integrated into ProtectionDetector")
+            print(f"   OK {method}() integrated into ProtectionDetector")
         else:
-            print(f"   ✗ {method}() NOT found in ProtectionDetector")
+            print(f"   FAIL {method}() NOT found in ProtectionDetector")
 else:
-    print("   ✗ protection_detector.py not found")
+    print("   FAIL protection_detector.py not found")
 
 print("\n11. Testing ProtectionDetector integration...")
 try:
     from intellicrack.protection.protection_detector import ProtectionDetector
 
     detector = ProtectionDetector()
-    print("   ✓ ProtectionDetector instantiated")
+    print("   OK ProtectionDetector instantiated")
 
     if hasattr(detector, 'analyze_denuvo_ticket'):
-        print("   ✓ analyze_denuvo_ticket() method available")
+        print("   OK analyze_denuvo_ticket() method available")
     if hasattr(detector, 'generate_denuvo_activation'):
-        print("   ✓ generate_denuvo_activation() method available")
+        print("   OK generate_denuvo_activation() method available")
     if hasattr(detector, 'forge_denuvo_token'):
-        print("   ✓ forge_denuvo_token() method available")
+        print("   OK forge_denuvo_token() method available")
 
     forged = detector.forge_denuvo_token(
         game_id="4d7947616d6532303235",
@@ -198,7 +198,7 @@ try:
     )
 
     if forged.get('success'):
-        print(f"   ✓ Token forging via detector: {forged.get('token_size')} bytes")
+        print(f"   OK Token forging via detector: {forged.get('token_size')} bytes")
     else:
         print(f"   ⚠ Token forging via detector: {forged.get('error', 'unknown error')}")
 
@@ -210,39 +210,39 @@ print("VERIFICATION COMPLETE - DENUVO TICKET ANALYZER READY")
 print("="*60)
 
 print("\nKey Features Implemented:")
-print("  • Multi-version ticket parsing (Denuvo 4.x - 7.x+)")
-print("  • Activation token analysis")
-print("  • Cryptographic signature validation/forging")
-print("  • Offline activation response generation")
-print("  • License token forging")
-print("  • Trial-to-full license conversion")
-print("  • Machine ID spoofing")
-print("  • PCAP traffic analysis support")
+print("   Multi-version ticket parsing (Denuvo 4.x - 7.x+)")
+print("   Activation token analysis")
+print("   Cryptographic signature validation/forging")
+print("   Offline activation response generation")
+print("   License token forging")
+print("   Trial-to-full license conversion")
+print("   Machine ID spoofing")
+print("   PCAP traffic analysis support")
 
 print("\nCryptographic Support:")
-print("  • AES-128/256-CBC encryption/decryption")
-print("  • AES-256-GCM encryption/decryption")
-print("  • HMAC-SHA256 signatures")
-print("  • RSA signature validation")
-print("  • Multi-key fallback")
+print("   AES-128/256-CBC encryption/decryption")
+print("   AES-256-GCM encryption/decryption")
+print("   HMAC-SHA256 signatures")
+print("   RSA signature validation")
+print("   Multi-key fallback")
 
 print("\nLicense Types Supported:")
-print(f"  • Trial (0x{analyzer.LICENSE_TRIAL:02X})")
-print(f"  • Full (0x{analyzer.LICENSE_FULL:02X})")
-print(f"  • Subscription (0x{analyzer.LICENSE_SUBSCRIPTION:02X})")
-print(f"  • Perpetual (0x{analyzer.LICENSE_PERPETUAL:02X})")
+print(f"   Trial (0x{analyzer.LICENSE_TRIAL:02X})")
+print(f"   Full (0x{analyzer.LICENSE_FULL:02X})")
+print(f"   Subscription (0x{analyzer.LICENSE_SUBSCRIPTION:02X})")
+print(f"   Perpetual (0x{analyzer.LICENSE_PERPETUAL:02X})")
 
 print("\nIntegration:")
-print("  • Integrated into ProtectionDetector")
-print("  • analyze_denuvo_ticket() method")
-print("  • generate_denuvo_activation() method")
-print("  • forge_denuvo_token() method")
-print("  • Compatible with existing Denuvo analyzer")
+print("   Integrated into ProtectionDetector")
+print("   analyze_denuvo_ticket() method")
+print("   generate_denuvo_activation() method")
+print("   forge_denuvo_token() method")
+print("   Compatible with existing Denuvo analyzer")
 
 print("\nProduction Readiness:")
-print("  ✓ All code fully functional")
-print("  ✓ No placeholders or TODOs")
-print("  ✓ Complete error handling")
-print("  ✓ Type hints throughout")
-print("  ✓ Windows compatible")
-print("  ✓ Works on real Denuvo protection")
+print("  OK All code fully functional")
+print("  OK No placeholders or TODOs")
+print("  OK Complete error handling")
+print("  OK Type hints throughout")
+print("  OK Windows compatible")
+print("  OK Works on real Denuvo protection")

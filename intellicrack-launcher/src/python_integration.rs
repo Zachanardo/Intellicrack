@@ -89,12 +89,16 @@ impl PythonIntegration {
             // Verify Tkinter availability
             integration.verify_tkinter(py)?;
 
-            // Eagerly initialize GPU and GIL safety to prevent SEGFAULT
             info!("Eagerly initializing GPU and GIL safety modules");
             let intellicrack_module = py.import("intellicrack")?;
             intellicrack_module.call_method0("_initialize_gil_safety")?;
             intellicrack_module.call_method0("_initialize_gpu")?;
             info!("GPU and GIL safety modules initialized");
+
+            #[cfg(target_os = "windows")]
+            {
+                integration.validate_xpu_availability(py)?;
+            }
 
             Ok(())
         })?;
@@ -257,19 +261,24 @@ impl PythonIntegration {
     fn verify_tkinter(&self, py: Python) -> Result<()> {
         debug!("Verifying Tkinter availability");
 
-        let importlib_util = py.import("importlib.util")
+        let importlib_util = py
+            .import("importlib.util")
             .context("Failed to import importlib.util")?;
 
-        let tkinter_spec = importlib_util.call_method1("find_spec", ("_tkinter",))
+        let tkinter_spec = importlib_util
+            .call_method1("find_spec", ("_tkinter",))
             .context("Failed to check for _tkinter module")?;
 
         if tkinter_spec.is_none() {
-            anyhow::bail!("_tkinter module is not available. Tkinter functionality will be limited.");
+            anyhow::bail!(
+                "_tkinter module is not available. Tkinter functionality will be limited."
+            );
         }
 
         match py.import("tkinter") {
             Ok(tk) => {
-                let root = tk.call_method0("Tk")
+                let root = tk
+                    .call_method0("Tk")
                     .context("Failed to create Tk root window")?;
 
                 root.call_method0("withdraw")
@@ -282,12 +291,78 @@ impl PythonIntegration {
                 Ok(())
             }
             Err(e) => {
-                anyhow::bail!("Failed to import tkinter: {}. Tkinter functionality will be limited.", e);
+                anyhow::bail!(
+                    "Failed to import tkinter: {}. Tkinter functionality will be limited.",
+                    e
+                );
             }
         }
     }
 
-    /// Validate Python environment and paths
+    #[cfg(target_os = "windows")]
+    fn validate_xpu_availability(&self, py: Python) -> Result<()> {
+        use crate::intel_gpu::detect_intel_arc_gpu;
+
+        info!("[XPU] Validating Intel XPU availability...");
+
+        match detect_intel_arc_gpu() {
+            Ok(Some(gpu_info)) => {
+                info!("[XPU] Intel GPU detected: {}", gpu_info.device_name);
+
+                match py.import("torch") {
+                    Ok(torch_module) => match torch_module.getattr("xpu") {
+                        Ok(xpu_module) => match xpu_module.call_method0("is_available") {
+                            Ok(available_result) => {
+                                if let Ok(true) = available_result.extract::<bool>() {
+                                    if let Ok(device_count_result) =
+                                        xpu_module.call_method0("device_count")
+                                        && let Ok(device_count) =
+                                            device_count_result.extract::<u32>()
+                                    {
+                                        info!(
+                                            "[XPU] ✓ Intel XPU available: {} device(s)",
+                                            device_count
+                                        );
+
+                                        for i in 0..device_count {
+                                            if let Ok(device_name_result) =
+                                                xpu_module.call_method1("get_device_name", (i,))
+                                                && let Ok(device_name) =
+                                                    device_name_result.extract::<String>()
+                                            {
+                                                info!("[XPU]   Device {}: {}", i, device_name);
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    warn!("[XPU] Intel GPU detected but XPU unavailable");
+                                    warn!("[XPU] PyTorch may not have XPU support enabled");
+                                }
+                            }
+                            Err(e) => {
+                                warn!("[XPU] Error checking XPU availability: {}", e);
+                            }
+                        },
+                        Err(e) => {
+                            warn!("[XPU] torch.xpu module not available: {}", e);
+                        }
+                    },
+                    Err(e) => {
+                        warn!("[XPU] PyTorch not available: {}", e);
+                    }
+                }
+            }
+            Ok(None) => {
+                debug!("[XPU] No Intel GPU detected, skipping XPU validation");
+            }
+            Err(e) => {
+                warn!("[XPU] GPU detection failed: {}", e);
+            }
+        }
+
+        Ok(())
+    }
+
     pub fn validate_python_environment(&self) -> Result<()> {
         info!("Validating Python environment");
 
@@ -345,23 +420,26 @@ impl PythonIntegration {
         info!("Running Intellicrack main module in embedded Python interpreter");
 
         Python::attach(|py| -> Result<i32> {
-            let main_module = py.import("intellicrack.main")
+            let main_module = py
+                .import("intellicrack.main")
                 .context("Failed to import intellicrack.main module")?;
 
-            let result = main_module.call_method0("main")
+            let result = main_module
+                .call_method0("main")
                 .context("Failed to call main() function in intellicrack.main")?;
 
-            let exit_code: i32 = result.extract()
+            let exit_code: i32 = result
+                .extract()
                 .context("Failed to extract exit code from main() return value")?;
 
             info!("Intellicrack main completed with exit code: {}", exit_code);
             Ok(exit_code)
-        }).map_err(|e: anyhow::Error| {
+        })
+        .map_err(|e: anyhow::Error| {
             error!("Error running Intellicrack main in embedded mode: {}", e);
             e
         })
     }
-
 
     /* Original PyO3 approach - keeping for reference
     Python::with_gil(|py| -> Result<i32> {
@@ -425,8 +503,8 @@ impl PythonIntegration {
 
             // Run the test script to verify environment setup
             let test_script_path = std::path::Path::new("tests/launcher/test_rust_launcher_env.py");
-            let test_script = std::fs::read_to_string(test_script_path)
-                .context("Failed to read test script")?;
+            let test_script =
+                std::fs::read_to_string(test_script_path).context("Failed to read test script")?;
 
             let c_test_script =
                 CString::new(test_script).context("Test script contains interior null bytes")?;
@@ -445,19 +523,19 @@ impl PythonIntegration {
     }
 
     /// Get Python interpreter path
-    #[must_use] 
+    #[must_use]
     pub const fn get_interpreter_path(&self) -> &PathBuf {
         &self.interpreter_path
     }
 
     /// Get virtual environment path
-    #[must_use] 
+    #[must_use]
     pub const fn get_virtual_env_path(&self) -> &PathBuf {
         &self.virtual_env_path
     }
 
     /// Check if Python library is loaded
-    #[must_use] 
+    #[must_use]
     pub const fn is_library_loaded(&self) -> bool {
         self.python_lib.is_some()
     }

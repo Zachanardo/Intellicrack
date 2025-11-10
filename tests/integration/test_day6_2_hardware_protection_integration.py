@@ -357,10 +357,10 @@ class TestHardwareProtectionIntegration:
             )
 
             if modules_present:
-                print("  ✓ PASS: Hardware protection modules initialized")
+                print("  OK PASS: Hardware protection modules initialized")
                 success = True
             else:
-                print("  ✗ FAIL: Hardware protection modules not initialized")
+                print("  FAIL FAIL: Hardware protection modules not initialized")
                 success = False
 
             os.unlink(test_binary)
@@ -368,7 +368,7 @@ class TestHardwareProtectionIntegration:
             return success
 
         except Exception as e:
-            print(f"  ✗ ERROR: {e}")
+            print(f"  FAIL ERROR: {e}")
             self.test_results.append(False)
             return False
 
@@ -394,10 +394,10 @@ class TestHardwareProtectionIntegration:
                     missing_methods.append(method)
 
             if not missing_methods:
-                print("  ✓ PASS: All hardware protection analysis methods present")
+                print("  OK PASS: All hardware protection analysis methods present")
                 success = True
             else:
-                print(f"  ✗ FAIL: Missing methods: {missing_methods}")
+                print(f"  FAIL FAIL: Missing methods: {missing_methods}")
                 success = False
 
             os.unlink(test_binary)
@@ -405,7 +405,7 @@ class TestHardwareProtectionIntegration:
             return success
 
         except Exception as e:
-            print(f"  ✗ ERROR: {e}")
+            print(f"  FAIL ERROR: {e}")
             self.test_results.append(False)
             return False
 
@@ -434,13 +434,13 @@ class TestHardwareProtectionIntegration:
                     missing_fields.append(field)
 
             if not missing_fields:
-                print("  ✓ PASS: Hardware protection fields present in analysis results")
-                print(f"  ✓ INFO: Hardware analysis data: {type(result.get('hardware_protection_analysis', {}))}")
-                print(f"  ✓ INFO: TPM analysis data: {type(result.get('tpm_bypass_analysis', {}))}")
-                print(f"  ✓ INFO: Dongle analysis data: {type(result.get('dongle_bypass_analysis', {}))}")
+                print("  OK PASS: Hardware protection fields present in analysis results")
+                print(f"  OK INFO: Hardware analysis data: {type(result.get('hardware_protection_analysis', {}))}")
+                print(f"  OK INFO: TPM analysis data: {type(result.get('tpm_bypass_analysis', {}))}")
+                print(f"  OK INFO: Dongle analysis data: {type(result.get('dongle_bypass_analysis', {}))}")
                 success = True
             else:
-                print(f"  ✗ FAIL: Missing fields: {missing_fields}")
+                print(f"  FAIL FAIL: Missing fields: {missing_fields}")
                 success = False
 
             os.unlink(test_binary)
@@ -448,7 +448,7 @@ class TestHardwareProtectionIntegration:
             return success
 
         except Exception as e:
-            print(f"  ✗ ERROR: {e}")
+            print(f"  FAIL ERROR: {e}")
             self.test_results.append(False)
             return False
 
@@ -474,31 +474,31 @@ class TestHardwareProtectionIntegration:
 
             # Check TPM detection
             if hardware_analysis.get("tpm_detected", False):
-                print("  ✓ PASS: TPM protection detected")
+                print("  OK PASS: TPM protection detected")
                 tests_passed += 1
             else:
-                print("  ✗ FAIL: TPM protection not detected")
+                print("  FAIL FAIL: TPM protection not detected")
 
             # Check dongle detection
             if hardware_analysis.get("dongles_detected", []):
-                print(f"  ✓ PASS: Hardware dongles detected: {hardware_analysis['dongles_detected']}")
+                print(f"  OK PASS: Hardware dongles detected: {hardware_analysis['dongles_detected']}")
                 tests_passed += 1
             else:
-                print("  ✗ FAIL: Hardware dongles not detected")
+                print("  FAIL FAIL: Hardware dongles not detected")
 
             # Check TPM bypass analysis
             if tpm_analysis.get("bypass_techniques", []):
-                print(f"  ✓ PASS: TPM bypass techniques identified: {len(tpm_analysis['bypass_techniques'])}")
+                print(f"  OK PASS: TPM bypass techniques identified: {len(tpm_analysis['bypass_techniques'])}")
                 tests_passed += 1
             else:
-                print("  ✗ FAIL: TPM bypass techniques not identified")
+                print("  FAIL FAIL: TPM bypass techniques not identified")
 
             # Check dongle bypass analysis
             if dongle_analysis.get("emulation_strategies", []):
-                print(f"  ✓ PASS: Dongle emulation strategies identified: {len(dongle_analysis['emulation_strategies'])}")
+                print(f"  OK PASS: Dongle emulation strategies identified: {len(dongle_analysis['emulation_strategies'])}")
                 tests_passed += 1
             else:
-                print("  ✗ FAIL: Dongle emulation strategies not identified")
+                print("  FAIL FAIL: Dongle emulation strategies not identified")
 
             success = tests_passed >= 3  # 75% pass rate required
             os.unlink(test_binary)
@@ -506,7 +506,7 @@ class TestHardwareProtectionIntegration:
             return success
 
         except Exception as e:
-            print(f"  ✗ ERROR: {e}")
+            print(f"  FAIL ERROR: {e}")
             self.test_results.append(False)
             return False
 
@@ -541,27 +541,27 @@ def main():
         total_tests = len(tester.test_results)
         pass_rate = passed_tests / total_tests if total_tests > 0 else 0
 
-        print(f"\n🎯 DAY 6.2 HARDWARE PROTECTION ANALYSIS RESULTS:")
+        print(f"\n DAY 6.2 HARDWARE PROTECTION ANALYSIS RESULTS:")
         print("=" * 55)
-        print(f"✅ Tests Passed: {passed_tests}")
-        print(f"❌ Tests Failed: {total_tests - passed_tests}")
-        print(f"📈 Pass Rate: {pass_rate:.2%}")
+        print(f"OK Tests Passed: {passed_tests}")
+        print(f"FAIL Tests Failed: {total_tests - passed_tests}")
+        print(f" Pass Rate: {pass_rate:.2%}")
 
         if pass_rate >= 0.75:  # 75% pass rate required
             print("\n🎉 DAY 6.2 HARDWARE PROTECTION ANALYSIS COMPLETED!")
-            print("✅ TPM bypass module integrated with radare2 analysis")
-            print("✅ Hardware dongle emulator integrated with vulnerability detection")
-            print("✅ Protocol fingerprinting connected to hardware analysis")
-            print("✅ Hardware protection bypass opportunities detected and analyzed")
-            print("\n🚀 READY TO PROCEED TO DAY 6.3: PRODUCTION READINESS CHECKPOINT 6")
+            print("OK TPM bypass module integrated with radare2 analysis")
+            print("OK Hardware dongle emulator integrated with vulnerability detection")
+            print("OK Protocol fingerprinting connected to hardware analysis")
+            print("OK Hardware protection bypass opportunities detected and analyzed")
+            print("\n READY TO PROCEED TO DAY 6.3: PRODUCTION READINESS CHECKPOINT 6")
             return 0
         else:
-            print(f"\n❌ DAY 6.2 INTEGRATION FAILED: {100-pass_rate*100:.1f}% of tests failed")
+            print(f"\nFAIL DAY 6.2 INTEGRATION FAILED: {100-pass_rate*100:.1f}% of tests failed")
             print("❗ Address integration issues before proceeding")
             return 1
 
     except Exception as e:
-        print(f"❌ Testing failed with error: {e}")
+        print(f"FAIL Testing failed with error: {e}")
         return 1
 
 

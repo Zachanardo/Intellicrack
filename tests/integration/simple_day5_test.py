@@ -252,7 +252,7 @@ def main():
     license_passed = 0
     for content, expected, desc in license_tests:
         result = analyzer._detect_license_key_formats(content)
-        status = "✓ PASS" if result == expected else "✗ FAIL"
+        status = "OK PASS" if result == expected else "FAIL FAIL"
         print(f"  {status}: {desc} - '{content}' -> {result}")
         if result == expected:
             license_passed += 1
@@ -271,7 +271,7 @@ def main():
     crypto_passed = 0
     for content, expected, desc in crypto_tests:
         result = analyzer._detect_cryptographic_data(content)
-        status = "✓ PASS" if result == expected else "✗ FAIL"
+        status = "OK PASS" if result == expected else "FAIL FAIL"
         print(f"  {status}: {desc} - '{content}' -> {result}")
         if result == expected:
             crypto_passed += 1
@@ -291,7 +291,7 @@ def main():
     api_passed = 0
     for content, expected, desc in api_tests:
         result = analyzer._analyze_api_function_patterns(content)
-        status = "✓ PASS" if result == expected else "✗ FAIL"
+        status = "OK PASS" if result == expected else "FAIL FAIL"
         print(f"  {status}: {desc} - '{content}' -> {result}")
         if result == expected:
             api_passed += 1
@@ -307,10 +307,10 @@ def main():
 
     if total_passed == total_tests:
         print("\n🎉 DAY 5.1 ENHANCED STRING ANALYSIS VALIDATION PASSED!")
-        print("✅ All enhanced pattern detection algorithms working correctly")
+        print("OK All enhanced pattern detection algorithms working correctly")
         return 0
     else:
-        print(f"\n❌ DAY 5.1 VALIDATION FAILED: {total_tests - total_passed} test(s) failed")
+        print(f"\nFAIL DAY 5.1 VALIDATION FAILED: {total_tests - total_passed} test(s) failed")
         return 1
 
 

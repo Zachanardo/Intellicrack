@@ -697,10 +697,10 @@ class HardwareSpoofingDialog(QDialog):
         self.detection_text.setMaximumHeight(100)
         self.detection_text.setPlainText(
             "Many software licenses are tied to hardware identifiers. Common methods include:\n"
-            "• Volume serial numbers (most common)\n"
-            "• MAC addresses for network licensing\n"
-            "• CPU ID for high-security applications\n"
-            "• Combined hardware fingerprint hashing"
+            " Volume serial numbers (most common)\n"
+            " MAC addresses for network licensing\n"
+            " CPU ID for high-security applications\n"
+            " Combined hardware fingerprint hashing"
         )
 
         detection_layout.addWidget(self.detection_text)
@@ -873,9 +873,9 @@ class HardwareSpoofingDialog(QDialog):
 
         driver_info = QLabel(
             "Driver-level spoofing provides deeper system integration but requires:\n"
-            "• Administrator privileges\n"
-            "• Driver signature bypass (Test Mode)\n"
-            "• System restart for some changes"
+            " Administrator privileges\n"
+            " Driver signature bypass (Test Mode)\n"
+            " System restart for some changes"
         )
         driver_layout.addWidget(driver_info)
 

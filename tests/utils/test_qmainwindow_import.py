@@ -22,8 +22,7 @@ try:
     # Import the specific section that imports QMainWindow
     import importlib.util
     from intellicrack.utils.path_resolver import get_project_root
-
-spec = importlib.util.spec_from_file_location("main_app", get_project_root() / "intellicrack/ui/main_app.py")
+    spec = importlib.util.spec_from_file_location("main_app", get_project_root() / "intellicrack/ui/main_app.py")
     main_app_module = importlib.util.module_from_spec(spec)
 
     # Execute just the imports
@@ -38,18 +37,18 @@ spec = importlib.util.spec_from_file_location("main_app", get_project_root() / "
             print(f"   QMainWindow module: {qmw.__module__}")
             print(f"   Has setGeometry: {hasattr(qmw, 'setGeometry')}")
             if hasattr(qmw, 'setGeometry'):
-                print("   ✅ setGeometry method found")
+                print("   OK setGeometry method found")
             else:
-                print("   ❌ setGeometry method NOT found")
+                print("   FAIL setGeometry method NOT found")
         else:
-            print("   ❌ QMainWindow not found in main_app module")
+            print("   FAIL QMainWindow not found in main_app module")
 
     except Exception as e:
-        print(f"   ❌ Error executing main_app: {e}")
+        print(f"   FAIL Error executing main_app: {e}")
         import traceback
         traceback.print_exc()
 
 except Exception as e:
-    print(f"❌ Error: {e}")
+    print(f"FAIL Error: {e}")
     import traceback
     traceback.print_exc()

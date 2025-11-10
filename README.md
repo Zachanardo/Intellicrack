@@ -1,6 +1,8 @@
 # Intellicrack
 
-A comprehensive binary analysis and security research platform designed to help software developers identify and strengthen vulnerabilities in their own licensing and protection systems.
+A comprehensive binary analysis and security research platform designed to help
+software developers identify and strengthen vulnerabilities in their own
+licensing and protection systems.
 
 ![Python](https://img.shields.io/badge/python-3.12%2B-blue)
 ![License](https://img.shields.io/badge/license-GPL%20v3-green)
@@ -9,33 +11,46 @@ A comprehensive binary analysis and security research platform designed to help 
 ## Features
 
 ### Core Capabilities
+
 - **Multi-Format Binary Analysis**: PE, ELF, Mach-O support
 - **Protection Detection**: Anti-debug, packing, obfuscation identification
-- **Vulnerability Research**: Buffer overflows, format strings, integer overflows
+- **Vulnerability Research**: Buffer overflows, format strings, integer
+  overflows
 - **Exploitation Framework**: Advanced exploit development and testing
-- **Network Analysis**: Traffic capture, protocol fingerprinting, license server emulation
+- **Network Analysis**: Traffic capture, protocol fingerprinting, license server
+  emulation
 
 ### Advanced Features
-- **AI/ML Integration**: Multiple AI providers with dynamic model fetching (OpenAI, Anthropic, Google, Local models)
-- **Template-Free Design**: No hardcoded templates or rigid patterns - AI generates adaptive, context-aware code and responses
-- **GPU Acceleration**: NVIDIA, AMD, and Intel GPU support for intensive operations
-- **Parallel Processing**: Multi-core processing support via Python multiprocessing
+
+- **AI/ML Integration**: Multiple AI providers with dynamic model fetching
+  (OpenAI, Anthropic, Google, Local models)
+- **Template-Free Design**: No hardcoded templates or rigid patterns - AI
+  generates adaptive, context-aware code and responses
+- **GPU Acceleration**: NVIDIA, AMD, and Intel GPU support for intensive
+  operations
+- **Parallel Processing**: Multi-core processing support via Python
+  multiprocessing
 - **Symbolic Execution**: Advanced path exploration and constraint solving
 - **Dynamic Analysis**: Runtime behavior analysis and instrumentation
 - **C2 Infrastructure**: Command and control capabilities for security testing
 
 ### User Interface
+
 - **Modern GUI**: Built with PyQt6 for Windows 11 compatibility
-- **Three-Panel Layout**: Professional IDE-like interface with tabs and output panel
-- **Hex Editor**: Built-in viewer/editor with pattern highlighting and data inspection
+- **Three-Panel Layout**: Professional IDE-like interface with tabs and output
+  panel
+- **Hex Editor**: Built-in viewer/editor with pattern highlighting and data
+  inspection
 - **AI Assistant Tab**: Integrated AI-powered analysis and script generation
-- **Embedded Terminal**: Full-featured terminal emulator with multi-session support and PTY integration
+- **Embedded Terminal**: Full-featured terminal emulator with multi-session
+  support and PTY integration
 - **Plugin System**: Extensible architecture for custom tools
 - **Real-time Logging**: Comprehensive logging with adjustable verbosity
 
 ## Requirements
 
 ### System Requirements
+
 - **OS**: Windows 11
 - **Python**: 3.12+ (required for full functionality)
 - **RAM**: 8GB minimum (16GB recommended)
@@ -43,6 +58,7 @@ A comprehensive binary analysis and security research platform designed to help 
 - **CPU**: 4 cores minimum
 
 ### Optional Requirements
+
 - **GPU**: NVIDIA, AMD, or Intel GPU with appropriate drivers
 - **Ghidra**: For advanced decompilation
 - **radare2**: For additional analysis capabilities
@@ -74,34 +90,35 @@ scoop install just
 pixi run cargo install just
 ```
 
-**Note:** Rust, Node.js, radare2, and git are automatically installed by pixi. Rustup and JDK 21 are installed via winget during `just install`.
+**Note:** Rust, Node.js, radare2, and git are automatically installed by pixi.
+Rustup and JDK 21 are installed via winget during `just install`.
 
 ### Automated Installation (Recommended)
 
 1. **Clone the repository**
 
-   ```bash
-   git clone https://github.com/Zachanardo/Intellicrack.git
-   cd Intellicrack
-   ```
+    ```bash
+    git clone https://github.com/Zachanardo/Intellicrack.git
+    cd Intellicrack
+    ```
 
 2. **Run automated setup**
 
-   ```bash
-   # Installs all dependencies + Intel XPU + linters + Rust build
-   just install
-   ```
+    ```bash
+    # Installs all dependencies + Intel XPU + linters + Rust build
+    just install
+    ```
 
-   This automatically runs:
-   - `pixi install` - Installs all Python/Conda dependencies
-   - `rustup update stable` - Updates Rust toolchain to latest
-   - JDK 21 installation (system-wide via winget)
-   - Latest Ghidra download and installation to `tools/ghidra/`
-   - Latest radare2 download and installation to `tools/radare2/`
-   - Latest QEMU download and installation to `tools/qemu/`
-   - Intel XPU PyTorch installation (for Intel GPU acceleration)
-   - ESLint + Markdownlint installation
-   - Rust launcher build (release mode)
+    This automatically runs:
+    - `pixi install` - Installs all Python/Conda dependencies
+    - `rustup update stable` - Updates Rust toolchain to latest
+    - JDK 21 installation (system-wide via winget)
+    - Latest Ghidra download and installation to `tools/ghidra/`
+    - Latest radare2 download and installation to `tools/radare2/`
+    - Latest QEMU download and installation to `tools/qemu/`
+    - Intel XPU PyTorch installation (for Intel GPU acceleration)
+    - ESLint + Markdownlint installation
+    - Rust launcher build (release mode)
 
 ### Manual Installation
 
@@ -109,15 +126,15 @@ If you prefer step-by-step installation:
 
 1. **Install base dependencies**
 
-   ```bash
-   pixi install
-   ```
+    ```bash
+    pixi install
+    ```
 
 2. **Run post-install setup**
 
-   ```bash
-   pixi run setup
-   ```
+    ```bash
+    pixi run setup
+    ```
 
 ### Activate Environment
 
@@ -135,12 +152,15 @@ pixi run intellicrack-gui
 Intellicrack automatically manages dependencies for Windows 11:
 
 #### Windows 11 Features
+
 - **Primary Engine**: angr (full Windows 11 support)
 - **GPU Support**: Intel Arc B580 detection with GIL crash prevention
 - All Windows 11 users get a fully functional system
 
 #### Symbolic Execution Support
-- **angr**: Windows 11 optimized, installed by default, recommended for all users
+
+- **angr**: Windows 11 optimized, installed by default, recommended for all
+  users
 - **Built-in fallback**: For minimal functionality
 
 ## 🎯 Usage
@@ -187,28 +207,38 @@ print(f"Protections: {result.protections}")
 
 ## Terminal Tab & Activation Tools
 
-Intellicrack features an embedded terminal emulator for interactive process execution and activation workflows.
+Intellicrack features an embedded terminal emulator for interactive process
+execution and activation workflows.
 
 ### Features
-- **Full PTY Support**: Windows ConPTY integration for native terminal experience
-- **Multi-Session Management**: Create and manage multiple terminal sessions simultaneously
+
+- **Full PTY Support**: Windows ConPTY integration for native terminal
+  experience
+- **Multi-Session Management**: Create and manage multiple terminal sessions
+  simultaneously
 - **ANSI Color Support**: Full color and formatting support for terminal output
-- **Smart Auto-Navigation**: Interactive processes automatically switch to Terminal tab
-- **Process Control**: Start, stop, and monitor processes with real-time feedback
+- **Smart Auto-Navigation**: Interactive processes automatically switch to
+  Terminal tab
+- **Process Control**: Start, stop, and monitor processes with real-time
+  feedback
 - **Copy/Paste**: Full clipboard integration with right-click context menu
-- **Scrollback Buffer**: Configurable buffer (10,000 lines default) with export functionality
+- **Scrollback Buffer**: Configurable buffer (10,000 lines default) with export
+  functionality
 
 ### Windows & Adobe Activation
 
-The integrated Activation Tools provide streamlined access to licensing analysis capabilities:
+The integrated Activation Tools provide streamlined access to licensing analysis
+capabilities:
 
 **Windows Activation**:
+
 - Interactive menu-driven activation via embedded terminal
 - Real-time activation status checking
 - Multiple activation method support (HWID, KMS38, Online KMS)
 - No external console windows - all operations within Intellicrack GUI
 
 **Adobe Product Activation**:
+
 - Frida-based injection for Adobe licensing analysis
 - Interactive terminal-based workflow
 - Live process monitoring and feedback
@@ -216,22 +246,23 @@ The integrated Activation Tools provide streamlined access to licensing analysis
 ### Usage
 
 1. **Access Activation Tools**:
-   - Navigate to **Tools** tab → **Activation Tools** sub-tab
-   - Click "Check Windows Activation Status" for current status
-   - Click "Activate Windows (Interactive)" to launch activation workflow
+    - Navigate to **Tools** tab → **Activation Tools** sub-tab
+    - Click "Check Windows Activation Status" for current status
+    - Click "Activate Windows (Interactive)" to launch activation workflow
 
 2. **Interactive Terminal**:
-   - Automatically switches to **Terminal** tab when activation starts
-   - Full menu interaction with keyboard input
-   - Real-time process output with color formatting
-   - Use Ctrl+C to interrupt, right-click for copy/paste
+    - Automatically switches to **Terminal** tab when activation starts
+    - Full menu interaction with keyboard input
+    - Real-time process output with color formatting
+    - Use Ctrl+C to interrupt, right-click for copy/paste
 
 3. **Manual Terminal Usage**:
-   - Navigate to **Terminal** tab (7th tab, between Tools and Settings)
-   - Click "+" to create new terminal session
-   - Execute custom commands and scripts interactively
+    - Navigate to **Terminal** tab (7th tab, between Tools and Settings)
+    - Click "+" to create new terminal session
+    - Execute custom commands and scripts interactively
 
-For detailed terminal usage instructions, see the [Terminal Tab User Guide](docs/TERMINAL_TAB_USER_GUIDE.md).
+For detailed terminal usage instructions, see the
+[Terminal Tab User Guide](docs/TERMINAL_TAB_USER_GUIDE.md).
 
 ## Documentation
 
@@ -266,7 +297,8 @@ Intellicrack uses JSON configuration files. Key settings include:
 }
 ```
 
-See the [Configuration Reference](docs/reference/CONFIGURATION_REFERENCE.md) for details.
+See the [Configuration Reference](docs/reference/CONFIGURATION_REFERENCE.md) for
+details.
 
 ## Plugins
 
@@ -285,7 +317,8 @@ class MyPlugin(PluginBase):
         return results
 ```
 
-See the [Plugin Development Guide](docs/development/plugins.md) for more information.
+See the [Plugin Development Guide](docs/development/plugins.md) for more
+information.
 
 ## Examples
 
@@ -374,7 +407,9 @@ Enable detailed logging for troubleshooting:
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on:
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md)
+for details on:
+
 - Code style guidelines
 - Development setup
 - Pull request process
@@ -382,15 +417,21 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ## License
 
-This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU General Public License v3.0 - see the
+[LICENSE](LICENSE) file for details.
 
 ## Disclaimer
 
-**Intellicrack** is developed for **defensive security research** to help software developers:
+**Intellicrack** is developed for **defensive security research** to help
+software developers:
 
 - **Identify weaknesses** in their own licensing protection mechanisms
-- **Test robustness** of their protection implementations in controlled environments
-- **Strengthen defenses** against potential attacks by understanding attack vectors
+- **Test robustness** of their protection implementations in controlled
+  environments
+- **Strengthen defenses** against potential attacks by understanding attack
+  vectors
 - **Validate security** of their own software before deployment
 
-This tool is for educational and authorized security research purposes only. Users are responsible for complying with applicable laws and regulations. The authors assume no liability for misuse or damage caused by this software.
+This tool is for educational and authorized security research purposes only.
+Users are responsible for complying with applicable laws and regulations. The
+authors assume no liability for misuse or damage caused by this software.

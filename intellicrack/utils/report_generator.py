@@ -338,7 +338,7 @@ class ReportGenerator:
         if result.recommendations:
             story.append(Paragraph("Recommendations", styles["Heading2"]))
             for rec in result.recommendations:
-                story.append(Paragraph(f"• {rec}", styles["Normal"]))
+                story.append(Paragraph(f" {rec}", styles["Normal"]))
             story.append(Spacer(1, 12))
 
         doc.build(story)
@@ -516,14 +516,14 @@ KEY FINDINGS
 ------------
 """
         for f in result.findings:
-            text_content += f"• {f.get('description', '')}\n"
+            text_content += f" {f.get('description', '')}\n"
 
         text_content += """
 RECOMMENDATIONS
 ---------------
 """
         for r in result.recommendations:
-            text_content += f"• {r}\n"
+            text_content += f" {r}\n"
 
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(text_content)

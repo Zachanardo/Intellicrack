@@ -41,7 +41,7 @@ def fix_syntax_errors():
         with open(cfi_test, 'w', encoding='utf-8') as f:
             f.writelines(fixed_lines)
 
-        print(f"  ✅ Fixed indentation errors")
+        print(f"  OK Fixed indentation errors")
 
     # Fix test_dep_bypass.py syntax error
     dep_test = test_dir / 'test_dep_bypass.py'
@@ -61,7 +61,7 @@ def fix_syntax_errors():
         with open(dep_test, 'w', encoding='utf-8') as f:
             f.write(content)
 
-        print(f"  ✅ Fixed analyzer syntax error")
+        print(f"  OK Fixed analyzer syntax error")
 
     # Fix test_aslr_bypass.py indentation
     aslr_test = test_dir / 'test_aslr_bypass.py'
@@ -85,7 +85,7 @@ def fix_syntax_errors():
         with open(aslr_test, 'w', encoding='utf-8') as f:
             f.writelines(fixed_lines)
 
-        print(f"  ✅ Fixed indentation errors")
+        print(f"  OK Fixed indentation errors")
 
     print()
     print("=" * 60)
@@ -108,13 +108,13 @@ def run_syntax_check():
     for test_file in test_dir.glob('test_*.py'):
         try:
             py_compile.compile(str(test_file), doraise=True)
-            print(f"✅ {test_file.name}: Valid Python syntax")
+            print(f"OK {test_file.name}: Valid Python syntax")
         except py_compile.PyCompileError as e:
-            print(f"❌ {test_file.name}: Syntax error")
+            print(f"FAIL {test_file.name}: Syntax error")
             print(f"    Line {e.exc_value.lineno}: {e.exc_value.msg}")
             all_valid = False
         except Exception as e:
-            print(f"❌ {test_file.name}: {e}")
+            print(f"FAIL {test_file.name}: {e}")
             all_valid = False
 
     return all_valid
@@ -123,6 +123,6 @@ if __name__ == "__main__":
     fix_syntax_errors()
 
     if run_syntax_check():
-        print("\n✅ All test files have valid Python syntax!")
+        print("\nOK All test files have valid Python syntax!")
     else:
-        print("\n⚠️  Some files still have syntax errors - manual review needed")
+        print("\nWARNING  Some files still have syntax errors - manual review needed")

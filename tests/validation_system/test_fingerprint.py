@@ -32,4 +32,4 @@ print("\nTesting FingerprintRandomizer...")
 randomizer = FingerprintRandomizer()
 print("FingerprintRandomizer initialized")
 
-print("\n✅ Fingerprint Randomizer Test Complete!")
+print("\nOK Fingerprint Randomizer Test Complete!")

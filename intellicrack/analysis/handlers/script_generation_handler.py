@@ -302,7 +302,7 @@ class ScriptDisplayDialog(QDialog):
             layout.addWidget(warnings_label)
 
             for warning in self.script_data["warnings"]:
-                warning_text = QLabel(f"  • {warning}")
+                warning_text = QLabel(f"   {warning}")
                 warning_text.setWordWrap(True)
                 layout.addWidget(warning_text)
 

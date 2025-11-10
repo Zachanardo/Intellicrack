@@ -96,9 +96,9 @@ def test_isolated_payload_generation():
                 "architecture": "x86"
             }
 
-            print(f"✓ Generated BOF payload with {len(shellcode)} bytes of shellcode")
-            print(f"✓ Complete payload size: {len(payload)} bytes")
-            print(f"✓ Shellcode (hex): {shellcode.hex()}")
+            print(f"OK Generated BOF payload with {len(shellcode)} bytes of shellcode")
+            print(f"OK Complete payload size: {len(payload)} bytes")
+            print(f"OK Shellcode (hex): {shellcode.hex()}")
 
             return True
 
@@ -136,10 +136,10 @@ def test_isolated_payload_generation():
                 }
             }
 
-            print(f"✓ Generated format string payload: {len(payload)} bytes")
-            print(f"✓ Payload: {payload}")
-            print(f"✓ Associated shellcode: {len(shellcode)} bytes")
-            print(f"✓ Shellcode (hex): {shellcode.hex()}")
+            print(f"OK Generated format string payload: {len(payload)} bytes")
+            print(f"OK Payload: {payload}")
+            print(f"OK Associated shellcode: {len(shellcode)} bytes")
+            print(f"OK Shellcode (hex): {shellcode.hex()}")
 
             return True
 
@@ -152,9 +152,9 @@ def test_isolated_payload_generation():
         if not test_generate_format_string_payload():
             return False
 
-        print("\n✓ All isolated payload tests PASSED")
-        print("✓ Methods generate real shellcode bytes")
-        print("✓ No template strings detected")
+        print("\nOK All isolated payload tests PASSED")
+        print("OK Methods generate real shellcode bytes")
+        print("OK No template strings detected")
 
         return True
 

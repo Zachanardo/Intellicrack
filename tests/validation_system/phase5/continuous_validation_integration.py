@@ -254,9 +254,9 @@ class NotificationManager:
         try:
             icon = {
                 "info": "ℹ️",
-                "warning": "⚠️",
-                "error": "❌",
-                "success": "✅"
+                "warning": "WARNING",
+                "error": "FAIL",
+                "success": "OK"
             }.get(level, "📢")
 
             text = f"{icon} *{title}*\n\n{message}"
@@ -915,6 +915,7 @@ class ContinuousValidationIntegration:
                         data
                     )
                 except:
+                    pass
                     # Message parsing may fail, continue processing other messages
 
     async def stop(self):

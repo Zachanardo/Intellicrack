@@ -23,16 +23,31 @@ import os
 import sys
 from typing import Any
 
+print("[DEBUG memory_patcher] Importing pyqt6_handler...")
+sys.stdout.flush()
 from intellicrack.handlers.pyqt6_handler import QMessageBox
 
+print("[DEBUG memory_patcher] pyqt6_handler imported OK")
+sys.stdout.flush()
+
+print("[DEBUG memory_patcher] Importing from protection_detector...")
+sys.stdout.flush()
 from ...protection.protection_detector import (
     detect_checksum_verification,
     detect_obfuscation,
     detect_self_healing_code,
 )
+
+print("[DEBUG memory_patcher] protection_detector imported OK")
+sys.stdout.flush()
+
+print("[DEBUG memory_patcher] Getting logger...")
+sys.stdout.flush()
 from ...utils.logger import get_logger
 
 logger = get_logger(__name__)
+print("[DEBUG memory_patcher] logger obtained OK")
+sys.stdout.flush()
 
 
 def _create_dword_type(ctypes):
@@ -578,7 +593,7 @@ def setup_memory_patching(app: Any) -> None:
 
         msg = "The following protections were detected:\\n\\n"
         for _p in protections:
-            msg += f"• {_p}\\n"
+            msg += f" {_p}\\n"
         msg += "\\nMemory patching is recommended for this binary.\\n"
         msg += "This will create a launcher that patches the program in memory.\\n\\n"
         msg += "Continue with memory patching setup?"
@@ -1057,9 +1072,9 @@ def _handle_guard_pages_windows(address: int, size: int, process_handle: int = N
                 # Optionally trigger the guard page to clear it
                 if not process_handle:  # Only for current process
                     try:
-                        # Read first byte to trigger guard
-                        dummy = ctypes.c_byte()
-                        ctypes.memmove(ctypes.byref(dummy), address, 1)
+                        # Read first byte to trigger guard page exception and clear the protection
+                        guard_trigger_byte = ctypes.c_byte()
+                        ctypes.memmove(ctypes.byref(guard_trigger_byte), address, 1)
                     except (OSError, ValueError, Exception) as e:
                         logger.error("Error in memory_patcher: %s", e)
 

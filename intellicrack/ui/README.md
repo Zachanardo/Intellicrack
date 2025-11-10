@@ -1,6 +1,7 @@
 # Intellicrack User Interface
 
-The UI module provides a modern, professional graphical interface built with PyQt6 for cross-platform compatibility.
+The UI module provides a modern, professional graphical interface built with
+PyQt6 for cross-platform compatibility.
 
 ## Architecture Overview
 

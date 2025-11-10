@@ -16,28 +16,28 @@ def test_real_provider_import():
     # Test OpenAI import
     try:
         import openai
-        print("✅ OpenAI module imported successfully")
+        print("OK OpenAI module imported successfully")
         if os.environ.get("OPENAI_API_KEY"):
             client = openai.OpenAI(api_key=os.environ["OPENAI_API_KEY"])
             print(f"   Client type: {type(client)}")
             print(f"   Has chat.completions: {hasattr(client, 'chat') and hasattr(client.chat, 'completions')}")
     except ImportError:
-        print("❌ OpenAI module not installed")
+        print("FAIL OpenAI module not installed")
     except Exception as e:
-        print(f"⚠️ OpenAI import succeeded but initialization failed: {e}")
+        print(f"WARNING OpenAI import succeeded but initialization failed: {e}")
 
     # Test Anthropic import
     try:
         import anthropic
-        print("\n✅ Anthropic module imported successfully")
+        print("\nOK Anthropic module imported successfully")
         if os.environ.get("ANTHROPIC_API_KEY"):
             client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
             print(f"   Client type: {type(client)}")
             print(f"   Has messages.create: {hasattr(client, 'messages') and hasattr(client.messages, 'create')}")
     except ImportError:
-        print("\n❌ Anthropic module not installed")
+        print("\nFAIL Anthropic module not installed")
     except Exception as e:
-        print(f"\n⚠️ Anthropic import succeeded but initialization failed: {e}")
+        print(f"\nWARNING Anthropic import succeeded but initialization failed: {e}")
 
     # Test dynamic import pattern used in _try_initialize_provider
     print("\n=== Testing Dynamic Import Pattern ===\n")
@@ -60,7 +60,7 @@ def test_real_provider_import():
         for module_name in import_attempts:
             try:
                 module = __import__(module_name)
-                print(f"  ✅ Imported as '{module_name}'")
+                print(f"  OK Imported as '{module_name}'")
                 print(f"     Module type: {type(module)}")
 
                 # Check for client creation methods
@@ -78,7 +78,7 @@ def test_real_provider_import():
                 continue
 
         if not imported:
-            print(f"  ❌ Could not import {provider_name} with any pattern")
+            print(f"  FAIL Could not import {provider_name} with any pattern")
         print()
 
 if __name__ == "__main__":

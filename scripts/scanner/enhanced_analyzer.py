@@ -1,20 +1,18 @@
 #!/usr/bin/env python3
-"""
-Enhanced analyzer to improve false positive filtering for the production scanner.
+"""Enhanced analyzer to improve false positive filtering for the production scanner.
+
 This script adds additional context analysis to better distinguish between
 legitimate defensive programming and actual non-production code patterns.
 """
 
 import json
 import re
-import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, Tuple
 
 
 def is_legitimate_error_handling(file_path: str, line_num: int, code_line: str) -> Tuple[bool, str]:
-    """
-    Determine if an empty return is legitimate error handling.
+    """Determine if an empty return is legitimate error handling.
 
     Returns: (is_legitimate, reason)
     """
@@ -22,8 +20,8 @@ def is_legitimate_error_handling(file_path: str, line_num: int, code_line: str) 
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             lines = f.readlines()
-    except:
-        return False, ""
+    except (OSError, UnicodeDecodeError, PermissionError) as e:
+        return False, f"Failed to read file: {e}"
 
     if line_num < 1 or line_num > len(lines):
         return False, ""
@@ -82,7 +80,6 @@ def is_legitimate_error_handling(file_path: str, line_num: int, code_line: str) 
 
 def analyze_findings(scan_results_path: str) -> Dict:
     """Analyze scan results and classify findings."""
-
     with open(scan_results_path, 'r') as f:
         data = json.load(f)
 
@@ -135,10 +132,9 @@ def analyze_findings(scan_results_path: str) -> Dict:
 
 def main():
     """Run enhanced analysis on scanner results."""
-
     # First, run the scanner to get fresh results
-    import subprocess
     import os
+    import subprocess
 
     scanner_dir = Path(__file__).parent
     os.chdir(scanner_dir)
@@ -159,16 +155,16 @@ def main():
     print("\nAnalyzing findings...")
     analysis = analyze_findings('enhanced_scan_results.json')
 
-    print(f"\n=== Enhanced Analysis Results ===")
+    print("\n=== Enhanced Analysis Results ===")
     print(f"Total Findings: {analysis['total_findings']}")
     print(f"True Positives: {analysis['true_positives']}")
     print(f"False Positives: {analysis['false_positives']}")
     print(f"False Positive Rate: {analysis['false_positive_rate']:.1f}%")
 
     if analysis['false_positive_rate'] < 5:
-        print("\n✅ FALSE POSITIVE RATE IS BELOW 5% TARGET!")
+        print("\nOK FALSE POSITIVE RATE IS BELOW 5% TARGET!")
     else:
-        print(f"\n❌ False positive rate {analysis['false_positive_rate']:.1f}% exceeds 5% target")
+        print(f"\nFAIL False positive rate {analysis['false_positive_rate']:.1f}% exceeds 5% target")
         print("\nSample false positives that need filtering:")
         for fp in analysis['false_positive_examples']:
             print(f"  - {fp['file_path']}:{fp['line']} - {fp.get('classification_reason', 'Unknown')}")

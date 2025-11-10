@@ -118,7 +118,7 @@ class TerminalTab(BaseTab):
         self.clear_btn.clicked.connect(self.clear_current_terminal)
         toolbar.addWidget(self.clear_btn)
 
-        self.export_btn = QPushButton("💾 Export Log")
+        self.export_btn = QPushButton(" Export Log")
         self.export_btn.setToolTip("Export terminal log to file")
         self.export_btn.clicked.connect(self.export_terminal_log)
         toolbar.addWidget(self.export_btn)

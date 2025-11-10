@@ -220,25 +220,25 @@ if __name__ == "__main__":
 
         # Test basic initialization
         assert manager.base_dir.exists()
-        print("✓ Initialization successful")
+        print("OK Initialization successful")
 
         # Test hash calculation
         test_file = Path(temp_dir) / "test.bin"
         test_file.write_bytes(b"Test content")
         hash_value = manager.calculate_sha256(test_file)
         assert len(hash_value) == 64  # SHA-256 produces 64 hex characters
-        print("✓ Hash calculation working")
+        print("OK Hash calculation working")
 
         # Test binary acquisition
         source = Path(temp_dir) / "mock.exe"
         source.write_bytes(b"Mock executable")
         success = manager.acquire_binary_from_path(source, "VMware Workstation Pro")
         assert success is True
-        print("✓ Binary acquisition working")
+        print("OK Binary acquisition working")
 
         # Test report generation
         report = manager.generate_acquisition_report()
         assert report["total_binaries"] == 1
-        print("✓ Report generation working")
+        print("OK Report generation working")
 
     print("\nAll smoke tests passed! The commercial_binary_manager.py is production-ready.")

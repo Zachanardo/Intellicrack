@@ -44,7 +44,7 @@ const tpmEmulator = {
 
     // TPM Configuration
     config: {
-    // TPM Properties
+        // TPM Properties
         tpmProperties: {
             TPM_PT_FAMILY_INDICATOR: 0x322e3000, // "2.0"
             TPM_PT_LEVEL: 0,
@@ -65,13 +65,13 @@ const tpmEmulator = {
         pcrBanks: {
             sha1: new Array(24).fill('0000000000000000000000000000000000000000'),
             sha256: new Array(24).fill(
-                '0000000000000000000000000000000000000000000000000000000000000000',
+                '0000000000000000000000000000000000000000000000000000000000000000'
             ),
             sha384: new Array(24).fill(
-                '000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
+                '000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
             ),
             sha512: new Array(24).fill(
-                '00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
+                '00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
             ),
         },
 
@@ -92,7 +92,7 @@ const tpmEmulator = {
                 keySize: 2048,
                 public: {
                     modulus:
-            'C4B8A1F4E9D7A2C3B5F8E6D4A9C7B5F3E8D6A4C2B7F5E9D3A6C8B4F7E2D5A9C3B6F8E4D7A2C5B9F3E6D8A4C7B5F2E9D6A3C8B7F4E2D9A5C3B8F6E4D7A2C5B9F3E6D8A1C4B7F5E2D9A6C3B8F7E4D2A5C9B6F3E8D4A7C5B2F9E6D3A8C7B4F5E2D9A6C3B8F7E1D4A2C5B9F6E3D8A4C7B5F2E9D6A3C8B7F4E1D9A5C2B8F6E3D7A4C9B5F2E8D6A3C7B4F9E1D5A2C8B6F3E7D4A9C5B2F8E6D3A7C4B9F1E5D2A6C8B3F7E4D9A5C2B8F6E3D1',
+                        'C4B8A1F4E9D7A2C3B5F8E6D4A9C7B5F3E8D6A4C2B7F5E9D3A6C8B4F7E2D5A9C3B6F8E4D7A2C5B9F3E6D8A4C7B5F2E9D6A3C8B7F4E2D9A5C3B8F6E4D7A2C5B9F3E6D8A1C4B7F5E2D9A6C3B8F7E4D2A5C9B6F3E8D4A7C5B2F9E6D3A8C7B4F5E2D9A6C3B8F7E1D4A2C5B9F6E3D8A4C7B5F2E9D6A3C8B7F4E1D9A5C2B8F6E3D7A4C9B5F2E8D6A3C7B4F9E1D5A2C8B6F3E7D4A9C5B2F8E6D3A7C4B9F1E5D2A6C8B3F7E4D9A5C2B8F6E3D1',
                     exponent: 65537,
                 },
                 private: 'HARDWARE_PROTECTED',
@@ -108,7 +108,7 @@ const tpmEmulator = {
                 keySize: 2048,
                 public: {
                     modulus:
-            'B7F5E9D3A6C8B4F7E2D5A9C3B6F8E4D7A2C5B9F3E6D8A4C7B5F2E9D6A3C8B7F4E2D9A5C3B8F6E4D7A2C5B9F3E6D8A1C4B7F5E2D9A6C3B8F7E4D2A5C9B6F3E8D4A7C5B2F9E6D3A8C7B4F5E2D9A6C3B8F7E1D4A2C5B9F6E3D8A4C7B5F2E9D6A3C8B7F4E1D9A5C2B8F6E3D7A4C9B5F2E8D6A3C7B4F9E1D5A2C8B6F3E7D4A9C5B2F8E6D3A7C4B9F1E5D2A6C8B3F7E4D9A5C2B8F6E3D1',
+                        'B7F5E9D3A6C8B4F7E2D5A9C3B6F8E4D7A2C5B9F3E6D8A4C7B5F2E9D6A3C8B7F4E2D9A5C3B8F6E4D7A2C5B9F3E6D8A1C4B7F5E2D9A6C3B8F7E4D2A5C9B6F3E8D4A7C5B2F9E6D3A8C7B4F5E2D9A6C3B8F7E1D4A2C5B9F6E3D8A4C7B5F2E9D6A3C8B7F4E1D9A5C2B8F6E3D7A4C9B5F2E8D6A3C7B4F9E1D5A2C8B6F3E7D4A9C5B2F8E6D3A7C4B9F1E5D2A6C8B3F7E4D9A5C2B8F6E3D1',
                     exponent: 65537,
                 },
                 created: Date.now(),
@@ -125,7 +125,7 @@ const tpmEmulator = {
                 keySize: 2048,
                 public: {
                     modulus:
-            'E8D6A4C2B7F5E9D3A6C8B4F7E2D5A9C3B6F8E4D7A2C5B9F3E6D8A4C7B5F2E9D6A3C8B7F4E2D9A5C3B8F6E4D7A2C5B9F3E6D8A1C4B7F5E2D9A6C3B8F7E4D2A5C9B6F3E8D4A7C5B2F9E6D3A8C7B4F5E2D9A6C3B8F7E1D4A2C5B9F6E3D8A4C7B5F2E9D6A3C8B7F4E1D9A5C2B8F6E3D7A4C9B5F2E8D6A3C7B4F9E1D5A2C8B6F3E7D4A9C5B2F8E6D3A7C4B9F1E5D2A6C8B3F7E4D9A5C2B8F6',
+                        'E8D6A4C2B7F5E9D3A6C8B4F7E2D5A9C3B6F8E4D7A2C5B9F3E6D8A4C7B5F2E9D6A3C8B7F4E2D9A5C3B8F6E4D7A2C5B9F3E6D8A1C4B7F5E2D9A6C3B8F7E4D2A5C9B6F3E8D4A7C5B2F9E6D3A8C7B4F5E2D9A6C3B8F7E1D4A2C5B9F6E3D8A4C7B5F2E9D6A3C8B7F4E1D9A5C2B8F6E3D7A4C9B5F2E8D6A3C7B4F9E1D5A2C8B6F3E7D4A9C5B2F8E6D3A7C4B9F1E5D2A6C8B3F7E4D9A5C2B8F6',
                     exponent: 65537,
                 },
                 created: Date.now(),
@@ -270,10 +270,7 @@ const tpmEmulator = {
         var self = this;
 
         // Tbsi_Context_Create
-        var tbsiContextCreate = Module.findExportByName(
-            'tbs.dll',
-            'Tbsi_Context_Create',
-        );
+        var tbsiContextCreate = Module.findExportByName('tbs.dll', 'Tbsi_Context_Create');
         if (tbsiContextCreate) {
             Interceptor.attach(tbsiContextCreate, {
                 onEnter: function (args) {
@@ -310,10 +307,7 @@ const tpmEmulator = {
         }
 
         // Tbsi_Submit_Command
-        var tbsiSubmitCommand = Module.findExportByName(
-            'tbs.dll',
-            'Tbsi_Submit_Command',
-        );
+        var tbsiSubmitCommand = Module.findExportByName('tbs.dll', 'Tbsi_Submit_Command');
         if (tbsiSubmitCommand) {
             Interceptor.attach(tbsiSubmitCommand, {
                 onEnter: function (args) {
@@ -356,10 +350,7 @@ const tpmEmulator = {
         }
 
         // Tbsi_GetDeviceInfo
-        var tbsiGetDeviceInfo = Module.findExportByName(
-            'tbs.dll',
-            'Tbsi_GetDeviceInfo',
-        );
+        var tbsiGetDeviceInfo = Module.findExportByName('tbs.dll', 'Tbsi_GetDeviceInfo');
         if (tbsiGetDeviceInfo) {
             Interceptor.attach(tbsiGetDeviceInfo, {
                 onEnter: function (args) {
@@ -388,7 +379,7 @@ const tpmEmulator = {
         // Tbsi_Physical_Presence_Command
         var tbsiPhysicalPresence = Module.findExportByName(
             'tbs.dll',
-            'Tbsi_Physical_Presence_Command',
+            'Tbsi_Physical_Presence_Command'
         );
         if (tbsiPhysicalPresence) {
             Interceptor.replace(
@@ -410,8 +401,8 @@ const tpmEmulator = {
                         return 0; // TBS_SUCCESS
                     },
                     'uint32',
-                    ['pointer', 'pointer', 'uint32', 'pointer', 'pointer'],
-                ),
+                    ['pointer', 'pointer', 'uint32', 'pointer', 'pointer']
+                )
             );
         }
     },
@@ -420,15 +411,15 @@ const tpmEmulator = {
     processTPMCommand: function (commandBuffer) {
         var tag = (commandBuffer[0] << 8) | commandBuffer[1];
         var commandSize =
-      (commandBuffer[2] << 24) |
-      (commandBuffer[3] << 16) |
-      (commandBuffer[4] << 8) |
-      commandBuffer[5];
+            (commandBuffer[2] << 24) |
+            (commandBuffer[3] << 16) |
+            (commandBuffer[4] << 8) |
+            commandBuffer[5];
         var commandCode =
-      (commandBuffer[6] << 24) |
-      (commandBuffer[7] << 16) |
-      (commandBuffer[8] << 8) |
-      commandBuffer[9];
+            (commandBuffer[6] << 24) |
+            (commandBuffer[7] << 16) |
+            (commandBuffer[8] << 8) |
+            commandBuffer[9];
 
         // Comprehensive TPM command size analysis and validation system
         var commandAnalysis = {
@@ -447,7 +438,7 @@ const tpmEmulator = {
         var sizeValidation = this.validateTPMCommandSize(
             commandSize,
             commandBuffer.length,
-            commandCode,
+            commandCode
         );
         commandAnalysis.size_validation_result = sizeValidation.result;
         commandAnalysis.security_implications = sizeValidation.security_issues;
@@ -528,20 +519,20 @@ const tpmEmulator = {
     // Handle TPM2_GetCapability
     handleGetCapability: function (commandBuffer) {
         var capability =
-      (commandBuffer[10] << 24) |
-      (commandBuffer[11] << 16) |
-      (commandBuffer[12] << 8) |
-      commandBuffer[13];
+            (commandBuffer[10] << 24) |
+            (commandBuffer[11] << 16) |
+            (commandBuffer[12] << 8) |
+            commandBuffer[13];
         var property =
-      (commandBuffer[14] << 24) |
-      (commandBuffer[15] << 16) |
-      (commandBuffer[16] << 8) |
-      commandBuffer[17];
+            (commandBuffer[14] << 24) |
+            (commandBuffer[15] << 16) |
+            (commandBuffer[16] << 8) |
+            commandBuffer[17];
         var propertyCount =
-      (commandBuffer[18] << 24) |
-      (commandBuffer[19] << 16) |
-      (commandBuffer[20] << 8) |
-      commandBuffer[21];
+            (commandBuffer[18] << 24) |
+            (commandBuffer[19] << 16) |
+            (commandBuffer[20] << 8) |
+            commandBuffer[21];
 
         send({
             type: 'info',
@@ -568,12 +559,7 @@ const tpmEmulator = {
 
         switch (capability) {
         case 0x00000006: // TPM_CAP_TPM_PROPERTIES
-            offset = this.writeTPMProperties(
-                response,
-                offset,
-                property,
-                propertyCount,
-            );
+            offset = this.writeTPMProperties(response, offset, property, propertyCount);
             break;
 
         case 0x00000000: // TPM_CAP_ALGS
@@ -589,7 +575,7 @@ const tpmEmulator = {
             break;
 
         default:
-        // Return empty capability
+            // Return empty capability
             offset = this.writeU32(response, offset, 0); // count
             break;
         }
@@ -649,8 +635,7 @@ const tpmEmulator = {
         response[offset++] = pcrSelCount;
 
         for (var i = 0; i < pcrSelCount; i++) {
-            var hashAlg =
-        (commandBuffer[11 + i * 4] << 8) | commandBuffer[12 + i * 4];
+            var hashAlg = (commandBuffer[11 + i * 4] << 8) | commandBuffer[12 + i * 4];
             var sizeOfSelect = commandBuffer[13 + i * 4];
 
             response[offset++] = (hashAlg >> 8) & 0xff;
@@ -678,7 +663,7 @@ const tpmEmulator = {
 
     // Handle TPM2_Quote (attestation)
     handleQuote: function (commandBuffer) {
-    // Comprehensive TPM quote command buffer analysis system
+        // Comprehensive TPM quote command buffer analysis system
         var quoteAnalysis = {
             timestamp: new Date().toISOString(),
             context: 'tpm_quote_command_buffer_analysis',
@@ -698,7 +683,7 @@ const tpmEmulator = {
 
         // Identify attestation vulnerabilities in command buffer
         quoteAnalysis.attestation_vulnerabilities =
-      this.identifyAttestationVulnerabilities(bufferAnalysis);
+            this.identifyAttestationVulnerabilities(bufferAnalysis);
 
         // Determine bypass techniques for attestation
         quoteAnalysis.bypass_techniques = [
@@ -810,8 +795,8 @@ const tpmEmulator = {
 
     // Create signature
     createSignature: function (data) {
-    // This would normally use the attestation key to sign
-    // For emulation, we return a fake signature
+        // This would normally use the attestation key to sign
+        // For emulation, we return a fake signature
         var signature = new Uint8Array(256);
 
         // Fill with deterministic but random-looking data
@@ -824,12 +809,12 @@ const tpmEmulator = {
 
     // Handle TPM2_NV_Read
     handleNVRead: function (commandBuffer) {
-    // Extract NV index
+        // Extract NV index
         var nvIndex =
-      (commandBuffer[10] << 24) |
-      (commandBuffer[11] << 16) |
-      (commandBuffer[12] << 8) |
-      commandBuffer[13];
+            (commandBuffer[10] << 24) |
+            (commandBuffer[11] << 16) |
+            (commandBuffer[12] << 8) |
+            commandBuffer[13];
 
         send({
             type: 'info',
@@ -863,10 +848,10 @@ const tpmEmulator = {
     // Handle TPM2_NV_Write
     handleNVWrite: function (commandBuffer) {
         var nvIndex =
-      (commandBuffer[10] << 24) |
-      (commandBuffer[11] << 16) |
-      (commandBuffer[12] << 8) |
-      commandBuffer[13];
+            (commandBuffer[10] << 24) |
+            (commandBuffer[11] << 16) |
+            (commandBuffer[12] << 8) |
+            commandBuffer[13];
 
         send({
             type: 'info',
@@ -886,7 +871,7 @@ const tpmEmulator = {
 
     // Handle TPM2_CreatePrimary
     handleCreatePrimary: function (commandBuffer) {
-    // Comprehensive TPM create primary command buffer analysis system
+        // Comprehensive TPM create primary command buffer analysis system
         var primaryKeyAnalysis = {
             timestamp: new Date().toISOString(),
             context: 'tpm_create_primary_command_buffer_analysis',
@@ -908,7 +893,7 @@ const tpmEmulator = {
 
         // Identify cryptographic vulnerabilities in key creation
         primaryKeyAnalysis.cryptographic_vulnerabilities =
-      this.identifyKeyCreationVulnerabilities(bufferAnalysis);
+            this.identifyKeyCreationVulnerabilities(bufferAnalysis);
 
         // Determine bypass techniques for primary key creation
         primaryKeyAnalysis.key_bypass_techniques = [
@@ -1053,10 +1038,7 @@ const tpmEmulator = {
         if (Process.platform !== 'windows') return;
 
         // NtDeviceIoControlFile
-        var ntDeviceIoControl = Module.findExportByName(
-            'ntdll.dll',
-            'NtDeviceIoControlFile',
-        );
+        var ntDeviceIoControl = Module.findExportByName('ntdll.dll', 'NtDeviceIoControlFile');
         if (ntDeviceIoControl) {
             Interceptor.attach(ntDeviceIoControl, {
                 onEnter: function (args) {
@@ -1089,7 +1071,7 @@ const tpmEmulator = {
                         switch (this.ioControlCode) {
                         case 0x22c00c: // TPM_IOCTL_SUBMIT_COMMAND
                             var response = self.processTPMCommand(
-                                new Uint8Array(this.inputData),
+                                new Uint8Array(this.inputData)
                             );
                             this.outputBuffer.writeByteArray(response);
                             break;
@@ -1112,7 +1094,7 @@ const tpmEmulator = {
 
     // Check if handle is TPM device
     isTPMDevice: function (handle) {
-    // Comprehensive TPM device handle analysis system
+        // Comprehensive TPM device handle analysis system
         var handleAnalysis = {
             timestamp: new Date().toISOString(),
             context: 'tpm_device_handle_analysis',
@@ -1178,10 +1160,7 @@ const tpmEmulator = {
             tssAnalysis.hook_installation_results[lib] = 'module_found_analyzing';
 
             // Hook Tss2_Sys_GetCapability
-            var sysGetCapability = Module.findExportByName(
-                lib,
-                'Tss2_Sys_GetCapability',
-            );
+            var sysGetCapability = Module.findExportByName(lib, 'Tss2_Sys_GetCapability');
             if (sysGetCapability) {
                 Interceptor.attach(sysGetCapability, {
                     onLeave: function (retval) {
@@ -1217,10 +1196,7 @@ const tpmEmulator = {
         };
 
         // NCryptOpenStorageProvider for TPM
-        var ncryptOpen = Module.findExportByName(
-            'ncrypt.dll',
-            'NCryptOpenStorageProvider',
-        );
+        var ncryptOpen = Module.findExportByName('ncrypt.dll', 'NCryptOpenStorageProvider');
         if (ncryptOpen) {
             windowsTPMAnalysis.api_hooks_installed.push('NCryptOpenStorageProvider');
 
@@ -1233,7 +1209,7 @@ const tpmEmulator = {
                         // Use self to access TPM emulator analysis methods
                         var providerAnalysis = self.analyzeWindowsTPMProvider(
                             this.pszProviderName,
-                            args,
+                            args
                         );
                         this.providerAnalysisResult = providerAnalysis;
 
@@ -1254,13 +1230,13 @@ const tpmEmulator = {
                     if (this.isTPMProvider) {
                         // Use self to access TPM emulator methods for provider handle creation
                         var fakeHandle = self.createFakeTPMProviderHandle(
-                            this.providerAnalysisResult,
+                            this.providerAnalysisResult
                         );
 
                         // Create fake provider handle using the sophisticated fake handle
                         var providerHandle = Memory.alloc(Process.pointerSize);
                         var handleValue =
-              fakeHandle && fakeHandle.handle ? fakeHandle.handle : 0x99999999;
+                            fakeHandle && fakeHandle.handle ? fakeHandle.handle : 0x99999999;
                         providerHandle.writePointer(ptr(handleValue));
                         this.phProvider.writePointer(providerHandle);
 
@@ -1283,10 +1259,7 @@ const tpmEmulator = {
         var fveapi = Process.findModuleByName('fveapi.dll');
         if (fveapi) {
             // FveGetTpmBootstrapKeyFromTPM
-            var getTpmKey = Module.findExportByName(
-                'fveapi.dll',
-                'FveGetTpmBootstrapKeyFromTPM',
-            );
+            var getTpmKey = Module.findExportByName('fveapi.dll', 'FveGetTpmBootstrapKeyFromTPM');
             if (getTpmKey) {
                 Interceptor.replace(
                     getTpmKey,
@@ -1301,8 +1274,8 @@ const tpmEmulator = {
                             return 0; // Success
                         },
                         'int',
-                        ['pointer', 'pointer', 'pointer'],
-                    ),
+                        ['pointer', 'pointer', 'pointer']
+                    )
                 );
             }
         }
@@ -1372,7 +1345,7 @@ const tpmEmulator = {
 
     // Helper functions
     writeResponseHeader: function (buffer, offset, tag, responseCode) {
-    // TPM response header
+        // TPM response header
         buffer[offset++] = (tag >> 8) & 0xff;
         buffer[offset++] = tag & 0xff;
 
@@ -1386,7 +1359,7 @@ const tpmEmulator = {
     },
 
     updateResponseSize: function (buffer, size) {
-    // Update size field in header
+        // Update size field in header
         buffer[2] = (size >> 24) & 0xff;
         buffer[3] = (size >> 16) & 0xff;
         buffer[4] = (size >> 8) & 0xff;
@@ -1503,7 +1476,7 @@ const tpmEmulator = {
 
     // Handle other TPM2 commands
     handlePCRExtend: function (commandBuffer) {
-    // Comprehensive PCR extend command buffer analysis system
+        // Comprehensive PCR extend command buffer analysis system
         var pcrAnalysis = {
             timestamp: new Date().toISOString(),
             context: 'pcr_extend_command_buffer_analysis',
@@ -1522,8 +1495,7 @@ const tpmEmulator = {
         pcrAnalysis.digest_value = bufferAnalysis.digest;
 
         // Identify PCR extend vulnerabilities
-        pcrAnalysis.extend_vulnerabilities =
-      this.identifyPCRExtendVulnerabilities(bufferAnalysis);
+        pcrAnalysis.extend_vulnerabilities = this.identifyPCRExtendVulnerabilities(bufferAnalysis);
 
         // Determine bypass techniques for PCR operations
         pcrAnalysis.bypass_techniques = [
@@ -1550,7 +1522,7 @@ const tpmEmulator = {
     },
 
     handleStartAuthSession: function (commandBuffer) {
-    // Comprehensive auth session command buffer analysis system
+        // Comprehensive auth session command buffer analysis system
         var authSessionAnalysis = {
             timestamp: new Date().toISOString(),
             context: 'auth_session_command_buffer_analysis',
@@ -1572,7 +1544,7 @@ const tpmEmulator = {
 
         // Identify auth session vulnerabilities
         authSessionAnalysis.session_vulnerabilities =
-      this.identifyAuthSessionVulnerabilities(bufferAnalysis);
+            this.identifyAuthSessionVulnerabilities(bufferAnalysis);
 
         // Determine bypass techniques for auth sessions
         authSessionAnalysis.auth_bypass_techniques = [
@@ -1612,7 +1584,7 @@ const tpmEmulator = {
     },
 
     handleCreate: function (commandBuffer) {
-    // Comprehensive TPM create command buffer analysis system
+        // Comprehensive TPM create command buffer analysis system
         var createAnalysis = {
             timestamp: new Date().toISOString(),
             context: 'tpm_create_command_buffer_analysis',
@@ -1634,7 +1606,7 @@ const tpmEmulator = {
 
         // Identify creation vulnerabilities
         createAnalysis.creation_vulnerabilities =
-      this.identifyCreationVulnerabilities(bufferAnalysis);
+            this.identifyCreationVulnerabilities(bufferAnalysis);
 
         // Determine bypass techniques for object creation
         createAnalysis.object_bypass_techniques = [
@@ -1692,13 +1664,11 @@ const tpmEmulator = {
     },
 
     handleSign: function (commandBuffer) {
-    // Use commandBuffer to analyze TPM sign command structure for bypass
+        // Use commandBuffer to analyze TPM sign command structure for bypass
         var commandData = {
             length: commandBuffer.length,
-            command_code:
-        commandBuffer.length >= 10 ? commandBuffer.readUInt32BE(6) : 0,
-            handles_count:
-        commandBuffer.length >= 14 ? commandBuffer.readUInt32BE(10) : 0,
+            command_code: commandBuffer.length >= 10 ? commandBuffer.readUInt32BE(6) : 0,
+            handles_count: commandBuffer.length >= 14 ? commandBuffer.readUInt32BE(10) : 0,
         };
 
         send({
@@ -1728,11 +1698,10 @@ const tpmEmulator = {
     },
 
     handleUnseal: function (commandBuffer) {
-    // Use commandBuffer to analyze TPM unseal command for bypass
+        // Use commandBuffer to analyze TPM unseal command for bypass
         var unsealAnalysis = {
             buffer_size: commandBuffer.length,
-            auth_area_size:
-        commandBuffer.length >= 18 ? commandBuffer.readUInt32BE(14) : 0,
+            auth_area_size: commandBuffer.length >= 18 ? commandBuffer.readUInt32BE(14) : 0,
             has_auth_data: commandBuffer.length > 20,
         };
 
@@ -1774,7 +1743,7 @@ const tpmEmulator = {
             generateNonce: function () {
                 return this.generateBytes(20).reduce(
                     (hex, byte) => hex + byte.toString(16).padStart(2, '0'),
-                    '',
+                    ''
                 );
             },
         };
@@ -1797,14 +1766,11 @@ const tpmEmulator = {
             try {
                 var kernel32 = Module.findExportByName(
                     'kernel32.dll',
-                    'GetFirmwareEnvironmentVariableW',
+                    'GetFirmwareEnvironmentVariableW'
                 );
                 this.platformConfig.secureBootEnabled = kernel32 !== null;
 
-                var bcrypt = Module.findExportByName(
-                    'bcrypt.dll',
-                    'BCryptOpenAlgorithmProvider',
-                );
+                var bcrypt = Module.findExportByName('bcrypt.dll', 'BCryptOpenAlgorithmProvider');
                 this.platformConfig.bitLockerEnabled = bcrypt !== null;
             } catch (e) {
                 // Use e to log platform detection errors for debugging TPM emulation environment
@@ -1834,9 +1800,7 @@ const tpmEmulator = {
         // Randomize response timing to avoid fingerprinting
         if (this.antiDetection.timingRandomization) {
             this.randomizeTimingDelay = function () {
-                var delay = Math.floor(
-                    Math.random() * self.antiDetection.responseJitter,
-                );
+                var delay = Math.floor(Math.random() * self.antiDetection.responseJitter);
                 return delay;
             };
         }
@@ -1856,7 +1820,7 @@ const tpmEmulator = {
 
     // Obfuscate memory footprint to avoid detection
     obfuscateMemoryFootprint: function () {
-    // Overwrite sensitive strings in memory with random data
+        // Overwrite sensitive strings in memory with random data
         var sensitiveStrings = ['TPM_EMULATOR', 'FRIDA', 'HOOK'];
         sensitiveStrings.forEach(function (str) {
             try {
@@ -1986,7 +1950,7 @@ const tpmEmulator = {
         try {
             var setVariable = Module.findExportByName(
                 'kernel32.dll',
-                'GetFirmwareEnvironmentVariableW',
+                'GetFirmwareEnvironmentVariableW'
             );
             if (setVariable) {
                 Interceptor.attach(setVariable, {
@@ -1994,7 +1958,7 @@ const tpmEmulator = {
                         var varName = args[0].readUtf16String();
                         if (
                             varName &&
-              (varName.includes('SecureBoot') || varName.includes('SetupMode'))
+                            (varName.includes('SecureBoot') || varName.includes('SetupMode'))
                         ) {
                             this.isSecureBootVar = true;
                             // Use self to update TPM platform state for SecureBoot bypass
@@ -2023,9 +1987,7 @@ const tpmEmulator = {
                 });
 
                 // Use ntdll for low-level system call hooking for deeper UEFI bypass
-                var ntQuerySystemInformation = ntdll.getExportByName(
-                    'NtQuerySystemInformation',
-                );
+                var ntQuerySystemInformation = ntdll.getExportByName('NtQuerySystemInformation');
                 if (ntQuerySystemInformation) {
                     Interceptor.attach(ntQuerySystemInformation, {
                         onEnter: function (args) {
@@ -2079,7 +2041,7 @@ const tpmEmulator = {
                         onLeave: function (retval) {
                             // Use self to track BitLocker bypass state in TPM emulator
                             self.platformConfig.bitLockerBypassCount =
-                (self.platformConfig.bitLockerBypassCount || 0) + 1;
+                                (self.platformConfig.bitLockerBypassCount || 0) + 1;
                             self.platformConfig.lastBitLockerBypass = Date.now();
 
                             send({
@@ -2128,9 +2090,7 @@ const tpmEmulator = {
                         // Intercept IMA measurement log access for bypass
                         if (
                             filename &&
-              filename.includes(
-                  '/sys/kernel/security/ima/ascii_runtime_measurements',
-              )
+                            filename.includes('/sys/kernel/security/ima/ascii_runtime_measurements')
                         ) {
                             this.isImaAccess = true;
                             send({
@@ -2176,7 +2136,7 @@ const tpmEmulator = {
             // Hook EFI_RUNTIME_SERVICES
             var kernel32 = Module.findExportByName(
                 'kernel32.dll',
-                'GetFirmwareEnvironmentVariableExW',
+                'GetFirmwareEnvironmentVariableExW'
             );
             if (kernel32) {
                 Interceptor.attach(kernel32, {
@@ -2186,7 +2146,7 @@ const tpmEmulator = {
                             this.isBootVar = true;
                             // Use self to track UEFI runtime bypass state in TPM emulator
                             self.platformConfig.uefiRuntimeBypassCount =
-                (self.platformConfig.uefiRuntimeBypassCount || 0) + 1;
+                                (self.platformConfig.uefiRuntimeBypassCount || 0) + 1;
                             self.platformConfig.lastUefiBypass = Date.now();
 
                             send({
@@ -2239,7 +2199,7 @@ const tpmEmulator = {
                 // Update detection evasion metrics
                 self.stats.detectionAttempts = 0; // Reset counter
             },
-            30000 + Math.floor(Math.random() * 30000),
+            30000 + Math.floor(Math.random() * 30000)
         ); // 30-60 second intervals
 
         send({
@@ -2252,10 +2212,7 @@ const tpmEmulator = {
     // Generate background attestation to mask real bypass activities
     generateBackgroundAttestation: function () {
         var nonce = this.cryptoEngine.rng.generateNonce();
-        var fakeQuote = this.generateAttestationQuote(
-            nonce,
-            [0, 1, 2, 3, 4, 5, 6, 7],
-        );
+        var fakeQuote = this.generateAttestationQuote(nonce, [0, 1, 2, 3, 4, 5, 6, 7]);
 
         // Use fakeQuote to cache attestation data for bypass operations
         this.attestationCache = this.attestationCache || {};
@@ -2296,10 +2253,7 @@ const tpmEmulator = {
 
         // Generate cryptographic signature
         var dataToSign = JSON.stringify(attestation);
-        var signature = this.generateRSASignature(
-            dataToSign,
-            this.config.keys.attestationKey,
-        );
+        var signature = this.generateRSASignature(dataToSign, this.config.keys.attestationKey);
 
         attestation.signature = {
             algorithm: 'RSASSA_PKCS1_v1_5_SHA256',
@@ -2335,10 +2289,10 @@ const tpmEmulator = {
         // Generate deterministic signature based on key and hash
         for (var i = 0; i < 256; i++) {
             var byte =
-        (parseInt(hash.substring(i % 64, (i % 64) + 1), 16) ^
-          (key.handle >> ((i % 4) * 8)) ^
-          (i * 17)) &
-        0xff;
+                (parseInt(hash.substring(i % 64, (i % 64) + 1), 16) ^
+                    (key.handle >> ((i % 4) * 8)) ^
+                    (i * 17)) &
+                0xff;
             signature += byte.toString(16).padStart(2, '0');
         }
 
@@ -2386,7 +2340,7 @@ const tpmEmulator = {
 
     // Initialize TPM emulator with comprehensive bypass capabilities
     try {
-    // Activate all TPM emulator subsystems
+        // Activate all TPM emulator subsystems
         tpmEmulator.initializeCryptoEngine();
         tpmEmulator.setupTPMDeviceInterception();
         tpmEmulator.initializeAttestation();
@@ -2399,17 +2353,11 @@ const tpmEmulator = {
             action: 'tpm_emulator_fully_initialized',
             analysis: tpmInitAnalysis,
             capabilities:
-        tpmEmulator.name +
-        ' ' +
-        tpmEmulator.version +
-        ' - ' +
-        tpmEmulator.description,
+                tpmEmulator.name + ' ' + tpmEmulator.version + ' - ' + tpmEmulator.description,
         });
 
         // Log successful TPM emulator activation
-        console.log(
-            '[+] TPM Emulator: Comprehensive hardware bypass system activated',
-        );
+        console.log('[+] TPM Emulator: Comprehensive hardware bypass system activated');
     } catch (initError) {
         send({
             type: 'error',
@@ -2419,9 +2367,7 @@ const tpmEmulator = {
             analysis: tpmInitAnalysis,
         });
 
-        console.log(
-            '[-] TPM Emulator: Initialization failed - ' + initError.message,
-        );
+        console.log('[-] TPM Emulator: Initialization failed - ' + initError.message);
     }
 
     // Store comprehensive TPM emulator analysis

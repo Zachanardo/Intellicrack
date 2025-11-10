@@ -1,6 +1,7 @@
 # Data Directory
 
-This directory contains data files used by Intellicrack for analysis, signatures, templates, and persistent storage.
+This directory contains data files used by Intellicrack for analysis,
+signatures, templates, and persistent storage.
 
 ## Contents
 
@@ -15,7 +16,8 @@ This directory contains data files used by Intellicrack for analysis, signatures
 
 ### Rule Files
 
-- `yara_rules/` - Directory containing YARA rules for malware detection and analysis
+- `yara_rules/` - Directory containing YARA rules for malware detection and
+  analysis
 
 ### Templates
 
@@ -32,4 +34,5 @@ These files support various Intellicrack features:
 
 ## Security Note
 
-Some files may contain sensitive data. Ensure proper permissions and backup important databases regularly.
+Some files may contain sensitive data. Ensure proper permissions and backup
+important databases regularly.

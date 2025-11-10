@@ -1,9 +1,11 @@
 # Intellicrack Installation
 
-For detailed installation instructions and the automated installation script, please see:
+For detailed installation instructions and the automated installation script,
+please see:
 
 📁 **[setup/INSTALL.md](setup/INSTALL.md)** - Comprehensive installation guide
-📜 **[setup/install.ps1](setup/install.ps1)** - Automated PowerShell installation script
+📜 **[setup/install.ps1](setup/install.ps1)** - Automated PowerShell
+installation script
 
 ## Quick Start
 
@@ -16,4 +18,5 @@ cd Intellicrack
 .\setup\install.ps1
 ```
 
-For manual installation, troubleshooting, and advanced options, see the full documentation in [setup/INSTALL.md](setup/INSTALL.md).
+For manual installation, troubleshooting, and advanced options, see the full
+documentation in [setup/INSTALL.md](setup/INSTALL.md).

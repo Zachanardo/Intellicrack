@@ -99,7 +99,7 @@ class ConfirmationManager:
 
         # Display action details
         print("\n" + "=" * 80)
-        print("🤖 AI ACTION CONFIRMATION REQUEST")
+        print(" AI ACTION CONFIRMATION REQUEST")
         print("=" * 80)
         print(f"Action Type: {action.action_type.value}")
         print(f"Description: {action.description}")
@@ -109,7 +109,7 @@ class ConfirmationManager:
         if action.potential_impacts:
             print("\nPotential Impacts:")
             for impact in action.potential_impacts:
-                print(f"  • {impact}")
+                print(f"   {impact}")
 
         if action.ai_reasoning:
             print(f"\nAI Reasoning: {action.ai_reasoning}")

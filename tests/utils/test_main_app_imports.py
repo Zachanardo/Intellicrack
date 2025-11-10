@@ -13,7 +13,7 @@ print("Testing main_app.py imports step by step...")
 try:
     print("1. Testing pyqt6_handler import...")
     from intellicrack.handlers.pyqt6_handler import HAS_PYQT, QMainWindow, QApplication
-    print(f"   ✅ pyqt6_handler imported successfully, HAS_PYQT: {HAS_PYQT}")
+    print(f"   OK pyqt6_handler imported successfully, HAS_PYQT: {HAS_PYQT}")
 
     print("2. Testing individual PyQt6 components...")
     try:
@@ -49,7 +49,7 @@ try:
             QListWidgetItem,
             QMainWindow,
         )
-        print("   ✅ First batch of PyQt6 components imported successfully")
+        print("   OK First batch of PyQt6 components imported successfully")
 
         # Test more components
         from intellicrack.handlers.pyqt6_handler import (
@@ -101,16 +101,16 @@ try:
             QWizardPage,
             pyqtSignal,
         )
-        print("   ✅ All PyQt6 components imported successfully")
+        print("   OK All PyQt6 components imported successfully")
         print(f"   QMainWindow type: {type(QMainWindow)}")
         print(f"   QMainWindow has setGeometry: {hasattr(QMainWindow, 'setGeometry')}")
 
     except ImportError as e:
-        print(f"   ❌ PyQt6 components import failed: {e}")
+        print(f"   FAIL PyQt6 components import failed: {e}")
         import traceback
         traceback.print_exc()
 
 except Exception as e:
-    print(f"❌ Basic import failed: {e}")
+    print(f"FAIL Basic import failed: {e}")
     import traceback
     traceback.print_exc()

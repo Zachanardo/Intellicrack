@@ -761,6 +761,7 @@ class DetectionDepthValidator:
                     try:
                         config_settings['concurrent_users'] = int(concurrent_pattern.group(1))
                     except ValueError:
+                        pass
                         # Parsing may fail, continue with other configuration detection
 
             elif 'hasp' in protection_lower or 'sentinel' in protection_lower:
@@ -2990,6 +2991,7 @@ class DetectionDepthValidator:
                 if pattern in section_data:
                     return True
         except:
+            pass
             # Feature detection may fail for various reasons, return False
         return False
 
@@ -3981,6 +3983,7 @@ class DetectionDepthValidator:
                             return f"{estimated_year}-06-01"  # Mid-year estimate
 
                     except ValueError:
+                        pass
                         # Parsing may fail, continue with other configuration detection
 
             return None

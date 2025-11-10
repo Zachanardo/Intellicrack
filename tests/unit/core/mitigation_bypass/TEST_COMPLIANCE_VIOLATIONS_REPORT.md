@@ -1,24 +1,29 @@
 # Test Compliance Violations Report - CRITICAL
 
 ## Executive Summary
-The Testing agent has created comprehensive test suites but with **CRITICAL VIOLATIONS** of Testing.md standards that must be immediately remediated.
+
+The Testing agent has created comprehensive test suites but with **CRITICAL
+VIOLATIONS** of Testing.md standards that must be immediately remediated.
 
 ## Critical Violations Requiring Immediate Fix
 
 ### 1. Mock Framework Usage (SEVERITY: CRITICAL)
 
 **Violation**: All 5 test files import and use `unittest.mock`:
+
 ```python
 from unittest.mock import Mock, patch, MagicMock
 ```
 
 **Impact**:
+
 - Tests can pass with non-functional placeholder code
 - Violates core anti-bias testing mandate
 - Defeats the purpose of specification-driven testing
 - Allows hidden functionality gaps
 
 **Required Fix**:
+
 1. Remove ALL mock imports from test files
 2. Replace mock objects with real binary data structures
 3. Let tests fail naturally when encountering non-functional code
@@ -27,6 +32,7 @@ from unittest.mock import Mock, patch, MagicMock
 ### 2. Weak Assertion Patterns (SEVERITY: HIGH)
 
 **Violation**: Tests use overly permissive assertions:
+
 ```python
 # BAD - Too permissive
 assert result is not None
@@ -40,6 +46,7 @@ assert result['gadget_chain']['executable'] == True
 ```
 
 **Required Fix**:
+
 - Replace all weak assertions with specific capability demands
 - Remove conditional success checks
 - Demand concrete exploitation results
@@ -47,6 +54,7 @@ assert result['gadget_chain']['executable'] == True
 ### 3. Mock Process Fixtures (SEVERITY: HIGH)
 
 **Violation**: Tests create mock processes:
+
 ```python
 @pytest.fixture
 def mock_process(self):
@@ -54,6 +62,7 @@ def mock_process(self):
 ```
 
 **Required Fix**:
+
 - Use real process creation or
 - Use static binary analysis without process interaction
 - If process interaction needed, demand real ptrace/debugging capabilities
@@ -99,6 +108,7 @@ if __name__ == "__main__":
 ## Validation Checklist
 
 After remediation, tests MUST:
+
 - [ ] Have ZERO mock imports
 - [ ] Use only real binary data and structures
 - [ ] Fail immediately on placeholder implementations
@@ -111,9 +121,13 @@ After remediation, tests MUST:
 ## Testing Philosophy Reminder
 
 From Testing.md:
-> "You MUST NOT read function implementations when writing tests. You operate using specification-driven, black-box testing methodology to prevent writing tests that merely validate existing placeholder code."
 
-The presence of mocks violates this core principle by allowing tests to succeed regardless of actual implementation quality.
+> "You MUST NOT read function implementations when writing tests. You operate
+> using specification-driven, black-box testing methodology to prevent writing
+> tests that merely validate existing placeholder code."
+
+The presence of mocks violates this core principle by allowing tests to succeed
+regardless of actual implementation quality.
 
 ## Recommendation
 
@@ -125,6 +139,10 @@ The presence of mocks violates this core principle by allowing tests to succeed 
 
 ## Conclusion
 
-While the Testing agent created extensive test coverage, the use of mocking frameworks represents a fundamental violation of Intellicrack's testing philosophy. These tests would allow placeholder code to pass, defeating the entire purpose of specification-driven testing.
+While the Testing agent created extensive test coverage, the use of mocking
+frameworks represents a fundamental violation of Intellicrack's testing
+philosophy. These tests would allow placeholder code to pass, defeating the
+entire purpose of specification-driven testing.
 
-**The tests must be remediated to remove ALL mocking before they can serve their intended purpose of validating genuine exploitation capabilities.**
+**The tests must be remediated to remove ALL mocking before they can serve their
+intended purpose of validating genuine exploitation capabilities.**

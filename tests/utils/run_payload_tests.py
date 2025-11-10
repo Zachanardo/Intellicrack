@@ -23,29 +23,29 @@ def run_basic_test():
     try:
         # Run minimal metadata test
         test_instance.test_successful_payload_processing_minimal_metadata()
-        print("✓ test_successful_payload_processing_minimal_metadata PASSED")
+        print("OK test_successful_payload_processing_minimal_metadata PASSED")
 
         # Run full metadata test
         test_instance.test_successful_payload_processing_full_metadata()
-        print("✓ test_successful_payload_processing_full_metadata PASSED")
+        print("OK test_successful_payload_processing_full_metadata PASSED")
 
         # Run failure test
         test_instance.test_failed_payload_with_error_message()
-        print("✓ test_failed_payload_with_error_message PASSED")
+        print("OK test_failed_payload_with_error_message PASSED")
 
         # Run callback test
         test_instance.test_successful_payload_with_save_callback()
-        print("✓ test_successful_payload_with_save_callback PASSED")
+        print("OK test_successful_payload_with_save_callback PASSED")
 
         # Run edge case test
         test_instance.test_none_save_callback_handling()
-        print("✓ test_none_save_callback_handling PASSED")
+        print("OK test_none_save_callback_handling PASSED")
 
         print("\n🎉 All basic tests PASSED!")
         return True
 
     except Exception as e:
-        print(f"✗ Test failed: {e}")
+        print(f"FAIL Test failed: {e}")
         import traceback
         traceback.print_exc()
         return False

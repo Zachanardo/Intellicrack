@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
-"""
-Analyze scanner results and generate report
-"""
+"""Analyze scanner results and generate report."""
 
 import json
 import os
 from collections import defaultdict
 from pathlib import Path
 
+
 def analyze_scan_results(json_file):
-    """Parse and analyze scan results"""
+    """Parse and analyze scan results."""
     with open(json_file, 'r') as f:
         data = json.load(f)
 
@@ -28,18 +27,18 @@ def analyze_scan_results(json_file):
         findings_by_severity[finding['severity']].append(finding)
 
     # Statistics
-    print(f"=== SCANNER RESULTS SUMMARY ===")
+    print("=== SCANNER RESULTS SUMMARY ===")
     print(f"Total Findings: {total_findings}")
-    print(f"\nSeverity Breakdown:")
+    print("\nSeverity Breakdown:")
     print(f"  Critical: {severity_counts.get('critical', 0)}")
     print(f"  High: {severity_counts.get('high', 0)}")
     print(f"  Medium: {severity_counts.get('medium', 0)}")
 
-    print(f"\nFindings by Type:")
+    print("\nFindings by Type:")
     for ftype, items in sorted(findings_by_type.items(), key=lambda x: -len(x[1])):
         print(f"  {ftype}: {len(items)}")
 
-    print(f"\nMost Affected Files (Top 10):")
+    print("\nMost Affected Files (Top 10):")
     sorted_files = sorted(findings_by_file.items(), key=lambda x: -len(x[1]))[:10]
     for filepath, items in sorted_files:
         # Simplify path for display
@@ -47,7 +46,7 @@ def analyze_scan_results(json_file):
         print(f"  {short_path}: {len(items)} issues")
 
     # Sample findings for manual review
-    print(f"\n=== SAMPLE FINDINGS FOR MANUAL REVIEW ===")
+    print("\n=== SAMPLE FINDINGS FOR MANUAL REVIEW ===")
 
     # Get 5 critical, 5 high, 5 medium findings for review
     samples = []

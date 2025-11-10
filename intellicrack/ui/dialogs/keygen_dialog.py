@@ -573,13 +573,13 @@ class KeygenDialog(BaseDialog):
             if analysis.get("detected_algorithms"):
                 text += "Detected Algorithms:\n"
                 for _algo in analysis["detected_algorithms"]:
-                    text += f"  • {_algo}\n"
+                    text += f"   {_algo}\n"
                 text += "\n"
 
             if analysis.get("patterns_found"):
                 text += "Patterns Found:\n"
                 for pattern, count in analysis["patterns_found"].items():
-                    text += f"  • {pattern}: {count} occurrences\n"
+                    text += f"   {pattern}: {count} occurrences\n"
                 text += "\n"
 
             if analysis.get("entropy_analysis"):
@@ -592,7 +592,7 @@ class KeygenDialog(BaseDialog):
             if analysis.get("string_analysis"):
                 text += "License-related Strings Found:\n"
                 for _string_type in analysis["string_analysis"]:
-                    text += f"  • {_string_type}\n"
+                    text += f"   {_string_type}\n"
                 text += "\n"
 
         return text
@@ -681,7 +681,7 @@ class KeygenDialog(BaseDialog):
             if validation.get("notes"):
                 text += "  Notes:\n"
                 for _note in validation["notes"]:
-                    text += f"    • {_note}\n"
+                    text += f"     {_note}\n"
             text += "\n"
 
         if "analysis" in result:
@@ -994,19 +994,19 @@ class KeygenDialog(BaseDialog):
                 analysis_text += "Format Distribution:\n"
                 for fmt, count in analysis["formats"].items():
                     percentage = (count / analysis["count"]) * 100
-                    analysis_text += f"  • {fmt.title()}: {count} ({percentage:.1f}%)\n"
+                    analysis_text += f"   {fmt.title()}: {count} ({percentage:.1f}%)\n"
                 analysis_text += "\n"
 
             if analysis.get("patterns"):
                 analysis_text += "Length Statistics:\n"
-                analysis_text += f"  • Average Length: {analysis['patterns'].get('avg_length', 0):.1f}\n"
-                analysis_text += f"  • Min Length: {analysis['patterns'].get('min_length', 0)}\n"
-                analysis_text += f"  • Max Length: {analysis['patterns'].get('max_length', 0)}\n\n"
+                analysis_text += f"   Average Length: {analysis['patterns'].get('avg_length', 0):.1f}\n"
+                analysis_text += f"   Min Length: {analysis['patterns'].get('min_length', 0)}\n"
+                analysis_text += f"   Max Length: {analysis['patterns'].get('max_length', 0)}\n\n"
 
             if analysis.get("recommendations"):
                 analysis_text += "Recommendations for Key Generation:\n"
-                analysis_text += f"  • Suggested Format: {analysis['recommendations'].get('format', 'alphanumeric').title()}\n"
-                analysis_text += f"  • Suggested Length: {analysis['recommendations'].get('length', 25)}\n"
+                analysis_text += f"   Suggested Format: {analysis['recommendations'].get('format', 'alphanumeric').title()}\n"
+                analysis_text += f"   Suggested Length: {analysis['recommendations'].get('length', 25)}\n"
 
             self.key_analysis_display.setPlainText(analysis_text)
 

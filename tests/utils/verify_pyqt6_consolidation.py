@@ -76,7 +76,7 @@ def check_pyqt6_consolidation():
     print()
 
     if not issues:
-        print("✅ SUCCESS: All PyQt6 imports are properly consolidated!")
+        print("OK SUCCESS: All PyQt6 imports are properly consolidated!")
         print()
         print("Summary:")
         print("- All application code uses: from intellicrack.ui.dialogs.common_imports import ...")
@@ -85,7 +85,7 @@ def check_pyqt6_consolidation():
         print()
         print("The consolidation is 100% complete!")
     else:
-        print("❌ ISSUES FOUND:")
+        print("FAIL ISSUES FOUND:")
         for issue in issues:
             print(f"  - {issue['file']}: {issue['type']} ({issue['count']} import(s))")
         print()
@@ -112,7 +112,7 @@ def check_pyqt6_consolidation():
         if qtwidgets_match:
             total_classes += len([c.strip() for c in qtwidgets_match.group(1).split(',') if c.strip()])
 
-        print("\n📊 Common imports statistics:")
+        print("\n Common imports statistics:")
         print(f"   - Total PyQt6 classes consolidated: {total_classes}")
         print(f"   - Location: {common_imports_file}")
 

@@ -564,7 +564,7 @@ class TestAIScriptGenerator(BaseIntellicrackTest):
             ("ghidra", "Analyze the binary to identify all instances of dynamic memory allocation including malloc, calloc, realloc, and new operations, trace their usage patterns throughout the program execution flow, identify potential memory leaks, buffer overflows, use-after-free vulnerabilities, and generate a comprehensive report with memory usage statistics, vulnerability risk scores, and recommended patches using secure coding practices"),
 
             # Non-English characters in prompt
-            ("python", "Create a script to find strings with Unicode characters like 你好世界 and émojis 🔒🔑"),
+            ("python", "Create a script to find strings with Unicode characters like 你好世界 and émojis 🔑"),
 
             # Prompt with code snippets
             ("frida", "Hook the function at address 0x401000 that has signature: int process_data(char* buffer, size_t len)"),

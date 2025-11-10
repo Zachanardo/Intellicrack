@@ -596,13 +596,13 @@ impl ProcessManager {
         }
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn get_process_info(&self, process_id: u32) -> Option<ProcessInfo> {
         let processes = self.processes.lock().unwrap();
         processes.get(&process_id).map(|p| p.info.clone())
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn list_processes(&self) -> Vec<ProcessInfo> {
         let processes = self.processes.lock().unwrap();
         processes.values().map(|p| p.info.clone()).collect()
@@ -714,7 +714,7 @@ impl ProcessManager {
         Ok(())
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn get_statistics(&self) -> ProcessStatistics {
         let stats = self.process_stats.lock().unwrap();
         ProcessStatistics {
@@ -728,7 +728,7 @@ impl ProcessManager {
         }
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn get_worker_status(&self) -> Vec<WorkerInfo> {
         let workers = self.worker_pool.lock().unwrap();
         workers.clone()
@@ -798,12 +798,12 @@ impl ProcessManager {
         })
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn is_running(&self) -> bool {
         !*self.shutdown_flag.lock().unwrap()
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn get_active_process_count(&self) -> usize {
         let processes = self.processes.lock().unwrap();
         processes

@@ -1,6 +1,7 @@
 ## 🚨 MANDATORY RESPONSE FORMAT 🚨
 
-**CRITICAL: EVERY Claude response MUST begin with these EXACT 5 principles. NO EXCEPTIONS.**
+**CRITICAL: EVERY Claude response MUST begin with these EXACT 5 principles. NO
+EXCEPTIONS.**
 
 ### ⚡ RESPONSE TEMPLATE - COPY THIS EXACTLY ⚡
 
@@ -28,4 +29,5 @@
     - Single-word answers
     - Everything
 
-**VERIFICATION**: If principles are missing or incorrect, the response is INVALID and must be restarted.
+**VERIFICATION**: If principles are missing or incorrect, the response is
+INVALID and must be restarted.

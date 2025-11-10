@@ -15,9 +15,9 @@ try:
         ValidationAnalyzer,
         ValidationRoutine,
     )
-    print("✓ All core classes imported successfully")
+    print("OK All core classes imported successfully")
 except ImportError as e:
-    print(f"✗ Import failed: {e}")
+    print(f"FAIL Import failed: {e}")
     sys.exit(1)
 
 print("\n" + "=" * 80)
@@ -184,24 +184,24 @@ print("IMPLEMENTATION SUMMARY")
 print("=" * 80)
 
 features = [
-    "✓ Constraint extraction from binaries",
-    "✓ Algorithm analysis and detection",
-    "✓ Key synthesis from constraints",
-    "✓ Microsoft-style key generation",
-    "✓ UUID key generation",
-    "✓ Luhn algorithm implementation",
-    "✓ CRC32-based keys",
-    "✓ Hardware-locked key generation",
-    "✓ Time-limited key generation",
-    "✓ Feature-encoded keys",
-    "✓ Volume license generation",
-    "✓ RSA-signed license keys",
-    "✓ ECC-signed license keys",
-    "✓ Reverse engineering capabilities",
-    "✓ Batch key generation",
-    "✓ User-specific key generation",
-    "✓ Z3 constraint solving",
-    "✓ Brute-force key recovery",
+    "OK Constraint extraction from binaries",
+    "OK Algorithm analysis and detection",
+    "OK Key synthesis from constraints",
+    "OK Microsoft-style key generation",
+    "OK UUID key generation",
+    "OK Luhn algorithm implementation",
+    "OK CRC32-based keys",
+    "OK Hardware-locked key generation",
+    "OK Time-limited key generation",
+    "OK Feature-encoded keys",
+    "OK Volume license generation",
+    "OK RSA-signed license keys",
+    "OK ECC-signed license keys",
+    "OK Reverse engineering capabilities",
+    "OK Batch key generation",
+    "OK User-specific key generation",
+    "OK Z3 constraint solving",
+    "OK Brute-force key recovery",
 ]
 
 print("\nImplemented Features:")

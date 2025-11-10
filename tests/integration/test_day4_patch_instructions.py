@@ -62,8 +62,8 @@ def test_enhanced_patch_instructions():
             print(f"  Error with address {address}: {e}")
 
     print()
-    print("✅ All patch instruction generation tests completed successfully!")
-    print("✅ Template patch instructions have been replaced with real implementations")
+    print("OK All patch instruction generation tests completed successfully!")
+    print("OK Template patch instructions have been replaced with real implementations")
 
     return True
 
@@ -72,16 +72,16 @@ def main():
     try:
         success = test_enhanced_patch_instructions()
         if success:
-            print("\n🎯 Day 4.1 VALIDATION: SUCCESS")
-            print("✅ Template patch instructions replaced with production-ready implementations")
-            print("✅ Enhanced instruction generation supports comprehensive bypass methods")
-            print("✅ Real machine code generation for x86/x64 architectures")
+            print("\n Day 4.1 VALIDATION: SUCCESS")
+            print("OK Template patch instructions replaced with production-ready implementations")
+            print("OK Enhanced instruction generation supports comprehensive bypass methods")
+            print("OK Real machine code generation for x86/x64 architectures")
             return 0
         else:
-            print("\n❌ Day 4.1 VALIDATION: FAILED")
+            print("\nFAIL Day 4.1 VALIDATION: FAILED")
             return 1
     except Exception as e:
-        print(f"\n❌ Day 4.1 VALIDATION: ERROR - {e}")
+        print(f"\nFAIL Day 4.1 VALIDATION: ERROR - {e}")
         return 1
 
 if __name__ == "__main__":

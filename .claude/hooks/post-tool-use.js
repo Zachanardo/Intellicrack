@@ -23,12 +23,14 @@ function detectViolations(filePath) {
 
     // Skip validation for hook files themselves and test files
     const normalizedPath = filePath.replace(/\\/g, '/').toLowerCase();
-    if (normalizedPath.includes('.claude/hooks') ||
+    if (
+        normalizedPath.includes('.claude/hooks') ||
         normalizedPath.endsWith('post-tool-use.js') ||
         normalizedPath.includes('/tests/') ||
         normalizedPath.includes('\\tests\\') ||
         normalizedPath.includes('test_') ||
-        normalizedPath.endsWith('_test.py')) {
+        normalizedPath.endsWith('_test.py')
+    ) {
         return violations;
     }
 
@@ -136,8 +138,10 @@ function detectViolations(filePath) {
 
         // Check for throw/raise with "not implemented" messages
         lines.forEach((line, index) => {
-            if ((line.includes('throw') || line.includes('raise')) &&
-                line.toLowerCase().includes('not implemented')) {
+            if (
+                (line.includes('throw') || line.includes('raise')) &&
+                line.toLowerCase().includes('not implemented')
+            ) {
                 violations.push(`Not implemented exception found at: ${index + 1}`);
             }
         });
@@ -191,7 +195,7 @@ except:
     const uniqueViolations = [];
     const seenTypes = new Set();
 
-    violations.forEach(violation => {
+    violations.forEach((violation) => {
         const type = violation.split(' ')[0];
         if (!seenTypes.has(type)) {
             seenTypes.add(type);
@@ -245,9 +249,13 @@ function main() {
 
         // Only validate code modification tools
         const codeTools = [
-            'Write', 'Edit', 'MultiEdit',
-            'mcp__filesystem__write_file', 'mcp__filesystem__edit_file',
-            'mcp__desktop-commander__write_file', 'mcp__desktop-commander__edit_block'
+            'Write',
+            'Edit',
+            'MultiEdit',
+            'mcp__filesystem__write_file',
+            'mcp__filesystem__edit_file',
+            'mcp__desktop-commander__write_file',
+            'mcp__desktop-commander__edit_block',
         ];
 
         if (!codeTools.includes(toolName)) {
@@ -281,17 +289,19 @@ function main() {
 
             // Output JSON to provide feedback to Claude for automatic fixing
             const response = {
-                decision: 'block',  // This prompts Claude to automatically fix violations
+                decision: 'block', // This prompts Claude to automatically fix violations
                 reason: `VIOLATIONS DETECTED at lines: ${violationString}\nFile: ${filePath}\nFix these violations with production-ready code immediately. If it's a comment, provide real production ready code. DO NOT simply just delete the comment.`,
                 hookSpecificOutput: {
                     hookEventName: 'PostToolUse',
-                    additionalContext: `Violations found: ${violationString}. All code must be production-ready. Full log at: ${LOG_FILE}`
-                }
+                    additionalContext: `Violations found: ${violationString}. All code must be production-ready. Full log at: ${LOG_FILE}`,
+                },
             };
 
             console.log(JSON.stringify(response));
 
-            logToFile(`STOPPING Claude workflow due to production code violations: ${violationString}`);
+            logToFile(
+                `STOPPING Claude workflow due to production code violations: ${violationString}`
+            );
             process.exit(0); // Use exit 0 with JSON response
         } else {
             logToFile('No violations found, allowing operation');

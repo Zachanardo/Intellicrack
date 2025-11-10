@@ -64,13 +64,13 @@ class TestStringAnalyzer:
             try:
                 result = self.analyzer._detect_license_key_formats(content)
                 if result == expected:
-                    print(f"✓ PASS: {description} - '{content}' -> {result}")
+                    print(f"OK PASS: {description} - '{content}' -> {result}")
                     passed += 1
                 else:
-                    print(f"✗ FAIL: {description} - '{content}' -> {result} (expected {expected})")
+                    print(f"FAIL FAIL: {description} - '{content}' -> {result} (expected {expected})")
                     failed += 1
             except Exception as e:
-                print(f"✗ ERROR: {description} - '{content}' -> {e}")
+                print(f"FAIL ERROR: {description} - '{content}' -> {e}")
                 failed += 1
 
         print(f"\nLicense Key Detection: {passed} passed, {failed} failed")
@@ -114,13 +114,13 @@ class TestStringAnalyzer:
             try:
                 result = self.analyzer._detect_cryptographic_data(content)
                 if result == expected:
-                    print(f"✓ PASS: {description} - '{content}' -> {result}")
+                    print(f"OK PASS: {description} - '{content}' -> {result}")
                     passed += 1
                 else:
-                    print(f"✗ FAIL: {description} - '{content}' -> {result} (expected {expected})")
+                    print(f"FAIL FAIL: {description} - '{content}' -> {result} (expected {expected})")
                     failed += 1
             except Exception as e:
-                print(f"✗ ERROR: {description} - '{content}' -> {e}")
+                print(f"FAIL ERROR: {description} - '{content}' -> {e}")
                 failed += 1
 
         print(f"\nCrypto String Detection: {passed} passed, {failed} failed")
@@ -169,13 +169,13 @@ class TestStringAnalyzer:
             try:
                 result = self.analyzer._analyze_api_function_patterns(content)
                 if result == expected:
-                    print(f"✓ PASS: {description} - '{content}' -> {result}")
+                    print(f"OK PASS: {description} - '{content}' -> {result}")
                     passed += 1
                 else:
-                    print(f"✗ FAIL: {description} - '{content}' -> {result} (expected {expected})")
+                    print(f"FAIL FAIL: {description} - '{content}' -> {result} (expected {expected})")
                     failed += 1
             except Exception as e:
-                print(f"✗ ERROR: {description} - '{content}' -> {e}")
+                print(f"FAIL ERROR: {description} - '{content}' -> {e}")
                 failed += 1
 
         print(f"\nAPI String Detection: {passed} passed, {failed} failed")
@@ -212,23 +212,23 @@ def main():
                 print(f"Test failed with exception: {e}")
                 failed_tests += 1
 
-        print(f"\n🎯 DAY 5.1 ENHANCEMENT TEST RESULTS:")
-        print(f"✅ Test Categories Passed: {passed_tests}")
-        print(f"❌ Test Categories Failed: {failed_tests}")
+        print(f"\n DAY 5.1 ENHANCEMENT TEST RESULTS:")
+        print(f"OK Test Categories Passed: {passed_tests}")
+        print(f"FAIL Test Categories Failed: {failed_tests}")
 
         if failed_tests == 0:
             print("\n🎉 DAY 5.1 ENHANCEMENTS COMPLETED SUCCESSFULLY!")
-            print("✅ Enhanced license key format detection algorithms implemented")
-            print("✅ Advanced cryptographic string identification working")
-            print("✅ Comprehensive API call string analysis functional")
-            print("✅ All enhanced pattern detection algorithms operational")
+            print("OK Enhanced license key format detection algorithms implemented")
+            print("OK Advanced cryptographic string identification working")
+            print("OK Comprehensive API call string analysis functional")
+            print("OK All enhanced pattern detection algorithms operational")
             return 0
         else:
-            print(f"\n❌ DAY 5.1 ENHANCEMENTS FAILED: {failed_tests} test category(s) failed")
+            print(f"\nFAIL DAY 5.1 ENHANCEMENTS FAILED: {failed_tests} test category(s) failed")
             return 1
 
     except Exception as e:
-        print(f"❌ Testing failed with error: {e}")
+        print(f"FAIL Testing failed with error: {e}")
         return 1
 
 

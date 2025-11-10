@@ -30,7 +30,7 @@ def run_coverage_analysis():
     try:
         # Import and run tests
         import pytest
-        from tests.unit.core.network.test_license_server_emulator import *
+        import tests.unit.core.network.test_license_server_emulator
 
         # Run specific test module
         test_file = "tests/unit/core/network/test_license_server_emulator.py"
@@ -86,14 +86,14 @@ def run_coverage_analysis():
 
             # Analyze coverage against Testing Agent requirements
             if coverage_percent >= 80:
-                print("✅ COVERAGE REQUIREMENT MET: Exceeds 80% minimum requirement")
+                print("OK COVERAGE REQUIREMENT MET: Exceeds 80% minimum requirement")
                 status = "SUCCESSFUL"
             else:
-                print("❌ COVERAGE REQUIREMENT NOT MET: Below 80% minimum requirement")
+                print("FAIL COVERAGE REQUIREMENT NOT MET: Below 80% minimum requirement")
                 status = "NEEDS_IMPROVEMENT"
 
         else:
-            print("❌ Target file not found for coverage analysis")
+            print("FAIL Target file not found for coverage analysis")
             coverage_percent = 0
             status = "FILE_NOT_FOUND"
 
@@ -159,8 +159,8 @@ if __name__ == "__main__":
     print()
 
     if results['testing_agent_compliance'] == 'SUCCESSFUL':
-        print("🎯 Testing Agent Mission: COMPLETE")
+        print(" Testing Agent Mission: COMPLETE")
         print("License server emulator test suite validates production-ready capabilities")
     else:
-        print("⚠️ Testing Agent Mission: NEEDS ATTENTION")
+        print("WARNING Testing Agent Mission: NEEDS ATTENTION")
         print("Additional test coverage or functionality validation required")

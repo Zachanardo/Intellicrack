@@ -57,7 +57,7 @@ def test_gui_fixes():
     tab_widget.addTab(exploitation, "Exploitation")
     tab_widget.addTab(tools, "Tools")
 
-    print("✓ All tabs created successfully")
+    print("OK All tabs created successfully")
 
     # Test 2: Verify CPU status widget has scroll area
     print("\n2. Testing CPU status widget...")
@@ -71,9 +71,9 @@ def test_gui_fixes():
             break
 
     if scroll_found:
-        print("✓ CPU status widget has scroll area")
+        print("OK CPU status widget has scroll area")
     else:
-        print("✗ CPU status widget missing scroll area")
+        print("FAIL CPU status widget missing scroll area")
 
     # Test 3: Verify GPU status widget has scroll area and timer
     print("\n3. Testing GPU status widget...")
@@ -87,15 +87,15 @@ def test_gui_fixes():
             break
 
     if scroll_found:
-        print("✓ GPU status widget has scroll area")
+        print("OK GPU status widget has scroll area")
     else:
-        print("✗ GPU status widget missing scroll area")
+        print("FAIL GPU status widget missing scroll area")
 
     # Check for monitoring thread
     if hasattr(gpu_widget, 'monitor_thread') and gpu_widget.monitor_thread:
-        print("✓ GPU status widget has monitoring thread")
+        print("OK GPU status widget has monitoring thread")
     else:
-        print("✗ GPU status widget missing monitoring thread")
+        print("FAIL GPU status widget missing monitoring thread")
 
     # Test 4: Verify button styling in dashboard
     print("\n4. Testing dashboard button styling...")
@@ -107,15 +107,15 @@ def test_gui_fixes():
             button = getattr(dashboard, button_name)
             style = button.styleSheet()
             if "background-color" in style and "text-shadow" in style:
-                print(f"✓ {button_name} has enhanced styling")
+                print(f"OK {button_name} has enhanced styling")
                 buttons_checked += 1
             else:
-                print(f"✗ {button_name} missing enhanced styling")
+                print(f"FAIL {button_name} missing enhanced styling")
         else:
-            print(f"✗ {button_name} not found")
+            print(f"FAIL {button_name} not found")
 
     if buttons_checked >= 3:
-        print("✓ All main buttons have enhanced styling")
+        print("OK All main buttons have enhanced styling")
 
     # Test 5: Test binary loading and shared context
     print("\n5. Testing shared context for binary loading...")
@@ -127,48 +127,48 @@ def test_gui_fixes():
     # Load binary via app_context
     success = app_context.load_binary(str(test_binary))
     if success:
-        print("✓ Binary loaded successfully")
+        print("OK Binary loaded successfully")
 
         # Check if tabs received the binary
         tabs_with_binary = 0
         if analysis.current_binary:
-            print("✓ Analysis tab has binary")
+            print("OK Analysis tab has binary")
             tabs_with_binary += 1
         if exploitation.current_binary:
-            print("✓ Exploitation tab has binary")
+            print("OK Exploitation tab has binary")
             tabs_with_binary += 1
         if tools.current_binary:
-            print("✓ Tools tab has binary")
+            print("OK Tools tab has binary")
             tabs_with_binary += 1
 
         if tabs_with_binary >= 3:
-            print("✓ All tabs received binary via shared context")
+            print("OK All tabs received binary via shared context")
         else:
-            print(f"✗ Only {tabs_with_binary}/3 tabs received binary")
+            print(f"FAIL Only {tabs_with_binary}/3 tabs received binary")
 
         # Clean up
         app_context.unload_binary()
         test_binary.unlink()
     else:
-        print("✗ Failed to load test binary")
+        print("FAIL Failed to load test binary")
 
     # Test 6: Check for attach process button rename
     print("\n6. Testing button rename...")
     if hasattr(dashboard, 'attach_process_btn'):
         button_text = dashboard.attach_process_btn.text()
         if "Attach to Running Process" in button_text:
-            print("✓ Button renamed to 'Attach to Running Process'")
+            print("OK Button renamed to 'Attach to Running Process'")
         else:
-            print(f"✗ Button text is '{button_text}', expected 'Attach to Running Process'")
+            print(f"FAIL Button text is '{button_text}', expected 'Attach to Running Process'")
     else:
-        print("✗ attach_process_btn not found")
+        print("FAIL attach_process_btn not found")
 
     # Show main window for visual inspection
     main_window.setCentralWidget(tab_widget)
     main_window.show()
 
     print("\n" + "=" * 60)
-    print("✅ GUI Test Complete! Check the window for visual verification.")
+    print("OK GUI Test Complete! Check the window for visual verification.")
     print("=" * 60)
     print("\nPlease verify visually:")
     print("- CPU and GPU widgets should be scrollable with full content visible")
@@ -185,7 +185,7 @@ if __name__ == "__main__":
     try:
         sys.exit(test_gui_fixes())
     except Exception as e:
-        print(f"\n❌ Test failed with error: {e}")
+        print(f"\nFAIL Test failed with error: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

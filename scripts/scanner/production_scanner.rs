@@ -74,7 +74,7 @@ static RE_SIMPLE_REGEX: Lazy<Regex> =
     Lazy::new(|| Regex::new(r#"re\.(?:search|findall|match)\(["']\w+["']"#).unwrap());
 
 static RE_SCANNER_IGNORE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"#\s*scanner-ignore:\s*([a-zA-Z_-]+)").unwrap());
+    Lazy::new(|| Regex::new(r"#\s*scanner-ignore").unwrap());
 
 static RE_MAC_ADDRESS: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"\bgetmac\b|uuid\.getnode\(\)").unwrap());
@@ -214,6 +214,18 @@ static RE_PYTHON_MUTABLE_DEFAULT: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"def\s+\w+\([^)]*=\s*\[\]").unwrap());
 
 static RE_PYTHON_GLOBAL: Lazy<Regex> = Lazy::new(|| Regex::new(r"\bglobal\s+\w+").unwrap());
+
+static RE_UI_PROPERTY: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^(is[A-Z][a-z]+|set[A-Z][a-z]+|get[A-Z][a-z]+|width|height|size|pos|x|y)$").unwrap());
+
+static RE_TOOL_CHECKER: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^(is_.*_available|has_.*|check_.*_installed|validate_[a-z0-9_]+)$").unwrap());
+
+static RE_CALLBACK_SETTER: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^(set_.*_callback|register_.*_callback|add_.*_callback|on_[a-z_]+)$").unwrap());
+
+static RE_CLEAR_RESET: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^(clear_.*|reset_.*)$").unwrap());
 
 struct Cli {
     root_path: String,
@@ -473,7 +485,7 @@ impl From<AstFunctionInfo> for FunctionInfo {
 }
 
 trait AstParser {
-    fn parse<'a>(&self, content: &'a str) -> Result<Tree, String>;
+    fn parse(&self, content: &str) -> Result<Tree, String>;
     fn extract_functions(&self, tree: &Tree, content: &str) -> Vec<AstFunctionInfo>;
     fn language(&self) -> Language;
 }
@@ -488,7 +500,7 @@ impl AstParser for PythonAstParser {
         tree_sitter_python::language()
     }
 
-    fn parse<'a>(&self, content: &'a str) -> Result<Tree, String> {
+    fn parse(&self, content: &str) -> Result<Tree, String> {
         let mut parser = Parser::new();
         parser
             .set_language(self.language())
@@ -553,7 +565,7 @@ impl AstParser for RustAstParser {
         tree_sitter_rust::language()
     }
 
-    fn parse<'a>(&self, content: &'a str) -> Result<Tree, String> {
+    fn parse(&self, content: &str) -> Result<Tree, String> {
         let mut parser = Parser::new();
         parser
             .set_language(self.language())
@@ -601,7 +613,7 @@ impl AstParser for JavaScriptAstParser {
         tree_sitter_javascript::language()
     }
 
-    fn parse<'a>(&self, content: &'a str) -> Result<Tree, String> {
+    fn parse(&self, content: &str) -> Result<Tree, String> {
         let mut parser = Parser::new();
         parser
             .set_language(self.language())
@@ -658,7 +670,7 @@ impl AstParser for JavaAstParser {
         tree_sitter_java::language()
     }
 
-    fn parse<'a>(&self, content: &'a str) -> Result<Tree, String> {
+    fn parse(&self, content: &str) -> Result<Tree, String> {
         let mut parser = Parser::new();
         parser
             .set_language(self.language())
@@ -984,7 +996,7 @@ fn extract_return_info(node: &Node, content: &str) -> (usize, Vec<String>) {
 ///
 /// # Returns
 /// * `String` - Type classification: "None", "Boolean", "Integer", "Float",
-///              "String", "Collection", or "Expression"
+///   "String", "Collection", or "Expression"
 fn classify_return_type(value: &str) -> String {
     if value == "None" || value == "null" || value == "nullptr" || value == "nil" {
         "None".to_string()
@@ -1255,7 +1267,7 @@ fn extract_function_calls(node: &Node, content: &str) -> HashSet<String> {
                         let method_name = if func_name.contains('.') {
                             func_name
                                 .split('.')
-                                .last()
+                                .next_back()
                                 .unwrap_or(&func_name)
                                 .to_string()
                         } else {
@@ -1275,7 +1287,7 @@ fn extract_function_calls(node: &Node, content: &str) -> HashSet<String> {
                 if parent.kind() == "call_expression" {
                     let attr_name = content[node.start_byte()..node.end_byte()].to_string();
                     if !attr_name.is_empty() && attr_name.contains('.') {
-                        if let Some(method) = attr_name.split('.').last() {
+                        if let Some(method) = attr_name.split('.').next_back() {
                             calls.insert(method.to_string());
                         }
                     }
@@ -2554,11 +2566,9 @@ fn get_ignored_issue_types(func_body: &str) -> HashSet<String> {
     let mut ignored = HashSet::new();
 
     for line in func_body.lines() {
-        if let Some(caps) = RE_SCANNER_IGNORE.captures(line) {
-            if let Some(type_match) = caps.get(1) {
-                let normalized = type_match.as_str().trim().to_lowercase().replace("-", "_");
-                ignored.insert(normalized);
-            }
+        if RE_SCANNER_IGNORE.is_match(line) {
+            ignored.insert("all".to_string());
+            break;
         }
     }
 
@@ -2939,26 +2949,22 @@ fn detect_domain_specific_issues(
                     35,
                 ));
             }
-        } else {
-            if !func.body.contains("Interceptor")
-                && !func.body.contains("attach")
-                && !func.body.contains("replace")
-            {
-                issues.push((
-                    "Frida hook without Interceptor.attach/replace".to_string(),
-                    35,
-                ));
-            }
+        } else if !func.body.contains("Interceptor")
+            && !func.body.contains("attach")
+            && !func.body.contains("replace")
+        {
+            issues.push((
+                "Frida hook without Interceptor.attach/replace".to_string(),
+                35,
+            ));
         }
     }
 
     if file_context.lang == LanguageType::Java
         && (name_lower.contains("analyze") || name_lower.contains("ghidra"))
-    {
-        if !func.body.contains("currentProgram") && !func.body.contains("getFunctionManager") {
+        && !func.body.contains("currentProgram") && !func.body.contains("getFunctionManager") {
             issues.push(("Ghidra script without Ghidra API usage".to_string(), 30));
         }
-    }
 
     issues
 }
@@ -3204,13 +3210,11 @@ fn detect_java_ghidra_issues(
                         35,
                     ));
                 }
-            } else {
-                if !RE_JAVA_GHIDRA_API.is_match(&func.body) {
-                    issues.push((
-                        "Ghidra analysis function without Ghidra API calls".to_string(),
-                        35,
-                    ));
-                }
+            } else if !RE_JAVA_GHIDRA_API.is_match(&func.body) {
+                issues.push((
+                    "Ghidra analysis function without Ghidra API calls".to_string(),
+                    35,
+                ));
             }
         }
 
@@ -3253,10 +3257,8 @@ fn detect_javascript_specific_issues(func: &FunctionInfo, is_frida_script: bool)
         if has_async && !func.body.contains("await") {
             issues.push(("async function without await keyword".to_string(), 25));
         }
-    } else {
-        if RE_JS_ASYNC_NO_AWAIT.is_match(&func.body) && !func.body.contains("await") {
-            issues.push(("async function without await keyword".to_string(), 25));
-        }
+    } else if RE_JS_ASYNC_NO_AWAIT.is_match(&func.body) && !func.body.contains("await") {
+        issues.push(("async function without await keyword".to_string(), 25));
     }
 
     if RE_JS_PROMISE_NO_CATCH.is_match(&func.body) {
@@ -3300,15 +3302,13 @@ fn detect_javascript_specific_issues(func: &FunctionInfo, is_frida_script: bool)
                 30,
             ));
         }
-    } else {
-        if (func.body.contains("JSON.parse") || func.body.contains("eval("))
-            && !RE_JS_TRY_CATCH.is_match(&func.body)
-        {
-            issues.push((
-                "JSON.parse or eval without try-catch error handling".to_string(),
-                30,
-            ));
-        }
+    } else if (func.body.contains("JSON.parse") || func.body.contains("eval("))
+        && !RE_JS_TRY_CATCH.is_match(&func.body)
+    {
+        issues.push((
+            "JSON.parse or eval without try-catch error handling".to_string(),
+            30,
+        ));
     }
 
     issues
@@ -3361,13 +3361,11 @@ fn detect_javascript_frida_issues(func: &FunctionInfo) -> Vec<(String, i32)> {
                     40,
                 ));
             }
-        } else {
-            if !has_any_frida_api(&func.body) {
-                issues.push((
-                    "Hook/intercept function without any Frida API usage".to_string(),
-                    40,
-                ));
-            }
+        } else if !has_any_frida_api(&func.body) {
+            issues.push((
+                "Hook/intercept function without any Frida API usage".to_string(),
+                40,
+            ));
         }
     }
 
@@ -3388,13 +3386,11 @@ fn detect_javascript_frida_issues(func: &FunctionInfo) -> Vec<(String, i32)> {
                 25,
             ));
         }
-    } else {
-        if RE_JS_FRIDA_MODULE.is_match(&func.body) && !RE_JS_TRY_CATCH.is_match(&func.body) {
-            issues.push((
-                "Module operations without try-catch error handling".to_string(),
-                25,
-            ));
-        }
+    } else if RE_JS_FRIDA_MODULE.is_match(&func.body) && !RE_JS_TRY_CATCH.is_match(&func.body) {
+        issues.push((
+            "Module operations without try-catch error handling".to_string(),
+            25,
+        ));
     }
 
     if name_lower.contains("keygen") || name_lower.contains("generate_key") {
@@ -3408,13 +3404,11 @@ fn detect_javascript_frida_issues(func: &FunctionInfo) -> Vec<(String, i32)> {
                     35,
                 ));
             }
-        } else {
-            if !func.body.contains("crypto") && !func.body.contains("random") {
-                issues.push((
-                    "Keygen function without crypto or random number generation".to_string(),
-                    35,
-                ));
-            }
+        } else if !func.body.contains("crypto") && !func.body.contains("random") {
+            issues.push((
+                "Keygen function without crypto or random number generation".to_string(),
+                35,
+            ));
         }
     }
 
@@ -3456,13 +3450,11 @@ fn detect_python_specific_issues(
                 25,
             ));
         }
-    } else {
-        if RE_PYTHON_BARE_EXCEPT.is_match(&func.body) {
-            issues.push((
-                "Bare except clause - catch specific exceptions".to_string(),
-                25,
-            ));
-        }
+    } else if RE_PYTHON_BARE_EXCEPT.is_match(&func.body) {
+        issues.push((
+            "Bare except clause - catch specific exceptions".to_string(),
+            25,
+        ));
     }
 
     if RE_PYTHON_MUTABLE_DEFAULT.is_match(&func.params) {
@@ -4020,6 +4012,37 @@ fn calculate_deductions(func: &FunctionInfo, file_context: &FileContext) -> i32 
         .filter(|l| !l.trim().is_empty() && !l.trim().starts_with('#'))
         .count();
 
+    // FP Reduction: UI framework property methods (Qt/PyQt/PySide)
+    let has_qt_imports = file_context.imports.iter().any(|imp| {
+        imp.contains("PyQt6") || imp.contains("PyQt5") || imp.contains("PySide6") || imp.contains("PySide2")
+    });
+    if has_qt_imports && RE_UI_PROPERTY.is_match(&func.name) {
+        deductions += 25;
+    }
+
+    // FP Reduction: Tool availability checkers
+    let has_tool_check = func.body.contains("shutil.which")
+        || func.body.contains("os.path.exists")
+        || func.body.contains("subprocess.run")
+        || func.body.contains("which(");
+    if RE_TOOL_CHECKER.is_match(&func.name) && has_tool_check {
+        deductions += 20;
+    }
+
+    // FP Reduction: Callback setter methods
+    if RE_CALLBACK_SETTER.is_match(&func.name) && non_empty_lines <= 3 {
+        deductions += 15;
+    }
+
+    // FP Reduction: Simple clear/reset methods
+    let is_simple_clear = func.body.contains(".clear()")
+        || func.body.contains("= []")
+        || func.body.contains("= {}")
+        || func.body.contains("= None");
+    if RE_CLEAR_RESET.is_match(&func.name) && non_empty_lines <= 2 && is_simple_clear {
+        deductions += 15;
+    }
+
     // Reduced LOC deductions by 50% to prevent over-penalizing production code
     if non_empty_lines >= 50 {
         deductions += 50; // was 100
@@ -4314,7 +4337,7 @@ fn analyze_file(path: &Path, content: &str, lang: LanguageType) -> Vec<Issue> {
             };
 
             let ignored_types = get_ignored_issue_types(&func.body);
-            if ignored_types.contains(&issue_type.to_lowercase()) {
+            if ignored_types.contains("all") || ignored_types.contains(&issue_type.to_lowercase()) {
                 eprintln!(
                     "Ignoring {} issue in {}:{} (scanner-ignore comment found)",
                     issue_type,

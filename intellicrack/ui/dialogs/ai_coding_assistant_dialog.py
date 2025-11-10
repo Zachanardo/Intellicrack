@@ -447,7 +447,7 @@ class ChatWidget(QWidget):
             if configured_models:
                 for model_id in configured_models.keys():
                     self.available_models.append(model_id)
-                    self.model_combo.addItem(f"📦 {model_id}")
+                    self.model_combo.addItem(f" {model_id}")
 
             if discovered_models:
                 total_discovered = sum(len(models) for models in discovered_models.values())
@@ -516,7 +516,7 @@ class ChatWidget(QWidget):
         """Display message when no models are configured."""
         self.chat_history.setHtml(
             "<div style='padding: 10px;'>"
-            "<h4 style='color: #ff6b6b;'>⚠️ No AI Models Configured</h4>"
+            "<h4 style='color: #ff6b6b;'>WARNING No AI Models Configured</h4>"
             "<p>Configure AI models to use the assistant:</p>"
             "<ul>"
             "<li>Add API keys (OpenAI, Anthropic, etc.)</li>"
@@ -536,7 +536,7 @@ class ChatWidget(QWidget):
         """
         self.chat_history.setHtml(
             "<div style='padding: 10px;'>"
-            f"<h4 style='color: #28a745;'>✅ AI Assistant Ready</h4>"
+            f"<h4 style='color: #28a745;'>OK AI Assistant Ready</h4>"
             f"<p><b>Active Model:</b> {model_name}</p>"
             f"<p><b>Available Models:</b> {total_models} model{'s' if total_models != 1 else ''} discovered</p>"
             "<p>Use the buttons above for quick actions or type your question below.</p>"
@@ -547,7 +547,7 @@ class ChatWidget(QWidget):
         """Display error message."""
         self.chat_history.setHtml(
             "<div style='padding: 10px;'>"
-            "<h4 style='color: #dc3545;'>❌ Configuration Error</h4>"
+            "<h4 style='color: #dc3545;'>FAIL Configuration Error</h4>"
             f"<p>{error}</p>"
             "<p>Check logs for details or reconfigure AI models.</p>"
             "</div>"
@@ -1692,7 +1692,7 @@ def validate_license_key(key: str) -> bool:
             # Report results
             if result.returncode == 0:
                 output = result.stdout if result.stdout else "Script executed successfully"
-                self.chat_widget.add_message("System", f"✅ Python bypass executed:\n{output}")
+                self.chat_widget.add_message("System", f"OK Python bypass executed:\n{output}")
             else:
                 error_msg = result.stderr if result.stderr else f"Exit code: {result.returncode}"
                 self.chat_widget.add_message("System", f"ERROR Python bypass failed:\n{error_msg}")
@@ -1728,7 +1728,7 @@ def validate_license_key(key: str) -> bool:
                     pid = frida.spawn([target_binary])
                     session = frida.attach(pid)
                     frida.resume(pid)
-                    self.chat_widget.add_message("System", f"🚀 Spawned and attached to: {process_name}")
+                    self.chat_widget.add_message("System", f" Spawned and attached to: {process_name}")
                 except Exception as e:
                     self.chat_widget.add_message("System", f"ERROR Failed to spawn process: {e}")
                     return
@@ -1738,7 +1738,7 @@ def validate_license_key(key: str) -> bool:
             script.on("message", self._on_frida_message)
             script.load()
 
-            self.chat_widget.add_message("System", "✅ Frida bypass script loaded successfully")
+            self.chat_widget.add_message("System", "OK Frida bypass script loaded successfully")
             self.chat_widget.add_message("System", "Script is running... Check target application")
 
             # Store script reference for cleanup
@@ -1781,7 +1781,7 @@ def validate_license_key(key: str) -> bool:
                 key = self._generate_key_from_template(config, f"user_{i + 1}")
                 generated_keys.append(key)
 
-            self.chat_widget.add_message("System", "✅ Generated License Keys:")
+            self.chat_widget.add_message("System", "OK Generated License Keys:")
             for i, key in enumerate(generated_keys, 1):
                 self.chat_widget.add_message("System", f"{i}. {key}")
 
@@ -1940,7 +1940,7 @@ def validate_license_key(key: str) -> bool:
             results = analyzer.analyze_protection()
 
             # Format and display results
-            self.chat_widget.add_message("System", f"🔍 Analysis Results for: {Path(target_binary).name}")
+            self.chat_widget.add_message("System", f" Analysis Results for: {Path(target_binary).name}")
             self.chat_widget.add_message("System", f"File size: {results.get('file_size', 0):,} bytes")
             self.chat_widget.add_message("System", f"Protection Level: {results.get('protection_level', 'Unknown')}")
             self.chat_widget.add_message("System", f"Protection Score: {results.get('protection_score', 0)}/100")
@@ -1948,12 +1948,12 @@ def validate_license_key(key: str) -> bool:
             if results.get("license_functions"):
                 self.chat_widget.add_message("System", f"🔑 Found {len(results['license_functions'])} license functions:")
                 for func in results["license_functions"][:5]:  # Show first 5
-                    self.chat_widget.add_message("System", f"  • {func['function']} ({func['dll']})")
+                    self.chat_widget.add_message("System", f"   {func['function']} ({func['dll']})")
 
             if results.get("string_patterns"):
                 self.chat_widget.add_message("System", f"📋 Found {len(results['string_patterns'])} string patterns:")
                 for pattern in results["string_patterns"]:
-                    self.chat_widget.add_message("System", f"  • {pattern['type']}: {pattern['count']} occurrences")
+                    self.chat_widget.add_message("System", f"   {pattern['type']}: {pattern['count']} occurrences")
 
             # Store results for other methods
             self.license_analysis_results = results
@@ -2205,15 +2205,15 @@ if __name__ == "__main__":
                 self.editor_tabs.addTab(editor, tab_name)
                 self.editor_tabs.setCurrentWidget(editor)
 
-                self.chat_widget.add_message("AI", f"✅ Keygen template generated: {tab_name}")
+                self.chat_widget.add_message("AI", f"OK Keygen template generated: {tab_name}")
                 self.chat_widget.add_message("AI", "Template includes:")
-                self.chat_widget.add_message("AI", "• Mathematical key generation algorithm")
-                self.chat_widget.add_message("AI", "• Checksum validation system")
-                self.chat_widget.add_message("AI", "• License type encoding")
-                self.chat_widget.add_message("AI", "• Batch key generation")
-                self.chat_widget.add_message("AI", "• Interactive command-line interface")
+                self.chat_widget.add_message("AI", " Mathematical key generation algorithm")
+                self.chat_widget.add_message("AI", " Checksum validation system")
+                self.chat_widget.add_message("AI", " License type encoding")
+                self.chat_widget.add_message("AI", " Batch key generation")
+                self.chat_widget.add_message("AI", " Interactive command-line interface")
             else:
-                self.chat_widget.add_message("AI", "✅ Keygen template generated in memory")
+                self.chat_widget.add_message("AI", "OK Keygen template generated in memory")
 
         except Exception as e:
             logger.error(f"Error generating keygen template: {e}")
@@ -2604,15 +2604,15 @@ if __name__ == "__main__":
                 self.editor_tabs.addTab(editor, tab_name)
                 self.editor_tabs.setCurrentWidget(editor)
 
-                self.chat_widget.add_message("AI", f"✅ HWID spoofing script generated: {tab_name}")
+                self.chat_widget.add_message("AI", f"OK HWID spoofing script generated: {tab_name}")
                 self.chat_widget.add_message("AI", "Features included:")
-                self.chat_widget.add_message("AI", "• Volume serial number spoofing")
-                self.chat_widget.add_message("AI", "• Computer name spoofing")
-                self.chat_widget.add_message("AI", "• MAC address spoofing")
-                self.chat_widget.add_message("AI", "• Disk serial spoofing")
-                self.chat_widget.add_message("AI", "• Processor ID spoofing")
-                self.chat_widget.add_message("AI", "• Frida runtime hooking script")
-                self.chat_widget.add_message("AI", "• Command-line interface")
+                self.chat_widget.add_message("AI", " Volume serial number spoofing")
+                self.chat_widget.add_message("AI", " Computer name spoofing")
+                self.chat_widget.add_message("AI", " MAC address spoofing")
+                self.chat_widget.add_message("AI", " Disk serial spoofing")
+                self.chat_widget.add_message("AI", " Processor ID spoofing")
+                self.chat_widget.add_message("AI", " Frida runtime hooking script")
+                self.chat_widget.add_message("AI", " Command-line interface")
 
                 # Also generate Frida script
                 frida_content = """// Hardware ID Spoofing - Frida Runtime Script
@@ -2664,7 +2664,7 @@ console.log("[+] All HWID hooks installed");
                 self.editor_tabs.addTab(frida_editor, "hwid_hooks.js")
 
             else:
-                self.chat_widget.add_message("AI", "✅ HWID spoofing code generated")
+                self.chat_widget.add_message("AI", "OK HWID spoofing code generated")
 
         except Exception as e:
             logger.error(f"Error generating HWID spoof: {e}")
@@ -3093,14 +3093,14 @@ if __name__ == "__main__":
                 self.editor_tabs.addTab(editor, tab_name)
                 self.editor_tabs.setCurrentWidget(editor)
 
-                self.chat_widget.add_message("System", f"✅ Binary patch assistant created: {tab_name}")
+                self.chat_widget.add_message("System", f"OK Binary patch assistant created: {tab_name}")
                 self.chat_widget.add_message("System", "Features available:")
-                self.chat_widget.add_message("System", "• Automatic backup creation")
-                self.chat_widget.add_message("System", "• License check pattern detection")
-                self.chat_widget.add_message("System", "• Conditional jump patching")
-                self.chat_widget.add_message("System", "• Return value patching")
-                self.chat_widget.add_message("System", "• Time-based check analysis")
-                self.chat_widget.add_message("System", "• Comprehensive patch reporting")
+                self.chat_widget.add_message("System", " Automatic backup creation")
+                self.chat_widget.add_message("System", " License check pattern detection")
+                self.chat_widget.add_message("System", " Conditional jump patching")
+                self.chat_widget.add_message("System", " Return value patching")
+                self.chat_widget.add_message("System", " Time-based check analysis")
+                self.chat_widget.add_message("System", " Comprehensive patch reporting")
 
         except Exception as e:
             logger.error(f"Error opening patch assistant: {e}")
@@ -3279,7 +3279,7 @@ WARNING️  All research should be conducted on your own software in controlled 
 
             logger.info(f"Generating {bypass_type} using AI...")
             if hasattr(self, "chat_widget"):
-                self.chat_widget.add_message("AI", f"🤖 Generating {bypass_type} code for license protection research...")
+                self.chat_widget.add_message("AI", f" Generating {bypass_type} code for license protection research...")
 
             # Create comprehensive context for AI bypass generation
             context = {
@@ -3337,14 +3337,14 @@ Please generate a comprehensive, production-ready bypass script with all necessa
 
                     # Update chat with success
                     if hasattr(self, "chat_widget"):
-                        success_msg = f"✅ AI-generated {bypass_type} bypass created successfully!\n\n"
+                        success_msg = f"OK AI-generated {bypass_type} bypass created successfully!\n\n"
                         success_msg += "Features included:\n"
-                        success_msg += "• Registry manipulation techniques\n"
-                        success_msg += "• API hooking with Frida integration\n"
-                        success_msg += "• Hardware ID spoofing methods\n"
-                        success_msg += "• Time-based protection bypass\n"
-                        success_msg += "• Comprehensive error handling\n"
-                        success_msg += "• Educational comments and documentation\n\n"
+                        success_msg += " Registry manipulation techniques\n"
+                        success_msg += " API hooking with Frida integration\n"
+                        success_msg += " Hardware ID spoofing methods\n"
+                        success_msg += " Time-based protection bypass\n"
+                        success_msg += " Comprehensive error handling\n"
+                        success_msg += " Educational comments and documentation\n\n"
                         success_msg += "WARNING️  Use responsibly for defensive security research only."
 
                         self.chat_widget.add_message("AI", success_msg)
@@ -3503,7 +3503,7 @@ WARNING️  Use for authorized security research only WARNING️
 
             # Process as quick license research query
             if hasattr(self, "chat_widget"):
-                self.chat_widget.add_message("AI", "🔍 Processing quick license research query...")
+                self.chat_widget.add_message("AI", " Processing quick license research query...")
 
             # Create context for quick processing
             context = {
@@ -3597,9 +3597,9 @@ Keep the response focused and actionable while maintaining technical accuracy.""
     def _format_quick_license_response(self, response: str, original_query: str) -> str:
         """Format AI response for quick license queries."""
         try:
-            formatted = "💡 **Quick License Research Response:**\n\n"
+            formatted = " **Quick License Research Response:**\n\n"
             formatted += f"{response}\n\n"
-            formatted += f"📝 **Query:** {original_query}\n"
+            formatted += f" **Query:** {original_query}\n"
             formatted += "🔬 **Research Context:** License protection mechanism analysis for defensive security\n"
             formatted += "WARNING️  **Note:** Use responsibly in authorized research environments only"
 
@@ -3615,65 +3615,65 @@ Keep the response focused and actionable while maintaining technical accuracy.""
             query_type = self._classify_quick_license_query(message)
 
             fallback_responses = {
-                "key_generation": """💡 **Key Generation Research (Offline):**
+                "key_generation": """ **Key Generation Research (Offline):**
 
 Common algorithms used in license key generation:
-• MD5/SHA-1 with user identifiers and magic constants
-• Checksum validation with predictable patterns
-• Base64 encoding with custom transformation matrices
-• Time-based seeds for "unique" generation
+ MD5/SHA-1 with user identifiers and magic constants
+ Checksum validation with predictable patterns
+ Base64 encoding with custom transformation matrices
+ Time-based seeds for "unique" generation
 
 Vulnerabilities to research:
-• Predictable seed sources (username, PC name)
-• Reversible mathematical operations
-• Insufficient entropy in random generation
-• Client-side validation exposure
+ Predictable seed sources (username, PC name)
+ Reversible mathematical operations
+ Insufficient entropy in random generation
+ Client-side validation exposure
 
 🔬 Research Focus: Understanding these patterns helps strengthen key generation security.""",
-                "bypass_techniques": """💡 **Bypass Techniques Research (Offline):**
+                "bypass_techniques": """ **Bypass Techniques Research (Offline):**
 
 Common bypass methods in security research:
-• Registry manipulation for stored license data
-• API hooking to intercept validation functions
-• Time manipulation for trial period extension
-• Binary patching of conditional jump instructions
-• Memory patching of runtime validation
+ Registry manipulation for stored license data
+ API hooking to intercept validation functions
+ Time manipulation for trial period extension
+ Binary patching of conditional jump instructions
+ Memory patching of runtime validation
 
 Defensive countermeasures:
-• Multiple validation layers with cross-verification
-• Server-side license verification
-• Anti-tampering and debugger detection
-• Encrypted validation communication
+ Multiple validation layers with cross-verification
+ Server-side license verification
+ Anti-tampering and debugger detection
+ Encrypted validation communication
 
 🔬 Research Focus: Understanding bypass methods helps build stronger protections.""",
-                "registry_analysis": """💡 **Registry Analysis Research (Offline):**
+                "registry_analysis": """ **Registry Analysis Research (Offline):**
 
 License storage in Windows Registry:
-• HKEY_LOCAL_MACHINE\\SOFTWARE\\[Company]\\[Product]
-• HKEY_CURRENT_USER\\SOFTWARE\\[Company]\\[Product]
-• Encrypted vs. plaintext storage methods
-• Registry key permissions and access control
+ HKEY_LOCAL_MACHINE\\SOFTWARE\\[Company]\\[Product]
+ HKEY_CURRENT_USER\\SOFTWARE\\[Company]\\[Product]
+ Encrypted vs. plaintext storage methods
+ Registry key permissions and access control
 
 Research techniques:
-• Registry monitoring with ProcMon
-• Key enumeration and data extraction
-• Permission analysis for tampering resistance
-• Backup and restore mechanisms
+ Registry monitoring with ProcMon
+ Key enumeration and data extraction
+ Permission analysis for tampering resistance
+ Backup and restore mechanisms
 
 🔬 Research Focus: Registry analysis helps understand storage security.""",
-                "runtime_manipulation": """💡 **Runtime Manipulation Research (Offline):**
+                "runtime_manipulation": """ **Runtime Manipulation Research (Offline):**
 
 Frida and API hooking techniques:
-• Function interception and parameter modification
-• Return value manipulation for validation bypass
-• Memory patching of critical validation logic
-• SSL/TLS certificate validation bypass
+ Function interception and parameter modification
+ Return value manipulation for validation bypass
+ Memory patching of critical validation logic
+ SSL/TLS certificate validation bypass
 
 Research applications:
-• Understanding validation flow analysis
-• Testing protection robustness
-• Identifying critical validation points
-• Developing anti-hooking countermeasures
+ Understanding validation flow analysis
+ Testing protection robustness
+ Identifying critical validation points
+ Developing anti-hooking countermeasures
 
 🔬 Research Focus: Runtime analysis helps strengthen protection mechanisms.""",
             }
@@ -3682,21 +3682,21 @@ Research applications:
             if query_type in fallback_responses:
                 response = fallback_responses[query_type]
             else:
-                response = f"""💡 **License Protection Research (Offline):**
+                response = f""" **License Protection Research (Offline):**
 
 Your query: "{message}"
 
 General research guidance:
-• Use static analysis tools for binary examination
-• Monitor system calls and API interactions
-• Analyze protection mechanisms and their implementation
-• Study common vulnerabilities in license validation
-• Research countermeasures and strengthening techniques
+ Use static analysis tools for binary examination
+ Monitor system calls and API interactions
+ Analyze protection mechanisms and their implementation
+ Study common vulnerabilities in license validation
+ Research countermeasures and strengthening techniques
 
 For specific guidance:
-• Load a target binary for detailed analysis
-• Enable AI functionality for enhanced responses
-• Use the specialized tools in this interface
+ Load a target binary for detailed analysis
+ Enable AI functionality for enhanced responses
+ Use the specialized tools in this interface
 
 🔬 Research Purpose: Understanding protection mechanisms to strengthen software security."""
 
@@ -4404,7 +4404,7 @@ def example_function():
 
     def _format_analysis_results(self, analysis_result: dict[str, Any]) -> str:
         """Format code analysis results for display."""
-        lines = ["📊 **Code Analysis Results**\n"]
+        lines = [" **Code Analysis Results**\n"]
 
         # Basic info
         lines.append(f"**Language:** {analysis_result.get('language', 'Unknown')}")
@@ -4416,15 +4416,15 @@ def example_function():
         # Insights
         insights = analysis_result.get("insights", [])
         if insights:
-            lines.append("**🔍 Insights:**")
+            lines.append("** Insights:**")
             for insight in insights:
-                lines.append(f"  • {insight}")
+                lines.append(f"   {insight}")
             lines.append("")
 
         # Security Issues
         security_issues = analysis_result.get("security_issues", [])
         if security_issues:
-            lines.append("**🔒 Security Issues:**")
+            lines.append("** Security Issues:**")
             for issue in security_issues:
                 lines.append(f"  WARNING️ {issue}")
             lines.append("")
@@ -4432,17 +4432,17 @@ def example_function():
         # Suggestions
         suggestions = analysis_result.get("suggestions", [])
         if suggestions:
-            lines.append("**💡 Suggestions:**")
+            lines.append("** Suggestions:**")
             for suggestion in suggestions:
-                lines.append(f"  • {suggestion}")
+                lines.append(f"   {suggestion}")
             lines.append("")
 
         # Patterns
         patterns = analysis_result.get("patterns", [])
         if patterns:
-            lines.append("**🎯 Detected Patterns:**")
+            lines.append("** Detected Patterns:**")
             for pattern in patterns:
-                lines.append(f"  • {pattern}")
+                lines.append(f"   {pattern}")
             lines.append("")
 
         # Timestamp

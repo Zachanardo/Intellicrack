@@ -581,14 +581,14 @@ class ConfigConcurrentAccessTests(unittest.TestCase):
         print("=" * 60)
 
         summary = {
-            "Concurrent Reads": "✓ No errors with 20 threads",
-            "Concurrent Writes": "✓ No errors with 10 threads",
-            "Mixed Operations": "✓ Stable with 15 threads",
-            "Save Under Load": "✓ No corruption detected",
-            "Thread Pool (50 workers)": "✓ < 1% error rate",
-            "Race Conditions": "✓ Handled gracefully",
-            "Deadlock Prevention": "✓ No deadlocks detected",
-            "Concurrent Migration": "✓ Multiple migrations safe"
+            "Concurrent Reads": "OK No errors with 20 threads",
+            "Concurrent Writes": "OK No errors with 10 threads",
+            "Mixed Operations": "OK Stable with 15 threads",
+            "Save Under Load": "OK No corruption detected",
+            "Thread Pool (50 workers)": "OK < 1% error rate",
+            "Race Conditions": "OK Handled gracefully",
+            "Deadlock Prevention": "OK No deadlocks detected",
+            "Concurrent Migration": "OK Multiple migrations safe"
         }
 
         for test, result in summary.items():

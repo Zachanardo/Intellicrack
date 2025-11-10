@@ -441,4 +441,4 @@ class TestBackupRestoreFunctionality(IntellicrackTestBase):
         assert restored["directories"]["workspace"] == "C:\\Users\\test\\workspace"
         assert restored["directories"]["plugins"] == "C:/Users/test/plugins"
 
-        print("\n✅ Task 20.1.3 COMPLETED: Backup and restore functionality fully tested")
+        print("\nOK Task 20.1.3 COMPLETED: Backup and restore functionality fully tested")

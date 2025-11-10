@@ -101,7 +101,7 @@ class ProductionReadinessCheckpoint7:
                 )
                 return False
 
-            print("    ✓ Commercial license analyzer tests passed")
+            print("    OK Commercial license analyzer tests passed")
             return True
 
         except ImportError as e:
@@ -187,7 +187,7 @@ class ProductionReadinessCheckpoint7:
             # Cleanup
             framework._cleanup_sandbox(sandbox_path)
 
-            print("    ✓ Real-world testing framework tests passed")
+            print("    OK Real-world testing framework tests passed")
             return True
 
         except ImportError as e:
@@ -246,7 +246,7 @@ class ProductionReadinessCheckpoint7:
                     )
                     return False
 
-            print("    ✓ Frida script generation tests passed")
+            print("    OK Frida script generation tests passed")
             return True
 
         except Exception as e:
@@ -312,7 +312,7 @@ class ProductionReadinessCheckpoint7:
                 else:
                     raise
 
-            print("    ✓ Radare2 integration tests passed")
+            print("    OK Radare2 integration tests passed")
             return True
 
         except Exception as e:
@@ -345,7 +345,7 @@ class ProductionReadinessCheckpoint7:
                 )
                 return False
 
-            print(f"    ✓ Success rate {success_rate:.1f}% meets requirements")
+            print(f"    OK Success rate {success_rate:.1f}% meets requirements")
             return True
 
         except Exception as e:
@@ -428,9 +428,9 @@ class ProductionReadinessCheckpoint7:
 
                 if not result:
                     all_passed = False
-                    print(f"✗ {test_name}: FAILED")
+                    print(f"FAIL {test_name}: FAILED")
                 else:
-                    print(f"✓ {test_name}: PASSED")
+                    print(f"OK {test_name}: PASSED")
 
             except Exception as e:
                 self.checkpoint_results["tests"][test_name] = False
@@ -438,7 +438,7 @@ class ProductionReadinessCheckpoint7:
                     f"{test_name} exception: {str(e)}"
                 )
                 all_passed = False
-                print(f"✗ {test_name}: EXCEPTION - {e}")
+                print(f"FAIL {test_name}: EXCEPTION - {e}")
 
         self.checkpoint_results["overall_pass"] = all_passed
 
@@ -456,28 +456,28 @@ Generated: {self.checkpoint_results['timestamp']}
 ## Test Results Summary
 
 ### Enterprise License System Tests
-1. **Commercial License Analyzer**: {'✅ PASSED' if self.checkpoint_results['tests'].get('Commercial License Analyzer') else '❌ FAILED'}
-2. **Real-World Testing Framework**: {'✅ PASSED' if self.checkpoint_results['tests'].get('Real-World Testing Framework') else '❌ FAILED'}
-3. **Frida Script Generation**: {'✅ PASSED' if self.checkpoint_results['tests'].get('Frida Script Generation') else '❌ FAILED'}
-4. **Radare2 Integration**: {'✅ PASSED' if self.checkpoint_results['tests'].get('Radare2 Integration') else '❌ FAILED'}
-5. **Success Rate Requirements**: {'✅ PASSED' if self.checkpoint_results['tests'].get('Success Rate Requirements') else '❌ FAILED'}
+1. **Commercial License Analyzer**: {'OK PASSED' if self.checkpoint_results['tests'].get('Commercial License Analyzer') else 'FAIL FAILED'}
+2. **Real-World Testing Framework**: {'OK PASSED' if self.checkpoint_results['tests'].get('Real-World Testing Framework') else 'FAIL FAILED'}
+3. **Frida Script Generation**: {'OK PASSED' if self.checkpoint_results['tests'].get('Frida Script Generation') else 'FAIL FAILED'}
+4. **Radare2 Integration**: {'OK PASSED' if self.checkpoint_results['tests'].get('Radare2 Integration') else 'FAIL FAILED'}
+5. **Success Rate Requirements**: {'OK PASSED' if self.checkpoint_results['tests'].get('Success Rate Requirements') else 'FAIL FAILED'}
 
 ### License System Detection Status
 
 #### FlexLM Analysis
-- Detection: {'✅ Working' if 'FlexLM detection failed' not in self.checkpoint_results['critical_failures'] else '❌ Failed'}
-- Bypass Generation: {'✅ Working' if 'FlexLM bypass generation failed' not in self.checkpoint_results['critical_failures'] else '❌ Failed'}
-- Frida Script: {'✅ Valid' if 'FlexLM Frida script' not in str(self.checkpoint_results['critical_failures']) else '❌ Invalid'}
+- Detection: {'OK Working' if 'FlexLM detection failed' not in self.checkpoint_results['critical_failures'] else 'FAIL Failed'}
+- Bypass Generation: {'OK Working' if 'FlexLM bypass generation failed' not in self.checkpoint_results['critical_failures'] else 'FAIL Failed'}
+- Frida Script: {'OK Valid' if 'FlexLM Frida script' not in str(self.checkpoint_results['critical_failures']) else 'FAIL Invalid'}
 
 #### HASP Analysis
-- Detection: {'✅ Working' if 'HASP detection failed' not in self.checkpoint_results['critical_failures'] else '❌ Failed'}
-- Bypass Generation: {'✅ Working' if 'HASP bypass generation failed' not in self.checkpoint_results['critical_failures'] else '❌ Failed'}
-- Frida Script: {'✅ Valid' if 'HASP Frida script' not in str(self.checkpoint_results['critical_failures']) else '❌ Invalid'}
+- Detection: {'OK Working' if 'HASP detection failed' not in self.checkpoint_results['critical_failures'] else 'FAIL Failed'}
+- Bypass Generation: {'OK Working' if 'HASP bypass generation failed' not in self.checkpoint_results['critical_failures'] else 'FAIL Failed'}
+- Frida Script: {'OK Valid' if 'HASP Frida script' not in str(self.checkpoint_results['critical_failures']) else 'FAIL Invalid'}
 
 #### CodeMeter Analysis
-- Detection: {'✅ Working' if 'CodeMeter detection failed' not in self.checkpoint_results['critical_failures'] else '❌ Failed'}
-- Bypass Generation: {'✅ Working' if 'CodeMeter bypass generation failed' not in self.checkpoint_results['critical_failures'] else '❌ Failed'}
-- Frida Script: {'✅ Valid' if 'CodeMeter Frida script' not in str(self.checkpoint_results['critical_failures']) else '❌ Invalid'}
+- Detection: {'OK Working' if 'CodeMeter detection failed' not in self.checkpoint_results['critical_failures'] else 'FAIL Failed'}
+- Bypass Generation: {'OK Working' if 'CodeMeter bypass generation failed' not in self.checkpoint_results['critical_failures'] else 'FAIL Failed'}
+- Frida Script: {'OK Valid' if 'CodeMeter Frida script' not in str(self.checkpoint_results['critical_failures']) else 'FAIL Invalid'}
 
 ### Critical Failures
 """
@@ -491,7 +491,7 @@ Generated: {self.checkpoint_results['timestamp']}
         report += f"""
 ### Overall Status
 Pass Rate: {sum(1 for v in self.checkpoint_results['tests'].values() if v)}/{len(self.checkpoint_results['tests'])} ({sum(1 for v in self.checkpoint_results['tests'].values() if v) / len(self.checkpoint_results['tests']) * 100:.1f}%)
-{'✅ CHECKPOINT PASSED' if passed else '❌ CHECKPOINT FAILED'}
+{'OK CHECKPOINT PASSED' if passed else 'FAIL CHECKPOINT FAILED'}
 
 ## Certification Statement
 """
@@ -504,7 +504,7 @@ Pass Rate: {sum(1 for v in self.checkpoint_results['tests'].values() if v)}/{len
 4. Real-world testing framework validates bypasses correctly
 5. Success rate meets >70% requirement
 
-**Deployment Decision**: APPROVED ✅
+**Deployment Decision**: APPROVED OK
 """
         else:
             report += """This checkpoint has FAILED. The following must be addressed:
@@ -513,7 +513,7 @@ Pass Rate: {sum(1 for v in self.checkpoint_results['tests'].values() if v)}/{len
 3. Verify bypass generation produces valid output
 4. Confirm testing framework functions correctly
 
-**Deployment Decision**: NOT APPROVED ❌
+**Deployment Decision**: NOT APPROVED FAIL
 """
 
         # Save report
@@ -538,12 +538,12 @@ def main():
 
     if passed:
         print("\n" + "=" * 60)
-        print("✅ CHECKPOINT 7 PASSED - READY FOR DAY 8")
+        print("OK CHECKPOINT 7 PASSED - READY FOR DAY 8")
         print("=" * 60)
         return 0
     else:
         print("\n" + "=" * 60)
-        print("❌ CHECKPOINT 7 FAILED - FIX ISSUES BEFORE PROCEEDING")
+        print("FAIL CHECKPOINT 7 FAILED - FIX ISSUES BEFORE PROCEEDING")
         print("=" * 60)
         return 1
 

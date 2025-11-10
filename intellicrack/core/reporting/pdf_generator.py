@@ -704,7 +704,7 @@ class PDFReportGenerator:
                 if vulnerabilities:
                     for vuln in vulnerabilities[:3]:  # Show first 3
                         vuln_type = vuln.get("type", "Unknown")
-                        html_content += f"<p>• {vuln_type}</p>"
+                        html_content += f"<p> {vuln_type}</p>"
 
             elif report_type == "technical":
                 # Technical report includes detailed analysis data

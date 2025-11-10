@@ -1,6 +1,8 @@
 # Intellicrack CLI
 
-This directory contains the command-line interface for Intellicrack, providing access to analysis, exploitation, and AI-powered features through terminal commands.
+This directory contains the command-line interface for Intellicrack, providing
+access to analysis, exploitation, and AI-powered features through terminal
+commands.
 
 ## Quick Start
 
@@ -131,7 +133,9 @@ cli/
 
 ## Note
 
-The CLI provides access to core Intellicrack functionality. Some advanced features may require additional dependencies or external tools (Frida, Ghidra, QEMU, etc.). Check individual command help for specific requirements.
+The CLI provides access to core Intellicrack functionality. Some advanced
+features may require additional dependencies or external tools (Frida, Ghidra,
+QEMU, etc.). Check individual command help for specific requirements.
 
 ## Command Categories
 
@@ -533,4 +537,6 @@ See the following files for more details:
 - `examples.md` - Detailed usage examples and workflows
 - `../cli_usage.md` - Complete usage documentation
 
-The Intellicrack CLI provides 100% feature parity with the GUI application, making it perfect for automation, testing, and headless deployments while maintaining the full power and flexibility of the complete Intellicrack suite.
+The Intellicrack CLI provides 100% feature parity with the GUI application,
+making it perfect for automation, testing, and headless deployments while
+maintaining the full power and flexibility of the complete Intellicrack suite.

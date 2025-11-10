@@ -51,7 +51,7 @@ def test_shared_context():
     assert analysis.app_context == app_context, "Analysis missing app_context"
     assert exploitation.app_context == app_context, "Exploitation missing app_context"
     assert tools.app_context == app_context, "Tools missing app_context"
-    print("✓ All tabs have app_context")
+    print("OK All tabs have app_context")
 
     # Test binary loading
     print("\n3. Testing binary loading...")
@@ -64,46 +64,46 @@ def test_shared_context():
     print(f"   Loading test binary: {test_binary}")
     success = app_context.load_binary(str(test_binary))
     assert success, "Failed to load binary"
-    print("✓ Binary loaded successfully")
+    print("OK Binary loaded successfully")
 
     # Check that all tabs received the binary
     print("\n4. Verifying binary is available in all tabs...")
 
     # Analysis tab should have current_binary set
     if analysis.current_binary:
-        print(f"✓ Analysis tab has binary: {analysis.current_binary}")
+        print(f"OK Analysis tab has binary: {analysis.current_binary}")
     else:
-        print("✗ Analysis tab missing binary")
+        print("FAIL Analysis tab missing binary")
 
     # Exploitation tab should have current_binary set
     if exploitation.current_binary:
-        print(f"✓ Exploitation tab has binary: {exploitation.current_binary}")
+        print(f"OK Exploitation tab has binary: {exploitation.current_binary}")
     else:
-        print("✗ Exploitation tab missing binary")
+        print("FAIL Exploitation tab missing binary")
 
     # Tools tab should have current_binary set
     if tools.current_binary:
-        print(f"✓ Tools tab has binary: {tools.current_binary}")
+        print(f"OK Tools tab has binary: {tools.current_binary}")
     else:
-        print("✗ Tools tab missing binary")
+        print("FAIL Tools tab missing binary")
 
     # Test binary unloading
     print("\n5. Testing binary unloading...")
     app_context.unload_binary()
-    print("✓ Binary unloaded")
+    print("OK Binary unloaded")
 
     # Verify tabs cleared their binary references
     print("\n6. Verifying binary is cleared in all tabs...")
     assert analysis.current_binary is None, "Analysis tab still has binary"
     assert exploitation.current_binary is None, "Exploitation tab still has binary"
     assert tools.current_binary is None, "Tools tab still has binary"
-    print("✓ All tabs cleared binary references")
+    print("OK All tabs cleared binary references")
 
     # Clean up test file
     test_binary.unlink()
 
     print("\n" + "=" * 60)
-    print("✅ All tests passed! Shared context is working correctly.")
+    print("OK All tests passed! Shared context is working correctly.")
     print("=" * 60)
 
     return True
@@ -114,7 +114,7 @@ if __name__ == "__main__":
         success = test_shared_context()
         sys.exit(0 if success else 1)
     except Exception as e:
-        print(f"\n❌ Test failed with error: {e}")
+        print(f"\nFAIL Test failed with error: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

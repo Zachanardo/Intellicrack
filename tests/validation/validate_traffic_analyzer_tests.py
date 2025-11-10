@@ -34,10 +34,10 @@ def validate_traffic_analyzer_import():
         sys.path.insert(0, str(project_root))
 
         from intellicrack.core.network.traffic_analyzer import NetworkTrafficAnalyzer
-        print("✓ Successfully imported NetworkTrafficAnalyzer")
+        print("OK Successfully imported NetworkTrafficAnalyzer")
         return True, NetworkTrafficAnalyzer
     except Exception as e:
-        print(f"✗ Failed to import NetworkTrafficAnalyzer: {e}")
+        print(f"FAIL Failed to import NetworkTrafficAnalyzer: {e}")
         traceback.print_exc()
         return False, None
 
@@ -48,17 +48,17 @@ def validate_test_file():
     test_file_path = Path(__file__).parent / "tests" / "unit" / "core" / "network" / "test_traffic_analyzer.py"
 
     if not test_file_path.exists():
-        print(f"✗ Test file not found: {test_file_path}")
+        print(f"FAIL Test file not found: {test_file_path}")
         return False, None
 
     # Load test module
     test_module = load_module_from_path("test_traffic_analyzer", test_file_path)
 
     if test_module is None:
-        print("✗ Failed to load test module")
+        print("FAIL Failed to load test module")
         return False, None
 
-    print("✓ Successfully loaded test module")
+    print("OK Successfully loaded test module")
 
     # Check for test classes
     test_classes = []
@@ -67,7 +67,7 @@ def validate_test_file():
         if isinstance(attr, type) and attr_name.startswith('Test'):
             test_classes.append((attr_name, attr))
 
-    print(f"✓ Found {len(test_classes)} test classes:")
+    print(f"OK Found {len(test_classes)} test classes:")
     for class_name, class_obj in test_classes:
         test_methods = [method for method in dir(class_obj) if method.startswith('test_')]
         print(f"  - {class_name}: {len(test_methods)} test methods")
@@ -100,8 +100,8 @@ def analyze_test_coverage(analyzer_class, test_module):
                 if method_name.startswith('test_'):
                     test_methods.append(method_name)
 
-    print(f"✓ Found {len(analyzer_methods)} methods in NetworkTrafficAnalyzer")
-    print(f"✓ Found {len(test_methods)} test methods")
+    print(f"OK Found {len(analyzer_methods)} methods in NetworkTrafficAnalyzer")
+    print(f"OK Found {len(test_methods)} test methods")
 
     # Analyze coverage mapping
     method_coverage = {}
@@ -176,7 +176,7 @@ def analyze_test_coverage(analyzer_class, test_module):
         for method in uncovered_critical:
             print(f"  - {method}")
     else:
-        print("\n✓ All critical methods are covered by tests")
+        print("\nOK All critical methods are covered by tests")
 
     return method_coverage_pct, critical_coverage_pct
 
@@ -187,57 +187,57 @@ def test_basic_functionality(analyzer_class):
     try:
         # Test initialization
         analyzer = analyzer_class()
-        print("✓ Analyzer initialization successful")
+        print("OK Analyzer initialization successful")
 
         # Test required attributes
         required_attrs = ['license_patterns', 'license_ports', 'connections', 'packets']
         for attr in required_attrs:
             if hasattr(analyzer, attr):
-                print(f"✓ Has required attribute: {attr}")
+                print(f"OK Has required attribute: {attr}")
             else:
-                print(f"✗ Missing required attribute: {attr}")
+                print(f"FAIL Missing required attribute: {attr}")
                 return False
 
         # Test required methods
         required_methods = ['start_capture', 'stop_capture', 'analyze_traffic', 'get_results', 'generate_report']
         for method in required_methods:
             if hasattr(analyzer, method) and callable(getattr(analyzer, method)):
-                print(f"✓ Has required method: {method}")
+                print(f"OK Has required method: {method}")
             else:
-                print(f"✗ Missing required method: {method}")
+                print(f"FAIL Missing required method: {method}")
                 return False
 
         # Test packet processing
         test_packet = b"\x00" * 20 + b"FLEXLM_LICENSE_TEST" + b"\x00" * 30
         analyzer._process_captured_packet(test_packet)
-        print("✓ Packet processing works")
+        print("OK Packet processing works")
 
         # Test analysis
         results = analyzer.analyze_traffic()
         if results is not None:
-            print("✓ Traffic analysis works")
+            print("OK Traffic analysis works")
         else:
             print("⚠ Traffic analysis returned None (expected with no real packets)")
 
         # Test results functionality
         full_results = analyzer.get_results()
         if full_results and isinstance(full_results, dict):
-            print("✓ get_results() works")
+            print("OK get_results() works")
 
             required_result_keys = ['packets_analyzed', 'protocols_detected', 'suspicious_traffic', 'statistics']
             for key in required_result_keys:
                 if key in full_results:
-                    print(f"  ✓ Results contain: {key}")
+                    print(f"  OK Results contain: {key}")
                 else:
                     print(f"  ⚠ Results missing: {key}")
         else:
-            print("✗ get_results() failed")
+            print("FAIL get_results() failed")
             return False
 
         return True
 
     except Exception as e:
-        print(f"✗ Basic functionality test failed: {e}")
+        print(f"FAIL Basic functionality test failed: {e}")
         traceback.print_exc()
         return False
 
@@ -258,7 +258,7 @@ def assess_production_readiness(method_coverage_pct, critical_coverage_pct):
     total_criteria = len(criteria)
 
     for criterion, passed in criteria.items():
-        status = "✓ PASS" if passed else "✗ FAIL"
+        status = "OK PASS" if passed else "FAIL FAIL"
         print(f"  {criterion:<30} {status}")
 
     overall_score = (passed_criteria / total_criteria) * 100
@@ -266,15 +266,15 @@ def assess_production_readiness(method_coverage_pct, critical_coverage_pct):
 
     if overall_score >= 100:
         print("🎉 EXCELLENT - Test suite exceeds production requirements")
-        print("✅ Ready for deployment as security research platform")
+        print("OK Ready for deployment as security research platform")
     elif overall_score >= 75:
-        print("✅ GOOD - Test suite meets production requirements")
-        print("✅ Suitable for deployment with minor improvements")
+        print("OK GOOD - Test suite meets production requirements")
+        print("OK Suitable for deployment with minor improvements")
     elif overall_score >= 50:
         print("⚠  MODERATE - Test suite has some gaps")
-        print("📝 Consider additional tests before production deployment")
+        print(" Consider additional tests before production deployment")
     else:
-        print("❌ INSUFFICIENT - Test suite has major gaps")
+        print("FAIL INSUFFICIENT - Test suite has major gaps")
         print("🚫 Not recommended for production deployment")
 
     return overall_score >= 75
@@ -287,19 +287,19 @@ def main():
     # Step 1: Validate imports
     import_success, analyzer_class = validate_traffic_analyzer_import()
     if not import_success:
-        print("❌ Cannot proceed - import failed")
+        print("FAIL Cannot proceed - import failed")
         return False
 
     # Step 2: Validate test file
     test_load_success, test_module = validate_test_file()
     if not test_load_success:
-        print("❌ Cannot proceed - test file load failed")
+        print("FAIL Cannot proceed - test file load failed")
         return False
 
     # Step 3: Test basic functionality
     basic_functionality_success = test_basic_functionality(analyzer_class)
     if not basic_functionality_success:
-        print("❌ Basic functionality test failed")
+        print("FAIL Basic functionality test failed")
         return False
 
     # Step 4: Analyze coverage
@@ -311,17 +311,17 @@ def main():
     print(f"\n{'='*60}")
     print("SUMMARY")
     print('='*60)
-    print(f"✅ NetworkTrafficAnalyzer import: SUCCESS")
-    print(f"✅ Test suite loading: SUCCESS")
-    print(f"✅ Basic functionality: SUCCESS")
-    print(f"📊 Method coverage: {method_coverage_pct:.1f}%")
-    print(f"📊 Critical method coverage: {critical_coverage_pct:.1f}%")
-    print(f"🎯 Production ready: {'YES' if production_ready else 'NEEDS IMPROVEMENT'}")
+    print(f"OK NetworkTrafficAnalyzer import: SUCCESS")
+    print(f"OK Test suite loading: SUCCESS")
+    print(f"OK Basic functionality: SUCCESS")
+    print(f" Method coverage: {method_coverage_pct:.1f}%")
+    print(f" Critical method coverage: {critical_coverage_pct:.1f}%")
+    print(f" Production ready: {'YES' if production_ready else 'NEEDS IMPROVEMENT'}")
 
     if production_ready:
         print(f"\n🎉 Test suite successfully validates NetworkTrafficAnalyzer")
-        print(f"✅ Meets requirements for production security research platform")
-        print(f"🔒 Provides comprehensive validation of network analysis capabilities")
+        print(f"OK Meets requirements for production security research platform")
+        print(f" Provides comprehensive validation of network analysis capabilities")
 
     return production_ready
 

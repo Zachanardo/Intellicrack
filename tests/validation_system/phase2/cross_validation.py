@@ -219,6 +219,7 @@ class CrossValidation:
                         try:
                             confidence = float(conf_str) / 100.0
                         except ValueError:
+                            pass
                             # Configuration parsing may fail, continue with protection info
                         protection_info = protection_info[:conf_start].strip()
 

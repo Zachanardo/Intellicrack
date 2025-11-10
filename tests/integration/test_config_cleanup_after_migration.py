@@ -494,10 +494,10 @@ Details:
 --------"""
 
         for file_path in cleanup_report['files_removed']:
-            summary += f"\n✓ Removed: {file_path}"
+            summary += f"\nOK Removed: {file_path}"
 
         for failure in cleanup_report['files_failed']:
-            summary += f"\n✗ Failed: {failure['file']} - {failure['error']}"
+            summary += f"\nFAIL Failed: {failure['file']} - {failure['error']}"
 
         # Save report
         report_file = self.temp_dir / "cleanup_report.txt"
@@ -508,4 +508,4 @@ Details:
         assert "Configuration Cleanup Summary" in report_file.read_text()
         assert len(cleanup_report["files_removed"]) > 0
 
-        print("\n✅ Task 20.1.4 COMPLETED: Old config file cleanup verified")
+        print("\nOK Task 20.1.4 COMPLETED: Old config file cleanup verified")

@@ -392,7 +392,7 @@ class IntellicrackProtectionWidget(QWidget):
             for detection in analysis.detections:
                 ver_str = f" v{detection.version}" if detection.version else ""
                 conf_str = f" ({detection.confidence:.0f}% confidence)" if detection.confidence < 100 else ""
-                summary_lines.append(f"  • {detection.name}{ver_str} [{detection.type.value}]{conf_str}")
+                summary_lines.append(f"   {detection.name}{ver_str} [{detection.type.value}]{conf_str}")
         else:
             summary_lines.append("No protections detected")
 
@@ -401,7 +401,7 @@ class IntellicrackProtectionWidget(QWidget):
             summary_lines.append("")
             summary_lines.append(f"License Files Found: {len(analysis.license_files)}")
             for file_info in analysis.license_files[:5]:  # Show up to 5
-                summary_lines.append(f"  • {file_info['name']} ({file_info.get('size_str', 'Unknown size')})")
+                summary_lines.append(f"   {file_info['name']} ({file_info.get('size_str', 'Unknown size')})")
 
         self.summary_text.setText("\n".join(summary_lines))
 
@@ -423,14 +423,14 @@ class IntellicrackProtectionWidget(QWidget):
                 name = section.get("name", "Unknown")
                 size = section.get("size", 0)
                 entropy = section.get("entropy", 0)
-                details_lines.append(f"  • {name}: Size={size}, Entropy={entropy:.2f}")
+                details_lines.append(f"   {name}: Size={size}, Entropy={entropy:.2f}")
             details_lines.append("")
 
         # Imports
         if analysis.imports:
             details_lines.append(f"Imports ({len(analysis.imports)} DLLs):")
             for imp in analysis.imports[:10]:  # Show first 10
-                details_lines.append(f"  • {imp}")
+                details_lines.append(f"   {imp}")
             if len(analysis.imports) > 10:
                 details_lines.append(f"  ... and {len(analysis.imports) - 10} more")
             details_lines.append("")
@@ -439,7 +439,7 @@ class IntellicrackProtectionWidget(QWidget):
         if analysis.metadata:
             details_lines.append("Metadata:")
             for key, value in analysis.metadata.items():
-                details_lines.append(f"  • {key}: {value}")
+                details_lines.append(f"   {key}: {value}")
 
         self.tech_details_text.setText("\n".join(details_lines))
 
@@ -471,17 +471,17 @@ class IntellicrackProtectionWidget(QWidget):
 
             bypass_lines.append("")
             bypass_lines.append("Note: These are general recommendations. Actual bypass methods may vary based on:")
-            bypass_lines.append("  • Specific version of the protection")
-            bypass_lines.append("  • Target application implementation")
-            bypass_lines.append("  • Additional protections present")
-            bypass_lines.append("  • Legal and ethical considerations")
+            bypass_lines.append("   Specific version of the protection")
+            bypass_lines.append("   Target application implementation")
+            bypass_lines.append("   Additional protections present")
+            bypass_lines.append("   Legal and ethical considerations")
         else:
             bypass_lines.append("No specific bypass recommendations available.")
             bypass_lines.append("")
             bypass_lines.append("This protection may require:")
-            bypass_lines.append("  • Manual reverse engineering")
-            bypass_lines.append("  • Custom tool development")
-            bypass_lines.append("  • Advanced analysis techniques")
+            bypass_lines.append("   Manual reverse engineering")
+            bypass_lines.append("   Custom tool development")
+            bypass_lines.append("   Advanced analysis techniques")
 
         self.bypass_text.setText("\n".join(bypass_lines))
 
@@ -637,14 +637,14 @@ class IntellicrackProtectionWidget(QWidget):
         if reasoning_result.get("evidence"):
             reasoning_lines.append("Evidence Found:")
             for evidence in reasoning_result["evidence"]:
-                reasoning_lines.append(f"  • {evidence}")
+                reasoning_lines.append(f"   {evidence}")
             reasoning_lines.append("")
 
         # Display conclusions
         if reasoning_result.get("conclusions"):
             reasoning_lines.append("Conclusions:")
             for conclusion in reasoning_result["conclusions"]:
-                reasoning_lines.append(f"  • {conclusion}")
+                reasoning_lines.append(f"   {conclusion}")
             reasoning_lines.append("")
 
         # Display next steps
@@ -709,7 +709,7 @@ class IntellicrackProtectionWidget(QWidget):
                     # Display results in a message box
                     message_lines = [f"Found {len(files_found)} potential license files:\n"]
                     for file_info in files_found[:10]:  # Show up to 10
-                        message_lines.append(f"• {file_info['name']} ({file_info.get('size_str', 'Unknown size')})")
+                        message_lines.append(f" {file_info['name']} ({file_info.get('size_str', 'Unknown size')})")
                         if file_info.get("match_type"):
                             message_lines.append(f"  Type: {file_info['match_type']}")
 
@@ -831,7 +831,7 @@ class IntellicrackProtectionWidget(QWidget):
             if suggestions:
                 response_text.append("<b>Suggested questions based on current analysis:</b>")
                 for suggestion in suggestions[:3]:  # Show up to 3 suggestions
-                    response_text.append(f"• {suggestion}")
+                    response_text.append(f" {suggestion}")
                 response_text.append("\n<i>Type your question above or click a suggestion to use it.</i>\n")
 
         dialog.exec()

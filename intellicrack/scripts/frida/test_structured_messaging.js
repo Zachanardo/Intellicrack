@@ -48,13 +48,7 @@ const MESSAGE_TYPES = [
     'detection',
     'notification',
 ];
-const TEST_TARGETS = [
-    'kernel32.dll',
-    'ntdll.dll',
-    'advapi32.dll',
-    'ws2_32.dll',
-    'crypt32.dll',
-];
+const TEST_TARGETS = ['kernel32.dll', 'ntdll.dll', 'advapi32.dll', 'ws2_32.dll', 'crypt32.dll'];
 
 // Message validation patterns
 const MESSAGE_VALIDATION_RULES = {
@@ -68,8 +62,7 @@ const MESSAGE_VALIDATION_RULES = {
 // === UTILITY FUNCTIONS ===
 
 function generateTestData(size) {
-    const chars =
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let result = '';
     for (let i = 0; i < size; i++) {
         result += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -111,8 +104,8 @@ function recordTestResult(testName, passed, latency, details) {
         TEST_RESULTS.minLatency = Math.min(TEST_RESULTS.minLatency, latency);
         TEST_RESULTS.maxLatency = Math.max(TEST_RESULTS.maxLatency, latency);
         TEST_RESULTS.averageLatency =
-      (TEST_RESULTS.averageLatency * (TEST_RESULTS.totalTests - 1) + latency) /
-      TEST_RESULTS.totalTests;
+            (TEST_RESULTS.averageLatency * (TEST_RESULTS.totalTests - 1) + latency) /
+            TEST_RESULTS.totalTests;
     }
 
     TEST_RESULTS.testDetails.push({
@@ -128,9 +121,7 @@ function encryptMessage(message, key = 0xdeadbeef) {
     const messageStr = JSON.stringify(message);
     let encrypted = '';
     for (let i = 0; i < messageStr.length; i++) {
-        encrypted += String.fromCharCode(
-            messageStr.charCodeAt(i) ^ (key >> (8 * (i % 4))),
-        );
+        encrypted += String.fromCharCode(messageStr.charCodeAt(i) ^ (key >> (8 * (i % 4))));
     }
     return btoa(encrypted);
 }
@@ -171,7 +162,7 @@ function runBasicMessageTests() {
             `basic_${messageType}`,
             true,
             latency,
-            `${messageType} message sent successfully`,
+            `${messageType} message sent successfully`
         );
     });
 }
@@ -198,19 +189,14 @@ function runPerformanceTests() {
             send(testMessage);
         });
 
-        recordTestResult(
-            `performance_${i}`,
-            true,
-            latency,
-            `Performance test message ${i}`,
-        );
+        recordTestResult(`performance_${i}`, true, latency, `Performance test message ${i}`);
     }
 
     const totalTime = performance.now() - startTime;
     TEST_RESULTS.messagesPerSecond = (messageCount / totalTime) * 1000;
 
     console.log(
-        `[TEST] Performance test completed: ${TEST_RESULTS.messagesPerSecond.toFixed(2)} messages/sec`,
+        `[TEST] Performance test completed: ${TEST_RESULTS.messagesPerSecond.toFixed(2)} messages/sec`
     );
 }
 
@@ -223,7 +209,7 @@ function runConcurrencyTests() {
     const messagesPerBatch = 50;
 
     for (let batch = 0; batch < concurrentBatches; batch++) {
-    // Simulate concurrent message sending
+        // Simulate concurrent message sending
         const batchPromises = [];
 
         for (let msg = 0; msg < messagesPerBatch; msg++) {
@@ -245,14 +231,14 @@ function runConcurrencyTests() {
                     `concurrency_b${batch}_m${msg}`,
                     true,
                     latency,
-                    'Concurrent message processed',
+                    'Concurrent message processed'
                 );
             } catch (error) {
                 recordTestResult(
                     `concurrency_b${batch}_m${msg}`,
                     false,
                     0,
-                    `Concurrency failure: ${error.message}`,
+                    `Concurrency failure: ${error.message}`
                 );
                 TEST_RESULTS.concurrencyFailures++;
             }
@@ -260,7 +246,7 @@ function runConcurrencyTests() {
     }
 
     console.log(
-        `[TEST] Concurrency test completed: ${TEST_RESULTS.concurrencyFailures} failures detected`,
+        `[TEST] Concurrency test completed: ${TEST_RESULTS.concurrencyFailures} failures detected`
     );
 }
 
@@ -301,19 +287,9 @@ function runStressTests() {
             const latency = measureLatency(() => {
                 send(testMessage);
             });
-            recordTestResult(
-                `stress_${i}`,
-                true,
-                latency,
-                `Stress test message ${i}`,
-            );
+            recordTestResult(`stress_${i}`, true, latency, `Stress test message ${i}`);
         } catch (error) {
-            recordTestResult(
-                `stress_${i}`,
-                false,
-                0,
-                `Stress test failure: ${error.message}`,
-            );
+            recordTestResult(`stress_${i}`, false, 0, `Stress test failure: ${error.message}`);
         }
     }
 
@@ -351,7 +327,7 @@ function runErrorInjectionTests() {
                     `error_injection_${index}`,
                     true,
                     0,
-                    'Correctly handled null/undefined message',
+                    'Correctly handled null/undefined message'
                 );
                 return;
             }
@@ -362,7 +338,7 @@ function runErrorInjectionTests() {
                     `error_injection_${index}`,
                     true,
                     0,
-                    `Correctly rejected invalid message: ${validation.error}`,
+                    `Correctly rejected invalid message: ${validation.error}`
                 );
             } else {
                 send(invalidMsg);
@@ -370,7 +346,7 @@ function runErrorInjectionTests() {
                     `error_injection_${index}`,
                     false,
                     0,
-                    'Invalid message was not rejected',
+                    'Invalid message was not rejected'
                 );
                 TEST_RESULTS.validationFailures++;
             }
@@ -379,7 +355,7 @@ function runErrorInjectionTests() {
                 `error_injection_${index}`,
                 true,
                 0,
-                `Correctly threw error for invalid message: ${error.message}`,
+                `Correctly threw error for invalid message: ${error.message}`
             );
         }
     });
@@ -411,12 +387,7 @@ function runIntegrationTests() {
             send(integrationMessage);
         });
 
-        recordTestResult(
-            `integration_${target}`,
-            true,
-            latency,
-            `Integration test for ${target}`,
-        );
+        recordTestResult(`integration_${target}`, true, latency, `Integration test for ${target}`);
     });
 }
 
@@ -449,19 +420,9 @@ function runEncryptionTests() {
             send(encryptionTestMsg);
         });
 
-        recordTestResult(
-            'encryption_test',
-            true,
-            latency,
-            'Message encryption test successful',
-        );
+        recordTestResult('encryption_test', true, latency, 'Message encryption test successful');
     } catch (error) {
-        recordTestResult(
-            'encryption_test',
-            false,
-            0,
-            `Encryption test failed: ${error.message}`,
-        );
+        recordTestResult('encryption_test', false, 0, `Encryption test failed: ${error.message}`);
     }
 }
 
@@ -492,14 +453,14 @@ function runTimingAnalysisTests() {
         });
 
         const withinExpectedRange =
-      latency >= MESSAGE_VALIDATION_RULES.min_response_time_ms &&
-      latency <= MESSAGE_VALIDATION_RULES.max_response_time_ms;
+            latency >= MESSAGE_VALIDATION_RULES.min_response_time_ms &&
+            latency <= MESSAGE_VALIDATION_RULES.max_response_time_ms;
 
         recordTestResult(
             `timing_${test.name}`,
             withinExpectedRange,
             latency,
-            `Timing test for ${test.size} byte message: ${latency.toFixed(2)}ms`,
+            `Timing test for ${test.size} byte message: ${latency.toFixed(2)}ms`
         );
     });
 }
@@ -507,9 +468,7 @@ function runTimingAnalysisTests() {
 // === MAIN TEST EXECUTION ===
 
 function runComprehensiveTestSuite() {
-    console.log(
-        '[TEST FRAMEWORK] Starting comprehensive structured messaging test suite...',
-    );
+    console.log('[TEST FRAMEWORK] Starting comprehensive structured messaging test suite...');
 
     send({
         type: 'status',
@@ -531,8 +490,7 @@ function runComprehensiveTestSuite() {
 
     // Calculate final results
     const totalDuration = Date.now() - TEST_RESULTS.startTime;
-    const successRate =
-    (TEST_RESULTS.passedTests / TEST_RESULTS.totalTests) * 100;
+    const successRate = (TEST_RESULTS.passedTests / TEST_RESULTS.totalTests) * 100;
 
     // Generate comprehensive test report
     const finalReport = {
@@ -562,8 +520,7 @@ function runComprehensiveTestSuite() {
             },
         },
         test_configuration: TEST_CONFIG,
-        production_ready:
-      successRate >= 95.0 && TEST_RESULTS.validationFailures === 0,
+        production_ready: successRate >= 95.0 && TEST_RESULTS.validationFailures === 0,
         recommendations: generateRecommendations(successRate),
         timestamp: Date.now(),
     };
@@ -571,7 +528,7 @@ function runComprehensiveTestSuite() {
     send(finalReport);
 
     console.log(
-        `[TEST FRAMEWORK] Test suite completed: ${TEST_RESULTS.passedTests}/${TEST_RESULTS.totalTests} tests passed (${successRate.toFixed(2)}%)`,
+        `[TEST FRAMEWORK] Test suite completed: ${TEST_RESULTS.passedTests}/${TEST_RESULTS.totalTests} tests passed (${successRate.toFixed(2)}%)`
     );
 }
 
@@ -580,38 +537,36 @@ function generateRecommendations(successRate) {
 
     if (successRate < 95.0) {
         recommendations.push(
-            'Success rate below production threshold (95%). Review failed test details.',
+            'Success rate below production threshold (95%). Review failed test details.'
         );
     }
 
     if (TEST_RESULTS.validationFailures > 0) {
         recommendations.push(
-            'Message validation failures detected. Review message format standards.',
+            'Message validation failures detected. Review message format standards.'
         );
     }
 
     if (TEST_RESULTS.concurrencyFailures > 0) {
         recommendations.push(
-            'Concurrency failures detected. Review thread safety and message queuing.',
+            'Concurrency failures detected. Review thread safety and message queuing.'
         );
     }
 
     if (TEST_RESULTS.maxLatency > 500) {
         recommendations.push(
-            'High latency detected (>500ms). Optimize message processing pipeline.',
+            'High latency detected (>500ms). Optimize message processing pipeline.'
         );
     }
 
     if (TEST_RESULTS.messagesPerSecond < 100) {
         recommendations.push(
-            'Low throughput detected (<100 msg/sec). Optimize message handling performance.',
+            'Low throughput detected (<100 msg/sec). Optimize message handling performance.'
         );
     }
 
     if (recommendations.length === 0) {
-        recommendations.push(
-            'All tests passed successfully. System is production-ready.',
-        );
+        recommendations.push('All tests passed successfully. System is production-ready.');
     }
 
     return recommendations;

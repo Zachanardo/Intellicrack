@@ -72,25 +72,25 @@ class TestCETCFIIntegration:
 
             # Check CET bypass module is initialized
             if hasattr(engine, 'cet_bypass') and engine.cet_bypass is not None:
-                print("  ✓ PASS: CET bypass module initialized")
+                print("  OK PASS: CET bypass module initialized")
 
                 # Test CET bypass has required methods
                 if hasattr(engine.cet_bypass, 'get_available_bypass_techniques'):
-                    print("  ✓ PASS: CET bypass methods available")
+                    print("  OK PASS: CET bypass methods available")
 
                     # Test we can get bypass techniques
                     try:
                         techniques = engine.cet_bypass.get_available_bypass_techniques()
-                        print(f"  ✓ INFO: {len(techniques)} CET bypass techniques available")
+                        print(f"  OK INFO: {len(techniques)} CET bypass techniques available")
                         success = True
                     except Exception as e:
-                        print(f"  ✗ FAIL: Error getting bypass techniques: {e}")
+                        print(f"  FAIL FAIL: Error getting bypass techniques: {e}")
                         success = False
                 else:
-                    print("  ✗ FAIL: CET bypass methods not available")
+                    print("  FAIL FAIL: CET bypass methods not available")
                     success = False
             else:
-                print("  ✗ FAIL: CET bypass module not initialized")
+                print("  FAIL FAIL: CET bypass module not initialized")
                 success = False
 
             # Cleanup
@@ -99,7 +99,7 @@ class TestCETCFIIntegration:
             return success
 
         except Exception as e:
-            print(f"  ✗ ERROR: {e}")
+            print(f"  FAIL ERROR: {e}")
             self.test_results.append(False)
             return False
 
@@ -115,28 +115,28 @@ class TestCETCFIIntegration:
 
             # Check CFI bypass module is initialized
             if hasattr(engine, 'cfi_bypass') and engine.cfi_bypass is not None:
-                print("  ✓ PASS: CFI bypass module initialized")
+                print("  OK PASS: CFI bypass module initialized")
 
                 # Test CFI bypass has required methods
                 required_methods = ['get_available_bypass_methods', 'find_rop_gadgets', 'find_jop_gadgets']
                 methods_available = all(hasattr(engine.cfi_bypass, method) for method in required_methods)
 
                 if methods_available:
-                    print("  ✓ PASS: CFI bypass methods available")
+                    print("  OK PASS: CFI bypass methods available")
 
                     # Test we can get bypass methods
                     try:
                         methods = engine.cfi_bypass.get_available_bypass_methods()
-                        print(f"  ✓ INFO: {len(methods)} CFI bypass methods available")
+                        print(f"  OK INFO: {len(methods)} CFI bypass methods available")
                         success = True
                     except Exception as e:
-                        print(f"  ✗ FAIL: Error getting bypass methods: {e}")
+                        print(f"  FAIL FAIL: Error getting bypass methods: {e}")
                         success = False
                 else:
-                    print("  ✗ FAIL: CFI bypass methods not available")
+                    print("  FAIL FAIL: CFI bypass methods not available")
                     success = False
             else:
-                print("  ✗ FAIL: CFI bypass module not initialized")
+                print("  FAIL FAIL: CFI bypass module not initialized")
                 success = False
 
             # Cleanup
@@ -145,7 +145,7 @@ class TestCETCFIIntegration:
             return success
 
         except Exception as e:
-            print(f"  ✗ ERROR: {e}")
+            print(f"  FAIL ERROR: {e}")
             self.test_results.append(False)
             return False
 
@@ -171,10 +171,10 @@ class TestCETCFIIntegration:
                     missing_methods.append(method)
 
             if not missing_methods:
-                print("  ✓ PASS: All modern protection analysis methods present")
+                print("  OK PASS: All modern protection analysis methods present")
                 success = True
             else:
-                print(f"  ✗ FAIL: Missing methods: {missing_methods}")
+                print(f"  FAIL FAIL: Missing methods: {missing_methods}")
                 success = False
 
             # Cleanup
@@ -183,7 +183,7 @@ class TestCETCFIIntegration:
             return success
 
         except Exception as e:
-            print(f"  ✗ ERROR: {e}")
+            print(f"  FAIL ERROR: {e}")
             self.test_results.append(False)
             return False
 
@@ -214,13 +214,13 @@ class TestCETCFIIntegration:
                         missing_fields.append(field)
 
                 if not missing_fields:
-                    print("  ✓ PASS: Modern protection fields present in analysis results")
-                    print(f"  ✓ INFO: Modern protections data: {type(result.get('modern_protections', {}))}")
-                    print(f"  ✓ INFO: CET analysis data: {type(result.get('cet_bypass_analysis', {}))}")
-                    print(f"  ✓ INFO: CFI analysis data: {type(result.get('cfi_bypass_analysis', {}))}")
+                    print("  OK PASS: Modern protection fields present in analysis results")
+                    print(f"  OK INFO: Modern protections data: {type(result.get('modern_protections', {}))}")
+                    print(f"  OK INFO: CET analysis data: {type(result.get('cet_bypass_analysis', {}))}")
+                    print(f"  OK INFO: CFI analysis data: {type(result.get('cfi_bypass_analysis', {}))}")
                     success = True
                 else:
-                    print(f"  ✗ FAIL: Missing fields: {missing_fields}")
+                    print(f"  FAIL FAIL: Missing fields: {missing_fields}")
                     success = False
 
             except Exception as analysis_error:
@@ -235,7 +235,7 @@ class TestCETCFIIntegration:
             return success
 
         except Exception as e:
-            print(f"  ✗ ERROR: {e}")
+            print(f"  FAIL ERROR: {e}")
             self.test_results.append(False)
             return False
 
@@ -247,11 +247,11 @@ class TestCETCFIIntegration:
         try:
             # Test CET bypass standalone
             cet_bypass = CETBypass()
-            print("  ✓ PASS: CET bypass module can be instantiated")
+            print("  OK PASS: CET bypass module can be instantiated")
 
             # Test CFI bypass standalone
             cfi_bypass = CFIBypass()
-            print("  ✓ PASS: CFI bypass module can be instantiated")
+            print("  OK PASS: CFI bypass module can be instantiated")
 
             # Test integration in vulnerability engine
             test_binary = create_test_binary_with_modern_protections()
@@ -267,10 +267,10 @@ class TestCETCFIIntegration:
             )
 
             if integration_check:
-                print("  ✓ PASS: Complete bypass integration workflow functional")
+                print("  OK PASS: Complete bypass integration workflow functional")
                 success = True
             else:
-                print("  ✗ FAIL: Integration workflow incomplete")
+                print("  FAIL FAIL: Integration workflow incomplete")
                 success = False
 
             # Cleanup
@@ -279,7 +279,7 @@ class TestCETCFIIntegration:
             return success
 
         except Exception as e:
-            print(f"  ✗ ERROR: {e}")
+            print(f"  FAIL ERROR: {e}")
             self.test_results.append(False)
             return False
 
@@ -293,7 +293,7 @@ def main():
     print()
 
     if not IMPORT_SUCCESS:
-        print("❌ IMPORTS FAILED: Cannot run tests without proper imports")
+        print("FAIL IMPORTS FAILED: Cannot run tests without proper imports")
         return 1
 
     try:
@@ -319,27 +319,27 @@ def main():
         total_tests = len(tester.test_results)
         pass_rate = passed_tests / total_tests if total_tests > 0 else 0
 
-        print(f"\n🎯 DAY 6.1 CET/CFI BYPASS INTEGRATION RESULTS:")
+        print(f"\n DAY 6.1 CET/CFI BYPASS INTEGRATION RESULTS:")
         print("=" * 50)
-        print(f"✅ Tests Passed: {passed_tests}")
-        print(f"❌ Tests Failed: {total_tests - passed_tests}")
-        print(f"📈 Pass Rate: {pass_rate:.2%}")
+        print(f"OK Tests Passed: {passed_tests}")
+        print(f"FAIL Tests Failed: {total_tests - passed_tests}")
+        print(f" Pass Rate: {pass_rate:.2%}")
 
         if pass_rate >= 0.80:  # 80% pass rate required
             print("\n🎉 DAY 6.1 CET/CFI BYPASS INTEGRATION COMPLETED!")
-            print("✅ CET bypass module integrated with radare2 analysis")
-            print("✅ CFI bypass module integrated with vulnerability detection")
-            print("✅ Modern protection analysis methods functional")
-            print("✅ Bypass opportunities detected and integrated with vulnerabilities")
-            print("\n🚀 READY TO PROCEED TO DAY 6.2: HARDWARE PROTECTION ANALYSIS")
+            print("OK CET bypass module integrated with radare2 analysis")
+            print("OK CFI bypass module integrated with vulnerability detection")
+            print("OK Modern protection analysis methods functional")
+            print("OK Bypass opportunities detected and integrated with vulnerabilities")
+            print("\n READY TO PROCEED TO DAY 6.2: HARDWARE PROTECTION ANALYSIS")
             return 0
         else:
-            print(f"\n❌ DAY 6.1 INTEGRATION FAILED: {100-pass_rate*100:.1f}% of tests failed")
+            print(f"\nFAIL DAY 6.1 INTEGRATION FAILED: {100-pass_rate*100:.1f}% of tests failed")
             print("❗ Address integration issues before proceeding")
             return 1
 
     except Exception as e:
-        print(f"❌ Testing failed with error: {e}")
+        print(f"FAIL Testing failed with error: {e}")
         return 1
 
 

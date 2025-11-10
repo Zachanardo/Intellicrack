@@ -27,19 +27,19 @@ def validate_imports():
             get_tool_command,
             get_missing_tools
         )
-        print("✓ Successfully imported external_tools_config module")
+        print("OK Successfully imported external_tools_config module")
 
         # Basic validation of imports
-        print(f"✓ ToolStatus: {ToolStatus}")
-        print(f"✓ ToolCategory: {ToolCategory}")
-        print(f"✓ ExternalTool: {ExternalTool}")
-        print(f"✓ ExternalToolsManager: {ExternalToolsManager}")
-        print(f"✓ external_tools_manager instance: {external_tools_manager}")
+        print(f"OK ToolStatus: {ToolStatus}")
+        print(f"OK ToolCategory: {ToolCategory}")
+        print(f"OK ExternalTool: {ExternalTool}")
+        print(f"OK ExternalToolsManager: {ExternalToolsManager}")
+        print(f"OK external_tools_manager instance: {external_tools_manager}")
 
         return True
 
     except Exception as e:
-        print(f"✗ Import validation failed: {e}")
+        print(f"FAIL Import validation failed: {e}")
         traceback.print_exc()
         return False
 
@@ -58,7 +58,7 @@ def validate_test_module():
             TestRealWorldScenarios,
             TestProductionReadinessValidation
         )
-        print("✓ Successfully imported test classes")
+        print("OK Successfully imported test classes")
 
         # Count test methods
         test_classes = [
@@ -72,13 +72,13 @@ def validate_test_module():
             test_methods = [method for method in dir(test_class) if method.startswith('test_')]
             class_test_count = len(test_methods)
             total_tests += class_test_count
-            print(f"✓ {test_class.__name__}: {class_test_count} test methods")
+            print(f"OK {test_class.__name__}: {class_test_count} test methods")
 
-        print(f"✓ Total test methods: {total_tests}")
+        print(f"OK Total test methods: {total_tests}")
         return True
 
     except Exception as e:
-        print(f"✗ Test module validation failed: {e}")
+        print(f"FAIL Test module validation failed: {e}")
         traceback.print_exc()
         return False
 
@@ -94,41 +94,41 @@ def validate_basic_functionality():
         # Test enum access
         try:
             status_values = list(ToolStatus)
-            print(f"✓ ToolStatus enum has {len(status_values)} values")
+            print(f"OK ToolStatus enum has {len(status_values)} values")
         except Exception as e:
-            print(f"✗ ToolStatus access failed: {e}")
+            print(f"FAIL ToolStatus access failed: {e}")
 
         try:
             category_values = list(ToolCategory)
-            print(f"✓ ToolCategory enum has {len(category_values)} values")
+            print(f"OK ToolCategory enum has {len(category_values)} values")
         except Exception as e:
-            print(f"✗ ToolCategory access failed: {e}")
+            print(f"FAIL ToolCategory access failed: {e}")
 
         # Test manager instance
         try:
-            print(f"✓ Global manager type: {type(external_tools_manager)}")
+            print(f"OK Global manager type: {type(external_tools_manager)}")
             manager_attrs = [attr for attr in dir(external_tools_manager) if not attr.startswith('_')]
-            print(f"✓ Manager has {len(manager_attrs)} public attributes/methods")
+            print(f"OK Manager has {len(manager_attrs)} public attributes/methods")
         except Exception as e:
-            print(f"✗ Manager access failed: {e}")
+            print(f"FAIL Manager access failed: {e}")
 
         # Test basic functions
         try:
             result = get_tool_path('notepad')
-            print(f"✓ get_tool_path('notepad') returned: {type(result)}")
+            print(f"OK get_tool_path('notepad') returned: {type(result)}")
         except Exception as e:
-            print(f"✗ get_tool_path failed: {e}")
+            print(f"FAIL get_tool_path failed: {e}")
 
         try:
             result = check_tool_available('notepad.exe')
-            print(f"✓ check_tool_available('notepad.exe') returned: {type(result)}")
+            print(f"OK check_tool_available('notepad.exe') returned: {type(result)}")
         except Exception as e:
-            print(f"✗ check_tool_available failed: {e}")
+            print(f"FAIL check_tool_available failed: {e}")
 
         return True
 
     except Exception as e:
-        print(f"✗ Functionality validation failed: {e}")
+        print(f"FAIL Functionality validation failed: {e}")
         traceback.print_exc()
         return False
 
@@ -145,12 +145,12 @@ def main():
     print("\n" + "=" * 50)
     print("VALIDATION SUMMARY")
     print("=" * 50)
-    print(f"Imports: {'✓ PASS' if imports_ok else '✗ FAIL'}")
-    print(f"Test Module: {'✓ PASS' if tests_ok else '✗ FAIL'}")
-    print(f"Basic Functionality: {'✓ PASS' if functionality_ok else '✗ FAIL'}")
+    print(f"Imports: {'OK PASS' if imports_ok else 'FAIL FAIL'}")
+    print(f"Test Module: {'OK PASS' if tests_ok else 'FAIL FAIL'}")
+    print(f"Basic Functionality: {'OK PASS' if functionality_ok else 'FAIL FAIL'}")
 
     overall_success = imports_ok and tests_ok and functionality_ok
-    print(f"\nOverall: {'✓ PASS' if overall_success else '✗ FAIL'}")
+    print(f"\nOverall: {'OK PASS' if overall_success else 'FAIL FAIL'}")
 
     return 0 if overall_success else 1
 

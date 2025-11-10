@@ -357,7 +357,7 @@ else:
                 if updates_available > 0:
                     update_message = f"{updates_available} plugin update(s) available:\n\n"
                     for update in update_details[:5]:  # Limit to first 5 for readability
-                        update_message += f"• {update['name']}: {update['current']} → {update['latest']}\n"
+                        update_message += f" {update['name']}: {update['current']} → {update['latest']}\n"
 
                     if len(update_details) > 5:
                         update_message += f"... and {len(update_details) - 5} more updates\n"
@@ -494,10 +494,10 @@ else:
             welcome_msg.setText(
                 "Welcome to the Intellicrack Plugin Manager!\n\n"
                 "Here you can:\n"
-                "• View and manage installed plugins\n"
-                "• Browse and install plugins from repositories\n"
-                "• Install plugins from local files\n"
-                "• Create and test your own plugins\n\n"
+                " View and manage installed plugins\n"
+                " Browse and install plugins from repositories\n"
+                " Install plugins from local files\n"
+                " Create and test your own plugins\n\n"
                 "Get started by exploring the available tabs above."
             )
             welcome_msg.addButton("Get Started", QMessageBox.AcceptRole)
@@ -2522,7 +2522,7 @@ if __name__ == '__main__':
                 else:
                     self.test_output.append("WARNING Warning: No plugin metadata found")
 
-                self.test_output.append("\n✅ Plugin test completed successfully")
+                self.test_output.append("\nOK Plugin test completed successfully")
 
             except SyntaxError as e:
                 logger.error("SyntaxError in plugin_manager_dialog: %s", e)

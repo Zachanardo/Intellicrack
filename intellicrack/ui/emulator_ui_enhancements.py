@@ -82,7 +82,7 @@ class EmulatorStatusWidget(QWidget):
 
         if emulator_type == "QEMU":
             if is_running:
-                self.qemu_status.setText("✅ Running")
+                self.qemu_status.setText("OK Running")
                 self.qemu_status.setStyleSheet("color: #51cf66;")  # Green
             else:
                 self.qemu_status.setText("⭕ Not Running")
@@ -91,7 +91,7 @@ class EmulatorStatusWidget(QWidget):
 
         elif emulator_type == "Qiling":
             if is_running:
-                self.qiling_status.setText("✅ Ready")
+                self.qiling_status.setText("OK Ready")
                 self.qiling_status.setStyleSheet("color: #51cf66;")  # Green
             else:
                 self.qiling_status.setText("⭕ Not Ready")

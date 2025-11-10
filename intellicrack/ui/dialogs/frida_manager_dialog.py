@@ -641,7 +641,7 @@ class FridaManagerDialog(QDialog):
         gen_button_layout = QHBoxLayout()
         gen_button_layout.addStretch()
 
-        self.generate_btn = QPushButton("🤖 Generate AI Scripts")
+        self.generate_btn = QPushButton(" Generate AI Scripts")
         self.generate_btn.setMinimumHeight(40)
         self.generate_btn.setObjectName("fridaGenerateButton")
         self.generate_btn.clicked.connect(self.generate_ai_scripts)
@@ -680,12 +680,12 @@ class FridaManagerDialog(QDialog):
         # Preview controls
         preview_controls = QHBoxLayout()
 
-        self.save_scripts_btn = QPushButton("💾 Save Scripts")
+        self.save_scripts_btn = QPushButton(" Save Scripts")
         self.save_scripts_btn.clicked.connect(self.save_generated_scripts)
         self.save_scripts_btn.setEnabled(False)
         preview_controls.addWidget(self.save_scripts_btn)
 
-        self.deploy_scripts_btn = QPushButton("🚀 Deploy to Current Session")
+        self.deploy_scripts_btn = QPushButton(" Deploy to Current Session")
         self.deploy_scripts_btn.clicked.connect(self.deploy_generated_scripts)
         self.deploy_scripts_btn.setEnabled(False)
         preview_controls.addWidget(self.deploy_scripts_btn)
@@ -1624,7 +1624,7 @@ class FridaManagerDialog(QDialog):
                 recommendations = stats["optimizer"].get("recommendations", [])
                 self.recommendations_text.clear()
                 for rec in recommendations:
-                    self.recommendations_text.append(f"• {rec}")
+                    self.recommendations_text.append(f" {rec}")
 
             # Update protection detection
             if "detector" in stats:
@@ -1857,7 +1857,7 @@ class FridaManagerDialog(QDialog):
 
     def create_ai_generation_group(self) -> QGroupBox:
         """Create AI script generation group."""
-        ai_group = QGroupBox("🤖 AI Script Generation")
+        ai_group = QGroupBox(" AI Script Generation")
         ai_layout = QVBoxLayout()
 
         # Binary selection
@@ -1912,12 +1912,12 @@ class FridaManagerDialog(QDialog):
 
         # Generation controls
         gen_layout = QHBoxLayout()
-        self.ai_generate_btn = QPushButton("🚀 Generate Script")
+        self.ai_generate_btn = QPushButton(" Generate Script")
         self.ai_generate_btn.clicked.connect(self.generate_ai_script)
         self.ai_generate_btn.setObjectName("aiGenerateButton")
         gen_layout.addWidget(self.ai_generate_btn)
 
-        self.ai_analyze_btn = QPushButton("🔍 Analyze Only")
+        self.ai_analyze_btn = QPushButton(" Analyze Only")
         self.ai_analyze_btn.clicked.connect(self.analyze_binary_ai)
         gen_layout.addWidget(self.ai_analyze_btn)
 
@@ -1986,7 +1986,7 @@ class FridaManagerDialog(QDialog):
         self.ai_generate_btn.setEnabled(False)
         self.ai_progress.setVisible(True)
         self.ai_progress.setRange(0, 0)  # Indeterminate progress
-        self.ai_status.setText("🤖 AI analyzing binary and generating script...")
+        self.ai_status.setText(" AI analyzing binary and generating script...")
 
         # Start AI generation in background
         self.start_ai_script_generation(binary_path)
@@ -2024,7 +2024,7 @@ class FridaManagerDialog(QDialog):
                 script_request += " Use autonomous mode with testing and refinement."
 
             # Process request
-            self.ai_status.setText("🔍 AI analyzing binary...")
+            self.ai_status.setText(" AI analyzing binary...")
             result = agent.process_request(script_request)
 
             # Handle results
@@ -2032,7 +2032,7 @@ class FridaManagerDialog(QDialog):
                 self.ai_generated_scripts = result.get("scripts", [])
                 self.ai_current_analysis = result.get("analysis", {})
 
-                self.ai_status.setText(f"✅ Generated {len(self.ai_generated_scripts)} scripts successfully!")
+                self.ai_status.setText(f"OK Generated {len(self.ai_generated_scripts)} scripts successfully!")
                 self.ai_preview_btn.setEnabled(True)
                 self.ai_deploy_btn.setEnabled(True)
                 self.ai_save_btn.setEnabled(True)
@@ -2072,7 +2072,7 @@ class FridaManagerDialog(QDialog):
             QMessageBox.warning(self, "Warning", "Please select a valid target binary first.")
             return
 
-        self.ai_status.setText("🔍 AI analyzing binary protections...")
+        self.ai_status.setText(" AI analyzing binary protections...")
 
         try:
             # Import AI components for analysis
@@ -2094,7 +2094,7 @@ class FridaManagerDialog(QDialog):
             self.ai_status.setText("⏳ Analysis in progress...")
 
             # For now, show completion - in real implementation would track task
-            self.ai_status.setText("✅ Binary analysis complete!")
+            self.ai_status.setText("OK Binary analysis complete!")
             self.log_console.append_output(f"[AI] Completed analysis of {os.path.basename(binary_path)}")
 
         except Exception as e:
@@ -2110,7 +2110,7 @@ class FridaManagerDialog(QDialog):
 
         # Create preview dialog
         preview_dialog = QDialog(self)
-        preview_dialog.setWindowTitle("🤖 AI Generated Scripts Preview")
+        preview_dialog.setWindowTitle(" AI Generated Scripts Preview")
         preview_dialog.resize(1000, 700)
 
         layout = QVBoxLayout()
@@ -2245,7 +2245,7 @@ class FridaManagerDialog(QDialog):
                         self.log_console.append_output(f"[AI ERROR] Failed to deploy script: {error_msg}")
 
             if deployed_count > 0:
-                self.ai_status.setText(f"✅ Deployed {deployed_count} scripts!")
+                self.ai_status.setText(f"OK Deployed {deployed_count} scripts!")
                 self.log_console.append_output(f"[AI] Deployed {deployed_count} AI-generated scripts")
                 QMessageBox.information(self, "Success", f"Successfully deployed {deployed_count} AI-generated scripts.")
             else:
@@ -2288,7 +2288,7 @@ class FridaManagerDialog(QDialog):
                     self.log_console.append_output(f"[AI ERROR] Failed to save script: {e}")
 
             if saved_count > 0:
-                self.ai_status.setText(f"✅ Saved {saved_count} scripts to {save_dir}")
+                self.ai_status.setText(f"OK Saved {saved_count} scripts to {save_dir}")
                 QMessageBox.information(self, "Success", f"Successfully saved {saved_count} scripts to:\n{save_dir}")
 
                 # Reload script list to show new scripts

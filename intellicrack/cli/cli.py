@@ -692,7 +692,7 @@ def _display_ai_integration_results(result: dict) -> None:
     """Display AI integration results."""
     if "ai_integration" in result and result["ai_integration"].get("enabled"):
         ai_data = result["ai_integration"]
-        click.echo("\n🤖 AI Script Generation Suggestions:")
+        click.echo("\n AI Script Generation Suggestions:")
 
         suggestions = ai_data.get("script_suggestions", {})
         if suggestions.get("frida_scripts"):
@@ -708,11 +708,11 @@ def _display_ai_integration_results(result: dict) -> None:
         if ai_data.get("recommended_actions"):
             click.echo("\n  Recommended AI Actions:")
             for action in ai_data["recommended_actions"]:
-                click.echo(f"    • {action}")
+                click.echo(f"     {action}")
 
         auto_confidence = suggestions.get("auto_generate_confidence", 0)
         if auto_confidence > 0.8:
-            click.echo(f"\n  🚀 High confidence ({auto_confidence:.0%}) - Autonomous script generation triggered!")
+            click.echo(f"\n   High confidence ({auto_confidence:.0%}) - Autonomous script generation triggered!")
         elif auto_confidence > 0.5:
             click.echo(f"\n  [FAST] Moderate confidence ({auto_confidence:.0%}) - Consider manual script generation")
 
@@ -870,7 +870,7 @@ def basic_analyze(binary_path: str, deep: bool, output: str | None, no_ai: bool)
         # Display AI integration results
         if "ai_integration" in result and result["ai_integration"].get("enabled"):
             ai_data = result["ai_integration"]
-            click.echo("\n🤖 AI Script Generation Suggestions:")
+            click.echo("\n AI Script Generation Suggestions:")
 
             suggestions = ai_data.get("script_suggestions", {})
             if suggestions.get("frida_scripts"):
@@ -887,12 +887,12 @@ def basic_analyze(binary_path: str, deep: bool, output: str | None, no_ai: bool)
             if ai_data.get("recommended_actions"):
                 click.echo("\n  Recommended AI Actions:")
                 for action in ai_data["recommended_actions"]:
-                    click.echo(f"    • {action}")
+                    click.echo(f"     {action}")
 
             # Display auto-generation status
             auto_confidence = suggestions.get("auto_generate_confidence", 0)
             if auto_confidence > 0.8:
-                click.echo(f"\n  🚀 High confidence ({auto_confidence:.0%}) - Autonomous script generation triggered!")
+                click.echo(f"\n   High confidence ({auto_confidence:.0%}) - Autonomous script generation triggered!")
             elif auto_confidence > 0.5:
                 click.echo(f"\n  [FAST] Moderate confidence ({auto_confidence:.0%}) - Consider manual script generation")
 
@@ -1206,7 +1206,7 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
                     click.echo(f"\nExploitation Strategies ({len(strategies)}):")
                     for strategy in strategies[:3]:
                         vuln = strategy["vulnerability"]
-                        click.echo(f"  • {vuln['type']} ({vuln['severity']}) - {strategy['approach']}")
+                        click.echo(f"   {vuln['type']} ({vuln['severity']}) - {strategy['approach']}")
                         click.echo(f"    Confidence: {strategy['confidence']:.2f}")
 
         else:
@@ -1265,7 +1265,7 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
                     for protection in protections[:5]:
                         type_name = protection.get("type", "Unknown")
                         description = protection.get("description", "No description")
-                        click.echo(f"  • {type_name} - {description}")
+                        click.echo(f"   {type_name} - {description}")
 
         # Save results if output specified
         if output and result["success"]:
@@ -1332,14 +1332,14 @@ def auto_exploit(target_path: str, lhost: str, lport: int, target_platform: str,
             for mech in mechanisms:
                 confidence = mech.get("confidence", 0)
                 conf_str = "HIGH" if confidence > 0.8 else "MEDIUM" if confidence > 0.5 else "LOW"
-                click.echo(f"  • {mech['type']} [{conf_str} confidence]")
+                click.echo(f"   {mech['type']} [{conf_str} confidence]")
 
             # Show AI recommendations
             recommendations = result.get("ai_recommendations", [])
             if recommendations:
                 click.echo(f"\nAI Recommendations ({len(recommendations)}):")
                 for rec in recommendations[:5]:
-                    click.echo(f"  • {rec}")
+                    click.echo(f"   {rec}")
 
         else:
             click.echo(f"FAIL Licensing protection analysis failed: {result.get('error')}")
@@ -1424,7 +1424,7 @@ def ai_generate(
         from intellicrack.ai.script_generation_agent import AIAgent
 
         # Get AI orchestrator
-        click.echo("🤖 Initializing AI script generator...")
+        click.echo(" Initializing AI script generator...")
         orchestrator = get_orchestrator()
 
         # Create autonomous agent
@@ -1432,10 +1432,10 @@ def ai_generate(
 
         # Build request
         binary_name = os.path.basename(binary_path)
-        click.echo(f"🎯 Target: {binary_name}")
+        click.echo(f" Target: {binary_name}")
         click.echo(f"📋 Script Type: {script_type}")
-        click.echo(f"🔧 Complexity: {complexity}")
-        click.echo(f"🔍 Focus: {focus}")
+        click.echo(f" Complexity: {complexity}")
+        click.echo(f" Focus: {focus}")
 
         if script_type == "both":
             script_request = f"Create both Frida and Ghidra scripts to bypass protections in {binary_path}"
@@ -1459,7 +1459,7 @@ def ai_generate(
             click.echo("🔄 Autonomous mode enabled - AI will test and refine scripts")
 
         # Generate scripts
-        click.echo("\n🚀 Starting AI script generation...")
+        click.echo("\n Starting AI script generation...")
         with click.progressbar(length=100, label="Generating") as bar:
             result = agent.process_request(script_request)
             bar.update(100)
@@ -1470,7 +1470,7 @@ def ai_generate(
             analysis = result.get("analysis", {})
             iterations = result.get("iterations", 0)
 
-            click.echo(f"\n✅ Successfully generated {len(scripts)} scripts!")
+            click.echo(f"\nOK Successfully generated {len(scripts)} scripts!")
             click.echo(f"🔄 Completed in {iterations} iterations")
 
             # Show analysis summary
@@ -1480,7 +1480,7 @@ def ai_generate(
                     click.echo(f"\n🛡️  Detected {len(protections)} protection mechanisms:")
                     for prot in protections[:5]:
                         confidence = prot.get("confidence", 0.0)
-                        click.echo(f"   • {prot['type']} (confidence: {confidence:.0%})")
+                        click.echo(f"    {prot['type']} (confidence: {confidence:.0%})")
 
             # Process each script
             for i, script in enumerate(scripts):
@@ -1514,7 +1514,7 @@ def ai_generate(
                     save_dir = output or "intellicrack/intellicrack/scripts/ai_generated"
                     saved_path = generator.save_script(script, save_dir)
 
-                    click.echo(f"💾 Saved: {saved_path}")
+                    click.echo(f" Saved: {saved_path}")
 
                 except (
                     OSError,
@@ -1588,7 +1588,7 @@ def test(script_path: str, binary: str | None, environment: str, timeout: int, v
         click.echo(f"⏱️  Timeout: {timeout}s")
 
         if binary:
-            click.echo(f"🎯 Target: {os.path.basename(binary)}")
+            click.echo(f" Target: {os.path.basename(binary)}")
 
         # Initialize test manager
         if environment == "qemu":
@@ -1602,7 +1602,7 @@ def test(script_path: str, binary: str | None, environment: str, timeout: int, v
 
             try:
                 # Run test
-                click.echo("🚀 Executing script in QEMU...")
+                click.echo(" Executing script in QEMU...")
                 if script_type == "frida":
                     result = test_manager.test_frida_script(snapshot_id, script_content, binary or "unknown")
                 else:
@@ -1610,7 +1610,7 @@ def test(script_path: str, binary: str | None, environment: str, timeout: int, v
 
                 # Show results
                 if result.success:
-                    click.echo("✅ Script executed successfully!")
+                    click.echo("OK Script executed successfully!")
                     click.echo(f"⏱️  Runtime: {result.runtime_ms}ms")
 
                     if verbose and result.output:
@@ -1665,8 +1665,8 @@ def ai_analyze(binary_path: str, output: str | None, output_format: str, deep: b
             get_orchestrator,
         )
 
-        click.echo(f"🔍 AI analyzing: {os.path.basename(binary_path)}")
-        click.echo(f"📊 Analysis depth: {'Deep' if deep else 'Standard'}")
+        click.echo(f" AI analyzing: {os.path.basename(binary_path)}")
+        click.echo(f" Analysis depth: {'Deep' if deep else 'Standard'}")
 
         # Get orchestrator
         orchestrator = get_orchestrator()
@@ -1683,7 +1683,7 @@ def ai_analyze(binary_path: str, output: str | None, output_format: str, deep: b
         )
 
         # Submit task
-        click.echo("🤖 Starting AI analysis...")
+        click.echo(" Starting AI analysis...")
         task_id = orchestrator.submit_task(task)
         click.echo(f"Task submitted with ID: {task_id}")
 
@@ -1709,7 +1709,7 @@ def ai_analyze(binary_path: str, output: str | None, output_format: str, deep: b
                 # Brief sleep to avoid excessive CPU usage during polling
                 time.sleep(0.1)
 
-        click.echo("✅ Analysis complete!")
+        click.echo("OK Analysis complete!")
 
         # Get actual analysis results from orchestrator
         analysis_results = orchestrator.get_task_results(task_id)
@@ -1766,7 +1766,7 @@ def ai_analyze(binary_path: str, output: str | None, output_format: str, deep: b
 
             output_text += f"Detected Protections ({len(analysis_results['protections'])}):\n"
             for prot in analysis_results["protections"]:
-                output_text += f"  • {prot['type']} (confidence: {prot['confidence']:.0%})\n"
+                output_text += f"   {prot['type']} (confidence: {prot['confidence']:.0%})\n"
                 output_text += f"    {prot['description']}\n"
 
             output_text += "\nAI Recommendations:\n"
@@ -1777,7 +1777,7 @@ def ai_analyze(binary_path: str, output: str | None, output_format: str, deep: b
         if output:
             with open(output, "w", encoding="utf-8") as f:
                 f.write(output_text)
-            click.echo(f"💾 Analysis saved to: {output}")
+            click.echo(f" Analysis saved to: {output}")
         else:
             click.echo("\n📋 Analysis Results:")
             click.echo(output_text)
@@ -1823,13 +1823,13 @@ def autonomous(
         from intellicrack.ai.orchestrator import get_orchestrator
         from intellicrack.ai.script_generation_agent import AIAgent
 
-        click.echo("🤖 Starting autonomous AI workflow...")
-        click.echo(f"📝 Request: {request}")
+        click.echo(" Starting autonomous AI workflow...")
+        click.echo(f" Request: {request}")
         click.echo(f"🔄 Max iterations: {max_iterations}")
         click.echo(f"🏗️  Test environment: {test_environment}")
 
         if binary:
-            click.echo(f"🎯 Target binary: {os.path.basename(binary)}")
+            click.echo(f" Target binary: {os.path.basename(binary)}")
             # Add binary to request if provided
             request = f"{request}. Target binary: {binary}"
 
@@ -1838,7 +1838,7 @@ def autonomous(
         agent = AIAgent(orchestrator=orchestrator, cli_interface=None)
         agent.max_iterations = max_iterations
 
-        click.echo("\n🚀 Executing autonomous workflow...")
+        click.echo("\n Executing autonomous workflow...")
 
         result = agent.process_request(request)
 
@@ -1848,7 +1848,7 @@ def autonomous(
             iterations = result.get("iterations", 0)
             analysis = result.get("analysis", {})
 
-            click.echo("\n✅ Autonomous workflow completed successfully!")
+            click.echo("\nOK Autonomous workflow completed successfully!")
             click.echo(f"🔄 Total iterations: {iterations}")
             click.echo(f"📄 Generated scripts: {len(scripts)}")
 
@@ -1881,12 +1881,12 @@ def autonomous(
 
             # Show analysis if verbose
             if verbose and analysis:
-                click.echo("\n📊 Analysis Summary:")
+                click.echo("\n Analysis Summary:")
                 if "protections" in analysis:
                     protections = analysis["protections"]
                     click.echo(f"   Protections detected: {len(protections)}")
                     for prot in protections[:3]:
-                        click.echo(f"      • {prot.get('type', 'unknown')}")
+                        click.echo(f"       {prot.get('type', 'unknown')}")
         else:
             error_msg = result.get("message", "Unknown error")
             click.echo(f"ERROR Autonomous workflow failed: {error_msg}", err=True)
@@ -1917,7 +1917,7 @@ def save_session(binary_path: str, output: str | None, include_ui: bool):
     try:
         from intellicrack.ai.script_generation_agent import AIAgent
 
-        click.echo("💾 Saving AI session data...")
+        click.echo(" Saving AI session data...")
 
         # Initialize agent
         agent = AIAgent()
@@ -1930,7 +1930,7 @@ def save_session(binary_path: str, output: str | None, include_ui: bool):
 
         # Include UI conversation history if requested
         if include_ui:
-            click.echo("📊 Including UI conversation history in session data...")
+            click.echo(" Including UI conversation history in session data...")
             # Try to get UI history if available
             try:
                 from intellicrack.ui.main_app import get_conversation_history
@@ -1955,7 +1955,7 @@ def save_session(binary_path: str, output: str | None, include_ui: bool):
             if include_ui:
                 click.echo("  Note: Agent doesn't support extended save options")
 
-        click.echo(f"✅ Session data saved to: {session_file}")
+        click.echo(f"OK Session data saved to: {session_file}")
 
         # Display what was included
         click.echo("\n📋 Session includes:")
@@ -1969,7 +1969,7 @@ def save_session(binary_path: str, output: str | None, include_ui: bool):
 
         # Show session summary
         history = agent.get_conversation_history()
-        click.echo(f"📊 Conversation entries: {len(history)}")
+        click.echo(f" Conversation entries: {len(history)}")
         click.echo(f"📄 Scripts generated: {len(agent.generated_scripts)}")
         click.echo(f"🧪 Tests run: {len(agent.test_results)}")
 
@@ -2007,11 +2007,11 @@ def reset(confirm: bool):
         agent = AIAgent()
         agent.reset()
 
-        click.echo("✅ AI agent reset successfully")
-        click.echo("   • Conversation history cleared")
-        click.echo("   • Generated scripts cleared")
-        click.echo("   • Test results cleared")
-        click.echo("   • Ready for new analysis")
+        click.echo("OK AI agent reset successfully")
+        click.echo("    Conversation history cleared")
+        click.echo("    Generated scripts cleared")
+        click.echo("    Test results cleared")
+        click.echo("    Ready for new analysis")
 
     except (
         OSError,
@@ -2051,8 +2051,8 @@ def task(
     try:
         from intellicrack.ai.script_generation_agent import AIAgent
 
-        click.echo(f"🤖 Executing {task_type} task...")
-        click.echo(f"🎯 Target: {os.path.basename(binary_path)}")
+        click.echo(f" Executing {task_type} task...")
+        click.echo(f" Target: {os.path.basename(binary_path)}")
 
         # Initialize agent
         agent = AIAgent()
@@ -2075,7 +2075,7 @@ def task(
 
         # Handle results
         if result.get("success"):
-            click.echo("\n✅ Task completed successfully!")
+            click.echo("\nOK Task completed successfully!")
 
             if task_type == "script_generation" and "scripts" in result:
                 scripts = result["scripts"]
@@ -2085,9 +2085,9 @@ def task(
 
             elif task_type == "vulnerability_analysis" and "vulnerabilities" in result:
                 vulns = result["vulnerabilities"]
-                click.echo(f"🔍 Found {len(vulns)} vulnerabilities")
+                click.echo(f" Found {len(vulns)} vulnerabilities")
                 for vuln in vulns[:5]:  # Show first 5
-                    click.echo(f"   • {vuln}")
+                    click.echo(f"    {vuln}")
 
             elif task_type == "script_testing" and "test_results" in result:
                 test_result = result["test_results"]
@@ -2098,9 +2098,9 @@ def task(
             if output:
                 with open(output, "w", encoding="utf-8") as f:
                     json.dump(result, f, indent=2, default=str)
-                click.echo(f"💾 Results saved to: {output}")
+                click.echo(f" Results saved to: {output}")
             elif verbose:
-                click.echo("\n📊 Full results:")
+                click.echo("\n Full results:")
                 click.echo(json.dumps(result, indent=2, default=str))
 
         else:
@@ -2170,7 +2170,7 @@ def frida_list(category: str | None, verbose: bool):
         click.echo(f"\n📜 Available Frida Scripts ({len(scripts_to_show)}):\n")
 
         for script_name, config in sorted(scripts_to_show.items()):
-            click.echo(f"  • {script_name}")
+            click.echo(f"   {script_name}")
             click.echo(f"    Category: {config.category.value}")
 
             if verbose:
@@ -2184,8 +2184,8 @@ def frida_list(category: str | None, verbose: bool):
 
                 click.echo()
 
-        click.echo("\n💡 Use 'intellicrack frida info <script_name>' for details")
-        click.echo("💡 Use 'intellicrack frida run <script_name> <binary>' to execute\n")
+        click.echo("\n Use 'intellicrack frida info <script_name>' for details")
+        click.echo(" Use 'intellicrack frida run <script_name> <binary>' to execute\n")
 
     except Exception as e:
         logger.error("Failed to list Frida scripts: %s", e, exc_info=True)
@@ -2219,7 +2219,7 @@ def frida_info(script_name: str):
         if config.parameters:
             click.echo("\nParameters:")
             for param_name, param_desc in config.parameters.items():
-                click.echo(f"  • {param_name}: {param_desc}")
+                click.echo(f"   {param_name}: {param_desc}")
 
         if config.example_usage:
             click.echo(f"\nExample Usage:\n  {config.example_usage}")
@@ -2268,12 +2268,12 @@ def frida_run(script_name: str, binary_path: str, mode: str, params: str | None,
         manager = FridaScriptManager(scripts_dir)
 
         if script_name not in manager.scripts:
-            click.echo(f"❌ Script '{script_name}' not found.")
+            click.echo(f"FAIL Script '{script_name}' not found.")
             click.echo(f"\nAvailable scripts: {', '.join(sorted(manager.scripts.keys()))}")
             sys.exit(1)
 
         if not os.path.exists(binary_path):
-            click.echo(f"❌ Binary not found: {binary_path}")
+            click.echo(f"FAIL Binary not found: {binary_path}")
             sys.exit(1)
 
         # Parse parameters if provided
@@ -2282,14 +2282,14 @@ def frida_run(script_name: str, binary_path: str, mode: str, params: str | None,
             try:
                 parameters = json.loads(params)
             except json.JSONDecodeError as e:
-                click.echo(f"❌ Invalid JSON parameters: {e}")
+                click.echo(f"FAIL Invalid JSON parameters: {e}")
                 sys.exit(1)
 
         click.echo(f"\n📜 Executing: {script_name}")
-        click.echo(f"🎯 Target: {Path(binary_path).name}")
-        click.echo(f"⚙️  Mode: {mode}")
+        click.echo(f" Target: {Path(binary_path).name}")
+        click.echo(f"[CFG]️  Mode: {mode}")
         if parameters:
-            click.echo(f"📦 Parameters: {parameters}")
+            click.echo(f" Parameters: {parameters}")
         click.echo()
 
         # Execute the script
@@ -2302,18 +2302,18 @@ def frida_run(script_name: str, binary_path: str, mode: str, params: str | None,
 
         # Display results
         if result.success:
-            click.echo("✅ Execution successful!")
+            click.echo("OK Execution successful!")
             click.echo(f"⏱️  Execution time: {result.execution_time_ms}ms")
 
             if result.output:
-                click.echo("\n📊 Script Output:")
+                click.echo("\n Script Output:")
                 click.echo(result.output)
 
             if result.hooks_triggered:
                 click.echo(f"\n🎣 Hooks triggered: {result.hooks_triggered}")
 
             if result.data_collected:
-                click.echo(f"\n📦 Data collected: {len(result.data_collected)} items")
+                click.echo(f"\n Data collected: {len(result.data_collected)} items")
 
                 # Show sample of collected data
                 for i, data_item in enumerate(list(result.data_collected)[:5]):
@@ -2325,11 +2325,11 @@ def frida_run(script_name: str, binary_path: str, mode: str, params: str | None,
             # Save results if output path specified
             if output:
                 manager.export_results([result], output_path=output)
-                click.echo(f"\n💾 Results saved to: {output}")
+                click.echo(f"\n Results saved to: {output}")
 
             click.echo()
         else:
-            click.echo(f"❌ Execution failed: {result.error}")
+            click.echo(f"FAIL Execution failed: {result.error}")
 
             if result.output:
                 click.echo("\n📋 Partial output:")
@@ -2364,7 +2364,7 @@ def cert_detect(target: str, report: str | None, verbose: bool, min_confidence: 
         sys.exit(1)
 
     try:
-        click.echo(f"🔍 Detecting certificate validation in: {target}")
+        click.echo(f" Detecting certificate validation in: {target}")
         click.echo()
 
         detector = CertificateValidationDetector()
@@ -2372,9 +2372,9 @@ def cert_detect(target: str, report: str | None, verbose: bool, min_confidence: 
 
         detection_report = detector.detect_certificate_validation(target)
 
-        click.echo("✅ Detection complete")
+        click.echo("OK Detection complete")
         click.echo()
-        click.echo("📊 Results:")
+        click.echo(" Results:")
         click.echo(f"  Binary: {detection_report.binary_path}")
         click.echo(f"  Detected libraries: {len(detection_report.detected_libraries)}")
 
@@ -2404,22 +2404,22 @@ def cert_detect(target: str, report: str | None, verbose: bool, min_confidence: 
             click.echo()
             click.echo("  ℹ️  No certificate validation detected")
 
-        click.echo(f"💡 Recommended method: {detection_report.recommended_method.value}")
-        click.echo(f"⚠️  Risk level: {detection_report.risk_level}")
+        click.echo(f" Recommended method: {detection_report.recommended_method.value}")
+        click.echo(f"WARNING  Risk level: {detection_report.risk_level}")
 
         if report:
             report_json = detection_report.to_json()
             with open(report, 'w', encoding='utf-8') as f:
                 f.write(report_json)
             click.echo()
-            click.echo(f"💾 Report saved to: {report}")
+            click.echo(f" Report saved to: {report}")
 
     except FileNotFoundError as e:
-        click.echo(f"❌ Error: Target not found - {e}", err=True)
+        click.echo(f"FAIL Error: Target not found - {e}", err=True)
         sys.exit(1)
     except Exception as e:
         logger.error("Certificate detection failed: %s", e, exc_info=True)
-        click.echo(f"❌ Error: {e}", err=True)
+        click.echo(f"FAIL Error: {e}", err=True)
         sys.exit(1)
 
 
@@ -2455,7 +2455,7 @@ def cert_bypass(target: str, method: str, verify: bool, report: str | None, forc
         sys.exit(1)
 
     try:
-        click.echo(f"🎯 Executing certificate bypass on: {target}")
+        click.echo(f" Executing certificate bypass on: {target}")
         click.echo(f"   Method: {method}")
         click.echo()
 
@@ -2471,14 +2471,14 @@ def cert_bypass(target: str, method: str, verify: bool, report: str | None, forc
             }
             bypass_method = method_map.get(method.lower())
 
-        click.echo("🔍 Step 1: Detecting certificate validation...")
+        click.echo(" Step 1: Detecting certificate validation...")
         result = orchestrator.bypass(target, method=bypass_method)
 
         if result.success:
             click.echo()
-            click.echo("✅ Bypass successful!")
+            click.echo("OK Bypass successful!")
             click.echo()
-            click.echo("📊 Results:")
+            click.echo(" Results:")
             click.echo(f"  Method used: {result.method_used.value}")
             click.echo(f"  Detected libraries: {', '.join(result.detection_report.detected_libraries)}")
             click.echo(f"  Functions bypassed: {len(result.detection_report.validation_functions)}")
@@ -2488,7 +2488,7 @@ def cert_bypass(target: str, method: str, verify: bool, report: str | None, forc
 
                 if result.patch_result.patched_functions:
                     click.echo()
-                    click.echo("🔧 Patched functions:")
+                    click.echo(" Patched functions:")
                     for patched in result.patch_result.patched_functions:
                         click.echo(f"    - {patched.api_name} at 0x{patched.address:x}")
                         click.echo(f"      Patch type: {patched.patch_type.value}")
@@ -2506,16 +2506,16 @@ def cert_bypass(target: str, method: str, verify: bool, report: str | None, forc
                 verification_passed = result.verification_passed
 
                 if verification_passed:
-                    click.echo("  ✅ Verification passed - bypass is working")
+                    click.echo("  OK Verification passed - bypass is working")
                 else:
-                    click.echo("  ⚠️  Verification failed - bypass may not be effective")
+                    click.echo("  WARNING  Verification failed - bypass may not be effective")
 
             click.echo()
-            click.echo("💡 Tip: Use 'intellicrack cert-rollback' to restore original state")
+            click.echo(" Tip: Use 'intellicrack cert-rollback' to restore original state")
 
         else:
             click.echo()
-            click.echo("❌ Bypass failed")
+            click.echo("FAIL Bypass failed")
             click.echo()
             click.echo("Errors:")
             for error in result.errors:
@@ -2528,18 +2528,18 @@ def cert_bypass(target: str, method: str, verify: bool, report: str | None, forc
             with open(report, 'w', encoding='utf-8') as f:
                 json.dump(result_dict, f, indent=2)
             click.echo()
-            click.echo(f"💾 Report saved to: {report}")
+            click.echo(f" Report saved to: {report}")
 
     except FileNotFoundError as e:
-        click.echo(f"❌ Error: Target not found - {e}", err=True)
+        click.echo(f"FAIL Error: Target not found - {e}", err=True)
         sys.exit(1)
     except PermissionError as e:
-        click.echo(f"❌ Error: Permission denied - {e}", err=True)
+        click.echo(f"FAIL Error: Permission denied - {e}", err=True)
         click.echo("   Try running with administrator/root privileges", err=True)
         sys.exit(1)
     except Exception as e:
         logger.error("Certificate bypass failed: %s", e, exc_info=True)
-        click.echo(f"❌ Error: {e}", err=True)
+        click.echo(f"FAIL Error: {e}", err=True)
         sys.exit(1)
 
 
@@ -2585,7 +2585,7 @@ def cert_test(target: str, url: str, timeout: int):
                 click.echo(f"Target type: Process (Name: {target})")
 
         click.echo()
-        click.echo("🔍 Checking bypass status...")
+        click.echo(" Checking bypass status...")
 
         detector = CertificateValidationDetector()
 
@@ -2613,33 +2613,33 @@ def cert_test(target: str, url: str, timeout: int):
 
                 if status_code == 200:
                     click.echo()
-                    click.echo("✅ Test PASSED")
+                    click.echo("OK Test PASSED")
                     click.echo(f"   Successfully connected to {url}")
                     click.echo(f"   Status code: {status_code}")
                     click.echo()
-                    click.echo("💡 Certificate bypass appears to be working")
+                    click.echo(" Certificate bypass appears to be working")
                 else:
                     click.echo()
-                    click.echo(f"⚠️  Test completed with status code: {status_code}")
+                    click.echo(f"WARNING  Test completed with status code: {status_code}")
                     click.echo("   Bypass may be partially effective")
 
         except urllib.error.URLError as e:
             click.echo()
-            click.echo("❌ Test FAILED")
+            click.echo("FAIL Test FAILED")
             click.echo(f"   Connection error: {e.reason}")
             click.echo()
-            click.echo("💡 This could indicate:")
+            click.echo(" This could indicate:")
             click.echo("   - Certificate bypass is not active or not effective")
             click.echo("   - Target is not using bypassed validation")
             click.echo("   - Network connectivity issues")
             sys.exit(1)
 
     except FileNotFoundError as e:
-        click.echo(f"❌ Error: Target not found - {e}", err=True)
+        click.echo(f"FAIL Error: Target not found - {e}", err=True)
         sys.exit(1)
     except Exception as e:
         logger.error("Certificate test failed: %s", e, exc_info=True)
-        click.echo(f"❌ Error: {e}", err=True)
+        click.echo(f"FAIL Error: {e}", err=True)
         sys.exit(1)
 
 
@@ -2676,28 +2676,28 @@ def cert_rollback(target: str, force: bool):
         target_path = Path(target)
         backup_path = Path(str(target_path) + ".intellicrack_backup")
 
-        click.echo("🔍 Checking for bypass artifacts...")
+        click.echo(" Checking for bypass artifacts...")
 
         rollback_success = False
 
         if backup_path.exists():
-            click.echo("  ✅ Found binary backup")
+            click.echo("  OK Found binary backup")
             click.echo()
-            click.echo("📝 Restoring original binary...")
+            click.echo(" Restoring original binary...")
 
             import shutil
             shutil.copy2(backup_path, target_path)
 
-            click.echo("  ✅ Original binary restored")
+            click.echo("  OK Original binary restored")
             backup_path.unlink()
-            click.echo("  🗑️  Backup file removed")
+            click.echo("    Backup file removed")
 
             rollback_success = True
         else:
             if not force:
-                click.echo("  ⚠️  No backup file found")
+                click.echo("  WARNING  No backup file found")
                 click.echo()
-                click.echo("💡 Possible reasons:")
+                click.echo(" Possible reasons:")
                 click.echo("   - Binary was not patched (Frida hooks only)")
                 click.echo("   - Backup was manually deleted")
                 click.echo("   - Bypass was not applied to this target")
@@ -2740,7 +2740,7 @@ def cert_rollback(target: str, force: bool):
                 hooks = FridaCertificateHooks()
                 if hooks.attach(target_pid):
                     hooks.detach()
-                    click.echo("  ✅ Frida hooks detached")
+                    click.echo("  OK Frida hooks detached")
                     rollback_success = True
                 else:
                     click.echo("  ℹ️  No active Frida hooks found")
@@ -2748,34 +2748,34 @@ def cert_rollback(target: str, force: bool):
                 click.echo("  ℹ️  Target process not running")
 
         except ImportError:
-            click.echo("  ⚠️  psutil not available, skipping process check")
+            click.echo("  WARNING  psutil not available, skipping process check")
         except Exception as hook_error:
             logger.warning("Failed to detach hooks: %s", hook_error)
-            click.echo(f"  ⚠️  Hook detachment failed: {hook_error}")
+            click.echo(f"  WARNING  Hook detachment failed: {hook_error}")
 
         click.echo()
 
         if rollback_success or force:
-            click.echo("✅ Rollback complete")
+            click.echo("OK Rollback complete")
             click.echo()
-            click.echo("💡 Next steps:")
+            click.echo(" Next steps:")
             click.echo("   - Verify target runs correctly")
             click.echo("   - Certificate validation should now be active")
         else:
-            click.echo("❌ Rollback incomplete")
+            click.echo("FAIL Rollback incomplete")
             click.echo("   No changes were made")
             sys.exit(1)
 
     except FileNotFoundError as e:
-        click.echo(f"❌ Error: Target not found - {e}", err=True)
+        click.echo(f"FAIL Error: Target not found - {e}", err=True)
         sys.exit(1)
     except PermissionError as e:
-        click.echo(f"❌ Error: Permission denied - {e}", err=True)
+        click.echo(f"FAIL Error: Permission denied - {e}", err=True)
         click.echo("   Try running with administrator/root privileges", err=True)
         sys.exit(1)
     except Exception as e:
         logger.error("Certificate rollback failed: %s", e, exc_info=True)
-        click.echo(f"❌ Error: {e}", err=True)
+        click.echo(f"FAIL Error: {e}", err=True)
         sys.exit(1)
 
 

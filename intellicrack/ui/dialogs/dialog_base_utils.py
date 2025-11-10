@@ -47,8 +47,8 @@ def create_standard_control_layout(buttons_config, include_progress=True):
             .replace(" ", "_")
             .replace("▶️", "run")
             .replace("⏹️", "stop")
-            .replace("💾", "save")
-            .replace("🔧", "generate")
+            .replace("", "save")
+            .replace("", "generate")
             .strip()
         )
         buttons[key] = btn

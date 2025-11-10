@@ -3,14 +3,14 @@
 ## Build, Lint, and Test Commands
 
 - Use `just` for development workflows:
-  - `just test` - Run all unit tests with real data validation
-  - `just test-coverage` - Run tests with 95%+ coverage requirement
-  - `just lint` - Run Ruff linting for Python
-  - `just lint-all` - Lint all languages (Python, JS, Java, Rust, Markdown)
+    - `just test` - Run all unit tests with real data validation
+    - `just test-coverage` - Run tests with 95%+ coverage requirement
+    - `just lint` - Run Ruff linting for Python
+    - `just lint-all` - Lint all languages (Python, JS, Java, Rust, Markdown)
 - To run a single test, use pytest directly, e.g.:
-  ```bash
-  pytest tests/path/to/test_file.py::test_function_name
-  ```
+    ```bash
+    pytest tests/path/to/test_file.py::test_function_name
+    ```
 
 ## Code Style Guidelines
 
@@ -25,21 +25,26 @@
 
 ## Development Guidelines
 
-This repository follows strict AI assistant guidelines to ensure high-quality, production-ready code:
+This repository follows strict AI assistant guidelines to ensure high-quality,
+production-ready code:
 
 - NO stubs, mocks, or placeholders; all code must be fully functional
 - NO TODO or explanatory comments unless explicitly requested
 - Prioritize Windows 11 compatibility
-- Use lazy and conditional imports for heavy modules (e.g., PyTorch, Frida) to avoid circular dependencies
+- Use lazy and conditional imports for heavy modules (e.g., PyTorch, Frida) to
+  avoid circular dependencies
 - Use `getattr()` and `hasattr()` for safe attribute access
 - Use try/except blocks for import errors with meaningful fallbacks
 - Follow thread-safe import patterns for PyTorch (`safe_torch_import()`)
-- Naming conventions must be clear, descriptive, and consistent with the existing codebase
+- Naming conventions must be clear, descriptive, and consistent with the
+  existing codebase
 
 ## GPU Handling Patterns
 
-- Import `intellicrack.utils.torch_gil_safety.initialize_gil_safety()` before any PyTorch/C++ extensions to prevent GIL crashes
-- Use `intellicrack.utils.gpu_autoloader` for unified GPU detection and device management
+- Import `intellicrack.utils.torch_gil_safety.initialize_gil_safety()` before
+  any PyTorch/C++ extensions to prevent GIL crashes
+- Use `intellicrack.utils.gpu_autoloader` for unified GPU detection and device
+  management
 - Always provide CPU fallback for GPU operations
 
 ## Error Handling Patterns
@@ -50,32 +55,33 @@ This repository follows strict AI assistant guidelines to ensure high-quality, p
 ## Import Structure Conventions
 
 - Lazy imports for heavy modules to avoid circular dependencies
-- Conditional imports with availability flags (e.g., `HAS_TORCH`, `FRIDA_MODULES_AVAILABLE`)
+- Conditional imports with availability flags (e.g., `HAS_TORCH`,
+  `FRIDA_MODULES_AVAILABLE`)
 - Thread-safe imports for PyTorch modules
 
 ## Build, Lint, and Test Commands
 
 - Use `just` for development workflows:
-  - `just test` - Run all unit tests with real data validation
-  - `just test-coverage` - Run tests with 95%+ coverage requirement
-  - `just lint` - Ruff linting for Python
-  - `just lint-all` - Lint all languages (Python, JS, Java, Rust, Markdown)
+    - `just test` - Run all unit tests with real data validation
+    - `just test-coverage` - Run tests with 95%+ coverage requirement
+    - `just lint` - Ruff linting for Python
+    - `just lint-all` - Lint all languages (Python, JS, Java, Rust, Markdown)
 - To run a single test, use pytest directly, e.g.:
-  ```bash
-  pytest tests/path/to/test_file.py::test_function_name
-  ```
+    ```bash
+    pytest tests/path/to/test_file.py::test_function_name
+    ```
 
 ## Application Launch
 
 - Primary launch method:
-  ```bash
-  python launch_intellicrack.py
-  ```
+    ```bash
+    python launch_intellicrack.py
+    ```
 - Alternative methods:
-  ```bash
-  python -m intellicrack --gui
-  python -m intellicrack analyze target.exe
-  ```
+    ```bash
+    python -m intellicrack --gui
+    python -m intellicrack analyze target.exe
+    ```
 
 ## Environment Setup
 
@@ -90,11 +96,13 @@ This repository follows strict AI assistant guidelines to ensure high-quality, p
 - Binary analysis supports PE, ELF, Mach-O formats
 - Protection detection via `ProtectionAnalyzer`
 - GPU acceleration for pattern matching and hash operations
-- AI model integration supports multiple providers and local models with unified device management
+- AI model integration supports multiple providers and local models with unified
+  device management
 
 ## Intel Arc B580 Specific Considerations
 
-- Extensive Intel Arc B580 GPU support with GIL crash prevention environment setup
+- Extensive Intel Arc B580 GPU support with GIL crash prevention environment
+  setup
 - Intel GPU detection pattern for PyTorch XPU acceleration
 
 ## Security & Ethics Context
@@ -110,4 +118,5 @@ This repository follows strict AI assistant guidelines to ensure high-quality, p
 - User guides in `docs/guides/`
 - Configuration reference documentation
 
-Maintain these standards strictly to ensure consistency and production readiness in all agentic coding operations.
+Maintain these standards strictly to ensure consistency and production readiness
+in all agentic coding operations.

@@ -7,7 +7,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 try:
     from intellicrack.core.analysis.entropy_analyzer import EntropyAnalyzer
-    print("✅ Import successful")
+    print("OK Import successful")
 
     analyzer = EntropyAnalyzer()
 
@@ -28,11 +28,11 @@ try:
     print(f"Classifications: {low}, {med}, {high}")
 
     if entropy1 == 0.0 and 7.9 <= entropy2 <= 8.0 and 0.9 <= entropy3 <= 1.1:
-        print("✅ Basic functionality works!")
+        print("OK Basic functionality works!")
     else:
-        print("❌ Functionality test failed")
+        print("FAIL Functionality test failed")
 
 except Exception as e:
-    print(f"❌ Error: {e}")
+    print(f"FAIL Error: {e}")
     import traceback
     traceback.print_exc()

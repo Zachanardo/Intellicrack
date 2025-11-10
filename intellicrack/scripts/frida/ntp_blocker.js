@@ -34,7 +34,7 @@ const NtpBlocker = {
 
     // Configuration
     config: {
-    // NTP/SNTP servers to block
+        // NTP/SNTP servers to block
         timeServers: [
             // Common NTP pools
             'pool.ntp.org',
@@ -246,7 +246,7 @@ const NtpBlocker = {
                         // Check for systemd-timesyncd
                         if (
                             pathname.includes('systemd-timesyncd') ||
-              pathname.includes('timedatectl')
+                            pathname.includes('timedatectl')
                         ) {
                             shouldBlock = true;
                             send({
@@ -285,7 +285,7 @@ const NtpBlocker = {
         // Block D-Bus calls to time sync services
         var dbus_message_new_method_call = Module.findExportByName(
             null,
-            'dbus_message_new_method_call',
+            'dbus_message_new_method_call'
         );
         if (dbus_message_new_method_call) {
             Interceptor.attach(dbus_message_new_method_call, {
@@ -297,9 +297,9 @@ const NtpBlocker = {
 
                     if (
                         destination &&
-            (destination.includes('timesyncd') ||
-              destination.includes('chrony') ||
-              destination.includes('timedated'))
+                        (destination.includes('timesyncd') ||
+                            destination.includes('chrony') ||
+                            destination.includes('timedated'))
                     ) {
                         send({
                             type: 'bypass',
@@ -328,10 +328,10 @@ const NtpBlocker = {
                     var pathname = args[0].readUtf8String();
                     if (
                         pathname &&
-            (pathname.includes('systemd-timesyncd.service') ||
-              pathname.includes('chronyd.service') ||
-              pathname.includes('ntp.service') ||
-              pathname.includes('ntpd.service'))
+                        (pathname.includes('systemd-timesyncd.service') ||
+                            pathname.includes('chronyd.service') ||
+                            pathname.includes('ntp.service') ||
+                            pathname.includes('ntpd.service'))
                     ) {
                         send({
                             type: 'bypass',
@@ -372,9 +372,9 @@ const NtpBlocker = {
                             // Check for NMEA sentences with time data
                             if (
                                 data.includes('$GPRMC') ||
-                data.includes('$GPGGA') ||
-                data.includes('$GPZDA') ||
-                data.includes('$GNGGA')
+                                data.includes('$GPGGA') ||
+                                data.includes('$GPZDA') ||
+                                data.includes('$GNGGA')
                             ) {
                                 send({
                                     type: 'bypass',
@@ -406,10 +406,10 @@ const NtpBlocker = {
                     var pathname = args[1].readUtf8String();
                     if (
                         pathname &&
-            (pathname.includes('/dev/ttyUSB') ||
-              pathname.includes('/dev/ttyACM') ||
-              pathname.includes('/dev/gps') ||
-              pathname.includes('/dev/pps'))
+                        (pathname.includes('/dev/ttyUSB') ||
+                            pathname.includes('/dev/ttyACM') ||
+                            pathname.includes('/dev/gps') ||
+                            pathname.includes('/dev/pps'))
                     ) {
                         send({
                             type: 'bypass',
@@ -447,8 +447,8 @@ const NtpBlocker = {
                         return -1; // Connection failed
                     },
                     'int',
-                    ['pointer', 'pointer', 'pointer'],
-                ),
+                    ['pointer', 'pointer', 'pointer']
+                )
             );
         }
     },
@@ -472,7 +472,7 @@ const NtpBlocker = {
                     // PTP uses raw sockets or UDP
                     if (
                         (type === 3 && protocol === 0x88f7) || // SOCK_RAW with PTP ethertype
-            (type === 2 && domain === 2)
+                        (type === 2 && domain === 2)
                     ) {
                         // SOCK_DGRAM AF_INET
                         this.checkPTP = true;
@@ -532,10 +532,10 @@ const NtpBlocker = {
                     var file = args[0].readUtf8String();
                     if (
                         file &&
-            (file.includes('ptp4l') ||
-              file.includes('phc2sys') ||
-              file.includes('pmc') ||
-              file.includes('ptpd'))
+                        (file.includes('ptp4l') ||
+                            file.includes('phc2sys') ||
+                            file.includes('pmc') ||
+                            file.includes('ptpd'))
                     ) {
                         send({
                             type: 'bypass',
@@ -571,9 +571,9 @@ const NtpBlocker = {
 
                     if (
                         request === PTP_CLOCK_GETCAPS ||
-            request === PTP_SYS_OFFSET ||
-            request === PTP_PIN_GETFUNC ||
-            request === PTP_PIN_SETFUNC
+                        request === PTP_SYS_OFFSET ||
+                        request === PTP_PIN_GETFUNC ||
+                        request === PTP_PIN_SETFUNC
                     ) {
                         send({
                             type: 'bypass',
@@ -630,7 +630,7 @@ const NtpBlocker = {
                             for (var endpoint of cloudTimeEndpoints) {
                                 if (
                                     data.includes(endpoint) ||
-                  (data.includes('time') && data.includes('GET'))
+                                    (data.includes('time') && data.includes('GET'))
                                 ) {
                                     send({
                                         type: 'bypass',
@@ -641,7 +641,7 @@ const NtpBlocker = {
 
                                     // Replace with blocked response
                                     var blocked =
-                    'GET /blocked HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n';
+                                        'GET /blocked HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n';
                                     Memory.writeUtf8String(buf, blocked);
                                     args[2] = ptr(blocked.length);
 
@@ -667,9 +667,9 @@ const NtpBlocker = {
                         // Check for curl/wget with time endpoints
                         if (
                             (command.includes('curl') || command.includes('wget')) &&
-              (command.includes('time') ||
-                command.includes('ntp') ||
-                command.includes('worldclock'))
+                            (command.includes('time') ||
+                                command.includes('ntp') ||
+                                command.includes('worldclock'))
                         ) {
                             blocked = true;
                         }
@@ -725,11 +725,7 @@ const NtpBlocker = {
                     self.stats.httpBlocked++;
 
                     // Redirect to blocked URL
-                    return originalXHROpen.call(
-                        this,
-                        method,
-                        'http://127.0.0.1:1/blocked',
-                    );
+                    return originalXHROpen.call(this, method, 'http://127.0.0.1:1/blocked');
                 }
 
                 return originalXHROpen.apply(this, arguments);
@@ -774,10 +770,10 @@ const NtpBlocker = {
                     var pathname = args[0].readUtf8String();
                     if (
                         pathname &&
-            (pathname.includes('/dev/rtc') ||
-              pathname.includes('/dev/rtc0') ||
-              pathname.includes('/dev/misc/rtc') ||
-              pathname.includes('/sys/class/rtc'))
+                        (pathname.includes('/dev/rtc') ||
+                            pathname.includes('/dev/rtc0') ||
+                            pathname.includes('/dev/misc/rtc') ||
+                            pathname.includes('/sys/class/rtc'))
                     ) {
                         send({
                             type: 'bypass',
@@ -846,8 +842,8 @@ const NtpBlocker = {
                         return -1; // EPERM
                     },
                     'int',
-                    ['int', 'pointer'],
-                ),
+                    ['int', 'pointer']
+                )
             );
         }
 
@@ -867,8 +863,8 @@ const NtpBlocker = {
                         return -1; // EPERM
                     },
                     'int',
-                    ['pointer', 'pointer'],
-                ),
+                    ['pointer', 'pointer']
+                )
             );
         }
 
@@ -888,8 +884,8 @@ const NtpBlocker = {
                         return -1;
                     },
                     'int',
-                    ['pointer', 'pointer'],
-                ),
+                    ['pointer', 'pointer']
+                )
             );
         }
 
@@ -908,8 +904,8 @@ const NtpBlocker = {
                         return -1;
                     },
                     'int',
-                    ['pointer'],
-                ),
+                    ['pointer']
+                )
             );
         }
     },
@@ -934,10 +930,7 @@ const NtpBlocker = {
 
         // Hook process creation
         if (Process.platform === 'windows') {
-            var createProcessW = Module.findExportByName(
-                'kernel32.dll',
-                'CreateProcessW',
-            );
+            var createProcessW = Module.findExportByName('kernel32.dll', 'CreateProcessW');
             if (createProcessW) {
                 Interceptor.attach(createProcessW, {
                     onEnter: function (args) {
@@ -947,9 +940,9 @@ const NtpBlocker = {
                         // Check for VM tools
                         if (
                             appName.includes('vmtoolsd') ||
-              cmdLine.includes('timesync') ||
-              appName.includes('VBoxService') ||
-              cmdLine.includes('--timesync')
+                            cmdLine.includes('timesync') ||
+                            appName.includes('VBoxService') ||
+                            cmdLine.includes('--timesync')
                         ) {
                             send({
                                 type: 'bypass',
@@ -1027,8 +1020,8 @@ const NtpBlocker = {
                             return 0;
                         },
                         'int',
-                        [],
-                    ),
+                        []
+                    )
                 );
             }
         }
@@ -1049,8 +1042,8 @@ const NtpBlocker = {
                         return -1;
                     },
                     'int',
-                    ['int64', 'bool', 'pointer'],
-                ),
+                    ['int64', 'bool', 'pointer']
+                )
             );
         }
     },
@@ -1081,7 +1074,7 @@ const NtpBlocker = {
                     Settings.putInt.overload(
                         'android.content.ContentResolver',
                         'java.lang.String',
-                        'int',
+                        'int'
                     ).implementation = function (resolver, name, value) {
                         if (name === 'auto_time' || name === 'auto_time_zone') {
                             send({
@@ -1110,9 +1103,7 @@ const NtpBlocker = {
                 // Block Android TimeManager
                 try {
                     var TimeManager = Java.use('android.app.time.TimeManager');
-                    TimeManager.suggestExternalTime.implementation = function (
-                        timeSuggestion,
-                    ) {
+                    TimeManager.suggestExternalTime.implementation = function (timeSuggestion) {
                         send({
                             type: 'bypass',
                             target: 'ntp_blocker',
@@ -1173,10 +1164,7 @@ const NtpBlocker = {
             }
 
             // Block iOS NTP updates
-            var CFHostCreateWithName = Module.findExportByName(
-                null,
-                'CFHostCreateWithName',
-            );
+            var CFHostCreateWithName = Module.findExportByName(null, 'CFHostCreateWithName');
             if (CFHostCreateWithName) {
                 Interceptor.attach(CFHostCreateWithName, {
                     onEnter: function (args) {
@@ -1222,8 +1210,8 @@ const NtpBlocker = {
                     // Time synchronization RPC programs
                     if (
                         prog === 100001 || // RSTATPROG
-            prog === 100028 || // YPXFRD
-            host.includes('time')
+                        prog === 100028 || // YPXFRD
+                        host.includes('time')
                     ) {
                         send({
                             type: 'bypass',
@@ -1257,9 +1245,9 @@ const NtpBlocker = {
                     // Check for master-slave time sync patterns
                     if (
                         hostname &&
-            (hostname.includes('master') ||
-              hostname.includes('timekeeper') ||
-              hostname.includes('coordinator'))
+                        (hostname.includes('master') ||
+                            hostname.includes('timekeeper') ||
+                            hostname.includes('coordinator'))
                     ) {
                         send({
                             type: 'bypass',
@@ -1289,7 +1277,7 @@ const NtpBlocker = {
                     // Common keys for time sync IPC
                     if (
                         key === 0x54494d45 || // 'TIME'
-            key === 0x434c4f43
+                        key === 0x434c4f43
                     ) {
                         // 'CLOC'
                         send({
@@ -1319,9 +1307,9 @@ const NtpBlocker = {
 
                     if (
                         name &&
-            (name.includes('timestamp') ||
-              name.includes('lamport') ||
-              name.includes('vector_clock'))
+                        (name.includes('timestamp') ||
+                            name.includes('lamport') ||
+                            name.includes('vector_clock'))
                     ) {
                         send({
                             type: 'bypass',
@@ -1384,7 +1372,7 @@ const NtpBlocker = {
         // Block timing side-channel attacks
         var QueryPerformanceCounter = Module.findExportByName(
             'kernel32.dll',
-            'QueryPerformanceCounter',
+            'QueryPerformanceCounter'
         );
         if (QueryPerformanceCounter) {
             Interceptor.attach(QueryPerformanceCounter, {
@@ -1408,11 +1396,7 @@ const NtpBlocker = {
         if (Process.arch === 'x64' || Process.arch === 'ia32') {
             // Find functions that might use RDTSC
             Process.enumerateModules().forEach(function (module) {
-                if (
-                    (module.name === Process.platform) === 'windows'
-                        ? 'ntdll.dll'
-                        : 'libc.so'
-                ) {
+                if ((module.name === Process.platform) === 'windows' ? 'ntdll.dll' : 'libc.so') {
                     // Scan for RDTSC instruction (0x0F 0x31)
                     Memory.scan(module.base, module.size, '0f 31', {
                         onMatch: function (address, size) {
@@ -1690,13 +1674,13 @@ const NtpBlocker = {
 
                             var ip = addr.add(4).readU32();
                             var ipStr =
-                (ip & 0xff) +
-                '.' +
-                ((ip >> 8) & 0xff) +
-                '.' +
-                ((ip >> 16) & 0xff) +
-                '.' +
-                ((ip >> 24) & 0xff);
+                                (ip & 0xff) +
+                                '.' +
+                                ((ip >> 8) & 0xff) +
+                                '.' +
+                                ((ip >> 16) & 0xff) +
+                                '.' +
+                                ((ip >> 24) & 0xff);
 
                             if (self.isNTPPort(port) || self.isBlockedIP(ipStr)) {
                                 send({
@@ -1736,7 +1720,7 @@ const NtpBlocker = {
                         if (Process.platform === 'windows') {
                             var WSASetLastError = Module.findExportByName(
                                 'ws2_32.dll',
-                                'WSASetLastError',
+                                'WSASetLastError'
                             );
                             if (WSASetLastError) {
                                 new NativeFunction(WSASetLastError, 'void', ['int'])(10061); // WSAECONNREFUSED
@@ -1810,13 +1794,13 @@ const NtpBlocker = {
 
                             var ip = addr.add(4).readU32();
                             var ipStr =
-                (ip & 0xff) +
-                '.' +
-                ((ip >> 8) & 0xff) +
-                '.' +
-                ((ip >> 16) & 0xff) +
-                '.' +
-                ((ip >> 24) & 0xff);
+                                (ip & 0xff) +
+                                '.' +
+                                ((ip >> 8) & 0xff) +
+                                '.' +
+                                ((ip >> 16) & 0xff) +
+                                '.' +
+                                ((ip >> 24) & 0xff);
 
                             if (self.isNTPPort(port) || self.isBlockedIP(ipStr)) {
                                 send({
@@ -1924,10 +1908,7 @@ const NtpBlocker = {
             }
 
             // WinHttpConnect
-            var winHttpConnect = Module.findExportByName(
-                'winhttp.dll',
-                'WinHttpConnect',
-            );
+            var winHttpConnect = Module.findExportByName('winhttp.dll', 'WinHttpConnect');
             if (winHttpConnect) {
                 Interceptor.attach(winHttpConnect, {
                     onEnter: function (args) {
@@ -1955,10 +1936,7 @@ const NtpBlocker = {
             }
 
             // InternetOpenUrl
-            var internetOpenUrl = Module.findExportByName(
-                'wininet.dll',
-                'InternetOpenUrlW',
-            );
+            var internetOpenUrl = Module.findExportByName('wininet.dll', 'InternetOpenUrlW');
             if (internetOpenUrl) {
                 Interceptor.attach(internetOpenUrl, {
                     onEnter: function (args) {
@@ -1988,10 +1966,7 @@ const NtpBlocker = {
         // Generic HTTP library hooks
         try {
             // XMLHttpRequest
-            var xhrOpen = Module.findExportByName(
-                null,
-                'XMLHttpRequest.prototype.open',
-            );
+            var xhrOpen = Module.findExportByName(null, 'XMLHttpRequest.prototype.open');
             if (xhrOpen) {
                 Interceptor.attach(xhrOpen, {
                     onEnter: function (args) {
@@ -2021,10 +1996,7 @@ const NtpBlocker = {
         var self = this;
 
         // W32TimeSetConfig
-        var w32TimeSetConfig = Module.findExportByName(
-            'w32time.dll',
-            'W32TimeSetConfig',
-        );
+        var w32TimeSetConfig = Module.findExportByName('w32time.dll', 'W32TimeSetConfig');
         if (w32TimeSetConfig) {
             Interceptor.attach(w32TimeSetConfig, {
                 onEnter: function (args) {
@@ -2046,10 +2018,7 @@ const NtpBlocker = {
         }
 
         // W32TimeSyncNow
-        var w32TimeSyncNow = Module.findExportByName(
-            'w32time.dll',
-            'W32TimeSyncNow',
-        );
+        var w32TimeSyncNow = Module.findExportByName('w32time.dll', 'W32TimeSyncNow');
         if (w32TimeSyncNow) {
             Interceptor.replace(
                 w32TimeSyncNow,
@@ -2065,8 +2034,8 @@ const NtpBlocker = {
                         return 0; // S_OK but don't sync
                     },
                     'int',
-                    ['pointer', 'int', 'int'],
-                ),
+                    ['pointer', 'int', 'int']
+                )
             );
         }
 
@@ -2076,10 +2045,7 @@ const NtpBlocker = {
             Interceptor.attach(startService, {
                 onEnter: function (args) {
                     // Check if it's Windows Time service
-                    var openService = Module.findExportByName(
-                        'advapi32.dll',
-                        'OpenServiceW',
-                    );
+                    var openService = Module.findExportByName('advapi32.dll', 'OpenServiceW');
                     if (openService) {
                         // This is simplified - would need to track service handles
                         send({
@@ -2093,10 +2059,7 @@ const NtpBlocker = {
         }
 
         // Block w32tm.exe execution
-        var createProcess = Module.findExportByName(
-            'kernel32.dll',
-            'CreateProcessW',
-        );
+        var createProcess = Module.findExportByName('kernel32.dll', 'CreateProcessW');
         if (createProcess) {
             Interceptor.attach(createProcess, {
                 onEnter: function (args) {
@@ -2105,7 +2068,7 @@ const NtpBlocker = {
 
                     if (
                         appName.toLowerCase().includes('w32tm.exe') ||
-            cmdLine.toLowerCase().includes('w32tm')
+                        cmdLine.toLowerCase().includes('w32tm')
                     ) {
                         send({
                             type: 'bypass',
@@ -2153,8 +2116,8 @@ const NtpBlocker = {
                         // Check if it's time-related
                         if (
                             valueName &&
-              (valueName.toLowerCase().includes('time') ||
-                valueName.toLowerCase().includes('ntp'))
+                            (valueName.toLowerCase().includes('time') ||
+                                valueName.toLowerCase().includes('ntp'))
                         ) {
                             send({
                                 type: 'bypass',
@@ -2297,18 +2260,15 @@ const NtpBlocker = {
         // Hook system log functions to detect new time servers
         if (Process.platform === 'windows') {
             // OutputDebugString
-            var outputDebugString = Module.findExportByName(
-                'kernel32.dll',
-                'OutputDebugStringW',
-            );
+            var outputDebugString = Module.findExportByName('kernel32.dll', 'OutputDebugStringW');
             if (outputDebugString) {
                 Interceptor.attach(outputDebugString, {
                     onEnter: function (args) {
                         var msg = args[0].readUtf16String();
                         if (
                             msg &&
-              msg.toLowerCase().includes('time') &&
-              (msg.includes('sync') || msg.includes('server'))
+                            msg.toLowerCase().includes('time') &&
+                            (msg.includes('sync') || msg.includes('server'))
                         ) {
                             send({
                                 type: 'info',
@@ -2339,14 +2299,11 @@ const NtpBlocker = {
                     if (ctx) {
                         // Disable time checks by setting X509_V_FLAG_NO_CHECK_TIME
                         // Flag value = 0x200000
-                        var set_flags = Module.findExportByName(
-                            null,
-                            'X509_STORE_CTX_set_flags',
-                        );
+                        var set_flags = Module.findExportByName(null, 'X509_STORE_CTX_set_flags');
                         if (set_flags) {
                             new NativeFunction(set_flags, 'void', ['pointer', 'uint32'])(
                                 ctx,
-                                0x200000,
+                                0x200000
                             );
                             send({
                                 type: 'bypass',
@@ -2364,7 +2321,7 @@ const NtpBlocker = {
         if (Process.platform === 'windows') {
             var CertVerifyTimeValidity = Module.findExportByName(
                 'crypt32.dll',
-                'CertVerifyTimeValidity',
+                'CertVerifyTimeValidity'
             );
             if (CertVerifyTimeValidity) {
                 Interceptor.replace(
@@ -2380,15 +2337,15 @@ const NtpBlocker = {
                             return 0; // Always return valid (0 = valid, -1 = before, 1 = after)
                         },
                         'int',
-                        ['pointer', 'pointer'],
-                    ),
+                        ['pointer', 'pointer']
+                    )
                 );
             }
 
             // Hook CertGetCertificateChain time validation
             var CertGetCertificateChain = Module.findExportByName(
                 'crypt32.dll',
-                'CertGetCertificateChain',
+                'CertGetCertificateChain'
             );
             if (CertGetCertificateChain) {
                 Interceptor.attach(CertGetCertificateChain, {
@@ -2406,10 +2363,7 @@ const NtpBlocker = {
         }
 
         // Hook GnuTLS certificate verification
-        var gnutls_x509_crt_verify = Module.findExportByName(
-            null,
-            'gnutls_x509_crt_verify',
-        );
+        var gnutls_x509_crt_verify = Module.findExportByName(null, 'gnutls_x509_crt_verify');
         if (gnutls_x509_crt_verify) {
             Interceptor.attach(gnutls_x509_crt_verify, {
                 onEnter: function (args) {
@@ -2434,7 +2388,7 @@ const NtpBlocker = {
             // Hook Tbsip.dll for TPM Base Services
             var Tbsi_Physical_Presence_Command = Module.findExportByName(
                 'tbsapi.dll',
-                'Tbsi_Physical_Presence_Command',
+                'Tbsi_Physical_Presence_Command'
             );
             if (Tbsi_Physical_Presence_Command) {
                 Interceptor.attach(Tbsi_Physical_Presence_Command, {
@@ -2464,18 +2418,14 @@ const NtpBlocker = {
             }
 
             // Block NCrypt HSM time operations
-            var NCryptGetProperty = Module.findExportByName(
-                'ncrypt.dll',
-                'NCryptGetProperty',
-            );
+            var NCryptGetProperty = Module.findExportByName('ncrypt.dll', 'NCryptGetProperty');
             if (NCryptGetProperty) {
                 Interceptor.attach(NCryptGetProperty, {
                     onEnter: function (args) {
                         var propertyName = args[1].readUtf16String();
                         if (
                             propertyName &&
-              (propertyName.includes('TIME') ||
-                propertyName.includes('TIMESTAMP'))
+                            (propertyName.includes('TIME') || propertyName.includes('TIMESTAMP'))
                         ) {
                             send({
                                 type: 'bypass',
@@ -2528,10 +2478,7 @@ const NtpBlocker = {
         var self = this;
 
         // Block Intel SGX trusted time
-        var sgx_get_trusted_time = Module.findExportByName(
-            null,
-            'sgx_get_trusted_time',
-        );
+        var sgx_get_trusted_time = Module.findExportByName(null, 'sgx_get_trusted_time');
         if (sgx_get_trusted_time) {
             Interceptor.replace(
                 sgx_get_trusted_time,
@@ -2546,16 +2493,13 @@ const NtpBlocker = {
                         return 0x00003203; // SGX_ERROR_SERVICE_UNAVAILABLE
                     },
                     'uint32',
-                    ['pointer', 'pointer'],
-                ),
+                    ['pointer', 'pointer']
+                )
             );
         }
 
         // Block SGX platform services time
-        var sgx_create_pse_session = Module.findExportByName(
-            null,
-            'sgx_create_pse_session',
-        );
+        var sgx_create_pse_session = Module.findExportByName(null, 'sgx_create_pse_session');
         if (sgx_create_pse_session) {
             Interceptor.replace(
                 sgx_create_pse_session,
@@ -2570,8 +2514,8 @@ const NtpBlocker = {
                         return 0x00003203; // SGX_ERROR_SERVICE_UNAVAILABLE
                     },
                     'uint32',
-                    [],
-                ),
+                    []
+                )
             );
         }
 
@@ -2595,8 +2539,8 @@ const NtpBlocker = {
                         self.stats.connectionsBlocked++;
                     },
                     'void',
-                    ['pointer'],
-                ),
+                    ['pointer']
+                )
             );
         }
 
@@ -2649,11 +2593,7 @@ const NtpBlocker = {
         // Hook connect to block metadata endpoints
         var connect = Module.findExportByName(null, 'connect');
         if (connect) {
-            var originalConnect = new NativeFunction(connect, 'int', [
-                'int',
-                'pointer',
-                'int',
-            ]);
+            var originalConnect = new NativeFunction(connect, 'int', ['int', 'pointer', 'int']);
             Interceptor.replace(
                 connect,
                 new NativeCallback(
@@ -2664,13 +2604,13 @@ const NtpBlocker = {
                                 // AF_INET
                                 var ip = addr.add(4).readU32();
                                 var ipStr =
-                  (ip & 0xff) +
-                  '.' +
-                  ((ip >> 8) & 0xff) +
-                  '.' +
-                  ((ip >> 16) & 0xff) +
-                  '.' +
-                  ((ip >> 24) & 0xff);
+                                    (ip & 0xff) +
+                                    '.' +
+                                    ((ip >> 8) & 0xff) +
+                                    '.' +
+                                    ((ip >> 16) & 0xff) +
+                                    '.' +
+                                    ((ip >> 24) & 0xff);
 
                                 // Check if it's a metadata endpoint
                                 for (var i = 0; i < metadataEndpoints.length; i++) {
@@ -2690,8 +2630,8 @@ const NtpBlocker = {
                         return originalConnect(sockfd, addr, addrlen);
                     },
                     'int',
-                    ['int', 'pointer', 'int'],
-                ),
+                    ['int', 'pointer', 'int']
+                )
             );
         }
 
@@ -2727,8 +2667,8 @@ const NtpBlocker = {
                         return originalGetaddrinfo(node, service, hints, res);
                     },
                     'int',
-                    ['pointer', 'pointer', 'pointer', 'pointer'],
-                ),
+                    ['pointer', 'pointer', 'pointer', 'pointer']
+                )
             );
         }
     },
@@ -2780,15 +2720,15 @@ const NtpBlocker = {
                         return originalSendto(sockfd, buf, len, flags, dest_addr, addrlen);
                     },
                     'int',
-                    ['int', 'pointer', 'int', 'int', 'pointer', 'int'],
-                ),
+                    ['int', 'pointer', 'int', 'int', 'pointer', 'int']
+                )
             );
         }
 
         // Block WebRTC DataChannel timestamps
         var RTCDataChannel_send = Module.findExportByName(
             null,
-            '_ZN7webrtc14DataChannel4SendEPKvm',
+            '_ZN7webrtc14DataChannel4SendEPKvm'
         );
         if (RTCDataChannel_send) {
             Interceptor.attach(RTCDataChannel_send, {
@@ -2801,9 +2741,9 @@ const NtpBlocker = {
                         var content = data.readUtf8String(Math.min(size, 100));
                         if (
                             content &&
-              (content.includes('timestamp') ||
-                content.includes('time') ||
-                content.includes('clock'))
+                            (content.includes('timestamp') ||
+                                content.includes('time') ||
+                                content.includes('clock'))
                         ) {
                             send({
                                 type: 'bypass',
@@ -2831,7 +2771,7 @@ const NtpBlocker = {
         // Hook QUIC frame processing
         var process_quic_frame = Module.findExportByName(
             null,
-            '_ZN4quic10QuicFramer17ProcessFrameDataEPKhm',
+            '_ZN4quic10QuicFramer17ProcessFrameDataEPKhm'
         );
         if (process_quic_frame) {
             Interceptor.attach(process_quic_frame, {
@@ -2864,7 +2804,7 @@ const NtpBlocker = {
         // Block Chrome QUIC implementation
         var QUIC_SendStreamData = Module.findExportByName(
             null,
-            '_ZN3net18QuicChromiumStream14SendStreamDataENS_11StreamSliceE',
+            '_ZN3net18QuicChromiumStream14SendStreamDataENS_11StreamSliceE'
         );
         if (QUIC_SendStreamData) {
             Interceptor.attach(QUIC_SendStreamData, {
@@ -2925,8 +2865,8 @@ const NtpBlocker = {
                         return -1;
                     },
                     'int',
-                    [],
-                ),
+                    []
+                )
             );
         }
     },
@@ -2936,10 +2876,7 @@ const NtpBlocker = {
         var self = this;
 
         // Block Ethereum block.timestamp
-        var eth_getBlockByNumber = Module.findExportByName(
-            null,
-            'eth_getBlockByNumber',
-        );
+        var eth_getBlockByNumber = Module.findExportByName(null, 'eth_getBlockByNumber');
         if (eth_getBlockByNumber) {
             Interceptor.attach(eth_getBlockByNumber, {
                 onLeave: function (retval) {
@@ -2957,7 +2894,7 @@ const NtpBlocker = {
         // Block Web3 provider time queries
         var web3_eth_getBlock = Module.findExportByName(
             null,
-            '_ZN4web33eth8getBlockERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE',
+            '_ZN4web33eth8getBlockERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE'
         );
         if (web3_eth_getBlock) {
             Interceptor.attach(web3_eth_getBlock, {
@@ -2981,16 +2918,13 @@ const NtpBlocker = {
             // Block UEFI Runtime Services GetTime
             var GetFirmwareEnvironmentVariable = Module.findExportByName(
                 'kernel32.dll',
-                'GetFirmwareEnvironmentVariableW',
+                'GetFirmwareEnvironmentVariableW'
             );
             if (GetFirmwareEnvironmentVariable) {
                 Interceptor.attach(GetFirmwareEnvironmentVariable, {
                     onEnter: function (args) {
                         var varName = args[0].readUtf16String();
-                        if (
-                            varName &&
-              (varName.includes('Time') || varName.includes('DATE'))
-                        ) {
+                        if (varName && (varName.includes('Time') || varName.includes('DATE'))) {
                             send({
                                 type: 'bypass',
                                 target: 'ntp_blocker',
@@ -3010,10 +2944,7 @@ const NtpBlocker = {
             }
 
             // Block Secure Boot timestamp validation
-            var WinVerifyTrust = Module.findExportByName(
-                'wintrust.dll',
-                'WinVerifyTrust',
-            );
+            var WinVerifyTrust = Module.findExportByName('wintrust.dll', 'WinVerifyTrust');
             if (WinVerifyTrust) {
                 Interceptor.attach(WinVerifyTrust, {
                     onEnter: function (args) {
@@ -3073,16 +3004,13 @@ const NtpBlocker = {
                         return 0;
                     },
                     'int',
-                    ['pointer', 'pointer'],
-                ),
+                    ['pointer', 'pointer']
+                )
             );
         }
 
         // Block SAML assertion time validation
-        var xmlSecDSigCtxVerify = Module.findExportByName(
-            null,
-            'xmlSecDSigCtxVerify',
-        );
+        var xmlSecDSigCtxVerify = Module.findExportByName(null, 'xmlSecDSigCtxVerify');
         if (xmlSecDSigCtxVerify) {
             Interceptor.attach(xmlSecDSigCtxVerify, {
                 onEnter: function (args) {
@@ -3098,10 +3026,7 @@ const NtpBlocker = {
         }
 
         // Block OAuth2 token expiry
-        var oauth2_validate_token = Module.findExportByName(
-            null,
-            'oauth2_validate_token',
-        );
+        var oauth2_validate_token = Module.findExportByName(null, 'oauth2_validate_token');
         if (oauth2_validate_token) {
             Interceptor.attach(oauth2_validate_token, {
                 onLeave: function (retval) {
@@ -3124,10 +3049,7 @@ const NtpBlocker = {
 
         if (Process.platform === 'windows') {
             // Block Authenticode timestamp validation
-            var WinVerifyTrustEx = Module.findExportByName(
-                'wintrust.dll',
-                'WinVerifyTrustEx',
-            );
+            var WinVerifyTrustEx = Module.findExportByName('wintrust.dll', 'WinVerifyTrustEx');
             if (WinVerifyTrustEx) {
                 Interceptor.attach(WinVerifyTrustEx, {
                     onEnter: function (args) {
@@ -3144,7 +3066,7 @@ const NtpBlocker = {
             // Block RFC 3161 timestamp requests
             var CryptRetrieveTimeStamp = Module.findExportByName(
                 'crypt32.dll',
-                'CryptRetrieveTimeStamp',
+                'CryptRetrieveTimeStamp'
             );
             if (CryptRetrieveTimeStamp) {
                 Interceptor.replace(
@@ -3169,17 +3091,14 @@ const NtpBlocker = {
                             'pointer',
                             'pointer',
                             'pointer',
-                        ],
-                    ),
+                        ]
+                    )
                 );
             }
         }
 
         // Block Java JAR timestamp validation
-        var JarFile_verify = Module.findExportByName(
-            null,
-            'Java_java_util_jar_JarFile_verify',
-        );
+        var JarFile_verify = Module.findExportByName(null, 'Java_java_util_jar_JarFile_verify');
         if (JarFile_verify) {
             Interceptor.attach(JarFile_verify, {
                 onEnter: function (args) {
@@ -3199,10 +3118,7 @@ const NtpBlocker = {
         var self = this;
 
         // Block Docker container time sync
-        var docker_time_sync = Module.findExportByName(
-            null,
-            '_ZN6docker9container8timeSyncEv',
-        );
+        var docker_time_sync = Module.findExportByName(null, '_ZN6docker9container8timeSyncEv');
         if (docker_time_sync) {
             Interceptor.replace(
                 docker_time_sync,
@@ -3217,16 +3133,13 @@ const NtpBlocker = {
                         return 0;
                     },
                     'int',
-                    [],
-                ),
+                    []
+                )
             );
         }
 
         // Block Kubernetes API server time
-        var k8s_api_time = Module.findExportByName(
-            null,
-            '_ZN10kubernetes9apiserver7getTimeEv',
-        );
+        var k8s_api_time = Module.findExportByName(null, '_ZN10kubernetes9apiserver7getTimeEv');
         if (k8s_api_time) {
             Interceptor.replace(
                 k8s_api_time,
@@ -3241,8 +3154,8 @@ const NtpBlocker = {
                         return 1609459200; // Fixed time
                     },
                     'uint32',
-                    [],
-                ),
+                    []
+                )
             );
         }
 
@@ -3266,8 +3179,8 @@ const NtpBlocker = {
                         return 0;
                     },
                     'int',
-                    ['pointer'],
-                ),
+                    ['pointer']
+                )
             );
         }
     },
@@ -3292,8 +3205,8 @@ const NtpBlocker = {
                         return -1;
                     },
                     'int',
-                    [],
-                ),
+                    []
+                )
             );
         }
 
@@ -3313,8 +3226,8 @@ const NtpBlocker = {
                         return -1;
                     },
                     'int',
-                    ['pointer', 'pointer'],
-                ),
+                    ['pointer', 'pointer']
+                )
             );
         }
 
@@ -3334,8 +3247,8 @@ const NtpBlocker = {
                         return -1;
                     },
                     'int',
-                    ['pointer'],
-                ),
+                    ['pointer']
+                )
             );
         }
     },
@@ -3345,10 +3258,7 @@ const NtpBlocker = {
         var self = this;
 
         // Block Denuvo time checks
-        var denuvo_check_time = Module.findExportByName(
-            null,
-            '_ZN6denuvo9checkTimeEv',
-        );
+        var denuvo_check_time = Module.findExportByName(null, '_ZN6denuvo9checkTimeEv');
         if (denuvo_check_time) {
             Interceptor.replace(
                 denuvo_check_time,
@@ -3363,15 +3273,15 @@ const NtpBlocker = {
                         return 1; // Valid
                     },
                     'int',
-                    [],
-                ),
+                    []
+                )
             );
         }
 
         // Block Steam DRM time validation
         var SteamAPI_GetServerRealTime = Module.findExportByName(
             null,
-            'SteamAPI_GetServerRealTime',
+            'SteamAPI_GetServerRealTime'
         );
         if (SteamAPI_GetServerRealTime) {
             Interceptor.replace(
@@ -3387,8 +3297,8 @@ const NtpBlocker = {
                         return 1609459200;
                     },
                     'uint32',
-                    [],
-                ),
+                    []
+                )
             );
         }
 
@@ -3408,16 +3318,13 @@ const NtpBlocker = {
                         return 1609459200;
                     },
                     'uint64',
-                    [],
-                ),
+                    []
+                )
             );
         }
 
         // Block BattlEye time checks
-        var BEClient_GetServerTime = Module.findExportByName(
-            null,
-            'BEClient_GetServerTime',
-        );
+        var BEClient_GetServerTime = Module.findExportByName(null, 'BEClient_GetServerTime');
         if (BEClient_GetServerTime) {
             Interceptor.replace(
                 BEClient_GetServerTime,
@@ -3432,8 +3339,8 @@ const NtpBlocker = {
                         return 1609459200;
                     },
                     'uint64',
-                    [],
-                ),
+                    []
+                )
             );
         }
     },
@@ -3458,16 +3365,13 @@ const NtpBlocker = {
                         return 0;
                     },
                     'uint64',
-                    [],
-                ),
+                    []
+                )
             );
         }
 
         // Block Modbus time sync
-        var modbus_get_time = Module.findExportByName(
-            null,
-            'modbus_get_system_time',
-        );
+        var modbus_get_time = Module.findExportByName(null, 'modbus_get_system_time');
         if (modbus_get_time) {
             Interceptor.replace(
                 modbus_get_time,
@@ -3482,8 +3386,8 @@ const NtpBlocker = {
                         return -1;
                     },
                     'int',
-                    ['pointer'],
-                ),
+                    ['pointer']
+                )
             );
         }
 
@@ -3503,8 +3407,8 @@ const NtpBlocker = {
                         return -1;
                     },
                     'int',
-                    [],
-                ),
+                    []
+                )
             );
         }
 
@@ -3524,8 +3428,8 @@ const NtpBlocker = {
                         return 0;
                     },
                     'uint64',
-                    [],
-                ),
+                    []
+                )
             );
         }
     },
@@ -3535,10 +3439,7 @@ const NtpBlocker = {
         var self = this;
 
         // MySQL replication timestamps
-        var mysql_make_datetime = Module.findExportByName(
-            null,
-            'mysql_make_datetime',
-        );
+        var mysql_make_datetime = Module.findExportByName(null, 'mysql_make_datetime');
         if (mysql_make_datetime) {
             Interceptor.attach(mysql_make_datetime, {
                 onEnter: function (args) {
@@ -3559,10 +3460,7 @@ const NtpBlocker = {
         }
 
         // PostgreSQL replication
-        var pg_current_xact_ts = Module.findExportByName(
-            null,
-            'pg_current_xact_ts',
-        );
+        var pg_current_xact_ts = Module.findExportByName(null, 'pg_current_xact_ts');
         if (pg_current_xact_ts) {
             Interceptor.replace(
                 pg_current_xact_ts,
@@ -3577,16 +3475,13 @@ const NtpBlocker = {
                         return ptr('2024-01-01 00:00:00');
                     },
                     'pointer',
-                    [],
-                ),
+                    []
+                )
             );
         }
 
         // MongoDB oplog timestamps
-        var bson_append_timestamp = Module.findExportByName(
-            null,
-            'bson_append_timestamp',
-        );
+        var bson_append_timestamp = Module.findExportByName(null, 'bson_append_timestamp');
         if (bson_append_timestamp) {
             Interceptor.attach(bson_append_timestamp, {
                 onEnter: function (args) {
@@ -3604,10 +3499,7 @@ const NtpBlocker = {
         }
 
         // Cassandra timestamp generation
-        var cql_timestamp = Module.findExportByName(
-            null,
-            'cass_statement_set_timestamp',
-        );
+        var cql_timestamp = Module.findExportByName(null, 'cass_statement_set_timestamp');
         if (cql_timestamp) {
             Interceptor.replace(
                 cql_timestamp,
@@ -3622,8 +3514,8 @@ const NtpBlocker = {
                         return 0;
                     },
                     'int',
-                    ['pointer', 'int64'],
-                ),
+                    ['pointer', 'int64']
+                )
             );
         }
     },
@@ -3635,7 +3527,7 @@ const NtpBlocker = {
         // Kafka timestamps
         var rd_kafka_message_timestamp = Module.findExportByName(
             null,
-            'rd_kafka_message_timestamp',
+            'rd_kafka_message_timestamp'
         );
         if (rd_kafka_message_timestamp) {
             Interceptor.replace(
@@ -3654,16 +3546,13 @@ const NtpBlocker = {
                         return 0;
                     },
                     'int64',
-                    ['pointer', 'pointer'],
-                ),
+                    ['pointer', 'pointer']
+                )
             );
         }
 
         // RabbitMQ AMQP timestamps
-        var amqp_basic_publish = Module.findExportByName(
-            null,
-            'amqp_basic_publish',
-        );
+        var amqp_basic_publish = Module.findExportByName(null, 'amqp_basic_publish');
         if (amqp_basic_publish) {
             Interceptor.attach(amqp_basic_publish, {
                 onEnter: function (args) {
@@ -3703,10 +3592,7 @@ const NtpBlocker = {
         }
 
         // MQTT timestamp headers
-        var MQTTClient_publishMessage = Module.findExportByName(
-            null,
-            'MQTTClient_publishMessage',
-        );
+        var MQTTClient_publishMessage = Module.findExportByName(null, 'MQTTClient_publishMessage');
         if (MQTTClient_publishMessage) {
             Interceptor.attach(MQTTClient_publishMessage, {
                 onEnter: function (args) {
@@ -3748,25 +3634,22 @@ const NtpBlocker = {
                             return 1704067200000;
                         },
                         'double',
-                        [],
-                    ),
+                        []
+                    )
                 );
             }
         });
 
         // Akamai Edge time headers
-        var ngx_http_set_header = Module.findExportByName(
-            null,
-            'ngx_http_set_header',
-        );
+        var ngx_http_set_header = Module.findExportByName(null, 'ngx_http_set_header');
         if (ngx_http_set_header) {
             Interceptor.attach(ngx_http_set_header, {
                 onEnter: function (args) {
                     var header = args[1].readUtf8String();
                     if (
                         header &&
-            (header.includes('X-Akamai-Request-Time') ||
-              header.includes('X-Edge-Request-Time'))
+                        (header.includes('X-Akamai-Request-Time') ||
+                            header.includes('X-Edge-Request-Time'))
                     ) {
                         args[1] = Memory.allocUtf8String('X-Blocked-Header');
                         send({
@@ -3796,16 +3679,13 @@ const NtpBlocker = {
                         return 1704067200.0;
                     },
                     'double',
-                    [],
-                ),
+                    []
+                )
             );
         }
 
         // AWS CloudFront headers
-        var cf_timestamp_header = Module.findExportByName(
-            null,
-            'aws_cf_add_timestamp',
-        );
+        var cf_timestamp_header = Module.findExportByName(null, 'aws_cf_add_timestamp');
         if (cf_timestamp_header) {
             Interceptor.replace(
                 cf_timestamp_header,
@@ -3820,8 +3700,8 @@ const NtpBlocker = {
                         return 0;
                     },
                     'int',
-                    ['pointer'],
-                ),
+                    ['pointer']
+                )
             );
         }
     },
@@ -3882,7 +3762,7 @@ const NtpBlocker = {
         // Ignite cache expiry
         var ignite_cache_with_expiry = Module.findExportByName(
             null,
-            'ignite_cache_withExpiryPolicy',
+            'ignite_cache_withExpiryPolicy'
         );
         if (ignite_cache_with_expiry) {
             Interceptor.replace(
@@ -3898,8 +3778,8 @@ const NtpBlocker = {
                         return cache;
                     },
                     'pointer',
-                    ['pointer', 'pointer'],
-                ),
+                    ['pointer', 'pointer']
+                )
             );
         }
     },
@@ -3911,13 +3791,10 @@ const NtpBlocker = {
         // Unity Time.realtimeSinceStartup
         var unity_get_realtime = Module.findExportByName(
             null,
-            '_ZN9UnityTime20GetRealtimeSinceBootEv',
+            '_ZN9UnityTime20GetRealtimeSinceBootEv'
         );
         if (!unity_get_realtime) {
-            unity_get_realtime = Module.findExportByName(
-                null,
-                'UnityTime_GetRealtimeSinceBoot',
-            );
+            unity_get_realtime = Module.findExportByName(null, 'UnityTime_GetRealtimeSinceBoot');
         }
         if (unity_get_realtime) {
             Interceptor.replace(
@@ -3933,21 +3810,15 @@ const NtpBlocker = {
                         return 100.0;
                     },
                     'float',
-                    [],
-                ),
+                    []
+                )
             );
         }
 
         // Unreal Engine world time
-        var ue_get_world_time = Module.findExportByName(
-            null,
-            '_ZN6UWorld11GetTimeSecsEv',
-        );
+        var ue_get_world_time = Module.findExportByName(null, '_ZN6UWorld11GetTimeSecsEv');
         if (!ue_get_world_time) {
-            ue_get_world_time = Module.findExportByName(
-                null,
-                'UWorld::GetTimeSeconds',
-            );
+            ue_get_world_time = Module.findExportByName(null, 'UWorld::GetTimeSeconds');
         }
         if (ue_get_world_time) {
             Interceptor.replace(
@@ -3963,16 +3834,13 @@ const NtpBlocker = {
                         return 100.0;
                     },
                     'float',
-                    ['pointer'],
-                ),
+                    ['pointer']
+                )
             );
         }
 
         // CryEngine gEnv->pTimer
-        var cry_get_frame_time = Module.findExportByName(
-            null,
-            '_ZN6CTimer12GetFrameTimeEv',
-        );
+        var cry_get_frame_time = Module.findExportByName(null, '_ZN6CTimer12GetFrameTimeEv');
         if (cry_get_frame_time) {
             Interceptor.replace(
                 cry_get_frame_time,
@@ -3987,16 +3855,13 @@ const NtpBlocker = {
                         return 0.016;
                     },
                     'float',
-                    ['pointer'],
-                ),
+                    ['pointer']
+                )
             );
         }
 
         // Godot OS.get_ticks_msec
-        var godot_get_ticks = Module.findExportByName(
-            null,
-            '_ZN2OS14get_ticks_msecEv',
-        );
+        var godot_get_ticks = Module.findExportByName(null, '_ZN2OS14get_ticks_msecEv');
         if (godot_get_ticks) {
             Interceptor.replace(
                 godot_get_ticks,
@@ -4011,15 +3876,15 @@ const NtpBlocker = {
                         return 100000;
                     },
                     'uint64',
-                    [],
-                ),
+                    []
+                )
             );
         }
 
         // Steam API time
         var steam_utils_servertime = Module.findExportByName(
             null,
-            'SteamAPI_ISteamUtils_GetServerRealTime',
+            'SteamAPI_ISteamUtils_GetServerRealTime'
         );
         if (steam_utils_servertime) {
             Interceptor.replace(
@@ -4035,8 +3900,8 @@ const NtpBlocker = {
                         return 1704067200;
                     },
                     'uint32',
-                    ['pointer'],
-                ),
+                    ['pointer']
+                )
             );
         }
     },
@@ -4048,7 +3913,7 @@ const NtpBlocker = {
         // MQTT timestamp properties
         var mqtt_property_set_timestamp = Module.findExportByName(
             null,
-            'mqtt_property_set_timestamp',
+            'mqtt_property_set_timestamp'
         );
         if (mqtt_property_set_timestamp) {
             Interceptor.replace(
@@ -4064,16 +3929,13 @@ const NtpBlocker = {
                         return 0;
                     },
                     'int',
-                    ['pointer', 'uint64'],
-                ),
+                    ['pointer', 'uint64']
+                )
             );
         }
 
         // CoAP message timestamps
-        var coap_set_header_time = Module.findExportByName(
-            null,
-            'coap_set_header_time',
-        );
+        var coap_set_header_time = Module.findExportByName(null, 'coap_set_header_time');
         if (coap_set_header_time) {
             Interceptor.replace(
                 coap_set_header_time,
@@ -4088,16 +3950,13 @@ const NtpBlocker = {
                         return 0;
                     },
                     'int',
-                    ['pointer', 'uint32'],
-                ),
+                    ['pointer', 'uint32']
+                )
             );
         }
 
         // Zigbee time cluster
-        var zigbee_time_cluster_handler = Module.findExportByName(
-            null,
-            'zb_time_cluster_handler',
-        );
+        var zigbee_time_cluster_handler = Module.findExportByName(null, 'zb_time_cluster_handler');
         if (zigbee_time_cluster_handler) {
             Interceptor.attach(zigbee_time_cluster_handler, {
                 onEnter: function (args) {
@@ -4118,7 +3977,7 @@ const NtpBlocker = {
         // LoRaWAN DeviceTimeReq
         var lorawan_process_mac_commands = Module.findExportByName(
             null,
-            'lorawan_process_mac_commands',
+            'lorawan_process_mac_commands'
         );
         if (lorawan_process_mac_commands) {
             Interceptor.attach(lorawan_process_mac_commands, {
@@ -4138,10 +3997,7 @@ const NtpBlocker = {
         }
 
         // Thread/OpenThread time sync
-        var otPlatAlarmMilliGetNow = Module.findExportByName(
-            null,
-            'otPlatAlarmMilliGetNow',
-        );
+        var otPlatAlarmMilliGetNow = Module.findExportByName(null, 'otPlatAlarmMilliGetNow');
         if (otPlatAlarmMilliGetNow) {
             Interceptor.replace(
                 otPlatAlarmMilliGetNow,
@@ -4156,8 +4012,8 @@ const NtpBlocker = {
                         return 100000;
                     },
                     'uint32',
-                    [],
-                ),
+                    []
+                )
             );
         }
     },
@@ -4167,10 +4023,7 @@ const NtpBlocker = {
         var self = this;
 
         // VMware Tools time sync
-        var vmware_guestd_time_sync = Module.findExportByName(
-            null,
-            'VMTools_TimeSync',
-        );
+        var vmware_guestd_time_sync = Module.findExportByName(null, 'VMTools_TimeSync');
         if (vmware_guestd_time_sync) {
             Interceptor.replace(
                 vmware_guestd_time_sync,
@@ -4185,8 +4038,8 @@ const NtpBlocker = {
                         return 0;
                     },
                     'int',
-                    [],
-                ),
+                    []
+                )
             );
         }
 
@@ -4210,10 +4063,7 @@ const NtpBlocker = {
         }
 
         // Hyper-V time sync
-        var hyperv_timesync_handler = Module.findExportByName(
-            null,
-            'hv_timesync_handler',
-        );
+        var hyperv_timesync_handler = Module.findExportByName(null, 'hv_timesync_handler');
         if (hyperv_timesync_handler) {
             Interceptor.replace(
                 hyperv_timesync_handler,
@@ -4228,16 +4078,13 @@ const NtpBlocker = {
                         return 0;
                     },
                     'int',
-                    ['pointer'],
-                ),
+                    ['pointer']
+                )
             );
         }
 
         // QEMU guest agent time sync
-        var qga_guest_set_time = Module.findExportByName(
-            null,
-            'qga_guest_set_time',
-        );
+        var qga_guest_set_time = Module.findExportByName(null, 'qga_guest_set_time');
         if (qga_guest_set_time) {
             Interceptor.replace(
                 qga_guest_set_time,
@@ -4252,16 +4099,13 @@ const NtpBlocker = {
                         return 0;
                     },
                     'int',
-                    ['int64', 'bool', 'pointer'],
-                ),
+                    ['int64', 'bool', 'pointer']
+                )
             );
         }
 
         // Parallels Tools time sync
-        var prl_tools_time_sync = Module.findExportByName(
-            null,
-            'prl_tools_sync_time',
-        );
+        var prl_tools_time_sync = Module.findExportByName(null, 'prl_tools_sync_time');
         if (prl_tools_time_sync) {
             Interceptor.replace(
                 prl_tools_time_sync,
@@ -4276,8 +4120,8 @@ const NtpBlocker = {
                         return 0;
                     },
                     'int',
-                    [],
-                ),
+                    []
+                )
             );
         }
     },
@@ -4326,8 +4170,8 @@ const NtpBlocker = {
                         return 0;
                     },
                     'int',
-                    ['pointer', 'pointer'],
-                ),
+                    ['pointer', 'pointer']
+                )
             );
         }
 
@@ -4353,8 +4197,8 @@ const NtpBlocker = {
                         return 0;
                     },
                     'int',
-                    ['pointer', 'pointer'],
-                ),
+                    ['pointer', 'pointer']
+                )
             );
         }
 
@@ -4421,10 +4265,7 @@ const NtpBlocker = {
         }
 
         // POP3 date parsing
-        var pop3_get_message_date = Module.findExportByName(
-            null,
-            'pop3_get_message_date',
-        );
+        var pop3_get_message_date = Module.findExportByName(null, 'pop3_get_message_date');
         if (pop3_get_message_date) {
             Interceptor.replace(
                 pop3_get_message_date,
@@ -4439,16 +4280,13 @@ const NtpBlocker = {
                         return 1704067200;
                     },
                     'uint32',
-                    ['pointer'],
-                ),
+                    ['pointer']
+                )
             );
         }
 
         // Exchange ActiveSync timestamps
-        var eas_sync_timestamp = Module.findExportByName(
-            null,
-            'eas_get_server_time',
-        );
+        var eas_sync_timestamp = Module.findExportByName(null, 'eas_get_server_time');
         if (eas_sync_timestamp) {
             Interceptor.replace(
                 eas_sync_timestamp,
@@ -4463,8 +4301,8 @@ const NtpBlocker = {
                         return 1704067200000;
                     },
                     'uint64',
-                    [],
-                ),
+                    []
+                )
             );
         }
     },
@@ -4489,8 +4327,8 @@ const NtpBlocker = {
                         return 160000;
                     },
                     'uint32',
-                    ['pointer'],
-                ),
+                    ['pointer']
+                )
             );
         }
 
@@ -4510,8 +4348,8 @@ const NtpBlocker = {
                         return 0;
                     },
                     'int',
-                    ['pointer'],
-                ),
+                    ['pointer']
+                )
             );
         }
 
@@ -4538,7 +4376,7 @@ const NtpBlocker = {
         // WebRTC media timestamps
         var webrtc_timestamp_extrapolator = Module.findExportByName(
             null,
-            '_ZN6webrtc21TimestampExtrapolator6UpdateEjj',
+            '_ZN6webrtc21TimestampExtrapolator6UpdateEjj'
         );
         if (webrtc_timestamp_extrapolator) {
             Interceptor.replace(
@@ -4553,16 +4391,13 @@ const NtpBlocker = {
                         return;
                     },
                     'void',
-                    ['pointer', 'uint32', 'uint32'],
-                ),
+                    ['pointer', 'uint32', 'uint32']
+                )
             );
         }
 
         // H.323 timestamps
-        var h323_get_timestamp = Module.findExportByName(
-            null,
-            'H323Connection::GetTimestamp',
-        );
+        var h323_get_timestamp = Module.findExportByName(null, 'H323Connection::GetTimestamp');
         if (h323_get_timestamp) {
             Interceptor.replace(
                 h323_get_timestamp,
@@ -4577,8 +4412,8 @@ const NtpBlocker = {
                         return 0;
                     },
                     'uint32',
-                    ['pointer'],
-                ),
+                    ['pointer']
+                )
             );
         }
     },

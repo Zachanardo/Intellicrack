@@ -14,15 +14,15 @@ const TPM_COMMANDS = {
     0x00000144: 'TPM2_Startup',
     0x00000153: 'TPM2_Create',
     0x00000157: 'TPM2_Load',
-    0x0000015E: 'TPM2_Unseal',
+    0x0000015e: 'TPM2_Unseal',
     0x00000158: 'TPM2_Quote',
-    0x0000017E: 'TPM2_PCR_Read',
+    0x0000017e: 'TPM2_PCR_Read',
     0x00000182: 'TPM2_PCR_Extend',
-    0x0000017B: 'TPM2_GetRandom',
-    0x0000015D: 'TPM2_Sign',
+    0x0000017b: 'TPM2_GetRandom',
+    0x0000015d: 'TPM2_Sign',
     0x00000131: 'TPM2_CreatePrimary',
     0x00000176: 'TPM2_StartAuthSession',
-    0x0000017A: 'TPM2_GetCapability'
+    0x0000017a: 'TPM2_GetCapability',
 };
 
 const interceptedCommands = [];
@@ -42,7 +42,7 @@ function parseTPMCommand(buffer) {
         size: size,
         commandCode: commandCode,
         commandName: TPM_COMMANDS[commandCode] || `Unknown_0x${commandCode.toString(16)}`,
-        fullBuffer: buffer
+        fullBuffer: buffer,
     };
 }
 
@@ -60,7 +60,7 @@ function parseTPMResponse(buffer) {
         size: size,
         responseCode: responseCode,
         success: responseCode === 0,
-        fullBuffer: buffer
+        fullBuffer: buffer,
     };
 }
 
@@ -78,7 +78,7 @@ function hookTbsipSubmitCommand() {
     }
 
     Interceptor.attach(tbsipSubmitCommand, {
-        onEnter: function(args) {
+        onEnter: function (args) {
             const context = args[0];
             const locality = args[1].toInt32();
             const priority = args[2].toInt32();
@@ -93,14 +93,16 @@ function hookTbsipSubmitCommand() {
 
                     if (parsed) {
                         console.log(`[+] TPM Command Intercepted: ${parsed.commandName}`);
-                        console.log(`    Tag: ${parsed.tag}, Size: ${parsed.size}, Code: 0x${parsed.commandCode.toString(16)}`);
+                        console.log(
+                            `    Tag: ${parsed.tag}, Size: ${parsed.size}, Code: 0x${parsed.commandCode.toString(16)}`
+                        );
                         console.log(`    Locality: ${locality}, Priority: ${priority}`);
 
                         interceptedCommands.push({
                             timestamp: Date.now(),
                             command: parsed,
                             locality: locality,
-                            priority: priority
+                            priority: priority,
                         });
 
                         if (parsed.commandName === 'TPM2_Unseal') {
@@ -108,7 +110,9 @@ function hookTbsipSubmitCommand() {
                         } else if (parsed.commandName === 'TPM2_Quote') {
                             console.log('[*] Quote operation detected - monitoring attestation...');
                         } else if (parsed.commandName === 'TPM2_PCR_Extend') {
-                            console.log('[*] PCR Extend detected - monitoring integrity measurement...');
+                            console.log(
+                                '[*] PCR Extend detected - monitoring integrity measurement...'
+                            );
                         }
                     }
                 } catch (e) {
@@ -122,7 +126,7 @@ function hookTbsipSubmitCommand() {
             this.resultSize = args[6];
         },
 
-        onLeave: function(retval) {
+        onLeave: function (retval) {
             if (retval.toInt32() === 0 && this.resultBuffer && !this.resultBuffer.isNull()) {
                 try {
                     const resultSizeValue = this.resultSize.readU32();
@@ -132,8 +136,12 @@ function hookTbsipSubmitCommand() {
                         const parsed = parseTPMResponse(buffer);
 
                         if (parsed) {
-                            console.log(`[+] TPM Response: ${parsed.success ? 'SUCCESS' : 'ERROR'}`);
-                            console.log(`    Tag: ${parsed.tag}, Size: ${parsed.size}, Code: 0x${parsed.responseCode.toString(16)}`);
+                            console.log(
+                                `[+] TPM Response: ${parsed.success ? 'SUCCESS' : 'ERROR'}`
+                            );
+                            console.log(
+                                `    Tag: ${parsed.tag}, Size: ${parsed.size}, Code: 0x${parsed.responseCode.toString(16)}`
+                            );
 
                             if (parsed.success && parsed.size > 10) {
                                 const dataSize = parsed.size - 10;
@@ -145,7 +153,7 @@ function hookTbsipSubmitCommand() {
                     console.log(`[-] Error parsing response: ${e.message}`);
                 }
             }
-        }
+        },
     });
 
     hookedFunctions.add('Tbsip_Submit_Command');
@@ -166,12 +174,12 @@ function hookTbsiContextCreate() {
     }
 
     Interceptor.attach(tbsiContextCreate, {
-        onEnter: function(args) {
+        onEnter: function (args) {
             console.log('[+] TBS Context Creation Detected');
             this.contextPtr = args[1];
         },
 
-        onLeave: function(retval) {
+        onLeave: function (retval) {
             if (retval.toInt32() === 0) {
                 console.log('[+] TBS Context Created Successfully');
                 if (this.contextPtr && !this.contextPtr.isNull()) {
@@ -181,7 +189,7 @@ function hookTbsiContextCreate() {
             } else {
                 console.log(`[-] TBS Context Creation Failed: 0x${retval.toInt32().toString(16)}`);
             }
-        }
+        },
     });
 
     hookedFunctions.add('Tbsi_Context_Create');
@@ -199,7 +207,7 @@ function hookNCryptTPMFunctions() {
     const ncryptOpenStorageProvider = ncryptDll.getExportByName('NCryptOpenStorageProvider');
     if (ncryptOpenStorageProvider) {
         Interceptor.attach(ncryptOpenStorageProvider, {
-            onEnter: function(args) {
+            onEnter: function (args) {
                 const providerNamePtr = args[1];
                 if (providerNamePtr && !providerNamePtr.isNull()) {
                     try {
@@ -214,11 +222,11 @@ function hookNCryptTPMFunctions() {
                 }
             },
 
-            onLeave: function(retval) {
+            onLeave: function (retval) {
                 if (this.isTpmProvider && retval.toInt32() === 0) {
                     console.log('[+] TPM Storage Provider Opened');
                 }
-            }
+            },
         });
 
         hookedFunctions.add('NCryptOpenStorageProvider');
@@ -228,7 +236,7 @@ function hookNCryptTPMFunctions() {
     const ncryptOpenKey = ncryptDll.getExportByName('NCryptOpenKey');
     if (ncryptOpenKey) {
         Interceptor.attach(ncryptOpenKey, {
-            onEnter: function(args) {
+            onEnter: function (args) {
                 const keyNamePtr = args[2];
                 if (keyNamePtr && !keyNamePtr.isNull()) {
                     try {
@@ -240,11 +248,11 @@ function hookNCryptTPMFunctions() {
                 }
             },
 
-            onLeave: function(retval) {
+            onLeave: function (retval) {
                 if (retval.toInt32() === 0) {
                     console.log('[+] TPM Key Opened Successfully');
                 }
-            }
+            },
         });
 
         hookedFunctions.add('NCryptOpenKey');
@@ -264,20 +272,31 @@ function hookDeviceIoControl() {
     }
 
     Interceptor.attach(deviceIoControl, {
-        onEnter: function(args) {
+        onEnter: function (args) {
             const hDevice = args[0];
             const dwIoControlCode = args[1].toInt32();
 
             try {
                 const deviceName = hDevice.toString();
-                if (deviceName.includes('TPM') || dwIoControlCode === 0x22C000 || dwIoControlCode === 0x22C004) {
-                    console.log(`[+] DeviceIoControl TPM Access Detected`);
-                    console.log(`    Device: ${deviceName}, IOCTL: 0x${dwIoControlCode.toString(16)}`);
+                if (
+                    deviceName.includes('TPM') ||
+                    dwIoControlCode === 0x22c000 ||
+                    dwIoControlCode === 0x22c004
+                ) {
+                    console.log('[+] DeviceIoControl TPM Access Detected');
+                    console.log(
+                        `    Device: ${deviceName}, IOCTL: 0x${dwIoControlCode.toString(16)}`
+                    );
 
                     const inputBuffer = args[2];
                     const inputSize = args[3].toInt32();
 
-                    if (inputSize > 0 && inputSize < 65536 && inputBuffer && !inputBuffer.isNull()) {
+                    if (
+                        inputSize > 0 &&
+                        inputSize < 65536 &&
+                        inputBuffer &&
+                        !inputBuffer.isNull()
+                    ) {
                         const inputData = inputBuffer.readByteArray(inputSize);
                         const buffer = Buffer.from(inputData);
                         const parsed = parseTPMCommand(buffer);
@@ -290,7 +309,7 @@ function hookDeviceIoControl() {
             } catch (e) {
                 console.log(`[-] Error in DeviceIoControl hook: ${e.message}`);
             }
-        }
+        },
     });
 
     hookedFunctions.add('DeviceIoControl');
@@ -302,12 +321,12 @@ function getSummary() {
     return {
         hookedFunctions: Array.from(hookedFunctions),
         interceptedCommandCount: interceptedCommands.length,
-        commands: interceptedCommands.map(entry => ({
+        commands: interceptedCommands.map((entry) => ({
             timestamp: entry.timestamp,
             commandName: entry.command.commandName,
             commandCode: `0x${entry.command.commandCode.toString(16)}`,
-            size: entry.command.size
-        }))
+            size: entry.command.size,
+        })),
     };
 }
 
@@ -333,20 +352,20 @@ function initialize() {
         hooksInstalled++;
     }
 
-    console.log(`[+] TPM Command Interceptor Initialized`);
+    console.log('[+] TPM Command Interceptor Initialized');
     console.log(`[+] Hooks Installed: ${hooksInstalled}`);
     console.log('[*] Monitoring TPM operations...');
 }
 
 rpc.exports = {
     getSummary: getSummary,
-    getInterceptedCommands: function() {
+    getInterceptedCommands: function () {
         return interceptedCommands;
     },
-    clearCommands: function() {
+    clearCommands: function () {
         interceptedCommands.length = 0;
         return { status: 'cleared' };
-    }
+    },
 };
 
 setImmediate(initialize);

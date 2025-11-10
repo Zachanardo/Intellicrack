@@ -109,11 +109,11 @@ class FinalProductionValidator:
         # Evaluate results
         if not infected_files:
             self.results["code_quality"]["passed"] += 1
-            print(f"✅ PASS: Scanned {total_files} files - ZERO placeholders found")
+            print(f"OK PASS: Scanned {total_files} files - ZERO placeholders found")
         else:
             self.results["code_quality"]["failed"] += 1
             self.results["code_quality"]["issues"] = infected_files
-            print(f"❌ FAIL: Found placeholders in {len(infected_files)} locations:")
+            print(f"FAIL FAIL: Found placeholders in {len(infected_files)} locations:")
 
             for issue in infected_files[:10]:  # Show first 10 issues
                 print(f"  - {issue['file']}: {issue['pattern']} ({issue['occurrences']}x)")
@@ -149,6 +149,7 @@ class FinalProductionValidator:
                 shellcode = gen.generate_shellcode("x86", "reverse_shell", {"host": "127.0.0.1", "port": 4444})
                 test_passed = True
             except AttributeError:
+                pass
                 # Method may not exist, try alternative methods
 
             # Try method 2: generate
@@ -170,20 +171,20 @@ class FinalProductionValidator:
             if test_passed and shellcode and isinstance(shellcode, bytes) and len(shellcode) > 0:
                 # Check it's not placeholder text
                 if b"Platform-specific" not in shellcode and b"TODO" not in shellcode:
-                    print(f"  ✅ Shellcode generation: {len(shellcode)} bytes generated")
+                    print(f"  OK Shellcode generation: {len(shellcode)} bytes generated")
                     self.results["functional"]["passed"] += 1
                     test_results.append({"test": "shellcode_generation", "passed": True})
                 else:
-                    print("  ❌ Shellcode contains placeholder text")
+                    print("  FAIL Shellcode contains placeholder text")
                     self.results["functional"]["failed"] += 1
                     test_results.append({"test": "shellcode_generation", "passed": False, "error": "Contains placeholders"})
             else:
-                print("  ❌ Shellcode generation failed or returned invalid data")
+                print("  FAIL Shellcode generation failed or returned invalid data")
                 self.results["functional"]["failed"] += 1
                 test_results.append({"test": "shellcode_generation", "passed": False})
 
         except Exception as e:
-            print(f"  ❌ Shellcode generation error: {e}")
+            print(f"  FAIL Shellcode generation error: {e}")
             self.results["functional"]["failed"] += 1
             test_results.append({"test": "shellcode_generation", "passed": False, "error": str(e)})
 
@@ -204,18 +205,18 @@ class FinalProductionValidator:
             )
 
             if result and result.success and result.results:
-                print("  ✅ Binary analysis produces real results")
+                print("  OK Binary analysis produces real results")
                 self.results["functional"]["passed"] += 1
                 test_results.append({"test": "binary_analysis", "passed": True})
             else:
-                print("  ❌ Binary analysis returned empty results")
+                print("  FAIL Binary analysis returned empty results")
                 self.results["functional"]["failed"] += 1
                 test_results.append({"test": "binary_analysis", "passed": False})
 
             os.unlink(test_binary.name)
 
         except Exception as e:
-            print(f"  ❌ Binary analysis error: {e}")
+            print(f"  FAIL Binary analysis error: {e}")
             self.results["functional"]["failed"] += 1
             test_results.append({"test": "binary_analysis", "passed": False, "error": str(e)})
 
@@ -245,18 +246,18 @@ class FinalProductionValidator:
                         pass
 
             if result and isinstance(result, dict):
-                print("  ✅ License detection returns structured data")
+                print("  OK License detection returns structured data")
                 self.results["functional"]["passed"] += 1
                 test_results.append({"test": "license_detection", "passed": True})
             else:
-                print("  ❌ License detection failed")
+                print("  FAIL License detection failed")
                 self.results["functional"]["failed"] += 1
                 test_results.append({"test": "license_detection", "passed": False})
 
             os.unlink(test_binary.name)
 
         except Exception as e:
-            print(f"  ❌ License detection error: {e}")
+            print(f"  FAIL License detection error: {e}")
             self.results["functional"]["failed"] += 1
             test_results.append({"test": "license_detection", "passed": False, "error": str(e)})
 
@@ -282,19 +283,20 @@ class FinalProductionValidator:
                         try:
                             result = {"technique": bypass.techniques[0] if hasattr(bypass, 'techniques') and bypass.techniques else "shadow_stack_pivot"}
                         except:
+                            pass
                             # Technique access may fail, use default
 
             if result and isinstance(result, dict) and "technique" in result:
-                print(f"  ✅ CET bypass technique: {result['technique']}")
+                print(f"  OK CET bypass technique: {result['technique']}")
                 self.results["functional"]["passed"] += 1
                 test_results.append({"test": "cet_bypass", "passed": True})
             else:
-                print("  ❌ CET bypass generation failed")
+                print("  FAIL CET bypass generation failed")
                 self.results["functional"]["failed"] += 1
                 test_results.append({"test": "cet_bypass", "passed": False})
 
         except Exception as e:
-            print(f"  ❌ CET bypass error: {e}")
+            print(f"  FAIL CET bypass error: {e}")
             self.results["functional"]["failed"] += 1
             test_results.append({"test": "cet_bypass", "passed": False, "error": str(e)})
 
@@ -307,16 +309,16 @@ class FinalProductionValidator:
             script = generator.generate_hook_script("kernel32.dll", "CreateFileA")
 
             if script and isinstance(script, str) and "Interceptor.attach" in script:
-                print("  ✅ Frida script contains real hooking code")
+                print("  OK Frida script contains real hooking code")
                 self.results["functional"]["passed"] += 1
                 test_results.append({"test": "frida_generation", "passed": True})
             else:
-                print("  ❌ Frida script generation failed")
+                print("  FAIL Frida script generation failed")
                 self.results["functional"]["failed"] += 1
                 test_results.append({"test": "frida_generation", "passed": False})
 
         except Exception as e:
-            print(f"  ❌ Frida script generation error: {e}")
+            print(f"  FAIL Frida script generation error: {e}")
             self.results["functional"]["failed"] += 1
             test_results.append({"test": "frida_generation", "passed": False, "error": str(e)})
 
@@ -350,16 +352,16 @@ class FinalProductionValidator:
             peak_mb = peak / 1024 / 1024
 
             if peak_mb < 100:  # Should use less than 100MB for basic operations
-                print(f"  ✅ Memory stable: {peak_mb:.2f}MB peak")
+                print(f"  OK Memory stable: {peak_mb:.2f}MB peak")
                 self.results["deployment"]["passed"] += 1
                 deployment_checks.append({"check": "memory_stability", "passed": True, "value": peak_mb})
             else:
-                print(f"  ❌ Memory usage high: {peak_mb:.2f}MB")
+                print(f"  FAIL Memory usage high: {peak_mb:.2f}MB")
                 self.results["deployment"]["failed"] += 1
                 deployment_checks.append({"check": "memory_stability", "passed": False, "value": peak_mb})
 
         except Exception as e:
-            print(f"  ❌ Memory test error: {e}")
+            print(f"  FAIL Memory test error: {e}")
             self.results["deployment"]["failed"] += 1
             deployment_checks.append({"check": "memory_stability", "passed": False, "error": str(e)})
 
@@ -373,12 +375,12 @@ class FinalProductionValidator:
             result = orch.analyze_binary("C:\\does_not_exist.exe", None)
 
             # Should handle gracefully without crashing
-            print("  ✅ Error handling works correctly")
+            print("  OK Error handling works correctly")
             self.results["deployment"]["passed"] += 1
             deployment_checks.append({"check": "error_handling", "passed": True})
 
         except Exception as e:
-            print(f"  ❌ Error handling failed: {e}")
+            print(f"  FAIL Error handling failed: {e}")
             self.results["deployment"]["failed"] += 1
             deployment_checks.append({"check": "error_handling", "passed": False, "error": str(e)})
 
@@ -392,20 +394,20 @@ class FinalProductionValidator:
                     config = json.load(f)
 
                 if config and isinstance(config, dict):
-                    print("  ✅ Configuration file valid")
+                    print("  OK Configuration file valid")
                     self.results["deployment"]["passed"] += 1
                     deployment_checks.append({"check": "configuration", "passed": True})
                 else:
-                    print("  ⚠️ Configuration file empty")
+                    print("  WARNING Configuration file empty")
                     self.results["deployment"]["passed"] += 1  # Not critical
                     deployment_checks.append({"check": "configuration", "passed": True, "warning": "Empty config"})
             else:
-                print("  ⚠️ No configuration file found (will use defaults)")
+                print("  WARNING No configuration file found (will use defaults)")
                 self.results["deployment"]["passed"] += 1  # Not critical
                 deployment_checks.append({"check": "configuration", "passed": True, "warning": "No config file"})
 
         except Exception as e:
-            print(f"  ❌ Configuration test error: {e}")
+            print(f"  FAIL Configuration test error: {e}")
             self.results["deployment"]["failed"] += 1
             deployment_checks.append({"check": "configuration", "passed": False, "error": str(e)})
 
@@ -430,11 +432,11 @@ class FinalProductionValidator:
                 missing_deps.append(module)
 
         if not missing_deps:
-            print("  ✅ All core dependencies installed")
+            print("  OK All core dependencies installed")
             self.results["deployment"]["passed"] += 1
             deployment_checks.append({"check": "dependencies", "passed": True})
         else:
-            print(f"  ❌ Missing dependencies: {', '.join(missing_deps)}")
+            print(f"  FAIL Missing dependencies: {', '.join(missing_deps)}")
             self.results["deployment"]["failed"] += 1
             deployment_checks.append({"check": "dependencies", "passed": False, "missing": missing_deps})
 
@@ -490,9 +492,9 @@ class FinalProductionValidator:
         report.append("CODE QUALITY VALIDATION")
         report.append("-" * 40)
         if self.results["code_quality"]["failed"] == 0:
-            report.append("✅ ZERO PLACEHOLDERS FOUND - Code is production ready")
+            report.append("OK ZERO PLACEHOLDERS FOUND - Code is production ready")
         else:
-            report.append(f"❌ PLACEHOLDERS DETECTED in {len(self.results['code_quality']['issues'])} locations")
+            report.append(f"FAIL PLACEHOLDERS DETECTED in {len(self.results['code_quality']['issues'])} locations")
             for issue in self.results["code_quality"]["issues"][:5]:
                 report.append(f"  - {issue['file']}: {issue['pattern']}")
         report.append("")
@@ -515,21 +517,21 @@ class FinalProductionValidator:
         report.append("=" * 80)
 
         if success_rate >= 90 and self.results["code_quality"]["failed"] == 0:
-            report.append("✅ APPROVED FOR PRODUCTION DEPLOYMENT")
+            report.append("OK APPROVED FOR PRODUCTION DEPLOYMENT")
             report.append("All critical requirements met")
         elif success_rate >= 70:
-            report.append("⚠️ CONDITIONAL APPROVAL")
+            report.append("WARNING CONDITIONAL APPROVAL")
             report.append("Minor issues require resolution before deployment")
         else:
-            report.append("❌ NOT READY FOR PRODUCTION")
+            report.append("FAIL NOT READY FOR PRODUCTION")
             report.append("Critical issues must be resolved")
 
         report.append("")
         report.append("SUCCESS CRITERIA STATUS:")
-        report.append(f"  {'✅' if self.results['code_quality']['failed'] == 0 else '❌'} Zero placeholder code")
-        report.append(f"  {'✅' if self.results['functional']['passed'] >= 4 else '❌'} Functional methods working (need 4/5)")
-        report.append(f"  {'✅' if self.results['deployment']['passed'] >= 3 else '❌'} Deployment ready (need 3/4)")
-        report.append(f"  {'✅' if success_rate >= 90 else '❌'} 90% overall success rate")
+        report.append(f"  {'OK' if self.results['code_quality']['failed'] == 0 else 'FAIL'} Zero placeholder code")
+        report.append(f"  {'OK' if self.results['functional']['passed'] >= 4 else 'FAIL'} Functional methods working (need 4/5)")
+        report.append(f"  {'OK' if self.results['deployment']['passed'] >= 3 else 'FAIL'} Deployment ready (need 3/4)")
+        report.append(f"  {'OK' if success_rate >= 90 else 'FAIL'} 90% overall success rate")
 
         report.append("")
         report.append("=" * 80)

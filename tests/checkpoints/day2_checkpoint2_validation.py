@@ -28,13 +28,11 @@ def validate_production_readiness_checkpoint2():
 
     # Import the actual vulnerability engine for testing
     try:
-        import os
-from intellicrack.utils.path_resolver import get_project_root
-
-sys.path.append(str(get_project_root()))
+        from intellicrack.utils.path_resolver import get_project_root
+        sys.path.append(str(get_project_root()))
         from intellicrack.core.analysis.radare2_vulnerability_engine import Radare2VulnerabilityEngine
         ACTUAL_ENGINE_AVAILABLE = True
-        print("✓ Successfully imported actual Radare2VulnerabilityEngine")
+        print("OK Successfully imported actual Radare2VulnerabilityEngine")
     except Exception as e:
         print(f"⚠ Could not import actual engine: {e}")
         print("  Using direct method testing approach...")
@@ -70,13 +68,13 @@ sys.path.append(str(get_project_root()))
             # Validate result structure
             if not isinstance(result, dict):
                 validation_results["critical_failures"].append("BOF payload returned non-dict")
-                print("❌ CRITICAL FAILURE: BOF payload method returned non-dictionary")
+                print("FAIL CRITICAL FAILURE: BOF payload method returned non-dictionary")
                 return False
 
             # Check for shellcode field
             if "shellcode" not in result:
                 validation_results["critical_failures"].append("BOF payload missing shellcode field")
-                print("❌ CRITICAL FAILURE: BOF payload missing 'shellcode' field")
+                print("FAIL CRITICAL FAILURE: BOF payload missing 'shellcode' field")
                 return False
 
             shellcode = result["shellcode"]
@@ -84,13 +82,13 @@ sys.path.append(str(get_project_root()))
             # Validate shellcode is bytes
             if not isinstance(shellcode, bytes):
                 validation_results["critical_failures"].append(f"Shellcode type is {type(shellcode)}, not bytes")
-                print(f"❌ CRITICAL FAILURE: Shellcode type is {type(shellcode)}, must be bytes")
+                print(f"FAIL CRITICAL FAILURE: Shellcode type is {type(shellcode)}, must be bytes")
                 return False
 
             # Validate shellcode has actual content
             if len(shellcode) == 0:
                 validation_results["critical_failures"].append("Shellcode is empty")
-                print("❌ CRITICAL FAILURE: Shellcode is empty")
+                print("FAIL CRITICAL FAILURE: Shellcode is empty")
                 return False
 
             # CRITICAL TEST: Verify NO instructional strings
@@ -99,7 +97,7 @@ sys.path.append(str(get_project_root()))
                     for forbidden_phrase in ["Analyze with", "Platform-specific", "Template", "Use debugger", "Replace with"]:
                         if forbidden_phrase in value:
                             validation_results["placeholder_violations"].append(f"Field '{field}' contains '{forbidden_phrase}'")
-                            print(f"❌ ZERO PLACEHOLDER RULE VIOLATION: Field '{field}' contains '{forbidden_phrase}'")
+                            print(f"FAIL ZERO PLACEHOLDER RULE VIOLATION: Field '{field}' contains '{forbidden_phrase}'")
                             return False
 
             # Document functional proof
@@ -116,15 +114,15 @@ sys.path.append(str(get_project_root()))
 
             validation_results["functional_proofs"].append(functional_proof)
 
-            print(f"✓ BOF payload generates {len(shellcode)} bytes of ACTUAL shellcode")
-            print(f"✓ Shellcode hex: {shellcode.hex()}")
-            print(f"✓ Complete payload size: {functional_proof['complete_payload_size']} bytes")
-            print(f"✓ Return address: {functional_proof['return_address']}")
-            print("✓ ZERO PLACEHOLDER RULE: PASSED - No instructional strings detected")
+            print(f"OK BOF payload generates {len(shellcode)} bytes of ACTUAL shellcode")
+            print(f"OK Shellcode hex: {shellcode.hex()}")
+            print(f"OK Complete payload size: {functional_proof['complete_payload_size']} bytes")
+            print(f"OK Return address: {functional_proof['return_address']}")
+            print("OK ZERO PLACEHOLDER RULE: PASSED - No instructional strings detected")
 
         except Exception as e:
             validation_results["critical_failures"].append(f"BOF payload generation exception: {e}")
-            print(f"❌ CRITICAL FAILURE: BOF payload generation failed: {e}")
+            print(f"FAIL CRITICAL FAILURE: BOF payload generation failed: {e}")
             return False
     else:
         print("⚠ Actual engine not available, using direct validation...")
@@ -138,7 +136,7 @@ sys.path.append(str(get_project_root()))
             bof_method_match = re.search(r'def _generate_bof_payload.*?(?=def|\Z)', source_code, re.DOTALL)
             if not bof_method_match:
                 validation_results["critical_failures"].append("Could not find _generate_bof_payload method")
-                print("❌ CRITICAL FAILURE: Could not find _generate_bof_payload method")
+                print("FAIL CRITICAL FAILURE: Could not find _generate_bof_payload method")
                 return False
 
             bof_method_code = bof_method_match.group(0)
@@ -157,7 +155,7 @@ sys.path.append(str(get_project_root()))
             for pattern in forbidden_patterns:
                 if pattern in bof_method_code:
                     validation_results["placeholder_violations"].append(f"BOF method contains '{pattern}'")
-                    print(f"❌ ZERO PLACEHOLDER RULE VIOLATION: BOF method contains '{pattern}'")
+                    print(f"FAIL ZERO PLACEHOLDER RULE VIOLATION: BOF method contains '{pattern}'")
                     return False
 
             # Check for positive indicators of real implementation
@@ -173,16 +171,16 @@ sys.path.append(str(get_project_root()))
 
             if indicators_found < 3:
                 validation_results["critical_failures"].append(f"BOF method shows insufficient real implementation patterns ({indicators_found}/5)")
-                print(f"❌ CRITICAL FAILURE: BOF method shows insufficient real implementation patterns ({indicators_found}/5)")
+                print(f"FAIL CRITICAL FAILURE: BOF method shows insufficient real implementation patterns ({indicators_found}/5)")
                 return False
 
-            print(f"✓ BOF method source code validation passed")
-            print(f"✓ ZERO PLACEHOLDER RULE: PASSED - No forbidden patterns detected")
-            print(f"✓ Real implementation indicators: {indicators_found}/5")
+            print(f"OK BOF method source code validation passed")
+            print(f"OK ZERO PLACEHOLDER RULE: PASSED - No forbidden patterns detected")
+            print(f"OK Real implementation indicators: {indicators_found}/5")
 
         except Exception as e:
             validation_results["critical_failures"].append(f"Source code validation failed: {e}")
-            print(f"❌ Source code validation failed: {e}")
+            print(f"FAIL Source code validation failed: {e}")
             return False
 
     # Test 2: Format String Payload Method Validation
@@ -202,13 +200,13 @@ sys.path.append(str(get_project_root()))
             # Validate result structure
             if not isinstance(result, dict):
                 validation_results["critical_failures"].append("Format string payload returned non-dict")
-                print("❌ CRITICAL FAILURE: Format string payload returned non-dictionary")
+                print("FAIL CRITICAL FAILURE: Format string payload returned non-dictionary")
                 return False
 
             # Check for payload field
             if "payload" not in result and "format_payload" not in result:
                 validation_results["critical_failures"].append("Format string payload missing payload field")
-                print("❌ CRITICAL FAILURE: Format string payload missing payload field")
+                print("FAIL CRITICAL FAILURE: Format string payload missing payload field")
                 return False
 
             payload = result.get("payload", result.get("format_payload", b""))
@@ -216,17 +214,17 @@ sys.path.append(str(get_project_root()))
             # Validate payload is bytes and contains format specifiers
             if not isinstance(payload, bytes):
                 validation_results["critical_failures"].append(f"Format payload type is {type(payload)}, not bytes")
-                print(f"❌ CRITICAL FAILURE: Format payload type is {type(payload)}, must be bytes")
+                print(f"FAIL CRITICAL FAILURE: Format payload type is {type(payload)}, must be bytes")
                 return False
 
             if len(payload) == 0:
                 validation_results["critical_failures"].append("Format payload is empty")
-                print("❌ CRITICAL FAILURE: Format payload is empty")
+                print("FAIL CRITICAL FAILURE: Format payload is empty")
                 return False
 
             if b"%" not in payload:
                 validation_results["critical_failures"].append("Format payload missing format specifiers")
-                print("❌ CRITICAL FAILURE: Format payload missing format specifiers")
+                print("FAIL CRITICAL FAILURE: Format payload missing format specifiers")
                 return False
 
             # CRITICAL TEST: Verify NO instructional strings
@@ -235,7 +233,7 @@ sys.path.append(str(get_project_root()))
                     for forbidden_phrase in ["Analyze with", "Platform-specific", "Template", "Use debugger", "Replace with"]:
                         if forbidden_phrase in value:
                             validation_results["placeholder_violations"].append(f"Format string field '{field}' contains '{forbidden_phrase}'")
-                            print(f"❌ ZERO PLACEHOLDER RULE VIOLATION: Format string field '{field}' contains '{forbidden_phrase}'")
+                            print(f"FAIL ZERO PLACEHOLDER RULE VIOLATION: Format string field '{field}' contains '{forbidden_phrase}'")
                             return False
 
             # Document functional proof
@@ -252,15 +250,15 @@ sys.path.append(str(get_project_root()))
 
             validation_results["functional_proofs"].append(functional_proof)
 
-            print(f"✓ Format string payload generates {len(payload)} bytes")
-            print(f"✓ Payload: {payload}")
-            print(f"✓ Payload hex: {payload.hex()}")
-            print(f"✓ Contains format specifiers: {b'%' in payload}")
-            print("✓ ZERO PLACEHOLDER RULE: PASSED - No instructional strings detected")
+            print(f"OK Format string payload generates {len(payload)} bytes")
+            print(f"OK Payload: {payload}")
+            print(f"OK Payload hex: {payload.hex()}")
+            print(f"OK Contains format specifiers: {b'%' in payload}")
+            print("OK ZERO PLACEHOLDER RULE: PASSED - No instructional strings detected")
 
         except Exception as e:
             validation_results["critical_failures"].append(f"Format string payload generation exception: {e}")
-            print(f"❌ CRITICAL FAILURE: Format string payload generation failed: {e}")
+            print(f"FAIL CRITICAL FAILURE: Format string payload generation failed: {e}")
             return False
     else:
         # Direct source validation for format string method
@@ -272,7 +270,7 @@ sys.path.append(str(get_project_root()))
             fmt_method_match = re.search(r'def _generate_format_string_payload.*?(?=def|\Z)', source_code, re.DOTALL)
             if not fmt_method_match:
                 validation_results["critical_failures"].append("Could not find _generate_format_string_payload method")
-                print("❌ CRITICAL FAILURE: Could not find _generate_format_string_payload method")
+                print("FAIL CRITICAL FAILURE: Could not find _generate_format_string_payload method")
                 return False
 
             fmt_method_code = fmt_method_match.group(0)
@@ -281,7 +279,7 @@ sys.path.append(str(get_project_root()))
             for pattern in forbidden_patterns:
                 if pattern in fmt_method_code:
                     validation_results["placeholder_violations"].append(f"Format string method contains '{pattern}'")
-                    print(f"❌ ZERO PLACEHOLDER RULE VIOLATION: Format string method contains '{pattern}'")
+                    print(f"FAIL ZERO PLACEHOLDER RULE VIOLATION: Format string method contains '{pattern}'")
                     return False
 
             # Check for format string implementation indicators
@@ -297,16 +295,16 @@ sys.path.append(str(get_project_root()))
 
             if format_indicators_found < 3:
                 validation_results["critical_failures"].append(f"Format string method shows insufficient implementation patterns ({format_indicators_found}/5)")
-                print(f"❌ CRITICAL FAILURE: Format string method shows insufficient implementation patterns ({format_indicators_found}/5)")
+                print(f"FAIL CRITICAL FAILURE: Format string method shows insufficient implementation patterns ({format_indicators_found}/5)")
                 return False
 
-            print(f"✓ Format string method source code validation passed")
-            print(f"✓ ZERO PLACEHOLDER RULE: PASSED - No forbidden patterns detected")
-            print(f"✓ Format string implementation indicators: {format_indicators_found}/5")
+            print(f"OK Format string method source code validation passed")
+            print(f"OK ZERO PLACEHOLDER RULE: PASSED - No forbidden patterns detected")
+            print(f"OK Format string implementation indicators: {format_indicators_found}/5")
 
         except Exception as e:
             validation_results["critical_failures"].append(f"Format string source validation failed: {e}")
-            print(f"❌ Format string source validation failed: {e}")
+            print(f"FAIL Format string source validation failed: {e}")
             return False
 
     # Test 3: Comprehensive Placeholder Scan
@@ -350,17 +348,17 @@ sys.path.append(str(get_project_root()))
 
         if violations_found:
             validation_results["placeholder_violations"].extend(violations_found)
-            print(f"❌ ZERO PLACEHOLDER RULE VIOLATION: Found {len(violations_found)} forbidden patterns:")
+            print(f"FAIL ZERO PLACEHOLDER RULE VIOLATION: Found {len(violations_found)} forbidden patterns:")
             for violation in violations_found:
                 print(f"  Line {violation['line']}: {violation['pattern']}")
             return False
         else:
-            print("✓ Comprehensive placeholder scan: PASSED")
-            print("✓ ZERO forbidden patterns detected in entire file")
+            print("OK Comprehensive placeholder scan: PASSED")
+            print("OK ZERO forbidden patterns detected in entire file")
 
     except Exception as e:
         validation_results["critical_failures"].append(f"Comprehensive scan failed: {e}")
-        print(f"❌ Comprehensive placeholder scan failed: {e}")
+        print(f"FAIL Comprehensive placeholder scan failed: {e}")
         return False
 
     # Test 4: Integration with ShellcodeGenerator and PayloadEngine
@@ -376,8 +374,8 @@ sys.path.append(str(get_project_root()))
         ], capture_output=True, text=True, cwd=str(get_project_root()))
 
         if result.returncode == 0 and "DAY 2.2 INTEGRATION TEST SUCCESS" in result.stdout:
-            print("✓ Integration test passed successfully")
-            print("✓ ShellcodeGenerator + PayloadEngine integration functional")
+            print("OK Integration test passed successfully")
+            print("OK ShellcodeGenerator + PayloadEngine integration functional")
             validation_results["tests"].append({
                 "name": "integration_test",
                 "status": "passed",
@@ -385,7 +383,7 @@ sys.path.append(str(get_project_root()))
             })
         else:
             validation_results["critical_failures"].append("Integration test failed")
-            print("❌ Integration test failed")
+            print("FAIL Integration test failed")
             print(f"Return code: {result.returncode}")
             print(f"Output: {result.stdout}")
             print(f"Errors: {result.stderr}")
@@ -393,7 +391,7 @@ sys.path.append(str(get_project_root()))
 
     except Exception as e:
         validation_results["critical_failures"].append(f"Integration test exception: {e}")
-        print(f"❌ Integration test failed: {e}")
+        print(f"FAIL Integration test failed: {e}")
         return False
 
     # Final validation summary
@@ -402,36 +400,36 @@ sys.path.append(str(get_project_root()))
     print("=" * 50)
 
     if len(validation_results["critical_failures"]) > 0:
-        print("❌ CHECKPOINT FAILED - Critical failures detected:")
+        print("FAIL CHECKPOINT FAILED - Critical failures detected:")
         for failure in validation_results["critical_failures"]:
-            print(f"  • {failure}")
+            print(f"   {failure}")
         return False
 
     if len(validation_results["placeholder_violations"]) > 0:
-        print("❌ CHECKPOINT FAILED - Placeholder violations detected:")
+        print("FAIL CHECKPOINT FAILED - Placeholder violations detected:")
         for violation in validation_results["placeholder_violations"]:
-            print(f"  • {violation}")
+            print(f"   {violation}")
         return False
 
     # Save validation results
     with open(get_project_root() / "day2_checkpoint2_results.json", "w") as f:
         json.dump(validation_results, f, indent=2)
 
-    print("✅ CHECKPOINT PASSED - ALL CRITICAL VALIDATIONS SUCCESSFUL")
+    print("OK CHECKPOINT PASSED - ALL CRITICAL VALIDATIONS SUCCESSFUL")
     print()
-    print("✅ MANDATORY VALIDATIONS COMPLETED:")
-    print("  ✓ _generate_bof_payload() produces ACTUAL shellcode bytes")
-    print("  ✓ _generate_format_string_payload() produces ACTUAL format strings")
-    print("  ✓ ZERO PLACEHOLDER RULE: NO instructional strings detected")
-    print("  ✓ Integration with ShellcodeGenerator + PayloadEngine functional")
-    print("  ✓ Comprehensive source code scan passed")
+    print("OK MANDATORY VALIDATIONS COMPLETED:")
+    print("  OK _generate_bof_payload() produces ACTUAL shellcode bytes")
+    print("  OK _generate_format_string_payload() produces ACTUAL format strings")
+    print("  OK ZERO PLACEHOLDER RULE: NO instructional strings detected")
+    print("  OK Integration with ShellcodeGenerator + PayloadEngine functional")
+    print("  OK Comprehensive source code scan passed")
     print()
-    print("✅ FUNCTIONAL PROOFS DOCUMENTED:")
+    print("OK FUNCTIONAL PROOFS DOCUMENTED:")
     for proof in validation_results["functional_proofs"]:
-        print(f"  • {proof['method']}: {proof.get('shellcode_size', proof.get('payload_size', 0))} bytes functional output")
+        print(f"   {proof['method']}: {proof.get('shellcode_size', proof.get('payload_size', 0))} bytes functional output")
     print()
-    print(f"✅ Results saved to: day2_checkpoint2_results.json")
-    print("✅ AUTHORIZED TO PROCEED TO DAY 3.1")
+    print(f"OK Results saved to: day2_checkpoint2_results.json")
+    print("OK AUTHORIZED TO PROCEED TO DAY 3.1")
 
     return True
 

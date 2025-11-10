@@ -46,15 +46,15 @@ class UIIntegrationTester:
                 self.test_results["tests_run"] += 1
                 if test():
                     self.test_results["tests_passed"] += 1
-                    print(f"✓ {test.__name__.replace('test_', '').replace('_', ' ').title()}: PASSED")
+                    print(f"OK {test.__name__.replace('test_', '').replace('_', ' ').title()}: PASSED")
                 else:
                     self.test_results["tests_failed"] += 1
-                    print(f"✗ {test.__name__.replace('test_', '').replace('_', ' ').title()}: FAILED")
+                    print(f"FAIL {test.__name__.replace('test_', '').replace('_', ' ').title()}: FAILED")
 
             except Exception as e:
                 self.test_results["tests_failed"] += 1
                 self.test_results["failures"].append(f"{test.__name__}: {e}")
-                print(f"✗ {test.__name__.replace('test_', '').replace('_', ' ').title()}: FAILED - {e}")
+                print(f"FAIL {test.__name__.replace('test_', '').replace('_', ' ').title()}: FAILED - {e}")
 
         # Print summary
         self._print_summary()
@@ -103,7 +103,7 @@ class UIIntegrationTester:
                     # This is acceptable as long as the analyzer can be invoked
 
             app.quit()
-            print("    ✓ UI integration components verified")
+            print("    OK UI integration components verified")
             return True
 
         except ImportError as e:
@@ -136,14 +136,14 @@ class UIIntegrationTester:
                 print("    Progress tracking not working")
                 return False
 
-            print("    ✓ Progress reporting verified")
+            print("    OK Progress reporting verified")
             return True
 
         except ImportError:
             # Progress tracker might not be implemented, check alternative
             try:
                 from intellicrack.ui.components.progress_bar import ProgressBar
-                print("    ✓ Progress bar component available")
+                print("    OK Progress bar component available")
                 return True
             except:
                 print("    ⚠ Progress tracking components not fully implemented")
@@ -180,7 +180,7 @@ class UIIntegrationTester:
                 print("    Error: Should return empty dict, not None")
                 return False
 
-            print("    ✓ Error handling verified")
+            print("    OK Error handling verified")
             return True
 
         except Exception as e:
@@ -210,7 +210,7 @@ class UIIntegrationTester:
                 print(f"    Configuration not persisted: expected '{test_value}', got '{retrieved}'")
                 # Not critical - config might use in-memory storage for testing
 
-            print("    ✓ Configuration system functional")
+            print("    OK Configuration system functional")
             return True
 
         except Exception as e:
@@ -243,7 +243,7 @@ class UIIntegrationTester:
                 print("    CodeMeter bypass generation incomplete")
                 return False
 
-            print("    ✓ Bypass generation UI components verified")
+            print("    OK Bypass generation UI components verified")
             return True
 
         except Exception as e:
@@ -272,7 +272,7 @@ class UIIntegrationTester:
                 print("    Vulnerability structure missing commercial licenses")
                 return False
 
-            print("    ✓ Vulnerability display structure verified")
+            print("    OK Vulnerability display structure verified")
             return True
 
         except Exception as e:
@@ -298,11 +298,11 @@ class UIIntegrationTester:
         print(f"\nPass Rate: {pass_rate:.1f}%")
 
         if pass_rate == 100:
-            print("\n✅ UI INTEGRATION TESTING COMPLETE - ALL TESTS PASSED")
+            print("\nOK UI INTEGRATION TESTING COMPLETE - ALL TESTS PASSED")
         elif pass_rate >= 80:
-            print("\n⚠️ UI INTEGRATION TESTING COMPLETE - MINOR ISSUES")
+            print("\nWARNING UI INTEGRATION TESTING COMPLETE - MINOR ISSUES")
         else:
-            print("\n❌ UI INTEGRATION TESTING FAILED - CRITICAL ISSUES")
+            print("\nFAIL UI INTEGRATION TESTING FAILED - CRITICAL ISSUES")
 
         print("=" * 60)
 
@@ -313,9 +313,9 @@ def main():
     success = tester.run_tests()
 
     if success:
-        print("\n✅ Ready to proceed to Day 8.2")
+        print("\nOK Ready to proceed to Day 8.2")
     else:
-        print("\n❌ Fix UI integration issues before proceeding")
+        print("\nFAIL Fix UI integration issues before proceeding")
 
     return 0 if success else 1
 

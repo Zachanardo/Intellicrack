@@ -395,7 +395,7 @@ class TutorialSystem:
 
         # Show recommendations
         if not any(self.tutorial_progress.values()):
-            self.console.print("\n💡 [bold yellow]Recommendation:[/bold yellow] Start with 'getting_started' if you're new to Intellicrack")
+            self.console.print("\n [bold yellow]Recommendation:[/bold yellow] Start with 'getting_started' if you're new to Intellicrack")
 
     def _list_tutorials_basic(self):
         """List tutorials in basic text format."""
@@ -513,11 +513,11 @@ class TutorialSystem:
             if step.hints:
                 step_content += "\n\n[bold magenta]Hints:[/bold magenta]"
                 for hint in step.hints:
-                    step_content += f"\n  💡 {hint}"
+                    step_content += f"\n   {hint}"
 
             step_panel = Panel(
                 step_content,
-                title=f"📝 Tutorial Step {step_num}",
+                title=f" Tutorial Step {step_num}",
                 border_style="green",
             )
             self.console.print(step_panel)
@@ -538,7 +538,7 @@ class TutorialSystem:
             if step.hints:
                 print("\nHints:")
                 for hint in step.hints:
-                    print(f"  💡 {hint}")
+                    print(f"   {hint}")
 
             print("\nNavigation: 'tutorial next' | 'tutorial prev' | 'tutorial skip' | 'tutorial quit'")
 
@@ -584,10 +584,10 @@ class TutorialSystem:
                     if step.hints:
                         if self.console:
                             for hint in step.hints:
-                                self.console.print(f"[yellow]💡 {hint}[/yellow]")
+                                self.console.print(f"[yellow] {hint}[/yellow]")
                         else:
                             for hint in step.hints:
-                                print(f"💡 {hint}")
+                                print(f" {hint}")
                     else:
                         print("No hints available for this step.")
                     continue
@@ -650,11 +650,11 @@ class TutorialSystem:
             # Provide helpful feedback
             hint_msg = "That's not quite right. Expected one of:\n"
             for cmd in step.commands:
-                hint_msg += f"  • {cmd}\n"
+                hint_msg += f"   {cmd}\n"
             if step.hints:
                 hint_msg += "\nHints:\n"
                 for hint in step.hints:
-                    hint_msg += f"  • {hint}\n"
+                    hint_msg += f"   {hint}\n"
             return False, hint_msg
 
         # Execute the command if CLI instance is available
@@ -700,7 +700,7 @@ class TutorialSystem:
                 )
 
         # Success! Mark step as completed
-        success_msg = "✅ Step completed successfully!"
+        success_msg = "OK Step completed successfully!"
         if step.explanation:
             success_msg += f"\n\n{step.explanation}"
 
@@ -841,7 +841,7 @@ class TutorialSystem:
                 rec_text = "Consider trying these tutorials next:\n"
                 for rec in recommendations:
                     tutorial = self.tutorials[rec]
-                    rec_text += f"  • [cyan]{rec}[/cyan] - {tutorial.title}\n"
+                    rec_text += f"   [cyan]{rec}[/cyan] - {tutorial.title}\n"
 
                 rec_panel = Panel(rec_text.strip(), title="📖 Next Steps", border_style="blue")
                 self.console.print(rec_panel)
@@ -849,7 +849,7 @@ class TutorialSystem:
                 print("\nRecommended next tutorials:")
                 for rec in recommendations:
                     tutorial = self.tutorials[rec]
-                    print(f"  • {rec} - {tutorial.title}")
+                    print(f"   {rec} - {tutorial.title}")
 
     def resume_tutorial(self) -> bool:
         """Resume the most recent tutorial."""
@@ -872,7 +872,7 @@ class TutorialSystem:
             return
 
         # Create progress table
-        progress_table = Table(title="📊 Tutorial Progress")
+        progress_table = Table(title=" Tutorial Progress")
         progress_table.add_column("Tutorial", style="cyan")
         progress_table.add_column("Progress", style="yellow")
         progress_table.add_column("Status", style="green")
@@ -930,10 +930,10 @@ class TutorialSystem:
   [cyan]tutorial help[/cyan]              - Show this help
 
 [bold green]Tips:[/bold green]
-  • Follow the commands exactly as shown
-  • Read explanations to understand concepts
-  • Use hints if you get stuck
-  • Take your time - tutorials are self-paced"""
+   Follow the commands exactly as shown
+   Read explanations to understand concepts
+   Use hints if you get stuck
+   Take your time - tutorials are self-paced"""
 
             help_panel = Panel(help_content, title="📚 Tutorial Help", border_style="blue")
             self.console.print(help_panel)
@@ -980,7 +980,7 @@ class TutorialSystem:
             completion = self.tutorial_progress.get(tutorial.name, {"completed": False, "progress": 0})
             if completion["completed"]:
                 border_style = "green"
-                title_prefix = "✅ "
+                title_prefix = "OK "
             elif completion["progress"] > 0:
                 border_style = "yellow"
                 title_prefix = "🔄 "
@@ -1077,7 +1077,7 @@ class TutorialSystem:
         if step.explanation:
             explanation_panel = Panel(
                 step.explanation,
-                title="💡 Explanation",
+                title=" Explanation",
                 border_style="yellow",
             )
             self.console.print(explanation_panel)
@@ -1161,7 +1161,7 @@ class TutorialSystem:
             # Get completion status
             progress_data = self.tutorial_progress.get(name, {"completed": False, "progress": 0})
             if progress_data["completed"]:
-                status = "✅ Complete"
+                status = "OK Complete"
             elif progress_data["progress"] > 0:
                 status = f"🔄 {progress_data['progress']}/{len(tutorial.steps)}"
             else:
@@ -1192,15 +1192,15 @@ class TutorialSystem:
 
         # Add tutorial metadata
         info_node = tree.add("ℹ️ [bold cyan]Tutorial Information[/bold cyan]")
-        info_node.add(f"📊 Difficulty: {tutorial.difficulty.title()}")
+        info_node.add(f" Difficulty: {tutorial.difficulty.title()}")
         info_node.add(f"⏱️ Estimated Time: {tutorial.estimated_time} minutes")
-        info_node.add(f"📝 Description: {tutorial.description}")
+        info_node.add(f" Description: {tutorial.description}")
 
         # Add tutorial steps
         steps_node = tree.add(f"📋 [bold yellow]Tutorial Steps ({len(tutorial.steps)})[/bold yellow]")
 
         for i, step in enumerate(tutorial.steps, 1):
-            step_icon = "✅" if i <= self.tutorial_progress.get(tutorial_name, {}).get("progress", 0) else "📖"
+            step_icon = "OK" if i <= self.tutorial_progress.get(tutorial_name, {}).get("progress", 0) else "📖"
             step_node = steps_node.add(f"{step_icon} [cyan]Step {i}: {step.title}[/cyan]")
 
             # Add step details
@@ -1212,7 +1212,7 @@ class TutorialSystem:
                     commands_node.add(f"... and {len(step.commands) - 3} more")
 
             if step.hints:
-                hints_node = step_node.add("💡 Hints Available")
+                hints_node = step_node.add(" Hints Available")
                 for hint in step.hints[:2]:  # Limit to first 2 hints
                     hints_node.add(f"💭 {hint}")
                 if len(step.hints) > 2:

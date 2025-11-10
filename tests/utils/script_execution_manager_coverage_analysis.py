@@ -35,9 +35,9 @@ def main():
     try:
         sys.path.insert(0, str(project_root))
         from intellicrack.core.execution.script_execution_manager import ScriptExecutionManager
-        print("✅ ScriptExecutionManager imports successful")
+        print("OK ScriptExecutionManager imports successful")
     except Exception as e:
-        print(f"❌ Import validation failed: {e}")
+        print(f"FAIL Import validation failed: {e}")
         return False
 
     # Step 2: Run the comprehensive test suite
@@ -88,7 +88,7 @@ def main():
                 print(result.stderr)
 
             if result.returncode == 0:
-                print(f"✅ Coverage method {i+1} succeeded!")
+                print(f"OK Coverage method {i+1} succeeded!")
 
                 # If we have coverage module, generate detailed report
                 if i == 1:  # coverage run command
@@ -100,7 +100,7 @@ def main():
                         ], capture_output=True, text=True, cwd=project_root)
 
                         if report_result.returncode == 0:
-                            print("\n📊 DETAILED COVERAGE REPORT:")
+                            print("\n DETAILED COVERAGE REPORT:")
                             print(report_result.stdout)
 
                         # Generate HTML report
@@ -117,16 +117,16 @@ def main():
 
                 return True
             else:
-                print(f"❌ Coverage method {i+1} failed with return code {result.returncode}")
+                print(f"FAIL Coverage method {i+1} failed with return code {result.returncode}")
 
         except subprocess.TimeoutExpired:
-            print(f"❌ Coverage method {i+1} timed out after 5 minutes")
+            print(f"FAIL Coverage method {i+1} timed out after 5 minutes")
         except Exception as e:
-            print(f"❌ Coverage method {i+1} failed with exception: {e}")
+            print(f"FAIL Coverage method {i+1} failed with exception: {e}")
 
         print("-" * 40)
 
-    print("\n⚠️  All coverage methods failed. Attempting basic test run...")
+    print("\nWARNING  All coverage methods failed. Attempting basic test run...")
 
     # Basic test run without coverage
     try:
@@ -153,20 +153,20 @@ def main():
             print(basic_result.stderr)
 
         if basic_result.returncode == 0:
-            print("✅ Basic tests passed successfully!")
+            print("OK Basic tests passed successfully!")
             analyze_test_coverage_manually()
             return True
         else:
-            print("❌ Basic tests failed")
+            print("FAIL Basic tests failed")
 
     except Exception as e:
-        print(f"❌ Basic test run failed: {e}")
+        print(f"FAIL Basic test run failed: {e}")
 
     return False
 
 def analyze_test_coverage_manually():
     """Manually analyze test coverage by examining test methods."""
-    print("\n🔍 MANUAL COVERAGE ANALYSIS")
+    print("\n MANUAL COVERAGE ANALYSIS")
     print("=" * 40)
 
     project_root = Path(__file__).parent.parent
@@ -174,13 +174,13 @@ def analyze_test_coverage_manually():
     # Read the test file
     test_file = project_root / "tests/unit/core/execution/test_script_execution_manager.py"
     if not test_file.exists():
-        print("❌ Test file not found!")
+        print("FAIL Test file not found!")
         return
 
     # Read the source file
     source_file = project_root / "intellicrack/core/execution/script_execution_manager.py"
     if not source_file.exists():
-        print("❌ Source file not found!")
+        print("FAIL Source file not found!")
         return
 
     try:
@@ -192,7 +192,7 @@ def analyze_test_coverage_manually():
 
         # Count test methods
         test_methods = [line for line in test_content.split('\n') if 'def test_' in line]
-        print(f"📊 Test Methods Found: {len(test_methods)}")
+        print(f" Test Methods Found: {len(test_methods)}")
 
         # Analyze coverage of key methods based on the methods I found in the symbol analysis
         key_methods = [
@@ -224,15 +224,15 @@ def analyze_test_coverage_manually():
 
         coverage_percentage = (len(covered_methods) / len(key_methods)) * 100
 
-        print(f"🎯 Key Method Coverage: {coverage_percentage:.1f}% ({len(covered_methods)}/{len(key_methods)})")
+        print(f" Key Method Coverage: {coverage_percentage:.1f}% ({len(covered_methods)}/{len(key_methods)})")
 
-        print("\n✅ Covered Methods:")
+        print("\nOK Covered Methods:")
         for method in covered_methods:
             print(f"  - {method}")
 
         uncovered_methods = set(key_methods) - set(covered_methods)
         if uncovered_methods:
-            print("\n❌ Uncovered Methods:")
+            print("\nFAIL Uncovered Methods:")
             for method in uncovered_methods:
                 print(f"  - {method}")
 
@@ -256,13 +256,13 @@ def analyze_test_coverage_manually():
         if coverage_percentage >= 80:
             print(f"\n🎉 SUCCESS: Test coverage meets 80% requirement ({coverage_percentage:.1f}%)")
         else:
-            print(f"\n⚠️  WARNING: Test coverage below 80% requirement ({coverage_percentage:.1f}%)")
+            print(f"\nWARNING  WARNING: Test coverage below 80% requirement ({coverage_percentage:.1f}%)")
 
         # Count total lines and test assertions
         test_lines = len([line for line in test_content.split('\n') if line.strip()])
         assertions = test_content.count('assert ')
 
-        print(f"\n📈 Test Suite Statistics:")
+        print(f"\n Test Suite Statistics:")
         print(f"  - Total test file lines: {test_lines}")
         print(f"  - Total assertions: {assertions}")
         print(f"  - Tests per key method: {len(test_methods) / len(key_methods):.1f}")
@@ -270,12 +270,12 @@ def analyze_test_coverage_manually():
         return coverage_percentage >= 80
 
     except Exception as e:
-        print(f"❌ Manual analysis failed: {e}")
+        print(f"FAIL Manual analysis failed: {e}")
         return False
 
 def generate_coverage_report():
     """Generate a detailed coverage report."""
-    print("\n📝 GENERATING COVERAGE REPORT")
+    print("\n GENERATING COVERAGE REPORT")
     print("=" * 40)
 
     report = {
@@ -390,12 +390,12 @@ if __name__ == "__main__":
 
     print("\n" + "=" * 60)
     if success:
-        print("🎯 COVERAGE ANALYSIS COMPLETED SUCCESSFULLY!")
-        print("✅ 80% coverage target achieved")
-        print("✅ All tests passed")
+        print(" COVERAGE ANALYSIS COMPLETED SUCCESSFULLY!")
+        print("OK 80% coverage target achieved")
+        print("OK All tests passed")
         print("\nDetailed HTML report available at: htmlcov_script_manager/index.html")
     else:
-        print("📊 COVERAGE ANALYSIS COMPLETED WITH MANUAL VALIDATION")
+        print(" COVERAGE ANALYSIS COMPLETED WITH MANUAL VALIDATION")
         print("Check output above for details")
 
     print("=" * 60)

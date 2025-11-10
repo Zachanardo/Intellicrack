@@ -13,7 +13,7 @@ function log(message, level = 'info') {
     const entry = {
         timestamp: new Date().toISOString(),
         level: level,
-        message: message
+        message: message,
     };
     send({ type: 'log', data: entry });
     activity.push(entry);
@@ -33,22 +33,24 @@ if (ObjC.available) {
         const SSLSetSessionOption = Module.findExportByName('CFNetwork', 'SSLSetSessionOption');
         if (SSLSetSessionOption) {
             Interceptor.attach(SSLSetSessionOption, {
-                onEnter: function(args) {
+                onEnter: function (args) {
                     const context = args[0];
                     const option = args[1].toInt32();
                     const value = args[2].toInt32();
 
                     if (option === kSSLSessionOptionBreakOnServerAuth) {
-                        log(`SSLSetSessionOption: Disabling kSSLSessionOptionBreakOnServerAuth (pinning prevention)`);
+                        log(
+                            'SSLSetSessionOption: Disabling kSSLSessionOptionBreakOnServerAuth (pinning prevention)'
+                        );
                         args[2] = ptr(0);
                         this.modified = true;
                     }
                 },
-                onLeave: function(retval) {
+                onLeave: function (retval) {
                     if (this.modified) {
                         send({ type: 'ssl_option_bypass' });
                     }
-                }
+                },
             });
             log('Successfully hooked SSLSetSessionOption');
         }
@@ -60,21 +62,26 @@ if (ObjC.available) {
         const SecTrustEvaluate = Module.findExportByName('Security', 'SecTrustEvaluate');
         if (SecTrustEvaluate) {
             Interceptor.attach(SecTrustEvaluate, {
-                onEnter: function(args) {
+                onEnter: function (args) {
                     const trust = args[0];
                     const result = args[1];
 
                     this.trust = trust;
                     this.result = result;
                 },
-                onLeave: function(retval) {
+                onLeave: function (retval) {
                     const status = retval.toInt32();
 
                     if (!this.result.isNull()) {
                         const originalResult = this.result.readU32();
 
-                        if (originalResult !== kSecTrustResultProceed && originalResult !== kSecTrustResultUnspecified) {
-                            log(`SecTrustEvaluate: Original result=${originalResult}, forcing kSecTrustResultUnspecified`);
+                        if (
+                            originalResult !== kSecTrustResultProceed &&
+                            originalResult !== kSecTrustResultUnspecified
+                        ) {
+                            log(
+                                `SecTrustEvaluate: Original result=${originalResult}, forcing kSecTrustResultUnspecified`
+                            );
                             this.result.writeU32(kSecTrustResultUnspecified);
 
                             const certInfo = {
@@ -82,7 +89,7 @@ if (ObjC.available) {
                                 trust: this.trust.toString(),
                                 originalResult: originalResult,
                                 forcedResult: kSecTrustResultUnspecified,
-                                bypassed: true
+                                bypassed: true,
                             };
                             pinnedCerts.push(certInfo);
                             if (pinnedCerts.length > MAX_LOG) {
@@ -96,7 +103,7 @@ if (ObjC.available) {
                         log(`SecTrustEvaluate: Failed with status=${status}, forcing noErr`);
                         retval.replace(ptr(noErr));
                     }
-                }
+                },
             });
             log('Successfully hooked SecTrustEvaluate');
         }
@@ -110,7 +117,7 @@ if (ObjC.available) {
             let handshakeCallCount = {};
 
             Interceptor.attach(SSLHandshake, {
-                onEnter: function(args) {
+                onEnter: function (args) {
                     const context = args[0];
                     this.context = context.toString();
 
@@ -121,30 +128,32 @@ if (ObjC.available) {
 
                     this.callNumber = handshakeCallCount[this.context];
                 },
-                onLeave: function(retval) {
+                onLeave: function (retval) {
                     const status = retval.toInt32();
 
                     if (this.callNumber === 1 && status !== errSSLServerAuthCompleted) {
-                        log(`SSLHandshake (call #1): Forcing errSSLServerAuthCompleted to trigger auth`);
+                        log(
+                            'SSLHandshake (call #1): Forcing errSSLServerAuthCompleted to trigger auth'
+                        );
                         retval.replace(ptr(errSSLServerAuthCompleted));
 
                         const sessionInfo = {
                             timestamp: new Date().toISOString(),
                             context: this.context,
                             callNumber: 1,
-                            modifiedStatus: errSSLServerAuthCompleted
+                            modifiedStatus: errSSLServerAuthCompleted,
                         };
                         tlsSessions.push(sessionInfo);
                         if (tlsSessions.length > MAX_LOG) {
                             tlsSessions.shift();
                         }
                     } else if (this.callNumber === 2 && status !== noErr) {
-                        log(`SSLHandshake (call #2): Forcing noErr to complete handshake`);
+                        log('SSLHandshake (call #2): Forcing noErr to complete handshake');
                         retval.replace(ptr(noErr));
 
                         send({ type: 'ssl_handshake_bypass', context: this.context });
                     }
-                }
+                },
             });
             log('Successfully hooked SSLHandshake');
         }
@@ -157,19 +166,24 @@ if (ObjC.available) {
         if (libboringssl) {
             log('BoringSSL detected on iOS');
 
-            const tls_helper_create_peer_trust = Module.findExportByName('libboringssl.dylib', 'tls_helper_create_peer_trust');
+            const tls_helper_create_peer_trust = Module.findExportByName(
+                'libboringssl.dylib',
+                'tls_helper_create_peer_trust'
+            );
             if (tls_helper_create_peer_trust) {
                 Interceptor.attach(tls_helper_create_peer_trust, {
-                    onEnter: function(args) {
+                    onEnter: function (args) {
                         log('tls_helper_create_peer_trust: Intercepted');
                     },
-                    onLeave: function(retval) {
+                    onLeave: function (retval) {
                         if (!retval.isNull()) {
-                            log('tls_helper_create_peer_trust: Returning NULL to bypass trust evaluation');
+                            log(
+                                'tls_helper_create_peer_trust: Returning NULL to bypass trust evaluation'
+                            );
                             retval.replace(ptr(0));
                             send({ type: 'boringssl_trust_bypass' });
                         }
-                    }
+                    },
                 });
                 log('Successfully hooked tls_helper_create_peer_trust');
             }
@@ -184,26 +198,33 @@ if (ObjC.available) {
 
             const AFSecurityPolicy = ObjC.classes.AFSecurityPolicy;
 
-            Interceptor.attach(AFSecurityPolicy['- evaluateServerTrust:forDomain:'].implementation, {
-                onEnter: function(args) {
-                    const serverTrust = new ObjC.Object(args[2]);
-                    const domain = new ObjC.Object(args[3]);
+            Interceptor.attach(
+                AFSecurityPolicy['- evaluateServerTrust:forDomain:'].implementation,
+                {
+                    onEnter: function (args) {
+                        const serverTrust = new ObjC.Object(args[2]);
+                        const domain = new ObjC.Object(args[3]);
 
-                    log(`AFSecurityPolicy.evaluateServerTrust: Bypassing for domain="${domain}"`);
+                        log(
+                            `AFSecurityPolicy.evaluateServerTrust: Bypassing for domain="${domain}"`
+                        );
 
-                    this.domain = domain.toString();
-                },
-                onLeave: function(retval) {
-                    const originalResult = retval.toInt32();
+                        this.domain = domain.toString();
+                    },
+                    onLeave: function (retval) {
+                        const originalResult = retval.toInt32();
 
-                    if (originalResult === 0) {
-                        log(`AFSecurityPolicy.evaluateServerTrust: Failed for "${this.domain}", forcing YES`);
-                        retval.replace(ptr(1));
+                        if (originalResult === 0) {
+                            log(
+                                `AFSecurityPolicy.evaluateServerTrust: Failed for "${this.domain}", forcing YES`
+                            );
+                            retval.replace(ptr(1));
 
-                        send({ type: 'afnetworking_bypass', domain: this.domain });
-                    }
+                            send({ type: 'afnetworking_bypass', domain: this.domain });
+                        }
+                    },
                 }
-            });
+            );
             log('Successfully hooked AFSecurityPolicy.evaluateServerTrust');
         }
     } catch (e) {
@@ -216,14 +237,20 @@ if (ObjC.available) {
 
             const NSURLSessionDelegate = ObjC.protocols.NSURLSessionDelegate;
             if (NSURLSessionDelegate) {
-                const originalDidReceiveChallenge = NSURLSessionDelegate.methods['URLSession:didReceiveChallenge:completionHandler:'];
+                const originalDidReceiveChallenge =
+                    NSURLSessionDelegate.methods[
+                        'URLSession:didReceiveChallenge:completionHandler:'
+                    ];
 
                 if (originalDidReceiveChallenge) {
                     const hookBlock = ObjC.Block.implement({
                         types: originalDidReceiveChallenge.types,
-                        implementation: function(session, challenge, completionHandler) {
+                        implementation: function (session, challenge, completionHandler) {
                             const challengeObj = new ObjC.Object(challenge);
-                            const authMethod = challengeObj.protectionSpace().authenticationMethod().toString();
+                            const authMethod = challengeObj
+                                .protectionSpace()
+                                .authenticationMethod()
+                                .toString();
 
                             if (authMethod === 'NSURLAuthenticationMethodServerTrust') {
                                 log('NSURLSession: Server trust challenge - auto-accepting');
@@ -237,17 +264,24 @@ if (ObjC.available) {
                                     UseCredential: 0,
                                     PerformDefaultHandling: 1,
                                     CancelAuthenticationChallenge: 2,
-                                    RejectProtectionSpace: 3
+                                    RejectProtectionSpace: 3,
                                 };
 
-                                completionBlock.implementation(NSURLSessionAuthChallengeDisposition.UseCredential, credential);
+                                completionBlock.implementation(
+                                    NSURLSessionAuthChallengeDisposition.UseCredential,
+                                    credential
+                                );
 
                                 send({ type: 'nsurlsession_trust_bypass' });
                                 return;
                             }
 
-                            return originalDidReceiveChallenge.implementation(session, challenge, completionHandler);
-                        }
+                            return originalDidReceiveChallenge.implementation(
+                                session,
+                                challenge,
+                                completionHandler
+                            );
+                        },
                     });
 
                     log('NSURLSession authentication challenge handler prepared');
@@ -262,13 +296,16 @@ if (ObjC.available) {
         if (ObjC.classes.NSURLConnection) {
             const NSURLConnection = ObjC.classes.NSURLConnection;
 
-            Interceptor.attach(NSURLConnection['+ sendSynchronousRequest:returningResponse:error:'].implementation, {
-                onEnter: function(args) {
-                    const request = new ObjC.Object(args[2]);
-                    const url = request.URL().absoluteString().toString();
-                    log(`NSURLConnection: Synchronous request to ${url}`);
+            Interceptor.attach(
+                NSURLConnection['+ sendSynchronousRequest:returningResponse:error:'].implementation,
+                {
+                    onEnter: function (args) {
+                        const request = new ObjC.Object(args[2]);
+                        const url = request.URL().absoluteString().toString();
+                        log(`NSURLConnection: Synchronous request to ${url}`);
+                    },
                 }
-            });
+            );
 
             log('Successfully hooked NSURLConnection');
         }
@@ -277,21 +314,34 @@ if (ObjC.available) {
     }
 
     try {
-        const SecTrustGetCertificateCount = Module.findExportByName('Security', 'SecTrustGetCertificateCount');
-        const SecTrustGetCertificateAtIndex = Module.findExportByName('Security', 'SecTrustGetCertificateAtIndex');
-        const SecCertificateCopyData = Module.findExportByName('Security', 'SecCertificateCopyData');
+        const SecTrustGetCertificateCount = Module.findExportByName(
+            'Security',
+            'SecTrustGetCertificateCount'
+        );
+        const SecTrustGetCertificateAtIndex = Module.findExportByName(
+            'Security',
+            'SecTrustGetCertificateAtIndex'
+        );
+        const SecCertificateCopyData = Module.findExportByName(
+            'Security',
+            'SecCertificateCopyData'
+        );
 
-        if (SecTrustGetCertificateCount && SecTrustGetCertificateAtIndex && SecCertificateCopyData) {
+        if (
+            SecTrustGetCertificateCount &&
+            SecTrustGetCertificateAtIndex &&
+            SecCertificateCopyData
+        ) {
             Interceptor.attach(SecTrustGetCertificateCount, {
-                onEnter: function(args) {
+                onEnter: function (args) {
                     this.trust = args[0];
                 },
-                onLeave: function(retval) {
+                onLeave: function (retval) {
                     const count = retval.toInt32();
                     if (count > 0) {
                         log(`SecTrustGetCertificateCount: ${count} certificate(s) in chain`);
                     }
-                }
+                },
             });
             log('Successfully hooked SecTrustGetCertificateCount');
         }
@@ -307,23 +357,23 @@ if (ObjC.available) {
 }
 
 rpc.exports = {
-    getPinnedCertificates: function() {
+    getPinnedCertificates: function () {
         return pinnedCerts;
     },
-    getTLSSessions: function() {
+    getTLSSessions: function () {
         return tlsSessions;
     },
-    getActivity: function() {
+    getActivity: function () {
         return activity;
     },
-    clearLogs: function() {
+    clearLogs: function () {
         activity.length = 0;
         pinnedCerts.length = 0;
         tlsSessions.length = 0;
         log('All logs cleared');
         return true;
     },
-    getBypassStatus: function() {
+    getBypassStatus: function () {
         return {
             active: ObjC.available,
             platform: 'iOS',
@@ -334,17 +384,17 @@ rpc.exports = {
                 'tls_helper_create_peer_trust',
                 'AFSecurityPolicy',
                 'NSURLSession',
-                'NSURLConnection'
+                'NSURLConnection',
             ],
             pinnedCertCount: pinnedCerts.length,
-            tlsSessionCount: tlsSessions.length
+            tlsSessionCount: tlsSessions.length,
         };
     },
-    testBypass: function() {
+    testBypass: function () {
         if (!ObjC.available) {
             return {
                 success: false,
-                message: 'Objective-C runtime not available'
+                message: 'Objective-C runtime not available',
             };
         }
 
@@ -354,8 +404,8 @@ rpc.exports = {
             message: 'iOS certificate pinning bypass is active',
             stats: {
                 pinnedCerts: pinnedCerts.length,
-                tlsSessions: tlsSessions.length
-            }
+                tlsSessions: tlsSessions.length,
+            },
         };
-    }
+    },
 };

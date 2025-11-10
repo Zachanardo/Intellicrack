@@ -44,7 +44,7 @@ var TimeBombDefuser = {
 
     // Production configuration
     config: {
-    // Target time settings
+        // Target time settings
         targetDate: new Date('2020-01-01T00:00:00Z'),
 
         // Time progression system
@@ -267,13 +267,13 @@ var TimeBombDefuser = {
 
     // Windows capability detection
     detectWindowsCapabilities: function () {
-    // Check for .NET runtime
+        // Check for .NET runtime
         Process.enumerateModules().forEach(function (module) {
             var name = module.name.toLowerCase();
             if (
                 name.includes('clr.dll') ||
-        name.includes('coreclr.dll') ||
-        name.includes('mscorlib')
+                name.includes('coreclr.dll') ||
+                name.includes('mscorlib')
             ) {
                 this.platform.capabilities.dotnet = true;
             }
@@ -282,7 +282,7 @@ var TimeBombDefuser = {
 
     // macOS capability detection
     detectMacOSCapabilities: function () {
-    // Check for Objective-C runtime
+        // Check for Objective-C runtime
         if (ObjC.available) {
             this.platform.capabilities.objc = true;
         }
@@ -290,7 +290,7 @@ var TimeBombDefuser = {
 
     // Linux capability detection
     detectLinuxCapabilities: function () {
-    // Check for glibc
+        // Check for glibc
         Process.enumerateModules().forEach(function (module) {
             if (module.name.includes('libc.so')) {
                 this.platform.capabilities.libc = true;
@@ -458,7 +458,7 @@ var TimeBombDefuser = {
                     var spoofedTime = self.getSpoofedTime();
                     // Convert to local time
                     var localTime = new Date(
-                        spoofedTime.getTime() - new Date().getTimezoneOffset() * 60000,
+                        spoofedTime.getTime() - new Date().getTimezoneOffset() * 60000
                     );
                     self.dateToSystemTime(localTime, this.lpSystemTime);
                     self.statistics.timeCalls++;
@@ -472,10 +472,7 @@ var TimeBombDefuser = {
                 this.lpSystemTimeAsFileTime = args[0];
             },
             onLeave: function (retval) {
-                if (
-                    this.lpSystemTimeAsFileTime &&
-          !this.lpSystemTimeAsFileTime.isNull()
-                ) {
+                if (this.lpSystemTimeAsFileTime && !this.lpSystemTimeAsFileTime.isNull()) {
                     var spoofedTime = self.getSpoofedTime();
                     var filetime = self.dateToFileTime(spoofedTime);
                     this.lpSystemTimeAsFileTime.writeU64(filetime);
@@ -545,11 +542,7 @@ var TimeBombDefuser = {
                 this.systemTime = args[0];
             },
             onLeave: function (retval) {
-                if (
-                    this.systemTime &&
-          !this.systemTime.isNull() &&
-          retval.toInt32() === 0
-                ) {
+                if (this.systemTime && !this.systemTime.isNull() && retval.toInt32() === 0) {
                     var spoofedTime = self.getSpoofedTime();
                     var ntTime = self.dateToNtTime(spoofedTime);
                     this.systemTime.writeU64(ntTime);
@@ -703,25 +696,19 @@ var TimeBombDefuser = {
         });
 
         // stat family functions for file timestamps
-        ['stat', 'lstat', 'fstat', 'stat64', 'lstat64', 'fstat64'].forEach(
-            function (func) {
-                self.safeHook(null, func, {
-                    onEnter: function (args) {
-                        this.statbuf = args[args.length - 1];
-                    },
-                    onLeave: function (retval) {
-                        if (
-                            retval.toInt32() === 0 &&
-              this.statbuf &&
-              !this.statbuf.isNull()
-                        ) {
-                            self.spoofStatTime(this.statbuf);
-                            self.statistics.timeCalls++;
-                        }
-                    },
-                });
-            },
-        );
+        ['stat', 'lstat', 'fstat', 'stat64', 'lstat64', 'fstat64'].forEach(function (func) {
+            self.safeHook(null, func, {
+                onEnter: function (args) {
+                    this.statbuf = args[args.length - 1];
+                },
+                onLeave: function (retval) {
+                    if (retval.toInt32() === 0 && this.statbuf && !this.statbuf.isNull()) {
+                        self.spoofStatTime(this.statbuf);
+                        self.statistics.timeCalls++;
+                    }
+                },
+            });
+        });
 
         send({
             type: 'info',
@@ -916,7 +903,7 @@ var TimeBombDefuser = {
 
     // Should spoof time (intelligent decision)
     shouldSpoofTime: function () {
-    // Check current context
+        // Check current context
         var backtrace = Thread.backtrace(this.context, Backtracer.ACCURATE);
 
         // Use ML prediction if available
@@ -959,14 +946,14 @@ var TimeBombDefuser = {
 
     // Get spoofed file time
     getSpoofedFileTime: function () {
-    // Convert target date to Windows FILETIME
+        // Convert target date to Windows FILETIME
         var date = new Date(
             this.config.targetDate.year,
             this.config.targetDate.month - 1,
             this.config.targetDate.day,
             this.config.targetDate.hour,
             this.config.targetDate.minute,
-            this.config.targetDate.second,
+            this.config.targetDate.second
         );
 
         // Windows FILETIME is 100-nanosecond intervals since January 1, 1601
@@ -998,9 +985,7 @@ var TimeBombDefuser = {
 
                 // Optimize if overhead is too high
                 if (self.performanceMonitor.hookOverhead[hookName].length > 100) {
-                    var avg = self.calculateAverage(
-                        self.performanceMonitor.hookOverhead[hookName],
-                    );
+                    var avg = self.calculateAverage(self.performanceMonitor.hookOverhead[hookName]);
                     if (avg > 1000) {
                         // 1ms threshold
                         self.optimizeHook(hookName);
@@ -1071,20 +1056,18 @@ var TimeBombDefuser = {
         });
 
         // localtime/gmtime and variants
-        ['localtime', 'gmtime', '_localtime64', '_gmtime64'].forEach(
-            function (func) {
-                self.hookWithCache(dll, func, function (original) {
-                    return function (timer) {
-                        if (self.shouldSpoofTime()) {
-                            var spoofedTime = Memory.alloc(8);
-                            spoofedTime.writeU64(self.getSpoofedUnixTime().seconds);
-                            return original(spoofedTime);
-                        }
-                        return original(timer);
-                    };
-                });
-            },
-        );
+        ['localtime', 'gmtime', '_localtime64', '_gmtime64'].forEach(function (func) {
+            self.hookWithCache(dll, func, function (original) {
+                return function (timer) {
+                    if (self.shouldSpoofTime()) {
+                        var spoofedTime = Memory.alloc(8);
+                        spoofedTime.writeU64(self.getSpoofedUnixTime().seconds);
+                        return original(spoofedTime);
+                    }
+                    return original(timer);
+                };
+            });
+        });
     },
 
     // .NET time hooks
@@ -1093,8 +1076,7 @@ var TimeBombDefuser = {
 
         // Find CLR module
         var clrModule =
-      Process.findModuleByName('clr.dll') ||
-      Process.findModuleByName('coreclr.dll');
+            Process.findModuleByName('clr.dll') || Process.findModuleByName('coreclr.dll');
 
         if (!clrModule) return;
 
@@ -1105,13 +1087,8 @@ var TimeBombDefuser = {
         });
 
         // DateTime.Now pattern
-        var dateTimeNowPattern =
-      '48 8B C4 48 89 58 ?? 48 89 70 ?? 48 89 78 ?? 4C 89 60';
-        var matches = Memory.scanSync(
-            clrModule.base,
-            clrModule.size,
-            dateTimeNowPattern,
-        );
+        var dateTimeNowPattern = '48 8B C4 48 89 58 ?? 48 89 70 ?? 48 89 78 ?? 4C 89 60';
+        var matches = Memory.scanSync(clrModule.base, clrModule.size, dateTimeNowPattern);
 
         matches.forEach(function (match) {
             Interceptor.attach(match.address, {
@@ -1127,8 +1104,7 @@ var TimeBombDefuser = {
         });
 
         // DateTime.UtcNow pattern
-        var utcNowPattern =
-      '48 83 EC ?? 48 8B 0D ?? ?? ?? ?? 48 85 C9 75 ?? 48 8D 0D';
+        var utcNowPattern = '48 83 EC ?? 48 8B 0D ?? ?? ?? ?? 48 85 C9 75 ?? 48 8D 0D';
         matches = Memory.scanSync(clrModule.base, clrModule.size, utcNowPattern);
 
         matches.forEach(function (match) {
@@ -1169,47 +1145,39 @@ var TimeBombDefuser = {
         });
 
         // CertVerifyTimeValidity
-        this.hookWithCache(
-            'crypt32.dll',
-            'CertVerifyTimeValidity',
-            function (original) {
-                return function (pTimeToVerify, pCertInfo) {
-                    if (self.shouldSpoofTime()) {
-                        // Always return 0 (valid)
-                        self.stats.timeSpoofs++;
-                        return 0;
-                    }
-                    return original(pTimeToVerify, pCertInfo);
-                };
-            },
-        );
+        this.hookWithCache('crypt32.dll', 'CertVerifyTimeValidity', function (original) {
+            return function (pTimeToVerify, pCertInfo) {
+                if (self.shouldSpoofTime()) {
+                    // Always return 0 (valid)
+                    self.stats.timeSpoofs++;
+                    return 0;
+                }
+                return original(pTimeToVerify, pCertInfo);
+            };
+        });
 
         // CertGetCertificateChain - modify chain validation
-        this.hookWithCache(
-            'crypt32.dll',
-            'CertGetCertificateChain',
-            function (original) {
-                return function (
-                    hChainEngine,
-                    pCertContext,
-                    pTime,
-                    hAdditionalStore,
-                    pChainPara,
-                    dwFlags,
-                    pvReserved,
-                    ppChainContext,
-                ) {
-                    if (pTime && !pTime.isNull() && self.shouldSpoofTime()) {
-                        // Replace time with safe time
-                        var safeTime = Memory.alloc(8);
-                        safeTime.writeU64(self.getSpoofedFileTime());
-                        arguments[2] = safeTime;
-                        self.stats.timeSpoofs++;
-                    }
-                    return original.apply(this, arguments);
-                };
-            },
-        );
+        this.hookWithCache('crypt32.dll', 'CertGetCertificateChain', function (original) {
+            return function (
+                hChainEngine,
+                pCertContext,
+                pTime,
+                hAdditionalStore,
+                pChainPara,
+                dwFlags,
+                pvReserved,
+                ppChainContext
+            ) {
+                if (pTime && !pTime.isNull() && self.shouldSpoofTime()) {
+                    // Replace time with safe time
+                    var safeTime = Memory.alloc(8);
+                    safeTime.writeU64(self.getSpoofedFileTime());
+                    arguments[2] = safeTime;
+                    self.stats.timeSpoofs++;
+                }
+                return original.apply(this, arguments);
+            };
+        });
 
         // Hook SSL/TLS certificate validation
         this.hookSSLCertificateValidation();
@@ -1228,14 +1196,7 @@ var TimeBombDefuser = {
         // RegQueryValueEx hooks
         ['RegQueryValueExW', 'RegQueryValueExA'].forEach(function (func) {
             self.hookWithCache('advapi32.dll', func, function (original) {
-                return function (
-                    hKey,
-                    lpValueName,
-                    lpReserved,
-                    lpType,
-                    lpData,
-                    lpcbData,
-                ) {
+                return function (hKey, lpValueName, lpReserved, lpType, lpData, lpcbData) {
                     var result = original.apply(this, arguments);
 
                     if (result === 0 && lpData && lpValueName) {
@@ -1265,7 +1226,7 @@ var TimeBombDefuser = {
                     lpReserved,
                     lpType,
                     lpData,
-                    lpcbData,
+                    lpcbData
                 ) {
                     var result = original.apply(this, arguments);
 
@@ -1321,7 +1282,7 @@ var TimeBombDefuser = {
             this.config.targetDate.day,
             this.config.targetDate.hour,
             this.config.targetDate.minute,
-            this.config.targetDate.second,
+            this.config.targetDate.second
         );
 
         var seconds = Math.floor(date.getTime() / 1000);
@@ -1340,7 +1301,7 @@ var TimeBombDefuser = {
             this.config.targetDate.day,
             this.config.targetDate.hour,
             this.config.targetDate.minute,
-            this.config.targetDate.second,
+            this.config.targetDate.second
         );
 
         // .NET ticks are 100-nanosecond intervals since January 1, 0001
@@ -1399,9 +1360,7 @@ var TimeBombDefuser = {
             timeSpoofs: this.stats.timeSpoofs,
             detectionsBypassed: this.stats.detectionsBypassed,
             mlPredictions: this.stats.mlPredictions,
-            performance: this.performanceMonitor
-                ? this.performanceMonitor.hookOverhead
-                : null,
+            performance: this.performanceMonitor ? this.performanceMonitor.hookOverhead : null,
         };
     },
 
@@ -1421,8 +1380,7 @@ var TimeBombDefuser = {
 
             // Add random variation
             if (this.config.timeProgression.randomVariation > 0) {
-                var variation =
-          (Math.random() - 0.5) * this.config.timeProgression.randomVariation;
+                var variation = (Math.random() - 0.5) * this.config.timeProgression.randomVariation;
                 progression += variation;
             }
 
@@ -1466,8 +1424,8 @@ var TimeBombDefuser = {
             var moduleName = module.name.toLowerCase();
             if (
                 moduleName.indexOf('clr.dll') !== -1 ||
-        moduleName.indexOf('coreclr.dll') !== -1 ||
-        moduleName.indexOf('mscorlib.ni.dll') !== -1
+                moduleName.indexOf('coreclr.dll') !== -1 ||
+                moduleName.indexOf('mscorlib.ni.dll') !== -1
             ) {
                 clrModule = module;
             }
@@ -1488,23 +1446,18 @@ var TimeBombDefuser = {
             var matches = Memory.scanSync(clrModule.base, clrModule.size, pattern);
 
             if (matches.length > 0) {
-                this.safeHook(
-                    matches[0].address,
-                    'DotNetDateTime_Now',
-                    function (args) {
-                        return {
-                            onLeave: function (retval) {
-                                var spoofedTime = self.getSpoofedTime();
-                                var dotNetEpoch = new Date('0001-01-01T00:00:00Z');
-                                var ticks =
-                  (spoofedTime.getTime() - dotNetEpoch.getTime()) * 10000;
-                                ticks |= 0x4000000000000000; // UTC flag
-                                retval.replace(ptr(ticks));
-                                self.stats.timeSpoofs++;
-                            },
-                        };
-                    },
-                );
+                this.safeHook(matches[0].address, 'DotNetDateTime_Now', function (args) {
+                    return {
+                        onLeave: function (retval) {
+                            var spoofedTime = self.getSpoofedTime();
+                            var dotNetEpoch = new Date('0001-01-01T00:00:00Z');
+                            var ticks = (spoofedTime.getTime() - dotNetEpoch.getTime()) * 10000;
+                            ticks |= 0x4000000000000000; // UTC flag
+                            retval.replace(ptr(ticks));
+                            self.stats.timeSpoofs++;
+                        },
+                    };
+                });
                 send({
                     type: 'info',
                     target: 'time_bomb_defuser',
@@ -1513,28 +1466,22 @@ var TimeBombDefuser = {
             }
 
             // Hook DateTime.UtcNow
-            pattern =
-        '48 8B C4 48 89 58 ?? 48 89 68 ?? 48 89 70 ?? 48 89 78 ?? 41 54';
+            pattern = '48 8B C4 48 89 58 ?? 48 89 68 ?? 48 89 70 ?? 48 89 78 ?? 41 54';
             matches = Memory.scanSync(clrModule.base, clrModule.size, pattern);
 
             if (matches.length > 0) {
-                this.safeHook(
-                    matches[0].address,
-                    'DotNetDateTime_UtcNow',
-                    function (args) {
-                        return {
-                            onLeave: function (retval) {
-                                var spoofedTime = self.getSpoofedTime();
-                                var dotNetEpoch = new Date('0001-01-01T00:00:00Z');
-                                var ticks =
-                  (spoofedTime.getTime() - dotNetEpoch.getTime()) * 10000;
-                                ticks |= 0x8000000000000000; // UTC flag
-                                retval.replace(ptr(ticks));
-                                self.stats.timeSpoofs++;
-                            },
-                        };
-                    },
-                );
+                this.safeHook(matches[0].address, 'DotNetDateTime_UtcNow', function (args) {
+                    return {
+                        onLeave: function (retval) {
+                            var spoofedTime = self.getSpoofedTime();
+                            var dotNetEpoch = new Date('0001-01-01T00:00:00Z');
+                            var ticks = (spoofedTime.getTime() - dotNetEpoch.getTime()) * 10000;
+                            ticks |= 0x8000000000000000; // UTC flag
+                            retval.replace(ptr(ticks));
+                            self.stats.timeSpoofs++;
+                        },
+                    };
+                });
                 send({
                     type: 'info',
                     target: 'time_bomb_defuser',
@@ -1568,8 +1515,7 @@ var TimeBombDefuser = {
                         if (hostname) {
                             for (var i = 0; i < self.config.ntpServers.length; i++) {
                                 if (
-                                    hostname.toLowerCase().indexOf(self.config.ntpServers[i]) !==
-                  -1
+                                    hostname.toLowerCase().indexOf(self.config.ntpServers[i]) !== -1
                                 ) {
                                     send({
                                         type: 'bypass',
@@ -1589,7 +1535,7 @@ var TimeBombDefuser = {
                         }
                     },
                 };
-            },
+            }
         );
 
         // Hook connect to block NTP port (123)
@@ -1625,7 +1571,7 @@ var TimeBombDefuser = {
                         }
                     },
                 };
-            },
+            }
         );
 
         // Hook WinHttpOpen to block time sync services
@@ -1654,7 +1600,7 @@ var TimeBombDefuser = {
                         }
                     },
                 };
-            },
+            }
         );
 
         send({
@@ -1685,9 +1631,9 @@ var TimeBombDefuser = {
                         return 0; // Time is valid
                     },
                     'int',
-                    ['pointer', 'pointer'],
+                    ['pointer', 'pointer']
                 );
-            },
+            }
         );
 
         // CertGetCertificateChain
@@ -1705,7 +1651,7 @@ var TimeBombDefuser = {
                         }
                     },
                 };
-            },
+            }
         );
 
         // Hook SSL/TLS certificate verification in schannel
@@ -1723,7 +1669,7 @@ var TimeBombDefuser = {
                         }
                     },
                 };
-            },
+            }
         );
 
         send({
@@ -1754,7 +1700,7 @@ var TimeBombDefuser = {
                         }
                     },
                 };
-            },
+            }
         );
 
         // GetDynamicTimeZoneInformation
@@ -1773,7 +1719,7 @@ var TimeBombDefuser = {
                         }
                     },
                 };
-            },
+            }
         );
 
         send({
@@ -1810,15 +1756,14 @@ var TimeBombDefuser = {
                         return unixTime;
                     },
                     Process.arch === 'x64' ? 'uint64' : 'uint32',
-                    ['pointer'],
+                    ['pointer']
                 );
             });
         }
 
         // _time64()
         var time64Func = Module.findExportByName('msvcrt.dll', '_time64');
-        if (!time64Func)
-            time64Func = Module.findExportByName('ucrtbase.dll', '_time64');
+        if (!time64Func) time64Func = Module.findExportByName('ucrtbase.dll', '_time64');
 
         if (time64Func) {
             this.safeHook(time64Func, 'CRT_Time64', function (args) {
@@ -1835,38 +1780,35 @@ var TimeBombDefuser = {
                         return unixTime;
                     },
                     'uint64',
-                    ['pointer'],
+                    ['pointer']
                 );
             });
         }
 
         // localtime() and gmtime()
-        ['localtime', 'gmtime', '_localtime64', '_gmtime64'].forEach(
-            function (funcName) {
-                var timeFunc = Module.findExportByName('msvcrt.dll', funcName);
-                if (!timeFunc)
-                    timeFunc = Module.findExportByName('ucrtbase.dll', funcName);
+        ['localtime', 'gmtime', '_localtime64', '_gmtime64'].forEach(function (funcName) {
+            var timeFunc = Module.findExportByName('msvcrt.dll', funcName);
+            if (!timeFunc) timeFunc = Module.findExportByName('ucrtbase.dll', funcName);
 
-                if (timeFunc) {
-                    self.safeHook(timeFunc, 'CRT_' + funcName, function (args) {
-                        return {
-                            onEnter: function (args) {
-                                // Modify input time to our spoofed time
-                                var spoofedTime = self.getSpoofedTime();
-                                var unixTime = Math.floor(spoofedTime.getTime() / 1000);
+            if (timeFunc) {
+                self.safeHook(timeFunc, 'CRT_' + funcName, function (args) {
+                    return {
+                        onEnter: function (args) {
+                            // Modify input time to our spoofed time
+                            var spoofedTime = self.getSpoofedTime();
+                            var unixTime = Math.floor(spoofedTime.getTime() / 1000);
 
-                                if (funcName.includes('64')) {
-                                    args[0] = ptr(unixTime);
-                                } else {
-                                    args[0] = ptr(unixTime & 0xffffffff);
-                                }
-                                self.stats.timeSpoofs++;
-                            },
-                        };
-                    });
-                }
-            },
-        );
+                            if (funcName.includes('64')) {
+                                args[0] = ptr(unixTime);
+                            } else {
+                                args[0] = ptr(unixTime & 0xffffffff);
+                            }
+                            self.stats.timeSpoofs++;
+                        },
+                    };
+                });
+            }
+        });
 
         send({
             type: 'info',
@@ -1919,7 +1861,7 @@ var TimeBombDefuser = {
                         }
                     },
                 };
-            },
+            }
         );
     },
 
@@ -1933,15 +1875,11 @@ var TimeBombDefuser = {
                 var elapsed = Date.now() - self.processStartTimes[process];
                 var progressed = elapsed * self.config.timeProgression.rate;
 
-                self.config.processTimeMap[process] =
-          self.config.targetDate.getTime() + progressed;
+                self.config.processTimeMap[process] = self.config.targetDate.getTime() + progressed;
             }
 
             // Trigger ML pattern analysis
-            if (
-                self.config.mlDetection.enabled &&
-        self.config.mlDetection.trainingEnabled
-            ) {
+            if (self.config.mlDetection.enabled && self.config.mlDetection.trainingEnabled) {
                 self.updateMLPatterns();
             }
 

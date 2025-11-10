@@ -14,15 +14,15 @@ print("Starting Intellicrack import debug...")
 try:
     print("1. Importing logger...")
     from intellicrack.utils.logger import logger
-    print("   ✓ Logger imported")
+    print("   OK Logger imported")
 
     print("2. Importing config...")
     from intellicrack import config
-    print("   ✓ Config imported")
+    print("   OK Config imported")
 
     print("3. Importing CLI...")
     from intellicrack.cli import cli
-    print("   ✓ CLI imported")
+    print("   OK CLI imported")
 
     print("4. Creating argument namespace...")
     import argparse
@@ -35,15 +35,15 @@ try:
         output=None,
         config=None
     )
-    print("   ✓ Args created")
+    print("   OK Args created")
 
     print("5. Calling cli.main with GUI flag...")
     cli.main(args)
-    print("   ✓ CLI main completed")
+    print("   OK CLI main completed")
 
 except Exception as e:
     import traceback
-    print(f"\n❌ Error during launch: {e}")
+    print(f"\nFAIL Error during launch: {e}")
     print("\nFull traceback:")
     traceback.print_exc()
     sys.exit(1)

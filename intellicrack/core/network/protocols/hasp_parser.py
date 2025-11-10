@@ -675,6 +675,7 @@ class HASPSentinelParser:
 
         Returns:
             Parsed HASPRequest object or None if invalid
+
         """
         self.logger.debug(f"Starting HASP request parsing, data length: {len(data)}")
         try:

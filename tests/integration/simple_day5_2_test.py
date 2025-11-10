@@ -257,13 +257,13 @@ def test_day5_2_implementation():
         components = analyzer._determine_analysis_components("test.exe", MockAnalysisEvent.ANALYSIS_STARTED)
 
         if "enhanced_strings" in components:
-            print("  ✓ PASS: enhanced_strings component included")
+            print("  OK PASS: enhanced_strings component included")
             test_results.append(True)
         else:
-            print(f"  ✗ FAIL: enhanced_strings not in components: {components}")
+            print(f"  FAIL FAIL: enhanced_strings not in components: {components}")
             test_results.append(False)
     except Exception as e:
-        print(f"  ✗ ERROR: {e}")
+        print(f"  FAIL ERROR: {e}")
         test_results.append(False)
 
     # Test 2: Enhanced string analysis functionality
@@ -276,19 +276,19 @@ def test_day5_2_implementation():
         if "error" not in result and "enhanced_features" in result:
             features = result["enhanced_features"]
             if all(features.values()):
-                print("  ✓ PASS: Enhanced string analysis functional")
-                print(f"  ✓ INFO: Found {result['analysis_summary']['license_key_count']} license keys")
-                print(f"  ✓ INFO: Found {result['analysis_summary']['crypto_string_count']} crypto strings")
-                print(f"  ✓ INFO: Found {result['analysis_summary']['api_string_count']} API strings")
+                print("  OK PASS: Enhanced string analysis functional")
+                print(f"  OK INFO: Found {result['analysis_summary']['license_key_count']} license keys")
+                print(f"  OK INFO: Found {result['analysis_summary']['crypto_string_count']} crypto strings")
+                print(f"  OK INFO: Found {result['analysis_summary']['api_string_count']} API strings")
                 test_results.append(True)
             else:
-                print(f"  ✗ FAIL: Enhanced features not all enabled: {features}")
+                print(f"  FAIL FAIL: Enhanced features not all enabled: {features}")
                 test_results.append(False)
         else:
-            print(f"  ✗ FAIL: Analysis failed or missing features: {result.get('error', 'Unknown')}")
+            print(f"  FAIL FAIL: Analysis failed or missing features: {result.get('error', 'Unknown')}")
             test_results.append(False)
     except Exception as e:
-        print(f"  ✗ ERROR: {e}")
+        print(f"  FAIL ERROR: {e}")
         test_results.append(False)
 
     # Test 3: Dynamic string monitoring
@@ -300,17 +300,17 @@ def test_day5_2_implementation():
 
         if "dynamic_extraction_enabled" in dynamic_result and dynamic_result["dynamic_extraction_enabled"]:
             if "memory_strings" in dynamic_result and "api_monitoring" in dynamic_result:
-                print("  ✓ PASS: Dynamic string monitoring functional")
-                print(f"  ✓ INFO: Monitoring {len(dynamic_result['memory_strings'])} memory strings")
+                print("  OK PASS: Dynamic string monitoring functional")
+                print(f"  OK INFO: Monitoring {len(dynamic_result['memory_strings'])} memory strings")
                 test_results.append(True)
             else:
-                print("  ✗ FAIL: Missing dynamic monitoring components")
+                print("  FAIL FAIL: Missing dynamic monitoring components")
                 test_results.append(False)
         else:
-            print(f"  ✗ FAIL: Dynamic extraction not enabled: {dynamic_result.get('error', 'Unknown')}")
+            print(f"  FAIL FAIL: Dynamic extraction not enabled: {dynamic_result.get('error', 'Unknown')}")
             test_results.append(False)
     except Exception as e:
-        print(f"  ✗ ERROR: {e}")
+        print(f"  FAIL ERROR: {e}")
         test_results.append(False)
 
     # Test 4: API call monitoring
@@ -323,16 +323,16 @@ def test_day5_2_implementation():
         if "monitoring_active" in api_result and api_result["monitoring_active"]:
             api_count = api_result["total_string_apis"]
             if api_count > 0:
-                print(f"  ✓ PASS: API monitoring active with {api_count} APIs")
+                print(f"  OK PASS: API monitoring active with {api_count} APIs")
                 test_results.append(True)
             else:
-                print("  ✗ FAIL: No string APIs detected")
+                print("  FAIL FAIL: No string APIs detected")
                 test_results.append(False)
         else:
-            print(f"  ✗ FAIL: API monitoring not active: {api_result.get('error', 'Unknown')}")
+            print(f"  FAIL FAIL: API monitoring not active: {api_result.get('error', 'Unknown')}")
             test_results.append(False)
     except Exception as e:
-        print(f"  ✗ ERROR: {e}")
+        print(f"  FAIL ERROR: {e}")
         test_results.append(False)
 
     # Test 5: Real-time capabilities
@@ -343,8 +343,8 @@ def test_day5_2_implementation():
 
         required_keys = ["running", "update_mode", "watched_binaries"]
         if all(key in status for key in required_keys):
-            print(f"  ✓ PASS: Real-time status structure complete")
-            print(f"  ✓ INFO: Update mode: {status['update_mode']}")
+            print(f"  OK PASS: Real-time status structure complete")
+            print(f"  OK INFO: Update mode: {status['update_mode']}")
 
             # Test callback registration
             test_events = []
@@ -352,35 +352,35 @@ def test_day5_2_implementation():
                 test_events.append(update)
 
             if analyzer.register_callback(MockAnalysisEvent.STRING_ANALYSIS_UPDATED, test_callback):
-                print("  ✓ PASS: Event callback registration successful")
+                print("  OK PASS: Event callback registration successful")
                 test_results.append(True)
             else:
-                print("  ✗ FAIL: Event callback registration failed")
+                print("  FAIL FAIL: Event callback registration failed")
                 test_results.append(False)
         else:
-            print(f"  ✗ FAIL: Missing status keys: {set(required_keys) - set(status.keys())}")
+            print(f"  FAIL FAIL: Missing status keys: {set(required_keys) - set(status.keys())}")
             test_results.append(False)
     except Exception as e:
-        print(f"  ✗ ERROR: {e}")
+        print(f"  FAIL ERROR: {e}")
         test_results.append(False)
 
     # Summary
     passed = sum(test_results)
     failed = len(test_results) - passed
 
-    print(f"\n🎯 DAY 5.2 VALIDATION RESULTS:")
-    print(f"✅ Tests Passed: {passed}")
-    print(f"❌ Tests Failed: {failed}")
+    print(f"\n DAY 5.2 VALIDATION RESULTS:")
+    print(f"OK Tests Passed: {passed}")
+    print(f"FAIL Tests Failed: {failed}")
 
     if failed == 0:
         print("\n🎉 DAY 5.2 REAL-TIME STRING MONITORING VALIDATION PASSED!")
-        print("✅ Enhanced string analysis integrated with real-time monitoring")
-        print("✅ Dynamic string pattern detection implemented")
-        print("✅ String API call monitoring functional")
-        print("✅ Real-time event system integration complete")
+        print("OK Enhanced string analysis integrated with real-time monitoring")
+        print("OK Dynamic string pattern detection implemented")
+        print("OK String API call monitoring functional")
+        print("OK Real-time event system integration complete")
         return 0
     else:
-        print(f"\n❌ DAY 5.2 VALIDATION FAILED: {failed} test(s) failed")
+        print(f"\nFAIL DAY 5.2 VALIDATION FAILED: {failed} test(s) failed")
         return 1
 
 

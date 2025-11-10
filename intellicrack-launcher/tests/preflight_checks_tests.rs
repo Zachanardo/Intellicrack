@@ -49,11 +49,7 @@ fn test_concurrent_preflight_checks() {
     use std::thread;
 
     let handles: Vec<_> = (0..4)
-        .map(|_| {
-            thread::spawn(|| {
-                preflight_checks::run_preflight_checks()
-            })
-        })
+        .map(|_| thread::spawn(|| preflight_checks::run_preflight_checks()))
         .collect();
 
     for handle in handles {
@@ -68,7 +64,9 @@ fn test_python_path_structure_windows() {
     let expected_python_exe = std::path::PathBuf::from(".pixi/envs/default/python.exe");
 
     assert!(
-        expected_python_exe.to_string_lossy().ends_with("python.exe"),
+        expected_python_exe
+            .to_string_lossy()
+            .ends_with("python.exe"),
         "Windows Python path should end with .exe"
     );
 }
@@ -120,7 +118,10 @@ fn test_missing_python_returns_helpful_error() {
 
     let error_msg = format!("{}", result.unwrap_err());
     assert!(error_msg.contains("Python"), "Error should mention Python");
-    assert!(error_msg.contains("pixi install"), "Error should suggest fix");
+    assert!(
+        error_msg.contains("pixi install"),
+        "Error should suggest fix"
+    );
 }
 
 #[test]
@@ -151,8 +152,7 @@ fn test_preflight_checks_with_partial_environment() {
     let result = preflight_checks::run_preflight_checks();
 
     match result {
-        Ok(_) => {
-        }
+        Ok(_) => {}
         Err(e) => {
             let error_msg = format!("{}", e);
             assert!(
@@ -179,8 +179,5 @@ fn test_preflight_checks_comprehensive() {
     eprintln!("Preflight checks result: {:?}", result);
     eprintln!("Elapsed time: {:?}", elapsed);
 
-    assert!(
-        elapsed.as_millis() < 100,
-        "Should complete within 100ms"
-    );
+    assert!(elapsed.as_millis() < 100, "Should complete within 100ms");
 }

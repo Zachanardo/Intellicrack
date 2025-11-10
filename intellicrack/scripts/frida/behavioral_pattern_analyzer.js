@@ -30,13 +30,12 @@
 
 const BehavioralPatternAnalyzer = {
     name: 'Behavioral Pattern Analyzer',
-    description:
-    'Intelligent behavioral analysis for automatic hook placement optimization',
+    description: 'Intelligent behavioral analysis for automatic hook placement optimization',
     version: '3.0.0',
 
     // Configuration for behavioral analysis
     config: {
-    // Pattern detection thresholds
+        // Pattern detection thresholds
         detection: {
             enabled: true,
             minFunctionCalls: 5, // Minimum calls to establish pattern
@@ -223,12 +222,7 @@ const BehavioralPatternAnalyzer = {
             root: null,
             depth: 0,
             nodes: [],
-            features: [
-                'frequency',
-                'criticality',
-                'performance_impact',
-                'success_rate',
-            ],
+            features: ['frequency', 'criticality', 'performance_impact', 'success_rate'],
             classes: ['place_hook', 'defer_hook', 'skip_hook'],
         };
 
@@ -298,11 +292,7 @@ const BehavioralPatternAnalyzer = {
                     var exp = exports[j];
 
                     if (exp.type === 'function') {
-                        this.hookFunctionForPatternAnalysis(
-                            module.name,
-                            exp.name,
-                            exp.address,
-                        );
+                        this.hookFunctionForPatternAnalysis(module.name, exp.name, exp.address);
                         hookedCount++;
                     }
                 }
@@ -348,7 +338,7 @@ const BehavioralPatternAnalyzer = {
                         this.functionKey,
                         retval,
                         duration,
-                        timestamp,
+                        timestamp
                     );
                 },
             });
@@ -366,12 +356,7 @@ const BehavioralPatternAnalyzer = {
                 type: 'warning',
                 target: 'pattern_hook',
                 message:
-          'Hook failed for ' +
-          moduleName +
-          '::' +
-          functionName +
-          ': ' +
-          error.message,
+                    'Hook failed for ' + moduleName + '::' + functionName + ': ' + error.message,
             });
         }
     },
@@ -418,16 +403,15 @@ const BehavioralPatternAnalyzer = {
 
         // Update average duration
         var totalCalls = pattern.entries.length;
-        pattern.avgDuration =
-      (pattern.avgDuration * (totalCalls - 1) + duration) / totalCalls;
+        pattern.avgDuration = (pattern.avgDuration * (totalCalls - 1) + duration) / totalCalls;
 
         // Update hook statistics
         if (this.activeHooks[functionKey]) {
             this.activeHooks[functionKey].callCount++;
             this.activeHooks[functionKey].totalDuration += duration;
             this.activeHooks[functionKey].avgDuration =
-        this.activeHooks[functionKey].totalDuration /
-        this.activeHooks[functionKey].callCount;
+                this.activeHooks[functionKey].totalDuration /
+                this.activeHooks[functionKey].callCount;
         }
 
         // Detect execution time anomalies
@@ -539,10 +523,7 @@ const BehavioralPatternAnalyzer = {
             retInfo.errorDetails = error.message;
 
             // Analyze error patterns for protection detection
-            if (
-                error.message.includes('protection') ||
-        error.message.includes('license')
-            ) {
+            if (error.message.includes('protection') || error.message.includes('license')) {
                 this.adaptiveBypass.recordProtectionError(error);
                 this.behaviorStats.protectionDetectedCount++;
             }
@@ -661,8 +642,7 @@ const BehavioralPatternAnalyzer = {
     calculateSequenceSignificance: function (pattern) {
         var frequency = pattern.count;
         var recency = 1.0 / Math.max(1, (Date.now() - pattern.lastSeen) / 60000); // Recency in minutes
-        var uniqueness =
-      1.0 / Math.max(1, this.patterns.temporalPatterns.size / 100); // Relative uniqueness
+        var uniqueness = 1.0 / Math.max(1, this.patterns.temporalPatterns.size / 100); // Relative uniqueness
 
         return (frequency * 0.5 + recency * 0.3 + uniqueness * 0.2) / 10; // Normalized
     },
@@ -719,11 +699,7 @@ const BehavioralPatternAnalyzer = {
         ];
 
         for (var i = 0; i < windowsAPIs.length; i++) {
-            this.hookAPIForPatternAnalysis(
-                'user32.dll',
-                windowsAPIs[i],
-                'windows_ui',
-            );
+            this.hookAPIForPatternAnalysis('user32.dll', windowsAPIs[i], 'windows_ui');
         }
     },
 
@@ -745,11 +721,7 @@ const BehavioralPatternAnalyzer = {
         ];
 
         for (var i = 0; i < registryAPIs.length; i++) {
-            this.hookAPIForPatternAnalysis(
-                'advapi32.dll',
-                registryAPIs[i],
-                'registry',
-            );
+            this.hookAPIForPatternAnalysis('advapi32.dll', registryAPIs[i], 'registry');
         }
     },
 
@@ -887,7 +859,7 @@ const BehavioralPatternAnalyzer = {
                         this.category,
                         this.args,
                         retval,
-                        duration,
+                        duration
                     );
                 },
             });
@@ -945,13 +917,11 @@ const BehavioralPatternAnalyzer = {
         var success = this.isAPICallSuccessful(apiName, retval);
         if (success) {
             apiPattern.successRate =
-        (apiPattern.successRate * (apiPattern.callCount - 1) + 1) /
-        apiPattern.callCount;
+                (apiPattern.successRate * (apiPattern.callCount - 1) + 1) / apiPattern.callCount;
         } else {
             apiPattern.failures++;
             apiPattern.successRate =
-        (apiPattern.successRate * (apiPattern.callCount - 1)) /
-        apiPattern.callCount;
+                (apiPattern.successRate * (apiPattern.callCount - 1)) / apiPattern.callCount;
         }
 
         categoryPattern.totalCalls++;
@@ -978,19 +948,13 @@ const BehavioralPatternAnalyzer = {
         } catch (error) {
             // API validation failed - implement stealth bypass
             this.behaviorStats.apiValidationBypassCount =
-        (this.behaviorStats.apiValidationBypassCount || 0) + 1;
+                (this.behaviorStats.apiValidationBypassCount || 0) + 1;
 
             // Analyze error for protection mechanism identification
-            if (
-                error.message.includes('access') ||
-        error.message.includes('permission')
-            ) {
+            if (error.message.includes('access') || error.message.includes('permission')) {
                 // Access denied suggests protection - attempt privilege escalation bypass
                 this.implementPrivilegeEscalationBypass(apiName, retval);
-            } else if (
-                error.message.includes('handle') ||
-        error.message.includes('invalid')
-            ) {
+            } else if (error.message.includes('handle') || error.message.includes('invalid')) {
                 // Invalid handle suggests obfuscation - implement handle bypass
                 this.implementHandleObfuscationBypass(apiName, retval);
             }
@@ -1000,7 +964,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     detectAPIUsagePatterns: function (category, apiName, args, retval) {
-    // Detect specific usage patterns that might indicate protection mechanisms
+        // Detect specific usage patterns that might indicate protection mechanisms
 
         if (category === 'registry') {
             this.detectRegistryProtectionPatterns(apiName, args, retval);
@@ -1016,23 +980,13 @@ const BehavioralPatternAnalyzer = {
     },
 
     detectRegistryProtectionPatterns: function (apiName, args, retval) {
-    // Look for license/protection-related registry access
+        // Look for license/protection-related registry access
         if (apiName === 'RegQueryValueExW' && args[1]) {
             try {
                 var valueName = args[1].readUtf16String().toLowerCase();
-                var protectionIndicators = [
-                    'license',
-                    'serial',
-                    'key',
-                    'activation',
-                    'trial',
-                ];
+                var protectionIndicators = ['license', 'serial', 'key', 'activation', 'trial'];
 
-                if (
-                    protectionIndicators.some((indicator) =>
-                        valueName.includes(indicator),
-                    )
-                ) {
+                if (protectionIndicators.some((indicator) => valueName.includes(indicator))) {
                     this.recordProtectionMechanism('registry_license_check', {
                         api: apiName,
                         value: valueName,
@@ -1060,10 +1014,7 @@ const BehavioralPatternAnalyzer = {
                 this.behaviorStats.registryProtectionDetected++;
 
                 // Error suggests protected registry access - implement stealth bypass
-                if (
-                    error.message.includes('access') ||
-          error.message.includes('permission')
-                ) {
+                if (error.message.includes('access') || error.message.includes('permission')) {
                     this.implementStealthRegistryAccess(apiName, args, retval);
                 } else if (error.message.includes('string')) {
                     // Registry value is encoded/obfuscated - attempt decode
@@ -1074,17 +1025,11 @@ const BehavioralPatternAnalyzer = {
     },
 
     detectFileSystemProtectionPatterns: function (apiName, args, retval) {
-    // Look for license file access patterns
+        // Look for license file access patterns
         if (apiName === 'CreateFileW' && args[0]) {
             try {
                 var fileName = args[0].readUtf16String().toLowerCase();
-                var protectionFiles = [
-                    '.lic',
-                    '.key',
-                    'license',
-                    'serial',
-                    'activation',
-                ];
+                var protectionFiles = ['.lic', '.key', 'license', 'serial', 'activation'];
 
                 if (protectionFiles.some((pattern) => fileName.includes(pattern))) {
                     this.recordProtectionMechanism('file_license_check', {
@@ -1117,16 +1062,10 @@ const BehavioralPatternAnalyzer = {
                 this.behaviorStats.fileProtectionDetected++;
 
                 // Error suggests protected file access - implement bypass strategies
-                if (
-                    error.message.includes('access') ||
-          error.message.includes('security')
-                ) {
+                if (error.message.includes('access') || error.message.includes('security')) {
                     // File is protected by security descriptors - escalate privileges
                     this.escalateFilePrivileges(apiName, args, retval);
-                } else if (
-                    error.message.includes('string') ||
-          error.message.includes('unicode')
-                ) {
+                } else if (error.message.includes('string') || error.message.includes('unicode')) {
                     // Filename is encoded or obfuscated - attempt to decode and patch
                     this.decodeProtectedFilename(args[0], retval);
                 }
@@ -1138,7 +1077,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     detectNetworkProtectionPatterns: function (apiName, args, retval) {
-    // Look for license server communication
+        // Look for license server communication
         if (apiName.includes('connect') || apiName.includes('Send')) {
             this.recordProtectionMechanism('network_license_check', {
                 api: apiName,
@@ -1152,7 +1091,7 @@ const BehavioralPatternAnalyzer = {
                 if (this.isLicenseServer(targetAddress)) {
                     this.implementLicenseServerBypass(args, retval);
                     this.behaviorStats.networkBypassCount =
-            (this.behaviorStats.networkBypassCount || 0) + 1;
+                        (this.behaviorStats.networkBypassCount || 0) + 1;
                 }
             }
 
@@ -1162,7 +1101,7 @@ const BehavioralPatternAnalyzer = {
                 if (this.containsLicenseRequest(sendData)) {
                     this.manipulateLicenseRequest(args, sendData);
                     this.behaviorStats.requestManipulationCount =
-            (this.behaviorStats.requestManipulationCount || 0) + 1;
+                        (this.behaviorStats.requestManipulationCount || 0) + 1;
                 }
             }
 
@@ -1174,14 +1113,14 @@ const BehavioralPatternAnalyzer = {
                     // Implement fake license server response
                     this.injectFakeLicenseResponse(retval);
                     this.behaviorStats.fakeResponseCount =
-            (this.behaviorStats.fakeResponseCount || 0) + 1;
+                        (this.behaviorStats.fakeResponseCount || 0) + 1;
                 }
             }
         }
     },
 
     detectProcessProtectionPatterns: function (apiName, args, retval) {
-    // Look for anti-debug/protection processes
+        // Look for anti-debug/protection processes
         if (apiName === 'CreateProcessW' && args[1]) {
             try {
                 var commandLine = args[1].readUtf16String().toLowerCase();
@@ -1201,29 +1140,26 @@ const BehavioralPatternAnalyzer = {
                             // Process creation failed - likely blocked by protection
                             this.implementProcessCreationBypass(args, commandLine);
                             this.behaviorStats.processBlockBypassCount =
-                (this.behaviorStats.processBlockBypassCount || 0) + 1;
+                                (this.behaviorStats.processBlockBypassCount || 0) + 1;
                         } else {
                             // Process created successfully - implement stealth injection
                             this.implementStealthProcessInjection(processHandle, commandLine);
                             this.behaviorStats.processInjectionCount =
-                (this.behaviorStats.processInjectionCount || 0) + 1;
+                                (this.behaviorStats.processInjectionCount || 0) + 1;
                         }
                     }
                 }
             } catch (error) {
                 // Command line read failed - implement advanced process analysis bypass
                 this.behaviorStats.processAnalysisBypassCount =
-          (this.behaviorStats.processAnalysisBypassCount || 0) + 1;
+                    (this.behaviorStats.processAnalysisBypassCount || 0) + 1;
 
                 // Error suggests obfuscated or protected command line
-                if (
-                    error.message.includes('string') ||
-          error.message.includes('encoding')
-                ) {
+                if (error.message.includes('string') || error.message.includes('encoding')) {
                     this.implementCommandLineDecryptionBypass(args[1], retval);
                 } else if (
                     error.message.includes('access') ||
-          error.message.includes('permission')
+                    error.message.includes('permission')
                 ) {
                     this.implementPrivilegedProcessBypass(args, retval);
                 }
@@ -1232,7 +1168,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     detectMemoryProtectionPatterns: function (apiName, args, retval) {
-    // Look for protection-related memory operations
+        // Look for protection-related memory operations
         if (apiName === 'VirtualProtect' && args[2]) {
             var protection = args[2].toInt32();
 
@@ -1252,14 +1188,14 @@ const BehavioralPatternAnalyzer = {
                         // Memory protection change failed - implement bypass
                         this.implementMemoryProtectionBypass(args, protection);
                         this.behaviorStats.memoryProtectionBypassCount =
-              (this.behaviorStats.memoryProtectionBypassCount || 0) + 1;
+                            (this.behaviorStats.memoryProtectionBypassCount || 0) + 1;
                     } else {
                         // Protection change succeeded - monitor for exploitation
                         var baseAddress = args[0];
                         var size = args[1].toInt32();
                         this.monitorProtectedMemoryRegion(baseAddress, size, protection);
                         this.behaviorStats.memoryMonitoringCount =
-              (this.behaviorStats.memoryMonitoringCount || 0) + 1;
+                            (this.behaviorStats.memoryMonitoringCount || 0) + 1;
                     }
                 }
             }
@@ -1272,7 +1208,7 @@ const BehavioralPatternAnalyzer = {
                 // Memory allocated successfully - check for code injection patterns
                 this.analyzeAllocatedMemory(allocatedMemory, args);
                 this.behaviorStats.memoryAllocationAnalysisCount =
-          (this.behaviorStats.memoryAllocationAnalysisCount || 0) + 1;
+                    (this.behaviorStats.memoryAllocationAnalysisCount || 0) + 1;
             }
         }
     },
@@ -1351,8 +1287,8 @@ const BehavioralPatternAnalyzer = {
             action: 'setting_up_memory_access_pattern_detection',
         });
 
-    // This would require more advanced techniques in a real implementation
-    // For now, we'll focus on allocation patterns and protection changes
+        // This would require more advanced techniques in a real implementation
+        // For now, we'll focus on allocation patterns and protection changes
     },
 
     setupHeapMonitoring: function () {
@@ -1478,25 +1414,25 @@ const BehavioralPatternAnalyzer = {
                                 // Implement specific bypasses based on API
                                 if (
                                     apiName === 'IsDebuggerPresent' ||
-                  apiName === 'CheckRemoteDebuggerPresent'
+                                    apiName === 'CheckRemoteDebuggerPresent'
                                 ) {
                                     this.implementDebuggerPresenceBypass(args);
                                 } else if (
                                     apiName.includes('Process') &&
-                  apiName.includes('Information')
+                                    apiName.includes('Information')
                                 ) {
                                     this.implementProcessInformationBypass(args);
                                 } else if (
                                     apiName.includes('Thread') &&
-                  apiName.includes('Context')
+                                    apiName.includes('Context')
                                 ) {
                                     this.implementThreadContextBypass(args);
                                 }
 
                                 // Track bypass attempts
                                 this.parent.parent.behaviorStats.antiDebugBypassAttempts =
-                  (this.parent.parent.behaviorStats.antiDebugBypassAttempts ||
-                    0) + 1;
+                                    (this.parent.parent.behaviorStats.antiDebugBypassAttempts ||
+                                        0) + 1;
                             }
                         },
 
@@ -1507,7 +1443,7 @@ const BehavioralPatternAnalyzer = {
                                     api: this.apiName,
                                     result: retval.toInt32(),
                                     timestamp: Date.now(),
-                                },
+                                }
                             );
                         },
                     });
@@ -1517,24 +1453,18 @@ const BehavioralPatternAnalyzer = {
         } catch (error) {
             // API hook failed - implement advanced hook bypass
             this.behaviorStats.apiHookBypassCount =
-        (this.behaviorStats.apiHookBypassCount || 0) + 1;
+                (this.behaviorStats.apiHookBypassCount || 0) + 1;
 
             // Analyze hook failure for protection mechanism identification
-            if (
-                error.message.includes('access') ||
-        error.message.includes('permission')
-            ) {
+            if (error.message.includes('access') || error.message.includes('permission')) {
                 // Access denied suggests API protection - attempt privilege escalation
                 this.implementAPIAccessBypass(apiName, error);
-            } else if (
-                error.message.includes('not found') ||
-        error.message.includes('export')
-            ) {
+            } else if (error.message.includes('not found') || error.message.includes('export')) {
                 // API not found suggests obfuscation - attempt symbol resolution bypass
                 this.implementSymbolResolutionBypass(apiName, error);
             } else if (
                 error.message.includes('already attached') ||
-        error.message.includes('hook')
+                error.message.includes('hook')
             ) {
                 // Hook conflict suggests multiple protections - implement stealth hook
                 this.implementStealthHookBypass(apiName, error);
@@ -1689,9 +1619,7 @@ const BehavioralPatternAnalyzer = {
         // Type-specific weights
         var typeWeight = this.getTypeWeight(type);
 
-        return (
-            criticality * 0.4 + frequency * 0.3 + recency * 0.2 + typeWeight * 0.1
-        );
+        return criticality * 0.4 + frequency * 0.3 + recency * 0.2 + typeWeight * 0.1;
     },
 
     getTypeWeight: function (type) {
@@ -1731,7 +1659,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     shouldPlaceHook: function (item) {
-    // Check if we should place this hook based on current conditions
+        // Check if we should place this hook based on current conditions
         var timeSinceDetection = Date.now() - item.timestamp;
         var maxAge = 300000; // 5 minutes
 
@@ -1834,11 +1762,10 @@ const BehavioralPatternAnalyzer = {
     },
 
     installOptimizedHook: function (config) {
-    // This would install the actual hook based on the configuration
-    // For this behavioral analyzer, we'll simulate the installation
+        // This would install the actual hook based on the configuration
+        // For this behavioral analyzer, we'll simulate the installation
 
-        var hookId =
-      'opt_hook_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        var hookId = 'opt_hook_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
         this.hookEffectiveness[hookId] = {
             config: config,
@@ -1899,12 +1826,9 @@ const BehavioralPatternAnalyzer = {
         if (!hook || hook.status !== 'active') return;
 
         // Calculate effectiveness based on metrics
-        var successRate =
-      hook.callCount > 0 ? hook.successCount / hook.callCount : 0;
+        var successRate = hook.callCount > 0 ? hook.successCount / hook.callCount : 0;
         var responsiveness =
-      hook.avgResponseTime < 10
-          ? 1.0
-          : Math.max(0, 1.0 - (hook.avgResponseTime - 10) / 100);
+            hook.avgResponseTime < 10 ? 1.0 : Math.max(0, 1.0 - (hook.avgResponseTime - 10) / 100);
         var usage = Math.min(hook.callCount / 10, 1.0); // Normalize usage
 
         hook.effectiveness = successRate * 0.5 + responsiveness * 0.3 + usage * 0.2;
@@ -1965,7 +1889,7 @@ const BehavioralPatternAnalyzer = {
         }
 
         this.effectivenessMetrics.averageEffectiveness =
-      totalHooks > 0 ? totalEffectiveness / totalHooks : 0;
+            totalHooks > 0 ? totalEffectiveness / totalHooks : 0;
         this.effectivenessMetrics.effectiveHooks = effectiveCount;
         this.effectivenessMetrics.ineffectiveHooks = totalHooks - effectiveCount;
     },
@@ -2026,7 +1950,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     updatePatternSignificance: function () {
-    // Update significance scores for all detected patterns
+        // Update significance scores for all detected patterns
 
         this.patterns.temporalPatterns.forEach((pattern, key) => {
             pattern.significance = this.calculateSequenceSignificance(pattern);
@@ -2036,7 +1960,7 @@ const BehavioralPatternAnalyzer = {
                 // High significance pattern detected - implement targeted bypass
                 this.implementTemporalPatternBypass(key, pattern);
                 this.behaviorStats.temporalBypassCount =
-          (this.behaviorStats.temporalBypassCount || 0) + 1;
+                    (this.behaviorStats.temporalBypassCount || 0) + 1;
             }
 
             // Use key for pattern indexing and cross-reference analysis
@@ -2052,7 +1976,7 @@ const BehavioralPatternAnalyzer = {
                 // Critical protection mechanism - implement specialized bypass
                 this.implementProtectionMechanismBypass(type, mechanism);
                 this.behaviorStats.protectionBypassCount =
-          (this.behaviorStats.protectionBypassCount || 0) + 1;
+                    (this.behaviorStats.protectionBypassCount || 0) + 1;
             }
 
             // Use type for mechanism classification and adaptive bypass selection
@@ -2062,7 +1986,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     trainMLModels: function () {
-    // Train the pattern classifier with new data
+        // Train the pattern classifier with new data
         if (this.patterns.callSequences.size > 100) {
             this.trainPatternClassifier();
         }
@@ -2120,7 +2044,7 @@ const BehavioralPatternAnalyzer = {
                 keyHash / 1000000, // Normalized key hash
                 contextualFeatures.temporalDistance, // Pattern temporal distance
                 contextualFeatures.complexityScore, // API call complexity
-                protectionTypeFeatures.riskLevel, // Protection mechanism risk
+                protectionTypeFeatures.riskLevel // Protection mechanism risk
             );
 
             var label = pattern.significance > 0.7 ? 1 : 0; // Binary classification
@@ -2134,10 +2058,7 @@ const BehavioralPatternAnalyzer = {
                 patternKey: key,
                 category: trainingCategory,
                 bypassStrategy: this.generateBypassStrategy(key, pattern),
-                adaptiveWeights: this.calculateAdaptiveWeights(
-                    key,
-                    pattern.significance,
-                ),
+                adaptiveWeights: this.calculateAdaptiveWeights(key, pattern.significance),
             });
 
             // Track training data diversity using key
@@ -2148,7 +2069,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     performNeuralNetworkTraining: function (trainingData) {
-    // Simplified neural network training (gradient descent)
+        // Simplified neural network training (gradient descent)
         var learningRate = this.patternClassifier.learningRate;
 
         for (var i = 0; i < trainingData.length; i++) {
@@ -2168,7 +2089,7 @@ const BehavioralPatternAnalyzer = {
                 }
 
                 this.patternClassifier.weights[weightKey] -=
-          learningRate * error * sample.features[j];
+                    learningRate * error * sample.features[j];
             }
         }
     },
@@ -2202,8 +2123,7 @@ const BehavioralPatternAnalyzer = {
             hookData.push({
                 features: {
                     frequency: hook.callCount,
-                    successRate:
-            hook.callCount > 0 ? hook.successCount / hook.callCount : 0,
+                    successRate: hook.callCount > 0 ? hook.successCount / hook.callCount : 0,
                     responseTime: hook.avgResponseTime,
                     age: Date.now() - hook.installTime,
                 },
@@ -2217,7 +2137,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     buildDecisionTree: function (data) {
-    // Simplified decision tree building
+        // Simplified decision tree building
         var bestFeature = this.findBestSplit(data);
 
         if (bestFeature) {
@@ -2262,29 +2182,21 @@ const BehavioralPatternAnalyzer = {
     },
 
     evaluateFeatureSplit: function (data, feature) {
-    // Find the best threshold for this feature
-        var values = data
-            .map((item) => item.features[feature])
-            .sort((a, b) => a - b);
+        // Find the best threshold for this feature
+        var values = data.map((item) => item.features[feature]).sort((a, b) => a - b);
         var bestThreshold = values[Math.floor(values.length / 2)]; // Median
 
-        var leftGroup = data.filter(
-            (item) => item.features[feature] <= bestThreshold,
-        );
-        var rightGroup = data.filter(
-            (item) => item.features[feature] > bestThreshold,
-        );
+        var leftGroup = data.filter((item) => item.features[feature] <= bestThreshold);
+        var rightGroup = data.filter((item) => item.features[feature] > bestThreshold);
 
         var leftAvg =
-      leftGroup.length > 0
-          ? leftGroup.reduce((sum, item) => sum + item.effectiveness, 0) /
-          leftGroup.length
-          : 0;
+            leftGroup.length > 0
+                ? leftGroup.reduce((sum, item) => sum + item.effectiveness, 0) / leftGroup.length
+                : 0;
         var rightAvg =
-      rightGroup.length > 0
-          ? rightGroup.reduce((sum, item) => sum + item.effectiveness, 0) /
-          rightGroup.length
-          : 0;
+            rightGroup.length > 0
+                ? rightGroup.reduce((sum, item) => sum + item.effectiveness, 0) / rightGroup.length
+                : 0;
 
         var score = Math.abs(leftAvg - rightAvg); // Information gain approximation
 
@@ -2320,29 +2232,26 @@ const BehavioralPatternAnalyzer = {
             totalTime += hook.totalDuration;
         }
 
-        currentPatterns.avgCallFrequency =
-      totalCalls / Object.keys(this.activeHooks).length;
+        currentPatterns.avgCallFrequency = totalCalls / Object.keys(this.activeHooks).length;
         currentPatterns.avgResponseTime = totalTime / totalCalls;
 
         // Update baseline with exponential moving average
         var alpha = 0.1; // Smoothing factor
 
         if (!this.anomalyDetector.baseline.avgCallFrequency) {
-            this.anomalyDetector.baseline.avgCallFrequency =
-        currentPatterns.avgCallFrequency;
+            this.anomalyDetector.baseline.avgCallFrequency = currentPatterns.avgCallFrequency;
         } else {
             this.anomalyDetector.baseline.avgCallFrequency =
-        alpha * currentPatterns.avgCallFrequency +
-        (1 - alpha) * this.anomalyDetector.baseline.avgCallFrequency;
+                alpha * currentPatterns.avgCallFrequency +
+                (1 - alpha) * this.anomalyDetector.baseline.avgCallFrequency;
         }
 
         if (!this.anomalyDetector.baseline.avgResponseTime) {
-            this.anomalyDetector.baseline.avgResponseTime =
-        currentPatterns.avgResponseTime;
+            this.anomalyDetector.baseline.avgResponseTime = currentPatterns.avgResponseTime;
         } else {
             this.anomalyDetector.baseline.avgResponseTime =
-        alpha * currentPatterns.avgResponseTime +
-        (1 - alpha) * this.anomalyDetector.baseline.avgResponseTime;
+                alpha * currentPatterns.avgResponseTime +
+                (1 - alpha) * this.anomalyDetector.baseline.avgResponseTime;
         }
     },
 
@@ -2401,10 +2310,7 @@ const BehavioralPatternAnalyzer = {
 
         // Clean up old protection mechanism records
         this.patterns.protectionMechanisms.forEach((mechanism, type) => {
-            if (
-                currentTime - mechanism.lastSeen > maxAge &&
-        mechanism.frequency < 3
-            ) {
+            if (currentTime - mechanism.lastSeen > maxAge && mechanism.frequency < 3) {
                 this.patterns.protectionMechanisms.delete(type);
             }
         });
@@ -2456,9 +2362,9 @@ const BehavioralPatternAnalyzer = {
     },
 
     estimateCpuUsage: function () {
-    // Simplified CPU usage estimation based on hook count and activity
+        // Simplified CPU usage estimation based on hook count and activity
         var activeHooks = Object.keys(this.hookEffectiveness).filter(
-            (hookId) => this.hookEffectiveness[hookId].status === 'active',
+            (hookId) => this.hookEffectiveness[hookId].status === 'active'
         ).length;
 
         var totalCalls = 0;
@@ -2470,11 +2376,11 @@ const BehavioralPatternAnalyzer = {
     },
 
     estimateMemoryUsage: function () {
-    // Simplified memory usage estimation
+        // Simplified memory usage estimation
         var patternCount =
-      this.patterns.callSequences.size +
-      this.patterns.apiUsage.size +
-      this.patterns.temporalPatterns.size;
+            this.patterns.callSequences.size +
+            this.patterns.apiUsage.size +
+            this.patterns.temporalPatterns.size;
 
         return patternCount * 0.1; // Rough estimation in MB
     },
@@ -2490,7 +2396,7 @@ const BehavioralPatternAnalyzer = {
             targetLevel = Math.max(0.05, currentLevel - 0.3);
             this.implementMemoryOptimizationBypass(memoryUsage);
             this.behaviorStats.memoryOptimizationCount =
-        (this.behaviorStats.memoryOptimizationCount || 0) + 1;
+                (this.behaviorStats.memoryOptimizationCount || 0) + 1;
 
             send({
                 type: 'critical',
@@ -2504,7 +2410,7 @@ const BehavioralPatternAnalyzer = {
             targetLevel = Math.max(0.2, currentLevel - 0.15);
             this.implementSelectiveBypassPruning(memoryUsage);
             this.behaviorStats.bypassPruningCount =
-        (this.behaviorStats.bypassPruningCount || 0) + 1;
+                (this.behaviorStats.bypassPruningCount || 0) + 1;
 
             send({
                 type: 'warning',
@@ -2533,13 +2439,13 @@ const BehavioralPatternAnalyzer = {
             });
         } else if (
             avgResponseTime < this.adaptiveConfig.performanceThreshold / 2 &&
-      cpuUsage < 5 &&
-      memoryUsage < 25
+            cpuUsage < 5 &&
+            memoryUsage < 25
         ) {
             // Good performance across all metrics including memory - can increase instrumentation
             this.implementEnhancedInstrumentationMode(memoryUsage);
             this.behaviorStats.enhancedInstrumentationCount =
-        (this.behaviorStats.enhancedInstrumentationCount || 0) + 1;
+                (this.behaviorStats.enhancedInstrumentationCount || 0) + 1;
             // Increase instrumentation if performance is good
             targetLevel = Math.min(1.0, currentLevel + 0.1);
             send({
@@ -2602,9 +2508,9 @@ const BehavioralPatternAnalyzer = {
     updateStatistics: function () {
         this.stats.analyzedFunctions = Object.keys(this.activeHooks).length;
         this.stats.detectedPatterns =
-      this.patterns.callSequences.size +
-      this.patterns.temporalPatterns.size +
-      this.patterns.protectionMechanisms.size;
+            this.patterns.callSequences.size +
+            this.patterns.temporalPatterns.size +
+            this.patterns.protectionMechanisms.size;
 
         send({
             type: 'info',
@@ -2732,7 +2638,7 @@ const BehavioralPatternAnalyzer = {
                 }
                 pattern.parameters[paramKey].types.set(
                     argInfo.type,
-                    pattern.parameters[paramKey].types.get(argInfo.type) + 1,
+                    pattern.parameters[paramKey].types.get(argInfo.type) + 1
                 );
 
                 // Detect parameter patterns
@@ -2740,7 +2646,7 @@ const BehavioralPatternAnalyzer = {
                     this.detectParameterPattern(
                         functionKey,
                         paramKey,
-                        pattern.parameters[paramKey],
+                        pattern.parameters[paramKey]
                     );
                 }
             }
@@ -2748,7 +2654,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     detectParameterPattern: function (functionKey, paramKey, paramData) {
-    // Detect patterns in parameter values
+        // Detect patterns in parameter values
         var values = paramData.values.slice(-10); // Last 10 values
 
         // Check for constant values
@@ -2831,8 +2737,7 @@ const BehavioralPatternAnalyzer = {
             };
 
             summaryData.ml_components = {
-                pattern_classifier:
-          this.patternClassifier.layers.join('-') + ' neural network',
+                pattern_classifier: this.patternClassifier.layers.join('-') + ' neural network',
                 hook_decision_tree_features: this.hookDecisionTree.features.length,
                 anomaly_detector: 'Baseline tracking enabled',
             };
@@ -2854,7 +2759,7 @@ const BehavioralPatternAnalyzer = {
 
             summaryData.status = 'ACTIVE';
             summaryData.description =
-        'Continuously learning and adapting hook placement strategies';
+                'Continuously learning and adapting hook placement strategies';
 
             // Send the comprehensive summary
             send(summaryData);
@@ -2900,7 +2805,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     setupNeuralNetworkSpoofer: function () {
-    // Hook common ML inference engines
+        // Hook common ML inference engines
         const mlLibraries = [
             'tensorflow.dll',
             'torch.dll',
@@ -2916,24 +2821,22 @@ const BehavioralPatternAnalyzer = {
                 if (module) {
                     // Hook inference functions
                     const inferenceFunc =
-            Module.findExportByName(library, 'Run') ||
-            Module.findExportByName(library, 'Predict') ||
-            Module.findExportByName(library, 'Forward');
+                        Module.findExportByName(library, 'Run') ||
+                        Module.findExportByName(library, 'Predict') ||
+                        Module.findExportByName(library, 'Forward');
 
                     if (inferenceFunc) {
                         Interceptor.attach(inferenceFunc, {
                             onEnter: function (args) {
                                 this.aiEvasion.neuralNetworkSpoofer.spoofedOutputs.set(
                                     args[0],
-                                    this.generateLegitimateMLOutput(),
+                                    this.generateLegitimateMLOutput()
                                 );
                             }.bind(this),
                             onLeave: function (retval) {
                                 // Replace ML model output with spoofed legitimate behavior
                                 const spoofed =
-                  this.aiEvasion.neuralNetworkSpoofer.spoofedOutputs.get(
-                      retval,
-                  );
+                                    this.aiEvasion.neuralNetworkSpoofer.spoofedOutputs.get(retval);
                                 if (spoofed) {
                                     retval.replace(spoofed);
                                     send({
@@ -2951,25 +2854,16 @@ const BehavioralPatternAnalyzer = {
             } catch (error) {
                 // Neural network library hook failed - implement advanced ML evasion bypass
                 this.behaviorStats.mlEvasionBypassCount =
-          (this.behaviorStats.mlEvasionBypassCount || 0) + 1;
+                    (this.behaviorStats.mlEvasionBypassCount || 0) + 1;
 
                 // Analyze error to determine ML protection type and implement bypass
-                if (
-                    error.message.includes('tensorflow') ||
-          error.message.includes('torch')
-                ) {
+                if (error.message.includes('tensorflow') || error.message.includes('torch')) {
                     // Deep learning framework detected - implement adversarial bypass
                     this.implementDeepLearningBypass(error);
-                } else if (
-                    error.message.includes('opencv') ||
-          error.message.includes('vision')
-                ) {
+                } else if (error.message.includes('opencv') || error.message.includes('vision')) {
                     // Computer vision detection - implement visual bypass
                     this.implementComputerVisionBypass(error);
-                } else if (
-                    error.message.includes('sklearn') ||
-          error.message.includes('model')
-                ) {
+                } else if (error.message.includes('sklearn') || error.message.includes('model')) {
                     // Traditional ML model - implement feature manipulation bypass
                     this.implementMLModelBypass(error);
                 }
@@ -2989,12 +2883,12 @@ const BehavioralPatternAnalyzer = {
     },
 
     generateLegitimateMLOutput: function () {
-    // Generate outputs that appear as legitimate user behavior
+        // Generate outputs that appear as legitimate user behavior
         return ptr(Math.floor(Math.random() * 0.1) + 0.9); // High legitimacy score
     },
 
     setupMLDetectionBypass: function () {
-    // Feature obfuscation for ML detection systems
+        // Feature obfuscation for ML detection systems
         this.aiEvasion.mlDetectionBypass.obfuscatedFeatures = {
             clickPatterns: this.generateNaturalClickPattern(),
             typingRhythm: this.generateNaturalTypingRhythm(),
@@ -3014,9 +2908,9 @@ const BehavioralPatternAnalyzer = {
         featureExtractors.forEach((funcName) => {
             try {
                 const addr =
-          Module.findExportByName('user32.dll', funcName) ||
-          Module.findExportByName('kernel32.dll', funcName) ||
-          Module.findExportByName('winmm.dll', funcName);
+                    Module.findExportByName('user32.dll', funcName) ||
+                    Module.findExportByName('kernel32.dll', funcName) ||
+                    Module.findExportByName('winmm.dll', funcName);
 
                 if (addr) {
                     Interceptor.attach(addr, {
@@ -3041,25 +2935,19 @@ const BehavioralPatternAnalyzer = {
             } catch (error) {
                 // Feature obfuscation failed - implement advanced ML detection bypass
                 this.behaviorStats.featureObfuscationBypassCount =
-          (this.behaviorStats.featureObfuscationBypassCount || 0) + 1;
+                    (this.behaviorStats.featureObfuscationBypassCount || 0) + 1;
 
                 // Analyze error to adapt obfuscation strategy
-                if (
-                    error.message.includes('read') ||
-          error.message.includes('access')
-                ) {
+                if (error.message.includes('read') || error.message.includes('access')) {
                     // Memory access denied - implement stealth memory bypass
                     this.implementStealthMemoryBypass(error);
                 } else if (
                     error.message.includes('permission') ||
-          error.message.includes('denied')
+                    error.message.includes('denied')
                 ) {
                     // Permission denied - implement privilege escalation bypass
                     this.implementPrivilegeEscalationBypass(error);
-                } else if (
-                    error.message.includes('hook') ||
-          error.message.includes('attach')
-                ) {
+                } else if (error.message.includes('hook') || error.message.includes('attach')) {
                     // Hook failure - implement alternative instrumentation bypass
                     this.implementAlternativeInstrumentationBypass(error);
                 }
@@ -3078,7 +2966,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     generateNaturalClickPattern: function () {
-    // Simulate natural human click patterns with micro-variations
+        // Simulate natural human click patterns with micro-variations
         const basePattern = [];
         for (let i = 0; i < 100; i++) {
             basePattern.push({
@@ -3091,7 +2979,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     generateNaturalTypingRhythm: function () {
-    // Simulate natural typing rhythms with realistic patterns
+        // Simulate natural typing rhythms with realistic patterns
         const rhythm = {
             averageWPM: 45 + Math.random() * 30, // 45-75 WPM range
             pausePatterns: [],
@@ -3109,7 +2997,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     generateNaturalMouseMovement: function () {
-    // Generate natural mouse movement patterns with bezier curves
+        // Generate natural mouse movement patterns with bezier curves
         const movements = [];
         for (let i = 0; i < 200; i++) {
             movements.push({
@@ -3123,7 +3011,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     generateNaturalTimeDelays: function () {
-    // Generate natural time delays that mimic human decision-making
+        // Generate natural time delays that mimic human decision-making
         return {
             decision: () => 500 + Math.random() * 2000, // 0.5-2.5s decision time
             reading: () => 2000 + Math.random() * 3000, // 2-5s reading time
@@ -3164,7 +3052,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     generateWorkingHoursPattern: function () {
-    // Simulate realistic working hour patterns
+        // Simulate realistic working hour patterns
         const pattern = {
             startTime: 8 + Math.random() * 2, // 8-10 AM start
             endTime: 17 + Math.random() * 2, // 5-7 PM end
@@ -3190,7 +3078,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     generateBreakPatterns: function () {
-    // Natural break patterns throughout the day
+        // Natural break patterns throughout the day
         return {
             microBreaks: {
                 frequency: 15 + Math.random() * 10, // Every 15-25 minutes
@@ -3208,7 +3096,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     simulateHeartRateVariation: function () {
-    // Simulate natural heart rate variation during computer use
+        // Simulate natural heart rate variation during computer use
         const baseRate = 60 + Math.random() * 20; // 60-80 BPM at rest
         const variation = [];
 
@@ -3262,7 +3150,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     monitorEnvironmentalChanges: function () {
-    // Monitor for changes that might affect behavior patterns
+        // Monitor for changes that might affect behavior patterns
         const environmentalFactors = [
             'systemLoad',
             'networkLatency',
@@ -3275,8 +3163,7 @@ const BehavioralPatternAnalyzer = {
         setInterval(() => {
             environmentalFactors.forEach((factor) => {
                 const currentValue = this.measureEnvironmentalFactor(factor);
-                const previousValue =
-          this.adaptationEngine.environmentalFactors.get(factor);
+                const previousValue = this.adaptationEngine.environmentalFactors.get(factor);
 
                 if (previousValue && Math.abs(currentValue - previousValue) > 0.2) {
                     // Significant change detected, adapt behavior
@@ -3343,7 +3230,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     setupDetectionAdaptation: function () {
-    // Advanced detection evasion through behavioral adaptation
+        // Advanced detection evasion through behavioral adaptation
         this.detectionCountermeasures = {
             antiHeuristics: {
                 enabled: true,
@@ -3407,22 +3294,16 @@ const BehavioralPatternAnalyzer = {
             } catch (error) {
                 // Detection API hook failed - implement advanced anti-detection bypass
                 this.behaviorStats.detectionAPIBypassCount =
-          (this.behaviorStats.detectionAPIBypassCount || 0) + 1;
+                    (this.behaviorStats.detectionAPIBypassCount || 0) + 1;
 
                 // Analyze hook failure to determine protection type
                 if (error.message.includes('ntdll') && api.func.includes('Query')) {
                     // NTDLL query hook failed - implement kernel-level bypass
                     this.implementKernelLevelBypass(api.func, error);
-                } else if (
-                    error.message.includes('kernel32') &&
-          api.func.includes('Debug')
-                ) {
+                } else if (error.message.includes('kernel32') && api.func.includes('Debug')) {
                     // Debugger detection hook failed - implement debugger concealment
                     this.implementDebuggerConcealmentBypass(api.func, error);
-                } else if (
-                    error.message.includes('advapi32') &&
-          api.func.includes('Reg')
-                ) {
+                } else if (error.message.includes('advapi32') && api.func.includes('Reg')) {
                     // Registry hook failed - implement registry virtualization
                     this.implementRegistryVirtualizationBypass(api.func, error);
                 } else if (error.message.includes('user32')) {
@@ -3446,7 +3327,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     isAnalysisAttempt: function (funcName, args) {
-    // Heuristics to detect analysis attempts
+        // Heuristics to detect analysis attempts
         const suspiciousPatterns = {
             NtQueryInformationProcess: (args) => {
                 // Check for debugger detection queries
@@ -3469,7 +3350,7 @@ const BehavioralPatternAnalyzer = {
                         isTimingAnalysis = true;
                         this.implementTimingBypass(args, callFrequency);
                         this.behaviorStats.timingBypassCount =
-              (this.behaviorStats.timingBypassCount || 0) + 1;
+                            (this.behaviorStats.timingBypassCount || 0) + 1;
                     }
 
                     // Analyze call patterns using args context
@@ -3488,9 +3369,7 @@ const BehavioralPatternAnalyzer = {
             RegOpenKeyExW: (args) => {
                 // Check for registry analysis
                 const keyName = args[1].readUtf16String();
-                return (
-                    keyName && (keyName.includes('Debug') || keyName.includes('Analysis'))
-                );
+                return keyName && (keyName.includes('Debug') || keyName.includes('Analysis'));
             },
         };
 
@@ -3499,7 +3378,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     triggerCountermeasures: function (detectedFunction) {
-    // Advanced countermeasures against detection
+        // Advanced countermeasures against detection
         send({
             type: 'warning',
             target: 'detection_adaptation',
@@ -3509,10 +3388,7 @@ const BehavioralPatternAnalyzer = {
         });
 
         // Increase stealth level
-        this.adaptiveConfig.stealthLevel = Math.min(
-            1.0,
-            this.adaptiveConfig.stealthLevel + 0.1,
-        );
+        this.adaptiveConfig.stealthLevel = Math.min(1.0, this.adaptiveConfig.stealthLevel + 0.1);
 
         // Randomize future behavior patterns
         this.randomizeBehaviorPatterns();
@@ -3522,15 +3398,14 @@ const BehavioralPatternAnalyzer = {
     },
 
     randomizeBehaviorPatterns: function () {
-    // Randomize behavior to avoid detection patterns
+        // Randomize behavior to avoid detection patterns
         Object.keys(this.humanBehavior.patterns).forEach((pattern) => {
-            this.humanBehavior.patterns[pattern] =
-        this.generateRandomizedPattern(pattern);
+            this.humanBehavior.patterns[pattern] = this.generateRandomizedPattern(pattern);
         });
     },
 
     enableAdvancedEvasion: function () {
-    // Enable more sophisticated evasion techniques
+        // Enable more sophisticated evasion techniques
         this.aiEvasion.neuralNetworkSpoofer.confidenceManipulation = true;
         this.aiEvasion.mlDetectionBypass.adversarialPatterns = true;
         this.aiEvasion.behaviorMimicry.naturalVariation += 0.1;
@@ -3540,14 +3415,14 @@ const BehavioralPatternAnalyzer = {
     },
 
     startAdaptationLoop: function () {
-    // Continuous adaptation and learning loop
+        // Continuous adaptation and learning loop
         setInterval(() => {
             this.performAdaptationCycle();
         }, 10000); // Adapt every 10 seconds
     },
 
     performAdaptationCycle: function () {
-    // Evaluate current performance and adapt
+        // Evaluate current performance and adapt
         const performance = this.evaluateCurrentPerformance();
 
         if (performance.detectionRisk > this.adaptationEngine.adaptationThreshold) {
@@ -3575,7 +3450,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     calculateNaturalnessScore: function () {
-    // Calculate how natural current behavior appears
+        // Calculate how natural current behavior appears
         const factors = [
             this.aiEvasion.behaviorMimicry.naturalVariation,
             this.adaptiveConfig.activityIntensity,
@@ -3606,7 +3481,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     simulateBlinkRatePattern: function () {
-    // Natural blink rate varies from 12-20 blinks per minute
+        // Natural blink rate varies from 12-20 blinks per minute
         const baseRate = 15 + Math.random() * 5;
         const hourlyPattern = [];
 
@@ -3686,14 +3561,10 @@ const BehavioralPatternAnalyzer = {
 
         // Update current behavioral state
         this.currentBehaviorState = {
-            productivity:
-        this.humanBehavior.patterns.workingHours.productivity[currentHour],
+            productivity: this.humanBehavior.patterns.workingHours.productivity[currentHour],
             focus: this.humanBehavior.patterns.focusLevels[currentHour],
             fatigue: this.humanBehavior.patterns.fatigueLevel[currentHour],
-            heartRate:
-        this.humanBehavior.biometrics.heartRate[
-            currentHour * 60 + currentMinute
-        ],
+            heartRate: this.humanBehavior.biometrics.heartRate[currentHour * 60 + currentMinute],
             attentiveness: this.calculateCurrentAttentiveness(),
         };
     },
@@ -3719,7 +3590,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     generateRandomizedPattern: function (patternType) {
-    // Generate randomized version of existing patterns
+        // Generate randomized version of existing patterns
         switch (patternType) {
         case 'workingHours':
             return this.generateWorkingHoursPattern();
@@ -3735,7 +3606,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     generateNaturalResponse: function (funcName) {
-    // Generate natural responses for different API calls
+        // Generate natural responses for different API calls
         switch (funcName) {
         case 'IsDebuggerPresent':
             return ptr(0); // No debugger
@@ -3751,7 +3622,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     performEmergencyAdaptation: function () {
-    // Emergency adaptation when high detection risk is detected
+        // Emergency adaptation when high detection risk is detected
         send({
             type: 'warning',
             target: 'emergency_adaptation',
@@ -3773,7 +3644,7 @@ const BehavioralPatternAnalyzer = {
     },
 
     performGradualAdaptation: function (performance) {
-    // Gradual adaptation based on performance metrics
+        // Gradual adaptation based on performance metrics
         const adaptationRate = this.adaptationEngine.learningRate;
 
         // Adjust parameters based on performance
@@ -3792,15 +3663,15 @@ const BehavioralPatternAnalyzer = {
         // Ensure values stay within bounds
         this.adaptiveConfig.activityIntensity = Math.max(
             0.1,
-            Math.min(1.0, this.adaptiveConfig.activityIntensity),
+            Math.min(1.0, this.adaptiveConfig.activityIntensity)
         );
         this.adaptiveConfig.stealthLevel = Math.max(
             0.0,
-            Math.min(1.0, this.adaptiveConfig.stealthLevel),
+            Math.min(1.0, this.adaptiveConfig.stealthLevel)
         );
         this.aiEvasion.behaviorMimicry.naturalVariation = Math.max(
             0.05,
-            Math.min(0.5, this.aiEvasion.behaviorMimicry.naturalVariation),
+            Math.min(0.5, this.aiEvasion.behaviorMimicry.naturalVariation)
         );
     },
 

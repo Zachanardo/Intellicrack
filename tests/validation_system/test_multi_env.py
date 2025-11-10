@@ -50,7 +50,7 @@ def main():
     compatible_count = sum(1 for c in compat_report['compatibility_matrix'] if c['compatible'])
     print(f"\n  Compatible environments: {compatible_count}/{len(tester.environments)}")
 
-    print("\n✅ Multi-Environment Tester Test Complete!")
+    print("\nOK Multi-Environment Tester Test Complete!")
 
 if __name__ == "__main__":
     main()

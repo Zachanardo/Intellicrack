@@ -83,19 +83,15 @@ const BinaryPatcherTests = {
 
             // Verify dependencies loaded
             const deps = BinaryPatcher.dependencies;
-            if (
-                !deps.memoryBypass ||
-        !deps.codeIntegrityBypass ||
-        !deps.antiDebugBypass
-            ) {
+            if (!deps.memoryBypass || !deps.codeIntegrityBypass || !deps.antiDebugBypass) {
                 throw new Error('Dependencies not loaded');
             }
 
             // Verify subsystems initialized
             if (
                 !BinaryPatcher.patchingEngine ||
-        !BinaryPatcher.architectures ||
-        !BinaryPatcher.formatHandlers
+                !BinaryPatcher.architectures ||
+                !BinaryPatcher.formatHandlers
             ) {
                 throw new Error('Subsystems not initialized');
             }
@@ -240,9 +236,7 @@ const BinaryPatcherTests = {
                 view.setUint32(0, 0xfeedface, false); // 32-bit
                 view.setInt32(4, 7, true); // CPU type x86
 
-                const headers = handlers.macho.parseHeaders(
-                    new Uint8Array(machoBuffer),
-                );
+                const headers = handlers.macho.parseHeaders(new Uint8Array(machoBuffer));
                 if (!headers.magic) {
                     throw new Error('Mach-O parsing failed');
                 }
@@ -329,9 +323,7 @@ const BinaryPatcherTests = {
             }
 
             // Test register substitution
-            const substituted = antiDetect.polymorphic.substituteRegisters([
-                0x89, 0xc0,
-            ]);
+            const substituted = antiDetect.polymorphic.substituteRegisters([0x89, 0xc0]);
             if (!substituted || substituted.length !== 2) {
                 throw new Error('Register substitution failed');
             }
@@ -358,10 +350,7 @@ const BinaryPatcherTests = {
 
             // Test parallel patcher initialization
             perf.parallelPatcher.initialize();
-            if (
-                perf.parallelPatcher.workerPool.length !==
-        perf.parallelPatcher.maxWorkers
-            ) {
+            if (perf.parallelPatcher.workerPool.length !== perf.parallelPatcher.maxWorkers) {
                 throw new Error('Parallel patcher initialization failed');
             }
 
@@ -407,9 +396,7 @@ const BinaryPatcherTests = {
             }
 
             // Test version detection (simulated)
-            const version = memResident.parseVersionBytes(
-                new Uint8Array([1, 0, 2, 0, 3, 0, 4, 0]),
-            );
+            const version = memResident.parseVersionBytes(new Uint8Array([1, 0, 2, 0, 3, 0, 4, 0]));
             if (!version) {
                 // Version detection might fail on test data, this is expected
                 test.status = 'passed';
@@ -448,8 +435,7 @@ const BinaryPatcherTests = {
                     data: [0x90, 0x90],
                 },
             };
-            const valid =
-        distributed.multiNodeCoordination.validatePatchProposal(proposal);
+            const valid = distributed.multiNodeCoordination.validatePatchProposal(proposal);
             if (typeof valid !== 'boolean') {
                 throw new Error('Patch validation failed');
             }
@@ -472,8 +458,7 @@ const BinaryPatcherTests = {
         };
 
         try {
-            const cloudNative =
-        BinaryPatcherAdvanced.distributedProtection.cloudNative;
+            const cloudNative = BinaryPatcherAdvanced.distributedProtection.cloudNative;
 
             // Test container detection
             const runtime = cloudNative.detectContainerRuntime();
@@ -484,10 +469,7 @@ const BinaryPatcherTests = {
                 timestamp: Date.now(),
             };
 
-            console.log(
-                '[TEST] Container runtime detection:',
-                runtime || 'none detected',
-            );
+            console.log('[TEST] Container runtime detection:', runtime || 'none detected');
 
             // Test namespace reading (might fail if not in k8s)
             const namespace = cloudNative.readNamespace();
@@ -525,10 +507,7 @@ const BinaryPatcherTests = {
                 timestamp: Date.now(),
             };
 
-            console.log(
-                '[TEST] Web3 provider detection:',
-                provider ? 'detected' : 'none',
-            );
+            console.log('[TEST] Web3 provider detection:', provider ? 'detected' : 'none');
 
             // Test address generation
             const address = blockchain.getCurrentAddress();
@@ -538,7 +517,7 @@ const BinaryPatcherTests = {
 
             // Test contract bypass setup
             const success = blockchain.bypassSmartContract(
-                '0x1234567890123456789012345678901234567890',
+                '0x1234567890123456789012345678901234567890'
             );
             if (typeof success !== 'boolean') {
                 throw new Error('Contract bypass setup failed');
@@ -619,21 +598,18 @@ const BinaryPatcherTests = {
 
             // Scenario 4: Test patch verification
             const testSuite =
-        BinaryPatcherAdvanced.advancedVerification.testFramework.createTestSuite(
-            patchId,
-            [
-                {
-                    name: 'Test Functionality',
-                    type: 'functionality',
-                    module: 'test.dll',
-                    function: 'testFunc',
-                    returnType: 'int',
-                    argTypes: [],
-                    inputs: [],
-                    expectedOutput: 1,
-                },
-            ],
-        );
+                BinaryPatcherAdvanced.advancedVerification.testFramework.createTestSuite(patchId, [
+                    {
+                        name: 'Test Functionality',
+                        type: 'functionality',
+                        module: 'test.dll',
+                        function: 'testFunc',
+                        returnType: 'int',
+                        argTypes: [],
+                        inputs: [],
+                        expectedOutput: 1,
+                    },
+                ]);
 
             if (!testSuite || !testSuite.id) {
                 throw new Error('Test suite creation failed');
@@ -652,12 +628,8 @@ const BinaryPatcherTests = {
 
     // === REPORT RESULTS ===
     reportResults: function () {
-        const total =
-      this.testResults.passed +
-      this.testResults.failed +
-      this.testResults.skipped;
-        const passRate =
-      total > 0 ? ((this.testResults.passed / total) * 100).toFixed(2) : 0;
+        const total = this.testResults.passed + this.testResults.failed + this.testResults.skipped;
+        const passRate = total > 0 ? ((this.testResults.passed / total) * 100).toFixed(2) : 0;
 
         send({
             type: 'info',

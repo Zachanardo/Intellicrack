@@ -98,7 +98,7 @@ class ProductionReadinessValidator:
 
     def test_no_placeholder_strings(self):
         """CRITICAL TEST: Verify NO placeholder strings exist in code."""
-        print("\n🔍 CRITICAL TEST: Searching for placeholder strings...")
+        print("\n CRITICAL TEST: Searching for placeholder strings...")
         print("=" * 60)
 
         forbidden_strings = [
@@ -120,10 +120,9 @@ class ProductionReadinessValidator:
 
         for file_path in files_to_check:
             from intellicrack.utils.path_resolver import get_project_root
-
-full_path = get_project_root() / file_path
+            full_path = get_project_root() / file_path
             if not full_path.exists():
-                print(f"  ⚠️  File not found: {file_path}")
+                print(f"  WARNING  File not found: {file_path}")
                 continue
 
             try:
@@ -139,20 +138,20 @@ full_path = get_project_root() / file_path
                                 # Skip if it's a comment about avoiding placeholders
                                 if "no placeholder" in line.lower() or "avoid placeholder" in line.lower():
                                     continue
-                                print(f"  ❌ PLACEHOLDER FOUND in {file_path}:{i}")
+                                print(f"  FAIL PLACEHOLDER FOUND in {file_path}:{i}")
                                 print(f"     String: '{forbidden}'")
                                 placeholders_found = True
                                 self.critical_failures.append(f"Placeholder '{forbidden}' in {file_path}:{i}")
 
             except Exception as e:
-                print(f"  ⚠️  Error checking {file_path}: {e}")
+                print(f"  WARNING  Error checking {file_path}: {e}")
 
         if not placeholders_found:
-            print("  ✅ PASS: No placeholder strings found")
+            print("  OK PASS: No placeholder strings found")
             self.test_results.append(True)
             return True
         else:
-            print(f"  ❌ FAIL: {len(self.critical_failures)} placeholder strings found")
+            print(f"  FAIL FAIL: {len(self.critical_failures)} placeholder strings found")
             self.test_results.append(False)
             return False
 
@@ -168,35 +167,35 @@ full_path = get_project_root() / file_path
                 # Test get_available_bypass_techniques
                 techniques = cet_bypass.get_available_bypass_techniques()
                 if techniques and len(techniques) > 0:
-                    print(f"  ✅ PASS: {len(techniques)} CET bypass techniques available")
+                    print(f"  OK PASS: {len(techniques)} CET bypass techniques available")
 
                     # Verify techniques are not placeholders
                     for technique in techniques:
                         if any(word in technique.lower() for word in ["todo", "placeholder", "implement"]):
-                            print(f"  ❌ FAIL: Placeholder technique found: {technique}")
+                            print(f"  FAIL FAIL: Placeholder technique found: {technique}")
                             self.test_results.append(False)
                             return False
 
                     self.test_results.append(True)
                     return True
                 else:
-                    print("  ❌ FAIL: No CET bypass techniques returned")
+                    print("  FAIL FAIL: No CET bypass techniques returned")
                     self.test_results.append(False)
                     return False
             else:
                 # Fallback test with mock
-                print("  ⚠️  Using mock test (modules not available)")
+                print("  WARNING  Using mock test (modules not available)")
                 self.test_results.append(True)
                 return True
 
         except Exception as e:
-            print(f"  ❌ FAIL: CET bypass error: {e}")
+            print(f"  FAIL FAIL: CET bypass error: {e}")
             self.test_results.append(False)
             return False
 
     def test_cfi_bypass_functionality(self):
         """Test CFI bypass produces real gadgets and techniques."""
-        print("\n🔒 Testing CFI Bypass Functionality...")
+        print("\n Testing CFI Bypass Functionality...")
         print("=" * 40)
 
         try:
@@ -208,26 +207,26 @@ full_path = get_project_root() / file_path
                 jop_gadgets = cfi_bypass.find_jop_gadgets(b'\x90' * 1000)
 
                 if rop_gadgets or jop_gadgets:
-                    print(f"  ✅ PASS: Found {len(rop_gadgets)} ROP and {len(jop_gadgets)} JOP gadgets")
+                    print(f"  OK PASS: Found {len(rop_gadgets)} ROP and {len(jop_gadgets)} JOP gadgets")
                     self.test_results.append(True)
                     return True
                 else:
-                    print("  ⚠️  WARNING: No gadgets found (may need real binary)")
+                    print("  WARNING  WARNING: No gadgets found (may need real binary)")
                     self.test_results.append(True)
                     return True
             else:
-                print("  ⚠️  Using mock test (modules not available)")
+                print("  WARNING  Using mock test (modules not available)")
                 self.test_results.append(True)
                 return True
 
         except Exception as e:
-            print(f"  ❌ FAIL: CFI bypass error: {e}")
+            print(f"  FAIL FAIL: CFI bypass error: {e}")
             self.test_results.append(False)
             return False
 
     def test_hardware_bypass_functionality(self):
         """Test hardware protection bypasses are functional."""
-        print("\n🔧 Testing Hardware Protection Bypasses...")
+        print("\n Testing Hardware Protection Bypasses...")
         print("=" * 45)
 
         try:
@@ -237,9 +236,9 @@ full_path = get_project_root() / file_path
                 tpm_methods = tpm_bypass.get_available_bypass_methods()
 
                 if tpm_methods and len(tpm_methods) > 0:
-                    print(f"  ✅ PASS: {len(tpm_methods)} TPM bypass methods available")
+                    print(f"  OK PASS: {len(tpm_methods)} TPM bypass methods available")
                 else:
-                    print("  ❌ FAIL: No TPM bypass methods available")
+                    print("  FAIL FAIL: No TPM bypass methods available")
                     self.test_results.append(False)
                     return False
 
@@ -248,21 +247,21 @@ full_path = get_project_root() / file_path
                 dongle_config = dongle_emulator.get_dongle_config("hasp")
 
                 if dongle_config:
-                    print("  ✅ PASS: Dongle emulator configuration available")
+                    print("  OK PASS: Dongle emulator configuration available")
                 else:
-                    print("  ❌ FAIL: Dongle emulator not functional")
+                    print("  FAIL FAIL: Dongle emulator not functional")
                     self.test_results.append(False)
                     return False
 
                 self.test_results.append(True)
                 return True
             else:
-                print("  ⚠️  Using mock test (modules not available)")
+                print("  WARNING  Using mock test (modules not available)")
                 self.test_results.append(True)
                 return True
 
         except Exception as e:
-            print(f"  ❌ FAIL: Hardware bypass error: {e}")
+            print(f"  FAIL FAIL: Hardware bypass error: {e}")
             self.test_results.append(False)
             return False
 
@@ -286,7 +285,7 @@ full_path = get_project_root() / file_path
                 )
 
                 if modules_ok:
-                    print("  ✅ PASS: All bypass modules integrated with radare2")
+                    print("  OK PASS: All bypass modules integrated with radare2")
 
                     # Test analysis includes modern protections
                     result = engine.analyze_vulnerabilities()
@@ -300,28 +299,28 @@ full_path = get_project_root() / file_path
 
                     missing = [f for f in required_fields if f not in result]
                     if not missing:
-                        print("  ✅ PASS: Analysis includes all modern protection fields")
+                        print("  OK PASS: Analysis includes all modern protection fields")
                         self.test_results.append(True)
                         os.unlink(test_binary)
                         return True
                     else:
-                        print(f"  ❌ FAIL: Missing fields: {missing}")
+                        print(f"  FAIL FAIL: Missing fields: {missing}")
                         self.test_results.append(False)
                         os.unlink(test_binary)
                         return False
                 else:
-                    print("  ❌ FAIL: Bypass modules not properly integrated")
+                    print("  FAIL FAIL: Bypass modules not properly integrated")
                     self.test_results.append(False)
                     os.unlink(test_binary)
                     return False
             else:
-                print("  ⚠️  Using mock test (modules not available)")
+                print("  WARNING  Using mock test (modules not available)")
                 os.unlink(test_binary)
                 self.test_results.append(True)
                 return True
 
         except Exception as e:
-            print(f"  ❌ FAIL: Integration test error: {e}")
+            print(f"  FAIL FAIL: Integration test error: {e}")
             self.test_results.append(False)
             return False
 
@@ -345,40 +344,40 @@ full_path = get_project_root() / file_path
                 # Check CET bypass analysis
                 cet_analysis = result.get('cet_bypass_analysis', {})
                 if cet_analysis.get('bypass_techniques'):
-                    print("  ✅ PASS: CET bypass techniques generated")
+                    print("  OK PASS: CET bypass techniques generated")
                 else:
-                    print("  ⚠️  WARNING: No CET bypass techniques (may need CET-enabled binary)")
+                    print("  WARNING  WARNING: No CET bypass techniques (may need CET-enabled binary)")
 
                 # Check CFI bypass analysis
                 cfi_analysis = result.get('cfi_bypass_analysis', {})
                 if cfi_analysis.get('bypass_techniques'):
-                    print("  ✅ PASS: CFI bypass techniques generated")
+                    print("  OK PASS: CFI bypass techniques generated")
                 else:
-                    print("  ⚠️  WARNING: No CFI bypass techniques (may need CFI-enabled binary)")
+                    print("  WARNING  WARNING: No CFI bypass techniques (may need CFI-enabled binary)")
 
                 # Check hardware bypass analysis
                 hw_analysis = result.get('hardware_protection_analysis', {})
                 if hw_analysis:
-                    print("  ✅ PASS: Hardware protection analysis performed")
+                    print("  OK PASS: Hardware protection analysis performed")
                 else:
-                    print("  ⚠️  WARNING: No hardware protections detected")
+                    print("  WARNING  WARNING: No hardware protections detected")
 
                 os.unlink(test_binary)
                 self.test_results.append(True)
                 return True
             else:
-                print("  ⚠️  Using mock test (modules not available)")
+                print("  WARNING  Using mock test (modules not available)")
                 self.test_results.append(True)
                 return True
 
         except Exception as e:
-            print(f"  ⚠️  WARNING: Real-world test limited: {e}")
+            print(f"  WARNING  WARNING: Real-world test limited: {e}")
             self.test_results.append(True)
             return True
 
     def generate_documentation(self):
         """Generate documentation of successful bypass tests."""
-        print("\n📝 Generating Documentation...")
+        print("\n Generating Documentation...")
         print("=" * 35)
 
         doc_content = f"""# PRODUCTION READINESS CHECKPOINT 6 - DOCUMENTATION
@@ -387,38 +386,38 @@ Generated: {datetime.now().isoformat()}
 ## Modern Protection Bypass Integration Status
 
 ### CET (Control-flow Enforcement Technology) Bypass
-- **Status**: {'✅ INTEGRATED' if self.test_results[1] else '❌ FAILED'}
+- **Status**: {'OK INTEGRATED' if self.test_results[1] else 'FAIL FAILED'}
 - **Techniques Available**: Multiple (ret2csu, stack pivot, shadow stack bypass)
 - **Integration**: Connected to radare2 vulnerability detection
 - **Production Ready**: {'YES' if self.test_results[1] else 'NO'}
 
 ### CFI (Control Flow Integrity) Bypass
-- **Status**: {'✅ INTEGRATED' if self.test_results[2] else '❌ FAILED'}
+- **Status**: {'OK INTEGRATED' if self.test_results[2] else 'FAIL FAILED'}
 - **ROP Gadget Finding**: Functional
 - **JOP Gadget Finding**: Functional
 - **Integration**: Connected to exploit generation
 - **Production Ready**: {'YES' if self.test_results[2] else 'NO'}
 
 ### Hardware Protection Bypass
-- **Status**: {'✅ INTEGRATED' if self.test_results[3] else '❌ FAILED'}
+- **Status**: {'OK INTEGRATED' if self.test_results[3] else 'FAIL FAILED'}
 - **TPM Bypass**: Multiple methods available
 - **Dongle Emulation**: HASP, SafeNet, CodeMeter supported
 - **Protocol Fingerprinting**: FlexLM, Network licensing detected
 - **Production Ready**: {'YES' if self.test_results[3] else 'NO'}
 
 ### Radare2 Integration
-- **Status**: {'✅ COMPLETE' if self.test_results[4] else '❌ INCOMPLETE'}
+- **Status**: {'OK COMPLETE' if self.test_results[4] else 'FAIL INCOMPLETE'}
 - **Vulnerability Detection**: Enhanced with modern protections
 - **Bypass Generation**: Automated based on detected protections
 - **Real-time Analysis**: Integrated with existing framework
 
 ### Critical Tests Passed
-- **Zero Placeholders**: {'✅ PASSED' if self.test_results[0] else '❌ FAILED'}
-- **Functional Methods**: {'✅ VERIFIED' if all(self.test_results[1:5]) else '❌ UNVERIFIED'}
-- **Real-world Capability**: {'✅ TESTED' if self.test_results[5] else '❌ UNTESTED'}
+- **Zero Placeholders**: {'OK PASSED' if self.test_results[0] else 'FAIL FAILED'}
+- **Functional Methods**: {'OK VERIFIED' if all(self.test_results[1:5]) else 'FAIL UNVERIFIED'}
+- **Real-world Capability**: {'OK TESTED' if self.test_results[5] else 'FAIL UNTESTED'}
 
 ### Production Deployment Status
-{'🚀 READY FOR DEPLOYMENT' if all(self.test_results) else '❌ NOT READY - CRITICAL FAILURES DETECTED'}
+{' READY FOR DEPLOYMENT' if all(self.test_results) else 'FAIL NOT READY - CRITICAL FAILURES DETECTED'}
 
 ### Critical Failures
 {chr(10).join(self.critical_failures) if self.critical_failures else 'None'}
@@ -431,14 +430,14 @@ This checkpoint certifies that all modern protection bypass mechanisms have been
 4. Connected to the existing Intellicrack framework
 5. Ready for production use against real protected software
 
-**Checkpoint Status**: {'✅ PASSED' if all(self.test_results) and not self.critical_failures else '❌ FAILED'}
+**Checkpoint Status**: {'OK PASSED' if all(self.test_results) and not self.critical_failures else 'FAIL FAILED'}
 """
 
         doc_path = get_project_root() / "CHECKPOINT_6_DOCUMENTATION.md"
         with open(doc_path, 'w') as f:
             f.write(doc_content)
 
-        print(f"  ✅ Documentation saved to: {doc_path}")
+        print(f"  OK Documentation saved to: {doc_path}")
         return True
 
 
@@ -449,7 +448,7 @@ def main():
     print("=" * 70)
     print("MANDATORY VALIDATION OF MODERN PROTECTION BYPASSES")
     print(f"Checkpoint Time: {datetime.now().isoformat()}")
-    print("\n⚠️  ZERO TOLERANCE POLICY IN EFFECT")
+    print("\nWARNING  ZERO TOLERANCE POLICY IN EFFECT")
     print("Any placeholder code or non-functional implementation = IMMEDIATE FAILURE")
 
     validator = ProductionReadinessValidator()
@@ -468,7 +467,7 @@ def main():
         try:
             test_func()
         except Exception as e:
-            print(f"❌ Test '{test_name}' failed with exception: {e}")
+            print(f"FAIL Test '{test_name}' failed with exception: {e}")
             validator.test_results.append(False)
 
     # Generate documentation
@@ -480,33 +479,33 @@ def main():
     pass_rate = passed_tests / total_tests if total_tests > 0 else 0
 
     print("\n" + "=" * 70)
-    print("🎯 PRODUCTION READINESS CHECKPOINT 6 - FINAL RESULTS")
+    print(" PRODUCTION READINESS CHECKPOINT 6 - FINAL RESULTS")
     print("=" * 70)
-    print(f"✅ Tests Passed: {passed_tests}/{total_tests}")
-    print(f"❌ Tests Failed: {total_tests - passed_tests}/{total_tests}")
-    print(f"📊 Pass Rate: {pass_rate:.2%}")
+    print(f"OK Tests Passed: {passed_tests}/{total_tests}")
+    print(f"FAIL Tests Failed: {total_tests - passed_tests}/{total_tests}")
+    print(f" Pass Rate: {pass_rate:.2%}")
 
     if validator.critical_failures:
-        print(f"\n⚠️  CRITICAL FAILURES DETECTED: {len(validator.critical_failures)}")
+        print(f"\nWARNING  CRITICAL FAILURES DETECTED: {len(validator.critical_failures)}")
         for failure in validator.critical_failures[:5]:  # Show first 5
             print(f"   - {failure}")
 
     print("\n" + "=" * 70)
 
     if pass_rate >= 0.90 and not validator.critical_failures:  # 90% pass rate required
-        print("✅ CHECKPOINT 6 PASSED - MODERN PROTECTION BYPASSES VALIDATED")
-        print("✅ CET/CFI bypass integration verified")
-        print("✅ Hardware protection bypasses functional")
-        print("✅ All methods produce real bypass techniques")
-        print("✅ Zero placeholder code detected")
-        print("\n🚀 CLEARED TO PROCEED TO DAY 7")
+        print("OK CHECKPOINT 6 PASSED - MODERN PROTECTION BYPASSES VALIDATED")
+        print("OK CET/CFI bypass integration verified")
+        print("OK Hardware protection bypasses functional")
+        print("OK All methods produce real bypass techniques")
+        print("OK Zero placeholder code detected")
+        print("\n CLEARED TO PROCEED TO DAY 7")
         return 0
     else:
-        print("❌ CHECKPOINT 6 FAILED - CRITICAL ISSUES DETECTED")
-        print("❌ DO NOT PROCEED UNTIL ALL ISSUES ARE RESOLVED")
+        print("FAIL CHECKPOINT 6 FAILED - CRITICAL ISSUES DETECTED")
+        print("FAIL DO NOT PROCEED UNTIL ALL ISSUES ARE RESOLVED")
         if validator.critical_failures:
-            print(f"❌ {len(validator.critical_failures)} CRITICAL FAILURES MUST BE FIXED")
-        print(f"❌ Current pass rate ({pass_rate:.2%}) below 90% requirement")
+            print(f"FAIL {len(validator.critical_failures)} CRITICAL FAILURES MUST BE FIXED")
+        print(f"FAIL Current pass rate ({pass_rate:.2%}) below 90% requirement")
         return 1
 
 

@@ -166,7 +166,7 @@ class AITerminalChat:
             "I can help you analyze binaries, understand security vulnerabilities,\n"
             "and provide insights about your analysis results.\n\n"
             "[dim]Type '/help' for commands or just ask me anything![/dim]",
-            title="🤖 AI Chat Interface",
+            title=" AI Chat Interface",
             border_style="blue",
         )
         self.console.print(welcome_panel)
@@ -556,7 +556,7 @@ class AITerminalChat:
         )
 
         # Header with centered title
-        header_content = Align.center(Text("🤖 AI Assistant Response", style="bold green"))
+        header_content = Align.center(Text(" AI Assistant Response", style="bold green"))
         layout["header"].update(Panel(header_content, border_style="green"))
 
         # Body with response content - check for code blocks and markdown
@@ -769,7 +769,7 @@ class AITerminalChat:
                     count = len(data)
                 else:
                     count = 1
-                overview += f"• {category.replace('_', ' ').title()}: {count} items\n"
+                overview += f" {category.replace('_', ' ').title()}: {count} items\n"
         else:
             overview += "No analysis results available. Run analysis first."
 
@@ -838,13 +838,13 @@ class AITerminalChat:
                             else:
                                 status += " [yellow](not configured)[/yellow]"
 
-                        self.console.print(f"  • {backend}{status}")
+                        self.console.print(f"   {backend}{status}")
                     self.console.print("\n[dim]Usage: /backend <name>[/dim]")
                 else:
                     print("\nAvailable AI Backends:")
                     for backend in available_backends:
                         status = " (current)" if backend == current_backend else ""
-                        print(f"  • {backend}{status}")
+                        print(f"   {backend}{status}")
                     print("\nUsage: /backend <name>")
 
                 return None
@@ -1060,7 +1060,7 @@ class AITerminalChat:
                 if entry_type == "user":
                     f.write(f"## 👤 User\n\n{content}\n\n")
                 else:
-                    f.write(f"## 🤖 AI Assistant\n\n{content}\n\n")
+                    f.write(f"##  AI Assistant\n\n{content}\n\n")
 
                 f.write(f"*{timestamp}*\n\n---\n\n")
 

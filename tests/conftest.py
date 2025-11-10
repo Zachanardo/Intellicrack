@@ -6,10 +6,19 @@ import os
 import pytest
 import sys
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
+
+# Load environment variables from .env file
+ENV_FILE = PROJECT_ROOT / ".env"
+if ENV_FILE.exists():
+    load_dotenv(ENV_FILE, override=True)
+else:
+    # Fallback to default .env location
+    load_dotenv(override=True)
 
 
 def pytest_sessionstart(session):

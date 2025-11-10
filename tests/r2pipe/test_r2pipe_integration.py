@@ -32,27 +32,27 @@ def test_r2pipe_integration():
 
         # Get file info
         file_info = r2.cmd('i')
-        print("✓ File info command executed")
+        print("OK File info command executed")
 
         # Analyze binary
         r2.cmd('aa')
-        print("✓ Basic analysis completed")
+        print("OK Basic analysis completed")
 
         # Get functions list
         functions = r2.cmd('afl')
-        print("✓ Function listing retrieved")
+        print("OK Function listing retrieved")
 
         # Get entry point
         entry = r2.cmd('ie')
-        print("✓ Entry point information retrieved")
+        print("OK Entry point information retrieved")
 
         # Test instruction disassembly
         disasm = r2.cmd('pd 10')
-        print("✓ Disassembly output generated")
+        print("OK Disassembly output generated")
 
         r2.quit()
 
-        print("\n✓ All r2pipe tests PASSED - Real analysis functionality confirmed")
+        print("\nOK All r2pipe tests PASSED - Real analysis functionality confirmed")
         return True
 
     except Exception as e:

@@ -333,24 +333,24 @@ def test_production_checkpoint_5():
             detected = analyzer._detect_license_key_formats(pattern)
             if detected == expected:
                 correct_detections += 1
-                status = "✓ PASS" if detected else "✓ SKIP"
+                status = "OK PASS" if detected else "OK SKIP"
                 print(f"  {status}: {description}")
             else:
-                print(f"  ✗ FAIL: {description} - Expected {expected}, got {detected}")
+                print(f"  FAIL FAIL: {description} - Expected {expected}, got {detected}")
 
         accuracy = correct_detections / len(real_license_patterns)
-        print(f"\n  📊 License Detection Accuracy: {accuracy:.2%} ({correct_detections}/{len(real_license_patterns)})")
+        print(f"\n   License Detection Accuracy: {accuracy:.2%} ({correct_detections}/{len(real_license_patterns)})")
 
         license_test_passed = accuracy >= 0.85  # 85% accuracy requirement
         if license_test_passed:
-            print("  ✅ PRODUCTION READY: License detection meets standards")
+            print("  OK PRODUCTION READY: License detection meets standards")
         else:
-            print("  ❌ NEEDS IMPROVEMENT: Below 85% accuracy threshold")
+            print("  FAIL NEEDS IMPROVEMENT: Below 85% accuracy threshold")
 
         test_results.append(license_test_passed)
 
     except Exception as e:
-        print(f"  ❌ ERROR: {e}")
+        print(f"  FAIL ERROR: {e}")
         test_results.append(False)
 
     # Test 2: Cryptographic Data Detection Production Validation
@@ -373,24 +373,24 @@ def test_production_checkpoint_5():
             detected = analyzer._detect_cryptographic_data(pattern)
             if detected == expected:
                 correct_detections += 1
-                status = "✓ PASS" if detected else "✓ SKIP"
+                status = "OK PASS" if detected else "OK SKIP"
                 print(f"  {status}: {description}")
             else:
-                print(f"  ✗ FAIL: {description} - Expected {expected}, got {detected}")
+                print(f"  FAIL FAIL: {description} - Expected {expected}, got {detected}")
 
         accuracy = correct_detections / len(real_crypto_patterns)
-        print(f"\n  📊 Crypto Detection Accuracy: {accuracy:.2%} ({correct_detections}/{len(real_crypto_patterns)})")
+        print(f"\n   Crypto Detection Accuracy: {accuracy:.2%} ({correct_detections}/{len(real_crypto_patterns)})")
 
         crypto_test_passed = accuracy >= 0.80  # 80% accuracy requirement
         if crypto_test_passed:
-            print("  ✅ PRODUCTION READY: Crypto detection meets standards")
+            print("  OK PRODUCTION READY: Crypto detection meets standards")
         else:
-            print("  ❌ NEEDS IMPROVEMENT: Below 80% accuracy threshold")
+            print("  FAIL NEEDS IMPROVEMENT: Below 80% accuracy threshold")
 
         test_results.append(crypto_test_passed)
 
     except Exception as e:
-        print(f"  ❌ ERROR: {e}")
+        print(f"  FAIL ERROR: {e}")
         test_results.append(False)
 
     # Test 3: API Function Recognition Production Validation
@@ -413,24 +413,24 @@ def test_production_checkpoint_5():
             detected = analyzer._analyze_api_function_patterns(pattern)
             if detected == expected:
                 correct_detections += 1
-                status = "✓ PASS" if detected else "✓ SKIP"
+                status = "OK PASS" if detected else "OK SKIP"
                 print(f"  {status}: {description}")
             else:
-                print(f"  ✗ FAIL: {description} - Expected {expected}, got {detected}")
+                print(f"  FAIL FAIL: {description} - Expected {expected}, got {detected}")
 
         accuracy = correct_detections / len(real_api_patterns)
-        print(f"\n  📊 API Detection Accuracy: {accuracy:.2%} ({correct_detections}/{len(real_api_patterns)})")
+        print(f"\n   API Detection Accuracy: {accuracy:.2%} ({correct_detections}/{len(real_api_patterns)})")
 
         api_test_passed = accuracy >= 0.90  # 90% accuracy requirement for API detection
         if api_test_passed:
-            print("  ✅ PRODUCTION READY: API detection meets standards")
+            print("  OK PRODUCTION READY: API detection meets standards")
         else:
-            print("  ❌ NEEDS IMPROVEMENT: Below 90% accuracy threshold")
+            print("  FAIL NEEDS IMPROVEMENT: Below 90% accuracy threshold")
 
         test_results.append(api_test_passed)
 
     except Exception as e:
-        print(f"  ❌ ERROR: {e}")
+        print(f"  FAIL ERROR: {e}")
         test_results.append(False)
 
     # Test 4: Real-time Integration Production Validation
@@ -442,18 +442,18 @@ def test_production_checkpoint_5():
         # Test component integration
         components = rt_analyzer._determine_analysis_components("test.exe", MockAnalysisEvent.ANALYSIS_STARTED)
         enhanced_included = "enhanced_strings" in components
-        print(f"  {'✓ PASS' if enhanced_included else '✗ FAIL'}: Enhanced strings component integrated")
+        print(f"  {'OK PASS' if enhanced_included else 'FAIL FAIL'}: Enhanced strings component integrated")
 
         # Test enhanced analysis execution
         r2_mock = None
         analysis_result = rt_analyzer._perform_enhanced_string_analysis(r2_mock, "test.exe")
         analysis_functional = "error" not in analysis_result and "production_features" in analysis_result
-        print(f"  {'✓ PASS' if analysis_functional else '✗ FAIL'}: Enhanced analysis execution")
+        print(f"  {'OK PASS' if analysis_functional else 'FAIL FAIL'}: Enhanced analysis execution")
 
         # Test dynamic monitoring
         dynamic_result = rt_analyzer._monitor_dynamic_string_patterns(r2_mock, "test.exe")
         dynamic_functional = "error" not in dynamic_result and "memory_monitoring" in dynamic_result
-        print(f"  {'✓ PASS' if dynamic_functional else '✗ FAIL'}: Dynamic pattern monitoring")
+        print(f"  {'OK PASS' if dynamic_functional else 'FAIL FAIL'}: Dynamic pattern monitoring")
 
         # Test callback system
         test_callbacks = []
@@ -461,12 +461,12 @@ def test_production_checkpoint_5():
             test_callbacks.append(data)
 
         callback_registered = rt_analyzer.register_callback(MockAnalysisEvent.STRING_ANALYSIS_UPDATED, test_callback)
-        print(f"  {'✓ PASS' if callback_registered else '✗ FAIL'}: Event callback registration")
+        print(f"  {'OK PASS' if callback_registered else 'FAIL FAIL'}: Event callback registration")
 
         # Test status system
         status = rt_analyzer.get_status()
         status_functional = "production_ready" in status and status["production_ready"]
-        print(f"  {'✓ PASS' if status_functional else '✗ FAIL'}: Production status reporting")
+        print(f"  {'OK PASS' if status_functional else 'FAIL FAIL'}: Production status reporting")
 
         realtime_test_passed = all([
             enhanced_included, analysis_functional, dynamic_functional,
@@ -474,14 +474,14 @@ def test_production_checkpoint_5():
         ])
 
         if realtime_test_passed:
-            print("  ✅ PRODUCTION READY: Real-time integration validated")
+            print("  OK PRODUCTION READY: Real-time integration validated")
         else:
-            print("  ❌ NEEDS IMPROVEMENT: Real-time integration issues detected")
+            print("  FAIL NEEDS IMPROVEMENT: Real-time integration issues detected")
 
         test_results.append(realtime_test_passed)
 
     except Exception as e:
-        print(f"  ❌ ERROR: {e}")
+        print(f"  FAIL ERROR: {e}")
         test_results.append(False)
 
     # Test 5: Performance Production Validation
@@ -512,19 +512,19 @@ def test_production_checkpoint_5():
         status_time = time.time() - start_time
         status_acceptable = status_time < 0.1  # 100ms max for status
 
-        print(f"  📊 String Analysis Time: {analysis_time:.3f}s {'✓' if analysis_acceptable else '✗'}")
-        print(f"  📊 Status Retrieval Time: {status_time:.3f}s {'✓' if status_acceptable else '✗'}")
+        print(f"   String Analysis Time: {analysis_time:.3f}s {'OK' if analysis_acceptable else 'FAIL'}")
+        print(f"   Status Retrieval Time: {status_time:.3f}s {'OK' if status_acceptable else 'FAIL'}")
 
         performance_test_passed = analysis_acceptable and status_acceptable
         if performance_test_passed:
-            print("  ✅ PRODUCTION READY: Performance meets requirements")
+            print("  OK PRODUCTION READY: Performance meets requirements")
         else:
-            print("  ❌ NEEDS IMPROVEMENT: Performance below standards")
+            print("  FAIL NEEDS IMPROVEMENT: Performance below standards")
 
         test_results.append(performance_test_passed)
 
     except Exception as e:
-        print(f"  ❌ ERROR: {e}")
+        print(f"  FAIL ERROR: {e}")
         test_results.append(False)
 
     # Summary and Conclusion
@@ -533,26 +533,26 @@ def test_production_checkpoint_5():
     pass_rate = passed_tests / total_tests if total_tests > 0 else 0
 
     print("\n" + "=" * 60)
-    print("🎯 DAY 5.3 PRODUCTION READINESS CHECKPOINT 5 RESULTS")
+    print(" DAY 5.3 PRODUCTION READINESS CHECKPOINT 5 RESULTS")
     print("=" * 60)
-    print(f"✅ Tests Passed: {passed_tests}")
-    print(f"❌ Tests Failed: {total_tests - passed_tests}")
-    print(f"📈 Overall Pass Rate: {pass_rate:.2%}")
+    print(f"OK Tests Passed: {passed_tests}")
+    print(f"FAIL Tests Failed: {total_tests - passed_tests}")
+    print(f" Overall Pass Rate: {pass_rate:.2%}")
 
     production_ready = pass_rate >= 0.80  # 80% pass rate for production readiness
 
     if production_ready:
         print("\n🎉 DAY 5.3 PRODUCTION READINESS CHECKPOINT 5 PASSED!")
-        print("✅ Enhanced string analysis validated for production deployment")
-        print("✅ License key detection meets commercial standards")
-        print("✅ Cryptographic pattern recognition functional")
-        print("✅ API function detection accurate")
-        print("✅ Real-time monitoring integration complete")
-        print("✅ Performance requirements satisfied")
-        print("\n🚀 READY TO PROCEED TO DAY 6: MODERN PROTECTION BYPASSES")
+        print("OK Enhanced string analysis validated for production deployment")
+        print("OK License key detection meets commercial standards")
+        print("OK Cryptographic pattern recognition functional")
+        print("OK API function detection accurate")
+        print("OK Real-time monitoring integration complete")
+        print("OK Performance requirements satisfied")
+        print("\n READY TO PROCEED TO DAY 6: MODERN PROTECTION BYPASSES")
         return 0
     else:
-        print(f"\n❌ DAY 5.3 CHECKPOINT FAILED")
+        print(f"\nFAIL DAY 5.3 CHECKPOINT FAILED")
         print(f"❗ Pass rate {pass_rate:.2%} below 80% production threshold")
         print("❗ Address failed tests before proceeding to Day 6")
         return 1

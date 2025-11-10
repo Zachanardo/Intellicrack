@@ -1,6 +1,7 @@
 # Production Code Scanner
 
-Production-ready code scanner for Intellicrack that detects non-production code patterns, stubs, placeholders, and weak implementations.
+Production-ready code scanner for Intellicrack that detects non-production code
+patterns, stubs, placeholders, and weak implementations.
 
 ## Quick Start
 
@@ -67,13 +68,17 @@ OPTIONS:
 ## Recent Improvements
 
 ### Context-Aware Detection (Nov 2025)
-- **Frida Script Detection**: Skips console.log detection in Frida instrumentation scripts
+
+- **Frida Script Detection**: Skips console.log detection in Frida
+  instrumentation scripts
 - **Guard Clause Recognition**: Distinguishes guard clauses from incomplete code
-- **Section Header Detection**: Recognizes configuration section headers vs task markers
+- **Section Header Detection**: Recognizes configuration section headers vs task
+  markers
 - **Callback Parameter Detection**: Skips empty callbacks in API patterns
 - **Abstract Method Support**: Recognizes @abstractmethod decorators in Python
 
 ### Results
+
 - **394 false positives eliminated** (console.log in Frida scripts)
 - **Clean build** with zero warnings
 - **Production-ready** implementations with full integration
@@ -83,12 +88,14 @@ OPTIONS:
 ### Bash/MSYS Environment (Recommended)
 
 Use the `scanner` bash script in the project root:
+
 ```bash
 cd /d/Intellicrack
 ./scanner
 ```
 
 **Advantages:**
+
 - Works in Git Bash, MSYS2, WSL
 - Passes command-line arguments correctly
 - Provides helpful error messages
@@ -97,11 +104,13 @@ cd /d/Intellicrack
 ### Windows Environment
 
 The `Scanner.lnk` Windows shortcut works in:
+
 - File Explorer (double-click)
 - Windows Command Prompt
 - PowerShell (Start-Process)
 
-**Note:** `.lnk` files cannot be executed from bash/MSYS2 as they're Windows-specific binary format.
+**Note:** `.lnk` files cannot be executed from bash/MSYS2 as they're
+Windows-specific binary format.
 
 ## Troubleshooting
 
@@ -112,11 +121,13 @@ cd scripts/scanner
 cargo build --release
 ```
 
-The scanner must be built before use. The bash script checks for the executable and provides guidance if missing.
+The scanner must be built before use. The bash script checks for the executable
+and provides guidance if missing.
 
 ### Cache Issues
 
 If you see stale results after code changes:
+
 ```bash
 ./scanner --clear-cache
 ```
@@ -129,9 +140,9 @@ If you see stale results after code changes:
 
 ## Integration Status
 
-✅ All context-aware detection functions integrated
-✅ Zero compiler warnings
-✅ 7/10 tests passing (3 fail due to pre-existing JavaScript parser limitation)
-✅ Production-ready code quality
+✅ All context-aware detection functions integrated ✅ Zero compiler warnings ✅
+7/10 tests passing (3 fail due to pre-existing JavaScript parser limitation) ✅
+Production-ready code quality
 
-See `INTEGRATION_REPORT.md` and `TEST_STATUS.md` for detailed technical documentation.
+See `INTEGRATION_REPORT.md` and `TEST_STATUS.md` for detailed technical
+documentation.

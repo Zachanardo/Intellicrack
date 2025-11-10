@@ -43,7 +43,10 @@ fn test_tool_cache_with_tools() {
 fn test_discover_and_cache_tools_completes() {
     let result = intellicrack_launcher::tool_discovery::discover_and_cache_tools();
 
-    assert!(result.is_ok(), "Tool discovery should complete without errors");
+    assert!(
+        result.is_ok(),
+        "Tool discovery should complete without errors"
+    );
 }
 
 #[test]
@@ -92,10 +95,7 @@ fn test_environment_variables_set_after_discovery() {
 
 #[test]
 fn test_tool_info_serialization() {
-    let tool_info = ToolInfo::new(
-        PathBuf::from("/usr/bin/test"),
-        Some("1.0.0".to_string()),
-    );
+    let tool_info = ToolInfo::new(PathBuf::from("/usr/bin/test"), Some("1.0.0".to_string()));
 
     let serialized = serde_json::to_string(&tool_info).unwrap();
     let deserialized: ToolInfo = serde_json::from_str(&serialized).unwrap();
@@ -124,7 +124,10 @@ fn test_tool_cache_serialization() {
 fn test_cache_handles_missing_tools_gracefully() {
     let result = intellicrack_launcher::tool_discovery::discover_and_cache_tools();
 
-    assert!(result.is_ok(), "Should succeed even if some tools are missing");
+    assert!(
+        result.is_ok(),
+        "Should succeed even if some tools are missing"
+    );
 }
 
 #[test]
@@ -133,9 +136,7 @@ fn test_concurrent_tool_discovery() {
 
     let handles: Vec<_> = (0..4)
         .map(|_| {
-            thread::spawn(|| {
-                intellicrack_launcher::tool_discovery::discover_and_cache_tools()
-            })
+            thread::spawn(|| intellicrack_launcher::tool_discovery::discover_and_cache_tools())
         })
         .collect();
 

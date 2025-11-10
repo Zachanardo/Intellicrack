@@ -400,25 +400,25 @@ class DependencyAnalyzer:
         print("\033[1;94m" + "=" * 80 + "\033[0m\n")
 
         # Local modules
-        print(f"\033[1;96m📦 Local Modules:\033[0m {len(all_imports.get('local', set()))}")
+        print(f"\033[1;96m Local Modules:\033[0m {len(all_imports.get('local', set()))}")
         if all_imports.get("local"):
             for module in sorted(all_imports["local"])[:10]:
-                print(f"  • {module}")
+                print(f"   {module}")
             if len(all_imports["local"]) > 10:
                 print(f"  ... and {len(all_imports['local']) - 10} more")
         print()
 
         # Standard library
-        print(f"\033[1;92m📚 Standard Library Imports:\033[0m {len(all_imports.get('stdlib', set()))}")
+        print(f"\033[1;92mStandard Library Imports:\033[0m {len(all_imports.get('stdlib', set()))}")
         print()
 
         # Installed packages
         installed = all_imports.get("installed", set())
-        print(f"\033[1;92m✓ Installed Third-Party Packages:\033[0m {len(installed)}")
+        print(f"\033[1;92mInstalled Third-Party Packages:\033[0m {len(installed)}")
         if installed:
             for package in sorted(installed)[:15]:
                 version = self.installed_packages.get(package, "unknown")
-                print(f"  • {package} ({version})")
+                print(f"   {package} ({version})")
             if len(installed) > 15:
                 print(f"  ... and {len(installed) - 15} more")
         print()
@@ -426,7 +426,7 @@ class DependencyAnalyzer:
         # Missing packages
         missing = all_imports.get("missing", set())
         if missing:
-            print(f"\033[1;91m✗ MISSING DEPENDENCIES:\033[0m {len(missing)}")
+            print(f"\033[1;91mMISSING DEPENDENCIES:\033[0m {len(missing)}")
             print("\033[1;91m" + "=" * 80 + "\033[0m")
 
             # Group by file
@@ -436,15 +436,15 @@ class DependencyAnalyzer:
 
             for file_path, imports in sorted(missing_by_file.items()):
                 rel_path = file_path.relative_to(self.project_root)
-                print(f"\n\033[93m📄 {rel_path}\033[0m")
+                print(f"\n\033[93m{rel_path}\033[0m")
                 for imp in sorted(set(imports)):
-                    print(f"  \033[91m✗\033[0m {imp}")
+                    print(f"  \033[91m[MISSING]\033[0m {imp}")
 
             print("\n\033[1;91m" + "=" * 80 + "\033[0m")
-            print(f"\n\033[1;93m⚠ Action Required:\033[0m Install {len(missing)} missing packages")
+            print(f"\n\033[1;93mAction Required:\033[0m Install {len(missing)} missing packages")
             print(f"\033[93mMissing packages:\033[0m {', '.join(sorted(missing))}")
         else:
-            print("\033[1;92m✓ ALL DEPENDENCIES SATISFIED!\033[0m")
+            print("\033[1;92mALL DEPENDENCIES SATISFIED!\033[0m")
             print("\033[1;92m" + "=" * 80 + "\033[0m")
 
 

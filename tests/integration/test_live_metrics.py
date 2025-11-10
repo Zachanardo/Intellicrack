@@ -48,15 +48,15 @@ def test_live_metrics():
 
     # Check CPU widget has monitoring thread
     if hasattr(cpu_widget, 'monitor_thread') and cpu_widget.monitor_thread.isRunning():
-        print("✓ CPU monitoring thread is running")
+        print("OK CPU monitoring thread is running")
     else:
-        print("✗ CPU monitoring thread not running")
+        print("FAIL CPU monitoring thread not running")
 
     # Check GPU widget has monitoring thread
     if hasattr(gpu_widget, 'monitor_thread') and gpu_widget.monitor_thread.isRunning():
-        print("✓ GPU monitoring thread is running")
+        print("OK GPU monitoring thread is running")
     else:
-        print("✗ GPU monitoring thread not running")
+        print("FAIL GPU monitoring thread not running")
 
     # Check for scroll areas
     print("\n4. Checking for scroll areas...")
@@ -65,24 +65,24 @@ def test_live_metrics():
     gpu_has_scroll = any(child.__class__.__name__ == "QScrollArea" for child in gpu_widget.children())
 
     if cpu_has_scroll:
-        print("✓ CPU widget has scroll area")
+        print("OK CPU widget has scroll area")
     else:
-        print("✗ CPU widget missing scroll area")
+        print("FAIL CPU widget missing scroll area")
 
     if gpu_has_scroll:
-        print("✓ GPU widget has scroll area")
+        print("OK GPU widget has scroll area")
     else:
-        print("✗ GPU widget missing scroll area")
+        print("FAIL GPU widget missing scroll area")
 
     # Check GPU dropdown
     print("\n5. Checking GPU dropdown...")
     if hasattr(gpu_widget, 'gpu_combo'):
         count = gpu_widget.gpu_combo.count()
-        print(f"✓ GPU dropdown has {count} items")
+        print(f"OK GPU dropdown has {count} items")
         for i in range(count):
             print(f"   - {gpu_widget.gpu_combo.itemText(i)}")
     else:
-        print("✗ GPU dropdown not found")
+        print("FAIL GPU dropdown not found")
 
     # Monitor for updates
     print("\n6. Monitoring for live updates...")
@@ -135,14 +135,14 @@ def test_live_metrics():
         print("Test Results:")
         print("=" * 60)
         if counts[0] > 5:
-            print(f"✅ CPU metrics updating live ({counts[0]} updates in 10s)")
+            print(f"OK CPU metrics updating live ({counts[0]} updates in 10s)")
         else:
-            print(f"❌ CPU metrics not updating properly ({counts[0]} updates in 10s)")
+            print(f"FAIL CPU metrics not updating properly ({counts[0]} updates in 10s)")
 
         if counts[1] > 5:
-            print(f"✅ GPU metrics updating live ({counts[1]} updates in 10s)")
+            print(f"OK GPU metrics updating live ({counts[1]} updates in 10s)")
         else:
-            print(f"⚠️  GPU metrics limited updates ({counts[1]} updates in 10s)")
+            print(f"WARNING  GPU metrics limited updates ({counts[1]} updates in 10s)")
             print("   (This is normal if no dedicated GPU is present)")
 
         print("\nPlease verify visually that:")
@@ -159,7 +159,7 @@ if __name__ == "__main__":
     try:
         sys.exit(test_live_metrics())
     except Exception as e:
-        print(f"\n❌ Test failed with error: {e}")
+        print(f"\nFAIL Test failed with error: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

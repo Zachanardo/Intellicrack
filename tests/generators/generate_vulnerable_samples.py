@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
             result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
             if result.returncode == 0:
                 compiled = True
-                print(f"✓ Created buffer overflow binary: {output_path}")
+                print(f"OK Created buffer overflow binary: {output_path}")
                 break
         except FileNotFoundError:
             continue
@@ -135,7 +135,7 @@ int main(int argc, char *argv[]) {
             result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
             if result.returncode == 0:
                 compiled = True
-                print(f"✓ Created format string binary: {output_path}")
+                print(f"OK Created format string binary: {output_path}")
                 break
         except FileNotFoundError:
             continue
@@ -206,7 +206,7 @@ int main(int argc, char *argv[]) {
             result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
             if result.returncode == 0:
                 compiled = True
-                print(f"✓ Created integer overflow binary: {output_path}")
+                print(f"OK Created integer overflow binary: {output_path}")
                 break
         except FileNotFoundError:
             continue
@@ -289,7 +289,7 @@ int main(int argc, char *argv[]) {
             result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
             if result.returncode == 0:
                 compiled = True
-                print(f"✓ Created heap overflow binary: {output_path}")
+                print(f"OK Created heap overflow binary: {output_path}")
                 break
         except FileNotFoundError:
             continue
@@ -366,7 +366,7 @@ int main(int argc, char *argv[]) {
             result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
             if result.returncode == 0:
                 compiled = True
-                print(f"✓ Created race condition binary: {output_path}")
+                print(f"OK Created race condition binary: {output_path}")
                 break
         except FileNotFoundError:
             continue
@@ -416,7 +416,7 @@ def create_precompiled_vulnerable_binary(output_path: Path, vuln_type: str) -> N
         pe_data[0x1100:0x1105] = bytes([0xFF, 0x15, 0x20, 0x20, 0x40])  # call malloc
 
     output_path.write_bytes(pe_data)
-    print(f"✓ Created pre-compiled {vuln_type} binary: {output_path}")
+    print(f"OK Created pre-compiled {vuln_type} binary: {output_path}")
 
 
 def generate_all_vulnerable_binaries(output_dir: Path) -> dict[str, list[Path]]:
@@ -461,7 +461,7 @@ def main():
 
     generated = generate_all_vulnerable_binaries(output_dir)
 
-    print("\n✓ Generated vulnerable binaries summary:")
+    print("\nOK Generated vulnerable binaries summary:")
     for category, files in generated.items():
         print(f"  {category}: {len(files)} files")
         for file in files:
@@ -470,7 +470,7 @@ def main():
                 print(f"    - {file.name} ({size} bytes)")
 
     print(f"\nTotal files generated: {sum(len(files) for files in generated.values())}")
-    print("\n⚠️  These binaries are INTENTIONALLY VULNERABLE for testing purposes only!")
+    print("\nWARNING  These binaries are INTENTIONALLY VULNERABLE for testing purposes only!")
 
 
 if __name__ == "__main__":

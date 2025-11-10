@@ -1,393 +1,401 @@
 [build-system]
-requires = ["setuptools>=75.8.2", "wheel"]
+requires = [
+  "setuptools>=75.8.2",
+  "wheel" 
+]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "Intellicrack"
 version = "0.1.0"
-authors = [
-    { name = "Zachary Flint", email = "zach.flint2@gmail.com" }
-]
+authors = [ { name = "Zachary Flint", email = "zach.flint2@gmail.com" } ]
 description = "Intellicrack: Advanced Binary Analysis and Security Research Framework with AI-driven capabilities"
 readme = "README.md"
 license = "GPL-3.0-or-later"
-requires-python = ">=3.12,<3.13"
-keywords = ["binary-analysis", "reverse-engineering", "security", "vulnerability-detection", "malware-analysis", "ai-security", "exploit-development"]
-classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Developers",
-    "Intended Audience :: Science/Research",
-    "Intended Audience :: Information Technology",
-    "Topic :: Security",
-    "Topic :: Software Development :: Disassemblers",
-    "Topic :: Software Development :: Debuggers",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.12",
-    "Operating System :: OS Independent",
-    "Environment :: Console",
-    "Environment :: X11 Applications :: Qt",
+requires-python = ">=3.12,<3.15"
+keywords = [
+  "binary-analysis",
+  "reverse-engineering",
+  "security",
+  "vulnerability-detection",
+  "malware-analysis",
+  "ai-security",
+  "exploit-development",
 ]
-
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Intended Audience :: Information Technology",
+  "Topic :: Security",
+  "Topic :: Software Development :: Disassemblers",
+  "Topic :: Software Development :: Debuggers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Operating System :: OS Independent",
+  "Environment :: Console",
+  "Environment :: X11 Applications :: Qt",
+]
 dependencies = [
-    # Core ML/AI
-    "accelerate==1.11.0",
-    "anthropic>=0.71.0,<0.72",
-    "openai>=2.5.0,<3",
-    "transformers>=4.57.1,<5",
-    "huggingface-hub>=0.35.3,<0.36",
-    "safetensors>=0.6.2,<0.7",
-    "peft==0.17.1",
-    # "auto-gptq>=0.7.0",  # Requires NVIDIA CUDA - not compatible with Intel GPU
-    "bitsandbytes==0.48.1",
+  # Core ML/AI
+  "accelerate==1.11.0",
+  "anthropic>=0.71.0,<0.72",
+  "openai>=2.5.0,<3",
+  "transformers>=4.57.1,<5",
+  "huggingface-hub>=0.35.3,<0.36",
+  "safetensors>=0.6.2,<0.7",
+  "peft==0.17.1",
+  # "auto-gptq>=0.7.0",  # Requires NVIDIA CUDA - not compatible with Intel GPU
+  "bitsandbytes==0.48.1",
 
-    # Binary Analysis
-    "angr>=9.2.180,<10",
-    "claripy>=9.2.180,<10",
-    "capstone>=5.0.3,<6",
-    "keystone-engine>=0.9.2,<0.10",
-    "binwalk3>=3.1.3,<4",
-    "python-magic>=0.4.27,<0.5",
+  # Binary Analysis
+  "angr>=9.2.180,<10",
+  "claripy>=9.2.180,<10",
+  "capstone>=5.0.3,<6",
+  "keystone-engine>=0.9.2,<0.10",
+  "binwalk3>=3.1.3,<4",
+  "python-magic>=0.4.27,<0.5",
 
-    "volatility3>=2.26.2,<3",
-    "yara-python>=4.5.4,<5",
-    "ppdeep==20250625",
-    "py-tlsh==4.7.2",
-    "lief>=0.17.0,<0.18",
-    "pefile>=2024.8.26,<2025",
-    "pyelftools>=0.32,<0.33",
-    "z3-solver>=4.13.0.0,<5",
-    "r2pipe>=1.9.6,<2",
-    "frida>=17.4.0,<18",
-    "frida-tools>=14.4.5,<15",
-    # Emulation & Analysis
-    "qiling>=1.4.6,<2",
-    "unicorn>=2.1.4,<3",
-    "python-fx @ git+https://github.com/Zachanardo/pyfx.git",
+  "volatility3>=2.26.2,<3",
+  "yara-python>=4.5.4,<5",
+  "ppdeep==20250625",
+  "py-tlsh==4.7.2",
+  "lief>=0.17.0,<0.18",
+  "pefile>=2024.8.26,<2025",
+  "pyelftools>=0.32,<0.33",
+  "z3-solver>=4.13.0.0,<5",
+  "r2pipe>=1.9.6,<2",
+  "frida>=17.4.0,<18",
+  "frida-tools>=14.4.5,<15",
+  # Emulation & Analysis
+  "qiling>=1.4.6,<2",
+  "unicorn>=2.1.4,<3",
+  "python-fx @ git+https://github.com/Zachanardo/pyfx.git",
 
-    # Security & Network
-    "mitmproxy @ git+https://github.com/Zachanardo/mitmproxy.git",
-    "scapy>=2.6.1,<3",
-    "cryptography>=45.0.7,<46",
-    "paramiko>=4.0.0,<5",
-    "pyshark>=0.6,<0.7",
-    "dpkt>=1.9.8,<2",
-    "pycryptodome>=3.23.0,<4",
-    "pyopenssl>=25.1.0,<26",
+  # Security & Network
+  "mitmproxy @ git+https://github.com/Zachanardo/mitmproxy.git",
+  "scapy>=2.6.1,<3",
+  "cryptography>=45.0.7,<46",
+  "paramiko>=4.0.0,<5",
+  "pyshark>=0.6,<0.7",
+  "dpkt>=1.9.8,<2",
+  "pycryptodome>=3.23.0,<4",
+  "pyopenssl>=25.1.0,<26",
 
-    # Web & HTTP
-    "aiohttp>=3.13.1,<4",
-    "requests>=2.32.5,<3",
-    "urllib3>=2.5.0,<3",
-    "defusedxml>=0.7.1,<0.8",
-    "xmltodict",
-    "boto3>=1.40.49,<2",
-    "azure-storage-blob>=12.27.0,<13",
-    "fastapi>=0.120.4,<0.121",
-    "httpie>=3.2.4,<4",
+  # Web & HTTP
+  "aiohttp>=3.13.1,<4",
+  "requests>=2.32.5,<3",
+  "urllib3>=2.5.0,<3",
+  "defusedxml>=0.7.1,<0.8",
+  "xmltodict",
+  "boto3>=1.40.49,<2",
+  "azure-storage-blob>=12.27.0,<13",
+  "fastapi>=0.120.4,<0.121",
+  "httpie>=3.2.4,<4",
 
-    # ML Frameworks
-    # torch/torchvision/torchaudio installed via pixi (Intel XPU for local, CPU for CI)
-    "dpctl==0.20.2",
-    "pyopencl>=2025.2.6,<2026",
-    "tensorflow>=2.20.0,<3",
-    "numba==0.62.1",
-    "tf2onnx",
-    "openvino==2025.3.0",
-    # "cupy>=13.0.0,<14",  # NVIDIA CUDA only - not compatible with Intel XPU
-    # "pycuda>=2024.1,<2025",  # NVIDIA CUDA only - not compatible with Intel XPU
-    # "pynvml>=11.5.0,<12",  # NVIDIA GPU monitoring - not compatible with Intel XPU
-    # "torch-directml>=0.2.0,<0.3",  # DirectML backend - using Intel XPU instead
+  # ML Frameworks
+  # torch/torchvision/torchaudio installed via pixi (Intel XPU for local, CPU for CI)
+  "dpctl==0.20.2",
+  "pyopencl>=2025.2.6,<2026",
+  "tensorflow>=2.20.0,<3",
+  "numba==0.62.1",
+  "tf2onnx",
+  "openvino==2025.3.0",
+  # "cupy>=13.0.0,<14",  # NVIDIA CUDA only - not compatible with Intel XPU
+  # "pycuda>=2024.1,<2025",  # NVIDIA CUDA only - not compatible with Intel XPU
+  # "pynvml>=11.5.0,<12",  # NVIDIA GPU monitoring - not compatible with Intel XPU
+  # "torch-directml>=0.2.0,<0.3",  # DirectML backend - using Intel XPU instead
 
-    # Database & Storage
-    "pymongo>=4.15.3,<5",
-    "psycopg2-binary>=2.9.11,<3",
+  # Database & Storage
+  "pymongo>=4.15.3,<5",
+  "psycopg2-binary>=2.9.11,<3",
 
-    # GUI & Visualization
-    "matplotlib>=3.10.7,<4",
-    "pyqt6>=6.9.1,<7",
-    "pyqt6-sip>=13.10.2,<14",
-    "pyqtgraph>=0.13.7,<0.14",
-    "pillow>=11.0.0,<13",
-    "cairocffi>=1.7.1,<2",
-    "graphviz>=0.21,<0.22",
+  # GUI & Visualization
+  "matplotlib>=3.10.7,<4",
+  "pyqt6>=6.9.1,<7",
+  "pyqt6-sip>=13.10.2,<14",
+  "pyqtgraph>=0.13.7,<0.14",
+  "pillow>=11.0.0,<13",
+  "cairocffi>=1.7.1,<2",
+  "graphviz>=0.21,<0.22",
 
-    # System & Hardware
-    "psutil>=7.1.1,<8",
-    "GPUtil==1.4.0",
-    "py-cpuinfo>=9.0.0,<10",
-    "pynput>=1.8.1,<2",
-    "pyusb>=1.3.1,<2",
-    "watchdog>=6.0.0,<7",
-    "wmi>=1.5.1,<2",
-    "pyzmq",
-    # "xattr>=1.0.0,<2",  # Unix file attributes - not needed on Windows
+  # System & Hardware
+  "psutil>=7.1.1,<8",
+  "GPUtil==1.4.0",
+  "py-cpuinfo>=9.0.0,<10",
+  "pynput>=1.8.1,<2",
+  "pyusb>=1.3.1,<2",
+  "watchdog>=6.0.0,<7",
+  "wmi>=1.5.1,<2",
+  "pyzmq",
+  # "xattr>=1.0.0,<2",  # Unix file attributes - not needed on Windows
 
-    # Web & Document Processing
-    "flask>=3.1.2,<4",
-    "flask-cors>=6.0.1,<7",
-    "jinja2>=3.1.6,<4",
-    "pdfkit>=1.0.0,<2",
-    "reportlab>=4.4.4,<5",
-    "weasyprint>=66.0,<67",
-    "tinycss2>=1.4.0,<2",
-    "xlsxwriter>=3.2.9,<4",
+  # Web & Document Processing
+  "flask>=3.1.2,<4",
+  "flask-cors>=6.0.1,<7",
+  "jinja2>=3.1.6,<4",
+  "pdfkit>=1.0.0,<2",
+  "reportlab>=4.4.4,<5",
+  "weasyprint>=66.0,<67",
+  "tinycss2>=1.4.0,<2",
+  "xlsxwriter>=3.2.9,<4",
 
-    "fsspec>=2025.9.0,<2026",
-    "aiobotocore>=2.25.0,<3",
+  "fsspec>=2025.9.0,<2026",
+  "aiobotocore>=2.25.0,<3",
 
-    # Data Science
-    "pandas>=2.3.3,<3",
-    "scikit-learn>=1.7.2,<2",
-    "scipy>=1.16.2,<2",
-    "onnx>=1.19.1,<2",
-    "numpy>=2.2.6,<3",
-    "seaborn>=0.13.2,<0.14",
-    "onnxruntime>=1.23.1,<2",
-    "joblib>=1.5.2,<2",
-    "networkx>=3.5,<4",
-    "plotly==6.3.1",
-    "pyarrow==22.0.0",
+  # Data Science
+  "pandas>=2.3.3,<3",
+  "scikit-learn>=1.7.2,<2",
+  "scipy>=1.16.2,<2",
+  "onnx>=1.19.1,<2",
+  "numpy>=2.2.6,<3",
+  "seaborn>=0.13.2,<0.14",
+  "onnxruntime>=1.23.1,<2",
+  "joblib>=1.5.2,<2",
+  "networkx>=3.5,<4",
+  "plotly==6.3.1",
+  "pyarrow==22.0.0",
 
-    # Data Validation & APIs
-    "pydantic>=2.12.3,<3",
-    "pydantic-core>=2.41.4,<3",
-    "jsonschema>=4.25.1,<5",
-    "pyjwt>=2.10.1,<3",
-    "pyyaml>=6.0.2,<7",
-    "sqlalchemy>=2.0.44,<3",
-    "uvicorn>=0.38.0,<0.39",
+  # Data Validation & APIs
+  "pydantic>=2.12.3,<3",
+  "pydantic-core>=2.41.4,<3",
+  "jsonschema>=4.25.1,<5",
+  "pyjwt>=2.10.1,<3",
+  "pyyaml>=6.0.2,<7",
+  "sqlalchemy>=2.0.44,<3",
+  "uvicorn>=0.38.0,<0.39",
 
-    # Development & Build
-    "build>=1.3.0,<2",
-    "macholib>=1.16.3,<2",
-    "nltk>=3.9.2,<4",
-    "regex>=2025.9.18,<2026",
-    "rich>=14.2.0,<15",
-    "tqdm>=4.67.1,<5",
-    "cffi>=2.0.0,<3",
-    "wheel>=0.45.1,<0.46",
-    "setuptools>=70.0.0,<81",
+  # Development & Build
+  "build>=1.3.0,<2",
+  "macholib>=1.16.3,<2",
+  "nltk>=3.9.2,<4",
+  "regex>=2025.9.18,<2026",
+  "rich>=14.2.0,<15",
+  "tqdm>=4.67.1,<5",
+  "cffi>=2.0.0,<3",
+  "wheel>=0.45.1,<0.46",
+  "setuptools>=70.0.0,<81",
 
-    "jiter>=0.11.1,<0.12",
-    "importlib-metadata>=8.7.0,<9",
-    "importlib-resources==6.5.2",
-    "idna>=3.11,<4",
-    "keyring>=25.6.0,<26",
-    "jmespath>=1.0.1,<2",
-    "hyperframe>=6.1.0,<7",
-    "ply>=3.11,<4",
-    "narwhals>=2.8.0,<3",
-    "matplotlib-inline>=0.1.7,<0.2",
-    "pycairo>=1.28.0,<2",
-    "xyzservices>=2025.4.0,<2026",
-    "google-auth>=2.41.1,<3",
-    "markdown-it-py>=4.0.0,<5",
-    "ml-dtypes>=0.5.3,<0.6",
-    "protobuf>=6.33.0,<7",
-    "tensorboard>=2.20.0,<3",
+  "jiter>=0.11.1,<0.12",
+  "importlib-metadata>=8.7.0,<9",
+  "importlib-resources==6.5.2",
+  "idna>=3.11,<4",
+  "keyring>=25.6.0,<26",
+  "jmespath>=1.0.1,<2",
+  "hyperframe>=6.1.0,<7",
+  "ply>=3.11,<4",
+  "narwhals>=2.8.0,<3",
+  "matplotlib-inline>=0.1.7,<0.2",
+  "pycairo>=1.28.0,<2",
+  "xyzservices>=2025.4.0,<2026",
+  "google-auth>=2.41.1,<3",
+  "markdown-it-py>=4.0.0,<5",
+  "ml-dtypes>=0.5.3,<0.6",
+  "protobuf>=6.33.0,<7",
+  "tensorboard>=2.20.0,<3",
 
-    # Task Management
-    "click>=8.1.7,<9",
-    "click-didyoumean==0.3.1",
-    "click-plugins==1.1.1.2",
-    "click-repl==0.3.0",
-    "python-dotenv>=1.1.1,<2",
+  # Task Management
+  "click>=8.1.7,<9",
+  "click-didyoumean==0.3.1",
+  "click-plugins==1.1.1.2",
+  "click-repl==0.3.0",
+  "python-dotenv>=1.1.1,<2",
 
-    # Distributed Computing & Task Queue
-    "celery==5.5.3",
-    "dask==2025.10.0",
-    "distributed==2025.10.0",
+  # Distributed Computing & Task Queue
+  "celery==5.5.3",
+  "dask==2025.10.0",
+  "distributed==2025.10.0",
 
-    # Additional Core Dependencies
-    "pwntools>=4.14.1,<5",
-    "ropgadget>=7.7,<8",
-    "archinfo>=9.2.180,<10",
-    "cle>=9.2.180,<10",
-    "pyvex>=9.2.180,<10",
-    "ailment>=9.2.158,<10",
-    "mulpyplexer>=0.9,<0.10",
-    "ghidra-bridge>=1.0.0,<2",
-    "jfx-bridge>=1.0.0,<2",
-    "libarchive-c>=5.3,<6",
-    "kaitaistruct>=0.10,<0.11",
-    "itanium-demangler>=1.1,<2",
-    "nampa>=0.1.1,<0.2",
-    "pydivert>=2.1.0,<3",
-    "pywin32>=311,<312",
-    "pywin32-ctypes>=0.2.3,<0.3",
-    "windows-curses>=2.4.1,<3",
-    "python-registry>=1.3.1,<2",
-    "pymem>=1.14.0,<2",
-    "attrs>=25.4.0,<26",
-    "beautifulsoup4>=4.14.2,<5",
-    "bokeh>=3.8.0,<4",
-    "charset-normalizer>=3.4.4,<4",
-    "colorama",
-    "decorator>=5.2.1,<6",
-    "distro>=1.9.0,<2",
-    "dnspython>=2.8.0,<3",
-    "exceptiongroup",
-    "filelock",
-    "fonttools>=4.60.1,<5",
-    "frozenlist>=1.8.0,<2",
-    "gitdb>=4.0.12,<5",
-    "gitpython>=3.1.45,<4",
-    "greenlet>=3.2.4,<4",
-    "h11>=0.16.0,<0.17",
-    "h2>=4.3.0,<5",
-    "httpcore>=1.0.9,<2",
-    "httptools>=0.7.1,<0.8",
-    "httpx>=0.28.1,<0.29",
-    "humanfriendly>=10.0,<11",
-    "ipython>=9.6.0,<10",
-    "isort>=7.0.0,<8",
-    "itsdangerous>=2.2.0,<3",
-    "kiwisolver>=1.4.9,<2",
-    "lxml>=6.0.2,<7",
-    "lz4>=4.4.4,<5",
-    "markdown>=3.9,<4",
-    "markupsafe>=2.1.0,<4",
-    "more-itertools>=10.8.0,<11",
-    "msgpack>=1.1.1,<2",
-    "multidict>=6.7.0,<7",
-    "netifaces>=0.11.0,<0.12",
-    "oauthlib>=3.3.1,<4",
-    "packaging",
-    "pathspec>=0.12.1,<0.13",
-    "platformdirs>=4.5.0,<5",
-    "pluggy",
-    "prometheus-client>=0.23.1,<0.24",
-    "prompt-toolkit>=3.0.52,<4",
-    "pyasn1>=0.6.1,<0.7",
-    "pyasn1-modules>=0.4.2,<0.5",
-    "pycodestyle>=2.14.0,<3",
-    "pydantic-settings>=2.11.0,<3",
-    "pyparsing>=3.2.5,<4",
-    "python-dateutil>=2.9.0.post0,<3",
-    "python-levenshtein>=0.27.1,<0.28",
-    "python-multipart>=0.0.20,<0.0.21",
-    "pytz>=2025.2,<2026",
-    "referencing>=0.37.0,<0.38",
-    "requests-oauthlib>=2.0.0,<3",
-    "rsa>=4.9.1,<5",
-    "six>=1.17.0,<2",
-    "sniffio>=1.3.1,<2",
-    "sortedcontainers>=2.4.0,<3",
-    "soupsieve>=2.8,<3",
-    "starlette>=0.49.1,<0.50",
-    "anyio>=4.11.0,<5",
-    "sympy>=1.14.0,<2",
-    "termcolor>=3.1.0,<4",
-    "threadpoolctl>=3.6.0,<4",
-    "tomlkit>=0.13.3,<0.14",
-    "tornado>=6.5.2,<7",
-    "traitlets>=5.14.3,<6",
-    "typing-extensions",  # Required by mitmproxy and intellicrack - relaxed for IPEX compatibility
-    "tzdata>=2025.2,<2026",
-    "wcwidth>=0.2.13,<0.3",
-    "websockets>=13.1,<14",
-    "werkzeug>=3.1.3,<4",
-    "wrapt>=1.17.3,<2",
-    "yarl>=1.22.0,<2",
-    "zipp>=3.23.0,<4",
-    "zope-event>=6.0,<7",
+  # Additional Core Dependencies
+  "pwntools>=4.14.1,<5",
+  "ropgadget>=7.7,<8",
+  "archinfo>=9.2.180,<10",
+  "cle>=9.2.180,<10",
+  "pyvex>=9.2.180,<10",
+  "ailment>=9.2.158,<10",
+  "mulpyplexer>=0.9,<0.10",
+  "ghidra-bridge>=1.0.0,<2",
+  "jfx-bridge>=1.0.0,<2",
+  "libarchive-c>=5.3,<6",
+  "kaitaistruct>=0.10,<0.11",
+  "itanium-demangler>=1.1,<2",
+  "nampa>=0.1.1,<0.2",
+  "pydivert>=2.1.0,<3",
+  "pywin32>=311,<312",
+  "pywin32-ctypes>=0.2.3,<0.3",
+  "windows-curses>=2.4.1,<3",
+  "python-registry>=1.3.1,<2",
+  "pymem>=1.14.0,<2",
+  "attrs>=25.4.0,<26",
+  "beautifulsoup4>=4.14.2,<5",
+  "bokeh>=3.8.0,<4",
+  "charset-normalizer>=3.4.4,<4",
+  "colorama",
+  "decorator>=5.2.1,<6",
+  "distro>=1.9.0,<2",
+  "dnspython>=2.8.0,<3",
+  "exceptiongroup",
+  "filelock",
+  "fonttools>=4.60.1,<5",
+  "frozenlist>=1.8.0,<2",
+  "gitdb>=4.0.12,<5",
+  "gitpython>=3.1.45,<4",
+  "greenlet>=3.2.4,<4",
+  "h11>=0.16.0,<0.17",
+  "h2>=4.3.0,<5",
+  "httpcore>=1.0.9,<2",
+  "httptools>=0.7.1,<0.8",
+  "httpx>=0.28.1,<0.29",
+  "humanfriendly>=10.0,<11",
+  "ipython>=9.6.0,<10",
+  "isort>=7.0.0,<8",
+  "itsdangerous>=2.2.0,<3",
+  "kiwisolver>=1.4.9,<2",
+  "lxml>=6.0.2,<7",
+  "lz4>=4.4.4,<5",
+  "markdown>=3.9,<4",
+  "markupsafe>=2.1.0,<4",
+  "more-itertools>=10.8.0,<11",
+  "msgpack>=1.1.1,<2",
+  "multidict>=6.7.0,<7",
+  "netifaces>=0.11.0,<0.12",
+  "oauthlib>=3.3.1,<4",
+  "packaging",
+  "pathspec>=0.12.1,<0.13",
+  "platformdirs>=4.5.0,<5",
+  "pluggy",
+  "prometheus-client>=0.23.1,<0.24",
+  "prompt-toolkit>=3.0.52,<4",
+  "pyasn1>=0.6.1,<0.7",
+  "pyasn1-modules>=0.4.2,<0.5",
+  "pycodestyle>=2.14.0,<3",
+  "pydantic-settings>=2.11.0,<3",
+  "pyparsing>=3.2.5,<4",
+  "python-dateutil>=2.9.0.post0,<3",
+  "python-levenshtein>=0.27.1,<0.28",
+  "python-multipart>=0.0.20,<0.0.21",
+  "pytz>=2025.2,<2026",
+  "referencing>=0.37.0,<0.38",
+  "requests-oauthlib>=2.0.0,<3",
+  "rsa>=4.9.1,<5",
+  "six>=1.17.0,<2",
+  "sniffio>=1.3.1,<2",
+  "sortedcontainers>=2.4.0,<3",
+  "soupsieve>=2.8,<3",
+  "starlette>=0.49.1,<0.50",
+  "anyio>=4.11.0,<5",
+  "sympy>=1.14.0,<2",
+  "termcolor>=3.1.0,<4",
+  "threadpoolctl>=3.6.0,<4",
+  "tomlkit>=0.13.3,<0.14",
+  "tornado>=6.5.2,<7",
+  "traitlets>=5.14.3,<6",
+  "typing-extensions",                # Required by mitmproxy and intellicrack - relaxed for IPEX compatibility
+  "tzdata>=2025.2,<2026",
+  "wcwidth>=0.2.13,<0.3",
+  "websockets>=13.1,<14",
+  "werkzeug>=3.1.3,<4",
+  "wrapt>=1.17.3,<2",
+  "yarl>=1.22.0,<2",
+  "zipp>=3.23.0,<4",
+  "zope-event>=6.0,<7",
 
-    # Local AI/LLM support
-    "llama-cpp-python>=0.3.16,<0.4",
-    "langchain",
-    "langchain-core",
-    "langchain-community",
+  # Local AI/LLM support
+  "llama-cpp-python>=0.3.16,<0.4",
+  "langchain",
+  "langchain-core",
+  "langchain-community",
 
-    # Code Quality & Linting
-    "black>=25.9.0,<26",
-    "pylint>=4.0.1,<5",
-    "autopep8>=2.3.2,<3",
-    "flake8>=7.3.0,<8",
-    "ruff>=0.14.1,<0.15",
-    "bandit>=1.8.6,<2",
-    "vulture>=2.14,<3",
-    "pydocstyle>=6.3.0,<7",
-    "mypy>=1.18.2,<2",
-    "pyright>=1.1.406,<2",
-    "mccabe>=0.7.0,<0.8",
-    "xenon>=0.9.3,<0.10",
-    "safety>=3.6.2,<4",
+  # Code Quality & Linting
+  "black>=25.9.0,<26",
+  "pylint>=4.0.1,<5",
+  "autopep8>=2.3.2,<3",
+  "flake8>=7.3.0,<8",
+  "ruff>=0.14.1,<0.15",
+  "bandit>=1.8.6,<2",
+  "vulture>=2.14,<3",
+  "pydocstyle>=6.3.0,<7",
+  "mypy>=1.18.2,<2",
+  "pyright>=1.1.406,<2",
+  "mccabe>=0.7.0,<0.8",
+  "xenon>=0.9.3,<0.10",
+  "safety>=3.6.2,<4",
 
-    # Testing & Coverage
-    "pytest",
-    "pytest-cov",
-    "pytest-mock>=3.15.1,<4",
-    "pytest-asyncio>=1.2.0,<2",
-    "pytest-xdist>=3.8.0,<4",
-    "pytest-timeout>=2.4.0,<3",
-    "pytest-qt>=4.5.0,<5",
-    "pytest-benchmark>=5.1.0,<6",
-    "pytest-html>=4.1.1,<5",
-    "pytest-randomly>=4.0.1,<5",
-    "pytest-sugar>=1.1.1,<2",
-    "pytest-env>=1.2.0,<2",
-    "pytest-instafail>=0.5.0,<0.6",
-    "hypothesis>=6.142.1,<7",
-    "tox",
-    "nox>=2025.10.16,<2026",
-    "coverage",
-    "freezegun>=1.5.5,<2",
-    "responses>=0.25.8,<0.26",
-    "faker>=37.11.0,<38",
+  # Testing & Coverage
+  "pytest",
+  "pytest-cov",
+  "pytest-mock>=3.15.1,<4",
+  "pytest-asyncio>=1.2.0,<2",
+  "pytest-xdist>=3.8.0,<4",
+  "pytest-timeout>=2.4.0,<3",
+  "pytest-qt>=4.5.0,<5",
+  "pytest-benchmark>=5.1.0,<6",
+  "pytest-html>=4.1.1,<5",
+  "pytest-randomly>=4.0.1,<5",
+  "pytest-sugar>=1.1.1,<2",
+  "pytest-env>=1.2.0,<2",
+  "pytest-instafail>=0.5.0,<0.6",
+  "hypothesis>=6.142.1,<7",
+  "tox",
+  "nox>=2025.10.16,<2026",
+  "coverage",
+  "freezegun>=1.5.5,<2",
+  "responses>=0.25.8,<0.26",
+  "faker>=37.11.0,<38",
 
-    # Code Metrics & Complexity
-    "radon>=6.0.1,<7",
+  # Code Metrics & Complexity
+  "radon>=6.0.1,<7",
 
-    # Documentation
-    "sphinx>=8.2.3,<9",
-    "sphinx-rtd-theme>=3.0.2,<4",
-    "sphinx-autodoc-typehints>=3.5.2,<4",
-    "sphinx-copybutton>=0.5.2,<0.6",
-    "sphinx-tabs>=3.4.7,<4",
-    "sphinxcontrib-mermaid>=1.0.0,<2",
-    "sphinx-autobuild>=2025.8.25,<2026",
-    "pdoc3>=0.11.6,<0.12",
-    "mkdocs-material>=9.6.22,<10",
+  # Documentation
+  "sphinx>=8.2.3,<9",
+  "sphinx-rtd-theme>=3.0.2,<4",
+  "sphinx-autodoc-typehints>=3.5.2,<4",
+  "sphinx-copybutton>=0.5.2,<0.6",
+  "sphinx-tabs>=3.4.7,<4",
+  "sphinxcontrib-mermaid>=1.0.0,<2",
+  "sphinx-autobuild>=2025.8.25,<2026",
+  "pdoc3>=0.11.6,<0.12",
+  "mkdocs-material>=9.6.22,<10",
 
-    # Debugging & Profiling
-    "ipdb>=0.13.13,<0.14",
-    "line-profiler>=5.0.0,<6",
-    "memory-profiler>=0.61.0,<0.62",
-    "py-spy>=0.4.1,<0.5",
-    "snakeviz>=2.2.2,<3",
-    "pyinstrument>=5.1.1,<6",
-    "scalene>=1.5.55,<2",
+  # Debugging & Profiling
+  "ipdb>=0.13.13,<0.14",
+  "line-profiler>=5.0.0,<6",
+  "memory-profiler>=0.61.0,<0.62",
+  "py-spy>=0.4.1,<0.5",
+  "snakeviz>=2.2.2,<3",
+  "pyinstrument>=5.1.1,<6",
+  "scalene>=1.5.55,<2",
 
-    # Development Utilities
-    "pre-commit>=4.3.0,<5",
-    "commitizen>=4.8.3,<5",
-    "bumpversion>=0.6.0,<0.7",
-    "pipdeptree>=2.29.0,<3",
-    "rope>=1.14.0,<2",
-    "astor>=0.8.1,<0.9",
-    "yapf>=0.43.0,<0.44",
-    "pip-audit>=2.9.0,<3",
-    "nodeenv>=1.9.1,<2",
-    "twine>=6.2.0,<7",
-    "setuptools-scm>=9.2.2,<10",
-    "poetry>=2.2.1,<3",
-    "pycallgraph2>=1.1.3,<2",
-    "pre-commit-hooks>=6.0.0,<7",
-    "detect-secrets>=1.5.0,<2",
+  # Development Utilities
+  "pre-commit>=4.3.0,<5",
+  "commitizen>=4.8.3,<5",
+  "bumpversion>=0.6.0,<0.7",
+  "pipdeptree>=2.29.0,<3",
+  "rope>=1.14.0,<2",
+  "astor>=0.8.1,<0.9",
+  "yapf>=0.43.0,<0.44",
+  "pip-audit>=2.9.0,<3",
+  "nodeenv>=1.9.1,<2",
+  "twine>=6.2.0,<7",
+  "setuptools-scm>=9.2.2,<10",
+  "poetry>=2.2.1,<3",
+  "pycallgraph2>=1.1.3,<2",
+  "pre-commit-hooks>=6.0.0,<7",
+  "detect-secrets>=1.5.0,<2",
 
-    # Monitoring & Logging
-    "loguru>=0.7.2,<0.8",
-    "sentry-sdk>=2.42.0,<3",
-    "structlog>=25.4.0,<26",
+  # Monitoring & Logging
+  "loguru>=0.7.2,<0.8",
+  "sentry-sdk>=2.42.0,<3",
+  "structlog>=25.4.0,<26",
 ]
 
 [project.optional-dependencies]
-# All dependencies are now in the main dependencies list for single-environment workflow
+linting = [ "yamllint>=1.35.1" ]
 
 [project.urls]
-"Homepage" = "https://github.com/zacharyflint/intellicrack"
+Homepage = "https://github.com/zacharyflint/intellicrack"
 "Bug Tracker" = "https://github.com/zacharyflint/intellicrack/issues"
-"Documentation" = "https://intellicrack.readthedocs.io"
+Documentation = "https://intellicrack.readthedocs.io"
 "Source Code" = "https://github.com/zacharyflint/intellicrack"
 
 # Tool configurations
@@ -402,125 +410,147 @@ intellicrack-gui = "intellicrack.ui.main_app:launch"
 # Tool configurations
 [tool.setuptools]
 packages = [
-    "intellicrack",
-    "intellicrack.ai",
-    "intellicrack.analysis",
-    "intellicrack.analysis.handlers",
-    "intellicrack.cli",
-    "intellicrack.core",
-    "intellicrack.core.analysis",
-    "intellicrack.core.anti_analysis",
-    "intellicrack.core.execution",
-    "intellicrack.core.exploitation",
-    "intellicrack.core.logging",
-    "intellicrack.core.network",
-    "intellicrack.core.network.protocols",
-    "intellicrack.core.patching",
-    "intellicrack.core.processing",
-    "intellicrack.core.protection_bypass",
-    "intellicrack.core.reporting",
-    "intellicrack.core.resources",
-    "intellicrack.core.security",
-    "intellicrack.core.shared",
-    "intellicrack.core.vulnerability_research",
-    "intellicrack.core.vulnerability_research.exploit_developer",
-    "intellicrack.dashboard",
-    "intellicrack.data",
-    "intellicrack.handlers",
-    "intellicrack.hexview",
-    "intellicrack.llm.tools",
-    "intellicrack.ml",
-    "intellicrack.models",
-    "intellicrack.models.repositories",
-    "intellicrack.plugins",
-    "intellicrack.plugins.custom_modules",
-    "intellicrack.protection",
-    "intellicrack.scripts",
-    "intellicrack.scripts.ghidra",
-    "intellicrack.scripts.setup",
-    "intellicrack.tools",
-    "intellicrack.ui",
-    "intellicrack.ui.dialogs",
-    "intellicrack.ui.tabs",
-    "intellicrack.ui.widgets",
-    "intellicrack.utils",
-    "intellicrack.utils.analysis",
-    "intellicrack.utils.binary",
-    "intellicrack.utils.core",
-    "intellicrack.utils.exploitation",
-    "intellicrack.utils.patching",
-    "intellicrack.utils.protection",
-    "intellicrack.utils.reporting",
-    "intellicrack.utils.runtime",
-    "intellicrack.utils.system",
-    "intellicrack.utils.tools",
-    "intellicrack.utils.ui",
-    "intellicrack.utils.validation",
+  "intellicrack",
+  "intellicrack.ai",
+  "intellicrack.analysis",
+  "intellicrack.analysis.handlers",
+  "intellicrack.cli",
+  "intellicrack.core",
+  "intellicrack.core.analysis",
+  "intellicrack.core.anti_analysis",
+  "intellicrack.core.execution",
+  "intellicrack.core.exploitation",
+  "intellicrack.core.logging",
+  "intellicrack.core.network",
+  "intellicrack.core.network.protocols",
+  "intellicrack.core.patching",
+  "intellicrack.core.processing",
+  "intellicrack.core.protection_bypass",
+  "intellicrack.core.reporting",
+  "intellicrack.core.resources",
+  "intellicrack.core.security",
+  "intellicrack.core.shared",
+  "intellicrack.core.vulnerability_research",
+  "intellicrack.core.vulnerability_research.exploit_developer",
+  "intellicrack.dashboard",
+  "intellicrack.data",
+  "intellicrack.handlers",
+  "intellicrack.hexview",
+  "intellicrack.llm.tools",
+  "intellicrack.ml",
+  "intellicrack.models",
+  "intellicrack.models.repositories",
+  "intellicrack.plugins",
+  "intellicrack.plugins.custom_modules",
+  "intellicrack.protection",
+  "intellicrack.scripts",
+  "intellicrack.scripts.ghidra",
+  "intellicrack.scripts.setup",
+  "intellicrack.tools",
+  "intellicrack.ui",
+  "intellicrack.ui.dialogs",
+  "intellicrack.ui.tabs",
+  "intellicrack.ui.widgets",
+  "intellicrack.utils",
+  "intellicrack.utils.analysis",
+  "intellicrack.utils.binary",
+  "intellicrack.utils.core",
+  "intellicrack.utils.exploitation",
+  "intellicrack.utils.patching",
+  "intellicrack.utils.protection",
+  "intellicrack.utils.reporting",
+  "intellicrack.utils.runtime",
+  "intellicrack.utils.system",
+  "intellicrack.utils.tools",
+  "intellicrack.utils.ui",
+  "intellicrack.utils.validation",
 ]
 include-package-data = true
 
 [tool.setuptools.package-data]
 intellicrack = [
-    "assets/*",
-    "data/signatures/*",
-    "plugins/custom_modules/*.py",
-    "models/*.pkl",
-    "models/*.joblib",
-    "config/*.json",
+  "assets/*",
+  "data/signatures/*",
+  "plugins/custom_modules/*.py",
+  "models/*.pkl",
+  "models/*.joblib",
+  "config/*.json",
 ]
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-testpaths = ["tests"]
+testpaths = [ "tests" ]
 addopts = [
-    "-ra",
-    "--strict-markers",
-    "--cov=intellicrack",
-    "--cov-report=term-missing",
-    "--cov-report=html",
-    "--cov-report=xml",
+  "-ra",
+  "--strict-markers",
+  "--cov=intellicrack",
+  "--cov-report=term-missing",
+  "--cov-report=html",
+  "--cov-report=xml",
+  "--ignore=tests/runners",
+  "--ignore=tests/generators",
+  "--ignore=tests/checkpoints",
+  "--ignore=tests/framework",
 ]
-python_files = ["test_*.py", "*_test.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
-
-[tool.coverage.run]
-source = ["intellicrack"]
-omit = [
-    "*/tests/*",
-    "*/test_*",
-    "*/__init__.py",
-    "*/setup.py",
+norecursedirs = [
+  "runners",
+  "generators",
+  "checkpoints",
+  "framework",
+  ".git",
+  ".pixi",
+  "__pycache__",
+  "*.egg-info",
 ]
-
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "raise AssertionError",
-    "raise NotImplementedError",
-    "if __name__ == .__main__.:",
-    "if TYPE_CHECKING:",
+python_files = [
+  "test_*.py",
+  "*_test.py"
 ]
+python_classes = [ "Test*" ]
+python_functions = [ "test_*" ]
 
 [tool.black]
 line-length = 100
-target-version = ['py310', 'py311', 'py312']
+target-version = [
+  'py310',
+  'py311',
+  'py312' 
+]
 include = '\.pyi?$'
 extend-exclude = '''
 /(
   # Directories
   \.eggs
   | \.git
+  | \.github
   | \.hg
   | \.mypy_cache
+  | \.pytest_cache
+  | \.ruff_cache
+  | \.benchmarks
+  | \.aider\.tags\.cache\.v4
+  | \.claude
+  | \.grok
+  | \.roo
+  | \.serena
+  | \.idea
+  | \.vscode
   | \.tox
   | \.venv
+  | \.pixi
   | _build
   | buck-out
   | build
   | dist
   | ghidra
+  | backups
+  | htmlcov
+  | htmlcov_mitigation
+  | logs
+  | reports
+  | node_modules
+  | CLI\ Coding
+  | Screenshots
 )/
 '''
 
@@ -535,68 +565,621 @@ ensure_newline_before_comments = true
 
 [tool.mypy]
 python_version = "3.12"
-warn_return_any = true
+warn_return_any = false
 warn_unused_configs = true
 disallow_untyped_defs = false
 disallow_incomplete_defs = false
 check_untyped_defs = false
 disallow_untyped_decorators = false
 no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
+warn_redundant_casts = false
+warn_unused_ignores = false
 warn_no_return = true
 warn_unreachable = true
 strict_equality = true
+ignore_missing_imports = true
+follow_imports = "silent"
+show_error_codes = true
+exclude = [
+  "^tools/",
+  "^build/",
+  "^dist/",
+  "^\\.git/",
+  "^\\.github/",
+  "^\\.pixi/",
+  "^venv/",
+  "^\\.venv/",
+  "^tests/",
+  "^docs/",
+  "^\\.mypy_cache/",
+  "^\\.pytest_cache/",
+  "^\\.ruff_cache/",
+  "^\\.benchmarks/",
+  "^\\.aider\\.tags\\.cache\\.v4/",
+  "^\\.claude/",
+  "^\\.grok/",
+  "^\\.roo/",
+  "^\\.serena/",
+  "^\\.idea/",
+  "^\\.vscode/",
+  "^backups/",
+  "^htmlcov/",
+  "^htmlcov_mitigation/",
+  "^logs/",
+  "^reports/",
+  "^node_modules/",
+  "^CLI\\ Coding/",
+  "^Screenshots/",
+  ".*\\.egg-info/",
+]
 
-[tool.pylint.messages_control]
-disable = [
-    "C0103",  # Invalid name
-    "C0114",  # Missing module docstring
-    "C0115",  # Missing class docstring
-    "C0116",  # Missing function docstring
-    "R0903",  # Too few public methods
-    "R0912",  # Too many branches
-    "R0913",  # Too many arguments
-    "R0914",  # Too many local variables
-    "R0915",  # Too many statements
-    "W0511",  # TODO comments
+[[tool.mypy.overrides]]
+module = [
+  "angr.*",
+  "claripy.*",
+  "capstone.*",
+  "keystone.*",
+  "r2pipe.*",
+  "frida.*",
+  "volatility3.*",
+  "yara.*",
+  "lief.*",
+  "pefile.*",
+  "qiling.*",
+  "unicorn.*",
+  "mitmproxy.*",
+]
+ignore_missing_imports = true
+ignore_errors = true
+
+[tool.ty]
+
+[tool.ty.src]
+include = [ "intellicrack" ]
+exclude = [
+  "tests",
+  "dev",
+  "tools",
+  "build",
+  "dist",
+  "ghidra",
+  "backups",
+  "htmlcov",
+  "htmlcov_mitigation",
+  "logs",
+  "reports",
+  "node_modules",
+  "**/__pycache__",
+  "**/*.pyc",
+  "**/.pytest_cache",
+  ".git",
+  ".github",
+  ".pixi",
+  "venv",
+  ".venv",
+]
+
+[tool.ty.environment]
+python-platform = "win32"
+python-version = "3.12"
+root = [ "intellicrack" ]
+
+[tool.ty.rules]
+possibly-unresolved-reference = "warn"
+division-by-zero = "error"
+unresolved-reference = "error"
+invalid-argument-type = "warn"
+invalid-assignment = "warn"
+invalid-return-type = "warn"
+missing-argument = "error"
+too-many-positional-arguments = "warn"
+call-non-callable = "warn"
+unresolved-import = "warn"
+unresolved-attribute = "warn"
+
+[tool.ty.terminal]
+output-format = "concise"
+
+[[tool.ty.overrides]]
+include = [
+  "tests/**",
+  "**/test_*.py" 
+]
+
+[tool.ty.overrides.rules]
+possibly-unresolved-reference = "ignore"
+unresolved-reference = "ignore"
+
+[[tool.ty.overrides]]
+include = [ "intellicrack/ai/**" ]
+
+[tool.ty.overrides.rules]
+call-non-callable = "warn"
+invalid-argument-type = "warn"
+
+[[tool.ty.overrides]]
+include = [ "intellicrack/core/**" ]
+
+[tool.ty.overrides.rules]
+invalid-assignment = "error"
+invalid-return-type = "error"
+
+[tool.pyright]
+include = [ "intellicrack" ]
+exclude = [
+  "**/__pycache__",
+  "**/node_modules",
+  "**/.venv",
+  "**/venv",
+  "**/build",
+  "**/dist",
+  "**/.git",
+  "**/.github",
+  "**/.pytest_cache",
+  "**/.mypy_cache",
+  "**/.ruff_cache",
+  "**/.benchmarks",
+  "**/.aider.tags.cache.v4",
+  "**/.claude",
+  "**/.grok",
+  "**/.roo",
+  "**/.serena",
+  "**/.idea",
+  "**/.vscode",
+  "**/backups",
+  "**/htmlcov",
+  "**/htmlcov_mitigation",
+  "**/logs",
+  "**/reports",
+  "**/*.egg-info",
+  "**/tests",
+  "tools",
+  "docs",
+  ".pixi",
+  "CLI Coding",
+  "Screenshots",
+]
+typeCheckingMode = "off"
+pythonVersion = "3.12"
+reportMissingImports = "none"
+reportMissingTypeStubs = false
+reportUnknownMemberType = false
+reportUnknownArgumentType = false
+reportUnknownVariableType = false
+reportUnknownParameterType = false
+useLibraryCodeForTypes = true
+analyzeUnannotatedFunctions = true
+enableTypeIgnoreComments = true
+
+[tool.pylint.main]
+extension-pkg-allow-list = [
+  "PyQt5",
+  "PyQt6"
+]
+ignore-paths = [
+  "^tests/.*",
+  "^dev/.*",
+  "^docs/.*",
+  "^tools/.*",
+  "^\\.git/.*",
+  "^\\.github/.*",
+  "^venv/.*",
+  "^\\.venv/.*",
+  "^build/.*",
+  "^dist/.*",
+  "^\\.pixi/.*",
+  "^\\.mypy_cache/.*",
+  "^\\.pytest_cache/.*",
+  "^\\.ruff_cache/.*",
+  "^\\.benchmarks/.*",
+  "^\\.aider\\.tags\\.cache\\.v4/.*",
+  "^\\.claude/.*",
+  "^\\.grok/.*",
+  "^\\.roo/.*",
+  "^\\.serena/.*",
+  "^\\.idea/.*",
+  "^\\.vscode/.*",
+  "^backups/.*",
+  "^htmlcov/.*",
+  "^htmlcov_mitigation/.*",
+  "^logs/.*",
+  "^reports/.*",
+  "^node_nodes/.*",
+  "^CLI\\ Coding/.*",
+  "^Screenshots/.*",
+  ".*\\.egg-info/.*",
+]
+jobs = 0
+py-version = "3.12"
+
+[tool.pylint.TYPECHECK]
+ignored-modules = [
+  "PyQt5",
+  "PyQt5.QtCore",
+  "PyQt5.QtGui",
+  "PyQt5.QtWidgets",
+  "PyQt6",
+  "PyQt6.QtCore",
+  "PyQt6.QtGui",
+  "PyQt6.QtWidgets",
+]
+ignored-classes = [
+  "QApplication",
+  "QWidget",
+  "QDialog",
+  "QMainWindow",
+  "QPushButton",
+  "QLabel",
+  "QLineEdit",
+  "QTextEdit",
+  "QTableWidget",
+  "QMessageBox",
+  "QFileDialog",
+  "QVBoxLayout",
+  "QHBoxLayout",
+  "Qt",
+  "pyqtSignal",
+  "QThread",
+  "QTimer",
+  "QFont",
+  "QIcon",
+  "QPixmap",
+  "QAction",
+  "QCheckBox",
+  "QComboBox",
+  "QSpinBox",
+  "QGroupBox",
+  "QFormLayout",
+  "QListWidget",
+  "QTreeWidget",
+  "QTabWidget",
+  "QSplitter",
+  "QProgressBar",
+  "QStatusBar",
+  "QToolBar",
+  "QMenu",
+  "QAbstractScrollArea",
+  "QPlainTextEdit",
+  "QInputDialog",
+  "QDesktopWidget",
+  "QSplashScreen",
+  "QWizard",
+  "QWizardPage",
+  "QTextBrowser",
+  "QHeaderView",
+  "QAbstractItemView",
+  "QDialogButtonBox",
+  "QSizePolicy",
+  "QSpacerItem",
+  "QFrame",
+  "QListWidgetItem",
+  "QTreeWidgetItem",
+  "QTableWidgetItem",
+  "QSize",
+  "QPoint",
+  "QRect",
+  "QColor",
+  "QPainter",
+  "QPen",
+  "QKeyEvent",
+  "QMouseEvent",
+  "QPaintEvent",
+  "QResizeEvent",
+  "QFontMetrics",
+  "QKeySequence",
 ]
 
 [tool.ruff]
-line-length = 100
+line-length = 140
 target-version = "py310"
 exclude = [
-    "tests/",
-    "dev/",
-    ".git/",
-    ".venv/",
-    "venv/",
-    "build/",
-    "dist/",
-    "*.egg-info/",
+  "tests/",
+  "test/",
+  "**/test_*.py",
+  "**/tests/*.py",
+  "dev/",
+  "development/",
+  ".git/",
+  ".github/",
+  ".gitignore",
+  ".venv/",
+  ".venv_windows/",
+  ".venv_wsl/",
+  "venv/",
+  "env/",
+  ".pixi/",
+  "build/",
+  "dist/",
+  "*.egg-info/",
+  "__pycache__/",
+  "*.pyc",
+  "*.pyo",
+  ".vscode/",
+  ".idea/",
+  "*.swp",
+  "*.swo",
+  "*~",
+  "docs/",
+  "documentation/",
+  "tools/",
+  "ghidra/",
+  ".ruff_cache/",
+  ".mypy_cache/",
+  ".pytest_cache/",
+  ".benchmarks/",
+  ".aider.tags.cache.v4/",
+  ".claude/",
+  ".grok/",
+  ".roo/",
+  ".serena/",
+  "backups/",
+  "htmlcov/",
+  "htmlcov_mitigation/",
+  "logs/",
+  "reports/",
+  "node_modules/",
+  "CLI Coding/",
+  "Screenshots/",
+  "*.ipynb",
+  "setup.py",
+  "setup.cfg",
 ]
 
 [tool.ruff.lint]
 select = [
-    "E",   # pycodestyle errors
-    "W",   # pycodestyle warnings
-    "F",   # pyflakes
-    "I",   # isort
-    "C90", # mccabe
-    "N",   # pep8-naming
-    "B",   # flake8-bugbear
-    "S",   # flake8-bandit
-]
-ignore = [
-    "E501",  # Line too long
-    "B008",  # Do not perform function calls in argument defaults
-    "S101",  # Use of assert detected
+  "E",
+  "W",
+  "F",
+  "I",
+  "C90",
+  "N",
+  "B",
+  "S",
+  "D",
+  "UP",
+  "YTT",
+  "ANN",
+  "ASYNC",
+  "BLE",
+  "FBT",
+  "A",
+  "COM",
+  "C4",
+  "DTZ",
+  "T10",
+  "EM",
+  "EXE",
+  "FA",
+  "ISC",
+  "ICN",
+  "G",
+  "INP",
+  "PIE",
+  "T20",
+  "PYI",
+  "PT",
+  "Q",
+  "RSE",
+  "RET",
+  "SLF",
+  "SLOT",
+  "SIM",
+  "TID",
+  "TCH",
+  "INT",
+  "ARG",
+  "PTH",
+  "TD",
+  "FIX",
+  "ERA",
+  "PD",
+  "PGH",
+  "PL",
+  "TRY",
+  "FLY",
+  "NPY",
+  "AIR",
+  "PERF",
+  "FURB",
+  "LOG",
+  "RUF",
 ]
 
+[tool.ruff.lint.mccabe]
+max-complexity = 30
+
+[tool.ruff.lint.pep8-naming]
+classmethod-decorators = [
+  "classmethod",
+  "pydantic.validator" 
+]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = [
+  "fastapi.Depends",
+  "fastapi.Query" 
+]
+
+[tool.vulture]
+exclude = [
+  ".git/",
+  ".github/",
+  ".pixi/",
+  ".venv*/",
+  "venv/",
+  "build/",
+  "dist/",
+  "*.egg-info/",
+  "__pycache__/",
+  "node_modules/",
+  "tests/",
+  "docs/",
+  "tools/",
+  "htmlcov/",
+  "htmlcov_mitigation/",
+  "logs/",
+  "reports/",
+  "backups/",
+  ".benchmarks/",
+  ".aider.tags.cache.v4/",
+  ".claude/",
+  ".grok/",
+  ".roo/",
+  ".serena/",
+  ".idea/",
+  ".vscode/",
+  "CLI Coding/",
+  "Screenshots/",
+]
+ignore_decorators = [
+  "@app.route",
+  "@celery.task",
+  "@pytest.fixture",
+  "@click.command",
+  "@staticmethod",
+  "@classmethod",
+  "@property",
+]
+ignore_names = [
+  "*test_*",
+  "*Test*",
+  "setUp",
+  "tearDown",
+]
+min_confidence = 80
+paths = ["intellicrack"]
+sort_by_size = true
+
 [tool.bandit]
-exclude_dirs = ["tests", "docs"]
-skips = ["B101", "B601"]
+exclude_dirs = [
+  "tests",
+  "docs",
+  "tools",
+  ".git",
+  ".github",
+  ".pixi",
+  ".mypy_cache",
+  ".pytest_cache",
+  ".ruff_cache",
+  ".benchmarks",
+  ".aider.tags.cache.v4",
+  ".claude",
+  ".grok",
+  ".roo",
+  ".serena",
+  ".idea",
+  ".vscode",
+  "backups",
+  "htmlcov",
+  "htmlcov_mitigation",
+  "logs",
+  "reports",
+  "node_modules",
+  "CLI Coding",
+  "Screenshots",
+]
+skips = [
+  "B101",
+  "B601"
+]
 
 [tool.uv.sources]
 python-fx = { git = "https://github.com/Zachanardo/pyfx.git" }
 mitmproxy = { git = "https://github.com/Zachanardo/mitmproxy.git" }
+
+[tool.coverage.run]
+source = [ "intellicrack" ]
+omit = [
+  "*/.git/*",
+  "*/.github/*",
+  "*/.pixi/*",
+  "*/dev/*",
+  "*/tools/*",
+  "*/tests/*",
+  "*/docs/*",
+  "*/__pycache__/*",
+  "*/.mypy_cache/*",
+  "*/.pytest_cache/*",
+  "*/.ruff_cache/*",
+  "*/.benchmarks/*",
+  "*/.aider.tags.cache.v4/*",
+  "*/.claude/*",
+  "*/.grok/*",
+  "*/.roo/*",
+  "*/.serena/*",
+  "*/.idea/*",
+  "*/.vscode/*",
+  "*/backups/*",
+  "*/htmlcov/*",
+  "*/htmlcov_mitigation/*",
+  "*/logs/*",
+  "*/reports/*",
+  "*/node_modules/*",
+  "*/CLI Coding/*",
+  "*/Screenshots/*",
+  "*/*.egg-info/*",
+  "setup.py",
+  "conftest.py",
+]
+branch = true
+
+[tool.coverage.report]
+fail_under = 80
+precision = 2
+show_missing = true
+skip_covered = false
+sort = "Cover"
+exclude_lines = [
+  "pragma: no cover",
+  "def __repr__",
+  "if self.debug:",
+  "if settings.DEBUG",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if 0:",
+  "if __name__ == .__main__.:",
+  "class .*\\bProtocol\\):",
+  "@(abc\\.)?abstractmethod",
+]
+
+[tool.coverage.html]
+directory = "coverage_html_report"
+title = "Intellicrack Coverage Report"
+
+[tool.coverage.xml]
+output = "coverage.xml"
+
+[tool.rumdl.global]
+exclude = [
+  ".git",
+  ".github",
+  ".pixi",
+  ".mypy_cache",
+  ".pytest_cache",
+  ".ruff_cache",
+  ".benchmarks",
+  ".aider.tags.cache.v4",
+  ".claude",
+  ".grok",
+  ".roo",
+  ".serena",
+  ".idea",
+  ".vscode",
+  "backups",
+  "htmlcov",
+  "htmlcov_mitigation",
+  "logs",
+  "reports",
+  "node_modules",
+  "CLI Coding",
+  "Screenshots",
+  "vendor",
+  "dist",
+  "build",
+  "tools",
+  "tests",
+  "docs",
+  "CHANGELOG.md",
+  "LICENSE.md",
+]
+respect_gitignore = true

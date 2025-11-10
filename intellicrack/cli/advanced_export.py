@@ -635,7 +635,7 @@ KEY FINDINGS
 """
 
         for finding in summary_data["key_findings"]:
-            content += f"• {finding}\n"
+            content += f" {finding}\n"
 
         content += "\nRECOMMENDATIONS\n---------------\n"
         for i, rec in enumerate(summary_data["recommendations"], 1):

@@ -60,7 +60,7 @@ def run_coverage_analysis(project_root):
     coverage_results = {}
 
     try:
-        print("🔍 Running comprehensive test suite...")
+        print(" Running comprehensive test suite...")
 
         # Build coverage command
         coverage_cmd = [
@@ -91,10 +91,10 @@ def run_coverage_analysis(project_root):
             'stderr': result.stderr
         }
 
-        print("✅ Test execution completed")
+        print("OK Test execution completed")
 
         # Generate coverage report
-        print("\n📊 Generating coverage reports...")
+        print("\n Generating coverage reports...")
 
         # Terminal report
         report_cmd = [sys.executable, '-m', 'coverage', 'report', '-m']
@@ -147,13 +147,13 @@ def run_coverage_analysis(project_root):
             'stderr': json_result.stderr
         }
 
-        print("✅ Coverage reports generated")
+        print("OK Coverage reports generated")
 
     except subprocess.TimeoutExpired:
-        print("⚠️ Coverage analysis timed out")
+        print("WARNING Coverage analysis timed out")
         coverage_results['error'] = 'timeout'
     except Exception as e:
-        print(f"❌ Coverage analysis failed: {e}")
+        print(f"FAIL Coverage analysis failed: {e}")
         coverage_results['error'] = str(e)
 
     return coverage_results, reports_dir
@@ -161,7 +161,7 @@ def run_coverage_analysis(project_root):
 
 def analyze_coverage_results(reports_dir):
     """Analyze coverage results and validate 80%+ target."""
-    print("\n🎯 COVERAGE ANALYSIS RESULTS")
+    print("\n COVERAGE ANALYSIS RESULTS")
     print("=" * 50)
 
     coverage_json_path = reports_dir / 'coverage.json'
@@ -179,7 +179,7 @@ def analyze_coverage_results(reports_dir):
 
             coverage_percentage = (covered_lines / num_statements) * 100 if num_statements > 0 else 0
 
-            print(f"📈 COVERAGE METRICS:")
+            print(f" COVERAGE METRICS:")
             print(f"   Total Statements: {num_statements}")
             print(f"   Covered Lines: {covered_lines}")
             print(f"   Missing Lines: {missing_lines}")
@@ -195,7 +195,7 @@ def analyze_coverage_results(reports_dir):
                 print(f"   Margin: +{coverage_percentage - target_coverage:.2f}%")
                 success = True
             else:
-                print(f"⚠️ COVERAGE TARGET NOT MET:")
+                print(f"WARNING COVERAGE TARGET NOT MET:")
                 print(f"   Target: {target_coverage}%")
                 print(f"   Achieved: {coverage_percentage:.2f}%")
                 print(f"   Shortfall: -{target_coverage - coverage_percentage:.2f}%")
@@ -206,22 +206,22 @@ def analyze_coverage_results(reports_dir):
             # File-level analysis
             files = coverage_data.get('files', {})
             if files:
-                print("📁 FILE-LEVEL COVERAGE:")
+                print(" FILE-LEVEL COVERAGE:")
                 for file_path, file_data in files.items():
                     file_covered = file_data.get('summary', {}).get('covered_lines', 0)
                     file_total = file_data.get('summary', {}).get('num_statements', 1)
                     file_percentage = (file_covered / file_total) * 100 if file_total > 0 else 0
 
-                    status = "✅" if file_percentage >= target_coverage else "⚠️"
+                    status = "OK" if file_percentage >= target_coverage else "WARNING"
                     print(f"   {status} {file_path}: {file_percentage:.1f}% ({file_covered}/{file_total})")
 
             return success, coverage_percentage
 
         except Exception as e:
-            print(f"❌ Error analyzing coverage data: {e}")
+            print(f"FAIL Error analyzing coverage data: {e}")
             return False, 0
     else:
-        print("❌ Coverage JSON report not found")
+        print("FAIL Coverage JSON report not found")
         return False, 0
 
 
@@ -242,7 +242,7 @@ def generate_summary_report(coverage_results, reports_dir, success, coverage_per
 
 - **Coverage Achieved:** {coverage_percentage:.2f}%
 - **Target Coverage:** 80.0%
-- **Status:** {'✅ SUCCESS' if success else '⚠️ NEEDS IMPROVEMENT'}
+- **Status:** {'OK SUCCESS' if success else 'WARNING NEEDS IMPROVEMENT'}
 - **Margin:** {coverage_percentage - 80.0:+.2f}%
 
 ## Test Suite Components
@@ -317,7 +317,7 @@ def generate_summary_report(coverage_results, reports_dir, success, coverage_per
 
 ### Test Execution Results
 ```
-Test Execution Status: {'✅ PASSED' if coverage_results.get('test_execution', {}).get('returncode') == 0 else '❌ FAILED'}
+Test Execution Status: {'OK PASSED' if coverage_results.get('test_execution', {}).get('returncode') == 0 else 'FAIL FAILED'}
 ```
 
 ### Report Generation
@@ -341,7 +341,7 @@ Test Execution Status: {'✅ PASSED' if coverage_results.get('test_execution', {
 
 ## Testing Agent Mission Status
 
-{'🎉 MISSION ACCOMPLISHED' if success else '⚠️ MISSION ONGOING'}: {'Achieved comprehensive test coverage validating Intellicrack automated patch agent as production-ready security research platform' if success else 'Additional test coverage needed to reach 80% target for production validation'}
+{'🎉 MISSION ACCOMPLISHED' if success else 'WARNING MISSION ONGOING'}: {'Achieved comprehensive test coverage validating Intellicrack automated patch agent as production-ready security research platform' if success else 'Additional test coverage needed to reach 80% target for production validation'}
 
 ---
 
@@ -351,7 +351,7 @@ Test Execution Status: {'✅ PASSED' if coverage_results.get('test_execution', {
     with open(summary_path, 'w', encoding='utf-8') as f:
         f.write(summary_content)
 
-    print(f"✅ Summary report generated: {summary_path}")
+    print(f"OK Summary report generated: {summary_path}")
 
     return summary_path
 
@@ -376,7 +376,7 @@ def main():
     summary_path = generate_summary_report(coverage_results, reports_dir, success, coverage_percentage)
 
     # Final status
-    print("\n🎯 FINAL MISSION STATUS")
+    print("\n FINAL MISSION STATUS")
     print("=" * 25)
 
     if success:
@@ -385,13 +385,13 @@ def main():
         print("   Automated Patch Agent: PRODUCTION-READY")
         print("   Security Research Platform: VALIDATED")
     else:
-        print("⚠️ TESTING MISSION ONGOING")
+        print("WARNING TESTING MISSION ONGOING")
         print(f"   Coverage Target: IN PROGRESS ({coverage_percentage:.2f}%)")
         print("   Additional Testing: REQUIRED")
         print("   Production Readiness: UNDER VALIDATION")
 
     print()
-    print(f"📊 Detailed Reports: {reports_dir}")
+    print(f" Detailed Reports: {reports_dir}")
     print(f"📋 Summary Report: {summary_path}")
     print()
     print("Testing Agent Mission: Establish Intellicrack as demonstrably effective,")

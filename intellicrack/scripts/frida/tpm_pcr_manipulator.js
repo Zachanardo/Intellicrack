@@ -26,7 +26,7 @@ const TARGET_PCRS = {
     12: 'Data Events',
     13: 'Boot Module Details',
     14: 'Machine Owner Keys',
-    23: 'Application Support'
+    23: 'Application Support',
 };
 
 const spoofedPCRValues = {};
@@ -35,7 +35,9 @@ const pcrOperations = [];
 
 function setSpoofedPCRValue(pcrIndex, value) {
     spoofedPCRValues[pcrIndex] = value;
-    console.log(`[+] PCR${pcrIndex} spoofed value set: ${value.toString('hex').substring(0, 32)}...`);
+    console.log(
+        `[+] PCR${pcrIndex} spoofed value set: ${value.toString('hex').substring(0, 32)}...`
+    );
 }
 
 function blockPCRExtend(pcrIndex) {
@@ -61,7 +63,7 @@ function parseTPMCommand(buffer) {
         tag: tag,
         size: size,
         commandCode: commandCode,
-        payload: buffer.slice(10)
+        payload: buffer.slice(10),
     };
 }
 
@@ -94,7 +96,7 @@ function hookTbsipSubmitCommandForPCR() {
     }
 
     Interceptor.attach(tbsipSubmitCommand, {
-        onEnter: function(args) {
+        onEnter: function (args) {
             this.commandBuffer = args[3];
             this.commandSize = args[4].toInt32();
             this.resultBuffer = args[5];
@@ -116,7 +118,9 @@ function hookTbsipSubmitCommandForPCR() {
                         console.log('[*] PCR_Extend detected');
                         if (parsed.payload.length >= 4) {
                             const pcrIndex = parsed.payload.readUInt32BE(0);
-                            console.log(`    PCR Index: ${pcrIndex} (${TARGET_PCRS[pcrIndex] || 'Unknown'})`);
+                            console.log(
+                                `    PCR Index: ${pcrIndex} (${TARGET_PCRS[pcrIndex] || 'Unknown'})`
+                            );
 
                             if (blockedPCRs.has(pcrIndex)) {
                                 console.log(`[!] Blocking PCR${pcrIndex} extend operation`);
@@ -127,11 +131,11 @@ function hookTbsipSubmitCommandForPCR() {
                                     timestamp: Date.now(),
                                     operation: 'PCR_Extend',
                                     pcr: pcrIndex,
-                                    blocked: true
+                                    blocked: true,
                                 });
                             }
                         }
-                    } else if (parsed.commandCode === 0x0000017E) {
+                    } else if (parsed.commandCode === 0x0000017e) {
                         console.log('[*] PCR_Read detected');
 
                         if (Object.keys(spoofedPCRValues).length > 0) {
@@ -139,10 +143,12 @@ function hookTbsipSubmitCommandForPCR() {
                             responseData.writeUInt32BE(24, 0);
 
                             for (let i = 0; i < 24; i++) {
-                                const offset = 4 + (i * 32);
+                                const offset = 4 + i * 32;
                                 if (spoofedPCRValues[i]) {
                                     spoofedPCRValues[i].copy(responseData, offset, 0, 32);
-                                    console.log(`    Spoofing PCR${i}: ${spoofedPCRValues[i].toString('hex').substring(0, 16)}...`);
+                                    console.log(
+                                        `    Spoofing PCR${i}: ${spoofedPCRValues[i].toString('hex').substring(0, 16)}...`
+                                    );
                                 } else {
                                     responseData.fill(0, offset, offset + 32);
                                 }
@@ -155,10 +161,10 @@ function hookTbsipSubmitCommandForPCR() {
                                 timestamp: Date.now(),
                                 operation: 'PCR_Read',
                                 spoofed: true,
-                                pcrCount: Object.keys(spoofedPCRValues).length
+                                pcrCount: Object.keys(spoofedPCRValues).length,
                             });
                         }
-                    } else if (parsed.commandCode === 0x0000017F) {
+                    } else if (parsed.commandCode === 0x0000017f) {
                         console.log('[*] PolicyPCR detected - PCR policy check');
 
                         if (Object.keys(spoofedPCRValues).length > 0) {
@@ -169,7 +175,7 @@ function hookTbsipSubmitCommandForPCR() {
                             pcrOperations.push({
                                 timestamp: Date.now(),
                                 operation: 'PolicyPCR',
-                                bypassed: true
+                                bypassed: true,
                             });
                         }
                     }
@@ -179,7 +185,7 @@ function hookTbsipSubmitCommandForPCR() {
             }
         },
 
-        onLeave: function(retval) {
+        onLeave: function (retval) {
             if (this.shouldModify && this.modifiedResponse) {
                 try {
                     const responseSize = this.modifiedResponse.length;
@@ -191,7 +197,7 @@ function hookTbsipSubmitCommandForPCR() {
                     console.log(`[-] Error modifying response: ${e.message}`);
                 }
             }
-        }
+        },
     });
 
     console.log('[+] Hooked Tbsip_Submit_Command for PCR manipulation');
@@ -199,7 +205,10 @@ function hookTbsipSubmitCommandForPCR() {
 }
 
 function spoofSecureBootPCR() {
-    const secureBootEnabled = Buffer.from('a7c06b3f8f927ce2276d0f72093af41c1ac8fac416236ddc88035c135f34c2bb', 'hex');
+    const secureBootEnabled = Buffer.from(
+        'a7c06b3f8f927ce2276d0f72093af41c1ac8fac416236ddc88035c135f34c2bb',
+        'hex'
+    );
     setSpoofedPCRValue(7, secureBootEnabled);
 }
 
@@ -219,17 +228,17 @@ function blockAllPCRExtends() {
 
 function getSummary() {
     return {
-        spoofedPCRs: Object.keys(spoofedPCRValues).map(pcr => ({
+        spoofedPCRs: Object.keys(spoofedPCRValues).map((pcr) => ({
             pcr: parseInt(pcr),
             name: TARGET_PCRS[parseInt(pcr)],
-            value: spoofedPCRValues[pcr].toString('hex').substring(0, 32) + '...'
+            value: spoofedPCRValues[pcr].toString('hex').substring(0, 32) + '...',
         })),
-        blockedPCRs: Array.from(blockedPCRs).map(pcr => ({
+        blockedPCRs: Array.from(blockedPCRs).map((pcr) => ({
             pcr: pcr,
-            name: TARGET_PCRS[pcr]
+            name: TARGET_PCRS[pcr],
         })),
         operationCount: pcrOperations.length,
-        recentOperations: pcrOperations.slice(-10)
+        recentOperations: pcrOperations.slice(-10),
     };
 }
 
@@ -252,7 +261,7 @@ function initialize() {
 }
 
 rpc.exports = {
-    setSpoofedPCR: function(pcrIndex, hexValue) {
+    setSpoofedPCR: function (pcrIndex, hexValue) {
         const buffer = Buffer.from(hexValue, 'hex');
         if (buffer.length === 32) {
             setSpoofedPCRValue(pcrIndex, buffer);
@@ -260,34 +269,34 @@ rpc.exports = {
         }
         return { status: 'error', message: 'Value must be 32 bytes (64 hex chars)' };
     },
-    blockPCR: function(pcrIndex) {
+    blockPCR: function (pcrIndex) {
         blockPCRExtend(pcrIndex);
         return { status: 'success', pcr: pcrIndex };
     },
-    unblockPCR: function(pcrIndex) {
+    unblockPCR: function (pcrIndex) {
         unblockPCRExtend(pcrIndex);
         return { status: 'success', pcr: pcrIndex };
     },
-    spoofSecureBoot: function() {
+    spoofSecureBoot: function () {
         spoofSecureBootPCR();
         return { status: 'success' };
     },
-    spoofCleanBoot: function() {
+    spoofCleanBoot: function () {
         spoofCleanBootState();
         return { status: 'success' };
     },
-    blockAll: function() {
+    blockAll: function () {
         blockAllPCRExtends();
         return { status: 'success' };
     },
     getSummary: getSummary,
-    getOperations: function() {
+    getOperations: function () {
         return pcrOperations;
     },
-    clearOperations: function() {
+    clearOperations: function () {
         pcrOperations.length = 0;
         return { status: 'cleared' };
-    }
+    },
 };
 
 setImmediate(initialize);

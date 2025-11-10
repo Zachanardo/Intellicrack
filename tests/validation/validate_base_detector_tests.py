@@ -15,7 +15,7 @@ def analyze_test_file(test_file_path):
     print(f"Analyzing test file: {test_file_path}")
 
     if not os.path.exists(test_file_path):
-        print("✗ Test file does not exist")
+        print("FAIL Test file does not exist")
         return False
 
     try:
@@ -93,7 +93,7 @@ def analyze_test_file(test_file_path):
         return True
 
     except Exception as e:
-        print(f"✗ Error analyzing test file: {e}")
+        print(f"FAIL Error analyzing test file: {e}")
         return False
 
 def validate_imports(project_root):
@@ -109,7 +109,7 @@ def validate_imports(project_root):
     base_detector_path = os.path.join(project_root, "intellicrack", "core", "anti_analysis", "base_detector.py")
 
     if not os.path.exists(base_detector_path):
-        print(f"✗ Base detector module not found: {base_detector_path}")
+        print(f"FAIL Base detector module not found: {base_detector_path}")
         return False
 
     try:
@@ -120,24 +120,24 @@ def validate_imports(project_root):
 
             # Check for BaseDetector class
             if hasattr(base_detector_module, 'BaseDetector'):
-                print("✓ Successfully imported BaseDetector class")
+                print("OK Successfully imported BaseDetector class")
 
                 # Check class methods
                 detector_class = getattr(base_detector_module, 'BaseDetector')
                 methods = [method for method in dir(detector_class) if not method.startswith('_')]
-                print(f"✓ Found {len(methods)} public methods: {', '.join(methods)}")
+                print(f"OK Found {len(methods)} public methods: {', '.join(methods)}")
 
                 return True
             else:
-                print("✗ BaseDetector class not found in module")
+                print("FAIL BaseDetector class not found in module")
                 return False
 
         else:
-            print("✗ Could not create module spec")
+            print("FAIL Could not create module spec")
             return False
 
     except Exception as e:
-        print(f"✗ Error importing base detector: {e}")
+        print(f"FAIL Error importing base detector: {e}")
         return False
 
 def estimate_coverage(test_file_path, target_module_path):
@@ -184,7 +184,7 @@ def estimate_coverage(test_file_path, target_module_path):
             print(f"Estimated coverage: {estimated_coverage:.1f}%")
 
             if estimated_coverage >= 80:
-                print("✓ Estimated coverage meets 80% requirement")
+                print("OK Estimated coverage meets 80% requirement")
             else:
                 print("⚠ Estimated coverage may not meet 80% requirement")
 
@@ -215,11 +215,11 @@ def main():
     # Overall assessment
     print("\n=== Overall Assessment ===")
     if test_analysis_ok and import_validation_ok:
-        print("✓ Test suite appears well-structured and comprehensive")
-        print("✓ Import validation successful")
-        print("✓ Ready for execution when environment issues are resolved")
+        print("OK Test suite appears well-structured and comprehensive")
+        print("OK Import validation successful")
+        print("OK Ready for execution when environment issues are resolved")
     else:
-        print("✗ Issues found that need to be addressed")
+        print("FAIL Issues found that need to be addressed")
 
     return 0
 

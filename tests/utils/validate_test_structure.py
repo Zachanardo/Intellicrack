@@ -20,10 +20,10 @@ def validate_test_file():
 
     # Check file exists
     if not test_file.exists():
-        print(f"❌ Test file does not exist: {test_file}")
+        print(f"FAIL Test file does not exist: {test_file}")
         return False
 
-    print("✅ Test file exists")
+    print("OK Test file exists")
 
     # Check syntax
     try:
@@ -32,7 +32,7 @@ def validate_test_file():
 
         # Parse as AST to check syntax
         ast.parse(content)
-        print("✅ Test file has valid syntax")
+        print("OK Test file has valid syntax")
 
         # Count test methods
         tree = ast.parse(content)
@@ -45,8 +45,8 @@ def validate_test_file():
             elif isinstance(node, ast.ClassDef) and 'Test' in node.name:
                 test_classes.append(node.name)
 
-        print(f"✅ Found {len(test_classes)} test classes")
-        print(f"✅ Found {len(test_methods)} test methods")
+        print(f"OK Found {len(test_classes)} test classes")
+        print(f"OK Found {len(test_methods)} test methods")
 
         # Check for required imports
         import_names = []
@@ -61,17 +61,17 @@ def validate_test_file():
         required_imports = ['pytest', 'intellicrack.utils.exploitation']
         for req_import in required_imports:
             if any(req_import in imp for imp in import_names):
-                print(f"✅ Required import found: {req_import}")
+                print(f"OK Required import found: {req_import}")
             else:
-                print(f"⚠️  Required import missing: {req_import}")
+                print(f"WARNING  Required import missing: {req_import}")
 
         return True
 
     except SyntaxError as e:
-        print(f"❌ Syntax error in test file: {e}")
+        print(f"FAIL Syntax error in test file: {e}")
         return False
     except Exception as e:
-        print(f"❌ Error validating test file: {e}")
+        print(f"FAIL Error validating test file: {e}")
         return False
 
 def test_imports():
@@ -84,7 +84,7 @@ def test_imports():
     try:
         # Test main module import
         import intellicrack.utils.exploitation
-        print("✅ intellicrack.utils.exploitation imported")
+        print("OK intellicrack.utils.exploitation imported")
 
         # Test individual function imports
         from intellicrack.utils.exploitation import (
@@ -97,20 +97,20 @@ def test_imports():
             generate_exploit_strategy,
             generate_license_key,
         )
-        print("✅ All individual functions imported")
+        print("OK All individual functions imported")
 
         # Test pytest
         import pytest
-        print("✅ pytest available")
+        print("OK pytest available")
 
         # Test base test class
         from tests.base_test import BaseIntellicrackTest
-        print("✅ BaseIntellicrackTest imported")
+        print("OK BaseIntellicrackTest imported")
 
         return True
 
     except Exception as e:
-        print(f"❌ Import failed: {e}")
+        print(f"FAIL Import failed: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -133,7 +133,7 @@ def estimate_coverage():
             if stripped and not stripped.startswith('#') and not stripped.startswith('"""'):
                 code_lines.append(i)
 
-        print(f"✅ __init__.py has ~{len(code_lines)} lines of code")
+        print(f"OK __init__.py has ~{len(code_lines)} lines of code")
 
         # Our test file should cover:
         # - All imports (8 functions)
@@ -143,12 +143,12 @@ def estimate_coverage():
         # This should easily achieve 80%+ coverage
 
         expected_coverage = 95  # We have comprehensive tests
-        print(f"✅ Expected coverage: ~{expected_coverage}%")
+        print(f"OK Expected coverage: ~{expected_coverage}%")
 
         return expected_coverage >= 80
 
     except Exception as e:
-        print(f"⚠️  Could not estimate coverage: {e}")
+        print(f"WARNING  Could not estimate coverage: {e}")
         return True
 
 def main():
@@ -173,13 +173,13 @@ def main():
 
     print("\n" + "=" * 60)
     if success:
-        print("🎯 VALIDATION SUCCESSFUL!")
-        print("✅ Test file is properly structured")
-        print("✅ All imports work correctly")
-        print("✅ Expected to achieve 80%+ coverage")
+        print(" VALIDATION SUCCESSFUL!")
+        print("OK Test file is properly structured")
+        print("OK All imports work correctly")
+        print("OK Expected to achieve 80%+ coverage")
         print("\nReady to run full coverage analysis!")
     else:
-        print("❌ VALIDATION FAILED!")
+        print("FAIL VALIDATION FAILED!")
         print("Issues must be fixed before running coverage analysis")
 
     return success

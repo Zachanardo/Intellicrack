@@ -55,7 +55,7 @@ def fix_test_files():
         with open(aslr_test, 'w', encoding='utf-8') as f:
             f.write(content)
 
-        print(f"  ✅ Fixed syntax errors and patch references")
+        print(f"  OK Fixed syntax errors and patch references")
 
     # Check all test files for remaining mock references
     for test_file in test_dir.glob('test_*.py'):
@@ -80,17 +80,17 @@ def fix_test_files():
         if content != original:
             with open(test_file, 'w', encoding='utf-8') as f:
                 f.write(content)
-            print(f"  ✅ Cleaned additional issues in {test_file.name}")
+            print(f"  OK Cleaned additional issues in {test_file.name}")
 
     print()
     print("=" * 60)
     print("REMEDIATION COMPLETE")
     print()
     print("Test files now comply with Testing.md requirements:")
-    print("✅ No mock framework usage")
-    print("✅ Specification-driven testing")
-    print("✅ Tests demand real exploitation capabilities")
-    print("✅ Will fail on placeholder implementations")
+    print("OK No mock framework usage")
+    print("OK Specification-driven testing")
+    print("OK Tests demand real exploitation capabilities")
+    print("OK Will fail on placeholder implementations")
     print("=" * 60)
 
 def validate_compliance():
@@ -126,12 +126,12 @@ def validate_compliance():
             violations.append((test_file.name, file_violations))
 
     if violations:
-        print("⚠️  VIOLATIONS FOUND:")
+        print("WARNING  VIOLATIONS FOUND:")
         for filename, viols in violations:
             print(f"  {filename}: {', '.join(viols)}")
         return False
     else:
-        print("✅ ALL TEST FILES COMPLY WITH TESTING.MD")
+        print("OK ALL TEST FILES COMPLY WITH TESTING.MD")
         return True
 
 if __name__ == "__main__":

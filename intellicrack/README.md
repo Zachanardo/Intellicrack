@@ -1,6 +1,7 @@
 # Intellicrack
 
-Intellicrack is a binary analysis platform designed for reverse engineering and software analysis tasks.
+Intellicrack is a binary analysis platform designed for reverse engineering and
+software analysis tasks.
 
 ## Features
 
@@ -46,4 +47,5 @@ This project is licensed under the GNU General Public License v3.0.
 
 ## Contributing
 
-Please ensure all contributions follow the project's coding standards and include appropriate documentation.
+Please ensure all contributions follow the project's coding standards and
+include appropriate documentation.

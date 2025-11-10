@@ -16,8 +16,9 @@ use tracing::{debug, info, warn};
 
 use crate::platform::{GpuVendor, OsType, PlatformInfo};
 
-pub static PROJECT_ROOT: std::sync::LazyLock<String> =
-    std::sync::LazyLock::new(|| env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string()));
+pub static PROJECT_ROOT: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
+    env::var("INTELLICRACK_ROOT").unwrap_or_else(|_| r"D:\Intellicrack".to_string())
+});
 
 /// Set threading environment variables for all numerical libraries
 ///
@@ -54,7 +55,7 @@ pub struct EnvironmentManager {
 
 impl EnvironmentManager {
     /// Create a new environment manager for the detected platform
-    #[must_use] 
+    #[must_use]
     pub fn new(platform: &PlatformInfo) -> Self {
         Self {
             platform: platform.clone(),
@@ -126,7 +127,7 @@ impl EnvironmentManager {
         Ok(())
     }
 
-    /// Set threading environment variables 
+    /// Set threading environment variables
     fn set_threading_environment(&self) -> Result<()> {
         debug!("Setting threading environment variables");
 
@@ -145,7 +146,7 @@ impl EnvironmentManager {
         Ok(())
     }
 
-    /// Set `PyBind11` GIL safety environment 
+    /// Set `PyBind11` GIL safety environment
     fn set_pybind11_environment(&self) -> Result<()> {
         debug!("Setting PyBind11 GIL safety environment");
 
@@ -314,8 +315,8 @@ impl EnvironmentManager {
             .filter(|p| {
                 let p_lower = p.to_lowercase();
                 !p_lower.contains("intel")
-                && !p_lower.contains("oneapi")
-                && !p_lower.contains("mkl")
+                    && !p_lower.contains("oneapi")
+                    && !p_lower.contains("mkl")
             })
             .collect();
 
@@ -529,7 +530,7 @@ impl EnvironmentManager {
         Ok(())
     }
 
-    /// Set `PyTorch` specific environment variables 
+    /// Set `PyTorch` specific environment variables
     pub fn set_pytorch_environment(&self) -> Result<()> {
         debug!("Setting PyTorch environment variables");
 

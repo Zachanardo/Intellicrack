@@ -14,11 +14,11 @@ def test_basic_functionality():
     try:
         # Create instance
         aslr = ASLRBypass()
-        print("✓ ASLRBypass instance created")
+        print("OK ASLRBypass instance created")
 
         # Check attributes
         assert hasattr(aslr, 'techniques'), "Missing techniques attribute"
-        print(f"✓ Found {len(aslr.techniques)} bypass techniques")
+        print(f"OK Found {len(aslr.techniques)} bypass techniques")
 
         # Test recommendation method
         result = aslr.get_recommended_technique(
@@ -27,7 +27,7 @@ def test_basic_functionality():
             has_write_primitive=True
         )
         assert result is not None, "get_recommended_technique returned None"
-        print(f"✓ Recommended technique: {result.get('technique', 'Unknown')}")
+        print(f"OK Recommended technique: {result.get('technique', 'Unknown')}")
 
         # Test analysis method
         analysis = aslr.analyze_aslr_bypass(
@@ -35,13 +35,13 @@ def test_basic_functionality():
             process=None
         )
         assert analysis is not None, "analyze_aslr_bypass returned None"
-        print(f"✓ Analysis completed with difficulty: {analysis.get('difficulty_score', 'Unknown')}")
+        print(f"OK Analysis completed with difficulty: {analysis.get('difficulty_score', 'Unknown')}")
 
         print("\nAll basic tests passed!")
         return True
 
     except Exception as e:
-        print(f"✗ Test failed: {e}")
+        print(f"FAIL Test failed: {e}")
         import traceback
         traceback.print_exc()
         return False

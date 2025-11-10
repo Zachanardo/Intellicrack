@@ -74,9 +74,9 @@ def test_bof_payload_generation():
             print("ERROR: Shellcode is empty")
             return False
 
-        print(f"✓ BOF payload contains {len(shellcode)} bytes of actual shellcode")
-        print(f"✓ Shellcode type: {type(shellcode)}")
-        print(f"✓ First 16 bytes (hex): {shellcode[:16].hex()}")
+        print(f"OK BOF payload contains {len(shellcode)} bytes of actual shellcode")
+        print(f"OK Shellcode type: {type(shellcode)}")
+        print(f"OK First 16 bytes (hex): {shellcode[:16].hex()}")
 
         # Check other required fields
         required_fields = ["complete_payload", "payload_size", "architecture", "return_address"]
@@ -84,13 +84,13 @@ def test_bof_payload_generation():
             if field not in result:
                 print(f"WARNING: Missing field '{field}' in result")
             else:
-                print(f"✓ Field '{field}': {type(result[field])}")
+                print(f"OK Field '{field}': {type(result[field])}")
 
         # Validate complete payload is bytes
         if "complete_payload" in result:
             complete_payload = result["complete_payload"]
             if isinstance(complete_payload, bytes):
-                print(f"✓ Complete payload is {len(complete_payload)} bytes")
+                print(f"OK Complete payload is {len(complete_payload)} bytes")
             else:
                 print(f"ERROR: Complete payload is {type(complete_payload)}, should be bytes")
                 return False
@@ -163,16 +163,16 @@ def test_format_string_payload_generation():
             print("ERROR: Payload doesn't contain format string specifiers")
             return False
 
-        print(f"✓ Format string payload contains {len(payload)} bytes")
-        print(f"✓ Payload type: {type(payload)}")
-        print(f"✓ Payload (hex): {payload.hex()}")
-        print(f"✓ Payload (ascii): {payload}")
+        print(f"OK Format string payload contains {len(payload)} bytes")
+        print(f"OK Payload type: {type(payload)}")
+        print(f"OK Payload (hex): {payload.hex()}")
+        print(f"OK Payload (ascii): {payload}")
 
         # Check for shellcode
         if "shellcode" in result:
             shellcode = result["shellcode"]
             if isinstance(shellcode, bytes) and len(shellcode) > 0:
-                print(f"✓ Associated shellcode: {len(shellcode)} bytes")
+                print(f"OK Associated shellcode: {len(shellcode)} bytes")
             else:
                 print("WARNING: No valid shellcode associated")
 
@@ -201,23 +201,23 @@ def main():
     for test_name, test_func in tests:
         print(f"Running {test_name}:")
         if test_func():
-            print(f"✓ {test_name} PASSED")
+            print(f"OK {test_name} PASSED")
             passed += 1
         else:
-            print(f"❌ {test_name} FAILED")
+            print(f"FAIL {test_name} FAILED")
         print("-" * 40)
 
     print(f"\nResults: {passed}/{total} tests passed")
 
     if passed == total:
-        print("✓ DAY 2.1 PAYLOAD METHOD REPLACEMENT SUCCESSFUL")
-        print("✓ All methods generate ACTUAL shellcode bytes")
-        print("✓ Zero template/placeholder content detected")
-        print("✓ Ready to proceed to Day 2.2")
+        print("OK DAY 2.1 PAYLOAD METHOD REPLACEMENT SUCCESSFUL")
+        print("OK All methods generate ACTUAL shellcode bytes")
+        print("OK Zero template/placeholder content detected")
+        print("OK Ready to proceed to Day 2.2")
         return True
     else:
-        print("❌ DAY 2.1 PAYLOAD METHOD REPLACEMENT FAILED")
-        print("❌ Template methods still present or non-functional")
+        print("FAIL DAY 2.1 PAYLOAD METHOD REPLACEMENT FAILED")
+        print("FAIL Template methods still present or non-functional")
         return False
 
 if __name__ == "__main__":

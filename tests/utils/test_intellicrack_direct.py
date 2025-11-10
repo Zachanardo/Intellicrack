@@ -20,14 +20,14 @@ try:
     print("2. Importing intellicrack directly...")
     import intellicrack
 
-    print("✅ Intellicrack imported successfully!")
+    print("OK Intellicrack imported successfully!")
     print(f"Intellicrack version: {getattr(intellicrack, '__version__', 'unknown')}")
 
-    print("✅ All tests passed!")
+    print("OK All tests passed!")
 
 except Exception as e:
     import traceback
-    print(f"\n❌ Error: {e}")
+    print(f"\nFAIL Error: {e}")
     print("\nFull traceback:")
     traceback.print_exc()
     sys.exit(1)

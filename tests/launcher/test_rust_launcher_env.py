@@ -87,9 +87,9 @@ if __name__ == "__main__":
         if not info["set"]:
             all_set = False
             missing_vars.append(var)
-            print(f"❌ {var}: NOT SET")
+            print(f"FAIL {var}: NOT SET")
         else:
-            print(f"✅ {var}: {info['value']}")
+            print(f"OK {var}: {info['value']}")
 
     print(f"\nPython Version: {results['python_version']}")
     print(f"Python Executable: {results['python_executable']}")
@@ -98,10 +98,10 @@ if __name__ == "__main__":
     print(f"Intellicrack module available: {results['intellicrack_available']}")
 
     if missing_vars:
-        print(f"\n⚠️  Missing environment variables: {', '.join(missing_vars)}")
+        print(f"\nWARNING  Missing environment variables: {', '.join(missing_vars)}")
         sys.exit(1)
     else:
-        print("\n✅ All critical environment variables are set!")
+        print("\nOK All critical environment variables are set!")
 
     # Save detailed results
     with open("rust_launcher_env_test_results.json", "w") as f:

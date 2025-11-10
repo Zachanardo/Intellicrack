@@ -77,10 +77,10 @@ class TestNetworkForensicsEngine:
         tls_data = (
             b'\x16\x03\x03\x00\x30' +  # TLS handshake header
             b'\x01\x00\x00\x2c' +      # Client hello message
-            b'\x03\x03'                # TLS version 1.2
-            b'\x12\x34\x56\x78' * 8  # Random data (32 bytes)
-            b'\x00\x02\x00\x35'      # Cipher suites
-            b'\x01\x00\x00\x04'      # Extensions
+            b'\x03\x03' +              # TLS version 1.2
+            b'\x12\x34\x56\x78' * 8 +  # Random data (32 bytes)
+            b'\x00\x02\x00\x35' +      # Cipher suites
+            b'\x01\x00\x00\x04'        # Extensions
         )
 
         return shb + tls_data

@@ -44,8 +44,7 @@ def validate_production_readiness_checkpoint3():
     try:
         # Read the AI integration file
         from intellicrack.utils.path_resolver import get_project_root
-
-with open(get_project_root() / "intellicrack/core/analysis/radare2_ai_integration.py", "r", encoding="utf-8") as f:
+        with open(get_project_root() / "intellicrack/core/analysis/radare2_ai_integration.py", "r", encoding="utf-8") as f:
             ai_source = f.read()
 
         # Extract both training data methods
@@ -60,12 +59,12 @@ with open(get_project_root() / "intellicrack/core/analysis/radare2_ai_integratio
 
         if not license_method_match:
             validation_results["critical_failures"].append("Could not find _generate_license_training_data method")
-            print("❌ CRITICAL FAILURE: Could not find _generate_license_training_data method")
+            print("FAIL CRITICAL FAILURE: Could not find _generate_license_training_data method")
             return False
 
         if not vuln_method_match:
             validation_results["critical_failures"].append("Could not find _generate_vulnerability_training_data method")
-            print("❌ CRITICAL FAILURE: Could not find _generate_vulnerability_training_data method")
+            print("FAIL CRITICAL FAILURE: Could not find _generate_vulnerability_training_data method")
             return False
 
         license_method_code = license_method_match.group(0)
@@ -112,13 +111,13 @@ with open(get_project_root() / "intellicrack/core/analysis/radare2_ai_integratio
 
         if violations_found:
             validation_results["synthetic_violations"].extend(violations_found)
-            print(f"❌ ZERO SYNTHETIC DATA RULE VIOLATION: Found {len(violations_found)} forbidden patterns:")
+            print(f"FAIL ZERO SYNTHETIC DATA RULE VIOLATION: Found {len(violations_found)} forbidden patterns:")
             for violation in violations_found:
                 print(f"  {violation['method']} line {violation['line']}: {violation['pattern']}")
             return False
         else:
-            print("✓ Synthetic data elimination: PASSED")
-            print("✓ ZERO forbidden synthetic patterns detected")
+            print("OK Synthetic data elimination: PASSED")
+            print("OK ZERO forbidden synthetic patterns detected")
 
         # Verify presence of real data indicators
         real_data_indicators = [
@@ -138,14 +137,14 @@ with open(get_project_root() / "intellicrack/core/analysis/radare2_ai_integratio
 
         if indicators_found < 6:
             validation_results["critical_failures"].append(f"Insufficient real data implementation indicators ({indicators_found}/7)")
-            print(f"❌ CRITICAL FAILURE: Insufficient real data implementation indicators ({indicators_found}/7)")
+            print(f"FAIL CRITICAL FAILURE: Insufficient real data implementation indicators ({indicators_found}/7)")
             return False
 
-        print(f"✓ Real data implementation indicators: {indicators_found}/7")
+        print(f"OK Real data implementation indicators: {indicators_found}/7")
 
     except Exception as e:
         validation_results["critical_failures"].append(f"Synthetic data validation failed: {e}")
-        print(f"❌ Synthetic data validation failed: {e}")
+        print(f"FAIL Synthetic data validation failed: {e}")
         return False
 
     # Test 2: AI Model Functionality and Accuracy Validation
@@ -357,27 +356,27 @@ with open(get_project_root() / "intellicrack/core/analysis/radare2_ai_integratio
 
         if not isinstance(X_license, np.ndarray) or not isinstance(y_license, np.ndarray):
             validation_results["critical_failures"].append("License training data not returned as numpy arrays")
-            print("❌ License training data not returned as numpy arrays")
+            print("FAIL License training data not returned as numpy arrays")
             return False
 
         if len(X_license) == 0 or len(y_license) == 0:
             validation_results["critical_failures"].append("License training data is empty")
-            print("❌ License training data is empty")
+            print("FAIL License training data is empty")
             return False
 
         # Check class distribution
         unique_labels = np.unique(y_license)
         if len(unique_labels) < 2:
             validation_results["critical_failures"].append("License training data missing class diversity")
-            print("❌ License training data missing class diversity")
+            print("FAIL License training data missing class diversity")
             return False
 
         license_count = np.sum(y_license == 1)
         non_license_count = np.sum(y_license == 0)
 
-        print(f"  ✓ License training data: {len(X_license)} samples")
-        print(f"  ✓ License-protected: {license_count} samples")
-        print(f"  ✓ Non-protected: {non_license_count} samples")
+        print(f"  OK License training data: {len(X_license)} samples")
+        print(f"  OK License-protected: {license_count} samples")
+        print(f"  OK Non-protected: {non_license_count} samples")
 
         # Test vulnerability classification training data
         print("  Testing Vulnerability Classification Training Data Generation:")
@@ -385,22 +384,22 @@ with open(get_project_root() / "intellicrack/core/analysis/radare2_ai_integratio
 
         if not isinstance(X_vuln, np.ndarray) or not isinstance(y_vuln, np.ndarray):
             validation_results["critical_failures"].append("Vulnerability training data not returned as numpy arrays")
-            print("❌ Vulnerability training data not returned as numpy arrays")
+            print("FAIL Vulnerability training data not returned as numpy arrays")
             return False
 
         if len(X_vuln) == 0 or len(y_vuln) == 0:
             validation_results["critical_failures"].append("Vulnerability training data is empty")
-            print("❌ Vulnerability training data is empty")
+            print("FAIL Vulnerability training data is empty")
             return False
 
         vuln_classes = np.unique(y_vuln)
         if len(vuln_classes) < 3:
             validation_results["critical_failures"].append("Vulnerability training data missing class diversity")
-            print("❌ Vulnerability training data missing class diversity")
+            print("FAIL Vulnerability training data missing class diversity")
             return False
 
-        print(f"  ✓ Vulnerability training data: {len(X_vuln)} samples")
-        print(f"  ✓ Vulnerability classes: {len(vuln_classes)}")
+        print(f"  OK Vulnerability training data: {len(X_vuln)} samples")
+        print(f"  OK Vulnerability classes: {len(vuln_classes)}")
 
         # Document accuracy validation
         validation_results["accuracy_proofs"].append({
@@ -419,12 +418,12 @@ with open(get_project_root() / "intellicrack/core/analysis/radare2_ai_integratio
             }
         })
 
-        print("✓ AI Model functionality validation: PASSED")
-        print("✓ Training data generation produces functional datasets")
+        print("OK AI Model functionality validation: PASSED")
+        print("OK Training data generation produces functional datasets")
 
     except Exception as e:
         validation_results["critical_failures"].append(f"AI model validation failed: {e}")
-        print(f"❌ AI model validation failed: {e}")
+        print(f"FAIL AI model validation failed: {e}")
         return False
 
     # Test 3: Real vs Synthetic Pattern Distinction
@@ -441,14 +440,14 @@ with open(get_project_root() / "intellicrack/core/analysis/radare2_ai_integratio
         license_formats = patterns.get("license_key_formats", [])
         if len(license_formats) < 3:
             validation_results["critical_failures"].append("Insufficient real license key formats")
-            print("❌ Insufficient real license key formats")
+            print("FAIL Insufficient real license key formats")
             return False
 
         # Validate crypto signatures contain real patterns
         crypto_headers = crypto_sigs.get("rsa_public_key_headers", [])
         if len(crypto_headers) < 2:
             validation_results["critical_failures"].append("Insufficient real crypto signature patterns")
-            print("❌ Insufficient real crypto signature patterns")
+            print("FAIL Insufficient real crypto signature patterns")
             return False
 
         # Validate vulnerability classes contain real CVEs
@@ -456,7 +455,7 @@ with open(get_project_root() / "intellicrack/core/analysis/radare2_ai_integratio
             cve_examples = vuln_data.get("cve_examples", [])
             if len(cve_examples) < 2:
                 validation_results["critical_failures"].append(f"Vulnerability type {vuln_type} missing CVE examples")
-                print(f"❌ Vulnerability type {vuln_type} missing CVE examples")
+                print(f"FAIL Vulnerability type {vuln_type} missing CVE examples")
                 return False
 
         validation_results["functional_validations"].append({
@@ -466,14 +465,14 @@ with open(get_project_root() / "intellicrack/core/analysis/radare2_ai_integratio
             "real_world_applicability": "confirmed"
         })
 
-        print(f"✓ License key patterns: {len(license_formats)} real formats")
-        print(f"✓ Crypto signatures: {len(crypto_headers)} real patterns")
-        print(f"✓ Vulnerability classes: {len(vuln_classes)} with CVE examples")
-        print("✓ Real-world pattern distinction: PASSED")
+        print(f"OK License key patterns: {len(license_formats)} real formats")
+        print(f"OK Crypto signatures: {len(crypto_headers)} real patterns")
+        print(f"OK Vulnerability classes: {len(vuln_classes)} with CVE examples")
+        print("OK Real-world pattern distinction: PASSED")
 
     except Exception as e:
         validation_results["critical_failures"].append(f"Pattern distinction validation failed: {e}")
-        print(f"❌ Pattern distinction validation failed: {e}")
+        print(f"FAIL Pattern distinction validation failed: {e}")
         return False
 
     # Test 4: Comprehensive Source Analysis for Forbidden Terms
@@ -533,19 +532,19 @@ with open(get_project_root() / "intellicrack/core/analysis/radare2_ai_integratio
 
         if all_violations:
             validation_results["synthetic_violations"].extend(all_violations)
-            print(f"❌ COMPREHENSIVE SCAN VIOLATION: Found {len(all_violations)} forbidden terms:")
+            print(f"FAIL COMPREHENSIVE SCAN VIOLATION: Found {len(all_violations)} forbidden terms:")
             for violation in all_violations[:5]:  # Show first 5
                 print(f"  Line {violation['line']}: {violation['term']}")
             if len(all_violations) > 5:
                 print(f"  ... and {len(all_violations) - 5} more violations")
             return False
         else:
-            print("✓ Comprehensive forbidden terms scan: PASSED")
-            print("✓ ZERO synthetic/placeholder terms detected in training methods")
+            print("OK Comprehensive forbidden terms scan: PASSED")
+            print("OK ZERO synthetic/placeholder terms detected in training methods")
 
     except Exception as e:
         validation_results["critical_failures"].append(f"Comprehensive scan failed: {e}")
-        print(f"❌ Comprehensive forbidden terms scan failed: {e}")
+        print(f"FAIL Comprehensive forbidden terms scan failed: {e}")
         return False
 
     # Save validation results
@@ -558,38 +557,38 @@ with open(get_project_root() / "intellicrack/core/analysis/radare2_ai_integratio
     print("=" * 50)
 
     if len(validation_results["critical_failures"]) > 0:
-        print("❌ CHECKPOINT FAILED - Critical failures detected:")
+        print("FAIL CHECKPOINT FAILED - Critical failures detected:")
         for failure in validation_results["critical_failures"]:
-            print(f"  • {failure}")
+            print(f"   {failure}")
         return False
 
     if len(validation_results["synthetic_violations"]) > 0:
-        print("❌ CHECKPOINT FAILED - Synthetic data violations detected:")
+        print("FAIL CHECKPOINT FAILED - Synthetic data violations detected:")
         for violation in validation_results["synthetic_violations"]:
-            print(f"  • {violation}")
+            print(f"   {violation}")
         return False
 
-    print("✅ CHECKPOINT PASSED - ALL CRITICAL VALIDATIONS SUCCESSFUL")
+    print("OK CHECKPOINT PASSED - ALL CRITICAL VALIDATIONS SUCCESSFUL")
     print()
-    print("✅ MANDATORY VALIDATIONS COMPLETED:")
-    print("  ✓ Training data contains ZERO np.random synthetic calls")
-    print("  ✓ AI models generate functional datasets based on real patterns")
-    print("  ✓ Vulnerability classification uses actual CVE database patterns")
-    print("  ✓ ZERO synthetic/random/dummy terms in training methods")
-    print("  ✓ AI models distinguish real license-protected vs non-protected binaries")
-    print("  ✓ Real-world effectiveness patterns validated")
+    print("OK MANDATORY VALIDATIONS COMPLETED:")
+    print("  OK Training data contains ZERO np.random synthetic calls")
+    print("  OK AI models generate functional datasets based on real patterns")
+    print("  OK Vulnerability classification uses actual CVE database patterns")
+    print("  OK ZERO synthetic/random/dummy terms in training methods")
+    print("  OK AI models distinguish real license-protected vs non-protected binaries")
+    print("  OK Real-world effectiveness patterns validated")
     print()
-    print("✅ ACCURACY AND FUNCTIONALITY PROOFS:")
+    print("OK ACCURACY AND FUNCTIONALITY PROOFS:")
     for proof in validation_results["accuracy_proofs"]:
         if "license_detection" in proof:
             ld = proof["license_detection"]
-            print(f"  • License Detection: {ld['total_samples']} samples, {ld['feature_dimensions']} features")
+            print(f"   License Detection: {ld['total_samples']} samples, {ld['feature_dimensions']} features")
         if "vulnerability_classification" in proof:
             vc = proof["vulnerability_classification"]
-            print(f"  • Vulnerability Classification: {vc['total_samples']} samples, {vc['vulnerability_classes']} classes")
+            print(f"   Vulnerability Classification: {vc['total_samples']} samples, {vc['vulnerability_classes']} classes")
     print()
-    print(f"✅ Results saved to: day3_checkpoint3_results.json")
-    print("✅ AUTHORIZED TO PROCEED TO DAY 4.1")
+    print(f"OK Results saved to: day3_checkpoint3_results.json")
+    print("OK AUTHORIZED TO PROCEED TO DAY 4.1")
 
     return True
 

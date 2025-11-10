@@ -228,7 +228,7 @@ class DebuggerDialog(QDialog):
 
         # Breakpoint controls
         toolbar.addAction("🔴 Toggle Breakpoint").triggered.connect(self.toggle_current_line_breakpoint)
-        toolbar.addAction("🗑️ Clear All Breakpoints").triggered.connect(self.clear_all_breakpoints)
+        toolbar.addAction(" Clear All Breakpoints").triggered.connect(self.clear_all_breakpoints)
 
         return toolbar
 
@@ -442,7 +442,7 @@ class DebuggerDialog(QDialog):
 
         # Clear console
         self.console.clear()
-        self.console.append("🐛 Starting debug session...\n")
+        self.console.append(" Starting debug session...\n")
 
         # Start output thread
         self.output_thread = DebuggerOutputThread(self.debugger.output_queue)
@@ -565,7 +565,7 @@ class DebuggerDialog(QDialog):
             if "error" in data:
                 self.console.append(f"ERROR Error evaluating '{data['expression']}': {data['error']}")
             else:
-                self.console.append(f"✅ {data['expression']} = {data['value']}")
+                self.console.append(f"OK {data['expression']} = {data['value']}")
 
         elif msg_type == "exception_break":
             self.console.append(f"WARNING️ Exception: {data['type']}: {data['message']}")

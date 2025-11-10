@@ -6,7 +6,6 @@ helping diagnose PATH priority issues and version conflicts.
 import ctypes
 import ctypes.util
 import os
-import sys
 from pathlib import Path
 
 
@@ -69,7 +68,7 @@ def diagnose_mkl_loading():
 
     pixi_lib = Path(r"D:\Intellicrack\.pixi\envs\default\Library\bin")
 
-    print(f"\n[1] Pixi Environment")
+    print("\n[1] Pixi Environment")
     print(f"    Location: {pixi_lib}")
     print(f"    Exists: {pixi_lib.exists()}")
 
@@ -81,7 +80,7 @@ def diagnose_mkl_loading():
         if len(mkl_dlls) > 10:
             print(f"      ... and {len(mkl_dlls) - 10} more")
 
-    print(f"\n[2] PATH Environment Variable Analysis")
+    print("\n[2] PATH Environment Variable Analysis")
     pixi_dirs, intel_dirs, other_dirs = check_path_priority()
 
     print(f"    Pixi directories ({len(pixi_dirs)}):")
@@ -92,15 +91,15 @@ def diagnose_mkl_loading():
 
     print(f"\n    Intel/oneAPI directories ({len(intel_dirs)}):")
     if intel_dirs:
-        print("    ⚠️  WARNING: System Intel paths detected in PATH!")
+        print("    WARNING  WARNING: System Intel paths detected in PATH!")
         for idx, directory in enumerate(intel_dirs[:5], 1):
             print(f"      {idx}. {directory}")
         if len(intel_dirs) > 5:
             print(f"      ... and {len(intel_dirs) - 5} more")
     else:
-        print("    ✓ No system Intel paths found (GOOD)")
+        print("    OK No system Intel paths found (GOOD)")
 
-    print(f"\n[3] Critical DLL Loading Verification")
+    print("\n[3] Critical DLL Loading Verification")
     critical_dlls = [
         "mkl_core.2.dll",
         "mkl_sycl_blas.5.dll",
@@ -122,10 +121,10 @@ def diagnose_mkl_loading():
         else:
             loaded_path_obj = Path(loaded_path)
             if pixi_lib in loaded_path_obj.parents or loaded_path_obj.parent == pixi_lib:
-                status = "✓ PIXI"
+                status = "OK PIXI"
                 location = str(loaded_path_obj)
             elif "intel" in str(loaded_path_obj).lower() or "oneapi" in str(loaded_path_obj).lower():
-                status = "⚠️  SYSTEM"
+                status = "WARNING  SYSTEM"
                 location = str(loaded_path_obj)
             else:
                 status = "? OTHER"
@@ -133,9 +132,9 @@ def diagnose_mkl_loading():
 
         print(f"    {dll_name:25s} : {status:12s} : {location}")
 
-    print(f"\n[4] Recommendations")
+    print("\n[4] Recommendations")
     if intel_dirs:
-        print("    ⚠️  PROBLEM DETECTED:")
+        print("    WARNING  PROBLEM DETECTED:")
         print("    System Intel oneAPI paths are in PATH environment variable.")
         print("    This can cause DLL version conflicts and entry point errors.")
         print()
@@ -144,7 +143,7 @@ def diagnose_mkl_loading():
         print("    2. Or manually remove Intel paths from system PATH")
         print("    3. Ensure pixi environment is activated before launching")
     else:
-        print("    ✓ PATH configuration looks correct")
+        print("    OK PATH configuration looks correct")
         print("    Pixi environment DLLs should load properly")
 
     print("\n" + "=" * 80)
@@ -154,7 +153,7 @@ if __name__ == "__main__":
     try:
         diagnose_mkl_loading()
     except Exception as e:
-        print(f"\n✗ DIAGNOSTIC FAILED: {e}")
+        print(f"\nFAIL DIAGNOSTIC FAILED: {e}")
         import traceback
         traceback.print_exc()
 

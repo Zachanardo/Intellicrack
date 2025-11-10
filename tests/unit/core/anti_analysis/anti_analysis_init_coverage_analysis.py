@@ -35,7 +35,7 @@ def analyze_coverage():
     # Parse AST to analyze code structure
     tree = ast.parse(source_code)
 
-    print("📁 SOURCE FILE ANALYSIS:")
+    print(" SOURCE FILE ANALYSIS:")
     print(f"   File: {source_file}")
 
     # Count lines (excluding comments and blank lines)
@@ -77,7 +77,7 @@ def analyze_coverage():
             for item in node.body:
                 if isinstance(item, ast.FunctionDef):
                     methods.append(item.name)
-                    print(f"   📝 METHOD: {item.name}")
+                    print(f"    METHOD: {item.name}")
                     print(f"      Line range: {item.lineno}-{item.end_lineno if hasattr(item, 'end_lineno') else 'end'}")
 
                     # Count decision points
@@ -96,7 +96,7 @@ def analyze_coverage():
             else:
                 imports_found.extend([alias.name for alias in node.names])
 
-    print(f"\n📊 CODE STRUCTURE ANALYSIS:")
+    print(f"\n CODE STRUCTURE ANALYSIS:")
     print(f"   Classes found: {len(classes_found)} -> {classes_found}")
     print(f"   Top-level functions: {len(functions_found)} -> {functions_found}")
     print(f"   Import statements: {len(imports_found)} imports")
@@ -105,52 +105,52 @@ def analyze_coverage():
     all_exports = getattr(anti_analysis_module, '__all__', [])
     print(f"   __all__ exports: {len(all_exports)} -> {all_exports}")
 
-    print("\n📊 TEST COVERAGE ANALYSIS:")
+    print("\n TEST COVERAGE ANALYSIS:")
 
     # Test scenarios covered by our test suite
     covered_scenarios = [
         # AntiAnalysisEngine class tests
-        "✓ AntiAnalysisEngine initialization with all detector components",
-        "✓ AntiAnalysisEngine detect_virtual_environment() method",
-        "✓ AntiAnalysisEngine detect_debugger() method",
-        "✓ AntiAnalysisEngine detect_sandbox() method",
-        "✓ Detection components have required methods",
-        "✓ Engine isolation between instances",
-        "✓ VM detector error handling",
-        "✓ Debugger detector error handling",
-        "✓ Sandbox detector error handling",
-        "✓ Comprehensive detection workflow",
-        "✓ Production-ready capabilities validation",
-        "✓ Real-world detection accuracy",
-        "✓ Concurrent detection safety",
-        "✓ Memory efficiency testing",
+        "OK AntiAnalysisEngine initialization with all detector components",
+        "OK AntiAnalysisEngine detect_virtual_environment() method",
+        "OK AntiAnalysisEngine detect_debugger() method",
+        "OK AntiAnalysisEngine detect_sandbox() method",
+        "OK Detection components have required methods",
+        "OK Engine isolation between instances",
+        "OK VM detector error handling",
+        "OK Debugger detector error handling",
+        "OK Sandbox detector error handling",
+        "OK Comprehensive detection workflow",
+        "OK Production-ready capabilities validation",
+        "OK Real-world detection accuracy",
+        "OK Concurrent detection safety",
+        "OK Memory efficiency testing",
 
         # Module import/export tests
-        "✓ All __all__ imports are accessible",
-        "✓ All classes are importable",
-        "✓ Module level attributes validation",
-        "✓ Import from statements functionality",
-        "✓ Module reloadability",
+        "OK All __all__ imports are accessible",
+        "OK All classes are importable",
+        "OK Module level attributes validation",
+        "OK Import from statements functionality",
+        "OK Module reloadability",
 
         # Integration tests
-        "✓ Cross-component compatibility",
-        "✓ Engine aggregation capabilities",
-        "✓ Component error isolation",
-        "✓ Production integration workflow",
-        "✓ Scalability characteristics",
+        "OK Cross-component compatibility",
+        "OK Engine aggregation capabilities",
+        "OK Component error isolation",
+        "OK Production integration workflow",
+        "OK Scalability characteristics",
 
         # Edge cases and error handling
-        "✓ Initialization with missing dependencies",
-        "✓ Detection with null detectors",
-        "✓ Extreme concurrent access patterns",
-        "✓ Memory pressure handling",
-        "✓ Invalid input handling"
+        "OK Initialization with missing dependencies",
+        "OK Detection with null detectors",
+        "OK Extreme concurrent access patterns",
+        "OK Memory pressure handling",
+        "OK Invalid input handling"
     ]
 
     for scenario in covered_scenarios:
         print(f"   {scenario}")
 
-    print(f"\n📈 COVERAGE SUMMARY:")
+    print(f"\n COVERAGE SUMMARY:")
     print(f"   Test scenarios: {len(covered_scenarios)}")
     print(f"   Test classes: 5 (TestAntiAnalysisEngine, TestModuleImports, TestModuleIntegration, TestEdgeCasesAndErrorHandling)")
     print(f"   Test methods: 30+")
@@ -173,9 +173,9 @@ def analyze_coverage():
     print(f"   Estimated coverage: {coverage_percentage:.1f}%")
 
     if coverage_percentage >= 80:
-        print(f"   Status: ✅ COVERAGE TARGET ACHIEVED")
+        print(f"   Status: OK COVERAGE TARGET ACHIEVED")
     else:
-        print(f"   Status: ❌ COVERAGE TARGET NOT MET")
+        print(f"   Status: FAIL COVERAGE TARGET NOT MET")
 
     return coverage_percentage
 
@@ -190,13 +190,13 @@ def test_functionality():
     try:
         engine = AntiAnalysisEngine()
         if hasattr(engine, 'debugger_detector') and hasattr(engine, 'vm_detector') and hasattr(engine, 'sandbox_detector'):
-            print("   ✅ PASS - AntiAnalysisEngine initializes correctly")
+            print("   OK PASS - AntiAnalysisEngine initializes correctly")
             test_results.append(True)
         else:
-            print("   ❌ FAIL - AntiAnalysisEngine missing detector attributes")
+            print("   FAIL FAIL - AntiAnalysisEngine missing detector attributes")
             test_results.append(False)
     except Exception as e:
-        print(f"   ❌ FAIL - AntiAnalysisEngine initialization failed: {e}")
+        print(f"   FAIL FAIL - AntiAnalysisEngine initialization failed: {e}")
         test_results.append(False)
 
     # Test 2: Detection methods
@@ -208,13 +208,13 @@ def test_functionality():
         sandbox_result = engine.detect_sandbox()
 
         if vm_result is not None and debugger_result is not None and sandbox_result is not None:
-            print("   ✅ PASS - All detection methods return results")
+            print("   OK PASS - All detection methods return results")
             test_results.append(True)
         else:
-            print("   ❌ FAIL - Some detection methods returned None")
+            print("   FAIL FAIL - Some detection methods returned None")
             test_results.append(False)
     except Exception as e:
-        print(f"   ❌ FAIL - Detection methods failed: {e}")
+        print(f"   FAIL FAIL - Detection methods failed: {e}")
         test_results.append(False)
 
     # Test 3: Module imports
@@ -234,13 +234,13 @@ def test_functionality():
         all_classes = all(isinstance(cls, type) for cls in imports)
 
         if all_classes:
-            print("   ✅ PASS - All module imports work correctly")
+            print("   OK PASS - All module imports work correctly")
             test_results.append(True)
         else:
-            print("   ❌ FAIL - Some imports are not classes")
+            print("   FAIL FAIL - Some imports are not classes")
             test_results.append(False)
     except Exception as e:
-        print(f"   ❌ FAIL - Module imports failed: {e}")
+        print(f"   FAIL FAIL - Module imports failed: {e}")
         test_results.append(False)
 
     # Test 4: __all__ exports
@@ -255,17 +255,17 @@ def test_functionality():
         actual_exports = anti_analysis_module.__all__
 
         if set(expected_exports) == set(actual_exports):
-            print("   ✅ PASS - __all__ exports are correct")
+            print("   OK PASS - __all__ exports are correct")
             test_results.append(True)
         else:
-            print(f"   ❌ FAIL - __all__ exports mismatch. Expected: {expected_exports}, Got: {actual_exports}")
+            print(f"   FAIL FAIL - __all__ exports mismatch. Expected: {expected_exports}, Got: {actual_exports}")
             test_results.append(False)
     except Exception as e:
-        print(f"   ❌ FAIL - __all__ exports test failed: {e}")
+        print(f"   FAIL FAIL - __all__ exports test failed: {e}")
         test_results.append(False)
 
     success_rate = sum(test_results) / len(test_results) * 100
-    print(f"\n🎯 FUNCTIONALITY TEST SUMMARY:")
+    print(f"\n FUNCTIONALITY TEST SUMMARY:")
     print(f"   Tests run: {len(test_results)}")
     print(f"   Tests passed: {sum(test_results)}")
     print(f"   Success rate: {success_rate:.1f}%")
@@ -274,7 +274,7 @@ def test_functionality():
         print("   🎉 Functionality tests PASSED!")
         return True
     else:
-        print("   ❌ Functionality tests FAILED!")
+        print("   FAIL Functionality tests FAILED!")
         return False
 
 def run_test_suite():
@@ -311,7 +311,7 @@ def run_test_suite():
     passed = tests_run - failures - errors - skipped
     success_rate = (passed / tests_run * 100) if tests_run > 0 else 0
 
-    print(f"📊 TEST SUITE RESULTS:")
+    print(f" TEST SUITE RESULTS:")
     print(f"   Tests run: {tests_run}")
     print(f"   Passed: {passed}")
     print(f"   Failed: {failures}")
@@ -321,7 +321,7 @@ def run_test_suite():
 
     # Show failures and errors if any
     if failures > 0:
-        print(f"\n❌ FAILURES ({failures}):")
+        print(f"\nFAIL FAILURES ({failures}):")
         for test, traceback in result.failures:
             print(f"   - {test}: {traceback.split(chr(10))[-2] if chr(10) in traceback else traceback}")
 
@@ -339,7 +339,7 @@ if __name__ == "__main__":
     # Test functionality first
     print("\n" + "=" * 70)
     if not test_functionality():
-        print("\n❌ BASIC FUNCTIONALITY TESTS FAILED")
+        print("\nFAIL BASIC FUNCTIONALITY TESTS FAILED")
         print("Proceeding with coverage analysis anyway...\n")
 
     # Run comprehensive test suite
@@ -347,28 +347,28 @@ if __name__ == "__main__":
     tests_passed, success_rate = run_test_suite()
 
     if not tests_passed:
-        print(f"\n⚠️  TEST SUITE SUCCESS RATE: {success_rate:.1f}% (some tests may have failed)")
+        print(f"\nWARNING  TEST SUITE SUCCESS RATE: {success_rate:.1f}% (some tests may have failed)")
         print("Proceeding with coverage analysis...\n")
     else:
-        print(f"\n✅ TEST SUITE SUCCESS RATE: {success_rate:.1f}% (all tests passed)")
+        print(f"\nOK TEST SUITE SUCCESS RATE: {success_rate:.1f}% (all tests passed)")
 
     # Analyze coverage
     print("\n" + "=" * 70)
     coverage = analyze_coverage()
 
     print("\n" + "=" * 70)
-    print("🎯 FINAL ASSESSMENT:")
+    print(" FINAL ASSESSMENT:")
 
     if coverage >= 80 and success_rate >= 80:
-        print("✅ MISSION ACCOMPLISHED")
+        print("OK MISSION ACCOMPLISHED")
         print(f"   - Coverage: {coverage:.1f}% (Target: 80%+)")
         print(f"   - Test Success: {success_rate:.1f}% (Target: 80%+)")
         print("   - Production-ready tests with real capabilities validation")
         sys.exit(0)
     else:
-        print("⚠️  MISSION PARTIALLY COMPLETE")
-        print(f"   - Coverage: {coverage:.1f}% (Target: 80%+) {'✅' if coverage >= 80 else '❌'}")
-        print(f"   - Test Success: {success_rate:.1f}% (Target: 80%+) {'✅' if success_rate >= 80 else '❌'}")
+        print("WARNING  MISSION PARTIALLY COMPLETE")
+        print(f"   - Coverage: {coverage:.1f}% (Target: 80%+) {'OK' if coverage >= 80 else 'FAIL'}")
+        print(f"   - Test Success: {success_rate:.1f}% (Target: 80%+) {'OK' if success_rate >= 80 else 'FAIL'}")
 
         if coverage < 80:
             print("   - Need more comprehensive test coverage")

@@ -13,17 +13,17 @@ from pathlib import Path
 def validate_ssl_interceptor_tests():
     """Validate SSL interceptor test suite structure and imports."""
 
-    print("🔒 SSL INTERCEPTOR TEST VALIDATION")
+    print(" SSL INTERCEPTOR TEST VALIDATION")
     print("=" * 60)
 
     # Test file location
     test_file = Path("tests/unit/core/network/test_ssl_interceptor.py")
 
     if not test_file.exists():
-        print(f"❌ Test file not found: {test_file}")
+        print(f"FAIL Test file not found: {test_file}")
         return False
 
-    print(f"✅ Test file found: {test_file}")
+    print(f"OK Test file found: {test_file}")
 
     # Read and analyze test file
     try:
@@ -50,12 +50,12 @@ def validate_ssl_interceptor_tests():
                 missing_imports.append(imp)
 
         if missing_imports:
-            print("❌ Missing required imports:")
+            print("FAIL Missing required imports:")
             for imp in missing_imports:
                 print(f"   - {imp}")
             return False
         else:
-            print("✅ All required imports present")
+            print("OK All required imports present")
 
         # Validate key test areas
         key_test_areas = [
@@ -79,12 +79,12 @@ def validate_ssl_interceptor_tests():
                 missing_tests.append(test)
 
         if missing_tests:
-            print("❌ Missing key test areas:")
+            print("FAIL Missing key test areas:")
             for test in missing_tests:
                 print(f"   - {test}")
             return False
         else:
-            print("✅ All key test areas covered")
+            print("OK All key test areas covered")
 
         # Validate production-ready features
         production_features = [
@@ -103,20 +103,20 @@ def validate_ssl_interceptor_tests():
                 missing_features.append(feature)
 
         if missing_features:
-            print("⚠️  Missing production features:")
+            print("WARNING  Missing production features:")
             for feature in missing_features:
                 print(f"   - {feature}")
         else:
-            print("✅ All production features validated")
+            print("OK All production features validated")
 
         # Calculate coverage metrics
         coverage_score = ((len(key_test_areas) - len(missing_tests)) / len(key_test_areas)) * 100
         production_score = ((len(production_features) - len(missing_features)) / len(production_features)) * 100
 
-        print(f"\n📊 COVERAGE METRICS")
-        print(f"   🎯 Test Coverage: {coverage_score:.1f}%")
+        print(f"\n COVERAGE METRICS")
+        print(f"    Test Coverage: {coverage_score:.1f}%")
         print(f"   🏭 Production Features: {production_score:.1f}%")
-        print(f"   📈 Test Methods: {test_methods}")
+        print(f"    Test Methods: {test_methods}")
 
         overall_score = (coverage_score + production_score) / 2
 
@@ -124,31 +124,31 @@ def validate_ssl_interceptor_tests():
             print(f"🏆 EXCELLENT - SSL interceptor tests meet production standards ({overall_score:.1f}%)")
             return True
         elif overall_score >= 70:
-            print(f"✅ GOOD - SSL interceptor tests are solid ({overall_score:.1f}%)")
+            print(f"OK GOOD - SSL interceptor tests are solid ({overall_score:.1f}%)")
             return True
         else:
-            print(f"⚠️  NEEDS IMPROVEMENT - SSL interceptor tests below standards ({overall_score:.1f}%)")
+            print(f"WARNING  NEEDS IMPROVEMENT - SSL interceptor tests below standards ({overall_score:.1f}%)")
             return False
 
     except Exception as e:
-        print(f"❌ Error validating tests: {e}")
+        print(f"FAIL Error validating tests: {e}")
         return False
 
 
 def validate_source_module():
     """Validate the source SSL interceptor module can be imported."""
 
-    print(f"\n🔧 SOURCE MODULE VALIDATION")
+    print(f"\n SOURCE MODULE VALIDATION")
     print("-" * 40)
 
     try:
         # Test import
         from intellicrack.core.network.ssl_interceptor import SSLTLSInterceptor
-        print("✅ SSL interceptor module imported successfully")
+        print("OK SSL interceptor module imported successfully")
 
         # Test instantiation
         interceptor = SSLTLSInterceptor()
-        print("✅ SSL interceptor instance created successfully")
+        print("OK SSL interceptor instance created successfully")
 
         # Test basic attributes
         assert hasattr(interceptor, 'config')
@@ -156,17 +156,17 @@ def validate_source_module():
         assert hasattr(interceptor, 'start')
         assert hasattr(interceptor, 'stop')
         assert hasattr(interceptor, 'configure')
-        print("✅ All required methods and attributes present")
+        print("OK All required methods and attributes present")
 
         return True
 
     except Exception as e:
-        print(f"❌ Error validating source module: {e}")
+        print(f"FAIL Error validating source module: {e}")
         return False
 
 
 if __name__ == "__main__":
-    print("🔒 INTELLICRACK SSL INTERCEPTOR TEST VALIDATION")
+    print(" INTELLICRACK SSL INTERCEPTOR TEST VALIDATION")
     print("=" * 60)
 
     test_validation = validate_ssl_interceptor_tests()
@@ -177,5 +177,5 @@ if __name__ == "__main__":
         print("SSL interceptor tests are production-ready for security research")
         sys.exit(0)
     else:
-        print(f"\n❌ VALIDATION FAILED - ISSUES FOUND")
+        print(f"\nFAIL VALIDATION FAILED - ISSUES FOUND")
         sys.exit(1)

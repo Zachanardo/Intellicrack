@@ -22,7 +22,7 @@ try:
     from intellicrack.core.config.external_tools_config import (
         ToolStatus, ToolCategory, ExternalTool, ExternalToolsManager
     )
-    print("✓ Main imports successful")
+    print("OK Main imports successful")
     print("ToolStatus:", ToolStatus)
     print("ToolCategory:", ToolCategory)
 
@@ -31,7 +31,7 @@ try:
         external_tools_manager, get_tool_path, check_tool_available
     )
 
-    print("✓ Function imports successful")
+    print("OK Function imports successful")
     print("Manager type:", type(external_tools_manager))
 
     # Test a basic function call
@@ -40,7 +40,7 @@ try:
 
     # Import test classes
     from tests.unit.core.config.test_external_tools_config import TestToolStatus
-    print("✓ Test class import successful")
+    print("OK Test class import successful")
 
     print("\n=== VALIDATION COMPLETE ===")
 

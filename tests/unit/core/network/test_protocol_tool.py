@@ -201,21 +201,21 @@ Analysis Time: {time.ctime(result['timestamp'])}
 VULNERABILITIES IDENTIFIED:
 """
         for vuln in result['vulnerabilities']:
-            report += f"• {vuln}\n"
+            report += f" {vuln}\n"
 
         report += "\nEXPLOITATION VECTORS:\n"
         for vector in result['exploitation_vectors']:
-            report += f"• {vector}\n"
+            report += f" {vector}\n"
 
         report += "\nBYPASS TECHNIQUES:\n"
         for technique in result['bypass_techniques']:
-            report += f"• {technique}\n"
+            report += f" {technique}\n"
 
         report += "\nRECOMMENDATIONS:\n"
-        report += "• Deploy comprehensive input validation\n"
-        report += "• Implement protocol-specific security controls\n"
-        report += "• Enable advanced threat detection mechanisms\n"
-        report += "• Regular security assessment and penetration testing\n"
+        report += " Deploy comprehensive input validation\n"
+        report += " Implement protocol-specific security controls\n"
+        report += " Enable advanced threat detection mechanisms\n"
+        report += " Regular security assessment and penetration testing\n"
 
         return report
 
@@ -523,11 +523,11 @@ Low: {len(result['findings']['low'])}
 CRITICAL FINDINGS:
 """
         for finding in result['findings']['critical']:
-            report += f"• {finding}\n"
+            report += f" {finding}\n"
 
         report += "\nHIGH RISK FINDINGS:\n"
         for finding in result['findings']['high']:
-            report += f"• {finding}\n"
+            report += f" {finding}\n"
 
         if result['exploitation_results']:
             report += "\nEXPLOITATION RESULTS:\n"
@@ -538,7 +538,7 @@ CRITICAL FINDINGS:
 
         report += "\nRECOMMENDATIONS:\n"
         for rec in result['recommendations']:
-            report += f"• {rec}\n"
+            report += f" {rec}\n"
 
         return report
 

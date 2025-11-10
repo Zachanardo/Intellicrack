@@ -654,18 +654,18 @@ class EndToEndWorkflowTest(unittest.TestCase):
 
         # Check 2-minute requirement
         all_under_2min = all(m["elapsed_time"] < 120 for m in cls.performance_metrics.values())
-        report.append(f"✓ 2-minute analysis limit: {'PASS' if all_under_2min else 'FAIL'}")
+        report.append(f"OK 2-minute analysis limit: {'PASS' if all_under_2min else 'FAIL'}")
 
         # Check memory requirement (8GB)
         under_memory_limit = max_memory < 8192
-        report.append(f"✓ Memory usage under 8GB: {'PASS' if under_memory_limit else 'FAIL'}")
+        report.append(f"OK Memory usage under 8GB: {'PASS' if under_memory_limit else 'FAIL'}")
 
         # Functionality tests
-        report.append("✓ Protection detection: PASS")
-        report.append("✓ Bypass generation: PASS")
-        report.append("✓ Exploitation capabilities: PASS")
-        report.append("✓ AI integration: PASS")
-        report.append("✓ Error handling: PASS")
+        report.append("OK Protection detection: PASS")
+        report.append("OK Bypass generation: PASS")
+        report.append("OK Exploitation capabilities: PASS")
+        report.append("OK AI integration: PASS")
+        report.append("OK Error handling: PASS")
         report.append("")
 
         report.append("=" * 80)

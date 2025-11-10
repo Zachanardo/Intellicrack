@@ -105,9 +105,9 @@ async fn test_python_integration_embedded_main() -> Result<()> {
             // Should fail with informative error message
             let error_msg = format!("{}", e);
             assert!(
-                error_msg.contains("intellicrack.main") ||
-                error_msg.contains("main()") ||
-                error_msg.contains("exit code"),
+                error_msg.contains("intellicrack.main")
+                    || error_msg.contains("main()")
+                    || error_msg.contains("exit code"),
                 "Error should mention module, function, or exit code: {}",
                 error_msg
             );
@@ -510,7 +510,10 @@ fn test_optimization_sequence_performance() {
 #[test]
 fn test_graceful_degradation_on_failures() {
     let process_result = intellicrack_launcher::optimize_process();
-    assert!(process_result.is_ok(), "Process optimization should be non-fatal");
+    assert!(
+        process_result.is_ok(),
+        "Process optimization should be non-fatal"
+    );
 
     let tool_result = intellicrack_launcher::discover_and_cache_tools();
     assert!(tool_result.is_ok(), "Tool discovery should be non-fatal");

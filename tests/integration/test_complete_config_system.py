@@ -501,4 +501,4 @@ class TestCompleteConfigSystem(IntellicrackTestBase):
             self.config.set(key, value)
             assert self.config.get(key) == value, f"Failed to set/get {key}"
 
-        print("\n✅ Task 20.1.1 COMPLETED: All features validated and working correctly")
+        print("\nOK Task 20.1.1 COMPLETED: All features validated and working correctly")

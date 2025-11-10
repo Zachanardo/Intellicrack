@@ -66,13 +66,13 @@ install-qemu:
 
 # ==================== BUILD ====================
 
-# Build Rust launcher in release mode
+# Build Rust launcher in release mode with maximum optimization
 build-rust:
-    @echo "Building Rust launcher..."
-    cargo build --release --manifest-path intellicrack-launcher/Cargo.toml
+    @echo "Building Rust launcher with maximum optimization..."
+    $env:RUSTFLAGS="-C target-cpu=native"; cargo build --release --manifest-path intellicrack-launcher/Cargo.toml
     @echo "Creating shortcut with icon..."
     $WshShell = New-Object -ComObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut("$PWD\Intellicrack.lnk"); $Shortcut.TargetPath = "$PWD\intellicrack-launcher\target\release\Intellicrack.exe"; $Shortcut.IconLocation = "$PWD\intellicrack\assets\icon.ico"; $Shortcut.WorkingDirectory = "$PWD"; $Shortcut.Save()
-    @echo "Rust launcher built ✓"
+    @echo "Rust launcher built with maximum optimization ✓"
     @echo "Shortcut created: Intellicrack.lnk"
 
 # Build Rust launcher in debug mode
@@ -186,6 +186,14 @@ lint-fix:
     pixi run ruff check --fix intellicrack/
     pixi run ruff format intellicrack/
 
+# Detect dead code with vulture
+vulture:
+    pixi run vulture intellicrack/
+
+# Security linting with bandit
+bandit:
+    pixi run bandit -r intellicrack/ -c pyproject.toml -f xml
+
 # Lint JavaScript files with ESLint
 lint-js:
     pixi run npx eslint . --ext .js
@@ -194,9 +202,13 @@ lint-js:
 lint-js-fix:
     pixi run npx eslint . --ext .js --fix
 
-# Lint Java files with Checkstyle
+# Lint Java files with PMD
 lint-java:
-    pixi run ./tools/checkstyle/checkstyle.bat -c ./tools/checkstyle/intellicrack_checks.xml (Get-ChildItem -Recurse -Filter *.java | Where-Object { $_.FullName -notmatch '(tools|\.venv|\.pixi|build|dist)' } | Select-Object -ExpandProperty FullName)
+    ./tools/pmd/bin/pmd.bat check -d intellicrack/scripts/ghidra -R tools/pmd/intellicrack-ruleset.xml -f text
+
+# Format Java files with google-java-format
+lint-java-fix:
+    Get-ChildItem -Recurse -Path intellicrack -Filter *.java | ForEach-Object { java -jar tools/google-java-format/google-java-format.jar --replace $_.FullName }
 
 # Lint Markdown files with markdownlint
 lint-md:
@@ -206,13 +218,50 @@ lint-md:
 lint-md-fix:
     pixi run markdownlint "**/*.md" --fix --ignore node_modules --ignore .venv* --ignore .pixi --ignore build --ignore dist --ignore tools
 
-# Lint all file types (Python, Rust, Java, JavaScript, Markdown)
+# Lint all TOML files in the project (excluding third-party via eslint config)
+lint-toml:
+    npx eslint "**/*.toml"
+
+# Fix TOML linting issues automatically for all TOML files
+lint-toml-fix:
+    npx eslint "**/*.toml" --fix
+
+# Lint all YAML files in the project with yamllint
+lint-yaml:
+    pixi run yamllint .
+
+# Fix YAML linting issues (yamllint does not auto-fix, this runs lint only)
+lint-yaml-fix:
+    @echo "yamllint does not support auto-fix. Use Prettier for YAML formatting."
+    @just format-fix
+
+# Lint all JSON files in the project with Prettier
+lint-json:
+    npx prettier --check "**/*.json"
+
+# Fix JSON linting issues automatically with Prettier
+lint-json-fix:
+    npx prettier --write "**/*.json"
+
+# Check formatting with Prettier for all supported files
+format:
+    npx prettier --check "**/*.{js,md,toml,yaml,yml,json}"
+
+# Fix formatting with Prettier for all supported files
+format-fix:
+    npx prettier --write "**/*.{js,md,toml,yaml,yml,json}"
+
+# Lint all file types (Python, Rust, Java, JavaScript, Markdown, TOML, YAML, JSON, Formatting)
 lint-all:
     -@just lint
     -@just lint-rust-all
     -@just lint-java
     -@just lint-js
     -@just lint-md
+    -@just lint-toml
+    -@just lint-yaml
+    -@just lint-json
+    -@just format
     @echo "All linting complete ✓"
 
 # Lint Rust code with clippy (comprehensive - all lints)
@@ -243,14 +292,18 @@ lint-rust-fix:
 lint-rust-all: lint-rust lint-rust-fmt-check
     @echo "Rust linting and formatting complete ✓"
 
-# Fix all auto-fixable linting issues (Python, Rust, JavaScript, Markdown)
-# Note: Java Checkstyle does not support auto-fix
+# Fix all auto-fixable linting issues (Python, Rust, Java, JavaScript, Markdown, TOML, YAML, JSON, Formatting)
+# Note: PMD does not support auto-fix (linting only), yamllint does not auto-fix (use Prettier instead)
 lint-all-fix:
     -@just lint-fix
     -@just lint-rust-fix
     -@just lint-rust-fmt
+    -@just lint-java-fix
     -@just lint-js-fix
     -@just lint-md-fix
+    -@just lint-toml-fix
+    -@just lint-json-fix
+    -@just format-fix
     @echo "All auto-fixable linting issues resolved ✓"
 
 # ==================== GIT ====================

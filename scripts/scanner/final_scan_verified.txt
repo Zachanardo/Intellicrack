@@ -2,76 +2,32 @@
 Starting Intellicrack production-readiness scan...
 Root: D:\Intellicrack
 
-Scanning 751 files...
-Progress: 50/751
-Progress: 100/751
-Progress: 150/751
-Progress: 200/751
-Progress: 250/751
-Progress: 300/751
-Progress: 350/751
-Progress: 400/751
-Progress: 450/751
-Progress: 500/751
-Progress: 550/751
-Progress: 600/751
-Progress: 650/751
-Progress: 700/751
-Progress: 750/751
-Progress: 751/751
+Scanning 690 files...
+Progress: 50/690
+Progress: 100/690
+Progress: 150/690
+Progress: 200/690
+Progress: 250/690
+Progress: 300/690
+Progress: 350/690
+Progress: 400/690
+Progress: 450/690
+Progress: 500/690
+Progress: 550/690
+Progress: 600/690
+Progress: 650/690
+Progress: 690/690
 Scan complete!
-✓ Generated TODO.txt
+✓ Generated TODO.md
 ✓ Generated TODO.xml
 
 # Intellicrack Production-Readiness Issues
 
-**Total Issues:** 671
+**Total Issues:** 609
 
 ---
 
-## Python Issues (158 files)
-
-### File: `D:\Intellicrack\intellicrack\ai\code_analysis_tools.py`
-
-**Issues in this file:** 2
-
-#### 1. [ ] `analyze_code()` - CRITICAL (Line 431)
-
-**Confidence:** 120%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 4 production issues detected
-
-**Evidence:**
-
-- Function name implies external tool usage but no subprocess/tool calls detected (+30 points)
-- Processing function with no local variables (no actual computation) (+45 points)
-- Trivial implementation: no loops, conditionals, or local vars despite multiple lines (+55 points)
-- Deductions for production patterns (-10 points) (-10 points)
-
-**Suggested Fix:** Review and implement production-ready functionality
-
----
-
-#### 2. [ ] `analyze_code()` - CRITICAL (Line 431)
-
-**Confidence:** 120%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 4 production issues detected
-
-**Evidence:**
-
-- Function name implies external tool usage but no subprocess/tool calls detected (+30 points)
-- Processing function with no local variables (no actual computation) (+45 points)
-- Trivial implementation: no loops, conditionals, or local vars despite multiple lines (+55 points)
-- Deductions for production patterns (-10 points) (-10 points)
-
-**Suggested Fix:** Review and implement production-ready functionality
-
----
+## Python Issues (154 files)
 
 ### File: `D:\Intellicrack\intellicrack\ai\gpu_integration.py`
 
@@ -220,30 +176,6 @@ Scan complete!
 - Analyzer without loops (single pattern check only) (+55 points)
 - Analyzer sophistication: 25% (WEAK - misses most protections) (+70 points)
 - Deductions for production patterns (-95 points) (-95 points)
-
-**Suggested Fix:** Review and implement production-ready functionality
-
----
-
-### File: `D:\Intellicrack\intellicrack\ai\llm_config_as_code.py`
-
-**Issues in this file:** 1
-
-#### 1. [ ] `validate()` - CRITICAL (Line 67)
-
-**Confidence:** 115%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 5 production issues detected
-
-**Evidence:**
-
-- Function name implies complex operation ('validate') but has ≤3 lines and low complexity (+30 points)
-- Validation/check function without conditional logic (always returns same value) (+50 points)
-- 'Simple' implementation confirmed: no iteration logic (+30 points)
-- Very short function (≤3 LOC) for non-getter/setter (+15 points)
-- Deductions for production patterns (-10 points) (-10 points)
 
 **Suggested Fix:** Review and implement production-ready functionality
 
@@ -781,7 +713,7 @@ Scan complete!
 
 **Issues in this file:** 2
 
-#### 1. [ ] `analyze()` - HIGH (Line 1001)
+#### 1. [ ] `analyze()` - HIGH (Line 1027)
 
 **Confidence:** 85%
 
@@ -800,7 +732,7 @@ Scan complete!
 
 ---
 
-#### 2. [ ] `analyze()` - HIGH (Line 1001)
+#### 2. [ ] `analyze()` - HIGH (Line 1027)
 
 **Confidence:** 85%
 
@@ -1154,11 +1086,11 @@ Scan complete!
 
 #### 1. [ ] `on_message()` - HIGH (Line 387)
 
-**Confidence:** 95%
+**Confidence:** 80%
 
 **Issue Type:** `stub_detection`
 
-**Description:** 4 production issues detected
+**Description:** 5 production issues detected
 
 **Evidence:**
 
@@ -1166,6 +1098,7 @@ Scan complete!
 - Imports 'frida' but doesn't use it in function (+15 points)
 - Very short function (≤3 LOC) for non-getter/setter (+15 points)
 - Function has only 1 caller and <3 lines (may be stub) (+15 points)
+- Deductions for production patterns (-15 points) (-15 points)
 
 **Suggested Fix:** Review and implement production-ready functionality
 
@@ -2743,15 +2676,14 @@ Scan complete!
 
 #### 1. [ ] `assess_patch_risk()` - CRITICAL (Line 262)
 
-**Confidence:** 250%
+**Confidence:** 225%
 
 **Issue Type:** `hardcoded_return`
 
-**Description:** 7 production issues detected
+**Description:** 6 production issues detected
 
 **Evidence:**
 
-- All returns are hardcoded strings (+25 points)
 - CRITICAL: Patcher without pattern search (hardcoded offsets only) (+85 points)
 - Patcher without format parsing (not PE/ELF aware - dangerous) (+70 points)
 - Patcher without backup capability (destructive without safety) (+50 points)
@@ -2765,15 +2697,14 @@ Scan complete!
 
 #### 2. [ ] `assess_patch_risk()` - CRITICAL (Line 262)
 
-**Confidence:** 250%
+**Confidence:** 225%
 
 **Issue Type:** `hardcoded_return`
 
-**Description:** 7 production issues detected
+**Description:** 6 production issues detected
 
 **Evidence:**
 
-- All returns are hardcoded strings (+25 points)
 - CRITICAL: Patcher without pattern search (hardcoded offsets only) (+85 points)
 - Patcher without format parsing (not PE/ELF aware - dangerous) (+70 points)
 - Patcher without backup capability (destructive without safety) (+50 points)
@@ -2877,7 +2808,7 @@ Scan complete!
 
 **Issues in this file:** 4
 
-#### 1. [ ] `inject_universal_bypass()` - CRITICAL (Line 347)
+#### 1. [ ] `inject_universal_bypass()` - CRITICAL (Line 349)
 
 **Confidence:** 297%
 
@@ -2899,7 +2830,7 @@ Scan complete!
 
 ---
 
-#### 2. [ ] `inject_universal_bypass()` - CRITICAL (Line 347)
+#### 2. [ ] `inject_universal_bypass()` - CRITICAL (Line 349)
 
 **Confidence:** 297%
 
@@ -2921,7 +2852,7 @@ Scan complete!
 
 ---
 
-#### 3. [ ] `inject_specific_bypass()` - CRITICAL (Line 372)
+#### 3. [ ] `inject_specific_bypass()` - CRITICAL (Line 374)
 
 **Confidence:** 277%
 
@@ -2943,7 +2874,7 @@ Scan complete!
 
 ---
 
-#### 4. [ ] `inject_specific_bypass()` - CRITICAL (Line 372)
+#### 4. [ ] `inject_specific_bypass()` - CRITICAL (Line 374)
 
 **Confidence:** 277%
 
@@ -3491,15 +3422,14 @@ Scan complete!
 
 #### 1. [ ] `assess_patch_risk()` - CRITICAL (Line 1052)
 
-**Confidence:** 347%
+**Confidence:** 322%
 
 **Issue Type:** `hardcoded_return`
 
-**Description:** 7 production issues detected
+**Description:** 6 production issues detected
 
 **Evidence:**
 
-- All returns are hardcoded strings (+25 points)
 - CRITICAL: Patcher without pattern search (hardcoded offsets only) (+85 points)
 - Patcher without format parsing (not PE/ELF aware - dangerous) (+70 points)
 - Patcher without backup capability (destructive without safety) (+50 points)
@@ -3513,15 +3443,14 @@ Scan complete!
 
 #### 2. [ ] `assess_patch_risk()` - CRITICAL (Line 1052)
 
-**Confidence:** 347%
+**Confidence:** 322%
 
 **Issue Type:** `hardcoded_return`
 
-**Description:** 7 production issues detected
+**Description:** 6 production issues detected
 
 **Evidence:**
 
-- All returns are hardcoded strings (+25 points)
 - CRITICAL: Patcher without pattern search (hardcoded offsets only) (+85 points)
 - Patcher without format parsing (not PE/ELF aware - dangerous) (+70 points)
 - Patcher without backup capability (destructive without safety) (+50 points)
@@ -3621,7 +3550,7 @@ Scan complete!
 
 **Issues in this file:** 3
 
-#### 1. [ ] `patch_memory_direct()` - CRITICAL (Line 770)
+#### 1. [ ] `patch_memory_direct()` - CRITICAL (Line 783)
 
 **Confidence:** 292%
 
@@ -3642,7 +3571,7 @@ Scan complete!
 
 ---
 
-#### 2. [ ] `detect_and_bypass_guard_pages()` - CRITICAL (Line 1174)
+#### 2. [ ] `detect_and_bypass_guard_pages()` - CRITICAL (Line 1187)
 
 **Confidence:** 190%
 
@@ -3664,7 +3593,7 @@ Scan complete!
 
 ---
 
-#### 3. [ ] `setup_memory_patching()` - CRITICAL (Line 527)
+#### 3. [ ] `setup_memory_patching()` - CRITICAL (Line 540)
 
 **Confidence:** 175%
 
@@ -4117,8 +4046,8 @@ Scan complete!
 - Patcher without loops (single-target/single-patch only) (+60 points)
 - CRITICAL: Patcher without conditionals (blindly patches - dangerous) (+75 points)
 - Patcher sophistication: 10% (DANGEROUS - will break on updates) (+80 points)
-- Imports 'frida' but doesn't use it in function (+15 points)
 - Imports 'capstone' but doesn't use it in function (+15 points)
+- Imports 'frida' but doesn't use it in function (+15 points)
 - Deductions for production patterns (-93 points) (-93 points)
 
 **Suggested Fix:** Implement actual binary patching with proper file I/O and byte manipulation
@@ -4209,8 +4138,8 @@ Scan complete!
 - Patcher without format parsing (not PE/ELF aware - dangerous) (+70 points)
 - Patcher without backup capability (destructive without safety) (+50 points)
 - Patcher sophistication: 55% (FRAGILE - limited reliability) (+50 points)
-- Imports 'frida' but doesn't use it in function (+15 points)
 - Imports 'capstone' but doesn't use it in function (+15 points)
+- Imports 'frida' but doesn't use it in function (+15 points)
 - Deductions for production patterns (-220 points) (-220 points)
 
 **Suggested Fix:** Replace hardcoded return with dynamic computation based on input parameters
@@ -4231,8 +4160,8 @@ Scan complete!
 - Patcher without format parsing (not PE/ELF aware - dangerous) (+70 points)
 - Patcher without backup capability (destructive without safety) (+50 points)
 - Patcher sophistication: 55% (FRAGILE - limited reliability) (+50 points)
-- Imports 'frida' but doesn't use it in function (+15 points)
 - Imports 'capstone' but doesn't use it in function (+15 points)
+- Imports 'frida' but doesn't use it in function (+15 points)
 - Deductions for production patterns (-220 points) (-220 points)
 
 **Suggested Fix:** Replace hardcoded return with dynamic computation based on input parameters
@@ -4250,8 +4179,8 @@ Scan complete!
 **Evidence:**
 
 - Weak encryption detected (XOR, character-by-character) (+30 points)
-- Imports 'capstone' but doesn't use it in function (+15 points)
 - Imports 'frida' but doesn't use it in function (+15 points)
+- Imports 'capstone' but doesn't use it in function (+15 points)
 
 **Suggested Fix:** Review and implement production-ready functionality
 
@@ -4268,8 +4197,8 @@ Scan complete!
 **Evidence:**
 
 - Weak encryption detected (XOR, character-by-character) (+30 points)
-- Imports 'capstone' but doesn't use it in function (+15 points)
 - Imports 'frida' but doesn't use it in function (+15 points)
+- Imports 'capstone' but doesn't use it in function (+15 points)
 
 **Suggested Fix:** Review and implement production-ready functionality
 
@@ -4304,8 +4233,8 @@ Scan complete!
 **Evidence:**
 
 - Weak encryption detected (XOR, character-by-character) (+30 points)
-- Imports 'frida' but doesn't use it in function (+15 points)
 - Imports 'capstone' but doesn't use it in function (+15 points)
+- Imports 'frida' but doesn't use it in function (+15 points)
 
 **Suggested Fix:** Review and implement production-ready functionality
 
@@ -4321,8 +4250,8 @@ Scan complete!
 
 **Evidence:**
 
-- Imports 'frida' but doesn't use it in function (+15 points)
 - Imports 'capstone' but doesn't use it in function (+15 points)
+- Imports 'frida' but doesn't use it in function (+15 points)
 - Function never called and calls no other functions (dead code or stub) (+25 points)
 
 **Suggested Fix:** Review and implement production-ready functionality
@@ -4408,8 +4337,8 @@ Scan complete!
 **Evidence:**
 
 - Validation/check function without conditional logic (always returns same value) (+50 points)
-- Imports 'subprocess' but doesn't use it in function (+15 points)
 - Imports 'cryptography' but doesn't use it in function (+15 points)
+- Imports 'subprocess' but doesn't use it in function (+15 points)
 
 **Suggested Fix:** Review and implement production-ready functionality
 
@@ -4664,7 +4593,7 @@ Scan complete!
 
 **Issues in this file:** 3
 
-#### 1. [ ] `analyze_serial_algorithm()` - HIGH (Line 107)
+#### 1. [ ] `analyze_serial_algorithm()` - HIGH (Line 112)
 
 **Confidence:** 92%
 
@@ -4682,7 +4611,7 @@ Scan complete!
 
 ---
 
-#### 2. [ ] `analyze_serial_algorithm()` - HIGH (Line 107)
+#### 2. [ ] `analyze_serial_algorithm()` - HIGH (Line 112)
 
 **Confidence:** 92%
 
@@ -4700,7 +4629,7 @@ Scan complete!
 
 ---
 
-#### 3. [ ] `feistel_round()` - MEDIUM (Line 728)
+#### 3. [ ] `feistel_round()` - MEDIUM (Line 733)
 
 **Confidence:** 60%
 
@@ -4825,30 +4754,6 @@ Scan complete!
 - Very short function (≤3 LOC) for non-getter/setter (+15 points)
 
 **Suggested Fix:** Review and implement production-ready functionality
-
----
-
-### File: `D:\Intellicrack\intellicrack\core\tool_discovery.py`
-
-**Issues in this file:** 1
-
-#### 1. [ ] `validate_radare2()` - MEDIUM (Line 119)
-
-**Confidence:** 65%
-
-**Issue Type:** `empty_function`
-
-**Description:** 5 production issues detected
-
-**Evidence:**
-
-- CRITICAL: Validator with no verification calls (ineffective validation) (+85 points)
-- Validator with single return (no error differentiation) (+45 points)
-- Validator sophistication: 30% (WEAK - bypassed easily) (+70 points)
-- 'Simple' implementation confirmed: no iteration logic (+30 points)
-- Deductions for production patterns (-165 points) (-165 points)
-
-**Suggested Fix:** Implement actual logic for 'validate_radare2'
 
 ---
 
@@ -5852,18 +5757,17 @@ Scan complete!
 
 **Issues in this file:** 4
 
-#### 1. [ ] `is_available()` - CRITICAL (Line 173)
+#### 1. [ ] `is_available()` - HIGH (Line 173)
 
-**Confidence:** 125%
+**Confidence:** 90%
 
 **Issue Type:** `stub_detection`
 
-**Description:** 4 production issues detected
+**Description:** 3 production issues detected
 
 **Evidence:**
 
 - Function has no meaningful content (≤1 line) (+50 points)
-- Single-line return of simple literal (0, 1, True, False, None) (+35 points)
 - Very short function (≤3 LOC) for non-getter/setter (+15 points)
 - Function never called and calls no other functions (dead code or stub) (+25 points)
 
@@ -5871,18 +5775,17 @@ Scan complete!
 
 ---
 
-#### 2. [ ] `device_count()` - CRITICAL (Line 177)
+#### 2. [ ] `device_count()` - HIGH (Line 177)
 
-**Confidence:** 125%
+**Confidence:** 90%
 
 **Issue Type:** `stub_detection`
 
-**Description:** 4 production issues detected
+**Description:** 3 production issues detected
 
 **Evidence:**
 
 - Function has no meaningful content (≤1 line) (+50 points)
-- Single-line return of simple literal (0, 1, True, False, None) (+35 points)
 - Very short function (≤3 LOC) for non-getter/setter (+15 points)
 - Function never called and calls no other functions (dead code or stub) (+25 points)
 
@@ -6064,7 +5967,7 @@ Scan complete!
 
 #### 1. [ ] `validate_selection()` - CRITICAL (Line 307)
 
-**Confidence:** 172%
+**Confidence:** 152%
 
 **Issue Type:** `empty_function`
 
@@ -6075,7 +5978,7 @@ Scan complete!
 - CRITICAL: Validator with no verification calls (ineffective validation) (+85 points)
 - Validator with no local validation state (too simple) (+40 points)
 - Validator sophistication: 35% (WEAK - bypassed easily) (+70 points)
-- Deductions for production patterns (-23 points) (-23 points)
+- Deductions for production patterns (-43 points) (-43 points)
 
 **Suggested Fix:** Implement actual logic for 'validate_selection'
 
@@ -6083,7 +5986,7 @@ Scan complete!
 
 #### 2. [ ] `validate_selection()` - CRITICAL (Line 307)
 
-**Confidence:** 172%
+**Confidence:** 152%
 
 **Issue Type:** `empty_function`
 
@@ -6094,7 +5997,7 @@ Scan complete!
 - CRITICAL: Validator with no verification calls (ineffective validation) (+85 points)
 - Validator with no local validation state (too simple) (+40 points)
 - Validator sophistication: 35% (WEAK - bypassed easily) (+70 points)
-- Deductions for production patterns (-23 points) (-23 points)
+- Deductions for production patterns (-43 points) (-43 points)
 
 **Suggested Fix:** Implement actual logic for 'validate_selection'
 
@@ -6626,8 +6529,8 @@ Scan complete!
 - Validator without cryptographic verification (string comparison only) (+65 points)
 - CRITICAL: Validator without conditionals (always same result) (+95 points)
 - Validator sophistication: 20% (WEAK - bypassed easily) (+70 points)
-- Imports 'cryptography' but doesn't use it in function (+15 points)
 - Imports 'subprocess' but doesn't use it in function (+15 points)
+- Imports 'cryptography' but doesn't use it in function (+15 points)
 - Deductions for production patterns (-83 points) (-83 points)
 
 **Suggested Fix:** Implement actual logic for 'validate_adobe_license'
@@ -6648,8 +6551,8 @@ Scan complete!
 - Validator without cryptographic verification (string comparison only) (+65 points)
 - CRITICAL: Validator without conditionals (always same result) (+95 points)
 - Validator sophistication: 20% (WEAK - bypassed easily) (+70 points)
-- Imports 'subprocess' but doesn't use it in function (+15 points)
 - Imports 'cryptography' but doesn't use it in function (+15 points)
+- Imports 'subprocess' but doesn't use it in function (+15 points)
 - Deductions for production patterns (-83 points) (-83 points)
 
 **Suggested Fix:** Implement actual logic for 'validate_adobe_license'
@@ -6669,8 +6572,8 @@ Scan complete!
 - Validation/check function without conditional logic (always returns same value) (+50 points)
 - CRITICAL: Validator without conditionals (always same result) (+95 points)
 - Validator sophistication: 50% (BASIC - needs improvement) (+40 points)
-- Imports 'subprocess' but doesn't use it in function (+15 points)
 - Imports 'cryptography' but doesn't use it in function (+15 points)
+- Imports 'subprocess' but doesn't use it in function (+15 points)
 - Function never called and calls no other functions (dead code or stub) (+25 points)
 - Deductions for production patterns (-43 points) (-43 points)
 
@@ -6691,8 +6594,8 @@ Scan complete!
 - Validation/check function without conditional logic (always returns same value) (+50 points)
 - CRITICAL: Validator without conditionals (always same result) (+95 points)
 - Validator sophistication: 50% (BASIC - needs improvement) (+40 points)
-- Imports 'subprocess' but doesn't use it in function (+15 points)
 - Imports 'cryptography' but doesn't use it in function (+15 points)
+- Imports 'subprocess' but doesn't use it in function (+15 points)
 - Function never called and calls no other functions (dead code or stub) (+25 points)
 - Deductions for production patterns (-43 points) (-43 points)
 
@@ -6712,8 +6615,8 @@ Scan complete!
 
 - CRITICAL: Validator with no verification calls (ineffective validation) (+85 points)
 - Validator sophistication: 20% (WEAK - bypassed easily) (+70 points)
-- Imports 'subprocess' but doesn't use it in function (+15 points)
 - Imports 'cryptography' but doesn't use it in function (+15 points)
+- Imports 'subprocess' but doesn't use it in function (+15 points)
 - Deductions for production patterns (-73 points) (-73 points)
 
 **Suggested Fix:** Implement actual logic for 'validate_license'
@@ -6732,8 +6635,8 @@ Scan complete!
 
 - CRITICAL: Validator with no verification calls (ineffective validation) (+85 points)
 - Validator sophistication: 20% (WEAK - bypassed easily) (+70 points)
-- Imports 'subprocess' but doesn't use it in function (+15 points)
 - Imports 'cryptography' but doesn't use it in function (+15 points)
+- Imports 'subprocess' but doesn't use it in function (+15 points)
 - Deductions for production patterns (-73 points) (-73 points)
 
 **Suggested Fix:** Implement actual logic for 'validate_license'
@@ -6768,8 +6671,8 @@ Scan complete!
 
 **Evidence:**
 
-- Imports 'cryptography' but doesn't use it in function (+15 points)
 - Imports 'subprocess' but doesn't use it in function (+15 points)
+- Imports 'cryptography' but doesn't use it in function (+15 points)
 - Very short function (≤3 LOC) for non-getter/setter (+15 points)
 - Function never called and calls no other functions (dead code or stub) (+25 points)
 - Deductions for production patterns (-10 points) (-10 points)
@@ -6788,8 +6691,8 @@ Scan complete!
 
 **Evidence:**
 
-- Imports 'subprocess' but doesn't use it in function (+15 points)
 - Imports 'cryptography' but doesn't use it in function (+15 points)
+- Imports 'subprocess' but doesn't use it in function (+15 points)
 - Very short function (≤3 LOC) for non-getter/setter (+15 points)
 - Function never called and calls no other functions (dead code or stub) (+25 points)
 - Deductions for production patterns (-10 points) (-10 points)
@@ -7000,109 +6903,111 @@ Scan complete!
 
 ---
 
-#### 4. [ ] `on_search()` - HIGH (Line 388)
+#### 4. [ ] `save_frida_script()` - MEDIUM (Line 1949)
 
-**Confidence:** 75%
+**Confidence:** 65%
 
 **Issue Type:** `stub_detection`
 
 **Description:** 3 production issues detected
+
+**Evidence:**
+
+- Function name implies file I/O but no file operations detected (+35 points)
+- Imports 'subprocess' but doesn't use it in function (+15 points)
+- Very short function (≤3 LOC) for non-getter/setter (+15 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 5. [ ] `save_frida_script()` - MEDIUM (Line 1949)
+
+**Confidence:** 65%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Function name implies file I/O but no file operations detected (+35 points)
+- Imports 'subprocess' but doesn't use it in function (+15 points)
+- Very short function (≤3 LOC) for non-getter/setter (+15 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 6. [ ] `save_r2_script()` - MEDIUM (Line 1959)
+
+**Confidence:** 65%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Function name implies file I/O but no file operations detected (+35 points)
+- Imports 'subprocess' but doesn't use it in function (+15 points)
+- Very short function (≤3 LOC) for non-getter/setter (+15 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 7. [ ] `save_r2_script()` - MEDIUM (Line 1959)
+
+**Confidence:** 65%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 3 production issues detected
+
+**Evidence:**
+
+- Function name implies file I/O but no file operations detected (+35 points)
+- Imports 'subprocess' but doesn't use it in function (+15 points)
+- Very short function (≤3 LOC) for non-getter/setter (+15 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 8. [ ] `on_search()` - MEDIUM (Line 388)
+
+**Confidence:** 60%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 4 production issues detected
 
 **Evidence:**
 
 - Search/scan function without iteration logic (single-element only) (+45 points)
 - Imports 'subprocess' but doesn't use it in function (+15 points)
 - Very short function (≤3 LOC) for non-getter/setter (+15 points)
+- Deductions for production patterns (-15 points) (-15 points)
 
 **Suggested Fix:** Review and implement production-ready functionality
 
 ---
 
-#### 5. [ ] `on_search()` - HIGH (Line 388)
+#### 9. [ ] `on_search()` - MEDIUM (Line 388)
 
-**Confidence:** 75%
+**Confidence:** 60%
 
 **Issue Type:** `stub_detection`
 
-**Description:** 3 production issues detected
+**Description:** 4 production issues detected
 
 **Evidence:**
 
 - Search/scan function without iteration logic (single-element only) (+45 points)
 - Imports 'subprocess' but doesn't use it in function (+15 points)
 - Very short function (≤3 LOC) for non-getter/setter (+15 points)
-
-**Suggested Fix:** Review and implement production-ready functionality
-
----
-
-#### 6. [ ] `save_frida_script()` - MEDIUM (Line 1949)
-
-**Confidence:** 65%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 3 production issues detected
-
-**Evidence:**
-
-- Function name implies file I/O but no file operations detected (+35 points)
-- Imports 'subprocess' but doesn't use it in function (+15 points)
-- Very short function (≤3 LOC) for non-getter/setter (+15 points)
-
-**Suggested Fix:** Review and implement production-ready functionality
-
----
-
-#### 7. [ ] `save_frida_script()` - MEDIUM (Line 1949)
-
-**Confidence:** 65%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 3 production issues detected
-
-**Evidence:**
-
-- Function name implies file I/O but no file operations detected (+35 points)
-- Imports 'subprocess' but doesn't use it in function (+15 points)
-- Very short function (≤3 LOC) for non-getter/setter (+15 points)
-
-**Suggested Fix:** Review and implement production-ready functionality
-
----
-
-#### 8. [ ] `save_r2_script()` - MEDIUM (Line 1959)
-
-**Confidence:** 65%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 3 production issues detected
-
-**Evidence:**
-
-- Function name implies file I/O but no file operations detected (+35 points)
-- Imports 'subprocess' but doesn't use it in function (+15 points)
-- Very short function (≤3 LOC) for non-getter/setter (+15 points)
-
-**Suggested Fix:** Review and implement production-ready functionality
-
----
-
-#### 9. [ ] `save_r2_script()` - MEDIUM (Line 1959)
-
-**Confidence:** 65%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 3 production issues detected
-
-**Evidence:**
-
-- Function name implies file I/O but no file operations detected (+35 points)
-- Imports 'subprocess' but doesn't use it in function (+15 points)
-- Very short function (≤3 LOC) for non-getter/setter (+15 points)
+- Deductions for production patterns (-15 points) (-15 points)
 
 **Suggested Fix:** Review and implement production-ready functionality
 
@@ -7146,26 +7051,9 @@ Scan complete!
 
 ### File: `D:\Intellicrack\intellicrack\plugins\plugin_base.py`
 
-**Issues in this file:** 4
+**Issues in this file:** 2
 
-#### 1. [ ] `calculate_entropy()` - HIGH (Line 191)
-
-**Confidence:** 80%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 2 production issues detected
-
-**Evidence:**
-
-- Trivial implementation: no loops, conditionals, or local vars despite multiple lines (+55 points)
-- Function never called and calls no other functions (dead code or stub) (+25 points)
-
-**Suggested Fix:** Review and implement production-ready functionality
-
----
-
-#### 2. [ ] `calculate_entropy()` - HIGH (Line 191)
+#### 1. [ ] `calculate_entropy()` - HIGH (Line 193)
 
 **Confidence:** 80%
 
@@ -7182,39 +7070,20 @@ Scan complete!
 
 ---
 
-#### 3. [ ] `validate_binary()` - MEDIUM (Line 148)
+#### 2. [ ] `calculate_entropy()` - HIGH (Line 193)
 
-**Confidence:** 62%
+**Confidence:** 80%
 
-**Issue Type:** `empty_function`
+**Issue Type:** `stub_detection`
 
-**Description:** 3 production issues detected
-
-**Evidence:**
-
-- CRITICAL: Validator with no verification calls (ineffective validation) (+85 points)
-- Validator sophistication: 35% (WEAK - bypassed easily) (+70 points)
-- Deductions for production patterns (-93 points) (-93 points)
-
-**Suggested Fix:** Implement actual logic for 'validate_binary'
-
----
-
-#### 4. [ ] `validate_binary()` - MEDIUM (Line 148)
-
-**Confidence:** 62%
-
-**Issue Type:** `empty_function`
-
-**Description:** 3 production issues detected
+**Description:** 2 production issues detected
 
 **Evidence:**
 
-- CRITICAL: Validator with no verification calls (ineffective validation) (+85 points)
-- Validator sophistication: 35% (WEAK - bypassed easily) (+70 points)
-- Deductions for production patterns (-93 points) (-93 points)
+- Trivial implementation: no loops, conditionals, or local vars despite multiple lines (+55 points)
+- Function never called and calls no other functions (dead code or stub) (+25 points)
 
-**Suggested Fix:** Implement actual logic for 'validate_binary'
+**Suggested Fix:** Review and implement production-ready functionality
 
 ---
 
@@ -7222,26 +7091,7 @@ Scan complete!
 
 **Issues in this file:** 3
 
-#### 1. [ ] `create_sample_plugins()` - HIGH (Line 1267)
-
-**Confidence:** 75%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 4 production issues detected
-
-**Evidence:**
-
-- Function name implies complex operation ('create') but has ≤3 lines and low complexity (+30 points)
-- Imports 'subprocess' but doesn't use it in function (+15 points)
-- Imports 'frida' but doesn't use it in function (+15 points)
-- Very short function (≤3 LOC) for non-getter/setter (+15 points)
-
-**Suggested Fix:** Review and implement production-ready functionality
-
----
-
-#### 2. [ ] `create_sample_plugins()` - HIGH (Line 1267)
+#### 1. [ ] `create_sample_plugins()` - HIGH (Line 1268)
 
 **Confidence:** 75%
 
@@ -7260,7 +7110,26 @@ Scan complete!
 
 ---
 
-#### 3. [ ] `getrlimit()` - MEDIUM (Line 64)
+#### 2. [ ] `create_sample_plugins()` - HIGH (Line 1268)
+
+**Confidence:** 75%
+
+**Issue Type:** `stub_detection`
+
+**Description:** 4 production issues detected
+
+**Evidence:**
+
+- Function name implies complex operation ('create') but has ≤3 lines and low complexity (+30 points)
+- Imports 'frida' but doesn't use it in function (+15 points)
+- Imports 'subprocess' but doesn't use it in function (+15 points)
+- Very short function (≤3 LOC) for non-getter/setter (+15 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 3. [ ] `getrlimit()` - MEDIUM (Line 65)
 
 **Confidence:** 67%
 
@@ -7270,8 +7139,8 @@ Scan complete!
 
 **Evidence:**
 
-- Imports 'frida' but doesn't use it in function (+15 points)
 - Imports 'subprocess' but doesn't use it in function (+15 points)
+- Imports 'frida' but doesn't use it in function (+15 points)
 - High cyclomatic complexity but no local variables (suspicious) (+35 points)
 - Function never called and calls no other functions (dead code or stub) (+25 points)
 - Deductions for production patterns (-23 points) (-23 points)
@@ -7452,29 +7321,9 @@ Scan complete!
 
 **Issues in this file:** 4
 
-#### 1. [ ] `detect_protections()` - CRITICAL (Line 65)
+#### 1. [ ] `detect_protections()` - CRITICAL (Line 91)
 
-**Confidence:** 237%
-
-**Issue Type:** `naive_implementation`
-
-**Description:** 5 production issues detected
-
-**Evidence:**
-
-- Protection analyzer without signature database (weak detection) (+60 points)
-- CRITICAL: Analyzer without binary format parsing (string matching only) (+75 points)
-- Analyzer without loops (single pattern check only) (+55 points)
-- Analyzer sophistication: 25% (WEAK - misses most protections) (+70 points)
-- Deductions for production patterns (-23 points) (-23 points)
-
-**Suggested Fix:** Review and implement production-ready functionality
-
----
-
-#### 2. [ ] `detect_protections()` - CRITICAL (Line 65)
-
-**Confidence:** 237%
+**Confidence:** 207%
 
 **Issue Type:** `naive_implementation`
 
@@ -7486,13 +7335,33 @@ Scan complete!
 - CRITICAL: Analyzer without binary format parsing (string matching only) (+75 points)
 - Analyzer without loops (single pattern check only) (+55 points)
 - Analyzer sophistication: 25% (WEAK - misses most protections) (+70 points)
-- Deductions for production patterns (-23 points) (-23 points)
+- Deductions for production patterns (-53 points) (-53 points)
 
 **Suggested Fix:** Review and implement production-ready functionality
 
 ---
 
-#### 3. [ ] `analyze()` - CRITICAL (Line 88)
+#### 2. [ ] `detect_protections()` - CRITICAL (Line 91)
+
+**Confidence:** 207%
+
+**Issue Type:** `naive_implementation`
+
+**Description:** 5 production issues detected
+
+**Evidence:**
+
+- Protection analyzer without signature database (weak detection) (+60 points)
+- CRITICAL: Analyzer without binary format parsing (string matching only) (+75 points)
+- Analyzer without loops (single pattern check only) (+55 points)
+- Analyzer sophistication: 25% (WEAK - misses most protections) (+70 points)
+- Deductions for production patterns (-53 points) (-53 points)
+
+**Suggested Fix:** Review and implement production-ready functionality
+
+---
+
+#### 3. [ ] `analyze()` - CRITICAL (Line 115)
 
 **Confidence:** 107%
 
@@ -7511,7 +7380,7 @@ Scan complete!
 
 ---
 
-#### 4. [ ] `analyze()` - CRITICAL (Line 88)
+#### 4. [ ] `analyze()` - CRITICAL (Line 115)
 
 **Confidence:** 107%
 
@@ -7645,44 +7514,6 @@ Scan complete!
 - Function name implies file I/O but no file operations detected (+35 points)
 - Very short function (≤3 LOC) for non-getter/setter (+15 points)
 - Function never called and calls no other functions (dead code or stub) (+25 points)
-
-**Suggested Fix:** Review and implement production-ready functionality
-
----
-
-### File: `D:\Intellicrack\intellicrack\scripts\ghidra\anti_analysis_detector.py`
-
-**Issues in this file:** 2
-
-#### 1. [ ] `isCancelled()` - MEDIUM (Line 225)
-
-**Confidence:** 60%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 2 production issues detected
-
-**Evidence:**
-
-- Search/scan function without iteration logic (single-element only) (+45 points)
-- Very short function (≤3 LOC) for non-getter/setter (+15 points)
-
-**Suggested Fix:** Review and implement production-ready functionality
-
----
-
-#### 2. [ ] `isCancelled()` - MEDIUM (Line 225)
-
-**Confidence:** 60%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 2 production issues detected
-
-**Evidence:**
-
-- Search/scan function without iteration logic (single-element only) (+45 points)
-- Very short function (≤3 LOC) for non-getter/setter (+15 points)
 
 **Suggested Fix:** Review and implement production-ready functionality
 
@@ -8263,8 +8094,8 @@ Scan complete!
 
 **Evidence:**
 
-- Imports 'subprocess' but doesn't use it in function (+15 points)
 - Imports 'frida' but doesn't use it in function (+15 points)
+- Imports 'subprocess' but doesn't use it in function (+15 points)
 - Very short function (≤3 LOC) for non-getter/setter (+15 points)
 - Function never called and calls no other functions (dead code or stub) (+25 points)
 
@@ -8340,8 +8171,8 @@ Scan complete!
 **Evidence:**
 
 - Search/scan function without iteration logic (single-element only) (+45 points)
-- Imports 'frida' but doesn't use it in function (+15 points)
 - Imports 'subprocess' but doesn't use it in function (+15 points)
+- Imports 'frida' but doesn't use it in function (+15 points)
 - Deductions for production patterns (-10 points) (-10 points)
 
 **Suggested Fix:** Review and implement production-ready functionality
@@ -8518,8 +8349,8 @@ Scan complete!
 
 **Evidence:**
 
-- Imports 'subprocess' but doesn't use it in function (+15 points)
 - Imports 'frida' but doesn't use it in function (+15 points)
+- Imports 'subprocess' but doesn't use it in function (+15 points)
 - Function never called and calls no other functions (dead code or stub) (+25 points)
 
 **Suggested Fix:** Review and implement production-ready functionality
@@ -8738,7 +8569,7 @@ Scan complete!
 
 ### File: `D:\Intellicrack\intellicrack\ui\dialogs\llm_config_dialog.py`
 
-**Issues in this file:** 4
+**Issues in this file:** 2
 
 #### 1. [ ] `validate_all_api_keys()` - CRITICAL (Line 1787)
 
@@ -8773,42 +8604,6 @@ Scan complete!
 - Deductions for production patterns (-33 points) (-33 points)
 
 **Suggested Fix:** Implement actual logic for 'validate_all_api_keys'
-
----
-
-#### 3. [ ] `on_test_progress()` - MEDIUM (Line 1603)
-
-**Confidence:** 55%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 3 production issues detected
-
-**Evidence:**
-
-- Validation/check function without conditional logic (always returns same value) (+50 points)
-- Very short function (≤3 LOC) for non-getter/setter (+15 points)
-- Deductions for production patterns (-10 points) (-10 points)
-
-**Suggested Fix:** Review and implement production-ready functionality
-
----
-
-#### 4. [ ] `on_test_progress()` - MEDIUM (Line 1603)
-
-**Confidence:** 55%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 3 production issues detected
-
-**Evidence:**
-
-- Validation/check function without conditional logic (always returns same value) (+50 points)
-- Very short function (≤3 LOC) for non-getter/setter (+15 points)
-- Deductions for production patterns (-10 points) (-10 points)
-
-**Suggested Fix:** Review and implement production-ready functionality
 
 ---
 
@@ -10021,7 +9816,7 @@ Scan complete!
 
 **Issues in this file:** 2
 
-#### 1. [ ] `setup_patching_exploitation_tab()` - CRITICAL (Line 1455)
+#### 1. [ ] `setup_patching_exploitation_tab()` - CRITICAL (Line 1456)
 
 **Confidence:** 342%
 
@@ -10044,7 +9839,7 @@ Scan complete!
 
 ---
 
-#### 2. [ ] `setup_patching_exploitation_tab()` - CRITICAL (Line 1455)
+#### 2. [ ] `setup_patching_exploitation_tab()` - CRITICAL (Line 1456)
 
 **Confidence:** 342%
 
@@ -10635,19 +10430,20 @@ Scan complete!
 
 ---
 
-#### 19. [ ] `on_patch_type_changed()` - HIGH (Line 345)
+#### 19. [ ] `on_patch_type_changed()` - MEDIUM (Line 345)
 
-**Confidence:** 80%
+**Confidence:** 65%
 
 **Issue Type:** `stub_detection`
 
-**Description:** 3 production issues detected
+**Description:** 4 production issues detected
 
 **Evidence:**
 
 - Function has no meaningful content (≤1 line) (+50 points)
 - Very short function (≤3 LOC) for non-getter/setter (+15 points)
 - Function has only 1 caller and <3 lines (may be stub) (+15 points)
+- Deductions for production patterns (-15 points) (-15 points)
 
 **Suggested Fix:** Review and implement production-ready functionality
 
@@ -10821,11 +10617,11 @@ Scan complete!
 
 #### 1. [ ] `on_analyze_clicked()` - CRITICAL (Line 209)
 
-**Confidence:** 150%
+**Confidence:** 135%
 
 **Issue Type:** `stub_detection`
 
-**Description:** 4 production issues detected
+**Description:** 5 production issues detected
 
 **Evidence:**
 
@@ -10833,6 +10629,7 @@ Scan complete!
 - Processing function with no local variables (no actual computation) (+45 points)
 - Trivial implementation: no loops, conditionals, or local vars despite multiple lines (+55 points)
 - Low complexity for analysis function (may be stub) (+20 points)
+- Deductions for production patterns (-15 points) (-15 points)
 
 **Suggested Fix:** Review and implement production-ready functionality
 
@@ -11047,7 +10844,7 @@ Scan complete!
 
 #### 1. [ ] `validate_binary_path()` - CRITICAL (Line 330)
 
-**Confidence:** 157%
+**Confidence:** 137%
 
 **Issue Type:** `empty_function`
 
@@ -11058,7 +10855,7 @@ Scan complete!
 - CRITICAL: Validator with no verification calls (ineffective validation) (+85 points)
 - Validator sophistication: 35% (WEAK - bypassed easily) (+70 points)
 - Function never called and calls no other functions (dead code or stub) (+25 points)
-- Deductions for production patterns (-23 points) (-23 points)
+- Deductions for production patterns (-43 points) (-43 points)
 
 **Suggested Fix:** Implement actual logic for 'validate_binary_path'
 
@@ -11291,7 +11088,7 @@ Scan complete!
 
 #### 6. [ ] `validate_file_path()` - CRITICAL (Line 26)
 
-**Confidence:** 125%
+**Confidence:** 105%
 
 **Issue Type:** `empty_function`
 
@@ -11302,7 +11099,7 @@ Scan complete!
 - CRITICAL: Validator with no verification calls (ineffective validation) (+85 points)
 - Validator sophistication: 20% (WEAK - bypassed easily) (+70 points)
 - Function never called and calls no other functions (dead code or stub) (+25 points)
-- Deductions for production patterns (-55 points) (-55 points)
+- Deductions for production patterns (-75 points) (-75 points)
 
 **Suggested Fix:** Implement actual logic for 'validate_file_path'
 
@@ -12163,7 +11960,7 @@ Scan complete!
 
 #### 2. [ ] `validate_command()` - CRITICAL (Line 152)
 
-**Confidence:** 122%
+**Confidence:** 102%
 
 **Issue Type:** `stub_detection`
 
@@ -12175,7 +11972,7 @@ Scan complete!
 - Validator with single return (no error differentiation) (+45 points)
 - Validator sophistication: 50% (BASIC - needs improvement) (+40 points)
 - Imports 'subprocess' but doesn't use it in function (+15 points)
-- Deductions for production patterns (-43 points) (-43 points)
+- Deductions for production patterns (-63 points) (-63 points)
 
 **Suggested Fix:** Review and implement production-ready functionality
 
@@ -12183,7 +11980,7 @@ Scan complete!
 
 #### 3. [ ] `validate_executable()` - CRITICAL (Line 63)
 
-**Confidence:** 120%
+**Confidence:** 100%
 
 **Issue Type:** `empty_function`
 
@@ -12195,7 +11992,7 @@ Scan complete!
 - Validator with single return (no error differentiation) (+45 points)
 - Validator sophistication: 20% (WEAK - bypassed easily) (+70 points)
 - Imports 'subprocess' but doesn't use it in function (+15 points)
-- Deductions for production patterns (-95 points) (-95 points)
+- Deductions for production patterns (-115 points) (-115 points)
 
 **Suggested Fix:** Implement actual logic for 'validate_executable'
 
@@ -12288,22 +12085,21 @@ Scan complete!
 
 ### File: `D:\Intellicrack\intellicrack\utils\ui\ui_setup_functions.py`
 
-**Issues in this file:** 21
+**Issues in this file:** 19
 
-#### 1. [ ] `method()` - CRITICAL (Line 97)
+#### 1. [ ] `show()` - HIGH (Line 66)
 
-**Confidence:** 115%
+**Confidence:** 90%
 
 **Issue Type:** `stub_detection`
 
-**Description:** 4 production issues detected
+**Description:** 3 production issues detected
 
 **Evidence:**
 
 - Function has no meaningful content (≤1 line) (+50 points)
-- Single-line return of simple literal (0, 1, True, False, None) (+35 points)
 - Very short function (≤3 LOC) for non-getter/setter (+15 points)
-- Function has only 1 caller and <3 lines (may be stub) (+15 points)
+- Function never called and calls no other functions (dead code or stub) (+25 points)
 
 **Suggested Fix:** Review and implement production-ready functionality
 
@@ -12327,7 +12123,7 @@ Scan complete!
 
 ---
 
-#### 3. [ ] `show()` - HIGH (Line 66)
+#### 3. [ ] `hide()` - HIGH (Line 69)
 
 **Confidence:** 90%
 
@@ -12363,7 +12159,7 @@ Scan complete!
 
 ---
 
-#### 5. [ ] `hide()` - HIGH (Line 69)
+#### 5. [ ] `setSpacing()` - HIGH (Line 110)
 
 **Confidence:** 90%
 
@@ -12399,7 +12195,7 @@ Scan complete!
 
 ---
 
-#### 7. [ ] `setSpacing()` - HIGH (Line 110)
+#### 7. [ ] `setContentsMargins()` - HIGH (Line 113)
 
 **Confidence:** 90%
 
@@ -12435,7 +12231,7 @@ Scan complete!
 
 ---
 
-#### 9. [ ] `setContentsMargins()` - HIGH (Line 113)
+#### 9. [ ] `setSingleShot()` - HIGH (Line 135)
 
 **Confidence:** 90%
 
@@ -12471,9 +12267,9 @@ Scan complete!
 
 ---
 
-#### 11. [ ] `setSingleShot()` - HIGH (Line 135)
+#### 11. [ ] `setEnabled()` - HIGH (Line 72)
 
-**Confidence:** 90%
+**Confidence:** 80%
 
 **Issue Type:** `stub_detection`
 
@@ -12483,7 +12279,7 @@ Scan complete!
 
 - Function has no meaningful content (≤1 line) (+50 points)
 - Very short function (≤3 LOC) for non-getter/setter (+15 points)
-- Function never called and calls no other functions (dead code or stub) (+25 points)
+- Function has only 1 caller and <3 lines (may be stub) (+15 points)
 
 **Suggested Fix:** Review and implement production-ready functionality
 
@@ -12507,7 +12303,7 @@ Scan complete!
 
 ---
 
-#### 13. [ ] `setEnabled()` - HIGH (Line 72)
+#### 13. [ ] `setValue()` - HIGH (Line 81)
 
 **Confidence:** 80%
 
@@ -12543,7 +12339,7 @@ Scan complete!
 
 ---
 
-#### 15. [ ] `setValue()` - HIGH (Line 81)
+#### 15. [ ] `method()` - HIGH (Line 97)
 
 **Confidence:** 80%
 
@@ -12597,43 +12393,7 @@ Scan complete!
 
 ---
 
-#### 18. [ ] `setInterval()` - HIGH (Line 132)
-
-**Confidence:** 80%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 3 production issues detected
-
-**Evidence:**
-
-- Function has no meaningful content (≤1 line) (+50 points)
-- Very short function (≤3 LOC) for non-getter/setter (+15 points)
-- Function has only 1 caller and <3 lines (may be stub) (+15 points)
-
-**Suggested Fix:** Review and implement production-ready functionality
-
----
-
-#### 19. [ ] `setInterval()` - HIGH (Line 132)
-
-**Confidence:** 80%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 3 production issues detected
-
-**Evidence:**
-
-- Function has no meaningful content (≤1 line) (+50 points)
-- Very short function (≤3 LOC) for non-getter/setter (+15 points)
-- Function has only 1 caller and <3 lines (may be stub) (+15 points)
-
-**Suggested Fix:** Review and implement production-ready functionality
-
----
-
-#### 20. [ ] `setText()` - MEDIUM (Line 75)
+#### 18. [ ] `setText()` - MEDIUM (Line 75)
 
 **Confidence:** 65%
 
@@ -12650,7 +12410,7 @@ Scan complete!
 
 ---
 
-#### 21. [ ] `setText()` - MEDIUM (Line 75)
+#### 19. [ ] `setText()` - MEDIUM (Line 75)
 
 **Confidence:** 65%
 
@@ -12784,7 +12544,7 @@ Scan complete!
 
 **Issues in this file:** 1
 
-#### 1. [ ] `test_threading_environment_configuration()` - MEDIUM (Line 673)
+#### 1. [ ] `test_threading_environment_configuration()` - MEDIUM (Line 701)
 
 **Confidence:** 57%
 
@@ -12823,978 +12583,6 @@ Scan complete!
 - Deductions for production patterns (-23 points) (-23 points)
 
 **Suggested Fix:** Replace unwrap() with expect() or proper Result handling using ?
-
----
-
-## Java Issues (8 files)
-
-### File: `D:\Intellicrack\intellicrack\scripts\ghidra\AdvancedAnalysis.java`
-
-**Issues in this file:** 7
-
-#### 1. [ ] `analyzeCodeObfuscation()` - HIGH (Line 4830)
-
-**Confidence:** 75%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 3 production issues detected
-
-**Evidence:**
-
-- Catch-all exception handling - catch specific exceptions (+25 points)
-- Function with parameters but no null checks (+15 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-#### 2. [ ] `analyzeVirtualizedCode()` - HIGH (Line 5112)
-
-**Confidence:** 75%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 3 production issues detected
-
-**Evidence:**
-
-- Catch-all exception handling - catch specific exceptions (+25 points)
-- Function with parameters but no null checks (+15 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-#### 3. [ ] `analyzeEnvironmentChecks()` - HIGH (Line 6442)
-
-**Confidence:** 75%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 3 production issues detected
-
-**Evidence:**
-
-- Catch-all exception handling - catch specific exceptions (+25 points)
-- Function with parameters but no null checks (+15 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-#### 4. [ ] `analyzeAntiAnalysisTechniques()` - MEDIUM (Line 4965)
-
-**Confidence:** 62%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 4 production issues detected
-
-**Evidence:**
-
-- Catch-all exception handling - catch specific exceptions (+25 points)
-- Function with parameters but no null checks (+15 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Deductions for production patterns (-13 points) (-13 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-#### 5. [ ] `analyzeMonitoringEvasion()` - MEDIUM (Line 6348)
-
-**Confidence:** 62%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 4 production issues detected
-
-**Evidence:**
-
-- Catch-all exception handling - catch specific exceptions (+25 points)
-- Function with parameters but no null checks (+15 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Deductions for production patterns (-13 points) (-13 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-#### 6. [ ] `getFunctionBody()` - MEDIUM (Line 1556)
-
-**Confidence:** 60%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 3 production issues detected
-
-**Evidence:**
-
-- Returning null (1 times) - consider Optional<T> (+20 points)
-- Function with parameters but no null checks (+15 points)
-- Function never called and calls no other functions (dead code or stub) (+25 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-#### 7. [ ] `analyzeCryptoConstants()` - MEDIUM (Line 2873)
-
-**Confidence:** 57%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 4 production issues detected
-
-**Evidence:**
-
-- Function with parameters but no null checks (+15 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Cryptographic analysis without byte operations or BigInteger (+30 points)
-- Deductions for production patterns (-23 points) (-23 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-### File: `D:\Intellicrack\intellicrack\scripts\ghidra\AutomatedUnpacker.java`
-
-**Issues in this file:** 18
-
-#### 1. [ ] `analyzeVMExitTarget()` - HIGH (Line 2217)
-
-**Confidence:** 90%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 4 production issues detected
-
-**Evidence:**
-
-- Returning null (1 times) - consider Optional<T> (+20 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Low complexity for analysis function (may be stub) (+20 points)
-- Very short function (≤3 LOC) for non-getter/setter (+15 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-#### 2. [ ] `patchTimingChecks()` - HIGH (Line 2229)
-
-**Confidence:** 90%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 5 production issues detected
-
-**Evidence:**
-
-- Function has no meaningful content (≤1 line) (+50 points)
-- Generic Exception in throws clause - use specific exception types (+20 points)
-- Very short function (≤3 LOC) for non-getter/setter (+15 points)
-- Function has only 1 caller and <3 lines (may be stub) (+15 points)
-- Deductions for production patterns (-10 points) (-10 points)
-
-**Suggested Fix:** Replace generic Exception with specific exception types
-
----
-
-#### 3. [ ] `patchMemoryChecks()` - HIGH (Line 2231)
-
-**Confidence:** 90%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 5 production issues detected
-
-**Evidence:**
-
-- Function has no meaningful content (≤1 line) (+50 points)
-- Generic Exception in throws clause - use specific exception types (+20 points)
-- Very short function (≤3 LOC) for non-getter/setter (+15 points)
-- Function has only 1 caller and <3 lines (may be stub) (+15 points)
-- Deductions for production patterns (-10 points) (-10 points)
-
-**Suggested Fix:** Replace generic Exception with specific exception types
-
----
-
-#### 4. [ ] `bypassThemidaAntiDebug()` - HIGH (Line 2429)
-
-**Confidence:** 90%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 5 production issues detected
-
-**Evidence:**
-
-- Function has no meaningful content (≤1 line) (+50 points)
-- Generic Exception in throws clause - use specific exception types (+20 points)
-- Very short function (≤3 LOC) for non-getter/setter (+15 points)
-- Function has only 1 caller and <3 lines (may be stub) (+15 points)
-- Deductions for production patterns (-10 points) (-10 points)
-
-**Suggested Fix:** Replace generic Exception with specific exception types
-
----
-
-#### 5. [ ] `bypassThemidaVMDetection()` - HIGH (Line 2431)
-
-**Confidence:** 90%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 5 production issues detected
-
-**Evidence:**
-
-- Function has no meaningful content (≤1 line) (+50 points)
-- Generic Exception in throws clause - use specific exception types (+20 points)
-- Very short function (≤3 LOC) for non-getter/setter (+15 points)
-- Function has only 1 caller and <3 lines (may be stub) (+15 points)
-- Deductions for production patterns (-10 points) (-10 points)
-
-**Suggested Fix:** Replace generic Exception with specific exception types
-
----
-
-#### 6. [ ] `bypassThemidaCRC()` - HIGH (Line 2433)
-
-**Confidence:** 90%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 5 production issues detected
-
-**Evidence:**
-
-- Function has no meaningful content (≤1 line) (+50 points)
-- Generic Exception in throws clause - use specific exception types (+20 points)
-- Very short function (≤3 LOC) for non-getter/setter (+15 points)
-- Function has only 1 caller and <3 lines (may be stub) (+15 points)
-- Deductions for production patterns (-10 points) (-10 points)
-
-**Suggested Fix:** Replace generic Exception with specific exception types
-
----
-
-#### 7. [ ] `bypassThemidaIntegrityChecks()` - HIGH (Line 2435)
-
-**Confidence:** 90%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 5 production issues detected
-
-**Evidence:**
-
-- Function has no meaningful content (≤1 line) (+50 points)
-- Generic Exception in throws clause - use specific exception types (+20 points)
-- Very short function (≤3 LOC) for non-getter/setter (+15 points)
-- Function has only 1 caller and <3 lines (may be stub) (+15 points)
-- Deductions for production patterns (-10 points) (-10 points)
-
-**Suggested Fix:** Replace generic Exception with specific exception types
-
----
-
-#### 8. [ ] `analyzeObsidiumExitTarget()` - HIGH (Line 2543)
-
-**Confidence:** 90%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 4 production issues detected
-
-**Evidence:**
-
-- Returning null (1 times) - consider Optional<T> (+20 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Low complexity for analysis function (may be stub) (+20 points)
-- Very short function (≤3 LOC) for non-getter/setter (+15 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-#### 9. [ ] `bypassObsidiumAntiDebug()` - HIGH (Line 2547)
-
-**Confidence:** 90%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 5 production issues detected
-
-**Evidence:**
-
-- Function has no meaningful content (≤1 line) (+50 points)
-- Generic Exception in throws clause - use specific exception types (+20 points)
-- Very short function (≤3 LOC) for non-getter/setter (+15 points)
-- Function has only 1 caller and <3 lines (may be stub) (+15 points)
-- Deductions for production patterns (-10 points) (-10 points)
-
-**Suggested Fix:** Replace generic Exception with specific exception types
-
----
-
-#### 10. [ ] `bypassObsidiumCRCChecks()` - HIGH (Line 2549)
-
-**Confidence:** 90%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 5 production issues detected
-
-**Evidence:**
-
-- Function has no meaningful content (≤1 line) (+50 points)
-- Generic Exception in throws clause - use specific exception types (+20 points)
-- Very short function (≤3 LOC) for non-getter/setter (+15 points)
-- Function has only 1 caller and <3 lines (may be stub) (+15 points)
-- Deductions for production patterns (-10 points) (-10 points)
-
-**Suggested Fix:** Replace generic Exception with specific exception types
-
----
-
-#### 11. [ ] `bypassObsidiumVMChecks()` - HIGH (Line 2551)
-
-**Confidence:** 90%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 5 production issues detected
-
-**Evidence:**
-
-- Function has no meaningful content (≤1 line) (+50 points)
-- Generic Exception in throws clause - use specific exception types (+20 points)
-- Very short function (≤3 LOC) for non-getter/setter (+15 points)
-- Function has only 1 caller and <3 lines (may be stub) (+15 points)
-- Deductions for production patterns (-10 points) (-10 points)
-
-**Suggested Fix:** Replace generic Exception with specific exception types
-
----
-
-#### 12. [ ] `bypassAntiUnpacking()` - HIGH (Line 2848)
-
-**Confidence:** 80%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 3 production issues detected
-
-**Evidence:**
-
-- Function has no meaningful content (≤1 line) (+50 points)
-- Very short function (≤3 LOC) for non-getter/setter (+15 points)
-- Function has only 1 caller and <3 lines (may be stub) (+15 points)
-
-**Suggested Fix:** Review and implement production-ready functionality
-
----
-
-#### 13. [ ] `patchPatternWithNops()` - HIGH (Line 2233)
-
-**Confidence:** 75%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 4 production issues detected
-
-**Evidence:**
-
-- Function has no meaningful content (≤1 line) (+50 points)
-- Generic Exception in throws clause - use specific exception types (+20 points)
-- Very short function (≤3 LOC) for non-getter/setter (+15 points)
-- Deductions for production patterns (-10 points) (-10 points)
-
-**Suggested Fix:** Replace generic Exception with specific exception types
-
----
-
-#### 14. [ ] `analyzeHighFunctionComplexity()` - MEDIUM (Line 907)
-
-**Confidence:** 62%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 4 production issues detected
-
-**Evidence:**
-
-- Catch-all exception handling - catch specific exceptions (+25 points)
-- Function with parameters but no null checks (+15 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Deductions for production patterns (-13 points) (-13 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-#### 15. [ ] `analyzePcodeComplexity()` - MEDIUM (Line 940)
-
-**Confidence:** 62%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 4 production issues detected
-
-**Evidence:**
-
-- Catch-all exception handling - catch specific exceptions (+25 points)
-- Function with parameters but no null checks (+15 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Deductions for production patterns (-13 points) (-13 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-#### 16. [ ] `findThemidaOEP()` - MEDIUM (Line 2394)
-
-**Confidence:** 60%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 3 production issues detected
-
-**Evidence:**
-
-- Catch-all exception handling - catch specific exceptions (+25 points)
-- Returning null (1 times) - consider Optional<T> (+20 points)
-- Function with parameters but no null checks (+15 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-#### 17. [ ] `analyzeDynamicImportCall()` - MEDIUM (Line 5290)
-
-**Confidence:** 55%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 2 production issues detected
-
-**Evidence:**
-
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Low complexity for analysis function (may be stub) (+20 points)
-
-**Suggested Fix:** Add Ghidra API calls (currentProgram, getFunctionManager, etc.)
-
----
-
-#### 18. [ ] `analyzeTrampoline()` - MEDIUM (Line 5295)
-
-**Confidence:** 55%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 2 production issues detected
-
-**Evidence:**
-
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Low complexity for analysis function (may be stub) (+20 points)
-
-**Suggested Fix:** Add Ghidra API calls (currentProgram, getFunctionManager, etc.)
-
----
-
-### File: `D:\Intellicrack\intellicrack\scripts\ghidra\CryptoRoutineIdentifier.java`
-
-**Issues in this file:** 4
-
-#### 1. [ ] `identifyCryptoConstant()` - HIGH (Line 2027)
-
-**Confidence:** 95%
-
-**Issue Type:** `hardcoded_return`
-
-**Description:** 5 production issues detected
-
-**Evidence:**
-
-- All returns are hardcoded strings (+25 points)
-- Function with parameters but no null checks (+15 points)
-- Cryptographic analysis without byte operations or BigInteger (+30 points)
-- High cyclomatic complexity but no local variables (suspicious) (+35 points)
-- Deductions for production patterns (-10 points) (-10 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-#### 2. [ ] `analyzeCryptoDataInFunction()` - HIGH (Line 1718)
-
-**Confidence:** 80%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 3 production issues detected
-
-**Evidence:**
-
-- Function with parameters but no null checks (+15 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Cryptographic analysis without byte operations or BigInteger (+30 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-#### 3. [ ] `analyzeCryptoEnum()` - MEDIUM (Line 1775)
-
-**Confidence:** 67%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 4 production issues detected
-
-**Evidence:**
-
-- Function with parameters but no null checks (+15 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Cryptographic analysis without byte operations or BigInteger (+30 points)
-- Deductions for production patterns (-13 points) (-13 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-#### 4. [ ] `analyzeCustomCrypto()` - MEDIUM (Line 1013)
-
-**Confidence:** 65%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 2 production issues detected
-
-**Evidence:**
-
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Cryptographic analysis without byte operations or BigInteger (+30 points)
-
-**Suggested Fix:** Add Ghidra API calls (currentProgram, getFunctionManager, etc.)
-
----
-
-### File: `D:\Intellicrack\intellicrack\scripts\ghidra\FindCryptoSignatures.java`
-
-**Issues in this file:** 12
-
-#### 1. [ ] `analyzeOperandTypesForCrypto()` - HIGH (Line 1127)
-
-**Confidence:** 85%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 3 production issues detected
-
-**Evidence:**
-
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Cryptographic analysis without byte operations or BigInteger (+30 points)
-- Low complexity for analysis function (may be stub) (+20 points)
-
-**Suggested Fix:** Add Ghidra API calls (currentProgram, getFunctionManager, etc.)
-
----
-
-#### 2. [ ] `analyzeRegisterValuesForCrypto()` - HIGH (Line 1132)
-
-**Confidence:** 85%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 3 production issues detected
-
-**Evidence:**
-
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Cryptographic analysis without byte operations or BigInteger (+30 points)
-- Low complexity for analysis function (may be stub) (+20 points)
-
-**Suggested Fix:** Add Ghidra API calls (currentProgram, getFunctionManager, etc.)
-
----
-
-#### 3. [ ] `analyzeGlobalCryptoPatterns()` - HIGH (Line 1014)
-
-**Confidence:** 80%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 3 production issues detected
-
-**Evidence:**
-
-- Function with parameters but no null checks (+15 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Cryptographic analysis without byte operations or BigInteger (+30 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-#### 4. [ ] `analyzeRegisterCryptoUsage()` - HIGH (Line 1120)
-
-**Confidence:** 80%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 3 production issues detected
-
-**Evidence:**
-
-- Function with parameters but no null checks (+15 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Cryptographic analysis without byte operations or BigInteger (+30 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-#### 5. [ ] `analyzeCryptoEnum()` - HIGH (Line 1825)
-
-**Confidence:** 80%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 3 production issues detected
-
-**Evidence:**
-
-- Function with parameters but no null checks (+15 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Cryptographic analysis without byte operations or BigInteger (+30 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-#### 6. [ ] `analyzeLicenseValidationCrypto()` - MEDIUM (Line 1000)
-
-**Confidence:** 67%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 4 production issues detected
-
-**Evidence:**
-
-- Function with parameters but no null checks (+15 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Cryptographic analysis without byte operations or BigInteger (+30 points)
-- Deductions for production patterns (-13 points) (-13 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-#### 7. [ ] `analyzeCryptoInstruction()` - MEDIUM (Line 1022)
-
-**Confidence:** 67%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 4 production issues detected
-
-**Evidence:**
-
-- Function with parameters but no null checks (+15 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Cryptographic analysis without byte operations or BigInteger (+30 points)
-- Deductions for production patterns (-13 points) (-13 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-#### 8. [ ] `analyzeCryptoSymbolReferences()` - MEDIUM (Line 1083)
-
-**Confidence:** 67%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 4 production issues detected
-
-**Evidence:**
-
-- Function with parameters but no null checks (+15 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Cryptographic analysis without byte operations or BigInteger (+30 points)
-- Deductions for production patterns (-13 points) (-13 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-#### 9. [ ] `analyzeCryptoStructure()` - MEDIUM (Line 1807)
-
-**Confidence:** 67%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 4 production issues detected
-
-**Evidence:**
-
-- Function with parameters but no null checks (+15 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Cryptographic analysis without byte operations or BigInteger (+30 points)
-- Deductions for production patterns (-13 points) (-13 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-#### 10. [ ] `analyzeCryptoDataReference()` - MEDIUM (Line 1036)
-
-**Confidence:** 57%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 4 production issues detected
-
-**Evidence:**
-
-- Function with parameters but no null checks (+15 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Cryptographic analysis without byte operations or BigInteger (+30 points)
-- Deductions for production patterns (-23 points) (-23 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-#### 11. [ ] `analyzeLicenseSymbolCrypto()` - MEDIUM (Line 1097)
-
-**Confidence:** 57%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 4 production issues detected
-
-**Evidence:**
-
-- Function with parameters but no null checks (+15 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Cryptographic analysis without byte operations or BigInteger (+30 points)
-- Deductions for production patterns (-23 points) (-23 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-#### 12. [ ] `analyzeGlobalReferencePatterns()` - MEDIUM (Line 1115)
-
-**Confidence:** 55%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 2 production issues detected
-
-**Evidence:**
-
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Low complexity for analysis function (may be stub) (+20 points)
-
-**Suggested Fix:** Add Ghidra API calls (currentProgram, getFunctionManager, etc.)
-
----
-
-### File: `D:\Intellicrack\intellicrack\scripts\ghidra\KeygenTemplateGenerator.java`
-
-**Issues in this file:** 3
-
-#### 1. [ ] `analyzeDataUnitForCryptoPatterns()` - HIGH (Line 2689)
-
-**Confidence:** 80%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 3 production issues detected
-
-**Evidence:**
-
-- Function with parameters but no null checks (+15 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Cryptographic analysis without byte operations or BigInteger (+30 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-#### 2. [ ] `analyzeCryptoOperations()` - MEDIUM (Line 1131)
-
-**Confidence:** 57%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 4 production issues detected
-
-**Evidence:**
-
-- Catch-all exception handling - catch specific exceptions (+25 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Cryptographic analysis without byte operations or BigInteger (+30 points)
-- Deductions for production patterns (-33 points) (-33 points)
-
-**Suggested Fix:** Add Ghidra API calls (currentProgram, getFunctionManager, etc.)
-
----
-
-#### 3. [ ] `analyzeInstructionForCryptoPatterns()` - MEDIUM (Line 2675)
-
-**Confidence:** 57%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 4 production issues detected
-
-**Evidence:**
-
-- Function with parameters but no null checks (+15 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Cryptographic analysis without byte operations or BigInteger (+30 points)
-- Deductions for production patterns (-23 points) (-23 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-### File: `D:\Intellicrack\intellicrack\scripts\ghidra\ModernPackerDetector.java`
-
-**Issues in this file:** 2
-
-#### 1. [ ] `analyzeSectionsWithPEStructures()` - MEDIUM (Line 3782)
-
-**Confidence:** 62%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 4 production issues detected
-
-**Evidence:**
-
-- Catch-all exception handling - catch specific exceptions (+25 points)
-- Function with parameters but no null checks (+15 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Deductions for production patterns (-13 points) (-13 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-#### 2. [ ] `performAdvancedSignatureScanning()` - MEDIUM (Line 402)
-
-**Confidence:** 60%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 4 production issues detected
-
-**Evidence:**
-
-- Generic Exception in throws clause - use specific exception types (+20 points)
-- Function with parameters but no null checks (+15 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Deductions for production patterns (-10 points) (-10 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-### File: `D:\Intellicrack\intellicrack\scripts\ghidra\QuickStringDump.java`
-
-**Issues in this file:** 2
-
-#### 1. [ ] `analyzeStringForLicensingPatterns()` - HIGH (Line 1811)
-
-**Confidence:** 87%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 5 production issues detected
-
-**Evidence:**
-
-- Catch-all exception handling - catch specific exceptions (+25 points)
-- Function with parameters but no null checks (+15 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- High cyclomatic complexity but no local variables (suspicious) (+35 points)
-- Deductions for production patterns (-23 points) (-23 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-#### 2. [ ] `analyzeString()` - MEDIUM (Line 731)
-
-**Confidence:** 57%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 4 production issues detected
-
-**Evidence:**
-
-- Returning null (1 times) - consider Optional<T> (+20 points)
-- Function with parameters but no null checks (+15 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Deductions for production patterns (-13 points) (-13 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-### File: `D:\Intellicrack\intellicrack\scripts\ghidra\SimpleStringExtractor.java`
-
-**Issues in this file:** 2
-
-#### 1. [ ] `analyzeStrings()` - MEDIUM (Line 301)
-
-**Confidence:** 60%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 4 production issues detected
-
-**Evidence:**
-
-- Generic Exception in throws clause - use specific exception types (+20 points)
-- Function with parameters but no null checks (+15 points)
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Deductions for production patterns (-10 points) (-10 points)
-
-**Suggested Fix:** Replace null returns with Optional<T> and add null checks
-
----
-
-#### 2. [ ] `analyzeMemoryContext()` - MEDIUM (Line 1019)
-
-**Confidence:** 55%
-
-**Issue Type:** `stub_detection`
-
-**Description:** 2 production issues detected
-
-**Evidence:**
-
-- Ghidra analysis function without Ghidra API calls (+35 points)
-- Low complexity for analysis function (may be stub) (+20 points)
-
-**Suggested Fix:** Add Ghidra API calls (currentProgram, getFunctionManager, etc.)
 
 ---
 

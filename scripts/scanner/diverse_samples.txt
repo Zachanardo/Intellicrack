@@ -1,0 +1,10 @@
+### File: `D:\Intellicrack\intellicrack\ai\code_analysis_tools.py`
+#### 1. [ ] `analyze_code()` - CRITICAL (Line 431)
+
+**Confidence:** 120%
+---
+### File: `D:\Intellicrack\intellicrack\ai\code_analysis_tools.py`
+#### 2. [ ] `analyze_code()` - CRITICAL (Line 431)
+
+**Confidence:** 120%
+---

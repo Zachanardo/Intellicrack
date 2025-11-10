@@ -717,14 +717,14 @@ class CrossVersionTester:
 
         report_lines.extend([
             "PHASE 2.5.2.3 COMPLIANCE ASSESSMENT:",
-            f"- Compliance Status: {'✅ PASSED' if compliance_met else '❌ FAILED'}",
+            f"- Compliance Status: {'OK PASSED' if compliance_met else 'FAIL FAILED'}",
             f"- All versions either handled or explicitly reported as incompatible: {'Yes' if compliance_met else 'No'}",
         ])
 
         if compliance_issues:
             report_lines.append("- Issues Found:")
             for issue in compliance_issues:
-                report_lines.append(f"  • {issue}")
+                report_lines.append(f"   {issue}")
 
         report_lines.append("")
 
@@ -735,13 +735,13 @@ class CrossVersionTester:
         ])
 
         if fully_supported:
-            report_lines.append(f"✅ FULLY SUPPORTED VERSIONS ({len(fully_supported)}):")
+            report_lines.append(f"OK FULLY SUPPORTED VERSIONS ({len(fully_supported)}):")
             for result in fully_supported:
                 features_passed = len(result.detection_result.get("features_passed", []))
                 report_lines.append(f"  - {result.version}: SUCCESS (Features: {features_passed} passed)")
 
         if partially_supported:
-            report_lines.append(f"⚠️ PARTIALLY SUPPORTED VERSIONS ({len(partially_supported)}):")
+            report_lines.append(f"WARNING PARTIALLY SUPPORTED VERSIONS ({len(partially_supported)}):")
             for result in partially_supported:
                 incomp_details = result.detection_result.get("incompatibility_details", {})
                 missing_caps = incomp_details.get("missing_capabilities", [])
@@ -781,12 +781,12 @@ class CrossVersionTester:
             ])
 
             if unknown_compatibility:
-                report_lines.append("• Implement explicit compatibility checking for unknown versions")
-                report_lines.append("• Add clear incompatibility messages for unsupported versions")
+                report_lines.append(" Implement explicit compatibility checking for unknown versions")
+                report_lines.append(" Add clear incompatibility messages for unsupported versions")
 
             if error_cases:
-                report_lines.append("• Enhance error handling to provide explicit incompatibility reports")
-                report_lines.append("• Ensure no silent failures - all errors should include compatibility guidance")
+                report_lines.append(" Enhance error handling to provide explicit incompatibility reports")
+                report_lines.append(" Ensure no silent failures - all errors should include compatibility guidance")
 
             report_lines.append("")
 
@@ -876,7 +876,7 @@ class CrossVersionTester:
                 logger.error(f"Failed to save success rate verification report: {e}")
 
             # Log compliance status
-            status_symbol = "✅" if success_rate_report.analysis.meets_90_percent_threshold else "❌"
+            status_symbol = "OK" if success_rate_report.analysis.meets_90_percent_threshold else "FAIL"
             logger.info(f"Phase 2.5.2.4 Compliance: {status_symbol} {success_rate_report.analysis.overall_success_rate:.1%} success rate")
 
             return summary

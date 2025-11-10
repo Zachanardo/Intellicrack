@@ -475,7 +475,7 @@ class SettingsTab(BaseTab):
         discovery_header = QHBoxLayout()
         discovery_header.addWidget(QLabel("Tool Discovery"))
 
-        self.auto_discovery_btn = QPushButton("🔍 Discover Tools")
+        self.auto_discovery_btn = QPushButton(" Discover Tools")
         self.auto_discovery_btn.setToolTip("Automatically scan for installed tools")
         self.auto_discovery_btn.clicked.connect(self.discover_tools)
 
@@ -567,7 +567,7 @@ class SettingsTab(BaseTab):
         status_label.setMinimumWidth(30)
 
         # Browse button
-        browse_btn = QPushButton("📁")
+        browse_btn = QPushButton("")
         browse_btn.setMaximumWidth(40)
         browse_btn.setToolTip("Browse for tool executable")
         browse_btn.clicked.connect(lambda checked, edit=path_edit, title=browse_title: self.browse_tool_path(edit, title))
@@ -619,7 +619,7 @@ class SettingsTab(BaseTab):
             path_edit.setText(current_dir_path)
 
         # Browse button
-        browse_btn = QPushButton("📁")
+        browse_btn = QPushButton("")
         browse_btn.setMaximumWidth(40)
         browse_btn.setToolTip("Browse for directory")
         browse_btn.clicked.connect(lambda checked, edit=path_edit, title=browse_title: self.browse_directory(edit, title))
@@ -638,7 +638,7 @@ class SettingsTab(BaseTab):
             return
 
         self.auto_discovery_btn.setEnabled(False)
-        self.auto_discovery_btn.setText("🔍 Discovering...")
+        self.auto_discovery_btn.setText(" Discovering...")
 
         try:
             # Run discovery in background to avoid blocking UI
@@ -659,7 +659,7 @@ class SettingsTab(BaseTab):
             self.log_message(f"Tool discovery failed: {e}", "error")
         finally:
             self.auto_discovery_btn.setEnabled(True)
-            self.auto_discovery_btn.setText("🔍 Discover Tools")
+            self.auto_discovery_btn.setText(" Discover Tools")
 
     def refresh_tool_discovery(self):
         """Refresh tool discovery."""

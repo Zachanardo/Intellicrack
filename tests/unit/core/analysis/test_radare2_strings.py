@@ -86,7 +86,7 @@ class TestStringExtractionEngine:
         """Create analyzer with mock binary."""
         with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as tmp:
             tmp.write(b'\x00\x00test string\x00\x00')
-            tmp.write(b'C:\Windows\System32\kernel32.dll\x00')
+            tmp.write(b'C:\\Windows\\System32\\kernel32.dll\x00')
             tmp.write(b'http://example.com/api/v1\x00')
             tmp.write(b'HKEY_LOCAL_MACHINE\\SOFTWARE\x00')
             tmp.flush()

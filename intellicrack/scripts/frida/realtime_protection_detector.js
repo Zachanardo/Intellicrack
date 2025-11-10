@@ -30,13 +30,12 @@
 
 const RealtimeProtectionDetector = {
     name: 'Real-Time Protection Detector',
-    description:
-    'Continuous protection technique detection and classification system',
+    description: 'Continuous protection technique detection and classification system',
     version: '2.0.0',
 
     // Configuration for real-time detection
     config: {
-    // Detection engine settings
+        // Detection engine settings
         detection: {
             enabled: true,
             realTimeAnalysis: true,
@@ -1240,10 +1239,7 @@ const RealtimeProtectionDetector = {
         });
 
         // Monitor VirtualProtect for code modification detection
-        var virtualProtect = Module.findExportByName(
-            'kernel32.dll',
-            'VirtualProtect',
-        );
+        var virtualProtect = Module.findExportByName('kernel32.dll', 'VirtualProtect');
         if (virtualProtect) {
             Interceptor.attach(virtualProtect, {
                 onEnter: function (args) {
@@ -1278,10 +1274,7 @@ const RealtimeProtectionDetector = {
         });
 
         // Monitor WinHTTP operations
-        var winHttpSendRequest = Module.findExportByName(
-            'winhttp.dll',
-            'WinHttpSendRequest',
-        );
+        var winHttpSendRequest = Module.findExportByName('winhttp.dll', 'WinHttpSendRequest');
         if (winHttpSendRequest) {
             Interceptor.attach(winHttpSendRequest, {
                 onEnter: function (args) {
@@ -1310,10 +1303,7 @@ const RealtimeProtectionDetector = {
         });
 
         // Monitor registry queries
-        var regQueryValueEx = Module.findExportByName(
-            'advapi32.dll',
-            'RegQueryValueExW',
-        );
+        var regQueryValueEx = Module.findExportByName('advapi32.dll', 'RegQueryValueExW');
         if (regQueryValueEx) {
             Interceptor.attach(regQueryValueEx, {
                 onEnter: function (args) {
@@ -1390,10 +1380,7 @@ const RealtimeProtectionDetector = {
         });
 
         // Monitor process creation
-        var createProcessW = Module.findExportByName(
-            'kernel32.dll',
-            'CreateProcessW',
-        );
+        var createProcessW = Module.findExportByName('kernel32.dll', 'CreateProcessW');
         if (createProcessW) {
             Interceptor.attach(createProcessW, {
                 onEnter: function (args) {
@@ -1523,7 +1510,7 @@ const RealtimeProtectionDetector = {
 
     // === DATA PROCESSING METHODS ===
     processAPICall: function (callData) {
-    // Add to analysis buffer
+        // Add to analysis buffer
         this.analysisData.apiCallSequences.push(callData);
 
         // Immediate pattern matching
@@ -1596,12 +1583,7 @@ const RealtimeProtectionDetector = {
             // Check for executable memory allocation (potential code injection)
             if (protection & 0x40 || protection & 0x20) {
                 // PAGE_EXECUTE_READWRITE or PAGE_EXECUTE_READ
-                this.handleDetection(
-                    'memory',
-                    'executable_memory_allocation',
-                    memoryData,
-                    0.8,
-                );
+                this.handleDetection('memory', 'executable_memory_allocation', memoryData, 0.8);
             }
 
             // Check for protection removal (potential unpacking)
@@ -1615,12 +1597,7 @@ const RealtimeProtectionDetector = {
     checkNetworkPatterns: function (networkData) {
         if (networkData.type === 'http_request') {
             // Network activity could indicate license server communication
-            this.handleDetection(
-                'network',
-                'network_communication',
-                networkData,
-                0.6,
-            );
+            this.handleDetection('network', 'network_communication', networkData, 0.6);
         }
     },
 
@@ -1632,12 +1609,7 @@ const RealtimeProtectionDetector = {
             var licenseKeywords = ['license', 'serial', 'key', 'activation', 'trial'];
             for (var i = 0; i < licenseKeywords.length; i++) {
                 if (valueName.includes(licenseKeywords[i])) {
-                    this.handleDetection(
-                        'licensing',
-                        'registry_license_check',
-                        registryData,
-                        0.8,
-                    );
+                    this.handleDetection('licensing', 'registry_license_check', registryData, 0.8);
                     break;
                 }
             }
@@ -1652,12 +1624,7 @@ const RealtimeProtectionDetector = {
             var licenseExtensions = ['.lic', '.key', '.license'];
             for (var i = 0; i < licenseExtensions.length; i++) {
                 if (fileName.includes(licenseExtensions[i])) {
-                    this.handleDetection(
-                        'licensing',
-                        'license_file_access',
-                        fileData,
-                        0.8,
-                    );
+                    this.handleDetection('licensing', 'license_file_access', fileData, 0.8);
                     break;
                 }
             }
@@ -1690,30 +1657,20 @@ const RealtimeProtectionDetector = {
     },
 
     analyzeCallSequence: function (calls) {
-    // Look for known anti-debug sequences
+        // Look for known anti-debug sequences
         var antiDebugSequence = [
             'IsDebuggerPresent',
             'CheckRemoteDebuggerPresent',
             'NtQueryInformationProcess',
         ];
         if (this.matchesSequence(calls, antiDebugSequence)) {
-            this.handleDetection(
-                'antiDebug',
-                'anti_debug_sequence',
-                { calls: calls },
-                0.95,
-            );
+            this.handleDetection('antiDebug', 'anti_debug_sequence', { calls: calls }, 0.95);
         }
 
         // Look for license validation sequences
         var licenseSequence = ['RegOpenKeyExW', 'RegQueryValueExW', 'RegCloseKey'];
         if (this.matchesSequence(calls, licenseSequence)) {
-            this.handleDetection(
-                'licensing',
-                'license_validation_sequence',
-                { calls: calls },
-                0.8,
-            );
+            this.handleDetection('licensing', 'license_validation_sequence', { calls: calls }, 0.8);
         }
     },
 
@@ -1749,7 +1706,7 @@ const RealtimeProtectionDetector = {
                         'timing',
                         'high_frequency_calls',
                         { api: apiName, count: frequency[apiName] },
-                        0.7,
+                        0.7
                     );
                 }
             }
@@ -1757,15 +1714,12 @@ const RealtimeProtectionDetector = {
     },
 
     analyzeCallTiming: function (calls) {
-    // Analyze timing between calls
+        // Analyze timing between calls
         for (var i = 1; i < calls.length; i++) {
             var timeDiff = calls[i].timestamp - calls[i - 1].timestamp;
 
             // Very fast consecutive calls might indicate automated protection
-            if (
-                timeDiff < 5 &&
-        this.areRelatedAPIs(calls[i - 1].apiName, calls[i].apiName)
-            ) {
+            if (timeDiff < 5 && this.areRelatedAPIs(calls[i - 1].apiName, calls[i].apiName)) {
                 this.handleDetection(
                     'timing',
                     'rapid_successive_calls',
@@ -1774,7 +1728,7 @@ const RealtimeProtectionDetector = {
                         api2: calls[i].apiName,
                         timeDiff: timeDiff,
                     },
-                    0.6,
+                    0.6
                 );
             }
         }
@@ -1782,7 +1736,7 @@ const RealtimeProtectionDetector = {
 
     // === DETECTION HANDLING ===
     handleDetection: function (category, technique, data, confidence) {
-    // Apply adaptive threshold
+        // Apply adaptive threshold
         var threshold = this.detectionEngine.adaptiveThresholds.get(category);
         if (threshold && confidence < threshold.confidence) {
             return; // Below threshold
@@ -1790,12 +1744,8 @@ const RealtimeProtectionDetector = {
 
         // Check if already detected recently
         var detectionKey = category + ':' + technique;
-        var existingDetection =
-      this.detectionEngine.detectedTechniques.get(detectionKey);
-        if (
-            existingDetection &&
-      Date.now() - existingDetection.lastDetected < 5000
-        ) {
+        var existingDetection = this.detectionEngine.detectedTechniques.get(detectionKey);
+        if (existingDetection && Date.now() - existingDetection.lastDetected < 5000) {
             existingDetection.count++;
             existingDetection.lastDetected = Date.now();
             return; // Recently detected
@@ -1893,7 +1843,7 @@ const RealtimeProtectionDetector = {
     },
 
     applyReplaceReturnCountermeasure: function (detection, returnValue) {
-    // This would integrate with the hook system to replace return values
+        // This would integrate with the hook system to replace return values
         send({
             type: 'bypass',
             target: 'realtime_protection_detector',
@@ -1904,7 +1854,7 @@ const RealtimeProtectionDetector = {
     },
 
     applySpoofTimingCountermeasure: function (detection) {
-    // This would normalize timing to avoid detection
+        // This would normalize timing to avoid detection
         send({
             type: 'bypass',
             target: 'realtime_protection_detector',
@@ -1914,7 +1864,7 @@ const RealtimeProtectionDetector = {
     },
 
     applyMemoryPatchCountermeasure: function (detection) {
-    // This would patch memory locations to bypass checks
+        // This would patch memory locations to bypass checks
         send({
             type: 'bypass',
             target: 'realtime_protection_detector',
@@ -1924,7 +1874,7 @@ const RealtimeProtectionDetector = {
     },
 
     applyInterceptSpoofCountermeasure: function (detection) {
-    // This would intercept and spoof network communications
+        // This would intercept and spoof network communications
         send({
             type: 'bypass',
             target: 'realtime_protection_detector',
@@ -1956,21 +1906,13 @@ const RealtimeProtectionDetector = {
     },
 
     isSuspiciousHighFrequency: function (apiName) {
-        var suspiciousAPIs = [
-            'IsDebuggerPresent',
-            'GetTickCount',
-            'QueryPerformanceCounter',
-        ];
+        var suspiciousAPIs = ['IsDebuggerPresent', 'GetTickCount', 'QueryPerformanceCounter'];
         return suspiciousAPIs.includes(apiName);
     },
 
     areRelatedAPIs: function (api1, api2) {
         var groups = [
-            [
-                'IsDebuggerPresent',
-                'CheckRemoteDebuggerPresent',
-                'NtQueryInformationProcess',
-            ],
+            ['IsDebuggerPresent', 'CheckRemoteDebuggerPresent', 'NtQueryInformationProcess'],
             ['GetTickCount', 'GetTickCount64', 'QueryPerformanceCounter'],
             ['RegOpenKeyExW', 'RegQueryValueExW', 'RegCloseKey'],
         ];
@@ -1992,15 +1934,14 @@ const RealtimeProtectionDetector = {
     },
 
     checkAPICallFrequency: function (callData) {
-    // Track API call frequency for pattern analysis
+        // Track API call frequency for pattern analysis
         var apiName = callData.apiName;
         var timeWindow = 10000; // 10 seconds
         var currentTime = Date.now();
 
         // Filter recent calls for this API
         var recentCalls = this.analysisData.apiCallSequences.filter(
-            (call) =>
-                call.apiName === apiName && currentTime - call.timestamp < timeWindow,
+            (call) => call.apiName === apiName && currentTime - call.timestamp < timeWindow
         );
 
         // Check for high frequency
@@ -2014,13 +1955,13 @@ const RealtimeProtectionDetector = {
                     frequency: recentCalls.length,
                     timeWindow: timeWindow,
                 },
-                0.8,
+                0.8
             );
         }
     },
 
     triggerImmediateAnalysis: function (callData) {
-    // Perform immediate deep analysis for critical API calls
+        // Perform immediate deep analysis for critical API calls
         send({
             type: 'info',
             target: 'realtime_protection_detector',
@@ -2031,7 +1972,7 @@ const RealtimeProtectionDetector = {
         // Check context and call stack
         if (callData.callStack && callData.callStack.length > 0) {
             var suspiciousFrames = callData.callStack.filter((frame) =>
-                this.isSuspiciousCallFrame(frame),
+                this.isSuspiciousCallFrame(frame)
             );
 
             if (suspiciousFrames.length > 0) {
@@ -2042,14 +1983,14 @@ const RealtimeProtectionDetector = {
                         api: callData.apiName,
                         suspiciousFrames: suspiciousFrames,
                     },
-                    0.9,
+                    0.9
                 );
             }
         }
     },
 
     isSuspiciousCallFrame: function (frame) {
-    // Check if call frame indicates suspicious origin
+        // Check if call frame indicates suspicious origin
         var suspiciousPatterns = ['packed', 'obfuscated', 'unknown'];
         var frameStr = frame.toLowerCase();
 
@@ -2058,10 +1999,8 @@ const RealtimeProtectionDetector = {
 
     // === CROSS-REFERENCE ANALYSIS ===
     performCrossReferenceAnalysis: function () {
-    // Correlate different types of detections for higher confidence
-        var detections = Array.from(
-            this.detectionEngine.detectedTechniques.values(),
-        );
+        // Correlate different types of detections for higher confidence
+        var detections = Array.from(this.detectionEngine.detectedTechniques.values());
 
         // Group by category
         var categories = {};
@@ -2078,7 +2017,7 @@ const RealtimeProtectionDetector = {
     },
 
     checkCorrelatedPatterns: function (categories) {
-    // Anti-debug + timing patterns suggest sophisticated protection
+        // Anti-debug + timing patterns suggest sophisticated protection
         if (categories.antiDebug && categories.timing) {
             if (categories.antiDebug.length >= 2 && categories.timing.length >= 1) {
                 this.handleDetection(
@@ -2088,7 +2027,7 @@ const RealtimeProtectionDetector = {
                         antiDebugCount: categories.antiDebug.length,
                         timingCount: categories.timing.length,
                     },
-                    0.95,
+                    0.95
                 );
             }
         }
@@ -2102,7 +2041,7 @@ const RealtimeProtectionDetector = {
                     licensingCount: categories.licensing.length,
                     networkCount: categories.network.length,
                 },
-                0.9,
+                0.9
             );
         }
 
@@ -2115,7 +2054,7 @@ const RealtimeProtectionDetector = {
                     memoryCount: categories.memory.length,
                     packingCount: categories.packing.length,
                 },
-                0.85,
+                0.85
             );
         }
     },
@@ -2188,7 +2127,7 @@ const RealtimeProtectionDetector = {
     },
 
     updateClassificationModel: function () {
-    // Train classification model with recent detections
+        // Train classification model with recent detections
         var trainingData = this.prepareTrainingData();
         if (trainingData.length > 10) {
             this.trainClassificationModel(trainingData);
@@ -2233,12 +2172,12 @@ const RealtimeProtectionDetector = {
     },
 
     getTechniqueWeight: function (technique) {
-    // Weight based on technique severity
+        // Weight based on technique severity
         return Math.random() * 0.5 + 0.5; // Simplified for now
     },
 
     trainClassificationModel: function (trainingData) {
-    // Simplified neural network training
+        // Simplified neural network training
         send({
             type: 'info',
             target: 'realtime_protection_detector',
@@ -2249,12 +2188,12 @@ const RealtimeProtectionDetector = {
     },
 
     updateAnomalyDetector: function () {
-    // Update anomaly detection baseline
+        // Update anomaly detection baseline
         this.updateAnomalyBaseline();
     },
 
     updateAnomalyBaseline: function () {
-    // Calculate baseline from recent normal behavior
+        // Calculate baseline from recent normal behavior
         var recentCalls = this.analysisData.apiCallSequences.slice(-100);
         var baseline = this.mlComponents.anomalyDetector.baseline;
 
@@ -2275,7 +2214,7 @@ const RealtimeProtectionDetector = {
     },
 
     updateSequencePredictor: function () {
-    // Update sequence prediction model
+        // Update sequence prediction model
         this.analyzeSequencePatterns();
     },
 
@@ -2312,13 +2251,13 @@ const RealtimeProtectionDetector = {
                 // High accuracy, can lower threshold (more sensitive)
                 threshold.confidence = Math.max(
                     0.5,
-                    threshold.confidence - threshold.adaptationRate,
+                    threshold.confidence - threshold.adaptationRate
                 );
             } else if (accuracy < 0.7) {
                 // Low accuracy, raise threshold (less sensitive)
                 threshold.confidence = Math.min(
                     0.95,
-                    threshold.confidence + threshold.adaptationRate,
+                    threshold.confidence + threshold.adaptationRate
                 );
             }
 
@@ -2327,10 +2266,10 @@ const RealtimeProtectionDetector = {
     },
 
     calculateCategoryAccuracy: function (category) {
-    // Calculate accuracy based on successful bypasses vs total detections
-        var detections = Array.from(
-            this.detectionEngine.detectedTechniques.values(),
-        ).filter((d) => d.category === category);
+        // Calculate accuracy based on successful bypasses vs total detections
+        var detections = Array.from(this.detectionEngine.detectedTechniques.values()).filter(
+            (d) => d.category === category
+        );
 
         if (detections.length === 0) return 0.8; // Default
 
@@ -2344,35 +2283,30 @@ const RealtimeProtectionDetector = {
         var maxAge = 300000; // 5 minutes
 
         // Clean up old API calls
-        this.analysisData.apiCallSequences =
-      this.analysisData.apiCallSequences.filter(
-          (call) => currentTime - call.timestamp < maxAge,
-      );
-
-        // Clean up other data types
-        this.analysisData.memoryAccessPatterns =
-      this.analysisData.memoryAccessPatterns.filter(
-          (data) => currentTime - data.timestamp < maxAge,
-      );
-
-        this.analysisData.networkActivity =
-      this.analysisData.networkActivity.filter(
-          (data) => currentTime - data.timestamp < maxAge,
-      );
-
-        this.analysisData.registryOperations =
-      this.analysisData.registryOperations.filter(
-          (data) => currentTime - data.timestamp < maxAge,
-      );
-
-        this.analysisData.fileOperations = this.analysisData.fileOperations.filter(
-            (data) => currentTime - data.timestamp < maxAge,
+        this.analysisData.apiCallSequences = this.analysisData.apiCallSequences.filter(
+            (call) => currentTime - call.timestamp < maxAge
         );
 
-        this.analysisData.timeAnalysisResults =
-      this.analysisData.timeAnalysisResults.filter(
-          (data) => currentTime - data.timestamp < maxAge,
-      );
+        // Clean up other data types
+        this.analysisData.memoryAccessPatterns = this.analysisData.memoryAccessPatterns.filter(
+            (data) => currentTime - data.timestamp < maxAge
+        );
+
+        this.analysisData.networkActivity = this.analysisData.networkActivity.filter(
+            (data) => currentTime - data.timestamp < maxAge
+        );
+
+        this.analysisData.registryOperations = this.analysisData.registryOperations.filter(
+            (data) => currentTime - data.timestamp < maxAge
+        );
+
+        this.analysisData.fileOperations = this.analysisData.fileOperations.filter(
+            (data) => currentTime - data.timestamp < maxAge
+        );
+
+        this.analysisData.timeAnalysisResults = this.analysisData.timeAnalysisResults.filter(
+            (data) => currentTime - data.timestamp < maxAge
+        );
 
         // Clean up old detections
         this.detectionEngine.detectedTechniques.forEach((detection, key) => {
@@ -2385,10 +2319,8 @@ const RealtimeProtectionDetector = {
 
     // === SYSTEM INTEGRATION ===
     updateBehaviorModel: function (detection) {
-    // Update behavior patterns based on detection
-        var pattern = this.detectionEngine.behaviorPatterns.get(
-            detection.category,
-        ) || {
+        // Update behavior patterns based on detection
+        var pattern = this.detectionEngine.behaviorPatterns.get(detection.category) || {
             frequency: 0,
             lastSeen: 0,
             techniques: new Set(),
@@ -2404,7 +2336,7 @@ const RealtimeProtectionDetector = {
     },
 
     notifyMainSystem: function (detection) {
-    // Notify the main Intellicrack system about the detection
+        // Notify the main Intellicrack system about the detection
         send({
             type: 'notification',
             target: 'realtime_protection_detector',
@@ -2412,26 +2344,23 @@ const RealtimeProtectionDetector = {
             message: detection.category + '.' + detection.technique + ' detected',
         });
 
-    // This would integrate with the main system's event system
+        // This would integrate with the main system's event system
     },
 
     // === STATISTICS AND REPORTING ===
     updateStatistics: function () {
-    // Update accuracy metrics
-        var totalDetections =
-      this.stats.correctDetections + this.stats.falsePositives;
+        // Update accuracy metrics
+        var totalDetections = this.stats.correctDetections + this.stats.falsePositives;
         if (totalDetections > 0) {
             this.stats.accuracy = this.stats.correctDetections / totalDetections;
         }
 
         // Update average detection time
-        var detections = Array.from(
-            this.detectionEngine.detectedTechniques.values(),
-        );
+        var detections = Array.from(this.detectionEngine.detectedTechniques.values());
         if (detections.length > 0) {
             var totalTime = detections.reduce(
                 (sum, d) => sum + (d.lastDetected - d.firstDetected),
-                0,
+                0
             );
             this.stats.averageDetectionTime = totalTime / detections.length;
         }
@@ -2440,15 +2369,9 @@ const RealtimeProtectionDetector = {
     getDetectionReport: function () {
         return {
             statistics: this.stats,
-            detectedTechniques: Array.from(
-                this.detectionEngine.detectedTechniques.entries(),
-            ),
-            behaviorPatterns: Array.from(
-                this.detectionEngine.behaviorPatterns.entries(),
-            ),
-            adaptiveThresholds: Array.from(
-                this.detectionEngine.adaptiveThresholds.entries(),
-            ),
+            detectedTechniques: Array.from(this.detectionEngine.detectedTechniques.entries()),
+            behaviorPatterns: Array.from(this.detectionEngine.behaviorPatterns.entries()),
+            adaptiveThresholds: Array.from(this.detectionEngine.adaptiveThresholds.entries()),
             mlModelStatus: {
                 classificationTrained: this.mlComponents.classificationModel.trained,
                 anomalyBaseline: this.mlComponents.anomalyDetector.baseline.size,
@@ -2743,8 +2666,8 @@ const RealtimeProtectionDetector = {
 
                 if (
                     moduleName.includes('cs') ||
-          moduleName.includes('falcon') ||
-          moduleName.includes('crowdstrike')
+                    moduleName.includes('falcon') ||
+                    moduleName.includes('crowdstrike')
                 ) {
                     send({
                         type: 'detection',
@@ -2806,10 +2729,10 @@ const RealtimeProtectionDetector = {
                     // Check for common hook signatures (JMP, CALL instructions)
                     if (
                         bytes[0] === 0xe9 ||
-            bytes[0] === 0xe8 || // JMP/CALL rel32
-            (bytes[0] === 0xff && (bytes[1] & 0xf8) === 0x20) || // JMP [mem]
-            (bytes[0] === 0x48 && bytes[1] === 0xb8) || // MOV RAX, imm64
-            bytes[0] === 0x6a
+                        bytes[0] === 0xe8 || // JMP/CALL rel32
+                        (bytes[0] === 0xff && (bytes[1] & 0xf8) === 0x20) || // JMP [mem]
+                        (bytes[0] === 0x48 && bytes[1] === 0xb8) || // MOV RAX, imm64
+                        bytes[0] === 0x6a
                     ) {
                         // PUSH imm8
 
@@ -2844,7 +2767,7 @@ const RealtimeProtectionDetector = {
         // Use WMI to check registry without direct access
         try {
             const wmiQuery =
-        'SELECT * FROM Win32_Service WHERE Name LIKE "%CS%" OR Name LIKE "%Falcon%" OR Name LIKE "%CrowdStrike%"';
+                'SELECT * FROM Win32_Service WHERE Name LIKE "%CS%" OR Name LIKE "%Falcon%" OR Name LIKE "%CrowdStrike%"';
 
             // This would require WMI access in real implementation
             send({
@@ -2921,7 +2844,7 @@ const RealtimeProtectionDetector = {
 
     // Implement CrowdStrike bypass techniques
     implementCrowdStrikeBypass: function () {
-    // Technique 1: Direct syscalls to bypass userland hooks
+        // Technique 1: Direct syscalls to bypass userland hooks
         this.implementDirectSyscalls();
 
         // Technique 2: Manual DLL loading to avoid process creation monitoring
@@ -3095,12 +3018,12 @@ const RealtimeProtectionDetector = {
 
     // Prepare process hollowing
     prepareProcesHollowing: function (processName) {
-    // Process hollowing steps:
-    // 1. Unmap original image
-    // 2. Allocate new memory
-    // 3. Write malicious payload
-    // 4. Update process context
-    // 5. Resume execution
+        // Process hollowing steps:
+        // 1. Unmap original image
+        // 2. Allocate new memory
+        // 3. Write malicious payload
+        // 4. Update process context
+        // 5. Resume execution
 
         const steps = [
             'unmap_original_image',
@@ -3265,7 +3188,7 @@ const RealtimeProtectionDetector = {
 
     // Detect SentinelOne behavioral analysis
     detectSentinelOneBehavioral: function () {
-    // SentinelOne monitors specific API patterns
+        // SentinelOne monitors specific API patterns
         const monitoredAPIs = [
             ['kernel32.dll', 'VirtualAllocEx'],
             ['kernel32.dll', 'WriteProcessMemory'],
@@ -3300,10 +3223,10 @@ const RealtimeProtectionDetector = {
 
     // Implement API evasion techniques
     implementAPIEvasion: function (args, apiName) {
-    // Modify API arguments to appear benign
+        // Modify API arguments to appear benign
         switch (apiName) {
         case 'VirtualAllocEx':
-        // Reduce allocation size to appear less suspicious
+            // Reduce allocation size to appear less suspicious
             if (args[2].toInt32() > 0x100000) {
                 // 1MB
                 args[2] = ptr(0x1000); // 4KB instead
@@ -3311,14 +3234,14 @@ const RealtimeProtectionDetector = {
             break;
 
         case 'WriteProcessMemory':
-        // Limit write size
+            // Limit write size
             if (args[3].toInt32() > 0x1000) {
                 args[3] = ptr(0x1000);
             }
             break;
 
         case 'CreateRemoteThread':
-        // Delay thread creation
+            // Delay thread creation
             setTimeout(() => {
                 send({
                     type: 'detection',
@@ -3333,7 +3256,7 @@ const RealtimeProtectionDetector = {
 
     // Implement SentinelOne evasion techniques
     implementSentinelOneEvasion: function () {
-    // Technique 1: Sleep before malicious activities to avoid behavioral detection
+        // Technique 1: Sleep before malicious activities to avoid behavioral detection
         this.implementDelayedExecution();
 
         // Technique 2: Use legitimate APIs with benign patterns
@@ -3427,7 +3350,7 @@ const RealtimeProtectionDetector = {
                 () => {
                     pattern();
                 },
-                Math.random() * 2000 + index * 1000,
+                Math.random() * 2000 + index * 1000
             );
         });
     },
@@ -3460,7 +3383,7 @@ const RealtimeProtectionDetector = {
                         index: index,
                     });
                 },
-                Math.random() * 3000 + index * 2000,
+                Math.random() * 3000 + index * 2000
             );
         });
     },
@@ -3567,8 +3490,8 @@ const RealtimeProtectionDetector = {
                         // Check if this is an AMSI-related CLSID
                         const clsidBytes = Memory.readByteArray(clsid, 16);
                         const amsiCLSID = new Uint8Array([
-                            0xfb, 0xd7, 0x6d, 0xca, 0x0f, 0x93, 0x4e, 0x12, 0x83, 0x40, 0x09,
-                            0xb2, 0x85, 0xab, 0xec, 0xa6,
+                            0xfb, 0xd7, 0x6d, 0xca, 0x0f, 0x93, 0x4e, 0x12, 0x83, 0x40, 0x09, 0xb2,
+                            0x85, 0xab, 0xec, 0xa6,
                         ]);
 
                         if (this.arraysEqual(new Uint8Array(clsidBytes), amsiCLSID)) {
@@ -3722,7 +3645,7 @@ const RealtimeProtectionDetector = {
 
     // Disable CET features
     disableCETFeatures: function () {
-    // CET bypass techniques
+        // CET bypass techniques
         const bypassTechniques = [
             'modify_shadow_stack',
             'corrupt_indirect_branch_tracking',
@@ -4031,7 +3954,7 @@ const RealtimeProtectionDetector = {
 
     // Perform statistical mimicry
     performStatisticalMimicry: function () {
-    // Generate behaviors that match normal statistical distributions
+        // Generate behaviors that match normal statistical distributions
         const normalDistribution = this.generateNormalDistribution(1000, 50, 10);
 
         send({
@@ -4130,7 +4053,7 @@ const RealtimeProtectionDetector = {
 
                 if (
                     fireeyeIndicators.some((indicator) =>
-                        moduleName.includes(indicator.toLowerCase()),
+                        moduleName.includes(indicator.toLowerCase())
                     )
                 ) {
                     send({
@@ -4225,19 +4148,19 @@ const RealtimeProtectionDetector = {
 
     // Read CR4 register (simplified - would require kernel access)
     readCR4Register: function () {
-    // This would require kernel-level access in real implementation
+        // This would require kernel-level access in real implementation
         return 0x001406e0; // Example CR4 value with CET enabled
     },
 
     // Check CPUID feature
     checkCPUIDFeature: function (eax, ecx, register, bit) {
-    // This would require actual CPUID instruction in real implementation
+        // This would require actual CPUID instruction in real implementation
         return true; // Assume feature is present for demonstration
     },
 
     // Read debug register
     readDebugRegister: function (index) {
-    // This would require kernel access in real implementation
+        // This would require kernel access in real implementation
         return 0; // No breakpoints set
     },
 
@@ -4261,8 +4184,8 @@ const RealtimeProtectionDetector = {
             address: funcAddress.toString(),
         });
 
-    // In real implementation, this would restore original bytes
-    // from backup or calculate them based on function prologue
+        // In real implementation, this would restore original bytes
+        // from backup or calculate them based on function prologue
     },
 
     // ===================================================================
@@ -4318,10 +4241,7 @@ const RealtimeProtectionDetector = {
 
         try {
             // Monitor VirtualProtect calls on IAT regions
-            const virtualProtect = Module.findExportByName(
-                'kernel32.dll',
-                'VirtualProtect',
-            );
+            const virtualProtect = Module.findExportByName('kernel32.dll', 'VirtualProtect');
             if (virtualProtect) {
                 Interceptor.attach(virtualProtect, {
                     onEnter: function (args) {
@@ -4357,7 +4277,7 @@ const RealtimeProtectionDetector = {
             // Monitor WriteProcessMemory for IAT patches
             const writeProcessMemory = Module.findExportByName(
                 'kernel32.dll',
-                'WriteProcessMemory',
+                'WriteProcessMemory'
             );
             if (writeProcessMemory) {
                 Interceptor.attach(writeProcessMemory, {
@@ -4371,7 +4291,7 @@ const RealtimeProtectionDetector = {
                     onLeave: function (retval) {
                         if (
                             retval.toInt32() !== 0 &&
-              this.hProcess.equals(Process.getCurrentProcess().handle)
+                            this.hProcess.equals(Process.getCurrentProcess().handle)
                         ) {
                             // Check if writing to IAT
                             if (this.parent.parent.isIATRegion(this.baseAddress, this.size)) {
@@ -4386,10 +4306,7 @@ const RealtimeProtectionDetector = {
                                     data_hash: this.parent.parent.calculateDataHash(data),
                                 });
 
-                                this.parent.parent.recordIATModification(
-                                    this.baseAddress,
-                                    data,
-                                );
+                                this.parent.parent.recordIATModification(this.baseAddress, data);
                             }
                         }
                     },
@@ -4415,10 +4332,7 @@ const RealtimeProtectionDetector = {
 
         try {
             // Monitor LoadLibrary for delayed imports
-            const loadLibraryW = Module.findExportByName(
-                'kernel32.dll',
-                'LoadLibraryW',
-            );
+            const loadLibraryW = Module.findExportByName('kernel32.dll', 'LoadLibraryW');
             if (loadLibraryW) {
                 Interceptor.attach(loadLibraryW, {
                     onEnter: function (args) {
@@ -4447,7 +4361,7 @@ const RealtimeProtectionDetector = {
 
                                 this.parent.parent.recordDelayedImport(
                                     this.libraryName,
-                                    moduleBase,
+                                    moduleBase
                                 );
                             }
                         }
@@ -4456,10 +4370,7 @@ const RealtimeProtectionDetector = {
             }
 
             // Monitor GetProcAddress for delayed import resolution
-            const getProcAddress = Module.findExportByName(
-                'kernel32.dll',
-                'GetProcAddress',
-            );
+            const getProcAddress = Module.findExportByName('kernel32.dll', 'GetProcAddress');
             if (getProcAddress) {
                 Interceptor.attach(getProcAddress, {
                     onEnter: function (args) {
@@ -4478,9 +4389,7 @@ const RealtimeProtectionDetector = {
                             const functionAddress = retval;
 
                             // Track delayed import resolution
-                            if (
-                                this.parent.parent.isDelayedImportFunction(this.functionName)
-                            ) {
+                            if (this.parent.parent.isDelayedImportFunction(this.functionName)) {
                                 send({
                                     type: 'detection',
                                     target: 'realtime_protection_detector',
@@ -4492,7 +4401,7 @@ const RealtimeProtectionDetector = {
 
                                 this.parent.parent.recordDelayedFunctionResolution(
                                     this.functionName,
-                                    functionAddress,
+                                    functionAddress
                                 );
                             }
                         }
@@ -4552,7 +4461,7 @@ const RealtimeProtectionDetector = {
 
     // Monitor string decryption for obfuscated imports
     monitorStringDecryption: function () {
-    // Look for common decryption patterns
+        // Look for common decryption patterns
         const suspiciousPatterns = [
             /[\x01-\x1F]{4,}/, // Control characters (encrypted data)
             /[\x80-\xFF]{8,}/, // High-byte sequences
@@ -4560,10 +4469,7 @@ const RealtimeProtectionDetector = {
         ];
 
         // Monitor memory allocations that might contain encrypted strings
-        const virtualAlloc = Module.findExportByName(
-            'kernel32.dll',
-            'VirtualAlloc',
-        );
+        const virtualAlloc = Module.findExportByName('kernel32.dll', 'VirtualAlloc');
         if (virtualAlloc) {
             Interceptor.attach(virtualAlloc, {
                 onEnter: function (args) {
@@ -4584,7 +4490,7 @@ const RealtimeProtectionDetector = {
 
     // Monitor hash-based API resolution
     monitorHashBasedResolution: function () {
-    // Common hash algorithms used for API obfuscation
+        // Common hash algorithms used for API obfuscation
         const hashAlgorithms = ['CRC32', 'DJB2', 'SDBM', 'FNV1A'];
 
         // Monitor for loops that could be hash calculations
@@ -4593,10 +4499,8 @@ const RealtimeProtectionDetector = {
 
     // Monitor encrypted import names
     monitorEncryptedImports: function () {
-    // Track XOR operations that might decrypt API names
-        const commonXORKeys = [
-            0xaa, 0x55, 0xff, 0x13, 0x37, 0xde, 0xad, 0xbe, 0xef,
-        ];
+        // Track XOR operations that might decrypt API names
+        const commonXORKeys = [0xaa, 0x55, 0xff, 0x13, 0x37, 0xde, 0xad, 0xbe, 0xef];
 
         // Monitor for string manipulation that results in known API names
         this.trackStringManipulation();
@@ -4805,9 +4709,7 @@ const RealtimeProtectionDetector = {
             [0x90000000, 0xa0000000],
         ];
 
-        return suspiciousRanges.some(
-            (range) => addr >= range[0] && addr <= range[1],
-        );
+        return suspiciousRanges.some((range) => addr >= range[0] && addr <= range[1]);
     },
 
     isSuspiciousModuleName: function (moduleName) {
@@ -4826,7 +4728,7 @@ const RealtimeProtectionDetector = {
     // Additional obfuscation detection helpers
     hasSuspiciousModuleNames: function (imports) {
         const suspiciousCount = imports.filter((imp) =>
-            this.isSuspiciousModuleName(imp.module),
+            this.isSuspiciousModuleName(imp.module)
         ).length;
 
         return suspiciousCount > imports.length * 0.3; // >30% suspicious
@@ -4834,27 +4736,27 @@ const RealtimeProtectionDetector = {
 
     hasEncryptedFunctionNames: function (imports) {
         const encryptedCount = imports.filter((imp) =>
-            this.isSuspiciousFunctionName(imp.name),
+            this.isSuspiciousFunctionName(imp.name)
         ).length;
 
         return encryptedCount > imports.length * 0.2; // >20% encrypted
     },
 
     hasIndirectCallPatterns: function (module) {
-    // This would analyze the module's code for indirect call patterns
-    // Simplified implementation
+        // This would analyze the module's code for indirect call patterns
+        // Simplified implementation
         return false;
     },
 
     hasTrampolinePatterns: function (module) {
-    // This would analyze for trampoline/stub patterns
-    // Simplified implementation
+        // This would analyze for trampoline/stub patterns
+        // Simplified implementation
         return false;
     },
 
     // Utility functions
     isIATRegion: function (address, size) {
-    // Check if address range overlaps with known IAT regions
+        // Check if address range overlaps with known IAT regions
         const addr = address.toInt32();
         const endAddr = addr + size;
 
@@ -4864,7 +4766,7 @@ const RealtimeProtectionDetector = {
     },
 
     isDelayedImport: function (libraryName) {
-    // Common libraries that are often delay-loaded
+        // Common libraries that are often delay-loaded
         const delayedLibraries = [
             'advapi32.dll',
             'shell32.dll',
@@ -4880,7 +4782,7 @@ const RealtimeProtectionDetector = {
     },
 
     isDelayedImportFunction: function (functionName) {
-    // Functions commonly delay-loaded
+        // Functions commonly delay-loaded
         const delayedFunctions = [
             'RegOpenKeyExW',
             'RegQueryValueExW',
@@ -4938,7 +4840,7 @@ const RealtimeProtectionDetector = {
     },
 
     trackPotentialEncryptedData: function (address, size) {
-    // Monitor this memory region for potential string decryption
+        // Monitor this memory region for potential string decryption
         setTimeout(() => {
             try {
                 const data = address.readByteArray(size);
@@ -4960,13 +4862,13 @@ const RealtimeProtectionDetector = {
     },
 
     trackHashCalculationPatterns: function () {
-    // This would use dynamic analysis to detect hash calculation loops
-    // Simplified implementation for demonstration
+        // This would use dynamic analysis to detect hash calculation loops
+        // Simplified implementation for demonstration
     },
 
     trackStringManipulation: function () {
-    // Monitor string manipulation functions for API name decryption
-    // Simplified implementation for demonstration
+        // Monitor string manipulation functions for API name decryption
+        // Simplified implementation for demonstration
     },
 
     // Analysis functions
@@ -4992,7 +4894,7 @@ const RealtimeProtectionDetector = {
     },
 
     calculateDataHash: function (data) {
-    // Simple hash calculation for data comparison
+        // Simple hash calculation for data comparison
         let hash = 0;
         const bytes = new Uint8Array(data);
 
@@ -5011,8 +4913,7 @@ const RealtimeProtectionDetector = {
             action: 'iat_analysis_complete',
             statistics: this.importAnalysis.analysisStats,
             obfuscation_detected: this.importAnalysis.obfuscationPatterns.size > 0,
-            modifications_detected:
-        this.importAnalysis.suspiciousModifications.length > 0,
+            modifications_detected: this.importAnalysis.suspiciousModifications.length > 0,
             delayed_imports: this.importAnalysis.delayedImports.size,
             dynamic_resolutions: this.importAnalysis.dynamicResolutions.size,
             security_level: this.calculateIATSecurityLevel(),
@@ -5218,8 +5119,7 @@ const RealtimeProtectionDetector = {
 
         try {
             // Calculate section header offset
-            const sectionHeaderOffset =
-        peHeader.e_lfanew + 24 + peHeader.sizeOfOptionalHeader;
+            const sectionHeaderOffset = peHeader.e_lfanew + 24 + peHeader.sizeOfOptionalHeader;
 
             for (let i = 0; i < peHeader.numberOfSections; i++) {
                 const sectionBase = moduleBase.add(sectionHeaderOffset + i * 40);
@@ -5327,11 +5227,7 @@ const RealtimeProtectionDetector = {
     calculateSectionEntropy: function (module, section) {
         try {
             const sectionBase = module.base.add(section.virtualAddress);
-            const sectionSize = Math.min(
-                section.virtualSize,
-                section.sizeOfRawData,
-                4096,
-            ); // Limit sample size
+            const sectionSize = Math.min(section.virtualSize, section.sizeOfRawData, 4096); // Limit sample size
 
             if (sectionSize === 0) return 0;
 
@@ -5402,7 +5298,7 @@ const RealtimeProtectionDetector = {
 
     // Check for suspicious section characteristics
     checkSuspiciousCharacteristics: function (analysis) {
-    // High entropy indicates packing/encryption
+        // High entropy indicates packing/encryption
         if (analysis.entropy > 7.0) {
             analysis.suspiciousIndicators.push('high_entropy');
             analysis.protectionLevel = 'packed_or_encrypted';
@@ -5465,8 +5361,8 @@ const RealtimeProtectionDetector = {
         // Check for random/obfuscated names
         if (
             randomNamePattern.test(analysis.name) ||
-      shortNamePattern.test(analysis.name) ||
-      numberOnlyPattern.test(analysis.name)
+            shortNamePattern.test(analysis.name) ||
+            numberOnlyPattern.test(analysis.name)
         ) {
             analysis.suspiciousIndicators.push('obfuscated_section_name');
         }
@@ -5532,11 +5428,7 @@ const RealtimeProtectionDetector = {
             }
 
             // Check section names
-            if (
-                signature.names.some((name) =>
-                    analysis.name.toLowerCase().includes(name),
-                )
-            ) {
+            if (signature.names.some((name) => analysis.name.toLowerCase().includes(name))) {
                 analysis.suspiciousIndicators.push(`${protector}_section_name`);
                 analysis.protectionLevel = protector;
             }
@@ -5607,10 +5499,7 @@ const RealtimeProtectionDetector = {
 
         try {
             // Monitor VirtualAlloc for new sections
-            const virtualAlloc = Module.findExportByName(
-                'kernel32.dll',
-                'VirtualAlloc',
-            );
+            const virtualAlloc = Module.findExportByName('kernel32.dll', 'VirtualAlloc');
             if (virtualAlloc) {
                 Interceptor.attach(virtualAlloc, {
                     onEnter: function (args) {
@@ -5625,7 +5514,7 @@ const RealtimeProtectionDetector = {
                             this.parent.parent.analyzeNewAllocation(
                                 retval,
                                 this.size,
-                                this.protect,
+                                this.protect
                             );
                         }
                     },
@@ -5633,10 +5522,7 @@ const RealtimeProtectionDetector = {
             }
 
             // Monitor LoadLibrary for new modules
-            const loadLibraryW = Module.findExportByName(
-                'kernel32.dll',
-                'LoadLibraryW',
-            );
+            const loadLibraryW = Module.findExportByName('kernel32.dll', 'LoadLibraryW');
             if (loadLibraryW) {
                 Interceptor.attach(loadLibraryW, {
                     onLeave: function (retval) {
@@ -5669,7 +5555,7 @@ const RealtimeProtectionDetector = {
 
     // Analyze new memory allocation
     analyzeNewAllocation: function (address, size, protect) {
-    // Check if this creates an unusual executable section
+        // Check if this creates an unusual executable section
         if (protect & 0x10 || protect & 0x20 || protect & 0x40) {
             // PAGE_EXECUTE_*
             send({
@@ -5719,7 +5605,7 @@ const RealtimeProtectionDetector = {
                 entropy: analysis.entropy.toFixed(3),
                 protection_level: analysis.protectionLevel,
                 permissions: Object.keys(analysis.permissions).filter(
-                    (p) => analysis.permissions[p],
+                    (p) => analysis.permissions[p]
                 ),
             });
         }
@@ -5751,8 +5637,7 @@ const RealtimeProtectionDetector = {
         });
 
         if (sectionCount > 0) {
-            this.sectionAnalysis.analysisStats.averageEntropy =
-        totalEntropy / sectionCount;
+            this.sectionAnalysis.analysisStats.averageEntropy = totalEntropy / sectionCount;
         }
     },
 
@@ -5766,9 +5651,7 @@ const RealtimeProtectionDetector = {
             suspicious_sections: Array.from(this.sectionAnalysis.suspiciousSections),
             packed_sections: Array.from(this.sectionAnalysis.packedSections),
             encrypted_sections: Array.from(this.sectionAnalysis.encryptedSections),
-            executable_sections: Array.from(
-                this.sectionAnalysis.executableSections.keys(),
-            ),
+            executable_sections: Array.from(this.sectionAnalysis.executableSections.keys()),
             writable_sections: Array.from(this.sectionAnalysis.writableSections),
             security_assessment: this.calculateSectionSecurityLevel(),
             recommendations: this.generateSectionRecommendations(),
@@ -5816,39 +5699,29 @@ const RealtimeProtectionDetector = {
         const stats = this.sectionAnalysis.analysisStats;
 
         if (stats.suspiciousSections > 0) {
-            recommendations.push(
-                'Review suspicious sections for potential protection mechanisms',
-            );
+            recommendations.push('Review suspicious sections for potential protection mechanisms');
         }
 
         if (stats.highEntropySections > 0) {
-            recommendations.push(
-                'High entropy sections detected - possible packing or encryption',
-            );
+            recommendations.push('High entropy sections detected - possible packing or encryption');
         }
 
         if (stats.unusualPermissions > 0) {
             recommendations.push(
-                'Unusual section permissions detected - review for security implications',
+                'Unusual section permissions detected - review for security implications'
             );
         }
 
         if (stats.packedSections > 0) {
-            recommendations.push(
-                'Packed sections detected - consider unpacking for analysis',
-            );
+            recommendations.push('Packed sections detected - consider unpacking for analysis');
         }
 
         if (stats.overlayDetected) {
-            recommendations.push(
-                'Overlay data detected - examine for hidden functionality',
-            );
+            recommendations.push('Overlay data detected - examine for hidden functionality');
         }
 
         if (recommendations.length === 0) {
-            recommendations.push(
-                'Section analysis completed - no significant issues detected',
-            );
+            recommendations.push('Section analysis completed - no significant issues detected');
         }
 
         return recommendations;
@@ -5900,7 +5773,7 @@ const RealtimeProtectionDetector = {
     },
 
     initializeEntryPointPatterns: function () {
-    // Known entry point obfuscation patterns
+        // Known entry point obfuscation patterns
         this.entryPointPatterns = {
             // VMProtect entry point patterns
             vmprotect: [
@@ -5955,9 +5828,9 @@ const RealtimeProtectionDetector = {
     analyzeMainEntryPoint: function () {
         try {
             const moduleBase =
-        Module.findBaseAddress(Process.getCurrentThreadId().toString()) ||
-        Module.findBaseAddress('main') ||
-        Module.findBaseAddress(Process.enumerateModules()[0].name);
+                Module.findBaseAddress(Process.getCurrentThreadId().toString()) ||
+                Module.findBaseAddress('main') ||
+                Module.findBaseAddress(Process.enumerateModules()[0].name);
 
             if (!moduleBase) {
                 send({
@@ -6017,11 +5890,7 @@ const RealtimeProtectionDetector = {
 
             // Read and disassemble instructions
             let currentAddr = address;
-            for (
-                let i = 0;
-                i < this.entryPointAnalysis.config.maxInstructionLookAhead;
-                i++
-            ) {
+            for (let i = 0; i < this.entryPointAnalysis.config.maxInstructionLookAhead; i++) {
                 try {
                     const instruction = Instruction.parse(currentAddr);
                     if (!instruction) break;
@@ -6051,7 +5920,7 @@ const RealtimeProtectionDetector = {
 
             if (
                 analysis.obfuscationLevel >
-        this.entryPointAnalysis.config.suspiciousPatternThreshold
+                this.entryPointAnalysis.config.suspiciousPatternThreshold
             ) {
                 this.entryPointAnalysis.obfuscatedEntries.add(identifier);
                 this.entryPointAnalysis.statistics.suspiciousEntryPoints++;
@@ -6076,9 +5945,7 @@ const RealtimeProtectionDetector = {
             const byteArray = new Uint8Array(bytes);
 
             // Check against known protector patterns
-            for (const [protector, patterns] of Object.entries(
-                this.entryPointPatterns,
-            )) {
+            for (const [protector, patterns] of Object.entries(this.entryPointPatterns)) {
                 for (const pattern of patterns) {
                     if (this.matchesPattern(byteArray, pattern)) {
                         analysis.protectorSignatures.push(protector);
@@ -6156,10 +6023,7 @@ const RealtimeProtectionDetector = {
             analysis.obfuscationLevel += 2;
         }
 
-        if (
-            instruction.mnemonic.includes('fs:') &&
-      instruction.opStr.includes('30h')
-        ) {
+        if (instruction.mnemonic.includes('fs:') && instruction.opStr.includes('30h')) {
             suspicious.push('peb_access');
             analysis.obfuscationLevel += 1;
         }
@@ -6176,10 +6040,7 @@ const RealtimeProtectionDetector = {
         }
 
         // Check for virtualization indicators
-        if (
-            instruction.mnemonic === 'pushad' ||
-      instruction.mnemonic === 'pushfd'
-        ) {
+        if (instruction.mnemonic === 'pushad' || instruction.mnemonic === 'pushfd') {
             suspicious.push('context_saving');
             analysis.obfuscationLevel += 1;
         }
@@ -6190,8 +6051,7 @@ const RealtimeProtectionDetector = {
     },
 
     detectTrampolines: function (startAddress) {
-        const trampolineThreshold =
-      this.entryPointAnalysis.config.trampolineJumpThreshold;
+        const trampolineThreshold = this.entryPointAnalysis.config.trampolineJumpThreshold;
         let currentAddr = startAddress;
 
         try {
@@ -6204,9 +6064,7 @@ const RealtimeProtectionDetector = {
                     const operand = instruction.operands[0];
                     if (operand && operand.type === 'imm') {
                         const targetAddr = ptr(operand.imm);
-                        const distance = Math.abs(
-                            targetAddr.toInt32() - currentAddr.toInt32(),
-                        );
+                        const distance = Math.abs(targetAddr.toInt32() - currentAddr.toInt32());
 
                         if (distance > trampolineThreshold) {
                             this.entryPointAnalysis.trampolines.set(currentAddr.toString(), {
@@ -6242,11 +6100,7 @@ const RealtimeProtectionDetector = {
             let currentAddr = address;
             const visitedAddresses = new Set();
 
-            for (
-                let i = 0;
-                i < 100 && !visitedAddresses.has(currentAddr.toString());
-                i++
-            ) {
+            for (let i = 0; i < 100 && !visitedAddresses.has(currentAddr.toString()); i++) {
                 visitedAddresses.add(currentAddr.toString());
 
                 const instruction = Instruction.parse(currentAddr);
@@ -6291,19 +6145,16 @@ const RealtimeProtectionDetector = {
 
             this.entryPointAnalysis.analysis.controlFlowRedirects.set(
                 address.toString(),
-                controlFlow,
+                controlFlow
             );
 
             // Determine if control flow is overly complex (potential obfuscation)
             if (controlFlow.complexity > 20) {
-                this.entryPointAnalysis.analysis.suspiciousPatterns.set(
-                    address.toString(),
-                    {
-                        type: 'complex_control_flow',
-                        complexity: controlFlow.complexity,
-                        indicators: ['high_branch_count', 'multiple_indirect_jumps'],
-                    },
-                );
+                this.entryPointAnalysis.analysis.suspiciousPatterns.set(address.toString(), {
+                    type: 'complex_control_flow',
+                    complexity: controlFlow.complexity,
+                    indicators: ['high_branch_count', 'multiple_indirect_jumps'],
+                });
             }
         } catch (error) {
             send({
@@ -6353,10 +6204,7 @@ const RealtimeProtectionDetector = {
             });
 
             // Monitor LoadLibrary calls for new entry points
-            const loadLibraryW = Module.findExportByName(
-                'kernel32.dll',
-                'LoadLibraryW',
-            );
+            const loadLibraryW = Module.findExportByName('kernel32.dll', 'LoadLibraryW');
             if (loadLibraryW) {
                 Interceptor.attach(loadLibraryW, {
                     onLeave: function (retval) {
@@ -6372,7 +6220,7 @@ const RealtimeProtectionDetector = {
                                     function () {
                                         this.analyzeNewModuleEntryPoint(moduleObj);
                                     }.bind(this),
-                                    100,
+                                    100
                                 );
                             }
                         } catch (error) {
@@ -6431,14 +6279,12 @@ const RealtimeProtectionDetector = {
 
     generateEntryPointReport: function () {
         try {
-            const analysisTime =
-        Date.now() - this.entryPointAnalysis.statistics.analysisStartTime;
+            const analysisTime = Date.now() - this.entryPointAnalysis.statistics.analysisStartTime;
 
             const report = {
                 summary: {
                     totalEntryPoints: this.entryPointAnalysis.statistics.totalEntryPoints,
-                    suspiciousEntryPoints:
-            this.entryPointAnalysis.statistics.suspiciousEntryPoints,
+                    suspiciousEntryPoints: this.entryPointAnalysis.statistics.suspiciousEntryPoints,
                     obfuscatedCount: this.entryPointAnalysis.obfuscatedEntries.size,
                     trampolineCount: this.entryPointAnalysis.statistics.trampolineCount,
                     virtualizedCount: this.entryPointAnalysis.virtualizedEntries.size,
@@ -6455,10 +6301,7 @@ const RealtimeProtectionDetector = {
             const protectorCounts = new Map();
             for (const [id, analysis] of this.entryPointAnalysis.entryPoints) {
                 for (const protector of analysis.protectorSignatures) {
-                    protectorCounts.set(
-                        protector,
-                        (protectorCounts.get(protector) || 0) + 1,
-                    );
+                    protectorCounts.set(protector, (protectorCounts.get(protector) || 0) + 1);
                 }
             }
 
@@ -6481,8 +6324,7 @@ const RealtimeProtectionDetector = {
             }
 
             // Collect suspicious patterns
-            for (const [address, pattern] of this.entryPointAnalysis.analysis
-                .suspiciousPatterns) {
+            for (const [address, pattern] of this.entryPointAnalysis.analysis.suspiciousPatterns) {
                 report.suspiciousPatterns.push({
                     address: address,
                     type: pattern.type,
@@ -6530,7 +6372,7 @@ const RealtimeProtectionDetector = {
                 category: 'protector_detection',
                 priority: 'high',
                 message:
-          'Multiple software protectors detected. Consider using protector-specific bypasses.',
+                    'Multiple software protectors detected. Consider using protector-specific bypasses.',
                 protectors: report.detectedProtectors.map((p) => p.name),
             });
         }
@@ -6540,7 +6382,7 @@ const RealtimeProtectionDetector = {
                 category: 'control_flow',
                 priority: 'medium',
                 message:
-          'High number of trampolines detected. Implement trampoline following for complete analysis.',
+                    'High number of trampolines detected. Implement trampoline following for complete analysis.',
                 count: report.trampolines.length,
             });
         }
@@ -6549,22 +6391,18 @@ const RealtimeProtectionDetector = {
             recommendations.push({
                 category: 'virtualization',
                 priority: 'critical',
-                message:
-          'Virtualized entry points detected. Consider VM-specific analysis tools.',
+                message: 'Virtualized entry points detected. Consider VM-specific analysis tools.',
                 count: report.summary.virtualizedCount,
             });
         }
 
-        if (
-            report.suspiciousPatterns.filter((p) => p.severity === 'high').length > 0
-        ) {
+        if (report.suspiciousPatterns.filter((p) => p.severity === 'high').length > 0) {
             recommendations.push({
                 category: 'obfuscation',
                 priority: 'high',
                 message:
-          'High-severity obfuscation patterns detected. Use advanced deobfuscation techniques.',
-                patterns: report.suspiciousPatterns.filter((p) => p.severity === 'high')
-                    .length,
+                    'High-severity obfuscation patterns detected. Use advanced deobfuscation techniques.',
+                patterns: report.suspiciousPatterns.filter((p) => p.severity === 'high').length,
             });
         }
 
@@ -6573,7 +6411,7 @@ const RealtimeProtectionDetector = {
                 category: 'analysis_complete',
                 priority: 'info',
                 message:
-          'Entry point analysis completed successfully with no major concerns detected.',
+                    'Entry point analysis completed successfully with no major concerns detected.',
             });
         }
 
@@ -6626,7 +6464,7 @@ const RealtimeProtectionDetector = {
     },
 
     initializeMemoryPatterns: function () {
-    // Shellcode signatures and patterns
+        // Shellcode signatures and patterns
         this.shellcodeSignatures = {
             // Common x86 shellcode patterns
             x86_patterns: [
@@ -6712,10 +6550,7 @@ const RealtimeProtectionDetector = {
     setupMemoryMonitoring: function () {
         try {
             // Monitor VirtualAlloc
-            const virtualAlloc = Module.findExportByName(
-                'kernel32.dll',
-                'VirtualAlloc',
-            );
+            const virtualAlloc = Module.findExportByName('kernel32.dll', 'VirtualAlloc');
             if (virtualAlloc) {
                 Interceptor.attach(virtualAlloc, {
                     onEnter: function (args) {
@@ -6740,10 +6575,7 @@ const RealtimeProtectionDetector = {
             }
 
             // Monitor VirtualProtect
-            const virtualProtect = Module.findExportByName(
-                'kernel32.dll',
-                'VirtualProtect',
-            );
+            const virtualProtect = Module.findExportByName('kernel32.dll', 'VirtualProtect');
             if (virtualProtect) {
                 Interceptor.attach(virtualProtect, {
                     onEnter: function (args) {
@@ -6791,8 +6623,8 @@ const RealtimeProtectionDetector = {
 
             // Monitor memcpy for potential buffer overflows
             const memcpy =
-        Module.findExportByName('msvcrt.dll', 'memcpy') ||
-        Module.findExportByName('ntdll.dll', 'memcpy');
+                Module.findExportByName('msvcrt.dll', 'memcpy') ||
+                Module.findExportByName('ntdll.dll', 'memcpy');
             if (memcpy) {
                 Interceptor.attach(memcpy, {
                     onEnter: function (args) {
@@ -6801,21 +6633,13 @@ const RealtimeProtectionDetector = {
                         this.size = args[2].toInt32();
 
                         // Check for potential buffer overflow patterns
-                        this.analyzeMemoryOperation(
-                            this.dest,
-                            this.src,
-                            this.size,
-                            'memcpy',
-                        );
+                        this.analyzeMemoryOperation(this.dest, this.src, this.size, 'memcpy');
                     }.bind(this),
                 });
             }
 
             // Monitor CreateThread for potential shellcode execution
-            const createThread = Module.findExportByName(
-                'kernel32.dll',
-                'CreateThread',
-            );
+            const createThread = Module.findExportByName('kernel32.dll', 'CreateThread');
             if (createThread) {
                 Interceptor.attach(createThread, {
                     onEnter: function (args) {
@@ -6861,10 +6685,7 @@ const RealtimeProtectionDetector = {
             if (this.isSuspiciousAllocation(info)) {
                 allocation.suspicious = true;
                 allocation.reasons = this.getSuspiciousReasons(info);
-                this.memoryPatterns.suspiciousRegions.set(
-                    address.toString(),
-                    allocation,
-                );
+                this.memoryPatterns.suspiciousRegions.set(address.toString(), allocation);
                 this.memoryPatterns.statistics.suspiciousAllocations++;
 
                 send({
@@ -6887,7 +6708,7 @@ const RealtimeProtectionDetector = {
             // Maintain history size limit
             if (
                 this.memoryPatterns.analysis.allocationHistory.length >
-        this.memoryPatterns.config.maxHistorySize
+                this.memoryPatterns.config.maxHistorySize
             ) {
                 this.memoryPatterns.analysis.allocationHistory.shift();
             }
@@ -6907,8 +6728,7 @@ const RealtimeProtectionDetector = {
         }
 
         // Check protection flags
-        for (const pattern of this.memoryAllocationPatterns
-            .suspicious_permissions) {
+        for (const pattern of this.memoryAllocationPatterns.suspicious_permissions) {
             if ((info.protect & pattern.flags) === pattern.flags) {
                 suspicious.push(pattern.desc);
             }
@@ -7029,7 +6849,7 @@ const RealtimeProtectionDetector = {
     },
 
     detectHeapSpray: function (info) {
-    // Simple heap spray detection based on allocation patterns
+        // Simple heap spray detection based on allocation patterns
         const recentAllocations = this.memoryPatterns.analysis.allocationHistory
             .filter((alloc) => Date.now() - alloc.timestamp < 5000) // Last 5 seconds
             .filter((alloc) => alloc.size === info.size); // Same size
@@ -7236,8 +7056,8 @@ const RealtimeProtectionDetector = {
         try {
             // Check if thread start address is in suspicious memory region
             const allocation =
-        this.memoryPatterns.allocations.get(startAddress.toString()) ||
-        this.memoryPatterns.suspiciousRegions.get(startAddress.toString());
+                this.memoryPatterns.allocations.get(startAddress.toString()) ||
+                this.memoryPatterns.suspiciousRegions.get(startAddress.toString());
 
             if (allocation && allocation.suspicious) {
                 send({
@@ -7258,7 +7078,7 @@ const RealtimeProtectionDetector = {
     },
 
     startMemoryAnalysis: function () {
-    // Periodic memory analysis
+        // Periodic memory analysis
         setInterval(() => {
             this.performMemoryAnalysis();
         }, 5000); // Every 5 seconds
@@ -7278,10 +7098,7 @@ const RealtimeProtectionDetector = {
             this.detectMemoryLeaks();
 
             // Generate periodic report
-            if (
-                Date.now() - this.memoryPatterns.statistics.analysisStartTime >
-        60000
-            ) {
+            if (Date.now() - this.memoryPatterns.statistics.analysisStartTime > 60000) {
                 this.generateMemoryAnalysisReport();
             }
         } catch (error) {
@@ -7291,10 +7108,9 @@ const RealtimeProtectionDetector = {
 
     analyzeMemoryUsagePatterns: function () {
         const now = Date.now();
-        const recentAllocations =
-      this.memoryPatterns.analysis.allocationHistory.filter(
-          (alloc) => now - alloc.timestamp < 30000,
-      ); // Last 30 seconds
+        const recentAllocations = this.memoryPatterns.analysis.allocationHistory.filter(
+            (alloc) => now - alloc.timestamp < 30000
+        ); // Last 30 seconds
 
         if (recentAllocations.length > 500) {
             send({
@@ -7309,7 +7125,7 @@ const RealtimeProtectionDetector = {
     },
 
     detectMemoryLeaks: function () {
-    // Simple memory leak detection based on allocation patterns
+        // Simple memory leak detection based on allocation patterns
         const allocationsPerFunction = new Map();
 
         for (const alloc of this.memoryPatterns.analysis.allocationHistory) {
@@ -7337,38 +7153,31 @@ const RealtimeProtectionDetector = {
 
         // Clean old allocation history
         this.memoryPatterns.analysis.allocationHistory =
-      this.memoryPatterns.analysis.allocationHistory.filter(
-          (alloc) => alloc.timestamp > cutoff,
-      );
+            this.memoryPatterns.analysis.allocationHistory.filter(
+                (alloc) => alloc.timestamp > cutoff
+            );
 
         // Clean old protection changes
         this.memoryPatterns.analysis.protectionChanges =
-      this.memoryPatterns.analysis.protectionChanges.filter(
-          (change) => change.timestamp > cutoff,
-      );
+            this.memoryPatterns.analysis.protectionChanges.filter(
+                (change) => change.timestamp > cutoff
+            );
     },
 
     generateMemoryAnalysisReport: function () {
         try {
-            const analysisTime =
-        Date.now() - this.memoryPatterns.statistics.analysisStartTime;
+            const analysisTime = Date.now() - this.memoryPatterns.statistics.analysisStartTime;
 
             const report = {
                 summary: {
                     totalAllocations: this.memoryPatterns.statistics.totalAllocations,
-                    suspiciousAllocations:
-            this.memoryPatterns.statistics.suspiciousAllocations,
+                    suspiciousAllocations: this.memoryPatterns.statistics.suspiciousAllocations,
                     protectionChanges: this.memoryPatterns.statistics.protectionChanges,
-                    shellcodeDetections:
-            this.memoryPatterns.statistics.shellcodeDetections,
+                    shellcodeDetections: this.memoryPatterns.statistics.shellcodeDetections,
                     analysisTimeMs: analysisTime,
                 },
-                suspiciousRegions: Array.from(
-                    this.memoryPatterns.suspiciousRegions.values(),
-                ),
-                shellcodeDetections: Array.from(
-                    this.memoryPatterns.shellcodePatterns.values(),
-                ),
+                suspiciousRegions: Array.from(this.memoryPatterns.suspiciousRegions.values()),
+                shellcodeDetections: Array.from(this.memoryPatterns.shellcodePatterns.values()),
                 memoryLeaks: Array.from(this.memoryPatterns.analysis.memoryLeaks),
                 recommendations: this.generateMemoryRecommendations(),
             };
@@ -7399,7 +7208,7 @@ const RealtimeProtectionDetector = {
                 category: 'memory_allocation',
                 priority: 'high',
                 message:
-          'Suspicious memory allocations detected. Review allocation patterns and permissions.',
+                    'Suspicious memory allocations detected. Review allocation patterns and permissions.',
                 count: this.memoryPatterns.statistics.suspiciousAllocations,
             });
         }
@@ -7409,7 +7218,7 @@ const RealtimeProtectionDetector = {
                 category: 'shellcode_detection',
                 priority: 'critical',
                 message:
-          'Potential shellcode patterns detected in memory. Investigate execution patterns.',
+                    'Potential shellcode patterns detected in memory. Investigate execution patterns.',
                 count: this.memoryPatterns.statistics.shellcodeDetections,
             });
         }
@@ -7419,7 +7228,7 @@ const RealtimeProtectionDetector = {
                 category: 'memory_management',
                 priority: 'medium',
                 message:
-          'Potential memory leaks detected. Monitor allocation/deallocation patterns.',
+                    'Potential memory leaks detected. Monitor allocation/deallocation patterns.',
                 functions: Array.from(this.memoryPatterns.analysis.memoryLeaks),
             });
         }
@@ -7429,7 +7238,7 @@ const RealtimeProtectionDetector = {
                 category: 'memory_protection',
                 priority: 'high',
                 message:
-          'High number of memory protection changes detected. Review for exploitation attempts.',
+                    'High number of memory protection changes detected. Review for exploitation attempts.',
                 count: this.memoryPatterns.statistics.protectionChanges,
             });
         }
@@ -7438,8 +7247,7 @@ const RealtimeProtectionDetector = {
             recommendations.push({
                 category: 'analysis_complete',
                 priority: 'info',
-                message:
-          'Memory pattern analysis completed with no significant threats detected.',
+                message: 'Memory pattern analysis completed with no significant threats detected.',
             });
         }
 
@@ -7481,7 +7289,7 @@ const RealtimeProtectionDetector = {
     },
 
     initializeBehavioralPatterns: function () {
-    // API call sequence patterns indicating protection schemes
+        // API call sequence patterns indicating protection schemes
         this.behavioralPatterns.protectionSequences = new Map([
             [
                 'vmprotect_sequence',
@@ -7538,24 +7346,12 @@ const RealtimeProtectionDetector = {
         // Anti-debugging technique patterns
         this.behavioralPatterns.antiDebugPatterns = new Map([
             ['debugger_check', ['IsDebuggerPresent', 'CheckRemoteDebuggerPresent']],
-            [
-                'timing_check',
-                ['GetTickCount', 'QueryPerformanceCounter', 'timeGetTime'],
-            ],
-            [
-                'exception_check',
-                ['SetUnhandledExceptionFilter', 'AddVectoredExceptionHandler'],
-            ],
+            ['timing_check', ['GetTickCount', 'QueryPerformanceCounter', 'timeGetTime']],
+            ['exception_check', ['SetUnhandledExceptionFilter', 'AddVectoredExceptionHandler']],
             ['memory_check', ['VirtualQuery', 'VirtualProtect', 'ReadProcessMemory']],
-            [
-                'process_check',
-                ['GetCurrentProcessId', 'OpenProcess', 'TerminateProcess'],
-            ],
+            ['process_check', ['GetCurrentProcessId', 'OpenProcess', 'TerminateProcess']],
             ['thread_check', ['GetCurrentThreadId', 'CreateThread', 'SuspendThread']],
-            [
-                'module_check',
-                ['GetModuleHandle', 'GetModuleFileName', 'EnumProcessModules'],
-            ],
+            ['module_check', ['GetModuleHandle', 'GetModuleFileName', 'EnumProcessModules']],
             ['registry_check', ['RegOpenKeyEx', 'RegQueryValueEx', 'RegSetValueEx']],
         ]);
 
@@ -7609,15 +7405,12 @@ const RealtimeProtectionDetector = {
                 'file_manipulation',
                 ['CreateFile', 'WriteFile', 'DeleteFile', 'MoveFile', 'CopyFile'],
             ],
-            [
-                'network_activity',
-                ['WSAStartup', 'socket', 'connect', 'send', 'recv', 'WSACleanup'],
-            ],
+            ['network_activity', ['WSAStartup', 'socket', 'connect', 'send', 'recv', 'WSACleanup']],
         ]);
     },
 
     setupBehavioralMonitoring: function () {
-    // Monitor critical Windows APIs for behavioral analysis
+        // Monitor critical Windows APIs for behavioral analysis
         const criticalApis = [
             'kernel32.dll!IsDebuggerPresent',
             'kernel32.dll!CheckRemoteDebuggerPresent',
@@ -7682,8 +7475,7 @@ const RealtimeProtectionDetector = {
                 this.behavioralPatterns.apiCallSequences.set(sequenceKey, []);
             }
 
-            const sequence =
-        this.behavioralPatterns.apiCallSequences.get(sequenceKey);
+            const sequence = this.behavioralPatterns.apiCallSequences.get(sequenceKey);
             sequence.push({
                 api: apiName,
                 phase: phase,
@@ -7706,9 +7498,7 @@ const RealtimeProtectionDetector = {
     },
 
     analyzeBehavioralSequence: function (sequence, threadKey) {
-        if (
-            sequence.length < this.behavioralPatterns.configuration.sequenceThreshold
-        ) {
+        if (sequence.length < this.behavioralPatterns.configuration.sequenceThreshold) {
             return;
         }
 
@@ -7716,8 +7506,7 @@ const RealtimeProtectionDetector = {
         const recentCalls = sequence.slice(-10).map((call) => call.api);
 
         // Check against known protection sequences
-        for (const [protectionName, pattern] of this.behavioralPatterns
-            .protectionSequences) {
+        for (const [protectionName, pattern] of this.behavioralPatterns.protectionSequences) {
             if (this.matchesPattern(recentCalls, pattern)) {
                 this.behavioralPatterns.behaviorStatistics.suspiciousSequences++;
 
@@ -7735,8 +7524,7 @@ const RealtimeProtectionDetector = {
         }
 
         // Check for suspicious API combinations
-        for (const [comboName, apis] of this.behavioralPatterns
-            .suspiciousCallCombos) {
+        for (const [comboName, apis] of this.behavioralPatterns.suspiciousCallCombos) {
             const matchCount = apis.filter((api) => recentCalls.includes(api)).length;
             if (matchCount >= 3) {
                 this.behavioralPatterns.behaviorStatistics.abnormalBehaviors++;
@@ -7756,7 +7544,7 @@ const RealtimeProtectionDetector = {
     },
 
     matchesPattern: function (sequence, pattern) {
-    // Check if the sequence contains the pattern (not necessarily consecutive)
+        // Check if the sequence contains the pattern (not necessarily consecutive)
         const patternMatches = pattern.filter((api) => sequence.includes(api));
         return patternMatches.length >= Math.ceil(pattern.length * 0.6); // 60% match threshold
     },
@@ -7784,12 +7572,11 @@ const RealtimeProtectionDetector = {
             }
 
             // Check for very regular timing (possible automated/protection behavior)
-            const avgInterval =
-        intervals.reduce((a, b) => a + b, 0) / intervals.length;
+            const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
             const variance =
-        intervals.reduce((sum, interval) => {
-            return sum + Math.pow(interval - avgInterval, 2);
-        }, 0) / intervals.length;
+                intervals.reduce((sum, interval) => {
+                    return sum + Math.pow(interval - avgInterval, 2);
+                }, 0) / intervals.length;
 
             // Low variance indicates very regular timing
             if (variance < 10 && avgInterval > 100 && avgInterval < 5000) {
@@ -7808,9 +7595,8 @@ const RealtimeProtectionDetector = {
     },
 
     detectAntiDebugBehavior: function (apiName, phase, threadId) {
-    // Check for anti-debugging patterns
-        for (const [patternName, apis] of this.behavioralPatterns
-            .antiDebugPatterns) {
+        // Check for anti-debugging patterns
+        for (const [patternName, apis] of this.behavioralPatterns.antiDebugPatterns) {
             if (apis.includes(apiName)) {
                 this.behavioralPatterns.behaviorStatistics.antiDebugTriggers++;
 
@@ -7840,17 +7626,14 @@ const RealtimeProtectionDetector = {
                         type: 'warning',
                         target: 'behavioral_pattern_detector',
                         action: 'debugger_presence_check',
-                        recommendation:
-                'Consider patching IsDebuggerPresent return value',
+                        recommendation: 'Consider patching IsDebuggerPresent return value',
                         timestamp: Date.now(),
                     });
                 }
                 break;
 
             case 'timing_check':
-                this.behavioralPatterns.evasionTechniques.add(
-                    'timing_based_detection',
-                );
+                this.behavioralPatterns.evasionTechniques.add('timing_based_detection');
                 send({
                     type: 'info',
                     target: 'behavioral_pattern_detector',
@@ -7861,9 +7644,7 @@ const RealtimeProtectionDetector = {
                 break;
 
             case 'memory_check':
-                this.behavioralPatterns.evasionTechniques.add(
-                    'memory_analysis_detection',
-                );
+                this.behavioralPatterns.evasionTechniques.add('memory_analysis_detection');
                 break;
             }
         } catch (error) {
@@ -7872,11 +7653,8 @@ const RealtimeProtectionDetector = {
     },
 
     setupProcessMonitoring: function () {
-    // Monitor process creation for behavioral analysis
-        const createProcessW = Module.findExportByName(
-            'kernel32.dll',
-            'CreateProcessW',
-        );
+        // Monitor process creation for behavioral analysis
+        const createProcessW = Module.findExportByName('kernel32.dll', 'CreateProcessW');
         if (createProcessW) {
             try {
                 Interceptor.attach(createProcessW, {
@@ -7898,11 +7676,8 @@ const RealtimeProtectionDetector = {
     },
 
     setupThreadMonitoring: function () {
-    // Monitor thread creation for behavioral analysis
-        const createThread = Module.findExportByName(
-            'kernel32.dll',
-            'CreateThread',
-        );
+        // Monitor thread creation for behavioral analysis
+        const createThread = Module.findExportByName('kernel32.dll', 'CreateThread');
         if (createThread) {
             try {
                 Interceptor.attach(createThread, {
@@ -7918,11 +7693,8 @@ const RealtimeProtectionDetector = {
     },
 
     setupMemoryMonitoring: function () {
-    // Monitor memory operations for behavioral analysis
-        const virtualProtect = Module.findExportByName(
-            'kernel32.dll',
-            'VirtualProtect',
-        );
+        // Monitor memory operations for behavioral analysis
+        const virtualProtect = Module.findExportByName('kernel32.dll', 'VirtualProtect');
         if (virtualProtect) {
             try {
                 Interceptor.attach(virtualProtect, {
@@ -7981,10 +7753,7 @@ const RealtimeProtectionDetector = {
             const region = Process.findRangeByAddress(startAddress);
             if (region) {
                 // Check if thread starts in dynamically allocated memory
-                if (
-                    region.protection.includes('w') &&
-          region.protection.includes('x')
-                ) {
+                if (region.protection.includes('w') && region.protection.includes('x')) {
                     send({
                         type: 'warning',
                         target: 'behavioral_pattern_detector',
@@ -8018,8 +7787,7 @@ const RealtimeProtectionDetector = {
                 0x80: 'PAGE_EXECUTE_WRITECOPY',
             };
 
-            const protectionName =
-        protectionFlags[newProtect] || `UNKNOWN_${newProtect}`;
+            const protectionName = protectionFlags[newProtect] || `UNKNOWN_${newProtect}`;
 
             // Check for suspicious protection changes
             if (newProtect === 0x40) {
@@ -8040,7 +7808,7 @@ const RealtimeProtectionDetector = {
     },
 
     startBehavioralAnalysis: function () {
-    // Periodic behavioral pattern analysis
+        // Periodic behavioral pattern analysis
         setInterval(() => {
             this.performBehavioralAnalysis();
         }, 15000); // Every 15 seconds
@@ -8060,9 +7828,8 @@ const RealtimeProtectionDetector = {
 
             // Generate periodic behavioral report
             if (
-                Date.now() -
-          this.behavioralPatterns.behaviorStatistics.analysisStartTime >
-        120000
+                Date.now() - this.behavioralPatterns.behaviorStatistics.analysisStartTime >
+                120000
             ) {
                 this.generateBehavioralAnalysisReport();
             }
@@ -8072,15 +7839,12 @@ const RealtimeProtectionDetector = {
     },
 
     analyzeBehavioralTrends: function () {
-    // Analyze trends in API call patterns
+        // Analyze trends in API call patterns
         const recentWindow = Date.now() - 30000; // Last 30 seconds
         let recentSuspiciousActivity = 0;
 
-        for (const [threadKey, sequence] of this.behavioralPatterns
-            .apiCallSequences) {
-            const recentCalls = sequence.filter(
-                (call) => call.timestamp > recentWindow,
-            );
+        for (const [threadKey, sequence] of this.behavioralPatterns.apiCallSequences) {
+            const recentCalls = sequence.filter((call) => call.timestamp > recentWindow);
             if (recentCalls.length > 50) {
                 // High API call activity
                 recentSuspiciousActivity++;
@@ -8100,14 +7864,13 @@ const RealtimeProtectionDetector = {
     },
 
     detectAnomalousBehavior: function () {
-    // Detect unusual behavioral patterns
+        // Detect unusual behavioral patterns
         const statistics = this.behavioralPatterns.behaviorStatistics;
         const analysisTime = Date.now() - statistics.analysisStartTime;
 
         // Calculate rates
         const apiCallRate = statistics.totalApiCalls / (analysisTime / 1000);
-        const suspiciousRate =
-      statistics.suspiciousSequences / (analysisTime / 1000);
+        const suspiciousRate = statistics.suspiciousSequences / (analysisTime / 1000);
 
         // Check for anomalous rates
         if (apiCallRate > 100) {
@@ -8136,7 +7899,7 @@ const RealtimeProtectionDetector = {
     },
 
     updateBehavioralBaseline: function () {
-    // Update baseline behavioral patterns for comparison
+        // Update baseline behavioral patterns for comparison
         try {
             const now = Date.now();
             const statistics = this.behavioralPatterns.behaviorStatistics;
@@ -8155,7 +7918,7 @@ const RealtimeProtectionDetector = {
             if (analysisTime > 0) {
                 const currentApiRate = statistics.totalApiCalls / (analysisTime / 1000);
                 const currentSuspiciousRate =
-          statistics.suspiciousSequences / (analysisTime / 1000);
+                    statistics.suspiciousSequences / (analysisTime / 1000);
 
                 this.behavioralPatterns.baseline.measurements.push({
                     timestamp: now,
@@ -8177,18 +7940,12 @@ const RealtimeProtectionDetector = {
         const cutoff = Date.now() - 300000; // 5 minutes ago
 
         // Clean old API call sequences
-        for (const [threadKey, sequence] of this.behavioralPatterns
-            .apiCallSequences) {
-            const filteredSequence = sequence.filter(
-                (call) => call.timestamp > cutoff,
-            );
+        for (const [threadKey, sequence] of this.behavioralPatterns.apiCallSequences) {
+            const filteredSequence = sequence.filter((call) => call.timestamp > cutoff);
             if (filteredSequence.length === 0) {
                 this.behavioralPatterns.apiCallSequences.delete(threadKey);
             } else {
-                this.behavioralPatterns.apiCallSequences.set(
-                    threadKey,
-                    filteredSequence,
-                );
+                this.behavioralPatterns.apiCallSequences.set(threadKey, filteredSequence);
             }
         }
 
@@ -8212,8 +7969,7 @@ const RealtimeProtectionDetector = {
     generateBehavioralAnalysisReport: function () {
         try {
             const analysisTime =
-        Date.now() -
-        this.behavioralPatterns.behaviorStatistics.analysisStartTime;
+                Date.now() - this.behavioralPatterns.behaviorStatistics.analysisStartTime;
             const statistics = this.behavioralPatterns.behaviorStatistics;
 
             const report = {
@@ -8225,9 +7981,7 @@ const RealtimeProtectionDetector = {
                     abnormalBehaviors: statistics.abnormalBehaviors,
                     analysisTimeMs: analysisTime,
                     activeThreads: this.behavioralPatterns.apiCallSequences.size,
-                    detectedEvasions: Array.from(
-                        this.behavioralPatterns.evasionTechniques,
-                    ),
+                    detectedEvasions: Array.from(this.behavioralPatterns.evasionTechniques),
                 },
                 patterns: {
                     protectionSequencesDetected: this.getDetectedProtectionSequences(),
@@ -8263,8 +8017,7 @@ const RealtimeProtectionDetector = {
 
     getAntiDebugPatterns: function () {
         const patterns = [];
-        for (const [patternName, apis] of this.behavioralPatterns
-            .antiDebugPatterns) {
+        for (const [patternName, apis] of this.behavioralPatterns.antiDebugPatterns) {
             // Check if any APIs from this pattern were called
             patterns.push({
                 name: patternName,
@@ -8277,8 +8030,7 @@ const RealtimeProtectionDetector = {
 
     getSuspiciousApiCombinations: function () {
         const combinations = [];
-        for (const [comboName, apis] of this.behavioralPatterns
-            .suspiciousCallCombos) {
+        for (const [comboName, apis] of this.behavioralPatterns.suspiciousCallCombos) {
             combinations.push({
                 name: comboName,
                 apis: apis,
@@ -8297,7 +8049,7 @@ const RealtimeProtectionDetector = {
                 category: 'behavioral_analysis',
                 priority: 'high',
                 message:
-          'Suspicious API call sequences detected. Investigate protection mechanisms.',
+                    'Suspicious API call sequences detected. Investigate protection mechanisms.',
                 count: statistics.suspiciousSequences,
             });
         }
@@ -8307,7 +8059,7 @@ const RealtimeProtectionDetector = {
                 category: 'anti_debugging',
                 priority: 'high',
                 message:
-          'Anti-debugging behaviors detected. Consider stealth debugging techniques.',
+                    'Anti-debugging behaviors detected. Consider stealth debugging techniques.',
                 count: statistics.antiDebugTriggers,
             });
         }
@@ -8317,7 +8069,7 @@ const RealtimeProtectionDetector = {
                 category: 'evasion_detection',
                 priority: 'critical',
                 message:
-          'Evasion techniques detected. Review process monitoring and analysis methods.',
+                    'Evasion techniques detected. Review process monitoring and analysis methods.',
                 count: statistics.evasionAttempts,
             });
         }
@@ -8326,8 +8078,7 @@ const RealtimeProtectionDetector = {
             recommendations.push({
                 category: 'abnormal_behavior',
                 priority: 'medium',
-                message:
-          'Abnormal behavioral patterns detected. Investigate execution flow.',
+                message: 'Abnormal behavioral patterns detected. Investigate execution flow.',
                 count: statistics.abnormalBehaviors,
             });
         }
@@ -8336,8 +8087,7 @@ const RealtimeProtectionDetector = {
             recommendations.push({
                 category: 'evasion_techniques',
                 priority: 'high',
-                message:
-          'Multiple evasion techniques identified in behavioral analysis.',
+                message: 'Multiple evasion techniques identified in behavioral analysis.',
                 techniques: Array.from(this.behavioralPatterns.evasionTechniques),
             });
         }
@@ -8347,7 +8097,7 @@ const RealtimeProtectionDetector = {
                 category: 'behavioral_analysis_complete',
                 priority: 'info',
                 message:
-          'Behavioral pattern analysis completed with no significant threats detected.',
+                    'Behavioral pattern analysis completed with no significant threats detected.',
             });
         }
 
@@ -8391,7 +8141,7 @@ const RealtimeProtectionDetector = {
     },
 
     initializeVersionSignatures: function () {
-    // VMProtect version signatures
+        // VMProtect version signatures
         this.versionDetection.protectorVersions.set(
             'vmprotect',
             new Map([
@@ -8400,8 +8150,8 @@ const RealtimeProtectionDetector = {
                     {
                         signatures: [
                             [
-                                0x56, 0x4d, 0x50, 0x72, 0x6f, 0x74, 0x65, 0x63, 0x74, 0x20,
-                                0x33, 0x2e, 0x38,
+                                0x56, 0x4d, 0x50, 0x72, 0x6f, 0x74, 0x65, 0x63, 0x74, 0x20, 0x33,
+                                0x2e, 0x38,
                             ],
                             [0x2e, 0x76, 0x6d, 0x70, 0x33],
                         ],
@@ -8418,8 +8168,8 @@ const RealtimeProtectionDetector = {
                     {
                         signatures: [
                             [
-                                0x56, 0x4d, 0x50, 0x72, 0x6f, 0x74, 0x65, 0x63, 0x74, 0x20,
-                                0x33, 0x2e, 0x37,
+                                0x56, 0x4d, 0x50, 0x72, 0x6f, 0x74, 0x65, 0x63, 0x74, 0x20, 0x33,
+                                0x2e, 0x37,
                             ],
                         ],
                         strings: ['VMProtect 3.7', 'VMProtect Professional'],
@@ -8435,8 +8185,8 @@ const RealtimeProtectionDetector = {
                     {
                         signatures: [
                             [
-                                0x56, 0x4d, 0x50, 0x72, 0x6f, 0x74, 0x65, 0x63, 0x74, 0x20,
-                                0x33, 0x2e, 0x36,
+                                0x56, 0x4d, 0x50, 0x72, 0x6f, 0x74, 0x65, 0x63, 0x74, 0x20, 0x33,
+                                0x2e, 0x36,
                             ],
                         ],
                         strings: ['VMProtect 3.6'],
@@ -8452,8 +8202,8 @@ const RealtimeProtectionDetector = {
                     {
                         signatures: [
                             [
-                                0x56, 0x4d, 0x50, 0x72, 0x6f, 0x74, 0x65, 0x63, 0x74, 0x20,
-                                0x32, 0x2e,
+                                0x56, 0x4d, 0x50, 0x72, 0x6f, 0x74, 0x65, 0x63, 0x74, 0x20, 0x32,
+                                0x2e,
                             ],
                         ],
                         strings: ['VMProtect 2.', 'VMProtect SDK'],
@@ -8464,7 +8214,7 @@ const RealtimeProtectionDetector = {
                         },
                     },
                 ],
-            ]),
+            ])
         );
 
         // Themida version signatures
@@ -8475,10 +8225,7 @@ const RealtimeProtectionDetector = {
                     '3.1.x',
                     {
                         signatures: [
-                            [
-                                0x54, 0x68, 0x65, 0x6d, 0x69, 0x64, 0x61, 0x20, 0x33, 0x2e,
-                                0x31,
-                            ],
+                            [0x54, 0x68, 0x65, 0x6d, 0x69, 0x64, 0x61, 0x20, 0x33, 0x2e, 0x31],
                         ],
                         strings: ['Themida 3.1', 'Oreans Technologies', 'WinLicense 3.1'],
                         peCharacteristics: {
@@ -8493,10 +8240,7 @@ const RealtimeProtectionDetector = {
                     '3.0.x',
                     {
                         signatures: [
-                            [
-                                0x54, 0x68, 0x65, 0x6d, 0x69, 0x64, 0x61, 0x20, 0x33, 0x2e,
-                                0x30,
-                            ],
+                            [0x54, 0x68, 0x65, 0x6d, 0x69, 0x64, 0x61, 0x20, 0x33, 0x2e, 0x30],
                         ],
                         strings: ['Themida 3.0', 'SecureEngine'],
                         peCharacteristics: {
@@ -8509,9 +8253,7 @@ const RealtimeProtectionDetector = {
                 [
                     '2.x',
                     {
-                        signatures: [
-                            [0x54, 0x68, 0x65, 0x6d, 0x69, 0x64, 0x61, 0x20, 0x32, 0x2e],
-                        ],
+                        signatures: [[0x54, 0x68, 0x65, 0x6d, 0x69, 0x64, 0x61, 0x20, 0x32, 0x2e]],
                         strings: ['Themida 2.', 'Themida SDK'],
                         peCharacteristics: {
                             sectionNames: ['.themida'],
@@ -8520,7 +8262,7 @@ const RealtimeProtectionDetector = {
                         },
                     },
                 ],
-            ]),
+            ])
         );
 
         // Denuvo version signatures
@@ -8556,7 +8298,7 @@ const RealtimeProtectionDetector = {
                         },
                     },
                 ],
-            ]),
+            ])
         );
 
         // Compiler version signatures
@@ -8565,10 +8307,7 @@ const RealtimeProtectionDetector = {
                 'msvc_2022',
                 {
                     signatures: [[0x4d, 0x53, 0x56, 0x43, 0x20, 0x32, 0x30, 0x32, 0x32]],
-                    strings: [
-                        'Microsoft (R) C/C++ Optimizing Compiler Version 19.3',
-                        'MSVC 2022',
-                    ],
+                    strings: ['Microsoft (R) C/C++ Optimizing Compiler Version 19.3', 'MSVC 2022'],
                     richHeader: true,
                     version: '14.3x',
                 },
@@ -8577,10 +8316,7 @@ const RealtimeProtectionDetector = {
                 'msvc_2019',
                 {
                     signatures: [[0x4d, 0x53, 0x56, 0x43, 0x20, 0x32, 0x30, 0x31, 0x39]],
-                    strings: [
-                        'Microsoft (R) C/C++ Optimizing Compiler Version 19.2',
-                        'MSVC 2019',
-                    ],
+                    strings: ['Microsoft (R) C/C++ Optimizing Compiler Version 19.2', 'MSVC 2019'],
                     richHeader: true,
                     version: '14.2x',
                 },
@@ -8589,10 +8325,7 @@ const RealtimeProtectionDetector = {
                 'msvc_2017',
                 {
                     signatures: [[0x4d, 0x53, 0x56, 0x43, 0x20, 0x32, 0x30, 0x31, 0x37]],
-                    strings: [
-                        'Microsoft (R) C/C++ Optimizing Compiler Version 19.1',
-                        'MSVC 2017',
-                    ],
+                    strings: ['Microsoft (R) C/C++ Optimizing Compiler Version 19.1', 'MSVC 2017'],
                     richHeader: true,
                     version: '14.1x',
                 },
@@ -8726,7 +8459,7 @@ const RealtimeProtectionDetector = {
                             if (matches) {
                                 matches.forEach((match) => {
                                     this.versionDetection.versionStrings.add(
-                                        `${moduleName}: ${match}`,
+                                        `${moduleName}: ${match}`
                                     );
                                     this.versionDetection.statistics.stringsFound++;
                                 });
@@ -8746,9 +8479,8 @@ const RealtimeProtectionDetector = {
     },
 
     checkProtectorStrings: function (bytes, moduleName) {
-    // Check each protector's version signatures
-        for (const [protectorName, versions] of this.versionDetection
-            .protectorVersions) {
+        // Check each protector's version signatures
+        for (const [protectorName, versions] of this.versionDetection.protectorVersions) {
             for (const [versionName, versionInfo] of versions) {
                 // Check byte signatures
                 for (const signature of versionInfo.signatures) {
@@ -8835,8 +8567,7 @@ const RealtimeProtectionDetector = {
         try {
             // Analyze timestamp
             const buildDate = new Date(peHeader.timestamp * 1000);
-            this.versionDetection.detectedVersions.buildDate =
-        buildDate.toISOString();
+            this.versionDetection.detectedVersions.buildDate = buildDate.toISOString();
             this.versionDetection.statistics.timestampsAnalyzed++;
 
             // Analyze linker version
@@ -8847,11 +8578,11 @@ const RealtimeProtectionDetector = {
 
             // Determine architecture
             const architecture =
-        peHeader.machine === 0x8664
-            ? 'x64'
-            : peHeader.machine === 0x14c
-                ? 'x86'
-                : 'Unknown';
+                peHeader.machine === 0x8664
+                    ? 'x64'
+                    : peHeader.machine === 0x14c
+                        ? 'x86'
+                        : 'Unknown';
 
             send({
                 type: 'info',
@@ -8997,8 +8728,7 @@ const RealtimeProtectionDetector = {
             const scanData = mainModule.base.readByteArray(8192);
             const bytes = new Uint8Array(scanData);
 
-            for (const [compilerName, compilerInfo] of this.versionDetection
-                .compilerSignatures) {
+            for (const [compilerName, compilerInfo] of this.versionDetection.compilerSignatures) {
                 for (const signature of compilerInfo.signatures) {
                     if (this.findBytePattern(bytes, signature).length > 0) {
                         this.versionDetection.detectedVersions.compiler = {
@@ -9090,7 +8820,7 @@ const RealtimeProtectionDetector = {
     },
 
     identifyCompilerFromRichHeader: function (entries) {
-    // Map product IDs to compiler versions (simplified)
+        // Map product IDs to compiler versions (simplified)
         const productMap = {
             0x00db: 'MSVC 2015 Update 3',
             0x00dd: 'MSVC 2017 15.0',
@@ -9145,23 +8875,15 @@ const RealtimeProtectionDetector = {
                 const vmpSections = sections.filter((s) => s.name.startsWith('.vmp'));
                 if (vmpSections.length > 0) {
                     const vmpVersion = vmpSections.length >= 3 ? '3.x' : '2.x';
-                    this.updateProtectorDetection(
-                        'vmprotect',
-                        vmpVersion,
-                        'section_analysis',
-                    );
+                    this.updateProtectorDetection('vmprotect', vmpVersion, 'section_analysis');
                 }
 
                 // Themida detection
                 const themidaSections = sections.filter(
-                    (s) => s.name.includes('themida') || s.name.includes('winlicense'),
+                    (s) => s.name.includes('themida') || s.name.includes('winlicense')
                 );
                 if (themidaSections.length > 0) {
-                    this.updateProtectorDetection(
-                        'themida',
-                        'Unknown',
-                        'section_analysis',
-                    );
+                    this.updateProtectorDetection('themida', 'Unknown', 'section_analysis');
                 }
 
                 // Check import table modifications
@@ -9175,7 +8897,7 @@ const RealtimeProtectionDetector = {
     updateProtectorDetection: function (protectorName, version, method) {
         if (
             !this.versionDetection.detectedVersions.protector ||
-      this.versionDetection.detectedVersions.protector.confidence === 'low'
+            this.versionDetection.detectedVersions.protector.confidence === 'low'
         ) {
             this.versionDetection.detectedVersions.protector = {
                 name: protectorName,
@@ -9228,9 +8950,7 @@ const RealtimeProtectionDetector = {
                 'GetTickCount',
             ];
 
-            const foundSuspicious = imports.filter((imp) =>
-                suspiciousImports.includes(imp.name),
-            );
+            const foundSuspicious = imports.filter((imp) => suspiciousImports.includes(imp.name));
 
             if (foundSuspicious.length >= 2) {
                 send({
@@ -9269,16 +8989,14 @@ const RealtimeProtectionDetector = {
 
     generateVersionAnalysisReport: function () {
         try {
-            const analysisTime =
-        Date.now() - this.versionDetection.statistics.analysisStartTime;
+            const analysisTime = Date.now() - this.versionDetection.statistics.analysisStartTime;
 
             const report = {
                 summary: {
                     versionsDetected: this.versionDetection.statistics.versionsDetected,
                     stringsFound: this.versionDetection.statistics.stringsFound,
                     signaturesMatched: this.versionDetection.statistics.signaturesMatched,
-                    timestampsAnalyzed:
-            this.versionDetection.statistics.timestampsAnalyzed,
+                    timestampsAnalyzed: this.versionDetection.statistics.timestampsAnalyzed,
                     analysisTimeMs: analysisTime,
                 },
                 detectedVersions: this.versionDetection.detectedVersions,
@@ -9320,7 +9038,7 @@ const RealtimeProtectionDetector = {
             // Version-specific recommendations
             if (
                 detected.protector.name === 'vmprotect' &&
-        detected.protector.version.startsWith('2.')
+                detected.protector.version.startsWith('2.')
             ) {
                 recommendations.push({
                     category: 'vulnerability',
@@ -9332,13 +9050,12 @@ const RealtimeProtectionDetector = {
 
             if (
                 detected.protector.name === 'themida' &&
-        detected.protector.version.startsWith('2.')
+                detected.protector.version.startsWith('2.')
             ) {
                 recommendations.push({
                     category: 'vulnerability',
                     priority: 'medium',
-                    message:
-            'Themida 2.x may be vulnerable to certain unpacking techniques',
+                    message: 'Themida 2.x may be vulnerable to certain unpacking techniques',
                     action: 'Try memory dumping at OEP',
                 });
             }
@@ -9356,8 +9073,7 @@ const RealtimeProtectionDetector = {
                 recommendations.push({
                     category: 'metadata',
                     priority: 'low',
-                    message:
-            'Rich header present - contains build environment information',
+                    message: 'Rich header present - contains build environment information',
                     action: 'Analyze Rich header for additional metadata',
                 });
             }
@@ -9390,8 +9106,7 @@ const RealtimeProtectionDetector = {
             recommendations.push({
                 category: 'version_analysis_complete',
                 priority: 'info',
-                message:
-          'Version analysis completed. Limited version information detected.',
+                message: 'Version analysis completed. Limited version information detected.',
                 action: 'Consider manual analysis for more details',
             });
         }
@@ -9510,7 +9225,7 @@ const RealtimeProtectionDetector = {
     },
 
     initializeNeuralNetwork: function () {
-    // Create a multi-layer perceptron for protection classification
+        // Create a multi-layer perceptron for protection classification
         const inputSize = 256; // Feature vector size
         const hiddenLayers = [128, 64, 32]; // Hidden layer sizes
         const outputSize = 16; // Number of protection types
@@ -9555,10 +9270,7 @@ const RealtimeProtectionDetector = {
                 weightMatrix.push(weights);
             }
 
-            this.mlEngine.neuralNetwork.weights.set(
-                `layer_${i}_${i + 1}`,
-                weightMatrix,
-            );
+            this.mlEngine.neuralNetwork.weights.set(`layer_${i}_${i + 1}`, weightMatrix);
 
             // Initialize biases
             const biases = [];
@@ -9612,7 +9324,7 @@ const RealtimeProtectionDetector = {
     },
 
     initializePatternRecognitionModels: function () {
-    // Initialize Support Vector Machine (SVM) model
+        // Initialize Support Vector Machine (SVM) model
         this.mlEngine.patternRecognition.models.set('svm', {
             kernel: 'rbf', // Radial Basis Function kernel
             gamma: 0.001,
@@ -9651,9 +9363,7 @@ const RealtimeProtectionDetector = {
                 predictions.forEach((pred) => {
                     counts[pred] = (counts[pred] || 0) + 1;
                 });
-                return Object.keys(counts).reduce((a, b) =>
-                    counts[a] > counts[b] ? a : b,
-                );
+                return Object.keys(counts).reduce((a, b) => (counts[a] > counts[b] ? a : b));
             },
         });
 
@@ -9695,7 +9405,7 @@ const RealtimeProtectionDetector = {
                 });
 
                 return Object.keys(labelCounts).reduce((a, b) =>
-                    labelCounts[a] > labelCounts[b] ? a : b,
+                    labelCounts[a] > labelCounts[b] ? a : b
                 );
             },
             calculateDistance: function (a, b) {
@@ -9709,7 +9419,7 @@ const RealtimeProtectionDetector = {
     },
 
     initializeAnomalyDetection: function () {
-    // Initialize Isolation Forest for anomaly detection
+        // Initialize Isolation Forest for anomaly detection
         this.mlEngine.anomalyDetection.statisticalModels.set('isolationForest', {
             trees: [],
             numTrees: 100,
@@ -9739,11 +9449,8 @@ const RealtimeProtectionDetector = {
                 };
             },
             anomalyScore: function (sample) {
-                const pathLengths = this.trees.map((tree) =>
-                    this.pathLength(sample, tree),
-                );
-                const avgPathLength =
-          pathLengths.reduce((a, b) => a + b, 0) / pathLengths.length;
+                const pathLengths = this.trees.map((tree) => this.pathLength(sample, tree));
+                const avgPathLength = pathLengths.reduce((a, b) => a + b, 0) / pathLengths.length;
                 const c = this.averagePathLength(this.sampleSize);
                 return Math.pow(2, -avgPathLength / c);
             },
@@ -9778,8 +9485,8 @@ const RealtimeProtectionDetector = {
                 let lofSum = 0;
                 for (const neighbor of neighbors) {
                     const neighborLRD =
-            this.localReachabilityDensity.get(neighbor) ||
-            this.calculateLRD(neighbor, this.getKNeighbors(neighbor));
+                        this.localReachabilityDensity.get(neighbor) ||
+                        this.calculateLRD(neighbor, this.getKNeighbors(neighbor));
                     lofSum += neighborLRD / lrd;
                 }
 
@@ -9799,8 +9506,7 @@ const RealtimeProtectionDetector = {
                 for (const neighbor of neighbors) {
                     const dist = this.euclideanDistance(point, neighbor);
                     const kDist =
-            this.minPtsDistance.get(neighbor) ||
-            this.calculateKDistance(neighbor);
+                        this.minPtsDistance.get(neighbor) || this.calculateKDistance(neighbor);
                     reachabilitySum += Math.max(dist, kDist);
                 }
 
@@ -9845,7 +9551,7 @@ const RealtimeProtectionDetector = {
     },
 
     initializeBehavioralAnalysis: function () {
-    // Initialize Markov Chain for behavioral sequence prediction
+        // Initialize Markov Chain for behavioral sequence prediction
         this.mlEngine.behavioralModels.markovChains.set('apiSequence', {
             states: new Set(),
             transitions: new Map(),
@@ -9863,10 +9569,7 @@ const RealtimeProtectionDetector = {
                     }
 
                     const stateTransitions = this.transitions.get(currentState);
-                    stateTransitions.set(
-                        nextState,
-                        (stateTransitions.get(nextState) || 0) + 1,
-                    );
+                    stateTransitions.set(nextState, (stateTransitions.get(nextState) || 0) + 1);
                 }
             },
             predictNext: function (currentSequence) {
@@ -9876,10 +9579,7 @@ const RealtimeProtectionDetector = {
                 if (!transitions) return null;
 
                 // Calculate probabilities
-                const total = Array.from(transitions.values()).reduce(
-                    (a, b) => a + b,
-                    0,
-                );
+                const total = Array.from(transitions.values()).reduce((a, b) => a + b, 0);
                 const probabilities = new Map();
 
                 for (const [nextState, count] of transitions) {
@@ -9901,107 +9601,104 @@ const RealtimeProtectionDetector = {
         });
 
         // Initialize Hidden Markov Model for complex behavioral patterns
-        this.mlEngine.behavioralModels.hiddenMarkovModels.set(
-            'protectionBehavior',
-            {
-                states: ['normal', 'checking', 'protecting', 'evading'],
-                observations: [],
-                startProbability: {
+        this.mlEngine.behavioralModels.hiddenMarkovModels.set('protectionBehavior', {
+            states: ['normal', 'checking', 'protecting', 'evading'],
+            observations: [],
+            startProbability: {
+                normal: 0.7,
+                checking: 0.2,
+                protecting: 0.05,
+                evading: 0.05,
+            },
+            transitionProbability: {
+                normal: {
                     normal: 0.7,
                     checking: 0.2,
                     protecting: 0.05,
                     evading: 0.05,
                 },
-                transitionProbability: {
-                    normal: {
-                        normal: 0.7,
-                        checking: 0.2,
-                        protecting: 0.05,
-                        evading: 0.05,
-                    },
-                    checking: {
-                        normal: 0.3,
-                        checking: 0.4,
-                        protecting: 0.2,
-                        evading: 0.1,
-                    },
-                    protecting: {
-                        normal: 0.1,
-                        checking: 0.2,
-                        protecting: 0.6,
-                        evading: 0.1,
-                    },
-                    evading: {
-                        normal: 0.05,
-                        checking: 0.05,
-                        protecting: 0.1,
-                        evading: 0.8,
-                    },
+                checking: {
+                    normal: 0.3,
+                    checking: 0.4,
+                    protecting: 0.2,
+                    evading: 0.1,
                 },
-                emissionProbability: {},
-                viterbi: function (observations) {
-                    const T = observations.length;
-                    const states = this.states;
-                    const V = [];
-                    const path = {};
-
-                    // Initialize
-                    V[0] = {};
-                    for (const state of states) {
-                        V[0][state] =
-              this.startProbability[state] *
-              this.getEmissionProbability(state, observations[0]);
-                        path[state] = [state];
-                    }
-
-                    // Run Viterbi
-                    for (let t = 1; t < T; t++) {
-                        V[t] = {};
-                        const newPath = {};
-
-                        for (const state of states) {
-                            let maxProb = 0;
-                            let prevState = null;
-
-                            for (const prevS of states) {
-                                const prob =
-                  V[t - 1][prevS] *
-                  this.transitionProbability[prevS][state] *
-                  this.getEmissionProbability(state, observations[t]);
-                                if (prob > maxProb) {
-                                    maxProb = prob;
-                                    prevState = prevS;
-                                }
-                            }
-
-                            V[t][state] = maxProb;
-                            newPath[state] = path[prevState].concat(state);
-                        }
-
-                        path = newPath;
-                    }
-
-                    // Find most probable final state
-                    let maxProb = 0;
-                    let finalState = null;
-                    for (const state of states) {
-                        if (V[T - 1][state] > maxProb) {
-                            maxProb = V[T - 1][state];
-                            finalState = state;
-                        }
-                    }
-
-                    return { path: path[finalState], probability: maxProb };
+                protecting: {
+                    normal: 0.1,
+                    checking: 0.2,
+                    protecting: 0.6,
+                    evading: 0.1,
                 },
-                getEmissionProbability: function (state, observation) {
-                    // Simplified emission probability
-                    if (!this.emissionProbability[state]) {
-                        this.emissionProbability[state] = {};
-                    }
-                    return this.emissionProbability[state][observation] || 0.1;
+                evading: {
+                    normal: 0.05,
+                    checking: 0.05,
+                    protecting: 0.1,
+                    evading: 0.8,
                 },
             },
-        );
+            emissionProbability: {},
+            viterbi: function (observations) {
+                const T = observations.length;
+                const states = this.states;
+                const V = [];
+                const path = {};
+
+                // Initialize
+                V[0] = {};
+                for (const state of states) {
+                    V[0][state] =
+                        this.startProbability[state] *
+                        this.getEmissionProbability(state, observations[0]);
+                    path[state] = [state];
+                }
+
+                // Run Viterbi
+                for (let t = 1; t < T; t++) {
+                    V[t] = {};
+                    const newPath = {};
+
+                    for (const state of states) {
+                        let maxProb = 0;
+                        let prevState = null;
+
+                        for (const prevS of states) {
+                            const prob =
+                                V[t - 1][prevS] *
+                                this.transitionProbability[prevS][state] *
+                                this.getEmissionProbability(state, observations[t]);
+                            if (prob > maxProb) {
+                                maxProb = prob;
+                                prevState = prevS;
+                            }
+                        }
+
+                        V[t][state] = maxProb;
+                        newPath[state] = path[prevState].concat(state);
+                    }
+
+                    path = newPath;
+                }
+
+                // Find most probable final state
+                let maxProb = 0;
+                let finalState = null;
+                for (const state of states) {
+                    if (V[T - 1][state] > maxProb) {
+                        maxProb = V[T - 1][state];
+                        finalState = state;
+                    }
+                }
+
+                return { path: path[finalState], probability: maxProb };
+            },
+            getEmissionProbability: function (state, observation) {
+                // Simplified emission probability
+                if (!this.emissionProbability[state]) {
+                    this.emissionProbability[state] = {};
+                }
+                return this.emissionProbability[state][observation] || 0.1;
+            },
+        });
 
         // Initialize LSTM-like sequence predictor
         this.mlEngine.behavioralModels.sequences.set('lstm', {
@@ -10020,19 +9717,19 @@ const RealtimeProtectionDetector = {
                 // Initialize weight matrices
                 this.weights.forget = this.randomMatrix(
                     this.inputSize + this.hiddenSize,
-                    this.hiddenSize,
+                    this.hiddenSize
                 );
                 this.weights.input = this.randomMatrix(
                     this.inputSize + this.hiddenSize,
-                    this.hiddenSize,
+                    this.hiddenSize
                 );
                 this.weights.candidate = this.randomMatrix(
                     this.inputSize + this.hiddenSize,
-                    this.hiddenSize,
+                    this.hiddenSize
                 );
                 this.weights.output = this.randomMatrix(
                     this.inputSize + this.hiddenSize,
-                    this.hiddenSize,
+                    this.hiddenSize
                 );
 
                 // Initialize states
@@ -10043,31 +9740,22 @@ const RealtimeProtectionDetector = {
                 const combined = input.concat(this.hiddenState);
 
                 // Forget gate
-                const forgetGate = this.sigmoid(
-                    this.matmul(combined, this.weights.forget),
-                );
+                const forgetGate = this.sigmoid(this.matmul(combined, this.weights.forget));
 
                 // Input gate
-                const inputGate = this.sigmoid(
-                    this.matmul(combined, this.weights.input),
-                );
+                const inputGate = this.sigmoid(this.matmul(combined, this.weights.input));
 
                 // Candidate values
-                const candidateValues = this.tanh(
-                    this.matmul(combined, this.weights.candidate),
-                );
+                const candidateValues = this.tanh(this.matmul(combined, this.weights.candidate));
 
                 // Update cell state
                 for (let i = 0; i < this.hiddenSize; i++) {
                     this.cellState[i] =
-            forgetGate[i] * this.cellState[i] +
-            inputGate[i] * candidateValues[i];
+                        forgetGate[i] * this.cellState[i] + inputGate[i] * candidateValues[i];
                 }
 
                 // Output gate
-                const outputGate = this.sigmoid(
-                    this.matmul(combined, this.weights.output),
-                );
+                const outputGate = this.sigmoid(this.matmul(combined, this.weights.output));
 
                 // Update hidden state
                 for (let i = 0; i < this.hiddenSize; i++) {
@@ -10113,63 +9801,53 @@ const RealtimeProtectionDetector = {
     },
 
     initializeFeatureExtractors: function () {
-    // Byte histogram feature extractor
-        this.mlEngine.featureExtraction.extractors.set(
-            'byteHistogram',
-            function (data) {
-                const histogram = new Array(256).fill(0);
-                for (let i = 0; i < data.length; i++) {
-                    histogram[data[i]]++;
-                }
-                // Normalize
-                const total = data.length;
-                return histogram.map((count) => count / total);
-            },
-        );
+        // Byte histogram feature extractor
+        this.mlEngine.featureExtraction.extractors.set('byteHistogram', function (data) {
+            const histogram = new Array(256).fill(0);
+            for (let i = 0; i < data.length; i++) {
+                histogram[data[i]]++;
+            }
+            // Normalize
+            const total = data.length;
+            return histogram.map((count) => count / total);
+        });
 
         // N-gram feature extractor
-        this.mlEngine.featureExtraction.extractors.set(
-            'ngrams',
-            function (data, n = 3) {
-                const ngrams = new Map();
-                for (let i = 0; i <= data.length - n; i++) {
-                    const ngram = data.slice(i, i + n).join('');
-                    ngrams.set(ngram, (ngrams.get(ngram) || 0) + 1);
-                }
-                return ngrams;
-            },
-        );
+        this.mlEngine.featureExtraction.extractors.set('ngrams', function (data, n = 3) {
+            const ngrams = new Map();
+            for (let i = 0; i <= data.length - n; i++) {
+                const ngram = data.slice(i, i + n).join('');
+                ngrams.set(ngram, (ngrams.get(ngram) || 0) + 1);
+            }
+            return ngrams;
+        });
 
         // Statistical features extractor
-        this.mlEngine.featureExtraction.extractors.set(
-            'statistical',
-            function (data) {
-                const values = Array.from(data);
-                const mean = values.reduce((a, b) => a + b, 0) / values.length;
-                const variance =
-          values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length;
-                const stdDev = Math.sqrt(variance);
+        this.mlEngine.featureExtraction.extractors.set('statistical', function (data) {
+            const values = Array.from(data);
+            const mean = values.reduce((a, b) => a + b, 0) / values.length;
+            const variance = values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length;
+            const stdDev = Math.sqrt(variance);
 
-                const sorted = values.sort((a, b) => a - b);
-                const median = sorted[Math.floor(sorted.length / 2)];
-                const q1 = sorted[Math.floor(sorted.length * 0.25)];
-                const q3 = sorted[Math.floor(sorted.length * 0.75)];
+            const sorted = values.sort((a, b) => a - b);
+            const median = sorted[Math.floor(sorted.length / 2)];
+            const q1 = sorted[Math.floor(sorted.length * 0.25)];
+            const q3 = sorted[Math.floor(sorted.length * 0.75)];
 
-                return {
-                    mean: mean,
-                    median: median,
-                    stdDev: stdDev,
-                    variance: variance,
-                    min: sorted[0],
-                    max: sorted[sorted.length - 1],
-                    q1: q1,
-                    q3: q3,
-                    iqr: q3 - q1,
-                    skewness: this.calculateSkewness(values, mean, stdDev),
-                    kurtosis: this.calculateKurtosis(values, mean, stdDev),
-                };
-            },
-        );
+            return {
+                mean: mean,
+                median: median,
+                stdDev: stdDev,
+                variance: variance,
+                min: sorted[0],
+                max: sorted[sorted.length - 1],
+                q1: q1,
+                q3: q3,
+                iqr: q3 - q1,
+                skewness: this.calculateSkewness(values, mean, stdDev),
+                kurtosis: this.calculateKurtosis(values, mean, stdDev),
+            };
+        });
 
         // Entropy-based features
         this.mlEngine.featureExtraction.extractors.set('entropy', function (data) {
@@ -10196,37 +9874,34 @@ const RealtimeProtectionDetector = {
         });
 
         // API call pattern features
-        this.mlEngine.featureExtraction.extractors.set(
-            'apiPatterns',
-            function (apiCalls) {
-                const patterns = {
-                    totalCalls: apiCalls.length,
-                    uniqueAPIs: new Set(apiCalls).size,
-                    frequency: new Map(),
-                    sequences: [],
-                    timing: [],
-                };
+        this.mlEngine.featureExtraction.extractors.set('apiPatterns', function (apiCalls) {
+            const patterns = {
+                totalCalls: apiCalls.length,
+                uniqueAPIs: new Set(apiCalls).size,
+                frequency: new Map(),
+                sequences: [],
+                timing: [],
+            };
 
-                // Calculate frequency
-                for (const api of apiCalls) {
-                    patterns.frequency.set(api, (patterns.frequency.get(api) || 0) + 1);
+            // Calculate frequency
+            for (const api of apiCalls) {
+                patterns.frequency.set(api, (patterns.frequency.get(api) || 0) + 1);
+            }
+
+            // Find common sequences
+            for (let len = 2; len <= 5; len++) {
+                for (let i = 0; i <= apiCalls.length - len; i++) {
+                    const seq = apiCalls.slice(i, i + len).join('-');
+                    patterns.sequences.push(seq);
                 }
+            }
 
-                // Find common sequences
-                for (let len = 2; len <= 5; len++) {
-                    for (let i = 0; i <= apiCalls.length - len; i++) {
-                        const seq = apiCalls.slice(i, i + len).join('-');
-                        patterns.sequences.push(seq);
-                    }
-                }
-
-                return patterns;
-            },
-        );
+            return patterns;
+        });
     },
 
     initializeClustering: function () {
-    // K-Means clustering
+        // K-Means clustering
         this.mlEngine.clustering.algorithms.set('kmeans', {
             k: 5,
             maxIterations: 100,
@@ -10447,14 +10122,13 @@ const RealtimeProtectionDetector = {
 
         // Update Markov chain
         if (history.length > 2) {
-            const markovChain =
-        this.mlEngine.behavioralModels.markovChains.get('apiSequence');
+            const markovChain = this.mlEngine.behavioralModels.markovChains.get('apiSequence');
             markovChain.addSequence(history.slice(-10));
         }
     },
 
     analyzeMemoryAllocationML: function (size, protection) {
-    // Extract features
+        // Extract features
         const features = [
             size,
             protection,
@@ -10465,8 +10139,7 @@ const RealtimeProtectionDetector = {
         ];
 
         // Check for anomalies using Isolation Forest
-        const isoForest =
-      this.mlEngine.anomalyDetection.statisticalModels.get('isolationForest');
+        const isoForest = this.mlEngine.anomalyDetection.statisticalModels.get('isolationForest');
         if (isoForest.trees.length > 0) {
             const anomalyScore = isoForest.anomalyScore(features);
 
@@ -10536,7 +10209,7 @@ const RealtimeProtectionDetector = {
     },
 
     updateMLModels: function () {
-    // Update neural network if we have training data
+        // Update neural network if we have training data
         if (this.mlEngine.neuralNetwork.trainingData.length > 0) {
             this.trainNeuralNetwork();
         }
@@ -10597,10 +10270,7 @@ const RealtimeProtectionDetector = {
         for (let i = 0; i < clusters.length; i++) {
             if (clusters[i].length > 0) {
                 const centroid = kmeans.centroids[i];
-                this.mlEngine.clustering.centroids.set(
-                    `anomaly_cluster_${i}`,
-                    centroid,
-                );
+                this.mlEngine.clustering.centroids.set(`anomaly_cluster_${i}`, centroid);
             }
         }
     },
@@ -10611,8 +10281,7 @@ const RealtimeProtectionDetector = {
         // Add current metrics as data point
         const dataPoint = {
             timestamp: Date.now(),
-            apiCalls:
-        this.mlEngine.behavioralModels.sequences.get('apiHistory')?.length || 0,
+            apiCalls: this.mlEngine.behavioralModels.sequences.get('apiHistory')?.length || 0,
             anomalies: this.mlEngine.anomalyDetection.detectedAnomalies.length,
             predictions: this.mlEngine.patternRecognition.classifications.size,
         };
@@ -10627,10 +10296,8 @@ const RealtimeProtectionDetector = {
         // Simple moving average for trend
         if (ts.dataPoints.length > 10) {
             const recent = ts.dataPoints.slice(-10);
-            const avgApiCalls =
-        recent.reduce((sum, p) => sum + p.apiCalls, 0) / recent.length;
-            const avgAnomalies =
-        recent.reduce((sum, p) => sum + p.anomalies, 0) / recent.length;
+            const avgApiCalls = recent.reduce((sum, p) => sum + p.apiCalls, 0) / recent.length;
+            const avgAnomalies = recent.reduce((sum, p) => sum + p.anomalies, 0) / recent.length;
 
             ts.trendAnalysis.set('apiCalls', avgApiCalls);
             ts.trendAnalysis.set('anomalies', avgAnomalies);
@@ -10638,14 +10305,12 @@ const RealtimeProtectionDetector = {
     },
 
     performPredictions: function () {
-    // Get current behavioral sequence
-        const apiHistory =
-      this.mlEngine.behavioralModels.sequences.get('apiHistory');
+        // Get current behavioral sequence
+        const apiHistory = this.mlEngine.behavioralModels.sequences.get('apiHistory');
 
         if (apiHistory && apiHistory.length > 2) {
             // Predict next API call
-            const markovChain =
-        this.mlEngine.behavioralModels.markovChains.get('apiSequence');
+            const markovChain = this.mlEngine.behavioralModels.markovChains.get('apiSequence');
             const prediction = markovChain.predictNext(apiHistory.slice(-2));
 
             if (prediction && prediction.probability > 0.7) {
@@ -10658,26 +10323,17 @@ const RealtimeProtectionDetector = {
     },
 
     detectKnownPatterns: function () {
-        const apiHistory =
-      this.mlEngine.behavioralModels.sequences.get('apiHistory');
+        const apiHistory = this.mlEngine.behavioralModels.sequences.get('apiHistory');
         if (!apiHistory || apiHistory.length < 5) return;
 
         const recentAPIs = apiHistory.slice(-10).join(',');
 
         // Known malicious patterns
         const patterns = {
-            process_injection: [
-                'OpenProcess,VirtualAllocEx,WriteProcessMemory,CreateRemoteThread',
-            ],
-            dll_injection: [
-                'OpenProcess,VirtualAllocEx,WriteProcessMemory,SetWindowsHookEx',
-            ],
-            privilege_escalation: [
-                'OpenProcessToken,AdjustTokenPrivileges,LookupPrivilegeValue',
-            ],
-            anti_debug: [
-                'IsDebuggerPresent,CheckRemoteDebuggerPresent,NtQueryInformationProcess',
-            ],
+            process_injection: ['OpenProcess,VirtualAllocEx,WriteProcessMemory,CreateRemoteThread'],
+            dll_injection: ['OpenProcess,VirtualAllocEx,WriteProcessMemory,SetWindowsHookEx'],
+            privilege_escalation: ['OpenProcessToken,AdjustTokenPrivileges,LookupPrivilegeValue'],
+            anti_debug: ['IsDebuggerPresent,CheckRemoteDebuggerPresent,NtQueryInformationProcess'],
             sandbox_evasion: [
                 'GetTickCount,Sleep,GetTickCount',
                 'GetSystemTime,Sleep,GetSystemTime',
@@ -10715,9 +10371,7 @@ const RealtimeProtectionDetector = {
         // Group anomalies by time windows
         const timeWindow = 60000; // 1 minute
         const now = Date.now();
-        const recentAnomalies = anomalies.filter(
-            (a) => now - a.timestamp < timeWindow,
-        );
+        const recentAnomalies = anomalies.filter((a) => now - a.timestamp < timeWindow);
 
         if (recentAnomalies.length > 5) {
             // High anomaly rate detected
@@ -10761,7 +10415,7 @@ const RealtimeProtectionDetector = {
     },
 
     interpretClusterCentroid: function (centroid) {
-    // Interpret centroid values to determine risk
+        // Interpret centroid values to determine risk
         const characteristics = {
             risk: 'low',
             features: [],
@@ -10804,8 +10458,7 @@ const RealtimeProtectionDetector = {
     },
 
     applyActivation: function (vector, activation) {
-        const func =
-      this.mlEngine.neuralNetwork.activationFunctions.get(activation);
+        const func = this.mlEngine.neuralNetwork.activationFunctions.get(activation);
         if (activation === 'softmax') {
             return func.forward(vector);
         }
@@ -10813,7 +10466,7 @@ const RealtimeProtectionDetector = {
     },
 
     calculateLoss: function (output, target) {
-    // Cross-entropy loss
+        // Cross-entropy loss
         let loss = 0;
         for (let i = 0; i < output.length; i++) {
             loss -= target[i] * Math.log(output[i] + 1e-10);
@@ -10827,10 +10480,7 @@ const RealtimeProtectionDetector = {
         var importTableHooks = 0;
 
         // Hook GetProcAddress for dynamic import resolution monitoring
-        var getProcAddress = Module.findExportByName(
-            'kernel32.dll',
-            'GetProcAddress',
-        );
+        var getProcAddress = Module.findExportByName('kernel32.dll', 'GetProcAddress');
         if (getProcAddress) {
             Interceptor.attach(getProcAddress, {
                 onEnter: function (args) {
@@ -10851,8 +10501,7 @@ const RealtimeProtectionDetector = {
                                 });
                             }
 
-                            var importData =
-                this.importTableAnalysis.dynamicImports.get(name);
+                            var importData = this.importTableAnalysis.dynamicImports.get(name);
                             importData.callCount++;
                             if (moduleName) {
                                 importData.modules.add(moduleName);
@@ -10877,12 +10526,9 @@ const RealtimeProtectionDetector = {
         }
 
         // Hook LoadLibrary variants for DLL loading monitoring
-        [
-            'LoadLibraryA',
-            'LoadLibraryW',
-            'LoadLibraryExA',
-            'LoadLibraryExW',
-        ].forEach(function (funcName) {
+        ['LoadLibraryA', 'LoadLibraryW', 'LoadLibraryExA', 'LoadLibraryExW'].forEach(function (
+            funcName
+        ) {
             var func = Module.findExportByName('kernel32.dll', funcName);
             if (func) {
                 Interceptor.attach(func, {
@@ -10901,8 +10547,7 @@ const RealtimeProtectionDetector = {
                                 });
                             }
 
-                            var libData =
-                this.importTableAnalysis.loadedLibraries.get(libName);
+                            var libData = this.importTableAnalysis.loadedLibraries.get(libName);
                             libData.loadCount++;
 
                             // Check for suspicious library loading patterns
@@ -10917,9 +10562,7 @@ const RealtimeProtectionDetector = {
         }, this);
 
         console.log(
-            '[Import Table Hooks] Installed ' +
-        importTableHooks +
-        ' import monitoring hooks',
+            '[Import Table Hooks] Installed ' + importTableHooks + ' import monitoring hooks'
         );
         return importTableHooks;
     },
@@ -10928,10 +10571,7 @@ const RealtimeProtectionDetector = {
         var sectionHooks = 0;
 
         // Hook VirtualProtect for section permission changes
-        var virtualProtect = Module.findExportByName(
-            'kernel32.dll',
-            'VirtualProtect',
-        );
+        var virtualProtect = Module.findExportByName('kernel32.dll', 'VirtualProtect');
         if (virtualProtect) {
             Interceptor.attach(virtualProtect, {
                 onEnter: function (args) {
@@ -10956,14 +10596,8 @@ const RealtimeProtectionDetector = {
                         });
 
                         // Detect suspicious protection changes
-                        if (
-                            this.detectSuspiciousProtectionChange(sectionName, newProtect)
-                        ) {
-                            this.reportSectionProtectionAnomaly(
-                                sectionName,
-                                address,
-                                newProtect,
-                            );
+                        if (this.detectSuspiciousProtectionChange(sectionName, newProtect)) {
+                            this.reportSectionProtectionAnomaly(sectionName, address, newProtect);
                         }
                     }
                 }.bind(this),
@@ -10993,10 +10627,7 @@ const RealtimeProtectionDetector = {
         }
 
         // Hook NtMapViewOfSection for section mapping
-        var ntMapViewOfSection = Module.findExportByName(
-            'ntdll.dll',
-            'NtMapViewOfSection',
-        );
+        var ntMapViewOfSection = Module.findExportByName('ntdll.dll', 'NtMapViewOfSection');
         if (ntMapViewOfSection) {
             Interceptor.attach(ntMapViewOfSection, {
                 onEnter: function (args) {
@@ -11018,11 +10649,7 @@ const RealtimeProtectionDetector = {
             sectionHooks++;
         }
 
-        console.log(
-            '[PE Section Hooks] Installed ' +
-        sectionHooks +
-        ' section monitoring hooks',
-        );
+        console.log('[PE Section Hooks] Installed ' + sectionHooks + ' section monitoring hooks');
         return sectionHooks;
     },
 
@@ -11030,10 +10657,7 @@ const RealtimeProtectionDetector = {
         var entryPointHooks = 0;
 
         // Hook process creation to catch entry point execution
-        var createProcessW = Module.findExportByName(
-            'kernel32.dll',
-            'CreateProcessW',
-        );
+        var createProcessW = Module.findExportByName('kernel32.dll', 'CreateProcessW');
         if (createProcessW) {
             Interceptor.attach(createProcessW, {
                 onEnter: function (args) {
@@ -11079,10 +10703,7 @@ const RealtimeProtectionDetector = {
         }
 
         // Hook NtCreateThreadEx for advanced thread creation
-        var ntCreateThreadEx = Module.findExportByName(
-            'ntdll.dll',
-            'NtCreateThreadEx',
-        );
+        var ntCreateThreadEx = Module.findExportByName('ntdll.dll', 'NtCreateThreadEx');
         if (ntCreateThreadEx) {
             Interceptor.attach(ntCreateThreadEx, {
                 onEnter: function (args) {
@@ -11105,10 +10726,7 @@ const RealtimeProtectionDetector = {
         }
 
         // Hook SetThreadContext for context manipulation (often used in unpacking)
-        var setThreadContext = Module.findExportByName(
-            'kernel32.dll',
-            'SetThreadContext',
-        );
+        var setThreadContext = Module.findExportByName('kernel32.dll', 'SetThreadContext');
         if (setThreadContext) {
             Interceptor.attach(setThreadContext, {
                 onEnter: function (args) {
@@ -11126,9 +10744,7 @@ const RealtimeProtectionDetector = {
         }
 
         console.log(
-            '[Entry Point Hooks] Installed ' +
-        entryPointHooks +
-        ' entry point monitoring hooks',
+            '[Entry Point Hooks] Installed ' + entryPointHooks + ' entry point monitoring hooks'
         );
         return entryPointHooks;
     },
@@ -11137,10 +10753,7 @@ const RealtimeProtectionDetector = {
         var memoryHooks = 0;
 
         // Hook WriteProcessMemory for memory modification patterns
-        var writeProcessMemory = Module.findExportByName(
-            'kernel32.dll',
-            'WriteProcessMemory',
-        );
+        var writeProcessMemory = Module.findExportByName('kernel32.dll', 'WriteProcessMemory');
         if (writeProcessMemory) {
             Interceptor.attach(writeProcessMemory, {
                 onEnter: function (args) {
@@ -11179,7 +10792,7 @@ const RealtimeProtectionDetector = {
         // Hook NtAllocateVirtualMemory for allocation patterns
         var ntAllocateVirtualMemory = Module.findExportByName(
             'ntdll.dll',
-            'NtAllocateVirtualMemory',
+            'NtAllocateVirtualMemory'
         );
         if (ntAllocateVirtualMemory) {
             Interceptor.attach(ntAllocateVirtualMemory, {
@@ -11199,9 +10812,7 @@ const RealtimeProtectionDetector = {
                         });
 
                         // Detect heap spray patterns
-                        if (
-                            this.detectHeapSprayPattern(this.allocSize, this.allocProtection)
-                        ) {
+                        if (this.detectHeapSprayPattern(this.allocSize, this.allocProtection)) {
                             this.memoryPatterns.heapSprayDetected = true;
                             this.reportHeapSprayDetection(this.allocSize);
                         }
@@ -11229,11 +10840,7 @@ const RealtimeProtectionDetector = {
             memoryHooks++;
         }
 
-        console.log(
-            '[Memory Pattern Hooks] Installed ' +
-        memoryHooks +
-        ' memory pattern hooks',
-        );
+        console.log('[Memory Pattern Hooks] Installed ' + memoryHooks + ' memory pattern hooks');
         return memoryHooks;
     },
 
@@ -11241,35 +10848,30 @@ const RealtimeProtectionDetector = {
         var behavioralHooks = 0;
 
         // Hook time-related APIs for timing attack detection
-        ['GetTickCount', 'GetTickCount64', 'QueryPerformanceCounter'].forEach(
-            function (funcName) {
-                var func = Module.findExportByName('kernel32.dll', funcName);
-                if (func) {
-                    Interceptor.attach(func, {
-                        onLeave: function (retval) {
-                            // Track timing checks
-                            this.behavioralPatterns.timingChecks.push({
-                                api: funcName,
-                                timestamp: Date.now(),
-                                returnValue: retval.toString(),
-                            });
+        ['GetTickCount', 'GetTickCount64', 'QueryPerformanceCounter'].forEach(function (funcName) {
+            var func = Module.findExportByName('kernel32.dll', funcName);
+            if (func) {
+                Interceptor.attach(func, {
+                    onLeave: function (retval) {
+                        // Track timing checks
+                        this.behavioralPatterns.timingChecks.push({
+                            api: funcName,
+                            timestamp: Date.now(),
+                            returnValue: retval.toString(),
+                        });
 
-                            // Detect anti-debugging timing checks
-                            if (this.detectTimingAntiDebug()) {
-                                this.behavioralPatterns.antiDebugPatterns.add('TimingCheck');
-                            }
-                        }.bind(this),
-                    });
-                    behavioralHooks++;
-                }
-            },
-            this,
-        );
+                        // Detect anti-debugging timing checks
+                        if (this.detectTimingAntiDebug()) {
+                            this.behavioralPatterns.antiDebugPatterns.add('TimingCheck');
+                        }
+                    }.bind(this),
+                });
+                behavioralHooks++;
+            }
+        }, this);
 
         // Hook debugger detection APIs
-        ['IsDebuggerPresent', 'CheckRemoteDebuggerPresent'].forEach(function (
-            funcName,
-        ) {
+        ['IsDebuggerPresent', 'CheckRemoteDebuggerPresent'].forEach(function (funcName) {
             var func = Module.findExportByName('kernel32.dll', funcName);
             if (func) {
                 Interceptor.attach(func, {
@@ -11291,7 +10893,7 @@ const RealtimeProtectionDetector = {
         // Hook NtQueryInformationProcess for advanced anti-debugging
         var ntQueryInformationProcess = Module.findExportByName(
             'ntdll.dll',
-            'NtQueryInformationProcess',
+            'NtQueryInformationProcess'
         );
         if (ntQueryInformationProcess) {
             Interceptor.attach(ntQueryInformationProcess, {
@@ -11300,9 +10902,7 @@ const RealtimeProtectionDetector = {
 
                     // ProcessDebugPort (0x07) and ProcessDebugObjectHandle (0x1E)
                     if (infoClass === 0x07 || infoClass === 0x1e) {
-                        this.behavioralPatterns.antiDebugPatterns.add(
-                            'NtQueryInformationProcess',
-                        );
+                        this.behavioralPatterns.antiDebugPatterns.add('NtQueryInformationProcess');
                         this.behavioralPatterns.advancedAntiDebug++;
                     }
                 }.bind(this),
@@ -11313,7 +10913,7 @@ const RealtimeProtectionDetector = {
         // Hook SetUnhandledExceptionFilter for exception-based anti-debugging
         var setUnhandledExceptionFilter = Module.findExportByName(
             'kernel32.dll',
-            'SetUnhandledExceptionFilter',
+            'SetUnhandledExceptionFilter'
         );
         if (setUnhandledExceptionFilter) {
             Interceptor.attach(setUnhandledExceptionFilter, {
@@ -11330,9 +10930,7 @@ const RealtimeProtectionDetector = {
         }
 
         console.log(
-            '[Behavioral Hooks] Installed ' +
-        behavioralHooks +
-        ' behavioral monitoring hooks',
+            '[Behavioral Hooks] Installed ' + behavioralHooks + ' behavioral monitoring hooks'
         );
         return behavioralHooks;
     },
@@ -11363,10 +10961,7 @@ const RealtimeProtectionDetector = {
         }, this);
 
         // Hook registry queries for version information
-        var regQueryValueExW = Module.findExportByName(
-            'advapi32.dll',
-            'RegQueryValueExW',
-        );
+        var regQueryValueExW = Module.findExportByName('advapi32.dll', 'RegQueryValueExW');
         if (regQueryValueExW) {
             Interceptor.attach(regQueryValueExW, {
                 onEnter: function (args) {
@@ -11384,10 +10979,7 @@ const RealtimeProtectionDetector = {
         }
 
         // Hook GetModuleFileName for self-identification
-        var getModuleFileNameW = Module.findExportByName(
-            'kernel32.dll',
-            'GetModuleFileNameW',
-        );
+        var getModuleFileNameW = Module.findExportByName('kernel32.dll', 'GetModuleFileNameW');
         if (getModuleFileNameW) {
             Interceptor.attach(getModuleFileNameW, {
                 onLeave: function (retval) {
@@ -11399,9 +10991,7 @@ const RealtimeProtectionDetector = {
         }
 
         console.log(
-            '[Version Detection Hooks] Installed ' +
-        versionHooks +
-        ' version detection hooks',
+            '[Version Detection Hooks] Installed ' + versionHooks + ' version detection hooks'
         );
         return versionHooks;
     },
@@ -11453,10 +11043,7 @@ const RealtimeProtectionDetector = {
         }
 
         // Hook registry operations for ML pattern learning
-        var regOpenKeyExW = Module.findExportByName(
-            'advapi32.dll',
-            'RegOpenKeyExW',
-        );
+        var regOpenKeyExW = Module.findExportByName('advapi32.dll', 'RegOpenKeyExW');
         if (regOpenKeyExW) {
             Interceptor.attach(regOpenKeyExW, {
                 onEnter: function (args) {
@@ -11487,11 +11074,7 @@ const RealtimeProtectionDetector = {
             mlHooks++;
         }
 
-        console.log(
-            '[ML Integration Hooks] Installed ' +
-        mlHooks +
-        ' ML data collection hooks',
-        );
+        console.log('[ML Integration Hooks] Installed ' + mlHooks + ' ML data collection hooks');
         return mlHooks;
     },
 
@@ -11552,9 +11135,7 @@ const RealtimeProtectionDetector = {
         }, this);
 
         console.log(
-            '[Protector Specific Hooks] Installed ' +
-        protectorHooks +
-        ' protector-specific hooks',
+            '[Protector Specific Hooks] Installed ' + protectorHooks + ' protector-specific hooks'
         );
         return protectorHooks;
     },
@@ -11574,15 +11155,11 @@ const RealtimeProtectionDetector = {
                 // Generate comprehensive protection profile
                 this.generateProtectionProfile();
             }.bind(this),
-            5000,
+            5000
         ); // Run correlation every 5 seconds
 
         // Hook for real-time correlation triggers
-        var correlationTriggers = [
-            'VirtualProtect',
-            'CreateThread',
-            'WriteProcessMemory',
-        ];
+        var correlationTriggers = ['VirtualProtect', 'CreateThread', 'WriteProcessMemory'];
 
         correlationTriggers.forEach(function (funcName) {
             var func = Module.findExportByName('kernel32.dll', funcName);
@@ -11597,11 +11174,7 @@ const RealtimeProtectionDetector = {
             }
         }, this);
 
-        console.log(
-            '[Correlation Hooks] Installed ' +
-        correlationHooks +
-        ' correlation hooks',
-        );
+        console.log('[Correlation Hooks] Installed ' + correlationHooks + ' correlation hooks');
         return correlationHooks;
     },
 };

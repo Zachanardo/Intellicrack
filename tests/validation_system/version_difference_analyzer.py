@@ -767,7 +767,7 @@ class VersionDifferenceAnalyzer:
             if changes:
                 lines.append(f"- {category.replace('_', ' ').title()}:")
                 for change in changes:
-                    lines.append(f"  • {change}")
+                    lines.append(f"   {change}")
         lines.append("")
 
         # Bypass implications

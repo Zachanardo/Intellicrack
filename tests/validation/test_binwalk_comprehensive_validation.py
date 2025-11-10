@@ -16,10 +16,10 @@ def test_result(name, passed, details=""):
 
     if passed:
         tests_passed += 1
-        status = "✓ PASS"
+        status = "OK PASS"
     else:
         tests_failed += 1
-        status = "✗ FAIL"
+        status = "FAIL FAIL"
 
     print(f"{status}: {name}")
     if details:
@@ -276,9 +276,9 @@ print(f"Tests Failed: {tests_failed}")
 print(f"Success Rate: {tests_passed}/{tests_passed + tests_failed} ({100*tests_passed/(tests_passed+tests_failed):.1f}%)")
 
 if tests_failed == 0:
-    print("\n✓ ALL TESTS PASSED - Package is ready for publishing")
+    print("\nOK ALL TESTS PASSED - Package is ready for publishing")
 else:
-    print(f"\n✗ {tests_failed} TESTS FAILED - DO NOT PUBLISH")
+    print(f"\nFAIL {tests_failed} TESTS FAILED - DO NOT PUBLISH")
     print("\nFailed tests:")
     for test in test_details:
         if not test['passed']:

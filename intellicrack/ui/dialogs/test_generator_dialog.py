@@ -156,7 +156,7 @@ class TestGeneratorDialog(PluginDialogBase):
         # Bottom controls
         control_layout = QHBoxLayout()
 
-        self.generate_btn = QPushButton("🔧 Generate Tests")
+        self.generate_btn = QPushButton(" Generate Tests")
         self.generate_btn.clicked.connect(self.generate_tests)
         self.generate_btn.setEnabled(False)
         control_layout.addWidget(self.generate_btn)
@@ -166,7 +166,7 @@ class TestGeneratorDialog(PluginDialogBase):
         self.run_btn.setEnabled(False)
         control_layout.addWidget(self.run_btn)
 
-        self.save_btn = QPushButton("💾 Save Tests")
+        self.save_btn = QPushButton(" Save Tests")
         self.save_btn.clicked.connect(self.save_tests)
         self.save_btn.setEnabled(False)
         control_layout.addWidget(self.save_btn)
@@ -432,7 +432,7 @@ class TestGeneratorDialog(PluginDialogBase):
 
         # Update summary
         if results.get('test_passed'):
-            self.summary_label.setText("✅ All tests passed!")
+            self.summary_label.setText("OK All tests passed!")
             self.summary_label.setObjectName("testSummarySuccess")
         else:
             self.summary_label.setText("ERROR Some tests failed")

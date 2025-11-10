@@ -113,14 +113,14 @@ def test_enhanced_patch_instruction_generation():
         if bytes_code and bytes_code != "90":
             successful_bytes += 1
 
-        print(f"    ✓ {method}: {instruction[:30]}... -> {bytes_code[:16]}...")
+        print(f"    OK {method}: {instruction[:30]}... -> {bytes_code[:16]}...")
 
-    print(f"  ✓ Enhanced instructions: {successful_instructions}/{len(bypass_methods)}")
-    print(f"  ✓ Enhanced byte codes: {successful_bytes}/{len(bypass_methods)}")
+    print(f"  OK Enhanced instructions: {successful_instructions}/{len(bypass_methods)}")
+    print(f"  OK Enhanced byte codes: {successful_bytes}/{len(bypass_methods)}")
 
     # Validation criteria: Should have significantly more than basic 4 methods
     success = successful_instructions >= 10 and successful_bytes >= 10
-    print(f"  Enhanced patch generation: {'✓ PASSED' if success else '❌ FAILED'}")
+    print(f"  Enhanced patch generation: {'OK PASSED' if success else 'FAIL FAILED'}")
 
     return success
 
@@ -163,14 +163,14 @@ def test_memory_write_instruction_generation():
             result = generate_memory_write_instructions(address, test_value)
             if result and len(result) > 8:  # Should be longer than simple fallback
                 successful_generations += 1
-                print(f"    ✓ {address} -> {result[:20]}...")
+                print(f"    OK {address} -> {result[:20]}...")
             else:
-                print(f"    ❌ {address} -> {result}")
+                print(f"    FAIL {address} -> {result}")
         except Exception as e:
-            print(f"    ❌ {address} -> Error: {e}")
+            print(f"    FAIL {address} -> Error: {e}")
 
     success = successful_generations >= 2  # At least 2/3 should work
-    print(f"  Enhanced memory write generation: {'✓ PASSED' if success else '❌ FAILED'}")
+    print(f"  Enhanced memory write generation: {'OK PASSED' if success else 'FAIL FAILED'}")
 
     return success
 
@@ -253,12 +253,12 @@ def test_r2_to_binary_patch_integration():
         binary_patch = convert_r2_to_binary_patch(r2_patch, "automated")
         if binary_patch:
             successful_conversions += 1
-            print(f"    ✓ Patch {i+1}: {hex(binary_patch.offset)} - {binary_patch.description[:40]}...")
+            print(f"    OK Patch {i+1}: {hex(binary_patch.offset)} - {binary_patch.description[:40]}...")
         else:
-            print(f"    ❌ Patch {i+1}: Conversion failed")
+            print(f"    FAIL Patch {i+1}: Conversion failed")
 
     success = successful_conversions >= 2  # At least 2/3 should convert successfully
-    print(f"  R2 integration conversion: {'✓ PASSED' if success else '❌ FAILED'}")
+    print(f"  R2 integration conversion: {'OK PASSED' if success else 'FAIL FAILED'}")
 
     return success
 
@@ -304,7 +304,7 @@ def test_binary_patch_application():
         apply_success = apply_patch_to_binary(str(test_binary), patch)
 
         if not apply_success:
-            print("    ❌ Patch application failed")
+            print("    FAIL Patch application failed")
             return False
 
         # Verify patch was applied
@@ -314,13 +314,13 @@ def test_binary_patch_application():
         verification_success = patched_content[:6] == patch.patched_bytes
 
         print(f"    Patched bytes:  {patched_content[:6].hex().upper()}")
-        print(f"    ✓ Patch applied: {'SUCCESS' if apply_success else 'FAILED'}")
-        print(f"    ✓ Verification:  {'SUCCESS' if verification_success else 'FAILED'}")
+        print(f"    OK Patch applied: {'SUCCESS' if apply_success else 'FAILED'}")
+        print(f"    OK Verification:  {'SUCCESS' if verification_success else 'FAILED'}")
 
         return apply_success and verification_success
 
     except Exception as e:
-        print(f"    ❌ Binary patching test error: {e}")
+        print(f"    FAIL Binary patching test error: {e}")
         return False
     finally:
         # Cleanup
@@ -375,13 +375,13 @@ def test_comprehensive_forbidden_patterns():
     for pattern in forbidden_patterns:
         if pattern.lower() in mock_file_content.lower():
             violations_found += 1
-            print(f"    ❌ Found: {pattern}")
+            print(f"    FAIL Found: {pattern}")
 
     if violations_found == 0:
-        print("    ✓ No forbidden patterns detected")
+        print("    OK No forbidden patterns detected")
 
     success = violations_found == 0
-    print(f"  Forbidden pattern scan: {'✓ PASSED' if success else '❌ FAILED'}")
+    print(f"  Forbidden pattern scan: {'OK PASSED' if success else 'FAIL FAILED'}")
 
     return success
 
@@ -408,7 +408,7 @@ def main():
             result = test_func()
             results.append(result)
         except Exception as e:
-            print(f"❌ Test {test_func.__name__} failed with error: {e}")
+            print(f"FAIL Test {test_func.__name__} failed with error: {e}")
             results.append(False)
 
     passed = sum(results)
@@ -419,20 +419,20 @@ def main():
     print("=" * 50)
 
     if passed == total:
-        print("✅ CHECKPOINT PASSED - ALL CRITICAL VALIDATIONS SUCCESSFUL")
+        print("OK CHECKPOINT PASSED - ALL CRITICAL VALIDATIONS SUCCESSFUL")
         print()
-        print("✅ MANDATORY VALIDATIONS COMPLETED:")
-        print("  ✓ Enhanced patch instructions fully replace template implementations")
-        print("  ✓ Comprehensive bypass method coverage (13+ methods)")
-        print("  ✓ Real machine code generation for memory write operations")
-        print("  ✓ R2-to-binary patch integration pipeline functional")
-        print("  ✓ Binary patch application working correctly")
-        print("  ✓ ZERO forbidden patterns detected in patch generation code")
+        print("OK MANDATORY VALIDATIONS COMPLETED:")
+        print("  OK Enhanced patch instructions fully replace template implementations")
+        print("  OK Comprehensive bypass method coverage (13+ methods)")
+        print("  OK Real machine code generation for memory write operations")
+        print("  OK R2-to-binary patch integration pipeline functional")
+        print("  OK Binary patch application working correctly")
+        print("  OK ZERO forbidden patterns detected in patch generation code")
         print()
-        print("✅ FUNCTIONAL PROOFS:")
-        print("  • Enhanced instruction generation: Production-ready")
-        print("  • Binary modification integration: Fully operational")
-        print("  • Patch application pipeline: End-to-end functional")
+        print("OK FUNCTIONAL PROOFS:")
+        print("   Enhanced instruction generation: Production-ready")
+        print("   Binary modification integration: Fully operational")
+        print("   Patch application pipeline: End-to-end functional")
 
         # Save results
         results_data = {
@@ -457,14 +457,14 @@ def main():
         with open("day4_checkpoint4_results.json", "w") as f:
             json.dump(results_data, f, indent=2)
 
-        print(f"\n✅ Results saved to: day4_checkpoint4_results.json")
-        print("✅ AUTHORIZED TO PROCEED TO DAY 5.1")
+        print(f"\nOK Results saved to: day4_checkpoint4_results.json")
+        print("OK AUTHORIZED TO PROCEED TO DAY 5.1")
         return 0
 
     else:
-        print("❌ CHECKPOINT FAILED - CRITICAL VALIDATIONS INCOMPLETE")
-        print(f"❌ {total - passed} validation(s) failed")
-        print("❌ MUST RESOLVE ALL ISSUES BEFORE PROCEEDING")
+        print("FAIL CHECKPOINT FAILED - CRITICAL VALIDATIONS INCOMPLETE")
+        print(f"FAIL {total - passed} validation(s) failed")
+        print("FAIL MUST RESOLVE ALL ISSUES BEFORE PROCEEDING")
         return 1
 
 

@@ -103,11 +103,11 @@ class ComprehensiveE2BTester:
                     test.result = TestResult.PASS
                     test.details = f"Successfully loaded {class_name}"
                     self.modules_tested.add(module_name)
-                    print(f"✓ {class_name} loaded successfully")
+                    print(f"OK {class_name} loaded successfully")
                 else:
                     test.result = TestResult.FAIL
                     test.details = f"Class {class_name} not found in module"
-                    print(f"✗ {class_name} not found")
+                    print(f"FAIL {class_name} not found")
             except ImportError as e:
                 if not self.is_windows and "Windows" in str(e):
                     test.result = TestResult.SKIP
@@ -116,11 +116,11 @@ class ComprehensiveE2BTester:
                 else:
                     test.result = TestResult.ERROR
                     test.details = str(e)
-                    print(f"✗ {class_name} error: {e}")
+                    print(f"FAIL {class_name} error: {e}")
             except Exception as e:
                 test.result = TestResult.ERROR
                 test.details = str(e)
-                print(f"✗ {class_name} error: {e}")
+                print(f"FAIL {class_name} error: {e}")
 
             self.results.append(test)
 
@@ -167,11 +167,11 @@ class ComprehensiveE2BTester:
                     test.result = TestResult.PASS
                     test.details = f"API {api_name} is callable"
                     self.apis_tested.add(api_name)
-                    print(f"✓ {api_name} available")
+                    print(f"OK {api_name} available")
                 else:
                     test.result = TestResult.FAIL
                     test.details = f"API {api_name} not callable"
-                    print(f"✗ {api_name} not available")
+                    print(f"FAIL {api_name} not available")
 
                 self.results.append(test)
 
@@ -212,15 +212,15 @@ class ComprehensiveE2BTester:
                         if compiled:
                             test.result = TestResult.PASS
                             test.details = f"Pattern compiled: {pattern.hex()}"
-                            print(f"✓ {description} pattern compiled")
+                            print(f"OK {description} pattern compiled")
                         else:
                             test.result = TestResult.FAIL
                             test.details = "Pattern compilation failed"
-                            print(f"✗ {description} pattern failed")
+                            print(f"FAIL {description} pattern failed")
                     except Exception as e:
                         test.result = TestResult.ERROR
                         test.details = str(e)
-                        print(f"✗ {description} error: {e}")
+                        print(f"FAIL {description} error: {e}")
 
                     self.results.append(test)
 
@@ -238,15 +238,15 @@ class ComprehensiveE2BTester:
                         test.result = TestResult.PASS
                         test.details = "Wildcard pattern scanning available"
                         self.capabilities_verified["wildcard_patterns"] = True
-                        print("✓ Wildcard pattern support verified")
+                        print("OK Wildcard pattern support verified")
                     else:
                         test.result = TestResult.FAIL
                         test.details = "No wildcard pattern support"
-                        print("✗ Wildcard pattern support missing")
+                        print("FAIL Wildcard pattern support missing")
                 except Exception as e:
                     test.result = TestResult.ERROR
                     test.details = str(e)
-                    print(f"✗ Wildcard pattern error: {e}")
+                    print(f"FAIL Wildcard pattern error: {e}")
 
                 self.results.append(test)
             else:
@@ -291,15 +291,15 @@ class ComprehensiveE2BTester:
                             test.result = TestResult.PASS
                             test.details = f"{op} is callable"
                             self.capabilities_verified[op] = True
-                            print(f"✓ {op} available")
+                            print(f"OK {op} available")
                         else:
                             test.result = TestResult.FAIL
                             test.details = f"{op} not callable"
-                            print(f"✗ {op} not callable")
+                            print(f"FAIL {op} not callable")
                     else:
                         test.result = TestResult.FAIL
                         test.details = f"{op} not found"
-                        print(f"✗ {op} not found")
+                        print(f"FAIL {op} not found")
 
                     self.results.append(test)
             else:
@@ -346,15 +346,15 @@ class ComprehensiveE2BTester:
                             test.result = TestResult.PASS
                             test.details = f"{func} is callable"
                             self.capabilities_verified[f"debug_{func}"] = True
-                            print(f"✓ {func} available")
+                            print(f"OK {func} available")
                         else:
                             test.result = TestResult.FAIL
                             test.details = f"{func} not callable"
-                            print(f"✗ {func} not callable")
+                            print(f"FAIL {func} not callable")
                     else:
                         test.result = TestResult.FAIL
                         test.details = f"{func} not found"
-                        print(f"✗ {func} not found")
+                        print(f"FAIL {func} not found")
 
                     self.results.append(test)
 
@@ -370,11 +370,11 @@ class ComprehensiveE2BTester:
                     test.result = TestResult.PASS
                     test.details = "Hardware breakpoint support verified"
                     self.capabilities_verified["hardware_breakpoints"] = True
-                    print("✓ Hardware breakpoint support verified")
+                    print("OK Hardware breakpoint support verified")
                 else:
                     test.result = TestResult.FAIL
                     test.details = "No hardware breakpoint support"
-                    print("✗ Hardware breakpoint support missing")
+                    print("FAIL Hardware breakpoint support missing")
 
                 self.results.append(test)
 
@@ -418,11 +418,11 @@ class ComprehensiveE2BTester:
                         test.result = TestResult.PASS
                         test.details = f"{feature} is callable"
                         self.capabilities_verified[f"yara_{feature}"] = True
-                        print(f"✓ {feature} available")
+                        print(f"OK {feature} available")
                     else:
                         test.result = TestResult.FAIL
                         test.details = f"{feature} not callable"
-                        print(f"✗ {feature} not callable")
+                        print(f"FAIL {feature} not callable")
                 else:
                     # Try alternative method names
                     alt_names = {
@@ -434,11 +434,11 @@ class ComprehensiveE2BTester:
                         test.result = TestResult.PASS
                         test.details = f"{feature} available as {alt_name}"
                         self.capabilities_verified[f"yara_{feature}"] = True
-                        print(f"✓ {feature} available (as {alt_name})")
+                        print(f"OK {feature} available (as {alt_name})")
                     else:
                         test.result = TestResult.FAIL
                         test.details = f"{feature} not found"
-                        print(f"✗ {feature} not found")
+                        print(f"FAIL {feature} not found")
 
                 self.results.append(test)
 
@@ -463,7 +463,7 @@ class ComprehensiveE2BTester:
                 if hasattr(scanner, 'license_rules'):
                     test.result = TestResult.PASS
                     test.details = f"License rule {rule_name} available"
-                    print(f"✓ {rule_name} rule available")
+                    print(f"OK {rule_name} rule available")
                 else:
                     test.result = TestResult.SKIP
                     test.details = "License rules not loaded"
@@ -511,15 +511,15 @@ class ComprehensiveE2BTester:
                             if result is False or result is None or result == []:
                                 test.result = TestResult.PASS
                                 test.details = "Error handled gracefully"
-                                print(f"✓ {scenario} handled")
+                                print(f"OK {scenario} handled")
                             else:
                                 test.result = TestResult.FAIL
                                 test.details = "No error handling"
-                                print(f"✗ {scenario} not handled properly")
+                                print(f"FAIL {scenario} not handled properly")
                         except Exception as e:
                             test.result = TestResult.PASS
                             test.details = f"Exception caught: {type(e).__name__}"
-                            print(f"✓ {scenario} exception handled")
+                            print(f"OK {scenario} exception handled")
                     else:
                         test.result = TestResult.SKIP
                         test.details = f"Function {function} not found"
@@ -538,15 +538,15 @@ class ComprehensiveE2BTester:
                             if result is False or result is None:
                                 test.result = TestResult.PASS
                                 test.details = "Error handled gracefully"
-                                print(f"✓ {scenario} handled")
+                                print(f"OK {scenario} handled")
                             else:
                                 test.result = TestResult.FAIL
                                 test.details = "No error handling"
-                                print(f"✗ {scenario} not handled")
+                                print(f"FAIL {scenario} not handled")
                         except Exception as e:
                             test.result = TestResult.PASS
                             test.details = f"Exception caught: {type(e).__name__}"
-                            print(f"✓ {scenario} exception handled")
+                            print(f"OK {scenario} exception handled")
                     else:
                         test.result = TestResult.SKIP
                         test.details = f"Function {function} not found"
@@ -562,15 +562,15 @@ class ComprehensiveE2BTester:
                             if result is False or result is None:
                                 test.result = TestResult.PASS
                                 test.details = "Error handled gracefully"
-                                print(f"✓ {scenario} handled")
+                                print(f"OK {scenario} handled")
                             else:
                                 test.result = TestResult.FAIL
                                 test.details = "No error handling"
-                                print(f"✗ {scenario} not handled")
+                                print(f"FAIL {scenario} not handled")
                         except Exception as e:
                             test.result = TestResult.PASS
                             test.details = f"Exception caught: {type(e).__name__}"
-                            print(f"✓ {scenario} exception handled")
+                            print(f"OK {scenario} exception handled")
                     else:
                         test.result = TestResult.SKIP
                         test.details = f"Function {function} not found"
@@ -620,11 +620,11 @@ class ComprehensiveE2BTester:
                         if hasattr(scanner, 'scan_process_with_analyzer'):
                             test.result = TestResult.PASS
                             test.details = "Integration method found"
-                            print(f"✓ {integration_name} integration verified")
+                            print(f"OK {integration_name} integration verified")
                         else:
                             test.result = TestResult.FAIL
                             test.details = "No integration method"
-                            print(f"✗ {integration_name} integration missing")
+                            print(f"FAIL {integration_name} integration missing")
                     else:
                         test.result = TestResult.SKIP
                         test.details = "Non-Windows platform"
@@ -640,11 +640,11 @@ class ComprehensiveE2BTester:
                         if hasattr(scanner, 'connect_to_debugger'):
                             test.result = TestResult.PASS
                             test.details = "Integration method found"
-                            print(f"✓ {integration_name} integration verified")
+                            print(f"OK {integration_name} integration verified")
                         else:
                             test.result = TestResult.FAIL
                             test.details = "No integration method"
-                            print(f"✗ {integration_name} integration missing")
+                            print(f"FAIL {integration_name} integration missing")
                     else:
                         test.result = TestResult.SKIP
                         test.details = "Non-Windows platform"
@@ -673,16 +673,16 @@ class ComprehensiveE2BTester:
                     if module1_imported and module2_imported:
                         test.result = TestResult.PASS
                         test.details = "Both modules importable"
-                        print(f"✓ {integration_name} modules compatible")
+                        print(f"OK {integration_name} modules compatible")
                     else:
                         test.result = TestResult.FAIL
                         test.details = f"Import failed: M1={module1_imported}, M2={module2_imported}"
-                        print(f"✗ {integration_name} import failed")
+                        print(f"FAIL {integration_name} import failed")
 
             except Exception as e:
                 test.result = TestResult.ERROR
                 test.details = str(e)
-                print(f"✗ {integration_name} error: {e}")
+                print(f"FAIL {integration_name} error: {e}")
 
             self.results.append(test)
 
@@ -751,9 +751,9 @@ class ComprehensiveE2BTester:
         print(f"Effective Rate: {effective_rate:.1f}% (excluding skipped)")
 
         if report["production_ready"]:
-            print("\n✅ PRODUCTION READY - All criteria met")
+            print("\nOK PRODUCTION READY - All criteria met")
         else:
-            print("\n⚠️ NOT PRODUCTION READY - Criteria not met")
+            print("\nWARNING NOT PRODUCTION READY - Criteria not met")
             if success_rate < 70:
                 print(f"  - Success rate {success_rate:.1f}% < 70%")
             if capabilities_present < 8:

@@ -19,6 +19,9 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import json
 import logging
 import os
+
+# Import our advanced radare2 analysis engines
+import sys
 import time
 import traceback
 from typing import Any
@@ -28,12 +31,40 @@ from intellicrack.utils.logger import logger
 from ...utils.tools.radare2_utils import R2Exception, r2_session
 from .radare2_ai_integration import R2AIEngine
 
-# Import our advanced radare2 analysis engines
+print("[DEBUG cfg_explorer] Importing radare2_decompiler...")
+sys.stdout.flush()
 from .radare2_decompiler import R2DecompilationEngine
+
+print("[DEBUG cfg_explorer] radare2_decompiler imported OK")
+sys.stdout.flush()
+
+print("[DEBUG cfg_explorer] Importing radare2_imports...")
+sys.stdout.flush()
 from .radare2_imports import R2ImportExportAnalyzer
+
+print("[DEBUG cfg_explorer] radare2_imports imported OK")
+sys.stdout.flush()
+
+print("[DEBUG cfg_explorer] Importing radare2_scripting...")
+sys.stdout.flush()
 from .radare2_scripting import R2ScriptingEngine
+
+print("[DEBUG cfg_explorer] radare2_scripting imported OK")
+sys.stdout.flush()
+
+print("[DEBUG cfg_explorer] Importing radare2_strings...")
+sys.stdout.flush()
 from .radare2_strings import R2StringAnalyzer
+
+print("[DEBUG cfg_explorer] radare2_strings imported OK")
+sys.stdout.flush()
+
+print("[DEBUG cfg_explorer] Importing radare2_vulnerability_engine...")
+sys.stdout.flush()
 from .radare2_vulnerability_engine import R2VulnerabilityEngine
+
+print("[DEBUG cfg_explorer] radare2_vulnerability_engine imported OK")
+sys.stdout.flush()
 
 """
 Control Flow Graph (CFG) Explorer for Binary Analysis
@@ -1471,9 +1502,161 @@ class CFGExplorer:
                     </div>
                 </div>
                 <div id="tooltip"></div>
+                <canvas id="cfg-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></canvas>
                 <script>
-                    // Implementation would go here - simplified for brevity
-                    console.log("CFG Visualization for {function_name}");
+                    const canvas = document.getElementById('cfg-canvas');
+                    const ctx = canvas.getContext('2d');
+                    const tooltip = document.getElementById('tooltip');
+
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+
+                    let scale = 1;
+                    let offsetX = canvas.width / 2;
+                    let offsetY = 100;
+                    const graphData = {json.dumps(graph_data)};
+                    const licensePatterns = {json.dumps(license_patterns)};
+
+                    function drawNode(node, x, y) {{
+                        ctx.save();
+                        ctx.translate(offsetX, offsetY);
+                        ctx.scale(scale, scale);
+
+                        const isLicenseCheck = licensePatterns.some(p => p.op_addr === node.addr);
+                        ctx.fillStyle = isLicenseCheck ? '#ffcccc' : (node.is_entry ? '#ccffcc' : '#ccccff');
+                        ctx.strokeStyle = '#333';
+                        ctx.lineWidth = 2;
+
+                        ctx.fillRect(x - 60, y - 20, 120, 40);
+                        ctx.strokeRect(x - 60, y - 20, 120, 40);
+
+                        ctx.fillStyle = '#000';
+                        ctx.font = '12px monospace';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(`0x${{node.addr.toString(16)}}`, x, y);
+
+                        ctx.restore();
+                    }}
+
+                    function drawEdge(from, to) {{
+                        ctx.save();
+                        ctx.translate(offsetX, offsetY);
+                        ctx.scale(scale, scale);
+
+                        ctx.strokeStyle = '#666';
+                        ctx.lineWidth = 1.5;
+                        ctx.beginPath();
+                        ctx.moveTo(from.x, from.y + 20);
+                        ctx.lineTo(to.x, to.y - 20);
+                        ctx.stroke();
+
+                        const angle = Math.atan2(to.y - from.y, to.x - from.x);
+                        ctx.save();
+                        ctx.translate(to.x, to.y - 20);
+                        ctx.rotate(angle - Math.PI / 2);
+                        ctx.beginPath();
+                        ctx.moveTo(0, 0);
+                        ctx.lineTo(-5, -10);
+                        ctx.lineTo(5, -10);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.restore();
+
+                        ctx.restore();
+                    }}
+
+                    function render() {{
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                        if (!graphData.nodes || graphData.nodes.length === 0) return;
+
+                        graphData.edges?.forEach(edge => {{
+                            const fromNode = graphData.nodes.find(n => n.addr === edge.from);
+                            const toNode = graphData.nodes.find(n => n.addr === edge.to);
+                            if (fromNode && toNode) {{
+                                drawEdge(fromNode, toNode);
+                            }}
+                        }});
+
+                        graphData.nodes.forEach(node => {{
+                            drawNode(node, node.x || 0, node.y || 0);
+                        }});
+                    }}
+
+                    document.getElementById('zoom-in').addEventListener('click', () => {{
+                        scale *= 1.2;
+                        render();
+                    }});
+
+                    document.getElementById('zoom-out').addEventListener('click', () => {{
+                        scale /= 1.2;
+                        render();
+                    }});
+
+                    document.getElementById('reset').addEventListener('click', () => {{
+                        scale = 1;
+                        offsetX = canvas.width / 2;
+                        offsetY = 100;
+                        render();
+                    }});
+
+                    let isDragging = false;
+                    let lastX, lastY;
+
+                    canvas.addEventListener('mousedown', (e) => {{
+                        isDragging = true;
+                        lastX = e.clientX;
+                        lastY = e.clientY;
+                    }});
+
+                    canvas.addEventListener('mousemove', (e) => {{
+                        if (isDragging) {{
+                            offsetX += e.clientX - lastX;
+                            offsetY += e.clientY - lastY;
+                            lastX = e.clientX;
+                            lastY = e.clientY;
+                            render();
+                        }}
+
+                        const rect = canvas.getBoundingClientRect();
+                        const x = (e.clientX - rect.left - offsetX) / scale;
+                        const y = (e.clientY - rect.top - offsetY) / scale;
+
+                        const hoveredNode = graphData.nodes?.find(n => {{
+                            const nx = n.x || 0;
+                            const ny = n.y || 0;
+                            return x >= nx - 60 && x <= nx + 60 && y >= ny - 20 && y <= ny + 20;
+                        }});
+
+                        if (hoveredNode) {{
+                            const pattern = licensePatterns.find(p => p.op_addr === hoveredNode.addr);
+                            tooltip.innerHTML = `<div style="position:absolute;left:${{e.clientX+10}}px;top:${{e.clientY+10}}px;background:#fff;border:1px solid #ccc;padding:8px;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.15);z-index:1000;">
+                                <strong>Address:</strong> 0x${{hoveredNode.addr.toString(16)}}<br/>
+                                ${{pattern ? `<strong>Type:</strong> ${{pattern.type}}<br/><strong>Disasm:</strong> ${{pattern.disasm}}` : ''}}
+                            </div>`;
+                        }} else {{
+                            tooltip.innerHTML = '';
+                        }}
+                    }});
+
+                    canvas.addEventListener('mouseup', () => {{
+                        isDragging = false;
+                    }});
+
+                    canvas.addEventListener('wheel', (e) => {{
+                        e.preventDefault();
+                        scale *= e.deltaY < 0 ? 1.1 : 0.9;
+                        scale = Math.max(0.1, Math.min(scale, 10));
+                        render();
+                    }});
+
+                    window.addEventListener('resize', () => {{
+                        canvas.width = window.innerWidth;
+                        canvas.height = window.innerHeight;
+                        render();
+                    }});
+
+                    render();
                 </script>
             """
                 + close_html()

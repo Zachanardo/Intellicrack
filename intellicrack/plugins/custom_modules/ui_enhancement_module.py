@@ -668,7 +668,7 @@ class FileExplorerPanel:
             for item in sorted(self.current_path.iterdir()):
                 try:
                     if item.is_dir():
-                        icon = "📁"
+                        icon = ""
                         size = ""
                         item_type = "Folder"
                         dir_count += 1
@@ -753,26 +753,26 @@ class FileExplorerPanel:
         suffix = file_path.suffix.lower()
 
         icons = {
-            ".exe": "⚙️",
-            ".dll": "🔧",
+            ".exe": "[CFG]️",
+            ".dll": "",
             ".sys": "[FAST]",
-            ".bin": "💾",
+            ".bin": "",
             ".bat": "📋",
             ".cmd": "📋",
             ".ps1": "💠",
             ".py": "🐍",
             ".js": "🟨",
-            ".jar": "☕",
-            ".zip": "📦",
-            ".rar": "📦",
-            ".7z": "📦",
+            ".jar": "[JAVA]",
+            ".zip": "",
+            ".rar": "",
+            ".7z": "",
             ".pdf": "📄",
             ".txt": "📄",
             ".log": "📋",
-            ".json": "⚙️",
-            ".xml": "⚙️",
-            ".cfg": "⚙️",
-            ".ini": "⚙️",
+            ".json": "[CFG]️",
+            ".xml": "[CFG]️",
+            ".cfg": "[CFG]️",
+            ".ini": "[CFG]️",
         }
 
         return icons.get(suffix, "📄")
@@ -3454,11 +3454,11 @@ Advanced binary analysis and exploitation platform with
 AI-driven capabilities and enhanced user interface.
 
 Features:
-• Three-panel professional interface
-• Real-time analysis visualization
-• Multi-platform script generation
-• Comprehensive logging system
-• Customizable themes and layouts
+ Three-panel professional interface
+ Real-time analysis visualization
+ Multi-platform script generation
+ Comprehensive logging system
+ Customizable themes and layouts
 
 Copyright © 2024 Intellicrack Framework
 Licensed under GPL v3

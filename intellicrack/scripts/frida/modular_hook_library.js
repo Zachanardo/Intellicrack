@@ -30,13 +30,12 @@
 
 const modularHookLibrary = {
     name: 'Modular Hook Library',
-    description:
-    'Reusable hook components system for efficient bypass development',
+    description: 'Reusable hook components system for efficient bypass development',
     version: '2.0.0',
 
     // Configuration for modular hook system
     config: {
-    // Library management
+        // Library management
         library: {
             enabled: true,
             autoLoad: true,
@@ -311,8 +310,7 @@ const modularHookLibrary = {
             version: '1.0.0',
             category: 'antiDebug',
             dependencies: ['antidebug.basic'],
-            description:
-        'Advanced debugger detection bypass including PEB/TEB manipulation',
+            description: 'Advanced debugger detection bypass including PEB/TEB manipulation',
             hooks: {
                 PEB_Manipulation: {
                     strategy: 'memory_patch',
@@ -434,8 +432,7 @@ const modularHookLibrary = {
             version: '1.0.0',
             category: 'licensing',
             dependencies: ['networking.https', 'crypto.jwt', 'crypto.oauth'],
-            description:
-        'Cloud-based license validation bypass with OAuth/JWT support',
+            description: 'Cloud-based license validation bypass with OAuth/JWT support',
             hooks: {
                 OAuth_Token_Validation: {
                     strategy: 'spoof_tokens',
@@ -1098,7 +1095,7 @@ const modularHookLibrary = {
     },
 
     validateModuleDefinition: function (module) {
-    // Required fields
+        // Required fields
         if (!module.name || !module.version || !module.category) {
             return false;
         }
@@ -1166,10 +1163,7 @@ const modularHookLibrary = {
             this.stats.cacheMisses++;
 
             // Load dependencies first
-            if (
-                moduleDefinition.dependencies &&
-        moduleDefinition.dependencies.length > 0
-            ) {
+            if (moduleDefinition.dependencies && moduleDefinition.dependencies.length > 0) {
                 for (var i = 0; i < moduleDefinition.dependencies.length; i++) {
                     var depId = moduleDefinition.dependencies[i];
                     this.loadModule(depId);
@@ -1230,25 +1224,25 @@ const modularHookLibrary = {
 
             // Copy methods from definition
             install:
-        moduleDefinition.install ||
-        function () {
-            return true;
-        },
+                moduleDefinition.install ||
+                function () {
+                    return true;
+                },
             uninstall:
-        moduleDefinition.uninstall ||
-        function () {
-            return true;
-        },
+                moduleDefinition.uninstall ||
+                function () {
+                    return true;
+                },
             enable:
-        moduleDefinition.enable ||
-        function () {
-            return true;
-        },
+                moduleDefinition.enable ||
+                function () {
+                    return true;
+                },
             disable:
-        moduleDefinition.disable ||
-        function () {
-            return true;
-        },
+                moduleDefinition.disable ||
+                function () {
+                    return true;
+                },
 
             // Add management methods
             getHooks: function () {
@@ -1443,10 +1437,7 @@ const modularHookLibrary = {
     },
 
     createReplaceReturnHook: function (hookDefinition) {
-        var targetFunc = Module.findExportByName(
-            hookDefinition.module,
-            hookDefinition.target,
-        );
+        var targetFunc = Module.findExportByName(hookDefinition.module, hookDefinition.target);
         if (!targetFunc) {
             send({
                 type: 'warning',
@@ -1470,16 +1461,13 @@ const modularHookLibrary = {
                     return hookDefinition.returnValue || 0;
                 },
                 'int',
-                [],
-            ),
+                []
+            )
         );
     },
 
     createInterceptModifyHook: function (hookDefinition) {
-        var targetFunc = Module.findExportByName(
-            hookDefinition.module,
-            hookDefinition.target,
-        );
+        var targetFunc = Module.findExportByName(hookDefinition.module, hookDefinition.target);
         if (!targetFunc) {
             return null;
         }
@@ -1505,10 +1493,7 @@ const modularHookLibrary = {
     },
 
     createMonitorLogHook: function (hookDefinition) {
-        var targetFunc = Module.findExportByName(
-            hookDefinition.module,
-            hookDefinition.target,
-        );
+        var targetFunc = Module.findExportByName(hookDefinition.module, hookDefinition.target);
         if (!targetFunc) {
             return null;
         }
@@ -1535,10 +1520,7 @@ const modularHookLibrary = {
     },
 
     createSpoofValuesHook: function (hookDefinition) {
-        var targetFunc = Module.findExportByName(
-            hookDefinition.module,
-            hookDefinition.target,
-        );
+        var targetFunc = Module.findExportByName(hookDefinition.module, hookDefinition.target);
         if (!targetFunc) {
             return null;
         }
@@ -1564,10 +1546,7 @@ const modularHookLibrary = {
     },
 
     createBlockRequestsHook: function (hookDefinition) {
-        var targetFunc = Module.findExportByName(
-            hookDefinition.module,
-            hookDefinition.target,
-        );
+        var targetFunc = Module.findExportByName(hookDefinition.module, hookDefinition.target);
         if (!targetFunc) {
             return null;
         }
@@ -1734,10 +1713,7 @@ const modularHookLibrary = {
 
             if (hookInfo) {
                 // Check if previous hooks succeeded (if required)
-                if (
-                    chain.options.stopOnFailure &&
-          results.some((r) => r.status === 'failed')
-                ) {
+                if (chain.options.stopOnFailure && results.some((r) => r.status === 'failed')) {
                     results.push({ hookId: hookId, status: 'skipped' });
                     continue;
                 }
@@ -2236,11 +2212,10 @@ const modularHookLibrary = {
                 action: 'runtime_statistic',
                 metric: 'cache_hit_rate',
                 value:
-          (
-              (this.stats.cacheHits /
-              (this.stats.cacheHits + this.stats.cacheMisses)) *
-            100
-          ).toFixed(1) + '%',
+                    (
+                        (this.stats.cacheHits / (this.stats.cacheHits + this.stats.cacheMisses)) *
+                        100
+                    ).toFixed(1) + '%',
             });
 
             send({
@@ -2304,7 +2279,7 @@ const modularHookLibrary = {
 
     // === ENHANCEMENT FUNCTIONS (2025) - BATCH 1 - PRODUCTION-READY ===
     initializeAdvancedModularOrchestration: function () {
-        var _self = this;  // Reserved for closures
+        var _self = this; // Reserved for closures
         var orchestrator = {
             interceptorBatch: null,
             activeInterceptors: new Map(),
@@ -2386,7 +2361,7 @@ const modularHookLibrary = {
 
         // Module load monitoring for dynamic hook installation
         orchestrator.monitorModuleLoads = function () {
-            var _self = this;  // Reserved for closures
+            var _self = this; // Reserved for closures
             Process.enumerateModules().forEach(function (module) {
                 self.performanceMetrics.set(module.name, {
                     base: module.base,
@@ -2460,7 +2435,7 @@ const modularHookLibrary = {
     },
 
     setupIntelligentHookComposition: function () {
-        var _self = this;  // Reserved for closures
+        var _self = this; // Reserved for closures
         var composer = {
             compositions: new Map(),
             chainedHooks: new Map(),
@@ -2575,7 +2550,7 @@ const modularHookLibrary = {
 
         // Execute dependent hooks based on conditions
         composer.executeDependentHooks = function (chainId, hookIds) {
-            var _self = this;  // Reserved for closures
+            var _self = this; // Reserved for closures
             var chainContext = self.sharedContexts.get(chainId);
             if (!chainContext) {
                 send({
@@ -2629,7 +2604,7 @@ const modularHookLibrary = {
                             var newRetval = behavior.onLeave.call(
                                 this,
                                 retval,
-                                behaviorResult.result,
+                                behaviorResult.result
                             );
                             if (newRetval !== undefined) {
                                 retval.replace(newRetval);
@@ -2699,7 +2674,7 @@ const modularHookLibrary = {
     },
 
     initializeAdaptiveLoadBalancer: function () {
-        var _self = this;  // Reserved for closures
+        var _self = this; // Reserved for closures
         var balancer = {
             threadMetrics: new Map(),
             hookDistribution: new Map(),
@@ -2788,15 +2763,12 @@ const modularHookLibrary = {
 
             if (bestThread) {
                 // Attach hook to specific thread
-                var target = Module.findExportByName(
-                    hookConfig.module,
-                    hookConfig.function,
-                );
+                var target = Module.findExportByName(hookConfig.module, hookConfig.function);
                 if (target) {
                     var interceptor = Interceptor.attach(target, {
                         onEnter: function (args) {
                             if (this.threadId === bestThread) {
-                                var _startTime = Date.now();  // Reserved for performance tracking
+                                var _startTime = Date.now(); // Reserved for performance tracking
                                 if (hookConfig.onEnter) {
                                     hookConfig.onEnter.call(this, args);
                                 }
@@ -2900,7 +2872,7 @@ const modularHookLibrary = {
     },
 
     setupQuantumResistantModuleEncryption: function () {
-        var _self = this;  // Reserved for closures
+        var _self = this; // Reserved for closures
         var encryption = {
             protectedCode: new Map(),
             codeSignatures: new Map(),
@@ -2922,17 +2894,13 @@ const modularHookLibrary = {
             // ChaCha20 quarter round
             function quarterRound(a, b, c, d) {
                 state[a] = (state[a] + state[b]) >>> 0;
-                state[d] =
-          ((state[d] ^ state[a]) << 16) | ((state[d] ^ state[a]) >>> 16);
+                state[d] = ((state[d] ^ state[a]) << 16) | ((state[d] ^ state[a]) >>> 16);
                 state[c] = (state[c] + state[d]) >>> 0;
-                state[b] =
-          ((state[b] ^ state[c]) << 12) | ((state[b] ^ state[c]) >>> 20);
+                state[b] = ((state[b] ^ state[c]) << 12) | ((state[b] ^ state[c]) >>> 20);
                 state[a] = (state[a] + state[b]) >>> 0;
-                state[d] =
-          ((state[d] ^ state[a]) << 8) | ((state[d] ^ state[a]) >>> 24);
+                state[d] = ((state[d] ^ state[a]) << 8) | ((state[d] ^ state[a]) >>> 24);
                 state[c] = (state[c] + state[d]) >>> 0;
-                state[b] =
-          ((state[b] ^ state[c]) << 7) | ((state[b] ^ state[c]) >>> 25);
+                state[b] = ((state[b] ^ state[c]) << 7) | ((state[b] ^ state[c]) >>> 25);
             }
 
             // 20 rounds
@@ -2978,8 +2946,7 @@ const modularHookLibrary = {
                 var keystream = this.chacha20Block(key, counter++, nonce);
                 for (var j = 0; j < 64 && i + j < codeBytes.length; j++) {
                     encrypted.push(
-                        codeBytes[i + j] ^
-              ((keystream[Math.floor(j / 4)] >>> ((j % 4) * 8)) & 0xff),
+                        codeBytes[i + j] ^ ((keystream[Math.floor(j / 4)] >>> ((j % 4) * 8)) & 0xff)
                     );
                 }
             }
@@ -3015,18 +2982,13 @@ const modularHookLibrary = {
         };
 
         // Monitor code integrity to detect tampering
-        encryption.monitorCodeIntegrity = function (
-            address,
-            size,
-            expectedChecksum,
-        ) {
-            var _self = this;  // Reserved for closures
+        encryption.monitorCodeIntegrity = function (address, size, expectedChecksum) {
+            var _self = this; // Reserved for closures
             var checkInterval = setInterval(function () {
                 try {
                     var currentChecksum = 0;
                     for (var i = 0; i < size; i++) {
-                        currentChecksum =
-              (currentChecksum + address.add(i).readU8()) & 0xffffffff;
+                        currentChecksum = (currentChecksum + address.add(i).readU8()) & 0xffffffff;
                     }
 
                     if (currentChecksum !== expectedChecksum) {
@@ -3073,7 +3035,7 @@ const modularHookLibrary = {
                 for (var j = 0; j < 64 && i + j < protectedData.encrypted.length; j++) {
                     decrypted.push(
                         protectedData.encrypted[i + j] ^
-              ((keystream[Math.floor(j / 4)] >>> ((j % 4) * 8)) & 0xff),
+                            ((keystream[Math.floor(j / 4)] >>> ((j % 4) * 8)) & 0xff)
                     );
                 }
             }
@@ -3110,7 +3072,7 @@ const modularHookLibrary = {
     },
 
     initializeAIAssistedDependencyResolution: function () {
-        var _self = this;  // Reserved for closures
+        var _self = this; // Reserved for closures
         var resolver = {
             importTable: new Map(),
             exportTable: new Map(),
@@ -3306,7 +3268,7 @@ const modularHookLibrary = {
 
     // Enhancement Function 6: Advanced Conflict Mitigation
     setupAdvancedConflictMitigation: function () {
-        var _self = this;  // Reserved for closures
+        var _self = this; // Reserved for closures
         var conflictResolver = {
             hookConflicts: new Map(),
             priorityQueue: [],
@@ -3407,9 +3369,7 @@ const modularHookLibrary = {
         // Find alternative hook points
         conflictResolver.findAlternatives = function (_addr) {
             var alternatives = [];
-            var func = DebugSymbol.getFunctionByName(
-                DebugSymbol.fromAddress(addr).name,
-            );
+            var func = DebugSymbol.getFunctionByName(DebugSymbol.fromAddress(addr).name);
 
             if (func) {
                 // Find all call sites to this function
@@ -3418,14 +3378,12 @@ const modularHookLibrary = {
                         function (match) {
                             var callInstr = Instruction.parse(match.address);
                             if (callInstr && callInstr.operands[0]) {
-                                var target = ptr(
-                                    callInstr.next.add(callInstr.operands[0].value),
-                                );
+                                var target = ptr(callInstr.next.add(callInstr.operands[0].value));
                                 if (target.equals(addr)) {
                                     alternatives.push(match.address);
                                 }
                             }
-                        },
+                        }
                     );
                 });
             }
@@ -3470,7 +3428,7 @@ const modularHookLibrary = {
 
     // Enhancement Function 7: Predictive Hook Optimization
     initializePredictiveHookOptimization: function () {
-        var _self = this;  // Reserved for closures
+        var _self = this; // Reserved for closures
         var optimizer = {
             callFrequency: new Map(),
             executionPaths: new Map(),
@@ -3481,7 +3439,7 @@ const modularHookLibrary = {
         // Profile function call frequency using Stalker
         optimizer.profileCallFrequency = function () {
             var _frequency = new Map();
-            var _startTime = Date.now();  // Reserved for performance tracking
+            var _startTime = Date.now(); // Reserved for performance tracking
 
             Process.enumerateThreads()
                 .slice(0, 3)
@@ -3498,7 +3456,7 @@ const modularHookLibrary = {
                                         var addr = event.target;
                                         frequency.set(
                                             addr.toString(),
-                                            (frequency.get(addr.toString()) || 0) + 1,
+                                            (frequency.get(addr.toString()) || 0) + 1
                                         );
                                     }
                                 });
@@ -3647,7 +3605,7 @@ const modularHookLibrary = {
 
     // Enhancement Function 8: Dynamic Module Evolution
     setupDynamicModuleEvolution: function () {
-        var _self = this;  // Reserved for closures
+        var _self = this; // Reserved for closures
         var evolution = {
             moduleGenerations: new Map(),
             mutationHistory: [],
@@ -3670,7 +3628,7 @@ const modularHookLibrary = {
             evolved.adaptations = [];
 
             // Monitor and adapt
-            var _self = this;  // Reserved for closures
+            var _self = this; // Reserved for closures
             evolved.monitor = setInterval(function () {
                 var metrics = self.collectMetrics(targetAddr);
 
@@ -3734,9 +3692,7 @@ const modularHookLibrary = {
 
                     // Fallback to previous generation
                     if (generation > 0) {
-                        return evolution
-                            .mutateCallback(callback, generation - 1)
-                            .call(this, args);
+                        return evolution.mutateCallback(callback, generation - 1).call(this, args);
                     }
                 }
             };
@@ -3807,7 +3763,7 @@ const modularHookLibrary = {
             };
 
             // Sample execution for metrics
-            var _startTime = Date.now();  // Reserved for performance tracking
+            var _startTime = Date.now(); // Reserved for performance tracking
             var sampler = Interceptor.attach(addr, {
                 onEnter: function () {
                     this.startTime = Date.now();
@@ -3827,8 +3783,7 @@ const modularHookLibrary = {
 
             return {
                 failureRate: metrics.failures / Math.max(metrics.calls, 1),
-                successRate:
-          (metrics.calls - metrics.failures) / Math.max(metrics.calls, 1),
+                successRate: (metrics.calls - metrics.failures) / Math.max(metrics.calls, 1),
                 avgTime: metrics.totalTime / Math.max(metrics.calls, 1),
             };
         };
@@ -3843,7 +3798,7 @@ const modularHookLibrary = {
 
     // Enhancement Function 9: Advanced Versioning System
     initializeAdvancedVersioningSystem: function () {
-        var _self = this;  // Reserved for closures
+        var _self = this; // Reserved for closures
         var versioning = {
             versions: new Map(),
             branches: new Map(),
@@ -3924,7 +3879,7 @@ const modularHookLibrary = {
                 target.commits.forEach(function (targetCommit) {
                     if (
                         commit.hookId === targetCommit.hookId &&
-            commit.address === targetCommit.address
+                        commit.address === targetCommit.address
                     ) {
                         hasConflict = true;
                         conflicts.push({
@@ -3961,12 +3916,8 @@ const modularHookLibrary = {
             }
 
             // Compare complexity - more complex wins
-            var sourceComplexity = conflict.source.code
-                ? conflict.source.code.length
-                : 0;
-            var targetComplexity = conflict.target.code
-                ? conflict.target.code.length
-                : 0;
+            var sourceComplexity = conflict.source.code ? conflict.source.code.length : 0;
+            var targetComplexity = conflict.target.code ? conflict.target.code.length : 0;
 
             if (sourceComplexity > targetComplexity) {
                 return conflict.source;
@@ -4083,7 +4034,7 @@ const modularHookLibrary = {
 
     // Enhancement Function 10: Intelligent Performance Orchestrator
     setupIntelligentPerformanceOrchestrator: function () {
-        var _self = this;  // Reserved for closures
+        var _self = this; // Reserved for closures
         var orchestrator = {
             performanceMetrics: new Map(),
             optimizationQueue: [],
@@ -4099,9 +4050,7 @@ const modularHookLibrary = {
             var metrics = {
                 memory: Process.getCurrentThreadId() ? this.getMemoryUsage() : 0,
                 cpu: this.getCpuUsage(),
-                hookCount: global.fridaHooks
-                    ? Object.keys(global.fridaHooks).length
-                    : 0,
+                hookCount: global.fridaHooks ? Object.keys(global.fridaHooks).length : 0,
                 timestamp: Date.now(),
             };
 
@@ -4132,11 +4081,7 @@ const modularHookLibrary = {
 
             // Estimate based on allocated memory regions
             Process.enumerateRanges('rw-').forEach(function (range) {
-                if (
-                    range.file &&
-          range.file.path &&
-          range.file.path.indexOf('frida') !== -1
-                ) {
+                if (range.file && range.file.path && range.file.path.indexOf('frida') !== -1) {
                     usage += range.size;
                 }
             });
@@ -4146,7 +4091,7 @@ const modularHookLibrary = {
 
         // Get CPU usage estimate
         orchestrator.getCpuUsage = function () {
-            var _startTime = Date.now();  // Reserved for performance tracking
+            var _startTime = Date.now(); // Reserved for performance tracking
             var iterations = 0;
 
             // Benchmark loop

@@ -108,21 +108,21 @@ if __name__ == "__main__":
             for key in real_license_keys:
                 if analyzer._detect_license_key_formats(key):
                     detected_count += 1
-                    print(f"  ✓ DETECTED: {key[:30]}...")
+                    print(f"  OK DETECTED: {key[:30]}...")
                 else:
-                    print(f"  ✗ MISSED: {key[:30]}...")
+                    print(f"  FAIL MISSED: {key[:30]}...")
 
             detection_rate = detected_count / len(real_license_keys)
-            print(f"\n  📊 License Detection Rate: {detection_rate:.2%} ({detected_count}/{len(real_license_keys)})")
+            print(f"\n   License Detection Rate: {detection_rate:.2%} ({detected_count}/{len(real_license_keys)})")
 
             # Cleanup
             os.unlink(test_binary)
 
             success = detection_rate >= 0.75  # Require 75% detection rate
             if success:
-                print("  ✅ PASS: License key detection meets production standards")
+                print("  OK PASS: License key detection meets production standards")
             else:
-                print("  ❌ FAIL: Detection rate below 75% threshold")
+                print("  FAIL FAIL: Detection rate below 75% threshold")
 
             self.test_results.append({
                 "test": "license_key_detection",
@@ -135,7 +135,7 @@ if __name__ == "__main__":
             return success
 
         except Exception as e:
-            print(f"  ❌ ERROR: {e}")
+            print(f"  FAIL ERROR: {e}")
             self.test_results.append({
                 "test": "license_key_detection",
                 "success": False,
@@ -166,21 +166,21 @@ if __name__ == "__main__":
             for crypto_str in crypto_strings:
                 if analyzer._detect_cryptographic_data(crypto_str):
                     detected_count += 1
-                    print(f"  ✓ DETECTED: {crypto_str[:40]}...")
+                    print(f"  OK DETECTED: {crypto_str[:40]}...")
                 else:
-                    print(f"  ✗ MISSED: {crypto_str[:40]}...")
+                    print(f"  FAIL MISSED: {crypto_str[:40]}...")
 
             detection_rate = detected_count / len(crypto_strings)
-            print(f"\n  📊 Crypto Detection Rate: {detection_rate:.2%} ({detected_count}/{len(crypto_strings)})")
+            print(f"\n   Crypto Detection Rate: {detection_rate:.2%} ({detected_count}/{len(crypto_strings)})")
 
             # Cleanup
             os.unlink(test_binary)
 
             success = detection_rate >= 0.70  # Require 70% detection rate
             if success:
-                print("  ✅ PASS: Cryptographic detection meets production standards")
+                print("  OK PASS: Cryptographic detection meets production standards")
             else:
-                print("  ❌ FAIL: Detection rate below 70% threshold")
+                print("  FAIL FAIL: Detection rate below 70% threshold")
 
             self.test_results.append({
                 "test": "crypto_detection",
@@ -193,7 +193,7 @@ if __name__ == "__main__":
             return success
 
         except Exception as e:
-            print(f"  ❌ ERROR: {e}")
+            print(f"  FAIL ERROR: {e}")
             self.test_results.append({
                 "test": "crypto_detection",
                 "success": False,
@@ -213,14 +213,14 @@ if __name__ == "__main__":
             # Test that enhanced_strings component is included
             components = analyzer._determine_analysis_components(test_binary, AnalysisEvent.ANALYSIS_STARTED)
             if "enhanced_strings" not in components:
-                print("  ❌ FAIL: enhanced_strings component not included")
+                print("  FAIL FAIL: enhanced_strings component not included")
                 return False
             else:
-                print("  ✓ PASS: enhanced_strings component properly integrated")
+                print("  OK PASS: enhanced_strings component properly integrated")
 
             # Test enhanced string analysis method exists and works
             if not hasattr(analyzer, '_perform_enhanced_string_analysis'):
-                print("  ❌ FAIL: _perform_enhanced_string_analysis method missing")
+                print("  FAIL FAIL: _perform_enhanced_string_analysis method missing")
                 return False
 
             # Test dynamic monitoring methods exist
@@ -235,10 +235,10 @@ if __name__ == "__main__":
                     missing_methods.append(method)
 
             if missing_methods:
-                print(f"  ❌ FAIL: Missing methods: {missing_methods}")
+                print(f"  FAIL FAIL: Missing methods: {missing_methods}")
                 return False
             else:
-                print("  ✓ PASS: All dynamic monitoring methods present")
+                print("  OK PASS: All dynamic monitoring methods present")
 
             # Test event system integration
             test_events = []
@@ -247,16 +247,16 @@ if __name__ == "__main__":
 
             try:
                 analyzer.register_callback(AnalysisEvent.STRING_ANALYSIS_UPDATED, test_callback)
-                print("  ✓ PASS: Event callback registration successful")
+                print("  OK PASS: Event callback registration successful")
             except Exception as e:
-                print(f"  ❌ FAIL: Event registration failed: {e}")
+                print(f"  FAIL FAIL: Event registration failed: {e}")
                 return False
 
             # Cleanup
             os.unlink(test_binary)
 
             success = True
-            print("  ✅ PASS: Real-time monitoring integration validated")
+            print("  OK PASS: Real-time monitoring integration validated")
 
             self.test_results.append({
                 "test": "realtime_monitoring",
@@ -269,7 +269,7 @@ if __name__ == "__main__":
             return success
 
         except Exception as e:
-            print(f"  ❌ ERROR: {e}")
+            print(f"  FAIL ERROR: {e}")
             self.test_results.append({
                 "test": "realtime_monitoring",
                 "success": False,
@@ -304,21 +304,21 @@ if __name__ == "__main__":
             for api_str in api_strings:
                 if analyzer._analyze_api_function_patterns(api_str):
                     detected_count += 1
-                    print(f"  ✓ DETECTED: {api_str}")
+                    print(f"  OK DETECTED: {api_str}")
                 else:
-                    print(f"  ✗ MISSED: {api_str}")
+                    print(f"  FAIL MISSED: {api_str}")
 
             detection_rate = detected_count / len(api_strings)
-            print(f"\n  📊 API Detection Rate: {detection_rate:.2%} ({detected_count}/{len(api_strings)})")
+            print(f"\n   API Detection Rate: {detection_rate:.2%} ({detected_count}/{len(api_strings)})")
 
             # Cleanup
             os.unlink(test_binary)
 
             success = detection_rate >= 0.80  # Require 80% detection rate for API strings
             if success:
-                print("  ✅ PASS: API string analysis meets production standards")
+                print("  OK PASS: API string analysis meets production standards")
             else:
-                print("  ❌ FAIL: Detection rate below 80% threshold")
+                print("  FAIL FAIL: Detection rate below 80% threshold")
 
             self.test_results.append({
                 "test": "api_analysis",
@@ -331,7 +331,7 @@ if __name__ == "__main__":
             return success
 
         except Exception as e:
-            print(f"  ❌ ERROR: {e}")
+            print(f"  FAIL ERROR: {e}")
             self.test_results.append({
                 "test": "api_analysis",
                 "success": False,
@@ -366,7 +366,7 @@ if __name__ == "__main__":
                 analyzer._analyze_api_function_patterns(test_str)
 
             analysis_time = time.time() - start_time
-            print(f"  📊 Analysis Time: {analysis_time:.3f} seconds")
+            print(f"   Analysis Time: {analysis_time:.3f} seconds")
 
             # Test real-time analyzer performance
             start_time = time.time()
@@ -375,7 +375,7 @@ if __name__ == "__main__":
             # Test status retrieval performance
             status = rt_analyzer.get_status()
             status_time = time.time() - start_time
-            print(f"  📊 Status Retrieval: {status_time:.3f} seconds")
+            print(f"   Status Retrieval: {status_time:.3f} seconds")
 
             # Cleanup
             os.unlink(test_binary)
@@ -387,9 +387,9 @@ if __name__ == "__main__":
             success = analysis_acceptable and status_acceptable
 
             if success:
-                print("  ✅ PASS: Performance meets production requirements")
+                print("  OK PASS: Performance meets production requirements")
             else:
-                print("  ❌ FAIL: Performance below production standards")
+                print("  FAIL FAIL: Performance below production standards")
 
             self.test_results.append({
                 "test": "performance",
@@ -403,7 +403,7 @@ if __name__ == "__main__":
             return success
 
         except Exception as e:
-            print(f"  ❌ ERROR: {e}")
+            print(f"  FAIL ERROR: {e}")
             self.test_results.append({
                 "test": "performance",
                 "success": False,
@@ -466,7 +466,7 @@ def main():
     print()
 
     if not IMPORT_SUCCESS:
-        print("❌ IMPORTS FAILED: Cannot validate without proper imports")
+        print("FAIL IMPORTS FAILED: Cannot validate without proper imports")
         return 1
 
     try:
@@ -495,18 +495,18 @@ def main():
         report = validator.generate_production_report()
 
         print("\n" + "=" * 60)
-        print("🎯 DAY 5.3 PRODUCTION READINESS CHECKPOINT 5 RESULTS")
+        print(" DAY 5.3 PRODUCTION READINESS CHECKPOINT 5 RESULTS")
         print("=" * 60)
 
-        print(f"📊 Overall Status: {report['overall_status']}")
-        print(f"✅ Tests Passed: {report['summary']['tests_passed']}")
-        print(f"❌ Tests Failed: {report['summary']['tests_failed']}")
-        print(f"📈 Pass Rate: {report['summary']['pass_rate']}")
+        print(f" Overall Status: {report['overall_status']}")
+        print(f"OK Tests Passed: {report['summary']['tests_passed']}")
+        print(f"FAIL Tests Failed: {report['summary']['tests_failed']}")
+        print(f" Pass Rate: {report['summary']['pass_rate']}")
 
-        print("\n🔍 PRODUCTION CRITERIA VALIDATION:")
+        print("\n PRODUCTION CRITERIA VALIDATION:")
         criteria = report['production_criteria']
         for criterion, status in criteria.items():
-            status_icon = "✅" if status else "❌"
+            status_icon = "OK" if status else "FAIL"
             print(f"  {status_icon} {criterion.replace('_', ' ').title()}: {'PASS' if status else 'FAIL'}")
 
         # Save detailed report
@@ -517,20 +517,20 @@ def main():
 
         if report['overall_status'] == "PRODUCTION_READY":
             print("\n🎉 DAY 5.3 PRODUCTION READINESS CHECKPOINT 5 PASSED!")
-            print("✅ Enhanced string analysis validated for production deployment")
-            print("✅ Real-time monitoring integration confirmed")
-            print("✅ Performance requirements met")
-            print("✅ All critical functionality verified")
-            print("\n🚀 READY TO PROCEED TO DAY 6: MODERN PROTECTION BYPASSES")
+            print("OK Enhanced string analysis validated for production deployment")
+            print("OK Real-time monitoring integration confirmed")
+            print("OK Performance requirements met")
+            print("OK All critical functionality verified")
+            print("\n READY TO PROCEED TO DAY 6: MODERN PROTECTION BYPASSES")
             return 0
         else:
-            print(f"\n❌ DAY 5.3 CHECKPOINT FAILED - REQUIRES IMPROVEMENT")
+            print(f"\nFAIL DAY 5.3 CHECKPOINT FAILED - REQUIRES IMPROVEMENT")
             print("❗ Production deployment criteria not met")
             print("❗ Review failed tests and address issues before proceeding")
             return 1
 
     except Exception as e:
-        print(f"❌ Validation failed with error: {e}")
+        print(f"FAIL Validation failed with error: {e}")
         return 1
 
 

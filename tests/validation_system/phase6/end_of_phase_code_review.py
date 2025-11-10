@@ -777,8 +777,7 @@ class EndOfPhaseCodeReviewer:
 if __name__ == "__main__":
     # Set up paths
     from intellicrack.utils.path_resolver import get_project_root
-
-phase6_path = get_project_root() / "tests/validation_system/phase6"
+    phase6_path = get_project_root() / "tests/validation_system/phase6"
 
     # Create reviewer and conduct review
     reviewer = EndOfPhaseCodeReviewer(phase6_path)

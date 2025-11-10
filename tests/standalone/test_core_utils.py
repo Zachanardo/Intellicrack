@@ -47,11 +47,11 @@ def run_test_pe_utils():
         assert 'EXECUTE' in chars, "Failed to detect EXECUTE characteristic"
         print(f"Section characteristics decoded correctly")
 
-        print("✓ Test PASSED!")
+        print("OK Test PASSED!")
         return True
 
     except Exception as e:
-        print(f"✗ Test FAILED: {type(e).__name__}: {e}")
+        print(f"FAIL Test FAILED: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -87,11 +87,11 @@ def run_test_path_utils():
         assert ">" not in safe_name, "Failed to sanitize >"
         print(f"Sanitized filename: {safe_name}")
 
-        print("✓ Test PASSED!")
+        print("OK Test PASSED!")
         return True
 
     except Exception as e:
-        print(f"✗ Test FAILED: {type(e).__name__}: {e}")
+        print(f"FAIL Test FAILED: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -127,11 +127,11 @@ def run_test_crypto_utils():
         assert len(xor_result) == len(test_data), "XOR length mismatch"
         print("XOR encryption working")
 
-        print("✓ Test PASSED!")
+        print("OK Test PASSED!")
         return True
 
     except Exception as e:
-        print(f"✗ Test FAILED: {type(e).__name__}: {e}")
+        print(f"FAIL Test FAILED: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -181,11 +181,11 @@ def run_test_pattern_matching():
 
         assert len(hex_found) == 3, f"Expected 3 instructions, found {len(hex_found)}"
 
-        print("✓ Test PASSED!")
+        print("OK Test PASSED!")
         return True
 
     except Exception as e:
-        print(f"✗ Test FAILED: {type(e).__name__}: {e}")
+        print(f"FAIL Test FAILED: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -240,11 +240,11 @@ def run_test_config_parsing():
         # Cleanup
         os.unlink(temp_ini)
 
-        print("✓ Test PASSED!")
+        print("OK Test PASSED!")
         return True
 
     except Exception as e:
-        print(f"✗ Test FAILED: {type(e).__name__}: {e}")
+        print(f"FAIL Test FAILED: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -293,11 +293,11 @@ def run_test_binary_packing():
         assert min == 0, "Minor version mismatch"
         print("Structure packing/unpacking working")
 
-        print("✓ Test PASSED!")
+        print("OK Test PASSED!")
         return True
 
     except Exception as e:
-        print(f"✗ Test FAILED: {type(e).__name__}: {e}")
+        print(f"FAIL Test FAILED: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -350,11 +350,11 @@ def run_test_shellcode_patterns():
 
         print(f"ROP gadget patterns: {len(rop_gadgets)} defined")
 
-        print("✓ Test PASSED!")
+        print("OK Test PASSED!")
         return True
 
     except Exception as e:
-        print(f"✗ Test FAILED: {type(e).__name__}: {e}")
+        print(f"FAIL Test FAILED: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -403,11 +403,11 @@ def run_test_protection_constants():
         for category, features in characteristics.items():
             print(f"  {category}: {len(features)} features")
 
-        print("✓ Test PASSED!")
+        print("OK Test PASSED!")
         return True
 
     except Exception as e:
-        print(f"✗ Test FAILED: {type(e).__name__}: {e}")
+        print(f"FAIL Test FAILED: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False

@@ -22,20 +22,20 @@ def test_imports():
     try:
         # Test ProtocolFingerprinter import
         from intellicrack.core.network.protocol_fingerprinter import ProtocolFingerprinter
-        print("✓ ProtocolFingerprinter import successful")
+        print("OK ProtocolFingerprinter import successful")
 
         # Test base test class import
         from tests.base_test import IntellicrackTestBase
-        print("✓ IntellicrackTestBase import successful")
+        print("OK IntellicrackTestBase import successful")
 
         # Test test class import
         from tests.unit.core.network.test_protocol_fingerprinter import TestProtocolFingerprinter
-        print("✓ TestProtocolFingerprinter import successful")
+        print("OK TestProtocolFingerprinter import successful")
 
         return True
 
     except ImportError as e:
-        print(f"✗ Import error: {e}")
+        print(f"FAIL Import error: {e}")
         return False
 
 def run_basic_functionality_check():
@@ -47,28 +47,28 @@ def run_basic_functionality_check():
 
         # Test initialization
         fingerprinter = ProtocolFingerprinter()
-        print(f"✓ ProtocolFingerprinter initialized with {len(fingerprinter.signatures)} signatures")
+        print(f"OK ProtocolFingerprinter initialized with {len(fingerprinter.signatures)} signatures")
 
         # Test basic traffic analysis
         test_data = b"SERVER_HEARTBEAT\x00\x01\x00\x04test"
         result = fingerprinter.analyze_traffic(test_data, port=27000)
 
         if result:
-            print(f"✓ Traffic analysis working - identified: {result.get('protocol_id', 'Unknown')}")
+            print(f"OK Traffic analysis working - identified: {result.get('protocol_id', 'Unknown')}")
         else:
             print("! Traffic analysis returned None (may indicate learning mode or no match)")
 
         # Test packet fingerprinting
         fingerprint = fingerprinter.fingerprint_packet(test_data, port=27000)
         if fingerprint:
-            print(f"✓ Packet fingerprinting working - entropy: {fingerprint.get('packet_entropy', 'Unknown')}")
+            print(f"OK Packet fingerprinting working - entropy: {fingerprint.get('packet_entropy', 'Unknown')}")
         else:
             print("! Packet fingerprinting returned None")
 
         return True
 
     except Exception as e:
-        print(f"✗ Functionality check failed: {e}")
+        print(f"FAIL Functionality check failed: {e}")
         return False
 
 def analyze_test_coverage():
@@ -125,14 +125,14 @@ def analyze_test_coverage():
         print(f"\nEstimated test coverage: {estimated_coverage:.1f}%")
 
         if estimated_coverage >= 80:
-            print("✓ Meets 80%+ coverage requirement")
+            print("OK Meets 80%+ coverage requirement")
         else:
-            print("✗ Below 80% coverage requirement")
+            print("FAIL Below 80% coverage requirement")
 
         return estimated_coverage >= 80
 
     except Exception as e:
-        print(f"✗ Coverage analysis failed: {e}")
+        print(f"FAIL Coverage analysis failed: {e}")
         return False
 
 def validate_test_quality():
@@ -193,14 +193,14 @@ def validate_test_quality():
         print(f"\nTest quality score: {quality_percentage:.1f}%")
 
         if quality_percentage >= 70:
-            print("✓ Tests meet production quality standards")
+            print("OK Tests meet production quality standards")
         else:
-            print("✗ Tests below production quality threshold")
+            print("FAIL Tests below production quality threshold")
 
         return quality_percentage >= 70
 
     except Exception as e:
-        print(f"✗ Quality validation failed: {e}")
+        print(f"FAIL Quality validation failed: {e}")
         return False
 
 def main():
@@ -225,7 +225,7 @@ def main():
     total = len(results)
 
     for check, result in results.items():
-        status = "✓ PASS" if result else "✗ FAIL"
+        status = "OK PASS" if result else "FAIL FAIL"
         print(f"{check.capitalize()}: {status}")
 
     print(f"\nOverall: {passed}/{total} checks passed ({(passed/total)*100:.1f}%)")
@@ -233,7 +233,7 @@ def main():
     if passed == total:
         print("🎉 ProtocolFingerprinter tests are production-ready!")
     else:
-        print("⚠️  Some issues need attention before production deployment.")
+        print("WARNING  Some issues need attention before production deployment.")
 
     return passed == total
 

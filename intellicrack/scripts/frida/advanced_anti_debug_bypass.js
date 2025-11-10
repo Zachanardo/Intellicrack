@@ -153,55 +153,55 @@ const advancedAntiDebugBypass = {
                 onLeave: function (retval) {
                     if (retval.toInt32() === 0 && this.processInfo && !this.processInfo.isNull()) {
                         switch (this.infoClass) {
-                            case 7:
-                                this.processInfo.writePointer(ptr(0));
-                                send({
-                                    type: 'bypass',
-                                    target: 'NtQueryInformationProcess',
-                                    class: 'ProcessDebugPort',
-                                    action: 'zeroed',
-                                });
-                                break;
+                        case 7:
+                            this.processInfo.writePointer(ptr(0));
+                            send({
+                                type: 'bypass',
+                                target: 'NtQueryInformationProcess',
+                                class: 'ProcessDebugPort',
+                                action: 'zeroed',
+                            });
+                            break;
 
-                            case 30:
-                                this.processInfo.writePointer(ptr(0));
-                                send({
-                                    type: 'bypass',
-                                    target: 'NtQueryInformationProcess',
-                                    class: 'ProcessDebugObjectHandle',
-                                    action: 'zeroed',
-                                });
-                                break;
+                        case 30:
+                            this.processInfo.writePointer(ptr(0));
+                            send({
+                                type: 'bypass',
+                                target: 'NtQueryInformationProcess',
+                                class: 'ProcessDebugObjectHandle',
+                                action: 'zeroed',
+                            });
+                            break;
 
-                            case 31:
-                                this.processInfo.writeU32(1);
-                                send({
-                                    type: 'bypass',
-                                    target: 'NtQueryInformationProcess',
-                                    class: 'ProcessDebugFlags',
-                                    action: 'spoofed',
-                                });
-                                break;
+                        case 31:
+                            this.processInfo.writeU32(1);
+                            send({
+                                type: 'bypass',
+                                target: 'NtQueryInformationProcess',
+                                class: 'ProcessDebugFlags',
+                                action: 'spoofed',
+                            });
+                            break;
 
-                            case 0x29:
-                                this.processInfo.writeU32(0);
-                                send({
-                                    type: 'bypass',
-                                    target: 'NtQueryInformationProcess',
-                                    class: 'ProcessBreakOnTermination',
-                                    action: 'disabled',
-                                });
-                                break;
+                        case 0x29:
+                            this.processInfo.writeU32(0);
+                            send({
+                                type: 'bypass',
+                                target: 'NtQueryInformationProcess',
+                                class: 'ProcessBreakOnTermination',
+                                action: 'disabled',
+                            });
+                            break;
 
-                            case 0x1F:
-                                this.processInfo.writeU32(0);
-                                send({
-                                    type: 'bypass',
-                                    target: 'NtQueryInformationProcess',
-                                    class: 'ProcessInstrumentationCallback',
-                                    action: 'zeroed',
-                                });
-                                break;
+                        case 0x1f:
+                            this.processInfo.writeU32(0);
+                            send({
+                                type: 'bypass',
+                                target: 'NtQueryInformationProcess',
+                                class: 'ProcessInstrumentationCallback',
+                                action: 'zeroed',
+                            });
+                            break;
                         }
                     }
                 },
@@ -296,7 +296,7 @@ const advancedAntiDebugBypass = {
             Interceptor.attach(ntClose, {
                 onEnter: function (args) {
                     const handle = args[0];
-                    if (handle.isNull() || handle.toInt32() === 0xFFFFFFFF) {
+                    if (handle.isNull() || handle.toInt32() === 0xffffffff) {
                         send({
                             type: 'bypass',
                             target: 'NtClose',
@@ -330,8 +330,8 @@ const advancedAntiDebugBypass = {
                         return 0;
                     },
                     'int',
-                    [],
-                ),
+                    []
+                )
             );
 
             this.hooksInstalled['NtYieldExecution'] = true;
@@ -359,7 +359,11 @@ const advancedAntiDebugBypass = {
             const self = this;
             const rdtscPattern = '0F 31';
 
-            const matches = Memory.scanSync(Process.enumerateModules()[0].base, Process.enumerateModules()[0].size, rdtscPattern);
+            const matches = Memory.scanSync(
+                Process.enumerateModules()[0].base,
+                Process.enumerateModules()[0].size,
+                rdtscPattern
+            );
 
             let patchCount = 0;
             matches.forEach((match) => {
@@ -400,7 +404,11 @@ const advancedAntiDebugBypass = {
         try {
             const rdtscpPattern = '0F 01 F9';
 
-            const matches = Memory.scanSync(Process.enumerateModules()[0].base, Process.enumerateModules()[0].size, rdtscpPattern);
+            const matches = Memory.scanSync(
+                Process.enumerateModules()[0].base,
+                Process.enumerateModules()[0].size,
+                rdtscpPattern
+            );
 
             let patchCount = 0;
             matches.forEach((match) => {
@@ -483,8 +491,8 @@ const advancedAntiDebugBypass = {
                         return Math.floor(elapsed);
                     },
                     'uint32',
-                    [],
-                ),
+                    []
+                )
             );
 
             this.hooksInstalled['GetTickCount'] = true;
@@ -505,8 +513,8 @@ const advancedAntiDebugBypass = {
                         return uint64(elapsed);
                     },
                     'uint64',
-                    [],
-                ),
+                    []
+                )
             );
 
             this.hooksInstalled['GetTickCount64'] = true;
@@ -533,8 +541,8 @@ const advancedAntiDebugBypass = {
                         return;
                     },
                     'void',
-                    ['uint32'],
-                ),
+                    ['uint32']
+                )
             );
 
             this.hooksInstalled['Sleep'] = true;
@@ -558,7 +566,11 @@ const advancedAntiDebugBypass = {
         try {
             const cpuidPattern = '0F A2';
 
-            const matches = Memory.scanSync(Process.enumerateModules()[0].base, Process.enumerateModules()[0].size, cpuidPattern);
+            const matches = Memory.scanSync(
+                Process.enumerateModules()[0].base,
+                Process.enumerateModules()[0].size,
+                cpuidPattern
+            );
 
             let patchCount = 0;
             matches.forEach((match) => {
@@ -763,8 +775,8 @@ const advancedAntiDebugBypass = {
                         return ptr(0);
                     },
                     'pointer',
-                    ['pointer'],
-                ),
+                    ['pointer']
+                )
             );
 
             this.hooksInstalled['SetUnhandledExceptionFilter'] = true;
@@ -782,7 +794,9 @@ const advancedAntiDebugBypass = {
 
         setTimeout(() => {
             try {
-                const teb = Process.getCurrentThread().context.gs_base || Process.getCurrentThread().context.fs_base;
+                const teb =
+                    Process.getCurrentThread().context.gs_base ||
+                    Process.getCurrentThread().context.fs_base;
 
                 if (teb && !teb.isNull()) {
                     const peb = teb.add(0x60).readPointer();
@@ -900,10 +914,18 @@ const advancedAntiDebugBypass = {
             categories: {
                 kernel: Object.keys(this.hooksInstalled).filter((k) => k.startsWith('Nt')).length,
                 timing: Object.keys(this.hooksInstalled).filter(
-                    (k) => k.includes('RDTSC') || k.includes('Qpc') || k.includes('Tick') || k.includes('Sleep'),
+                    (k) =>
+                        k.includes('RDTSC') ||
+                        k.includes('Qpc') ||
+                        k.includes('Tick') ||
+                        k.includes('Sleep')
                 ).length,
-                hypervisor: Object.keys(this.hooksInstalled).filter((k) => k.includes('CPUID') || k.includes('VMX')).length,
-                integrity: Object.keys(this.hooksInstalled).filter((k) => k.includes('Crc') || k.includes('Virtual')).length,
+                hypervisor: Object.keys(this.hooksInstalled).filter(
+                    (k) => k.includes('CPUID') || k.includes('VMX')
+                ).length,
+                integrity: Object.keys(this.hooksInstalled).filter(
+                    (k) => k.includes('Crc') || k.includes('Virtual')
+                ).length,
             },
         });
     },

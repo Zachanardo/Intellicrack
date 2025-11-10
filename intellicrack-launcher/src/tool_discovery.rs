@@ -393,20 +393,27 @@ fn load_custom_tool_paths() -> HashMap<String, PathBuf> {
     ];
 
     for (config_key, tool_name) in &tool_mappings {
-        if let Some(path_str) = config.get(config_key).and_then(|v| v.as_str()) {
-            if !path_str.is_empty() {
-                let path = PathBuf::from(path_str);
-                if path.exists() {
-                    debug!("Loaded custom path for '{}': {}", tool_name, path.display());
-                    custom_paths.insert(tool_name.to_string(), path);
-                } else {
-                    warn!("Custom path for '{}' does not exist: {}", tool_name, path.display());
-                }
+        if let Some(path_str) = config.get(config_key).and_then(|v| v.as_str())
+            && !path_str.is_empty()
+        {
+            let path = PathBuf::from(path_str);
+            if path.exists() {
+                debug!("Loaded custom path for '{}': {}", tool_name, path.display());
+                custom_paths.insert(tool_name.to_string(), path);
+            } else {
+                warn!(
+                    "Custom path for '{}' does not exist: {}",
+                    tool_name,
+                    path.display()
+                );
             }
         }
     }
 
-    debug!("Loaded {} custom tool paths from config", custom_paths.len());
+    debug!(
+        "Loaded {} custom tool paths from config",
+        custom_paths.len()
+    );
     custom_paths
 }
 
@@ -445,7 +452,10 @@ fn load_custom_tool_paths() -> HashMap<String, PathBuf> {
 /// # Performance
 ///
 /// Typically 5-15ms per tool on cold search, <1ms if tool is in PATH or config.
-fn discover_tool_with_config(name: &str, custom_paths: &HashMap<String, PathBuf>) -> Option<ToolInfo> {
+fn discover_tool_with_config(
+    name: &str,
+    custom_paths: &HashMap<String, PathBuf>,
+) -> Option<ToolInfo> {
     debug!("Discovering tool: {}", name);
 
     if let Some(custom_path) = custom_paths.get(name) {
@@ -454,7 +464,11 @@ fn discover_tool_with_config(name: &str, custom_paths: &HashMap<String, PathBuf>
             let version = get_tool_version(custom_path, name);
             return Some(ToolInfo::new(custom_path.clone(), version));
         } else {
-            warn!("Custom path for '{}' in config does not exist: {}", name, custom_path.display());
+            warn!(
+                "Custom path for '{}' in config does not exist: {}",
+                name,
+                custom_path.display()
+            );
         }
     }
 
@@ -531,7 +545,12 @@ fn get_common_tool_paths(tool_name: &str) -> Vec<PathBuf> {
 
             if tool_name == "qemu-system-x86_64" {
                 paths.push(tools_dir.join("qemu").join("qemu-system-x86_64.exe"));
-                paths.push(tools_dir.join("qemu").join("bin").join("qemu-system-x86_64.exe"));
+                paths.push(
+                    tools_dir
+                        .join("qemu")
+                        .join("bin")
+                        .join("qemu-system-x86_64.exe"),
+                );
             }
 
             if tool_name == "nasm" {
@@ -897,7 +916,12 @@ pub fn discover_and_cache_tools() -> Result<()> {
                 .as_ref()
                 .map(|v| format!(" ({})", v))
                 .unwrap_or_default();
-            info!("  ✓ {} found at: {}{}", tool_name, tool_info.path.display(), version_str);
+            info!(
+                "  ✓ {} found at: {}{}",
+                tool_name,
+                tool_info.path.display(),
+                version_str
+            );
         } else {
             warn!("  ✗ {} NOT FOUND", tool_name);
         }

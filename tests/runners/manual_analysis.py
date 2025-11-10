@@ -35,11 +35,11 @@ print(f"Test file: {test_file}")
 print(f"Test exists: {os.path.exists(test_file)}")
 
 if not os.path.exists(target_module):
-    print("✗ Target module not found!")
+    print("FAIL Target module not found!")
     exit()
 
 if not os.path.exists(test_file):
-    print("✗ Test file not found!")
+    print("FAIL Test file not found!")
     exit()
 
 # Analyze target module
@@ -218,9 +218,9 @@ if total_testable_elements > 0:
     print("-" * 40)
 
     if overall_score >= 80:
-        print("✓ EXCELLENT: Coverage meets the 80% requirement")
-        print("✓ Test suite demonstrates comprehensive validation")
-        print("✓ Production-ready test characteristics detected")
+        print("OK EXCELLENT: Coverage meets the 80% requirement")
+        print("OK Test suite demonstrates comprehensive validation")
+        print("OK Production-ready test characteristics detected")
     elif overall_score >= 70:
         print("⚠ GOOD: Coverage is strong, approaching requirements")
         print("⚠ Minor enhancements could improve coverage")
@@ -228,8 +228,8 @@ if total_testable_elements > 0:
         print("⚠ MODERATE: Coverage needs improvement")
         print("⚠ Additional test scenarios required")
     else:
-        print("✗ INSUFFICIENT: Coverage below requirements")
-        print("✗ Significant test expansion needed")
+        print("FAIL INSUFFICIENT: Coverage below requirements")
+        print("FAIL Significant test expansion needed")
 
     print(f"\n5. PRODUCTION READINESS INDICATORS")
     print("-" * 40)
@@ -251,7 +251,7 @@ if total_testable_elements > 0:
     print(f"Production readiness: {passed_indicators}/{total_indicators} indicators met")
 
     for indicator, passed in production_indicators:
-        status = "✓" if passed else "✗"
+        status = "OK" if passed else "FAIL"
         print(f"  {status} {indicator}")
 
     production_score = (passed_indicators / total_indicators) * 100
@@ -261,13 +261,13 @@ if total_testable_elements > 0:
     print("-" * 40)
 
     if overall_score >= 80 and production_score >= 75:
-        print("✓ TEST SUITE APPROVED: Meets all requirements")
-        print("✓ 80%+ coverage achieved")
-        print("✓ Production-ready validation approach")
-        print("✓ Comprehensive anti-analysis testing")
+        print("OK TEST SUITE APPROVED: Meets all requirements")
+        print("OK 80%+ coverage achieved")
+        print("OK Production-ready validation approach")
+        print("OK Comprehensive anti-analysis testing")
         success = True
     elif overall_score >= 80:
-        print("✓ COVERAGE APPROVED: Meets coverage requirements")
+        print("OK COVERAGE APPROVED: Meets coverage requirements")
         print("⚠ Production readiness could be enhanced")
         success = True
     else:

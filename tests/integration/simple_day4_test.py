@@ -98,7 +98,7 @@ def test_enhanced_patch_instructions():
         "memory_override"
     ]
 
-    print("✓ Testing patch instruction generation:")
+    print("OK Testing patch instruction generation:")
     for method in test_methods:
         instruction = _generate_patch_instruction(method)
         bytes_code = _generate_patch_bytes_for_method(method)
@@ -107,7 +107,7 @@ def test_enhanced_patch_instructions():
     print()
 
     # Test memory write instruction generation
-    print("✓ Testing memory write instruction generation:")
+    print("OK Testing memory write instruction generation:")
     test_addresses = ["0x401000", "401000"]
     test_value = 1
 
@@ -119,12 +119,12 @@ def test_enhanced_patch_instructions():
             print(f"  Error with address {address}: {e}")
 
     print()
-    print("🎯 VALIDATION RESULTS:")
-    print("✅ Template patch instructions replaced with production-ready implementations")
-    print("✅ Enhanced instruction generation supports comprehensive bypass methods")
-    print("✅ Real machine code generation for x86/x64 architectures")
-    print("✅ Proper memory write instruction generation with struct packing")
-    print("✅ Comprehensive bypass method coverage (license, time, CRC, debug)")
+    print(" VALIDATION RESULTS:")
+    print("OK Template patch instructions replaced with production-ready implementations")
+    print("OK Enhanced instruction generation supports comprehensive bypass methods")
+    print("OK Real machine code generation for x86/x64 architectures")
+    print("OK Proper memory write instruction generation with struct packing")
+    print("OK Comprehensive bypass method coverage (license, time, CRC, debug)")
 
     return True
 
@@ -133,14 +133,14 @@ def main():
     try:
         success = test_enhanced_patch_instructions()
         if success:
-            print("\n🎯 DAY 4.1 COMPLETED SUCCESSFULLY")
+            print("\n DAY 4.1 COMPLETED SUCCESSFULLY")
             print("Template patch instructions have been replaced with real implementations!")
             return 0
         else:
-            print("\n❌ DAY 4.1 VALIDATION FAILED")
+            print("\nFAIL DAY 4.1 VALIDATION FAILED")
             return 1
     except Exception as e:
-        print(f"\n❌ DAY 4.1 ERROR: {e}")
+        print(f"\nFAIL DAY 4.1 ERROR: {e}")
         return 1
 
 if __name__ == "__main__":

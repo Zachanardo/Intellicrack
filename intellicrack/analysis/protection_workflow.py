@@ -337,7 +337,7 @@ class ProtectionAnalysisWorkflow:
         # Priority recommendations
         if analysis.is_packed:
             recommendations.append(
-                "🎯 Priority: Unpack the binary first. The file is packed which obscures the real code.",
+                " Priority: Unpack the binary first. The file is packed which obscures the real code.",
             )
 
         if analysis.has_anti_debug:
@@ -361,7 +361,7 @@ class ProtectionAnalysisWorkflow:
 
         if tools_needed:
             recommendations.append(
-                f"📦 Recommended tools: {', '.join(sorted(tools_needed))}",
+                f" Recommended tools: {', '.join(sorted(tools_needed))}",
             )
 
         # Difficulty assessment
@@ -378,7 +378,7 @@ class ProtectionAnalysisWorkflow:
         # AI assistance
         if self.llm_manager.has_active_backend():
             recommendations.append(
-                "🤖 AI assistance available. Use the Script Generation feature for automated bypass script creation.",
+                " AI assistance available. Use the Script Generation feature for automated bypass script creation.",
             )
 
         return recommendations
@@ -402,7 +402,7 @@ class ProtectionAnalysisWorkflow:
 
             if matches_found > 0:
                 recommendations.append(
-                    f"🔍 YARA detected {matches_found} protection patterns. Check for packing, anti-debug, and licensing signatures.",
+                    f" YARA detected {matches_found} protection patterns. Check for packing, anti-debug, and licensing signatures.",
                 )
 
                 # Look for specific pattern types in supplemental data
@@ -411,7 +411,7 @@ class ProtectionAnalysisWorkflow:
 
                 if protection_categories.get("packer", 0) > 0:
                     recommendations.append(
-                        "📦 YARA identified packer signatures. Consider unpacking before further analysis.",
+                        " YARA identified packer signatures. Consider unpacking before further analysis.",
                     )
                 if protection_categories.get("anti_debug", 0) > 0:
                     recommendations.append(
@@ -423,7 +423,7 @@ class ProtectionAnalysisWorkflow:
                     )
             else:
                 recommendations.append(
-                    "✅ YARA found no known protection patterns. Binary may use custom or unknown protections.",
+                    "OK YARA found no known protection patterns. Binary may use custom or unknown protections.",
                 )
 
         # Binwalk firmware analysis recommendations
@@ -435,7 +435,7 @@ class ProtectionAnalysisWorkflow:
 
             if signatures_found > 0:
                 recommendations.append(
-                    f"🔧 Binwalk identified {signatures_found} embedded components. This may be firmware or contain embedded files.",
+                    f" Binwalk identified {signatures_found} embedded components. This may be firmware or contain embedded files.",
                 )
 
                 if firmware_type != "unknown":
@@ -453,7 +453,7 @@ class ProtectionAnalysisWorkflow:
             embedded_files = firmware_supplemental.get("embedded_files", [])
             if embedded_files:
                 recommendations.append(
-                    f"📁 Found {len(embedded_files)} embedded files. Extract and analyze individual components.",
+                    f" Found {len(embedded_files)} embedded files. Extract and analyze individual components.",
                 )
 
         # Volatility3 memory forensics recommendations
@@ -477,7 +477,7 @@ class ProtectionAnalysisWorkflow:
                 protection_indicators = memory_supplemental.get("protection_indicators", [])
                 if protection_indicators:
                     recommendations.append(
-                        f"🔒 Memory analysis revealed {len(protection_indicators)} protection indicators in runtime.",
+                        f" Memory analysis revealed {len(protection_indicators)} protection indicators in runtime.",
                     )
 
         return recommendations

@@ -40,7 +40,7 @@ impl Default for PerformanceMetrics {
 }
 
 impl PerformanceMetrics {
-    #[must_use] 
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
@@ -381,12 +381,12 @@ impl PerformanceMetrics {
         Err(anyhow!("Failed to measure network latency"))
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn get_total_runtime(&self) -> Duration {
         self.startup_time + self.validation_time + self.dependency_check_time
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn format_summary(&self) -> String {
         format!(
             "Performance Summary:\n\
@@ -428,7 +428,7 @@ pub struct DiagnosticEntry {
 }
 
 impl DiagnosticEntry {
-    #[must_use] 
+    #[must_use]
     pub fn new(level: String, category: String, message: String) -> Self {
         Self {
             timestamp: SystemTime::now()
@@ -443,13 +443,13 @@ impl DiagnosticEntry {
         }
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn with_details(mut self, details: HashMap<String, String>) -> Self {
         self.details = details;
         self
     }
 
-    #[must_use] 
+    #[must_use]
     pub const fn with_metrics(mut self, metrics: PerformanceMetrics) -> Self {
         self.metrics = Some(metrics);
         self
@@ -528,12 +528,12 @@ impl DiagnosticsManager {
         );
     }
 
-    #[must_use] 
+    #[must_use]
     pub const fn is_enabled(&self) -> bool {
         self.enabled
     }
 
-    #[must_use] 
+    #[must_use]
     pub const fn get_metrics(&self) -> &PerformanceMetrics {
         &self.metrics
     }
@@ -717,7 +717,10 @@ impl DiagnosticsManager {
             .append(true)
             .open(&self.log_path)?;
 
-        let timestamp = chrono::DateTime::from_timestamp(entry.timestamp as i64, 0).map_or_else(|| entry.timestamp.to_string(), |dt| dt.format("%Y-%m-%d %H:%M:%S UTC").to_string());
+        let timestamp = chrono::DateTime::from_timestamp(entry.timestamp as i64, 0).map_or_else(
+            || entry.timestamp.to_string(),
+            |dt| dt.format("%Y-%m-%d %H:%M:%S UTC").to_string(),
+        );
 
         writeln!(
             file,
@@ -746,7 +749,7 @@ impl DiagnosticsManager {
         Ok(())
     }
 
-    #[must_use] 
+    #[must_use]
     pub const fn get_entries(&self) -> &Vec<DiagnosticEntry> {
         &self.entries
     }
@@ -775,7 +778,7 @@ impl DiagnosticsManager {
         Ok(())
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn get_summary_report(&self) -> String {
         if !self.enabled {
             return "Diagnostics disabled".to_string();
@@ -798,7 +801,11 @@ impl DiagnosticsManager {
         // Show last 10 entries
         let recent_entries = self.entries.iter().rev().take(10);
         for entry in recent_entries {
-            let timestamp = chrono::DateTime::from_timestamp(entry.timestamp as i64, 0).map_or_else(|| entry.timestamp.to_string(), |dt| dt.format("%H:%M:%S").to_string());
+            let timestamp = chrono::DateTime::from_timestamp(entry.timestamp as i64, 0)
+                .map_or_else(
+                    || entry.timestamp.to_string(),
+                    |dt| dt.format("%H:%M:%S").to_string(),
+                );
             report.push_str(&format!(
                 "[{}] [{}] {}\n",
                 timestamp, entry.level, entry.message

@@ -495,7 +495,7 @@ class EnhancedCLIRunner:
 
         lines = [f"[red]Found {len(vulns)} vulnerabilities:[/red]"]
         for vuln in vulns[:5]:  # Show first 5
-            lines.append(f"  • {vuln}")
+            lines.append(f"   {vuln}")
 
         if len(vulns) > 5:
             lines.append(f"  ... and {len(vulns) - 5} more")
@@ -511,7 +511,7 @@ class EnhancedCLIRunner:
         lines = ["[yellow]Detected protections:[/yellow]"]
         for protection, details in protections.items():
             if details:
-                lines.append(f"  • {protection}: {details}")
+                lines.append(f"   {protection}: {details}")
 
         return "\n".join(lines)
 
@@ -536,7 +536,7 @@ def main():
     # Show banner
     banner = """
     ╔═══════════════════════════════════════════════════╗
-    ║     🚀 Intellicrack Enhanced CLI Runner 🚀        ║
+    ║      Intellicrack Enhanced CLI Runner         ║
     ║          With Progress Visualization              ║
     ╚═══════════════════════════════════════════════════╝
     """

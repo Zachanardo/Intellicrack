@@ -15,9 +15,9 @@ sys.path.insert(0, r"D:\Intellicrack")
 print("Test 1: Importing main_app module...")
 try:
     from intellicrack.ui.main_app import launch
-    print("✓ main_app imported successfully")
+    print("OK main_app imported successfully")
 except ImportError as e:
-    print(f"✗ Failed to import main_app: {e}")
+    print(f"FAIL Failed to import main_app: {e}")
     import traceback
     traceback.print_exc()
     sys.exit(1)
@@ -27,7 +27,7 @@ try:
     result = launch()
     print(f"Launch returned: {result}")
 except Exception as e:
-    print(f"✗ Launch failed: {e}")
+    print(f"FAIL Launch failed: {e}")
     import traceback
     traceback.print_exc()
     sys.exit(1)

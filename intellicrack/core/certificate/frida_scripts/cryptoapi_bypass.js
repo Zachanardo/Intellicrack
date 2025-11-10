@@ -11,7 +11,7 @@ function log(message, level = 'info') {
     const entry = {
         timestamp: new Date().toISOString(),
         level: level,
-        message: message
+        message: message,
     };
     send({ type: 'log', data: entry });
     activity.push(entry);
@@ -31,10 +31,13 @@ if (!crypt32) {
     log('crypt32.dll found at: ' + crypt32.base);
 
     try {
-        const CertVerifyCertificateChainPolicy = Module.findExportByName('crypt32.dll', 'CertVerifyCertificateChainPolicy');
+        const CertVerifyCertificateChainPolicy = Module.findExportByName(
+            'crypt32.dll',
+            'CertVerifyCertificateChainPolicy'
+        );
         if (CertVerifyCertificateChainPolicy) {
             Interceptor.attach(CertVerifyCertificateChainPolicy, {
-                onEnter: function(args) {
+                onEnter: function (args) {
                     const pszPolicyOID = args[0];
                     const pChainContext = args[1];
                     const pPolicyPara = args[2];
@@ -56,21 +59,27 @@ if (!crypt32) {
                     this.pChainContext = pChainContext;
                     this.policyOID = policyOID;
                 },
-                onLeave: function(retval) {
+                onLeave: function (retval) {
                     const success = retval.toInt32();
 
                     if (!this.pPolicyStatus.isNull()) {
                         try {
                             const dwErrorOffset = Process.pointerSize === 8 ? 0x08 : 0x04;
                             const lChainIndexOffset = Process.pointerSize === 8 ? 0x10 : 0x08;
-                            const lElementIndexOffset = Process.pointerSize === 8 ? 0x18 : 0x0C;
+                            const lElementIndexOffset = Process.pointerSize === 8 ? 0x18 : 0x0c;
 
                             const originalError = this.pPolicyStatus.add(dwErrorOffset).readU32();
-                            const originalChainIndex = this.pPolicyStatus.add(lChainIndexOffset).readS32();
-                            const originalElementIndex = this.pPolicyStatus.add(lElementIndexOffset).readS32();
+                            const originalChainIndex = this.pPolicyStatus
+                                .add(lChainIndexOffset)
+                                .readS32();
+                            const originalElementIndex = this.pPolicyStatus
+                                .add(lElementIndexOffset)
+                                .readS32();
 
                             if (originalError !== 0) {
-                                log(`CertVerifyCertificateChainPolicy: Original error=0x${originalError.toString(16)}, clearing to 0`);
+                                log(
+                                    `CertVerifyCertificateChainPolicy: Original error=0x${originalError.toString(16)}, clearing to 0`
+                                );
 
                                 this.pPolicyStatus.add(dwErrorOffset).writeU32(0);
                                 this.pPolicyStatus.add(lChainIndexOffset).writeS32(0);
@@ -82,7 +91,7 @@ if (!crypt32) {
                                     originalError: originalError,
                                     chainIndex: originalChainIndex,
                                     elementIndex: originalElementIndex,
-                                    bypassed: true
+                                    bypassed: true,
                                 };
                                 chains.push(chainInfo);
                                 if (chains.length > MAX_LOG) {
@@ -101,7 +110,7 @@ if (!crypt32) {
                     } else {
                         log('CertVerifyCertificateChainPolicy: Succeeded, ensuring clean status');
                     }
-                }
+                },
             });
             log('Successfully hooked CertVerifyCertificateChainPolicy');
         }
@@ -110,10 +119,13 @@ if (!crypt32) {
     }
 
     try {
-        const CertGetCertificateChain = Module.findExportByName('crypt32.dll', 'CertGetCertificateChain');
+        const CertGetCertificateChain = Module.findExportByName(
+            'crypt32.dll',
+            'CertGetCertificateChain'
+        );
         if (CertGetCertificateChain) {
             Interceptor.attach(CertGetCertificateChain, {
-                onEnter: function(args) {
+                onEnter: function (args) {
                     const hChainEngine = args[0];
                     const pCertContext = args[1];
                     const pTime = args[2];
@@ -128,11 +140,13 @@ if (!crypt32) {
                     this.ppChainContext = ppChainContext;
                     this.dwFlags = dwFlags;
                 },
-                onLeave: function(retval) {
+                onLeave: function (retval) {
                     const success = retval.toInt32();
 
                     if (success === 0) {
-                        log('CertGetCertificateChain: Failed, forcing TRUE and creating valid-looking chain');
+                        log(
+                            'CertGetCertificateChain: Failed, forcing TRUE and creating valid-looking chain'
+                        );
                         retval.replace(ptr(1));
 
                         if (!this.ppChainContext.isNull()) {
@@ -147,7 +161,9 @@ if (!crypt32) {
                                     chainMemory.add(cbSizeOffset).writeU32(chainSize);
 
                                     this.ppChainContext.writePointer(chainMemory);
-                                    log('CertGetCertificateChain: Allocated synthetic chain context');
+                                    log(
+                                        'CertGetCertificateChain: Allocated synthetic chain context'
+                                    );
                                 }
                             } catch (e) {
                                 logError('Failed to create chain context: ' + e.message);
@@ -164,7 +180,7 @@ if (!crypt32) {
                                         timestamp: new Date().toISOString(),
                                         chainContext: pChainContext.toString(),
                                         flags: this.dwFlags,
-                                        success: true
+                                        success: true,
                                     };
                                     send({ type: 'certificate_chain_built', data: chainInfo });
                                 }
@@ -173,7 +189,7 @@ if (!crypt32) {
                             }
                         }
                     }
-                }
+                },
             });
             log('Successfully hooked CertGetCertificateChain');
         }
@@ -182,10 +198,13 @@ if (!crypt32) {
     }
 
     try {
-        const CertFreeCertificateChain = Module.findExportByName('crypt32.dll', 'CertFreeCertificateChain');
+        const CertFreeCertificateChain = Module.findExportByName(
+            'crypt32.dll',
+            'CertFreeCertificateChain'
+        );
         if (CertFreeCertificateChain) {
             Interceptor.attach(CertFreeCertificateChain, {
-                onEnter: function(args) {
+                onEnter: function (args) {
                     const pChainContext = args[0];
 
                     if (!pChainContext.isNull()) {
@@ -193,11 +212,11 @@ if (!crypt32) {
                         this.pChainContext = pChainContext;
                     }
                 },
-                onLeave: function(retval) {
+                onLeave: function (retval) {
                     if (this.pChainContext) {
                         log('CertFreeCertificateChain: Chain freed successfully');
                     }
-                }
+                },
             });
             log('Successfully hooked CertFreeCertificateChain');
         }
@@ -206,17 +225,20 @@ if (!crypt32) {
     }
 
     try {
-        const CertCreateCertificateChainEngine = Module.findExportByName('crypt32.dll', 'CertCreateCertificateChainEngine');
+        const CertCreateCertificateChainEngine = Module.findExportByName(
+            'crypt32.dll',
+            'CertCreateCertificateChainEngine'
+        );
         if (CertCreateCertificateChainEngine) {
             Interceptor.attach(CertCreateCertificateChainEngine, {
-                onEnter: function(args) {
+                onEnter: function (args) {
                     const pConfig = args[0];
                     const phChainEngine = args[1];
 
                     log('CertCreateCertificateChainEngine: Creating custom chain engine');
                     this.phChainEngine = phChainEngine;
                 },
-                onLeave: function(retval) {
+                onLeave: function (retval) {
                     const success = retval.toInt32();
                     if (success === 0) {
                         log('CertCreateCertificateChainEngine: Failed, forcing TRUE');
@@ -226,8 +248,10 @@ if (!crypt32) {
                             try {
                                 const existingHandle = this.phChainEngine.readPointer();
                                 if (existingHandle.isNull()) {
-                                    this.phChainEngine.writePointer(ptr(0xDEADBEEF));
-                                    log('CertCreateCertificateChainEngine: Created synthetic engine handle');
+                                    this.phChainEngine.writePointer(ptr(0xdeadbeef));
+                                    log(
+                                        'CertCreateCertificateChainEngine: Created synthetic engine handle'
+                                    );
                                 }
                             } catch (e) {
                                 logError('Failed to create engine handle: ' + e.message);
@@ -236,7 +260,7 @@ if (!crypt32) {
                     } else {
                         log('CertCreateCertificateChainEngine: Succeeded');
                     }
-                }
+                },
             });
             log('Successfully hooked CertCreateCertificateChainEngine');
         }
@@ -250,10 +274,13 @@ if (bcrypt) {
     log('bcrypt.dll found at: ' + bcrypt.base);
 
     try {
-        const BCryptVerifySignature = Module.findExportByName('bcrypt.dll', 'BCryptVerifySignature');
+        const BCryptVerifySignature = Module.findExportByName(
+            'bcrypt.dll',
+            'BCryptVerifySignature'
+        );
         if (BCryptVerifySignature) {
             Interceptor.attach(BCryptVerifySignature, {
-                onEnter: function(args) {
+                onEnter: function (args) {
                     const hKey = args[0];
                     const pPaddingInfo = args[1];
                     const pbHash = args[2];
@@ -262,19 +289,23 @@ if (bcrypt) {
                     const cbSignature = args[5].toInt32();
                     const dwFlags = args[6].toInt32();
 
-                    log(`BCryptVerifySignature: Hash size=${cbHash}, Signature size=${cbSignature}`);
+                    log(
+                        `BCryptVerifySignature: Hash size=${cbHash}, Signature size=${cbSignature}`
+                    );
                     this.hKey = hKey;
                 },
-                onLeave: function(retval) {
+                onLeave: function (retval) {
                     const status = retval.toInt32();
 
                     if (status !== 0) {
-                        log(`BCryptVerifySignature: Failed with status=0x${status.toString(16)}, forcing success (STATUS_SUCCESS = 0)`);
+                        log(
+                            `BCryptVerifySignature: Failed with status=0x${status.toString(16)}, forcing success (STATUS_SUCCESS = 0)`
+                        );
                         retval.replace(ptr(0));
                     } else {
                         log('BCryptVerifySignature: Succeeded');
                     }
-                }
+                },
             });
             log('Successfully hooked BCryptVerifySignature');
         }
@@ -286,7 +317,7 @@ if (bcrypt) {
         const BCryptHashData = Module.findExportByName('bcrypt.dll', 'BCryptHashData');
         if (BCryptHashData) {
             Interceptor.attach(BCryptHashData, {
-                onEnter: function(args) {
+                onEnter: function (args) {
                     const hHash = args[0];
                     const pbInput = args[1];
                     const cbInput = args[2].toInt32();
@@ -294,12 +325,14 @@ if (bcrypt) {
 
                     this.cbInput = cbInput;
                 },
-                onLeave: function(retval) {
+                onLeave: function (retval) {
                     const status = retval.toInt32();
                     if (status !== 0) {
-                        log(`BCryptHashData: Failed with status=0x${status.toString(16)}, allowing to proceed`);
+                        log(
+                            `BCryptHashData: Failed with status=0x${status.toString(16)}, allowing to proceed`
+                        );
                     }
-                }
+                },
             });
             log('Successfully hooked BCryptHashData');
         }
@@ -311,19 +344,19 @@ if (bcrypt) {
 }
 
 rpc.exports = {
-    getCryptoAPIActivity: function() {
+    getCryptoAPIActivity: function () {
         return activity;
     },
-    getCertificateChains: function() {
+    getCertificateChains: function () {
         return chains;
     },
-    clearLogs: function() {
+    clearLogs: function () {
         activity.length = 0;
         chains.length = 0;
         log('Activity logs cleared');
         return true;
     },
-    getBypassStatus: function() {
+    getBypassStatus: function () {
         return {
             active: true,
             library: 'CryptoAPI (crypt32.dll)',
@@ -333,21 +366,21 @@ rpc.exports = {
                 'CertFreeCertificateChain',
                 'CertCreateCertificateChainEngine',
                 'BCryptVerifySignature',
-                'BCryptHashData'
+                'BCryptHashData',
             ],
-            chainBypassCount: chains.length
+            chainBypassCount: chains.length,
         };
     },
-    testBypass: function() {
+    testBypass: function () {
         log('Testing CryptoAPI bypass functionality');
         return {
             success: true,
             message: 'CryptoAPI bypass is active and monitoring',
             stats: {
-                chainBypasses: chains.length
-            }
+                chainBypasses: chains.length,
+            },
         };
-    }
+    },
 };
 
 log('CryptoAPI certificate bypass script loaded successfully');

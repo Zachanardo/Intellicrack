@@ -578,19 +578,19 @@ class CertificateBypassOrchestrator:
         try:
             if self._verify_binary_patches(target_path):
                 verification_score += 1.0
-                logger.info("✓ Binary patch verification passed")
+                logger.info("OK Binary patch verification passed")
             else:
                 logger.debug("Binary patch verification: No patches detected")
 
             if self._verify_frida_hooks():
                 verification_score += 1.0
-                logger.info("✓ Frida hook verification passed")
+                logger.info("OK Frida hook verification passed")
             else:
                 logger.debug("Frida hook verification: No active hooks")
 
             if self._verify_validation_bypassed(target_path):
                 verification_score += 1.0
-                logger.info("✓ Validation function bypass verified")
+                logger.info("OK Validation function bypass verified")
             else:
                 logger.debug("Validation bypass verification: Inconclusive")
 

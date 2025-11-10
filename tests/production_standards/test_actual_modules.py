@@ -61,10 +61,10 @@ class TestActualModules(unittest.TestCase):
 
         for module, available in modules_status.items():
             if available:
-                print(f"✓ {module}: Successfully imported")
+                print(f"OK {module}: Successfully imported")
             else:
                 error = globals().get(f"{module.upper()}_ERROR", "Unknown error")
-                print(f"✗ {module}: Import failed - {error}")
+                print(f"FAIL {module}: Import failed - {error}")
                 self.results["errors"].append(f"{module} import failed: {error}")
 
         total = len(modules_status)
@@ -131,11 +131,11 @@ class TestActualModules(unittest.TestCase):
                         if func:
                             api_count += 1
                             found_apis.append(f"{dll_name}.{api}")
-                            print(f"  ✓ {api}")
+                            print(f"  OK {api}")
                     except AttributeError:
-                        print(f"  ✗ {api} - Not found")
+                        print(f"  FAIL {api} - Not found")
             except Exception as e:
-                print(f"  ✗ Error accessing {dll_name}: {e}")
+                print(f"  FAIL Error accessing {dll_name}: {e}")
 
         self.results["windows_apis"] = found_apis
         print(f"\nTotal Windows APIs found: {api_count}")
@@ -171,26 +171,26 @@ class TestActualModules(unittest.TestCase):
                     method = getattr(analyzer, method_name)
                     if callable(method):
                         capabilities.append(method_name)
-                        print(f"  ✓ {method_name}")
+                        print(f"  OK {method_name}")
                     else:
-                        print(f"  ✗ {method_name} - Not callable")
+                        print(f"  FAIL {method_name} - Not callable")
                 else:
-                    print(f"  ✗ {method_name} - Not found")
+                    print(f"  FAIL {method_name} - Not found")
 
             if hasattr(analyzer, '_setup_windows_apis'):
-                print("\n  ✓ Windows API setup method found")
+                print("\n  OK Windows API setup method found")
                 capabilities.append("windows_api_setup")
 
             if hasattr(analyzer, 'kernel32'):
-                print("  ✓ kernel32 DLL loaded")
+                print("  OK kernel32 DLL loaded")
                 capabilities.append("kernel32_dll")
 
             if hasattr(analyzer, 'ntdll'):
-                print("  ✓ ntdll DLL loaded")
+                print("  OK ntdll DLL loaded")
                 capabilities.append("ntdll_dll")
 
         except Exception as e:
-            print(f"  ✗ Error initializing LicenseAnalyzer: {e}")
+            print(f"  FAIL Error initializing LicenseAnalyzer: {e}")
             self.results["errors"].append(f"LicenseAnalyzer init failed: {e}")
 
         self.results["capabilities"]["license_analyzer"] = capabilities
@@ -225,26 +225,26 @@ class TestActualModules(unittest.TestCase):
                     method = getattr(debugger, method_name)
                     if callable(method):
                         capabilities.append(method_name)
-                        print(f"  ✓ {method_name}")
+                        print(f"  OK {method_name}")
                     else:
-                        print(f"  ✗ {method_name} - Not callable")
+                        print(f"  FAIL {method_name} - Not callable")
                 else:
-                    print(f"  ✗ {method_name} - Not found")
+                    print(f"  FAIL {method_name} - Not found")
 
             if hasattr(debugger, 'debug_event_handlers'):
-                print("\n  ✓ Debug event handlers present")
+                print("\n  OK Debug event handlers present")
                 capabilities.append("debug_event_handlers")
 
             if hasattr(debugger, 'hardware_breakpoints'):
-                print("  ✓ Hardware breakpoint support")
+                print("  OK Hardware breakpoint support")
                 capabilities.append("hardware_breakpoints")
 
             if hasattr(debugger, 'veh_handler'):
-                print("  ✓ VEH handler support")
+                print("  OK VEH handler support")
                 capabilities.append("veh_handler")
 
         except Exception as e:
-            print(f"  ✗ Error initializing LicenseDebugger: {e}")
+            print(f"  FAIL Error initializing LicenseDebugger: {e}")
             self.results["errors"].append(f"LicenseDebugger init failed: {e}")
 
         self.results["capabilities"]["license_debugger"] = capabilities
@@ -277,18 +277,18 @@ class TestActualModules(unittest.TestCase):
                     method = getattr(scanner, method_name)
                     if callable(method):
                         capabilities.append(method_name)
-                        print(f"  ✓ {method_name}")
+                        print(f"  OK {method_name}")
                     else:
-                        print(f"  ✗ {method_name} - Not callable")
+                        print(f"  FAIL {method_name} - Not callable")
                 else:
-                    print(f"  ✗ {method_name} - Not found")
+                    print(f"  FAIL {method_name} - Not found")
 
             if hasattr(scanner, 'rules'):
-                print("\n  ✓ Rule storage present")
+                print("\n  OK Rule storage present")
                 capabilities.append("rule_storage")
 
             if hasattr(scanner, 'compiled_rules'):
-                print("  ✓ Compiled rules support")
+                print("  OK Compiled rules support")
                 capabilities.append("compiled_rules")
 
             try:
@@ -308,13 +308,13 @@ class TestActualModules(unittest.TestCase):
                 }
                 '''
                 scanner.add_rule("test_rule", test_rule)
-                print("  ✓ Rule compilation successful")
+                print("  OK Rule compilation successful")
                 capabilities.append("rule_compilation")
             except Exception as e:
-                print(f"  ✗ Rule compilation failed: {e}")
+                print(f"  FAIL Rule compilation failed: {e}")
 
         except Exception as e:
-            print(f"  ✗ Error initializing YaraScanner: {e}")
+            print(f"  FAIL Error initializing YaraScanner: {e}")
             self.results["errors"].append(f"YaraScanner init failed: {e}")
 
         self.results["capabilities"]["yara_scanner"] = capabilities
@@ -350,16 +350,16 @@ class TestActualModules(unittest.TestCase):
             found_methods = 0
             for method_name in pattern_methods:
                 if hasattr(analyzer, method_name):
-                    print(f"  ✓ {method_name} found")
+                    print(f"  OK {method_name} found")
                     found_methods += 1
                 else:
-                    print(f"  ✗ {method_name} not found")
+                    print(f"  FAIL {method_name} not found")
 
             self.assertGreaterEqual(found_methods, 1,
                                    "At least one pattern scanning method required")
 
         except Exception as e:
-            print(f"  ✗ Error testing pattern scanning: {e}")
+            print(f"  FAIL Error testing pattern scanning: {e}")
             self.fail(f"Pattern scanning test failed: {e}")
 
     def test_07_memory_operations(self):
@@ -384,16 +384,16 @@ class TestActualModules(unittest.TestCase):
             found_count = 0
             for method_name, description in memory_methods:
                 if hasattr(analyzer, method_name):
-                    print(f"  ✓ {method_name}: {description}")
+                    print(f"  OK {method_name}: {description}")
                     found_count += 1
                 else:
-                    print(f"  ✗ {method_name}: Not implemented")
+                    print(f"  FAIL {method_name}: Not implemented")
 
             self.assertGreaterEqual(found_count, 2,
                                    "At least 2 memory operations required")
 
         except Exception as e:
-            print(f"  ✗ Error testing memory operations: {e}")
+            print(f"  FAIL Error testing memory operations: {e}")
             self.fail(f"Memory operations test failed: {e}")
 
     def test_08_protection_detection(self):
@@ -413,22 +413,22 @@ class TestActualModules(unittest.TestCase):
             ]
 
             if hasattr(analyzer, 'detect_protection'):
-                print("  ✓ detect_protection method found")
+                print("  OK detect_protection method found")
 
                 if hasattr(analyzer, 'protection_signatures'):
                     sigs = getattr(analyzer, 'protection_signatures', {})
-                    print(f"  ✓ Protection signatures: {len(sigs)} defined")
+                    print(f"  OK Protection signatures: {len(sigs)} defined")
                     for prot in protections[:4]:
                         if prot in str(sigs).lower():
-                            print(f"    • {prot} signature present")
+                            print(f"     {prot} signature present")
 
                 self.results["capabilities"]["protection_detection"] = True
             else:
-                print("  ✗ detect_protection method not found")
+                print("  FAIL detect_protection method not found")
                 self.results["capabilities"]["protection_detection"] = False
 
         except Exception as e:
-            print(f"  ✗ Error testing protection detection: {e}")
+            print(f"  FAIL Error testing protection detection: {e}")
             self.results["errors"].append(f"Protection detection test failed: {e}")
 
     def test_09_hooking_capabilities(self):
@@ -453,16 +453,16 @@ class TestActualModules(unittest.TestCase):
             found_count = 0
             for method_name, description in hook_methods:
                 if hasattr(analyzer, method_name):
-                    print(f"  ✓ {method_name}: {description}")
+                    print(f"  OK {method_name}: {description}")
                     found_count += 1
                 else:
-                    print(f"  ✗ {method_name}: Not implemented")
+                    print(f"  FAIL {method_name}: Not implemented")
 
             self.assertGreaterEqual(found_count, 1,
                                    "At least 1 hooking method required")
 
         except Exception as e:
-            print(f"  ✗ Error testing hooking capabilities: {e}")
+            print(f"  FAIL Error testing hooking capabilities: {e}")
             self.results["errors"].append(f"Hooking test failed: {e}")
 
     def test_10_registry_manipulation(self):
@@ -487,16 +487,16 @@ class TestActualModules(unittest.TestCase):
             found_count = 0
             for method_name, description in registry_methods:
                 if hasattr(analyzer, method_name):
-                    print(f"  ✓ {method_name}: {description}")
+                    print(f"  OK {method_name}: {description}")
                     found_count += 1
                 else:
-                    print(f"  ✗ {method_name}: Not implemented")
+                    print(f"  FAIL {method_name}: Not implemented")
 
             self.assertGreaterEqual(found_count, 1,
                                    "At least 1 registry method required")
 
         except Exception as e:
-            print(f"  ✗ Error testing registry manipulation: {e}")
+            print(f"  FAIL Error testing registry manipulation: {e}")
             self.results["errors"].append(f"Registry test failed: {e}")
 
     def test_99_summary_report(self):
@@ -510,22 +510,22 @@ class TestActualModules(unittest.TestCase):
         print(f"Is Windows: {self.is_windows}")
 
         print("\n[MODULE STATUS]")
-        print(f"process_manipulation: {'✓ Available' if PROCESS_MANIPULATION_AVAILABLE else '✗ Not Available'}")
-        print(f"debugging_engine: {'✓ Available' if DEBUGGING_ENGINE_AVAILABLE else '✗ Not Available'}")
-        print(f"yara_scanner: {'✓ Available' if YARA_SCANNER_AVAILABLE else '✗ Not Available'}")
+        print(f"process_manipulation: {'OK Available' if PROCESS_MANIPULATION_AVAILABLE else 'FAIL Not Available'}")
+        print(f"debugging_engine: {'OK Available' if DEBUGGING_ENGINE_AVAILABLE else 'FAIL Not Available'}")
+        print(f"yara_scanner: {'OK Available' if YARA_SCANNER_AVAILABLE else 'FAIL Not Available'}")
 
         print("\n[WINDOWS API COUNT]")
         api_count = len(self.results.get("windows_apis", []))
         print(f"Total APIs found: {api_count}")
         print(f"Minimum required: 15")
-        print(f"Status: {'✓ PASS' if api_count >= 15 else '✗ FAIL'}")
+        print(f"Status: {'OK PASS' if api_count >= 15 else 'FAIL FAIL'}")
 
         print("\n[CAPABILITIES SUMMARY]")
         for module, caps in self.results.get("capabilities", {}).items():
             if isinstance(caps, list):
                 print(f"{module}: {len(caps)} capabilities")
             else:
-                print(f"{module}: {'✓ Enabled' if caps else '✗ Disabled'}")
+                print(f"{module}: {'OK Enabled' if caps else 'FAIL Disabled'}")
 
         print("\n[CORE CRACKING CAPABILITIES]")
         capabilities_str = str(self.results.get("capabilities", {}))
@@ -543,7 +543,7 @@ class TestActualModules(unittest.TestCase):
         }
 
         for capability, present in capabilities_check.items():
-            status = "✓" if present else "✗"
+            status = "OK" if present else "FAIL"
             print(f"  {status} {capability}")
 
         capabilities_count = sum(1 for v in capabilities_check.values() if v)
@@ -552,7 +552,7 @@ class TestActualModules(unittest.TestCase):
         if self.results.get("errors"):
             print("\n[ERRORS ENCOUNTERED]")
             for error in self.results["errors"]:
-                print(f"  • {error}")
+                print(f"   {error}")
 
         print("\n[OVERALL ASSESSMENT]")
         modules_ok = sum([PROCESS_MANIPULATION_AVAILABLE,
@@ -562,9 +562,9 @@ class TestActualModules(unittest.TestCase):
         capabilities_ok = capabilities_count >= 7
 
         if modules_ok and apis_ok and capabilities_ok:
-            print("✓ PRODUCTION READY - All critical requirements met")
+            print("OK PRODUCTION READY - All critical requirements met")
         else:
-            print("✗ NOT PRODUCTION READY - Critical requirements missing:")
+            print("FAIL NOT PRODUCTION READY - Critical requirements missing:")
             if not modules_ok:
                 print("  - Insufficient modules available")
             if not apis_ok:

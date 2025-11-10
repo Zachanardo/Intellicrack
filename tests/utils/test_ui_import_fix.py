@@ -19,35 +19,35 @@ try:
 
     print("2. Testing intellicrack base import...")
     import intellicrack
-    print("✅ Intellicrack base import successful!")
+    print("OK Intellicrack base import successful!")
 
     print("3. Testing direct UI import...")
     try:
         from intellicrack import ui
         if ui is not None:
-            print("✅ UI import successful!")
+            print("OK UI import successful!")
         else:
-            print("⚠️ UI import returned None - checking details...")
+            print("WARNING UI import returned None - checking details...")
 
         print("4. Testing direct pyqt6_handler import...")
         from intellicrack.handlers.pyqt6_handler import HAS_PYQT, PYQT6_AVAILABLE
-        print(f"✅ PyQt6 handler import successful! HAS_PYQT={HAS_PYQT}, PYQT6_AVAILABLE={PYQT6_AVAILABLE}")
+        print(f"OK PyQt6 handler import successful! HAS_PYQT={HAS_PYQT}, PYQT6_AVAILABLE={PYQT6_AVAILABLE}")
 
         print("5. Testing main_app import...")
         try:
             from intellicrack.ui.main_app import IntellicrackApp
-            print("✅ IntellicrackApp import successful!")
+            print("OK IntellicrackApp import successful!")
         except ImportError as e:
-            print(f"❌ IntellicrackApp import failed: {e}")
+            print(f"FAIL IntellicrackApp import failed: {e}")
 
     except ImportError as e:
-        print(f"❌ UI import failed: {e}")
+        print(f"FAIL UI import failed: {e}")
         import traceback
         traceback.print_exc()
 
-    print("✅ All tests completed!")
+    print("OK All tests completed!")
 
 except Exception as e:
-    print(f"❌ Test failed with error: {e}")
+    print(f"FAIL Test failed with error: {e}")
     import traceback
     traceback.print_exc()

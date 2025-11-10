@@ -1,13 +1,13 @@
 repos:
   # Rust Quality Assurance (New Intellicrack Launcher)
   - repo: https://github.com/doublify/pre-commit-rust
-    rev: eeee35a89e69d5772bdee97db1a6a898467b686e  # pragma: allowlist secret
+    rev: eeee35a89e69d5772bdee97db1a6a898467b686e # pragma: allowlist secret
     hooks:
       - id: cargo-check
-        args: ["--manifest-path", "intellicrack-launcher/Cargo.toml"]
+        args: ['--manifest-path', 'intellicrack-launcher/Cargo.toml']
         name: Rust cargo check
       - id: clippy
-        args: ["--manifest-path", "intellicrack-launcher/Cargo.toml", "--", "-D", "warnings"]
+        args: ['--manifest-path', 'intellicrack-launcher/Cargo.toml', '--', '-D', 'warnings']
         name: Rust clippy linting
 
   - repo: local

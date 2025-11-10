@@ -202,7 +202,7 @@ pub struct GilSafetyStatus {
 }
 
 impl GilSafetyStatus {
-    #[must_use] 
+    #[must_use]
     pub const fn is_fully_configured(&self) -> bool {
         self.pybind11_assertions_disabled
             && (self.thread_check_configured || self.torch_gil_safety_available)

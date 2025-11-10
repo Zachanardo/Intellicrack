@@ -550,7 +550,7 @@ def run_gpu_accelerated_analysis(app_instance=None, **kwargs) -> dict[str, Any]:
         logger.info("Starting GPU-accelerated analysis")
 
         if app_instance:
-            app_instance.update_output.emit("🚀 Starting GPU-Accelerated Analysis...")
+            app_instance.update_output.emit(" Starting GPU-Accelerated Analysis...")
             app_instance.update_output.emit("=" * 50)
 
         try:
@@ -570,17 +570,17 @@ def run_gpu_accelerated_analysis(app_instance=None, **kwargs) -> dict[str, Any]:
             status = accelerator.get_acceleration_status()
 
             if app_instance:
-                app_instance.update_output.emit("🔍 GPU Hardware Detection:")
-                app_instance.update_output.emit(f"  • CUDA Available: {accelerator.cuda_available}")
-                app_instance.update_output.emit(f"  • OpenCL Available: {accelerator.opencl_available}")
-                app_instance.update_output.emit(f"  • TensorFlow GPU: {accelerator.tensorflow_available}")
-                app_instance.update_output.emit(f"  • PyTorch GPU: {accelerator.pytorch_available}")
-                app_instance.update_output.emit(f"  • Selected Backend: {status.get('selected_backend', 'None')}")
+                app_instance.update_output.emit(" GPU Hardware Detection:")
+                app_instance.update_output.emit(f"   CUDA Available: {accelerator.cuda_available}")
+                app_instance.update_output.emit(f"   OpenCL Available: {accelerator.opencl_available}")
+                app_instance.update_output.emit(f"   TensorFlow GPU: {accelerator.tensorflow_available}")
+                app_instance.update_output.emit(f"   PyTorch GPU: {accelerator.pytorch_available}")
+                app_instance.update_output.emit(f"   Selected Backend: {status.get('selected_backend', 'None')}")
                 app_instance.update_output.emit("")
 
             # Test GPU-accelerated pattern matching
             if app_instance:
-                app_instance.update_output.emit("🔍 Testing GPU Pattern Matching:")
+                app_instance.update_output.emit(" Testing GPU Pattern Matching:")
 
             test_data = {"data": b"license key verification routine CRACK PATCH trial expired serial number validation"}
             test_patterns = {"patterns": [b"license", b"CRACK", b"PATCH", b"trial", b"serial"]}
@@ -590,24 +590,24 @@ def run_gpu_accelerated_analysis(app_instance=None, **kwargs) -> dict[str, Any]:
             if app_instance:
                 backend = pattern_result.get("backend", "unknown")
                 if pattern_result.get("gpu_available"):
-                    app_instance.update_output.emit(f"  ✅ GPU pattern matching successful - Backend: {backend}")
+                    app_instance.update_output.emit(f"  OK GPU pattern matching successful - Backend: {backend}")
                 else:
                     app_instance.update_output.emit("  WARNING️ Using CPU fallback for pattern matching")
-                app_instance.update_output.emit(f"  📊 Result: {pattern_result.get('message', 'No message')}")
+                app_instance.update_output.emit(f"   Result: {pattern_result.get('message', 'No message')}")
                 app_instance.update_output.emit("")
 
             # Test GPU-accelerated entropy calculation
             if app_instance:
-                app_instance.update_output.emit("📈 Testing GPU Entropy Calculation:")
+                app_instance.update_output.emit(" Testing GPU Entropy Calculation:")
 
             test_binary_data = b"\x00" * 100 + b"\xff" * 100 + bytes(range(256)) * 10  # Mixed entropy data
 
             try:
                 entropy = accelerator.accelerate_entropy_calculation(test_binary_data)
                 if app_instance:
-                    app_instance.update_output.emit(f"  ✅ Entropy calculated: {entropy:.3f} bits")
+                    app_instance.update_output.emit(f"  OK Entropy calculated: {entropy:.3f} bits")
                     if entropy > 7.0:
-                        app_instance.update_output.emit("  🔒 High entropy detected - possible encryption/packing")
+                        app_instance.update_output.emit("   High entropy detected - possible encryption/packing")
                     else:
                         app_instance.update_output.emit("  📄 Normal entropy - likely uncompressed data")
                     app_instance.update_output.emit("")
@@ -626,25 +626,25 @@ def run_gpu_accelerated_analysis(app_instance=None, **kwargs) -> dict[str, Any]:
             if app_instance:
                 crypto_backend = crypto_result.get("backend", "unknown")
                 if crypto_result.get("gpu_available"):
-                    app_instance.update_output.emit(f"  ✅ GPU crypto operations successful - Backend: {crypto_backend}")
+                    app_instance.update_output.emit(f"  OK GPU crypto operations successful - Backend: {crypto_backend}")
                 else:
                     app_instance.update_output.emit("  WARNING️ Using CPU fallback for crypto operations")
-                app_instance.update_output.emit(f"  📊 Result: {crypto_result.get('message', 'No message')}")
+                app_instance.update_output.emit(f"   Result: {crypto_result.get('message', 'No message')}")
                 app_instance.update_output.emit("")
 
             # Summary
             if app_instance:
                 app_instance.update_output.emit("📋 GPU Acceleration Summary:")
                 if gpu_available and status.get("selected_backend"):
-                    app_instance.update_output.emit("  ✅ GPU acceleration is properly configured and functional")
-                    app_instance.update_output.emit(f"  🎯 Active backend: {status.get('selected_backend')}")
-                    app_instance.update_output.emit("  🚀 Pattern matching, entropy calculation, and hashing accelerated")
+                    app_instance.update_output.emit("  OK GPU acceleration is properly configured and functional")
+                    app_instance.update_output.emit(f"   Active backend: {status.get('selected_backend')}")
+                    app_instance.update_output.emit("   Pattern matching, entropy calculation, and hashing accelerated")
                 else:
                     app_instance.update_output.emit("  WARNING️ GPU acceleration not available - using optimized CPU fallbacks")
-                    app_instance.update_output.emit("  💡 Install PyOpenCL, CuPy, or PyTorch for GPU acceleration")
+                    app_instance.update_output.emit("   Install PyOpenCL, CuPy, or PyTorch for GPU acceleration")
 
                 app_instance.update_output.emit("=" * 50)
-                app_instance.update_output.emit("✅ GPU-Accelerated Analysis Complete!")
+                app_instance.update_output.emit("OK GPU-Accelerated Analysis Complete!")
 
             # Return comprehensive results
             return {

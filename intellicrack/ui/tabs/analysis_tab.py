@@ -468,12 +468,12 @@ class AnalysisTab(BaseTab):
         self.protection_display.setReadOnly(True)
         initial_scan_text = "Protection Scanner Initialized\n" + "=" * 50 + "\n"
         initial_scan_text += "Supported Protections:\n"
-        initial_scan_text += "• Denuvo Anti-Tamper\n"
-        initial_scan_text += "• VMProtect\n"
-        initial_scan_text += "• Themida/WinLicense\n"
-        initial_scan_text += "• SafeNet Sentinel\n"
-        initial_scan_text += "• FlexNet/FlexLM\n"
-        initial_scan_text += "• Hardware-locked licensing\n"
+        initial_scan_text += " Denuvo Anti-Tamper\n"
+        initial_scan_text += " VMProtect\n"
+        initial_scan_text += " Themida/WinLicense\n"
+        initial_scan_text += " SafeNet Sentinel\n"
+        initial_scan_text += " FlexNet/FlexLM\n"
+        initial_scan_text += " Hardware-locked licensing\n"
         initial_scan_text += "\nReady for protection analysis..."
         self.protection_display.setText(initial_scan_text)
         protection_layout.addWidget(self.protection_display)
@@ -1155,7 +1155,7 @@ class AnalysisTab(BaseTab):
                             if key_data.get("rsa_keys"):
                                 self.results_display.append(f"\nRSA Keys ({len(key_data['rsa_keys'])}):\n")
                                 for key in key_data["rsa_keys"]:
-                                    self.results_display.append(f"  • Address: {key['address']}\n")
+                                    self.results_display.append(f"   Address: {key['address']}\n")
                                     self.results_display.append(f"    - Modulus: {key['modulus_bits']} bits\n")
                                     self.results_display.append(f"    - Exponent: {key['exponent']}\n")
                                     self.results_display.append(f"    - Confidence: {key['confidence']:.1%}\n")
@@ -1166,7 +1166,7 @@ class AnalysisTab(BaseTab):
                             if key_data.get("ecc_keys"):
                                 self.results_display.append(f"\nECC Keys ({len(key_data['ecc_keys'])}):\n")
                                 for key in key_data["ecc_keys"]:
-                                    self.results_display.append(f"  • Address: {key['address']}\n")
+                                    self.results_display.append(f"   Address: {key['address']}\n")
                                     self.results_display.append(f"    - Curve: {key.get('curve', 'Unknown')}\n")
                                     self.results_display.append(f"    - Confidence: {key['confidence']:.1%}\n")
 
@@ -1174,7 +1174,7 @@ class AnalysisTab(BaseTab):
                             if key_data.get("symmetric_keys"):
                                 self.results_display.append(f"\nSymmetric Keys ({len(key_data['symmetric_keys'])}):\n")
                                 for key in key_data["symmetric_keys"]:
-                                    self.results_display.append(f"  • Address: {key['address']}\n")
+                                    self.results_display.append(f"   Address: {key['address']}\n")
                                     self.results_display.append(f"    - Type: {key['type']}\n")
                                     self.results_display.append(f"    - Key Size: {key['key_size']} bits\n")
                                     self.results_display.append(f"    - Confidence: {key['confidence']:.1%}\n")
@@ -1183,7 +1183,7 @@ class AnalysisTab(BaseTab):
                             if key_data.get("certificates"):
                                 self.results_display.append(f"\nCertificates ({len(key_data['certificates'])}):\n")
                                 for cert in key_data["certificates"]:
-                                    self.results_display.append(f"  • Subject: {cert['subject']}\n")
+                                    self.results_display.append(f"   Subject: {cert['subject']}\n")
                                     self.results_display.append(f"    - Issuer: {cert['issuer']}\n")
                                     self.results_display.append(f"    - Serial: {cert['serial_number']}\n")
                                     self.results_display.append(f"    - Valid Until: {cert['not_valid_after']}\n")
@@ -1202,7 +1202,7 @@ class AnalysisTab(BaseTab):
                             if bypass_data.get("bypass_methods"):
                                 self.results_display.append(f"\nAvailable Bypass Methods ({len(bypass_data['bypass_methods'])}):\n")
                                 for method in bypass_data["bypass_methods"]:
-                                    self.results_display.append(f"  • {method['method']}\n")
+                                    self.results_display.append(f"   {method['method']}\n")
                                     self.results_display.append(f"    - {method['description']}\n")
                                     self.results_display.append(f"    - Confidence: {method['confidence']:.0%}\n")
 
@@ -1276,7 +1276,7 @@ class AnalysisTab(BaseTab):
                 if results:
                     self.results_display.append("Dynamic Analysis Results:\n")
                     for result in results:
-                        self.results_display.append(f"  • {result}\n")
+                        self.results_display.append(f"   {result}\n")
                 else:
                     self.results_display.append("No dynamic analysis results found.\n")
             else:
@@ -1293,52 +1293,52 @@ class AnalysisTab(BaseTab):
                 # File information
                 if os.path.exists(self.current_file_path):
                     stat_info = os.stat(self.current_file_path)
-                    self.results_display.append(f"  • File size: {stat_info.st_size} bytes\n")
-                    self.results_display.append(f"  • Last modified: {stat_info.st_mtime}\n")
+                    self.results_display.append(f"   File size: {stat_info.st_size} bytes\n")
+                    self.results_display.append(f"   Last modified: {stat_info.st_mtime}\n")
 
                 # Check if file is executable
                 if self.current_file_path.endswith((".exe", ".dll", ".sys")):
-                    self.results_display.append("  • Windows PE executable detected\n")
+                    self.results_display.append("   Windows PE executable detected\n")
 
                     # Try to run strings command for basic analysis
                     try:
                         strings_path = shutil.which("strings")
                         if not strings_path:
-                            self.results_display.append("  • strings command not available\n")
+                            self.results_display.append("   strings command not available\n")
                         else:
                             result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                                 [strings_path, self.current_file_path], capture_output=True, text=True, timeout=10, shell=False
                             )
                             if result.stdout:
                                 strings_count = len(result.stdout.split("\n"))
-                                self.results_display.append(f"  • Found {strings_count} strings\n")
+                                self.results_display.append(f"   Found {strings_count} strings\n")
                     except (subprocess.TimeoutExpired, FileNotFoundError):
-                        self.results_display.append("  • String analysis not available\n")
+                        self.results_display.append("   String analysis not available\n")
 
                 # Execute real-time monitoring based on selected options
                 for monitor_type in monitoring:
                     if monitor_type == "API Calls":
                         # Hook and monitor actual API calls
                         api_calls = self._monitor_api_calls()
-                        self.results_display.append(f"  • API monitoring detected {len(api_calls)} calls\n")
+                        self.results_display.append(f"   API monitoring detected {len(api_calls)} calls\n")
                         for call in api_calls[:5]:  # Show first 5
                             self.results_display.append(f"    - {call}\n")
                     elif monitor_type == "Registry Operations":
                         # Monitor actual registry operations
                         reg_ops = self._monitor_registry_operations()
-                        self.results_display.append(f"  • Registry monitoring detected {len(reg_ops)} operations\n")
+                        self.results_display.append(f"   Registry monitoring detected {len(reg_ops)} operations\n")
                         for op in reg_ops[:5]:
                             self.results_display.append(f"    - {op}\n")
                     elif monitor_type == "File Operations":
                         # Monitor actual file system operations
                         file_ops = self._monitor_file_operations()
-                        self.results_display.append(f"  • File monitoring detected {len(file_ops)} operations\n")
+                        self.results_display.append(f"   File monitoring detected {len(file_ops)} operations\n")
                         for op in file_ops[:5]:
                             self.results_display.append(f"    - {op}\n")
                     elif monitor_type == "Network Activity":
                         # Monitor actual network traffic
                         net_activity = self._monitor_network_activity()
-                        self.results_display.append(f"  • Network monitoring detected {len(net_activity)} connections\n")
+                        self.results_display.append(f"   Network monitoring detected {len(net_activity)} connections\n")
                         for conn in net_activity[:5]:
                             self.results_display.append(f"    - {conn}\n")
             else:
@@ -1378,7 +1378,7 @@ class AnalysisTab(BaseTab):
                 if results:
                     self.results_display.append("Protection Detection Results:\n")
                     for protection, details in results.items():
-                        self.results_display.append(f"  • {protection}: {details}\n")
+                        self.results_display.append(f"   {protection}: {details}\n")
                 else:
                     self.results_display.append("No protections detected.\n")
             else:
@@ -1398,13 +1398,13 @@ class AnalysisTab(BaseTab):
 
                     # Check for common signatures
                     if b"UPX" in header:
-                        self.results_display.append("  • UPX packer detected\n")
+                        self.results_display.append("   UPX packer detected\n")
                     if b"This program cannot be run in DOS mode" in header:
-                        self.results_display.append("  • Standard PE executable\n")
+                        self.results_display.append("   Standard PE executable\n")
                     if b"VMProtect" in header:
-                        self.results_display.append("  • VMProtect detected\n")
+                        self.results_display.append("   VMProtect detected\n")
                     if b"Themida" in header:
-                        self.results_display.append("  • Themida protection detected\n")
+                        self.results_display.append("   Themida protection detected\n")
 
                     # Execute real detection based on selected types
                     for detection_type in detections:
@@ -1416,17 +1416,17 @@ class AnalysisTab(BaseTab):
                                 if sig in header:
                                     packers_found.append(packer)
                             if packers_found:
-                                self.results_display.append(f"  • Packers detected: {', '.join(packers_found)}\n")
+                                self.results_display.append(f"   Packers detected: {', '.join(packers_found)}\n")
                             else:
-                                self.results_display.append("  • No known packers detected\n")
+                                self.results_display.append("   No known packers detected\n")
                         elif detection_type == "Obfuscation":
                             # Check for actual obfuscation patterns
                             junk_count = header.count(b"\x90")  # NOP sleds
                             xor_count = header.count(b"\x31") + header.count(b"\x33")  # XOR instructions
                             if junk_count > 100 or xor_count > 50:
-                                self.results_display.append(f"  • Obfuscation detected: {junk_count} NOPs, {xor_count} XORs\n")
+                                self.results_display.append(f"   Obfuscation detected: {junk_count} NOPs, {xor_count} XORs\n")
                             else:
-                                self.results_display.append("  • No significant obfuscation detected\n")
+                                self.results_display.append("   No significant obfuscation detected\n")
                         elif detection_type == "Anti-Debug":
                             # Check for actual anti-debug techniques
                             anti_debug_found = []
@@ -1437,9 +1437,9 @@ class AnalysisTab(BaseTab):
                             if b"\xcc" in header[:1000]:  # INT3 breakpoint
                                 anti_debug_found.append("Breakpoint checks")
                             if anti_debug_found:
-                                self.results_display.append(f"  • Anti-debug detected: {', '.join(anti_debug_found)}\n")
+                                self.results_display.append(f"   Anti-debug detected: {', '.join(anti_debug_found)}\n")
                             else:
-                                self.results_display.append("  • No anti-debug techniques detected\n")
+                                self.results_display.append("   No anti-debug techniques detected\n")
                         elif detection_type == "VM Protection":
                             # Check for actual VM protection signatures
                             vm_found = []
@@ -1450,9 +1450,9 @@ class AnalysisTab(BaseTab):
                             if b".enigma" in header:
                                 vm_found.append("Enigma")
                             if vm_found:
-                                self.results_display.append(f"  • VM protection detected: {', '.join(vm_found)}\n")
+                                self.results_display.append(f"   VM protection detected: {', '.join(vm_found)}\n")
                             else:
-                                self.results_display.append("  • No VM protection detected\n")
+                                self.results_display.append("   No VM protection detected\n")
                         elif detection_type == "License Checks":
                             # Check for actual license validation patterns
                             license_patterns = [
@@ -1468,12 +1468,12 @@ class AnalysisTab(BaseTab):
                             ]
                             license_found = sum(1 for pattern in license_patterns if pattern in header)
                             if license_found > 0:
-                                self.results_display.append(f"  • License checks detected: {license_found} validation patterns found\n")
+                                self.results_display.append(f"   License checks detected: {license_found} validation patterns found\n")
                             else:
-                                self.results_display.append("  • No license validation patterns detected\n")
+                                self.results_display.append("   No license validation patterns detected\n")
 
                     if not detections:
-                        self.results_display.append("  • No specific protection types selected\n")
+                        self.results_display.append("   No specific protection types selected\n")
                 else:
                     self.results_display.append("Binary file not found.\n")
             else:
@@ -1805,7 +1805,7 @@ class AnalysisTab(BaseTab):
                 if license_checks:
                     self.log_activity(f"Found {len(license_checks)} potential license check locations:")
                     for check in license_checks[:10]:  # Show first 10
-                        self.log_activity(f"  • 0x{check['address']:X}: {check['string']} ({check['type']})")
+                        self.log_activity(f"   0x{check['address']:X}: {check['string']} ({check['type']})")
                         if check["jump_addresses"]:
                             for jump in check["jump_addresses"]:
                                 self.log_activity(f"    - Jump at 0x{jump['address']:X} ({jump['type']})")
@@ -1817,14 +1817,14 @@ class AnalysisTab(BaseTab):
                 if trial_checks:
                     self.log_activity(f"Found {len(trial_checks)} trial period checks:")
                     for check in trial_checks[:5]:
-                        self.log_activity(f"  • 0x{check['address']:X}: {check['pattern']}")
+                        self.log_activity(f"   0x{check['address']:X}: {check['pattern']}")
 
                 # Scan for serial validation
                 serial_checks = self.license_analyzer.find_serial_validation()
                 if serial_checks:
                     self.log_activity(f"Found {len(serial_checks)} serial validation routines:")
                     for check in serial_checks[:5]:
-                        self.log_activity(f"  • 0x{check['address']:X}: {check['pattern']}")
+                        self.log_activity(f"   0x{check['address']:X}: {check['pattern']}")
 
                 # Update UI to show attached state
                 self.hooking_framework_combo.currentText()
@@ -1833,9 +1833,9 @@ class AnalysisTab(BaseTab):
                     "Process Attached",
                     f"Successfully attached to PID {self.attached_pid}\n\n"
                     f"License Analysis Results:\n"
-                    f"• {len(license_checks)} license check locations\n"
-                    f"• {len(trial_checks)} trial period checks\n"
-                    f"• {len(serial_checks)} serial validation routines\n\n"
+                    f" {len(license_checks)} license check locations\n"
+                    f" {len(trial_checks)} trial period checks\n"
+                    f" {len(serial_checks)} serial validation routines\n\n"
                     f"Ready for patching operations.",
                 )
             else:
@@ -1846,9 +1846,9 @@ class AnalysisTab(BaseTab):
                     "Attachment Failed",
                     f"Could not attach to process {pid_text}\n\n"
                     f"Possible reasons:\n"
-                    f"• Process not found\n"
-                    f"• Insufficient permissions (try running as Administrator)\n"
-                    f"• Process is protected by anti-debugging",
+                    f" Process not found\n"
+                    f" Insufficient permissions (try running as Administrator)\n"
+                    f" Process is protected by anti-debugging",
                 )
 
     def take_system_snapshot(self):
@@ -1911,21 +1911,21 @@ class AnalysisTab(BaseTab):
                     f"Snapshot '{snapshot_name}' captured successfully!",
                     "",
                     "License Analysis Summary:",
-                    f"• Processes scanned: {len(snapshot_data.get('processes', []))}",
-                    f"• Registry keys analyzed: {sum(len(v) for v in snapshot_data.get('registry', {}).values())}",
-                    f"• License files found: {len(snapshot_data.get('files', {}).get('license_files', []))}",
-                    f"• Services monitored: {len(snapshot_data.get('services', []))}",
-                    f"• Network connections: {len(snapshot_data.get('network', {}).get('connections', []))}",
-                    f"• Certificates detected: {len(snapshot_data.get('certificates', []))}",
-                    f"• Protection drivers: {len(snapshot_data.get('drivers', []))}",
+                    f" Processes scanned: {len(snapshot_data.get('processes', []))}",
+                    f" Registry keys analyzed: {sum(len(v) for v in snapshot_data.get('registry', {}).values())}",
+                    f" License files found: {len(snapshot_data.get('files', {}).get('license_files', []))}",
+                    f" Services monitored: {len(snapshot_data.get('services', []))}",
+                    f" Network connections: {len(snapshot_data.get('network', {}).get('connections', []))}",
+                    f" Certificates detected: {len(snapshot_data.get('certificates', []))}",
+                    f" Protection drivers: {len(snapshot_data.get('drivers', []))}",
                 ]
 
                 # Check for license-specific findings
                 if snapshot_data.get("loaded_dlls"):
-                    summary.append(f"• License DLLs loaded: {len(snapshot_data['loaded_dlls'])}")
+                    summary.append(f" License DLLs loaded: {len(snapshot_data['loaded_dlls'])}")
 
                 if snapshot_data.get("mutexes"):
-                    summary.append(f"• License mutexes found: {len(snapshot_data['mutexes'])}")
+                    summary.append(f" License mutexes found: {len(snapshot_data['mutexes'])}")
 
                 # Log detailed findings
                 self.log_activity("=" * 50)
@@ -2219,16 +2219,16 @@ class AnalysisTab(BaseTab):
             if high_entropy_blocks > num_blocks * 0.3:
                 results += "WARNING️ HIGH ENTROPY DETECTED - Possible encryption/packing\n"
                 results += "This may indicate license protection mechanisms:\n"
-                results += "• Encrypted license validation code\n"
-                results += "• Packed/compressed executable sections\n"
-                results += "• Anti-tampering protection\n\n"
+                results += " Encrypted license validation code\n"
+                results += " Packed/compressed executable sections\n"
+                results += " Anti-tampering protection\n\n"
 
             if low_entropy_blocks > num_blocks * 0.2:
                 results += "📋 LOW ENTROPY REGIONS - Possible padding/alignment\n"
                 results += "May contain:\n"
-                results += "• String tables with license messages\n"
-                results += "• Padding areas for code caves\n"
-                results += "• Uninitialized data sections\n\n"
+                results += " String tables with license messages\n"
+                results += " Padding areas for code caves\n"
+                results += " Uninitialized data sections\n\n"
 
             results += "Analysis completed successfully."
 
@@ -2257,7 +2257,7 @@ class AnalysisTab(BaseTab):
             with open(self.current_file_path, "rb") as f:
                 file_data = f.read()
 
-            analysis_results = "🔍 COMPREHENSIVE ENTROPY ANALYSIS FOR LICENSE PROTECTION\n\n"
+            analysis_results = " COMPREHENSIVE ENTROPY ANALYSIS FOR LICENSE PROTECTION\n\n"
             analysis_results += f"Target: {os.path.basename(self.current_file_path)}\n"
             analysis_results += f"Size: {len(file_data):,} bytes\n"
             analysis_results += "=" * 60 + "\n\n"
@@ -2310,17 +2310,17 @@ class AnalysisTab(BaseTab):
 
             if protection_level != "NONE":
                 analysis_results += "\nPOSSIBLE PROTECTION MECHANISMS:\n"
-                analysis_results += "• Code packing/compression\n"
-                analysis_results += "• License key encryption\n"
-                analysis_results += "• Anti-tampering systems\n"
-                analysis_results += "• Hardware fingerprinting\n"
-                analysis_results += "• Obfuscated validation routines\n\n"
+                analysis_results += " Code packing/compression\n"
+                analysis_results += " License key encryption\n"
+                analysis_results += " Anti-tampering systems\n"
+                analysis_results += " Hardware fingerprinting\n"
+                analysis_results += " Obfuscated validation routines\n\n"
 
                 analysis_results += "BYPASS RECOMMENDATIONS:\n"
-                analysis_results += "• Use dynamic analysis to identify unpacking\n"
-                analysis_results += "• Hook decryption routines during runtime\n"
-                analysis_results += "• Locate license validation after unpacking\n"
-                analysis_results += "• Consider memory patching techniques\n"
+                analysis_results += " Use dynamic analysis to identify unpacking\n"
+                analysis_results += " Hook decryption routines during runtime\n"
+                analysis_results += " Locate license validation after unpacking\n"
+                analysis_results += " Consider memory patching techniques\n"
 
             self.fallback_entropy_results.setPlainText(analysis_results)
             self.log_activity("Comprehensive entropy analysis completed")
@@ -2371,7 +2371,7 @@ class AnalysisTab(BaseTab):
             if license_strings:
                 analysis_results += f"Found {len(license_strings)} potential license-related strings:\n"
                 for string in license_strings[:10]:  # Show first 10
-                    analysis_results += f"  • {string}\n"
+                    analysis_results += f"   {string}\n"
                 if len(license_strings) > 10:
                     analysis_results += f"  ... and {len(license_strings) - 10} more\n"
             else:
@@ -2482,17 +2482,17 @@ class AnalysisTab(BaseTab):
 
                 protection_results += "\nLICENSE BYPASS STRATEGIES:\n"
                 protection_results += "1. Dynamic Analysis:\n"
-                protection_results += "   • Hook license validation functions\n"
-                protection_results += "   • Monitor registry/file access\n"
-                protection_results += "   • Trace hardware ID generation\n\n"
+                protection_results += "    Hook license validation functions\n"
+                protection_results += "    Monitor registry/file access\n"
+                protection_results += "    Trace hardware ID generation\n\n"
                 protection_results += "2. Static Patching:\n"
-                protection_results += "   • NOP out license checks\n"
-                protection_results += "   • Modify validation logic\n"
-                protection_results += "   • Replace with JMP instructions\n\n"
+                protection_results += "    NOP out license checks\n"
+                protection_results += "    Modify validation logic\n"
+                protection_results += "    Replace with JMP instructions\n\n"
                 protection_results += "3. Key Generation:\n"
-                protection_results += "   • Reverse engineer algorithm\n"
-                protection_results += "   • Create keygen tool\n"
-                protection_results += "   • Implement validation bypass\n"
+                protection_results += "    Reverse engineer algorithm\n"
+                protection_results += "    Create keygen tool\n"
+                protection_results += "    Implement validation bypass\n"
             else:
                 protection_results += "NO OBVIOUS PROTECTION DETECTED\n"
                 protection_results += "This does not guarantee the absence of protection.\n"
@@ -3020,18 +3020,18 @@ class AnalysisTab(BaseTab):
 
                 # Add specific details based on bypass type
                 if detected_type == "cloud_based":
-                    self.bypass_display.append("• Local license server started on port 443\n")
-                    self.bypass_display.append("• Host file redirections applied\n")
-                    self.bypass_display.append("• SSL certificate validation bypassed\n")
+                    self.bypass_display.append(" Local license server started on port 443\n")
+                    self.bypass_display.append(" Host file redirections applied\n")
+                    self.bypass_display.append(" SSL certificate validation bypassed\n")
                 elif detected_type == "server_license":
-                    self.bypass_display.append("• License server emulator running\n")
-                    self.bypass_display.append("• Response hooks installed\n")
+                    self.bypass_display.append(" License server emulator running\n")
+                    self.bypass_display.append(" Response hooks installed\n")
                 elif detected_type == "token_based":
-                    self.bypass_display.append("• Valid tokens generated\n")
-                    self.bypass_display.append("• Token store updated\n")
+                    self.bypass_display.append(" Valid tokens generated\n")
+                    self.bypass_display.append(" Token store updated\n")
                 elif detected_type == "oauth":
-                    self.bypass_display.append("• OAuth tokens injected\n")
-                    self.bypass_display.append("• Refresh mechanism bypassed\n")
+                    self.bypass_display.append(" OAuth tokens injected\n")
+                    self.bypass_display.append(" Refresh mechanism bypassed\n")
 
                 self.bypass_display.append("\nOK Subscription validation bypass successful\n")
                 self.log_activity("Subscription bypass executed successfully")
@@ -3128,13 +3128,13 @@ class AnalysisTab(BaseTab):
             if self.monitoring_session.start():
                 frida_status = self.monitoring_session.frida_server.get_status()
 
-                self.monitor_log.append(f"[✓] frida-server running (version {frida_status['version']})")
+                self.monitor_log.append(f"[OK] frida-server running (version {frida_status['version']})")
 
                 if not frida_status["is_admin"]:
                     self.monitor_log.append("<font color='orange'>[!] Not running as administrator - some features may be limited</font>")
 
-                self.monitor_log.append("[✓] All monitors initialized successfully")
-                self.monitor_log.append("[✓] Monitoring active - waiting for license activity...\n")
+                self.monitor_log.append("[OK] All monitors initialized successfully")
+                self.monitor_log.append("[OK] Monitoring active - waiting for license activity...\n")
 
                 self.start_monitor_btn.setEnabled(False)
                 self.stop_monitor_btn.setEnabled(True)
@@ -3142,9 +3142,9 @@ class AnalysisTab(BaseTab):
             else:
                 self.monitor_log.append("\n[ERROR] Failed to start monitoring!")
                 self.monitor_log.append("Possible causes:")
-                self.monitor_log.append("  • frida-server failed to start")
-                self.monitor_log.append("  • Target process may have anti-debugging protection")
-                self.monitor_log.append("  • Insufficient permissions")
+                self.monitor_log.append("   frida-server failed to start")
+                self.monitor_log.append("   Target process may have anti-debugging protection")
+                self.monitor_log.append("   Insufficient permissions")
                 self.monitoring_session = None
 
         except Exception as e:
@@ -3170,16 +3170,16 @@ class AnalysisTab(BaseTab):
                 events_by_source = agg_stats.get("events_by_source", {})
 
                 self.monitor_log.append("\nSession Information:")
-                self.monitor_log.append(f"• frida-server version: {frida_status.get('version', 'unknown')}")
-                self.monitor_log.append(f"• Administrator privileges: {'Yes' if frida_status.get('is_admin', False) else 'No'}")
+                self.monitor_log.append(f" frida-server version: {frida_status.get('version', 'unknown')}")
+                self.monitor_log.append(f" Administrator privileges: {'Yes' if frida_status.get('is_admin', False) else 'No'}")
 
                 self.monitor_log.append("\nMonitoring Summary:")
-                self.monitor_log.append(f"• Total events captured: {agg_stats.get('total_events', 0)}")
-                self.monitor_log.append(f"• API calls intercepted: {events_by_source.get('api', 0)}")
-                self.monitor_log.append(f"• Registry operations: {events_by_source.get('registry', 0)}")
-                self.monitor_log.append(f"• File operations: {events_by_source.get('file', 0)}")
-                self.monitor_log.append(f"• Network events: {events_by_source.get('network', 0)}")
-                self.monitor_log.append(f"• Memory patterns found: {events_by_source.get('memory', 0)}")
+                self.monitor_log.append(f" Total events captured: {agg_stats.get('total_events', 0)}")
+                self.monitor_log.append(f" API calls intercepted: {events_by_source.get('api', 0)}")
+                self.monitor_log.append(f" Registry operations: {events_by_source.get('registry', 0)}")
+                self.monitor_log.append(f" File operations: {events_by_source.get('file', 0)}")
+                self.monitor_log.append(f" Network events: {events_by_source.get('network', 0)}")
+                self.monitor_log.append(f" Memory patterns found: {events_by_source.get('memory', 0)}")
 
                 self.monitoring_session = None
 
@@ -3349,44 +3349,44 @@ class AnalysisTab(BaseTab):
                     if comparison.get("process_changes"):
                         self.log_activity("\nProcess Changes:")
                         for change in comparison["process_changes"]:
-                            self.log_activity(f"  • {change['type']}: {change['name']} (PID: {change.get('pid', 'N/A')})")
+                            self.log_activity(f"   {change['type']}: {change['name']} (PID: {change.get('pid', 'N/A')})")
 
                     if comparison.get("registry_changes"):
                         self.log_activity("\nRegistry Changes:")
                         for key, changes in comparison["registry_changes"].items():
                             self.log_activity(f"  {key}:")
                             for change in changes:
-                                self.log_activity(f"    • {change}")
+                                self.log_activity(f"     {change}")
 
                     if comparison.get("file_changes"):
                         self.log_activity("\nFile System Changes:")
                         for change in comparison["file_changes"]:
-                            self.log_activity(f"  • {change['type']}: {change['path']}")
+                            self.log_activity(f"   {change['type']}: {change['path']}")
 
                     if comparison.get("service_changes"):
                         self.log_activity("\nService Changes:")
                         for change in comparison["service_changes"]:
-                            self.log_activity(f"  • {change['type']}: {change['name']} ({change.get('status', 'unknown')})")
+                            self.log_activity(f"   {change['type']}: {change['name']} ({change.get('status', 'unknown')})")
 
                     if comparison.get("network_changes"):
                         self.log_activity("\nNetwork Changes:")
                         for change in comparison["network_changes"]:
-                            self.log_activity(f"  • {change['type']}: {change.get('address', 'N/A')}:{change.get('port', 'N/A')}")
+                            self.log_activity(f"   {change['type']}: {change.get('address', 'N/A')}:{change.get('port', 'N/A')}")
 
                     if comparison.get("certificate_changes"):
                         self.log_activity("\nCertificate Changes:")
                         for change in comparison["certificate_changes"]:
-                            self.log_activity(f"  • {change['type']}: {change['subject']}")
+                            self.log_activity(f"   {change['type']}: {change['subject']}")
 
                     if comparison.get("dll_changes"):
                         self.log_activity("\nDLL Changes:")
                         for change in comparison["dll_changes"]:
-                            self.log_activity(f"  • {change['type']}: {change['path']}")
+                            self.log_activity(f"   {change['type']}: {change['path']}")
 
                     if comparison.get("mutex_changes"):
                         self.log_activity("\nMutex Changes:")
                         for change in comparison["mutex_changes"]:
-                            self.log_activity(f"  • {change['type']}: {change['name']}")
+                            self.log_activity(f"   {change['type']}: {change['name']}")
 
                     # Store comparison results
                     self.comparison_results.append(
@@ -3501,12 +3501,12 @@ class AnalysisTab(BaseTab):
                     summary = [
                         f"Snapshot '{snapshot_name}' imported successfully!",
                         "",
-                        f"• Timestamp: {snapshot_data.get('timestamp', 'Unknown')}",
-                        f"• System: {snapshot_data.get('system_info', {}).get('platform', 'Unknown')}",
-                        f"• Processes: {len(snapshot_data.get('processes', []))}",
-                        f"• Registry keys: {sum(len(v) for v in snapshot_data.get('registry', {}).values())}",
-                        f"• Files: {len(snapshot_data.get('files', {}).get('license_files', []))}",
-                        f"• Services: {len(snapshot_data.get('services', []))}",
+                        f" Timestamp: {snapshot_data.get('timestamp', 'Unknown')}",
+                        f" System: {snapshot_data.get('system_info', {}).get('platform', 'Unknown')}",
+                        f" Processes: {len(snapshot_data.get('processes', []))}",
+                        f" Registry keys: {sum(len(v) for v in snapshot_data.get('registry', {}).values())}",
+                        f" Files: {len(snapshot_data.get('files', {}).get('license_files', []))}",
+                        f" Services: {len(snapshot_data.get('services', []))}",
                     ]
 
                     QMessageBox.information(self, "Import Successful", "\n".join(summary))

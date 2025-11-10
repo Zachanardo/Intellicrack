@@ -86,29 +86,29 @@ def main():
     print("[1/3] Validating Intel MKL DLLs...")
     success, error = validate_mkl_dlls()
     if not success:
-        print(f"✗ FAILED: {error}")
+        print(f"FAIL FAILED: {error}")
         print("\nRECOMMENDATION: Reinstall Intel MKL via pixi:")
         print("  pixi reinstall")
         input("\nPress Enter to exit safely...")
         return 1
-    print("✓ MKL DLLs validated successfully")
+    print("OK MKL DLLs validated successfully")
 
     print("\n[2/3] Testing critical imports...")
     success, error = safe_import_check()
     if not success:
-        print(f"✗ FAILED: {error}")
+        print(f"FAIL FAILED: {error}")
         print("\nRECOMMENDATION: Reinstall dependencies:")
         print("  pixi reinstall")
         input("\nPress Enter to exit safely...")
         return 1
-    print("✓ Critical imports successful")
+    print("OK Critical imports successful")
 
     print("\n[3/3] Launching Intellicrack main application...")
     try:
         import intellicrack.main
         return intellicrack.main.main()
     except Exception as e:
-        print("\n✗ FATAL ERROR in main application:")
+        print("\nFAIL FATAL ERROR in main application:")
         print(f"  {type(e).__name__}: {e}")
         print("\nStack trace:")
         import traceback
@@ -125,7 +125,7 @@ if __name__ == "__main__":
         print("\n\nInterrupted by user. Exiting safely...")
         exit_code = 130
     except Exception as e:
-        print("\n\n✗ UNEXPECTED FATAL ERROR:")
+        print("\n\nFAIL UNEXPECTED FATAL ERROR:")
         print(f"  {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()

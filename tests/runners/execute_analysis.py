@@ -65,12 +65,12 @@ def main():
     print("=" * 80)
 
     for script, success in results.items():
-        status = "✓ SUCCESS" if success else "✗ FAILED"
+        status = "OK SUCCESS" if success else "FAIL FAILED"
         print(f"{status}: {os.path.basename(script)}")
 
     overall_success = all(results.values())
     if overall_success:
-        print("\n✓ All analysis scripts completed successfully")
+        print("\nOK All analysis scripts completed successfully")
     else:
         print("\n⚠ Some analysis scripts encountered issues")
 

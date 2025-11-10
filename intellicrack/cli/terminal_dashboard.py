@@ -317,7 +317,7 @@ class TerminalDashboard:
         if self.analysis_stats.last_analysis:
             content += f"\n[yellow]Last Analysis:[/yellow] {self.analysis_stats.last_analysis}"
 
-        return Panel(content, title="🔍 Analysis", border_style="blue")
+        return Panel(content, title=" Analysis", border_style="blue")
 
     def _create_session_panel(self) -> Panel:
         """Create session information panel."""
@@ -344,7 +344,7 @@ class TerminalDashboard:
         if self.session_info.current_project:
             content += f"\n\n[bold green]Current Project:[/bold green]\n{self.session_info.current_project}"
 
-        return Panel(content, title="📊 Session", border_style="yellow")
+        return Panel(content, title=" Session", border_style="yellow")
 
     def _create_activity_panel(self) -> Panel:
         """Create recent activity panel."""
@@ -527,7 +527,7 @@ Memory: {"🟢" if self.system_metrics.memory_percent < 80 else "🟡" if self.s
 
         # Header
         header_text = Text(
-            "🚀 Intellicrack Terminal Dashboard",
+            " Intellicrack Terminal Dashboard",
             style="bold cyan",
             justify="center",
         )
@@ -661,7 +661,7 @@ Analysis: {self.analysis_stats.total_binaries} binaries, {self.analysis_stats.vu
 
         memory_panel = Panel(
             f"[bold magenta]{self.system_metrics.memory_percent:.1f}%[/bold magenta]\nProcesses: {self.system_metrics.process_count}",
-            title="💾 Memory Usage",
+            title=" Memory Usage",
             border_style="green" if self.system_metrics.memory_percent < 80 else "red",
         )
 
@@ -711,7 +711,7 @@ Analysis: {self.analysis_stats.total_binaries} binaries, {self.analysis_stats.vu
 
         with Status(f"[bold green]{activity_title}...", console=self.console):
             # Create activity list
-            activity_items = "\n".join([f"• {activity}" for activity in activities[-5:]])  # Show last 5
+            activity_items = "\n".join([f" {activity}" for activity in activities[-5:]])  # Show last 5
 
             activity_panel = Panel(
                 activity_items or "No recent activities",
@@ -737,11 +737,11 @@ Analysis: {self.analysis_stats.total_binaries} binaries, {self.analysis_stats.vu
         table.add_column("Trend", style="blue")
 
         # Add system metrics to table
-        cpu_status = "✅ Normal" if self.system_metrics.cpu_percent < 80 else "WARNING️ High"
+        cpu_status = "OK Normal" if self.system_metrics.cpu_percent < 80 else "WARNING️ High"
         cpu_trend = self._get_trend(self.cpu_history)
         table.add_row("CPU Usage", f"{self.system_metrics.cpu_percent:.1f}%", cpu_status, cpu_trend)
 
-        memory_status = "✅ Normal" if self.system_metrics.memory_percent < 80 else "WARNING️ High"
+        memory_status = "OK Normal" if self.system_metrics.memory_percent < 80 else "WARNING️ High"
         memory_trend = self._get_trend(self.memory_history)
         table.add_row(
             "Memory Usage",
@@ -750,13 +750,13 @@ Analysis: {self.analysis_stats.total_binaries} binaries, {self.analysis_stats.vu
             memory_trend,
         )
 
-        disk_status = "✅ Normal" if self.system_metrics.disk_usage < 90 else "WARNING️ Full"
-        table.add_row("Disk Usage", f"{self.system_metrics.disk_usage:.1f}%", disk_status, "📊")
+        disk_status = "OK Normal" if self.system_metrics.disk_usage < 90 else "WARNING️ Full"
+        table.add_row("Disk Usage", f"{self.system_metrics.disk_usage:.1f}%", disk_status, "")
 
         uptime_str = self._format_duration(self.system_metrics.uptime)
-        table.add_row("System Uptime", uptime_str, "✅ Running", "⏱️")
+        table.add_row("System Uptime", uptime_str, "OK Running", "⏱️")
 
-        table.add_row("Process Count", str(self.system_metrics.process_count), "ℹ️ Active", "📈")
+        table.add_row("Process Count", str(self.system_metrics.process_count), "ℹ️ Active", "")
 
         self.console.print(table)
 
@@ -774,25 +774,25 @@ Analysis: {self.analysis_stats.total_binaries} binaries, {self.analysis_stats.vu
         tree = Tree(f"🗂️ [bold blue]{project_data.get('name', 'Project')}[/bold blue]")
 
         # Add project statistics
-        stats_node = tree.add("📊 [bold cyan]Statistics[/bold cyan]")
-        stats_node.add(f"📦 Binaries Analyzed: {self.analysis_stats.total_binaries}")
-        stats_node.add(f"🔍 Analyses Completed: {self.analysis_stats.analyses_completed}")
+        stats_node = tree.add(" [bold cyan]Statistics[/bold cyan]")
+        stats_node.add(f" Binaries Analyzed: {self.analysis_stats.total_binaries}")
+        stats_node.add(f" Analyses Completed: {self.analysis_stats.analyses_completed}")
         stats_node.add(f"🚨 Vulnerabilities Found: {self.analysis_stats.vulnerabilities_found}")
         stats_node.add(f"📂 Active Projects: {self.analysis_stats.active_projects}")
 
         # Add cache information
-        cache_node = tree.add("💾 [bold yellow]Cache Status[/bold yellow]")
+        cache_node = tree.add(" [bold yellow]Cache Status[/bold yellow]")
         cache_total = self.analysis_stats.cache_hits + self.analysis_stats.cache_misses
         cache_hit_rate = (self.analysis_stats.cache_hits / cache_total * 100) if cache_total > 0 else 0
-        cache_node.add(f"✅ Cache Hits: {self.analysis_stats.cache_hits}")
+        cache_node.add(f"OK Cache Hits: {self.analysis_stats.cache_hits}")
         cache_node.add(f"ERROR Cache Misses: {self.analysis_stats.cache_misses}")
-        cache_node.add(f"📈 Hit Rate: {cache_hit_rate:.1f}%")
+        cache_node.add(f" Hit Rate: {cache_hit_rate:.1f}%")
 
         # Add recent activity
         if self.activity_log:
             activity_node = tree.add("🕒 [bold green]Recent Activity[/bold green]")
             for activity in self.activity_log[-3:]:  # Show last 3 activities
-                activity_node.add(f"• {activity}")
+                activity_node.add(f" {activity}")
 
         self.console.print(tree)
 

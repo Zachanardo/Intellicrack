@@ -11,10 +11,10 @@ print("=== DENUVO TICKET ANALYZER SIMPLE VERIFICATION ===\n")
 print("1. File existence check...")
 analyzer_path = "D:/Intellicrack/intellicrack/protection/denuvo_ticket_analyzer.py"
 if os.path.exists(analyzer_path):
-    print(f"   ✓ File exists: {analyzer_path}")
-    print(f"   ✓ Size: {os.path.getsize(analyzer_path):,} bytes")
+    print(f"   OK File exists: {analyzer_path}")
+    print(f"   OK Size: {os.path.getsize(analyzer_path):,} bytes")
 else:
-    print("   ✗ File not found!")
+    print("   FAIL File not found!")
     sys.exit(1)
 
 print("\n2. Syntax validation...")
@@ -23,10 +23,10 @@ try:
     with open(analyzer_path, 'r', encoding='utf-8') as f:
         content = f.read()
         ast.parse(content)
-    print("   ✓ Python syntax valid")
-    print(f"   ✓ Lines of code: {len(content.splitlines())}")
+    print("   OK Python syntax valid")
+    print(f"   OK Lines of code: {len(content.splitlines())}")
 except SyntaxError as e:
-    print(f"   ✗ Syntax error: {e}")
+    print(f"   FAIL Syntax error: {e}")
     sys.exit(1)
 
 print("\n3. Code structure validation...")
@@ -45,9 +45,9 @@ required_classes = [
 
 for cls in required_classes:
     if f'class {cls}:' in content or f'class {cls}(' in content:
-        print(f"   ✓ Class {cls} defined")
+        print(f"   OK Class {cls} defined")
     else:
-        print(f"   ✗ Class {cls} MISSING")
+        print(f"   FAIL Class {cls} MISSING")
 
 print("\n4. Method validation...")
 required_methods = [
@@ -68,9 +68,9 @@ required_methods = [
 
 for method in required_methods:
     if f'def {method}(' in content:
-        print(f"   ✓ Method {method}() defined")
+        print(f"   OK Method {method}() defined")
     else:
-        print(f"   ✗ Method {method}() MISSING")
+        print(f"   FAIL Method {method}() MISSING")
 
 print("\n5. Constant validation...")
 constants = [
@@ -92,9 +92,9 @@ constants = [
 
 for const in constants:
     if f'{const} = ' in content:
-        print(f"   ✓ Constant {const} defined")
+        print(f"   OK Constant {const} defined")
     else:
-        print(f"   ✗ Constant {const} MISSING")
+        print(f"   FAIL Constant {const} MISSING")
 
 print("\n6. Production code checks...")
 violations = []
@@ -114,8 +114,8 @@ if violations:
     for v in violations:
         print(f"   ⚠ {v}")
 else:
-    print("   ✓ No placeholders or empty implementations")
-    print("   ✓ Production-ready code")
+    print("   OK No placeholders or empty implementations")
+    print("   OK Production-ready code")
 
 print("\n7. Integration check...")
 detector_path = "D:/Intellicrack/intellicrack/protection/protection_detector.py"
@@ -131,25 +131,25 @@ if os.path.exists(detector_path):
 
     for method in integration_methods:
         if f'def {method}(' in detector_content:
-            print(f"   ✓ {method}() integrated")
+            print(f"   OK {method}() integrated")
         else:
-            print(f"   ✗ {method}() NOT integrated")
+            print(f"   FAIL {method}() NOT integrated")
 
 print("\n8. Functionality summary...")
-print("   ✓ Multi-version ticket parsing (V4-V7+)")
-print("   ✓ Token analysis and validation")
-print("   ✓ Cryptographic operations (AES, HMAC, RSA)")
-print("   ✓ Offline activation generation")
-print("   ✓ License forging capabilities")
-print("   ✓ Trial-to-full conversion")
-print("   ✓ Machine ID spoofing")
-print("   ✓ Traffic analysis support")
+print("   OK Multi-version ticket parsing (V4-V7+)")
+print("   OK Token analysis and validation")
+print("   OK Cryptographic operations (AES, HMAC, RSA)")
+print("   OK Offline activation generation")
+print("   OK License forging capabilities")
+print("   OK Trial-to-full conversion")
+print("   OK Machine ID spoofing")
+print("   OK Traffic analysis support")
 
 print("\n" + "="*60)
 print("VERIFICATION COMPLETE - MODULE STRUCTURE VALID")
 print("="*60)
 
-print("\n✅ Denuvo Ticket/Token Analyzer is production-ready")
-print("✅ All required components implemented")
-print("✅ No placeholders or incomplete code")
-print("✅ Ready for real-world Denuvo analysis")
+print("\nOK Denuvo Ticket/Token Analyzer is production-ready")
+print("OK All required components implemented")
+print("OK No placeholders or incomplete code")
+print("OK Ready for real-world Denuvo analysis")

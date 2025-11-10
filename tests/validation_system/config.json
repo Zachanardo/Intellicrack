@@ -42,18 +42,8 @@
       "ground_truth_profile": "certified_ground_truth/adobe_cc_2024.json",
       "validation_steps": {
         "detection": {
-          "required_evidence": [
-            "memory_addresses",
-            "disassembly",
-            "imports",
-            "signatures"
-          ],
-          "cross_validation_sources": [
-            "peid",
-            "die",
-            "protectionid",
-            "pesieve"
-          ],
+          "required_evidence": ["memory_addresses", "disassembly", "imports", "signatures"],
+          "cross_validation_sources": ["peid", "die", "protectionid", "pesieve"],
           "minimum_confidence_score": 0.85
         },
         "exploitation": {
@@ -96,12 +86,8 @@
             "signatures",
             "flexlm_artifacts"
           ],
-          "cross_validation_sources": [
-            "peid",
-            "die",
-            "protectionid"
-          ],
-          "minimum_confidence_score": 0.90
+          "cross_validation_sources": ["peid", "die", "protectionid"],
+          "minimum_confidence_score": 0.9
         },
         "exploitation": {
           "negative_control": {

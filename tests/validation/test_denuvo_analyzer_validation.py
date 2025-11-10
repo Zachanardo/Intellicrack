@@ -9,18 +9,18 @@ print("=== DENUVO ANALYZER VERIFICATION TEST ===\n")
 print("1. Checking file exists...")
 analyzer_path = "D:/Intellicrack/intellicrack/protection/denuvo_analyzer.py"
 if os.path.exists(analyzer_path):
-    print(f"   ✓ File found: {analyzer_path}")
+    print(f"   OK File found: {analyzer_path}")
     file_size = os.path.getsize(analyzer_path)
-    print(f"   ✓ File size: {file_size:,} bytes")
+    print(f"   OK File size: {file_size:,} bytes")
 else:
-    print(f"   ✗ File not found!")
+    print(f"   FAIL File not found!")
     sys.exit(1)
 
 print("\n2. Checking file integrity...")
 with open(analyzer_path, 'r', encoding='utf-8') as f:
     content = f.read()
     lines = content.split('\n')
-    print(f"   ✓ Total lines: {len(lines)}")
+    print(f"   OK Total lines: {len(lines)}")
 
     # Check for key components
     components = {
@@ -37,9 +37,9 @@ with open(analyzer_path, 'r', encoding='utf-8') as f:
 
     for name, pattern in components.items():
         if pattern in content:
-            print(f"   ✓ {name} found")
+            print(f"   OK {name} found")
         else:
-            print(f"   ✗ {name} MISSING")
+            print(f"   FAIL {name} MISSING")
 
 print("\n3. Checking signature databases...")
 signature_counts = {
@@ -55,9 +55,9 @@ signature_counts = {
 
 for name, count in signature_counts.items():
     if count > 0:
-        print(f"   ✓ {name} defined")
+        print(f"   OK {name} defined")
     else:
-        print(f"   ✗ {name} MISSING")
+        print(f"   FAIL {name} MISSING")
 
 print("\n4. Checking data structures...")
 dataclasses = [
@@ -71,9 +71,9 @@ dataclasses = [
 
 for dc in dataclasses:
     if f'class {dc}:' in content or f'class {dc}(' in content:
-        print(f"   ✓ {dc} dataclass defined")
+        print(f"   OK {dc} dataclass defined")
     else:
-        print(f"   ✗ {dc} MISSING")
+        print(f"   FAIL {dc} MISSING")
 
 print("\n5. Integration check...")
 detector_path = "D:/Intellicrack/intellicrack/protection/protection_detector.py"
@@ -81,25 +81,25 @@ if os.path.exists(detector_path):
     with open(detector_path, 'r', encoding='utf-8') as f:
         detector_content = f.read()
         if 'detect_denuvo_advanced' in detector_content:
-            print("   ✓ detect_denuvo_advanced method found in protection_detector.py")
+            print("   OK detect_denuvo_advanced method found in protection_detector.py")
         else:
-            print("   ✗ detect_denuvo_advanced method NOT found in protection_detector.py")
+            print("   FAIL detect_denuvo_advanced method NOT found in protection_detector.py")
 
         if 'from .denuvo_analyzer import DenuvoAnalyzer' in detector_content:
-            print("   ✓ DenuvoAnalyzer import found in protection_detector.py")
+            print("   OK DenuvoAnalyzer import found in protection_detector.py")
         else:
-            print("   ✗ DenuvoAnalyzer import NOT found in protection_detector.py")
+            print("   FAIL DenuvoAnalyzer import NOT found in protection_detector.py")
 else:
-    print("   ✗ protection_detector.py not found")
+    print("   FAIL protection_detector.py not found")
 
 print("\n6. Syntax validation...")
 try:
     import ast
     with open(analyzer_path, 'r', encoding='utf-8') as f:
         ast.parse(f.read())
-    print("   ✓ Python syntax is valid")
+    print("   OK Python syntax is valid")
 except SyntaxError as e:
-    print(f"   ✗ Syntax error: {e}")
+    print(f"   FAIL Syntax error: {e}")
     sys.exit(1)
 
 print("\n" + "="*50)
@@ -107,15 +107,15 @@ print("VERIFICATION COMPLETE - ALL CHECKS PASSED")
 print("="*50)
 print("\nDenuvo Analyzer is ready for production use.")
 print("\nKey Features Implemented:")
-print("  • Multi-version detection (Denuvo 4.x through 7.x+)")
-print("  • Advanced signature scanning")
-print("  • VM region detection")
-print("  • Integrity check identification")
-print("  • Timing check detection")
-print("  • Activation trigger analysis")
-print("  • Entropy-based encryption detection")
-print("  • Comprehensive bypass recommendations")
+print("   Multi-version detection (Denuvo 4.x through 7.x+)")
+print("   Advanced signature scanning")
+print("   VM region detection")
+print("   Integrity check identification")
+print("   Timing check detection")
+print("   Activation trigger analysis")
+print("   Entropy-based encryption detection")
+print("   Comprehensive bypass recommendations")
 print("\nIntegration:")
-print("  • Integrated into protection_detector.py")
-print("  • Available via detect_denuvo_advanced() method")
-print("  • Works with both LIEF (advanced) and raw binary (fallback) modes")
+print("   Integrated into protection_detector.py")
+print("   Available via detect_denuvo_advanced() method")
+print("   Works with both LIEF (advanced) and raw binary (fallback) modes")

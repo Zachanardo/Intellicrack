@@ -149,15 +149,15 @@ class CICDDialog(PluginDialogBase):
 
         # Pipeline tab
         self.pipeline_widget = self.create_pipeline_tab()
-        self.tab_widget.addTab(self.pipeline_widget, "🚀 Pipeline")
+        self.tab_widget.addTab(self.pipeline_widget, " Pipeline")
 
         # Configuration tab
         self.config_widget = self.create_config_tab()
-        self.tab_widget.addTab(self.config_widget, "⚙️ Configuration")
+        self.tab_widget.addTab(self.config_widget, "[CFG]️ Configuration")
 
         # Reports tab
         self.reports_widget = self.create_reports_tab()
-        self.tab_widget.addTab(self.reports_widget, "📊 Reports")
+        self.tab_widget.addTab(self.reports_widget, " Reports")
 
         # GitHub Actions tab
         self.github_widget = self.create_github_tab()
@@ -544,7 +544,7 @@ class CICDDialog(PluginDialogBase):
                     report = json.load(f)
 
                 status = report.get("overall_status", "unknown")
-                icon = "✅" if status == "success" else "ERROR"
+                icon = "OK" if status == "success" else "ERROR"
 
                 item = QListWidgetItem(f"{icon} {timestamp}")
                 item.setData(Qt.UserRole, os.path.join(report_dir, file))
@@ -632,7 +632,7 @@ class CICDDialog(PluginDialogBase):
 
         # Clear console
         self.console_output.clear()
-        self.console_output.append(f"🚀 Starting CI/CD pipeline for {os.path.basename(self.plugin_path)}\n")
+        self.console_output.append(f" Starting CI/CD pipeline for {os.path.basename(self.plugin_path)}\n")
 
         # Reset stage widgets
         for stage_widget in self.stage_widgets.values():
@@ -667,7 +667,7 @@ class CICDDialog(PluginDialogBase):
 
     def on_stage_started(self, stage: str):
         """Handle stage started."""
-        self.console_output.append(f"\n📦 Running stage: {stage}")
+        self.console_output.append(f"\n Running stage: {stage}")
 
         if stage in self.stage_widgets:
             widget = self.stage_widgets[stage]
@@ -682,7 +682,7 @@ class CICDDialog(PluginDialogBase):
 
         if stage in self.stage_widgets:
             widget = self.stage_widgets[stage]
-            widget.status_label.setText("✅" if success else "ERROR")
+            widget.status_label.setText("OK" if success else "ERROR")
             widget.progress.setVisible(False)
 
             # Update result label
@@ -702,7 +702,7 @@ class CICDDialog(PluginDialogBase):
                 widget.setObjectName("pipelineStageError")
 
         # Update progress
-        completed = sum(1 for w in self.stage_widgets.values() if w.status_label.text() in ["✅", "ERROR"])
+        completed = sum(1 for w in self.stage_widgets.values() if w.status_label.text() in ["OK", "ERROR"])
         self.progress_bar.setValue(completed)
 
         # Log errors
@@ -725,7 +725,7 @@ class CICDDialog(PluginDialogBase):
         # Show summary
         status = results.get("overall_status", "unknown")
         if status == "success":
-            self.console_output.append("\n✅ Pipeline completed successfully!")
+            self.console_output.append("\nOK Pipeline completed successfully!")
         else:
             self.console_output.append(f"\nERROR Pipeline failed with status: {status}")
 

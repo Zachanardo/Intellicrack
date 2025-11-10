@@ -430,9 +430,11 @@ class FileAnalyzer:
                 tokens = tokenize.generate_tokens(io.StringIO(ctx.content).readline)
                 ctx.comments = [tok.string for tok in tokens if tok.type == tokenize.COMMENT]
             except Exception:
+                pass
                 # Tokenization may fail for complex files, continue without comments
 
         except SyntaxError:
+            pass
             # File may have syntax errors, skip analysis
 
     def _analyze_java(self, ctx: FileContext):

@@ -14,6 +14,9 @@ use std::path::PathBuf;
 use std::{env, fs};
 use tracing::{debug, info, warn};
 
+#[cfg(target_os = "windows")]
+use crate::intel_gpu::{detect_intel_arc_gpu, get_gpu_info_for_logging};
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum OsType {
     Windows,
@@ -150,29 +153,78 @@ impl PlatformInfo {
         Ok(GpuVendor::Intel)
     }
 
-    /// Detect GPU vendor on Windows using system information
     #[cfg(target_os = "windows")]
     fn detect_windows_gpu_vendor() -> Result<GpuVendor> {
-        use std::process::Command;
+        match detect_intel_arc_gpu() {
+            Ok(Some(gpu_details)) => {
+                info!("{}", get_gpu_info_for_logging(&gpu_details));
 
-        // Use WMIC to query display adapters
-        let output = Command::new("wmic")
-            .args(["path", "win32_VideoController", "get", "name"])
-            .output()
-            .context("Failed to run wmic command")?;
+                unsafe {
+                    env::set_var("INTELLICRACK_GPU_MODEL", &gpu_details.device_name);
+                    env::set_var("INTELLICRACK_GPU_VRAM_MB", gpu_details.vram_mb.to_string());
+                    env::set_var("INTELLICRACK_GPU_IS_ARC", gpu_details.is_arc.to_string());
+                    env::set_var(
+                        "INTELLICRACK_GPU_DEVICE_ID",
+                        format!("0x{:04X}", gpu_details.device_id),
+                    );
 
-        let output_str = String::from_utf8_lossy(&output.stdout).to_lowercase();
-        debug!("WMIC GPU output: {}", output_str);
+                    if gpu_details.is_arc {
+                        env::set_var("IPEX_ENABLE", "1");
+                        env::set_var("ZE_ENABLE_PCI_ID_DEVICE_ORDER", "1");
+                    }
+                }
 
-        if output_str.contains("intel") {
-            Ok(GpuVendor::Intel)
-        } else if output_str.contains("nvidia") {
-            Ok(GpuVendor::Nvidia)
-        } else if output_str.contains("amd") || output_str.contains("radeon") {
-            Ok(GpuVendor::Amd)
-        } else {
-            Ok(GpuVendor::Unknown)
+                Ok(GpuVendor::Intel)
+            }
+            Ok(None) => {
+                debug!("No Intel GPU detected via DXGI, checking for other vendors");
+                Self::detect_other_gpu_vendors()
+            }
+            Err(e) => {
+                warn!(
+                    "DXGI GPU detection failed: {}, falling back to generic detection",
+                    e
+                );
+                Self::detect_other_gpu_vendors()
+            }
         }
+    }
+
+    #[cfg(target_os = "windows")]
+    fn detect_other_gpu_vendors() -> Result<GpuVendor> {
+        use windows::Win32::Graphics::Dxgi::{
+            CreateDXGIFactory1, DXGI_ADAPTER_DESC1, IDXGIFactory1,
+        };
+
+        unsafe {
+            let factory: IDXGIFactory1 =
+                CreateDXGIFactory1().context("Failed to create DXGI factory")?;
+
+            let mut adapter_index = 0;
+            while let Ok(adapter) = factory.EnumAdapters1(adapter_index) {
+                let mut desc = std::mem::zeroed::<DXGI_ADAPTER_DESC1>();
+                adapter
+                    .GetDesc1(&mut desc)
+                    .context("Failed to get adapter description")?;
+
+                let device_name = String::from_utf16_lossy(&desc.Description)
+                    .trim_end_matches('\0')
+                    .to_lowercase();
+
+                if device_name.contains("nvidia") {
+                    info!("NVIDIA GPU detected: {}", device_name);
+                    return Ok(GpuVendor::Nvidia);
+                } else if device_name.contains("amd") || device_name.contains("radeon") {
+                    info!("AMD GPU detected: {}", device_name);
+                    return Ok(GpuVendor::Amd);
+                }
+
+                adapter_index += 1;
+            }
+        }
+
+        debug!("No recognized GPU vendor detected");
+        Ok(GpuVendor::Unknown)
     }
 
     /// Detect display availability
@@ -536,7 +588,6 @@ mod tests {
                 "Linux version 4.19.128-microsoft-standard (oe-user@oe-host) (gcc version 8.2.0 (GCC)) #1 SMP Tue Jun 23 12:58:10 UTC 2020"
             ).unwrap();
 
-            // We can't easily mock the file path, but we can test the string parsing logic
             let content = fs::read_to_string(&proc_version_path).unwrap();
             assert!(content.to_lowercase().contains("microsoft"));
 

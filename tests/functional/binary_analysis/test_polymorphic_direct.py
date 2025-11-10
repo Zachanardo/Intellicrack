@@ -77,11 +77,11 @@ def test_enumerations():
     print("POLYMORPHIC ANALYZER - ENUMERATION TYPES TEST")
     print("=" * 70)
 
-    print("\n✓ MutationType enumeration:")
+    print("\nOK MutationType enumeration:")
     for mutation in MutationType:
         print(f"  - {mutation.value}")
 
-    print("\n✓ PolymorphicEngine enumeration:")
+    print("\nOK PolymorphicEngine enumeration:")
     for engine in PolymorphicEngine:
         print(f"  - {engine.value}")
 
@@ -99,7 +99,7 @@ def test_data_structures():
         side_effects={"memory"},
     )
 
-    print(f"\n✓ Created InstructionNode:")
+    print(f"\nOK Created InstructionNode:")
     print(f"  - Semantic class: {node.semantic_class}")
     print(f"  - Operand types: {node.operand_types}")
     print(f"  - Data dependencies: {node.data_dependencies}")
@@ -115,7 +115,7 @@ def test_data_structures():
         evasion_techniques=["timing_check"],
     )
 
-    print(f"\n✓ Created PolymorphicAnalysis:")
+    print(f"\nOK Created PolymorphicAnalysis:")
     print(f"  - Engine type: {analysis.engine_type.value}")
     print(f"  - Mutation types: {[m.value for m in analysis.mutation_types]}")
     print(f"  - Mutation complexity: {analysis.mutation_complexity}")
@@ -149,20 +149,20 @@ def test_semantic_hashing():
         side_effects={"flags"},
     )
 
-    print(f"\n✓ Semantic hashes:")
+    print(f"\nOK Semantic hashes:")
     print(f"  - Node 1: {node1.semantic_hash}")
     print(f"  - Node 2: {node2.semantic_hash}")
     print(f"  - Node 3: {node3.semantic_hash}")
 
     if node1.semantic_hash == node2.semantic_hash:
-        print("\n✓ PASS: Identical nodes produce identical hashes")
+        print("\nOK PASS: Identical nodes produce identical hashes")
     else:
-        print("\n✗ FAIL: Identical nodes should have same hash")
+        print("\nFAIL FAIL: Identical nodes should have same hash")
 
     if node1.semantic_hash != node3.semantic_hash:
-        print("✓ PASS: Different nodes produce different hashes")
+        print("OK PASS: Different nodes produce different hashes")
     else:
-        print("✗ FAIL: Different nodes should have different hashes")
+        print("FAIL FAIL: Different nodes should have different hashes")
 
 
 def test_polymorphic_detection_patterns():
@@ -191,7 +191,7 @@ def test_polymorphic_detection_patterns():
     xor_count = mnemonics_metaphor.count("xor")
     loop_count = mnemonics_metaphor.count("loop")
 
-    print(f"\n✓ MetaPHOR pattern detection:")
+    print(f"\nOK MetaPHOR pattern detection:")
     print(f"  - XOR count: {xor_count}")
     print(f"  - LOOP count: {loop_count}")
 
@@ -206,7 +206,7 @@ def test_polymorphic_detection_patterns():
     push_count = sum(1 for m in mnemonics_zmist if "push" in m)
     pop_count = sum(1 for m in mnemonics_zmist if "pop" in m)
 
-    print(f"\n✓ Zmist pattern detection:")
+    print(f"\nOK Zmist pattern detection:")
     print(f"  - PUSH count: {push_count}")
     print(f"  - POP count: {pop_count}")
 
@@ -235,25 +235,25 @@ def main():
         print("ALL TESTS COMPLETED SUCCESSFULLY")
         print("=" * 70)
 
-        print("\n✓ Core functionality verified:")
-        print("  • Mutation type detection")
-        print("  • Engine identification")
-        print("  • Semantic hashing")
-        print("  • Data structure creation")
-        print("  • Pattern matching logic")
+        print("\nOK Core functionality verified:")
+        print("   Mutation type detection")
+        print("   Engine identification")
+        print("   Semantic hashing")
+        print("   Data structure creation")
+        print("   Pattern matching logic")
 
-        print("\n✓ Supported capabilities:")
-        print("  • 10 mutation types")
-        print("  • 8 polymorphic engine types")
-        print("  • Semantic signature extraction")
-        print("  • Behavior pattern analysis")
-        print("  • Code normalization")
-        print("  • Invariant feature extraction")
+        print("\nOK Supported capabilities:")
+        print("   10 mutation types")
+        print("   8 polymorphic engine types")
+        print("   Semantic signature extraction")
+        print("   Behavior pattern analysis")
+        print("   Code normalization")
+        print("   Invariant feature extraction")
 
         return 0
 
     except Exception as e:
-        print(f"\n✗ TEST FAILED: {e}")
+        print(f"\nFAIL TEST FAILED: {e}")
         import traceback
 
         traceback.print_exc()

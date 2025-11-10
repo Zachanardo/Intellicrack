@@ -84,34 +84,11 @@ const ADVANCED_DOMAINS = new Map([
             'wwis-dubc1-vip60.adobe.com',
         ],
     ],
-    [
-        'autodesk',
-        [
-            'register.autodesk.com',
-            'activation.autodesk.com',
-            'accounts.autodesk.com',
-        ],
-    ],
-    [
-        'unity',
-        [
-            'telemetry.unity3d.com',
-            'config.uca.cloud.unity3d.com',
-            'cdp.cloud.unity3d.com',
-        ],
-    ],
-    [
-        'nvidia',
-        ['gfe.nvidia.com', 'services.gfe.nvidia.com', 'telemetry.nvidia.com'],
-    ],
+    ['autodesk', ['register.autodesk.com', 'activation.autodesk.com', 'accounts.autodesk.com']],
+    ['unity', ['telemetry.unity3d.com', 'config.uca.cloud.unity3d.com', 'cdp.cloud.unity3d.com']],
+    ['nvidia', ['gfe.nvidia.com', 'services.gfe.nvidia.com', 'telemetry.nvidia.com']],
     ['intel', ['registrationcenter.intel.com', 'software.intel.com']],
-    [
-        'rockstar',
-        [
-            'prod.telemetry.ros.rockstargames.com',
-            'telemetry.gta5.rockstargames.com',
-        ],
-    ],
+    ['rockstar', ['prod.telemetry.ros.rockstargames.com', 'telemetry.gta5.rockstargames.com']],
     [
         'generic',
         [
@@ -137,9 +114,8 @@ const CRYPTO_CERT_SUBJECTS = [
 function randomDelay() {
     if (!CONFIG.stealthMode) return;
     const delay =
-    Math.floor(
-        Math.random() * (CONFIG.blockingDelay.max - CONFIG.blockingDelay.min + 1),
-    ) + CONFIG.blockingDelay.min;
+        Math.floor(Math.random() * (CONFIG.blockingDelay.max - CONFIG.blockingDelay.min + 1)) +
+        CONFIG.blockingDelay.min;
     Thread.sleep(delay / 1000.0);
 }
 
@@ -207,9 +183,7 @@ tryAttach('ntdll.dll', 'NtCreateFile', {
         if (isExcludedProcess()) return;
 
         const objectAttrs = args[2];
-        const objectNamePtr = objectAttrs
-            .add(Process.pointerSize === 8 ? 16 : 8)
-            .readPointer();
+        const objectNamePtr = objectAttrs.add(Process.pointerSize === 8 ? 16 : 8).readPointer();
 
         if (!objectNamePtr || objectNamePtr.isNull()) return;
 
@@ -295,9 +269,7 @@ tryAttach('winhttp.dll', 'WinHttpSendRequest', {
 
             if (
                 headers &&
-        suspiciousHeaders.some((header) =>
-            headers.toLowerCase().includes(header),
-        )
+                suspiciousHeaders.some((header) => headers.toLowerCase().includes(header))
             ) {
                 randomDelay();
                 send({
@@ -479,12 +451,8 @@ tryAttach('ws2_32.dll', 'WSAConnect', {
                 '31.13.', // Facebook/Meta telemetry
             ];
 
-            const isSuspiciousIP = suspiciousIPs.some((range) =>
-                ipStr.startsWith(range),
-            );
-            const isSuspiciousPort = [
-                80, 443, 8080, 8443, 9001, 9443, 10001, 11001,
-            ].includes(port);
+            const isSuspiciousIP = suspiciousIPs.some((range) => ipStr.startsWith(range));
+            const isSuspiciousPort = [80, 443, 8080, 8443, 9001, 9443, 10001, 11001].includes(port);
 
             if (isSuspiciousIP || isSuspiciousPort) {
                 randomDelay();
@@ -523,9 +491,7 @@ tryAttach('ws2_32.dll', 'connect', {
         if (family === 2) {
             // AF_INET
             const port = (sockAddr.add(2).readU8() << 8) | sockAddr.add(3).readU8();
-            shouldBlock = [80, 443, 8080, 8443, 9001, 9443, 10443, 11443].includes(
-                port,
-            );
+            shouldBlock = [80, 443, 8080, 8443, 9001, 9443, 10443, 11443].includes(port);
         } else if (family === 23) {
             // AF_INET6
             const port = (sockAddr.add(2).readU8() << 8) | sockAddr.add(3).readU8();
@@ -573,9 +539,7 @@ tryAttach('ws2_32.dll', 'send', {
 
                 if (
                     data &&
-          suspiciousPayloads.some((payload) =>
-              data.toLowerCase().includes(payload),
-          )
+                    suspiciousPayloads.some((payload) => data.toLowerCase().includes(payload))
                 ) {
                     randomDelay();
                     this.blockSend = true;
@@ -695,13 +659,7 @@ tryAttach('ws2_32.dll', 'gethostbyname', {
         if (!hostName) return;
 
         const lowerDomain = hostName.toLowerCase();
-        const suspiciousPatterns = [
-            'telemetry',
-            'activation',
-            'genuine',
-            'watson',
-            'analytics',
-        ];
+        const suspiciousPatterns = ['telemetry', 'activation', 'genuine', 'watson', 'analytics'];
 
         if (suspiciousPatterns.some((pattern) => lowerDomain.includes(pattern))) {
             randomDelay();
@@ -791,9 +749,7 @@ tryAttach('kernel32.dll', 'CreateProcessW', {
             'compattelrunner',
         ];
 
-        const shouldBlock = suspiciousProcesses.some((proc) =>
-            lowerCmd.includes(proc),
-        );
+        const shouldBlock = suspiciousProcesses.some((proc) => lowerCmd.includes(proc));
 
         if (shouldBlock) {
             randomDelay();
@@ -835,9 +791,7 @@ tryAttach('kernel32.dll', 'CreateProcessA', {
             'crashreporter',
         ];
 
-        const shouldBlock = suspiciousProcesses.some((proc) =>
-            lowerCmd.includes(proc),
-        );
+        const shouldBlock = suspiciousProcesses.some((proc) => lowerCmd.includes(proc));
 
         if (shouldBlock) {
             randomDelay();
@@ -868,12 +822,7 @@ tryAttach('shell32.dll', 'ShellExecuteW', {
         const parameters = args[3] ? args[3].readUtf16String() : null;
 
         const fullCommand = `${file || ''} ${parameters || ''}`.toLowerCase();
-        const suspiciousExecs = [
-            'telemetry',
-            'activation',
-            'licensing',
-            'analytics',
-        ];
+        const suspiciousExecs = ['telemetry', 'activation', 'licensing', 'analytics'];
 
         if (suspiciousExecs.some((exec) => fullCommand.includes(exec))) {
             randomDelay();
@@ -948,9 +897,7 @@ tryAttach('advapi32.dll', 'RegSetValueExW', {
             'disabletelemetry',
         ];
 
-        const shouldBlock = suspiciousValues.some((val) =>
-            lowerValue.includes(val),
-        );
+        const shouldBlock = suspiciousValues.some((val) => lowerValue.includes(val));
 
         if (shouldBlock) {
             randomDelay();
@@ -983,9 +930,7 @@ tryAttach('advapi32.dll', 'RegSetValueExA', {
         const lowerValue = valueName.toLowerCase();
         const suspiciousValues = ['telemetry', 'diagtrack', 'watson', 'ceip'];
 
-        const shouldBlock = suspiciousValues.some((val) =>
-            lowerValue.includes(val),
-        );
+        const shouldBlock = suspiciousValues.some((val) => lowerValue.includes(val));
 
         if (shouldBlock) {
             randomDelay();
@@ -1169,16 +1114,11 @@ tryAttach('kernel32.dll', 'WriteFile', {
         if (buffer && !buffer.isNull() && bytesToWrite > 0) {
             try {
                 const data = buffer.readCString(Math.min(bytesToWrite, 512));
-                const suspiciousData = [
-                    'telemetry',
-                    'analytics',
-                    'tracking',
-                    'activation',
-                ];
+                const suspiciousData = ['telemetry', 'analytics', 'tracking', 'activation'];
 
                 if (
                     data &&
-          suspiciousData.some((keyword) => data.toLowerCase().includes(keyword))
+                    suspiciousData.some((keyword) => data.toLowerCase().includes(keyword))
                 ) {
                     randomDelay();
                     this.blockWrite = true;
@@ -1221,12 +1161,12 @@ setInterval(() => {
             blocked_registry: TELEMETRY_STATS.blockedRegistry,
             crypto_interceptions: TELEMETRY_STATS.cryptoInterceptions,
             total_blocked:
-        TELEMETRY_STATS.blockedConnections +
-        TELEMETRY_STATS.blockedDNS +
-        TELEMETRY_STATS.blockedFiles +
-        TELEMETRY_STATS.blockedProcesses +
-        TELEMETRY_STATS.blockedRegistry +
-        TELEMETRY_STATS.cryptoInterceptions,
+                TELEMETRY_STATS.blockedConnections +
+                TELEMETRY_STATS.blockedDNS +
+                TELEMETRY_STATS.blockedFiles +
+                TELEMETRY_STATS.blockedProcesses +
+                TELEMETRY_STATS.blockedRegistry +
+                TELEMETRY_STATS.cryptoInterceptions,
         },
         timestamp: Date.now(),
     });
@@ -1237,7 +1177,7 @@ send({
     target: 'telemetry_blocker',
     action: 'installation_complete',
     message:
-    'Advanced telemetry blocking system activated with comprehensive multi-layer protection',
+        'Advanced telemetry blocking system activated with comprehensive multi-layer protection',
     features: [
         'Native API interception',
         'Cryptographic blocking',

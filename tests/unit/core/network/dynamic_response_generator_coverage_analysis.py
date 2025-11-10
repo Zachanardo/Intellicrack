@@ -292,7 +292,7 @@ class DynamicResponseGeneratorCoverageAnalyzer:
 
 ## Production-Ready Validation Status
 
-{'✅ MEETS PRODUCTION STANDARDS (80%+ coverage achieved)' if coverage_percentage >= 80 else '❌ BELOW PRODUCTION STANDARDS (80%+ coverage required)'}
+{'OK MEETS PRODUCTION STANDARDS (80%+ coverage achieved)' if coverage_percentage >= 80 else 'FAIL BELOW PRODUCTION STANDARDS (80%+ coverage required)'}
 
 ## Detailed Method Coverage Analysis
 
@@ -368,11 +368,11 @@ class DynamicResponseGeneratorCoverageAnalyzer:
         report += "\n## Recommendations for Production Deployment\n\n"
 
         if coverage_percentage >= 95:
-            report += "✅ **EXCELLENT**: Test coverage exceeds production standards. Ready for deployment.\n"
+            report += "OK **EXCELLENT**: Test coverage exceeds production standards. Ready for deployment.\n"
         elif coverage_percentage >= 80:
-            report += "✅ **GOOD**: Test coverage meets production standards. Consider addressing any gaps for critical methods.\n"
+            report += "OK **GOOD**: Test coverage meets production standards. Consider addressing any gaps for critical methods.\n"
         else:
-            report += "❌ **NEEDS IMPROVEMENT**: Test coverage below production standards. Additional tests required before deployment.\n"
+            report += "FAIL **NEEDS IMPROVEMENT**: Test coverage below production standards. Additional tests required before deployment.\n"
 
         if no_coverage:
             report += f"\n**CRITICAL**: {len(no_coverage)} methods lack test coverage. These should be prioritized:\n"
@@ -454,10 +454,10 @@ def main():
     total_gaps = sum(len(gap_list) for gap_list in gaps.values())
 
     if total_gaps == 0:
-        gap_report += "\n✅ **NO SIGNIFICANT FUNCTIONALITY GAPS DETECTED**\n"
+        gap_report += "\nOK **NO SIGNIFICANT FUNCTIONALITY GAPS DETECTED**\n"
         gap_report += "\nThe test suite provides comprehensive coverage of all critical functionality.\n"
     else:
-        gap_report += f"\n⚠️  **{total_gaps} FUNCTIONALITY GAPS IDENTIFIED**\n"
+        gap_report += f"\nWARNING  **{total_gaps} FUNCTIONALITY GAPS IDENTIFIED**\n"
         gap_report += "\nThe following areas require additional testing attention:\n\n"
 
         for gap_type, methods in gaps.items():

@@ -42,6 +42,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import psutil
 
+from ...utils.core.plugin_paths import get_ghidra_scripts_dir
 from ..frida_manager import FridaManager
 from .ghidra_analyzer import run_advanced_ghidra_analysis
 from .ghidra_results import GhidraAnalysisResult

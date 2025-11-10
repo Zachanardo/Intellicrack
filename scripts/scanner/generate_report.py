@@ -1,3 +1,10 @@
+"""Production code scanner audit report generator.
+
+This module generates comprehensive audit reports from scanner verification results,
+analyzing false positive rates, identifying common patterns, and providing
+recommendations for improving scanner accuracy and reducing detection noise.
+"""
+
 import json
 
 # Load the verification results
@@ -23,9 +30,9 @@ report_content = f'''# Production Code Scanner Audit Report
 ### Most Common False Positive Patterns
 Based on the analysis, the most common false positive patterns were:
 
-1. **Third-party library code**: Many findings were in third-party libraries (particularly in the Ghidra tools) that contained development markers, empty functions, or TODO comments that were flagged but are part of legitimate third-party code.
+1. **Third-party library code**: Many findings were in third-party libraries (particularly in the Ghidra tools) that contained development markers, empty functions, or task comments that were flagged but are part of legitimate third-party code.
 
-2. **Test files**: The scanner flagged legitimate code in test files (files in /tests/ directories or with test_ prefixes) that intentionally contain console logs, artificial delays for testing purposes, and placeholder implementations.
+2. **Test files**: The scanner flagged legitimate code in test files (files in /tests/ directories or with test_ prefixes) that intentionally contain console logs, artificial delays for testing purposes, and temporary implementations.
 
 3. **Legitimate error handling**: The scanner flagged legitimate empty returns ({results['true_positives'] + results['false_positives']} total findings) in error handling code, where returning empty lists/dictionaries is a valid defensive programming practice.
 
@@ -35,8 +42,8 @@ Based on the analysis, the most common false positive patterns were:
 Examples of correctly identified non-production patterns include:
 - Console logging statements in production JavaScript files
 - Hardcoded credentials in production code
-- Development markers (TODO/FIXME/HACK) in production files
-- Implementation placeholders in production code
+- Development task markers in production files
+- Incomplete implementations in production code
 
 ### Examples of False Positives
 Examples of incorrectly flagged patterns include:

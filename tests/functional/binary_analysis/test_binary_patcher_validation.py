@@ -20,8 +20,7 @@ def validate_implementation():
 
     # Check file existence
     from intellicrack.utils.path_resolver import get_project_root
-
-script_dir = get_project_root() / "intellicrack/scripts/frida"
+    script_dir = get_project_root() / "intellicrack/scripts/frida"
     required_files = [
         "binary_patcher.js",
         "binary_patcher_advanced.js",
@@ -35,13 +34,13 @@ script_dir = get_project_root() / "intellicrack/scripts/frida"
         if file_path.exists():
             size = file_path.stat().st_size
             lines = len(file_path.read_text().splitlines())
-            print(f"  ✓ {file}: {lines} lines, {size:,} bytes")
+            print(f"  OK {file}: {lines} lines, {size:,} bytes")
         else:
-            print(f"  ✗ {file}: NOT FOUND")
+            print(f"  FAIL {file}: NOT FOUND")
             all_exist = False
 
     if not all_exist:
-        print("\n❌ Some files are missing!")
+        print("\nFAIL Some files are missing!")
         return False
 
     # Validate main binary_patcher.js structure
@@ -71,9 +70,9 @@ script_dir = get_project_root() / "intellicrack/scripts/frida"
             missing.append(component)
 
     if missing:
-        print(f"  ✗ Missing components: {', '.join(missing)}")
+        print(f"  FAIL Missing components: {', '.join(missing)}")
     else:
-        print(f"  ✓ All {len(required_components)} core components present")
+        print(f"  OK All {len(required_components)} core components present")
 
     # Validate advanced module structure
     print("\n[3] Validating Advanced Module Structure...")
@@ -99,9 +98,9 @@ script_dir = get_project_root() / "intellicrack/scripts/frida"
             missing_advanced.append(component)
 
     if missing_advanced:
-        print(f"  ✗ Missing advanced components: {', '.join(missing_advanced)}")
+        print(f"  FAIL Missing advanced components: {', '.join(missing_advanced)}")
     else:
-        print(f"  ✓ All {len(advanced_components)} advanced components present")
+        print(f"  OK All {len(advanced_components)} advanced components present")
 
     # Check test coverage
     print("\n[4] Validating Test Coverage...")
@@ -129,9 +128,9 @@ script_dir = get_project_root() / "intellicrack/scripts/frida"
             missing_tests.append(test)
 
     if missing_tests:
-        print(f"  ✗ Missing tests: {', '.join(missing_tests)}")
+        print(f"  FAIL Missing tests: {', '.join(missing_tests)}")
     else:
-        print(f"  ✓ All {len(test_functions)} test functions present")
+        print(f"  OK All {len(test_functions)} test functions present")
 
     # Check specification completion
     print("\n[5] Checking Specification Completion...")
@@ -140,24 +139,24 @@ script_dir = get_project_root() / "intellicrack/scripts/frida"
         spec_content = spec_file.read_text()
         completed_count = spec_content.count("[x]")
         total_count = spec_content.count("- [x]") + spec_content.count("- [ ]")
-        print(f"  ✓ Specification: {completed_count}/{total_count} items completed")
+        print(f"  OK Specification: {completed_count}/{total_count} items completed")
 
         if completed_count == 288:
-            print(f"  ✓ All 288 requirements marked complete!")
+            print(f"  OK All 288 requirements marked complete!")
         else:
             print(f"  ⚠ Only {completed_count}/288 requirements marked complete")
     else:
-        print("  ✗ Specification file not found")
+        print("  FAIL Specification file not found")
 
     # Summary statistics
     print("\n[6] Implementation Statistics:")
-    print(f"  • Core module: ~2,072 lines")
-    print(f"  • Advanced module: ~1,746 lines")
-    print(f"  • Test suite: ~639 lines")
-    print(f"  • Total: ~4,457 lines of production code")
-    print(f"  • Features implemented: 288")
-    print(f"  • Architectures supported: 5 (x86-64, ARM64, RISC-V, WASM, JVM)")
-    print(f"  • Binary formats: 5 (PE/PE+, ELF/ELF64, Mach-O, APK, DEX)")
+    print(f"   Core module: ~2,072 lines")
+    print(f"   Advanced module: ~1,746 lines")
+    print(f"   Test suite: ~639 lines")
+    print(f"   Total: ~4,457 lines of production code")
+    print(f"   Features implemented: 288")
+    print(f"   Architectures supported: 5 (x86-64, ARM64, RISC-V, WASM, JVM)")
+    print(f"   Binary formats: 5 (PE/PE+, ELF/ELF64, Mach-O, APK, DEX)")
 
     # Implementation validation
     print("\n[7] Code Quality Validation:")
@@ -175,7 +174,7 @@ script_dir = get_project_root() / "intellicrack/scripts/frida"
                 has_placeholders = True
 
     if not has_placeholders:
-        print("  ✓ Code quality validated")
+        print("  OK Code quality validated")
 
     # Check for proper error handling
     for file in ["binary_patcher.js", "binary_patcher_advanced.js"]:
@@ -183,7 +182,7 @@ script_dir = get_project_root() / "intellicrack/scripts/frida"
         content = file_path.read_text()
         try_count = content.count("try {")
         catch_count = content.count("} catch")
-        print(f"  ✓ {file}: {try_count} try-catch blocks for error handling")
+        print(f"  OK {file}: {try_count} try-catch blocks for error handling")
 
     # Final result
     print("\n" + "=" * 60)
@@ -191,7 +190,7 @@ script_dir = get_project_root() / "intellicrack/scripts/frida"
     print("=" * 60)
 
     if all_exist and not missing and not missing_advanced and not missing_tests and not has_placeholders:
-        print("\n✅ Binary Patcher Implementation: FULLY VALIDATED")
+        print("\nOK Binary Patcher Implementation: FULLY VALIDATED")
         print("   All components are production-ready")
         return True
     else:
@@ -203,5 +202,5 @@ if __name__ == "__main__":
         success = validate_implementation()
         sys.exit(0 if success else 1)
     except Exception as e:
-        print(f"\n❌ Validation error: {e}")
+        print(f"\nFAIL Validation error: {e}")
         sys.exit(1)

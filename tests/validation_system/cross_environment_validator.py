@@ -242,6 +242,7 @@ class CrossEnvironmentValidator:
                         if proc.info['name'].lower() in common_security_processes:
                             security_software.append(proc.info['name'])
                     except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        pass
                         # Process may have exited or access denied, continue checking others
 
             # If nothing found, assume Windows Defender is active

@@ -2,7 +2,9 @@
 
 ## Purpose
 
-These tests validate Intellicrack's **actual capability** to detect, analyze, and bypass real software protections. Tests run against **genuine protected binaries** and **FAIL** if Intellicrack doesn't work.
+These tests validate Intellicrack's **actual capability** to detect, analyze,
+and bypass real software protections. Tests run against **genuine protected
+binaries** and **FAIL** if Intellicrack doesn't work.
 
 ## Test Binary Directory Structure
 
@@ -63,48 +65,49 @@ tests/integration/real_binary_tests/
 ### Legal Sources for Protected Software
 
 1. **Abandonware (Protection Expired)**:
-   - Old games with SecuROM/StarForce/Safedisc from 2000-2010
-   - Legacy CAD/engineering software with FlexLM/HASP dongles
-   - Many available legally from abandonware sites
-   - Protection companies no longer support these versions
+    - Old games with SecuROM/StarForce/Safedisc from 2000-2010
+    - Legacy CAD/engineering software with FlexLM/HASP dongles
+    - Many available legally from abandonware sites
+    - Protection companies no longer support these versions
 
 2. **Demo/Trial Software**:
-   - Publicly available trial versions with protection
-   - VMProtect/Themida trial versions often protected
-   - Enigma Protector demo applications
-   - Legal to download and possess
+    - Publicly available trial versions with protection
+    - VMProtect/Themida trial versions often protected
+    - Enigma Protector demo applications
+    - Legal to download and possess
 
 3. **Your Own Software**:
-   - If you own protected games/software legally
-   - Professional software you have licenses for
-   - Copy executables to test directory
-   - Document which version you're testing
+    - If you own protected games/software legally
+    - Professional software you have licenses for
+    - Copy executables to test directory
+    - Document which version you're testing
 
 4. **Protection Vendors' Own Demos**:
-   - VMProtect includes protected demo executables
-   - Themida/WinLicense provides sample protected apps
-   - Enigma Protector trial includes examples
-   - ASProtect/Armadillo legacy demo versions
+    - VMProtect includes protected demo executables
+    - Themida/WinLicense provides sample protected apps
+    - Enigma Protector trial includes examples
+    - ASProtect/Armadillo legacy demo versions
 
 5. **Public Malware Repositories** (for driver analysis):
-   - VirusTotal samples (some protection drivers flagged as PUP)
-   - MalwareBazaar public samples
-   - theZoo malware repository
+    - VirusTotal samples (some protection drivers flagged as PUP)
+    - MalwareBazaar public samples
+    - theZoo malware repository
 
 ### Protection-Specific Sources
 
-**SecuROM/StarForce**: Old retail game executables from 2000s
-**VMProtect**: Security software, game protectors, commercial apps
-**Themida/WinLicense**: Shareware applications, trial software
-**HASP/Sentinel**: Professional CAD software, engineering tools, old dongle-protected apps
-**FlexLM/FlexNet**: Academic software, engineering tools, simulation software
-**Armadillo**: Legacy shareware from 2000s (protection discontinued)
-**Enigma Protector**: Modern shareware and indie game protection
-**Packers (UPX/PECompact)**: Compressed executables, can create your own test files
+**SecuROM/StarForce**: Old retail game executables from 2000s **VMProtect**:
+Security software, game protectors, commercial apps **Themida/WinLicense**:
+Shareware applications, trial software **HASP/Sentinel**: Professional CAD
+software, engineering tools, old dongle-protected apps **FlexLM/FlexNet**:
+Academic software, engineering tools, simulation software **Armadillo**: Legacy
+shareware from 2000s (protection discontinued) **Enigma Protector**: Modern
+shareware and indie game protection **Packers (UPX/PECompact)**: Compressed
+executables, can create your own test files
 
 ### Driver Files
 
 Protection drivers can be extracted from:
+
 - Existing installations on your system (`C:\Windows\System32\drivers\`)
 - Uninstallers that leave drivers behind
 - Driver packages from manufacturer websites
@@ -116,13 +119,13 @@ For each binary you add, create a manifest entry:
 
 ```json
 {
-  "name": "Game Name v1.0",
-  "file": "game_v1.0.exe",
-  "protection": "securom",
-  "version": "7.02.0000",
-  "expected_drivers": ["secdrv.sys", "SR7.sys"],
-  "expected_sections": [".securom"],
-  "notes": "Retail release, disc check enabled"
+    "name": "Game Name v1.0",
+    "file": "game_v1.0.exe",
+    "protection": "securom",
+    "version": "7.02.0000",
+    "expected_drivers": ["secdrv.sys", "SR7.sys"],
+    "expected_sections": [".securom"],
+    "notes": "Retail release, disc check enabled"
 }
 ```
 
@@ -144,6 +147,7 @@ pytest tests/integration/real_binary_tests/test_securom_real.py::TestSecuROMv7Re
 ### Without Test Binaries
 
 Tests will **SKIP** with clear message:
+
 ```
 SKIPPED [1] No real SecuROM v7 binaries found in tests/integration/real_binary_tests/binaries/securom/v7/
          Place protected executables in this directory to enable real capability validation.
@@ -153,18 +157,21 @@ SKIPPED [1] No real SecuROM v7 binaries found in tests/integration/real_binary_t
 ## What Tests Actually Validate
 
 ### Detection Tests
+
 - **Input**: Real protected executable
 - **Action**: Run detector on actual binary
 - **Validation**: Detector identifies correct protection and version
 - **Failure**: Test FAILS if detector misses real protection
 
 ### Analysis Tests
+
 - **Input**: Real protected executable
 - **Action**: Extract activation mechanisms, keys, triggers
 - **Validation**: Extracted data matches known characteristics
 - **Failure**: Test FAILS if analysis returns no results
 
 ### Bypass Tests
+
 - **Input**: Real protected executable
 - **Action**: Patch binary to remove protection
 - **Validation**: Patched binary runs without protection checks
@@ -175,24 +182,26 @@ SKIPPED [1] No real SecuROM v7 binaries found in tests/integration/real_binary_t
 1. Obtain protected executable (e.g., old game demo)
 2. Place in `tests/integration/real_binary_tests/binaries/securom/v7/`
 3. Create manifest entry in `manifests/securom_v7_samples.json`:
-   ```json
-   {
-     "name": "Example Game Demo",
-     "file": "example_demo.exe",
-     "protection": "securom",
-     "version": "7.38.0004",
-     "expected_drivers": ["secdrv.sys"],
-     "expected_sections": [".securom"],
-     "sha256": "abc123...",
-     "notes": "Demo version, activation disabled"
-   }
-   ```
-4. Run tests: `pytest tests/integration/real_binary_tests/test_securom_real.py -v`
+    ```json
+    {
+        "name": "Example Game Demo",
+        "file": "example_demo.exe",
+        "protection": "securom",
+        "version": "7.38.0004",
+        "expected_drivers": ["secdrv.sys"],
+        "expected_sections": [".securom"],
+        "sha256": "abc123...",
+        "notes": "Demo version, activation disabled"
+    }
+    ```
+4. Run tests:
+   `pytest tests/integration/real_binary_tests/test_securom_real.py -v`
 5. Test validates Intellicrack actually works on this real binary
 
 ## Continuous Integration
 
 For CI/CD without real binaries:
+
 - Tests automatically skip when binaries unavailable
 - CI passes with skip warnings
 - Manual validation required before release
@@ -207,7 +216,9 @@ For CI/CD without real binaries:
 
 ## Security Research Context
 
-These tests validate Intellicrack serves its purpose as a defensive security tool:
+These tests validate Intellicrack serves its purpose as a defensive security
+tool:
+
 - Developers can test their own protection implementations
 - Security researchers validate bypass techniques
 - Protection vendors can assess vulnerabilities

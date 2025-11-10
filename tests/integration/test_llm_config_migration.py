@@ -304,9 +304,9 @@ class TestLLMConfigMigration(unittest.TestCase):
         self.assertEqual(len(loaded_metrics), 3, "Should have metrics for 3 models")
         self.assertEqual(len(loaded_metrics["gpt4-turbo"]["history"]), 3)
 
-        print(f"✓ Created test models.json with {len(loaded_models)} models")
-        print(f"✓ Created test profiles.json with {len(loaded_profiles)} profiles")
-        print(f"✓ Created test metrics.json with {len(loaded_metrics)} models' metrics")
+        print(f"OK Created test models.json with {len(loaded_models)} models")
+        print(f"OK Created test profiles.json with {len(loaded_profiles)} profiles")
+        print(f"OK Created test metrics.json with {len(loaded_metrics)} models' metrics")
 
     def test_11_1_2_run_migration_verify_integrity(self):
         """Task 11.1.2: Run migration and verify data integrity."""
@@ -326,11 +326,11 @@ class TestLLMConfigMigration(unittest.TestCase):
             backup_metrics = backup_dir / "metrics.json"
 
             if backup_models.exists():
-                print("✓ Backup of models.json created")
+                print("OK Backup of models.json created")
             if backup_profiles.exists():
-                print("✓ Backup of profiles.json created")
+                print("OK Backup of profiles.json created")
             if backup_metrics.exists():
-                print("✓ Backup of metrics.json created")
+                print("OK Backup of metrics.json created")
 
         # Verify data migrated to central config
         migrated_models = config.get("llm_configuration.models", {})
@@ -389,10 +389,10 @@ class TestLLMConfigMigration(unittest.TestCase):
             self.assertEqual(migrated_model_metrics["aggregate"]["total_tokens"],
                            original_metrics["aggregate"]["total_tokens"])
 
-        print(f"✓ Successfully migrated {len(migrated_models)} models to central config")
-        print(f"✓ Successfully migrated {len(migrated_profiles)} profiles to central config")
-        print(f"✓ Successfully migrated metrics for {len(migrated_metrics)} models")
-        print("✓ Data integrity verified - all fields preserved correctly")
+        print(f"OK Successfully migrated {len(migrated_models)} models to central config")
+        print(f"OK Successfully migrated {len(migrated_profiles)} profiles to central config")
+        print(f"OK Successfully migrated metrics for {len(migrated_metrics)} models")
+        print("OK Data integrity verified - all fields preserved correctly")
 
     def test_11_1_3_model_loading_after_migration(self):
         """Task 11.1.3: Test model loading after migration."""
@@ -426,7 +426,7 @@ class TestLLMConfigMigration(unittest.TestCase):
             self.assertEqual(loaded_config.tools_enabled, original["tools_enabled"])
             self.assertEqual(loaded_config.custom_params, original["custom_params"])
 
-            print(f"✓ Successfully loaded {model_id} after migration")
+            print(f"OK Successfully loaded {model_id} after migration")
 
         # Test loading non-existent model
         non_existent = llm_manager.load_model_config("non_existent_model")
@@ -437,8 +437,8 @@ class TestLLMConfigMigration(unittest.TestCase):
         self.assertEqual(len(all_configs), len(models_data),
                         "Should list all migrated models")
 
-        print(f"✓ All {len(models_data)} models load correctly after migration")
-        print("✓ Model loading functionality fully verified")
+        print(f"OK All {len(models_data)} models load correctly after migration")
+        print("OK Model loading functionality fully verified")
 
     def test_11_1_4_profile_application_after_migration(self):
         """Task 11.1.4: Test profile application after migration."""
@@ -488,7 +488,7 @@ class TestLLMConfigMigration(unittest.TestCase):
                 self.assertEqual(modified_config.custom_params.get("frequency_penalty"),
                                profile_settings["frequency_penalty"])
 
-            print(f"✓ Successfully applied profile '{profile_id}' after migration")
+            print(f"OK Successfully applied profile '{profile_id}' after migration")
 
         # Test listing all profiles
         all_profiles = llm_manager.list_profiles()
@@ -501,8 +501,8 @@ class TestLLMConfigMigration(unittest.TestCase):
         self.assertEqual(exploit_profile["name"], "Exploit Analysis")
         self.assertEqual(exploit_profile["settings"]["max_tokens"], 8192)
 
-        print(f"✓ All {len(profiles_data)} profiles apply correctly after migration")
-        print("✓ Profile application functionality fully verified")
+        print(f"OK All {len(profiles_data)} profiles apply correctly after migration")
+        print("OK Profile application functionality fully verified")
 
     def test_11_1_5_metrics_tracking_after_migration(self):
         """Task 11.1.5: Test metrics tracking after migration."""
@@ -533,7 +533,7 @@ class TestLLMConfigMigration(unittest.TestCase):
             self.assertEqual(loaded_metrics["aggregate"]["total_tokens"],
                            original_metrics["aggregate"]["total_tokens"])
 
-            print(f"✓ Metrics for {model_id} loaded correctly after migration")
+            print(f"OK Metrics for {model_id} loaded correctly after migration")
 
         # Test adding new metrics
         new_metrics = {
@@ -559,7 +559,7 @@ class TestLLMConfigMigration(unittest.TestCase):
         self.assertGreater(updated_metrics["aggregate"]["total_tokens"],
                           metrics_data["gpt4-turbo"]["aggregate"]["total_tokens"])
 
-        print("✓ New metrics can be added after migration")
+        print("OK New metrics can be added after migration")
 
         # Test metrics for new model
         new_model_metrics = {
@@ -573,8 +573,8 @@ class TestLLMConfigMigration(unittest.TestCase):
         self.assertIsNotNone(new_loaded)
         self.assertEqual(len(new_loaded["history"]), 1)
 
-        print("✓ Metrics for new models can be created after migration")
-        print("✓ Metrics tracking fully functional after migration")
+        print("OK Metrics for new models can be created after migration")
+        print("OK Metrics tracking fully functional after migration")
 
     def test_production_readiness_checks(self):
         """Comprehensive production readiness verification."""
@@ -609,7 +609,7 @@ class TestLLMConfigMigration(unittest.TestCase):
             t.join()
 
         self.assertEqual(len(errors), 0, "No errors during concurrent access")
-        print("✓ Thread safety verified - no race conditions")
+        print("OK Thread safety verified - no race conditions")
 
         # Test error handling for corrupted data
         corrupted_file = self.llm_config_dir / "corrupted.json"
@@ -618,7 +618,7 @@ class TestLLMConfigMigration(unittest.TestCase):
         # Should handle gracefully
         result = llm_manager._load_json_file(str(corrupted_file), {})
         self.assertEqual(result, {}, "Should return empty dict for corrupted JSON")
-        print("✓ Handles corrupted JSON files gracefully")
+        print("OK Handles corrupted JSON files gracefully")
 
         # Test handling of missing API keys
         config_no_key = LLMConfig(
@@ -632,7 +632,7 @@ class TestLLMConfigMigration(unittest.TestCase):
         llm_manager.save_model_config("no_key_model", config_no_key)
         loaded_no_key = llm_manager.load_model_config("no_key_model")
         self.assertIsNone(loaded_no_key.api_key, "Should handle missing API keys")
-        print("✓ Handles missing API keys correctly")
+        print("OK Handles missing API keys correctly")
 
         # Test maximum metrics history limit
         for i in range(150):  # Exceed 100 entry limit
@@ -644,7 +644,7 @@ class TestLLMConfigMigration(unittest.TestCase):
         final_metrics = llm_manager.get_metrics("test_model")
         self.assertLessEqual(len(final_metrics["history"]), 100,
                             "Should limit history to 100 entries")
-        print("✓ Metrics history limited to 100 entries")
+        print("OK Metrics history limited to 100 entries")
 
         # Test export/import with API key redaction
         export_path = self.temp_dir / "export.json"
@@ -659,22 +659,22 @@ class TestLLMConfigMigration(unittest.TestCase):
                 self.assertEqual(model_config["api_key"], "***REDACTED***",
                                "API keys should be redacted in export")
 
-        print("✓ API key redaction works correctly")
+        print("OK API key redaction works correctly")
 
         # Test import with merge
         llm_manager.import_config(str(export_path), merge=True)
-        print("✓ Import with merge functionality works")
+        print("OK Import with merge functionality works")
 
         # Verify all production features
         print("\n=== PRODUCTION READINESS VERIFIED ===")
-        print("✓ Thread-safe operations")
-        print("✓ Graceful error handling")
-        print("✓ Data integrity preservation")
-        print("✓ Backward compatibility maintained")
-        print("✓ Security features (API key redaction)")
-        print("✓ Performance limits (history capping)")
-        print("✓ Import/Export functionality")
-        print("✓ NO STUBS, MOCKS, OR PLACEHOLDERS")
+        print("OK Thread-safe operations")
+        print("OK Graceful error handling")
+        print("OK Data integrity preservation")
+        print("OK Backward compatibility maintained")
+        print("OK Security features (API key redaction)")
+        print("OK Performance limits (history capping)")
+        print("OK Import/Export functionality")
+        print("OK NO STUBS, MOCKS, OR PLACEHOLDERS")
 
 
 if __name__ == "__main__":

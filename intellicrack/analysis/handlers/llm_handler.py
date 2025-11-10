@@ -22,7 +22,8 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 from __future__ import annotations
-from typing import Any, Optional, TYPE_CHECKING
+
+from typing import TYPE_CHECKING, Any, Optional
 
 try:
     from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal

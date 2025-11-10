@@ -162,7 +162,7 @@ def classify_severity(pattern: str, line: str, file_path: str) -> str:
 def print_report(violations: dict, summary_only: bool = False) -> int:
     """Print violation report and return exit code."""
     if not violations:
-        print("✅ SUCCESS: No mock usage found in tests!")
+        print("OK SUCCESS: No mock usage found in tests!")
         print("All tests appear to use REAL data as required.")
         return 0
 
@@ -182,7 +182,7 @@ def print_report(violations: dict, summary_only: bool = False) -> int:
             critical_files.append(file_path)
 
     # Print summary
-    print("❌ MOCK USAGE VIOLATIONS DETECTED")
+    print("FAIL MOCK USAGE VIOLATIONS DETECTED")
     print("=" * 80)
     print(f"🔴 CRITICAL: {severity_counts['CRITICAL']} (Mock framework imports)")
     print(f"🟡 HIGH:     {severity_counts['HIGH']} (Mock objects/assertions)")
@@ -202,7 +202,7 @@ def print_report(violations: dict, summary_only: bool = False) -> int:
             for line_num, line, _pattern in critical_lines[:3]:
                 print(f"   Line {line_num}: {line}")
 
-    print("\n⚠️  REMEDIATION REQUIRED:")
+    print("\nWARNING  REMEDIATION REQUIRED:")
     print("1. Replace unittest.mock imports with real test data")
     print("2. Use fixtures from tests/fixtures/ directory")
     print("3. Implement real API responses for network tests")
@@ -251,7 +251,7 @@ def main():
         print(f"Error: Test directory not found at {test_dir}")
         return 1
 
-    print(f"🔍 Scanning {test_dir} for mock usage...")
+    print(f" Scanning {test_dir} for mock usage...")
     if not args.summary:
         print("This may take a moment...\n")
 

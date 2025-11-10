@@ -34,7 +34,7 @@ const Http3QuicInterceptor = {
 
     // Configuration
     config: {
-    // Target ports for QUIC
+        // Target ports for QUIC
         quicPorts: [443, 4433, 8443, 9443],
 
         // Known QUIC implementations
@@ -325,10 +325,7 @@ const Http3QuicInterceptor = {
         }
 
         // nghttp3_conn_submit_response
-        var submitResponse = Module.findExportByName(
-            null,
-            'nghttp3_conn_submit_response',
-        );
+        var submitResponse = Module.findExportByName(null, 'nghttp3_conn_submit_response');
         if (submitResponse) {
             Interceptor.attach(submitResponse, {
                 onEnter: function (args) {
@@ -352,10 +349,7 @@ const Http3QuicInterceptor = {
         }
 
         // ngtcp2_conn_writev_stream
-        var writevStream = Module.findExportByName(
-            null,
-            'ngtcp2_conn_writev_stream',
-        );
+        var writevStream = Module.findExportByName(null, 'ngtcp2_conn_writev_stream');
         if (writevStream) {
             Interceptor.attach(writevStream, {
                 onEnter: function (args) {
@@ -484,10 +478,7 @@ const Http3QuicInterceptor = {
         var self = this;
 
         // MsQuicOpenVersion
-        var openVersion = Module.findExportByName(
-            'msquic.dll',
-            'MsQuicOpenVersion',
-        );
+        var openVersion = Module.findExportByName('msquic.dll', 'MsQuicOpenVersion');
         if (openVersion) {
             Interceptor.attach(openVersion, {
                 onEnter: function (args) {
@@ -762,10 +753,7 @@ const Http3QuicInterceptor = {
         var self = this;
 
         // SSL_CTX_set_alpn_select_cb
-        var setAlpnSelect = Module.findExportByName(
-            null,
-            'SSL_CTX_set_alpn_select_cb',
-        );
+        var setAlpnSelect = Module.findExportByName(null, 'SSL_CTX_set_alpn_select_cb');
         if (setAlpnSelect) {
             Interceptor.attach(setAlpnSelect, {
                 onEnter: function (args) {
@@ -861,14 +849,7 @@ const Http3QuicInterceptor = {
 
         try {
             var str = this.bufferToString(data);
-            var keywords = [
-                'license',
-                'activation',
-                'subscription',
-                'auth',
-                'token',
-                'key',
-            ];
+            var keywords = ['license', 'activation', 'subscription', 'auth', 'token', 'key'];
 
             for (var i = 0; i < keywords.length; i++) {
                 if (str.toLowerCase().includes(keywords[i])) {
@@ -884,7 +865,7 @@ const Http3QuicInterceptor = {
 
     // Process HTTP/3 headers
     processHttp3Headers: function (data, length) {
-    // This is simplified - real HTTP/3 header processing is complex
+        // This is simplified - real HTTP/3 header processing is complex
         try {
             var headers = this.parseHttp3Headers(data);
             var modified = false;
@@ -907,8 +888,7 @@ const Http3QuicInterceptor = {
             if (headers[':status']) {
                 var status = parseInt(headers[':status']);
                 if (this.config.responseMods.statusCodes[status]) {
-                    headers[':status'] =
-            this.config.responseMods.statusCodes[status].toString();
+                    headers[':status'] = this.config.responseMods.statusCodes[status].toString();
                     send({
                         type: 'bypass',
                         target: 'http3_quic_interceptor',
@@ -1040,14 +1020,11 @@ const Http3QuicInterceptor = {
                     var statusInt = parseInt(status);
 
                     if (this.config.responseMods.statusCodes[statusInt]) {
-                        var newStatus =
-              this.config.responseMods.statusCodes[statusInt].toString();
+                        var newStatus = this.config.responseMods.statusCodes[statusInt].toString();
                         var newStatusBuf = Memory.allocUtf8String(newStatus);
 
                         header.add(Process.pointerSize).writePointer(newStatusBuf);
-                        header
-                            .add(Process.pointerSize * 3)
-                            .writePointer(ptr(newStatus.length));
+                        header.add(Process.pointerSize * 3).writePointer(ptr(newStatus.length));
 
                         send({
                             type: 'bypass',
@@ -1074,8 +1051,8 @@ const Http3QuicInterceptor = {
 
     // Check for HTTP/3 frames in QUIC packet
     checkForHttp3Frames: function (buf, len) {
-    // Skip QUIC packet header to get to frames
-    // This is simplified - real parsing requires full QUIC packet parsing
+        // Skip QUIC packet header to get to frames
+        // This is simplified - real parsing requires full QUIC packet parsing
 
         var offset = 0;
 
@@ -1105,9 +1082,7 @@ const Http3QuicInterceptor = {
 
         // Now we should be at the payload (frames)
         if (offset < len - 10) {
-            var frameData = buf
-                .add(offset)
-                .readByteArray(Math.min(len - offset, 100));
+            var frameData = buf.add(offset).readByteArray(Math.min(len - offset, 100));
             if (this.isHttp3Data(frameData)) {
                 send({
                     type: 'detection',
@@ -1217,10 +1192,7 @@ const Http3QuicInterceptor = {
                                 });
 
                                 // Inject our modern versions
-                                var modifiedPacket = self.createModernVersionNegotiation(
-                                    buf,
-                                    len,
-                                );
+                                var modifiedPacket = self.createModernVersionNegotiation(buf, len);
                                 if (modifiedPacket) {
                                     args[1] = modifiedPacket.ptr;
                                     args[2] = ptr(modifiedPacket.size);
@@ -1682,10 +1654,7 @@ const Http3QuicInterceptor = {
 
             checkForRebinding: function (sourceIp, sourcePort) {
                 if (this.lastSourceIp && this.lastSourcePort) {
-                    if (
-                        this.lastSourceIp !== sourceIp ||
-            this.lastSourcePort !== sourcePort
-                    ) {
+                    if (this.lastSourceIp !== sourceIp || this.lastSourcePort !== sourcePort) {
                         this.rebindingCount++;
 
                         send({
@@ -1725,13 +1694,13 @@ const Http3QuicInterceptor = {
                                 port = ((port & 0xff) << 8) | ((port & 0xff00) >> 8);
                                 var ip = addr.add(4).readU32();
                                 var ipStr =
-                  ((ip >> 24) & 0xff) +
-                  '.' +
-                  ((ip >> 16) & 0xff) +
-                  '.' +
-                  ((ip >> 8) & 0xff) +
-                  '.' +
-                  (ip & 0xff);
+                                    ((ip >> 24) & 0xff) +
+                                    '.' +
+                                    ((ip >> 16) & 0xff) +
+                                    '.' +
+                                    ((ip >> 8) & 0xff) +
+                                    '.' +
+                                    (ip & 0xff);
 
                                 if (self.natRebindingDetector.checkForRebinding(ipStr, port)) {
                                     send({
@@ -1835,7 +1804,7 @@ const Http3QuicInterceptor = {
                             // Check for WebTransport protocol header
                             var isWebTransport = self.checkWebTransportHeaders(
                                 headers,
-                                headersCount,
+                                headersCount
                             );
 
                             if (isWebTransport) {
@@ -2093,7 +2062,7 @@ const Http3QuicInterceptor = {
 
                         self.serverPushState.maxPushId = Math.max(
                             self.serverPushState.maxPushId,
-                            pushId,
+                            pushId
                         );
 
                         send({
@@ -2175,7 +2144,7 @@ const Http3QuicInterceptor = {
                         // Don't cancel license-related pushes
                         if (
                             self.isLicensePushResource(
-                                self.serverPushState.pushPromises[pushId].headers,
+                                self.serverPushState.pushPromises[pushId].headers
                             )
                         ) {
                             send({
@@ -2201,7 +2170,7 @@ const Http3QuicInterceptor = {
                         var oldMaxPushId = self.serverPushState.maxPushId;
                         self.serverPushState.maxPushId = Math.max(
                             self.serverPushState.maxPushId,
-                            maxPushId,
+                            maxPushId
                         );
 
                         send({
@@ -2239,9 +2208,9 @@ const Http3QuicInterceptor = {
 
                     if (
                         streamId &&
-            data &&
-            dataLen > 0 &&
-            self.serverPushState.pushStreams[streamId]
+                        data &&
+                        dataLen > 0 &&
+                        self.serverPushState.pushStreams[streamId]
                     ) {
                         var pushStream = self.serverPushState.pushStreams[streamId];
                         pushStream.bytesReceived += dataLen;
@@ -2388,20 +2357,12 @@ const Http3QuicInterceptor = {
 
         Java.perform(() => {
             try {
-                const QPackDecoder = Java.use(
-                    'com.android.org.conscrypt.ct.QPackDecoder',
-                );
-                const QPackEncoder = Java.use(
-                    'com.android.org.conscrypt.ct.QPackEncoder',
-                );
-                const HeaderTable = Java.use(
-                    'com.android.org.conscrypt.ct.HeaderTable',
-                );
+                const QPackDecoder = Java.use('com.android.org.conscrypt.ct.QPackDecoder');
+                const QPackEncoder = Java.use('com.android.org.conscrypt.ct.QPackEncoder');
+                const HeaderTable = Java.use('com.android.org.conscrypt.ct.HeaderTable');
 
                 if (QPackDecoder) {
-                    QPackDecoder.decode.overload('[B').implementation = function (
-                        encoded,
-                    ) {
+                    QPackDecoder.decode.overload('[B').implementation = function (encoded) {
                         try {
                             const originalResult = this.decode.call(this, encoded);
 
@@ -2419,10 +2380,10 @@ const Http3QuicInterceptor = {
                             const licenseHeaders = headers.filter(
                                 (h) =>
                                     h.name.toLowerCase().includes('license') ||
-                  h.name.toLowerCase().includes('activation') ||
-                  h.name.toLowerCase().includes('auth') ||
-                  h.value.toLowerCase().includes('license') ||
-                  h.value.toLowerCase().includes('activation'),
+                                    h.name.toLowerCase().includes('activation') ||
+                                    h.name.toLowerCase().includes('auth') ||
+                                    h.value.toLowerCase().includes('license') ||
+                                    h.value.toLowerCase().includes('activation')
                             );
 
                             if (licenseHeaders.length > 0) {
@@ -2443,11 +2404,11 @@ const Http3QuicInterceptor = {
                                 licenseHeaders.forEach((header) => {
                                     if (
                                         header.value.includes('expired') ||
-                    header.value.includes('invalid')
+                                        header.value.includes('invalid')
                                     ) {
                                         const modifiedHeaders = [...headers];
                                         const headerIndex = modifiedHeaders.findIndex(
-                                            (h) => h.name === header.name,
+                                            (h) => h.name === header.name
                                         );
                                         if (headerIndex !== -1) {
                                             modifiedHeaders[headerIndex].value = header.value
@@ -2477,7 +2438,7 @@ const Http3QuicInterceptor = {
 
                 if (QPackEncoder) {
                     QPackEncoder.encode.overload(
-                        '[Lcom.android.org.conscrypt.ct.HeaderField;',
+                        '[Lcom.android.org.conscrypt.ct.HeaderField;'
                     ).implementation = function (headers) {
                         try {
                             const modifiedHeaders = [];
@@ -2490,11 +2451,11 @@ const Http3QuicInterceptor = {
 
                                     if (
                                         headerName.toLowerCase().includes('license') ||
-                    headerName.toLowerCase().includes('activation')
+                                        headerName.toLowerCase().includes('activation')
                                     ) {
                                         if (
                                             headerValue.includes('check') ||
-                      headerValue.includes('validate')
+                                            headerValue.includes('validate')
                                         ) {
                                             headerValue = headerValue
                                                 .replace(/check/gi, 'bypass')
@@ -2514,11 +2475,9 @@ const Http3QuicInterceptor = {
                                     }
 
                                     const HeaderField = Java.use(
-                                        'com.android.org.conscrypt.ct.HeaderField',
+                                        'com.android.org.conscrypt.ct.HeaderField'
                                     );
-                                    modifiedHeaders.push(
-                                        HeaderField.$new(headerName, headerValue),
-                                    );
+                                    modifiedHeaders.push(HeaderField.$new(headerName, headerValue));
                                 }
                             }
 
@@ -2526,8 +2485,8 @@ const Http3QuicInterceptor = {
                                 this,
                                 Java.array(
                                     'com.android.org.conscrypt.ct.HeaderField',
-                                    modifiedHeaders,
-                                ),
+                                    modifiedHeaders
+                                )
                             );
                         } catch (e) {
                             return this.encode.call(this, headers);
@@ -2537,20 +2496,18 @@ const Http3QuicInterceptor = {
 
                 if (HeaderTable) {
                     HeaderTable.add.overload(
-                        'com.android.org.conscrypt.ct.HeaderField',
+                        'com.android.org.conscrypt.ct.HeaderField'
                     ).implementation = function (headerField) {
                         try {
                             const name = headerField.name ? headerField.name.toString() : '';
-                            const value = headerField.value
-                                ? headerField.value.toString()
-                                : '';
+                            const value = headerField.value ? headerField.value.toString() : '';
 
                             if (
                                 name.toLowerCase().includes('license') &&
-                (value.includes('expired') || value.includes('invalid'))
+                                (value.includes('expired') || value.includes('invalid'))
                             ) {
                                 const HeaderField = Java.use(
-                                    'com.android.org.conscrypt.ct.HeaderField',
+                                    'com.android.org.conscrypt.ct.HeaderField'
                                 );
                                 const modifiedValue = value
                                     .replace(/expired/gi, 'valid')
@@ -2599,90 +2556,78 @@ const Http3QuicInterceptor = {
         Java.perform(() => {
             try {
                 const CongestionController = Java.use(
-                    'com.android.org.conscrypt.QuicCongestionController',
+                    'com.android.org.conscrypt.QuicCongestionController'
                 );
                 const EcnHandler = Java.use('com.android.org.conscrypt.QuicEcnHandler');
-                const NetworkPath = Java.use(
-                    'com.android.org.conscrypt.QuicNetworkPath',
-                );
+                const NetworkPath = Java.use('com.android.org.conscrypt.QuicNetworkPath');
 
                 if (CongestionController) {
-                    CongestionController.onCongestionEvent.overload(
-                        'long',
-                        'int',
-                    ).implementation = function (timestamp, congestionType) {
+                    CongestionController.onCongestionEvent.overload('long', 'int').implementation =
+                        function (timestamp, congestionType) {
+                            try {
+                                if (congestionType === 3) {
+                                    send({
+                                        type: 'detection',
+                                        target: 'http3_quic_interceptor',
+                                        action: 'ecn_congestion_control_triggered',
+                                        timestamp: timestamp,
+                                        type: 'license_throttling_detected',
+                                    });
+
+                                    return this.onCongestionEvent.call(this, timestamp, 0);
+                                }
+
+                                return this.onCongestionEvent.call(this, timestamp, congestionType);
+                            } catch (e) {
+                                return this.onCongestionEvent.call(this, timestamp, congestionType);
+                            }
+                        };
+
+                    CongestionController.getSlowStartThreshold.implementation = function () {
                         try {
-                            if (congestionType === 3) {
+                            const originalThreshold = this.getSlowStartThreshold.call(this);
+
+                            if (originalThreshold < 65536) {
                                 send({
-                                    type: 'detection',
+                                    type: 'bypass',
                                     target: 'http3_quic_interceptor',
-                                    action: 'ecn_congestion_control_triggered',
-                                    timestamp: timestamp,
-                                    type: 'license_throttling_detected',
+                                    action: 'congestion_threshold_bypass',
+                                    original: originalThreshold,
+                                    modified: 1048576,
                                 });
 
-                                return this.onCongestionEvent.call(this, timestamp, 0);
+                                return 1048576;
                             }
 
-                            return this.onCongestionEvent.call(
-                                this,
-                                timestamp,
-                                congestionType,
-                            );
+                            return originalThreshold;
                         } catch (e) {
-                            return this.onCongestionEvent.call(
-                                this,
-                                timestamp,
-                                congestionType,
-                            );
+                            return this.getSlowStartThreshold.call(this);
                         }
                     };
-
-                    CongestionController.getSlowStartThreshold.implementation =
-            function () {
-                try {
-                    const originalThreshold = this.getSlowStartThreshold.call(this);
-
-                    if (originalThreshold < 65536) {
-                        send({
-                            type: 'bypass',
-                            target: 'http3_quic_interceptor',
-                            action: 'congestion_threshold_bypass',
-                            original: originalThreshold,
-                            modified: 1048576,
-                        });
-
-                        return 1048576;
-                    }
-
-                    return originalThreshold;
-                } catch (e) {
-                    return this.getSlowStartThreshold.call(this);
-                }
-            };
                 }
 
                 if (EcnHandler) {
-                    EcnHandler.processEcnMarking.overload('int').implementation =
-            function (ecnCodepoint) {
-                try {
-                    if (ecnCodepoint === 3) {
-                        send({
-                            type: 'bypass',
-                            target: 'http3_quic_interceptor',
-                            action: 'ecn_marking_bypassed',
-                            original: ecnCodepoint,
-                            modified: 0,
-                        });
+                    EcnHandler.processEcnMarking.overload('int').implementation = function (
+                        ecnCodepoint
+                    ) {
+                        try {
+                            if (ecnCodepoint === 3) {
+                                send({
+                                    type: 'bypass',
+                                    target: 'http3_quic_interceptor',
+                                    action: 'ecn_marking_bypassed',
+                                    original: ecnCodepoint,
+                                    modified: 0,
+                                });
 
-                        return this.processEcnMarking.call(this, 0);
-                    }
+                                return this.processEcnMarking.call(this, 0);
+                            }
 
-                    return this.processEcnMarking.call(this, ecnCodepoint);
-                } catch (e) {
-                    return this.processEcnMarking.call(this, ecnCodepoint);
-                }
-            };
+                            return this.processEcnMarking.call(this, ecnCodepoint);
+                        } catch (e) {
+                            return this.processEcnMarking.call(this, ecnCodepoint);
+                        }
+                    };
 
                     EcnHandler.validateEcnCapability.implementation = function () {
                         try {
@@ -2704,29 +2649,31 @@ const Http3QuicInterceptor = {
                 }
 
                 if (NetworkPath) {
-                    NetworkPath.updateRtt.overload('long', 'long').implementation =
-            function (rtt, ackDelay) {
-                try {
-                    if (rtt > 1000000) {
-                        send({
-                            type: 'bypass',
-                            target: 'http3_quic_interceptor',
-                            action: 'rtt_optimization',
-                            original: rtt,
-                            optimized: 50000,
-                        });
+                    NetworkPath.updateRtt.overload('long', 'long').implementation = function (
+                        rtt,
+                        ackDelay
+                    ) {
+                        try {
+                            if (rtt > 1000000) {
+                                send({
+                                    type: 'bypass',
+                                    target: 'http3_quic_interceptor',
+                                    action: 'rtt_optimization',
+                                    original: rtt,
+                                    optimized: 50000,
+                                });
 
-                        return this.updateRtt.call(this, 50000, ackDelay);
-                    }
+                                return this.updateRtt.call(this, 50000, ackDelay);
+                            }
 
-                    return this.updateRtt.call(this, rtt, ackDelay);
-                } catch (e) {
-                    return this.updateRtt.call(this, rtt, ackDelay);
-                }
-            };
+                            return this.updateRtt.call(this, rtt, ackDelay);
+                        } catch (e) {
+                            return this.updateRtt.call(this, rtt, ackDelay);
+                        }
+                    };
 
                     NetworkPath.onLossDetected.overload('[J').implementation = function (
-                        lostPackets,
+                        lostPackets
                     ) {
                         try {
                             if (lostPackets && lostPackets.length > 10) {
@@ -2770,31 +2717,27 @@ const Http3QuicInterceptor = {
 
         Java.perform(() => {
             try {
-                const Http3Connection = Java.use(
-                    'com.android.org.conscrypt.Http3Connection',
-                );
+                const Http3Connection = Java.use('com.android.org.conscrypt.Http3Connection');
                 const ExtendedConnectFrame = Java.use(
-                    'com.android.org.conscrypt.ExtendedConnectFrame',
+                    'com.android.org.conscrypt.ExtendedConnectFrame'
                 );
                 const ConnectProtocolHandler = Java.use(
-                    'com.android.org.conscrypt.ConnectProtocolHandler',
+                    'com.android.org.conscrypt.ConnectProtocolHandler'
                 );
 
                 if (Http3Connection) {
                     Http3Connection.sendExtendedConnect.overload(
                         'java.lang.String',
-                        '[B',
+                        '[B'
                     ).implementation = function (protocol, payload) {
                         try {
-                            const payloadStr = payload
-                                ? Java.array('byte', payload).join('')
-                                : '';
+                            const payloadStr = payload ? Java.array('byte', payload).join('') : '';
 
                             if (
                                 payloadStr.includes('license') ||
-                payloadStr.includes('activation') ||
-                payloadStr.includes('validation') ||
-                protocol.includes('license')
+                                payloadStr.includes('activation') ||
+                                payloadStr.includes('validation') ||
+                                protocol.includes('license')
                             ) {
                                 let modifiedPayload = payloadStr
                                     .replace(/license.*?expired/gi, 'license_valid')
@@ -2806,7 +2749,7 @@ const Http3QuicInterceptor = {
 
                                 const modifiedBytes = Java.array(
                                     'byte',
-                                    modifiedPayload.split('').map((c) => c.charCodeAt(0)),
+                                    modifiedPayload.split('').map((c) => c.charCodeAt(0))
                                 );
 
                                 send({
@@ -2818,11 +2761,7 @@ const Http3QuicInterceptor = {
                                     modified_size: modifiedBytes.length,
                                 });
 
-                                return this.sendExtendedConnect.call(
-                                    this,
-                                    protocol,
-                                    modifiedBytes,
-                                );
+                                return this.sendExtendedConnect.call(this, protocol, modifiedBytes);
                             }
 
                             return this.sendExtendedConnect.call(this, protocol, payload);
@@ -2833,7 +2772,7 @@ const Http3QuicInterceptor = {
 
                     Http3Connection.handleExtendedConnectResponse.overload(
                         'int',
-                        '[B',
+                        '[B'
                     ).implementation = function (status, responseData) {
                         try {
                             const responseStr = responseData
@@ -2842,7 +2781,7 @@ const Http3QuicInterceptor = {
 
                             if (
                                 responseStr.includes('license') &&
-                (status === 403 || status === 401 || status === 402)
+                                (status === 403 || status === 401 || status === 402)
                             ) {
                                 send({
                                     type: 'bypass',
@@ -2860,26 +2799,26 @@ const Http3QuicInterceptor = {
 
                                 const successBytes = Java.array(
                                     'byte',
-                                    successResponse.split('').map((c) => c.charCodeAt(0)),
+                                    successResponse.split('').map((c) => c.charCodeAt(0))
                                 );
 
                                 return this.handleExtendedConnectResponse.call(
                                     this,
                                     200,
-                                    successBytes,
+                                    successBytes
                                 );
                             }
 
                             return this.handleExtendedConnectResponse.call(
                                 this,
                                 status,
-                                responseData,
+                                responseData
                             );
                         } catch (e) {
                             return this.handleExtendedConnectResponse.call(
                                 this,
                                 status,
-                                responseData,
+                                responseData
                             );
                         }
                     };
@@ -2887,12 +2826,12 @@ const Http3QuicInterceptor = {
 
                 if (ExtendedConnectFrame) {
                     ExtendedConnectFrame.parseProtocolField.overload(
-                        'java.lang.String',
+                        'java.lang.String'
                     ).implementation = function (protocolValue) {
                         try {
                             if (
                                 protocolValue.includes('license-check') ||
-                protocolValue.includes('activation-verify')
+                                protocolValue.includes('activation-verify')
                             ) {
                                 const bypassedProtocol = protocolValue
                                     .replace(/license-check/gi, 'license-bypass')
@@ -2919,13 +2858,13 @@ const Http3QuicInterceptor = {
 
                 if (ConnectProtocolHandler) {
                     ConnectProtocolHandler.validateProtocolUpgrade.overload(
-                        'java.lang.String',
+                        'java.lang.String'
                     ).implementation = function (protocol) {
                         try {
                             if (
                                 protocol.includes('license') ||
-                protocol.includes('drm') ||
-                protocol.includes('protection')
+                                protocol.includes('drm') ||
+                                protocol.includes('protection')
                             ) {
                                 send({
                                     type: 'bypass',
@@ -2945,7 +2884,7 @@ const Http3QuicInterceptor = {
                     };
 
                     ConnectProtocolHandler.negotiateProtocol.overload(
-                        '[Ljava.lang.String;',
+                        '[Ljava.lang.String;'
                     ).implementation = function (supportedProtocols) {
                         try {
                             const protocols = [];
@@ -2956,8 +2895,8 @@ const Http3QuicInterceptor = {
                             const licenseProtocols = protocols.filter(
                                 (p) =>
                                     p.includes('license') ||
-                  p.includes('activation') ||
-                  p.includes('drm'),
+                                    p.includes('activation') ||
+                                    p.includes('drm')
                             );
 
                             if (licenseProtocols.length > 0) {
@@ -2970,7 +2909,7 @@ const Http3QuicInterceptor = {
 
                                 const bypassProtocol = licenseProtocols[0].replace(
                                     /check|verify|validate/gi,
-                                    'bypass',
+                                    'bypass'
                                 );
                                 return bypassProtocol;
                             }
@@ -3004,39 +2943,38 @@ const Http3QuicInterceptor = {
         Java.perform(() => {
             try {
                 const MultipathQuicConnection = Java.use(
-                    'com.android.org.conscrypt.MultipathQuicConnection',
+                    'com.android.org.conscrypt.MultipathQuicConnection'
                 );
-                const PathManager = Java.use(
-                    'com.android.org.conscrypt.QuicPathManager',
-                );
+                const PathManager = Java.use('com.android.org.conscrypt.QuicPathManager');
                 const NetworkPathValidator = Java.use(
-                    'com.android.org.conscrypt.NetworkPathValidator',
+                    'com.android.org.conscrypt.NetworkPathValidator'
                 );
 
                 if (MultipathQuicConnection) {
                     MultipathQuicConnection.addPath.overload(
-                        'java.net.InetSocketAddress',
+                        'java.net.InetSocketAddress'
                     ).implementation = function (remoteAddress) {
                         try {
                             const address = remoteAddress.toString();
 
                             if (
                                 address.includes('licensing') ||
-                address.includes('activation') ||
-                address.includes('drm') ||
-                address.includes('validation')
+                                address.includes('activation') ||
+                                address.includes('drm') ||
+                                address.includes('validation')
                             ) {
                                 const originalPort = remoteAddress.getPort();
                                 const alternativePort =
-                  originalPort === 443
-                      ? 8443
-                      : originalPort === 80
-                          ? 8080
-                          : originalPort + 1000;
+                                    originalPort === 443
+                                        ? 8443
+                                        : originalPort === 80
+                                            ? 8080
+                                            : originalPort + 1000;
 
-                                const bypassAddress = Java.use(
-                                    'java.net.InetSocketAddress',
-                                ).$new(remoteAddress.getAddress(), alternativePort);
+                                const bypassAddress = Java.use('java.net.InetSocketAddress').$new(
+                                    remoteAddress.getAddress(),
+                                    alternativePort
+                                );
 
                                 send({
                                     type: 'bypass',
@@ -3055,44 +2993,40 @@ const Http3QuicInterceptor = {
                         }
                     };
 
-                    MultipathQuicConnection.selectBestPath.overload().implementation =
-            function () {
-                try {
-                    const selectedPath = this.selectBestPath.call(this);
+                    MultipathQuicConnection.selectBestPath.overload().implementation = function () {
+                        try {
+                            const selectedPath = this.selectBestPath.call(this);
 
-                    if (selectedPath) {
-                        const pathStr = selectedPath.toString();
-                        if (
-                            pathStr.includes('license') ||
-                    pathStr.includes('activation')
-                        ) {
-                            send({
-                                type: 'detection',
-                                target: 'http3_quic_interceptor',
-                                action: 'license_path_detected',
-                                path: pathStr,
-                                action_taken: 'path_manipulation',
-                            });
+                            if (selectedPath) {
+                                const pathStr = selectedPath.toString();
+                                if (pathStr.includes('license') || pathStr.includes('activation')) {
+                                    send({
+                                        type: 'detection',
+                                        target: 'http3_quic_interceptor',
+                                        action: 'license_path_detected',
+                                        path: pathStr,
+                                        action_taken: 'path_manipulation',
+                                    });
+                                }
+                            }
+
+                            return selectedPath;
+                        } catch (e) {
+                            return this.selectBestPath.call(this);
                         }
-                    }
-
-                    return selectedPath;
-                } catch (e) {
-                    return this.selectBestPath.call(this);
-                }
-            };
+                    };
                 }
 
                 if (PathManager) {
                     PathManager.validatePath.overload(
-                        'com.android.org.conscrypt.NetworkPath',
+                        'com.android.org.conscrypt.NetworkPath'
                     ).implementation = function (path) {
                         try {
                             const pathInfo = path ? path.toString() : '';
 
                             if (
                                 pathInfo.includes('license-server') ||
-                pathInfo.includes('activation-service')
+                                pathInfo.includes('activation-service')
                             ) {
                                 send({
                                     type: 'bypass',
@@ -3113,14 +3047,14 @@ const Http3QuicInterceptor = {
 
                     PathManager.handlePathFailure.overload(
                         'com.android.org.conscrypt.NetworkPath',
-                        'int',
+                        'int'
                     ).implementation = function (failedPath, errorCode) {
                         try {
                             const pathStr = failedPath ? failedPath.toString() : '';
 
                             if (
                                 pathStr.includes('license') &&
-                (errorCode === 404 || errorCode === 403 || errorCode === 401)
+                                (errorCode === 404 || errorCode === 403 || errorCode === 401)
                             ) {
                                 send({
                                     type: 'bypass',
@@ -3143,16 +3077,16 @@ const Http3QuicInterceptor = {
 
                 if (NetworkPathValidator) {
                     NetworkPathValidator.performPathValidation.overload(
-                        'java.net.InetSocketAddress',
+                        'java.net.InetSocketAddress'
                     ).implementation = function (remoteEndpoint) {
                         try {
                             const endpoint = remoteEndpoint.toString();
 
                             if (
                                 endpoint.includes('license') ||
-                endpoint.includes('activation') ||
-                endpoint.includes('validation') ||
-                endpoint.includes('drm')
+                                endpoint.includes('activation') ||
+                                endpoint.includes('validation') ||
+                                endpoint.includes('drm')
                             ) {
                                 send({
                                     type: 'bypass',
@@ -3163,7 +3097,7 @@ const Http3QuicInterceptor = {
                                 });
 
                                 const ValidationResult = Java.use(
-                                    'com.android.org.conscrypt.PathValidationResult',
+                                    'com.android.org.conscrypt.PathValidationResult'
                                 );
                                 return ValidationResult.SUCCESS;
                             }
@@ -3175,14 +3109,14 @@ const Http3QuicInterceptor = {
                     };
 
                     NetworkPathValidator.checkReachability.overload(
-                        'java.net.InetAddress',
+                        'java.net.InetAddress'
                     ).implementation = function (address) {
                         try {
                             const addressStr = address.toString();
 
                             if (
                                 addressStr.includes('licensing') ||
-                addressStr.includes('activation')
+                                addressStr.includes('activation')
                             ) {
                                 send({
                                     type: 'bypass',
@@ -3224,20 +3158,16 @@ const Http3QuicInterceptor = {
         Java.perform(() => {
             try {
                 const CertificateVerifier = Java.use(
-                    'com.android.org.conscrypt.CertificateVerifier',
+                    'com.android.org.conscrypt.CertificateVerifier'
                 );
-                const TrustManagerImpl = Java.use(
-                    'com.android.org.conscrypt.TrustManagerImpl',
-                );
+                const TrustManagerImpl = Java.use('com.android.org.conscrypt.TrustManagerImpl');
                 const X509Certificate = Java.use('java.security.cert.X509Certificate');
-                const CertPathValidator = Java.use(
-                    'java.security.cert.CertPathValidator',
-                );
+                const CertPathValidator = Java.use('java.security.cert.CertPathValidator');
 
                 if (CertificateVerifier) {
                     CertificateVerifier.verify.overload(
                         '[Ljava.security.cert.X509Certificate;',
-                        'java.lang.String',
+                        'java.lang.String'
                     ).implementation = function (chain, authType) {
                         try {
                             if (chain && chain.length > 0) {
@@ -3247,11 +3177,11 @@ const Http3QuicInterceptor = {
 
                                 if (
                                     subject.includes('license') ||
-                  subject.includes('activation') ||
-                  subject.includes('drm') ||
-                  issuer.includes('license') ||
-                  issuer.includes('activation') ||
-                  issuer.includes('drm')
+                                    subject.includes('activation') ||
+                                    subject.includes('drm') ||
+                                    issuer.includes('license') ||
+                                    issuer.includes('activation') ||
+                                    issuer.includes('drm')
                                 ) {
                                     send({
                                         type: 'bypass',
@@ -3283,15 +3213,15 @@ const Http3QuicInterceptor = {
                     TrustManagerImpl.checkServerTrusted.overload(
                         '[Ljava.security.cert.X509Certificate;',
                         'java.lang.String',
-                        'java.lang.String',
+                        'java.lang.String'
                     ).implementation = function (chain, authType, host) {
                         try {
                             if (
                                 host &&
-                (host.includes('license') ||
-                  host.includes('activation') ||
-                  host.includes('drm') ||
-                  host.includes('protection'))
+                                (host.includes('license') ||
+                                    host.includes('activation') ||
+                                    host.includes('drm') ||
+                                    host.includes('protection'))
                             ) {
                                 send({
                                     type: 'bypass',
@@ -3312,9 +3242,9 @@ const Http3QuicInterceptor = {
 
                                     if (
                                         subject.includes('license') ||
-                    subject.includes('activation') ||
-                    subject.includes('drm') ||
-                    subject.includes('protection')
+                                        subject.includes('activation') ||
+                                        subject.includes('drm') ||
+                                        subject.includes('protection')
                                     ) {
                                         send({
                                             type: 'bypass',
@@ -3343,15 +3273,15 @@ const Http3QuicInterceptor = {
                     };
 
                     TrustManagerImpl.isUserAddedCertificate.overload(
-                        'java.security.cert.X509Certificate',
+                        'java.security.cert.X509Certificate'
                     ).implementation = function (cert) {
                         try {
                             const subject = cert.getSubjectDN().toString().toLowerCase();
 
                             if (
                                 subject.includes('license') ||
-                subject.includes('activation') ||
-                subject.includes('drm')
+                                subject.includes('activation') ||
+                                subject.includes('drm')
                             ) {
                                 send({
                                     type: 'bypass',
@@ -3374,7 +3304,7 @@ const Http3QuicInterceptor = {
                 if (CertPathValidator) {
                     CertPathValidator.validate.overload(
                         'java.security.cert.CertPath',
-                        'java.security.cert.CertPathParameters',
+                        'java.security.cert.CertPathParameters'
                     ).implementation = function (certPath, params) {
                         try {
                             const certificates = certPath.getCertificates();
@@ -3391,8 +3321,8 @@ const Http3QuicInterceptor = {
 
                                         if (
                                             subject.includes('license') ||
-                      subject.includes('activation') ||
-                      subject.includes('drm')
+                                            subject.includes('activation') ||
+                                            subject.includes('drm')
                                         ) {
                                             hasLicenseCert = true;
                                             break;
@@ -3411,13 +3341,15 @@ const Http3QuicInterceptor = {
                                 });
 
                                 const CertPathValidatorResult = Java.use(
-                                    'java.security.cert.CertPathValidatorResult',
+                                    'java.security.cert.CertPathValidatorResult'
                                 );
                                 return Java.cast(
-                                    Java.use(
-                                        'java.security.cert.PKIXCertPathValidatorResult',
-                                    ).$new(null, null, null),
-                                    CertPathValidatorResult,
+                                    Java.use('java.security.cert.PKIXCertPathValidatorResult').$new(
+                                        null,
+                                        null,
+                                        null
+                                    ),
+                                    CertPathValidatorResult
                                 );
                             }
 
@@ -3431,15 +3363,15 @@ const Http3QuicInterceptor = {
                             });
 
                             const CertPathValidatorResult = Java.use(
-                                'java.security.cert.CertPathValidatorResult',
+                                'java.security.cert.CertPathValidatorResult'
                             );
                             return Java.cast(
                                 Java.use('java.security.cert.PKIXCertPathValidatorResult').$new(
                                     null,
                                     null,
-                                    null,
+                                    null
                                 ),
-                                CertPathValidatorResult,
+                                CertPathValidatorResult
                             );
                         }
                     };
@@ -3447,62 +3379,61 @@ const Http3QuicInterceptor = {
 
                 const SSLContext = Java.use('javax.net.ssl.SSLContext');
                 const originalGetInstanceMethod =
-          SSLContext.getInstance.overload('java.lang.String');
+                    SSLContext.getInstance.overload('java.lang.String');
 
-                SSLContext.getInstance.overload('java.lang.String').implementation =
-          function (protocol) {
-              try {
-                  const context = originalGetInstanceMethod.call(this, protocol);
+                SSLContext.getInstance.overload('java.lang.String').implementation = function (
+                    protocol
+                ) {
+                    try {
+                        const context = originalGetInstanceMethod.call(this, protocol);
 
-                  const TrustManager = Java.use('javax.net.ssl.TrustManager');
-                  const X509TrustManager = Java.use(
-                      'javax.net.ssl.X509TrustManager',
-                  );
+                        const TrustManager = Java.use('javax.net.ssl.TrustManager');
+                        const X509TrustManager = Java.use('javax.net.ssl.X509TrustManager');
 
-                  const TrustAllManager = Java.registerClass({
-                      name: 'com.intellicrack.TrustAllManager',
-                      implements: [X509TrustManager],
-                      methods: {
-                          checkClientTrusted: function (chain, authType) {
-                              send({
-                                  type: 'bypass',
-                                  target: 'http3_quic_interceptor',
-                                  action: 'client_certificate_check_bypassed',
-                              });
-                          },
-                          checkServerTrusted: function (chain, authType) {
-                              send({
-                                  type: 'bypass',
-                                  target: 'http3_quic_interceptor',
-                                  action: 'server_certificate_check_bypassed',
-                                  certificates: chain ? chain.length : 0,
-                              });
-                          },
-                          getAcceptedIssuers: function () {
-                              return Java.array('java.security.cert.X509Certificate', []);
-                          },
-                      },
-                  });
+                        const TrustAllManager = Java.registerClass({
+                            name: 'com.intellicrack.TrustAllManager',
+                            implements: [X509TrustManager],
+                            methods: {
+                                checkClientTrusted: function (chain, authType) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'http3_quic_interceptor',
+                                        action: 'client_certificate_check_bypassed',
+                                    });
+                                },
+                                checkServerTrusted: function (chain, authType) {
+                                    send({
+                                        type: 'bypass',
+                                        target: 'http3_quic_interceptor',
+                                        action: 'server_certificate_check_bypassed',
+                                        certificates: chain ? chain.length : 0,
+                                    });
+                                },
+                                getAcceptedIssuers: function () {
+                                    return Java.array('java.security.cert.X509Certificate', []);
+                                },
+                            },
+                        });
 
-                  const trustAllManagerInstance = TrustAllManager.$new();
-                  const trustManagers = Java.array('javax.net.ssl.TrustManager', [
-                      trustAllManagerInstance,
-                  ]);
+                        const trustAllManagerInstance = TrustAllManager.$new();
+                        const trustManagers = Java.array('javax.net.ssl.TrustManager', [
+                            trustAllManagerInstance,
+                        ]);
 
-                  context.init(null, trustManagers, null);
+                        context.init(null, trustManagers, null);
 
-                  send({
-                      type: 'success',
-                      target: 'http3_quic_interceptor',
-                      action: 'ssl_context_trust_all_manager_installed',
-                      protocol: protocol,
-                  });
+                        send({
+                            type: 'success',
+                            target: 'http3_quic_interceptor',
+                            action: 'ssl_context_trust_all_manager_installed',
+                            protocol: protocol,
+                        });
 
-                  return context;
-              } catch (e) {
-                  return originalGetInstanceMethod.call(this, protocol);
-              }
-          };
+                        return context;
+                    } catch (e) {
+                        return originalGetInstanceMethod.call(this, protocol);
+                    }
+                };
             } catch (e) {
                 send({
                     type: 'error',

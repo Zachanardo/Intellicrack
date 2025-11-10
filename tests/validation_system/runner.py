@@ -291,6 +291,7 @@ class ProcessMonitor:
                                 logger.info(f"VM tool detected: {proc_name}")
 
                     except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        pass
                         # Process may have exited or access denied, continue monitoring
 
                 time.sleep(1)
@@ -702,7 +703,7 @@ class EnvironmentIsolationManager:
 
             # Log results
             for isolation_type, success in isolation_results.items():
-                status = "✓" if success else "✗"
+                status = "OK" if success else "FAIL"
                 logger.info(f"{status} {isolation_type}: {'Active' if success else 'Failed'}")
 
             # Consider isolation active if at least network and filesystem are working
@@ -752,6 +753,7 @@ class EnvironmentIsolationManager:
                     process.terminate()
                     process.wait(timeout=5)
                 except (psutil.NoSuchProcess, psutil.TimeoutExpired):
+                    pass
                     # Process may have already exited or timeout occurred, continue cleanup
 
             self.isolation_active = False
@@ -1178,7 +1180,7 @@ if __name__ == "__main__":
     print("Anti-gaming checks configured:")
     anti_gaming = runner.config.get("validation_requirements", {}).get("anti_gaming_checks", {})
     for check, enabled in anti_gaming.items():
-        status = "✓" if enabled else "✗"
+        status = "OK" if enabled else "FAIL"
         print(f"  {status} {check}")
     print()
 

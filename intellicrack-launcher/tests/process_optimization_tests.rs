@@ -5,7 +5,10 @@ use intellicrack_launcher::process_optimization;
 fn test_optimize_process_priority_succeeds_on_windows() {
     let result = process_optimization::optimize_process_priority();
 
-    assert!(result.is_ok(), "Process priority optimization should succeed on Windows");
+    assert!(
+        result.is_ok(),
+        "Process priority optimization should succeed on Windows"
+    );
 }
 
 #[test]
@@ -15,8 +18,14 @@ fn test_optimize_process_priority_noops_on_unix() {
     let result = process_optimization::optimize_process_priority();
     let elapsed = start.elapsed();
 
-    assert!(result.is_ok(), "Process priority optimization should return Ok on Unix");
-    assert!(elapsed.as_millis() < 10, "Should return immediately (<10ms)");
+    assert!(
+        result.is_ok(),
+        "Process priority optimization should return Ok on Unix"
+    );
+    assert!(
+        elapsed.as_millis() < 10,
+        "Should return immediately (<10ms)"
+    );
 }
 
 #[test]
@@ -32,7 +41,10 @@ fn test_optimize_process_is_idempotent() {
     let result2 = process_optimization::optimize_process();
 
     assert!(result1.is_ok(), "First optimization should succeed");
-    assert!(result2.is_ok(), "Second optimization should also succeed (idempotent)");
+    assert!(
+        result2.is_ok(),
+        "Second optimization should also succeed (idempotent)"
+    );
 }
 
 #[test]
@@ -50,8 +62,7 @@ fn test_process_priority_actually_changed() {
         let current_priority = GetPriorityClass(handle);
 
         assert_eq!(
-            current_priority,
-            ABOVE_NORMAL_PRIORITY_CLASS,
+            current_priority, ABOVE_NORMAL_PRIORITY_CLASS,
             "Process priority should be set to ABOVE_NORMAL"
         );
     }
@@ -80,7 +91,10 @@ fn test_cpu_topology_structure() {
 
     assert_eq!(topology.p_cores, p_cores);
     assert_eq!(topology.e_cores, e_cores);
-    assert!(topology.is_hybrid, "Should detect hybrid CPU with both P and E cores");
+    assert!(
+        topology.is_hybrid,
+        "Should detect hybrid CPU with both P and E cores"
+    );
 }
 
 #[test]
@@ -92,7 +106,10 @@ fn test_cpu_topology_non_hybrid() {
 
     assert_eq!(topology.p_cores, p_cores);
     assert!(topology.e_cores.is_empty());
-    assert!(!topology.is_hybrid, "Should not detect hybrid CPU when E-cores are empty");
+    assert!(
+        !topology.is_hybrid,
+        "Should not detect hybrid CPU when E-cores are empty"
+    );
 }
 
 #[test]
@@ -107,11 +124,7 @@ fn test_multiple_concurrent_optimizations() {
     use std::thread;
 
     let handles: Vec<_> = (0..4)
-        .map(|_| {
-            thread::spawn(|| {
-                process_optimization::optimize_process()
-            })
-        })
+        .map(|_| thread::spawn(|| process_optimization::optimize_process()))
         .collect();
 
     for handle in handles {

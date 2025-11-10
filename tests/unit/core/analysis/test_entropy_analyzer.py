@@ -585,7 +585,7 @@ class TestEdgeCasesAndErrorRecovery(unittest.TestCase):
     def test_unicode_filename_handling(self):
         """Test handling of Unicode filenames."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            test_file = Path(tmpdir) / "测试文件_тест_🔒.bin"
+            test_file = Path(tmpdir) / "测试文件_тест_.bin"
             test_file.write_bytes(b"Test data")
 
             result = self.analyzer.analyze_entropy(test_file)

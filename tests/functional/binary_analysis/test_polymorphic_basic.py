@@ -17,7 +17,7 @@ def test_basic_functionality():
     print("=" * 70)
 
     analyzer = PolymorphicAnalyzer(arch="x86", bits=32)
-    print(f"\n✓ Created PolymorphicAnalyzer: arch={analyzer.arch}, bits={analyzer.bits}")
+    print(f"\nOK Created PolymorphicAnalyzer: arch={analyzer.arch}, bits={analyzer.bits}")
 
     code = bytes(
         [
@@ -30,11 +30,11 @@ def test_basic_functionality():
             0xC3,
         ]
     )
-    print(f"\n✓ Test code bytes: {code.hex()}")
+    print(f"\nOK Test code bytes: {code.hex()}")
 
     try:
         analysis = analyzer.analyze_polymorphic_code(code, base_address=0x1000)
-        print(f"\n✓ Analysis completed successfully")
+        print(f"\nOK Analysis completed successfully")
         print(f"  - Engine type: {analysis.engine_type.value}")
         print(f"  - Mutation types detected: {len(analysis.mutation_types)}")
         print(f"  - Behavior patterns: {len(analysis.behavior_patterns)}")
@@ -65,10 +65,10 @@ def test_basic_functionality():
         print("  (This is expected without Capstone installed)")
 
     normalized = analyzer.normalize_code_variant(code, base_address=0x1000)
-    print(f"\n✓ Normalized signature: {normalized[:32]}...")
+    print(f"\nOK Normalized signature: {normalized[:32]}...")
 
     semantic_sig = analyzer.extract_semantic_signature(code, base_address=0x1000)
-    print(f"✓ Semantic signature: {semantic_sig[:32] if semantic_sig else 'N/A (requires Capstone)'}...")
+    print(f"OK Semantic signature: {semantic_sig[:32] if semantic_sig else 'N/A (requires Capstone)'}...")
 
     code_variant = bytes(
         [
@@ -85,7 +85,7 @@ def test_basic_functionality():
     )
 
     similarity, details = analyzer.compare_code_variants(code, code_variant)
-    print(f"\n✓ Code variant comparison:")
+    print(f"\nOK Code variant comparison:")
     print(f"  - Similarity score: {similarity:.2f}")
     print(f"  - Details: {details}")
 
@@ -95,13 +95,13 @@ def test_basic_functionality():
     print("\nNOTE: For full functionality, install Capstone:")
     print("  pip install capstone")
     print("\nThe analyzer provides:")
-    print("  ✓ Semantic analysis of polymorphic code")
-    print("  ✓ Mutation detection (substitution, renaming, etc.)")
-    print("  ✓ Behavior pattern extraction")
-    print("  ✓ Code normalization and signature generation")
-    print("  ✓ Decryption routine identification")
-    print("  ✓ Evasion technique detection")
-    print("  ✓ Code variant comparison")
+    print("  OK Semantic analysis of polymorphic code")
+    print("  OK Mutation detection (substitution, renaming, etc.)")
+    print("  OK Behavior pattern extraction")
+    print("  OK Code normalization and signature generation")
+    print("  OK Decryption routine identification")
+    print("  OK Evasion technique detection")
+    print("  OK Code variant comparison")
 
 
 def test_mutation_types():
@@ -125,7 +125,7 @@ def test_mutation_types():
 
     print("\nSupported mutation detection types:")
     for mutation in mutation_types:
-        print(f"  ✓ {mutation.value.replace('_', ' ').title()}")
+        print(f"  OK {mutation.value.replace('_', ' ').title()}")
 
 
 def test_engine_types():
@@ -147,7 +147,7 @@ def test_engine_types():
 
     print("\nSupported polymorphic engine detection:")
     for engine in engine_types:
-        print(f"  ✓ {engine.value.upper()}")
+        print(f"  OK {engine.value.upper()}")
 
 
 if __name__ == "__main__":

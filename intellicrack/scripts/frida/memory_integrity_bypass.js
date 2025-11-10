@@ -34,7 +34,7 @@ const MemoryIntegrityBypass = {
 
     // Configuration for memory integrity bypass
     config: {
-    // Memory protection settings
+        // Memory protection settings
         memoryProtection: {
             enabled: true,
             allowExecutableWrites: true,
@@ -93,9 +93,7 @@ const MemoryIntegrityBypass = {
             pid: pid,
         });
         this.processId = pid;
-        this.baseAddress = Process.findModuleByName(
-            Process.getCurrentModule().name,
-        ).base;
+        this.baseAddress = Process.findModuleByName(Process.getCurrentModule().name).base;
     },
 
     run: function () {
@@ -157,10 +155,7 @@ const MemoryIntegrityBypass = {
     },
 
     hookVirtualProtect: function () {
-        var virtualProtect = Module.findExportByName(
-            'kernel32.dll',
-            'VirtualProtect',
-        );
+        var virtualProtect = Module.findExportByName('kernel32.dll', 'VirtualProtect');
         if (virtualProtect) {
             Interceptor.attach(virtualProtect, {
                 onEnter: function (args) {
@@ -184,7 +179,7 @@ const MemoryIntegrityBypass = {
                         var config = this.parent.parent.config;
                         if (
                             config.memoryProtection.enabled &&
-              config.memoryProtection.allowExecutableWrites
+                            config.memoryProtection.allowExecutableWrites
                         ) {
                             // Force PAGE_EXECUTE_READWRITE instead
                             args[2] = ptr(0x40);
@@ -201,19 +196,16 @@ const MemoryIntegrityBypass = {
                 onLeave: function (retval) {
                     if (
                         retval.toInt32() !== 0 &&
-            this.lpflOldProtect &&
-            !this.lpflOldProtect.isNull()
+                        this.lpflOldProtect &&
+                        !this.lpflOldProtect.isNull()
                     ) {
                         // Record the memory region change
                         var config = this.parent.parent.config;
-                        config.codeIntegrity.protectedRegions.set(
-                            this.lpAddress.toString(),
-                            {
-                                size: this.dwSize,
-                                newProtect: this.flNewProtect,
-                                oldProtect: this.lpflOldProtect.readU32(),
-                            },
-                        );
+                        config.codeIntegrity.protectedRegions.set(this.lpAddress.toString(), {
+                            size: this.dwSize,
+                            newProtect: this.flNewProtect,
+                            oldProtect: this.lpflOldProtect.readU32(),
+                        });
                     }
                 },
             });
@@ -223,10 +215,7 @@ const MemoryIntegrityBypass = {
     },
 
     hookVirtualProtectEx: function () {
-        var virtualProtectEx = Module.findExportByName(
-            'kernel32.dll',
-            'VirtualProtectEx',
-        );
+        var virtualProtectEx = Module.findExportByName('kernel32.dll', 'VirtualProtectEx');
         if (virtualProtectEx) {
             Interceptor.attach(virtualProtectEx, {
                 onEnter: function (args) {
@@ -245,10 +234,7 @@ const MemoryIntegrityBypass = {
 
                     // Allow execute permissions for external processes too
                     var config = this.parent.parent.config;
-                    if (
-                        config.memoryProtection.enabled &&
-            (this.flNewProtect & 0xf0) === 0
-                    ) {
+                    if (config.memoryProtection.enabled && (this.flNewProtect & 0xf0) === 0) {
                         args[3] = ptr(0x40); // PAGE_EXECUTE_READWRITE
                         send({
                             type: 'bypass',
@@ -286,7 +272,7 @@ const MemoryIntegrityBypass = {
                     var config = this.parent.parent.config;
                     if (
                         config.memoryProtection.enabled &&
-            config.memoryProtection.allowExecutableWrites
+                        config.memoryProtection.allowExecutableWrites
                     ) {
                         if (this.flProtect & 0x40) {
                             // PAGE_EXECUTE_READWRITE requested
@@ -336,10 +322,7 @@ const MemoryIntegrityBypass = {
     },
 
     hookVirtualAllocEx: function () {
-        var virtualAllocEx = Module.findExportByName(
-            'kernel32.dll',
-            'VirtualAllocEx',
-        );
+        var virtualAllocEx = Module.findExportByName('kernel32.dll', 'VirtualAllocEx');
         if (virtualAllocEx) {
             Interceptor.attach(virtualAllocEx, {
                 onEnter: function (args) {
@@ -360,7 +343,7 @@ const MemoryIntegrityBypass = {
                     var config = this.parent.parent.config;
                     if (
                         config.memoryProtection.enabled &&
-            config.memoryProtection.allowExecutableWrites
+                        config.memoryProtection.allowExecutableWrites
                     ) {
                         if (this.flProtect & 0x20) {
                             // Upgrade EXECUTE_READ to EXECUTE_READWRITE
@@ -381,10 +364,7 @@ const MemoryIntegrityBypass = {
     },
 
     hookNtProtectVirtualMemory: function () {
-        var ntProtectVirtualMemory = Module.findExportByName(
-            'ntdll.dll',
-            'NtProtectVirtualMemory',
-        );
+        var ntProtectVirtualMemory = Module.findExportByName('ntdll.dll', 'NtProtectVirtualMemory');
         if (ntProtectVirtualMemory) {
             Interceptor.attach(ntProtectVirtualMemory, {
                 onEnter: function (args) {
@@ -405,7 +385,7 @@ const MemoryIntegrityBypass = {
                     var config = this.parent.parent.config;
                     if (
                         config.memoryProtection.enabled &&
-            config.memoryProtection.allowExecutableWrites
+                        config.memoryProtection.allowExecutableWrites
                     ) {
                         if ((this.newProtect & 0xf0) === 0) {
                             // No execute permissions
@@ -505,7 +485,7 @@ const MemoryIntegrityBypass = {
                                 var config = this.parent.parent.parent.config;
                                 if (
                                     config.codeIntegrity.enabled &&
-                  config.codeIntegrity.spoofChecksums
+                                    config.codeIntegrity.spoofChecksums
                                 ) {
                                     // Return a predictable checksum
                                     retval.replace(0x12345678);
@@ -553,10 +533,7 @@ const MemoryIntegrityBypass = {
                 onLeave: function (retval) {
                     if (this.isCodeIntegrityCheck && retval.toInt32() !== 0) {
                         var config = this.parent.parent.config;
-                        if (
-                            config.codeIntegrity.enabled &&
-              config.codeIntegrity.bypassSelfChecks
-                        ) {
+                        if (config.codeIntegrity.enabled && config.codeIntegrity.bypassSelfChecks) {
                             // Force comparison to succeed
                             retval.replace(0);
                             send({
@@ -585,7 +562,7 @@ const MemoryIntegrityBypass = {
         // Hook page fault handler registration
         var addVectoredExceptionHandler = Module.findExportByName(
             'kernel32.dll',
-            'AddVectoredExceptionHandler',
+            'AddVectoredExceptionHandler'
         );
         if (addVectoredExceptionHandler) {
             Interceptor.attach(addVectoredExceptionHandler, {
@@ -623,7 +600,7 @@ const MemoryIntegrityBypass = {
         // Hook SetUnhandledExceptionFilter
         var setUnhandledFilter = Module.findExportByName(
             'kernel32.dll',
-            'SetUnhandledExceptionFilter',
+            'SetUnhandledExceptionFilter'
         );
         if (setUnhandledFilter) {
             Interceptor.attach(setUnhandledFilter, {
@@ -651,10 +628,7 @@ const MemoryIntegrityBypass = {
         });
 
         // Hook GetModuleInformation to spoof module details
-        var getModuleInfo = Module.findExportByName(
-            'psapi.dll',
-            'GetModuleInformation',
-        );
+        var getModuleInfo = Module.findExportByName('psapi.dll', 'GetModuleInformation');
         if (getModuleInfo) {
             Interceptor.attach(getModuleInfo, {
                 onEnter: function (args) {
@@ -672,11 +646,7 @@ const MemoryIntegrityBypass = {
                 },
 
                 onLeave: function (retval) {
-                    if (
-                        retval.toInt32() !== 0 &&
-            this.lpmodinfo &&
-            !this.lpmodinfo.isNull()
-                    ) {
+                    if (retval.toInt32() !== 0 && this.lpmodinfo && !this.lpmodinfo.isNull()) {
                         // Could modify module information here
                         send({
                             type: 'info',
@@ -708,11 +678,7 @@ const MemoryIntegrityBypass = {
                 },
 
                 onLeave: function (retval) {
-                    if (
-                        retval.toInt32() > 0 &&
-            this.lpBuffer &&
-            !this.lpBuffer.isNull()
-                    ) {
+                    if (retval.toInt32() > 0 && this.lpBuffer && !this.lpBuffer.isNull()) {
                         // Modify memory info to hide our modifications
                         var config = this.parent.parent.config;
                         if (config.memoryProtection.enabled) {
@@ -777,8 +743,8 @@ const MemoryIntegrityBypass = {
 
                 isProtectedPattern: function (pattern) {
                     var config = this.parent.parent.parent.config;
-                    return config.memoryScanning.protectedPatterns.some(
-                        (protectedPattern) => pattern.includes(protectedPattern),
+                    return config.memoryScanning.protectedPatterns.some((protectedPattern) =>
+                        pattern.includes(protectedPattern)
                     );
                 },
             });
@@ -808,10 +774,7 @@ const MemoryIntegrityBypass = {
                 onLeave: function (retval) {
                     if (this.hidePattern && !retval.isNull()) {
                         var config = this.parent.parent.config;
-                        if (
-                            config.memoryScanning.enabled &&
-              config.memoryScanning.hidePatches
-                        ) {
+                        if (config.memoryScanning.enabled && config.memoryScanning.hidePatches) {
                             retval.replace(ptr(0));
                             send({
                                 type: 'bypass',
@@ -858,10 +821,7 @@ const MemoryIntegrityBypass = {
         });
 
         // Hook __security_check_cookie (MSVC stack canary)
-        var securityCheckCookie = Module.findExportByName(
-            'msvcrt.dll',
-            '__security_check_cookie',
-        );
+        var securityCheckCookie = Module.findExportByName('msvcrt.dll', '__security_check_cookie');
         if (securityCheckCookie) {
             Interceptor.attach(securityCheckCookie, {
                 onEnter: function (args) {
@@ -879,7 +839,7 @@ const MemoryIntegrityBypass = {
                         var config = this.parent.parent.config;
                         if (
                             config.runtimeVerification.enabled &&
-              config.runtimeVerification.spoofStackCanaries
+                            config.runtimeVerification.spoofStackCanaries
                         ) {
                             // Normal return - canary check passed
                             send({
@@ -896,10 +856,7 @@ const MemoryIntegrityBypass = {
         }
 
         // Hook __stack_chk_fail (GCC stack canary)
-        var stackChkFail = Module.findExportByName(
-            'msvcrt.dll',
-            '__stack_chk_fail',
-        );
+        var stackChkFail = Module.findExportByName('msvcrt.dll', '__stack_chk_fail');
         if (stackChkFail) {
             Interceptor.replace(
                 stackChkFail,
@@ -913,8 +870,8 @@ const MemoryIntegrityBypass = {
                         // Do nothing - bypass the abort
                     },
                     'void',
-                    [],
-                ),
+                    []
+                )
             );
 
             this.hooksInstalled['__stack_chk_fail'] = true;
@@ -930,10 +887,7 @@ const MemoryIntegrityBypass = {
         });
 
         // Hook _guard_dispatch_icall (CFG indirect call check)
-        var guardDispatch = Module.findExportByName(
-            'ntdll.dll',
-            '_guard_dispatch_icall',
-        );
+        var guardDispatch = Module.findExportByName('ntdll.dll', '_guard_dispatch_icall');
         if (guardDispatch) {
             Interceptor.attach(guardDispatch, {
                 onEnter: function (args) {
@@ -952,7 +906,7 @@ const MemoryIntegrityBypass = {
                         var config = this.parent.parent.config;
                         if (
                             config.runtimeVerification.enabled &&
-              config.runtimeVerification.bypassCFG
+                            config.runtimeVerification.bypassCFG
                         ) {
                             // Allow the call to proceed
                             send({
@@ -969,10 +923,7 @@ const MemoryIntegrityBypass = {
         }
 
         // Hook LdrpValidateUserCallTarget
-        var ldrpValidate = Module.findExportByName(
-            'ntdll.dll',
-            'LdrpValidateUserCallTarget',
-        );
+        var ldrpValidate = Module.findExportByName('ntdll.dll', 'LdrpValidateUserCallTarget');
         if (ldrpValidate) {
             Interceptor.attach(ldrpValidate, {
                 onEnter: function (args) {
@@ -988,7 +939,7 @@ const MemoryIntegrityBypass = {
                     var config = this.parent.parent.config;
                     if (
                         config.runtimeVerification.enabled &&
-            config.runtimeVerification.bypassCFG
+                        config.runtimeVerification.bypassCFG
                     ) {
                         // Return success (STATUS_SUCCESS)
                         retval.replace(0);
@@ -1029,8 +980,8 @@ const MemoryIntegrityBypass = {
                         // Return without aborting
                     },
                     'void',
-                    ['pointer', 'pointer', 'pointer'],
-                ),
+                    ['pointer', 'pointer', 'pointer']
+                )
             );
 
             this.hooksInstalled['__cfi_check'] = true;
@@ -1051,8 +1002,8 @@ const MemoryIntegrityBypass = {
                         // Return without validation
                     },
                     'void',
-                    ['pointer', 'pointer'],
-                ),
+                    ['pointer', 'pointer']
+                )
             );
 
             this.hooksInstalled['__cfi_slowpath'] = true;
@@ -1068,10 +1019,7 @@ const MemoryIntegrityBypass = {
         });
 
         // Hook functions that might detect ROP chains
-        var isExecutableAddress = Module.findExportByName(
-            'kernel32.dll',
-            'IsBadCodePtr',
-        );
+        var isExecutableAddress = Module.findExportByName('kernel32.dll', 'IsBadCodePtr');
         if (isExecutableAddress) {
             Interceptor.attach(isExecutableAddress, {
                 onEnter: function (args) {
@@ -1123,10 +1071,7 @@ const MemoryIntegrityBypass = {
     },
 
     hookReadProcessMemory: function () {
-        var readProcessMemory = Module.findExportByName(
-            'kernel32.dll',
-            'ReadProcessMemory',
-        );
+        var readProcessMemory = Module.findExportByName('kernel32.dll', 'ReadProcessMemory');
         if (readProcessMemory) {
             Interceptor.attach(readProcessMemory, {
                 onEnter: function (args) {
@@ -1151,15 +1096,12 @@ const MemoryIntegrityBypass = {
                 onLeave: function (retval) {
                     if (
                         this.isScanning &&
-            retval.toInt32() !== 0 &&
-            this.lpBuffer &&
-            !this.lpBuffer.isNull()
+                        retval.toInt32() !== 0 &&
+                        this.lpBuffer &&
+                        !this.lpBuffer.isNull()
                     ) {
                         var config = this.parent.parent.config;
-                        if (
-                            config.memoryScanning.enabled &&
-              config.memoryScanning.spoofPatterns
-                        ) {
+                        if (config.memoryScanning.enabled && config.memoryScanning.spoofPatterns) {
                             // Could modify the read data here to hide our patches
                             this.spoofReadData();
                         }
@@ -1180,9 +1122,9 @@ const MemoryIntegrityBypass = {
                             for (var i = 0; i <= bytes.length - 4; i++) {
                                 if (
                                     bytes[i] === 0x90 &&
-                  bytes[i + 1] === 0x90 &&
-                  bytes[i + 2] === 0x90 &&
-                  bytes[i + 3] === 0x90
+                                    bytes[i + 1] === 0x90 &&
+                                    bytes[i + 2] === 0x90 &&
+                                    bytes[i + 3] === 0x90
                                 ) {
                                     // Replace NOP sled with fake original instructions
                                     bytes[i] = 0x55; // push ebp
@@ -1218,10 +1160,7 @@ const MemoryIntegrityBypass = {
     },
 
     hookWriteProcessMemory: function () {
-        var writeProcessMemory = Module.findExportByName(
-            'kernel32.dll',
-            'WriteProcessMemory',
-        );
+        var writeProcessMemory = Module.findExportByName('kernel32.dll', 'WriteProcessMemory');
         if (writeProcessMemory) {
             Interceptor.attach(writeProcessMemory, {
                 onEnter: function (args) {
@@ -1243,13 +1182,10 @@ const MemoryIntegrityBypass = {
                     if (this.nSize <= 1024) {
                         // Reasonable patch size
                         var config = this.parent.parent.config;
-                        config.codeIntegrity.protectedRegions.set(
-                            this.lpBaseAddress.toString(),
-                            {
-                                size: this.nSize,
-                                type: 'patch',
-                            },
-                        );
+                        config.codeIntegrity.protectedRegions.set(this.lpBaseAddress.toString(), {
+                            size: this.nSize,
+                            type: 'patch',
+                        });
                     }
                 },
             });
@@ -1259,10 +1195,7 @@ const MemoryIntegrityBypass = {
     },
 
     hookVirtualQueryEx: function () {
-        var virtualQueryEx = Module.findExportByName(
-            'kernel32.dll',
-            'VirtualQueryEx',
-        );
+        var virtualQueryEx = Module.findExportByName('kernel32.dll', 'VirtualQueryEx');
         if (virtualQueryEx) {
             Interceptor.attach(virtualQueryEx, {
                 onEnter: function (args) {
@@ -1280,11 +1213,7 @@ const MemoryIntegrityBypass = {
                 },
 
                 onLeave: function (retval) {
-                    if (
-                        retval.toInt32() > 0 &&
-            this.lpBuffer &&
-            !this.lpBuffer.isNull()
-                    ) {
+                    if (retval.toInt32() > 0 && this.lpBuffer && !this.lpBuffer.isNull()) {
                         // Could modify memory information to hide our patches
                         send({
                             type: 'info',
@@ -1309,10 +1238,7 @@ const MemoryIntegrityBypass = {
         });
 
         // Hook Module32First/Next for module enumeration
-        var module32First = Module.findExportByName(
-            'kernel32.dll',
-            'Module32FirstW',
-        );
+        var module32First = Module.findExportByName('kernel32.dll', 'Module32FirstW');
         if (module32First) {
             Interceptor.attach(module32First, {
                 onEnter: function (args) {
@@ -1372,9 +1298,7 @@ const MemoryIntegrityBypass = {
         });
 
         // Protect DOS and NT headers from dumping tools
-        var imageBase = Process.findModuleByName(
-            Process.getCurrentModule().name,
-        ).base;
+        var imageBase = Process.findModuleByName(Process.getCurrentModule().name).base;
 
         send({
             type: 'info',
@@ -1383,8 +1307,8 @@ const MemoryIntegrityBypass = {
             base_address: imageBase,
         });
 
-    // We could set up memory access violations for the headers, but that might break legitimate access
-    // Instead, we'll hook the functions that typically access these headers
+        // We could set up memory access violations for the headers, but that might break legitimate access
+        // Instead, we'll hook the functions that typically access these headers
     },
 
     hookImportTableAccess: function () {
@@ -1396,10 +1320,7 @@ const MemoryIntegrityBypass = {
         });
 
         // Hook GetProcAddress to detect import reconstruction attempts
-        var getProcAddress = Module.findExportByName(
-            'kernel32.dll',
-            'GetProcAddress',
-        );
+        var getProcAddress = Module.findExportByName('kernel32.dll', 'GetProcAddress');
         if (getProcAddress) {
             Interceptor.attach(getProcAddress, {
                 onEnter: function (args) {
@@ -1447,7 +1368,7 @@ const MemoryIntegrityBypass = {
         // Hook ImageDirectoryEntryToData (used to access PE sections)
         var imageDirEntryToData = Module.findExportByName(
             'dbghelp.dll',
-            'ImageDirectoryEntryToData',
+            'ImageDirectoryEntryToData'
         );
         if (imageDirEntryToData) {
             Interceptor.attach(imageDirEntryToData, {
@@ -1513,9 +1434,7 @@ const MemoryIntegrityBypass = {
 
                     // Remove from our tracking
                     var config = this.parent.parent.config;
-                    config.codeIntegrity.protectedRegions.delete(
-                        this.lpAddress.toString(),
-                    );
+                    config.codeIntegrity.protectedRegions.delete(this.lpAddress.toString());
                 },
             });
 
@@ -1533,10 +1452,7 @@ const MemoryIntegrityBypass = {
         });
 
         // Hook DebugActiveProcess
-        var debugActiveProcess = Module.findExportByName(
-            'kernel32.dll',
-            'DebugActiveProcess',
-        );
+        var debugActiveProcess = Module.findExportByName('kernel32.dll', 'DebugActiveProcess');
         if (debugActiveProcess) {
             Interceptor.attach(debugActiveProcess, {
                 onEnter: function (args) {
@@ -1642,35 +1558,35 @@ const MemoryIntegrityBypass = {
             for (var hook in this.hooksInstalled) {
                 if (
                     hook.includes('Virtual') ||
-          hook.includes('Protect') ||
-          hook.includes('Alloc')
+                    hook.includes('Protect') ||
+                    hook.includes('Alloc')
                 ) {
                     categories['Memory Protection']++;
                 } else if (
                     hook.includes('Checksum') ||
-          hook.includes('Integrity') ||
-          hook.includes('Self')
+                    hook.includes('Integrity') ||
+                    hook.includes('Self')
                 ) {
                     categories['Code Integrity']++;
                 } else if (
                     hook.includes('Stack') ||
-          hook.includes('CFG') ||
-          hook.includes('CFI') ||
-          hook.includes('ROP')
+                    hook.includes('CFG') ||
+                    hook.includes('CFI') ||
+                    hook.includes('ROP')
                 ) {
                     categories['Runtime Verification']++;
                 } else if (
                     hook.includes('Read') ||
-          hook.includes('Write') ||
-          hook.includes('Query') ||
-          hook.includes('Scan')
+                    hook.includes('Write') ||
+                    hook.includes('Query') ||
+                    hook.includes('Scan')
                 ) {
                     categories['Memory Scanning']++;
                 } else if (
                     hook.includes('Header') ||
-          hook.includes('Import') ||
-          hook.includes('Section') ||
-          hook.includes('Dump')
+                    hook.includes('Import') ||
+                    hook.includes('Section') ||
+                    hook.includes('Dump')
                 ) {
                     categories['Anti-Dump Protection']++;
                 } else if (hook.includes('Debug') || hook.includes('Process')) {
@@ -1805,10 +1721,7 @@ const MemoryIntegrityBypass = {
         };
 
         // Hook memory mapping functions for integrity tracking
-        var ntMapViewOfSection = Module.findExportByName(
-            'ntdll.dll',
-            'NtMapViewOfSection',
-        );
+        var ntMapViewOfSection = Module.findExportByName('ntdll.dll', 'NtMapViewOfSection');
         if (ntMapViewOfSection) {
             Interceptor.attach(ntMapViewOfSection, {
                 onEnter: function (args) {
@@ -1830,7 +1743,7 @@ const MemoryIntegrityBypass = {
                             timestamp: Date.now(),
                             checksum: parent.computeMemoryChecksum(
                                 address,
-                                this.viewSize.readU32(),
+                                this.viewSize.readU32()
                             ),
                         });
                         send({
@@ -1887,10 +1800,7 @@ const MemoryIntegrityBypass = {
         });
 
         // Hook memory read operations to decrypt on-the-fly
-        var ntReadVirtualMemory = Module.findExportByName(
-            'ntdll.dll',
-            'NtReadVirtualMemory',
-        );
+        var ntReadVirtualMemory = Module.findExportByName('ntdll.dll', 'NtReadVirtualMemory');
         if (ntReadVirtualMemory) {
             Interceptor.attach(ntReadVirtualMemory, {
                 onEnter: function (args) {
@@ -1900,22 +1810,14 @@ const MemoryIntegrityBypass = {
                     this.size = args[3].toInt32();
 
                     var parent = this.parent.parent;
-                    if (
-                        parent.encryptionEngine.encryptedRegions.has(
-                            this.baseAddress.toString(),
-                        )
-                    ) {
+                    if (parent.encryptionEngine.encryptedRegions.has(this.baseAddress.toString())) {
                         this.needsDecryption = true;
                     }
                 },
                 onLeave: function (retval) {
                     if (this.needsDecryption && retval.toInt32() === 0) {
                         var parent = this.parent.parent;
-                        parent.decryptMemoryBuffer(
-                            this.buffer,
-                            this.size,
-                            this.baseAddress,
-                        );
+                        parent.decryptMemoryBuffer(this.buffer, this.size, this.baseAddress);
                         send({
                             type: 'bypass',
                             target: 'memory_integrity_bypass',
@@ -1954,10 +1856,7 @@ const MemoryIntegrityBypass = {
                 sections.forEach((section) => {
                     if (section.protection.includes('x')) {
                         // Executable section
-                        this.scanForCodeCaves(
-                            module.base.add(section.offset),
-                            section.size,
-                        );
+                        this.scanForCodeCaves(module.base.add(section.offset), section.size);
                     }
                 });
             } catch (e) {
@@ -2012,7 +1911,7 @@ const MemoryIntegrityBypass = {
         // Hook exception handlers to catch memory violations
         var kiUserExceptionDispatcher = Module.findExportByName(
             'ntdll.dll',
-            'KiUserExceptionDispatcher',
+            'KiUserExceptionDispatcher'
         );
         if (kiUserExceptionDispatcher) {
             Interceptor.attach(kiUserExceptionDispatcher, {
@@ -2038,7 +1937,7 @@ const MemoryIntegrityBypass = {
         this.addWatchdogRegion(
             Process.findModuleByName(Process.getCurrentModule().name).base,
             0x1000,
-            'critical',
+            'critical'
         );
 
         // Set up memory access pattern analysis
@@ -2078,10 +1977,7 @@ const MemoryIntegrityBypass = {
         this.generateJunkOpcodes();
 
         // Hook memory write operations to apply polymorphic transformations
-        var ntWriteVirtualMemory = Module.findExportByName(
-            'ntdll.dll',
-            'NtWriteVirtualMemory',
-        );
+        var ntWriteVirtualMemory = Module.findExportByName('ntdll.dll', 'NtWriteVirtualMemory');
         if (ntWriteVirtualMemory) {
             Interceptor.attach(ntWriteVirtualMemory, {
                 onEnter: function (args) {
@@ -2093,10 +1989,7 @@ const MemoryIntegrityBypass = {
                     if (this.size <= 256) {
                         // Reasonable patch size
                         var parent = this.parent.parent;
-                        var mutatedPatch = parent.createPolymorphicPatch(
-                            this.buffer,
-                            this.size,
-                        );
+                        var mutatedPatch = parent.createPolymorphicPatch(this.buffer, this.size);
                         if (mutatedPatch) {
                             args[2] = mutatedPatch;
                             parent.polymorphicEngine.patchHistory.push({
@@ -2141,7 +2034,7 @@ const MemoryIntegrityBypass = {
     },
 
     interceptIntegrityChecks: function () {
-    // Hook common integrity check patterns
+        // Hook common integrity check patterns
         var patterns = [
             'VerifyIntegrity',
             'CheckIntegrity',
@@ -2188,18 +2081,15 @@ const MemoryIntegrityBypass = {
                 size: Math.min(region.size, 0x10000),
                 originalChecksum: this.computeMemoryChecksum(
                     region.base,
-                    Math.min(region.size, 0x10000),
+                    Math.min(region.size, 0x10000)
                 ),
             });
         });
     },
 
     setupChecksumValidationBypass: function () {
-    // Hook common checksum validation routines
-        var rtlComputeCrc32 = Module.findExportByName(
-            'ntdll.dll',
-            'RtlComputeCrc32',
-        );
+        // Hook common checksum validation routines
+        var rtlComputeCrc32 = Module.findExportByName('ntdll.dll', 'RtlComputeCrc32');
         if (rtlComputeCrc32) {
             Interceptor.attach(rtlComputeCrc32, {
                 onEnter: function (args) {
@@ -2212,8 +2102,7 @@ const MemoryIntegrityBypass = {
                     // Check if this is validating a known region
                     var regionKey = parent.findMatchingRegion(this.pData, this.iLen);
                     if (regionKey) {
-                        var storedChecksum =
-              parent.memoryIntegrityState.checksums.get(regionKey);
+                        var storedChecksum = parent.memoryIntegrityState.checksums.get(regionKey);
                         if (storedChecksum) {
                             retval.replace(storedChecksum);
                             send({
@@ -2298,10 +2187,10 @@ const MemoryIntegrityBypass = {
                         if (caveStart === -1) caveStart = i;
                     } else {
                         if (caveStart !== -1 && i - caveStart >= minCaveSize) {
-                            this.codeCaveManager.detectedCaves.set(
-                                base.add(caveStart).toString(),
-                                { size: i - caveStart, type: bytes[caveStart] },
-                            );
+                            this.codeCaveManager.detectedCaves.set(base.add(caveStart).toString(), {
+                                size: i - caveStart,
+                                type: bytes[caveStart],
+                            });
                         }
                         caveStart = -1;
                     }
@@ -2313,7 +2202,7 @@ const MemoryIntegrityBypass = {
     },
 
     generateDecoyCode: function () {
-    // Generate various decoy instruction sequences
+        // Generate various decoy instruction sequences
         this.codeCaveManager.decoyCode = [
             [0x55, 0x8b, 0xec, 0x83, 0xec, 0x10], // push ebp; mov ebp,esp; sub esp,10h
             [0x50, 0x51, 0x52, 0x53, 0x5b, 0x5a, 0x59, 0x58], // push/pop registers
@@ -2325,9 +2214,7 @@ const MemoryIntegrityBypass = {
 
     fillCodeCave: function (address, size) {
         try {
-            var decoyIndex = Math.floor(
-                Math.random() * this.codeCaveManager.decoyCode.length,
-            );
+            var decoyIndex = Math.floor(Math.random() * this.codeCaveManager.decoyCode.length);
             var decoy = this.codeCaveManager.decoyCode[decoyIndex];
             var fillData = [];
 
@@ -2382,8 +2269,8 @@ const MemoryIntegrityBypass = {
     },
 
     setupHardwareBreakpoints: function () {
-    // Set up debug registers for hardware breakpoint monitoring
-    // This would typically require kernel-level access
+        // Set up debug registers for hardware breakpoint monitoring
+        // This would typically require kernel-level access
         send({
             type: 'info',
             target: 'memory_integrity_bypass',
@@ -2464,7 +2351,7 @@ const MemoryIntegrityBypass = {
     },
 
     loadInstructionEquivalents: function () {
-    // Load equivalent instruction sequences for polymorphism
+        // Load equivalent instruction sequences for polymorphism
         this.polymorphicEngine.mutationEngine.equivalents.set('mov eax, ebx', [
             [0x89, 0xd8], // mov eax, ebx
             [0x50, 0x53, 0x58, 0x5b, 0x89, 0xd8], // push eax; push ebx; pop eax; pop ebx; mov eax, ebx
@@ -2500,17 +2387,14 @@ const MemoryIntegrityBypass = {
 
                 for (var i = 0; i < bytes.length; i++) {
                     // Add random junk opcodes
-                    if (
-                        Math.random() < 0.3 &&
-            this.polymorphicEngine.currentLevel !== 'low'
-                    ) {
+                    if (Math.random() < 0.3 && this.polymorphicEngine.currentLevel !== 'low') {
                         var junk =
-              this.polymorphicEngine.mutationEngine.junkOpcodes[
-                  Math.floor(
-                      Math.random() *
-                    this.polymorphicEngine.mutationEngine.junkOpcodes.length,
-                  )
-              ];
+                            this.polymorphicEngine.mutationEngine.junkOpcodes[
+                                Math.floor(
+                                    Math.random() *
+                                        this.polymorphicEngine.mutationEngine.junkOpcodes.length
+                                )
+                            ];
                         mutated = mutated.concat(junk);
                     }
                     mutated.push(bytes[i]);
@@ -2531,7 +2415,7 @@ const MemoryIntegrityBypass = {
                 // Older than 2 minutes
                 var newMutation = this.createPolymorphicPatch(
                     patch.original,
-                    patch.original.readByteArray(16).length,
+                    patch.original.readByteArray(16).length
                 );
                 if (newMutation) {
                     patch.mutated = newMutation;
@@ -2553,7 +2437,7 @@ const MemoryIntegrityBypass = {
             var regionAddr = ptr(key);
             if (
                 address.compare(regionAddr) >= 0 &&
-        address.compare(regionAddr.add(region.size)) < 0
+                address.compare(regionAddr.add(region.size)) < 0
             ) {
                 return key;
             }
@@ -2595,10 +2479,7 @@ const MemoryIntegrityBypass = {
         };
 
         // Hook heap allocation functions
-        var rtlAllocateHeap = Module.findExportByName(
-            'ntdll.dll',
-            'RtlAllocateHeap',
-        );
+        var rtlAllocateHeap = Module.findExportByName('ntdll.dll', 'RtlAllocateHeap');
         if (rtlAllocateHeap) {
             Interceptor.attach(rtlAllocateHeap, {
                 onEnter: function (args) {
@@ -2620,10 +2501,10 @@ const MemoryIntegrityBypass = {
                         parent.heapProtection.allocations.set(retval.toString(), {
                             size: this.size,
                             timestamp: Date.now(),
-                            callStack: Thread.backtrace(
-                                this.context,
-                                Backtracer.ACCURATE,
-                            ).slice(0, 5),
+                            callStack: Thread.backtrace(this.context, Backtracer.ACCURATE).slice(
+                                0,
+                                5
+                            ),
                         });
 
                         send({
@@ -2712,7 +2593,7 @@ const MemoryIntegrityBypass = {
                     var parent = this.parent.parent;
                     parent.stackRandomization.randomOffsets.set(
                         Thread.getCurrentThreadId(),
-                        padding,
+                        padding
                     );
 
                     send({
@@ -2747,24 +2628,16 @@ const MemoryIntegrityBypass = {
         // Create replicas of critical memory regions
         var criticalModules = Process.enumerateModules().filter(
             (m) =>
-                m.name.includes('.exe') ||
-        m.name.includes('kernel32') ||
-        m.name.includes('ntdll'),
+                m.name.includes('.exe') || m.name.includes('kernel32') || m.name.includes('ntdll')
         );
 
         criticalModules.forEach((module) => {
             try {
-                var textSection = module
-                    .enumerateSections()
-                    .find((s) => s.name === '.text');
+                var textSection = module.enumerateSections().find((s) => s.name === '.text');
                 if (textSection) {
                     var replicaSize = Math.min(textSection.size, 0x10000);
                     var replica = Memory.alloc(replicaSize);
-                    Memory.copy(
-                        replica,
-                        module.base.add(textSection.offset),
-                        replicaSize,
-                    );
+                    Memory.copy(replica, module.base.add(textSection.offset), replicaSize);
 
                     this.memoryReplication.replicas.set(module.base.toString(), {
                         original: module.base.add(textSection.offset),
@@ -2772,7 +2645,7 @@ const MemoryIntegrityBypass = {
                         size: replicaSize,
                         checksum: this.computeMemoryChecksum(
                             module.base.add(textSection.offset),
-                            replicaSize,
+                            replicaSize
                         ),
                     });
 
@@ -2825,7 +2698,7 @@ const MemoryIntegrityBypass = {
         // Hook vectored exception handler for guard page violations
         var addVectoredHandler = Module.findExportByName(
             'kernel32.dll',
-            'AddVectoredExceptionHandler',
+            'AddVectoredExceptionHandler'
         );
         if (addVectoredHandler) {
             var guardPageHandler = new NativeCallback(
@@ -2859,13 +2732,11 @@ const MemoryIntegrityBypass = {
                             // Re-enable guard page after a delay
                             setTimeout(() => {
                                 Memory.protect(faultAddress.and(~0xfff), 0x1000, 'rwx');
-                                var oldProtect = Memory.queryProtection(
-                                    faultAddress.and(~0xfff),
-                                );
+                                var oldProtect = Memory.queryProtection(faultAddress.and(~0xfff));
                                 Memory.protect(
                                     faultAddress.and(~0xfff),
                                     0x1000,
-                                    oldProtect.protection + '---g',
+                                    oldProtect.protection + '---g'
                                 ); // Add guard flag
                             }, 100);
 
@@ -2883,7 +2754,7 @@ const MemoryIntegrityBypass = {
                     return 0; // EXCEPTION_CONTINUE_SEARCH
                 },
                 'long',
-                ['pointer'],
+                ['pointer']
             );
 
             // Register the handler
@@ -2924,10 +2795,7 @@ const MemoryIntegrityBypass = {
         this.obfuscateForensicArtifacts();
 
         // Hook memory dump functions
-        var miniDumpWriteDump = Module.findExportByName(
-            'dbghelp.dll',
-            'MiniDumpWriteDump',
-        );
+        var miniDumpWriteDump = Module.findExportByName('dbghelp.dll', 'MiniDumpWriteDump');
         if (miniDumpWriteDump) {
             Interceptor.attach(miniDumpWriteDump, {
                 onEnter: function (args) {
@@ -2970,7 +2838,7 @@ const MemoryIntegrityBypass = {
     },
 
     createIsolatedHeap: function () {
-    // Create a custom heap for sensitive allocations
+        // Create a custom heap for sensitive allocations
         var heapCreate = Module.findExportByName('kernel32.dll', 'HeapCreate');
         if (heapCreate) {
             var isolatedHeap = heapCreate(0x00040000, 0x100000, 0); // HEAP_CREATE_ENABLE_EXECUTE
@@ -2987,7 +2855,7 @@ const MemoryIntegrityBypass = {
     },
 
     initializeHeapSprayDetection: function () {
-    // Monitor for heap spray patterns
+        // Monitor for heap spray patterns
         setInterval(() => {
             var suspiciousPatterns = 0;
             this.heapProtection.allocations.forEach((alloc, address) => {
@@ -3003,9 +2871,9 @@ const MemoryIntegrityBypass = {
                             for (var i = 4; i < bytes.length - 3; i += 4) {
                                 if (
                                     bytes[i] === pattern[0] &&
-                  bytes[i + 1] === pattern[1] &&
-                  bytes[i + 2] === pattern[2] &&
-                  bytes[i + 3] === pattern[3]
+                                    bytes[i + 1] === pattern[1] &&
+                                    bytes[i + 2] === pattern[2] &&
+                                    bytes[i + 3] === pattern[3]
                                 ) {
                                     repeats++;
                                 }
@@ -3032,7 +2900,7 @@ const MemoryIntegrityBypass = {
     },
 
     hookFunctionPrologues: function () {
-    // Hook common function prologues to add stack randomization
+        // Hook common function prologues to add stack randomization
         var modules = Process.enumerateModules();
         modules.forEach((module) => {
             if (module.name.includes('.exe')) {
@@ -3064,7 +2932,7 @@ const MemoryIntegrityBypass = {
     },
 
     setupShadowStack: function () {
-    // Create shadow stack for return address protection
+        // Create shadow stack for return address protection
         var shadowStackSize = 0x10000;
         var shadowStack = Memory.alloc(shadowStackSize);
         this.stackRandomization.shadowStacks.set(Thread.getCurrentThreadId(), {
@@ -3084,14 +2952,14 @@ const MemoryIntegrityBypass = {
     },
 
     monitorStackPivoting: function () {
-    // Monitor for stack pivoting attempts
+        // Monitor for stack pivoting attempts
         setInterval(() => {
             var currentStack = Thread.getCurrentStackPointer();
             var expectedRange = Process.getCurrentThreadStackRange();
 
             if (
                 currentStack.compare(expectedRange.base) < 0 ||
-        currentStack.compare(expectedRange.base.add(expectedRange.size)) >= 0
+                currentStack.compare(expectedRange.base.add(expectedRange.size)) >= 0
             ) {
                 send({
                     type: 'warning',
@@ -3108,13 +2976,11 @@ const MemoryIntegrityBypass = {
         var now = Date.now();
         this.memoryReplication.syncSchedule.forEach((schedule) => {
             if (now >= schedule.nextSync) {
-                var replica = this.memoryReplication.replicas.get(
-                    schedule.address.toString(),
-                );
+                var replica = this.memoryReplication.replicas.get(schedule.address.toString());
                 if (replica) {
                     var currentChecksum = this.computeMemoryChecksum(
                         replica.original,
-                        replica.size,
+                        replica.size
                     );
                     if (currentChecksum !== replica.checksum) {
                         this.memoryReplication.divergenceCount++;
@@ -3150,7 +3016,7 @@ const MemoryIntegrityBypass = {
     },
 
     hookMemoryModifications: function () {
-    // Hook memory modification functions to update replicas
+        // Hook memory modification functions to update replicas
         var memcpy = Module.findExportByName('msvcrt.dll', 'memcpy');
         if (memcpy) {
             Interceptor.attach(memcpy, {
@@ -3165,14 +3031,14 @@ const MemoryIntegrityBypass = {
                     parent.memoryReplication.replicas.forEach((replica, key) => {
                         if (
                             this.dest.compare(replica.original) >= 0 &&
-              this.dest.compare(replica.original.add(replica.size)) < 0
+                            this.dest.compare(replica.original.add(replica.size)) < 0
                         ) {
                             // Update replica
                             var offset = this.dest.sub(replica.original).toInt32();
                             Memory.copy(
                                 replica.replica.add(offset),
                                 this.dest,
-                                Math.min(this.size, replica.size - offset),
+                                Math.min(this.size, replica.size - offset)
                             );
                         }
                     });
@@ -3182,7 +3048,7 @@ const MemoryIntegrityBypass = {
     },
 
     createGuardPages: function () {
-    // Create guard pages around critical regions
+        // Create guard pages around critical regions
         var criticalRegions = [
             { name: 'Stack', range: Process.getCurrentThreadStackRange() },
             { name: 'Heap', range: Process.getHeapRange() },
@@ -3214,14 +3080,11 @@ const MemoryIntegrityBypass = {
     },
 
     isLegitimateAccess: function (address) {
-    // Check if access is from legitimate code
+        // Check if access is from legitimate code
         var backtrace = Thread.backtrace(this.context, Backtracer.ACCURATE);
         for (var i = 0; i < Math.min(backtrace.length, 5); i++) {
             var module = Process.findModuleByAddress(backtrace[i]);
-            if (
-                module &&
-        (module.name.includes('kernel32') || module.name.includes('ntdll'))
-            ) {
+            if (module && (module.name.includes('kernel32') || module.name.includes('ntdll'))) {
                 return true;
             }
         }
@@ -3229,7 +3092,7 @@ const MemoryIntegrityBypass = {
     },
 
     setupCanaryPages: function () {
-    // Set up canary pages for heap spray detection
+        // Set up canary pages for heap spray detection
         for (var i = 0; i < 10; i++) {
             var canaryPage = Memory.alloc(0x1000);
             // Fill with canary pattern
@@ -3267,19 +3130,13 @@ const MemoryIntegrityBypass = {
     },
 
     obfuscateForensicArtifacts: function () {
-    // Obfuscate common forensic artifacts
+        // Obfuscate common forensic artifacts
         var patterns = [
             { pattern: 'MZ', replacement: [0x4d ^ 0xff, 0x5a ^ 0xff] },
             { pattern: 'PE', replacement: [0x50 ^ 0xff, 0x45 ^ 0xff] },
             {
                 pattern: '.text',
-                replacement: [
-                    0x2e ^ 0xff,
-                    0x74 ^ 0xff,
-                    0x65 ^ 0xff,
-                    0x78 ^ 0xff,
-                    0x74 ^ 0xff,
-                ],
+                replacement: [0x2e ^ 0xff, 0x74 ^ 0xff, 0x65 ^ 0xff, 0x78 ^ 0xff, 0x74 ^ 0xff],
             },
         ];
 
@@ -3292,9 +3149,7 @@ const MemoryIntegrityBypass = {
         this.memoryReplication.replicas.forEach((replica, key) => {
             try {
                 // XOR scramble the memory
-                var data = replica.original.readByteArray(
-                    Math.min(replica.size, 0x1000),
-                );
+                var data = replica.original.readByteArray(Math.min(replica.size, 0x1000));
                 if (data) {
                     var bytes = new Uint8Array(data);
                     for (var i = 0; i < bytes.length; i++) {
@@ -3314,9 +3169,7 @@ const MemoryIntegrityBypass = {
         this.memoryReplication.replicas.forEach((replica, key) => {
             try {
                 // XOR unscramble the memory
-                var data = replica.original.readByteArray(
-                    Math.min(replica.size, 0x1000),
-                );
+                var data = replica.original.readByteArray(Math.min(replica.size, 0x1000));
                 if (data) {
                     var bytes = new Uint8Array(data);
                     for (var i = 0; i < bytes.length; i++) {
@@ -3333,7 +3186,7 @@ const MemoryIntegrityBypass = {
     },
 
     clearMemoryArtifacts: function () {
-    // Clear various memory artifacts
+        // Clear various memory artifacts
         var artifacts = ['password', 'license', 'serial', 'key', 'token'];
 
         artifacts.forEach((artifact) => {
@@ -3356,11 +3209,8 @@ const MemoryIntegrityBypass = {
     },
 
     hookHibernationFileCreation: function () {
-    // Hook hibernation file creation to prevent memory disclosure
-        var ntSetSystemPowerState = Module.findExportByName(
-            'ntdll.dll',
-            'NtSetSystemPowerState',
-        );
+        // Hook hibernation file creation to prevent memory disclosure
+        var ntSetSystemPowerState = Module.findExportByName('ntdll.dll', 'NtSetSystemPowerState');
         if (ntSetSystemPowerState) {
             Interceptor.attach(ntSetSystemPowerState, {
                 onEnter: function (args) {
@@ -3377,13 +3227,13 @@ const MemoryIntegrityBypass = {
     },
 
     isLegitimateModification: function (address) {
-    // Check if memory modification is from legitimate source
+        // Check if memory modification is from legitimate source
         var module = Process.findModuleByAddress(address);
         if (module) {
             return (
                 module.name.includes('.exe') ||
-        module.name.includes('kernel32') ||
-        module.name.includes('ntdll')
+                module.name.includes('kernel32') ||
+                module.name.includes('ntdll')
             );
         }
         return false;
@@ -3398,13 +3248,11 @@ const MemoryIntegrityBypass = {
     },
 
     getCurrentThreadStackRange: function () {
-    // Get current thread's stack range
+        // Get current thread's stack range
         var teb = Process.getCurrentThreadTeb();
         if (teb) {
             var stackBase = teb.add(Process.arch === 'x64' ? 0x8 : 0x4).readPointer();
-            var stackLimit = teb
-                .add(Process.arch === 'x64' ? 0x10 : 0x8)
-                .readPointer();
+            var stackLimit = teb.add(Process.arch === 'x64' ? 0x10 : 0x8).readPointer();
             return {
                 base: stackLimit,
                 size: stackBase.sub(stackLimit).toInt32(),
@@ -3414,12 +3262,10 @@ const MemoryIntegrityBypass = {
     },
 
     getHeapRange: function () {
-    // Get process heap range
+        // Get process heap range
         var peb = Process.getCurrentProcessPeb();
         if (peb) {
-            var processHeap = peb
-                .add(Process.arch === 'x64' ? 0x30 : 0x18)
-                .readPointer();
+            var processHeap = peb.add(Process.arch === 'x64' ? 0x30 : 0x18).readPointer();
             // This is simplified - actual heap range would require walking heap segments
             return {
                 base: processHeap,

@@ -47,14 +47,5 @@
     "opcode_freq_0e",
     "opcode_freq_0f"
   ],
-  "classes": [
-    "ASProtect",
-    "Armadillo",
-    "Enigma",
-    "None",
-    "Obsidium",
-    "Themida",
-    "UPX",
-    "VMProtect"
-  ]
+  "classes": ["ASProtect", "Armadillo", "Enigma", "None", "Obsidium", "Themida", "UPX", "VMProtect"]
 }

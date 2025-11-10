@@ -22,9 +22,9 @@ def test_hasp_parser_basic():
     print("=== Testing HASP Sentinel Parser ===")
     parser = HASPSentinelParser()
 
-    print(f"✓ Parser initialized with {len(parser.features)} default features")
-    print(f"✓ Hardware fingerprint generated: ID {parser.hardware_fingerprint['hasp_id']}")
-    print(f"✓ Supported vendor codes: {len(parser.VENDOR_CODES)}")
+    print(f"OK Parser initialized with {len(parser.features)} default features")
+    print(f"OK Hardware fingerprint generated: ID {parser.hardware_fingerprint['hasp_id']}")
+    print(f"OK Supported vendor codes: {len(parser.VENDOR_CODES)}")
 
     for vendor_code, vendor_name in list(parser.VENDOR_CODES.items())[:3]:
         print(f"  - {vendor_name}: 0x{vendor_code:08X}")
@@ -61,19 +61,19 @@ def test_hasp_request_response():
     request = parser.parse_request(bytes(request_data))
 
     if request:
-        print(f"✓ Parsed LOGIN request for feature {request.feature_id}")
+        print(f"OK Parsed LOGIN request for feature {request.feature_id}")
         print(f"  - Vendor code: 0x{request.vendor_code:08X}")
         print(f"  - Command: {HASPCommandType(request.command).name}")
 
         response = parser.generate_response(request)
-        print(f"✓ Generated response with status: {HASPStatusCode(response.status).name}")
+        print(f"OK Generated response with status: {HASPStatusCode(response.status).name}")
         print(f"  - Session ID: {response.session_id}")
         print(f"  - Feature ID: {response.feature_id}")
 
         response_bytes = parser.serialize_response(response)
-        print(f"✓ Serialized response: {len(response_bytes)} bytes")
+        print(f"OK Serialized response: {len(response_bytes)} bytes")
     else:
-        print("✗ Failed to parse request")
+        print("FAIL Failed to parse request")
 
 
 def test_hasp_crypto():
@@ -85,19 +85,19 @@ def test_hasp_crypto():
 
     aes_encrypted = parser.crypto.aes_encrypt(test_data, 0)
     aes_decrypted = parser.crypto.aes_decrypt(aes_encrypted, 0)
-    print(f"✓ AES-256 encryption/decryption: {aes_decrypted == test_data}")
+    print(f"OK AES-256 encryption/decryption: {aes_decrypted == test_data}")
 
     hasp4_encrypted = parser.crypto.hasp4_encrypt(test_data, 0x12345678)
     hasp4_decrypted = parser.crypto.hasp4_decrypt(hasp4_encrypted, 0x12345678)
-    print(f"✓ HASP4 legacy encryption/decryption: {hasp4_decrypted == test_data}")
+    print(f"OK HASP4 legacy encryption/decryption: {hasp4_decrypted == test_data}")
 
     envelope_encrypted = parser.crypto.envelope_encrypt(test_data, 0)
     envelope_decrypted = parser.crypto.envelope_decrypt(envelope_encrypted, 0)
-    print(f"✓ Envelope (RSA+AES) encryption/decryption: {envelope_decrypted == test_data}")
+    print(f"OK Envelope (RSA+AES) encryption/decryption: {envelope_decrypted == test_data}")
 
     signature = parser.crypto.rsa_sign(test_data, 0)
     verified = parser.crypto.rsa_verify(test_data, signature, 0)
-    print(f"✓ RSA signature verification: {verified}")
+    print(f"OK RSA signature verification: {verified}")
 
 
 def test_hasp_feature_management():
@@ -119,13 +119,13 @@ def test_hasp_feature_management():
     )
 
     parser.add_feature(custom_feature)
-    print(f"✓ Added custom feature: {custom_feature.name}")
+    print(f"OK Added custom feature: {custom_feature.name}")
     print(f"  - Feature ID: {custom_feature.feature_id}")
     print(f"  - Memory size: {custom_feature.memory_size} bytes")
 
     if custom_feature.feature_id in parser.memory_storage:
         memory = parser.memory_storage[custom_feature.feature_id]
-        print(f"✓ Feature memory initialized: {len(memory)} bytes")
+        print(f"OK Feature memory initialized: {len(memory)} bytes")
 
 
 def test_hasp_memory_operations():
@@ -153,13 +153,13 @@ def test_hasp_memory_operations():
 
     login_request = parser.parse_request(bytes(request_data))
     if not login_request:
-        print("✗ Failed to parse login request for memory test")
+        print("FAIL Failed to parse login request for memory test")
         return
 
     login_response = parser.generate_response(login_request)
     session_id = login_response.session_id
 
-    print(f"✓ Created session: {session_id}")
+    print(f"OK Created session: {session_id}")
 
     read_request = HASPRequest(
         command=HASPCommandType.READ,
@@ -175,7 +175,7 @@ def test_hasp_memory_operations():
 
     read_response = parser.generate_response(read_request)
     if read_response.status == HASPStatusCode.STATUS_OK:
-        print(f"✓ Read {len(read_response.encryption_response)} bytes from memory")
+        print(f"OK Read {len(read_response.encryption_response)} bytes from memory")
         print(f"  - Data: {read_response.encryption_response[:16].hex()}")
 
 
@@ -184,20 +184,20 @@ def test_hasp_usb_emulator():
     print("\n=== Testing USB Emulator ===")
     usb_emulator = HASPUSBEmulator()
 
-    print(f"✓ USB device initialized")
+    print(f"OK USB device initialized")
     print(f"  - Vendor ID: 0x{usb_emulator.device_info['vendor_id']:04X}")
     print(f"  - Product ID: 0x{usb_emulator.device_info['product_id']:04X}")
     print(f"  - Serial: {usb_emulator.device_info['serial_number']}")
 
     test_data = b"USB test data"
     encrypted = usb_emulator._handle_usb_encrypt(test_data)
-    print(f"✓ USB encryption: {len(encrypted)} bytes")
+    print(f"OK USB encryption: {len(encrypted)} bytes")
 
     decrypted = usb_emulator._handle_usb_decrypt(encrypted)
-    print(f"✓ USB decryption: {decrypted[:13] == test_data}")
+    print(f"OK USB decryption: {decrypted[:13] == test_data}")
 
     device_descriptor = usb_emulator.emulate_usb_device()
-    print(f"✓ Device descriptor generated with {len(device_descriptor)} sections")
+    print(f"OK Device descriptor generated with {len(device_descriptor)} sections")
 
 
 def test_hasp_packet_analyzer():
@@ -210,14 +210,14 @@ def test_hasp_packet_analyzer():
     if pcap_path.exists():
         try:
             packets = analyzer.parse_pcap_file(pcap_path)
-            print(f"✓ Parsed {len(packets)} packets from PCAP")
+            print(f"OK Parsed {len(packets)} packets from PCAP")
 
             if packets:
                 for packet in packets[:3]:
                     print(f"  - {packet.packet_type}: {packet.source_ip}:{packet.source_port} -> {packet.dest_ip}:{packet.dest_port}")
 
                 license_info = analyzer.extract_license_info_from_capture()
-                print(f"✓ Extracted license information:")
+                print(f"OK Extracted license information:")
                 print(f"  - Servers: {len(license_info['discovered_servers'])}")
                 print(f"  - Features: {len(license_info['discovered_features'])}")
         except ImportError:
@@ -231,13 +231,13 @@ def test_hasp_server_emulator():
     print("\n=== Testing Server Emulator ===")
     server = HASPServerEmulator("127.0.0.1", 1947)
 
-    print(f"✓ Server initialized")
+    print(f"OK Server initialized")
     print(f"  - Bind address: {server.bind_address}:{server.port}")
     print(f"  - Server ID: {server.server_id}")
     print(f"  - Features available: {len(server.parser.features)}")
 
     discovery_response = server.generate_discovery_response()
-    print(f"✓ Discovery response: {len(discovery_response)} bytes")
+    print(f"OK Discovery response: {len(discovery_response)} bytes")
     print(f"  - Content: {discovery_response[:50]}")
 
 
@@ -258,11 +258,11 @@ def main():
         test_hasp_server_emulator()
 
         print("\n" + "=" * 60)
-        print("✓ ALL TESTS PASSED - HASP Parser is production-ready!")
+        print("OK ALL TESTS PASSED - HASP Parser is production-ready!")
         print("=" * 60)
 
     except Exception as e:
-        print(f"\n✗ Test failed with error: {e}")
+        print(f"\nFAIL Test failed with error: {e}")
         import traceback
         traceback.print_exc()
 

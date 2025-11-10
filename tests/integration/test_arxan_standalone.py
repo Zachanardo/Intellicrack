@@ -49,7 +49,7 @@ def test_arxan_detector():
     from intellicrack.core.protection_detection.arxan_detector import ArxanDetector
 
     detector = ArxanDetector()
-    print("✓ ArxanDetector initialized")
+    print("OK ArxanDetector initialized")
 
     with tempfile.TemporaryDirectory() as temp_dir:
         test_dir = Path(temp_dir)
@@ -58,7 +58,7 @@ def test_arxan_detector():
         result = detector.detect(clean_binary)
 
         assert result.is_protected == False, "Clean binary should not be detected as protected"
-        print("✓ Clean binary detection works")
+        print("OK Clean binary detection works")
 
         arxan_sigs = [b"Arxan Technologies", b"TransformIT", b"GuardIT"]
         protected_binary = create_test_pe_binary(test_dir / "protected", arxan_sigs)
@@ -70,10 +70,10 @@ def test_arxan_detector():
         assert result.is_protected == True, "Arxan-protected binary should be detected"
         assert result.confidence > 0.5, f"Confidence should be > 0.5, got {result.confidence}"
         assert len(result.signatures_found) > 0, "Should find signatures"
-        print(f"✓ Arxan protection detected (confidence: {result.confidence:.2%})")
-        print(f"✓ Found {len(result.signatures_found)} signatures")
+        print(f"OK Arxan protection detected (confidence: {result.confidence:.2%})")
+        print(f"OK Found {len(result.signatures_found)} signatures")
 
-    print("✓ All ArxanDetector tests passed\n")
+    print("OK All ArxanDetector tests passed\n")
 
 
 def test_arxan_analyzer():
@@ -83,7 +83,7 @@ def test_arxan_analyzer():
     from intellicrack.core.analysis.arxan_analyzer import ArxanAnalyzer
 
     analyzer = ArxanAnalyzer()
-    print("✓ ArxanAnalyzer initialized")
+    print("OK ArxanAnalyzer initialized")
 
     with tempfile.TemporaryDirectory() as temp_dir:
         test_dir = Path(temp_dir)
@@ -116,10 +116,10 @@ def test_arxan_analyzer():
 
         assert result is not None, "Analysis should return results"
         assert result.metadata.get("analysis_complete") == True, "Analysis should complete"
-        print("✓ Analysis completed successfully")
-        print(f"✓ Control flow obfuscation density: {result.control_flow.obfuscation_density:.2%}")
+        print("OK Analysis completed successfully")
+        print(f"OK Control flow obfuscation density: {result.control_flow.obfuscation_density:.2%}")
 
-    print("✓ All ArxanAnalyzer tests passed\n")
+    print("OK All ArxanAnalyzer tests passed\n")
 
 
 def test_arxan_bypass():
@@ -129,7 +129,7 @@ def test_arxan_bypass():
     from intellicrack.core.protection_bypass.arxan_bypass import ArxanBypass
 
     bypass = ArxanBypass()
-    print("✓ ArxanBypass initialized")
+    print("OK ArxanBypass initialized")
 
     with tempfile.TemporaryDirectory() as temp_dir:
         test_dir = Path(temp_dir)
@@ -142,11 +142,11 @@ def test_arxan_bypass():
         assert result.success == True, "Bypass should succeed"
         assert result.patched_binary_path is not None, "Should create patched binary"
         assert Path(result.patched_binary_path).exists(), "Patched binary should exist"
-        print("✓ Bypass completed successfully")
-        print(f"✓ Patches applied: {len(result.patches_applied)}")
-        print(f"✓ Patched binary: {result.patched_binary_path}")
+        print("OK Bypass completed successfully")
+        print(f"OK Patches applied: {len(result.patches_applied)}")
+        print(f"OK Patched binary: {result.patched_binary_path}")
 
-    print("✓ All ArxanBypass tests passed\n")
+    print("OK All ArxanBypass tests passed\n")
 
 
 def test_integration():
@@ -189,22 +189,22 @@ def test_integration():
         detection_result = detector.detect(test_file)
 
         assert detection_result.is_protected == True, "Should detect Arxan protection"
-        print(f"✓ Detection: {detection_result.confidence:.2%} confidence")
+        print(f"OK Detection: {detection_result.confidence:.2%} confidence")
 
         analyzer = ArxanAnalyzer()
         analysis_result = analyzer.analyze(test_file)
 
         assert analysis_result.metadata.get("analysis_complete") == True
-        print("✓ Analysis completed")
+        print("OK Analysis completed")
 
         bypass = ArxanBypass()
         bypass_result = bypass.bypass(test_file)
 
         assert bypass_result.success == True, "Bypass should succeed"
-        print("✓ Bypass completed")
-        print(f"✓ Patched binary created at: {bypass_result.patched_binary_path}")
+        print("OK Bypass completed")
+        print(f"OK Patched binary created at: {bypass_result.patched_binary_path}")
 
-    print("✓ All integration tests passed\n")
+    print("OK All integration tests passed\n")
 
 
 def main():
@@ -220,7 +220,7 @@ def main():
         test_integration()
 
         print("=" * 60)
-        print("✓✓✓ ALL TESTS PASSED ✓✓✓")
+        print("OKOKOK ALL TESTS PASSED OKOKOK")
         print("=" * 60)
         print("\nArxan support implementation successful!")
         print("- Detection: signature-based and heuristic analysis")
@@ -231,7 +231,7 @@ def main():
         return 0
 
     except Exception as e:
-        print(f"\n✗ TEST FAILED: {e}")
+        print(f"\nFAIL TEST FAILED: {e}")
         import traceback
 
         traceback.print_exc()

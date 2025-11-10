@@ -1,10 +1,10 @@
-name: "CodeQL Advanced Security Scanning"
+name: 'CodeQL Advanced Security Scanning'
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   schedule:
     - cron: '30 1 * * 0'
 
@@ -31,57 +31,57 @@ jobs:
             build-mode: none
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
-      with:
-        languages: ${{ matrix.language }}
-        build-mode: ${{ matrix.build-mode }}
-        config-file: .github/codeql/codeql-config.yml
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          config-file: .github/codeql/codeql-config.yml
 
-    - name: Set up Pixi
-      if: matrix.language == 'rust'
-      uses: prefix-dev/setup-pixi@v0.9.2
-      with:
-        pixi-version: latest
+      - name: Set up Pixi
+        if: matrix.language == 'rust'
+        uses: prefix-dev/setup-pixi@v0.9.2
+        with:
+          pixi-version: latest
 
-    - name: Set up Rust toolchain
-      if: matrix.language == 'rust'
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        toolchain: stable
-        components: rustfmt, clippy
+      - name: Set up Rust toolchain
+        if: matrix.language == 'rust'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
 
-    - name: Cache Rust dependencies
-      if: matrix.language == 'rust'
-      uses: Swatinem/rust-cache@v2
-      with:
-        workspaces: intellicrack-launcher
+      - name: Cache Rust dependencies
+        if: matrix.language == 'rust'
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: intellicrack-launcher
 
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
-      with:
-        category: "/language:${{ matrix.language }}"
-        output: sarif-results
-        upload: true
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:${{ matrix.language }}'
+          output: sarif-results
+          upload: true
 
-    - name: Upload CodeQL results as artifact
-      uses: actions/upload-artifact@v5
-      with:
-        name: codeql-results-${{ matrix.language }}
-        path: sarif-results
-        retention-days: 5
+      - name: Upload CodeQL results as artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: codeql-results-${{ matrix.language }}
+          path: sarif-results
+          retention-days: 5
 
-    - name: Filter and validate SARIF
-      if: always()
-      run: |
-        echo "CodeQL analysis completed for ${{ matrix.language }}"
-        if [ -d "sarif-results" ]; then
-          echo "SARIF results generated successfully"
-          ls -lah sarif-results/
-        fi
-      shell: bash
+      - name: Filter and validate SARIF
+        if: always()
+        run: |
+          echo "CodeQL analysis completed for ${{ matrix.language }}"
+          if [ -d "sarif-results" ]; then
+            echo "SARIF results generated successfully"
+            ls -lah sarif-results/
+          fi
+        shell: bash

@@ -20,16 +20,16 @@ def test_client_initialization():
         # Pattern 1: getattr(module, 'Client')(api_key=api_key)
         try:
             ClientClass = getattr(openai, 'Client')
-            print(f"  ❌ Has 'Client' attribute but it's: {ClientClass}")
+            print(f"  FAIL Has 'Client' attribute but it's: {ClientClass}")
         except AttributeError:
-            print("  ✅ No 'Client' attribute (correct)")
+            print("  OK No 'Client' attribute (correct)")
 
         # Check actual pattern for OpenAI
         if hasattr(openai, 'OpenAI'):
-            print(f"  ✅ Has 'OpenAI' class (actual client class)")
+            print(f"  OK Has 'OpenAI' class (actual client class)")
             if os.environ.get("OPENAI_API_KEY"):
                 client = openai.OpenAI(api_key=os.environ["OPENAI_API_KEY"])
-                print(f"  ✅ Successfully created client: {type(client)}")
+                print(f"  OK Successfully created client: {type(client)}")
 
     except ImportError:
         print("OpenAI not installed")
@@ -44,16 +44,16 @@ def test_client_initialization():
         # Pattern 1: getattr(module, 'Client')(api_key=api_key)
         try:
             ClientClass = getattr(anthropic, 'Client')
-            print(f"  ❌ Has 'Client' attribute but it's: {ClientClass}")
+            print(f"  FAIL Has 'Client' attribute but it's: {ClientClass}")
         except AttributeError:
-            print("  ✅ No 'Client' attribute (correct)")
+            print("  OK No 'Client' attribute (correct)")
 
         # Check actual pattern for Anthropic
         if hasattr(anthropic, 'Anthropic'):
-            print(f"  ✅ Has 'Anthropic' class (actual client class)")
+            print(f"  OK Has 'Anthropic' class (actual client class)")
             if os.environ.get("ANTHROPIC_API_KEY"):
                 client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
-                print(f"  ✅ Successfully created client: {type(client)}")
+                print(f"  OK Successfully created client: {type(client)}")
 
     except ImportError:
         print("Anthropic not installed")

@@ -28,19 +28,13 @@
             "crypto_analysis",
             "protection_analysis"
           ],
-          "limitations": [
-            "Minor crypto differences from v11.16.2"
-          ],
+          "limitations": ["Minor crypto differences from v11.16.2"],
           "success_rate": 0.92,
           "notes": "Stable support with minor limitations"
         },
         "v11.15.0": {
           "status": "partially_supported",
-          "features": [
-            "license_detection",
-            "key_extraction",
-            "protection_analysis"
-          ],
+          "features": ["license_detection", "key_extraction", "protection_analysis"],
           "limitations": [
             "Limited bypass generation",
             "Older crypto methods",
@@ -83,19 +77,13 @@
             "creative_suite_analysis",
             "protection_analysis"
           ],
-          "limitations": [
-            "AMT analysis limited"
-          ],
+          "limitations": ["AMT analysis limited"],
           "success_rate": 0.85,
           "notes": "Previous generation with good support"
         },
         "v5": {
           "status": "partially_supported",
-          "features": [
-            "license_detection",
-            "basic_bypass",
-            "protection_analysis"
-          ],
+          "features": ["license_detection", "basic_bypass", "protection_analysis"],
           "limitations": [
             "No modern AMT support",
             "Limited activation bypass",
@@ -138,19 +126,13 @@
             "protection_bypass",
             "crypto_analysis"
           ],
-          "limitations": [
-            "Some newer anti-debug features missing"
-          ],
+          "limitations": ["Some newer anti-debug features missing"],
           "success_rate": 0.88,
           "notes": "Previous version with strong support"
         },
         "previous_2": {
           "status": "partially_supported",
-          "features": [
-            "dongle_detection",
-            "basic_emulation",
-            "key_analysis"
-          ],
+          "features": ["dongle_detection", "basic_emulation", "key_analysis"],
           "limitations": [
             "Limited hardware emulation",
             "Older crypto only",
@@ -182,11 +164,6 @@
       "adobe.*licensing.*v?[89]",
       "sentinel.*hasp.*v?[6789]\\."
     ],
-    "beta_unstable": [
-      ".*beta.*",
-      ".*alpha.*",
-      ".*rc\\d+.*",
-      ".*dev.*"
-    ]
+    "beta_unstable": [".*beta.*", ".*alpha.*", ".*rc\\d+.*", ".*dev.*"]
   }
 }

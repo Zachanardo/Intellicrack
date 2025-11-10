@@ -19,7 +19,7 @@ print(f"TK_LIBRARY: {os.environ.get('TK_LIBRARY', 'NOT SET')}")
 
 try:
     import _tkinter
-    print("✅ SUCCESS: _tkinter imported successfully")
+    print("OK SUCCESS: _tkinter imported successfully")
 
     # Try creating a simple tkinter window
     try:
@@ -27,11 +27,11 @@ try:
         root = tk.Tk()
         root.withdraw()  # Hide the window
         root.destroy()
-        print("✅ SUCCESS: tkinter GUI created and destroyed")
+        print("OK SUCCESS: tkinter GUI created and destroyed")
     except Exception as e:
-        print(f"❌ FAIL: tkinter GUI creation failed: {e}")
+        print(f"FAIL FAIL: tkinter GUI creation failed: {e}")
 
 except ImportError as e:
-    print(f"❌ FAIL: _tkinter import failed: {e}")
+    print(f"FAIL FAIL: _tkinter import failed: {e}")
 except Exception as e:
-    print(f"❌ FAIL: Unexpected error: {e}")
+    print(f"FAIL FAIL: Unexpected error: {e}")

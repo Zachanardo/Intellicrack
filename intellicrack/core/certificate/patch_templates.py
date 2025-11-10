@@ -103,7 +103,6 @@ from intellicrack.core.certificate.patch_generators import (
     generate_always_succeed_x64,
     generate_always_succeed_x86,
 )
-
 from intellicrack.utils.logger import get_logger
 
 logger = get_logger(__name__)

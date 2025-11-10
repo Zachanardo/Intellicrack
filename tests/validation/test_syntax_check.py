@@ -11,14 +11,14 @@ try:
     # Import the test file
     import tests.unit.core.network.test_cloud_license_hooker as test_module
 
-    print("✅ Test file imports successfully")
+    print("OK Test file imports successfully")
 
     # Check test classes exist
     assert hasattr(test_module, 'TestCloudLicenseResponseGenerator')
     assert hasattr(test_module, 'TestCloudLicenseHooker')
     assert hasattr(test_module, 'TestProductionReadiness')
 
-    print("✅ All test classes found")
+    print("OK All test classes found")
 
     # Count test methods
     test_classes = [
@@ -31,22 +31,22 @@ try:
     for cls in test_classes:
         test_methods = [m for m in dir(cls) if m.startswith('test_')]
         total_tests += len(test_methods)
-        print(f"✅ {cls.__name__}: {len(test_methods)} test methods")
+        print(f"OK {cls.__name__}: {len(test_methods)} test methods")
 
-    print(f"\n✅ Total test methods: {total_tests}")
-    print("✅ Syntax validation PASSED")
+    print(f"\nOK Total test methods: {total_tests}")
+    print("OK Syntax validation PASSED")
 
     # Try to instantiate a test
     try:
         test_instance = test_module.TestCloudLicenseResponseGenerator()
-        print("✅ Test class instantiation PASSED")
+        print("OK Test class instantiation PASSED")
     except Exception as e:
-        print(f"⚠️  Test instantiation issue: {e}")
+        print(f"WARNING  Test instantiation issue: {e}")
 
     # Run the summary
     exec(open('cloud_hooker_test_summary.py').read())
 
 except Exception as e:
-    print(f"❌ Error: {e}")
+    print(f"FAIL Error: {e}")
     import traceback
     traceback.print_exc()

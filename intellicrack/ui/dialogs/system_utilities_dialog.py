@@ -799,9 +799,9 @@ class SystemUtilitiesDialog(QDialog):
             "Install Dependencies",
             "Dependency installation would be implemented here.\n\n"
             "This would automatically install missing packages using:\n"
-            "• pip for Python packages\n"
-            "• System package managers\n"
-            "• Direct downloads for tools",
+            " pip for Python packages\n"
+            " System package managers\n"
+            " Direct downloads for tools",
         )
 
     def get_process_list(self):

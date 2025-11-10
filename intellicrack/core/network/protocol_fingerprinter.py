@@ -18,6 +18,11 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+import sys
+
+print("[DEBUG protocol_fingerprinter] Module loading started")
+sys.stdout.flush()
+
 import json
 import logging
 import math
@@ -28,8 +33,13 @@ import traceback
 from collections import Counter
 from typing import Any
 
+print("[DEBUG protocol_fingerprinter] About to import calculate_entropy from protection_utils...")
+sys.stdout.flush()
 # Import shared entropy calculation
 from ...utils.protection_utils import calculate_entropy
+
+print("[DEBUG protocol_fingerprinter] calculate_entropy imported OK")
+sys.stdout.flush()
 
 
 class ProtocolFingerprinter:
@@ -1059,3 +1069,8 @@ class ProtocolFingerprinter:
 
 
 __all__ = ["ProtocolFingerprinter", "calculate_entropy"]
+
+import sys
+
+print("[DEBUG protocol_fingerprinter] Module load complete (end of file)")
+sys.stdout.flush()

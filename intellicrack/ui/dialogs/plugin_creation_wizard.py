@@ -741,7 +741,7 @@ class SummaryPage(QWizardPage):
 <p><b>Template:</b> {template["name"] if template else "None"}</p>
 
 <p><b>Features:</b><br>
-{"<br>".join("• " + f for f in features) if features else "None selected"}</p>
+{"<br>".join(" " + f for f in features) if features else "None selected"}</p>
 
 <p><b>Code Preview:</b><br>
 <pre>{code[:500]}...</pre></p>

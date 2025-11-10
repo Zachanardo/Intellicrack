@@ -675,11 +675,11 @@ class TestScriptDialog(BaseDialog):
         # Add specific recommendations based on test results
         security_results = self.test_results.get("security_analysis", {})
         if security_results.get("risk_level") == "high":
-            summary["recommendations"].append("🔒 High security risk - review and sanitize dangerous operations")
+            summary["recommendations"].append(" High security risk - review and sanitize dangerous operations")
 
         syntax_results = self.test_results.get("syntax_validation", {})
         if not syntax_results.get("syntax_valid", True):
-            summary["recommendations"].append("🔧 Syntax errors detected - fix before deployment")
+            summary["recommendations"].append(" Syntax errors detected - fix before deployment")
 
         self.test_results["summary"] = summary
         self.update_summary_display()
@@ -802,7 +802,7 @@ class TestScriptDialog(BaseDialog):
         optimizations = results.get("optimizations", [])
         if optimizations:
             lines.append("Optimization Suggestions:")
-            lines.extend([f"  💡 {opt}" for opt in optimizations])
+            lines.extend([f"   {opt}" for opt in optimizations])
             lines.append("")
 
         # Estimates (simplified)
@@ -853,7 +853,7 @@ class TestScriptDialog(BaseDialog):
         recommendations = results.get("recommendations", [])
         if recommendations:
             lines.append("Recommendations:")
-            lines.extend([f"  💡 {rec}" for rec in recommendations])
+            lines.extend([f"   {rec}" for rec in recommendations])
 
         self.effectiveness_results.setText("\n".join(lines))
 
@@ -1673,7 +1673,7 @@ class ScriptGeneratorDialog(BaseDialog):
         if insights:
             lines.append("Insights:")
             for insight in insights:
-                lines.append(f"  • {insight}")
+                lines.append(f"   {insight}")
             lines.append("")
 
         # Security Issues
@@ -1689,7 +1689,7 @@ class ScriptGeneratorDialog(BaseDialog):
         if suggestions:
             lines.append("Suggestions:")
             for suggestion in suggestions:
-                lines.append(f"  • {suggestion}")
+                lines.append(f"   {suggestion}")
             lines.append("")
 
         # Patterns
@@ -1697,7 +1697,7 @@ class ScriptGeneratorDialog(BaseDialog):
         if patterns:
             lines.append("Detected Patterns:")
             for pattern in patterns:
-                lines.append(f"  • {pattern}")
+                lines.append(f"   {pattern}")
             lines.append("")
 
         # Timestamp

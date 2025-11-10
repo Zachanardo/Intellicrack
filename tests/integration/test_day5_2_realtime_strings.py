@@ -48,14 +48,14 @@ class TestRealTimeStringMonitoring:
             components = analyzer._determine_analysis_components("test.exe", AnalysisEvent.ANALYSIS_STARTED)
 
             if "enhanced_strings" in components:
-                print("✓ PASS: enhanced_strings component included in analysis")
+                print("OK PASS: enhanced_strings component included in analysis")
                 return True
             else:
-                print(f"✗ FAIL: enhanced_strings component not found in: {components}")
+                print(f"FAIL FAIL: enhanced_strings component not found in: {components}")
                 return False
 
         except Exception as e:
-            print(f"✗ ERROR: {e}")
+            print(f"FAIL ERROR: {e}")
             return False
 
     def test_enhanced_string_analysis_method(self):
@@ -69,28 +69,28 @@ class TestRealTimeStringMonitoring:
 
             # Check if the enhanced string analysis method exists
             if hasattr(analyzer, '_perform_enhanced_string_analysis'):
-                print("✓ PASS: _perform_enhanced_string_analysis method exists")
+                print("OK PASS: _perform_enhanced_string_analysis method exists")
 
                 # Check if the dynamic monitoring methods exist
                 if hasattr(analyzer, '_monitor_dynamic_string_patterns'):
-                    print("✓ PASS: _monitor_dynamic_string_patterns method exists")
+                    print("OK PASS: _monitor_dynamic_string_patterns method exists")
                 else:
-                    print("✗ FAIL: _monitor_dynamic_string_patterns method missing")
+                    print("FAIL FAIL: _monitor_dynamic_string_patterns method missing")
                     return False
 
                 if hasattr(analyzer, '_monitor_string_api_calls'):
-                    print("✓ PASS: _monitor_string_api_calls method exists")
+                    print("OK PASS: _monitor_string_api_calls method exists")
                 else:
-                    print("✗ FAIL: _monitor_string_api_calls method missing")
+                    print("FAIL FAIL: _monitor_string_api_calls method missing")
                     return False
 
                 return True
             else:
-                print("✗ FAIL: _perform_enhanced_string_analysis method missing")
+                print("FAIL FAIL: _perform_enhanced_string_analysis method missing")
                 return False
 
         except Exception as e:
-            print(f"✗ ERROR: {e}")
+            print(f"FAIL ERROR: {e}")
             return False
 
     def test_event_system_integration(self):
@@ -104,7 +104,7 @@ class TestRealTimeStringMonitoring:
 
             # Check if STRING_ANALYSIS_UPDATED event is available
             if hasattr(AnalysisEvent, 'STRING_ANALYSIS_UPDATED'):
-                print("✓ PASS: STRING_ANALYSIS_UPDATED event available")
+                print("OK PASS: STRING_ANALYSIS_UPDATED event available")
 
                 # Set up event callback to capture events
                 self.test_events = []
@@ -113,15 +113,15 @@ class TestRealTimeStringMonitoring:
                     self.test_events.append(update)
 
                 analyzer.register_callback(AnalysisEvent.STRING_ANALYSIS_UPDATED, test_callback)
-                print("✓ PASS: Event callback registration successful")
+                print("OK PASS: Event callback registration successful")
 
                 return True
             else:
-                print("✗ FAIL: STRING_ANALYSIS_UPDATED event not available")
+                print("FAIL FAIL: STRING_ANALYSIS_UPDATED event not available")
                 return False
 
         except Exception as e:
-            print(f"✗ ERROR: {e}")
+            print(f"FAIL ERROR: {e}")
             return False
 
     def test_string_analyzer_integration(self):
@@ -148,22 +148,22 @@ class TestRealTimeStringMonitoring:
                     missing_methods.append(method_name)
 
             if not missing_methods:
-                print("✓ PASS: All required string analyzer methods available")
+                print("OK PASS: All required string analyzer methods available")
 
                 # Test a sample method call
                 test_result = analyzer._detect_license_key_formats("ABCD-1234-EFGH-5678")
                 if test_result:
-                    print("✓ PASS: String analyzer methods functional")
+                    print("OK PASS: String analyzer methods functional")
                     return True
                 else:
-                    print("✗ FAIL: String analyzer method not working correctly")
+                    print("FAIL FAIL: String analyzer method not working correctly")
                     return False
             else:
-                print(f"✗ FAIL: Missing methods: {missing_methods}")
+                print(f"FAIL FAIL: Missing methods: {missing_methods}")
                 return False
 
         except Exception as e:
-            print(f"✗ ERROR: {e}")
+            print(f"FAIL ERROR: {e}")
             return False
 
     def test_realtime_monitoring_capabilities(self):
@@ -179,7 +179,7 @@ class TestRealTimeStringMonitoring:
             update_modes = [UpdateMode.CONTINUOUS, UpdateMode.INTERVAL,
                            UpdateMode.ON_CHANGE, UpdateMode.HYBRID]
 
-            print(f"✓ PASS: Available update modes: {[mode.value for mode in update_modes]}")
+            print(f"OK PASS: Available update modes: {[mode.value for mode in update_modes]}")
 
             # Test analyzer status structure
             status = analyzer.get_status()
@@ -187,14 +187,14 @@ class TestRealTimeStringMonitoring:
 
             missing_keys = [key for key in required_keys if key not in status]
             if not missing_keys:
-                print("✓ PASS: Status structure contains required keys")
+                print("OK PASS: Status structure contains required keys")
                 return True
             else:
-                print(f"✗ FAIL: Missing status keys: {missing_keys}")
+                print(f"FAIL FAIL: Missing status keys: {missing_keys}")
                 return False
 
         except Exception as e:
-            print(f"✗ ERROR: {e}")
+            print(f"FAIL ERROR: {e}")
             return False
 
 
@@ -206,7 +206,7 @@ def main():
     print()
 
     if not IMPORT_SUCCESS:
-        print("❌ IMPORTS FAILED: Cannot run tests without proper imports")
+        print("FAIL IMPORTS FAILED: Cannot run tests without proper imports")
         return 1
 
     try:
@@ -234,24 +234,24 @@ def main():
                 print(f"Test failed with exception: {e}")
                 failed_tests += 1
 
-        print(f"\n🎯 DAY 5.2 REAL-TIME STRING MONITORING TEST RESULTS:")
-        print(f"✅ Test Categories Passed: {passed_tests}")
-        print(f"❌ Test Categories Failed: {failed_tests}")
+        print(f"\n DAY 5.2 REAL-TIME STRING MONITORING TEST RESULTS:")
+        print(f"OK Test Categories Passed: {passed_tests}")
+        print(f"FAIL Test Categories Failed: {failed_tests}")
 
         if failed_tests == 0:
             print("\n🎉 DAY 5.2 REAL-TIME STRING MONITORING COMPLETED SUCCESSFULLY!")
-            print("✅ Enhanced string analysis integrated with real-time analyzer")
-            print("✅ Dynamic string pattern monitoring implemented")
-            print("✅ String API call monitoring functional")
-            print("✅ Event system integration operational")
-            print("✅ Real-time string extraction capabilities added")
+            print("OK Enhanced string analysis integrated with real-time analyzer")
+            print("OK Dynamic string pattern monitoring implemented")
+            print("OK String API call monitoring functional")
+            print("OK Event system integration operational")
+            print("OK Real-time string extraction capabilities added")
             return 0
         else:
-            print(f"\n❌ DAY 5.2 IMPLEMENTATION FAILED: {failed_tests} test category(s) failed")
+            print(f"\nFAIL DAY 5.2 IMPLEMENTATION FAILED: {failed_tests} test category(s) failed")
             return 1
 
     except Exception as e:
-        print(f"❌ Testing failed with error: {e}")
+        print(f"FAIL Testing failed with error: {e}")
         return 1
 
 

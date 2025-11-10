@@ -27,19 +27,49 @@ import os
 import sys
 from typing import Any
 
+print("[DEBUG protection_detector] Module loading started")
+sys.stdout.flush()
+
+print("[DEBUG protection_detector] Importing get_logger...")
+sys.stdout.flush()
 from ..utils.logger import get_logger
+
+print("[DEBUG protection_detector] get_logger imported OK")
+sys.stdout.flush()
+
+print("[DEBUG protection_detector] Importing get_driver_path...")
+sys.stdout.flush()
 from ..utils.system.driver_utils import get_driver_path
+
+print("[DEBUG protection_detector] get_driver_path imported OK")
+sys.stdout.flush()
+
+print("[DEBUG protection_detector] Importing intellicrack_protection_core...")
+sys.stdout.flush()
 from .intellicrack_protection_core import (
     DetectionResult,
     ProtectionAnalysis,
     ProtectionType,
 )
+
+print("[DEBUG protection_detector] intellicrack_protection_core imported OK")
+sys.stdout.flush()
+
+print("[DEBUG protection_detector] Importing unified_protection_engine...")
+sys.stdout.flush()
 from .unified_protection_engine import (
     UnifiedProtectionEngine,
     UnifiedProtectionResult,
 )
 
+print("[DEBUG protection_detector] unified_protection_engine imported OK")
+sys.stdout.flush()
+
+print("[DEBUG protection_detector] Getting logger...")
+sys.stdout.flush()
 logger = get_logger(__name__)
+print("[DEBUG protection_detector] logger obtained OK")
+sys.stdout.flush()
 
 
 class ProtectionDetector:
@@ -123,6 +153,7 @@ class ProtectionDetector:
 
         Returns:
             List of ProtectionAnalysis results
+
         """
         logger.info(f"Starting directory analysis: {directory}, recursive={recursive}, deep_scan={deep_scan}")
         results = []
@@ -251,7 +282,7 @@ class ProtectionDetector:
             for det in analysis.detections:
                 ver_str = f" v{det.version}" if det.version else ""
                 conf_str = f" [{det.confidence:.0f}%]" if det.confidence < 100 else ""
-                lines.append(f"  • {det.name}{ver_str} ({det.type.value}){conf_str}")
+                lines.append(f"   {det.name}{ver_str} ({det.type.value}){conf_str}")
 
         if "confidence_score" in analysis.metadata:
             lines.append(f"\nOverall Confidence: {analysis.metadata['confidence_score']:.0f}%")
@@ -1090,25 +1121,22 @@ class ProtectionDetector:
             Entropy value (0-8)
 
         """
+        if not data:
+            logger.warning("Empty data provided for entropy calculation")
+            return 0.0
 
-    if not data:
-        logger.warning("Empty data provided for entropy calculation")
-        return 0.0
+        import math
 
-        # Calculate frequency of each byte
         frequency = {}
         for byte in data:
             frequency[byte] = frequency.get(byte, 0) + 1
 
-        # Calculate entropy
         entropy = 0.0
         data_len = len(data)
 
         for count in frequency.values():
             if count > 0:
                 probability = count / data_len
-                import math
-
                 entropy -= probability * math.log2(probability)
 
         return entropy
@@ -1121,6 +1149,7 @@ class ProtectionDetector:
 
         Returns:
             Combined detection results
+
         """
         logger.info(f"Starting comprehensive protection detection for {binary_path}")
         results = {

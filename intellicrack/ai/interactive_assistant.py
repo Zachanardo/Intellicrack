@@ -522,9 +522,9 @@ Would you like me to:
         summary = "Detected Protections:\n"
         for protection_type, details in protections.items():
             if isinstance(details, dict) and details.get("detected"):
-                summary += f"• {protection_type}: {details.get('confidence', 'Unknown')} confidence\n"
+                summary += f" {protection_type}: {details.get('confidence', 'Unknown')} confidence\n"
             elif details:  # Simple boolean or truthy value
-                summary += f"• {protection_type}: Detected\n"
+                summary += f" {protection_type}: Detected\n"
 
         return summary if summary != "Detected Protections:\n" else "Standard binary with no advanced protections detected."
 
@@ -535,27 +535,27 @@ Would you like me to:
         if topic == "binary_analysis":
             return """**Binary Analysis**: Understanding how executables work:
 
-• **Static Analysis**: Examining file structure, imports, strings without execution
-• **Dynamic Analysis**: Running the program and monitoring behavior
-• **Hybrid Approaches**: Combining both methods for comprehensive understanding
+ **Static Analysis**: Examining file structure, imports, strings without execution
+ **Dynamic Analysis**: Running the program and monitoring behavior
+ **Hybrid Approaches**: Combining both methods for comprehensive understanding
 
 Would you like me to analyze a specific binary?"""
         if topic == "patching":
             return """**Patching Techniques**: Methods to modify binary behavior:
 
-• **NOP Patches**: Replace instructions with no-operation codes
-• **Jump Patches**: Redirect execution flow around checks
-• **Value Patches**: Modify constants and validation values
-• **Function Hooking**: Intercept and modify function calls
+ **NOP Patches**: Replace instructions with no-operation codes
+ **Jump Patches**: Redirect execution flow around checks
+ **Value Patches**: Modify constants and validation values
+ **Function Hooking**: Intercept and modify function calls
 
 What type of patching are you interested in?"""
         if topic == "license_bypass":
             return """**License Bypass Methods**: Common approaches to software licensing:
 
-• **Trial Extension**: Modify time checks and expiration logic
-• **Key Validation**: Bypass or patch license key verification
-• **Hardware Checks**: Circumvent dongle and hardware fingerprinting
-• **Server Communication**: Block or redirect license server calls
+ **Trial Extension**: Modify time checks and expiration logic
+ **Key Validation**: Bypass or patch license key verification
+ **Hardware Checks**: Circumvent dongle and hardware fingerprinting
+ **Server Communication**: Block or redirect license server calls
 
 Which protection mechanism are you analyzing?"""
         return """I can help you understand:
@@ -574,28 +574,28 @@ What would you like to learn about?"""
         if aspect == "license_server":
             return """I can analyze license server communications:
 
-• **Server Discovery**: Identify license validation endpoints
-• **Protocol Analysis**: Decode license request/response formats
-• **Traffic Interception**: Monitor and modify license communications
-• **Offline Activation Bypass**: Generate valid activation responses without server connectivity
+ **Server Discovery**: Identify license validation endpoints
+ **Protocol Analysis**: Decode license request/response formats
+ **Traffic Interception**: Monitor and modify license communications
+ **Offline Activation Bypass**: Generate valid activation responses without server connectivity
 
 Would you like me to start license server analysis?"""
         if aspect == "traffic":
             return """I can perform network traffic analysis:
 
-• **Packet Capture**: Monitor all network communications
-• **Protocol Identification**: Detect HTTP, TCP, UDP, and custom protocols
-• **Data Extraction**: Extract license keys, certificates, and validation data
-• **Flow Analysis**: Understand communication patterns and timing
+ **Packet Capture**: Monitor all network communications
+ **Protocol Identification**: Detect HTTP, TCP, UDP, and custom protocols
+ **Data Extraction**: Extract license keys, certificates, and validation data
+ **Flow Analysis**: Understand communication patterns and timing
 
 Shall I begin traffic capture?"""
         if aspect == "security":
             return """I can analyze network security measures:
 
-• **SSL/TLS Analysis**: Examine certificate validation and encryption
-• **Firewall Detection**: Identify network restrictions and bypasses
-• **VPN Analysis**: Analyze virtual private network configurations
-• **Authentication**: Study network-based authentication mechanisms
+ **SSL/TLS Analysis**: Examine certificate validation and encryption
+ **Firewall Detection**: Identify network restrictions and bypasses
+ **VPN Analysis**: Analyze virtual private network configurations
+ **Authentication**: Study network-based authentication mechanisms
 
 What security aspect interests you?"""
         return "I can analyze network communications, including:\n- Protocol identification\n- License server communication\n- SSL/TLS traffic\n\nWould you like me to start network analysis?"

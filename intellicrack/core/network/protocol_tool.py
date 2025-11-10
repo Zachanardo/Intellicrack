@@ -419,7 +419,7 @@ class ProtocolToolWindow(QWidget):
                 parser_module = protocols.get_parser(parser_name)
                 # Get parser description
                 desc = parser_module.__doc__.split("\n")[0] if parser_module.__doc__ else "No description"
-                self.output_text_edit.append(f"  • {parser_name}: {desc}")
+                self.output_text_edit.append(f"   {parser_name}: {desc}")
         else:
             self.output_text_edit.append("  No protocol parsers loaded")
 

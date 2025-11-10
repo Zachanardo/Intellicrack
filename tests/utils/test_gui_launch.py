@@ -19,29 +19,29 @@ try:
 
     print("2. Importing PyQt6 components...")
     from intellicrack.handlers.pyqt6_handler import QApplication, HAS_PYQT
-    print(f"✅ PyQt6 available: {HAS_PYQT}")
+    print(f"OK PyQt6 available: {HAS_PYQT}")
 
     print("3. Creating QApplication...")
     app = QApplication(sys.argv)
-    print("✅ QApplication created successfully!")
+    print("OK QApplication created successfully!")
 
     print("4. Importing IntellicrackApp...")
     from intellicrack.ui.main_app import IntellicrackApp
-    print("✅ IntellicrackApp imported successfully!")
+    print("OK IntellicrackApp imported successfully!")
 
     print("5. Creating IntellicrackApp instance...")
     window = IntellicrackApp()
-    print("✅ IntellicrackApp instantiated successfully!")
+    print("OK IntellicrackApp instantiated successfully!")
 
     print("6. Testing window properties...")
     print(f"Window title: {window.windowTitle()}")
     print(f"Window size: {window.size().width()}x{window.size().height()}")
-    print("✅ GUI is ready to be shown!")
+    print("OK GUI is ready to be shown!")
 
-    print("✅ All GUI tests passed! Intellicrack GUI is working.")
+    print("OK All GUI tests passed! Intellicrack GUI is working.")
 
 except Exception as e:
-    print(f"❌ GUI test failed: {e}")
+    print(f"FAIL GUI test failed: {e}")
     import traceback
     traceback.print_exc()
     sys.exit(1)

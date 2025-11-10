@@ -1,10 +1,12 @@
 # Intellicrack Core
 
-The core module contains the fundamental components and engines that power Intellicrack's analysis capabilities.
+The core module contains the fundamental components and engines that power
+Intellicrack's analysis capabilities.
 
 ## Architecture Overview
 
-The core module is organized into specialized subsystems, each handling specific aspects of binary analysis and security research.
+The core module is organized into specialized subsystems, each handling specific
+aspects of binary analysis and security research.
 
 ## Module Structure
 

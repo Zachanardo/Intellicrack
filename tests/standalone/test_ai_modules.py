@@ -45,11 +45,11 @@ def run_test_llm_backends():
         assert isinstance(capabilities, dict), "Capabilities must be dict"
         print(f"Backend capabilities: {list(capabilities.keys())}")
 
-        print("✓ Test PASSED!")
+        print("OK Test PASSED!")
         return True
 
     except Exception as e:
-        print(f"✗ Test FAILED: {type(e).__name__}: {e}")
+        print(f"FAIL Test FAILED: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -82,11 +82,11 @@ def run_test_pattern_library():
         assert matches is not None, "Pattern matching returned None"
         print(f"Pattern matches for test code: {len(matches) if matches else 0}")
 
-        print("✓ Test PASSED!")
+        print("OK Test PASSED!")
         return True
 
     except Exception as e:
-        print(f"✗ Test FAILED: {type(e).__name__}: {e}")
+        print(f"FAIL Test FAILED: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -135,11 +135,11 @@ def run_test_learning_engine():
         assert learn_result is not None, "Learning from experience failed"
         print("Successfully learned from experience")
 
-        print("✓ Test PASSED!")
+        print("OK Test PASSED!")
         return True
 
     except Exception as e:
-        print(f"✗ Test FAILED: {type(e).__name__}: {e}")
+        print(f"FAIL Test FAILED: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -180,11 +180,11 @@ def run_test_script_generation():
         assert len(ghidra_script) > 0, "Empty Ghidra script"
         print(f"Generated Ghidra script: {len(ghidra_script)} chars")
 
-        print("✓ Test PASSED!")
+        print("OK Test PASSED!")
         return True
 
     except Exception as e:
-        print(f"✗ Test FAILED: {type(e).__name__}: {e}")
+        print(f"FAIL Test FAILED: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -220,11 +220,11 @@ def run_test_llm_config():
         assert temps is not None, "Temperature presets returned None"
         print(f"Temperature presets: {list(temps.keys()) if isinstance(temps, dict) else 'default'}")
 
-        print("✓ Test PASSED!")
+        print("OK Test PASSED!")
         return True
 
     except Exception as e:
-        print(f"✗ Test FAILED: {type(e).__name__}: {e}")
+        print(f"FAIL Test FAILED: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -265,11 +265,11 @@ def run_test_ai_tools():
         assert vulns is not None, "Vulnerability detection returned None"
         print(f"Vulnerabilities found: {len(vulns) if isinstance(vulns, list) else 'analysis complete'}")
 
-        print("✓ Test PASSED!")
+        print("OK Test PASSED!")
         return True
 
     except Exception as e:
-        print(f"✗ Test FAILED: {type(e).__name__}: {e}")
+        print(f"FAIL Test FAILED: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -307,11 +307,11 @@ def run_test_model_performance():
         assert recommendations is not None, "Recommendations returned None"
         print(f"Optimization recommendations: {len(recommendations) if isinstance(recommendations, list) else 'available'}")
 
-        print("✓ Test PASSED!")
+        print("OK Test PASSED!")
         return True
 
     except Exception as e:
-        print(f"✗ Test FAILED: {type(e).__name__}: {e}")
+        print(f"FAIL Test FAILED: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -348,11 +348,11 @@ def run_test_ai_integration():
         else:
             print("No patterns found, but integration test structure validated")
 
-        print("✓ Test PASSED!")
+        print("OK Test PASSED!")
         return True
 
     except Exception as e:
-        print(f"✗ Test FAILED: {type(e).__name__}: {e}")
+        print(f"FAIL Test FAILED: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False

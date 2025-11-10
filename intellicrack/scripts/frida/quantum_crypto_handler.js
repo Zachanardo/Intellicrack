@@ -30,13 +30,12 @@
 
 const QuantumCryptoHandler = {
     name: 'Quantum Crypto Handler',
-    description:
-    'Post-quantum cryptography detection and bypass for future-proof protection',
+    description: 'Post-quantum cryptography detection and bypass for future-proof protection',
     version: '2.0.0',
 
     // Configuration
     config: {
-    // Post-quantum algorithms
+        // Post-quantum algorithms
         algorithms: {
             // Lattice-based
             lattice: {
@@ -299,7 +298,7 @@ const QuantumCryptoHandler = {
 
     // Scan for SPHINCS+ implementation
     scanForSPHINCS: function () {
-    // SPHINCS+ uses hash functions and tree structures
+        // SPHINCS+ uses hash functions and tree structures
         const sphincsFuncs = [
             'sphincs_sign',
             'sphincs_verify',
@@ -322,7 +321,7 @@ const QuantumCryptoHandler = {
 
     // Scan for other PQC algorithms
     scanForOtherPQC: function () {
-    // Multivariate signature schemes
+        // Multivariate signature schemes
         const multivariatePatterns = [
             'rainbow',
             'geMSS',
@@ -343,25 +342,16 @@ const QuantumCryptoHandler = {
         ];
 
         // Hash-based patterns
-        const hashPatterns = [
-            'xmss',
-            'lms',
-            'merkle_tree',
-            'lamport',
-            'winternitz',
-            'hash_tree',
-        ];
+        const hashPatterns = ['xmss', 'lms', 'merkle_tree', 'lamport', 'winternitz', 'hash_tree'];
 
-        [...multivariatePatterns, ...isogenyPatterns, ...hashPatterns].forEach(
-            (pattern) => {
-                this.findAndHookFunction(pattern, pattern);
-            },
-        );
+        [...multivariatePatterns, ...isogenyPatterns, ...hashPatterns].forEach((pattern) => {
+            this.findAndHookFunction(pattern, pattern);
+        });
     },
 
     // Scan for Kyber implementation
     scanForKyber: function () {
-    // Kyber polynomial operations use q=3329
+        // Kyber polynomial operations use q=3329
         const kyberQ = 3329;
         const qBytes = [(kyberQ >> 8) & 0xff, kyberQ & 0xff];
 
@@ -410,7 +400,7 @@ const QuantumCryptoHandler = {
 
     // Scan for Dilithium implementation
     scanForDilithium: function () {
-    // Dilithium uses q=8380417
+        // Dilithium uses q=8380417
         const dilithiumQ = 8380417;
 
         try {
@@ -422,9 +412,7 @@ const QuantumCryptoHandler = {
                 dilithiumQ & 0xff,
             ];
 
-            const pattern = qBytes
-                .map((b) => b.toString(16).padStart(2, '0'))
-                .join(' ');
+            const pattern = qBytes.map((b) => b.toString(16).padStart(2, '0')).join(' ');
 
             const matches = Memory.scanSync(Process.enumerateRanges('r-x'), {
                 pattern: pattern,
@@ -485,7 +473,7 @@ const QuantumCryptoHandler = {
 
     // Hook KEM operations
     hookKEMOperations: function () {
-    // Generic KEM interface
+        // Generic KEM interface
         const kemOps = [
             'crypto_kem_keypair',
             'crypto_kem_enc',
@@ -610,10 +598,7 @@ const QuantumCryptoHandler = {
             }
 
             // Search in memory
-            const matches = Memory.scanSync(
-                Process.enumerateRanges('r-x'),
-                'utf8:' + funcName,
-            );
+            const matches = Memory.scanSync(Process.enumerateRanges('r-x'), 'utf8:' + funcName);
 
             matches.forEach((match) => {
                 send({
@@ -687,7 +672,7 @@ const QuantumCryptoHandler = {
                     // Apply bypasses based on function name
                     this.applyBypass(name, retval);
                 }.bind(this),
-            },
+            }
         );
 
         this.state.hooked_functions.set(address.toString(), {
@@ -749,13 +734,7 @@ const QuantumCryptoHandler = {
         });
 
         // Generic keypair functions
-        const keygenPatterns = [
-            'keypair',
-            'keygen',
-            'generate_key',
-            'gen_key',
-            'make_key',
-        ];
+        const keygenPatterns = ['keypair', 'keygen', 'generate_key', 'gen_key', 'make_key'];
 
         keygenPatterns.forEach((pattern) => {
             this.findAndHookFunction(pattern, 'keygen', {
@@ -840,7 +819,7 @@ const QuantumCryptoHandler = {
 
     // Get key sizes based on context
     getKeySizesForContext: function (context) {
-    // Default sizes for common PQC algorithms
+        // Default sizes for common PQC algorithms
         const sizes = {
             kyber: { publicKey: 1568, privateKey: 3168 }, // Kyber-1024
             dilithium: { publicKey: 2592, privateKey: 4864 }, // Dilithium5
@@ -960,7 +939,7 @@ const QuantumCryptoHandler = {
 
     // Get expected ciphertext size
     getCiphertextSize: function (operation) {
-    // Ciphertext sizes for common algorithms
+        // Ciphertext sizes for common algorithms
         const sizes = {
             kyber512: 768,
             kyber768: 1088,
@@ -1086,11 +1065,7 @@ const QuantumCryptoHandler = {
             const endAddr = ptr(address).add(searchRange);
 
             // Find functions in range
-            for (
-                let addr = startAddr;
-                addr.compare(endAddr) < 0;
-                addr = addr.add(4)
-            ) {
+            for (let addr = startAddr; addr.compare(endAddr) < 0; addr = addr.add(4)) {
                 try {
                     const inst = Instruction.parse(addr);
                     if (inst && this.isFunctionPrologue(inst)) {
@@ -1198,7 +1173,7 @@ const QuantumCryptoHandler = {
 
     // Monitor key allocations
     monitorKeyAllocations: function () {
-    // Hook malloc/calloc for large allocations (potential keys)
+        // Hook malloc/calloc for large allocations (potential keys)
         const malloc = Module.findExportByName(null, 'malloc');
         if (malloc) {
             Interceptor.attach(malloc, {
@@ -1239,10 +1214,7 @@ const QuantumCryptoHandler = {
                         });
 
                         // Track this allocation
-                        this.state.crypto_contexts.set(
-                            retval.toString(),
-                            this.pendingAlloc,
-                        );
+                        this.state.crypto_contexts.set(retval.toString(), this.pendingAlloc);
                         this.pendingAlloc = null;
                     }
                 }.bind(this),
@@ -1493,7 +1465,7 @@ const QuantumCryptoHandler = {
             break;
 
         default:
-        // Generic bypass
+            // Generic bypass
             if (lowerName.includes('verify') || lowerName.includes('check')) {
                 if (retval.toInt32() !== 0) {
                     send({
@@ -1543,7 +1515,7 @@ const QuantumCryptoHandler = {
 
     // Detect FALCON signature scheme
     detectFALCON: function () {
-    // FALCON uses q = 12289 and specific polynomial structures
+        // FALCON uses q = 12289 and specific polynomial structures
         const falconQ = 12289;
         const qBytes = [(falconQ >> 8) & 0xff, falconQ & 0xff];
 
@@ -1604,7 +1576,7 @@ const QuantumCryptoHandler = {
 
     // Detect BIKE (Bit Flipping Key Encapsulation)
     detectBIKE: function () {
-    // BIKE specific constants and patterns
+        // BIKE specific constants and patterns
         const bikePatterns = ['bike', 'BIKE', 'bit_flipping', 'qc_mdpc'];
 
         // BIKE uses quasi-cyclic MDPC codes
@@ -1683,7 +1655,7 @@ const QuantumCryptoHandler = {
 
     // Detect FrodoKEM (conservative lattice-based)
     detectFrodoKEM: function () {
-    // FrodoKEM uses LWE with larger error distributions
+        // FrodoKEM uses LWE with larger error distributions
         const frodoFuncs = [
             'frodo_keygen',
             'frodo_encaps',
@@ -1724,7 +1696,7 @@ const QuantumCryptoHandler = {
 
     // Detect SABER
     detectSABER: function () {
-    // SABER uses Module-LWR instead of Module-LWE
+        // SABER uses Module-LWR instead of Module-LWE
         const saberFuncs = [
             'saber_keygen',
             'saber_encaps',
@@ -1947,7 +1919,7 @@ const QuantumCryptoHandler = {
 
     // Compute PQC likelihood score
     computePQCScore: function (features) {
-    // Weighted scoring based on PQC characteristics
+        // Weighted scoring based on PQC characteristics
         const weights = {
             polynomial_ops: 0.3,
             modular_arithmetic: 0.25,
@@ -2064,7 +2036,7 @@ const QuantumCryptoHandler = {
 
             // Scan stack regions
             const stackRanges = Process.enumerateRanges('rw-').filter(
-                (r) => r.protection.includes('rw') && r.size < 0x100000,
+                (r) => r.protection.includes('rw') && r.size < 0x100000
             );
 
             stackRanges.forEach((range) => {
@@ -2086,7 +2058,7 @@ const QuantumCryptoHandler = {
 
     // Scan range for key material
     scanRangeForKeys: function (range) {
-    // PQC key entropy patterns
+        // PQC key entropy patterns
         const data = range.base.readByteArray(Math.min(range.size, 0x10000));
         if (!data) return;
 
@@ -2135,9 +2107,7 @@ const QuantumCryptoHandler = {
         const bytes = new Uint8Array(data);
 
         // Check for PQC key size patterns
-        const commonKeySizes = [
-            32, 64, 128, 256, 512, 768, 1024, 1568, 2592, 3168, 4864,
-        ];
+        const commonKeySizes = [32, 64, 128, 256, 512, 768, 1024, 1568, 2592, 3168, 4864];
 
         commonKeySizes.forEach((size) => {
             if (bytes.length === size || bytes.length === size * 2) {
@@ -2239,11 +2209,7 @@ const QuantumCryptoHandler = {
                     this.prngContext = { func: func, buffer: args[0], size: args[1] };
                 },
                 onLeave: function (retval) {
-                    if (
-                        this.prngContext &&
-            this.prngContext.buffer &&
-            this.prngContext.size
-                    ) {
+                    if (this.prngContext && this.prngContext.buffer && this.prngContext.size) {
                         try {
                             const size = this.prngContext.size.toInt32();
                             if (size > 0 && size <= 4096) {
@@ -2321,7 +2287,7 @@ const QuantumCryptoHandler = {
 
     // Scan for BIKE patterns
     scanForBIKEPatterns: function () {
-    // BIKE uses specific bit manipulation patterns
+        // BIKE uses specific bit manipulation patterns
         const bikeConstants = [
             12323,
             24659,
@@ -2338,9 +2304,7 @@ const QuantumCryptoHandler = {
                 ];
 
                 const matches = Memory.scanSync(Process.enumerateRanges('r-x'), {
-                    pattern: constBytes
-                        .map((b) => b.toString(16).padStart(2, '0'))
-                        .join(' '),
+                    pattern: constBytes.map((b) => b.toString(16).padStart(2, '0')).join(' '),
                 });
 
                 matches.forEach((match) => {
@@ -2361,7 +2325,7 @@ const QuantumCryptoHandler = {
 
     // Scan for Frodo constants
     scanForFrodoConstants: function () {
-    // FrodoKEM parameters
+        // FrodoKEM parameters
         const frodoParams = [
             { n: 640, q: 32768 }, // Frodo-640
             { n: 976, q: 65536 }, // Frodo-976
@@ -2395,11 +2359,11 @@ const QuantumCryptoHandler = {
 
     // Scan for X25519+Kyber patterns
     scanForX25519KyberPatterns: function () {
-    // X25519 base point
+        // X25519 base point
         const x25519Base = new Uint8Array([
-            0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
         ]);
 
         try {
@@ -2687,7 +2651,7 @@ const QuantumCryptoHandler = {
 
     // Scan for SPHINCS+ parameters
     scanForSPHINCSParameters: function () {
-    // SPHINCS+ parameter sets
+        // SPHINCS+ parameter sets
         const sphincsParams = [
             { n: 16, h: 60 }, // SPHINCS+-SHA256-128s
             { n: 24, h: 60 }, // SPHINCS+-SHA256-192s
@@ -2728,7 +2692,7 @@ const QuantumCryptoHandler = {
             target: 'quantum_crypto_handler',
             action: 'initialized',
             message:
-        'Quantum Crypto Handler v3.0.0 - Advanced Post-Quantum Cryptography Analysis & Attack',
+                'Quantum Crypto Handler v3.0.0 - Advanced Post-Quantum Cryptography Analysis & Attack',
         });
 
         this.initialize();

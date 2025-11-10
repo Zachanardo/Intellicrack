@@ -28,16 +28,16 @@ def test_frida_generation():
         )
 
         if result.success:
-            print(f"✅ Script generated successfully!")
-            print(f"📁 Saved to: {result.file_path}")
-            print(f"📝 Content preview:\n{result.content[:500]}...")
+            print(f"OK Script generated successfully!")
+            print(f" Saved to: {result.file_path}")
+            print(f" Content preview:\n{result.content[:500]}...")
             return True
         else:
-            print(f"❌ Generation failed: {result.error}")
+            print(f"FAIL Generation failed: {result.error}")
             return False
 
     except Exception as e:
-        print(f"❌ Exception during generation: {e}")
+        print(f"FAIL Exception during generation: {e}")
         return False
 
 def test_ghidra_generation():
@@ -58,21 +58,21 @@ def test_ghidra_generation():
         )
 
         if result.success:
-            print(f"✅ Ghidra script generated successfully!")
-            print(f"📁 Saved to: {result.file_path}")
-            print(f"📝 Content preview:\n{result.content[:500]}...")
+            print(f"OK Ghidra script generated successfully!")
+            print(f" Saved to: {result.file_path}")
+            print(f" Content preview:\n{result.content[:500]}...")
             return True
         else:
-            print(f"❌ Generation failed: {result.error}")
+            print(f"FAIL Generation failed: {result.error}")
             return False
 
     except Exception as e:
-        print(f"❌ Exception during generation: {e}")
+        print(f"FAIL Exception during generation: {e}")
         return False
 
 def main():
     """Run all tests."""
-    print("🚀 Testing Dynamic AI Script Generation System")
+    print(" Testing Dynamic AI Script Generation System")
     print("=" * 50)
 
     # Test configuration
@@ -83,7 +83,7 @@ def main():
         print(f"📋 LLM Backend: {ai_config.get('default_backend', 'openai')}")
         print(f"📋 Model: {ai_config.get('models', {}).get('openai', 'gpt-4')}")
     except Exception as e:
-        print(f"⚠️ Config warning: {e}")
+        print(f"WARNING Config warning: {e}")
 
     print()
 
@@ -92,15 +92,15 @@ def main():
     ghidra_success = test_ghidra_generation()
 
     print("\n" + "=" * 50)
-    print("📊 Test Results:")
-    print(f"Frida Generation: {'✅ PASS' if frida_success else '❌ FAIL'}")
-    print(f"Ghidra Generation: {'✅ PASS' if ghidra_success else '❌ FAIL'}")
+    print(" Test Results:")
+    print(f"Frida Generation: {'OK PASS' if frida_success else 'FAIL FAIL'}")
+    print(f"Ghidra Generation: {'OK PASS' if ghidra_success else 'FAIL FAIL'}")
 
     if frida_success and ghidra_success:
         print("\n🎉 All tests passed! Dynamic AI script generation is working.")
         return True
     else:
-        print("\n⚠️ Some tests failed. Check configuration and LLM backend.")
+        print("\nWARNING Some tests failed. Check configuration and LLM backend.")
         return False
 
 if __name__ == "__main__":
@@ -111,7 +111,7 @@ if __name__ == "__main__":
         print("\n\n⏹️ Test interrupted by user")
         sys.exit(130)
     except Exception as e:
-        print(f"\n❌ Fatal error: {e}")
+        print(f"\nFAIL Fatal error: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

@@ -179,6 +179,7 @@ class MemoryIntegrityChecker:
                                         return pid
 
                             except Exception:
+                                pass
                                 # Memory reading may fail for protected processes
                             finally:
                                 kernel32.CloseHandle(hProcess)

@@ -643,10 +643,9 @@ def main():
     ]
 
     # Initialize validator
+    from intellicrack.utils.path_resolver import get_project_root
     validator = StatisticalRequirementsValidator(
-        from intellicrack.utils.path_resolver import get_project_root
-
-output_path=get_project_root() / "tests/validation_system/phase6/statistical_analysis"
+        output_path=get_project_root() / "tests/validation_system/phase6/statistical_analysis"
     )
 
     # Run validation

@@ -5,7 +5,7 @@ const path = require('path');
 const os = require('os');
 
 let input = '';
-process.stdin.on('data', chunk => input += chunk);
+process.stdin.on('data', (chunk) => (input += chunk));
 process.stdin.on('end', () => {
     try {
         const data = JSON.parse(input);
@@ -34,18 +34,20 @@ process.stdin.on('end', () => {
         const contextPercentage = calculateContextPercentage(transcriptPath);
 
         const formattedTokens = formatTokenCount(totalTokens);
-        const { text: contextText, color: contextColor } = formatContextPercentage(contextPercentage);
+        const { text: contextText, color: contextColor } =
+            formatContextPercentage(contextPercentage);
 
-        const contextColored = contextColor === 'green' ? green : contextColor === 'yellow' ? yellow : brightRed;
+        const contextColored =
+            contextColor === 'green' ? green : contextColor === 'yellow' ? yellow : brightRed;
 
         console.log(
             `${brightMagenta}${projectName}${reset} ${brightRed}|${reset} ` +
-            `${cyan}[${model}]${reset} ${brightRed}|${reset} ` +
-            `Tokens: ${orangeGold}${formattedTokens}${reset} ${brightRed}|${reset} ` +
-            `${green}${formattedCost}${reset} ${brightRed}|${reset} ` +
-            `Context: ${contextColored}${contextText}${reset} ${brightRed}|${reset} ` +
-            `Lines added: ${brightGreen}${linesAdded}${reset} ${brightRed}|${reset} ` +
-            `Lines removed: ${brightRed}${linesRemoved}${reset}`
+                `${cyan}[${model}]${reset} ${brightRed}|${reset} ` +
+                `Tokens: ${orangeGold}${formattedTokens}${reset} ${brightRed}|${reset} ` +
+                `${green}${formattedCost}${reset} ${brightRed}|${reset} ` +
+                `Context: ${contextColored}${contextText}${reset} ${brightRed}|${reset} ` +
+                `Lines added: ${brightGreen}${linesAdded}${reset} ${brightRed}|${reset} ` +
+                `Lines removed: ${brightRed}${linesRemoved}${reset}`
         );
     } catch (error) {
         console.log('[Claude] Intellicrack | $0.0000');
@@ -84,7 +86,10 @@ function calculateSessionTokens(sessionId, transcriptPath) {
         let totalTokens = cache?.totalTokens || 0;
 
         const content = fs.readFileSync(transcriptPath, 'utf8');
-        const lines = content.trim().split('\n').filter(line => line.trim());
+        const lines = content
+            .trim()
+            .split('\n')
+            .filter((line) => line.trim());
 
         for (const line of lines) {
             try {
@@ -107,11 +112,14 @@ function calculateSessionTokens(sessionId, transcriptPath) {
             }
         }
 
-        fs.writeFileSync(cacheFile, JSON.stringify({
-            timestamp: now,
-            totalTokens,
-            processedHashes: Array.from(processedHashes)
-        }));
+        fs.writeFileSync(
+            cacheFile,
+            JSON.stringify({
+                timestamp: now,
+                totalTokens,
+                processedHashes: Array.from(processedHashes),
+            })
+        );
 
         return totalTokens;
     } catch (error) {
@@ -126,7 +134,10 @@ function calculateContextPercentage(transcriptPath) {
 
     try {
         const content = fs.readFileSync(transcriptPath, 'utf8');
-        const lines = content.trim().split('\n').filter(line => line.trim());
+        const lines = content
+            .trim()
+            .split('\n')
+            .filter((line) => line.trim());
 
         let totalContextTokens = 0;
         const processedHashes = new Set();
@@ -164,7 +175,7 @@ function extractTokensFromEntry(entry) {
         outputTokens: 0,
         cacheCreationTokens: 0,
         cacheReadTokens: 0,
-        totalTokens: 0
+        totalTokens: 0,
     };
 
     const sources = [];
@@ -184,8 +195,16 @@ function extractTokensFromEntry(entry) {
 
         const inputFields = ['input_tokens', 'inputTokens', 'prompt_tokens'];
         const outputFields = ['output_tokens', 'outputTokens', 'completion_tokens'];
-        const cacheCreationFields = ['cache_creation_tokens', 'cache_creation_input_tokens', 'cacheCreationInputTokens'];
-        const cacheReadFields = ['cache_read_input_tokens', 'cache_read_tokens', 'cacheReadInputTokens'];
+        const cacheCreationFields = [
+            'cache_creation_tokens',
+            'cache_creation_input_tokens',
+            'cacheCreationInputTokens',
+        ];
+        const cacheReadFields = [
+            'cache_read_input_tokens',
+            'cache_read_tokens',
+            'cacheReadInputTokens',
+        ];
 
         const input = extractField(source, inputFields);
         const output = extractField(source, outputFields);

@@ -54,7 +54,7 @@ class ProgressTracker:
         self.callback = callback
         self.is_cancelled = False
 
-    def update(self, value: int = None, increment: int = None):
+    def update(self, value: int | None = None, increment: int | None = None):
         """Update progress value."""
         if self.is_cancelled:
             return
@@ -83,7 +83,7 @@ class ProgressTracker:
         self.is_cancelled = False
 
 
-def show_message(message: str, msg_type: MessageType = MessageType.INFO, title: str = None, parent: Any = None) -> None:
+def show_message(message: str, msg_type: MessageType = MessageType.INFO, title: str | None = None, parent: Any = None) -> None:
     """Display a message to the user.
 
     Args:
@@ -192,7 +192,7 @@ def get_user_input(prompt: str, default: str = "", title: str = "Input Required"
         return None
 
 
-def update_progress(progress: int, message: str = None, callback: Callable[[int, str], None] | None = None) -> None:
+def update_progress(progress: int, message: str | None = None, callback: Callable[[int, str | None], None] | None = None) -> None:
     """Update progress display.
 
     Args:

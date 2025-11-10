@@ -20,7 +20,7 @@ class ProductionReadinessValidator:
 
     def test_no_placeholder_strings(self):
         """CRITICAL TEST: Verify NO placeholder strings exist in code."""
-        print("\n🔍 CRITICAL TEST: Searching for placeholder strings...")
+        print("\n CRITICAL TEST: Searching for placeholder strings...")
         print("=" * 60)
 
         forbidden_strings = [
@@ -43,10 +43,9 @@ class ProductionReadinessValidator:
 
         for file_path in files_to_check:
             from intellicrack.utils.path_resolver import get_project_root
-
-full_path = get_project_root() / file_path
+            full_path = get_project_root() / file_path
             if not full_path.exists():
-                print(f"  ⚠️  File not found: {file_path}")
+                print(f"  WARNING  File not found: {file_path}")
                 continue
 
             files_checked += 1
@@ -87,16 +86,16 @@ full_path = get_project_root() / file_path
                         })
 
             except Exception as e:
-                print(f"  ⚠️  Error checking {file_path}: {e}")
+                print(f"  WARNING  Error checking {file_path}: {e}")
 
         print(f"  ℹ️  Checked {files_checked}/{len(files_to_check)} files")
 
         if not placeholders_found:
-            print("  ✅ PASS: No placeholder strings found")
+            print("  OK PASS: No placeholder strings found")
             self.test_results.append(True)
             return True
         else:
-            print(f"  ❌ FAIL: {len(placeholders_found)} placeholder strings found:")
+            print(f"  FAIL FAIL: {len(placeholders_found)} placeholder strings found:")
             for p in placeholders_found[:5]:  # Show first 5
                 print(f"     - {p['file']}:{p['line']} - '{p['string']}'")
             self.critical_failures.extend([f"{p['file']}:{p['line']}" for p in placeholders_found])
@@ -106,10 +105,10 @@ full_path = get_project_root() / file_path
     def test_radare2_integration_fields(self):
         """Test radare2_vulnerability_engine.py has all integration fields."""
         print("\n🔗 Testing Radare2 Integration Fields...")
-file_path = get_project_root() / "intellicrack/core/analysis/radare2_vulnerability_engine.py"
+        file_path = get_project_root() / "intellicrack/core/analysis/radare2_vulnerability_engine.py"
 
         if not file_path.exists():
-            print(f"  ❌ FAIL: File not found: {file_path}")
+            print(f"  FAIL FAIL: File not found: {file_path}")
             self.test_results.append(False)
             return False
 
@@ -160,14 +159,14 @@ file_path = get_project_root() / "intellicrack/core/analysis/radare2_vulnerabili
 
             # Report results
             if not missing_imports and not missing_methods and not missing_init:
-                print("  ✅ PASS: All integration components present")
+                print("  OK PASS: All integration components present")
                 print(f"     - {len(required_imports)} imports verified")
                 print(f"     - {len(required_methods)} methods verified")
                 print(f"     - {len(init_checks)} initializations verified")
                 self.test_results.append(True)
                 return True
             else:
-                print("  ❌ FAIL: Missing integration components")
+                print("  FAIL FAIL: Missing integration components")
                 if missing_imports:
                     print(f"     Missing imports: {missing_imports}")
                 if missing_methods:
@@ -178,7 +177,7 @@ file_path = get_project_root() / "intellicrack/core/analysis/radare2_vulnerabili
                 return False
 
         except Exception as e:
-            print(f"  ❌ FAIL: Error checking integration: {e}")
+            print(f"  FAIL FAIL: Error checking integration: {e}")
             self.test_results.append(False)
             return False
 
@@ -216,7 +215,7 @@ file_path = get_project_root() / "intellicrack/core/analysis/radare2_vulnerabili
             file_path = get_project_root() / module['path']
 
             if not file_path.exists():
-                print(f"  ❌ Module not found: {module['path']}")
+                print(f"  FAIL Module not found: {module['path']}")
                 all_modules_ok = False
                 continue
 
@@ -226,7 +225,7 @@ file_path = get_project_root() / "intellicrack/core/analysis/radare2_vulnerabili
 
                 # Check class exists
                 if f"class {module['class']}" not in content:
-                    print(f"  ❌ Class {module['class']} not found in {module['path']}")
+                    print(f"  FAIL Class {module['class']} not found in {module['path']}")
                     all_modules_ok = False
                     continue
 
@@ -237,13 +236,13 @@ file_path = get_project_root() / "intellicrack/core/analysis/radare2_vulnerabili
                         missing_methods.append(method)
 
                 if missing_methods:
-                    print(f"  ❌ {module['class']} missing methods: {missing_methods}")
+                    print(f"  FAIL {module['class']} missing methods: {missing_methods}")
                     all_modules_ok = False
                 else:
-                    print(f"  ✅ {module['class']} has all required methods")
+                    print(f"  OK {module['class']} has all required methods")
 
             except Exception as e:
-                print(f"  ❌ Error checking {module['path']}: {e}")
+                print(f"  FAIL Error checking {module['path']}: {e}")
                 all_modules_ok = False
 
         self.test_results.append(all_modules_ok)
@@ -251,14 +250,14 @@ file_path = get_project_root() / "intellicrack/core/analysis/radare2_vulnerabili
 
     def test_production_functionality(self):
         """Test that methods return real data, not placeholders."""
-        print("\n⚙️ Testing Production Functionality...")
+        print("\n[CFG]️ Testing Production Functionality...")
         print("=" * 40)
 
         # Check radare2_vulnerability_engine.py for real implementations
         file_path = get_project_root() / "intellicrack/core/analysis/radare2_vulnerability_engine.py"
 
         if not file_path.exists():
-            print(f"  ❌ FAIL: File not found")
+            print(f"  FAIL FAIL: File not found")
             self.test_results.append(False)
             return False
 
@@ -288,24 +287,24 @@ file_path = get_project_root() / "intellicrack/core/analysis/radare2_vulnerabili
                             template_found.append(f"Line {i}: {pattern}")
 
             if not template_found:
-                print("  ✅ PASS: No template return values found")
+                print("  OK PASS: No template return values found")
                 self.test_results.append(True)
                 return True
             else:
-                print(f"  ❌ FAIL: {len(template_found)} template patterns found")
+                print(f"  FAIL FAIL: {len(template_found)} template patterns found")
                 for t in template_found[:3]:  # Show first 3
                     print(f"     - {t}")
                 self.test_results.append(False)
                 return False
 
         except Exception as e:
-            print(f"  ❌ FAIL: Error checking functionality: {e}")
+            print(f"  FAIL FAIL: Error checking functionality: {e}")
             self.test_results.append(False)
             return False
 
     def generate_documentation(self):
         """Generate checkpoint documentation."""
-        print("\n📝 Generating Documentation...")
+        print("\n Generating Documentation...")
         print("=" * 35)
 
         doc_content = f"""# PRODUCTION READINESS CHECKPOINT 6 - VALIDATION REPORT
@@ -314,21 +313,21 @@ Generated: {datetime.now().isoformat()}
 ## Test Results Summary
 
 ### Critical Validation Tests
-1. **No Placeholder Strings**: {'✅ PASSED' if self.test_results[0] else '❌ FAILED'}
-2. **Radare2 Integration Fields**: {'✅ PASSED' if self.test_results[1] else '❌ FAILED'}
-3. **Bypass Modules Exist**: {'✅ PASSED' if self.test_results[2] else '❌ FAILED'}
-4. **Production Functionality**: {'✅ PASSED' if self.test_results[3] else '❌ FAILED'}
+1. **No Placeholder Strings**: {'OK PASSED' if self.test_results[0] else 'FAIL FAILED'}
+2. **Radare2 Integration Fields**: {'OK PASSED' if self.test_results[1] else 'FAIL FAILED'}
+3. **Bypass Modules Exist**: {'OK PASSED' if self.test_results[2] else 'FAIL FAILED'}
+4. **Production Functionality**: {'OK PASSED' if self.test_results[3] else 'FAIL FAILED'}
 
 ### Modern Protection Bypass Status
 
 #### CET (Control-flow Enforcement Technology) Bypass
-- Import: {'✅ Present' if self.test_results[1] else '❌ Missing'}
+- Import: {'OK Present' if self.test_results[1] else 'FAIL Missing'}
 - Class: CETBypass
 - Methods: get_available_bypass_techniques, generate_cet_bypass
 - Integration: Connected to radare2_vulnerability_engine.py
 
 #### CFI (Control Flow Integrity) Bypass
-- Import: {'✅ Present' if self.test_results[1] else '❌ Missing'}
+- Import: {'OK Present' if self.test_results[1] else 'FAIL Missing'}
 - Class: CFIBypass
 - Methods: find_rop_gadgets, find_jop_gadgets
 - Integration: Connected to vulnerability analysis
@@ -344,7 +343,7 @@ Generated: {datetime.now().isoformat()}
 
 ### Overall Status
 Pass Rate: {sum(self.test_results)}/{len(self.test_results)} ({sum(self.test_results)/len(self.test_results)*100:.1f}%)
-{'✅ CHECKPOINT PASSED' if all(self.test_results) else '❌ CHECKPOINT FAILED'}
+{'OK CHECKPOINT PASSED' if all(self.test_results) else 'FAIL CHECKPOINT FAILED'}
 
 ## Certification Statement
 This checkpoint {'certifies' if all(self.test_results) else 'CANNOT certify'} that:
@@ -353,14 +352,14 @@ This checkpoint {'certifies' if all(self.test_results) else 'CANNOT certify'} th
 3. All methods produce functional output
 4. System is ready for production use
 
-**Deployment Decision**: {'APPROVED ✅' if all(self.test_results) else 'BLOCKED ❌'}
+**Deployment Decision**: {'APPROVED OK' if all(self.test_results) else 'BLOCKED FAIL'}
 """
 
         doc_path = get_project_root() / "CHECKPOINT_6_REPORT.md"
         with open(doc_path, 'w', encoding='utf-8') as f:
             f.write(doc_content)
 
-        print(f"  ✅ Report saved to: {doc_path}")
+        print(f"  OK Report saved to: {doc_path}")
         return True
 
 
@@ -371,7 +370,7 @@ def main():
     print("=" * 70)
     print("MANDATORY VALIDATION OF MODERN PROTECTION BYPASSES")
     print(f"Checkpoint Time: {datetime.now().isoformat()}")
-    print("\n⚠️  ZERO TOLERANCE POLICY: Any placeholder = IMMEDIATE FAILURE")
+    print("\nWARNING  ZERO TOLERANCE POLICY: Any placeholder = IMMEDIATE FAILURE")
 
     validator = ProductionReadinessValidator()
 
@@ -390,14 +389,14 @@ def main():
     pass_rate = passed / total if total > 0 else 0
 
     print("\n" + "=" * 70)
-    print("🎯 CHECKPOINT 6 - FINAL RESULTS")
+    print(" CHECKPOINT 6 - FINAL RESULTS")
     print("=" * 70)
-    print(f"✅ Tests Passed: {passed}/{total}")
-    print(f"❌ Tests Failed: {total - passed}/{total}")
-    print(f"📊 Pass Rate: {pass_rate:.1%}")
+    print(f"OK Tests Passed: {passed}/{total}")
+    print(f"FAIL Tests Failed: {total - passed}/{total}")
+    print(f" Pass Rate: {pass_rate:.1%}")
 
     if validator.critical_failures:
-        print(f"\n⚠️  CRITICAL FAILURES: {len(validator.critical_failures)}")
+        print(f"\nWARNING  CRITICAL FAILURES: {len(validator.critical_failures)}")
         for failure in validator.critical_failures[:5]:
             print(f"   - {failure}")
 
@@ -405,18 +404,18 @@ def main():
 
     # 90% pass rate required per plan
     if pass_rate >= 0.90 and len(validator.critical_failures) == 0:
-        print("✅ CHECKPOINT 6 PASSED - MODERN PROTECTIONS VALIDATED")
-        print("✅ All bypass modules integrated")
-        print("✅ Zero placeholder code detected")
-        print("✅ Production functionality confirmed")
-        print("\n🚀 CLEARED TO PROCEED TO DAY 7")
+        print("OK CHECKPOINT 6 PASSED - MODERN PROTECTIONS VALIDATED")
+        print("OK All bypass modules integrated")
+        print("OK Zero placeholder code detected")
+        print("OK Production functionality confirmed")
+        print("\n CLEARED TO PROCEED TO DAY 7")
         return 0
     else:
-        print("❌ CHECKPOINT 6 FAILED")
-        print(f"❌ Pass rate {pass_rate:.1%} below 90% requirement")
+        print("FAIL CHECKPOINT 6 FAILED")
+        print(f"FAIL Pass rate {pass_rate:.1%} below 90% requirement")
         if validator.critical_failures:
-            print(f"❌ {len(validator.critical_failures)} critical failures detected")
-        print("❌ DO NOT PROCEED - FIX ISSUES FIRST")
+            print(f"FAIL {len(validator.critical_failures)} critical failures detected")
+        print("FAIL DO NOT PROCEED - FIX ISSUES FIRST")
         return 1
 
 

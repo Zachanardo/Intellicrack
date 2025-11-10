@@ -329,10 +329,10 @@ class TestIntegration:
         dos_header = b'MZ' + b'\x00' * 58 + b'\x40\x00\x00\x00'
         pe_header = b'PE\x00\x00'
         coff_header = (
-            b'\x4C\x01'  # Machine (i386)
-            b'\x03\x00'  # NumberOfSections
-            b'\x00' * 12  # TimeDateStamp + PointerToSymbolTable + NumberOfSymbols
-            b'\xE0\x00'  # SizeOfOptionalHeader
+            b'\x4C\x01' +  # Machine (i386)
+            b'\x03\x00' +  # NumberOfSections
+            b'\x00' * 12 +  # TimeDateStamp + PointerToSymbolTable + NumberOfSymbols
+            b'\xE0\x00' +  # SizeOfOptionalHeader
             b'\x0F\x01'  # Characteristics
         )
 
@@ -428,13 +428,13 @@ def run_comprehensive_tests():
                 test_instance.setup_method()
                 test_method()
                 passed_tests += 1
-                print(f"  ✓ {method_name}")
+                print(f"  OK {method_name}")
             except pytest.skip.Exception as e:
                 skipped_tests += 1
                 print(f"  ⊘ {method_name} (SKIPPED: {e})")
             except Exception as e:
                 failed_tests += 1
-                print(f"  ✗ {method_name} (FAILED: {e})")
+                print(f"  FAIL {method_name} (FAILED: {e})")
 
     print()
     print("=" * 80)

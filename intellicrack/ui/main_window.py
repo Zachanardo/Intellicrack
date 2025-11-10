@@ -664,7 +664,7 @@ class IntellicrackMainWindow(QMainWindow):
                 self.status_label.setToolTip(
                     "The following components are disabled:\n"
                     + "\n".join(
-                        [f"• {comp}: {self.component_status[comp]['error'] or 'Initialization failed'}" for comp in disabled_components]
+                        [f" {comp}: {self.component_status[comp]['error'] or 'Initialization failed'}" for comp in disabled_components]
                     )
                 )
                 self.status_label.setStyleSheet("color: orange; font-weight: bold;")
@@ -919,7 +919,7 @@ Licensing Files Found: {len(licensing_files)}"""
                         if ai_analysis.get("findings"):
                             self.update_output.emit("\nFindings:")
                             for finding in ai_analysis["findings"]:
-                                self.update_output.emit(f"  • {finding}")
+                                self.update_output.emit(f"   {finding}")
 
                         if ai_analysis.get("recommendations"):
                             self.update_output.emit("\nRecommendations:")
@@ -1125,7 +1125,7 @@ Licensing Files Found: {len(licensing_files)}"""
         if result.protections:
             result_text += "\nDetected Protections:\n"
             for protection in result.protections:
-                result_text += f"  • {protection['name']} ({protection['type']}) - {protection.get('confidence', 0):.0f}%\n"
+                result_text += f"   {protection['name']} ({protection['type']}) - {protection.get('confidence', 0):.0f}%\n"
 
         self.results_display.append(result_text)
 
@@ -1163,7 +1163,7 @@ Licensing Files Found: {len(licensing_files)}"""
         if result.all_detections:
             result_text += "\nDetections:\n"
             for detection in result.all_detections:
-                result_text += f"  • {detection.name} [{detection.type}]\n"
+                result_text += f"   {detection.name} [{detection.type}]\n"
                 if detection.version:
                     result_text += f"    Version: {detection.version}\n"
 

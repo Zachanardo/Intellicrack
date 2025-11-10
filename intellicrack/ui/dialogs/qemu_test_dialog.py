@@ -137,10 +137,10 @@ class QEMUTestDialog(QDialog):
         # QEMU benefits info
         benefits_text = QLabel(
             "<b>Benefits of QEMU testing:</b><br>"
-            "• Isolates script execution from host system<br>"
-            "• Shows script behavior before deployment<br>"
-            "• Prevents potential system damage<br>"
-            "• Allows safe experimentation",
+            " Isolates script execution from host system<br>"
+            " Shows script behavior before deployment<br>"
+            " Prevents potential system damage<br>"
+            " Allows safe experimentation",
         )
         benefits_text.setObjectName("benefitsText")
         benefits_text.setWordWrap(True)

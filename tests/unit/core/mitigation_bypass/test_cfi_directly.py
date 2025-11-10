@@ -15,11 +15,11 @@ print("=" * 80)
 try:
     # Try to import the module
     from intellicrack.core.mitigation_bypass.cfi_bypass import CFIBypass
-    print("✓ Successfully imported CFIBypass from mitigation_bypass")
+    print("OK Successfully imported CFIBypass from mitigation_bypass")
 
     # Create instance
     cfi = CFIBypass()
-    print("✓ Successfully created CFIBypass instance")
+    print("OK Successfully created CFIBypass instance")
 
     # Test basic functionality
     import tempfile
@@ -86,10 +86,10 @@ try:
     print(f"\nTest suite exit code: {exit_code}")
 
 except ImportError as e:
-    print(f"✗ Import error: {e}")
+    print(f"FAIL Import error: {e}")
     traceback.print_exc()
 except Exception as e:
-    print(f"✗ Error: {e}")
+    print(f"FAIL Error: {e}")
     traceback.print_exc()
 
 print("\nTest execution complete.")

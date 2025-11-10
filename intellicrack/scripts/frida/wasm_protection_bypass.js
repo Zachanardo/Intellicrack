@@ -30,13 +30,12 @@
 
 const wasmProtectionBypass = {
     name: 'WebAssembly Protection Bypass',
-    description:
-    'WASM-based license validation bypass for modern web applications',
+    description: 'WASM-based license validation bypass for modern web applications',
     version: '3.0.0',
 
     // Configuration
     config: {
-    // WASM detection patterns
+        // WASM detection patterns
         patterns: {
             // WebAssembly API patterns
             wasm_apis: [
@@ -269,10 +268,7 @@ const wasmProtectionBypass = {
                     modifiedImports = self.modifyImportObject(importObject);
                 }
 
-                if (
-                    bufferSource instanceof ArrayBuffer ||
-          ArrayBuffer.isView(bufferSource)
-                ) {
+                if (bufferSource instanceof ArrayBuffer || ArrayBuffer.isView(bufferSource)) {
                     // Analyze binary
                     const analysis = self.analyzeWASMBinary(bufferSource);
 
@@ -291,11 +287,7 @@ const wasmProtectionBypass = {
                 }
 
                 // Call original
-                const result = await original.call(
-                    this,
-                    modifiedBuffer,
-                    modifiedImports,
-                );
+                const result = await original.call(this, modifiedBuffer, modifiedImports);
 
                 // Hook the instance
                 if (result.instance) {
@@ -396,12 +388,7 @@ const wasmProtectionBypass = {
             const bytes = new Uint8Array(buffer);
 
             // Check WASM magic number
-            if (
-                bytes[0] !== 0x00 ||
-        bytes[1] !== 0x61 ||
-        bytes[2] !== 0x73 ||
-        bytes[3] !== 0x6d
-            ) {
+            if (bytes[0] !== 0x00 || bytes[1] !== 0x61 || bytes[2] !== 0x73 || bytes[3] !== 0x6d) {
                 send({
                     type: 'warning',
                     target: 'wasm_bypass',
@@ -483,7 +470,13 @@ const wasmProtectionBypass = {
                 pos += 2;
             }
         } catch (e) {
-            send({ type: "debug", target: "wasm_bypass", action: "export_parse_error", error: e.toString(), stack: e.stack || "No stack" });
+            send({
+                type: 'debug',
+                target: 'wasm_bypass',
+                action: 'export_parse_error',
+                error: e.toString(),
+                stack: e.stack || 'No stack',
+            });
         }
     },
 
@@ -524,12 +517,7 @@ const wasmProtectionBypass = {
         patched.set(bytes);
 
         // WASM magic number and version
-        if (
-            bytes[0] !== 0x00 ||
-      bytes[1] !== 0x61 ||
-      bytes[2] !== 0x73 ||
-      bytes[3] !== 0x6d
-        ) {
+        if (bytes[0] !== 0x00 || bytes[1] !== 0x61 || bytes[2] !== 0x73 || bytes[3] !== 0x6d) {
             send({
                 type: 'error',
                 target: 'wasm_bypass',
@@ -599,7 +587,7 @@ const wasmProtectionBypass = {
                     // Check if this is a license function by index
                     if (
                         analysis.licenseFunctionIndices &&
-            analysis.licenseFunctionIndices.includes(i)
+                        analysis.licenseFunctionIndices.includes(i)
                     ) {
                         // 3. Patch function body to bypass license validation
                         send({
@@ -791,9 +779,9 @@ const wasmProtectionBypass = {
 
             if (
                 lowerName.includes('check') ||
-        lowerName.includes('validate') ||
-        lowerName.includes('verify') ||
-        lowerName.includes('is')
+                lowerName.includes('validate') ||
+                lowerName.includes('verify') ||
+                lowerName.includes('is')
             ) {
                 // Return true/1 for validation functions
                 send({
@@ -814,10 +802,7 @@ const wasmProtectionBypass = {
                 });
                 self.state.bypass_count++;
                 return 4102444800; // Year 2100
-            } else if (
-                lowerName.includes('decrypt') ||
-        lowerName.includes('decode')
-            ) {
+            } else if (lowerName.includes('decrypt') || lowerName.includes('decode')) {
                 // Return passthrough decrypted data
                 send({
                     type: 'bypass',
@@ -960,9 +945,9 @@ const wasmProtectionBypass = {
         // Boolean checks - ensure true
         if (
             lowerName.includes('is') ||
-      lowerName.includes('check') ||
-      lowerName.includes('validate') ||
-      lowerName.includes('verify')
+            lowerName.includes('check') ||
+            lowerName.includes('validate') ||
+            lowerName.includes('verify')
         ) {
             if (result === 0 || result === false) {
                 return 1; // Return true
@@ -1008,13 +993,7 @@ const wasmProtectionBypass = {
             const decoder = new TextDecoder();
 
             // Look for license-related strings
-            const patterns = [
-                'UNLICENSED',
-                'TRIAL',
-                'EXPIRED',
-                'INVALID',
-                'LICENSE_FAIL',
-            ];
+            const patterns = ['UNLICENSED', 'TRIAL', 'EXPIRED', 'INVALID', 'LICENSE_FAIL'];
 
             patterns.forEach((pattern) => {
                 const encoder = new TextEncoder();
@@ -1155,9 +1134,7 @@ const wasmProtectionBypass = {
         }
 
         // Check known patterns
-        return this.config.patterns.module_patterns.some((pattern) =>
-            urlStr.includes(pattern),
-        );
+        return this.config.patterns.module_patterns.some((pattern) => urlStr.includes(pattern));
     },
 
     // Hook XMLHttpRequest for WASM
@@ -1352,10 +1329,7 @@ const wasmProtectionBypass = {
             // Hook exported functions
             if (Module.asm) {
                 for (const name in Module.asm) {
-                    if (
-                        typeof Module.asm[name] === 'function' &&
-            self.isLicenseFunction(name)
-                    ) {
+                    if (typeof Module.asm[name] === 'function' && self.isLicenseFunction(name)) {
                         self.hookModuleFunction(name);
                     }
                 }
@@ -1808,8 +1782,7 @@ const wasmProtectionBypass = {
                             // Look for license validation patterns in SIMD results
                             if (result && Array.isArray(result)) {
                                 const hasLicensePattern = result.some(
-                                    (val) =>
-                                        val === 0xdeadbeef || val === 0xcafebabe || val === 0,
+                                    (val) => val === 0xdeadbeef || val === 0xcafebabe || val === 0
                                 );
 
                                 if (hasLicensePattern) {
@@ -1856,7 +1829,7 @@ const wasmProtectionBypass = {
 
     // Scan for new modules
     scanForNewModules: function () {
-    // Check for new WebAssembly.Module instances
+        // Check for new WebAssembly.Module instances
         if (typeof WebAssembly !== 'undefined' && WebAssembly.Module) {
             // This is tricky without proper instrumentation
             // In practice, we rely on our hooks to catch new modules
@@ -1954,14 +1927,14 @@ const wasmProtectionBypass = {
 
     // Monitor dynamic WASM creation
     monitorDynamicWASM: function () {
-    // Monitor eval for dynamic WASM
+        // Monitor eval for dynamic WASM
         const originalEval = window.eval;
         const self = this;
 
         window.eval = function (code) {
             if (
                 typeof code === 'string' &&
-        (code.includes('WebAssembly') || code.includes('wasm'))
+                (code.includes('WebAssembly') || code.includes('wasm'))
             ) {
                 send({
                     type: 'info',
@@ -2161,11 +2134,7 @@ const wasmProtectionBypass = {
             const decoder = new TextDecoder();
             const text = decoder.decode(view);
 
-            if (
-                text.includes('license') ||
-        text.includes('trial') ||
-        text.includes('expire')
-            ) {
+            if (text.includes('license') || text.includes('trial') || text.includes('expire')) {
                 send({
                     type: 'bypass',
                     target: 'wasm_bypass',
@@ -2368,7 +2337,10 @@ const wasmProtectionBypass = {
                     if (type === 'error' || type === 'unhandledrejection') {
                         const wrappedListener = function (event) {
                             if (event && event.message && typeof event.message === 'string') {
-                                if (event.message.includes('LICENSE') || event.message.includes('license')) {
+                                if (
+                                    event.message.includes('LICENSE') ||
+                                    event.message.includes('license')
+                                ) {
                                     send({
                                         type: 'bypass',
                                         target: 'wasm_bypass',
@@ -2581,8 +2553,8 @@ const wasmProtectionBypass = {
         // Hook WebAssembly.Module.imports for component analysis
         if (
             typeof WebAssembly !== 'undefined' &&
-      WebAssembly.Module &&
-      WebAssembly.Module.imports
+            WebAssembly.Module &&
+            WebAssembly.Module.imports
         ) {
             const originalImports = WebAssembly.Module.imports;
             WebAssembly.Module.imports = function (module) {
@@ -2592,7 +2564,7 @@ const wasmProtectionBypass = {
                 imports.forEach((imp) => {
                     if (
                         imp.name &&
-            (imp.name.includes('license') || imp.name.includes('validate'))
+                        (imp.name.includes('license') || imp.name.includes('validate'))
                     ) {
                         send({
                             type: 'info',
@@ -2615,8 +2587,8 @@ const wasmProtectionBypass = {
         // Hook WebAssembly.Module.exports
         if (
             typeof WebAssembly !== 'undefined' &&
-      WebAssembly.Module &&
-      WebAssembly.Module.exports
+            WebAssembly.Module &&
+            WebAssembly.Module.exports
         ) {
             const originalExports = WebAssembly.Module.exports;
             WebAssembly.Module.exports = function (module) {
@@ -2798,10 +2770,7 @@ const wasmProtectionBypass = {
                 if (unity.SendMessage) {
                     const originalSend = unity.SendMessage;
                     unity.SendMessage = function (gameObject, method, param) {
-                        if (
-                            method &&
-              (method.includes('License') || method.includes('Validate'))
-                        ) {
+                        if (method && (method.includes('License') || method.includes('Validate'))) {
                             send({
                                 type: 'bypass',
                                 target: 'wasm_bypass',
@@ -3063,7 +3032,12 @@ const wasmProtectionBypass = {
         if (typeof Atomics !== 'undefined') {
             const originalCompareExchange = Atomics.compareExchange;
 
-            Atomics.compareExchange = function (typedArray, index, expectedValue, replacementValue) {
+            Atomics.compareExchange = function (
+                typedArray,
+                index,
+                expectedValue,
+                replacementValue
+            ) {
                 if (expectedValue === 0 && replacementValue === 1) {
                     send({
                         type: 'bypass',
@@ -3073,7 +3047,13 @@ const wasmProtectionBypass = {
                     return originalCompareExchange.call(this, typedArray, index, expectedValue, 1);
                 }
 
-                return originalCompareExchange.call(this, typedArray, index, expectedValue, replacementValue);
+                return originalCompareExchange.call(
+                    this,
+                    typedArray,
+                    index,
+                    expectedValue,
+                    replacementValue
+                );
             };
         }
     },

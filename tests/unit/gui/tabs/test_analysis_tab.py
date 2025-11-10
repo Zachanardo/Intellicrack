@@ -225,6 +225,7 @@ class TestAnalysisTab:
                 protection_results = detector.analyze()
                 self.tab.detect_protection()
             except Exception:
+                pass
                 # Handle any detection errors gracefully
                 # Continue with test even if detection fails
             qtbot.wait(100)

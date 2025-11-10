@@ -25,10 +25,13 @@ from typing import Any
 from intellicrack.handlers.psutil_handler import psutil
 
 from ...utils.logger import get_logger
-from ..logging.audit_logger import get_audit_logger
 
 logger = get_logger(__name__)
-audit_logger = get_audit_logger()
+
+def _get_audit_logger():
+    """Lazy import of audit logger to avoid circular imports."""
+    from ..logging.audit_logger import get_audit_logger
+    return get_audit_logger()
 
 try:
     from ..terminal_manager import get_terminal_manager
@@ -242,7 +245,7 @@ class VMResource(ManagedResource):
             self.vm_process.kill()
 
         # Log VM shutdown
-        audit_logger.log_vm_operation("stop", self.vm_name, success=True)
+        _get_audit_logger().log_vm_operation("stop", self.vm_name, success=True)
 
 
 class ResourceManager:
@@ -439,7 +442,7 @@ class ResourceManager:
 
         try:
             self.register_resource(resource)
-            audit_logger.log_vm_operation("start", vm_name, success=True)
+            _get_audit_logger().log_vm_operation("start", vm_name, success=True)
             yield resource
         finally:
             self.release_resource(resource.resource_id)

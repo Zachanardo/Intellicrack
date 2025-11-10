@@ -14,13 +14,13 @@ def test_anthropic_generation():
 
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
-        print("❌ No ANTHROPIC_API_KEY set")
+        print("FAIL No ANTHROPIC_API_KEY set")
         return
 
     import anthropic
     client = anthropic.Anthropic(api_key=api_key)
 
-    print(f"✅ Client created: {type(client)}")
+    print(f"OK Client created: {type(client)}")
     print(f"   Has messages: {hasattr(client, 'messages')}")
     print(f"   Has messages.create: {hasattr(client, 'messages') and hasattr(client.messages, 'create')}")
 
@@ -32,7 +32,7 @@ def test_anthropic_generation():
             max_tokens=100,
             temperature=0.3
         )
-        print(f"\n✅ Generation successful!")
+        print(f"\nOK Generation successful!")
         print(f"   Response type: {type(response)}")
         print(f"   Has content: {hasattr(response, 'content')}")
 
@@ -40,7 +40,7 @@ def test_anthropic_generation():
             text = response.content[0].text
             print(f"   Text: {text[:100]}...")
     except Exception as e:
-        print(f"\n❌ Generation failed: {e}")
+        print(f"\nFAIL Generation failed: {e}")
 
 if __name__ == "__main__":
     test_anthropic_generation()

@@ -320,7 +320,7 @@ class ProtocolToolCoverageAnalyzer:
 
 ## EXECUTIVE SUMMARY
 - **Overall Coverage**: {coverage_metrics.get('overall_coverage_percentage', 0):.1f}%
-- **80% Requirement Met**: {'✓ YES' if coverage_metrics.get('meets_80_percent_requirement', False) else '✗ NO'}
+- **80% Requirement Met**: {'OK YES' if coverage_metrics.get('meets_80_percent_requirement', False) else 'FAIL NO'}
 - **Total Test Cases**: {coverage_metrics.get('total_test_cases', 0)}
 - **Test Quality**: {'HIGH' if coverage_metrics.get('total_test_cases', 0) > 50 else 'MEDIUM' if coverage_metrics.get('total_test_cases', 0) > 20 else 'LOW'}
 
@@ -342,14 +342,14 @@ class ProtocolToolCoverageAnalyzer:
 """
 
         for cls in source_analysis.get('classes', []):
-            status = '✓' if cls['name'] in test_analysis.get('classes_tested', set()) else '✗'
+            status = 'OK' if cls['name'] in test_analysis.get('classes_tested', set()) else 'FAIL'
             report += f"- {status} **{cls['name']}** ({len(cls['methods'])} methods)\n"
 
         report += f"""
 ### Identified Functions
 """
         for func in source_analysis.get('functions', []):
-            status = '✓' if func['name'] in test_analysis.get('functions_tested', set()) else '✗'
+            status = 'OK' if func['name'] in test_analysis.get('functions_tested', set()) else 'FAIL'
             report += f"- {status} **{func['name']}()** (line {func['line_number']})\n"
 
         report += f"""
@@ -359,7 +359,7 @@ class ProtocolToolCoverageAnalyzer:
 ### Test Files Analyzed
 """
         for test_file in self.test_files:
-            exists = '✓' if test_file.exists() else '✗'
+            exists = 'OK' if test_file.exists() else 'FAIL'
             report += f"- {exists} {test_file.name}\n"
 
         report += f"""
@@ -411,19 +411,19 @@ class ProtocolToolCoverageAnalyzer:
 ## PRODUCTION READINESS ASSESSMENT
 
 ### Compliance Status
-- **80% Coverage Requirement**: {'✓ MET' if coverage_metrics.get('meets_80_percent_requirement', False) else '✗ NOT MET'}
-- **Test Quality**: {'✓ ACCEPTABLE' if total_tests >= 30 else '✗ INSUFFICIENT'}
-- **Integration Testing**: {'✓ PRESENT' if coverage_metrics.get('integration_tests', 0) > 0 else '✗ MISSING'}
+- **80% Coverage Requirement**: {'OK MET' if coverage_metrics.get('meets_80_percent_requirement', False) else 'FAIL NOT MET'}
+- **Test Quality**: {'OK ACCEPTABLE' if total_tests >= 30 else 'FAIL INSUFFICIENT'}
+- **Integration Testing**: {'OK PRESENT' if coverage_metrics.get('integration_tests', 0) > 0 else 'FAIL MISSING'}
 
 ### Final Verdict
 """
 
         if coverage_metrics.get('meets_80_percent_requirement', False) and total_tests >= 30:
-            report += "**✓ PRODUCTION READY** - Protocol tool meets coverage requirements\n"
+            report += "**OK PRODUCTION READY** - Protocol tool meets coverage requirements\n"
         elif coverage_metrics.get('overall_coverage_percentage', 0) >= 70:
             report += "**⚠ NEEDS IMPROVEMENT** - Close to requirements but needs additional test coverage\n"
         else:
-            report += "**✗ NOT PRODUCTION READY** - Insufficient test coverage for production deployment\n"
+            report += "**FAIL NOT PRODUCTION READY** - Insufficient test coverage for production deployment\n"
 
         report += f"""
 
@@ -467,7 +467,7 @@ def main():
 
     print(f"\nCOVERAGE ANALYSIS COMPLETE")
     print(f"Overall Coverage: {coverage_metrics.get('overall_coverage_percentage', 0):.1f}%")
-    print(f"80% Requirement: {'✓ MET' if coverage_metrics.get('meets_80_percent_requirement', False) else '✗ NOT MET'}")
+    print(f"80% Requirement: {'OK MET' if coverage_metrics.get('meets_80_percent_requirement', False) else 'FAIL NOT MET'}")
     print(f"Total Test Cases: {coverage_metrics.get('total_test_cases', 0)}")
     print(f"Report saved: {report_path}")
 

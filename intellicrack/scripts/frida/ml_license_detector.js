@@ -29,13 +29,12 @@
 
 const MlLicenseDetector = {
     name: 'ML License Function Detector',
-    description:
-    'Intelligent license function detection and automatic hook placement',
+    description: 'Intelligent license function detection and automatic hook placement',
     version: '2.0.0',
 
     // Configuration for ML-based detection
     config: {
-    // Machine learning features
+        // Machine learning features
         ml: {
             enabled: true,
             confidence_threshold: 0.7,
@@ -249,7 +248,7 @@ const MlLicenseDetector = {
             config.name_patterns,
             config.api_patterns,
             config.string_patterns,
-            config.behavioral_patterns,
+            config.behavioral_patterns
         );
 
         // Initialize bias
@@ -366,11 +365,7 @@ const MlLicenseDetector = {
             var functionAddress = exportInfo.address;
 
             // Extract features for ML prediction
-            var features = this.extractFunctionFeatures(
-                moduleName,
-                functionName,
-                functionAddress,
-            );
+            var features = this.extractFunctionFeatures(moduleName, functionName, functionAddress);
 
             // Make ML prediction
             var prediction = this.predict(features);
@@ -386,8 +381,7 @@ const MlLicenseDetector = {
                 timestamp: Date.now(),
             };
 
-            this.detected_functions[moduleName + '!' + functionName] =
-        detectionResult;
+            this.detected_functions[moduleName + '!' + functionName] = detectionResult;
 
             // Decide on hook placement based on confidence
             this.evaluateHookPlacement(detectionResult);
@@ -402,11 +396,7 @@ const MlLicenseDetector = {
     },
 
     // === FEATURE EXTRACTION ===
-    extractFunctionFeatures: function (
-        moduleName,
-        functionName,
-        functionAddress,
-    ) {
+    extractFunctionFeatures: function (moduleName, functionName, functionAddress) {
         var features = {
             name_score: 0.0,
             api_score: 0.0,
@@ -493,7 +483,7 @@ const MlLicenseDetector = {
     },
 
     extractApiFeatures: function (functionName) {
-    // Simplified API feature extraction based on function name patterns
+        // Simplified API feature extraction based on function name patterns
         var score = 0.0;
         var apiPatterns = this.config.ml.features.api_patterns;
 
@@ -507,7 +497,7 @@ const MlLicenseDetector = {
     },
 
     extractStringFeatures: function (functionName) {
-    // Simplified string feature extraction
+        // Simplified string feature extraction
         var score = 0.0;
         var stringPatterns = this.config.ml.features.string_patterns;
 
@@ -525,7 +515,7 @@ const MlLicenseDetector = {
     },
 
     extractBehavioralFeatures: function (functionName) {
-    // Simplified behavioral feature extraction
+        // Simplified behavioral feature extraction
         var score = 0.0;
         var behavioralPatterns = this.config.ml.features.behavioral_patterns;
 
@@ -548,7 +538,7 @@ const MlLicenseDetector = {
     },
 
     combineFeatures: function (features) {
-    // Weighted combination of feature scores
+        // Weighted combination of feature scores
         var weights = {
             name: 0.4,
             api: 0.25,
@@ -558,9 +548,9 @@ const MlLicenseDetector = {
 
         return (
             features.name_score * weights.name +
-      features.api_score * weights.api +
-      features.string_score * weights.string +
-      features.behavioral_score * weights.behavioral
+            features.api_score * weights.api +
+            features.string_score * weights.string +
+            features.behavioral_score * weights.behavioral
         );
     },
 
@@ -574,8 +564,7 @@ const MlLicenseDetector = {
             var confidence = 1.0 / (1.0 + Math.exp(-score));
 
             // Determine classification
-            var is_license_function =
-        confidence >= this.config.thresholds.minimum_confidence;
+            var is_license_function = confidence >= this.config.thresholds.minimum_confidence;
 
             // Store prediction for learning
             this.model.prediction_history.push({
@@ -734,7 +723,7 @@ const MlLicenseDetector = {
                     var bypassResult = this.parent.parent.applyBypass(
                         this.functionName,
                         this.moduleName,
-                        retval,
+                        retval
                     );
 
                     if (bypassResult.applied) {
@@ -747,7 +736,7 @@ const MlLicenseDetector = {
                             original_value: original,
                             bypassed_value: retval,
                             bypass_details:
-                bypassResult.old_value + ' -> ' + bypassResult.new_value,
+                                bypassResult.old_value + ' -> ' + bypassResult.new_value,
                         });
                     }
 
@@ -755,7 +744,7 @@ const MlLicenseDetector = {
                     this.parent.parent.recordBypassResult(
                         this.functionName,
                         this.moduleName,
-                        bypassResult,
+                        bypassResult
                     );
                 },
             });
@@ -832,24 +821,12 @@ const MlLicenseDetector = {
     },
 
     isLicenseValidationFunction: function (name) {
-        var patterns = [
-            'validate',
-            'verify',
-            'check',
-            'islicense',
-            'isvalid',
-            'licensevalid',
-        ];
+        var patterns = ['validate', 'verify', 'check', 'islicense', 'isvalid', 'licensevalid'];
         return patterns.some((pattern) => name.includes(pattern));
     },
 
     isLicenseCheckFunction: function (name) {
-        var patterns = [
-            'checklic',
-            'licensecheck',
-            'checklicense',
-            'verifylicense',
-        ];
+        var patterns = ['checklic', 'licensecheck', 'checklicense', 'verifylicense'];
         return patterns.some((pattern) => name.includes(pattern));
     },
 
@@ -896,10 +873,7 @@ const MlLicenseDetector = {
             });
         }
 
-        var regQueryValue = Module.findExportByName(
-            'advapi32.dll',
-            'RegQueryValueExW',
-        );
+        var regQueryValue = Module.findExportByName('advapi32.dll', 'RegQueryValueExW');
         if (regQueryValue) {
             Interceptor.attach(regQueryValue, {
                 onEnter: function (args) {
@@ -915,10 +889,7 @@ const MlLicenseDetector = {
     },
 
     monitorNetworkAccess: function () {
-        var winHttpConnect = Module.findExportByName(
-            'winhttp.dll',
-            'WinHttpConnect',
-        );
+        var winHttpConnect = Module.findExportByName('winhttp.dll', 'WinHttpConnect');
         if (winHttpConnect) {
             Interceptor.attach(winHttpConnect, {
                 onEnter: function (args) {
@@ -942,8 +913,8 @@ const MlLicenseDetector = {
                         var fileName = args[0].readUtf16String();
                         if (
                             fileName.toLowerCase().includes('license') ||
-              fileName.toLowerCase().includes('key') ||
-              fileName.toLowerCase().includes('activation')
+                            fileName.toLowerCase().includes('key') ||
+                            fileName.toLowerCase().includes('activation')
                         ) {
                             this.parent.parent.recordApiCall('CreateFileW', {
                                 file: fileName,
@@ -956,10 +927,7 @@ const MlLicenseDetector = {
     },
 
     monitorTimeAccess: function () {
-        var getSystemTime = Module.findExportByName(
-            'kernel32.dll',
-            'GetSystemTime',
-        );
+        var getSystemTime = Module.findExportByName('kernel32.dll', 'GetSystemTime');
         if (getSystemTime) {
             Interceptor.attach(getSystemTime, {
                 onEnter: function (args) {
@@ -979,15 +947,10 @@ const MlLicenseDetector = {
                 },
                 onLeave: function (retval) {
                     // Use retval to check GetSystemTime success for ML analysis
-                    var timeCallSuccess =
-            retval && !retval.isNull() && retval.toInt32() !== 0;
+                    var timeCallSuccess = retval && !retval.isNull() && retval.toInt32() !== 0;
 
                     // Could manipulate returned time for license bypass
-                    if (
-                        this.systemTimePtr &&
-            !this.systemTimePtr.isNull() &&
-            timeCallSuccess
-                    ) {
+                    if (this.systemTimePtr && !this.systemTimePtr.isNull() && timeCallSuccess) {
                         try {
                             // Read the returned SYSTEMTIME structure for analysis
                             var year = this.systemTimePtr.readU16();
@@ -1129,12 +1092,12 @@ const MlLicenseDetector = {
             // Update feature weights (simplified)
             var featureWeight = this.model.weights['combined'] || 0.0;
             this.model.weights['combined'] =
-        featureWeight - learningRate * error * features.combined_score;
+                featureWeight - learningRate * error * features.combined_score;
         }
     },
 
     updateAccuracyMetrics: function () {
-    // Calculate accuracy based on recent predictions and actual bypass results
+        // Calculate accuracy based on recent predictions and actual bypass results
         var metrics = this.model.accuracy_metrics;
         var correct = 0;
         var total = 0;
@@ -1146,8 +1109,7 @@ const MlLicenseDetector = {
                 total++;
 
                 var predicted =
-          result.detection.confidence >=
-          this.config.thresholds.medium_confidence;
+                    result.detection.confidence >= this.config.thresholds.medium_confidence;
                 var actual = result.bypass.applied;
 
                 if (predicted === actual) {
@@ -1214,7 +1176,7 @@ const MlLicenseDetector = {
     },
 
     recordApiCall: function (apiName, params) {
-    // Record API call for behavioral analysis
+        // Record API call for behavioral analysis
         var timestamp = Date.now();
 
         // Use params for behavioral pattern analysis
@@ -1232,10 +1194,10 @@ const MlLicenseDetector = {
         if (params) {
             behavioralData.param_count = Object.keys(params).length;
             behavioralData.has_string_params = Object.values(params).some(
-                (v) => typeof v === 'string',
+                (v) => typeof v === 'string'
             );
             behavioralData.has_pointer_params = Object.values(params).some(
-                (v) => typeof v === 'object' && v.toString,
+                (v) => typeof v === 'object' && v.toString
             );
         }
 
@@ -1250,14 +1212,14 @@ const MlLicenseDetector = {
     },
 
     getCallFrequency: function (apiName) {
-    // Simple frequency counter for behavioral analysis
+        // Simple frequency counter for behavioral analysis
         this.apiCallCounts = this.apiCallCounts || {};
         this.apiCallCounts[apiName] = (this.apiCallCounts[apiName] || 0) + 1;
         return this.apiCallCounts[apiName];
     },
 
     hashParams: function (params) {
-    // Simple hash of parameters for pattern matching
+        // Simple hash of parameters for pattern matching
         if (!params) return 0;
         var hash = 0;
         var str = JSON.stringify(params);
@@ -1270,7 +1232,7 @@ const MlLicenseDetector = {
     },
 
     updateModelWithResult: function (functionKey, bypassResult) {
-    // Immediate model update based on successful bypass
+        // Immediate model update based on successful bypass
         if (bypassResult.applied && this.detected_functions[functionKey]) {
             var detection = this.detected_functions[functionKey];
 
@@ -1292,7 +1254,7 @@ const MlLicenseDetector = {
 
     // === UTILITY FUNCTIONS ===
     processBatch: function () {
-    // Process pending hook placements
+        // Process pending hook placements
         setTimeout(() => {
             send({
                 type: 'status',
@@ -1322,7 +1284,7 @@ const MlLicenseDetector = {
     },
 
     loadSavedModel: function () {
-    // In a real implementation, this would load from persistent storage
+        // In a real implementation, this would load from persistent storage
         send({
             type: 'warning',
             target: 'ml_license_detector',
@@ -1331,7 +1293,7 @@ const MlLicenseDetector = {
     },
 
     saveModel: function () {
-    // In a real implementation, this would save to persistent storage
+        // In a real implementation, this would save to persistent storage
         send({
             type: 'success',
             target: 'ml_license_detector',
@@ -1375,10 +1337,7 @@ const MlLicenseDetector = {
         }
 
         // Hook GetProcAddress to detect function lookups
-        var getProcAddress = Module.findExportByName(
-            'kernel32.dll',
-            'GetProcAddress',
-        );
+        var getProcAddress = Module.findExportByName('kernel32.dll', 'GetProcAddress');
         if (getProcAddress) {
             Interceptor.attach(getProcAddress, {
                 onEnter: function (args) {

@@ -19,7 +19,7 @@ function log(message, level = 'info') {
     const entry = {
         timestamp: new Date().toISOString(),
         level: level,
-        message: message
+        message: message,
     };
     send({ type: 'log', data: entry });
     activity.push(entry);
@@ -34,11 +34,22 @@ function logError(message) {
 
 function findOpenSSLModule() {
     const possible_names = [
-        'libssl.so', 'libssl.so.1.1', 'libssl.so.1.0.0', 'libssl.so.3',
-        'libssl.dylib', 'libssl.1.1.dylib', 'libssl.1.0.0.dylib',
-        'libssl-1_1-x64.dll', 'libssl-1_1.dll', 'libssl-3-x64.dll', 'libssl-3.dll',
-        'ssleay32.dll', 'libeay32.dll',
-        'libboringssl.so', 'libboringssl.dylib', 'boringssl.dll'
+        'libssl.so',
+        'libssl.so.1.1',
+        'libssl.so.1.0.0',
+        'libssl.so.3',
+        'libssl.dylib',
+        'libssl.1.1.dylib',
+        'libssl.1.0.0.dylib',
+        'libssl-1_1-x64.dll',
+        'libssl-1_1.dll',
+        'libssl-3-x64.dll',
+        'libssl-3.dll',
+        'ssleay32.dll',
+        'libeay32.dll',
+        'libboringssl.so',
+        'libboringssl.dylib',
+        'boringssl.dll',
     ];
 
     for (let name of possible_names) {
@@ -54,8 +65,7 @@ function findOpenSSLModule() {
 
                 return module;
             }
-        } catch (e) {
-        }
+        } catch (e) {}
     }
 
     return null;
@@ -67,15 +77,20 @@ if (!openssl_module) {
     logError('OpenSSL module not found');
 } else {
     try {
-        const SSL_CTX_set_verify = Module.findExportByName(openssl_module.name, 'SSL_CTX_set_verify');
+        const SSL_CTX_set_verify = Module.findExportByName(
+            openssl_module.name,
+            'SSL_CTX_set_verify'
+        );
         if (SSL_CTX_set_verify) {
             Interceptor.attach(SSL_CTX_set_verify, {
-                onEnter: function(args) {
+                onEnter: function (args) {
                     const ctx = args[0];
                     const mode = args[1].toInt32();
                     const callback = args[2];
 
-                    log(`SSL_CTX_set_verify: Original mode=0x${mode.toString(16)}, callback=${callback}`);
+                    log(
+                        `SSL_CTX_set_verify: Original mode=0x${mode.toString(16)}, callback=${callback}`
+                    );
 
                     args[1] = ptr(SSL_VERIFY_NONE);
                     args[2] = ptr(0);
@@ -83,9 +98,11 @@ if (!openssl_module) {
                     this.originalMode = mode;
                     this.ctx = ctx;
                 },
-                onLeave: function(retval) {
-                    log(`SSL_CTX_set_verify: Forced mode to SSL_VERIFY_NONE for context ${this.ctx}`);
-                }
+                onLeave: function (retval) {
+                    log(
+                        `SSL_CTX_set_verify: Forced mode to SSL_VERIFY_NONE for context ${this.ctx}`
+                    );
+                },
             });
             log('Successfully hooked SSL_CTX_set_verify');
         }
@@ -97,21 +114,23 @@ if (!openssl_module) {
         const SSL_set_verify = Module.findExportByName(openssl_module.name, 'SSL_set_verify');
         if (SSL_set_verify) {
             Interceptor.attach(SSL_set_verify, {
-                onEnter: function(args) {
+                onEnter: function (args) {
                     const ssl = args[0];
                     const mode = args[1].toInt32();
                     const callback = args[2];
 
-                    log(`SSL_set_verify: Original mode=0x${mode.toString(16)} for SSL object ${ssl}`);
+                    log(
+                        `SSL_set_verify: Original mode=0x${mode.toString(16)} for SSL object ${ssl}`
+                    );
 
                     args[1] = ptr(SSL_VERIFY_NONE);
                     args[2] = ptr(0);
 
                     this.ssl = ssl;
                 },
-                onLeave: function(retval) {
+                onLeave: function (retval) {
                     log(`SSL_set_verify: Forced mode to SSL_VERIFY_NONE for SSL ${this.ssl}`);
-                }
+                },
             });
             log('Successfully hooked SSL_set_verify');
         }
@@ -120,24 +139,29 @@ if (!openssl_module) {
     }
 
     try {
-        const SSL_get_verify_result = Module.findExportByName(openssl_module.name, 'SSL_get_verify_result');
+        const SSL_get_verify_result = Module.findExportByName(
+            openssl_module.name,
+            'SSL_get_verify_result'
+        );
         if (SSL_get_verify_result) {
             Interceptor.attach(SSL_get_verify_result, {
-                onEnter: function(args) {
+                onEnter: function (args) {
                     const ssl = args[0];
                     this.ssl = ssl;
                 },
-                onLeave: function(retval) {
+                onLeave: function (retval) {
                     const originalResult = retval.toInt32();
 
                     if (originalResult !== X509_V_OK) {
-                        log(`SSL_get_verify_result: Original error=${originalResult}, forcing X509_V_OK`);
+                        log(
+                            `SSL_get_verify_result: Original error=${originalResult}, forcing X509_V_OK`
+                        );
 
                         const certInfo = {
                             timestamp: new Date().toISOString(),
                             ssl: this.ssl.toString(),
                             originalError: originalResult,
-                            bypassed: true
+                            bypassed: true,
                         };
                         certificates.push(certInfo);
                         if (certificates.length > MAX_LOG) {
@@ -147,7 +171,7 @@ if (!openssl_module) {
 
                         retval.replace(ptr(X509_V_OK));
                     }
-                }
+                },
             });
             log('Successfully hooked SSL_get_verify_result');
         }
@@ -156,29 +180,40 @@ if (!openssl_module) {
     }
 
     try {
-        const SSL_CTX_set_cert_verify_callback = Module.findExportByName(openssl_module.name, 'SSL_CTX_set_cert_verify_callback');
+        const SSL_CTX_set_cert_verify_callback = Module.findExportByName(
+            openssl_module.name,
+            'SSL_CTX_set_cert_verify_callback'
+        );
         if (SSL_CTX_set_cert_verify_callback) {
-            const always_succeed_callback = new NativeCallback(function(x509_ctx, arg) {
-                log('Custom verify callback invoked - returning success (1)');
-                return 1;
-            }, 'int', ['pointer', 'pointer']);
+            const always_succeed_callback = new NativeCallback(
+                function (x509_ctx, arg) {
+                    log('Custom verify callback invoked - returning success (1)');
+                    return 1;
+                },
+                'int',
+                ['pointer', 'pointer']
+            );
 
             Interceptor.attach(SSL_CTX_set_cert_verify_callback, {
-                onEnter: function(args) {
+                onEnter: function (args) {
                     const ctx = args[0];
                     const callback = args[1];
                     const arg = args[2];
 
-                    log(`SSL_CTX_set_cert_verify_callback: Replacing callback ${callback} with always-succeed callback`);
+                    log(
+                        `SSL_CTX_set_cert_verify_callback: Replacing callback ${callback} with always-succeed callback`
+                    );
 
                     args[1] = always_succeed_callback;
 
                     this.ctx = ctx;
                     this.originalCallback = callback;
                 },
-                onLeave: function(retval) {
-                    log(`SSL_CTX_set_cert_verify_callback: Callback replaced for context ${this.ctx}`);
-                }
+                onLeave: function (retval) {
+                    log(
+                        `SSL_CTX_set_cert_verify_callback: Callback replaced for context ${this.ctx}`
+                    );
+                },
             });
             log('Successfully hooked SSL_CTX_set_cert_verify_callback');
         }
@@ -187,10 +222,13 @@ if (!openssl_module) {
     }
 
     try {
-        const SSL_CTX_load_verify_locations = Module.findExportByName(openssl_module.name, 'SSL_CTX_load_verify_locations');
+        const SSL_CTX_load_verify_locations = Module.findExportByName(
+            openssl_module.name,
+            'SSL_CTX_load_verify_locations'
+        );
         if (SSL_CTX_load_verify_locations) {
             Interceptor.attach(SSL_CTX_load_verify_locations, {
-                onEnter: function(args) {
+                onEnter: function (args) {
                     const ctx = args[0];
                     const CAfile = args[1];
                     const CApath = args[2];
@@ -210,15 +248,17 @@ if (!openssl_module) {
                         } catch (e) {}
                     }
 
-                    log(`SSL_CTX_load_verify_locations: CAfile="${cafile_str}", CApath="${capath_str}"`);
+                    log(
+                        `SSL_CTX_load_verify_locations: CAfile="${cafile_str}", CApath="${capath_str}"`
+                    );
                 },
-                onLeave: function(retval) {
+                onLeave: function (retval) {
                     const result = retval.toInt32();
                     if (result === 0) {
                         log('SSL_CTX_load_verify_locations: Failed originally, forcing success');
                         retval.replace(ptr(1));
                     }
-                }
+                },
             });
             log('Successfully hooked SSL_CTX_load_verify_locations');
         }
@@ -230,20 +270,27 @@ if (!openssl_module) {
         const X509_verify_cert = Module.findExportByName(openssl_module.name, 'X509_verify_cert');
         if (X509_verify_cert) {
             Interceptor.attach(X509_verify_cert, {
-                onEnter: function(args) {
+                onEnter: function (args) {
                     const ctx = args[0];
                     this.ctx = ctx;
                 },
-                onLeave: function(retval) {
+                onLeave: function (retval) {
                     const result = retval.toInt32();
                     if (result !== 1) {
                         log(`X509_verify_cert: Failed with result=${result}, forcing success (1)`);
                         retval.replace(ptr(1));
 
                         try {
-                            const X509_STORE_CTX_set_error = Module.findExportByName(openssl_module.name, 'X509_STORE_CTX_set_error');
+                            const X509_STORE_CTX_set_error = Module.findExportByName(
+                                openssl_module.name,
+                                'X509_STORE_CTX_set_error'
+                            );
                             if (X509_STORE_CTX_set_error) {
-                                const set_error = new NativeFunction(X509_STORE_CTX_set_error, 'void', ['pointer', 'int']);
+                                const set_error = new NativeFunction(
+                                    X509_STORE_CTX_set_error,
+                                    'void',
+                                    ['pointer', 'int']
+                                );
                                 set_error(this.ctx, X509_V_OK);
                                 log('X509_verify_cert: Set error to X509_V_OK in context');
                             }
@@ -251,7 +298,7 @@ if (!openssl_module) {
                             logError('Failed to set X509 error: ' + e.message);
                         }
                     }
-                }
+                },
             });
             log('Successfully hooked X509_verify_cert');
         }
@@ -260,19 +307,24 @@ if (!openssl_module) {
     }
 
     try {
-        const X509_STORE_CTX_get_error = Module.findExportByName(openssl_module.name, 'X509_STORE_CTX_get_error');
+        const X509_STORE_CTX_get_error = Module.findExportByName(
+            openssl_module.name,
+            'X509_STORE_CTX_get_error'
+        );
         if (X509_STORE_CTX_get_error) {
             Interceptor.attach(X509_STORE_CTX_get_error, {
-                onEnter: function(args) {
+                onEnter: function (args) {
                     this.ctx = args[0];
                 },
-                onLeave: function(retval) {
+                onLeave: function (retval) {
                     const error = retval.toInt32();
                     if (error !== X509_V_OK) {
-                        log(`X509_STORE_CTX_get_error: Original error=${error}, returning X509_V_OK`);
+                        log(
+                            `X509_STORE_CTX_get_error: Original error=${error}, returning X509_V_OK`
+                        );
                         retval.replace(ptr(X509_V_OK));
                     }
-                }
+                },
             });
             log('Successfully hooked X509_STORE_CTX_get_error');
         }
@@ -281,16 +333,19 @@ if (!openssl_module) {
     }
 
     try {
-        const SSL_CTX_set_verify_depth = Module.findExportByName(openssl_module.name, 'SSL_CTX_set_verify_depth');
+        const SSL_CTX_set_verify_depth = Module.findExportByName(
+            openssl_module.name,
+            'SSL_CTX_set_verify_depth'
+        );
         if (SSL_CTX_set_verify_depth) {
             Interceptor.attach(SSL_CTX_set_verify_depth, {
-                onEnter: function(args) {
+                onEnter: function (args) {
                     const ctx = args[0];
                     const depth = args[1].toInt32();
 
                     log(`SSL_CTX_set_verify_depth: Original depth=${depth}, setting to 100`);
                     args[1] = ptr(100);
-                }
+                },
             });
             log('Successfully hooked SSL_CTX_set_verify_depth');
         }
@@ -299,16 +354,19 @@ if (!openssl_module) {
     }
 
     try {
-        const SSL_set_verify_depth = Module.findExportByName(openssl_module.name, 'SSL_set_verify_depth');
+        const SSL_set_verify_depth = Module.findExportByName(
+            openssl_module.name,
+            'SSL_set_verify_depth'
+        );
         if (SSL_set_verify_depth) {
             Interceptor.attach(SSL_set_verify_depth, {
-                onEnter: function(args) {
+                onEnter: function (args) {
                     const ssl = args[0];
                     const depth = args[1].toInt32();
 
                     log(`SSL_set_verify_depth: Original depth=${depth}, setting to 100`);
                     args[1] = ptr(100);
-                }
+                },
             });
             log('Successfully hooked SSL_set_verify_depth');
         }
@@ -318,15 +376,24 @@ if (!openssl_module) {
 
     if (is_boringssl) {
         try {
-            const SSL_set_custom_verify = Module.findExportByName(openssl_module.name, 'SSL_set_custom_verify');
+            const SSL_set_custom_verify = Module.findExportByName(
+                openssl_module.name,
+                'SSL_set_custom_verify'
+            );
             if (SSL_set_custom_verify) {
-                const boringssl_always_succeed = new NativeCallback(function(ssl, out_alert) {
-                    log('BoringSSL custom verify callback invoked - returning ssl_verify_ok (1)');
-                    return 1;
-                }, 'int', ['pointer', 'pointer']);
+                const boringssl_always_succeed = new NativeCallback(
+                    function (ssl, out_alert) {
+                        log(
+                            'BoringSSL custom verify callback invoked - returning ssl_verify_ok (1)'
+                        );
+                        return 1;
+                    },
+                    'int',
+                    ['pointer', 'pointer']
+                );
 
                 Interceptor.attach(SSL_set_custom_verify, {
-                    onEnter: function(args) {
+                    onEnter: function (args) {
                         const ssl = args[0];
                         const mode = args[1].toInt32();
                         const callback = args[2];
@@ -335,7 +402,7 @@ if (!openssl_module) {
 
                         args[1] = ptr(SSL_VERIFY_NONE);
                         args[2] = boringssl_always_succeed;
-                    }
+                    },
                 });
                 log('Successfully hooked SSL_set_custom_verify (BoringSSL)');
             }
@@ -344,24 +411,35 @@ if (!openssl_module) {
         }
 
         try {
-            const SSL_CTX_set_custom_verify = Module.findExportByName(openssl_module.name, 'SSL_CTX_set_custom_verify');
+            const SSL_CTX_set_custom_verify = Module.findExportByName(
+                openssl_module.name,
+                'SSL_CTX_set_custom_verify'
+            );
             if (SSL_CTX_set_custom_verify) {
-                const boringssl_ctx_always_succeed = new NativeCallback(function(ssl, out_alert) {
-                    log('BoringSSL CTX custom verify callback invoked - returning ssl_verify_ok (1)');
-                    return 1;
-                }, 'int', ['pointer', 'pointer']);
+                const boringssl_ctx_always_succeed = new NativeCallback(
+                    function (ssl, out_alert) {
+                        log(
+                            'BoringSSL CTX custom verify callback invoked - returning ssl_verify_ok (1)'
+                        );
+                        return 1;
+                    },
+                    'int',
+                    ['pointer', 'pointer']
+                );
 
                 Interceptor.attach(SSL_CTX_set_custom_verify, {
-                    onEnter: function(args) {
+                    onEnter: function (args) {
                         const ctx = args[0];
                         const mode = args[1].toInt32();
                         const callback = args[2];
 
-                        log(`SSL_CTX_set_custom_verify (BoringSSL): mode=${mode}, replacing callback`);
+                        log(
+                            `SSL_CTX_set_custom_verify (BoringSSL): mode=${mode}, replacing callback`
+                        );
 
                         args[1] = ptr(SSL_VERIFY_NONE);
                         args[2] = boringssl_ctx_always_succeed;
-                    }
+                    },
                 });
                 log('Successfully hooked SSL_CTX_set_custom_verify (BoringSSL)');
             }
@@ -374,12 +452,12 @@ if (!openssl_module) {
         const SSL_connect = Module.findExportByName(openssl_module.name, 'SSL_connect');
         if (SSL_connect) {
             Interceptor.attach(SSL_connect, {
-                onEnter: function(args) {
+                onEnter: function (args) {
                     const ssl = args[0];
                     this.ssl = ssl;
                     this.startTime = Date.now();
                 },
-                onLeave: function(retval) {
+                onLeave: function (retval) {
                     const result = retval.toInt32();
                     const duration = Date.now() - this.startTime;
 
@@ -388,7 +466,7 @@ if (!openssl_module) {
                         ssl: this.ssl.toString(),
                         result: result,
                         duration: duration,
-                        success: result === 1
+                        success: result === 1,
                     };
 
                     connections.push(connInfo);
@@ -398,7 +476,7 @@ if (!openssl_module) {
 
                     log(`SSL_connect: Result=${result}, Duration=${duration}ms`);
                     send({ type: 'ssl_connection', data: connInfo });
-                }
+                },
             });
             log('Successfully hooked SSL_connect');
         }
@@ -408,45 +486,45 @@ if (!openssl_module) {
 }
 
 rpc.exports = {
-    getOpenSSLConnections: function() {
+    getOpenSSLConnections: function () {
         return connections;
     },
-    getCertificateChains: function() {
+    getCertificateChains: function () {
         return certificates;
     },
-    getActivity: function() {
+    getActivity: function () {
         return activity;
     },
-    clearLogs: function() {
+    clearLogs: function () {
         activity.length = 0;
         connections.length = 0;
         certificates.length = 0;
         log('All logs cleared');
         return true;
     },
-    getBypassStatus: function() {
+    getBypassStatus: function () {
         return {
             active: true,
             library: openssl_module ? openssl_module.name : 'Unknown',
             variant: is_boringssl ? 'BoringSSL' : 'OpenSSL',
             moduleBase: openssl_module ? openssl_module.base.toString() : 'N/A',
             connectionCount: connections.length,
-            certificateBypassCount: certificates.length
+            certificateBypassCount: certificates.length,
         };
     },
-    testBypass: function() {
+    testBypass: function () {
         log('Testing OpenSSL bypass functionality');
         return {
             success: openssl_module !== null,
-            message: openssl_module ?
-                `OpenSSL/BoringSSL bypass is active (${is_boringssl ? 'BoringSSL' : 'OpenSSL'})` :
-                'OpenSSL module not found',
+            message: openssl_module
+                ? `OpenSSL/BoringSSL bypass is active (${is_boringssl ? 'BoringSSL' : 'OpenSSL'})`
+                : 'OpenSSL module not found',
             stats: {
                 connections: connections.length,
-                certificateBypasses: certificates.length
-            }
+                certificateBypasses: certificates.length,
+            },
         };
-    }
+    },
 };
 
 if (openssl_module) {

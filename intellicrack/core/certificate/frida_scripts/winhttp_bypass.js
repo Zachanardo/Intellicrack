@@ -3,10 +3,11 @@ const SECURITY_FLAG_IGNORE_UNKNOWN_CA = 0x00000100;
 const SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE = 0x00000200;
 const SECURITY_FLAG_IGNORE_CERT_CN_INVALID = 0x00001000;
 const SECURITY_FLAG_IGNORE_CERT_DATE_INVALID = 0x00002000;
-const ALL_CERT_IGNORE_FLAGS = SECURITY_FLAG_IGNORE_UNKNOWN_CA |
-                               SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE |
-                               SECURITY_FLAG_IGNORE_CERT_CN_INVALID |
-                               SECURITY_FLAG_IGNORE_CERT_DATE_INVALID;
+const ALL_CERT_IGNORE_FLAGS =
+    SECURITY_FLAG_IGNORE_UNKNOWN_CA |
+    SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE |
+    SECURITY_FLAG_IGNORE_CERT_CN_INVALID |
+    SECURITY_FLAG_IGNORE_CERT_DATE_INVALID;
 
 const activity = [];
 const MAX_ACTIVITY_LOG = 1000;
@@ -15,7 +16,7 @@ function log(message, level = 'info') {
     const entry = {
         timestamp: new Date().toISOString(),
         level: level,
-        message: message
+        message: message,
     };
     send({ type: 'log', data: entry });
     activity.push(entry);
@@ -38,7 +39,7 @@ if (!winhttp) {
         const WinHttpSetOption = Module.findExportByName('winhttp.dll', 'WinHttpSetOption');
         if (WinHttpSetOption) {
             Interceptor.attach(WinHttpSetOption, {
-                onEnter: function(args) {
+                onEnter: function (args) {
                     const hInternet = args[0];
                     const dwOption = args[1].toInt32();
                     const lpBuffer = args[2];
@@ -49,19 +50,21 @@ if (!winhttp) {
                         const newFlags = originalFlags | ALL_CERT_IGNORE_FLAGS;
                         lpBuffer.writeU32(newFlags);
 
-                        log(`WinHttpSetOption: Modified SECURITY_FLAGS from 0x${originalFlags.toString(16)} to 0x${newFlags.toString(16)}`);
+                        log(
+                            `WinHttpSetOption: Modified SECURITY_FLAGS from 0x${originalFlags.toString(16)} to 0x${newFlags.toString(16)}`
+                        );
 
                         this.modified = true;
                         this.originalFlags = originalFlags;
                         this.newFlags = newFlags;
                     }
                 },
-                onLeave: function(retval) {
+                onLeave: function (retval) {
                     if (this.modified) {
                         retval.replace(ptr(1));
                         log('WinHttpSetOption: Forced success return');
                     }
-                }
+                },
             });
             log('Successfully hooked WinHttpSetOption');
         }
@@ -73,7 +76,7 @@ if (!winhttp) {
         const WinHttpSendRequest = Module.findExportByName('winhttp.dll', 'WinHttpSendRequest');
         if (WinHttpSendRequest) {
             Interceptor.attach(WinHttpSendRequest, {
-                onEnter: function(args) {
+                onEnter: function (args) {
                     const hRequest = args[0];
                     const lpszHeaders = args[1];
                     const dwHeadersLength = args[2].toInt32();
@@ -97,20 +100,20 @@ if (!winhttp) {
                         hRequest: hRequest.toString(),
                         headers: headers,
                         optionalLength: dwOptionalLength,
-                        totalLength: dwTotalLength
+                        totalLength: dwTotalLength,
                     };
 
                     log(`WinHttpSendRequest called - Headers: ${headers.substring(0, 200)}`);
                     send({ type: 'https_request', data: requestInfo });
                 },
-                onLeave: function(retval) {
+                onLeave: function (retval) {
                     if (retval.toInt32() === 0) {
                         log('WinHttpSendRequest: Failed originally, forcing success');
                         retval.replace(ptr(1));
                     } else {
                         log('WinHttpSendRequest: Succeeded');
                     }
-                }
+                },
             });
             log('Successfully hooked WinHttpSendRequest');
         }
@@ -119,26 +122,31 @@ if (!winhttp) {
     }
 
     try {
-        const WinHttpReceiveResponse = Module.findExportByName('winhttp.dll', 'WinHttpReceiveResponse');
+        const WinHttpReceiveResponse = Module.findExportByName(
+            'winhttp.dll',
+            'WinHttpReceiveResponse'
+        );
         if (WinHttpReceiveResponse) {
             Interceptor.attach(WinHttpReceiveResponse, {
-                onEnter: function(args) {
+                onEnter: function (args) {
                     const hRequest = args[0];
                     const lpReserved = args[1];
 
                     log(`WinHttpReceiveResponse called - hRequest: ${hRequest}`);
                     this.hRequest = hRequest;
                 },
-                onLeave: function(retval) {
+                onLeave: function (retval) {
                     const success = retval.toInt32() !== 0;
                     if (!success) {
                         const lastError = ptr(kernel32.GetLastError());
-                        log(`WinHttpReceiveResponse: Failed with error ${lastError}, forcing success`);
+                        log(
+                            `WinHttpReceiveResponse: Failed with error ${lastError}, forcing success`
+                        );
                         retval.replace(ptr(1));
                     } else {
                         log('WinHttpReceiveResponse: Succeeded');
                     }
-                }
+                },
             });
             log('Successfully hooked WinHttpReceiveResponse');
         }
@@ -150,7 +158,7 @@ if (!winhttp) {
         const WinHttpQueryOption = Module.findExportByName('winhttp.dll', 'WinHttpQueryOption');
         if (WinHttpQueryOption) {
             Interceptor.attach(WinHttpQueryOption, {
-                onEnter: function(args) {
+                onEnter: function (args) {
                     const hInternet = args[0];
                     const dwOption = args[1].toInt32();
                     const lpBuffer = args[2];
@@ -160,15 +168,17 @@ if (!winhttp) {
                     this.lpBuffer = lpBuffer;
                     this.lpdwBufferLength = lpdwBufferLength;
                 },
-                onLeave: function(retval) {
+                onLeave: function (retval) {
                     if (this.dwOption === WINHTTP_OPTION_SECURITY_FLAGS && retval.toInt32() !== 0) {
                         const bufferLength = this.lpdwBufferLength.readU32();
                         if (bufferLength >= 4 && !this.lpBuffer.isNull()) {
                             const flags = this.lpBuffer.readU32();
-                            log(`WinHttpQueryOption: Read SECURITY_FLAGS as 0x${flags.toString(16)}`);
+                            log(
+                                `WinHttpQueryOption: Read SECURITY_FLAGS as 0x${flags.toString(16)}`
+                            );
                         }
                     }
-                }
+                },
             });
             log('Successfully hooked WinHttpQueryOption');
         }
@@ -184,15 +194,15 @@ try {
 }
 
 rpc.exports = {
-    getWinHttpActivity: function() {
+    getWinHttpActivity: function () {
         return activity;
     },
-    clearLogs: function() {
+    clearLogs: function () {
         activity.length = 0;
         log('Activity log cleared');
         return true;
     },
-    getBypassStatus: function() {
+    getBypassStatus: function () {
         return {
             active: true,
             library: 'winhttp.dll',
@@ -200,23 +210,23 @@ rpc.exports = {
                 'WinHttpSetOption',
                 'WinHttpSendRequest',
                 'WinHttpReceiveResponse',
-                'WinHttpQueryOption'
+                'WinHttpQueryOption',
             ],
             bypassFlags: {
                 SECURITY_FLAG_IGNORE_UNKNOWN_CA: true,
                 SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE: true,
                 SECURITY_FLAG_IGNORE_CERT_CN_INVALID: true,
-                SECURITY_FLAG_IGNORE_CERT_DATE_INVALID: true
-            }
+                SECURITY_FLAG_IGNORE_CERT_DATE_INVALID: true,
+            },
         };
     },
-    testBypass: function() {
+    testBypass: function () {
         log('Testing WinHTTP bypass functionality');
         return {
             success: true,
-            message: 'WinHTTP bypass is active and monitoring'
+            message: 'WinHTTP bypass is active and monitoring',
         };
-    }
+    },
 };
 
 log('WinHTTP certificate bypass script loaded successfully');

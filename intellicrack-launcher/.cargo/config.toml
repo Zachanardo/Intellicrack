@@ -6,5 +6,6 @@ PATH = { value = "D:\\Intellicrack\\.pixi\\envs\\default\\bin;D:\\Intellicrack\\
 
 [build]
 rustflags = [
-    "-L", "D:\\Intellicrack\\.pixi\\envs\\default\\libs",
+  "-L",
+  "D:\\Intellicrack\\.pixi\\envs\\default\\libs" 
 ]

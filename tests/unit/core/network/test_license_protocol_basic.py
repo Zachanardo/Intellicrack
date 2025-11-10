@@ -10,10 +10,10 @@ try:
         HASPProtocolHandler,
         LicenseProtocolHandler,
     )
-    print("✅ Successfully imported license protocol handlers")
+    print("OK Successfully imported license protocol handlers")
 
     # Test basic FlexLM functionality
-    print("\n🔍 Testing FlexLM handler...")
+    print("\n Testing FlexLM handler...")
     flexlm = FlexLMProtocolHandler()
     print(f"  - Initialized: {flexlm.__class__.__name__}")
     print(f"  - Port: {flexlm.flexlm_port}")
@@ -32,7 +32,7 @@ try:
     print(f"  - Captured requests: {len(flexlm.captured_requests)}")
 
     # Test basic HASP functionality
-    print("\n🔍 Testing HASP handler...")
+    print("\n Testing HASP handler...")
     hasp = HASPProtocolHandler()
     print(f"  - Initialized: {hasp.__class__.__name__}")
     print(f"  - Port: {hasp.hasp_port}")
@@ -54,7 +54,7 @@ try:
     print(f"  - Captured requests: {len(hasp.captured_requests)}")
 
     # Test status methods
-    print("\n🔍 Testing status methods...")
+    print("\n Testing status methods...")
     flexlm_status = flexlm.get_status()
     print(f"  - FlexLM status: {flexlm_status}")
 
@@ -62,20 +62,20 @@ try:
     print(f"  - HASP status: {hasp_status}")
 
     # Test clear data
-    print("\n🔍 Testing clear data...")
+    print("\n Testing clear data...")
     flexlm.clear_data()
     hasp.clear_data()
     print(f"  - FlexLM requests after clear: {len(flexlm.captured_requests)}")
     print(f"  - HASP requests after clear: {len(hasp.captured_requests)}")
 
-    print("\n✅ All basic tests passed successfully!")
+    print("\nOK All basic tests passed successfully!")
 
 except ImportError as e:
-    print(f"❌ Import error: {e}")
+    print(f"FAIL Import error: {e}")
     sys.exit(1)
 
 except Exception as e:
-    print(f"❌ Test error: {e}")
+    print(f"FAIL Test error: {e}")
     import traceback
     traceback.print_exc()
     sys.exit(1)

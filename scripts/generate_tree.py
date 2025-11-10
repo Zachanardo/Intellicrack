@@ -15,43 +15,43 @@ def get_file_icon(file_path):
     """Return appropriate icon based on file extension."""
     ext = Path(file_path).suffix.lower()
     icons = {
-        ".py": "🐍",
-        ".js": "📜",
-        ".json": "📋",
-        ".md": "📝",
-        ".txt": "📄",
-        ".html": "🌐",
-        ".css": "🎨",
-        ".exe": "⚙️",
-        ".dll": "📦",
-        ".so": "📚",
-        ".java": "☕",
-        ".c": "🔧",
-        ".cpp": "🔧",
-        ".h": "📎",
-        ".rs": "🦀",
-        ".go": "🐹",
-        ".yaml": "⚙️",
-        ".yml": "⚙️",
-        ".xml": "📰",
-        ".svg": "🖼️",
-        ".png": "🖼️",
-        ".jpg": "🖼️",
-        ".jpeg": "🖼️",
-        ".gif": "🖼️",
-        ".ico": "🎭",
-        ".zip": "📦",
-        ".rar": "📦",
-        ".7z": "📦",
-        ".tar": "📦",
-        ".gz": "📦",
-        ".pdf": "📕",
-        ".doc": "📘",
-        ".docx": "📘",
-        ".xls": "📊",
-        ".xlsx": "📊",
+        ".py": "[PY]",
+        ".js": "[JS]",
+        ".json": "[JSON]",
+        ".md": "[MD]",
+        ".txt": "[TXT]",
+        ".html": "[HTML]",
+        ".css": "[CSS]",
+        ".exe": "[EXE]",
+        ".dll": "[DLL]",
+        ".so": "[SO]",
+        ".java": "[JAVA]",
+        ".c": "[C]",
+        ".cpp": "[CPP]",
+        ".h": "[H]",
+        ".rs": "[RS]",
+        ".go": "[GO]",
+        ".yaml": "[YAML]",
+        ".yml": "[YML]",
+        ".xml": "[XML]",
+        ".svg": "[SVG]",
+        ".png": "[PNG]",
+        ".jpg": "[JPG]",
+        ".jpeg": "[JPEG]",
+        ".gif": "[GIF]",
+        ".ico": "[ICO]",
+        ".zip": "[ZIP]",
+        ".rar": "[RAR]",
+        ".7z": "[7Z]",
+        ".tar": "[TAR]",
+        ".gz": "[GZ]",
+        ".pdf": "[PDF]",
+        ".doc": "[DOC]",
+        ".docx": "[DOCX]",
+        ".xls": "[XLS]",
+        ".xlsx": "[XLSX]",
     }
-    return icons.get(ext, "📄")
+    return icons.get(ext, "[FILE]")
 
 
 def scan_directory(root_path):
@@ -70,7 +70,7 @@ def scan_directory(root_path):
 
         if os.path.isdir(path):
             folder_count += 1
-            icon = "📁"
+            icon = "[DIR]"
             html += "<li>"
             html += f'<span class="item folder expanded" data-path="{path}" data-id="{item_id}" data-type="folder">'
             html += f"{icon} {name}"
@@ -177,7 +177,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
         f.write(tree_output)
 
     line_count = tree_output.count("\n")
-    print(f"✅ TXT tree generated: {output_file} ({line_count} lines)")
+    print(f"TXT tree generated: {output_file} ({line_count} lines)")
 
 
 def generate_fallback_tree(root_path, prefix="", is_last=True):
@@ -647,10 +647,10 @@ function hasHighlightedChildren(element) {{
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(hta_content)
 
-    print(f"✅ HTA file generated successfully: {output_file}")
-    print(f"📁 Root path: {root_path}")
-    print(f"📊 Processed: {file_count} files, {folder_count} folders")
-    print("\n🚀 Double-click the HTA file to open")
+    print(f"HTA file generated successfully: {output_file}")
+    print(f"Root path: {root_path}")
+    print(f"Processed: {file_count} files, {folder_count} folders")
+    print("\nDouble-click the HTA file to open")
 
 
 if __name__ == "__main__":
@@ -661,4 +661,4 @@ if __name__ == "__main__":
     generate_hta(root_path, hta_output_file)
     generate_txt_tree(root_path, txt_output_file)
 
-    print("\n✨ Both directory structure files generated successfully!")
+    print("\nBoth directory structure files generated successfully!")

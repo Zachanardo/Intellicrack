@@ -261,7 +261,7 @@ class LLMConfigDialog(BaseDialog):
             layout = QVBoxLayout(self.content_widget)
 
         # Title and description
-        title_label = QLabel("🤖 Agentic AI Model Configuration")
+        title_label = QLabel(" Agentic AI Model Configuration")
         title_label.setFont(QFont("Arial", 14, QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(title_label)
@@ -1609,7 +1609,7 @@ class LLMConfigDialog(BaseDialog):
         self.test_progress.setVisible(False)
 
         if success:
-            self.status_text.append(f"✅ {message}")
+            self.status_text.append(f"OK {message}")
         else:
             self.status_text.append(f"ERROR {message}")
 

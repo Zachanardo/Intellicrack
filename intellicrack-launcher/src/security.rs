@@ -444,7 +444,7 @@ impl SecurityManager {
         Ok(algorithm.to_string())
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn get_security_status(&self) -> SecurityStatus {
         let mut patches_applied = HashMap::new();
 
@@ -469,17 +469,17 @@ impl SecurityManager {
         }
     }
 
-    #[must_use] 
+    #[must_use]
     pub const fn is_sandbox_mode(&self) -> bool {
         self.config.sandbox_analysis
     }
 
-    #[must_use] 
+    #[must_use]
     pub const fn is_network_access_allowed(&self) -> bool {
         self.config.allow_network_access
     }
 
-    #[must_use] 
+    #[must_use]
     pub fn get_default_hash_algorithm(&self) -> &str {
         &self.config.hashing.default_algorithm
     }

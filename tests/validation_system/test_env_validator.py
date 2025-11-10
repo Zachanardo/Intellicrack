@@ -47,7 +47,7 @@ def main():
     for env in test_matrix[:3]:  # Show first 3
         print(f"    - {env['name']}: {env['description']}")
 
-    print("\n✅ Environment Validator Test Complete!")
+    print("\nOK Environment Validator Test Complete!")
 
 if __name__ == "__main__":
     main()

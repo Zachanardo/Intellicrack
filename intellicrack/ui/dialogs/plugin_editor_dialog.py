@@ -77,7 +77,7 @@ class PluginEditorDialog(QDialog):
         self.editor = PluginEditor()
         self.editor.saveRequested.connect(self.on_plugin_saved)
         self.editor.validationComplete.connect(self.on_validation_complete)
-        self.tab_widget.addTab(self.editor, "📝 Editor")
+        self.tab_widget.addTab(self.editor, " Editor")
 
         # Testing tab
         self.test_widget = QWidget()
@@ -98,7 +98,7 @@ class PluginEditorDialog(QDialog):
         self.run_btn.clicked.connect(self.run_plugin)
         button_layout.addWidget(self.run_btn)
 
-        self.debug_btn = QPushButton("🐛 Debug")
+        self.debug_btn = QPushButton(" Debug")
         self.debug_btn.clicked.connect(self.debug_plugin)
         button_layout.addWidget(self.debug_btn)
 
@@ -106,7 +106,7 @@ class PluginEditorDialog(QDialog):
         self.test_gen_btn.clicked.connect(self.generate_tests)
         button_layout.addWidget(self.test_gen_btn)
 
-        self.ci_cd_btn = QPushButton("🚀 CI/CD Pipeline")
+        self.ci_cd_btn = QPushButton(" CI/CD Pipeline")
         self.ci_cd_btn.clicked.connect(self.open_ci_cd)
         button_layout.addWidget(self.ci_cd_btn)
 
@@ -171,7 +171,7 @@ class PluginEditorDialog(QDialog):
         self.stop_test_btn.clicked.connect(self.stop_test)
         control_layout.addWidget(self.stop_test_btn)
 
-        self.clear_btn = QPushButton("🗑️ Clear")
+        self.clear_btn = QPushButton(" Clear")
         self.clear_btn.clicked.connect(self.test_output.clear)
         control_layout.addWidget(self.clear_btn)
 

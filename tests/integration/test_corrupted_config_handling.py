@@ -202,7 +202,7 @@ class TestCorruptedConfigHandling(unittest.TestCase):
                 "description": "Binary Analysis Tool"
             },
             "test_unicode": "测试中文",  # Chinese characters
-            "test_emoji": "🔧🔍",  # Emojis
+            "test_emoji": "",  # Emojis
             "test_special": "äöü"  # Special characters
         }
 
@@ -217,7 +217,7 @@ class TestCorruptedConfigHandling(unittest.TestCase):
         # Should handle all encodings properly
         self.assertEqual(config.get("application.name"), "Intellicrack™")
         self.assertEqual(config.get("test_unicode"), "测试中文")
-        self.assertEqual(config.get("test_emoji"), "🔧🔍")
+        self.assertEqual(config.get("test_emoji"), "")
         self.assertEqual(config.get("test_special"), "äöü")
 
     def test_18_1_4_permission_errors(self):

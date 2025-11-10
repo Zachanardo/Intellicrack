@@ -383,15 +383,18 @@ impl DependencyValidator {
     async fn check_qemu_dependency(&mut self) -> Result<()> {
         info!("Checking QEMU dependency");
 
-        let qemu_status = if Command::new("qemu-system-x86_64").arg("--version").output().is_ok() {
+        let qemu_status = if Command::new("qemu-system-x86_64")
+            .arg("--version")
+            .output()
+            .is_ok()
+        {
             info!("QEMU system emulator found");
             DependencyStatus {
                 available: true,
                 version: None,
                 details: {
                     let mut details = HashMap::new();
-                    details
-                        .insert("system_emulator".to_string(), serde_json::Value::Bool(true));
+                    details.insert("system_emulator".to_string(), serde_json::Value::Bool(true));
                     details
                 },
             }

@@ -44,14 +44,14 @@ try:
     print(f"\nReturn code: {result.returncode}")
 
     if result.returncode == 0:
-        print("\n✅ Coverage analysis completed successfully!")
-        print("✅ 80% coverage target achieved!")
+        print("\nOK Coverage analysis completed successfully!")
+        print("OK 80% coverage target achieved!")
     else:
-        print("\n❌ Coverage analysis failed or coverage below threshold")
+        print("\nFAIL Coverage analysis failed or coverage below threshold")
 
 except subprocess.TimeoutExpired:
-    print("❌ Coverage analysis timed out")
+    print("FAIL Coverage analysis timed out")
 except Exception as e:
-    print(f"❌ Error running coverage analysis: {e}")
+    print(f"FAIL Error running coverage analysis: {e}")
 
 print("=" * 70)

@@ -16,7 +16,7 @@ def test_binary(filepath, name, expected_signatures_min=1):
     print('='*80)
 
     if not os.path.exists(filepath):
-        print(f"✗ SKIP: File not found")
+        print(f"FAIL SKIP: File not found")
         return
 
     filesize = os.path.getsize(filepath)
@@ -26,14 +26,14 @@ def test_binary(filepath, name, expected_signatures_min=1):
         results = list(binwalk.scan(filepath))
 
         if len(results) == 0:
-            print(f"✗ FAIL: No module results returned")
+            print(f"FAIL FAIL: No module results returned")
             tests_failed += 1
             return
 
         module = results[0]
 
         if module.errors:
-            print(f"✗ FAIL: Errors encountered:")
+            print(f"FAIL FAIL: Errors encountered:")
             for error in module.errors:
                 print(f"  - {error}")
             tests_failed += 1
@@ -43,7 +43,7 @@ def test_binary(filepath, name, expected_signatures_min=1):
         print(f"\nSignatures found: {num_sigs}")
 
         if num_sigs >= expected_signatures_min:
-            print(f"✓ PASS: Found {num_sigs} signatures (expected >= {expected_signatures_min})")
+            print(f"OK PASS: Found {num_sigs} signatures (expected >= {expected_signatures_min})")
             tests_passed += 1
 
             # Show first few signatures
@@ -56,11 +56,11 @@ def test_binary(filepath, name, expected_signatures_min=1):
             if num_sigs > 5:
                 print(f"  ... and {num_sigs - 5} more signatures")
         else:
-            print(f"✗ FAIL: Found {num_sigs} signatures, expected at least {expected_signatures_min}")
+            print(f"FAIL FAIL: Found {num_sigs} signatures, expected at least {expected_signatures_min}")
             tests_failed += 1
 
     except Exception as e:
-        print(f"✗ FAIL: Exception - {e}")
+        print(f"FAIL FAIL: Exception - {e}")
         import traceback
         traceback.print_exc()
         tests_failed += 1
@@ -131,12 +131,12 @@ print(f"Tests Passed: {tests_passed}")
 print(f"Tests Failed: {tests_failed}")
 
 if tests_failed == 0 and tests_passed > 0:
-    print(f"\n✓ ALL TESTS PASSED ({tests_passed}/{tests_passed})")
+    print(f"\nOK ALL TESTS PASSED ({tests_passed}/{tests_passed})")
     print("Package validated on real system binaries")
 elif tests_passed > 0:
     success_rate = 100 * tests_passed / (tests_passed + tests_failed)
     print(f"\n⚠ PARTIAL SUCCESS: {success_rate:.1f}% ({tests_passed}/{tests_passed + tests_failed})")
 else:
-    print("\n✗ ALL TESTS FAILED")
+    print("\nFAIL ALL TESTS FAILED")
 
 print("="*80)

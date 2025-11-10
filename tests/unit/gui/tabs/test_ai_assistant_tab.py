@@ -127,6 +127,7 @@ class TestAIAssistantTab:
                     qtbot.mouseClick(generate_button, Qt.MouseButton.LeftButton)
                     qtbot.wait(300)
             except Exception:
+                pass
                 # Handle AI generation errors gracefully
                 # Continue with test even if generation fails
 
@@ -263,13 +264,12 @@ class TestAIAssistantTab:
                     qtbot.mouseClick(load_button, Qt.MouseButton.LeftButton)
                     qtbot.wait(200)
             except Exception:
-                # Handle model loading errors gracefully
                 pass
 
-                    # Check progress indication
-                    if progress_bars:
-                        progress_bar = progress_bars[0]
-                        assert 0 <= progress_bar.value() <= 100
+            # Check progress indication
+            if progress_bars:
+                progress_bar = progress_bars[0]
+                assert 0 <= progress_bar.value() <= 100
 
     def test_syntax_highlighting_real_code_display(self, qtbot):
         """Test REAL syntax highlighting for generated code."""

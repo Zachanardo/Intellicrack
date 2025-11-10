@@ -1,6 +1,7 @@
 # AI Module
 
-This directory contains the AI-powered components of Intellicrack, providing intelligent analysis, script generation, and automated assistance capabilities.
+This directory contains the AI-powered components of Intellicrack, providing
+intelligent analysis, script generation, and automated assistance capabilities.
 
 ## Components
 
@@ -36,8 +37,11 @@ This directory contains the AI-powered components of Intellicrack, providing int
 
 ## Dependencies
 
-This module requires various AI libraries including transformers, torch, and provider-specific SDKs (OpenAI, Anthropic, etc.).
+This module requires various AI libraries including transformers, torch, and
+provider-specific SDKs (OpenAI, Anthropic, etc.).
 
 ## Usage
 
-The AI components are integrated throughout the application and are not typically used directly. They provide backend support for intelligent features in the UI.
+The AI components are integrated throughout the application and are not
+typically used directly. They provide backend support for intelligent features
+in the UI.

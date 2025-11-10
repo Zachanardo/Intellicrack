@@ -86,11 +86,11 @@ class CICDPipeline:
 
     def run_pipeline(self) -> Dict[str, Any]:
         """Run the complete CI/CD pipeline"""
-        print(f"🚀 Starting CI/CD pipeline for {self.plugin_name}")
+        print(f" Starting CI/CD pipeline for {self.plugin_name}")
 
         for stage in self.pipeline_config["stages"]:
             if self.pipeline_config.get(stage, {}).get("enabled", True):
-                print(f"\n📦 Running stage: {stage}")
+                print(f"\n Running stage: {stage}")
 
                 stage_result = getattr(self, f"run_{stage}_stage")()
                 self.results["stages"][stage] = stage_result
@@ -100,7 +100,7 @@ class CICDPipeline:
                     self.results["overall_status"] = "failed"
                     break
                 else:
-                    print(f"✅ Stage '{stage}' passed!")
+                    print(f"OK Stage '{stage}' passed!")
         else:
             self.results["overall_status"] = "success"
 
@@ -541,7 +541,7 @@ Stage Results:
 """
 
         for stage, result in self.results["stages"].items():
-            status = "✅ PASSED" if result["success"] else "ERROR FAILED"
+            status = "OK PASSED" if result["success"] else "ERROR FAILED"
             report_text += f"\n{stage}: {status}"
 
             if result.get("errors"):

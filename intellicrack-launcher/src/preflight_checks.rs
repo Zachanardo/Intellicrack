@@ -54,10 +54,14 @@ use tracing::{debug, info, warn};
 /// and remediation steps.
 #[derive(Debug, thiserror::Error)]
 pub enum PreflightError {
-    #[error("Python executable not found at expected location: {path}\n\nTo fix this issue:\n  1. Run: pixi install\n  2. Verify installation completed successfully\n  3. Try launching again\n\nIf the problem persists, check that you're in the correct project directory.")]
+    #[error(
+        "Python executable not found at expected location: {path}\n\nTo fix this issue:\n  1. Run: pixi install\n  2. Verify installation completed successfully\n  3. Try launching again\n\nIf the problem persists, check that you're in the correct project directory."
+    )]
     PythonNotFound { path: String },
 
-    #[error("Python path exists but is not executable: {path}\n\nTo fix this issue:\n  1. Check file permissions\n  2. Run: pixi install --force\n  3. Try launching again")]
+    #[error(
+        "Python path exists but is not executable: {path}\n\nTo fix this issue:\n  1. Check file permissions\n  2. Run: pixi install --force\n  3. Try launching again"
+    )]
     PythonNotExecutable { path: String },
 
     #[error("Environment validation failed: {0}")]
@@ -113,12 +117,21 @@ fn get_python_executable_path() -> PathBuf {
 
     #[cfg(target_os = "windows")]
     {
-        project_root.join(".pixi").join("envs").join("default").join("python.exe")
+        project_root
+            .join(".pixi")
+            .join("envs")
+            .join("default")
+            .join("python.exe")
     }
 
     #[cfg(not(target_os = "windows"))]
     {
-        project_root.join(".pixi").join("envs").join("default").join("bin").join("python")
+        project_root
+            .join(".pixi")
+            .join("envs")
+            .join("default")
+            .join("bin")
+            .join("python")
     }
 }
 
@@ -134,7 +147,12 @@ fn get_site_packages_path() -> PathBuf {
 
     #[cfg(target_os = "windows")]
     {
-        project_root.join(".pixi").join("envs").join("default").join("Lib").join("site-packages")
+        project_root
+            .join(".pixi")
+            .join("envs")
+            .join("default")
+            .join("Lib")
+            .join("site-packages")
     }
 
     #[cfg(not(target_os = "windows"))]
@@ -191,8 +209,8 @@ fn check_python_executable() -> Result<PathBuf> {
     #[cfg(not(target_os = "windows"))]
     {
         use std::os::unix::fs::PermissionsExt;
-        let metadata = std::fs::metadata(&python_path)
-            .context("Failed to read Python executable metadata")?;
+        let metadata =
+            std::fs::metadata(&python_path).context("Failed to read Python executable metadata")?;
         let permissions = metadata.permissions();
 
         if permissions.mode() & 0o111 == 0 {
@@ -205,8 +223,11 @@ fn check_python_executable() -> Result<PathBuf> {
 
     #[cfg(target_os = "windows")]
     {
-        if !python_path.extension().map_or(false, |e| e == "exe") {
-            warn!("Python executable missing .exe extension: {}", python_path.display());
+        if python_path.extension().is_none_or(|e| e != "exe") {
+            warn!(
+                "Python executable missing .exe extension: {}",
+                python_path.display()
+            );
         }
     }
 
@@ -232,7 +253,10 @@ fn check_critical_packages() -> Result<Vec<String>> {
     let site_packages = get_site_packages_path();
 
     if !site_packages.exists() {
-        warn!("Site-packages directory not found: {}", site_packages.display());
+        warn!(
+            "Site-packages directory not found: {}",
+            site_packages.display()
+        );
         return Ok(CRITICAL_PACKAGES.iter().map(|s| s.to_string()).collect());
     }
 
@@ -270,7 +294,10 @@ fn check_package_dlls() -> Result<Vec<String>> {
     let site_packages = get_site_packages_path();
 
     if !site_packages.exists() {
-        warn!("Site-packages directory not found: {}", site_packages.display());
+        warn!(
+            "Site-packages directory not found: {}",
+            site_packages.display()
+        );
         return Ok(CRITICAL_DLLS.iter().map(|s| s.to_string()).collect());
     }
 
@@ -377,11 +404,9 @@ pub fn run_preflight_checks() -> Result<()> {
 
     check_python_executable().context("Critical: Python executable validation failed")?;
 
-    let missing_packages = check_critical_packages()
-        .context("Package validation check failed")?;
+    let missing_packages = check_critical_packages().context("Package validation check failed")?;
 
-    let missing_dlls = check_package_dlls()
-        .context("DLL/SO validation check failed")?;
+    let missing_dlls = check_package_dlls().context("DLL/SO validation check failed")?;
 
     if !missing_packages.is_empty() {
         warn!("Missing packages: {:?}", missing_packages);

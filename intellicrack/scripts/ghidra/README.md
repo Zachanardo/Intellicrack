@@ -104,16 +104,21 @@ Brief description of what the script does
 
 ## Important Notes
 
-1. **Centralized Location**: This is the ONLY location Intellicrack looks for Ghidra scripts
-2. **Automatic Discovery**: Scripts are automatically found when you use the script selector
+1. **Centralized Location**: This is the ONLY location Intellicrack looks for
+   Ghidra scripts
+2. **Automatic Discovery**: Scripts are automatically found when you use the
+   script selector
 3. **Validation**: Only valid Ghidra scripts can be selected and run
-4. **Temporary Execution**: Scripts are copied to a temp directory during execution
+4. **Temporary Execution**: Scripts are copied to a temp directory during
+   execution
 
 ## Troubleshooting
 
 - **Script Not Appearing**: Ensure it has valid metadata and structure
-- **Script Fails Validation**: Check that it extends GhidraScript (Java) or follows Python conventions
-- **Script Not Running**: Check Ghidra path in Settings and ensure script has no syntax errors
+- **Script Fails Validation**: Check that it extends GhidraScript (Java) or
+  follows Python conventions
+- **Script Not Running**: Check Ghidra path in Settings and ensure script has no
+  syntax errors
 
 ## Contributing Scripts
 

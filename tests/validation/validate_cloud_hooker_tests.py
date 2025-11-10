@@ -22,9 +22,9 @@ def analyze_test_coverage():
             CloudLicenseHooker,
             run_cloud_license_hooker
         )
-        print("✓ Successfully imported cloud_license_hooker module")
+        print("OK Successfully imported cloud_license_hooker module")
     except ImportError as e:
-        print(f"✗ Failed to import module: {e}")
+        print(f"FAIL Failed to import module: {e}")
         return
 
     try:
@@ -33,9 +33,9 @@ def analyze_test_coverage():
             TestCloudLicenseHooker,
             TestProductionReadiness
         )
-        print("✓ Successfully imported test module")
+        print("OK Successfully imported test module")
     except ImportError as e:
-        print(f"✗ Failed to import tests: {e}")
+        print(f"FAIL Failed to import tests: {e}")
         return
 
     # Analyze CloudLicenseResponseGenerator methods
@@ -114,7 +114,7 @@ def analyze_test_coverage():
 
     print(f"Real-world scenario tests: {len(scenario_tests)}")
     for test in scenario_tests:
-        print(f"  ✓ {test}")
+        print(f"  OK {test}")
 
     # CloudLicenseHooker tests
     print("\n" + "-" * 70)
@@ -128,7 +128,7 @@ def analyze_test_coverage():
 
     print(f"Test methods: {len(hooker_tests)}")
     for test in hooker_tests:
-        print(f"  ✓ {test}")
+        print(f"  OK {test}")
 
     # Production readiness tests
     print("\n" + "-" * 70)
@@ -142,7 +142,7 @@ def analyze_test_coverage():
 
     print(f"Production validation tests: {len(readiness_tests)}")
     for test in readiness_tests:
-        print(f"  ✓ {test}")
+        print(f"  OK {test}")
 
     # Calculate total coverage estimate
     print("\n" + "=" * 70)
@@ -155,9 +155,9 @@ def analyze_test_coverage():
 
     # Determine if we meet requirements
     if coverage_percentage >= 80:
-        print("\n✓ COVERAGE REQUIREMENT MET (80%+)")
+        print("\nOK COVERAGE REQUIREMENT MET (80%+)")
     else:
-        print(f"\n✗ Coverage below 80% requirement (current: {coverage_percentage:.1f}%)")
+        print(f"\nFAIL Coverage below 80% requirement (current: {coverage_percentage:.1f}%)")
         print("\nMethods needing test coverage:")
         for method in all_methods:
             if method not in covered_methods:
@@ -179,7 +179,7 @@ def analyze_test_coverage():
     }
 
     for check, count in quality_checks.items():
-        status = "✓" if count > 0 else "✗"
+        status = "OK" if count > 0 else "FAIL"
         print(f"{status} {check}: {count}")
 
     # Final verdict
@@ -188,10 +188,10 @@ def analyze_test_coverage():
     print("=" * 70)
 
     if coverage_percentage >= 80 and all(count > 0 for count in quality_checks.values()):
-        print("✓ TEST SUITE IS COMPREHENSIVE AND PRODUCTION-READY")
-        print("✓ Validates real cloud license interception capabilities")
-        print("✓ Tests genuine exploitation scenarios")
-        print("✓ No placeholder or mock testing detected")
+        print("OK TEST SUITE IS COMPREHENSIVE AND PRODUCTION-READY")
+        print("OK Validates real cloud license interception capabilities")
+        print("OK Tests genuine exploitation scenarios")
+        print("OK No placeholder or mock testing detected")
     else:
         print("⚠ TEST SUITE NEEDS IMPROVEMENT")
         if coverage_percentage < 80:

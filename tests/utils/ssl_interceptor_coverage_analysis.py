@@ -29,14 +29,14 @@ def analyze_ssl_interceptor_coverage():
 
     # Validate files exist
     if not source_file.exists():
-        print(f"❌ Source file not found: {source_file}")
+        print(f"FAIL Source file not found: {source_file}")
         return False
 
     if not test_file.exists():
-        print(f"❌ Test file not found: {test_file}")
+        print(f"FAIL Test file not found: {test_file}")
         return False
 
-    print("✅ Both source and test files found")
+    print("OK Both source and test files found")
 
     # Analyze source file
     print("\n📋 ANALYZING SOURCE FILE STRUCTURE")
@@ -60,7 +60,7 @@ def analyze_ssl_interceptor_coverage():
                 for item in node.body:
                     if isinstance(item, ast.FunctionDef):
                         methods.append(item.name)
-                print(f"📦 Class: {node.name}")
+                print(f" Class: {node.name}")
                 for method in methods:
                     print(f"   └── Method: {method}")
 
@@ -68,10 +68,10 @@ def analyze_ssl_interceptor_coverage():
                                                                for parent in ast.walk(source_tree)
                                                                if node in ast.walk(parent)):
                 functions.append(node.name)
-                print(f"🔧 Function: {node.name}")
+                print(f" Function: {node.name}")
 
     except Exception as e:
-        print(f"❌ Error analyzing source file: {e}")
+        print(f"FAIL Error analyzing source file: {e}")
         return False
 
     # Analyze test file
@@ -102,11 +102,11 @@ def analyze_ssl_interceptor_coverage():
                     print(f"   └── Test: {method}")
 
     except Exception as e:
-        print(f"❌ Error analyzing test file: {e}")
+        print(f"FAIL Error analyzing test file: {e}")
         return False
 
     # Coverage analysis
-    print("\n📊 COVERAGE ANALYSIS")
+    print("\n COVERAGE ANALYSIS")
     print("-" * 50)
 
     # Key functionality areas that must be tested
@@ -128,20 +128,20 @@ def analyze_ssl_interceptor_coverage():
         "license_server_mitm_attack"
     ]
 
-    print("🎯 Required Test Areas:")
+    print(" Required Test Areas:")
     covered_areas = []
     missing_areas = []
 
     for area in required_test_areas:
         if area in test_content:
-            print(f"   ✅ {area}")
+            print(f"   OK {area}")
             covered_areas.append(area)
         else:
-            print(f"   ❌ {area}")
+            print(f"   FAIL {area}")
             missing_areas.append(area)
 
     coverage_percentage = (len(covered_areas) / len(required_test_areas)) * 100
-    print(f"\n📈 Test Coverage: {coverage_percentage:.1f}% ({len(covered_areas)}/{len(required_test_areas)})")
+    print(f"\n Test Coverage: {coverage_percentage:.1f}% ({len(covered_areas)}/{len(required_test_areas)})")
 
     # Production readiness validation
     print("\n🏭 PRODUCTION READINESS VALIDATION")
@@ -165,14 +165,14 @@ def analyze_ssl_interceptor_coverage():
 
     for criterion, test in production_criteria:
         if test:
-            print(f"   ✅ {criterion}")
+            print(f"   OK {criterion}")
             passed_criteria.append(criterion)
         else:
-            print(f"   ❌ {criterion}")
+            print(f"   FAIL {criterion}")
             failed_criteria.append(criterion)
 
     production_score = (len(passed_criteria) / len(production_criteria)) * 100
-    print(f"\n🎯 Production Readiness Score: {production_score:.1f}% ({len(passed_criteria)}/{len(production_criteria)})")
+    print(f"\n Production Readiness Score: {production_score:.1f}% ({len(passed_criteria)}/{len(production_criteria)})")
 
     # Quality assessment
     print("\n🏆 QUALITY ASSESSMENT")
@@ -194,13 +194,13 @@ def analyze_ssl_interceptor_coverage():
     quality_passes = 0
     for indicator, test in quality_indicators:
         if test:
-            print(f"   ✅ {indicator}")
+            print(f"   OK {indicator}")
             quality_passes += 1
         else:
-            print(f"   ⚠️  {indicator}")
+            print(f"   WARNING  {indicator}")
 
     quality_score = (quality_passes / len(quality_indicators)) * 100
-    print(f"\n📊 Overall Quality Score: {quality_score:.1f}% ({quality_passes}/{len(quality_indicators)})")
+    print(f"\n Overall Quality Score: {quality_score:.1f}% ({quality_passes}/{len(quality_indicators)})")
 
     # Final assessment
     print("\n🎖️  FINAL ASSESSMENT")
@@ -212,28 +212,28 @@ def analyze_ssl_interceptor_coverage():
         print(f"🏆 EXCELLENT - SSL Interceptor tests meet production standards ({overall_score:.1f}%)")
         status = "PASS"
     elif overall_score >= 70:
-        print(f"✅ GOOD - SSL Interceptor tests are solid with minor gaps ({overall_score:.1f}%)")
+        print(f"OK GOOD - SSL Interceptor tests are solid with minor gaps ({overall_score:.1f}%)")
         status = "PASS"
     elif overall_score >= 60:
-        print(f"⚠️  ACCEPTABLE - SSL Interceptor tests need improvement ({overall_score:.1f}%)")
+        print(f"WARNING  ACCEPTABLE - SSL Interceptor tests need improvement ({overall_score:.1f}%)")
         status = "NEEDS_WORK"
     else:
-        print(f"❌ INSUFFICIENT - SSL Interceptor tests do not meet standards ({overall_score:.1f}%)")
+        print(f"FAIL INSUFFICIENT - SSL Interceptor tests do not meet standards ({overall_score:.1f}%)")
         status = "FAIL"
 
     # Recommendations
-    print("\n💡 RECOMMENDATIONS")
+    print("\n RECOMMENDATIONS")
     print("-" * 50)
 
     if missing_areas:
         print("Missing test areas to address:")
         for area in missing_areas:
-            print(f"   • Add tests for: {area}")
+            print(f"    Add tests for: {area}")
 
     if failed_criteria:
         print("\nProduction readiness gaps:")
         for criterion in failed_criteria:
-            print(f"   • Implement: {criterion}")
+            print(f"    Implement: {criterion}")
 
     print("\n" + "=" * 80)
     print(f"ANALYSIS COMPLETE - STATUS: {status}")

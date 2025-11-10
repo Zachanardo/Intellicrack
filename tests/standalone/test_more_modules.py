@@ -43,11 +43,11 @@ def run_test_entropy_analyzer():
         assert len(chunks) > 0, "No chunks analyzed"
         print(f"Analyzed {len(chunks)} chunks")
 
-        print("✓ Test PASSED!")
+        print("OK Test PASSED!")
         return True
 
     except Exception as e:
-        print(f"✗ Test FAILED: {type(e).__name__}: {e}")
+        print(f"FAIL Test FAILED: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -86,11 +86,11 @@ def run_test_config_manager():
         assert 'testing' in sections, "Testing section not found"
         print(f"Available sections: {sections}")
 
-        print("✓ Test PASSED!")
+        print("OK Test PASSED!")
         return True
 
     except Exception as e:
-        print(f"✗ Test FAILED: {type(e).__name__}: {e}")
+        print(f"FAIL Test FAILED: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -141,11 +141,11 @@ def run_test_yara_pattern_engine():
         assert patterns is not None, "Built-in patterns returned None"
         print(f"Available pattern categories: {list(patterns.keys())}")
 
-        print("✓ Test PASSED!")
+        print("OK Test PASSED!")
         return True
 
     except Exception as e:
-        print(f"✗ Test FAILED: {type(e).__name__}: {e}")
+        print(f"FAIL Test FAILED: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -178,11 +178,11 @@ def run_test_tool_discovery():
             assert os.path.exists(python_path), f"Python path invalid: {python_path}"
             print(f"Python path: {python_path}")
 
-        print("✓ Test PASSED!")
+        print("OK Test PASSED!")
         return True
 
     except Exception as e:
-        print(f"✗ Test FAILED: {type(e).__name__}: {e}")
+        print(f"FAIL Test FAILED: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -220,11 +220,11 @@ def run_test_app_context():
         assert 'data' in resources, "Data path not found"
         print(f"Resource paths configured: {list(resources.keys())}")
 
-        print("✓ Test PASSED!")
+        print("OK Test PASSED!")
         return True
 
     except Exception as e:
-        print(f"✗ Test FAILED: {type(e).__name__}: {e}")
+        print(f"FAIL Test FAILED: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -258,11 +258,11 @@ def run_test_frida_constants():
         assert bypass_scripts is not None, "Bypass scripts returned None"
         print(f"Available bypass scripts: {len(bypass_scripts)}")
 
-        print("✓ Test PASSED!")
+        print("OK Test PASSED!")
         return True
 
     except Exception as e:
-        print(f"✗ Test FAILED: {type(e).__name__}: {e}")
+        print(f"FAIL Test FAILED: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -296,11 +296,11 @@ def run_test_multi_format_analyzer():
         assert len(analyzers) > 0, "No analyzers registered"
         print(f"Registered analyzers: {list(analyzers.keys())}")
 
-        print("✓ Test PASSED!")
+        print("OK Test PASSED!")
         return True
 
     except Exception as e:
-        print(f"✗ Test FAILED: {type(e).__name__}: {e}")
+        print(f"FAIL Test FAILED: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -342,11 +342,11 @@ def run_test_security_utils():
         assert unsafe_input != "test<script>alert()</script>", "Unsafe input not sanitized"
         print("Input sanitization working correctly")
 
-        print("✓ Test PASSED!")
+        print("OK Test PASSED!")
         return True
 
     except Exception as e:
-        print(f"✗ Test FAILED: {type(e).__name__}: {e}")
+        print(f"FAIL Test FAILED: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -385,11 +385,11 @@ def run_test_payload_generator():
         assert len(payload) > 0, "Empty payload generated"
         print(f"Generated payload: {len(payload)} bytes")
 
-        print("✓ Test PASSED!")
+        print("OK Test PASSED!")
         return True
 
     except Exception as e:
-        print(f"✗ Test FAILED: {type(e).__name__}: {e}")
+        print(f"FAIL Test FAILED: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -423,11 +423,11 @@ def run_test_network_capture():
         assert 'timeout' in config, "Missing timeout in config"
         print(f"Default capture config: buffer={config['buffer_size']}, timeout={config['timeout']}")
 
-        print("✓ Test PASSED!")
+        print("OK Test PASSED!")
         return True
 
     except Exception as e:
-        print(f"✗ Test FAILED: {type(e).__name__}: {e}")
+        print(f"FAIL Test FAILED: {type(e).__name__}: {e}")
         import traceback
         traceback.print_exc()
         return False

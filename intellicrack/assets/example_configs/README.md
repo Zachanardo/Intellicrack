@@ -1,15 +1,21 @@
 # Example Model Configurations
 
-This directory contains ready-to-use model configuration files for Intellicrack's LLM system.
+This directory contains ready-to-use model configuration files for
+Intellicrack's LLM system.
 
 ## Usage
 
-These JSON files serve as reference configurations for setting up LLM models in Intellicrack. To use them:
+These JSON files serve as reference configurations for setting up LLM models in
+Intellicrack. To use them:
 
-1. **Manual Configuration**: Open the LLM Configuration dialog and manually enter settings based on these examples
-2. **API Keys**: Copy the structure and replace `YOUR_API_KEY` placeholders with actual keys
-3. **Model Paths**: For local models, update `model_path` to point to your local model files
-4. **Customize**: Adjust parameters like `temperature`, `max_tokens`, and other settings as needed
+1. **Manual Configuration**: Open the LLM Configuration dialog and manually
+   enter settings based on these examples
+2. **API Keys**: Copy the structure and replace `YOUR_API_KEY` placeholders with
+   actual keys
+3. **Model Paths**: For local models, update `model_path` to point to your local
+   model files
+4. **Customize**: Adjust parameters like `temperature`, `max_tokens`, and other
+   settings as needed
 5. **Save**: Save your customized configuration through the dialog
 
 ## Available Configurations

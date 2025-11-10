@@ -166,7 +166,7 @@ class DashboardTab(BaseTab):
         buttons_layout.addWidget(open_file_btn)
 
         # Open Project button
-        open_project_btn = QPushButton("📁 Open Project")
+        open_project_btn = QPushButton(" Open Project")
         open_project_btn.setMinimumHeight(60)
         open_project_btn.setToolTip("Open an existing Intellicrack project workspace with saved analysis sessions and configurations")
         self._style_quick_start_button(open_project_btn, theme.success_color)
@@ -437,11 +437,11 @@ class DashboardTab(BaseTab):
                     file_ext = os.path.splitext(file_path)[1].lower()
                     icon_prefix = "🗃️"  # Default file icon
                     if file_ext in [".exe", ".dll"]:
-                        icon_prefix = "⚙️"
+                        icon_prefix = "[CFG]️"
                     elif file_ext in [".so", ".dylib"]:
-                        icon_prefix = "📦"
+                        icon_prefix = ""
                     elif file_ext == ".icp":
-                        icon_prefix = "📁"
+                        icon_prefix = ""
                     item.setText(f"{icon_prefix} {os.path.basename(file_path)}")
 
                 self.recent_files_list.addItem(item)

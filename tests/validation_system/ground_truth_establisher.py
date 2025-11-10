@@ -663,7 +663,7 @@ if __name__ == "__main__":
     for category, tools in establisher.external_validators.items():
         print(f"\n{category}:")
         for name, info in tools.items():
-            status = "✓" if info["available"] else "✗"
+            status = "OK" if info["available"] else "FAIL"
             print(f"  {status} {name}")
 
     print(f"\nIntellicrack NOT used: {establisher.verify_no_intellicrack_usage()}")

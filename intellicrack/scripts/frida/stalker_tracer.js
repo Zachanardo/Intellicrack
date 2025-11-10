@@ -44,8 +44,18 @@ const stats = {
 };
 
 const licenseKeywords = [
-    'license', 'serial', 'key', 'activation', 'register', 'trial',
-    'validate', 'check', 'verify', 'auth', 'crack', 'protect',
+    'license',
+    'serial',
+    'key',
+    'activation',
+    'register',
+    'trial',
+    'validate',
+    'check',
+    'verify',
+    'auth',
+    'crack',
+    'protect',
 ];
 
 function isLicensingRelated(name) {
@@ -53,7 +63,7 @@ function isLicensingRelated(name) {
         return false;
     }
     const lower = name.toLowerCase();
-    return licenseKeywords.some(keyword => lower.includes(keyword));
+    return licenseKeywords.some((keyword) => lower.includes(keyword));
 }
 
 function formatAddress(addr) {
@@ -78,7 +88,7 @@ function shouldExcludeModule(moduleName) {
     if (!moduleName) {
         return false;
     }
-    return config.excludeModules.some(excluded =>
+    return config.excludeModules.some((excluded) =>
         moduleName.toLowerCase().includes(excluded.toLowerCase())
     );
 }
@@ -106,7 +116,7 @@ function setupAPIMonitoring() {
         { module: 'ws2_32.dll', name: 'recv' },
     ];
 
-    criticalAPIs.forEach(api => {
+    criticalAPIs.forEach((api) => {
         const addr = Module.findExportByName(api.module, api.name);
         if (addr) {
             try {
@@ -168,7 +178,7 @@ function createStalkerTransformer() {
                 stringify: false,
             });
 
-            parsed.forEach(event => {
+            parsed.forEach((event) => {
                 if (event[0] === 'call') {
                     const [, target] = event;
                     const moduleInfo = getModuleInfo(target);
@@ -285,7 +295,7 @@ function traceFunction(moduleName, functionName) {
     }
 
     const exports = module.enumerateExports();
-    const targetExport = exports.find(exp => exp.name === functionName);
+    const targetExport = exports.find((exp) => exp.name === functionName);
 
     if (!targetExport) {
         send({
@@ -313,7 +323,7 @@ function traceFunction(moduleName, functionName) {
             }
 
             const backtrace = Thread.backtrace(this.context, Backtracer.ACCURATE)
-                .map(addr => {
+                .map((addr) => {
                     const info = getModuleInfo(addr);
                     return info ? `${info.name}+${info.offset}` : formatAddress(addr);
                 })
@@ -338,7 +348,7 @@ function traceFunction(moduleName, functionName) {
                 },
                 onReceive: function (events) {
                     const parsed = Stalker.parse(events);
-                    parsed.forEach(event => {
+                    parsed.forEach((event) => {
                         if (traceData.length < 10000) {
                             const moduleInfo = getModuleInfo(event[1]);
                             traceData.push({
@@ -409,8 +419,7 @@ function collectModuleCoverage(moduleName) {
             while (instruction !== null) {
                 const addr = instruction.address;
 
-                if (addr.compare(moduleBase) >= 0 &&
-                    addr.compare(moduleBase.add(moduleSize)) < 0) {
+                if (addr.compare(moduleBase) >= 0 && addr.compare(moduleBase.add(moduleSize)) < 0) {
                     const offset = addr.sub(moduleBase);
                     blocksCovered.add(formatAddress(offset));
 
@@ -458,24 +467,26 @@ function analyzeLicensingFlow() {
     const licensingEvents = [];
     const hooks = [];
 
-    licensingAPIs.forEach(api => {
+    licensingAPIs.forEach((api) => {
         const addr = Module.findExportByName(api.module, api.name);
         if (addr) {
             const hook = Interceptor.attach(addr, {
                 onEnter: function (args) {
                     const backtrace = Thread.backtrace(this.context, Backtracer.ACCURATE);
-                    const callers = backtrace.map(addr => {
-                        const info = getModuleInfo(addr);
-                        return info ? {
-                            module: info.name,
-                            offset: info.offset,
-                            address: formatAddress(addr),
-                        } : null;
-                    }).filter(x => x !== null);
+                    const callers = backtrace
+                        .map((addr) => {
+                            const info = getModuleInfo(addr);
+                            return info
+                                ? {
+                                    module: info.name,
+                                    offset: info.offset,
+                                    address: formatAddress(addr),
+                                }
+                                : null;
+                        })
+                        .filter((x) => x !== null);
 
-                    const licensingCaller = callers.find(c =>
-                        isLicensingRelated(c.module)
-                    );
+                    const licensingCaller = callers.find((c) => isLicensingRelated(c.module));
 
                     if (licensingCaller) {
                         licensingEvents.push({

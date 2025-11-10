@@ -88,7 +88,6 @@ from intellicrack.handlers.pyqt6_handler import (
 )
 from intellicrack.hexview.integration import TOOL_REGISTRY
 from intellicrack.plugins import run_frida_plugin_from_file, run_ghidra_plugin_from_file
-from intellicrack.utils.core.plugin_paths import get_frida_scripts_dir, get_ghidra_scripts_dir
 from intellicrack.plugins.custom_modules.license_server_emulator import run_network_license_emulator
 from intellicrack.ui.cfg_explorer_inner import CfgExplorerInner
 from intellicrack.ui.dashboard_manager import DashboardManager
@@ -107,6 +106,7 @@ from intellicrack.ui.tabs.workspace_tab import WorkspaceTab
 from intellicrack.ui.theme_manager import get_theme_manager
 from intellicrack.ui.traffic_analyzer import TrafficAnalyzer, clear_network_capture, start_network_capture, stop_network_capture
 from intellicrack.utils import run_frida_script, run_qemu_analysis, run_selected_analysis, run_ssl_tls_interceptor
+from intellicrack.utils.core.plugin_paths import get_frida_scripts_dir, get_ghidra_scripts_dir
 from intellicrack.utils.log_message import log_message
 from intellicrack.utils.protection_utils import inject_comprehensive_api_hooks
 from intellicrack.utils.resource_helper import get_resource_path

@@ -182,7 +182,7 @@ def test_r2_to_binary_patch_conversion():
     # Convert to binary patches
     binary_patches = integrator._convert_r2_to_binary_patches(r2_result)
 
-    print(f"✓ Converted {len(binary_patches)} R2 patches to binary patches")
+    print(f"OK Converted {len(binary_patches)} R2 patches to binary patches")
 
     for i, patch in enumerate(binary_patches):
         print(f"  Patch {i+1}:")
@@ -222,7 +222,7 @@ def test_patch_validation():
     patches = [valid_patch, invalid_patch]
     validated_patches = integrator._validate_patches_with_binary_patcher(patches)
 
-    print(f"✓ Validated {len(validated_patches)}/2 patches")
+    print(f"OK Validated {len(validated_patches)}/2 patches")
     print(f"  Valid patches: {len(validated_patches)}")
     print(f"  Binary patcher patches: {len(integrator.binary_patcher.patches)}")
 
@@ -270,7 +270,7 @@ def test_binary_file_patching():
         # Check that the patch was applied correctly
         success = patched_content[:6] == patch.patched_bytes
 
-        print(f"✓ Binary file patching: {'SUCCESS' if success else 'FAILED'}")
+        print(f"OK Binary file patching: {'SUCCESS' if success else 'FAILED'}")
         print(f"  Original: {original_content[:6].hex().upper()}")
         print(f"  Patched:  {patched_content[:6].hex().upper()}")
         print(f"  Expected: {patch.patched_bytes.hex().upper()}")
@@ -313,18 +313,18 @@ def main():
             print(f"  Test failed with exception: {e}")
             failed += 1
 
-    print(f"\n🎯 DAY 4.2 INTEGRATION TEST RESULTS:")
-    print(f"✅ Tests Passed: {passed}")
-    print(f"❌ Tests Failed: {failed}")
+    print(f"\n DAY 4.2 INTEGRATION TEST RESULTS:")
+    print(f"OK Tests Passed: {passed}")
+    print(f"FAIL Tests Failed: {failed}")
 
     if failed == 0:
         print("\n🎉 DAY 4.2 INTEGRATION COMPLETED SUCCESSFULLY!")
-        print("✅ R2 Bypass Generator integrated with Binary Modification capabilities")
-        print("✅ Enhanced patch instructions converted to binary patches")
-        print("✅ Patch validation and application working correctly")
+        print("OK R2 Bypass Generator integrated with Binary Modification capabilities")
+        print("OK Enhanced patch instructions converted to binary patches")
+        print("OK Patch validation and application working correctly")
         return 0
     else:
-        print(f"\n❌ DAY 4.2 INTEGRATION FAILED: {failed} test(s) failed")
+        print(f"\nFAIL DAY 4.2 INTEGRATION FAILED: {failed} test(s) failed")
         return 1
 
 

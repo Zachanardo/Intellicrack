@@ -19,8 +19,7 @@ def analyze_coverage():
 
     # Get the source file path
     from intellicrack.utils.path_resolver import get_project_root
-
-source_file = get_project_root() / "intellicrack/utils/exploitation/payload_result_handler.py"
+    source_file = get_project_root() / "intellicrack/utils/exploitation/payload_result_handler.py"
 
     # Read source code
     with open(source_file, 'r', encoding='utf-8') as f:
@@ -29,7 +28,7 @@ source_file = get_project_root() / "intellicrack/utils/exploitation/payload_resu
     # Parse AST to analyze code structure
     tree = ast.parse(source_code)
 
-    print("📁 SOURCE FILE ANALYSIS:")
+    print(" SOURCE FILE ANALYSIS:")
     print(f"   File: {source_file}")
 
     # Count lines (excluding comments and blank lines)
@@ -46,7 +45,7 @@ source_file = get_project_root() / "intellicrack/utils/exploitation/payload_resu
 
             for item in node.body:
                 if isinstance(item, ast.FunctionDef):
-                    print(f"   📝 METHOD: {item.name}")
+                    print(f"    METHOD: {item.name}")
                     print(f"      Line range: {item.lineno}-{item.end_lineno}")
 
                     # Count decision points (if statements, loops, etc.)
@@ -56,32 +55,32 @@ source_file = get_project_root() / "intellicrack/utils/exploitation/payload_resu
                             decision_points += 1
                     print(f"      Decision points: {decision_points}")
 
-    print("\n📊 TEST COVERAGE ANALYSIS:")
+    print("\n TEST COVERAGE ANALYSIS:")
 
     # Test scenarios covered by our test suite
     covered_scenarios = [
-        "✓ Successful payload processing with minimal metadata",
-        "✓ Successful payload processing with full metadata",
-        "✓ Successful payload with save callback",
-        "✓ Failed payload with error message",
-        "✓ Failed payload without error message",
-        "✓ Save callback not called on failure",
-        "✓ None save callback handling",
-        "✓ Partial optional metadata fields",
-        "✓ Zero values in metadata",
-        "✓ Large payload handling",
-        "✓ High entropy payload",
-        "✓ Empty bad chars list",
-        "✓ Metadata formatting precision",
-        "✓ Multiple calls state independence",
-        "✓ Real-world msfvenom-like result",
-        "✓ Exploitation framework integration"
+        "OK Successful payload processing with minimal metadata",
+        "OK Successful payload processing with full metadata",
+        "OK Successful payload with save callback",
+        "OK Failed payload with error message",
+        "OK Failed payload without error message",
+        "OK Save callback not called on failure",
+        "OK None save callback handling",
+        "OK Partial optional metadata fields",
+        "OK Zero values in metadata",
+        "OK Large payload handling",
+        "OK High entropy payload",
+        "OK Empty bad chars list",
+        "OK Metadata formatting precision",
+        "OK Multiple calls state independence",
+        "OK Real-world msfvenom-like result",
+        "OK Exploitation framework integration"
     ]
 
     for scenario in covered_scenarios:
         print(f"   {scenario}")
 
-    print(f"\n📈 COVERAGE SUMMARY:")
+    print(f"\n COVERAGE SUMMARY:")
     print(f"   Test scenarios: {len(covered_scenarios)}")
     print(f"   Code paths tested: 16+")
     print(f"   Edge cases covered: 8+")
@@ -94,9 +93,9 @@ source_file = get_project_root() / "intellicrack/utils/exploitation/payload_resu
     print(f"   Estimated coverage: {coverage_percentage:.1f}%")
 
     if coverage_percentage >= 80:
-        print(f"   Status: ✅ COVERAGE TARGET ACHIEVED")
+        print(f"   Status: OK COVERAGE TARGET ACHIEVED")
     else:
-        print(f"   Status: ❌ COVERAGE TARGET NOT MET")
+        print(f"   Status: FAIL COVERAGE TARGET NOT MET")
 
     return coverage_percentage
 
@@ -123,9 +122,9 @@ def test_functionality():
     success = PayloadResultHandler.process_payload_result(result, capture_output)
 
     if success and len(messages) == 3:
-        print("   ✅ PASS - Basic success case works")
+        print("   OK PASS - Basic success case works")
     else:
-        print("   ❌ FAIL - Basic success case failed")
+        print("   FAIL FAIL - Basic success case failed")
         return False
 
     # Test 2: Failure case
@@ -140,9 +139,9 @@ def test_functionality():
     success = PayloadResultHandler.process_payload_result(result, capture_output)
 
     if not success and len(messages) == 1 and "Test error" in messages[0]:
-        print("   ✅ PASS - Failure case works")
+        print("   OK PASS - Failure case works")
     else:
-        print("   ❌ FAIL - Failure case failed")
+        print("   FAIL FAIL - Failure case failed")
         return False
 
     # Test 3: Save callback
@@ -165,9 +164,9 @@ def test_functionality():
     success = PayloadResultHandler.process_payload_result(result, capture_output, capture_save)
 
     if success and len(saves) == 1:
-        print("   ✅ PASS - Save callback works")
+        print("   OK PASS - Save callback works")
     else:
-        print("   ❌ FAIL - Save callback failed")
+        print("   FAIL FAIL - Save callback failed")
         return False
 
     print("\n🎉 All functionality tests PASSED!")
@@ -179,7 +178,7 @@ if __name__ == "__main__":
 
     # Test functionality first
     if not test_functionality():
-        print("\n❌ FUNCTIONALITY TESTS FAILED")
+        print("\nFAIL FUNCTIONALITY TESTS FAILED")
         sys.exit(1)
 
     # Analyze coverage
@@ -187,8 +186,8 @@ if __name__ == "__main__":
 
     print("\n" + "=" * 60)
     if coverage >= 80:
-        print("✅ MISSION ACCOMPLISHED - 80%+ COVERAGE ACHIEVED")
+        print("OK MISSION ACCOMPLISHED - 80%+ COVERAGE ACHIEVED")
     else:
-        print("❌ MISSION NOT COMPLETE - COVERAGE BELOW 80%")
+        print("FAIL MISSION NOT COMPLETE - COVERAGE BELOW 80%")
 
     sys.exit(0)

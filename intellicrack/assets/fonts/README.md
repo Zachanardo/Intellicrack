@@ -1,13 +1,15 @@
 # Intellicrack Fonts Directory
 
-This directory is reserved for custom fonts that may be bundled with Intellicrack.
+This directory is reserved for custom fonts that may be bundled with
+Intellicrack.
 
 ## Current Font Usage
 
 The application uses the following fonts:
 
 - **UI Fonts**: Segoe UI, Arial, Roboto, System Default
-- **Code/Monospace Fonts**: JetBrains Mono, Consolas, Courier New, Source Code Pro, Monospace
+- **Code/Monospace Fonts**: JetBrains Mono, Consolas, Courier New, Source Code
+  Pro, Monospace
 
 ## Bundled Fonts
 
@@ -16,11 +18,13 @@ This directory includes:
 - **JetBrainsMono-Regular.ttf**: Regular weight JetBrains Mono font
 - **JetBrainsMono-Bold.ttf**: Bold weight JetBrains Mono font
 
-These fonts are automatically loaded by the application for monospace text display.
+These fonts are automatically loaded by the application for monospace text
+display.
 
 ## Font Fallback
 
-The application will use system fonts by default. If you experience font-related issues:
+The application will use system fonts by default. If you experience font-related
+issues:
 
 1. The application will automatically fall back to available system fonts
 2. On Windows: Consolas → Courier New → Monospace
@@ -34,4 +38,5 @@ To add custom fonts:
 1. Place .ttf or .otf files in this directory
 2. Update the application to load them using QFontDatabase.addApplicationFont()
 
-Note: Source Code Pro is referenced but not bundled. It will use system installation if available, otherwise fall back to other monospace fonts.
+Note: Source Code Pro is referenced but not bundled. It will use system
+installation if available, otherwise fall back to other monospace fonts.

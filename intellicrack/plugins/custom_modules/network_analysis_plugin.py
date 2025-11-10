@@ -141,7 +141,7 @@ class NetworkAnalysisPlugin:
             if found_apis:
                 results.append(f"Found {len(found_apis)} socket API references:")
                 for api in found_apis:
-                    results.append(f"  • {api}")
+                    results.append(f"   {api}")
             else:
                 results.append("No socket API references found")
 

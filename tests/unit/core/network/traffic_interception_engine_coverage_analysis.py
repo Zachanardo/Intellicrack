@@ -168,7 +168,7 @@ COVERAGE SUMMARY:
 - Covered Components: {coverage_data['covered_components']}
 - Coverage Percentage: {coverage_data['coverage_percentage']:.1f}%
 - Minimum Required: 80.0%
-- Coverage Status: {'✓ MEETS REQUIREMENT' if coverage_data['coverage_percentage'] >= 80 else '✗ BELOW REQUIREMENT'}
+- Coverage Status: {'OK MEETS REQUIREMENT' if coverage_data['coverage_percentage'] >= 80 else 'FAIL BELOW REQUIREMENT'}
 
 COMPONENT BREAKDOWN:
 - Classes: {coverage_data['classes_total']} total
@@ -183,14 +183,14 @@ DETAILED SOURCE ANALYSIS:
         for class_name, class_data in coverage_data['source_analysis']['classes'].items():
             report += f"\nClass: {class_name} (line {class_data['line']})\n"
             for method in class_data['methods']:
-                status = "✓" if f"method:{class_name}.{method}" in coverage_data['covered_items'] else "✗"
+                status = "OK" if f"method:{class_name}.{method}" in coverage_data['covered_items'] else "FAIL"
                 report += f"  {status} {method}\n"
 
         # Add function details
         if coverage_data['source_analysis']['functions']:
             report += "\nStandalone Functions:\n"
             for func_name, line_no in coverage_data['source_analysis']['functions'].items():
-                status = "✓" if f"function:{func_name}" in coverage_data['covered_items'] else "✗"
+                status = "OK" if f"function:{func_name}" in coverage_data['covered_items'] else "FAIL"
                 report += f"  {status} {func_name} (line {line_no})\n"
 
         # Add test method list
@@ -202,19 +202,19 @@ DETAILED SOURCE ANALYSIS:
         report += "\nCOVERAGE ASSESSMENT:\n"
 
         if coverage_data['coverage_percentage'] >= 80:
-            report += "✓ This test suite meets the 80% minimum coverage requirement\n"
-            report += "✓ Comprehensive testing of all major components\n"
-            report += "✓ Production-ready validation standards achieved\n"
+            report += "OK This test suite meets the 80% minimum coverage requirement\n"
+            report += "OK Comprehensive testing of all major components\n"
+            report += "OK Production-ready validation standards achieved\n"
         else:
-            report += "✗ Coverage below 80% requirement - additional tests needed\n"
+            report += "FAIL Coverage below 80% requirement - additional tests needed\n"
 
         # Recommendations
         report += "\nTEST QUALITY ANALYSIS:\n"
-        report += "✓ Tests use real-world network scenarios\n"
-        report += "✓ No mock data or placeholder validations\n"
-        report += "✓ Sophisticated traffic analysis validation\n"
-        report += "✓ Integration testing for production scenarios\n"
-        report += "✓ Network manipulation and injection capabilities tested\n"
+        report += "OK Tests use real-world network scenarios\n"
+        report += "OK No mock data or placeholder validations\n"
+        report += "OK Sophisticated traffic analysis validation\n"
+        report += "OK Integration testing for production scenarios\n"
+        report += "OK Network manipulation and injection capabilities tested\n"
 
         report += "\nRECOMMENDATIONS:\n"
         if coverage_data['coverage_percentage'] >= 80:

@@ -1,6 +1,7 @@
 # Contributing to Intellicrack
 
-Thank you for your interest in contributing to Intellicrack! This document provides guidelines and instructions for contributing to the project.
+Thank you for your interest in contributing to Intellicrack! This document
+provides guidelines and instructions for contributing to the project.
 
 ## Table of Contents
 
@@ -15,27 +16,29 @@ Thank you for your interest in contributing to Intellicrack! This document provi
 
 ## Code of Conduct
 
-Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md) to ensure a welcoming environment for all contributors.
+Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md) to ensure a
+welcoming environment for all contributors.
 
 ## Getting Started
 
 1. Fork the repository on GitHub
 2. Clone your fork locally:
 
-   ```bash
-   git clone https://github.com/Zachanardo/Intellicrack.git
-   cd Intellicrack
-   ```
+    ```bash
+    git clone https://github.com/Zachanardo/Intellicrack.git
+    cd Intellicrack
+    ```
 
 3. Add the upstream repository as a remote:
 
-   ```bash
-   git remote add upstream https://github.com/Zachanardo/Intellicrack.git
-   ```
+    ```bash
+    git remote add upstream https://github.com/Zachanardo/Intellicrack.git
+    ```
 
 ## Development Setup
 
 ### Prerequisites
+
 - **Python 3.12+** (required for full functionality)
 - **Git** for version control
 - **Windows 11**
@@ -44,26 +47,28 @@ Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md) to ensure a wel
 
 1. Create and activate virtual environment:
 
-   ```bash
-   # Windows 11 (using actual project structure)
-   pixi init
-   pixi shell   ```
+    ````bash
+    # Windows 11 (using actual project structure)
+    pixi init
+    pixi shell   ```
+
+    ````
 
 2. Install dependencies:
 
-   ```bash
-   # Install from requirements lock file (actual file location)
-   pip install -r requirements/requirements.lock
+    ```bash
+    # Install from requirements lock file (actual file location)
+    pip install -r requirements/requirements.lock
 
-   # For development dependencies
-   pip install -r requirements/requirements-dev.lock
-   ```
+    # For development dependencies
+    pip install -r requirements/requirements-dev.lock
+    ```
 
 3. Install pre-commit hooks:
 
-   ```bash
-   pre-commit install
-   ```
+    ```bash
+    pre-commit install
+    ```
 
 ## Project Structure
 
@@ -87,9 +92,9 @@ intellicrack/
 
 1. Create a new branch for your feature or fix:
 
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
+    ```bash
+    git checkout -b feature/your-feature-name
+    ```
 
 2. Make your changes following the coding standards
 
@@ -99,9 +104,9 @@ intellicrack/
 
 5. Commit your changes with clear, descriptive messages:
 
-   ```bash
-   git commit -m "Add feature: description of what you added"
-   ```
+    ```bash
+    git commit -m "Add feature: description of what you added"
+    ```
 
 ## Coding Standards
 
@@ -182,16 +187,16 @@ def test_binary_analyzer_detects_pe_format():
 
 1. Push your changes to your fork:
 
-   ```bash
-   git push origin feature/your-feature-name
-   ```
+    ```bash
+    git push origin feature/your-feature-name
+    ```
 
 2. Create a Pull Request on GitHub:
-   - Provide a clear title and description
-   - Reference any related issues
-   - Include screenshots for UI changes
-   - Ensure all tests pass
-   - Address review feedback promptly
+    - Provide a clear title and description
+    - Reference any related issues
+    - Include screenshots for UI changes
+    - Ensure all tests pass
+    - Address review feedback promptly
 
 ### Pull Request Checklist
 
@@ -210,4 +215,5 @@ def test_binary_analyzer_detects_pe_format():
 
 ## Questions?
 
-Feel free to open an issue for any questions about contributing. We're here to help!
+Feel free to open an issue for any questions about contributing. We're here to
+help!

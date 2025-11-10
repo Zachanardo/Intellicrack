@@ -86,25 +86,16 @@ const credentialGenerator = {
     // Detect format (JWT, UUID, base64, hex, etc.)
     detectFormat: function (value) {
         if (value.includes('.') && value.split('.').length === 3) return 'jwt';
-        if (
-            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-                value,
-            )
-        )
+        if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value))
             return 'uuid';
-        if (/^[A-Za-z0-9+\/=]+$/.test(value) && value.length % 4 === 0)
-            return 'base64';
+        if (/^[A-Za-z0-9+\/=]+$/.test(value) && value.length % 4 === 0) return 'base64';
         if (/^[0-9a-f]+$/i.test(value)) return 'hex';
         if (/^[A-Za-z0-9_-]+$/.test(value)) return 'alphanumeric';
         return 'custom';
     },
 
     // Generate credential matching learned pattern
-    generateCredential: function (
-        credentialType,
-        targetLength = null,
-        targetPrefix = null,
-    ) {
+    generateCredential: function (credentialType, targetLength = null, targetPrefix = null) {
         const pattern = this.patterns.get(credentialType);
 
         if (pattern) {
@@ -115,11 +106,7 @@ const credentialGenerator = {
     },
 
     // Generate from learned pattern
-    generateFromPattern: function (
-        pattern,
-        overrideLength = null,
-        overridePrefix = null,
-    ) {
+    generateFromPattern: function (pattern, overrideLength = null, overridePrefix = null) {
         const length = overrideLength || pattern.length;
         const prefix = overridePrefix || pattern.prefix;
 
@@ -147,8 +134,7 @@ const credentialGenerator = {
             chars += charset.specialChars.join('');
         }
 
-        if (!chars)
-            chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        if (!chars) chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 
         let result = prefix;
         const remainingLength = Math.max(0, length - prefix.length);
@@ -169,30 +155,26 @@ const credentialGenerator = {
                 exp: Math.floor(Date.now() / 1000) + 86400,
                 iat: Math.floor(Date.now() / 1000),
                 jti: Math.random().toString(36),
-            }),
+            })
         );
         const signature = btoa(
-            Array.from({ length: 32 }, () => Math.random().toString(36)[2]).join(''),
+            Array.from({ length: 32 }, () => Math.random().toString(36)[2]).join('')
         );
         return `${header}.${payload}.${signature}`;
     },
 
     // Generate UUID
     generateUUID: function () {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
-            /[xy]/g,
-            function (c) {
-                const r = (Math.random() * 16) | 0;
-                const v = c == 'x' ? r : (r & 0x3) | 0x8;
-                return v.toString(16);
-            },
-        );
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            const r = (Math.random() * 16) | 0;
+            const v = c == 'x' ? r : (r & 0x3) | 0x8;
+            return v.toString(16);
+        });
     },
 
     // Generate base64
     generateBase64: function (targetLength) {
-        const chars =
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
         let result = '';
         const baseLength = Math.ceil(targetLength * 0.75); // Account for base64 padding
 
@@ -216,11 +198,7 @@ const credentialGenerator = {
     },
 
     // Generate default format when no pattern learned
-    generateDefault: function (
-        credentialType,
-        targetLength = null,
-        targetPrefix = null,
-    ) {
+    generateDefault: function (credentialType, targetLength = null, targetPrefix = null) {
         const commonPatterns = {
             api_key: { length: 64, prefix: 'ak_' },
             access_token: { length: 128, prefix: 'at_' },
@@ -260,7 +238,7 @@ const websocketInterceptor = {
 
     // Configuration
     config: {
-    // Target WebSocket URLs
+        // Target WebSocket URLs
         targetUrls: [
             '*license*',
             '*activation*',
@@ -301,10 +279,7 @@ const websocketInterceptor = {
             enableDataChannelInterception: true,
             enablePeerConnectionHooking: true,
             spoofIceServers: true,
-            overrideStunServers: [
-                'stun:stun.l.google.com:19302',
-                'stun:stun1.l.google.com:19302',
-            ],
+            overrideStunServers: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'],
         },
 
         // HTTP/3 and QUIC support
@@ -490,10 +465,7 @@ const websocketInterceptor = {
             if (!module) return;
 
             // WebSocketCreateClientHandle
-            var createHandle = Module.findExportByName(
-                moduleName,
-                'WebSocketCreateClientHandle',
-            );
+            var createHandle = Module.findExportByName(moduleName, 'WebSocketCreateClientHandle');
             if (createHandle) {
                 Interceptor.attach(createHandle, {
                     onLeave: function (retval) {
@@ -530,7 +502,7 @@ const websocketInterceptor = {
                             var message = self.readWebSocketBuffer(
                                 buffer,
                                 bufferLength,
-                                bufferType,
+                                bufferType
                             );
                             send({
                                 type: 'info',
@@ -571,18 +543,11 @@ const websocketInterceptor = {
                         this.bufferLength = args[2];
                     },
                     onLeave: function (retval) {
-                        if (
-                            retval.toInt32() === 0 &&
-              self.sockets[this.handle.toString()]
-                        ) {
+                        if (retval.toInt32() === 0 && self.sockets[this.handle.toString()]) {
                             var length = this.bufferLength.readU32();
                             var bufferType = this.context.r9 ? this.context.r9.readU32() : 1;
 
-                            var message = self.readWebSocketBuffer(
-                                this.buffer,
-                                length,
-                                bufferType,
-                            );
+                            var message = self.readWebSocketBuffer(this.buffer, length, bufferType);
                             send({
                                 type: 'info',
                                 target: 'websocket_interceptor',
@@ -688,7 +653,7 @@ const websocketInterceptor = {
 
                 self.interceptedMessages++;
             },
-            true,
+            true
         ); // Use capture phase
 
         // Hook close method
@@ -711,7 +676,7 @@ const websocketInterceptor = {
         // Hook WinHTTP WebSocket upgrade
         var winHttpWebSocketCompleteUpgrade = Module.findExportByName(
             'winhttp.dll',
-            'WinHttpWebSocketCompleteUpgrade',
+            'WinHttpWebSocketCompleteUpgrade'
         );
         if (winHttpWebSocketCompleteUpgrade) {
             Interceptor.attach(winHttpWebSocketCompleteUpgrade, {
@@ -737,71 +702,66 @@ const websocketInterceptor = {
         }
 
         // Hook WinHTTP WebSocket send/receive
-        ['WinHttpWebSocketSend', 'WinHttpWebSocketReceive'].forEach(
-            function (func) {
-                var fn = Module.findExportByName('winhttp.dll', func);
-                if (fn) {
-                    Interceptor.attach(fn, {
-                        onEnter: function (args) {
-                            this.handle = args[0];
-                            this.bufferType = args[1].toInt32();
-                            this.buffer = args[2];
-                            this.bufferLength = args[3].toInt32();
-                            this.isSend = func.includes('Send');
-                        },
-                        onLeave: function (retval) {
-                            if (
-                                retval.toInt32() === 0 &&
-                self.sockets[this.handle.toString()]
-                            ) {
-                                var message = self.readWebSocketBuffer(
-                                    this.buffer,
-                                    this.bufferLength,
-                                    this.bufferType,
-                                );
+        ['WinHttpWebSocketSend', 'WinHttpWebSocketReceive'].forEach(function (func) {
+            var fn = Module.findExportByName('winhttp.dll', func);
+            if (fn) {
+                Interceptor.attach(fn, {
+                    onEnter: function (args) {
+                        this.handle = args[0];
+                        this.bufferType = args[1].toInt32();
+                        this.buffer = args[2];
+                        this.bufferLength = args[3].toInt32();
+                        this.isSend = func.includes('Send');
+                    },
+                    onLeave: function (retval) {
+                        if (retval.toInt32() === 0 && self.sockets[this.handle.toString()]) {
+                            var message = self.readWebSocketBuffer(
+                                this.buffer,
+                                this.bufferLength,
+                                this.bufferType
+                            );
 
-                                if (this.isSend) {
-                                    send({
-                                        type: 'info',
-                                        target: 'websocket_interceptor',
-                                        action: 'winhttp_send',
-                                        message: message,
-                                        handle: this.handle.toString(),
-                                    });
-                                    var modified = self.processOutgoingMessage(message);
-                                    if (modified !== message) {
-                                        self.replaceWebSocketBuffer(
-                                            this.buffer,
-                                            modified,
-                                            this.bufferType,
-                                        );
-                                    }
-                                } else {
-                                    send({
-                                        type: 'info',
-                                        target: 'websocket_interceptor',
-                                        action: 'winhttp_receive',
-                                        message: message,
-                                        handle: this.handle.toString(),
-                                    });
-                                    var modified = self.processIncomingMessage(message);
-                                    if (modified !== message) {
-                                        self.replaceWebSocketBuffer(
-                                            this.buffer,
-                                            modified,
-                                            this.bufferType,
-                                        );
-                                        self.spoofedResponses++;
-                                    }
+                            if (this.isSend) {
+                                send({
+                                    type: 'info',
+                                    target: 'websocket_interceptor',
+                                    action: 'winhttp_send',
+                                    message: message,
+                                    handle: this.handle.toString(),
+                                });
+                                var modified = self.processOutgoingMessage(message);
+                                if (modified !== message) {
+                                    self.replaceWebSocketBuffer(
+                                        this.buffer,
+                                        modified,
+                                        this.bufferType
+                                    );
                                 }
-
-                                self.interceptedMessages++;
+                            } else {
+                                send({
+                                    type: 'info',
+                                    target: 'websocket_interceptor',
+                                    action: 'winhttp_receive',
+                                    message: message,
+                                    handle: this.handle.toString(),
+                                });
+                                var modified = self.processIncomingMessage(message);
+                                if (modified !== message) {
+                                    self.replaceWebSocketBuffer(
+                                        this.buffer,
+                                        modified,
+                                        this.bufferType
+                                    );
+                                    self.spoofedResponses++;
+                                }
                             }
-                        },
-                    });
-                }
-            },
-        );
+
+                            self.interceptedMessages++;
+                        }
+                    },
+                });
+            }
+        });
     },
 
     // Hook XMLHttpRequest for Socket.IO fallback
@@ -809,10 +769,7 @@ const websocketInterceptor = {
         var _self = this;
 
         // Socket.IO often falls back to HTTP long-polling
-        var xhrOpen = Module.findExportByName(
-            null,
-            'XMLHttpRequest.prototype.open',
-        );
+        var xhrOpen = Module.findExportByName(null, 'XMLHttpRequest.prototype.open');
         if (xhrOpen) {
             Interceptor.attach(xhrOpen, {
                 onEnter: function (args) {
@@ -848,8 +805,7 @@ const websocketInterceptor = {
 
         // Windows.Networking.Sockets.MessageWebSocket (UWP apps)
         try {
-            var messageWebSocket =
-        ObjC.classes['Windows.Networking.Sockets.MessageWebSocket'];
+            var messageWebSocket = ObjC.classes['Windows.Networking.Sockets.MessageWebSocket'];
             if (messageWebSocket) {
                 Interceptor.attach(messageWebSocket['- connectAsync:'], {
                     onEnter: function (args) {
@@ -1098,15 +1054,12 @@ const websocketInterceptor = {
             if (typeof RTCPeerConnection !== 'undefined') {
                 var originalRTCPeerConnection = RTCPeerConnection;
                 RTCPeerConnection = function (config) {
-                    if (
-                        self.config.webRtcConfig.spoofIceServers &&
-            config &&
-            config.iceServers
-                    ) {
-                        config.iceServers =
-              self.config.webRtcConfig.overrideStunServers.map((url) => ({
-                  urls: url,
-              }));
+                    if (self.config.webRtcConfig.spoofIceServers && config && config.iceServers) {
+                        config.iceServers = self.config.webRtcConfig.overrideStunServers.map(
+                            (url) => ({
+                                urls: url,
+                            })
+                        );
                         send({
                             type: 'bypass',
                             target: 'websocket_interceptor',
@@ -1122,13 +1075,11 @@ const websocketInterceptor = {
             }
 
             // Hook native WebRTC APIs (Windows)
-            var webRtcModule = Process.findModuleByName(
-                'webrtc_audio_device_module.dll',
-            );
+            var webRtcModule = Process.findModuleByName('webrtc_audio_device_module.dll');
             if (webRtcModule) {
                 var createDataChannel = Module.findExportByName(
                     webRtcModule.name,
-                    'CreateDataChannel',
+                    'CreateDataChannel'
                 );
                 if (createDataChannel) {
                     Interceptor.attach(createDataChannel, {
@@ -1271,7 +1222,7 @@ const websocketInterceptor = {
             if (quicModule) {
                 var quicConnectionOpen = Module.findExportByName(
                     'msquic.dll',
-                    'MsQuicConnectionOpen',
+                    'MsQuicConnectionOpen'
                 );
                 if (quicConnectionOpen) {
                     Interceptor.attach(quicConnectionOpen, {
@@ -1301,10 +1252,7 @@ const websocketInterceptor = {
                 }
 
                 // Hook QUIC stream send/receive
-                var quicStreamSend = Module.findExportByName(
-                    'msquic.dll',
-                    'MsQuicStreamSend',
-                );
+                var quicStreamSend = Module.findExportByName('msquic.dll', 'MsQuicStreamSend');
                 if (quicStreamSend) {
                     Interceptor.attach(quicStreamSend, {
                         onEnter: function (args) {
@@ -1357,7 +1305,7 @@ const websocketInterceptor = {
 
                 var quicStreamReceive = Module.findExportByName(
                     'msquic.dll',
-                    'MsQuicStreamReceiveSetEnabled',
+                    'MsQuicStreamReceiveSetEnabled'
                 );
                 if (quicStreamReceive) {
                     Interceptor.attach(quicStreamReceive, {
@@ -1399,7 +1347,7 @@ const websocketInterceptor = {
         // Hook HTTP response processing
         var winHttpReceiveResponse = Module.findExportByName(
             'winhttp.dll',
-            'WinHttpReceiveResponse',
+            'WinHttpReceiveResponse'
         );
         if (winHttpReceiveResponse) {
             Interceptor.attach(winHttpReceiveResponse, {
@@ -1431,7 +1379,7 @@ const websocketInterceptor = {
             // Hook WebSocket extension negotiation
             var wsCreateClientHandle = Module.findExportByName(
                 'websocket.dll',
-                'WebSocketCreateClientHandle',
+                'WebSocketCreateClientHandle'
             );
             if (wsCreateClientHandle) {
                 Interceptor.attach(wsCreateClientHandle, {
@@ -1443,7 +1391,7 @@ const websocketInterceptor = {
                         if (!subProtocols.isNull()) {
                             send(
                                 '[WebSocket] Client handle with subProtocols: ' +
-                  subProtocols.readUtf8String(),
+                                    subProtocols.readUtf8String()
                             );
                             // Inject custom subprotocol for license bypass
                             var bypassProtocol = Memory.allocUtf8String('license-bypass-v1');
@@ -1461,7 +1409,7 @@ const websocketInterceptor = {
 
                             // Override with our supported extensions
                             var extensionList =
-                self.config.wsExtensions.supportedExtensions.join(';');
+                                self.config.wsExtensions.supportedExtensions.join(';');
                             Memory.writeUtf8String(extensions, extensionList);
                         }
                     },
@@ -1551,11 +1499,11 @@ const websocketInterceptor = {
                                     total_attempts: self.compressionStats.inflate_attempts,
                                     successful_bypasses: self.compressionStats.bypass_success,
                                     success_rate:
-                    (
-                        (self.compressionStats.bypass_success /
-                        self.compressionStats.inflate_attempts) *
-                      100
-                    ).toFixed(2) + '%',
+                                        (
+                                            (self.compressionStats.bypass_success /
+                                                self.compressionStats.inflate_attempts) *
+                                            100
+                                        ).toFixed(2) + '%',
                                 },
                             });
                         }
@@ -1579,7 +1527,7 @@ const websocketInterceptor = {
         // Hook timing functions to manipulate rate limiting
         var queryPerformanceCounter = Module.findExportByName(
             'kernel32.dll',
-            'QueryPerformanceCounter',
+            'QueryPerformanceCounter'
         );
         if (queryPerformanceCounter) {
             var baseTime = Date.now() * 1000;
@@ -1611,11 +1559,11 @@ const websocketInterceptor = {
                                     manipulations: self.rateLimitStats.time_manipulations,
                                     bypass_attempts: self.rateLimitStats.bypass_attempts,
                                     manipulation_rate:
-                    (
-                        (self.rateLimitStats.time_manipulations /
-                        self.rateLimitStats.timing_queries) *
-                      100
-                    ).toFixed(1) + '%',
+                                        (
+                                            (self.rateLimitStats.time_manipulations /
+                                                self.rateLimitStats.timing_queries) *
+                                            100
+                                        ).toFixed(1) + '%',
                                 },
                             });
                         }
@@ -1681,9 +1629,9 @@ const websocketInterceptor = {
                         successes: self.binaryProtocolStats.decoding_successes,
                         failures: self.binaryProtocolStats.decoding_failures,
                         total_protocols:
-              self.binaryProtocolStats.protobuf_messages +
-              self.binaryProtocolStats.msgpack_messages +
-              self.binaryProtocolStats.avro_messages,
+                            self.binaryProtocolStats.protobuf_messages +
+                            self.binaryProtocolStats.msgpack_messages +
+                            self.binaryProtocolStats.avro_messages,
                     },
                 },
             });
@@ -1711,7 +1659,7 @@ const websocketInterceptor = {
             // Hook message parsing
             var parseFromString = Module.findExportByName(
                 moduleName,
-                '_ZN6google8protobuf7Message15ParseFromStringERKSs',
+                '_ZN6google8protobuf7Message15ParseFromStringERKSs'
             );
             if (parseFromString) {
                 Interceptor.attach(parseFromString, {
@@ -1728,10 +1676,10 @@ const websocketInterceptor = {
                             // Analyze for license-related fields and credentials
                             if (
                                 stringData &&
-                (stringData.includes('license') ||
-                  stringData.includes('token') ||
-                  stringData.includes('credential') ||
-                  stringData.includes('auth'))
+                                (stringData.includes('license') ||
+                                    stringData.includes('token') ||
+                                    stringData.includes('credential') ||
+                                    stringData.includes('auth'))
                             ) {
                                 self.protobufAnalysis.license_fields_detected++;
                                 self.protobufAnalysis.bypass_opportunities++;
@@ -1751,11 +1699,11 @@ const websocketInterceptor = {
                                     license_fields: self.protobufAnalysis.license_fields_detected,
                                     bypass_ops: self.protobufAnalysis.bypass_opportunities,
                                     detection_rate:
-                    (
-                        (self.protobufAnalysis.license_fields_detected /
-                        self.protobufAnalysis.parsed_messages) *
-                      100
-                    ).toFixed(1) + '%',
+                                        (
+                                            (self.protobufAnalysis.license_fields_detected /
+                                                self.protobufAnalysis.parsed_messages) *
+                                            100
+                                        ).toFixed(1) + '%',
                                 },
                             });
 
@@ -1781,8 +1729,8 @@ const websocketInterceptor = {
                                     error_type: e.name || 'ProtobufParseError',
                                     error_message: e.message || e.toString(),
                                     likely_binary:
-                    e.toString().includes('UTF') ||
-                    e.toString().includes('encode'),
+                                        e.toString().includes('UTF') ||
+                                        e.toString().includes('encode'),
                                     fallback_strategy: 'binary_analysis_mode',
                                 },
                             });
@@ -1795,11 +1743,11 @@ const websocketInterceptor = {
 
     // Process Protocol Buffers messages for license bypass
     processProtobufMessage: function (message) {
-    // Look for common license validation patterns in protobuf
+        // Look for common license validation patterns in protobuf
         if (
             message.includes('license') ||
-      message.includes('valid') ||
-      message.includes('expire')
+            message.includes('valid') ||
+            message.includes('expire')
         ) {
             send({
                 type: 'info',
@@ -1811,10 +1759,7 @@ const websocketInterceptor = {
             // Apply license validation bypass
             var modified = message;
             modified = modified.replace(/valid["\s]*:["\s]*false/gi, 'valid": true');
-            modified = modified.replace(
-                /expired["\s]*:["\s]*true/gi,
-                'expired": false',
-            );
+            modified = modified.replace(/expired["\s]*:["\s]*true/gi, 'expired": false');
             modified = modified.replace(/trial["\s]*:["\s]*true/gi, 'trial": false');
 
             return modified;
@@ -1877,8 +1822,8 @@ const websocketInterceptor = {
             size: buffer.byteLength,
         });
 
-    // MessagePack data would require proper decoding
-    // This is a simplified representation
+        // MessagePack data would require proper decoding
+        // This is a simplified representation
     },
 
     // Hook Apache Avro decoding
@@ -1963,7 +1908,7 @@ const websocketInterceptor = {
             // Hook Cap'n Proto message reading
             var readMessage = Module.findExportByName(
                 'capnp.dll',
-                '_ZN6capnp11MessageReader11readMessageERNS_11InputStreamEi',
+                '_ZN6capnp11MessageReader11readMessageERNS_11InputStreamEi'
             );
             if (readMessage) {
                 Interceptor.attach(readMessage, {
@@ -2002,8 +1947,7 @@ const websocketInterceptor = {
                                 total_messages: self.capnprotoAnalysis.messages_read,
                                 license_messages: self.capnprotoAnalysis.license_messages,
                                 struct_analyses: self.capnprotoAnalysis.struct_analyses,
-                                bypass_candidates:
-                  self.capnprotoAnalysis.bypass_candidates.length,
+                                bypass_candidates: self.capnprotoAnalysis.bypass_candidates.length,
                             },
                         });
                     },
@@ -2122,7 +2066,7 @@ const websocketInterceptor = {
                                         var decodedHeader = JSON.parse(atob(header));
                                         if (decodedHeader.alg) {
                                             self.jwtSpoofingStats.detected_algorithms.add(
-                                                decodedHeader.alg,
+                                                decodedHeader.alg
                                             );
                                         }
                                     } catch (_parseError) {
@@ -2150,16 +2094,16 @@ const websocketInterceptor = {
                                         tokens_decoded: self.jwtSpoofingStats.tokens_decoded,
                                         tokens_spoofed: self.jwtSpoofingStats.tokens_spoofed,
                                         bypass_successes:
-                      self.jwtSpoofingStats.bypass_success_count,
+                                            self.jwtSpoofingStats.bypass_success_count,
                                         algorithms_detected: Array.from(
-                                            self.jwtSpoofingStats.detected_algorithms,
+                                            self.jwtSpoofingStats.detected_algorithms
                                         ),
                                         spoof_success_rate:
-                      (
-                          (self.jwtSpoofingStats.tokens_spoofed /
-                          self.jwtSpoofingStats.tokens_decoded) *
-                        100
-                      ).toFixed(1) + '%',
+                                            (
+                                                (self.jwtSpoofingStats.tokens_spoofed /
+                                                    self.jwtSpoofingStats.tokens_decoded) *
+                                                100
+                                            ).toFixed(1) + '%',
                                     },
                                 });
 
@@ -2240,10 +2184,7 @@ const websocketInterceptor = {
         // Hook common API key validation patterns
         var cryptoModule = Process.findModuleByName('crypt32.dll');
         if (cryptoModule) {
-            var cryptHashData = Module.findExportByName(
-                'crypt32.dll',
-                'CryptHashData',
-            );
+            var cryptHashData = Module.findExportByName('crypt32.dll', 'CryptHashData');
             if (cryptHashData) {
                 Interceptor.attach(cryptHashData, {
                     onEnter: function (args) {
@@ -2262,8 +2203,8 @@ const websocketInterceptor = {
                                 var keyData = data.readUtf8String(Math.min(dataLen, 256));
                                 if (
                                     keyData.match(/^[A-Za-z0-9+\/=]{16,}$/) ||
-                  keyData.includes('key') ||
-                  keyData.includes('api')
+                                    keyData.includes('key') ||
+                                    keyData.includes('api')
                                 ) {
                                     send({
                                         type: 'info',
@@ -2335,8 +2276,8 @@ const websocketInterceptor = {
                         eventSource.addEventListener = function (type, listener, options) {
                             if (
                                 type === 'message' ||
-                type === 'error' ||
-                type.includes('license')
+                                type === 'error' ||
+                                type.includes('license')
                             ) {
                                 var wrappedListener = function (event) {
                                     var originalData = event.data;
@@ -2376,23 +2317,16 @@ const websocketInterceptor = {
                                     this,
                                     type,
                                     wrappedListener,
-                                    options,
+                                    options
                                 );
                             }
-                            return originalAddEventListener.call(
-                                this,
-                                type,
-                                listener,
-                                options,
-                            );
+                            return originalAddEventListener.call(this, type, listener, options);
                         };
 
                         // Hook onmessage property
                         var messageDescriptor =
-              Object.getOwnPropertyDescriptor(
-                  EventSource.prototype,
-                  'onmessage',
-              ) || Object.getOwnPropertyDescriptor(eventSource, 'onmessage');
+                            Object.getOwnPropertyDescriptor(EventSource.prototype, 'onmessage') ||
+                            Object.getOwnPropertyDescriptor(eventSource, 'onmessage');
                         if (messageDescriptor && messageDescriptor.set) {
                             var originalSetter = messageDescriptor.set;
                             Object.defineProperty(eventSource, 'onmessage', {
@@ -2437,7 +2371,7 @@ const websocketInterceptor = {
             if (winHttpModule) {
                 var winHttpOpenRequest = Module.findExportByName(
                     'winhttp.dll',
-                    'WinHttpOpenRequest',
+                    'WinHttpOpenRequest'
                 );
                 if (winHttpOpenRequest) {
                     Interceptor.attach(winHttpOpenRequest, {
@@ -2448,8 +2382,7 @@ const websocketInterceptor = {
                             // Check for SSE requests (typically GET with Accept: text/event-stream)
                             if (
                                 verb === 'GET' &&
-                (objectName.includes('/events') ||
-                  objectName.includes('/stream'))
+                                (objectName.includes('/events') || objectName.includes('/stream'))
                             ) {
                                 this.isSseRequest = true;
                                 this.objectName = objectName;
@@ -2479,7 +2412,7 @@ const websocketInterceptor = {
                 // Hook WinHttpReceiveResponse for SSE data interception
                 var winHttpReceiveResponse = Module.findExportByName(
                     'winhttp.dll',
-                    'WinHttpReceiveResponse',
+                    'WinHttpReceiveResponse'
                 );
                 if (winHttpReceiveResponse) {
                     Interceptor.attach(winHttpReceiveResponse, {
@@ -2495,7 +2428,7 @@ const websocketInterceptor = {
 
                                 var queryResult = Module.findExportByName(
                                     'winhttp.dll',
-                                    'WinHttpQueryHeaders',
+                                    'WinHttpQueryHeaders'
                                 );
                                 if (queryResult) {
                                     var WINHTTP_QUERY_CONTENT_TYPE = 1;
@@ -2513,16 +2446,16 @@ const websocketInterceptor = {
                                             WINHTTP_QUERY_CONTENT_TYPE,
                                             NULL,
                                             buffer,
-                                            sizeNeeded,
+                                            sizeNeeded
                                         ) !== 0 ||
-                    Process.getLastError() === 122
+                                        Process.getLastError() === 122
                                     ) {
                                         // ERROR_INSUFFICIENT_BUFFER
 
                                         var contentType = buffer.readUtf8String();
                                         if (
                                             contentType &&
-                      contentType.includes('text/event-stream')
+                                            contentType.includes('text/event-stream')
                                         ) {
                                             send({
                                                 type: 'info',
@@ -2642,8 +2575,7 @@ const websocketInterceptor = {
                             });
 
                         // Hook datagrams
-                        var originalSendDatagrams =
-              transport.datagrams.writable.getWriter();
+                        var originalSendDatagrams = transport.datagrams.writable.getWriter();
                         transport.datagrams.writable.getWriter = function () {
                             var writer = originalSendDatagrams;
                             var originalWrite = writer.write;
@@ -2851,7 +2783,7 @@ const websocketInterceptor = {
                     request,
                     metadata,
                     methodDescriptor,
-                    callback,
+                    callback
                 ) {
                     send({
                         type: 'info',
@@ -2865,8 +2797,8 @@ const websocketInterceptor = {
                     // Check if this is a license-related gRPC call
                     if (
                         method.includes('license') ||
-            method.includes('validate') ||
-            method.includes('auth')
+                        method.includes('validate') ||
+                        method.includes('auth')
                     ) {
                         send({
                             type: 'info',
@@ -2915,7 +2847,7 @@ const websocketInterceptor = {
                         request,
                         metadata,
                         methodDescriptor,
-                        callback,
+                        callback
                     );
                 };
             }
@@ -2923,10 +2855,7 @@ const websocketInterceptor = {
             // Hook native gRPC implementations (grpc.dll)
             var grpcModule = Process.findModuleByName('grpc.dll');
             if (grpcModule) {
-                var grpcCall = Module.findExportByName(
-                    'grpc.dll',
-                    'grpc_channel_create_call',
-                );
+                var grpcCall = Module.findExportByName('grpc.dll', 'grpc_channel_create_call');
                 if (grpcCall) {
                     Interceptor.attach(grpcCall, {
                         onEnter: function (args) {
@@ -2938,8 +2867,8 @@ const websocketInterceptor = {
 
                             if (
                                 method.includes('license') ||
-                method.includes('validate') ||
-                method.includes('auth')
+                                method.includes('validate') ||
+                                method.includes('auth')
                             ) {
                                 send({
                                     type: 'info',
@@ -2968,10 +2897,7 @@ const websocketInterceptor = {
                 }
 
                 // Hook gRPC message sending
-                var grpcSendMessage = Module.findExportByName(
-                    'grpc.dll',
-                    'grpc_call_start_batch',
-                );
+                var grpcSendMessage = Module.findExportByName('grpc.dll', 'grpc_call_start_batch');
                 if (grpcSendMessage) {
                     Interceptor.attach(grpcSendMessage, {
                         onEnter: function (args) {
@@ -3152,10 +3078,7 @@ const websocketInterceptor = {
             });
 
             // Hook BrotliDecoderDecompressStream
-            var decompress = Module.findExportByName(
-                moduleName,
-                'BrotliDecoderDecompressStream',
-            );
+            var decompress = Module.findExportByName(moduleName, 'BrotliDecoderDecompressStream');
             if (decompress) {
                 Interceptor.attach(decompress, {
                     onEnter: function (args) {
@@ -3184,7 +3107,7 @@ const websocketInterceptor = {
                             if (!this.nextOut.isNull() && outputSize > 0) {
                                 try {
                                     var decompressedData = this.nextOut.readUtf8String(
-                                        Math.min(outputSize, 1024),
+                                        Math.min(outputSize, 1024)
                                     );
                                     var modified = self.processIncomingMessage(decompressedData);
 
@@ -3217,10 +3140,7 @@ const websocketInterceptor = {
             }
 
             // Hook BrotliEncoderCompressStream
-            var compress = Module.findExportByName(
-                moduleName,
-                'BrotliEncoderCompressStream',
-            );
+            var compress = Module.findExportByName(moduleName, 'BrotliEncoderCompressStream');
             if (compress) {
                 Interceptor.attach(compress, {
                     onEnter: function (args) {
@@ -3235,7 +3155,7 @@ const websocketInterceptor = {
                         if (!this.nextIn.isNull() && this.availableIn.readU32() > 0) {
                             try {
                                 var inputData = this.nextIn.readUtf8String(
-                                    Math.min(this.availableIn.readU32(), 1024),
+                                    Math.min(this.availableIn.readU32(), 1024)
                                 );
                                 var modified = self.processOutgoingMessage(inputData);
 
@@ -3289,10 +3209,7 @@ const websocketInterceptor = {
             });
 
             // Hook LZ4_decompress_safe
-            var decompress = Module.findExportByName(
-                moduleName,
-                'LZ4_decompress_safe',
-            );
+            var decompress = Module.findExportByName(moduleName, 'LZ4_decompress_safe');
             if (decompress) {
                 Interceptor.attach(decompress, {
                     onEnter: function (args) {
@@ -3316,7 +3233,7 @@ const websocketInterceptor = {
                             if (!this.dest.isNull()) {
                                 try {
                                     var decompressedData = this.dest.readUtf8String(
-                                        Math.min(decompressedSize, 1024),
+                                        Math.min(decompressedSize, 1024)
                                     );
                                     var modified = self.processIncomingMessage(decompressedData);
 
@@ -3347,10 +3264,7 @@ const websocketInterceptor = {
             }
 
             // Hook LZ4_compress_default
-            var compress = Module.findExportByName(
-                moduleName,
-                'LZ4_compress_default',
-            );
+            var compress = Module.findExportByName(moduleName, 'LZ4_compress_default');
             if (compress) {
                 Interceptor.attach(compress, {
                     onEnter: function (args) {
@@ -3363,7 +3277,7 @@ const websocketInterceptor = {
                         if (!this.source.isNull() && this.sourceSize > 0) {
                             try {
                                 var inputData = this.source.readUtf8String(
-                                    Math.min(this.sourceSize, 1024),
+                                    Math.min(this.sourceSize, 1024)
                                 );
                                 var modified = self.processOutgoingMessage(inputData);
 
@@ -3441,7 +3355,7 @@ const websocketInterceptor = {
 
                             try {
                                 var decompressedData = this.dst.readUtf8String(
-                                    Math.min(decompressedSize, 1024),
+                                    Math.min(decompressedSize, 1024)
                                 );
                                 var modified = self.processIncomingMessage(decompressedData);
 
@@ -3485,7 +3399,7 @@ const websocketInterceptor = {
                         if (!this.src.isNull() && this.srcSize > 0) {
                             try {
                                 var inputData = this.src.readUtf8String(
-                                    Math.min(this.srcSize, 1024),
+                                    Math.min(this.srcSize, 1024)
                                 );
                                 var modified = self.processOutgoingMessage(inputData);
 
@@ -3556,7 +3470,7 @@ const websocketInterceptor = {
         if (winHttpModule) {
             var winHttpReceiveRequest = Module.findExportByName(
                 'winhttp.dll',
-                'WinHttpReceiveRequest',
+                'WinHttpReceiveRequest'
             );
             if (winHttpReceiveRequest) {
                 Interceptor.attach(winHttpReceiveRequest, {
@@ -3573,7 +3487,7 @@ const websocketInterceptor = {
 
                             var queryHeaders = Module.findExportByName(
                                 'winhttp.dll',
-                                'WinHttpQueryHeaders',
+                                'WinHttpQueryHeaders'
                             );
                             if (queryHeaders) {
                                 var WINHTTP_QUERY_REQUEST_METHOD = 45;
@@ -3591,7 +3505,7 @@ const websocketInterceptor = {
                                         WINHTTP_QUERY_REQUEST_METHOD,
                                         NULL,
                                         buffer,
-                                        sizeNeeded,
+                                        sizeNeeded
                                     ) !== 0
                                 ) {
                                     var method = buffer.readUtf8String();
@@ -3617,17 +3531,19 @@ const websocketInterceptor = {
                                                 WINHTTP_QUERY_RAW_HEADERS_CRLF,
                                                 NULL,
                                                 urlBuffer,
-                                                urlSize,
+                                                urlSize
                                             ) !== 0
                                         ) {
-                                            var headers = urlBuffer.readUtf8String(urlSize.readU32());
+                                            var headers = urlBuffer.readUtf8String(
+                                                urlSize.readU32()
+                                            );
 
                                             // Look for license-related webhook endpoints
                                             if (
                                                 headers.includes('license') ||
-                        headers.includes('webhook') ||
-                        headers.includes('validate') ||
-                        headers.includes('callback')
+                                                headers.includes('webhook') ||
+                                                headers.includes('validate') ||
+                                                headers.includes('callback')
                                             ) {
                                                 send({
                                                     type: 'info',
@@ -3693,8 +3609,8 @@ const websocketInterceptor = {
                             router.post = function (path) {
                                 if (
                                     path.includes('webhook') ||
-                  path.includes('license') ||
-                  path.includes('callback')
+                                    path.includes('license') ||
+                                    path.includes('callback')
                                 ) {
                                     send({
                                         type: 'info',
@@ -3711,8 +3627,8 @@ const websocketInterceptor = {
                             router.put = function (path) {
                                 if (
                                     path.includes('webhook') ||
-                  path.includes('license') ||
-                  path.includes('callback')
+                                    path.includes('license') ||
+                                    path.includes('callback')
                                 ) {
                                     send({
                                         type: 'info',
@@ -3798,10 +3714,7 @@ const websocketInterceptor = {
             });
 
             // Read request body if available
-            var winHttpReadData = Module.findExportByName(
-                'winhttp.dll',
-                'WinHttpReadData',
-            );
+            var winHttpReadData = Module.findExportByName('winhttp.dll', 'WinHttpReadData');
             if (winHttpReadData) {
                 var buffer = Memory.alloc(4096);
                 var bytesRead = Memory.alloc(4);
@@ -3869,15 +3782,10 @@ const websocketInterceptor = {
                 timestamp: Date.now(),
             });
 
-            var winHttpSendResponse = Module.findExportByName(
-                'winhttp.dll',
-                'WinHttpSendResponse',
-            );
+            var winHttpSendResponse = Module.findExportByName('winhttp.dll', 'WinHttpSendResponse');
             if (winHttpSendResponse) {
                 var statusCode = Memory.allocUtf8String('200 OK');
-                var headers = Memory.allocUtf8String(
-                    'Content-Type: application/json\r\n',
-                );
+                var headers = Memory.allocUtf8String('Content-Type: application/json\r\n');
                 var responseBuffer = Memory.allocUtf8String(response);
 
                 var sendFunc = new NativeFunction(winHttpSendResponse, 'int', [
@@ -3899,7 +3807,7 @@ const websocketInterceptor = {
                     headers.readUtf8String().length,
                     responseBuffer,
                     response.length,
-                    NULL,
+                    NULL
                 );
 
                 send({
@@ -3940,14 +3848,12 @@ const websocketInterceptor = {
                         self.hookWasmImports(imports);
                     }
 
-                    return originalInstantiate
-                        .call(this, bytes, imports)
-                        .then(function (result) {
-                            if (result.instance && result.instance.exports) {
-                                self.hookWasmExports(result.instance.exports);
-                            }
-                            return result;
-                        });
+                    return originalInstantiate.call(this, bytes, imports).then(function (result) {
+                        if (result.instance && result.instance.exports) {
+                            self.hookWasmExports(result.instance.exports);
+                        }
+                        return result;
+                    });
                 };
 
                 var originalInstantiateStreaming = WebAssembly.instantiateStreaming;
@@ -4004,12 +3910,12 @@ const websocketInterceptor = {
                             // Hook functions that might be used for license validation
                             if (
                                 typeof originalFunc === 'function' &&
-                (func.includes('send') ||
-                  func.includes('message') ||
-                  func.includes('validate') ||
-                  func.includes('license') ||
-                  func.includes('check') ||
-                  func.includes('auth'))
+                                (func.includes('send') ||
+                                    func.includes('message') ||
+                                    func.includes('validate') ||
+                                    func.includes('license') ||
+                                    func.includes('check') ||
+                                    func.includes('auth'))
                             ) {
                                 moduleImports[func] = function () {
                                     var args = Array.prototype.slice.call(arguments);
@@ -4088,20 +3994,17 @@ const websocketInterceptor = {
 
         try {
             for (var func in exports) {
-                if (
-                    exports.hasOwnProperty(func) &&
-          typeof exports[func] === 'function'
-                ) {
+                if (exports.hasOwnProperty(func) && typeof exports[func] === 'function') {
                     var originalFunc = exports[func];
 
                     // Hook functions that might handle license validation
                     if (
                         func.includes('validate') ||
-            func.includes('license') ||
-            func.includes('check') ||
-            func.includes('auth') ||
-            func.includes('send') ||
-            func.includes('receive')
+                        func.includes('license') ||
+                        func.includes('check') ||
+                        func.includes('auth') ||
+                        func.includes('send') ||
+                        func.includes('receive')
                     ) {
                         exports[func] = function () {
                             var args = Array.prototype.slice.call(arguments);
@@ -4206,9 +4109,9 @@ const websocketInterceptor = {
                                     function: funcName,
                                 });
                                 this.isLicenseFunction =
-                  funcName.includes('license') ||
-                  funcName.includes('validate') ||
-                  funcName.includes('auth');
+                                    funcName.includes('license') ||
+                                    funcName.includes('validate') ||
+                                    funcName.includes('auth');
                             },
                             onLeave: function (retval) {
                                 if (this.isLicenseFunction) {
@@ -4294,17 +4197,17 @@ const websocketInterceptor = {
                             var result = retval.toInt32();
                             if (
                                 result === 0 &&
-                funcName === 'SslDecryptPacket' &&
-                this.bufferSize > 0
+                                funcName === 'SslDecryptPacket' &&
+                                this.bufferSize > 0
                             ) {
                                 // Process decrypted TLS data
                                 try {
                                     var decryptedData = this.buffer.readUtf8String(
-                                        Math.min(this.bufferSize, 1024),
+                                        Math.min(this.bufferSize, 1024)
                                     );
                                     if (
                                         decryptedData.includes('license') ||
-                    decryptedData.includes('validate')
+                                        decryptedData.includes('validate')
                                     ) {
                                         send({
                                             type: 'info',
@@ -4366,8 +4269,8 @@ const websocketInterceptor = {
                                 var data = this.buf.readUtf8String(Math.min(bytesRead, 1024));
                                 if (
                                     data.includes('license') ||
-                  data.includes('validate') ||
-                  data.includes('auth')
+                                    data.includes('validate') ||
+                                    data.includes('auth')
                                 ) {
                                     send({
                                         type: 'info',
@@ -4412,8 +4315,8 @@ const websocketInterceptor = {
                                 var data = this.buf.readUtf8String(Math.min(this.num, 1024));
                                 if (
                                     data.includes('license') ||
-                  data.includes('validate') ||
-                  data.includes('auth')
+                                    data.includes('validate') ||
+                                    data.includes('auth')
                                 ) {
                                     var modified = self.processOutgoingMessage(data);
                                     if (modified !== data) {
@@ -4447,7 +4350,7 @@ const websocketInterceptor = {
         if (crypt32Module) {
             var certVerifyChain = Module.findExportByName(
                 'crypt32.dll',
-                'CertVerifyCertificateChainPolicy',
+                'CertVerifyCertificateChainPolicy'
             );
             if (certVerifyChain) {
                 Interceptor.attach(certVerifyChain, {
@@ -4476,10 +4379,7 @@ const websocketInterceptor = {
             }
 
             // Hook certificate chain building
-            var certGetChain = Module.findExportByName(
-                'crypt32.dll',
-                'CertGetCertificateChain',
-            );
+            var certGetChain = Module.findExportByName('crypt32.dll', 'CertGetCertificateChain');
             if (certGetChain) {
                 Interceptor.attach(certGetChain, {
                     onLeave: function (retval) {
@@ -4498,10 +4398,7 @@ const websocketInterceptor = {
         // Hook certificate pinning in common HTTP libraries
         var winHttpModule = Process.findModuleByName('winhttp.dll');
         if (winHttpModule) {
-            var winHttpSetOption = Module.findExportByName(
-                'winhttp.dll',
-                'WinHttpSetOption',
-            );
+            var winHttpSetOption = Module.findExportByName('winhttp.dll', 'WinHttpSetOption');
             if (winHttpSetOption) {
                 Interceptor.attach(winHttpSetOption, {
                     onEnter: function (args) {
@@ -4511,7 +4408,7 @@ const websocketInterceptor = {
 
                         if (
                             option === WINHTTP_OPTION_SERVER_CERT_CONTEXT ||
-              option === WINHTTP_OPTION_SECURITY_FLAGS
+                            option === WINHTTP_OPTION_SECURITY_FLAGS
                         ) {
                             send({
                                 type: 'bypass',
@@ -4540,10 +4437,7 @@ const websocketInterceptor = {
         // Hook TLS SNI extension processing
         var winHttpModule = Process.findModuleByName('winhttp.dll');
         if (winHttpModule) {
-            var winHttpConnect = Module.findExportByName(
-                'winhttp.dll',
-                'WinHttpConnect',
-            );
+            var winHttpConnect = Module.findExportByName('winhttp.dll', 'WinHttpConnect');
             if (winHttpConnect) {
                 Interceptor.attach(winHttpConnect, {
                     onEnter: function (args) {
@@ -4557,9 +4451,9 @@ const websocketInterceptor = {
                             // Check if this is a license server connection
                             if (
                                 originalName.includes('license') ||
-                originalName.includes('activate') ||
-                originalName.includes('validate') ||
-                originalName.includes('auth')
+                                originalName.includes('activate') ||
+                                originalName.includes('validate') ||
+                                originalName.includes('auth')
                             ) {
                                 send({
                                     type: 'info',
@@ -4625,10 +4519,9 @@ const websocketInterceptor = {
                 // Check if this is a GraphQL subscription WebSocket
                 if (
                     protocols &&
-          (protocols.includes('graphql-ws') ||
-            protocols.includes('graphql-transport-ws') ||
-            (Array.isArray(protocols) &&
-              protocols.some((p) => p.includes('graphql'))))
+                    (protocols.includes('graphql-ws') ||
+                        protocols.includes('graphql-transport-ws') ||
+                        (Array.isArray(protocols) && protocols.some((p) => p.includes('graphql'))))
                 ) {
                     send({
                         type: 'info',
@@ -4670,11 +4563,11 @@ const websocketInterceptor = {
 
                     if (
                         query.includes('license') ||
-            query.includes('validate') ||
-            query.includes('subscription') ||
-            Object.keys(variables).some(
-                (k) => k.includes('license') || k.includes('auth'),
-            )
+                        query.includes('validate') ||
+                        query.includes('subscription') ||
+                        Object.keys(variables).some(
+                            (k) => k.includes('license') || k.includes('auth')
+                        )
                     ) {
                         send({
                             type: 'info',
@@ -4759,7 +4652,7 @@ const websocketInterceptor = {
                     // Not JSON data
                 }
             },
-            true,
+            true
         );
     },
 
@@ -4776,9 +4669,9 @@ const websocketInterceptor = {
 
                     if (
                         (module === 'graphql' ||
-              module === 'apollo-server' ||
-              module === 'apollo-client') &&
-            result
+                            module === 'apollo-server' ||
+                            module === 'apollo-client') &&
+                        result
                     ) {
                         send({
                             type: 'info',
@@ -4797,26 +4690,30 @@ const websocketInterceptor = {
                                 if (document && document.definitions) {
                                     document.definitions.forEach(function (def) {
                                         if (def.selectionSet && def.selectionSet.selections) {
-                                            def.selectionSet.selections.forEach(function (selection) {
-                                                if (
-                                                    selection.name &&
-                          (selection.name.value.includes('license') ||
-                            selection.name.value.includes('validate') ||
-                            selection.name.value.includes('auth'))
-                                                ) {
-                                                    send({
-                                                        type: 'info',
-                                                        target: 'websocket_interceptor',
-                                                        action: 'graphql_license_query_detected',
-                                                        operation: selection.name.value,
-                                                        variables: variables,
-                                                    });
+                                            def.selectionSet.selections.forEach(
+                                                function (selection) {
+                                                    if (
+                                                        selection.name &&
+                                                        (selection.name.value.includes('license') ||
+                                                            selection.name.value.includes(
+                                                                'validate'
+                                                            ) ||
+                                                            selection.name.value.includes('auth'))
+                                                    ) {
+                                                        send({
+                                                            type: 'info',
+                                                            target: 'websocket_interceptor',
+                                                            action: 'graphql_license_query_detected',
+                                                            operation: selection.name.value,
+                                                            variables: variables,
+                                                        });
 
-                                                    // Modify variables for license bypass
-                                                    args.variableValues =
-                            self.modifyGraphQLVariables(variables);
+                                                        // Modify variables for license bypass
+                                                        args.variableValues =
+                                                            self.modifyGraphQLVariables(variables);
+                                                    }
                                                 }
-                                            });
+                                            );
                                         }
                                     });
                                 }
@@ -4857,9 +4754,9 @@ const websocketInterceptor = {
         for (var key in modified) {
             if (
                 key.toLowerCase().includes('license') ||
-        key.toLowerCase().includes('valid') ||
-        key.toLowerCase().includes('expired') ||
-        key.toLowerCase().includes('trial')
+                key.toLowerCase().includes('valid') ||
+                key.toLowerCase().includes('expired') ||
+                key.toLowerCase().includes('trial')
             ) {
                 if (key.includes('valid') || key.includes('license')) {
                     modified[key] = true;
@@ -4888,10 +4785,10 @@ const websocketInterceptor = {
                         processObject(value);
                     } else if (
                         key.toLowerCase().includes('license') ||
-            key.toLowerCase().includes('valid') ||
-            key.toLowerCase().includes('expired') ||
-            key.toLowerCase().includes('trial') ||
-            key.toLowerCase().includes('auth')
+                        key.toLowerCase().includes('valid') ||
+                        key.toLowerCase().includes('expired') ||
+                        key.toLowerCase().includes('trial') ||
+                        key.toLowerCase().includes('auth')
                     ) {
                         // Modify license-related fields
                         if (key.includes('valid') || key.includes('licensed')) {
@@ -4955,10 +4852,7 @@ const websocketInterceptor = {
         // Hook HTTP upgrade request processing for WebSocket subprotocol manipulation
         var winHttpModule = Process.findModuleByName('winhttp.dll');
         if (winHttpModule) {
-            var winHttpSendRequest = Module.findExportByName(
-                'winhttp.dll',
-                'WinHttpSendRequest',
-            );
+            var winHttpSendRequest = Module.findExportByName('winhttp.dll', 'WinHttpSendRequest');
             if (winHttpSendRequest) {
                 Interceptor.attach(winHttpSendRequest, {
                     onEnter: function (args) {
@@ -4972,7 +4866,7 @@ const websocketInterceptor = {
                             // Check for WebSocket upgrade with subprotocols
                             if (
                                 headerString.includes('Upgrade: websocket') &&
-                headerString.includes('Sec-WebSocket-Protocol:')
+                                headerString.includes('Sec-WebSocket-Protocol:')
                             ) {
                                 send({
                                     type: 'info',
@@ -4983,7 +4877,7 @@ const websocketInterceptor = {
 
                                 // Extract and modify subprotocols
                                 var protocolMatch = headerString.match(
-                                    /Sec-WebSocket-Protocol:\s*([^\r\n]+)/i,
+                                    /Sec-WebSocket-Protocol:\s*([^\r\n]+)/i
                                 );
                                 if (protocolMatch) {
                                     var protocols = protocolMatch[1]
@@ -5005,7 +4899,7 @@ const websocketInterceptor = {
 
                                     var modifiedHeaders = headerString.replace(
                                         /Sec-WebSocket-Protocol:\s*[^\r\n]+/i,
-                                        'Sec-WebSocket-Protocol: ' + spoofedProtocols.join(', '),
+                                        'Sec-WebSocket-Protocol: ' + spoofedProtocols.join(', ')
                                     );
 
                                     Memory.writeUtf16String(headers, modifiedHeaders);
@@ -5028,7 +4922,7 @@ const websocketInterceptor = {
             // Hook WebSocket handshake response processing
             var winHttpReceiveResponse = Module.findExportByName(
                 'winhttp.dll',
-                'WinHttpReceiveResponse',
+                'WinHttpReceiveResponse'
             );
             if (winHttpReceiveResponse) {
                 Interceptor.attach(winHttpReceiveResponse, {
@@ -5043,7 +4937,7 @@ const websocketInterceptor = {
 
                             var queryHeaders = Module.findExportByName(
                                 'winhttp.dll',
-                                'WinHttpQueryHeaders',
+                                'WinHttpQueryHeaders'
                             );
                             if (queryHeaders) {
                                 var WINHTTP_QUERY_RAW_HEADERS_CRLF = 22;
@@ -5061,14 +4955,14 @@ const websocketInterceptor = {
                                         WINHTTP_QUERY_RAW_HEADERS_CRLF,
                                         NULL,
                                         buffer,
-                                        sizeNeeded,
+                                        sizeNeeded
                                     ) !== 0
                                 ) {
                                     var responseHeaders = buffer.readUtf8String();
 
                                     if (
                                         responseHeaders.includes('101 Switching Protocols') &&
-                    responseHeaders.includes('Sec-WebSocket-Protocol:')
+                                        responseHeaders.includes('Sec-WebSocket-Protocol:')
                                     ) {
                                         send({
                                             type: 'info',
@@ -5079,7 +4973,7 @@ const websocketInterceptor = {
 
                                         // Extract selected protocol
                                         var protocolMatch = responseHeaders.match(
-                                            /Sec-WebSocket-Protocol:\s*([^\r\n]+)/i,
+                                            /Sec-WebSocket-Protocol:\s*([^\r\n]+)/i
                                         );
                                         if (protocolMatch) {
                                             var selectedProtocol = protocolMatch[1].trim();
@@ -5150,8 +5044,8 @@ const websocketInterceptor = {
 
     // Handle binary protocol messages
     handleBinaryProtocol: function (message) {
-    // Binary protocol processing would require specific protocol knowledge
-    // For now, return original message
+        // Binary protocol processing would require specific protocol knowledge
+        // For now, return original message
         send({
             type: 'info',
             target: 'websocket_interceptor',
@@ -5163,7 +5057,7 @@ const websocketInterceptor = {
 
     // Handle license-specific protocol messages
     handleLicenseProtocol: function (message) {
-    // License protocol specific processing
+        // License protocol specific processing
         var modified = message;
 
         // Apply license-specific transformations
@@ -5176,7 +5070,7 @@ const websocketInterceptor = {
 
     // Handle default protocol messages
     handleDefaultProtocol: function (message) {
-    // Apply general license bypass patterns
+        // Apply general license bypass patterns
         return this.processIncomingMessage(message);
     },
 
@@ -5275,10 +5169,7 @@ const websocketInterceptor = {
         var originalProcessIncomingMessage = this.processIncomingMessage;
         this.processIncomingMessage = function (message) {
             // Check for protocol switching commands
-            if (
-                message.includes('SWITCH_PROTOCOL') ||
-        message.includes('UPGRADE_PROTOCOL')
-            ) {
+            if (message.includes('SWITCH_PROTOCOL') || message.includes('UPGRADE_PROTOCOL')) {
                 send({
                     type: 'info',
                     target: 'websocket_interceptor',
@@ -5330,19 +5221,11 @@ const websocketInterceptor = {
         var _self = this;
 
         // Hook HTTPS requests to common DoH servers
-        var dohServers = [
-            'cloudflare-dns.com',
-            'dns.google',
-            'dns.quad9.net',
-            'dns.adguard.com',
-        ];
+        var dohServers = ['cloudflare-dns.com', 'dns.google', 'dns.quad9.net', 'dns.adguard.com'];
 
         var winHttpModule = Process.findModuleByName('winhttp.dll');
         if (winHttpModule) {
-            var winHttpConnect = Module.findExportByName(
-                'winhttp.dll',
-                'WinHttpConnect',
-            );
+            var winHttpConnect = Module.findExportByName('winhttp.dll', 'WinHttpConnect');
             if (winHttpConnect) {
                 Interceptor.attach(winHttpConnect, {
                     onEnter: function (args) {
@@ -5518,10 +5401,7 @@ const websocketInterceptor = {
                             });
 
                             // Process DNS response for license domain spoofing
-                            var modified = self.processDnsResponse(
-                                this.buffer,
-                                bytesReceived,
-                            );
+                            var modified = self.processDnsResponse(this.buffer, bytesReceived);
                             if (modified) {
                                 send({
                                     type: 'bypass',
@@ -5544,10 +5424,7 @@ const websocketInterceptor = {
         // Hook GetAddrInfoExW for modern DNS resolution
         var ws2_32 = Process.findModuleByName('ws2_32.dll');
         if (ws2_32) {
-            var getAddrInfoEx = Module.findExportByName(
-                'ws2_32.dll',
-                'GetAddrInfoExW',
-            );
+            var getAddrInfoEx = Module.findExportByName('ws2_32.dll', 'GetAddrInfoExW');
             if (getAddrInfoEx) {
                 Interceptor.attach(getAddrInfoEx, {
                     onEnter: function (args) {
@@ -5560,10 +5437,10 @@ const websocketInterceptor = {
                             // Check for license-related domains
                             if (
                                 hostname.includes('license') ||
-                hostname.includes('activate') ||
-                hostname.includes('validate') ||
-                hostname.includes('auth') ||
-                hostname.includes('verify')
+                                hostname.includes('activate') ||
+                                hostname.includes('validate') ||
+                                hostname.includes('auth') ||
+                                hostname.includes('verify')
                             ) {
                                 send({
                                     type: 'info',
@@ -5608,10 +5485,7 @@ const websocketInterceptor = {
             }
 
             // Hook classic gethostbyname for older applications
-            var gethostbyname = Module.findExportByName(
-                'ws2_32.dll',
-                'gethostbyname',
-            );
+            var gethostbyname = Module.findExportByName('ws2_32.dll', 'gethostbyname');
             if (gethostbyname) {
                 Interceptor.attach(gethostbyname, {
                     onEnter: function (args) {
@@ -5619,9 +5493,9 @@ const websocketInterceptor = {
 
                         if (
                             hostname.includes('license') ||
-              hostname.includes('activate') ||
-              hostname.includes('validate') ||
-              hostname.includes('auth')
+                            hostname.includes('activate') ||
+                            hostname.includes('validate') ||
+                            hostname.includes('auth')
                         ) {
                             send({
                                 type: 'info',
@@ -5661,9 +5535,9 @@ const websocketInterceptor = {
 
             if (
                 domainName &&
-        (domainName.includes('license') ||
-          domainName.includes('activate') ||
-          domainName.includes('validate'))
+                (domainName.includes('license') ||
+                    domainName.includes('activate') ||
+                    domainName.includes('validate'))
             ) {
                 send({
                     type: 'info',
@@ -5757,8 +5631,7 @@ const websocketInterceptor = {
 if (typeof websocketInterceptor !== 'undefined') {
     send({
         type: 'info',
-        message:
-      'Initializing WebSocket Interceptor v' + websocketInterceptor.version,
+        message: 'Initializing WebSocket Interceptor v' + websocketInterceptor.version,
     });
 
     // Start interception

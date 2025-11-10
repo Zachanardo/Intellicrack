@@ -58,7 +58,7 @@ class IntellicrakGraphVisualization {
     }
 
     initializeSVG() {
-    // Clear existing SVG
+        // Clear existing SVG
         this.container.selectAll('*').remove();
 
         // Create main SVG
@@ -105,7 +105,7 @@ class IntellicrakGraphVisualization {
     }
 
     initializeForceLayout() {
-    // Create force layout engine using D3's physics-based layout
+        // Create force layout engine using D3's physics-based layout
         const forceMethod = 'force' + String.fromCharCode(83) + 'imulation'; // D3.js API method
         this.layoutEngine = d3[forceMethod]()
             .force(
@@ -113,18 +113,18 @@ class IntellicrakGraphVisualization {
                 d3
                     .forceLink()
                     .id((d) => d.id)
-                    .distance(this.options.linkDistance),
+                    .distance(this.options.linkDistance)
             )
             .force('charge', d3.forceManyBody().strength(this.options.chargeStrength))
             .force(
                 'center',
                 d3
                     .forceCenter(this.width / 2, this.height / 2)
-                    .strength(this.options.centerStrength),
+                    .strength(this.options.centerStrength)
             )
             .force(
                 'collision',
-                d3.forceCollide().radius((d) => this.getNodeRadius(d) + 5),
+                d3.forceCollide().radius((d) => this.getNodeRadius(d) + 5)
             )
             .on('tick', () => this.tick());
 
@@ -133,7 +133,7 @@ class IntellicrakGraphVisualization {
     }
 
     initializeZoom() {
-    // Create zoom behavior
+        // Create zoom behavior
         this.zoom = d3
             .zoom()
             .scaleExtent([0.1, 10])
@@ -194,10 +194,7 @@ class IntellicrakGraphVisualization {
     }
 
     resetZoom() {
-        this.svg
-            .transition()
-            .duration(750)
-            .call(this.zoom.transform, d3.zoomIdentity);
+        this.svg.transition().duration(750).call(this.zoom.transform, d3.zoomIdentity);
     }
 
     fitToScreen() {
@@ -211,17 +208,14 @@ class IntellicrakGraphVisualization {
         const midY = bounds.y + height / 2;
 
         const scale = 0.9 / Math.max(width / fullWidth, height / fullHeight);
-        const translate = [
-            fullWidth / 2 - scale * midX,
-            fullHeight / 2 - scale * midY,
-        ];
+        const translate = [fullWidth / 2 - scale * midX, fullHeight / 2 - scale * midY];
 
         this.svg
             .transition()
             .duration(750)
             .call(
                 this.zoom.transform,
-                d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale),
+                d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
             );
     }
 
@@ -259,7 +253,7 @@ class IntellicrakGraphVisualization {
     }
 
     addNode(nodeData) {
-    // Create node object
+        // Create node object
         const node = {
             id: nodeData.id || `node_${Date.now()}_${Math.random()}`,
             type: nodeData.type || 'default',
@@ -284,7 +278,7 @@ class IntellicrakGraphVisualization {
     }
 
     addLink(linkData) {
-    // Create link object
+        // Create link object
         const link = {
             id: linkData.id || `link_${Date.now()}_${Math.random()}`,
             source: linkData.source,
@@ -312,14 +306,12 @@ class IntellicrakGraphVisualization {
     }
 
     update() {
-    // Convert maps to arrays
+        // Convert maps to arrays
         const nodesArray = Array.from(this.nodes.values());
         const linksArray = Array.from(this.links.values());
 
         // Update links
-        const links = this.linkGroup
-            .selectAll('.link')
-            .data(linksArray, (d) => d.id);
+        const links = this.linkGroup.selectAll('.link').data(linksArray, (d) => d.id);
 
         links.exit().remove();
 
@@ -335,9 +327,7 @@ class IntellicrakGraphVisualization {
         links.merge(linksEnter);
 
         // Update nodes
-        const nodes = this.nodeGroup
-            .selectAll('.node')
-            .data(nodesArray, (d) => d.id);
+        const nodes = this.nodeGroup.selectAll('.node').data(nodesArray, (d) => d.id);
 
         nodes.exit().remove();
 
@@ -360,7 +350,7 @@ class IntellicrakGraphVisualization {
         // Update labels
         const labels = this.labelGroup.selectAll('.label').data(
             nodesArray.filter((d) => d.size > 2),
-            (d) => d.id,
+            (d) => d.id
         );
 
         labels.exit().remove();
@@ -388,7 +378,7 @@ class IntellicrakGraphVisualization {
     }
 
     tick() {
-    // Update link positions
+        // Update link positions
         this.linkGroup
             .selectAll('.link')
             .attr('x1', (d) => d.source.x)
@@ -521,7 +511,7 @@ class IntellicrakGraphVisualization {
     }
 
     onNodeDoubleClick(node) {
-    // Expand/collapse node on double click
+        // Expand/collapse node on double click
         if (node.expanded) {
             this.collapseNode(node);
         } else {
@@ -530,7 +520,7 @@ class IntellicrakGraphVisualization {
     }
 
     expandNode(node) {
-    // Mark as expanded
+        // Mark as expanded
         node.expanded = true;
 
         // Request child nodes from server
@@ -540,7 +530,7 @@ class IntellicrakGraphVisualization {
     }
 
     collapseNode(node) {
-    // Mark as collapsed
+        // Mark as collapsed
         node.expanded = false;
 
         // Remove child nodes
@@ -562,7 +552,7 @@ class IntellicrakGraphVisualization {
     }
 
     highlightPath(node) {
-    // Reset all highlights
+        // Reset all highlights
         this.nodeGroup.selectAll('.node').attr('opacity', 0.3);
 
         this.linkGroup.selectAll('.link').attr('opacity', 0.1);
@@ -587,7 +577,7 @@ class IntellicrakGraphVisualization {
     }
 
     removeNode(nodeId) {
-    // Remove node
+        // Remove node
         this.nodes.delete(nodeId);
 
         // Remove connected links
@@ -637,7 +627,7 @@ class IntellicrakGraphVisualization {
     }
 
     updateStatistics() {
-    // Calculate clusters
+        // Calculate clusters
         const clusters = this.detectClusters();
         this.stats.clusters = clusters.length;
 
@@ -648,7 +638,7 @@ class IntellicrakGraphVisualization {
     }
 
     detectClusters() {
-    // Simple connected components detection
+        // Simple connected components detection
         const visited = new Set();
         const clusters = [];
 
@@ -687,7 +677,7 @@ class IntellicrakGraphVisualization {
     }
 
     clear() {
-    // Clear all data
+        // Clear all data
         this.nodes.clear();
         this.links.clear();
 
@@ -701,7 +691,7 @@ class IntellicrakGraphVisualization {
     }
 
     exportGraph() {
-    // Export graph data
+        // Export graph data
         return {
             nodes: Array.from(this.nodes.values()),
             links: Array.from(this.links.values()).map((link) => ({
@@ -714,7 +704,7 @@ class IntellicrakGraphVisualization {
     }
 
     importGraph(graphData) {
-    // Clear existing graph
+        // Clear existing graph
         this.clear();
 
         // Import nodes
@@ -749,7 +739,7 @@ class IntellicrakGraphVisualization {
     }
 
     applyForceLayout() {
-    // Reset fixed positions
+        // Reset fixed positions
         this.nodes.forEach((node) => {
             node.fx = null;
             node.fy = null;
@@ -777,7 +767,7 @@ class IntellicrakGraphVisualization {
     }
 
     applyHierarchicalLayout() {
-    // Find root nodes (no incoming edges)
+        // Find root nodes (no incoming edges)
         const roots = [];
         const hasIncoming = new Set();
 

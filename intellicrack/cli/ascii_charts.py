@@ -68,7 +68,7 @@ class ASCIIChartGenerator:
             "tee_down": "┬",
             "tee_left": "┤",
             "tee_right": "├",
-            "dot": "•",
+            "dot": "",
             "circle": "○",
             "diamond": "◆",
             "triangle": "▲",
@@ -548,7 +548,7 @@ class ASCIIChartGenerator:
                 details,
             )
 
-        charts.append(Panel(stats_table, title="📊 Summary"))
+        charts.append(Panel(stats_table, title=" Summary"))
 
         # Vulnerability chart
         vuln_data = analysis_results.get("vulnerabilities", {})
@@ -575,7 +575,7 @@ class ASCIIChartGenerator:
                         f"{percentage:.1f}%",
                     )
 
-                charts.append(Panel(vuln_table, title="🔍 Security Issues"))
+                charts.append(Panel(vuln_table, title=" Security Issues"))
 
         # Protection status
         prot_data = analysis_results.get("protections", {})
@@ -594,7 +594,7 @@ class ASCIIChartGenerator:
             }
 
             for prot, enabled in prot_data.items():
-                status = "[green]✅ Enabled[/green]" if enabled else "[red]ERROR Disabled[/red]"
+                status = "[green]OK Enabled[/green]" if enabled else "[red]ERROR Disabled[/red]"
                 desc = prot_descriptions.get(prot, "Security feature")
                 prot_table.add_row(
                     prot.upper(),
@@ -602,7 +602,7 @@ class ASCIIChartGenerator:
                     desc,
                 )
 
-            charts.append(Panel(prot_table, title="🔒 Protections"))
+            charts.append(Panel(prot_table, title=" Protections"))
 
         # Display charts in columns
         if len(charts) >= 2:

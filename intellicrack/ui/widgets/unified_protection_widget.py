@@ -621,7 +621,7 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
         if "bypass_recommendations" in protection:
             details += "\nBypass Recommendations:\n"
             for rec in protection["bypass_recommendations"]:
-                details += f"  • {rec}\n"
+                details += f"   {rec}\n"
 
         self.details_text.setPlainText(details)
 
@@ -1014,7 +1014,7 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
             if packers:
                 sig_content += "Detected Packers/Protectors:\n"
                 for packer in packers:
-                    sig_content += f"  • {packer}\n"
+                    sig_content += f"   {packer}\n"
             else:
                 sig_content += "No packers detected\n"
 
@@ -1051,10 +1051,10 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
                 entropy_content += "🟢 LOW ENTROPY - Normal code/data\n"
 
             entropy_content += "\nEntropy Interpretation:\n"
-            entropy_content += "• 0.0 - 4.0: Low entropy (normal code, text)\n"
-            entropy_content += "• 4.0 - 6.0: Medium entropy (mixed content)\n"
-            entropy_content += "• 6.0 - 7.5: High entropy (compressed/obfuscated)\n"
-            entropy_content += "• 7.5 - 8.0: Very high entropy (encrypted)\n\n"
+            entropy_content += " 0.0 - 4.0: Low entropy (normal code, text)\n"
+            entropy_content += " 4.0 - 6.0: Medium entropy (mixed content)\n"
+            entropy_content += " 6.0 - 7.5: High entropy (compressed/obfuscated)\n"
+            entropy_content += " 7.5 - 8.0: Very high entropy (encrypted)\n\n"
 
             # Per-section entropy
             entropy_content += "Per-Section Entropy:\n"

@@ -592,10 +592,10 @@ class AIAssistantWidget(QWidget):
                 f"Analysis using {model} (temp={temperature}):\n"
                 f"Your question: '{message}'\n\n"
                 f"For comprehensive security research, consider:\n"
-                f"• Static analysis of target binaries\n"
-                f"• Dynamic runtime analysis\n"
-                f"• Network traffic monitoring\n"
-                f"• Vulnerability assessment\n\n"
+                f" Static analysis of target binaries\n"
+                f" Dynamic runtime analysis\n"
+                f" Network traffic monitoring\n"
+                f" Vulnerability assessment\n\n"
                 f"{'Context considered: ' + context if context else 'No additional context provided'}"
             )
 
@@ -720,7 +720,7 @@ class AIAssistantWidget(QWidget):
                     if result.returncode == 0:
                         self.script_output.setPlainText(
                             f"{script_content}\n\n{'=' * 50}\n"
-                            f"✓ Frida validation passed\n"
+                            f"OK Frida validation passed\n"
                             f"Script saved to: {script_file}\n"
                             f"Run with: frida -f <target> -l {script_file.name}"
                         )
@@ -738,12 +738,12 @@ class AIAssistantWidget(QWidget):
 
                     if result.returncode == 0:
                         self.script_output.setPlainText(
-                            f"{script_content}\n\n{'=' * 50}\n✓ Python syntax validation passed\nScript is syntactically correct"
+                            f"{script_content}\n\n{'=' * 50}\nOK Python syntax validation passed\nScript is syntactically correct"
                         )
                         logger.info("Python script validation successful")
                     else:
                         error_msg = result.stderr or result.stdout
-                        self.script_output.setPlainText(f"{script_content}\n\n{'=' * 50}\n✗ Syntax error:\n{error_msg}")
+                        self.script_output.setPlainText(f"{script_content}\n\n{'=' * 50}\nFAIL Syntax error:\n{error_msg}")
                         logger.error(f"Python validation failed: {error_msg}")
 
                 elif "Ghidra" in script_type:
@@ -754,7 +754,7 @@ class AIAssistantWidget(QWidget):
 
                     if result.returncode == 0:
                         self.script_output.setPlainText(
-                            f"{script_content}\n\n{'=' * 50}\n✓ Ghidra script syntax validated\nPlace in Ghidra scripts directory to use"
+                            f"{script_content}\n\n{'=' * 50}\nOK Ghidra script syntax validated\nPlace in Ghidra scripts directory to use"
                         )
                         logger.info("Ghidra script validation successful")
                     else:
@@ -768,7 +768,7 @@ class AIAssistantWidget(QWidget):
 
                     if result.returncode == 0:
                         self.script_output.setPlainText(
-                            f"{script_content}\n\n{'=' * 50}\n✓ Radare2 available\nRun with: r2 -i {script_file.name} <target>"
+                            f"{script_content}\n\n{'=' * 50}\nOK Radare2 available\nRun with: r2 -i {script_file.name} <target>"
                         )
                         logger.info("Radare2 script prepared")
                     else:
@@ -777,16 +777,16 @@ class AIAssistantWidget(QWidget):
                 else:
                     self.script_output.setPlainText(
                         f"{script_content}\n\n{'=' * 50}\n"
-                        f"✓ Script generated for {script_type}\n"
+                        f"OK Script generated for {script_type}\n"
                         f"Manual testing required for this script type"
                     )
                     logger.info(f"Script prepared for {script_type}")
 
         except subprocess.TimeoutExpired:
-            self.script_output.setPlainText(f"{script_content}\n\n{'=' * 50}\n✗ Test timed out")
+            self.script_output.setPlainText(f"{script_content}\n\n{'=' * 50}\nFAIL Test timed out")
             logger.error("Script test timed out")
         except Exception as e:
-            self.script_output.setPlainText(f"{script_content}\n\n{'=' * 50}\n✗ Test error: {str(e)}")
+            self.script_output.setPlainText(f"{script_content}\n\n{'=' * 50}\nFAIL Test error: {str(e)}")
             logger.error(f"Script test failed: {e}")
 
     def load_current_file_for_analysis(self):
@@ -975,7 +975,7 @@ Return ONLY the code, no explanations."""
                                 shutil.copy(exe_path, save_path)
                                 self.keygen_output.setPlainText(
                                     f"{keygen_content}\n\n{'=' * 50}\n"
-                                    f"✓ Compilation successful!\n"
+                                    f"OK Compilation successful!\n"
                                     f"Executable saved to: {save_path}\n"
                                     f"Size: {Path(save_path).stat().st_size // 1024} KB"
                                 )
@@ -986,7 +986,7 @@ Return ONLY the code, no explanations."""
                             )
                     else:
                         error_msg = compile_result.stderr[-500:] if compile_result.stderr else "Unknown error"
-                        self.keygen_output.setPlainText(f"{keygen_content}\n\n{'=' * 50}\n✗ Compilation failed:\n{error_msg}")
+                        self.keygen_output.setPlainText(f"{keygen_content}\n\n{'=' * 50}\nFAIL Compilation failed:\n{error_msg}")
                         logger.error(f"PyInstaller compilation failed: {error_msg}")
 
                 elif language in ["C", "C++"]:
@@ -1032,14 +1032,14 @@ Return ONLY the code, no explanations."""
                             shutil.copy(output_exe, save_path)
                             self.keygen_output.setPlainText(
                                 f"{keygen_content}\n\n{'=' * 50}\n"
-                                f"✓ Compilation successful!\n"
+                                f"OK Compilation successful!\n"
                                 f"Executable saved to: {save_path}\n"
                                 f"Size: {Path(save_path).stat().st_size // 1024} KB"
                             )
                             logger.info(f"Keygen compiled successfully: {save_path}")
                     else:
                         error_msg = compile_result.stderr[-500:] if compile_result.stderr else "Unknown error"
-                        self.keygen_output.setPlainText(f"{keygen_content}\n\n{'=' * 50}\n✗ Compilation failed:\n{error_msg}")
+                        self.keygen_output.setPlainText(f"{keygen_content}\n\n{'=' * 50}\nFAIL Compilation failed:\n{error_msg}")
                         logger.error(f"{compiler} compilation failed: {error_msg}")
 
                 elif language == "JavaScript":
@@ -1067,10 +1067,10 @@ Return ONLY the code, no explanations."""
                     )
 
         except subprocess.TimeoutExpired:
-            self.keygen_output.setPlainText(f"{keygen_content}\n\n{'=' * 50}\n✗ Compilation timed out")
+            self.keygen_output.setPlainText(f"{keygen_content}\n\n{'=' * 50}\nFAIL Compilation timed out")
             logger.error("Keygen compilation timed out")
         except Exception as e:
-            self.keygen_output.setPlainText(f"{keygen_content}\n\n{'=' * 50}\n✗ Compilation error: {str(e)}")
+            self.keygen_output.setPlainText(f"{keygen_content}\n\n{'=' * 50}\nFAIL Compilation error: {str(e)}")
             logger.error(f"Keygen compilation failed: {e}")
 
     def load_available_models(self, force_refresh: bool = False):
@@ -1091,7 +1091,7 @@ Return ONLY the code, no explanations."""
             if configured_models:
                 for model_id in configured_models.keys():
                     self.available_models.append(model_id)
-                    self.model_combo.addItem(f"📦 {model_id}")
+                    self.model_combo.addItem(f" {model_id}")
 
             if discovered_models:
                 for provider_name, models in sorted(discovered_models.items()):
@@ -1149,7 +1149,7 @@ Return ONLY the code, no explanations."""
         """Display welcome message with model count."""
         self.chat_history.setHtml(
             "<div style='padding: 20px;'>"
-            "<h2 style='color: #28a745;'>✓ AI Assistant Ready</h2>"
+            "<h2 style='color: #28a745;'>OK AI Assistant Ready</h2>"
             f"<p style='font-size: 14px;'>{total_models} AI model(s) available for use.</p>"
             "<h3 style='color: #0078d4;'>What can I help you with?</h3>"
             "<ul style='font-size: 13px;'>"
@@ -1172,7 +1172,7 @@ Return ONLY the code, no explanations."""
         """Display error message when model loading fails."""
         self.chat_history.setHtml(
             "<div style='padding: 20px;'>"
-            "<h2 style='color: #dc3545;'>✗ Error Loading Models</h2>"
+            "<h2 style='color: #dc3545;'>FAIL Error Loading Models</h2>"
             f"<p style='font-size: 14px; color: #666;'>{error}</p>"
             "<h3 style='color: #0078d4;'>Troubleshooting:</h3>"
             "<ul style='font-size: 13px;'>"

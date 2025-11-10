@@ -244,30 +244,30 @@ def test_payload_methods_directly():
         result = engine._generate_bof_payload(test_vuln)
 
         if not isinstance(result, dict):
-            print("❌ BOF payload returned invalid type")
+            print("FAIL BOF payload returned invalid type")
             return False
 
         if "shellcode" not in result:
-            print("❌ BOF payload missing shellcode field")
+            print("FAIL BOF payload missing shellcode field")
             return False
 
         shellcode = result["shellcode"]
 
         if not isinstance(shellcode, bytes):
-            print(f"❌ Shellcode type is {type(shellcode)}, should be bytes")
+            print(f"FAIL Shellcode type is {type(shellcode)}, should be bytes")
             return False
 
         if len(shellcode) == 0:
-            print("❌ Shellcode is empty")
+            print("FAIL Shellcode is empty")
             return False
 
-        print(f"✓ BOF payload generated {len(shellcode)} bytes of shellcode")
-        print(f"✓ Shellcode hex: {shellcode.hex()}")
-        print(f"✓ Complete payload size: {result.get('payload_size', 'unknown')} bytes")
-        print(f"✓ Return address: 0x{result.get('return_address', 0):08x}")
+        print(f"OK BOF payload generated {len(shellcode)} bytes of shellcode")
+        print(f"OK Shellcode hex: {shellcode.hex()}")
+        print(f"OK Complete payload size: {result.get('payload_size', 'unknown')} bytes")
+        print(f"OK Return address: 0x{result.get('return_address', 0):08x}")
 
     except Exception as e:
-        print(f"❌ BOF payload generation failed: {e}")
+        print(f"FAIL BOF payload generation failed: {e}")
         return False
 
     # Test Format String payload
@@ -278,47 +278,47 @@ def test_payload_methods_directly():
         result = engine._generate_format_string_payload(test_vuln)
 
         if not isinstance(result, dict):
-            print("❌ Format string payload returned invalid type")
+            print("FAIL Format string payload returned invalid type")
             return False
 
         if "payload" not in result:
-            print("❌ Format string payload missing payload field")
+            print("FAIL Format string payload missing payload field")
             return False
 
         payload = result["payload"]
 
         if not isinstance(payload, bytes):
-            print(f"❌ Payload type is {type(payload)}, should be bytes")
+            print(f"FAIL Payload type is {type(payload)}, should be bytes")
             return False
 
         if len(payload) == 0:
-            print("❌ Payload is empty")
+            print("FAIL Payload is empty")
             return False
 
         if b"%" not in payload:
-            print("❌ Payload doesn't contain format specifiers")
+            print("FAIL Payload doesn't contain format specifiers")
             return False
 
-        print(f"✓ Format string payload: {len(payload)} bytes")
-        print(f"✓ Payload: {payload}")
-        print(f"✓ Payload hex: {payload.hex()}")
+        print(f"OK Format string payload: {len(payload)} bytes")
+        print(f"OK Payload: {payload}")
+        print(f"OK Payload hex: {payload.hex()}")
 
         if "shellcode" in result:
             shellcode = result["shellcode"]
             if isinstance(shellcode, bytes) and len(shellcode) > 0:
-                print(f"✓ Associated shellcode: {len(shellcode)} bytes")
-                print(f"✓ Shellcode hex: {shellcode.hex()}")
+                print(f"OK Associated shellcode: {len(shellcode)} bytes")
+                print(f"OK Shellcode hex: {shellcode.hex()}")
 
     except Exception as e:
-        print(f"❌ Format string payload generation failed: {e}")
+        print(f"FAIL Format string payload generation failed: {e}")
         return False
 
     print("\n" + "=" * 65)
-    print("✓ DAY 2.1 PAYLOAD METHOD REPLACEMENT SUCCESS!")
-    print("✓ Both methods generate REAL shellcode bytes")
-    print("✓ Zero template/placeholder content detected")
-    print("✓ Methods are production-ready and functional")
-    print("✓ Ready to proceed to Day 2.2")
+    print("OK DAY 2.1 PAYLOAD METHOD REPLACEMENT SUCCESS!")
+    print("OK Both methods generate REAL shellcode bytes")
+    print("OK Zero template/placeholder content detected")
+    print("OK Methods are production-ready and functional")
+    print("OK Ready to proceed to Day 2.2")
 
     return True
 

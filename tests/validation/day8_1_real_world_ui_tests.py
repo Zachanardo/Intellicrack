@@ -53,15 +53,15 @@ class RealWorldUIIntegrationTester:
                 self.test_results["tests_run"] += 1
                 if test():
                     self.test_results["tests_passed"] += 1
-                    print(f"✓ {test.__name__.replace('test_', '').replace('_', ' ').title()}: PASSED")
+                    print(f"OK {test.__name__.replace('test_', '').replace('_', ' ').title()}: PASSED")
                 else:
                     self.test_results["tests_failed"] += 1
-                    print(f"✗ {test.__name__.replace('test_', '').replace('_', ' ').title()}: FAILED")
+                    print(f"FAIL {test.__name__.replace('test_', '').replace('_', ' ').title()}: FAILED")
 
             except Exception as e:
                 self.test_results["tests_failed"] += 1
                 self.test_results["failures"].append(f"{test.__name__}: {e}")
-                print(f"✗ {test.__name__.replace('test_', '').replace('_', ' ').title()}: FAILED - {e}")
+                print(f"FAIL {test.__name__.replace('test_', '').replace('_', ' ').title()}: FAILED - {e}")
 
         # Print summary
         self._print_summary()
@@ -221,7 +221,7 @@ class RealWorldUIIntegrationTester:
             # Clean up
             os.unlink(test_binary)
 
-            print("    ✓ FlexLM real detection and bypass generation verified")
+            print("    OK FlexLM real detection and bypass generation verified")
             self.test_results["real_world_validations"].append("FlexLM v11.16.2")
             return True
 
@@ -259,7 +259,7 @@ class RealWorldUIIntegrationTester:
             # Clean up
             os.unlink(test_binary)
 
-            print("    ✓ HASP real detection and bypass generation verified")
+            print("    OK HASP real detection and bypass generation verified")
             self.test_results["real_world_validations"].append("HASP Sentinel LDK")
             return True
 
@@ -297,7 +297,7 @@ class RealWorldUIIntegrationTester:
             # Clean up
             os.unlink(test_binary)
 
-            print("    ✓ CodeMeter real detection and bypass generation verified")
+            print("    OK CodeMeter real detection and bypass generation verified")
             self.test_results["real_world_validations"].append("CodeMeter Runtime")
             return True
 
@@ -349,7 +349,7 @@ class RealWorldUIIntegrationTester:
                 if replacement[0] not in [0x31, 0x48, 0xB8, 0xC3, 0x90]:
                     print(f"    WARNING: Unusual hook byte: {hex(replacement[0])}")
 
-            print("    ✓ Real bypass generation produces executable code")
+            print("    OK Real bypass generation produces executable code")
             self.test_results["real_world_validations"].append("Executable patches verified")
             return True
 
@@ -400,7 +400,7 @@ class RealWorldUIIntegrationTester:
             # Clean up
             os.unlink(test_binary)
 
-            print("    ✓ UI workflow integration verified")
+            print("    OK UI workflow integration verified")
             return True
 
         except ImportError as e:
@@ -446,7 +446,7 @@ class RealWorldUIIntegrationTester:
 
             app.quit()
 
-            print("    ✓ Protection Analysis tab functional")
+            print("    OK Protection Analysis tab functional")
             return True
 
         except ImportError as e:
@@ -495,7 +495,7 @@ class RealWorldUIIntegrationTester:
             # Clean up
             os.unlink(test_binary)
 
-            print("    ✓ Vulnerability engine integration verified")
+            print("    OK Vulnerability engine integration verified")
             return True
 
         except Exception as e:
@@ -534,7 +534,7 @@ class RealWorldUIIntegrationTester:
                 print(f"    WARNING: Performance issue - took {elapsed:.2f} seconds")
                 return False
 
-            print(f"    ✓ Performance verified - {elapsed:.2f} seconds for 3 binaries")
+            print(f"    OK Performance verified - {elapsed:.2f} seconds for 3 binaries")
             self.test_results["real_world_validations"].append(f"Performance: {elapsed:.2f}s")
             return True
 
@@ -554,23 +554,23 @@ class RealWorldUIIntegrationTester:
         if self.test_results["real_world_validations"]:
             print("\nReal-World Validations:")
             for validation in self.test_results["real_world_validations"]:
-                print(f"  ✓ {validation}")
+                print(f"  OK {validation}")
 
         if self.test_results["failures"]:
             print("\nFailures:")
             for failure in self.test_results["failures"]:
-                print(f"  ✗ {failure}")
+                print(f"  FAIL {failure}")
 
         pass_rate = (self.test_results["tests_passed"] /
                     max(1, self.test_results["tests_run"]) * 100)
         print(f"\nPass Rate: {pass_rate:.1f}%")
 
         if pass_rate == 100:
-            print("\n✅ REAL-WORLD UI INTEGRATION TESTING COMPLETE - 100% PASS RATE")
-            print("✅ ALL MODERN LICENSING PROTECTIONS DETECTED AND BYPASSED")
+            print("\nOK REAL-WORLD UI INTEGRATION TESTING COMPLETE - 100% PASS RATE")
+            print("OK ALL MODERN LICENSING PROTECTIONS DETECTED AND BYPASSED")
         else:
-            print(f"\n❌ REAL-WORLD TESTING FAILED - ONLY {pass_rate:.1f}% PASSED")
-            print("❌ INSUFFICIENT FOR PRODUCTION - MUST ACHIEVE 100%")
+            print(f"\nFAIL REAL-WORLD TESTING FAILED - ONLY {pass_rate:.1f}% PASSED")
+            print("FAIL INSUFFICIENT FOR PRODUCTION - MUST ACHIEVE 100%")
 
         print("=" * 60)
 
@@ -581,10 +581,10 @@ def main():
     success = tester.run_tests()
 
     if success:
-        print("\n✅ Ready to proceed to Day 8.2")
+        print("\nOK Ready to proceed to Day 8.2")
     else:
-        print("\n❌ FAILED - Fix ALL issues before proceeding")
-        print("❌ 100% pass rate is MANDATORY for production readiness")
+        print("\nFAIL FAILED - Fix ALL issues before proceeding")
+        print("FAIL 100% pass rate is MANDATORY for production readiness")
 
     return 0 if success else 1
 

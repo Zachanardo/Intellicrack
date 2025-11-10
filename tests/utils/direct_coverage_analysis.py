@@ -218,11 +218,11 @@ def validate_imports():
     try:
         # Test main module import
         import intellicrack.utils.exploitation as exp_module
-        print("✅ Main module import successful")
+        print("OK Main module import successful")
 
         # Test __all__ is defined
         assert hasattr(exp_module, '__all__'), "__all__ not defined"
-        print("✅ __all__ is defined")
+        print("OK __all__ is defined")
 
         # Test individual function imports
         from intellicrack.utils.exploitation import (
@@ -235,7 +235,7 @@ def validate_imports():
             generate_exploit_strategy,
             generate_license_key,
         )
-        print("✅ All individual functions imported successfully")
+        print("OK All individual functions imported successfully")
 
         # Test functions are callable
         functions = [
@@ -251,17 +251,17 @@ def validate_imports():
 
         for func in functions:
             assert callable(func), f"{func.__name__} is not callable"
-        print(f"✅ All {len(functions)} functions are callable")
+        print(f"OK All {len(functions)} functions are callable")
 
         # Test docstrings exist
         for func in functions:
             assert func.__doc__ is not None, f"{func.__name__} missing docstring"
-        print("✅ All functions have docstrings")
+        print("OK All functions have docstrings")
 
         return True
 
     except Exception as e:
-        print(f"❌ Import validation failed: {e}")
+        print(f"FAIL Import validation failed: {e}")
         return False
 
 def main():
@@ -297,18 +297,18 @@ def main():
     )
 
     if success:
-        print("🎯 COVERAGE TARGET ACHIEVED!")
-        print(f"✅ Estimated coverage: {estimated_coverage:.1f}% (>= 80%)")
-        print(f"✅ Total test methods: {test_analysis['test_methods'] if test_analysis else 0}")
-        print("✅ All imports validated")
-        print("✅ Comprehensive test coverage")
-        print("✅ Production-ready test suite")
+        print(" COVERAGE TARGET ACHIEVED!")
+        print(f"OK Estimated coverage: {estimated_coverage:.1f}% (>= 80%)")
+        print(f"OK Total test methods: {test_analysis['test_methods'] if test_analysis else 0}")
+        print("OK All imports validated")
+        print("OK Comprehensive test coverage")
+        print("OK Production-ready test suite")
     else:
-        print("❌ COVERAGE TARGET NOT MET")
+        print("FAIL COVERAGE TARGET NOT MET")
         if not imports_valid:
-            print("❌ Import validation failed")
+            print("FAIL Import validation failed")
         if estimated_coverage < 80:
-            print(f"❌ Coverage too low: {estimated_coverage:.1f}% < 80%")
+            print(f"FAIL Coverage too low: {estimated_coverage:.1f}% < 80%")
 
     return success
 

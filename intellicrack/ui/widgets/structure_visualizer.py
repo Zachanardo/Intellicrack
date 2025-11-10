@@ -600,7 +600,7 @@ class StructureVisualizerWidget(QWidget):
         if suspicious:
             details += "WARNING️ Suspicious Indicators:\n"
             for item in suspicious[:10]:  # Show first 10
-                details += f"  • {item}\n"
+                details += f"   {item}\n"
 
         self.details_text.setText(details)
 

@@ -1,12 +1,10 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
-use intellicrack_launcher::{optimize_process, discover_and_cache_tools, run_preflight_checks};
+use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
+use intellicrack_launcher::{discover_and_cache_tools, optimize_process, run_preflight_checks};
 use std::time::Duration;
 
 fn bench_process_optimization(c: &mut Criterion) {
     c.bench_function("process_optimization", |b| {
-        b.iter(|| {
-            black_box(optimize_process().unwrap())
-        });
+        b.iter(|| black_box(optimize_process().unwrap()));
     });
 }
 
@@ -14,16 +12,12 @@ fn bench_process_optimization_detailed(c: &mut Criterion) {
     let mut group = c.benchmark_group("process_optimization_detailed");
 
     group.bench_function("cold_start", |b| {
-        b.iter(|| {
-            black_box(optimize_process().unwrap())
-        });
+        b.iter(|| black_box(optimize_process().unwrap()));
     });
 
     group.bench_function("repeated_calls", |b| {
         let _ = optimize_process();
-        b.iter(|| {
-            black_box(optimize_process().unwrap())
-        });
+        b.iter(|| black_box(optimize_process().unwrap()));
     });
 
     group.finish();
@@ -40,9 +34,7 @@ fn bench_tool_discovery_cold(c: &mut Criterion) {
                 let _ = std::fs::remove_file(&cache_path);
                 ()
             },
-            |_| {
-                black_box(discover_and_cache_tools().unwrap())
-            },
+            |_| black_box(discover_and_cache_tools().unwrap()),
             criterion::BatchSize::PerIteration,
         );
     });
@@ -52,9 +44,7 @@ fn bench_tool_discovery_warm(c: &mut Criterion) {
     let _ = discover_and_cache_tools();
 
     c.bench_function("tool_discovery_warm", |b| {
-        b.iter(|| {
-            black_box(discover_and_cache_tools().unwrap())
-        });
+        b.iter(|| black_box(discover_and_cache_tools().unwrap()));
     });
 }
 
@@ -63,9 +53,7 @@ fn bench_tool_discovery_comparison(c: &mut Criterion) {
 
     group.bench_function("warm_cached", |b| {
         let _ = discover_and_cache_tools();
-        b.iter(|| {
-            black_box(discover_and_cache_tools().unwrap())
-        });
+        b.iter(|| black_box(discover_and_cache_tools().unwrap()));
     });
 
     group.finish();
@@ -124,9 +112,7 @@ fn bench_optimization_sequence_breakdown(c: &mut Criterion) {
     let mut group = c.benchmark_group("optimization_sequence");
 
     group.bench_function("process_only", |b| {
-        b.iter(|| {
-            black_box(optimize_process().unwrap())
-        });
+        b.iter(|| black_box(optimize_process().unwrap()));
     });
 
     group.bench_function("preflight_only", |b| {
@@ -137,9 +123,7 @@ fn bench_optimization_sequence_breakdown(c: &mut Criterion) {
 
     group.bench_function("tool_discovery_only_warm", |b| {
         let _ = discover_and_cache_tools();
-        b.iter(|| {
-            black_box(discover_and_cache_tools().unwrap())
-        });
+        b.iter(|| black_box(discover_and_cache_tools().unwrap()));
     });
 
     group.bench_function("all_three_warm", |b| {
@@ -160,11 +144,7 @@ fn bench_concurrent_optimizations(c: &mut Criterion) {
     c.bench_function("concurrent_process_optimization", |b| {
         b.iter(|| {
             let handles: Vec<_> = (0..4)
-                .map(|_| {
-                    thread::spawn(|| {
-                        optimize_process().unwrap()
-                    })
-                })
+                .map(|_| thread::spawn(|| optimize_process().unwrap()))
                 .collect();
 
             for handle in handles {
@@ -178,9 +158,7 @@ fn bench_optimization_overhead(c: &mut Criterion) {
     let mut group = c.benchmark_group("optimization_overhead");
 
     group.bench_function("no_optimization", |b| {
-        b.iter(|| {
-            black_box(())
-        });
+        b.iter(|| black_box(()));
     });
 
     group.bench_function("with_optimizations", |b| {
@@ -220,15 +198,11 @@ fn bench_startup_time_comparison(c: &mut Criterion) {
     let mut group = c.benchmark_group("startup_time_comparison");
 
     group.bench_function("baseline_minimal", |b| {
-        b.iter(|| {
-            black_box(std::time::Instant::now())
-        });
+        b.iter(|| black_box(std::time::Instant::now()));
     });
 
     group.bench_function("with_process_opt", |b| {
-        b.iter(|| {
-            black_box(optimize_process().unwrap())
-        });
+        b.iter(|| black_box(optimize_process().unwrap()));
     });
 
     group.bench_function("with_preflight", |b| {
@@ -239,9 +213,7 @@ fn bench_startup_time_comparison(c: &mut Criterion) {
 
     group.bench_function("with_tool_discovery", |b| {
         let _ = discover_and_cache_tools();
-        b.iter(|| {
-            black_box(discover_and_cache_tools().unwrap())
-        });
+        b.iter(|| black_box(discover_and_cache_tools().unwrap()));
     });
 
     group.bench_function("complete_sequence", |b| {

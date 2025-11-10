@@ -746,7 +746,7 @@ class AntiDetectionVerifier:
             result = technique()
             results['anti_debug'].append(asdict(result))
 
-            status = "✓ BYPASSED" if result.bypassed else "✗ DETECTED"
+            status = "OK BYPASSED" if result.bypassed else "FAIL DETECTED"
             print(f"  {result.technique_name}: {status}")
             if result.detected:
                 print(f"    Details: {result.details}")
@@ -765,7 +765,7 @@ class AntiDetectionVerifier:
             result = technique()
             results['anti_vm'].append(asdict(result))
 
-            status = "✓ EVADED" if result.bypassed else "✗ DETECTED"
+            status = "OK EVADED" if result.bypassed else "FAIL DETECTED"
             print(f"  {result.technique_name}: {status}")
             if result.detected:
                 print(f"    Details: {result.details}")
@@ -784,7 +784,7 @@ class AntiDetectionVerifier:
                 result = self.packer_detector.detect_packer(file_path)
                 results['packer_detection'].append(asdict(result))
 
-                status = "✓ NOT PACKED" if not result.detected else "✗ PACKED"
+                status = "OK NOT PACKED" if not result.detected else "FAIL PACKED"
                 print(f"  {os.path.basename(file_path)}: {status}")
                 if result.detected:
                     print(f"    Details: {result.details}")

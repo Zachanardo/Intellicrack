@@ -1,6 +1,7 @@
 # Intellicrack CLI - Usage Examples
 
-This document provides practical examples of using the Intellicrack CLI with its actual available commands.
+This document provides practical examples of using the Intellicrack CLI with its
+actual available commands.
 
 ## Basic Analysis
 
@@ -215,4 +216,5 @@ python cli/cli.py scan binary.exe --vulns
 python -c "import intellicrack.cli.cli; print('CLI imports successfully')"
 ```
 
-These examples demonstrate the actual capabilities of the Intellicrack CLI as implemented in the codebase.
+These examples demonstrate the actual capabilities of the Intellicrack CLI as
+implemented in the codebase.

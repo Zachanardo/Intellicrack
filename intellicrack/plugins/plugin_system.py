@@ -26,12 +26,12 @@ import signal
 import sys
 import tempfile
 import traceback
-from intellicrack.utils.core.plugin_paths import get_frida_scripts_dir, get_ghidra_scripts_dir
 from typing import Any
 
 from PyQt6.QtWidgets import QInputDialog, QMessageBox
 
 from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
+from intellicrack.utils.core.plugin_paths import get_frida_scripts_dir, get_ghidra_scripts_dir
 from intellicrack.utils.logger import logger
 
 from ..config import CONFIG
@@ -1038,8 +1038,8 @@ class {class_name}:
             results.append(f"ERROR {{msg}}")
             return results
 
-        results.append(f"✅ {{msg}}")
-        results.append(f"🔍 Analyzing with {plugin_name}: {{binary_path}}")
+        results.append(f"OK {{msg}}")
+        results.append(f" Analyzing with {plugin_name}: {{binary_path}}")
 
         # Add your comprehensive analysis logic here
 
@@ -1047,7 +1047,7 @@ class {class_name}:
 
     def patch(self, binary_path: str, options: Optional[Dict] = None) -> List[str]:
         results = []
-        results.append(f"🔧 Patching with {plugin_name}: {{binary_path}}")
+        results.append(f" Patching with {plugin_name}: {{binary_path}}")
 
         # Add your patching logic here
 
@@ -1251,7 +1251,8 @@ class PluginSystem:
                 return plugin_file
 
         # Check other plugin directories
-        # Check centralized script directories
+        plugin_subdirs = ["frida", "ghidra", "radare2", "analysis", "exploitation", "monitoring"]
+        for subdir in plugin_subdirs:
             plugin_path = os.path.join(self.plugin_dir, subdir)
             if os.path.exists(plugin_path):
                 for ext in [".js", ".py"]:
@@ -1296,7 +1297,8 @@ class PluginSystem:
                     discovered.append(file[:-3])
 
         # Check other plugin directories
-        # Check centralized script directories
+        plugin_subdirs = ["frida", "ghidra", "radare2", "analysis", "exploitation", "monitoring"]
+        for subdir in plugin_subdirs:
             plugin_path = os.path.join(self.plugin_dir, subdir)
             if os.path.exists(plugin_path):
                 for file in os.listdir(plugin_path):
