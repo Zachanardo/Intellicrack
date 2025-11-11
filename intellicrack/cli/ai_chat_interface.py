@@ -54,7 +54,7 @@ sys.path.insert(0, project_root)
 class AITerminalChat:
     """Terminal-based AI chat interface with rich formatting."""
 
-    def __init__(self, binary_path: str | None = None, analysis_results: dict[str, Any] | None = None):
+    def __init__(self, binary_path: str | None = None, analysis_results: dict[str, Any] | None = None) -> None:
         """Initialize AI chat interface.
 
         Args:
@@ -91,7 +91,7 @@ class AITerminalChat:
         # Initialize AI backend
         self._initialize_ai_backend()
 
-    def _initialize_ai_backend(self):
+    def _initialize_ai_backend(self) -> None:
         """Initialize AI backend connection."""
         self.ai_backend = None
         self.llm_manager = None
@@ -149,14 +149,14 @@ class AITerminalChat:
                     print(f"All AI backends failed: {fallback_error}")
                 self.ai_backend = None
 
-    def start_chat_session(self):
+    def start_chat_session(self) -> None:
         """Start interactive chat session."""
         if self.console:
             self._start_rich_chat()
         else:
             self._start_basic_chat()
 
-    def _start_rich_chat(self):
+    def _start_rich_chat(self) -> None:
         """Start rich terminal chat interface."""
         self.console.clear()
 
@@ -206,7 +206,7 @@ class AITerminalChat:
         except EOFError:
             self.console.print("\n[yellow]Chat session ended[/yellow]")
 
-    def _start_basic_chat(self):
+    def _start_basic_chat(self) -> None:
         """Start basic terminal chat interface."""
         print("Intellicrack AI Assistant")
         print("=" * 25)
@@ -245,7 +245,7 @@ class AITerminalChat:
         except EOFError:
             print("\nChat session ended")
 
-    def _process_ai_query(self, user_input: str):
+    def _process_ai_query(self, user_input: str) -> None:
         """Process AI query with rich formatting."""
         # Add to conversation history
         self.conversation_history.append(
@@ -253,7 +253,7 @@ class AITerminalChat:
                 "timestamp": datetime.now().isoformat(),
                 "type": "user",
                 "content": user_input,
-            }
+            },
         )
 
         # Show thinking indicator with progress bar
@@ -285,14 +285,14 @@ class AITerminalChat:
                 "timestamp": datetime.now().isoformat(),
                 "type": "ai",
                 "content": response,
-            }
+            },
         )
 
         # Trim history if too long
         if len(self.conversation_history) > self.max_history * 2:
             self.conversation_history = self.conversation_history[-self.max_history :]
 
-    def _process_ai_query_basic(self, user_input: str):
+    def _process_ai_query_basic(self, user_input: str) -> None:
         """Process AI query with basic formatting."""
         # Add to conversation history
         self.conversation_history.append(
@@ -300,7 +300,7 @@ class AITerminalChat:
                 "timestamp": datetime.now().isoformat(),
                 "type": "user",
                 "content": user_input,
-            }
+            },
         )
 
         print("AI: Thinking...")
@@ -314,7 +314,7 @@ class AITerminalChat:
                 "timestamp": datetime.now().isoformat(),
                 "type": "ai",
                 "content": response,
-            }
+            },
         )
 
     def _get_ai_response(self, user_input: str) -> str:
@@ -376,7 +376,7 @@ class AITerminalChat:
             # Direct LLM manager usage as final attempt
             elif self.llm_manager:
                 response = self.llm_manager.generate_response(
-                    prompt=user_input, context=enriched_context.get("binary_analysis", {}), max_tokens=1500
+                    prompt=user_input, context=enriched_context.get("binary_analysis", {}), max_tokens=1500,
                 )
 
                 if isinstance(response, dict):
@@ -400,7 +400,7 @@ class AITerminalChat:
                         content = fallback_response.get("content", fallback_response.get("text", str(fallback_response)))
                         return f"{content}\n\n[Note: Primary AI backend encountered an error, using fallback response]"
 
-                    return f"{str(fallback_response)}\n\n[Note: Primary AI backend encountered an error, using fallback response]"
+                    return f"{fallback_response!s}\n\n[Note: Primary AI backend encountered an error, using fallback response]"
 
                 except Exception as fallback_error:
                     return f"AI backend error: {e}\nFallback error: {fallback_error}\n\nPlease check your AI configuration and ensure all required services are running."
@@ -541,7 +541,7 @@ class AITerminalChat:
 
         return context
 
-    def _display_ai_response(self, response: str):
+    def _display_ai_response(self, response: str) -> None:
         """Display AI response with typing effect."""
         if not RICH_AVAILABLE:
             print(f"\nAI: {response}")
@@ -632,7 +632,7 @@ class AITerminalChat:
 
         return response
 
-    def _display_analysis_summary(self):
+    def _display_analysis_summary(self) -> None:
         """Display analysis summary using columns layout."""
         if not RICH_AVAILABLE or not self.analysis_results:
             print("Analysis results not available or Rich not installed")
@@ -649,7 +649,7 @@ class AITerminalChat:
                     f"[red]{vuln_count}[/red] vulnerabilities found",
                     title="Security",
                     border_style="red",
-                )
+                ),
             )
 
         if "strings" in self.analysis_results:
@@ -659,7 +659,7 @@ class AITerminalChat:
                     f"[blue]{string_count}[/blue] strings extracted",
                     title="Strings",
                     border_style="blue",
-                )
+                ),
             )
 
         if "protections" in self.analysis_results:
@@ -670,7 +670,7 @@ class AITerminalChat:
                     f"[yellow]{protection_count}[/yellow] protections detected",
                     title="Protections",
                     border_style="yellow",
-                )
+                ),
             )
 
         if panels:
@@ -765,7 +765,7 @@ class AITerminalChat:
 
         if self.analysis_results:
             for category, data in self.analysis_results.items():
-                if isinstance(data, dict) or isinstance(data, list):
+                if isinstance(data, (dict, list)):
                     count = len(data)
                 else:
                     count = 1
@@ -903,7 +903,7 @@ class AITerminalChat:
 
         return None
 
-    def _reinitialize_ai_with_backend(self, backend_name: str):
+    def _reinitialize_ai_with_backend(self, backend_name: str) -> None:
         """Reinitialize AI backend systems with new backend configuration."""
         try:
             # Reinitialize orchestrator with new LLM manager
@@ -1026,7 +1026,7 @@ class AITerminalChat:
 
         return None
 
-    def _export_text(self, filename: str):
+    def _export_text(self, filename: str) -> None:
         """Export conversation as plain text."""
         with open(filename, "w", encoding="utf-8") as f:
             f.write("Intellicrack AI Chat Session\n")
@@ -1043,7 +1043,7 @@ class AITerminalChat:
                 speaker = "You" if entry_type == "user" else "AI"
                 f.write(f"[{timestamp}] {speaker}: {content}\n\n")
 
-    def _export_markdown(self, filename: str):
+    def _export_markdown(self, filename: str) -> None:
         """Export conversation as Markdown."""
         with open(filename, "w", encoding="utf-8") as f:
             f.write("# Intellicrack AI Chat Session\n\n")
@@ -1065,7 +1065,7 @@ class AITerminalChat:
                 f.write(f"*{timestamp}*\n\n---\n\n")
 
 
-def launch_ai_chat(binary_path: str | None = None, analysis_results: dict[str, Any] | None = None):
+def launch_ai_chat(binary_path: str | None = None, analysis_results: dict[str, Any] | None = None) -> bool:
     """Launch AI chat interface.
 
     Args:

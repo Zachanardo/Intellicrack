@@ -41,7 +41,7 @@ def run_subprocess_safely(cmd: list[str], timeout: int = 30, capture_output: boo
 
     """
     try:
-        return subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+        return subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
             cmd,
             stdout=subprocess.PIPE if capture_output else None,
             stderr=subprocess.PIPE if capture_output else None,
@@ -75,7 +75,7 @@ def create_popen_safely(cmd: list[str], **kwargs) -> subprocess.Popen:
     }
     defaults.update(kwargs)
 
-    return subprocess.Popen(cmd, **defaults)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+    return subprocess.Popen(cmd, **defaults)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
 
 
 def create_suspended_process_with_context(create_func, get_context_func, target_exe: str, logger_instance=None) -> dict[str, Any]:

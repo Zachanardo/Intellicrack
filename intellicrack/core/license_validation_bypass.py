@@ -16,7 +16,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePrivateKey, EllipticCurvePublicKey
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
 
-from intellicrack.utils.logger import logger
+from intellicrack.utils.logger import log_all_methods, log_function_call, logger
 
 
 class KeyType(Enum):
@@ -47,11 +47,13 @@ class ExtractedKey:
     key_object: Optional[Any] = None
 
 
+@log_all_methods
 class LicenseValidationBypass:
     """Production-ready license validation bypass engine with real cryptographic operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the LicenseValidationBypassEngine with cryptographic engines and patterns."""
+        logger.info("Initializing LicenseValidationBypass engine")
         self.backend = default_backend()
         self.cs_x86 = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
         self.cs_x64 = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
@@ -64,91 +66,126 @@ class LicenseValidationBypass:
 
     def _build_rsa_patterns(self) -> List[re.Pattern]:
         """Build patterns for RSA key detection in binary data."""
+        logger.debug("Building RSA key detection patterns.")
         patterns = []
 
         # ASN.1 DER encoded RSA public key
-        patterns.append(re.compile(b"\x30[\x81\x82][\x01-\x02][\x00-\xff]\x30\x0d\x06\x09\x2a\x86\x48\x86\xf7\x0d\x01\x01\x01"))
+        patterns.append(re.compile(b"\\x30[\\x81\\x82][\\x01-\\x02][\\x00-\\xff]\\x30\\x0d\\x06\\x09\\x2a\\x86\\x48\\x86\\xf7\\x0d\\x01\\x01\\x01"))
+        logger.debug("Added ASN.1 DER RSA public key pattern.")
 
         # PKCS#1 RSA private key
-        patterns.append(re.compile(b"\x30[\x82][\x04-\x09][\x00-\xff]\x02\x01\x00"))
+        patterns.append(re.compile(b"\\x30[\\x82][\\x04-\\x09][\\x00-\\xff]\\x02\\x01\\x00"))
+        logger.debug("Added PKCS#1 RSA private key pattern.")
 
         # Common RSA exponents
-        patterns.append(re.compile(b"\x01\x00\x01"))  # 65537
-        patterns.append(re.compile(b"\x00\x00\x00\x03"))  # 3
+        patterns.append(re.compile(b"\\x01\\x00\\x01"))  # 65537
+        patterns.append(re.compile(b"\\x00\\x00\\x00\\x03"))  # 3
+        logger.debug("Added common RSA exponent patterns.")
 
         # OpenSSL RSA structure markers
-        patterns.append(re.compile(b"RSA\x00"))
+        patterns.append(re.compile(b"RSA\\x00"))
         patterns.append(re.compile(b"-----BEGIN RSA"))
         patterns.append(re.compile(b"-----BEGIN PUBLIC KEY"))
+        logger.debug("Added OpenSSL RSA structure marker patterns.")
 
         # Microsoft CryptoAPI markers
         patterns.append(re.compile(b"RSA1"))  # PUBLICKEYSTRUC
         patterns.append(re.compile(b"RSA2"))  # PRIVATEKEYSTRUC
+        logger.debug("Added Microsoft CryptoAPI marker patterns.")
 
+        logger.info(f"Built {len(patterns)} RSA key patterns.")
         return patterns
 
+    @log_function_call
     def _build_ecc_patterns(self) -> List[re.Pattern]:
         """Build patterns for ECC key detection."""
+        logger.debug("Building ECC key detection patterns.")
         patterns = []
 
         # ASN.1 DER encoded EC public key
         patterns.append(re.compile(b"\x30[\x59-\x81][\x30]\x13\x06\x07\x2a\x86\x48\xce\x3d\x02\x01"))
+        logger.debug("Added ASN.1 DER ECC public key pattern.")
 
         # Named curves OIDs
         patterns.append(re.compile(b"\x06\x08\x2a\x86\x48\xce\x3d\x03\x01\x07"))  # P-256
         patterns.append(re.compile(b"\x06\x05\x2b\x81\x04\x00\x22"))  # P-384
         patterns.append(re.compile(b"\x06\x05\x2b\x81\x04\x00\x23"))  # P-521
         patterns.append(re.compile(b"\x06\x05\x2b\x81\x04\x00\x0a"))  # secp256k1
+        logger.debug("Added named curve OID patterns.")
 
         # OpenSSL EC markers
         patterns.append(re.compile(b"EC\x00"))
         patterns.append(re.compile(b"-----BEGIN EC"))
+        logger.debug("Added OpenSSL EC marker patterns.")
 
+        logger.info(f"Built {len(patterns)} ECC key patterns.")
         return patterns
 
+    @log_function_call
     def _build_cert_patterns(self) -> List[re.Pattern]:
         """Build patterns for certificate detection."""
+        logger.debug("Building certificate detection patterns.")
         patterns = []
 
         # X.509 certificate
         patterns.append(re.compile(b"\x30\x82[\x03-\x08][\x00-\xff]\x30\x82"))
+        logger.debug("Added X.509 certificate pattern.")
 
         # Certificate markers
         patterns.append(re.compile(b"-----BEGIN CERTIFICATE"))
         patterns.append(re.compile(b"-----END CERTIFICATE"))
+        logger.debug("Added certificate marker patterns.")
 
+        logger.info(f"Built {len(patterns)} certificate patterns.")
         return patterns
 
     def extract_rsa_keys_from_binary(self, binary_path: str) -> List[ExtractedKey]:
         """Extract RSA keys from binary with advanced heuristics."""
+        logger.info(f"Starting RSA key extraction from {binary_path}")
         keys = []
 
         with open(binary_path, "rb") as f:
             data = f.read()
 
+        logger.debug("Method 1: Searching for ASN.1 structures.")
         # Method 1: Pattern matching for ASN.1 structures
         for pattern in self.rsa_patterns:
             for match in pattern.finditer(data):
                 offset = match.start()
                 key_candidate = self._extract_asn1_key(data[offset : offset + 4096])
                 if key_candidate:
+                    logger.debug(f"Found potential ASN.1 key at offset {offset}")
                     key_candidate.address = offset
                     keys.append(key_candidate)
+        logger.debug(f"Method 1 (ASN.1 structures) completed. Found {len(keys)} keys so far.")
 
+        logger.debug("Method 2: Scanning for large prime numbers (RSA moduli).")
         # Method 2: Scan for large prime numbers (RSA moduli)
+        initial_keys_count = len(keys)
         keys.extend(self._scan_for_rsa_moduli(data))
+        logger.debug(f"Method 2 (RSA moduli scan) completed. Added {len(keys) - initial_keys_count} keys.")
 
         # Method 3: Parse PE imports for CryptoAPI
         if binary_path.endswith((".exe", ".dll")):
+            logger.debug("Method 3: Parsing PE resources and CryptoAPI calls.")
+            initial_keys_count = len(keys)
             keys.extend(self._extract_from_pe_resources(binary_path))
             keys.extend(self._extract_from_crypto_api_calls(binary_path))
+            logger.debug(f"Method 3 (PE resources and CryptoAPI) completed. Added {len(keys) - initial_keys_count} keys.")
 
+        logger.debug("Method 4: Analyzing memory patterns for in-memory key structures.")
         # Method 4: Memory pattern analysis
+        initial_keys_count = len(keys)
         keys.extend(self._analyze_memory_patterns(data))
+        logger.debug(f"Method 4 (Memory pattern analysis) completed. Added {len(keys) - initial_keys_count} keys.")
 
+        logger.debug("Method 5: Detecting keys based on entropy analysis.")
         # Method 5: Entropy-based detection
+        initial_keys_count = len(keys)
         keys.extend(self._entropy_based_key_detection(data))
+        logger.debug(f"Method 5 (Entropy-based detection) completed. Added {len(keys) - initial_keys_count} keys.")
 
+        logger.info(f"Found {len(keys)} potential RSA keys in {binary_path}")
         return keys
 
     def _extract_asn1_key(self, data: bytes) -> Optional[ExtractedKey]:
@@ -198,11 +235,13 @@ class LicenseValidationBypass:
 
         # Look for 128, 256, 512-byte sequences with high entropy
         for key_size in [128, 256, 512]:
+            logger.debug(f"Scanning for RSA moduli of size {key_size} bytes.")
             for offset in range(0, len(data) - key_size, 4):
                 chunk = data[offset : offset + key_size]
 
                 # Check entropy
                 entropy = self._calculate_entropy(chunk)
+                logger.debug(f"Chunk at offset {offset} (size {key_size}) has entropy: {entropy:.2f}")
                 if entropy < 7.5:  # RSA keys have high entropy
                     continue
 
@@ -225,7 +264,7 @@ class LicenseValidationBypass:
                                     address=offset,
                                     confidence=0.7,
                                     context=f"Probable RSA modulus with e={exp}",
-                                )
+                                ),
                             )
                             break
 
@@ -260,6 +299,7 @@ class LicenseValidationBypass:
             pe = pefile.PE(binary_path)
 
             # Check resources
+            logger.debug("Checking PE resources for embedded keys.")
             if hasattr(pe, "DIRECTORY_ENTRY_RESOURCE"):
                 for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
                     for resource_id in resource_type.directory.entries:
@@ -270,13 +310,18 @@ class LicenseValidationBypass:
                             if self._is_key_data(data):
                                 extracted = self._parse_key_data(data)
                                 if extracted:
+                                    logger.debug(f"Found {len(extracted)} key(s) in PE resource.")
                                     keys.extend(extracted)
 
             # Check data sections
+            logger.debug("Checking PE data sections for embedded keys.")
             for section in pe.sections:
                 if section.Name.startswith(b".data") or section.Name.startswith(b".rdata"):
                     data = section.get_data()
-                    keys.extend(self._scan_section_for_keys(data, section.VirtualAddress))
+                    section_keys = self._scan_section_for_keys(data, section.VirtualAddress)
+                    if section_keys:
+                        logger.debug(f"Found {len(section_keys)} key(s) in section {section.Name.decode(errors='ignore')}.")
+                        keys.extend(section_keys)
 
         except Exception as e:
             logger.debug(f"Section scanning failed: {e}")
@@ -291,6 +336,7 @@ class LicenseValidationBypass:
             pe = pefile.PE(binary_path)
 
             # Look for CryptoAPI imports
+            logger.debug("Looking for CryptoAPI imports.")
             crypto_apis = [
                 "CryptImportKey",
                 "CryptExportKey",
@@ -306,9 +352,11 @@ class LicenseValidationBypass:
                     for imp in entry.imports:
                         if imp.name and imp.name.decode("utf-8", errors="ignore") in crypto_apis:
                             crypto_imports.append((imp.address, imp.name))
+            logger.debug(f"Found {len(crypto_imports)} CryptoAPI imports.")
 
             # Analyze code around crypto API calls
             if crypto_imports:
+                logger.debug("Analyzing code around CryptoAPI calls.")
                 text_section = None
                 for section in pe.sections:
                     if section.Name.startswith(b".text"):
@@ -318,6 +366,8 @@ class LicenseValidationBypass:
                 if text_section:
                     code = text_section.get_data()
                     keys.extend(self._analyze_crypto_api_usage(code, crypto_imports, text_section.VirtualAddress))
+            else:
+                logger.debug("No CryptoAPI imports found to analyze.")
 
         except Exception as e:
             logger.debug(f"Crypto API analysis failed: {e}")
@@ -329,6 +379,7 @@ class LicenseValidationBypass:
         keys = []
 
         # OpenSSL RSA structure
+        logger.debug("Analyzing memory for OpenSSL RSA structures.")
         openssl_rsa_magic = b"RSA\x00"
         offset = 0
         while True:
@@ -343,12 +394,14 @@ class LicenseValidationBypass:
                 if key:
                     key.address = offset
                     keys.append(key)
+                    logger.debug(f"Found OpenSSL RSA structure at offset {offset}.")
             except (ValueError, TypeError) as e:
                 logger.debug(f"Failed to parse OpenSSL RSA structure at offset {offset}: {e}")
 
             offset += 1
 
         # Windows BCRYPT_RSAKEY_BLOB structure
+        logger.debug("Analyzing memory for Windows BCRYPT_RSAKEY_BLOB structures.")
         bcrypt_magic = b"RSA1"  # BCRYPT_RSAPUBLIC_MAGIC
         offset = 0
         while True:
@@ -361,6 +414,7 @@ class LicenseValidationBypass:
                 if key:
                     key.address = offset
                     keys.append(key)
+                    logger.debug(f"Found Windows BCRYPT_RSAKEY_BLOB structure at offset {offset}.")
             except (ValueError, TypeError) as e:
                 logger.debug(f"Failed to parse BCRYPT key blob at offset {offset}: {e}")
 
@@ -372,14 +426,18 @@ class LicenseValidationBypass:
         """Detect keys based on entropy analysis."""
         keys = []
         window_size = 256
+        logger.debug(f"Starting entropy-based key detection with window size: {window_size}")
 
         for offset in range(0, len(data) - window_size, 16):
             chunk = data[offset : offset + window_size]
             entropy = self._calculate_entropy(chunk)
+            logger.debug(f"Chunk at offset {offset} has entropy: {entropy:.2f}")
 
             if entropy > 7.8:  # Very high entropy
+                logger.debug(f"High entropy chunk found at offset {offset}. Checking for key structure.")
                 # Check if it's structured like a key
                 if self._has_key_structure(chunk):
+                    logger.debug(f"Chunk at offset {offset} has key-like structure. Attempting to parse.")
                     # Try to parse as various key formats
                     for parser in [self._try_parse_der, self._try_parse_pem, self._try_parse_raw_modulus]:
                         key = parser(chunk)
@@ -387,6 +445,7 @@ class LicenseValidationBypass:
                             key.address = offset
                             key.confidence *= 0.8  # Lower confidence for entropy-based
                             keys.append(key)
+                            logger.debug(f"Successfully parsed key from high entropy chunk at offset {offset}.")
                             break
 
         return keys
@@ -968,10 +1027,7 @@ class LicenseValidationBypass:
 
         # Check for consistent byte patterns
         # Keys often have repeating patterns at specific intervals
-        if len(set(data[::32])) < len(data) // 32 * 0.7:
-            return False
-
-        return True
+        return not len(set(data[::32])) < len(data) // 32 * 0.7
 
     def _try_parse_der(self, data: bytes) -> Optional[ExtractedKey]:
         """Try to parse DER encoded key."""
@@ -1316,7 +1372,7 @@ class LicenseValidationBypass:
                         from cryptography.hazmat.primitives.asymmetric import rsa
 
                         private_numbers = rsa.RSAPrivateNumbers(
-                            p=p, q=q, d=d, dmp1=dmp1, dmq1=dmq1, iqmp=iqmp, public_numbers=rsa.RSAPublicNumbers(e, n)
+                            p=p, q=q, d=d, dmp1=dmp1, dmq1=dmq1, iqmp=iqmp, public_numbers=rsa.RSAPublicNumbers(e, n),
                         )
                         private_key = private_numbers.private_key(self.backend)
 
@@ -1356,7 +1412,7 @@ class LicenseValidationBypass:
                 e = int.from_bytes(base64.urlsafe_b64decode(jwk["e"] + "=="), "big")
 
                 return ExtractedKey(
-                    key_type=KeyType.RSA_PUBLIC, key_data=data, modulus=n, exponent=e, confidence=0.95, context="JSON Web Key (JWK)"
+                    key_type=KeyType.RSA_PUBLIC, key_data=data, modulus=n, exponent=e, confidence=0.95, context="JSON Web Key (JWK)",
                 )
         except (ValueError, TypeError) as e:
             logger.debug(f"Failed to parse JSON Web Key: {e}")
@@ -1365,20 +1421,25 @@ class LicenseValidationBypass:
 
     def extract_ecc_keys_from_binary(self, binary_path: str) -> List[ExtractedKey]:
         """Extract ECC keys from binary."""
+        logger.info(f"Starting ECC key extraction from {binary_path}")
         keys = []
 
         with open(binary_path, "rb") as f:
             data = f.read()
 
+        logger.debug("Method 1: Searching for ECC structures using patterns.")
         # Pattern matching for ECC structures
         for pattern in self.ecc_patterns:
             for match in pattern.finditer(data):
                 offset = match.start()
                 key_candidate = self._extract_ecc_key(data[offset : offset + 512])
                 if key_candidate:
+                    logger.debug(f"Found potential ECC key at offset {offset}")
                     key_candidate.address = offset
                     keys.append(key_candidate)
+        logger.debug(f"Method 1 (ECC patterns) completed. Found {len(keys)} keys so far.")
 
+        logger.debug("Method 2: Searching for named curve OIDs.")
         # Look for named curve OIDs
         curve_oids = {
             b"\x06\x08\x2a\x86\x48\xce\x3d\x03\x01\x07": "P-256",
@@ -1387,6 +1448,7 @@ class LicenseValidationBypass:
             b"\x06\x05\x2b\x81\x04\x00\x0a": "secp256k1",
         }
 
+        initial_keys_count = len(keys)
         for oid, curve_name in curve_oids.items():
             offset = 0
             while True:
@@ -1394,12 +1456,14 @@ class LicenseValidationBypass:
                 if offset == -1:
                     break
 
+                logger.debug(f"Found OID for curve {curve_name} at offset {offset}. Looking for EC point nearby.")
                 # Look for EC point nearby
                 for point_offset in range(max(0, offset - 100), min(len(data), offset + 100)):
                     if data[point_offset] == 0x04:  # Uncompressed point
-                        point_len = {"P-256": 64, "P-384": 96, "P-521": 132}[curve_name]
-                        if point_offset + point_len + 1 <= len(data):
+                        point_len = {"P-256": 64, "P-384": 96, "P-521": 132}.get(curve_name)
+                        if point_len and point_offset + point_len + 1 <= len(data):
                             point_data = data[point_offset : point_offset + point_len + 1]
+                            logger.debug(f"Found potential EC point for curve {curve_name} at offset {point_offset}")
                             keys.append(
                                 ExtractedKey(
                                     key_type=KeyType.ECC_PUBLIC,
@@ -1408,13 +1472,12 @@ class LicenseValidationBypass:
                                     address=point_offset,
                                     confidence=0.8,
                                     context=f"EC point for curve {curve_name}",
-                                )
+                                ),
                             )
                             break
 
                 offset += 1
-
-        return keys
+        logger.debug(f"Method 2 (Named curve OIDs) completed. Added {len(keys) - initial_keys_count} keys.")
 
     def _extract_ecc_key(self, data: bytes) -> Optional[ExtractedKey]:
         """Extract ECC key from data."""
@@ -1451,19 +1514,23 @@ class LicenseValidationBypass:
 
     def extract_certificates(self, binary_path: str) -> List[x509.Certificate]:
         """Extract X.509 certificates from binary."""
+        logger.info(f"Starting certificate extraction from {binary_path}")
         certificates = []
 
         with open(binary_path, "rb") as f:
             data = f.read()
 
+        logger.debug("Searching for certificate markers.")
         # Look for certificate markers
         for pattern in self.cert_patterns:
             for match in pattern.finditer(data):
                 offset = match.start()
+                logger.debug(f"Found potential certificate marker at offset {offset}. Attempting to parse.")
                 try:
                     # Try to parse certificate
                     cert_data = data[offset : offset + 8192]
                     cert = x509.load_der_x509_certificate(cert_data, backend=self.backend)
+                    logger.debug(f"Found and parsed DER certificate at offset {offset}")
                     certificates.append(cert)
                 except (ValueError, TypeError):
                     # Try PEM format
@@ -1472,30 +1539,38 @@ class LicenseValidationBypass:
                         if end != -1:
                             cert_data = data[offset : end + 25]
                             cert = x509.load_pem_x509_certificate(cert_data, backend=self.backend)
+                            logger.debug(f"Found and parsed PEM certificate at offset {offset}")
                             certificates.append(cert)
                     except (ValueError, TypeError) as e:
                         logger.debug(f"Failed to parse X.509 certificate at offset {offset}: {e}")
 
+        logger.info(f"Found {len(certificates)} certificates in {binary_path}")
         return certificates
 
     def extract_all_keys(self, binary_path: str) -> Dict[str, List[ExtractedKey]]:
         """Extract all types of cryptographic keys from binary."""
+        logger.info(f"Starting comprehensive key extraction from {binary_path}")
         results = {"rsa": [], "ecc": [], "symmetric": [], "certificates": []}
 
         # Extract RSA keys
+        logger.info("Extracting RSA keys...")
         results["rsa"] = self.extract_rsa_keys_from_binary(binary_path)
 
         # Extract ECC keys
+        logger.info("Extracting ECC keys...")
         results["ecc"] = self.extract_ecc_keys_from_binary(binary_path)
 
         # Extract symmetric keys (simplified)
+        logger.info("Extracting symmetric keys...")
         results["symmetric"] = self._extract_symmetric_keys(binary_path)
 
         # Extract certificates and get their public keys
+        logger.info("Extracting certificates and their public keys...")
         certs = self.extract_certificates(binary_path)
         for cert in certs:
             pub_key = cert.public_key()
             if isinstance(pub_key, RSAPublicKey):
+                logger.debug(f"Extracting RSA public key from certificate: {cert.subject}")
                 numbers = pub_key.public_numbers()
                 results["rsa"].append(
                     ExtractedKey(
@@ -1505,9 +1580,10 @@ class LicenseValidationBypass:
                         exponent=numbers.e,
                         confidence=1.0,
                         context=f"Certificate: {cert.subject}",
-                    )
+                    ),
                 )
             elif isinstance(pub_key, EllipticCurvePublicKey):
+                logger.debug(f"Extracting ECC public key from certificate: {cert.subject}")
                 results["ecc"].append(
                     ExtractedKey(
                         key_type=KeyType.ECC_PUBLIC,
@@ -1515,9 +1591,11 @@ class LicenseValidationBypass:
                         curve=pub_key.curve.name,
                         confidence=1.0,
                         context=f"Certificate: {cert.subject}",
-                    )
+                    ),
                 )
 
+        total_keys = len(results["rsa"]) + len(results["ecc"]) + len(results["symmetric"])
+        logger.info(f"Extraction complete. Found {total_keys} total keys and {len(certs)} certificates in {binary_path}")
         return results
 
     def _extract_symmetric_keys(self, binary_path: str) -> List[ExtractedKey]:
@@ -1527,23 +1605,27 @@ class LicenseValidationBypass:
         with open(binary_path, "rb") as f:
             data = f.read()
 
+        logger.debug("Searching for high-entropy regions for symmetric keys.")
         # Look for high-entropy regions of specific sizes
         key_sizes = [16, 24, 32, 56, 64, 128, 256]  # Common symmetric key sizes
 
         for size in key_sizes:
+            logger.debug(f"Scanning for symmetric keys of size {size} bytes.")
             for offset in range(0, len(data) - size, 4):
                 chunk = data[offset : offset + size]
                 entropy = self._calculate_entropy(chunk)
 
                 if entropy > 7.5:
+                    logger.debug(f"High entropy chunk found at offset {offset} (size {size}) with entropy: {entropy:.2f}. Checking if likely symmetric key.")
                     # Additional checks for symmetric keys
                     if self._is_likely_symmetric_key(chunk):
                         key_type = self._determine_symmetric_type(chunk)
                         keys.append(
                             ExtractedKey(
-                                key_type=key_type, key_data=chunk, address=offset, confidence=0.7, context=f"Probable {key_type.value} key"
-                            )
+                                key_type=key_type, key_data=chunk, address=offset, confidence=0.7, context=f"Probable {key_type.value} key",
+                            ),
                         )
+                        logger.debug(f"Found probable symmetric key ({key_type.value}) at offset {offset}.")
 
         return keys
 

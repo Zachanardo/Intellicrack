@@ -384,7 +384,7 @@ class ParallelProcessingManager:
                             "pattern": _pattern,
                             "position": chunk_start + _match.start(),
                             "match": _match.group(),
-                        }
+                        },
                     )
             except (OSError, ValueError, RuntimeError) as e:
                 logger.warning("Error processing pattern %s: %s", _pattern, e)
@@ -421,7 +421,7 @@ class ParallelProcessingManager:
                     "offset": chunk_start + _i,
                     "size": len(window_data),
                     "entropy": window_entropy,
-                }
+                },
             )
 
         # Find high entropy regions
@@ -509,7 +509,7 @@ class ParallelProcessingManager:
                         "entropy": chunk_entropy,
                         "string_count": len(chunk_strings),
                         "strings": chunk_strings[:10],  # Limit to first 10 strings per chunk
-                    }
+                    },
                 )
 
             # Calculate overall entropy as average of chunk entropies
@@ -608,7 +608,7 @@ class ParallelProcessingManager:
                                             "address": f"0x{state.addr:x}",
                                             "chunk": chunk_number,
                                             "description": "Stack pointer potentially corrupted",
-                                        }
+                                        },
                                     )
                             except (AttributeError, Exception) as e:
                                 logger.debug("Skipping state analysis due to error: %s", e)
@@ -624,7 +624,7 @@ class ParallelProcessingManager:
                         "final_active_states": len(execution_mgr.active),
                         "chunk_duration": chunk_duration,
                         "vulnerabilities_found": len([v for v in vulnerabilities if v.get("chunk") == chunk_number]),
-                    }
+                    },
                 )
 
                 paths_explored += chunk_paths_explored

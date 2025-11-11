@@ -1085,18 +1085,18 @@ const BinaryPatcherAdvanced = {
                 }
 
                 switch (provider) {
-                case 'aws-lambda':
-                    return this.patchLambdaFunction(functionName, patchData);
-                case 'azure-functions':
-                    return this.patchAzureFunction(functionName, patchData);
-                case 'gcp-functions':
-                    return this.patchGCPFunction(functionName, patchData);
-                default:
-                    console.error('[Serverless] Unsupported provider: ' + provider);
-                    // Store for potential future support
-                    this.unsupportedPatches = this.unsupportedPatches || [];
-                    this.unsupportedPatches.push({ provider, functionName, patchData });
-                    return false;
+                    case 'aws-lambda':
+                        return this.patchLambdaFunction(functionName, patchData);
+                    case 'azure-functions':
+                        return this.patchAzureFunction(functionName, patchData);
+                    case 'gcp-functions':
+                        return this.patchGCPFunction(functionName, patchData);
+                    default:
+                        console.error('[Serverless] Unsupported provider: ' + provider);
+                        // Store for potential future support
+                        this.unsupportedPatches = this.unsupportedPatches || [];
+                        this.unsupportedPatches.push({ provider, functionName, patchData });
+                        return false;
                 }
             },
 
@@ -1483,14 +1483,14 @@ const BinaryPatcherAdvanced = {
 
                 // Apply appropriate patching strategy
                 switch (device.type) {
-                case 'esp32':
-                    return this.patchESP32(device, patchData);
-                case 'arduino':
-                    return this.patchArduino(device, patchData);
-                case 'raspberrypi':
-                    return this.patchRaspberryPi(device, patchData);
-                default:
-                    return this.patchGenericDevice(device, patchData);
+                    case 'esp32':
+                        return this.patchESP32(device, patchData);
+                    case 'arduino':
+                        return this.patchArduino(device, patchData);
+                    case 'raspberrypi':
+                        return this.patchRaspberryPi(device, patchData);
+                    default:
+                        return this.patchGenericDevice(device, patchData);
                 }
             },
 
@@ -1866,20 +1866,20 @@ const BinaryPatcherAdvanced = {
 
                 try {
                     switch (test.type) {
-                    case 'functionality':
-                        result.passed = this.testFunctionality(test);
-                        break;
-                    case 'performance':
-                        result.passed = this.testPerformance(test);
-                        break;
-                    case 'compatibility':
-                        result.passed = this.testCompatibility(test);
-                        break;
-                    case 'security':
-                        result.passed = this.testSecurity(test);
-                        break;
-                    default:
-                        result.passed = this.runCustomTest(test);
+                        case 'functionality':
+                            result.passed = this.testFunctionality(test);
+                            break;
+                        case 'performance':
+                            result.passed = this.testPerformance(test);
+                            break;
+                        case 'compatibility':
+                            result.passed = this.testCompatibility(test);
+                            break;
+                        case 'security':
+                            result.passed = this.testSecurity(test);
+                            break;
+                        default:
+                            result.passed = this.runCustomTest(test);
                     }
                 } catch (e) {
                     result.error = e.message;
@@ -1931,14 +1931,14 @@ const BinaryPatcherAdvanced = {
 
             checkCompatibility: function (check) {
                 switch (check.type) {
-                case 'module':
-                    return Process.findModuleByName(check.name) !== null;
-                case 'function':
-                    return Module.findExportByName(check.module, check.name) !== null;
-                case 'version':
-                    return this.checkVersion(check.module, check.minVersion);
-                default:
-                    return true;
+                    case 'module':
+                        return Process.findModuleByName(check.name) !== null;
+                    case 'function':
+                        return Module.findExportByName(check.module, check.name) !== null;
+                    case 'version':
+                        return this.checkVersion(check.module, check.minVersion);
+                    default:
+                        return true;
                 }
             },
 
@@ -2087,18 +2087,18 @@ const BinaryPatcherAdvanced = {
             validateOnPlatform: function (patchData, platform) {
                 // Platform-specific validation
                 switch (platform) {
-                case 'windows':
-                    return this.validateWindows(patchData);
-                case 'linux':
-                    return this.validateLinux(patchData);
-                case 'darwin':
-                    return this.validateMacOS(patchData);
-                case 'android':
-                    return this.validateAndroid(patchData);
-                case 'ios':
-                    return this.validateIOS(patchData);
-                default:
-                    return false;
+                    case 'windows':
+                        return this.validateWindows(patchData);
+                    case 'linux':
+                        return this.validateLinux(patchData);
+                    case 'darwin':
+                        return this.validateMacOS(patchData);
+                    case 'android':
+                        return this.validateAndroid(patchData);
+                    case 'ios':
+                        return this.validateIOS(patchData);
+                    default:
+                        return false;
                 }
             },
 
@@ -2427,65 +2427,65 @@ const BinaryPatcherAdvanced = {
                 }
 
                 switch (platform) {
-                case 'windows':
-                    if (patchData.format && patchData.format === 'PE') {
-                        result.confidence += 0.1;
-                        result.checks.push('PE format compatible');
-                    } else {
-                        result.confidence -= 0.3;
-                        result.checks.push('Non-PE format may not work');
-                    }
-                    break;
+                    case 'windows':
+                        if (patchData.format && patchData.format === 'PE') {
+                            result.confidence += 0.1;
+                            result.checks.push('PE format compatible');
+                        } else {
+                            result.confidence -= 0.3;
+                            result.checks.push('Non-PE format may not work');
+                        }
+                        break;
 
-                case 'linux':
-                    if (patchData.format && patchData.format === 'ELF') {
-                        result.confidence += 0.1;
-                        result.checks.push('ELF format compatible');
-                    } else {
-                        result.confidence -= 0.3;
-                        result.checks.push('Non-ELF format may not work');
-                    }
-                    break;
+                    case 'linux':
+                        if (patchData.format && patchData.format === 'ELF') {
+                            result.confidence += 0.1;
+                            result.checks.push('ELF format compatible');
+                        } else {
+                            result.confidence -= 0.3;
+                            result.checks.push('Non-ELF format may not work');
+                        }
+                        break;
 
-                case 'darwin':
-                    if (patchData.format && patchData.format === 'MACH-O') {
-                        result.confidence += 0.1;
-                        result.checks.push('Mach-O format compatible');
-                    } else {
-                        result.confidence -= 0.3;
-                        result.checks.push('Non-Mach-O format may not work');
-                    }
-                    break;
+                    case 'darwin':
+                        if (patchData.format && patchData.format === 'MACH-O') {
+                            result.confidence += 0.1;
+                            result.checks.push('Mach-O format compatible');
+                        } else {
+                            result.confidence -= 0.3;
+                            result.checks.push('Non-Mach-O format may not work');
+                        }
+                        break;
 
-                case 'android':
-                    if (patchData.format && ['DEX', 'APK', 'ELF'].includes(patchData.format)) {
-                        result.confidence += 0.1;
-                        result.checks.push('Android format compatible');
-                    } else {
-                        result.confidence -= 0.3;
-                        result.checks.push('Format may not work on Android');
-                    }
-                    if (patchData.requiresRoot) {
-                        result.confidence -= 0.2;
-                        result.checks.push('Root requirement reduces compatibility');
-                    }
-                    break;
+                    case 'android':
+                        if (patchData.format && ['DEX', 'APK', 'ELF'].includes(patchData.format)) {
+                            result.confidence += 0.1;
+                            result.checks.push('Android format compatible');
+                        } else {
+                            result.confidence -= 0.3;
+                            result.checks.push('Format may not work on Android');
+                        }
+                        if (patchData.requiresRoot) {
+                            result.confidence -= 0.2;
+                            result.checks.push('Root requirement reduces compatibility');
+                        }
+                        break;
 
-                case 'ios':
-                    if (patchData.format && patchData.format === 'MACH-O') {
-                        result.confidence += 0.1;
-                        result.checks.push('iOS Mach-O format compatible');
-                    }
-                    if (patchData.requiresJailbreak) {
-                        result.confidence -= 0.3;
-                        result.checks.push('Jailbreak requirement reduces compatibility');
-                    }
-                    break;
+                    case 'ios':
+                        if (patchData.format && patchData.format === 'MACH-O') {
+                            result.confidence += 0.1;
+                            result.checks.push('iOS Mach-O format compatible');
+                        }
+                        if (patchData.requiresJailbreak) {
+                            result.confidence -= 0.3;
+                            result.checks.push('Jailbreak requirement reduces compatibility');
+                        }
+                        break;
 
-                default:
-                    result.confidence = 0.3;
-                    result.checks.push('Unknown platform: ' + platform);
-                    break;
+                    default:
+                        result.confidence = 0.3;
+                        result.checks.push('Unknown platform: ' + platform);
+                        break;
                 }
 
                 // General architecture checks

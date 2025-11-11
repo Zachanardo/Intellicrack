@@ -113,7 +113,7 @@ class CodeContext:
 class CodeAnalyzer:
     """Analyzes code to extract context and dependencies."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the code analyzer.
 
         Sets up supported file extensions and their corresponding
@@ -283,9 +283,7 @@ class CodeAnalyzer:
 
         for node in ast.walk(tree):
             if (
-                isinstance(node, (ast.If, ast.While, ast.For, ast.AsyncFor))
-                or isinstance(node, ast.ExceptHandler)
-                or isinstance(node, (ast.And, ast.Or))
+                isinstance(node, (ast.If, ast.While, ast.For, ast.AsyncFor, ast.ExceptHandler, ast.And, ast.Or))
             ):
                 complexity += 1
 
@@ -360,14 +358,14 @@ class DiffGenerator:
                             "line_number": i + 1,
                             "content": original_lines[i],
                             "type": "unchanged",
-                        }
+                        },
                     )
                     diff_data["modified_lines"].append(
                         {
                             "line_number": j1 + (i - i1) + 1,
                             "content": original_lines[i],
                             "type": "unchanged",
-                        }
+                        },
                     )
 
             elif tag == "delete":
@@ -377,7 +375,7 @@ class DiffGenerator:
                             "line_number": i + 1,
                             "content": original_lines[i],
                             "type": "deleted",
-                        }
+                        },
                     )
 
             elif tag == "insert":
@@ -387,7 +385,7 @@ class DiffGenerator:
                             "line_number": j + 1,
                             "content": modified_lines[j],
                             "type": "added",
-                        }
+                        },
                     )
 
             elif tag == "replace":
@@ -397,7 +395,7 @@ class DiffGenerator:
                             "line_number": i + 1,
                             "content": original_lines[i],
                             "type": "modified",
-                        }
+                        },
                     )
                 for j in range(j1, j2):
                     diff_data["modified_lines"].append(
@@ -405,7 +403,7 @@ class DiffGenerator:
                             "line_number": j + 1,
                             "content": modified_lines[j],
                             "type": "modified",
-                        }
+                        },
                     )
 
             if tag != "equal":
@@ -416,7 +414,7 @@ class DiffGenerator:
                         "original_end": i2,
                         "modified_start": j1,
                         "modified_end": j2,
-                    }
+                    },
                 )
 
         return diff_data
@@ -451,7 +449,7 @@ class DiffGenerator:
 class IntelligentCodeModifier:
     """Run class for intelligent code modification."""
 
-    def __init__(self, llm_manager: LLMManager | None = None):
+    def __init__(self, llm_manager: LLMManager | None = None) -> None:
         """Initialize the intelligent code modifier.
 
         Args:
@@ -485,7 +483,7 @@ class IntelligentCodeModifier:
             files_to_analyze = [project_path / f for f in target_files if (project_path / f).exists()]
         else:
             files_to_analyze = []
-            for ext in self.analyzer.supported_extensions.keys():
+            for ext in self.analyzer.supported_extensions:
                 files_to_analyze.extend(project_path.rglob(f"*{ext}"))
 
         # Limit number of files to analyze

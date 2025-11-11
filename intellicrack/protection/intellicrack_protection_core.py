@@ -220,7 +220,7 @@ class IntellicrackProtectionCore:
         ],
     }
 
-    def __init__(self, engine_path: str | None = None):
+    def __init__(self, engine_path: str | None = None) -> None:
         """Initialize protection detector using native ICP Engine integration.
 
         Args:
@@ -236,7 +236,7 @@ class IntellicrackProtectionCore:
             logger.info("Protection detection will use fallback methods")
             self.icp_backend = None
 
-    def _validate_engine_installation(self):
+    def _validate_engine_installation(self) -> bool | None:
         """Validate that native ICP Engine integration is working."""
         try:
             version = self.icp_backend.get_engine_version()
@@ -718,7 +718,7 @@ class IntellicrackProtectionCore:
             lines = ["File,Type,Architecture,Protection,Version,Category"]
             for det in analysis.detections:
                 lines.append(
-                    f"{analysis.file_path},{analysis.file_type},{analysis.architecture},{det.name},{det.version or 'N/A'},{det.type.value}"
+                    f"{analysis.file_path},{analysis.file_type},{analysis.architecture},{det.name},{det.version or 'N/A'},{det.type.value}",
                 )
             return "\n".join(lines)
 

@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+import contextlib
 import logging
 import shutil
 import subprocess
@@ -34,7 +35,7 @@ logger = get_logger(__name__)
 class AdvancedDynamicAnalyzer:
     """Comprehensive dynamic runtime analysis and vulnerability exploitation."""
 
-    def __init__(self, binary_path: str | Path):
+    def __init__(self, binary_path: str | Path) -> None:
         """Initialize the advanced dynamic analyzer with binary path configuration."""
         self.binary_path = Path(binary_path)
         self.logger = logging.getLogger("IntellicrackLogger.DynamicAnalyzer")
@@ -92,8 +93,8 @@ class AdvancedDynamicAnalyzer:
         self.logger.info("Starting subprocess analysis for %s", self.binary_path)
 
         try:
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                [self.binary_path], capture_output=True, text=True, timeout=10, check=False
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                [self.binary_path], capture_output=True, text=True, timeout=10, check=False,
             )
 
             self.logger.debug(
@@ -456,7 +457,7 @@ class AdvancedDynamicAnalyzer:
             # Message handler
             analysis_data = {}
 
-            def on_message(message, _data):  # pylint: disable=unused-argument
+            def on_message(message, _data) -> None:  # pylint: disable=unused-argument
                 """Handle messages from the Frida script during dynamic analysis.
 
                 Args:
@@ -534,7 +535,7 @@ class AdvancedDynamicAnalyzer:
 
         try:
             # Use psutil for detailed process analysis
-            process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 [self.binary_path],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -703,7 +704,7 @@ class AdvancedDynamicAnalyzer:
             script = session.create_script(script_code)
             results = {"matches": [], "status": "success", "scan_count": 0}
 
-            def on_message(message, data):
+            def on_message(message, data) -> None:
                 if data:
                     self.logger.debug(f"Message data: {len(data)} bytes")
                 if message["type"] == "send":
@@ -771,7 +772,7 @@ class AdvancedDynamicAnalyzer:
             if not target_proc:
                 # Try to start the process
                 try:
-                    proc = subprocess.Popen([str(self.binary_path)])  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    proc = subprocess.Popen([str(self.binary_path)])  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     time.sleep(2)
                     target_proc = psutil.Process(proc.pid)
                 except Exception as e:
@@ -798,10 +799,8 @@ class AdvancedDynamicAnalyzer:
             # Get memory information
             memory_info = target_proc.memory_info()
             memory_maps = []
-            try:
+            with contextlib.suppress(AttributeError, OSError, PermissionError):
                 memory_maps = target_proc.memory_maps() if hasattr(target_proc, "memory_maps") else []
-            except (AttributeError, OSError, PermissionError):
-                pass
 
             self.logger.info(f"Memory scan found {len(matches)} matches")
 
@@ -872,7 +871,7 @@ class AdvancedDynamicAnalyzer:
                     bytes_read = ctypes.c_size_t()
 
                     if kernel32.ReadProcessMemory(
-                        handle, ctypes.c_void_p(mbi.BaseAddress), buffer, mbi.RegionSize, ctypes.byref(bytes_read)
+                        handle, ctypes.c_void_p(mbi.BaseAddress), buffer, mbi.RegionSize, ctypes.byref(bytes_read),
                     ):
                         # Search for keywords in memory
                         memory_data = buffer.raw[: bytes_read.value]
@@ -910,7 +909,7 @@ class AdvancedDynamicAnalyzer:
                                         "region_base": hex(mbi.BaseAddress),
                                         "region_size": mbi.RegionSize,
                                         "protection": hex(mbi.Protect),
-                                    }
+                                    },
                                 )
 
                                 offset = pos + 1
@@ -946,7 +945,7 @@ class AdvancedDynamicAnalyzer:
                                         "region_size": mbi.RegionSize,
                                         "protection": hex(mbi.Protect),
                                         "encoding": "UTF-16",
-                                    }
+                                    },
                                 )
 
                                 offset = pos + 2
@@ -965,7 +964,7 @@ class AdvancedDynamicAnalyzer:
 
         try:
             # Read memory maps to get valid memory regions
-            with open(f"/proc/{pid}/maps", "r") as f:
+            with open(f"/proc/{pid}/maps") as f:
                 maps = f.readlines()
 
             # Open process memory
@@ -1033,12 +1032,12 @@ class AdvancedDynamicAnalyzer:
                                         "region_size": size,
                                         "permissions": perms,
                                         "mapping": parts[5] if len(parts) > 5 else "",
-                                    }
+                                    },
                                 )
 
                                 offset = pos + 1
 
-                    except (OSError, IOError):
+                    except OSError:
                         # Some memory regions may not be accessible
                         continue
 
@@ -1134,7 +1133,7 @@ print(matches)
                             "size": mmap.size if hasattr(mmap, "size") else mmap.rss,
                             "addr": mmap.addr if hasattr(mmap, "addr") else "unknown",
                             "perms": mmap.perms if hasattr(mmap, "perms") else "r--",
-                        }
+                        },
                     )
             except (AttributeError, psutil.AccessDenied):
                 # memory_maps not available on this platform
@@ -1202,7 +1201,7 @@ print(matches)
                                 "offset": offset,
                                 "source": source,
                                 "region_base": hex(base_address),
-                            }
+                            },
                         )
 
             # Try to read actual memory using ctypes if possible
@@ -1254,7 +1253,7 @@ print(matches)
                             "offset": index,
                             "region_base": "0x00000000",
                             "region_size": len(binary_data),
-                        }
+                        },
                     )
 
                     offset = index + len(keyword)
@@ -1443,7 +1442,7 @@ def deep_runtime_monitoring(binary_path: str, timeout: int = 30000) -> list[str]
 
         # Launch the process
         logs.append("Launching process...")
-        process = subprocess.Popen([binary_path], encoding="utf-8")  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+        process = subprocess.Popen([binary_path], encoding="utf-8")  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
         logs.append(f"Process started with PID {process.pid}")
 
         # Attach Frida
@@ -1454,7 +1453,7 @@ def deep_runtime_monitoring(binary_path: str, timeout: int = 30000) -> list[str]
         script = session.create_script(script_content)
 
         # Set up message handler
-        def on_message(message, _data):  # pylint: disable=unused-argument
+        def on_message(message, _data) -> None:  # pylint: disable=unused-argument
             """Handle messages from a Frida script.
 
             Appends payloads from 'send' messages to the logs list.

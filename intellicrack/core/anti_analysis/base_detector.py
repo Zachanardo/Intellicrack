@@ -36,7 +36,7 @@ class BaseDetector(ABC):
     Provides common detection loop functionality.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the base detector with logging and detection methods registry."""
         self.logger = logging.getLogger("IntellicrackLogger.AntiAnalysis")
         self.detection_methods = {}
@@ -113,10 +113,10 @@ class BaseDetector(ABC):
         """
         try:
             if platform.system() == "Windows":
-                result = subprocess.run(["tasklist"], check=False, capture_output=True, text=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
+                result = subprocess.run(["tasklist"], check=False, capture_output=True, text=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis
                 processes = result.stdout.lower()
             else:
-                result = subprocess.run(["ps", "aux"], check=False, capture_output=True, text=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
+                result = subprocess.run(["ps", "aux"], check=False, capture_output=True, text=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis
                 processes = result.stdout.lower()
 
             # Also get individual process names

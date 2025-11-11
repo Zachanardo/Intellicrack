@@ -112,7 +112,7 @@ class R2AIEngine:
     - Code similarity and family classification
     """
 
-    def __init__(self, binary_path: str, radare2_path: str | None = None):
+    def __init__(self, binary_path: str, radare2_path: str | None = None) -> None:
         """Initialize AI engine."""
         self.binary_path = binary_path
         self.radare2_path = radare2_path
@@ -283,7 +283,7 @@ class R2AIEngine:
             "debug_string_ratio": float(len(string_analysis.get("debug_strings", [])) / max(1, total_strings)),
             "average_entropy": float(string_analysis.get("string_entropy_analysis", {}).get("average_entropy", 0)),
             "high_entropy_ratio": float(
-                len(string_analysis.get("string_entropy_analysis", {}).get("high_entropy_strings", [])) / max(1, total_strings)
+                len(string_analysis.get("string_entropy_analysis", {}).get("high_entropy_strings", [])) / max(1, total_strings),
             ),
             "suspicious_patterns": float(len(string_analysis.get("suspicious_patterns", []))),
         }
@@ -638,7 +638,7 @@ class R2AIEngine:
                     "description": "Patch license validation strings",
                     "success_probability": 0.8,
                     "difficulty": "easy",
-                }
+                },
             )
 
         if import_features.get("crypto_api_ratio", 0) > 0.1:
@@ -648,7 +648,7 @@ class R2AIEngine:
                     "description": "Bypass cryptographic license validation",
                     "success_probability": 0.6,
                     "difficulty": "medium",
-                }
+                },
             )
 
         if import_features.get("registry_api_ratio", 0) > 0.1:
@@ -658,7 +658,7 @@ class R2AIEngine:
                     "description": "Modify registry-based license checks",
                     "success_probability": 0.9,
                     "difficulty": "easy",
-                }
+                },
             )
 
         # Calculate overall confidence
@@ -1036,7 +1036,7 @@ class R2AIEngine:
             ]
         else:
             base_patterns = [
-                [0, 0, 5, 100, 1.5, 0.5, 2, 1024000, 10, 0.2]  # Generic vulnerability
+                [0, 0, 5, 100, 1.5, 0.5, 2, 1024000, 10, 0.2],  # Generic vulnerability
             ]
 
         # Generate variations of real patterns

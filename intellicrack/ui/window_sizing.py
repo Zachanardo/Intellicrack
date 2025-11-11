@@ -42,7 +42,7 @@ def get_default_window_size(width_percentage=0.8, height_percentage=0.8, min_wid
     return min_width, min_height
 
 
-def center_window_on_screen(window):
+def center_window_on_screen(window) -> None:
     """Center a window on the primary screen.
 
     Args:
@@ -106,7 +106,7 @@ def get_dialog_size(dialog_type="standard"):
     return width, height, config["min_width"], config["min_height"]
 
 
-def apply_dialog_sizing(dialog, dialog_type="standard"):
+def apply_dialog_sizing(dialog, dialog_type="standard") -> None:
     """Apply dynamic sizing to a dialog based on screen size.
 
     Args:

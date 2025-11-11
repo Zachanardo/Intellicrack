@@ -10,6 +10,7 @@ Production-ready implementation for:
 - Automated exploit generation
 """
 
+import contextlib
 import logging
 import re
 import struct
@@ -133,7 +134,7 @@ class ExploitPrimitive:
 class Radare2Emulator:
     """Advanced emulation engine using Radare2."""
 
-    def __init__(self, binary_path: str):
+    def __init__(self, binary_path: str) -> None:
         """Initialize the Radare2AdvancedEmulator with a binary file path.
 
         Args:
@@ -343,7 +344,7 @@ class Radare2Emulator:
             logger.error(f"Failed to setup Unicorn: {e}")
             return False
 
-    def _unicorn_code_hook(self, uc, address, size, user_data):
+    def _unicorn_code_hook(self, uc, address, size, user_data) -> None:
         """Monitor code execution in Unicorn emulator."""
         self.execution_trace.append(address)
 
@@ -351,7 +352,7 @@ class Radare2Emulator:
         if address in self.breakpoints if hasattr(self, "breakpoints") else []:
             uc.emu_stop()
 
-    def _unicorn_mem_write_hook(self, uc, access, address, size, value, user_data):
+    def _unicorn_mem_write_hook(self, uc, access, address, size, value, user_data) -> None:
         """Monitor memory writes in Unicorn emulator."""
         self.memory_map[address] = struct.pack("<Q", value)[:size]
 
@@ -359,7 +360,7 @@ class Radare2Emulator:
         if address in self.taint_tracker:
             self._propagate_taint(address, value)
 
-    def _unicorn_mem_read_hook(self, uc, access, address, size, value, user_data):
+    def _unicorn_mem_read_hook(self, uc, access, address, size, value, user_data) -> None:
         """Monitor memory reads in Unicorn emulator."""
         # Track memory reads for taint analysis
         if address in self.taint_tracker:
@@ -453,7 +454,7 @@ class Radare2Emulator:
                         "r13": UC_X86_REG_R13,
                         "r14": UC_X86_REG_R14,
                         "r15": UC_X86_REG_R15,
-                    }
+                    },
                 )
 
         elif self.arch == "arm":
@@ -468,10 +469,8 @@ class Radare2Emulator:
             reg_map["pc"] = UC_ARM64_REG_PC
 
         for name, const in reg_map.items():
-            try:
+            with contextlib.suppress(AttributeError, OSError):
                 registers[name] = self.uc.reg_read(const)
-            except (AttributeError, OSError):
-                pass
 
         return registers
 
@@ -500,7 +499,7 @@ class Radare2Emulator:
                     success=True,
                     registers={},
                     memory_changes=[],
-                    execution_path=path + [current_addr],
+                    execution_path=[*path, current_addr],
                     constraints=bb_result["constraints"],
                     metadata={
                         "solver_model": str(solver.model()) if solver.check() == z3.sat else None,
@@ -519,7 +518,7 @@ class Radare2Emulator:
                 new_solver.add(constraint)
 
                 if new_solver.check() == z3.sat:
-                    work_queue.append((successor, path + [current_addr], new_solver))
+                    work_queue.append((successor, [*path, current_addr], new_solver))
 
         return results
 
@@ -578,7 +577,7 @@ class Radare2Emulator:
                         fall_through = inst["offset"] + inst["size"]
 
                         # Create branch conditions
-                        if mnemonic == "je" or mnemonic == "jz":
+                        if mnemonic in {"je", "jz"}:
                             # Jump if equal/zero
                             condition = z3.BoolVal(True)  # Simplified
                             result["successors"].append((target, condition))
@@ -602,7 +601,7 @@ class Radare2Emulator:
         # Initialize taint sources
         for addr, size, label in taint_sources:
             self.taint_tracker[addr] = TaintInfo(
-                address=addr, size=size, taint_label=label, propagation_path=[], influenced_registers=[], influenced_memory=[]
+                address=addr, size=size, taint_label=label, propagation_path=[], influenced_registers=[], influenced_memory=[],
             )
 
         # Emulate and track taint
@@ -681,7 +680,7 @@ class Radare2Emulator:
                 address=new_addr,
                 size=taint.size,
                 taint_label=f"{taint.taint_label}_propagated",
-                propagation_path=taint.propagation_path + [address],
+                propagation_path=[*taint.propagation_path, address],
                 influenced_registers=taint.influenced_registers.copy(),
                 influenced_memory=taint.influenced_memory.copy(),
             )
@@ -1191,7 +1190,7 @@ class Radare2Emulator:
 
         return "\n".join(report)
 
-    def close(self):
+    def close(self) -> None:
         """Close emulation engines."""
         if self.r2:
             self.r2.quit()
@@ -1199,14 +1198,14 @@ class Radare2Emulator:
             del self.uc
 
 
-def main():
+def main() -> None:
     """Demonstrate usage of Radare2 Emulator."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Radare2 Emulation Engine")
     parser.add_argument("binary", help="Binary file to emulate")
     parser.add_argument(
-        "-m", "--mode", choices=["esil", "unicorn", "symbolic", "taint", "exploit"], default="unicorn", help="Emulation mode"
+        "-m", "--mode", choices=["esil", "unicorn", "symbolic", "taint", "exploit"], default="unicorn", help="Emulation mode",
     )
     parser.add_argument("-s", "--start", help="Start address (hex)", type=lambda x: int(x, 16))
     parser.add_argument("-e", "--end", help="End address (hex)", type=lambda x: int(x, 16))

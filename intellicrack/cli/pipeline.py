@@ -78,7 +78,7 @@ class PipelineData:
 class PipelineStage(ABC):
     """Base class for pipeline stages."""
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         """Initialize pipeline stage with name and console."""
         self.name = name
         self.console = Console()
@@ -146,7 +146,7 @@ class PipelineStage(ABC):
 class AnalysisStage(PipelineStage):
     """Run binary analysis."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize analysis stage for binary analysis processing."""
         super().__init__("analysis")
 
@@ -190,7 +190,7 @@ class AnalysisStage(PipelineStage):
 class FilterStage(PipelineStage):
     """Filter data based on criteria."""
 
-    def __init__(self, filter_expr: str):
+    def __init__(self, filter_expr: str) -> None:
         """Initialize filter stage with filter expression for data processing."""
         super().__init__("filter")
         self.filter_expr = filter_expr
@@ -245,7 +245,7 @@ class FilterStage(PipelineStage):
 class TransformStage(PipelineStage):
     """Transform data format."""
 
-    def __init__(self, output_format: str):
+    def __init__(self, output_format: str) -> None:
         """Initialize transform stage with output format for data transformation."""
         super().__init__("transform")
         self.output_format = output_format
@@ -324,11 +324,11 @@ class TransformStage(PipelineStage):
         elif isinstance(content, list) and content:
             if isinstance(content[0], dict):
                 # List of dicts
-                for key in content[0].keys():
+                for key in content[0]:
                     table.add_column(str(key))
 
                 for item in content:
-                    table.add_row(*[str(item.get(k, "")) for k in content[0].keys()])
+                    table.add_row(*[str(item.get(k, "")) for k in content[0]])
 
         # Render table to string
         import io
@@ -367,7 +367,7 @@ class TransformStage(PipelineStage):
 class OutputStage(PipelineStage):
     """Output data to file or stdout."""
 
-    def __init__(self, output_path: str | None = None):
+    def __init__(self, output_path: str | None = None) -> None:
         """Initialize output stage with optional output path for data export."""
         super().__init__("output")
         self.output_path = output_path
@@ -400,7 +400,7 @@ class OutputStage(PipelineStage):
 class Pipeline:
     """Pipeline executor."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize pipeline with empty stages list and console."""
         self.stages: list[PipelineStage] = []
         self.console = Console()
@@ -528,7 +528,7 @@ def parse_pipeline_command(command: str) -> Pipeline:
 
 
 # pylint: disable=too-many-branches,too-many-statements
-def main():
+def main() -> None:
     """CLI entry point for pipeline operations."""
     parser = argparse.ArgumentParser(
         description="Intellicrack Pipeline Processor",

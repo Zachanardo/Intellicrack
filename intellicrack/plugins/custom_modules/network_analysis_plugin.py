@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 class NetworkAnalysisPlugin:
     """Plugin for network traffic analysis and security assessment."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the network analysis plugin."""
         super().__init__()
         self.capture_thread = None
@@ -238,7 +238,7 @@ class NetworkAnalysisPlugin:
                             "service": service_name,
                             "state": "open",
                             "protocol": "tcp",
-                        }
+                        },
                     )
             except TimeoutError:
                 # Port is filtered or host is down
@@ -263,7 +263,7 @@ class NetworkAnalysisPlugin:
         if self.monitoring:
             return {"error": "Monitoring already in progress"}
 
-        def monitor_thread():
+        def monitor_thread() -> None:
             """Thread function for monitoring."""
             self.monitoring = True
             start_time = time.time()
@@ -295,7 +295,7 @@ class NetworkAnalysisPlugin:
                                         "local": f"{conn.laddr.ip}:{conn.laddr.port}" if conn.laddr else "N/A",
                                         "remote": f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else "N/A",
                                         "pid": conn.pid if hasattr(conn, "pid") else "N/A",
-                                    }
+                                    },
                                 )
 
                     # Check for closed connections
@@ -306,7 +306,7 @@ class NetworkAnalysisPlugin:
                                 "timestamp": time.time(),
                                 "type": "closed_connection",
                                 "connection": conn_id,
-                            }
+                            },
                         )
 
                     initial_connections = current_connections
@@ -369,7 +369,7 @@ class NetworkAnalysisPlugin:
                                     "type": "suspicious_port",
                                     "details": f"Connection to suspicious port {conn.raddr.port} at {ip}",
                                     "severity": "medium",
-                                }
+                                },
                             )
 
             # Identify patterns
@@ -380,7 +380,7 @@ class NetworkAnalysisPlugin:
                         "type": "port_usage",
                         "description": "Most frequently used ports",
                         "data": most_used_ports,
-                    }
+                    },
                 )
 
             if ip_frequency:
@@ -390,7 +390,7 @@ class NetworkAnalysisPlugin:
                         "type": "ip_connections",
                         "description": "Most frequently connected IPs",
                         "data": most_connected_ips,
-                    }
+                    },
                 )
 
             # Check for potential port scanning
@@ -400,7 +400,7 @@ class NetworkAnalysisPlugin:
                         "type": "possible_port_scan",
                         "details": f"Large number of different ports in use: {len(port_frequency)}",
                         "severity": "high",
-                    }
+                    },
                 )
 
         except Exception as e:
@@ -408,7 +408,7 @@ class NetworkAnalysisPlugin:
 
         return result
 
-    def cleanup_sockets(self):
+    def cleanup_sockets(self) -> None:
         """Clean up any active sockets."""
         for socket_name, sock in self.active_sockets.items():
             try:
@@ -465,7 +465,7 @@ class NetworkAnalysisPlugin:
                             "remote_host": remote_host,
                             "status": conn.status,
                             "pid": conn.pid if hasattr(conn, "pid") else "N/A",
-                        }
+                        },
                     )
 
             if active_connections:
@@ -487,7 +487,7 @@ class NetworkAnalysisPlugin:
                         {
                             "address": local_addr,
                             "pid": conn.pid if hasattr(conn, "pid") else "N/A",
-                        }
+                        },
                     )
 
             if listening_ports:

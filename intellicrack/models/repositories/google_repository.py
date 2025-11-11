@@ -22,7 +22,6 @@ import os
 from typing import Any
 
 from intellicrack.core.config_manager import get_config
-from intellicrack.utils.secrets_manager import SecretsManager
 
 from .base import APIRepositoryBase, RateLimitConfig
 from .interface import ModelInfo
@@ -51,7 +50,7 @@ class GoogleRepository(APIRepositoryBase):
         rate_limit_config: RateLimitConfig | None = None,
         cache_config: dict[str, Any] | None = None,
         download_dir: str = os.path.join(os.path.dirname(__file__), "..", "downloads"),
-    ):
+    ) -> None:
         """Initialize the Google repository.
 
         Args:
@@ -72,6 +71,8 @@ class GoogleRepository(APIRepositoryBase):
 
         # Get API key from secrets manager if not provided
         if not api_key:
+            from intellicrack.utils.secrets_manager import SecretsManager
+
             secrets_manager = SecretsManager()
             api_key = secrets_manager.get("GOOGLE_API_KEY") or ""
 
@@ -221,7 +222,7 @@ class GoogleRepository(APIRepositoryBase):
             # Check for multimodal support
             input_features = []
             for input_feature in (
-                model_data.get("inputSchema", {}).get("properties", {}).get("parts", {}).get("items", {}).get("properties", {}).keys()
+                model_data.get("inputSchema", {}).get("properties", {}).get("parts", {}).get("items", {}).get("properties", {})
             ):
                 input_features.append(input_feature)
 

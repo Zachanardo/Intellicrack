@@ -29,8 +29,6 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
-from intellicrack.core.config_manager import get_config
-
 # Import from common import checks
 from ..utils.core.import_checks import PSUTIL_AVAILABLE, psutil
 
@@ -101,7 +99,7 @@ class FileRegion:
 class FileCache:
     """LRU cache for file regions with memory management."""
 
-    def __init__(self, config: MemoryConfig):
+    def __init__(self, config: MemoryConfig) -> None:
         """Initialize the FileCache with memory configuration."""
         self.config = config
         self.regions: OrderedDict[int, FileRegion] = OrderedDict()
@@ -139,11 +137,11 @@ class FileCache:
             region.ref_count = 1
 
             logger.debug(
-                f"Cached region: offset=0x{region.offset:X}, size={region.size}, total_memory={self.total_memory / (1024 * 1024):.1f}MB"
+                f"Cached region: offset=0x{region.offset:X}, size={region.size}, total_memory={self.total_memory / (1024 * 1024):.1f}MB",
             )
             return True
 
-    def _evict_oldest(self):
+    def _evict_oldest(self) -> None:
         """Evict the oldest region from cache."""
         if not self.regions:
             return
@@ -168,12 +166,12 @@ class FileCache:
 
         logger.debug("Evicted region: offset=0x%s, size=%s", region.offset, region.size)
 
-    def release_region(self, region: FileRegion):
+    def release_region(self, region: FileRegion) -> None:
         """Release a reference to a region."""
         with self.lock:
             region.ref_count = max(0, region.ref_count - 1)
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear all cached regions."""
         with self.lock:
             self.regions.clear()
@@ -213,18 +211,18 @@ class FileCache:
 class MemoryMonitor:
     """Monitors system memory usage and adjusts caching strategy."""
 
-    def __init__(self, config: MemoryConfig):
+    def __init__(self, config: MemoryConfig) -> None:
         """Initialize the MemoryMonitor with memory configuration."""
         self.config = config
         self.callbacks: list[Callable[[float], None]] = []
         self.monitoring = False
         self.thread: threading.Thread | None = None
 
-    def add_callback(self, callback: Callable[[float], None]):
+    def add_callback(self, callback: Callable[[float], None]) -> None:
         """Add a callback for memory usage changes."""
         self.callbacks.append(callback)
 
-    def start_monitoring(self):
+    def start_monitoring(self) -> None:
         """Start memory monitoring in background thread."""
         if self.monitoring:
             return
@@ -234,14 +232,14 @@ class MemoryMonitor:
         self.thread.start()
         logger.debug("Memory monitoring started")
 
-    def stop_monitoring(self):
+    def stop_monitoring(self) -> None:
         """Stop memory monitoring."""
         self.monitoring = False
         if self.thread:
             self.thread.join(timeout=1.0)
         logger.debug("Memory monitoring stopped")
 
-    def _monitor_loop(self):
+    def _monitor_loop(self) -> None:
         """Run main monitoring loop."""
         while self.monitoring:
             try:
@@ -292,7 +290,7 @@ class BackgroundLoader(QThread if PYQT6_AVAILABLE else threading.Thread):
     #: Signal emitted when an error occurs (type: str)
     error_occurred = pyqtSignal(str) if PYQT6_AVAILABLE else None
 
-    def __init__(self, file_path: str, cache: FileCache, config: MemoryConfig):
+    def __init__(self, file_path: str, cache: FileCache, config: MemoryConfig) -> None:
         """Initialize the BackgroundLoader with file path, cache, and configuration."""
         if PYQT6_AVAILABLE:
             super().__init__()
@@ -306,7 +304,7 @@ class BackgroundLoader(QThread if PYQT6_AVAILABLE else threading.Thread):
         self.queue_lock = threading.Lock()
         self.should_stop = False
 
-    def queue_load(self, offset: int, size: int):
+    def queue_load(self, offset: int, size: int) -> None:
         """Queue a region for loading."""
         with self.queue_lock:
             # Avoid duplicate requests
@@ -315,7 +313,7 @@ class BackgroundLoader(QThread if PYQT6_AVAILABLE else threading.Thread):
                 self.load_queue.append(request)
                 logger.debug("Queued load: offset=0x%s, size=%s", offset, size)
 
-    def run(self):
+    def run(self) -> None:
         """Run main loading loop."""
         try:
             with open(self.file_path, "rb") as file:
@@ -354,7 +352,7 @@ class BackgroundLoader(QThread if PYQT6_AVAILABLE else threading.Thread):
             if self.error_occurred:
                 self.error_occurred.emit(str(e))
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the background loader."""
         self.should_stop = True
 
@@ -362,8 +360,10 @@ class BackgroundLoader(QThread if PYQT6_AVAILABLE else threading.Thread):
 class LargeFileHandler:
     """Enhanced file handler optimized for large files."""
 
-    def __init__(self, file_path: str, read_only: bool = True, config: MemoryConfig | None = None):
+    def __init__(self, file_path: str, read_only: bool = True, config: MemoryConfig | None = None) -> None:
         """Initialize the LargeFileHandler with file path, read-only mode, and configuration."""
+        from intellicrack.core.config_manager import get_config
+
         self.file_path = file_path
         self.read_only = read_only
 
@@ -403,7 +403,7 @@ class LargeFileHandler:
         # Initialize the file
         self._initialize_file()
 
-    def _initialize_file(self):
+    def _initialize_file(self) -> None:
         """Initialize file access based on size and available memory."""
         try:
             # Get file size
@@ -453,7 +453,7 @@ class LargeFileHandler:
             logger.error("Failed to initialize large file handler: %s", e)
             raise
 
-    def _init_direct_load(self):
+    def _init_direct_load(self) -> None:
         """Initialize direct loading strategy."""
         try:
             with open(self.file_path, "rb") as f:
@@ -471,7 +471,7 @@ class LargeFileHandler:
             self.memory_strategy = MemoryStrategy.STREAMING
             self._init_streaming()
 
-    def _init_memory_map(self):
+    def _init_memory_map(self) -> None:
         """Initialize memory mapping strategy."""
         try:
             self.file_handle = open(self.file_path, "rb")  # pylint: disable=consider-using-with
@@ -488,7 +488,7 @@ class LargeFileHandler:
             self.memory_strategy = MemoryStrategy.STREAMING
             self._init_streaming()
 
-    def _init_streaming(self):
+    def _init_streaming(self) -> None:
         """Initialize streaming strategy."""
         # Streaming doesn't require initialization
         # Data is loaded on-demand through the cache
@@ -595,7 +595,7 @@ class LargeFileHandler:
 
         return b""
 
-    def _prefetch_chunks(self, next_offset: int):
+    def _prefetch_chunks(self, next_offset: int) -> None:
         """Prefetch chunks for better performance."""
         if self.config.prefetch_chunks > 0 and self.background_loader and self.loading_strategy == LoadingStrategy.PROGRESSIVE:
             chunk_size = self.config.chunk_size_mb * 1024 * 1024
@@ -610,7 +610,7 @@ class LargeFileHandler:
                             min(chunk_size, self.file_size - prefetch_offset),
                         )
 
-    def _on_memory_pressure(self, memory_usage: float):
+    def _on_memory_pressure(self, memory_usage: float) -> None:
         """Handle memory pressure by adjusting cache."""
         if memory_usage > self.config.memory_threshold:
             # Reduce cache size
@@ -623,10 +623,10 @@ class LargeFileHandler:
                 self.cache.clear()
 
             logger.warning(
-                f"Memory pressure detected: {memory_usage:.1%}, reduced cache from {old_size}MB to {self.config.cache_size_mb}MB"
+                f"Memory pressure detected: {memory_usage:.1%}, reduced cache from {old_size}MB to {self.config.cache_size_mb}MB",
             )
 
-    def _periodic_cleanup(self):
+    def _periodic_cleanup(self) -> None:
         """Periodic cleanup of cache and resources."""
         try:
             # Clean old access patterns
@@ -690,7 +690,7 @@ class LargeFileHandler:
 
         return sequential_count / total_count if total_count > 0 else 0.0
 
-    def close(self):
+    def close(self) -> None:
         """Close the file handler and clean up resources."""
         try:
             # Stop background loader
@@ -720,6 +720,6 @@ class LargeFileHandler:
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error closing large file handler: %s", e)
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Cleanup when object is destroyed."""
         self.close()

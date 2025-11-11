@@ -112,7 +112,7 @@ class CodeMeterProtocolParser:
         0x00000012: "CM_GCM_ENCRYPTION_ERROR",
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the CodeMeter protocol parser with session tracking and container info."""
         self.logger = get_logger(__name__)
         self.active_sessions = {}  # Track active sessions
@@ -120,7 +120,7 @@ class CodeMeterProtocolParser:
         self.license_receipts = {}  # Store license receipts
         self._load_default_products()
 
-    def _load_default_products(self):
+    def _load_default_products(self) -> None:
         """Load default CodeMeter products."""
         self.products = {
             # Common firm codes and products
@@ -666,7 +666,7 @@ class CodeMeterProtocolParser:
         """Handle enumerate products request."""
         products_list = []
         for (firm_code, product_code), product in self.products.items():
-            if firm_code == request.firm_code or request.firm_code == 0:
+            if request.firm_code in (firm_code, 0):
                 products_list.append(
                     {
                         "firm_code": firm_code,
@@ -674,7 +674,7 @@ class CodeMeterProtocolParser:
                         "name": product["name"],
                         "features": product["features"],
                         "max_users": product["max_users"],
-                    }
+                    },
                 )
 
         return CodeMeterResponse(
@@ -819,7 +819,7 @@ class CodeMeterProtocolParser:
                     value_bytes = value.encode("utf-8")
                 elif isinstance(value, int):
                     value_bytes = struct.pack("<I", value)
-                elif isinstance(value, list) or isinstance(value, dict):
+                elif isinstance(value, (list, dict)):
                     value_bytes = str(value).encode("utf-8")
                 else:
                     value_bytes = str(value).encode("utf-8")

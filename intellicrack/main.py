@@ -41,7 +41,7 @@ if "DISPLAY" not in os.environ and "QT_QPA_PLATFORM" not in os.environ:
             with open("/proc/version", encoding="utf-8") as f:
                 if "microsoft" in f.read().lower():
                     os.environ["QT_QPA_PLATFORM"] = "offscreen"
-        except (IOError, OSError) as e:
+        except OSError as e:
             print(f"Warning: Could not read /proc/version to detect WSL: {e}")
     # Don't set offscreen mode on Windows - use native rendering
     elif os.name != "nt":
@@ -72,6 +72,10 @@ if os.name == "nt":
 # The comprehensive logging system interferes with Qt's window display mechanisms
 
 
+from intellicrack.utils.logger import log_function_call
+
+
+@log_function_call
 def main() -> int:
     """Run the main entry point for the Intellicrack application.
 
@@ -99,157 +103,118 @@ def main() -> int:
 
     """
     try:
-        print("[DEBUG] main() started")
-        sys.stdout.flush()
+        # Configure logging using the central configuration
+        import os
 
-        # Configure logging with file output FIRST
-        print("[DEBUG] Importing datetime...")
-        sys.stdout.flush()
-        from datetime import datetime
-        print("[DEBUG] datetime imported OK")
-        sys.stdout.flush()
-
-        print("[DEBUG] About to import from intellicrack.utils.core.plugin_paths...")
-        sys.stdout.flush()
-        print("[DEBUG] Importing plugin_paths module...")
-        sys.stdout.flush()
-        import intellicrack.utils.core.plugin_paths
-        print("[DEBUG] plugin_paths module imported OK")
-        sys.stdout.flush()
-
-        print("[DEBUG] Getting get_logs_dir function...")
-        sys.stdout.flush()
-        get_logs_dir = intellicrack.utils.core.plugin_paths.get_logs_dir
-        print("[DEBUG] get_logs_dir function obtained OK")
-        sys.stdout.flush()
-
-        print("[DEBUG] Importing setup_logging from logger...")
-        sys.stdout.flush()
+        from intellicrack.config import get_config
+        from intellicrack.utils.core.plugin_paths import get_logs_dir
         from intellicrack.utils.logger import setup_logging
-        print("[DEBUG] setup_logging imported OK")
-        sys.stdout.flush()
 
-        # Get logs directory using centralized path management
-        print("[DEBUG] Getting logs directory...")
-        sys.stdout.flush()
-        logs_dir = get_logs_dir()
+        log_config = get_config().get("logging", {})
+        log_level = log_config.get("level", "INFO")
 
-        # Generate log filename with current date
-        log_filename = f"intellicrack-launcher.{datetime.now().strftime('%Y-%m-%d')}"
-        log_file_path = logs_dir / log_filename
+        log_file = None
+        if log_config.get("enable_file_logging", True):
+            log_dir = get_logs_dir()
+            os.makedirs(log_dir, exist_ok=True)
+            log_file = os.path.join(log_dir, "intellicrack.log")
 
-        # Set up logging with file handler
-        print("[DEBUG] Setting up logging...")
-        sys.stdout.flush()
+        # Get console logging status from config, default to True if not specified
+        enable_console = log_config.get("enable_console_logging", True)
+
         setup_logging(
-            level="INFO",
-            log_file=str(log_file_path),
-            enable_rotation=False,
+            level=log_level,
+            log_file=log_file,
+            enable_rotation=log_config.get("log_rotation", 5) > 0,
+            max_bytes=log_config.get("max_log_size", 10 * 1024 * 1024),
+            backup_count=log_config.get("log_rotation", 5),
+            enable_console=enable_console,
         )
 
         logger.info("=== Intellicrack Application Starting ===")
-        logger.info(f"Log file: {log_file_path}")
-        print("[DEBUG] Logging configured")
-        sys.stdout.flush()
+        if log_file:
+            logger.info(f"Log file: {log_file}")
 
         # Initialize GIL safety measures
-        print("[DEBUG] Initializing GIL safety...")
-        sys.stdout.flush()
+        logger.debug("Initializing GIL safety...")
         try:
             from intellicrack.utils.torch_gil_safety import initialize_gil_safety
             initialize_gil_safety()
             logger.info("GIL safety initialized")
-            print("[DEBUG] GIL safety initialized")
-            sys.stdout.flush()
+            logger.debug("GIL safety initialized")
         except ImportError as e:
             logger.warning(f"GIL safety not available: {e}")
             os.environ.setdefault("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1")
-            print(f"[DEBUG] GIL safety not available: {e}")
-            sys.stdout.flush()
+            logger.debug(f"GIL safety not available: {e}")
 
         # Initialize security enforcement if available
-        print("[DEBUG] Initializing security enforcement...")
-        sys.stdout.flush()
+        logger.debug("Initializing security enforcement...")
         try:
             from intellicrack.core import security_enforcement
             security_enforcement.initialize_security()
             security_status = security_enforcement.get_security_status()
             if security_status.get("initialized"):
                 logger.info(f"Security enforcement initialized: {security_status}")
-                print("Security enforcement enabled.")
-            print("[DEBUG] Security enforcement initialized")
-            sys.stdout.flush()
+                logger.info("Security enforcement enabled.")
+            logger.debug("Security enforcement initialized")
         except ImportError as e:
             logger.warning(f"Security enforcement not available: {e}")
-            print(f"[DEBUG] Security enforcement not available: {e}")
-            sys.stdout.flush()
+            logger.debug(f"Security enforcement not available: {e}")
 
         # Apply security mitigations
-        print("[DEBUG] Applying security mitigations...")
-        sys.stdout.flush()
+        logger.debug("Applying security mitigations...")
         try:
             from intellicrack.utils.security_mitigations import apply_all_mitigations
             apply_all_mitigations()
             logger.info("Security mitigations applied")
-            print("[DEBUG] Security mitigations applied")
-            sys.stdout.flush()
+            logger.debug("Security mitigations applied")
         except ImportError as e:
             logger.warning(f"Security mitigations not available: {e}")
-            print(f"[DEBUG] Security mitigations not available: {e}")
-            sys.stdout.flush()
+            logger.debug(f"Security mitigations not available: {e}")
 
         # Perform startup checks and auto-configuration
-        print("[DEBUG] Importing startup_checks...")
-        sys.stdout.flush()
+        logger.debug("Importing startup_checks...")
         from intellicrack.core.startup_checks import perform_startup_checks
 
-        print("Initializing Intellicrack...")
+        logger.info("Initializing Intellicrack...")
         logger.info("Performing startup checks...")
-        print("[DEBUG] Calling perform_startup_checks()...")
-        sys.stdout.flush()
+        logger.debug("Calling perform_startup_checks()...")
         perform_startup_checks()
-        print("Startup checks completed.")
+        logger.info("Startup checks completed.")
         logger.info("Startup checks completed successfully")
-        print("[DEBUG] Startup checks completed")
-        sys.stdout.flush()
+        logger.debug("Startup checks completed")
 
         # Import and launch the GUI
         # Always use absolute import to avoid issues
-        print("Importing launch function...")
+        logger.info("Importing launch function...")
         logger.info("Importing GUI launch function...")
-        print("[DEBUG] Importing main_app.launch...")
-        sys.stdout.flush()
+        logger.debug("Importing main_app.launch...")
         from intellicrack.ui.main_app import launch
 
-        print("Launch function imported successfully.")
+        logger.info("Launch function imported successfully.")
         logger.info("GUI launch function imported successfully")
-        print("[DEBUG] Launch function imported")
-        sys.stdout.flush()
+        logger.debug("Launch function imported")
 
-        print("Calling launch()...")
+        logger.info("Calling launch()...")
         logger.info("Launching GUI application...")
-        print("[DEBUG] Calling launch()...")
-        sys.stdout.flush()  # Force output to display
+        logger.debug("Calling launch()...")
         result = launch()
-        print(f"Launch() returned: {result}")
+        logger.info(f"Launch() returned: {result}")
         logger.info(f"GUI application exited with code: {result}")
-        print(f"[DEBUG] Launch returned: {result}")
-        sys.stdout.flush()
+        logger.debug(f"Launch returned: {result}")
         return result
 
     except ImportError as e:
-        logger.error("Import error in main: %s", e)
-        print(f"Error: Failed to import Intellicrack components: {e}")
-        print("\nPlease ensure all dependencies are installed:")
-        print("  pip install -r requirements.txt")
+        logger.exception("Import error in main: %s", e)
+        logger.critical("Failed to import Intellicrack components: %s. Please ensure all dependencies are installed using 'pip install -r requirements.txt'", e)
         import traceback
 
         traceback.print_exc()
         return 1
 
     except (OSError, ValueError, RuntimeError) as e:  # pylint: disable=broad-exception-caught
-        logger.error("Error launching Intellicrack: %s", e)
-        print(f"Error launching Intellicrack: {e}")
+        logger.exception("Error launching Intellicrack: %s", e)
+        logger.critical("Error launching Intellicrack: %s", e)
         import traceback
 
         traceback.print_exc()

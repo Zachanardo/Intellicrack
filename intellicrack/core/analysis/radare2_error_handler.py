@@ -99,7 +99,7 @@ class R2ErrorHandler:
     - Graceful degradation capabilities
     """
 
-    def __init__(self, max_errors_per_session: int = 100):
+    def __init__(self, max_errors_per_session: int = 100) -> None:
         """Initialize the Radare2 error handler.
 
         Args:
@@ -132,7 +132,7 @@ class R2ErrorHandler:
 
         self.logger.info("R2ErrorHandler initialized")
 
-    def _initialize_recovery_actions(self):
+    def _initialize_recovery_actions(self) -> None:
         """Initialize built-in recovery actions."""
         # R2 session recovery
         self.recovery_actions["restart_r2_session"] = RecoveryAction(
@@ -535,7 +535,7 @@ class R2ErrorHandler:
 
         return False
 
-    def _update_circuit_breaker(self, operation_name: str, success: bool):
+    def _update_circuit_breaker(self, operation_name: str, success: bool) -> None:
         """Update circuit breaker state."""
         if operation_name not in self.circuit_breakers:
             self.circuit_breakers[operation_name] = {
@@ -563,7 +563,7 @@ class R2ErrorHandler:
 
     # Performance monitoring
 
-    def _record_performance(self, operation_name: str, duration: float, success: bool):
+    def _record_performance(self, operation_name: str, duration: float, success: bool) -> None:
         """Record performance metrics."""
         if operation_name not in self.performance_monitor["operation_times"]:
             self.performance_monitor["operation_times"][operation_name] = []
@@ -584,7 +584,7 @@ class R2ErrorHandler:
         else:
             self.performance_monitor["failure_rates"][operation_name]["failures"] += 1
 
-    def _record_recovery_success(self, action_name: str):
+    def _record_recovery_success(self, action_name: str) -> None:
         """Record successful recovery."""
         if action_name not in self.performance_monitor["recovery_success_rates"]:
             self.performance_monitor["recovery_success_rates"][action_name] = {
@@ -594,7 +594,7 @@ class R2ErrorHandler:
 
         self.performance_monitor["recovery_success_rates"][action_name]["successes"] += 1
 
-    def _record_recovery_failure(self, action_name: str):
+    def _record_recovery_failure(self, action_name: str) -> None:
         """Record failed recovery."""
         if action_name not in self.performance_monitor["recovery_success_rates"]:
             self.performance_monitor["recovery_success_rates"][action_name] = {
@@ -604,7 +604,7 @@ class R2ErrorHandler:
 
         self.performance_monitor["recovery_success_rates"][action_name]["failures"] += 1
 
-    def _record_error(self, error_event: ErrorEvent):
+    def _record_error(self, error_event: ErrorEvent) -> None:
         """Record error in history."""
         self.error_history.append(error_event)
 
@@ -621,7 +621,7 @@ class R2ErrorHandler:
 
     # Public API methods
 
-    def add_recovery_action(self, name: str, action: RecoveryAction):
+    def add_recovery_action(self, name: str, action: RecoveryAction) -> None:
         """Add custom recovery action."""
         self.recovery_actions[name] = action
         self.logger.info(f"Added custom recovery action: {name}")
@@ -681,7 +681,7 @@ class R2ErrorHandler:
             return self.circuit_breakers[operation_name].get("degraded", False)
         return False
 
-    def reset_circuit_breaker(self, operation_name: str):
+    def reset_circuit_breaker(self, operation_name: str) -> None:
         """Reset circuit breaker for operation."""
         if operation_name in self.circuit_breakers:
             self.circuit_breakers[operation_name] = {
@@ -693,7 +693,7 @@ class R2ErrorHandler:
             }
             self.logger.info(f"Reset circuit breaker for {operation_name}")
 
-    def clear_error_history(self):
+    def clear_error_history(self) -> None:
         """Clear error history."""
         self.error_history.clear()
         self.session_stats["total_errors"] = 0

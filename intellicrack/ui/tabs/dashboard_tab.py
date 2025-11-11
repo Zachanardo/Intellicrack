@@ -57,7 +57,7 @@ class DashboardTab(BaseTab):
     project_opened = pyqtSignal(str)
     project_closed = pyqtSignal()
 
-    def __init__(self, shared_context=None, parent=None):
+    def __init__(self, shared_context=None, parent=None) -> None:
         """Initialize dashboard tab with system overview and status monitoring."""
         self.config_manager = get_ui_config_manager()
 
@@ -68,13 +68,13 @@ class DashboardTab(BaseTab):
         self.config_manager.register_callback("layout.dashboard", self.update_layout)
         self.config_manager.register_callback("font", self.update_fonts)
 
-    def setup_content(self):
+    def setup_content(self) -> None:
         """Set up the simplified dashboard content."""
         layout_config = self.config_manager.get_layout_config()
         layout = self.layout()  # Use existing layout from BaseTab
         layout.setSpacing(layout_config.panel_spacing)
         layout.setContentsMargins(
-            layout_config.margin_size, layout_config.margin_size, layout_config.margin_size, layout_config.margin_size
+            layout_config.margin_size, layout_config.margin_size, layout_config.margin_size, layout_config.margin_size,
         )
 
         # Top section - Quick Start (prominent)
@@ -159,7 +159,7 @@ class DashboardTab(BaseTab):
         open_file_btn = QPushButton("📄 Open File")
         open_file_btn.setMinimumHeight(60)
         open_file_btn.setToolTip(
-            "Load a binary file (EXE, DLL, SO, ELF) for analysis. Supports Windows PE, Linux ELF, and other executable formats"
+            "Load a binary file (EXE, DLL, SO, ELF) for analysis. Supports Windows PE, Linux ELF, and other executable formats",
         )
         self._style_quick_start_button(open_file_btn, theme.accent_color)
         open_file_btn.clicked.connect(self.open_file_action)
@@ -177,7 +177,7 @@ class DashboardTab(BaseTab):
         select_target_btn = QPushButton("Attach to Running Process")
         select_target_btn.setMinimumHeight(60)
         select_target_btn.setToolTip(
-            "Attach to a currently running process for live analysis and debugging. Select from active processes on your system"
+            "Attach to a currently running process for live analysis and debugging. Select from active processes on your system",
         )
         self._style_quick_start_button(select_target_btn, theme.error_color)
         select_target_btn.clicked.connect(self.select_program_from_target)
@@ -281,7 +281,7 @@ class DashboardTab(BaseTab):
 
         return panel
 
-    def open_file_action(self):
+    def open_file_action(self) -> None:
         """Handle Open File button action."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
@@ -302,7 +302,7 @@ class DashboardTab(BaseTab):
             else:
                 self.log_activity(f"Opened file: {os.path.basename(file_path)}")
 
-    def select_program_from_target(self):
+    def select_program_from_target(self) -> None:
         """Handle Select Program from Target button action."""
         try:
             from ..dialogs.program_selector_dialog import ProgramSelectorDialog
@@ -331,7 +331,7 @@ class DashboardTab(BaseTab):
             QMessageBox.information(
                 self,
                 "Feature Unavailable",
-                f"Program selector dialog not available. Using file browser instead.\n\nTechnical details: {str(e)}",
+                f"Program selector dialog not available. Using file browser instead.\n\nTechnical details: {e!s}",
             )
             self.open_file_action()
         except Exception as e:
@@ -339,11 +339,11 @@ class DashboardTab(BaseTab):
             QMessageBox.critical(
                 self,
                 "Program Selection Error",
-                f"An error occurred while selecting a program:\n\n{str(e)}\n\nPlease try using the Open File option instead.",
+                f"An error occurred while selecting a program:\n\n{e!s}\n\nPlease try using the Open File option instead.",
             )
-            self.log_activity(f"Error in program selection: {str(e)}")
+            self.log_activity(f"Error in program selection: {e!s}")
 
-    def log_activity(self, message):
+    def log_activity(self, message) -> None:
         """Log an activity message - simplified version for dashboard."""
         # For the simplified dashboard, we can log to console or a simple logger
         # The full activity log functionality will be moved to WorkspaceTab
@@ -365,7 +365,7 @@ class DashboardTab(BaseTab):
 
         return self.system_monitor
 
-    def handle_system_alert(self, alert_type: str, message: str):
+    def handle_system_alert(self, alert_type: str, message: str) -> None:
         """Handle system monitoring alerts."""
         # Log the alert to activity log
         self.log_activity(f"[SYSTEM ALERT - {alert_type}] {message}")
@@ -402,7 +402,7 @@ class DashboardTab(BaseTab):
 
         return self.cpu_status
 
-    def open_project(self):
+    def open_project(self) -> None:
         """Perform project opening for Quick Start."""
         project_file, _ = QFileDialog.getOpenFileName(
             self,
@@ -416,7 +416,7 @@ class DashboardTab(BaseTab):
             self.project_opened.emit(project_file)
             self.log_activity(f"Opened project: {os.path.basename(project_file)}")
 
-    def populate_recent_files(self):
+    def populate_recent_files(self) -> None:
         """Populate the recent files list."""
         self.recent_files_list.clear()
 
@@ -446,7 +446,7 @@ class DashboardTab(BaseTab):
 
                 self.recent_files_list.addItem(item)
 
-    def load_recent_file(self, item):
+    def load_recent_file(self, item) -> None:
         """Load a file from the recent files list."""
         file_path = item.data(Qt.ItemDataRole.UserRole)
         if file_path and os.path.exists(file_path):
@@ -461,7 +461,7 @@ class DashboardTab(BaseTab):
             else:
                 self.log_activity(f"Loaded recent file: {os.path.basename(file_path)}")
 
-    def add_to_recent_files(self, file_path):
+    def add_to_recent_files(self, file_path) -> None:
         """Add a file to the recent files list."""
         recent_files = self.config_manager.get_setting("recent_files", [])
         max_recent = self.config_manager.get_setting("dashboard.max_recent_files", 10)
@@ -482,13 +482,13 @@ class DashboardTab(BaseTab):
         # Refresh the UI
         self.populate_recent_files()
 
-    def clear_recent_files(self):
+    def clear_recent_files(self) -> None:
         """Clear the recent files list."""
         self.config_manager.set_setting("recent_files", [])
         self.recent_files_list.clear()
         self.log_activity("Recent files list cleared")
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Cleanup resources when tab is closed."""
         # Stop system monitoring
         if hasattr(self, "system_monitor"):
@@ -513,7 +513,7 @@ class DashboardTab(BaseTab):
         # Call parent cleanup
         super().cleanup()
 
-    def _style_quick_start_button(self, button, base_color):
+    def _style_quick_start_button(self, button, base_color) -> None:
         """Apply consistent styling to quick start buttons with improved contrast."""
         theme = self.config_manager.get_theme_config()
         font_config = self.config_manager.get_font_config()
@@ -555,7 +555,7 @@ class DashboardTab(BaseTab):
             }}
         """)
 
-    def apply_theme(self):
+    def apply_theme(self) -> None:
         """Apply theme changes to dashboard components."""
         if not self.is_loaded:
             return
@@ -593,7 +593,7 @@ class DashboardTab(BaseTab):
                 }}
             """)
 
-    def update_layout(self):
+    def update_layout(self) -> None:
         """Update layout configuration when settings change."""
         if not self.is_loaded:
             return
@@ -604,10 +604,10 @@ class DashboardTab(BaseTab):
         if self.layout():
             self.layout().setSpacing(layout_config.panel_spacing)
             self.layout().setContentsMargins(
-                layout_config.margin_size, layout_config.margin_size, layout_config.margin_size, layout_config.margin_size
+                layout_config.margin_size, layout_config.margin_size, layout_config.margin_size, layout_config.margin_size,
             )
 
-    def update_fonts(self):
+    def update_fonts(self) -> None:
         """Update font configuration when settings change."""
         if not self.is_loaded:
             return

@@ -130,7 +130,7 @@ from intellicrack.core.certificate.cert_chain_generator import CertificateChain
 class CertificateCache:
     """Thread-safe LRU cache for generated certificate chains."""
 
-    def __init__(self, cache_dir: Optional[Path] = None, max_entries: int = 1000):
+    def __init__(self, cache_dir: Optional[Path] = None, max_entries: int = 1000) -> None:
         """Initialize certificate cache.
 
         Args:
@@ -164,7 +164,7 @@ class CertificateCache:
 
         """
         try:
-            with open(self.metadata_file, "r") as f:
+            with open(self.metadata_file) as f:
                 return json.load(f)
         except (FileNotFoundError, json.JSONDecodeError):
             return {}
@@ -458,5 +458,5 @@ class CertificateCache:
                     encoding=serialization.Encoding.PEM,
                     format=serialization.PrivateFormat.TraditionalOpenSSL,
                     encryption_algorithm=serialization.NoEncryption(),
-                )
+                ),
             )

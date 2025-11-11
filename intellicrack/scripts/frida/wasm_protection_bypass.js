@@ -1293,16 +1293,16 @@ const wasmProtectionBypass = {
 
             // Return success based on type
             switch (returnType) {
-            case 'number':
-            case 'boolean':
-                return 1;
-            case 'string':
-                return 'LICENSED';
-            case 'null':
-            case 'void':
-                return null;
-            default:
-                return 0;
+                case 'number':
+                case 'boolean':
+                    return 1;
+                case 'string':
+                    return 'LICENSED';
+                case 'null':
+                case 'void':
+                    return null;
+                default:
+                    return 0;
             }
         };
     },

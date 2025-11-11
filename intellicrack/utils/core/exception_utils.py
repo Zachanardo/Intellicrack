@@ -77,7 +77,7 @@ class RestrictedUnpickler(pickle.Unpickler):
         raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
 
 
-def secure_pickle_dump(obj, file_path):
+def secure_pickle_dump(obj, file_path) -> None:
     """Securely dump object with integrity check."""
     # Serialize object
     data = pickle.dumps(obj)
@@ -191,7 +191,7 @@ def _report_error(exc_type, exc_value, exc_traceback) -> None:
                     msg="",
                     args=(),
                     exc_info=None,
-                )
+                ),
             )
             if logger.handlers
             else str(sys.exc_info()),

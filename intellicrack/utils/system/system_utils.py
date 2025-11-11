@@ -86,7 +86,7 @@ def get_targetprocess_pid(binary_path: str) -> int | None:
                             "name": proc.info["name"],
                             "create_time": proc.info["create_time"],
                             "match": "exact",
-                        }
+                        },
                     )
                 elif target_name in proc_name_lower:
                     potential_pids.append(
@@ -95,7 +95,7 @@ def get_targetprocess_pid(binary_path: str) -> int | None:
                             "name": proc.info["name"],
                             "create_time": proc.info["create_time"],
                             "match": "partial",
-                        }
+                        },
                     )
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error iterating processes: %s", e)
@@ -207,7 +207,7 @@ def run_command(
         if isinstance(command, str) and not shell:
             command = command.split()
 
-        result = subprocess.run(  # nosec B603 - controlled command execution for analysis tools  # noqa: S603
+        result = subprocess.run(  # nosec B603 - controlled command execution for analysis tools
             command,
             shell=shell,
             capture_output=capture_output,
@@ -394,7 +394,7 @@ def run_as_admin(command: str | list[str], shell: bool = False) -> bool:
                 logger.error("PowerShell not found in PATH")
                 return False, "PowerShell not available"
 
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 [powershell_path, "-Command", ps_command],
                 capture_output=True,
                 text=True,
@@ -406,8 +406,8 @@ def run_as_admin(command: str | list[str], shell: bool = False) -> bool:
         if isinstance(command, str):
             command = command.split()
 
-        sudo_command = ["sudo"] + command
-        result = subprocess.run(sudo_command, capture_output=True, text=True, check=False)  # nosec B603 - controlled sudo execution  # noqa: S603
+        sudo_command = ["sudo", *command]
+        result = subprocess.run(sudo_command, capture_output=True, text=True, check=False)  # nosec B603 - controlled sudo execution
         return result.returncode == 0
 
     except (OSError, ValueError, RuntimeError) as e:

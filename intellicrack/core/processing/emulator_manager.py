@@ -60,7 +60,7 @@ class EmulatorManager(QObject):
     #: emulator_type, error_message (type: str, str)
     emulator_error = pyqtSignal(str, str)
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the emulator manager with signal handling and emulator setup."""
         super().__init__()
         self.logger = logging.getLogger(__name__)
@@ -200,7 +200,7 @@ class EmulatorManager(QObject):
             self.emulator_status_changed.emit("Qiling", False, "Qiling initialization failed")
             return None
 
-    def stop_qemu(self):
+    def stop_qemu(self) -> None:
         """Stop QEMU emulator if running."""
         if self.qemu_instance and self.qemu_running:
             try:
@@ -211,7 +211,7 @@ class EmulatorManager(QObject):
             except Exception as e:
                 self.logger.error(f"Error stopping QEMU: {e}")
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up all emulator resources."""
         self.stop_qemu()
         self.qiling_instances.clear()

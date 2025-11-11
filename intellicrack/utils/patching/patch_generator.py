@@ -69,7 +69,7 @@ def generate_patch(target_binary: str, patch_config: dict[str, Any] | None = Non
 class PatchGenerator:
     """Patch generator class for advanced patch operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize patch generator with logger for binary patching operations."""
         self.logger = logging.getLogger("IntellicrackLogger.PatchGenerator")
 

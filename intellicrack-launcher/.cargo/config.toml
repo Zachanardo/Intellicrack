@@ -5,7 +5,4 @@ PYTHON_SYS_EXECUTABLE = "D:\\Intellicrack\\.pixi\\envs\\default\\python.exe"
 PATH = { value = "D:\\Intellicrack\\.pixi\\envs\\default\\bin;D:\\Intellicrack\\.pixi\\envs\\default\\Library\\mingw-w64\\bin", relative = true }
 
 [build]
-rustflags = [
-  "-L",
-  "D:\\Intellicrack\\.pixi\\envs\\default\\libs" 
-]
+rustflags = ["-L", "D:\\Intellicrack\\.pixi\\envs\\default\\libs"]

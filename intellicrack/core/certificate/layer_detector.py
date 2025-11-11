@@ -107,7 +107,7 @@ class LayerInfo:
 class DependencyGraph:
     """Represents dependencies between validation layers."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize empty dependency graph."""
         self._graph: Dict[ValidationLayer, Set[ValidationLayer]] = {}
         self._layers: Set[ValidationLayer] = set()
@@ -160,26 +160,26 @@ class ValidationLayerDetector:
 
     OS_LEVEL_DLLS = {
         "crypt32.dll", "sspicli.dll", "schannel.dll", "bcrypt.dll",
-        "ncrypt.dll", "cryptsp.dll", "rsaenh.dll"
+        "ncrypt.dll", "cryptsp.dll", "rsaenh.dll",
     }
 
     LIBRARY_LEVEL_LIBS = {
         "libssl.so", "libssl.dylib", "libssl.so.1.1", "libssl.so.3",
         "libnss3.so", "libnss3.dylib", "libnspr4.so",
-        "libboringssl.so", "libboringssl.dylib"
+        "libboringssl.so", "libboringssl.dylib",
     }
 
     APPLICATION_LEVEL_INDICATORS = {
         "certificate pin", "cert pin", "public key pin",
-        "SHA-256", "SHA-1", "X509_verify", "cert_verify"
+        "SHA-256", "SHA-1", "X509_verify", "cert_verify",
     }
 
     SERVER_LEVEL_INDICATORS = {
         "activation", "license_server", "validation_endpoint",
-        "auth_server", "verify_license"
+        "auth_server", "verify_license",
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the layer detector."""
         self._api_signatures = get_all_signatures()
 
@@ -236,7 +236,7 @@ class ValidationLayerDetector:
         """Detect OS-level validation (CryptoAPI, Schannel, system trust store)."""
         layer_info = LayerInfo(
             layer_type=ValidationLayer.OS_LEVEL,
-            confidence=0.0
+            confidence=0.0,
         )
 
         imported_libs = set()
@@ -246,7 +246,7 @@ class ValidationLayerDetector:
                 imported_libs.add(lib_name)
 
         os_dll_matches = imported_libs.intersection(
-            {dll.lower() for dll in self.OS_LEVEL_DLLS}
+            {dll.lower() for dll in self.OS_LEVEL_DLLS},
         )
 
         if os_dll_matches:
@@ -269,7 +269,7 @@ class ValidationLayerDetector:
         """Detect library-level validation (OpenSSL, NSS, BoringSSL)."""
         layer_info = LayerInfo(
             layer_type=ValidationLayer.LIBRARY_LEVEL,
-            confidence=0.0
+            confidence=0.0,
         )
 
         imported_libs = set()
@@ -279,7 +279,7 @@ class ValidationLayerDetector:
                 imported_libs.add(lib_name)
 
         lib_matches = imported_libs.intersection(
-            {lib.lower() for lib in self.LIBRARY_LEVEL_LIBS}
+            {lib.lower() for lib in self.LIBRARY_LEVEL_LIBS},
         )
 
         if lib_matches:
@@ -302,12 +302,12 @@ class ValidationLayerDetector:
     def _detect_application_level(
         self,
         binary: lief.Binary,
-        target_path: Path
+        target_path: Path,
     ) -> Optional[LayerInfo]:
         """Detect application-level pinning (hardcoded certs, custom logic)."""
         layer_info = LayerInfo(
             layer_type=ValidationLayer.APPLICATION_LEVEL,
-            confidence=0.0
+            confidence=0.0,
         )
 
         try:
@@ -325,13 +325,13 @@ class ValidationLayerDetector:
                 layer_info.confidence = min(len(indicator_matches) * 0.2, 0.9)
                 for indicator in indicator_matches[:5]:
                     layer_info.add_evidence(
-                        f"Found application-level indicator: {indicator}"
+                        f"Found application-level indicator: {indicator}",
                     )
 
             if self._contains_certificate_hashes(strings_found):
                 layer_info.confidence = min(layer_info.confidence + 0.3, 1.0)
                 layer_info.add_evidence(
-                    "Found hardcoded certificate hash (SHA-256 or SHA-1)"
+                    "Found hardcoded certificate hash (SHA-256 or SHA-1)",
                 )
 
             if self._contains_embedded_certificates(target_path):
@@ -346,12 +346,12 @@ class ValidationLayerDetector:
     def _detect_server_level(
         self,
         binary: lief.Binary,
-        target_path: Path
+        target_path: Path,
     ) -> Optional[LayerInfo]:
         """Detect server-level validation (network-based license checking)."""
         layer_info = LayerInfo(
             layer_type=ValidationLayer.SERVER_LEVEL,
-            confidence=0.0
+            confidence=0.0,
         )
 
         try:
@@ -369,7 +369,7 @@ class ValidationLayerDetector:
                 layer_info.confidence = min(len(indicator_matches) * 0.25, 0.9)
                 for indicator in indicator_matches[:3]:
                     layer_info.add_evidence(
-                        f"Found server-level indicator: {indicator}"
+                        f"Found server-level indicator: {indicator}",
                     )
 
             if self._contains_http_endpoints(strings_found):
@@ -404,7 +404,7 @@ class ValidationLayerDetector:
                 b'-----BEGIN CERTIFICATE-----',
                 b'-----BEGIN RSA PRIVATE KEY-----',
                 b'-----BEGIN PUBLIC KEY-----',
-                b'MII'
+                b'MII',
             ]
 
             for marker in cert_markers:
@@ -431,33 +431,33 @@ class ValidationLayerDetector:
         """Establish dependency relationships between detected layers."""
         if ValidationLayer.APPLICATION_LEVEL in layers and ValidationLayer.LIBRARY_LEVEL in layers:
             layers[ValidationLayer.APPLICATION_LEVEL].add_dependency(
-                ValidationLayer.LIBRARY_LEVEL
+                ValidationLayer.LIBRARY_LEVEL,
             )
 
         if ValidationLayer.APPLICATION_LEVEL in layers and ValidationLayer.OS_LEVEL in layers:
             if ValidationLayer.LIBRARY_LEVEL not in layers:
                 layers[ValidationLayer.APPLICATION_LEVEL].add_dependency(
-                    ValidationLayer.OS_LEVEL
+                    ValidationLayer.OS_LEVEL,
                 )
 
         if ValidationLayer.LIBRARY_LEVEL in layers and ValidationLayer.OS_LEVEL in layers:
             layers[ValidationLayer.LIBRARY_LEVEL].add_dependency(
-                ValidationLayer.OS_LEVEL
+                ValidationLayer.OS_LEVEL,
             )
 
         if ValidationLayer.SERVER_LEVEL in layers:
             if ValidationLayer.LIBRARY_LEVEL in layers:
                 layers[ValidationLayer.SERVER_LEVEL].add_dependency(
-                    ValidationLayer.LIBRARY_LEVEL
+                    ValidationLayer.LIBRARY_LEVEL,
                 )
             elif ValidationLayer.OS_LEVEL in layers:
                 layers[ValidationLayer.SERVER_LEVEL].add_dependency(
-                    ValidationLayer.OS_LEVEL
+                    ValidationLayer.OS_LEVEL,
                 )
 
     def build_layer_dependency_graph(
         self,
-        layers: List[LayerInfo]
+        layers: List[LayerInfo],
     ) -> DependencyGraph:
         """Build a dependency graph from detected layers.
 

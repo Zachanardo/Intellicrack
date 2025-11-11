@@ -32,7 +32,7 @@ from PyQt6.QtWidgets import QInputDialog, QMessageBox
 
 from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
 from intellicrack.utils.core.plugin_paths import get_frida_scripts_dir, get_ghidra_scripts_dir
-from intellicrack.utils.logger import logger
+from intellicrack.utils.logger import log_all_methods, logger
 
 from ..config import CONFIG
 from ..utils.system.process_utils import get_target_process_pid
@@ -78,7 +78,7 @@ except ImportError as e:
                 return (1024 * 1024, 1024 * 1024)  # Default 1MB
 
         @staticmethod
-        def setrlimit(resource_type, limits):
+        def setrlimit(resource_type, limits) -> None:
             """Set resource limits (no-op on Windows)."""
             # Windows doesn't support Unix-style resource limits
             # Process limits are controlled through Job Objects API instead
@@ -154,10 +154,10 @@ def load_plugins(plugin_dir: str = "intellicrack/intellicrack/plugins") -> dict[
                                 "module": module_name,
                                 "instance": plugin_instance,
                                 "description": description,
-                            }
+                            },
                         )
                 except (OSError, ValueError, RuntimeError) as e:
-                    logger.error("Error loading custom plugin %s: %s", file, e)
+                    logger.exception("Error loading custom plugin %s: %s", file, e)
                     logger.error(traceback.format_exc())
 
     logger.info(
@@ -253,7 +253,7 @@ def run_custom_plugin(app, plugin_info: dict[str, Any]) -> None:
                     app.update_output.emit(log_message(f"[{plugin_info['name']}] {results}"))
                     logger.debug(f"Plugin {plugin_info['name']} result: {results}")
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in plugin_system: %s", e)
+            logger.exception("Error in plugin_system: %s", e)
             app.update_output.emit(log_message(f"[Plugin] Error running plugin: {e}"))
             app.update_output.emit(log_message(traceback.format_exc()))
     else:
@@ -282,7 +282,7 @@ def run_custom_plugin(app, plugin_info: dict[str, Any]) -> None:
                         app.update_output.emit(log_message(f"[{plugin_info['name']}] {results}"))
                         logger.debug(f"Plugin {plugin_info['name']} patch result: {results}")
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in plugin_system: %s", e)
+                logger.exception("Error in plugin_system: %s", e)
                 app.update_output.emit(log_message(f"[Plugin] Error running patch: {e}"))
                 app.update_output.emit(log_message(traceback.format_exc()))
 
@@ -313,7 +313,7 @@ def run_frida_plugin_from_file(app, plugin_path: str) -> None:
         with open(plugin_path, encoding="utf-8") as f:
             script_content = f.read()
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in plugin_system: %s", e)
+        logger.exception("Error in plugin_system: %s", e)
         app.update_output.emit(log_message(f"[Plugin] Error reading script file {plugin_path}: {e}"))
         return
 
@@ -339,7 +339,7 @@ def run_frida_plugin_from_file(app, plugin_path: str) -> None:
 
         script = session.create_script(script_content)
 
-        def on_message(message, data):
+        def on_message(message, data) -> None:
             """Handle messages from a Frida script.
 
             Adds the plugin name as a prefix to log messages and processes payloads.
@@ -356,7 +356,7 @@ def run_frida_plugin_from_file(app, plugin_path: str) -> None:
                     try:
                         log_text = f"{prefix} Data: {json.dumps(payload)}"
                     except TypeError as e:
-                        logger.error("Type error in plugin_system: %s", e)
+                        logger.exception("Type error in plugin_system: %s", e)
                         log_text = f"{prefix} Received complex data structure"
                 app.update_output.emit(log_message(log_text))
 
@@ -387,25 +387,25 @@ def run_frida_plugin_from_file(app, plugin_path: str) -> None:
             app.frida_sessions[plugin_name] = (session, script)
 
     except frida.ProcessNotFoundError as e:
-        logger.error("frida.ProcessNotFoundError in plugin_system: %s", e)
+        logger.exception("frida.ProcessNotFoundError in plugin_system: %s", e)
         app.update_output.emit(
-            log_message(f"[Plugin] Error running '{plugin_name}': Process PID {target_pid} not found (may have terminated).")
+            log_message(f"[Plugin] Error running '{plugin_name}': Process PID {target_pid} not found (may have terminated)."),
         )
     except frida.TransportError as e:
-        logger.error("frida.TransportError in plugin_system: %s", e)
+        logger.exception("frida.TransportError in plugin_system: %s", e)
         app.update_output.emit(log_message(f"[Plugin] Error running '{plugin_name}': Connection to Frida server failed: {e}"))
         app.update_output.emit(log_message("[Plugin] Ensure frida-server is running on the target device (if applicable)."))
     except frida.InvalidArgumentError as e:
-        logger.error("frida.InvalidArgumentError in plugin_system: %s", e)
+        logger.exception("frida.InvalidArgumentError in plugin_system: %s", e)
         app.update_output.emit(log_message(f"[Plugin] Error running '{plugin_name}': Invalid argument during Frida operation: {e}"))
     except frida.NotSupportedError as e:
-        logger.error("frida.NotSupportedError in plugin_system: %s", e)
+        logger.exception("frida.NotSupportedError in plugin_system: %s", e)
         app.update_output.emit(log_message(f"[Plugin] Error running '{plugin_name}': Operation not supported by Frida: {e}"))
     except frida.ExecutableNotFoundError as e:
-        logger.error("frida.ExecutableNotFoundError in plugin_system: %s", e)
+        logger.exception("frida.ExecutableNotFoundError in plugin_system: %s", e)
         app.update_output.emit(log_message(f"[Plugin] Error running '{plugin_name}': Frida could not find required executable: {e}"))
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in plugin_system: %s", e)
+        logger.exception("Error in plugin_system: %s", e)
         # Catch generic exceptions during attach or script load
         app.update_output.emit(log_message(f"[Plugin] Failed to attach or inject script '{plugin_name}' into PID {target_pid}: {e}"))
         app.update_output.emit(log_message("[Plugin] Possible causes: Insufficient permissions, anti-debugging measures, or Frida issues."))
@@ -453,7 +453,7 @@ def run_ghidra_plugin_from_file(app, plugin_path: str) -> None:
         # Use the common Ghidra plugin runner
         from ..utils.ghidra_common import run_ghidra_plugin
 
-        returncode, stdout, stderr = run_ghidra_plugin(
+        _returncode, stdout, stderr = run_ghidra_plugin(
             ghidra_path,
             temp_dir,
             project_name,
@@ -493,7 +493,7 @@ def run_ghidra_plugin_from_file(app, plugin_path: str) -> None:
                 logger.info(f"Ghidra output file created: {file}")
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in plugin_system: %s", e)
+        logger.exception("Error in plugin_system: %s", e)
         app.update_output.emit(log_message(f"[Plugin] Error running Ghidra script: {e}"))
         app.update_output.emit(log_message(traceback.format_exc()))
     finally:
@@ -501,7 +501,7 @@ def run_ghidra_plugin_from_file(app, plugin_path: str) -> None:
         try:
             shutil.rmtree(temp_dir)
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in plugin_system: %s", e)
+            logger.exception("Error in plugin_system: %s", e)
             app.update_output.emit(log_message(f"[Plugin] Warning: Failed to clean up temporary directory: {e}"))
 
 
@@ -595,7 +595,7 @@ class BinaryPatcherPlugin:
                     results.append("Found function prologue - patchable")
 
         except Exception as e:
-            self.logger.error("Exception in plugin_system: %s", e)
+            logger.exception("Exception in plugin_system: %s", e)
             results.append(f"Analysis error: {e}")
 
         return results
@@ -672,7 +672,7 @@ class NetworkAnalysisPlugin:
                     results.append("No obvious network indicators found")
 
         except Exception as e:
-            logger.error("Exception in plugin_system: %s", e)
+            logger.exception("Exception in plugin_system: %s", e)
             results.append(f"Analysis error: {e}")
 
         return results
@@ -690,7 +690,7 @@ class NetworkAnalysisPlugin:
                 results.extend(self._monitor_unix_traffic(target_process))
 
         except Exception as e:
-            logger.error(f"Network monitoring error: {e}")
+            logger.exception(f"Network monitoring error: {e}")
             results.append(f"Error: {str(e)}")
             results.append("Fallback: Using netstat-based monitoring")
             results.extend(self._fallback_network_monitor(target_process))
@@ -1026,7 +1026,7 @@ class {class_name}:
 
             return True, "Validation successful"
         except Exception as e:
-            self.logger.error("Exception in plugin_system: %s", e)
+            logger.exception("Exception in plugin_system: %s", e)
             return False, f"Validation error: {{e}}"
 
     def analyze(self, binary_path: str) -> List[str]:
@@ -1092,7 +1092,7 @@ def _sandbox_worker(plugin_path: str, function_name: str, args: tuple, result_qu
         result_queue.put(("success", result))
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in plugin_system: %s", e)
+        logger.exception("Error in plugin_system: %s", e)
         result_queue.put(("error", str(e)))
 
 
@@ -1140,7 +1140,7 @@ def run_plugin_in_sandbox(plugin_path: str, function_name: str, *args) -> list[s
             return [str(result)]
         return [f"Plugin error: {result}"]
     except Exception as e:
-        logger.error("Exception in plugin_system: %s", e)
+        logger.exception("Exception in plugin_system: %s", e)
         return ["No results returned from plugin"]
 
 
@@ -1207,18 +1207,19 @@ def run_plugin_remotely(app, plugin_info: dict[str, Any]) -> list[str] | None:
         return ["No results returned from remote execution"]
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in plugin_system: %s", e)
+        logger.exception("Error in plugin_system: %s", e)
         app.update_output.emit(log_message(f"[Plugin] Remote execution error: {e}"))
         return None
 
 
+@log_all_methods
 class PluginSystem:
     """Run plugin system class that encapsulates all plugin functionality.
 
     This class provides a unified interface for plugin management in Intellicrack.
     """
 
-    def __init__(self, plugin_dir: str = "intellicrack/intellicrack/plugins"):
+    def __init__(self, plugin_dir: str = "intellicrack/intellicrack/plugins") -> None:
         """Initialize the plugin system."""
         self.plugin_dir = plugin_dir
         self.plugins = None
@@ -1363,7 +1364,7 @@ class PluginSystem:
                     else:
                         dest_dir = os.path.join(self.plugin_dir, "custom_modules")
                 else:
-                    self.logger.error(f"Unsupported plugin type: {filename}")
+                    self.logger.exception(f"Unsupported plugin type: {filename}")
                     return False
 
                 # Create directory if it doesn't exist
@@ -1378,12 +1379,12 @@ class PluginSystem:
                     self.logger.info(f"Successfully installed plugin: {filename}")
                     plugin_installed = True
                 else:
-                    self.logger.error(f"Failed to download plugin: {plugin_name}")
+                    self.logger.exception(f"Failed to download plugin: {plugin_name}")
                     if os.path.exists(dest_path):
                         os.remove(dest_path)
 
             except Exception as e:
-                self.logger.error(f"Error installing plugin from URL: {e}")
+                self.logger.exception(f"Error installing plugin from URL: {e}")
                 return False
 
         # If it's a local file path, copy it
@@ -1400,7 +1401,7 @@ class PluginSystem:
                     else:
                         dest_dir = os.path.join(self.plugin_dir, "custom_modules")
                 else:
-                    self.logger.error(f"Unsupported plugin type: {filename}")
+                    self.logger.exception(f"Unsupported plugin type: {filename}")
                     return False
 
                 # Create directory and copy file
@@ -1412,7 +1413,7 @@ class PluginSystem:
                 plugin_installed = True
 
             except Exception as e:
-                self.logger.error(f"Error installing plugin from file: {e}")
+                self.logger.exception(f"Error installing plugin from file: {e}")
                 return False
 
         # If it's a plugin name from repository (future enhancement)
@@ -1426,10 +1427,9 @@ class PluginSystem:
 
             if plugin_name in builtin_plugins:
                 return self.install_plugin(builtin_plugins[plugin_name])
-            self.logger.error(f"Plugin {plugin_name} not found in repository")
+            self.logger.exception(f"Plugin {plugin_name} not found in repository")
             return False
 
-        # Reload plugins if installation was successful
         if plugin_installed:
             self.load_plugins()
 
@@ -1523,11 +1523,11 @@ class PluginSystem:
                                 self.logger.info(f"Plugin {plugin_name} (class-based) executed successfully")
                                 return result
 
-                self.logger.error(f"Plugin {plugin_name} has no recognized entry point")
+                self.logger.exception(f"Plugin {plugin_name} has no recognized entry point")
                 return None
 
             except Exception as e:
-                self.logger.error(f"Failed to execute plugin {plugin_name}: {e}")
+                self.logger.exception(f"Failed to execute plugin {plugin_name}: {e}")
                 self.logger.debug(f"Traceback: {traceback.format_exc()}")
                 return None
 
@@ -1547,7 +1547,7 @@ class PluginSystem:
                             target_process = args[0]
 
                     if not target_process:
-                        self.logger.error("No target process specified for Frida plugin")
+                        self.logger.exception("No target process specified for Frida plugin")
                         return None
 
                     # Attach to process
@@ -1560,7 +1560,7 @@ class PluginSystem:
                         if pid:
                             session = frida.attach(pid)
                         else:
-                            self.logger.error(f"Process '{target_process}' not found")
+                            self.logger.exception(f"Process '{target_process}' not found")
                             return None
 
                     # Create and load script
@@ -1569,12 +1569,12 @@ class PluginSystem:
                     # Set up message handler
                     messages = []
 
-                    def on_message(message, data):
+                    def on_message(message, data) -> None:
                         messages.append({"message": message, "data": data})
                         if message["type"] == "send":
                             self.logger.info(f"Frida message: {message.get('payload', '')}")
                         elif message["type"] == "error":
-                            self.logger.error(f"Frida error: {message.get('description', '')}")
+                            self.logger.exception(f"Frida error: {message.get('description', '')}")
 
                     script.on("message", on_message)
                     script.load()
@@ -1596,14 +1596,14 @@ class PluginSystem:
                     return messages if messages else True
 
                 except Exception as e:
-                    self.logger.error(f"Failed to execute Frida plugin {plugin_name}: {e}")
+                    self.logger.exception(f"Failed to execute Frida plugin {plugin_name}: {e}")
                     return None
             else:
-                self.logger.error("Frida not available for JavaScript plugin execution")
+                self.logger.exception("Frida not available for JavaScript plugin execution")
                 return None
 
         else:
-            self.logger.error(f"Unsupported plugin type: {plugin_path}")
+            self.logger.exception(f"Unsupported plugin type: {plugin_path}")
             return None
 
     def execute_remote_plugin(self, plugin_url: str, *args, **kwargs) -> Any:
@@ -1666,7 +1666,7 @@ class PluginSystem:
                     try:
                         content_text = content.decode("utf-8")
                     except UnicodeDecodeError as e:
-                        logger.error("UnicodeDecodeError in plugin_system: %s", e)
+                        logger.exception("UnicodeDecodeError in plugin_system: %s", e)
                         raise ValueError("Remote plugin contains binary data") from e
 
                     # Basic security scan
@@ -1695,7 +1695,7 @@ class PluginSystem:
                         f.write(content_text)
 
             except Exception as e:
-                self.logger.error(f"Failed to download remote plugin: {e}")
+                self.logger.exception(f"Failed to download remote plugin: {e}")
                 return None
 
             # Execute the downloaded plugin
@@ -1712,7 +1712,7 @@ class PluginSystem:
                 return result
 
             except Exception as e:
-                self.logger.error(f"Failed to execute downloaded plugin: {e}")
+                self.logger.exception(f"Failed to execute downloaded plugin: {e}")
                 # Clean up on error
                 try:
                     os.remove(temp_plugin_path)
@@ -1721,7 +1721,7 @@ class PluginSystem:
                 return None
 
         except Exception as e:
-            self.logger.error(f"Failed to execute remote plugin: {e}")
+            self.logger.exception(f"Failed to execute remote plugin: {e}")
             self.logger.debug(f"Traceback: {traceback.format_exc()}")
             return None
 
@@ -1833,10 +1833,10 @@ try:
             print(json.dumps({{"success": False, "error": "No callable functions found in plugin"}}))
 
 except TimeoutError as e:
-    logger.error("Timeout error in plugin_system: %s", e)
+    logger.exception("Timeout error in plugin_system: %s", e)
     print(json.dumps({{"success": False, "error": str(e)}}))
 except Exception as e:
-    logger.error("Exception in plugin_system: %s", e)
+    logger.exception("Exception in plugin_system: %s", e)
     print(json.dumps({{"success": False, "error": str(e), "traceback": traceback.format_exc()}}))
 finally:
     signal.alarm(0)
@@ -1848,7 +1848,7 @@ finally:
             if sys.platform == "win32":
                 # Windows doesn't support resource limits, use process creation flags
                 CREATE_NO_WINDOW = 0x08000000
-                process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     [sys.executable, "-c", sandbox_code],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
@@ -1857,19 +1857,19 @@ finally:
                 )
             else:
                 # Unix-like systems with resource limits
-                process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     [sys.executable, "-c", sandbox_code],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     text=True,
-                    preexec_fn=getattr(os, "setsid", None) if sys.platform != "win32" else None,  # Create new process group on Unix
+                    start_new_session=True,
                 )
 
             # Wait for completion with timeout
             try:
                 stdout, stderr = process.communicate(timeout=35)  # 35 seconds (5 more than internal timeout)
             except subprocess.TimeoutExpired as e:
-                logger.error("Subprocess timeout in plugin_system: %s", e)
+                logger.exception("Subprocess timeout in plugin_system: %s", e)
                 # Kill the process group on timeout
                 if sys.platform != "win32":
                     os.killpg(os.getpgid(process.pid), signal.SIGTERM)
@@ -1893,21 +1893,21 @@ finally:
                             # Return as string if can't deserialize
                             return result["result"]
                     else:
-                        self.logger.error(f"Sandbox execution failed: {result.get('error', 'Unknown error')}")
+                        self.logger.exception(f"Sandbox execution failed: {result.get('error', 'Unknown error')}")
                         if result.get("traceback"):
                             self.logger.debug(f"Traceback: {result['traceback']}")
                         return None
                 except json.JSONDecodeError:
-                    self.logger.error(f"Failed to parse sandbox output: {stdout}")
+                    self.logger.exception(f"Failed to parse sandbox output: {stdout}")
                     if stderr:
                         self.logger.error(f"Stderr: {stderr}")
                     return None
             else:
-                self.logger.error(f"No output from sandboxed plugin. Stderr: {stderr}")
+                self.logger.exception(f"No output from sandboxed plugin. Stderr: {stderr}")
                 return None
 
         except Exception as e:
-            self.logger.error(f"Failed to execute sandboxed plugin: {e}")
+            self.logger.exception(f"Failed to execute sandboxed plugin: {e}")
             self.logger.debug(f"Traceback: {traceback.format_exc()}")
             return None
 
@@ -1917,9 +1917,9 @@ finally:
 try:
     from .plugin_config import PLUGIN_SYSTEM_EXPORTS
 
-    __all__ = ["PluginSystem", "create_plugin_template"] + PLUGIN_SYSTEM_EXPORTS
+    __all__ = ["PluginSystem", "create_plugin_template", *PLUGIN_SYSTEM_EXPORTS]
 except ImportError as e:
-    logger.error("Import error in plugin_system: %s", e)
+    logger.exception("Import error in plugin_system: %s", e)
     # Fallback in case of circular import issues
     __all__ = [
         "PluginSystem",

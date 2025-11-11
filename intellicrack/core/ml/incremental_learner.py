@@ -70,7 +70,7 @@ class IncrementalLearner:
     MIN_CONFIDENCE_FOR_AUTO_LEARNING = 0.85
     BUFFER_SIZE = 500
 
-    def __init__(self, classifier: ProtectionClassifier, buffer_path: Path | None = None, auto_retrain: bool = True):
+    def __init__(self, classifier: ProtectionClassifier, buffer_path: Path | None = None, auto_retrain: bool = True) -> None:
         """Initialize incremental learner.
 
         Args:
@@ -128,7 +128,7 @@ class IncrementalLearner:
 
             self.sample_buffer.append(sample)
             self.logger.info(
-                "Added sample %s (protection: %s, confidence: %.2f, source: %s)", binary_path.name, protection_type, confidence, source
+                "Added sample %s (protection: %s, confidence: %.2f, source: %s)", binary_path.name, protection_type, confidence, source,
             )
 
             self._save_buffer()
@@ -257,7 +257,7 @@ class IncrementalLearner:
                             "actual_label": sample.protection_type,
                             "timestamp": sample.timestamp,
                         },
-                    )
+                    ),
                 )
 
         uncertain.sort(key=lambda x: x[1]["confidence"])

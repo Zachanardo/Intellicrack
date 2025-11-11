@@ -330,7 +330,7 @@ class AnalysisStatsGenerator:
                             f"  Max: {stats['max']:.2f}",
                             f"  Average: {stats['avg']:.2f}",
                             f"  Sum: {stats['sum']:.2f}",
-                        ]
+                        ],
                     )
                 else:
                     counts = AnalysisStatsGenerator.count_by_attribute(items, attr)
@@ -470,16 +470,16 @@ class AnalysisStatsGenerator:
 class PerformanceTracker:
     """Track performance metrics for analysis operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the performance tracker with empty metrics and timing data."""
         self.metrics = {}
         self.start_times = {}
 
-    def start_operation(self, operation_name: str):
+    def start_operation(self, operation_name: str) -> None:
         """Start tracking an operation."""
         self.start_times[operation_name] = time.time()
 
-    def end_operation(self, operation_name: str, item_count: int = 1):
+    def end_operation(self, operation_name: str, item_count: int = 1) -> None:
         """End tracking an operation and record metrics."""
         try:
             if operation_name in self.start_times:
@@ -515,7 +515,7 @@ class PerformanceTracker:
         """Get all collected metrics."""
         return dict(self.metrics)
 
-    def reset_metrics(self):
+    def reset_metrics(self) -> None:
         """Reset all metrics."""
         self.metrics.clear()
         self.start_times.clear()

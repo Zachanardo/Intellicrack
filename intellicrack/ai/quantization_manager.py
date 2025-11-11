@@ -115,7 +115,7 @@ except ImportError as e:
 class QuantizationManager:
     """Manages model quantization for efficient inference."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the quantization manager."""
         self.loaded_models = {}
         self.quantization_configs = {}
@@ -866,7 +866,7 @@ class QuantizationManager:
 
         raise ValueError(f"Unsupported quantization type: {quantization_type}")
 
-    def cleanup_memory(self):
+    def cleanup_memory(self) -> None:
         """Clean up GPU memory after model operations."""
         if GPU_AUTOLOADER_AVAILABLE:
             gpu_autoloader.synchronize()

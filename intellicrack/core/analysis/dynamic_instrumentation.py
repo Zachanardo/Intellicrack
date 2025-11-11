@@ -26,7 +26,7 @@ from threading import Thread
 import frida
 
 
-def on_message(main_app, message, data):
+def on_message(main_app, message, data) -> None:
     """Handle messages from Frida scripts."""
     if message["type"] == "send":
         payload = message["payload"]
@@ -35,7 +35,7 @@ def on_message(main_app, message, data):
         main_app.update_output.emit(f"[Frida Error] {message['stack']}")
 
 
-def run_instrumentation_thread(main_app, binary_path, script_source):
+def run_instrumentation_thread(main_app, binary_path, script_source) -> None:
     """Run instrumentation logic in a separate thread.
 
     to avoid blocking the main UI.
@@ -78,7 +78,7 @@ def run_instrumentation_thread(main_app, binary_path, script_source):
             main_app.analysis_completed.emit("Dynamic Instrumentation")
 
 
-def run_dynamic_instrumentation(main_app):
+def run_dynamic_instrumentation(main_app) -> None:
     """Launch dynamic instrumentation session using Frida. This function.
 
     is designed to be called from the main UI thread.

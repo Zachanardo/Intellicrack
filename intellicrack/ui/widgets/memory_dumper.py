@@ -43,14 +43,14 @@ from intellicrack.utils.logger import logger
 class MemoryDumperWidget(QWidget):
     """Widget for dumping and analyzing process memory."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize memory dumper widget with parent widget and process tracking components."""
         super().__init__(parent)
         self.current_process = None
         self.dump_thread = None
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the memory dumper UI."""
         layout = QVBoxLayout(self)
 
@@ -187,7 +187,7 @@ class MemoryDumperWidget(QWidget):
         # Initial refresh
         self.refresh_process_list()
 
-    def refresh_process_list(self):
+    def refresh_process_list(self) -> None:
         """Refresh the list of running processes."""
         self.process_combo.clear()
 
@@ -196,7 +196,7 @@ class MemoryDumperWidget(QWidget):
         else:
             self._refresh_linux_processes()
 
-    def _refresh_windows_processes(self):
+    def _refresh_windows_processes(self) -> None:
         """Refresh Windows process list."""
         try:
             from intellicrack.handlers.psutil_handler import psutil
@@ -218,8 +218,8 @@ class MemoryDumperWidget(QWidget):
                 if not tasklist_path:
                     return
 
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                    [tasklist_path, "/fo", "csv"], check=False, capture_output=True, text=True, shell=False
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                    [tasklist_path, "/fo", "csv"], check=False, capture_output=True, text=True, shell=False,
                 )
                 lines = result.stdout.strip().split("\n")[1:]  # Skip header
                 for line in lines:
@@ -231,7 +231,7 @@ class MemoryDumperWidget(QWidget):
             except Exception as e:
                 self.output_log.append(f"Failed to enumerate processes: {e}")
 
-    def _refresh_linux_processes(self):
+    def _refresh_linux_processes(self) -> None:
         """Refresh Linux process list."""
         try:
             from intellicrack.handlers.psutil_handler import psutil
@@ -257,7 +257,7 @@ class MemoryDumperWidget(QWidget):
             except Exception as e:
                 self.output_log.append(f"Failed to enumerate processes: {e}")
 
-    def attach_to_process(self):
+    def attach_to_process(self) -> None:
         """Attach to selected process."""
         if self.process_combo.currentData():
             pid = self.process_combo.currentData()
@@ -278,7 +278,7 @@ class MemoryDumperWidget(QWidget):
         # Auto-scan regions
         self.scan_memory_regions()
 
-    def scan_memory_regions(self):
+    def scan_memory_regions(self) -> None:
         """Scan memory regions of attached process."""
         if not self.current_process:
             self.output_log.append("No process attached")
@@ -291,7 +291,7 @@ class MemoryDumperWidget(QWidget):
         else:
             self._scan_linux_regions()
 
-    def _scan_windows_regions(self):
+    def _scan_windows_regions(self) -> None:
         """Scan Windows process memory regions."""
         try:
             import ctypes
@@ -363,7 +363,7 @@ class MemoryDumperWidget(QWidget):
         except Exception as e:
             self.output_log.append(f"Error scanning regions: {e}")
 
-    def _scan_linux_regions(self):
+    def _scan_linux_regions(self) -> None:
         """Scan Linux process memory regions."""
         try:
             maps_file = f"/proc/{self.current_process}/maps"
@@ -421,7 +421,7 @@ class MemoryDumperWidget(QWidget):
         }
         return types.get(mem_type, f"0x{mem_type:X}")
 
-    def _should_include_region(self, protect):
+    def _should_include_region(self, protect) -> bool:
         """Check if Windows region should be included based on filters."""
         # Check protection flags
         readable = protect & 0x66  # Any read permission
@@ -432,12 +432,9 @@ class MemoryDumperWidget(QWidget):
             return False
         if self.writable_check.isChecked() and not writable:
             return False
-        if self.executable_check.isChecked() and not executable:
-            return False
+        return not (self.executable_check.isChecked() and not executable)
 
-        return True
-
-    def _should_include_region_linux(self, perms):
+    def _should_include_region_linux(self, perms) -> bool:
         """Check if Linux region should be included based on filters."""
         if self.readable_check.isChecked() and "r" not in perms:
             return False
@@ -445,12 +442,9 @@ class MemoryDumperWidget(QWidget):
             return False
         if self.executable_check.isChecked() and "x" not in perms:
             return False
-        if self.private_check.isChecked() and "p" not in perms:
-            return False
+        return not (self.private_check.isChecked() and "p" not in perms)
 
-        return True
-
-    def dump_selected_regions(self):
+    def dump_selected_regions(self) -> None:
         """Dump selected memory regions."""
         selected_rows = set()
         for item in self.regions_table.selectedItems():
@@ -480,7 +474,7 @@ class MemoryDumperWidget(QWidget):
         self.progress_bar.setVisible(True)
         self.dump_thread.start()
 
-    def dump_all_regions(self):
+    def dump_all_regions(self) -> None:
         """Dump all memory regions."""
         if self.regions_table.rowCount() == 0:
             self.output_log.append("No regions to dump")
@@ -520,11 +514,11 @@ class MemoryDumperWidget(QWidget):
             "strings": self.strings_check.isChecked(),
         }
 
-    def update_progress(self, value):
+    def update_progress(self, value) -> None:
         """Update progress bar."""
         self.progress_bar.setValue(value)
 
-    def dump_finished(self):
+    def dump_finished(self) -> None:
         """Handle dump completion."""
         self.progress_bar.setVisible(False)
         self.output_log.append("Memory dump completed")
@@ -536,7 +530,7 @@ class MemoryDumpThread(QThread):
     progress = pyqtSignal(int)
     log = pyqtSignal(str)
 
-    def __init__(self, pid, rows, table, output_dir, options):
+    def __init__(self, pid, rows, table, output_dir, options) -> None:
         """Initialize memory dump thread with process ID, table data, output directory, and dump options."""
         super().__init__()
         self.pid = pid
@@ -545,7 +539,7 @@ class MemoryDumpThread(QThread):
         self.output_dir = output_dir
         self.options = options
 
-    def run(self):
+    def run(self) -> None:
         """Execute memory dump."""
         total = len(self.rows)
 
@@ -571,7 +565,7 @@ class MemoryDumpThread(QThread):
             # Update progress
             self.progress.emit(int((i + 1) / total * 100))
 
-    def _dump_windows_region(self, addr, size):
+    def _dump_windows_region(self, addr, size) -> None:
         """Dump Windows memory region."""
         import ctypes
 
@@ -614,7 +608,7 @@ class MemoryDumpThread(QThread):
         finally:
             kernel32.CloseHandle(h_process)
 
-    def _dump_linux_region(self, addr, size):
+    def _dump_linux_region(self, addr, size) -> None:
         """Dump Linux memory region."""
         mem_file = f"/proc/{self.pid}/mem"
 
@@ -637,7 +631,7 @@ class MemoryDumpThread(QThread):
         except Exception as e:
             self.log.emit(f"Failed to read memory at 0x{addr:016X}: {e}")
 
-    def _extract_strings(self, data, base_addr):
+    def _extract_strings(self, data, base_addr) -> None:
         """Extract printable strings from memory dump."""
         strings = []
         current_string = bytearray()
@@ -651,7 +645,7 @@ class MemoryDumpThread(QThread):
                         (
                             base_addr + i - len(current_string),
                             current_string.decode("ascii", errors="ignore"),
-                        )
+                        ),
                     )
                 current_string = bytearray()
 

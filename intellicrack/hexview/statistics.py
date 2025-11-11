@@ -336,11 +336,11 @@ def analyze_compression_ratio(data: bytes) -> float:
 class StatisticsCalculator:
     """Helper class for calculating statistics with progress tracking."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize statistics calculator."""
         self.progress_callback = None
 
-    def set_progress_callback(self, callback):
+    def set_progress_callback(self, callback) -> None:
         """Set callback for progress updates.
 
         Args:

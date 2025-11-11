@@ -63,7 +63,7 @@ class ToolsTab(BaseTab):
     plugin_loaded = pyqtSignal(str, bool)
     network_capture_started = pyqtSignal(str)
 
-    def __init__(self, shared_context=None, parent=None):
+    def __init__(self, shared_context=None, parent=None) -> None:
         """Initialize tools tab with external tool integration and management."""
         self.available_tools = {}
         self.loaded_plugins = {}
@@ -82,7 +82,7 @@ class ToolsTab(BaseTab):
             if current_binary:
                 self.on_binary_loaded(current_binary)
 
-    def setup_content(self):
+    def setup_content(self) -> None:
         """Set up the tools tab content."""
         layout = self.layout()  # Use existing layout from BaseTab
 
@@ -485,7 +485,7 @@ class ToolsTab(BaseTab):
         layout.addStretch()
         return tab
 
-    def check_windows_activation(self):
+    def check_windows_activation(self) -> None:
         """Check current Windows activation status."""
         try:
             activator = WindowsActivator()
@@ -510,7 +510,7 @@ class ToolsTab(BaseTab):
             if hasattr(self.parent(), "append_output"):
                 self.parent().append_output(f"Error checking Windows activation: {e}")
 
-    def activate_windows_interactive(self):
+    def activate_windows_interactive(self) -> None:
         """Launch Windows activation in embedded terminal."""
         try:
             terminal_mgr = get_terminal_manager()
@@ -551,20 +551,20 @@ class ToolsTab(BaseTab):
         frida_analysis_btn.clicked.connect(self.run_frida_analysis)
         frida_analysis_btn.setStyleSheet("font-weight: bold; color: #FF6B35;")
         frida_analysis_btn.setToolTip(
-            "Dynamic binary instrumentation framework for real-time code injection, API hooking, and runtime manipulation"
+            "Dynamic binary instrumentation framework for real-time code injection, API hooking, and runtime manipulation",
         )
 
         symbolic_exec_btn = QPushButton("Symbolic Execution")
         symbolic_exec_btn.clicked.connect(self.run_symbolic_execution)
         symbolic_exec_btn.setStyleSheet("font-weight: bold; color: #2E86AB;")
         symbolic_exec_btn.setToolTip(
-            "Explore multiple execution paths simultaneously using symbolic values to discover vulnerabilities and edge cases"
+            "Explore multiple execution paths simultaneously using symbolic values to discover vulnerabilities and edge cases",
         )
 
         memory_forensics_btn = QPushButton("Memory Forensics")
         memory_forensics_btn.clicked.connect(self.run_memory_forensics)
         memory_forensics_btn.setToolTip(
-            "Analyze memory dumps, heap structures, and runtime memory patterns for hidden data and exploitation vectors"
+            "Analyze memory dumps, heap structures, and runtime memory patterns for hidden data and exploitation vectors",
         )
 
         dynamic_layout.addWidget(frida_analysis_btn, 0, 0)
@@ -579,7 +579,7 @@ class ToolsTab(BaseTab):
         ghidra_analysis_btn.clicked.connect(self.run_ghidra_analysis)
         ghidra_analysis_btn.setStyleSheet("font-weight: bold; color: #7209B7;")
         ghidra_analysis_btn.setToolTip(
-            "NSA's reverse engineering suite for decompilation, control flow analysis, and cross-references mapping"
+            "NSA's reverse engineering suite for decompilation, control flow analysis, and cross-references mapping",
         )
 
         protection_scan_btn = QPushButton("Protection Scanner")
@@ -590,13 +590,13 @@ class ToolsTab(BaseTab):
         vulnerability_scan_btn = QPushButton("Vulnerability Engine")
         vulnerability_scan_btn.clicked.connect(self.run_vulnerability_engine)
         vulnerability_scan_btn.setToolTip(
-            "Automated vulnerability scanning for buffer overflows, format strings, race conditions, and common weaknesses"
+            "Automated vulnerability scanning for buffer overflows, format strings, race conditions, and common weaknesses",
         )
 
         taint_analysis_btn = QPushButton("Taint Analysis")
         taint_analysis_btn.clicked.connect(self.run_taint_analysis)
         taint_analysis_btn.setToolTip(
-            "Track data flow from untrusted sources to critical sinks to identify potential security vulnerabilities"
+            "Track data flow from untrusted sources to critical sinks to identify potential security vulnerabilities",
         )
 
         static_layout.addWidget(ghidra_analysis_btn, 0, 0)
@@ -616,13 +616,13 @@ class ToolsTab(BaseTab):
         semantic_analysis_btn = QPushButton("Semantic Analysis")
         semantic_analysis_btn.clicked.connect(self.run_semantic_analysis)
         semantic_analysis_btn.setToolTip(
-            "Use AI to understand code intent, identify algorithms, and recognize design patterns in decompiled code"
+            "Use AI to understand code intent, identify algorithms, and recognize design patterns in decompiled code",
         )
 
         pattern_analysis_btn = QPushButton("Pattern Analysis")
         pattern_analysis_btn.clicked.connect(self.run_pattern_analysis)
         pattern_analysis_btn.setToolTip(
-            "Machine learning-based detection of cryptographic routines, licensing checks, and protection patterns"
+            "Machine learning-based detection of cryptographic routines, licensing checks, and protection patterns",
         )
 
         ai_layout.addWidget(ai_script_gen_btn, 0, 0)
@@ -642,7 +642,7 @@ class ToolsTab(BaseTab):
         payload_engine_btn.clicked.connect(self.run_payload_engine)
         payload_engine_btn.setStyleSheet("font-weight: bold; color: #FF8500;")
         payload_engine_btn.setToolTip(
-            "Create, encode, and obfuscate exploitation payloads with bad character avoidance and size optimization"
+            "Create, encode, and obfuscate exploitation payloads with bad character avoidance and size optimization",
         )
 
         shellcode_gen_btn = QPushButton("Shellcode Generator")
@@ -660,13 +660,13 @@ class ToolsTab(BaseTab):
         traffic_analysis_btn = QPushButton("Traffic Analysis")
         traffic_analysis_btn.clicked.connect(self.run_traffic_analysis)
         traffic_analysis_btn.setToolTip(
-            "Capture and analyze network traffic to identify license servers, API calls, and communication protocols"
+            "Capture and analyze network traffic to identify license servers, API calls, and communication protocols",
         )
 
         protocol_analysis_btn = QPushButton("Protocol Fingerprinting")
         protocol_analysis_btn.clicked.connect(self.run_protocol_analysis)
         protocol_analysis_btn.setToolTip(
-            "Identify and decode proprietary protocols, license verification schemes, and encrypted communications"
+            "Identify and decode proprietary protocols, license verification schemes, and encrypted communications",
         )
 
         network_layout.addWidget(traffic_analysis_btn, 0, 0)
@@ -713,7 +713,7 @@ class ToolsTab(BaseTab):
                 "Protocol",
                 "Length",
                 "Info",
-            ]
+            ],
         )
         self.packets_table.horizontalHeader().setStretchLastSection(True)
 
@@ -730,7 +730,7 @@ class ToolsTab(BaseTab):
         layout.addWidget(self.results_tabs)
         return panel
 
-    def on_binary_loaded(self, binary_info):
+    def on_binary_loaded(self, binary_info) -> None:
         """Handle binary loaded signal from app_context."""
         if isinstance(binary_info, dict):
             self.current_binary = binary_info.get("name", "Unknown")
@@ -747,7 +747,7 @@ class ToolsTab(BaseTab):
             if hasattr(self, "tool_output"):
                 self.tool_output.append(f"[INFO] Binary loaded: {self.current_binary}")
 
-    def on_binary_unloaded(self):
+    def on_binary_unloaded(self) -> None:
         """Handle binary unloaded signal from app_context."""
         self.current_binary = None
         self.current_binary_path = None
@@ -763,7 +763,7 @@ class ToolsTab(BaseTab):
         if hasattr(self, "tool_output"):
             self.tool_output.append("[INFO] Binary unloaded")
 
-    def enable_binary_dependent_tools(self, enabled):
+    def enable_binary_dependent_tools(self, enabled) -> None:
         """Enable or disable tools that require a loaded binary."""
         # List of buttons that require a binary to be loaded
         binary_dependent_buttons = [
@@ -783,7 +783,7 @@ class ToolsTab(BaseTab):
                 btn = getattr(self, btn_name)
                 btn.setEnabled(enabled)
 
-    def get_system_info(self):
+    def get_system_info(self) -> None:
         """Get system information."""
         try:
             import platform
@@ -805,7 +805,7 @@ class ToolsTab(BaseTab):
         except Exception as e:
             self.output_console.append(f"Error getting system info: {e!s}")
 
-    def list_processes(self):
+    def list_processes(self) -> None:
         """List running processes."""
         try:
             from intellicrack.handlers.psutil_handler import psutil
@@ -818,7 +818,7 @@ class ToolsTab(BaseTab):
                         f"PID: {proc_info['pid']:>6} | "
                         f"Name: {proc_info['name']:<20} | "
                         f"CPU: {proc_info['cpu_percent']:>5.1f}% | "
-                        f"Memory: {proc_info['memory_percent']:>5.1f}%"
+                        f"Memory: {proc_info['memory_percent']:>5.1f}%",
                     )
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     continue
@@ -833,7 +833,7 @@ class ToolsTab(BaseTab):
         except Exception as e:
             self.output_console.append(f"Error listing processes: {e!s}")
 
-    def get_memory_info(self):
+    def get_memory_info(self) -> None:
         """Get memory information."""
         try:
             from intellicrack.handlers.psutil_handler import psutil
@@ -857,7 +857,7 @@ class ToolsTab(BaseTab):
         except Exception as e:
             self.output_console.append(f"Error getting memory info: {e!s}")
 
-    def browse_file(self):
+    def browse_file(self) -> None:
         """Browse for file."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
@@ -870,7 +870,7 @@ class ToolsTab(BaseTab):
             self.file_path_edit.setText(file_path)
             self.log_message(f"File selected: {file_path}")
 
-    def get_file_info(self):
+    def get_file_info(self) -> None:
         """Get file information."""
         file_path = self.file_path_edit.text().strip()
         if not file_path or not os.path.exists(file_path):
@@ -899,7 +899,7 @@ class ToolsTab(BaseTab):
         except Exception as e:
             self.output_console.append(f"Error getting file info: {e!s}")
 
-    def create_hex_dump(self):
+    def create_hex_dump(self) -> None:
         """Create hex dump of file."""
         file_path = self.file_path_edit.text().strip()
         if not file_path or not os.path.exists(file_path):
@@ -924,7 +924,7 @@ class ToolsTab(BaseTab):
         except Exception as e:
             self.output_console.append(f"Error creating hex dump: {e!s}")
 
-    def extract_strings(self):
+    def extract_strings(self) -> None:
         """Extract strings from file."""
         file_path = self.file_path_edit.text().strip()
         if not file_path or not os.path.exists(file_path):
@@ -967,7 +967,7 @@ class ToolsTab(BaseTab):
         except Exception as e:
             self.output_console.append(f"Error extracting strings: {e!s}")
 
-    def query_registry(self):
+    def query_registry(self) -> None:
         """Query Windows registry."""
         reg_key = self.reg_key_edit.text().strip()
         if not reg_key:
@@ -1009,7 +1009,7 @@ class ToolsTab(BaseTab):
         except Exception as e:
             self.output_console.append(f"Error querying registry: {e!s}")
 
-    def browse_analysis_binary(self):
+    def browse_analysis_binary(self) -> None:
         """Browse for binary to analyze."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
@@ -1022,7 +1022,7 @@ class ToolsTab(BaseTab):
             self.analysis_binary_edit.setText(file_path)
             self.log_message(f"Analysis binary selected: {file_path}")
 
-    def disassemble_binary(self):
+    def disassemble_binary(self) -> None:
         """Disassemble binary using external tools."""
         binary_path = self.analysis_binary_edit.text().strip()
         if not binary_path or not os.path.exists(binary_path):
@@ -1035,8 +1035,8 @@ class ToolsTab(BaseTab):
                 self.log_message(f"Binary file not found: {binary_path}")
                 return
 
-            result = subprocess.run(  # nosec B603 B607 - objdump is a legitimate analysis tool  # noqa: S603
-                ["objdump", "-d", str(binary_path)],  # noqa: S607
+            result = subprocess.run(  # nosec B603 B607 - objdump is a legitimate analysis tool
+                ["objdump", "-d", str(binary_path)],
                 check=False,
                 capture_output=True,
                 text=True,
@@ -1059,7 +1059,7 @@ class ToolsTab(BaseTab):
         except Exception as e:
             self.output_console.append(f"Error disassembling binary: {e!s}")
 
-    def analyze_entropy(self):
+    def analyze_entropy(self) -> None:
         """Analyze binary entropy."""
         binary_path = self.analysis_binary_edit.text().strip()
         if not binary_path or not os.path.exists(binary_path):
@@ -1116,7 +1116,7 @@ class ToolsTab(BaseTab):
         except Exception as e:
             self.output_console.append(f"Error analyzing entropy: {e!s}")
 
-    def analyze_imports(self):
+    def analyze_imports(self) -> None:
         """Analyze binary imports."""
         binary_path = self.analysis_binary_edit.text().strip()
         if not binary_path or not os.path.exists(binary_path):
@@ -1152,7 +1152,7 @@ class ToolsTab(BaseTab):
         except Exception as e:
             self.output_console.append(f"Error analyzing imports: {e!s}")
 
-    def analyze_exports(self):
+    def analyze_exports(self) -> None:
         """Analyze binary exports."""
         binary_path = self.analysis_binary_edit.text().strip()
         if not binary_path or not os.path.exists(binary_path):
@@ -1190,7 +1190,7 @@ class ToolsTab(BaseTab):
         except Exception as e:
             self.output_console.append(f"Error analyzing exports: {e!s}")
 
-    def analyze_sections(self):
+    def analyze_sections(self) -> None:
         """Analyze binary sections."""
         binary_path = self.analysis_binary_edit.text().strip()
         if not binary_path or not os.path.exists(binary_path):
@@ -1224,7 +1224,7 @@ class ToolsTab(BaseTab):
         except Exception as e:
             self.output_console.append(f"Error analyzing sections: {e!s}")
 
-    def analyze_symbols(self):
+    def analyze_symbols(self) -> None:
         """Analyze binary symbols."""
         binary_path = self.analysis_binary_edit.text().strip()
         if not binary_path or not os.path.exists(binary_path):
@@ -1233,8 +1233,8 @@ class ToolsTab(BaseTab):
 
         try:
             # Try using nm tool for symbol analysis
-            result = subprocess.run(  # nosec B603 B607 - nm is a legitimate analysis tool  # noqa: S603
-                ["nm", str(binary_path)],  # noqa: S607
+            result = subprocess.run(  # nosec B603 B607 - nm is a legitimate analysis tool
+                ["nm", str(binary_path)],
                 check=False,
                 capture_output=True,
                 text=True,
@@ -1259,7 +1259,7 @@ class ToolsTab(BaseTab):
         except Exception as e:
             self.output_console.append(f"Error analyzing symbols: {e!s}")
 
-    def calculate_hash(self, algorithm):
+    def calculate_hash(self, algorithm) -> None:
         """Calculate hash of input data."""
         data = self.crypto_input.toPlainText().strip()
         if not data:
@@ -1286,7 +1286,7 @@ class ToolsTab(BaseTab):
         except Exception as e:
             self.output_console.append(f"Error calculating hash: {e!s}")
 
-    def base64_encode(self):
+    def base64_encode(self) -> None:
         """Base64 encode input data."""
         data = self.crypto_input.toPlainText().strip()
         if not data:
@@ -1305,7 +1305,7 @@ class ToolsTab(BaseTab):
         except Exception as e:
             self.output_console.append(f"Error encoding data: {e!s}")
 
-    def base64_decode(self):
+    def base64_decode(self) -> None:
         """Base64 decode input data."""
         data = self.crypto_input.toPlainText().strip()
         if not data:
@@ -1324,7 +1324,7 @@ class ToolsTab(BaseTab):
         except Exception as e:
             self.output_console.append(f"Error decoding data: {e!s}")
 
-    def populate_plugin_list(self):
+    def populate_plugin_list(self) -> None:
         """Populate the plugin list."""
         self.plugin_list.clear()
 
@@ -1348,7 +1348,7 @@ class ToolsTab(BaseTab):
 
         self.log_message(f"Found {self.plugin_list.count()} plugins")
 
-    def load_selected_plugin(self):
+    def load_selected_plugin(self) -> None:
         """Load the selected plugin."""
         current_item = self.plugin_list.currentItem()
         if not current_item:
@@ -1401,7 +1401,7 @@ class ToolsTab(BaseTab):
             self.output_console.append(f"Error loading plugin '{plugin_name}': {e!s}")
             self.plugin_loaded.emit(plugin_name, False)
 
-    def unload_selected_plugin(self):
+    def unload_selected_plugin(self) -> None:
         """Unload the selected plugin."""
         current_item = self.plugin_list.currentItem()
         if not current_item:
@@ -1420,7 +1420,7 @@ class ToolsTab(BaseTab):
         else:
             self.output_console.append(f"Plugin '{plugin_name}' is not loaded")
 
-    def reload_selected_plugin(self):
+    def reload_selected_plugin(self) -> None:
         """Reload the selected plugin."""
         current_item = self.plugin_list.currentItem()
         if not current_item:
@@ -1435,7 +1435,7 @@ class ToolsTab(BaseTab):
         self.load_selected_plugin()
         self.log_message(f"Plugin '{plugin_name}' reloaded")
 
-    def create_new_plugin(self):
+    def create_new_plugin(self) -> None:
         """Create a new plugin."""
         plugin_name, ok = QInputDialog.getText(self, "Create Plugin", "Plugin Name:")
 
@@ -1496,7 +1496,7 @@ def get_plugin():
             except Exception as e:
                 self.output_console.append(f"Error creating plugin: {e!s}")
 
-    def edit_selected_plugin(self):
+    def edit_selected_plugin(self) -> None:
         """Edit the selected plugin."""
         current_item = self.plugin_list.currentItem()
         if not current_item:
@@ -1515,9 +1515,9 @@ def get_plugin():
                 import subprocess
 
                 if platform.system() == "Windows":
-                    subprocess.run(["notepad", str(plugin_file)], check=False)  # nosec B603 B607 - system editor  # noqa: S603, S607
+                    subprocess.run(["notepad", str(plugin_file)], check=False)  # nosec B603 B607 - system editor
                 else:
-                    subprocess.run(["xdg-open", str(plugin_file)], check=False)  # nosec B603 B607 - system opener  # noqa: S603, S607
+                    subprocess.run(["xdg-open", str(plugin_file)], check=False)  # nosec B603 B607 - system opener
 
                 self.log_message(f"Opened plugin '{plugin_name}' for editing")
 
@@ -1526,7 +1526,7 @@ def get_plugin():
         else:
             self.output_console.append(f"Plugin file not found: {plugin_file}")
 
-    def populate_network_interfaces(self):
+    def populate_network_interfaces(self) -> None:
         """Populate network interfaces."""
         self.interface_combo.clear()
 
@@ -1534,7 +1534,7 @@ def get_plugin():
             from intellicrack.handlers.psutil_handler import psutil
 
             interfaces = psutil.net_if_addrs()
-            for interface_name in interfaces.keys():
+            for interface_name in interfaces:
                 self.interface_combo.addItem(interface_name)
 
             self.log_message(f"Found {len(interfaces)} network interfaces")
@@ -1542,7 +1542,7 @@ def get_plugin():
         except Exception as e:
             self.output_console.append(f"Error getting network interfaces: {e!s}")
 
-    def start_packet_capture(self):
+    def start_packet_capture(self) -> None:
         """Start packet capture."""
         interface = self.interface_combo.currentText()
         filter_text = self.capture_filter_edit.text().strip()
@@ -1583,7 +1583,7 @@ def get_plugin():
         except Exception as e:
             self.output_console.append(f"Error starting packet capture: {e!s}")
 
-    def _update_packet_table_periodically(self):
+    def _update_packet_table_periodically(self) -> None:
         """Update packet table with captured packets in background."""
         import time
 
@@ -1613,13 +1613,13 @@ def get_plugin():
             except Exception:
                 break
 
-    def stop_packet_capture(self):
+    def stop_packet_capture(self) -> None:
         """Stop packet capture."""
         self._capture_active = False
         self.output_console.append("Packet capture stopped")
         self.log_message("Packet capture stopped")
 
-    def save_packet_capture(self):
+    def save_packet_capture(self) -> None:
         """Save packet capture."""
         file_path, _ = QFileDialog.getSaveFileName(
             self,
@@ -1632,7 +1632,7 @@ def get_plugin():
             self.output_console.append(f"Packet capture saved to: {file_path}")
             self.log_message(f"Packet capture saved to: {file_path}")
 
-    def ping_scan(self):
+    def ping_scan(self) -> None:
         """Perform ping scan."""
         target = self.scan_target_edit.text().strip()
         if not target:
@@ -1667,7 +1667,7 @@ def get_plugin():
         except Exception as e:
             self.output_console.append(f"Error performing ping scan: {e!s}")
 
-    def port_scan(self):
+    def port_scan(self) -> None:
         """Perform port scan."""
         target = self.scan_target_edit.text().strip()
         if not target:
@@ -1699,7 +1699,7 @@ def get_plugin():
 
             open_ports = []
 
-            def scan_port(host, port, service):
+            def scan_port(host, port, service) -> None:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(0.5)
                 try:
@@ -1734,7 +1734,7 @@ def get_plugin():
         except Exception as e:
             self.output_console.append(f"Error performing port scan: {e!s}")
 
-    def service_scan(self):
+    def service_scan(self) -> None:
         """Perform service scan."""
         target = self.scan_target_edit.text().strip()
         if not target:
@@ -1816,7 +1816,7 @@ def get_plugin():
 
                         self.tool_output.append(f"{port}/tcp   open  {service_name:10} {version_info[:40]}")
 
-                except (socket.timeout, socket.error, ConnectionRefusedError):
+                except (TimeoutError, OSError, ConnectionRefusedError):
                     pass  # Port closed or filtered
                 except Exception as e:
                     logger.debug(f"Service detection failed: {e}")  # Service detection failed
@@ -1828,7 +1828,7 @@ def get_plugin():
         except Exception as e:
             self.output_console.append(f"Error performing service scan: {e!s}")
 
-    def browse_advanced_binary(self):
+    def browse_advanced_binary(self) -> None:
         """Browse for binary for advanced analysis."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
@@ -1841,7 +1841,7 @@ def get_plugin():
             self.advanced_binary_edit.setText(file_path)
             self.log_message(f"Advanced analysis binary selected: {file_path}")
 
-    def run_frida_analysis(self):
+    def run_frida_analysis(self) -> None:
         """Execute Frida dynamic analysis on target binary."""
         binary_path = self.advanced_binary_edit.text().strip()
         if not binary_path or not os.path.exists(binary_path):
@@ -1900,7 +1900,7 @@ def get_plugin():
         except Exception as e:
             self.output_console.append(f"Error running Frida analysis: {e!s}")
 
-    def run_symbolic_execution(self):
+    def run_symbolic_execution(self) -> None:
         """Execute symbolic execution analysis on target binary."""
         binary_path = self.advanced_binary_edit.text().strip()
         if not binary_path or not os.path.exists(binary_path):
@@ -1941,7 +1941,7 @@ def get_plugin():
         except Exception as e:
             self.output_console.append(f"Error running symbolic execution: {e!s}")
 
-    def run_memory_forensics(self):
+    def run_memory_forensics(self) -> None:
         """Execute memory forensics analysis on target binary."""
         binary_path = self.advanced_binary_edit.text().strip()
         if not binary_path or not os.path.exists(binary_path):
@@ -1982,7 +1982,7 @@ def get_plugin():
         except Exception as e:
             self.output_console.append(f"Error running memory forensics: {e!s}")
 
-    def run_ghidra_analysis(self):
+    def run_ghidra_analysis(self) -> None:
         """Execute Ghidra static analysis on target binary."""
         binary_path = self.advanced_binary_edit.text().strip()
         if not binary_path or not os.path.exists(binary_path):
@@ -2034,7 +2034,7 @@ def get_plugin():
         except Exception as e:
             self.output_console.append(f"Error running Ghidra analysis: {e!s}")
 
-    def run_protection_scanner(self):
+    def run_protection_scanner(self) -> None:
         """Execute comprehensive protection scanning on target binary."""
         binary_path = self.advanced_binary_edit.text().strip()
         if not binary_path or not os.path.exists(binary_path):
@@ -2097,7 +2097,7 @@ def get_plugin():
         except Exception as e:
             self.output_console.append(f"Error running protection scanner: {e!s}")
 
-    def run_vulnerability_engine(self):
+    def run_vulnerability_engine(self) -> None:
         """Execute vulnerability detection engine on target binary."""
         binary_path = self.advanced_binary_edit.text().strip()
         if not binary_path or not os.path.exists(binary_path):
@@ -2159,7 +2159,7 @@ def get_plugin():
         except Exception as e:
             self.output_console.append(f"Error running vulnerability engine: {e!s}")
 
-    def run_taint_analysis(self):
+    def run_taint_analysis(self) -> None:
         """Execute taint analysis on target binary."""
         binary_path = self.advanced_binary_edit.text().strip()
         if not binary_path or not os.path.exists(binary_path):
@@ -2207,7 +2207,7 @@ def get_plugin():
         except Exception as e:
             self.output_console.append(f"Error running taint analysis: {e!s}")
 
-    def run_ai_script_generator(self):
+    def run_ai_script_generator(self) -> None:
         """Execute AI-powered script generation for target binary."""
         binary_path = self.advanced_binary_edit.text().strip()
         if not binary_path or not os.path.exists(binary_path):
@@ -2265,7 +2265,7 @@ def get_plugin():
         except Exception as e:
             self.output_console.append(f"Error running AI script generator: {e!s}")
 
-    def run_semantic_analysis(self):
+    def run_semantic_analysis(self) -> None:
         """Execute AI semantic analysis on target binary."""
         binary_path = self.advanced_binary_edit.text().strip()
         if not binary_path or not os.path.exists(binary_path):
@@ -2308,7 +2308,7 @@ def get_plugin():
         except Exception as e:
             self.output_console.append(f"Error running semantic analysis: {e!s}")
 
-    def run_pattern_analysis(self):
+    def run_pattern_analysis(self) -> None:
         """Execute AI pattern analysis on target binary."""
         binary_path = self.advanced_binary_edit.text().strip()
         if not binary_path or not os.path.exists(binary_path):
@@ -2349,7 +2349,7 @@ def get_plugin():
         except Exception as e:
             self.output_console.append(f"Error running pattern analysis: {e!s}")
 
-    def run_rop_generator(self):
+    def run_rop_generator(self) -> None:
         """Execute ROP chain generation for target binary."""
         binary_path = self.advanced_binary_edit.text().strip()
         if not binary_path or not os.path.exists(binary_path):
@@ -2404,7 +2404,7 @@ def get_plugin():
         except Exception as e:
             self.output_console.append(f"Error running ROP generator: {e!s}")
 
-    def run_payload_engine(self):
+    def run_payload_engine(self) -> None:
         """Execute payload generation engine for target binary."""
         binary_path = self.advanced_binary_edit.text().strip()
         if not binary_path or not os.path.exists(binary_path):
@@ -2456,7 +2456,7 @@ def get_plugin():
         except Exception as e:
             self.output_console.append(f"Error running payload engine: {e!s}")
 
-    def run_shellcode_generator(self):
+    def run_shellcode_generator(self) -> None:
         """Execute shellcode generation for target binary."""
         binary_path = self.advanced_binary_edit.text().strip()
         if not binary_path or not os.path.exists(binary_path):
@@ -2506,7 +2506,7 @@ def get_plugin():
         except Exception as e:
             self.output_console.append(f"Error running shellcode generator: {e!s}")
 
-    def run_traffic_analysis(self):
+    def run_traffic_analysis(self) -> None:
         """Execute network traffic analysis."""
         self.tool_output.append("Starting network traffic analysis...")
         self.tool_output.append("=" * 50)
@@ -2554,7 +2554,7 @@ def get_plugin():
         except Exception as e:
             self.output_console.append(f"Error running traffic analysis: {e!s}")
 
-    def run_protocol_analysis(self):
+    def run_protocol_analysis(self) -> None:
         """Execute protocol fingerprinting analysis."""
         self.tool_output.append("Starting protocol fingerprinting...")
         self.tool_output.append("=" * 50)
@@ -2598,7 +2598,7 @@ def get_plugin():
         except Exception as e:
             self.output_console.append(f"Error running protocol analysis: {e!s}")
 
-    def log_message(self, message, level="info"):
+    def log_message(self, message, level="info") -> None:
         """Log message to console or status."""
         if hasattr(self.shared_context, "log_message"):
             self.shared_context.log_message(message, level)

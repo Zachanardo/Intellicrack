@@ -66,7 +66,7 @@ class KeygenWorker(QThread):
     batch_completed = pyqtSignal(list)
     error_occurred = pyqtSignal(str)
 
-    def __init__(self, binary_path: str, operation: str, **kwargs):
+    def __init__(self, binary_path: str, operation: str, **kwargs) -> None:
         """Initialize the KeygenWorker with default values."""
         super().__init__()
         self.binary_path = binary_path
@@ -74,7 +74,7 @@ class KeygenWorker(QThread):
         self.kwargs = kwargs
         self.should_stop = False
 
-    def run(self):
+    def run(self) -> None:
         """Execute the keygen operation."""
         try:
             if self.operation == "single":
@@ -87,7 +87,7 @@ class KeygenWorker(QThread):
             self.logger.error("Error in keygen_dialog: %s", e)
             self.error_occurred.emit(str(e))
 
-    def _generate_single_key(self):
+    def _generate_single_key(self) -> None:
         """Generate a single license key."""
         from ...utils.exploitation import generate_license_key
 
@@ -100,7 +100,7 @@ class KeygenWorker(QThread):
         )
         self.key_generated.emit(result)
 
-    def _generate_batch_keys(self):
+    def _generate_batch_keys(self) -> None:
         """Generate multiple license keys."""
         count = self.kwargs.get("count", 10)
         keys = []
@@ -131,12 +131,12 @@ class KeygenWorker(QThread):
                         "error": str(e),
                         "algorithm": self.kwargs.get("algorithm", "auto"),
                         "format": self.kwargs.get("format_type", "auto"),
-                    }
+                    },
                 )
 
         self.batch_completed.emit(keys)
 
-    def _analyze_binary(self):
+    def _analyze_binary(self) -> None:
         """Analyze binary for algorithm detection."""
         from ...utils.exploitation import _detect_key_format, _detect_license_algorithm
 
@@ -150,7 +150,7 @@ class KeygenWorker(QThread):
         }
         self.key_generated.emit(result)
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the worker thread."""
         self.should_stop = True
 
@@ -158,7 +158,7 @@ class KeygenWorker(QThread):
 class KeygenDialog(BaseDialog):
     """Professional Keygen Dialog with advanced features."""
 
-    def __init__(self, parent=None, binary_path: str = ""):
+    def __init__(self, parent=None, binary_path: str = "") -> None:
         """Initialize the KeygenDialog with default values."""
         # Initialize UI attributes
         self.analysis_display = None
@@ -198,7 +198,7 @@ class KeygenDialog(BaseDialog):
         if self.binary_path and os.path.exists(self.binary_path):
             self.auto_analyze_binary()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the user interface."""
         layout = QVBoxLayout(self)
 
@@ -211,12 +211,12 @@ class KeygenDialog(BaseDialog):
         # Status and controls
         self.setup_footer(layout)
 
-    def setup_header(self, layout):
+    def setup_header(self, layout) -> None:
         """Set up header with binary selection."""
         # Use the base class method with analyze button
         super().setup_header(layout, show_label=True, extra_buttons=[("Analyze Binary", self.analyze_binary)])
 
-    def setup_tabs(self, layout):
+    def setup_tabs(self, layout) -> None:
         """Set up main tab widget."""
         self.tabs = QTabWidget()
 
@@ -234,7 +234,7 @@ class KeygenDialog(BaseDialog):
 
         layout.addWidget(self.tabs)
 
-    def setup_single_tab(self):
+    def setup_single_tab(self) -> None:
         """Set up single key generation tab."""
         single_widget = QWidget()
         layout = QVBoxLayout(single_widget)
@@ -255,7 +255,7 @@ class KeygenDialog(BaseDialog):
                 "AES",
                 "Checksum",
                 "Hardware-Locked",
-            ]
+            ],
         )
         config_layout.addWidget(self.algorithm_combo, 0, 1)
 
@@ -269,7 +269,7 @@ class KeygenDialog(BaseDialog):
                 "Formatted",
                 "Hex",
                 "Base64",
-            ]
+            ],
         )
         config_layout.addWidget(self.format_combo, 1, 1)
 
@@ -335,7 +335,7 @@ class KeygenDialog(BaseDialog):
 
         self.tabs.addTab(single_widget, "Single Key")
 
-    def setup_batch_tab(self):
+    def setup_batch_tab(self) -> None:
         """Set up batch generation tab."""
         batch_widget = QWidget()
         layout = QVBoxLayout(batch_widget)
@@ -361,7 +361,7 @@ class KeygenDialog(BaseDialog):
                 "AES",
                 "Checksum",
                 "Hardware-Locked",
-            ]
+            ],
         )
         config_layout.addWidget(self.batch_algorithm_combo, 1, 1)
 
@@ -374,7 +374,7 @@ class KeygenDialog(BaseDialog):
                 "Formatted",
                 "Hex",
                 "Base64",
-            ]
+            ],
         )
         config_layout.addWidget(self.batch_format_combo, 2, 1)
 
@@ -423,7 +423,7 @@ class KeygenDialog(BaseDialog):
                 "Algorithm",
                 "Format",
                 "Status",
-            ]
+            ],
         )
 
         # Set column widths
@@ -434,7 +434,7 @@ class KeygenDialog(BaseDialog):
 
         self.tabs.addTab(batch_widget, "Batch Generation")
 
-    def setup_analysis_tab(self):
+    def setup_analysis_tab(self) -> None:
         """Set up binary analysis tab."""
         analysis_widget = QWidget()
         layout = QVBoxLayout(analysis_widget)
@@ -448,7 +448,7 @@ class KeygenDialog(BaseDialog):
 
         self.tabs.addTab(analysis_widget, "Binary Analysis")
 
-    def setup_management_tab(self):
+    def setup_management_tab(self) -> None:
         """Set up key management tab."""
         management_widget = QWidget()
         layout = QVBoxLayout(management_widget)
@@ -477,30 +477,30 @@ class KeygenDialog(BaseDialog):
 
         self.tabs.addTab(management_widget, "Key Management")
 
-    def setup_footer(self, layout):
+    def setup_footer(self, layout) -> None:
         """Set up footer with status and close button."""
         from ..dialog_utils import setup_footer
 
         setup_footer(self, layout)
 
-    def connect_signals(self):
+    def connect_signals(self) -> None:
         """Connect internal signals."""
         from ..dialog_utils import connect_binary_signals
 
         connect_binary_signals(self)
 
-    def on_binary_path_changed(self, text):
+    def on_binary_path_changed(self, text) -> None:
         """Handle binary path change."""
         from ..dialog_utils import on_binary_path_changed
 
         on_binary_path_changed(self, text)
 
-    def auto_analyze_binary(self):
+    def auto_analyze_binary(self) -> None:
         """Automatically analyze binary on startup."""
         if self.binary_path and os.path.exists(self.binary_path):
             QTimer.singleShot(500, self.analyze_binary)  # Delay for UI setup
 
-    def analyze_binary(self):
+    def analyze_binary(self) -> None:
         """Analyze binary for algorithm detection."""
         if not self.binary_path or not os.path.exists(self.binary_path):
             QMessageBox.warning(self, "Warning", "Please select a valid binary file first.")
@@ -515,7 +515,7 @@ class KeygenDialog(BaseDialog):
         self.worker.error_occurred.connect(self.on_error)
         self.worker.start()
 
-    def on_analysis_completed(self, result):
+    def on_analysis_completed(self, result) -> None:
         """Handle analysis completion."""
         self.current_analysis = result
 
@@ -597,7 +597,7 @@ class KeygenDialog(BaseDialog):
 
         return text
 
-    def generate_single_key(self):
+    def generate_single_key(self) -> None:
         """Generate a single license key."""
         if not self.binary_path or not os.path.exists(self.binary_path):
             QMessageBox.warning(self, "Warning", "Please select a valid binary file first.")
@@ -643,7 +643,7 @@ class KeygenDialog(BaseDialog):
         self.worker.error_occurred.connect(self.on_error)
         self.worker.start()
 
-    def on_single_key_generated(self, result):
+    def on_single_key_generated(self, result) -> None:
         """Handle single key generation completion."""
         # Display the key
         self.key_display.setPlainText(result.get("key", "Error generating key"))
@@ -696,7 +696,7 @@ class KeygenDialog(BaseDialog):
 
         return text
 
-    def copy_key(self):
+    def copy_key(self) -> None:
         """Copy generated key to clipboard."""
         key = self.key_display.toPlainText().strip()
         if key:
@@ -709,7 +709,7 @@ class KeygenDialog(BaseDialog):
                 self.logger.error("Error in keygen_dialog: %s", e)
                 QMessageBox.information(self, "Copy", f"Key: {key}")
 
-    def save_single_key(self):
+    def save_single_key(self) -> None:
         """Save the generated key to file."""
         if not self.last_generated_key:
             QMessageBox.warning(self, "Warning", "No key to save. Generate a key first.")
@@ -777,11 +777,11 @@ class KeygenDialog(BaseDialog):
                 # Open the generated_keys folder
                 try:
                     if platform.system() == "Windows":
-                        subprocess.run(["explorer", save_dir], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
+                        subprocess.run(["explorer", save_dir], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     elif platform.system() == "Darwin":  # macOS
-                        subprocess.run(["open", save_dir], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
+                        subprocess.run(["open", save_dir], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     else:  # Linux
-                        subprocess.run(["xdg-open", save_dir], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
+                        subprocess.run(["xdg-open", save_dir], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("Error in keygen_dialog: %s", e)
                     QMessageBox.information(self, "Folder Location", f"Keys saved to: {save_dir}")
@@ -791,7 +791,7 @@ class KeygenDialog(BaseDialog):
             QMessageBox.critical(self, "Save Error", f"Failed to save key: {e!s}")
             self.status_label.setText("Error saving key")
 
-    def generate_batch_keys(self):
+    def generate_batch_keys(self) -> None:
         """Generate batch of license keys."""
         if not self.binary_path or not os.path.exists(self.binary_path):
             QMessageBox.warning(self, "Warning", "Please select a valid binary file first.")
@@ -852,12 +852,12 @@ class KeygenDialog(BaseDialog):
         self.worker.error_occurred.connect(self.on_error)
         self.worker.start()
 
-    def on_batch_progress(self, current, total):
+    def on_batch_progress(self, current, total) -> None:
         """Handle batch generation progress."""
         self.batch_progress.setValue(current)
         self.status_label.setText(f"Generating keys: {current}/{total}")
 
-    def on_batch_completed(self, keys):
+    def on_batch_completed(self, keys) -> None:
         """Handle batch generation completion."""
         self.generated_keys = keys
 
@@ -898,7 +898,7 @@ class KeygenDialog(BaseDialog):
         self.batch_stop_btn.setEnabled(False)
         self.batch_progress.setValue(self.batch_progress.maximum())
 
-    def stop_batch_generation(self):
+    def stop_batch_generation(self) -> None:
         """Stop batch generation."""
         if self.worker:
             self.worker.stop()
@@ -908,14 +908,14 @@ class KeygenDialog(BaseDialog):
         self.batch_stop_btn.setEnabled(False)
         self.status_label.setText("Batch generation stopped")
 
-    def clear_batch_results(self):
+    def clear_batch_results(self) -> None:
         """Clear batch results."""
         self.batch_table.setRowCount(0)
         self.generated_keys = []
         self.batch_progress.setValue(0)
         self.status_label.setText("Batch results cleared")
 
-    def export_batch_keys(self):
+    def export_batch_keys(self) -> None:
         """Export batch keys to file."""
         if not self.generated_keys:
             QMessageBox.warning(self, "Warning", "No keys to export. Generate keys first.")
@@ -954,7 +954,7 @@ class KeygenDialog(BaseDialog):
                                     _key_data.get("algorithm", ""),
                                     _key_data.get("format", ""),
                                     "Error" if "error" in _key_data else "Generated",
-                                ]
+                                ],
                             )
                 else:  # txt
                     with open(file_path, "w", encoding="utf-8") as f:
@@ -970,7 +970,7 @@ class KeygenDialog(BaseDialog):
                 logger.error("Error in keygen_dialog: %s", e)
                 QMessageBox.critical(self, "Export Error", f"Failed to export keys: {e!s}")
 
-    def analyze_existing_keys(self):
+    def analyze_existing_keys(self) -> None:
         """Analyze existing keys for patterns."""
         keys_text = self.existing_keys_input.toPlainText().strip()
         if not keys_text:
@@ -1017,7 +1017,7 @@ class KeygenDialog(BaseDialog):
             logger.error("Error in keygen_dialog: %s", e)
             QMessageBox.critical(self, "Analysis Error", f"Failed to analyze keys: {e!s}")
 
-    def on_error(self, error_msg):
+    def on_error(self, error_msg) -> None:
         """Handle worker thread errors."""
         QMessageBox.critical(self, "Error", f"An error occurred: {error_msg}")
         self.status_label.setText("Error occurred")
@@ -1026,7 +1026,7 @@ class KeygenDialog(BaseDialog):
         self.batch_stop_btn.setEnabled(False)
         self.analyze_btn.setEnabled(True)
 
-    def closeEvent(self, event):
+    def closeEvent(self, event) -> None:
         """Handle dialog close event."""
         if self.worker and self.worker.isRunning():
             self.worker.stop()

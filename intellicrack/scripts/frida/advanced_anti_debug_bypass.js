@@ -153,55 +153,55 @@ const advancedAntiDebugBypass = {
                 onLeave: function (retval) {
                     if (retval.toInt32() === 0 && this.processInfo && !this.processInfo.isNull()) {
                         switch (this.infoClass) {
-                        case 7:
-                            this.processInfo.writePointer(ptr(0));
-                            send({
-                                type: 'bypass',
-                                target: 'NtQueryInformationProcess',
-                                class: 'ProcessDebugPort',
-                                action: 'zeroed',
-                            });
-                            break;
+                            case 7:
+                                this.processInfo.writePointer(ptr(0));
+                                send({
+                                    type: 'bypass',
+                                    target: 'NtQueryInformationProcess',
+                                    class: 'ProcessDebugPort',
+                                    action: 'zeroed',
+                                });
+                                break;
 
-                        case 30:
-                            this.processInfo.writePointer(ptr(0));
-                            send({
-                                type: 'bypass',
-                                target: 'NtQueryInformationProcess',
-                                class: 'ProcessDebugObjectHandle',
-                                action: 'zeroed',
-                            });
-                            break;
+                            case 30:
+                                this.processInfo.writePointer(ptr(0));
+                                send({
+                                    type: 'bypass',
+                                    target: 'NtQueryInformationProcess',
+                                    class: 'ProcessDebugObjectHandle',
+                                    action: 'zeroed',
+                                });
+                                break;
 
-                        case 31:
-                            this.processInfo.writeU32(1);
-                            send({
-                                type: 'bypass',
-                                target: 'NtQueryInformationProcess',
-                                class: 'ProcessDebugFlags',
-                                action: 'spoofed',
-                            });
-                            break;
+                            case 31:
+                                this.processInfo.writeU32(1);
+                                send({
+                                    type: 'bypass',
+                                    target: 'NtQueryInformationProcess',
+                                    class: 'ProcessDebugFlags',
+                                    action: 'spoofed',
+                                });
+                                break;
 
-                        case 0x29:
-                            this.processInfo.writeU32(0);
-                            send({
-                                type: 'bypass',
-                                target: 'NtQueryInformationProcess',
-                                class: 'ProcessBreakOnTermination',
-                                action: 'disabled',
-                            });
-                            break;
+                            case 0x29:
+                                this.processInfo.writeU32(0);
+                                send({
+                                    type: 'bypass',
+                                    target: 'NtQueryInformationProcess',
+                                    class: 'ProcessBreakOnTermination',
+                                    action: 'disabled',
+                                });
+                                break;
 
-                        case 0x1f:
-                            this.processInfo.writeU32(0);
-                            send({
-                                type: 'bypass',
-                                target: 'NtQueryInformationProcess',
-                                class: 'ProcessInstrumentationCallback',
-                                action: 'zeroed',
-                            });
-                            break;
+                            case 0x1f:
+                                this.processInfo.writeU32(0);
+                                send({
+                                    type: 'bypass',
+                                    target: 'NtQueryInformationProcess',
+                                    class: 'ProcessInstrumentationCallback',
+                                    action: 'zeroed',
+                                });
+                                break;
                         }
                     }
                 },

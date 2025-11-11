@@ -469,50 +469,50 @@ const tpmEmulator = {
 
         // Process based on command code
         switch (commandCode) {
-        case 0x00000144: // TPM2_GetCapability
-            return this.handleGetCapability(commandBuffer);
+            case 0x00000144: // TPM2_GetCapability
+                return this.handleGetCapability(commandBuffer);
 
-        case 0x0000017e: // TPM2_PCR_Read
-            return this.handlePCRRead(commandBuffer);
+            case 0x0000017e: // TPM2_PCR_Read
+                return this.handlePCRRead(commandBuffer);
 
-        case 0x00000182: // TPM2_PCR_Extend
-            return this.handlePCRExtend(commandBuffer);
+            case 0x00000182: // TPM2_PCR_Extend
+                return this.handlePCRExtend(commandBuffer);
 
-        case 0x00000176: // TPM2_StartAuthSession
-            return this.handleStartAuthSession(commandBuffer);
+            case 0x00000176: // TPM2_StartAuthSession
+                return this.handleStartAuthSession(commandBuffer);
 
-        case 0x00000153: // TPM2_Create
-            return this.handleCreate(commandBuffer);
+            case 0x00000153: // TPM2_Create
+                return this.handleCreate(commandBuffer);
 
-        case 0x00000121: // TPM2_CreatePrimary
-            return this.handleCreatePrimary(commandBuffer);
+            case 0x00000121: // TPM2_CreatePrimary
+                return this.handleCreatePrimary(commandBuffer);
 
-        case 0x0000014e: // TPM2_NV_Read
-            return this.handleNVRead(commandBuffer);
+            case 0x0000014e: // TPM2_NV_Read
+                return this.handleNVRead(commandBuffer);
 
-        case 0x00000137: // TPM2_NV_Write
-            return this.handleNVWrite(commandBuffer);
+            case 0x00000137: // TPM2_NV_Write
+                return this.handleNVWrite(commandBuffer);
 
-        case 0x00000148: // TPM2_Quote
-            return this.handleQuote(commandBuffer);
+            case 0x00000148: // TPM2_Quote
+                return this.handleQuote(commandBuffer);
 
-        case 0x00000177: // TPM2_GetRandom
-            return this.handleGetRandom(commandBuffer);
+            case 0x00000177: // TPM2_GetRandom
+                return this.handleGetRandom(commandBuffer);
 
-        case 0x0000015d: // TPM2_Sign
-            return this.handleSign(commandBuffer);
+            case 0x0000015d: // TPM2_Sign
+                return this.handleSign(commandBuffer);
 
-        case 0x00000159: // TPM2_Unseal
-            return this.handleUnseal(commandBuffer);
+            case 0x00000159: // TPM2_Unseal
+                return this.handleUnseal(commandBuffer);
 
-        default:
-            send({
-                type: 'warning',
-                target: 'tpm_emulator',
-                action: 'unhandled_command',
-                command_code: '0x' + commandCode.toString(16),
-            });
-            return this.createErrorResponse(tag, 0x0000000d); // TPM_RC_COMMAND_CODE
+            default:
+                send({
+                    type: 'warning',
+                    target: 'tpm_emulator',
+                    action: 'unhandled_command',
+                    command_code: '0x' + commandCode.toString(16),
+                });
+                return this.createErrorResponse(tag, 0x0000000d); // TPM_RC_COMMAND_CODE
         }
     },
 
@@ -558,26 +558,26 @@ const tpmEmulator = {
         response[offset++] = capability & 0xff;
 
         switch (capability) {
-        case 0x00000006: // TPM_CAP_TPM_PROPERTIES
-            offset = this.writeTPMProperties(response, offset, property, propertyCount);
-            break;
+            case 0x00000006: // TPM_CAP_TPM_PROPERTIES
+                offset = this.writeTPMProperties(response, offset, property, propertyCount);
+                break;
 
-        case 0x00000000: // TPM_CAP_ALGS
-            offset = this.writeAlgorithms(response, offset);
-            break;
+            case 0x00000000: // TPM_CAP_ALGS
+                offset = this.writeAlgorithms(response, offset);
+                break;
 
-        case 0x00000001: // TPM_CAP_HANDLES
-            offset = this.writeHandles(response, offset);
-            break;
+            case 0x00000001: // TPM_CAP_HANDLES
+                offset = this.writeHandles(response, offset);
+                break;
 
-        case 0x00000005: // TPM_CAP_PCRS
-            offset = this.writePCRSelection(response, offset);
-            break;
+            case 0x00000005: // TPM_CAP_PCRS
+                offset = this.writePCRSelection(response, offset);
+                break;
 
-        default:
-            // Return empty capability
-            offset = this.writeU32(response, offset, 0); // count
-            break;
+            default:
+                // Return empty capability
+                offset = this.writeU32(response, offset, 0); // count
+                break;
         }
 
         // Update size in header
@@ -1069,17 +1069,17 @@ const tpmEmulator = {
                     if (this.isTPM && retval.toInt32() >= 0) {
                         // Process based on IOCTL code
                         switch (this.ioControlCode) {
-                        case 0x22c00c: // TPM_IOCTL_SUBMIT_COMMAND
-                            var response = self.processTPMCommand(
-                                new Uint8Array(this.inputData)
-                            );
-                            this.outputBuffer.writeByteArray(response);
-                            break;
+                            case 0x22c00c: // TPM_IOCTL_SUBMIT_COMMAND
+                                var response = self.processTPMCommand(
+                                    new Uint8Array(this.inputData)
+                                );
+                                this.outputBuffer.writeByteArray(response);
+                                break;
 
-                        case 0x22c014: // TPM_IOCTL_GET_CAPABILITY
-                            // Return TPM 2.0 capability
-                            this.outputBuffer.writeU32(0x322e3000); // "2.0"
-                            break;
+                            case 0x22c014: // TPM_IOCTL_GET_CAPABILITY
+                                // Return TPM 2.0 capability
+                                this.outputBuffer.writeU32(0x322e3000); // "2.0"
+                                break;
                         }
                     }
                 },
@@ -1891,20 +1891,20 @@ const tpmEmulator = {
         var input = typeof data === 'string' ? data : data.toString();
 
         switch (algorithm) {
-        case 'sha1':
-            result = this.sha1Hash(input);
-            break;
-        case 'sha256':
-            result = this.sha256Hash(input);
-            break;
-        case 'sha384':
-            result = this.sha384Hash(input);
-            break;
-        case 'sha512':
-            result = this.sha512Hash(input);
-            break;
-        default:
-            result = this.sha256Hash(input); // Default to SHA256
+            case 'sha1':
+                result = this.sha1Hash(input);
+                break;
+            case 'sha256':
+                result = this.sha256Hash(input);
+                break;
+            case 'sha384':
+                result = this.sha384Hash(input);
+                break;
+            case 'sha512':
+                result = this.sha512Hash(input);
+                break;
+            default:
+                result = this.sha256Hash(input); // Default to SHA256
         }
 
         this.cryptoEngine.hashCache[algorithm + data] = result;

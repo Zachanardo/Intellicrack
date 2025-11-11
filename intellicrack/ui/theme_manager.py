@@ -20,15 +20,16 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import os
 
-from intellicrack.core.config_manager import get_config
 from intellicrack.handlers.pyqt6_handler import QApplication
 
 
 class ThemeManager:
     """Manages application themes and dynamic stylesheet switching."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize theme manager with default themes and UI styling options."""
+        from intellicrack.core.config_manager import get_config
+
         self.themes = {
             "dark": "dark_theme.qss",
             "light": "light_theme.qss",
@@ -63,11 +64,11 @@ class ThemeManager:
 
         return theme_mapping.get(stored_theme, "dark")
 
-    def save_theme_preference(self):
+    def save_theme_preference(self) -> None:
         """Save current theme preference to central config."""
         self.config.set("ui_preferences.theme", self.current_theme)
 
-    def set_theme(self, theme_name):
+    def set_theme(self, theme_name) -> None:
         """Set the application theme.
 
         Args:
@@ -87,7 +88,7 @@ class ThemeManager:
             "white": "light",  # Map white to light
         }
 
-        normalized_theme = theme_mapping.get(theme_name, None)
+        normalized_theme = theme_mapping.get(theme_name)
 
         if normalized_theme not in self.themes:
             print(f"Warning: Unknown theme '{theme_name}', using light theme")
@@ -97,7 +98,7 @@ class ThemeManager:
         self.save_theme_preference()
         self._apply_theme()
 
-    def _apply_theme(self):
+    def _apply_theme(self) -> None:
         """Apply the current theme's stylesheet to the application."""
         try:
             # Get the stylesheet content
@@ -138,7 +139,7 @@ class ThemeManager:
             return self._get_builtin_dark_stylesheet()
         return self._get_builtin_light_stylesheet()
 
-    def _get_builtin_dark_stylesheet(self):
+    def _get_builtin_dark_stylesheet(self) -> str:
         """Built-in dark theme stylesheet with proper contrast."""
         return """
 /* Intellicrack Dark Theme */
@@ -517,7 +518,7 @@ QPushButton#resetButton:pressed {
 }
 """
 
-    def _get_builtin_light_stylesheet(self):
+    def _get_builtin_light_stylesheet(self) -> str:
         """Built-in light theme stylesheet with improved contrast."""
         return """
 /* Intellicrack Light Theme - Enhanced Contrast */
@@ -920,7 +921,7 @@ QPushButton#resetButton:pressed {
 }
 """
 
-    def _apply_builtin_dark_theme(self):
+    def _apply_builtin_dark_theme(self) -> None:
         """Apply built-in dark theme as fallback."""
         try:
             app = QApplication.instance()
@@ -943,7 +944,7 @@ def get_theme_manager():
     return _theme_manager
 
 
-def apply_theme(theme_name):
+def apply_theme(theme_name) -> None:
     """Apply a theme."""
     get_theme_manager().set_theme(theme_name)
 

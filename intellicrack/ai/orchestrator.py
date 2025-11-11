@@ -114,7 +114,7 @@ class AIResult:
 class AISharedContext:
     """Shared context and memory for AI workflows."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the shared context for AI workflows.
 
         Creates a thread-safe context store for sharing data between AI components,
@@ -171,7 +171,7 @@ class AISharedContext:
 class AIEventBus:
     """Event bus for AI component communication."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the AI event bus for component communication.
 
         Creates a thread-safe publish-subscribe system for AI components
@@ -191,7 +191,7 @@ class AIEventBus:
                 {
                     "callback": callback,
                     "component": component_name,
-                }
+                },
             )
 
         logger.debug("Component %s subscribed to %s", component_name, event_type)
@@ -212,7 +212,7 @@ class AIEventBus:
             for _subscriber in subscribers:
                 try:
                     # Call subscriber in a separate thread to avoid blocking
-                    def call_subscriber(sub):
+                    def call_subscriber(sub) -> None:
                         """Call a subscriber's callback function with event data.
 
                         Args:
@@ -247,7 +247,7 @@ class AIOrchestrator:
     of each component type.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the AI orchestrator.
 
         Sets up the shared context, event bus, task queue, and starts the task processing
@@ -279,7 +279,7 @@ class AIOrchestrator:
 
         logger.info("AI Orchestrator initialized successfully")
 
-    def _initialize_components(self):
+    def _initialize_components(self) -> None:
         """Initialize all AI components."""
         logger.info("Initializing AI components...")
 
@@ -338,7 +338,7 @@ class AIOrchestrator:
             logger.error("Failed to initialize Hex Bridge: %s", e)
             self.hex_bridge = None
 
-    def _setup_event_subscriptions(self):
+    def _setup_event_subscriptions(self) -> None:
         """Set up event subscriptions for component coordination."""
         # Subscribe to analysis completion events
         self.event_bus.subscribe("analysis_complete", self._on_analysis_complete, "orchestrator")
@@ -346,7 +346,7 @@ class AIOrchestrator:
         self.event_bus.subscribe("model_loaded", self._on_model_loaded, "orchestrator")
         self.event_bus.subscribe("error_occurred", self._on_error_occurred, "orchestrator")
 
-    def _on_analysis_complete(self, data: dict[str, Any], source: str):
+    def _on_analysis_complete(self, data: dict[str, Any], source: str) -> None:
         """Handle analysis completion events."""
         logger.info("Analysis complete from %s: %s", source, data.get("task_id", "unknown"))
 
@@ -356,10 +356,10 @@ class AIOrchestrator:
                 {
                     f"last_analysis_{source}": data["results"],
                     f"last_analysis_time_{source}": datetime.now(),
-                }
+                },
             )
 
-    def _on_ml_prediction_complete(self, data: dict[str, Any], source: str):
+    def _on_ml_prediction_complete(self, data: dict[str, Any], source: str) -> None:
         """Handle ML prediction completion events."""
         logger.info("ML prediction complete from %s", source)
 
@@ -368,15 +368,15 @@ class AIOrchestrator:
         if confidence < 0.7:  # Low confidence, use LLM for verification
             self._escalate_to_complex_analysis(data)
 
-    def _on_model_loaded(self, data: dict[str, Any], source: str):
+    def _on_model_loaded(self, data: dict[str, Any], source: str) -> None:
         """Handle model loading events."""
         logger.info("Model loaded in %s: %s", source, data.get("model_name", "unknown"))
 
-    def _on_error_occurred(self, data: dict[str, Any], source: str):
+    def _on_error_occurred(self, data: dict[str, Any], source: str) -> None:
         """Handle error events."""
         logger.error("Error in %s: %s", source, data.get("error", "unknown error"))
 
-    def _escalate_to_complex_analysis(self, ml_data: dict[str, Any]):
+    def _escalate_to_complex_analysis(self, ml_data: dict[str, Any]) -> None:
         """Escalate low-confidence ML results to complex LLM analysis."""
         if self.model_manager:
             logger.info("Escalating to complex analysis due to low ML confidence")
@@ -392,7 +392,7 @@ class AIOrchestrator:
             )
             self.submit_task(task)
 
-    def start_processing(self):
+    def start_processing(self) -> None:
         """Start the task processing thread."""
         if not self.is_running:
             # Skip thread creation during testing
@@ -405,14 +405,14 @@ class AIOrchestrator:
             self.processing_thread.start()
             logger.info("Task processing started")
 
-    def stop_processing(self):
+    def stop_processing(self) -> None:
         """Stop the task processing thread."""
         self.is_running = False
         if self.processing_thread:
             self.processing_thread.join(timeout=5)
         logger.info("Task processing stopped")
 
-    def _process_tasks(self):
+    def _process_tasks(self) -> None:
         """Process tasks in the main loop."""
         while self.is_running:
             try:
@@ -554,7 +554,7 @@ class AIOrchestrator:
                 logger.error("Error in task callback: %s", e)
 
         # Clear progress tracking after short delay (keep for UI feedback)
-        def clear_progress():
+        def clear_progress() -> None:
             import time
 
             time.sleep(5)  # Keep progress visible for 5 seconds
@@ -1221,7 +1221,7 @@ class AIOrchestrator:
         self.progress_callbacks.pop(task_id, None)
         logger.debug(f"Cleared progress tracking for task {task_id}")
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown the orchestrator and all components."""
         logger.info("Shutting down AI Orchestrator...")
         self.stop_processing()
@@ -1249,7 +1249,7 @@ def get_orchestrator() -> AIOrchestrator:
     return _ORCHESTRATOR_INSTANCE
 
 
-def shutdown_orchestrator():
+def shutdown_orchestrator() -> None:
     """Shutdown the global orchestrator instance."""
     global _ORCHESTRATOR_INSTANCE  # pylint: disable=global-statement
     if _ORCHESTRATOR_INSTANCE:

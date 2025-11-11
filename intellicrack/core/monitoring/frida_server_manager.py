@@ -27,7 +27,7 @@ class FridaServerManager:
     and performs health checks before allowing monitoring to proceed.
     """
 
-    def __init__(self, server_dir: Optional[Path] = None):
+    def __init__(self, server_dir: Optional[Path] = None) -> None:
         """Initialize frida server manager.
 
         Args:
@@ -177,9 +177,8 @@ class FridaServerManager:
         try:
             import lzma
 
-            with lzma.open(input_path, "rb") as f_in:
-                with open(output_path, "wb") as f_out:
-                    f_out.write(f_in.read())
+            with lzma.open(input_path, "rb") as f_in, open(output_path, "wb") as f_out:
+                f_out.write(f_in.read())
         except ImportError:
             raise RuntimeError("lzma module not available - cannot decompress frida-server") from None
 

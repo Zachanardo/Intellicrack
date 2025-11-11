@@ -83,7 +83,7 @@ class BinarySimilaritySearchDialog(QDialog):
     and apply patterns from similar cracking attempts.
     """
 
-    def __init__(self, binary_path: str, parent=None):
+    def __init__(self, binary_path: str, parent=None) -> None:
         """Initialize the binary similarity search dialog.
 
         Args:
@@ -263,14 +263,14 @@ class BinarySimilaritySearchDialog(QDialog):
 
             result_signal = pyqtSignal(list)
 
-            def __init__(self, search_engine, binary_path: str, threshold: float):
+            def __init__(self, search_engine, binary_path: str, threshold: float) -> None:
                 """Initialize the SearchThread with default values."""
                 super().__init__()
                 self.search_engine = search_engine
                 self.binary_path = binary_path
                 self.threshold = threshold
 
-            def run(self):
+            def run(self) -> None:
                 """Execute binary similarity search in a separate thread."""
                 try:
                     results = self.search_engine.search_similar_binaries(self.binary_path, self.threshold)

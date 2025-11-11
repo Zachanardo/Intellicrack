@@ -19,6 +19,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import logging
 import os
 import subprocess
+from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -89,7 +90,7 @@ def run_ghidra_plugin(
         logger.info(f"Running Ghidra command: {' '.join(command)}")
 
         # Execute Ghidra
-        process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+        process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
             command,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -819,8 +820,9 @@ def cleanup_ghidra_project(project_dir: str, project_name: str) -> bool:
                     shutil.rmtree(file_path)
 
         # Remove directory if empty
-        if not os.listdir(project_dir):
-            os.rmdir(project_dir)
+        project_path = Path(project_dir)
+        if project_path.exists() and project_path.is_dir() and not any(project_path.iterdir()):
+            project_path.rmdir()
 
         logger.info(f"Cleaned up Ghidra project: {project_name}")
         return True

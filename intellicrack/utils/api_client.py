@@ -43,7 +43,7 @@ except ImportError as e:
 class APIClient:
     """Production-ready API client with retry logic and error handling."""
 
-    def __init__(self, base_url: str | None = None):
+    def __init__(self, base_url: str | None = None) -> None:
         """Initialize the API client with configuration from environment or defaults."""
         if not HAS_AIOHTTP:
             logger.warning("aiohttp not available - API client will use fallback implementation")

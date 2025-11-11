@@ -242,6 +242,7 @@ except ImportError as e:
     import time
     import weakref
 
+    @log_all_methods
     class FallbackWidget:
         """Production-ready widget implementation for headless/server environments."""
 
@@ -250,7 +251,7 @@ except ImportError as e:
         _running = False
         _cleanup_registered = False
 
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs) -> None:
             self._properties = {}
             self._children = []
             self._parent = kwargs.get("parent")
@@ -269,21 +270,21 @@ except ImportError as e:
                 atexit.register(FallbackWidget._cleanup_all)
                 FallbackWidget._cleanup_registered = True
 
-        def show(self):
+        def show(self) -> bool:
             if not self._destroyed:
                 self._visible = True
                 logger.debug(f"Widget {self.__class__.__name__} shown (headless mode)")
                 self._emit_event("show")
             return True
 
-        def hide(self):
+        def hide(self) -> bool:
             if not self._destroyed:
                 self._visible = False
                 logger.debug(f"Widget {self.__class__.__name__} hidden (headless mode)")
                 self._emit_event("hide")
             return True
 
-        def setEnabled(self, enabled):
+        def setEnabled(self, enabled) -> bool:
             if not self._destroyed:
                 self._enabled = bool(enabled)
                 logger.debug(f"Widget {self.__class__.__name__} enabled={self._enabled}")
@@ -293,7 +294,7 @@ except ImportError as e:
         def isEnabled(self):
             return self._enabled and not self._destroyed
 
-        def setText(self, text):
+        def setText(self, text) -> bool:
             if not self._destroyed:
                 self._text = str(text)
                 self._emit_event("textChanged", self._text)
@@ -302,7 +303,7 @@ except ImportError as e:
         def text(self):
             return self._text if not self._destroyed else ""
 
-        def setValue(self, value):
+        def setValue(self, value) -> bool:
             if not self._destroyed:
                 old_value = self._value
                 self._value = value
@@ -313,7 +314,7 @@ except ImportError as e:
         def value(self):
             return self._value if not self._destroyed else None
 
-        def setGeometry(self, x, y, w, h):
+        def setGeometry(self, x, y, w, h) -> bool:
             if not self._destroyed:
                 self._geometry = {"x": x, "y": y, "width": w, "height": h}
                 self._emit_event("geometryChanged", self._geometry)
@@ -322,14 +323,14 @@ except ImportError as e:
         def geometry(self):
             return self._geometry.copy() if not self._destroyed else {"x": 0, "y": 0, "width": 0, "height": 0}
 
-        def addWidget(self, widget, *args):
+        def addWidget(self, widget, *args) -> bool:
             if not self._destroyed and hasattr(widget, "_properties"):
                 self._children.append(widget)
                 if hasattr(widget, "_parent"):
                     widget._parent = self
             return True
 
-        def setLayout(self, layout):
+        def setLayout(self, layout) -> bool:
             if not self._destroyed and hasattr(layout, "_children"):
                 self._children.extend(layout._children)
                 for child in layout._children:
@@ -337,7 +338,7 @@ except ImportError as e:
                         child._parent = self
             return True
 
-        def exec(self):
+        def exec(self) -> int | None:
             if self._destroyed:
                 return 0
 
@@ -357,13 +358,13 @@ except ImportError as e:
             finally:
                 FallbackWidget._running = False
 
-        def accept(self):
+        def accept(self) -> bool:
             if not self._destroyed:
                 self._emit_event("accepted")
                 return True
             return False
 
-        def reject(self):
+        def reject(self) -> bool:
             if not self._destroyed:
                 self._emit_event("rejected")
                 return False
@@ -377,13 +378,13 @@ except ImportError as e:
                 return None
             return self
 
-        def __int__(self):
+        def __int__(self) -> int:
             return 0 if self._destroyed else 1
 
-        def __str__(self):
+        def __str__(self) -> str:
             return f"FallbackWidget({self.__class__.__name__})"
 
-        def __bool__(self):
+        def __bool__(self) -> bool:
             return not self._destroyed
 
         @classmethod
@@ -396,7 +397,7 @@ except ImportError as e:
             instance = cls()
             return instance
 
-        def processEvents(self):
+        def processEvents(self) -> None:
             if self._destroyed:
                 return
 
@@ -425,7 +426,7 @@ except ImportError as e:
                     else:
                         timer_info["next_fire"] = time.time() + timer_info["interval"]
 
-        def quit(self):
+        def quit(self) -> None:
             FallbackWidget._running = False
 
             for instance in list(FallbackWidget._instances):
@@ -451,14 +452,14 @@ except ImportError as e:
 
             return code
 
-        def connect(self, signal_name, callback):
+        def connect(self, signal_name, callback) -> None:
             if not self._destroyed and callable(callback):
                 if signal_name not in self._signals:
                     self._signals[signal_name] = []
                 self._signals[signal_name].append(callback)
                 logger.debug(f"Connected signal {signal_name} to {callback.__name__}")
 
-        def disconnect(self, signal_name, callback=None):
+        def disconnect(self, signal_name, callback=None) -> None:
             if not self._destroyed and signal_name in self._signals:
                 if callback:
                     if callback in self._signals[signal_name]:
@@ -468,7 +469,7 @@ except ImportError as e:
                     self._signals[signal_name] = []
                     logger.debug(f"Disconnected all from {signal_name}")
 
-        def emit(self, signal_name, *args, **kwargs):
+        def emit(self, signal_name, *args, **kwargs) -> None:
             if not self._destroyed and signal_name in self._signals:
                 for callback in self._signals[signal_name]:
                     try:
@@ -476,16 +477,16 @@ except ImportError as e:
                     except Exception as e:
                         logger.error(f"Signal callback error for {signal_name}: {e}")
 
-        def _emit_event(self, event_type, data=None):
+        def _emit_event(self, event_type, data=None) -> None:
             if not self._destroyed:
                 event = {"type": event_type, "widget": self, "data": data, "timestamp": time.time()}
                 FallbackWidget._event_queue.put(event)
 
-        def _process_event(self, event):
+        def _process_event(self, event) -> None:
             if event["type"] in self._signals:
                 self.emit(event["type"], event.get("data"))
 
-        def _cleanup(self):
+        def _cleanup(self) -> None:
             self._destroyed = True
             self._signals.clear()
             self._timers.clear()
@@ -493,7 +494,7 @@ except ImportError as e:
             self._properties.clear()
 
         @classmethod
-        def _cleanup_all(cls):
+        def _cleanup_all(cls) -> None:
             for instance in list(cls._instances):
                 if hasattr(instance, "_cleanup"):
                     instance._cleanup()
@@ -509,8 +510,8 @@ except ImportError as e:
 
             return method
 
-        def deleteLater(self):
-            def cleanup():
+        def deleteLater(self) -> None:
+            def cleanup() -> None:
                 self._cleanup()
                 if self in FallbackWidget._instances:
                     FallbackWidget._instances.discard(self)
@@ -529,7 +530,7 @@ except ImportError as e:
                 return len(self._timers) - 1
             return -1
 
-        def killTimer(self, timer_id):
+        def killTimer(self, timer_id) -> None:
             if 0 <= timer_id < len(self._timers):
                 self._timers[timer_id] = None
                 self._timers = [t for t in self._timers if t is not None]
@@ -645,7 +646,7 @@ except ImportError as e:
             "Checked": 2,
         }
 
-        def __init__(self):
+        def __init__(self) -> None:
             self._namespace_name = "QtFallback"
             self._sub_namespaces = {}
 
@@ -679,10 +680,10 @@ except ImportError as e:
         def __call__(self, *args, **kwargs):
             return 0
 
-        def __int__(self):
+        def __int__(self) -> int:
             return 0
 
-        def __bool__(self):
+        def __bool__(self) -> bool:
             return True
 
     class FallbackQtEnum:
@@ -839,7 +840,7 @@ except ImportError as e:
             },
         }
 
-        def __init__(self, enum_type):
+        def __init__(self, enum_type) -> None:
             self._enum_type = enum_type
             self._values = self._enum_mappings.get(enum_type, {})
 
@@ -850,7 +851,7 @@ except ImportError as e:
             logger.debug(f"Unknown Qt enum value requested: {self._enum_type}.{name}, returning 0")
             return 0
 
-        def __int__(self):
+        def __int__(self) -> int:
             return 0
 
         def __call__(self, *args, **kwargs):
@@ -1102,18 +1103,18 @@ except ImportError as e:
         class FallbackSignal:
             """Production-ready signal implementation for headless environments."""
 
-            def __init__(self, *types, **kwargs):
+            def __init__(self, *types, **kwargs) -> None:
                 self._types = types
                 self._name = kwargs.get("name", "signal")
                 self._callbacks = []
                 self._enabled = True
 
-            def connect(self, callback):
+            def connect(self, callback) -> None:
                 if callable(callback) and callback not in self._callbacks:
                     self._callbacks.append(callback)
                     logger.debug(f"Signal {self._name} connected to {callback.__name__}")
 
-            def disconnect(self, callback=None):
+            def disconnect(self, callback=None) -> None:
                 if callback is None:
                     self._callbacks.clear()
                     logger.debug(f"All callbacks disconnected from signal {self._name}")
@@ -1121,7 +1122,7 @@ except ImportError as e:
                     self._callbacks.remove(callback)
                     logger.debug(f"Callback {callback.__name__} disconnected from signal {self._name}")
 
-            def emit(self, *args):
+            def emit(self, *args) -> None:
                 if not self._enabled:
                     return
 
@@ -1131,13 +1132,13 @@ except ImportError as e:
                     except Exception as e:
                         logger.error(f"Signal {self._name} callback error: {e}")
 
-            def setEnabled(self, enabled):
+            def setEnabled(self, enabled) -> None:
                 self._enabled = bool(enabled)
 
             def __call__(self, *args):
                 self.emit(*args)
 
-            def __bool__(self):
+            def __bool__(self) -> bool:
                 return True
 
         def pyqtSignal(*types, **kwargs):
@@ -1162,7 +1163,7 @@ except ImportError as e:
                             expected_type = func._slot_result
                             if not isinstance(result, expected_type):
                                 logger.warning(
-                                    f"Slot {func._slot_name} returned {type(result).__name__}, expected {expected_type.__name__}"
+                                    f"Slot {func._slot_name} returned {type(result).__name__}, expected {expected_type.__name__}",
                                 )
 
                         return result

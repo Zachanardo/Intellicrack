@@ -41,7 +41,7 @@ class R2SignatureAnalyzer:
     - Known vulnerability pattern detection
     """
 
-    def __init__(self, binary_path: str, radare2_path: str | None = None):
+    def __init__(self, binary_path: str, radare2_path: str | None = None) -> None:
         """Initialize signature analyzer.
 
         Args:
@@ -170,7 +170,7 @@ class R2SignatureAnalyzer:
                                         "address": hex(func_addr),
                                         "size": func.get("size", 0),
                                         "signature_type": "flirt",
-                                    }
+                                    },
                                 )
                         except R2Exception as e:
                             logger.error("R2Exception in radare2_signatures: %s", e)
@@ -242,7 +242,7 @@ class R2SignatureAnalyzer:
                     "category": category,
                     "confidence": self._calculate_name_confidence(func_name),
                     "signature_source": self._determine_signature_source(func_name),
-                }
+                },
             )
 
         return categorized
@@ -1140,7 +1140,7 @@ class R2SignatureAnalyzer:
                             "pattern": pattern,
                             "confidence": confidence,
                             "r2_enhanced": r2_enhanced,
-                        }
+                        },
                     )
 
         return custom_matches

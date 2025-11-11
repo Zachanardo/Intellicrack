@@ -78,7 +78,7 @@ class SessionMetrics:
 class R2PerformanceMonitor:
     """Monitor and collect performance metrics for radare2 operations."""
 
-    def __init__(self, enable_real_time: bool = True):
+    def __init__(self, enable_real_time: bool = True) -> None:
         """Initialize performance monitor.
 
         Args:
@@ -192,7 +192,7 @@ class R2PerformanceMonitor:
         return metrics
 
     def end_operation(
-        self, operation_metrics: OperationMetrics, success: bool = True, error_message: Optional[str] = None, bytes_processed: int = 0
+        self, operation_metrics: OperationMetrics, success: bool = True, error_message: Optional[str] = None, bytes_processed: int = 0,
     ) -> OperationMetrics:
         """End tracking an operation.
 
@@ -241,25 +241,24 @@ class R2PerformanceMonitor:
                 # Update peak memory
                 if operation_metrics.memory_after:
                     memory_mb = operation_metrics.memory_after / (1024 * 1024)
-                    if memory_mb > self.current_session.peak_memory_mb:
-                        self.current_session.peak_memory_mb = memory_mb
+                    self.current_session.peak_memory_mb = max(self.current_session.peak_memory_mb, memory_mb)
 
         # Check thresholds
         self._check_thresholds(operation_metrics)
 
         self.logger.debug(
-            f"Ended operation: {operation_metrics.operation_name} (duration: {operation_metrics.duration_ms:.2f}ms, success: {success})"
+            f"Ended operation: {operation_metrics.operation_name} (duration: {operation_metrics.duration_ms:.2f}ms, success: {success})",
         )
 
         return operation_metrics
 
-    def record_cache_hit(self):
+    def record_cache_hit(self) -> None:
         """Record a cache hit."""
         with self.metrics_lock:
             if self.current_session:
                 self.current_session.cache_hits += 1
 
-    def record_cache_miss(self):
+    def record_cache_miss(self) -> None:
         """Record a cache miss."""
         with self.metrics_lock:
             if self.current_session:
@@ -358,7 +357,7 @@ class R2PerformanceMonitor:
             "historical_sessions": len(self.historical_sessions),
         }
 
-    def _start_monitoring(self):
+    def _start_monitoring(self) -> None:
         """Start real-time monitoring thread."""
         if self.monitoring_thread and self.monitoring_thread.is_alive():
             return
@@ -373,14 +372,14 @@ class R2PerformanceMonitor:
         self.monitoring_thread = threading.Thread(target=self._monitor_loop, daemon=True)
         self.monitoring_thread.start()
 
-    def _stop_monitoring(self):
+    def _stop_monitoring(self) -> None:
         """Stop real-time monitoring thread."""
         self.stop_monitoring.set()
         if self.monitoring_thread:
             self.monitoring_thread.join(timeout=1)
         self.process_monitor = None
 
-    def _monitor_loop(self):
+    def _monitor_loop(self) -> None:
         """Real-time monitoring loop."""
         cpu_samples = []
 
@@ -411,7 +410,7 @@ class R2PerformanceMonitor:
 
             self.stop_monitoring.wait(timeout=1)
 
-    def _check_thresholds(self, metrics: OperationMetrics):
+    def _check_thresholds(self, metrics: OperationMetrics) -> None:
         """Check if metrics exceed thresholds and log warnings.
 
         Args:
@@ -431,7 +430,7 @@ class R2PerformanceMonitor:
             elif memory_mb > self.thresholds["memory_usage_warn_mb"]:
                 self.logger.info(f"Memory usage warning: {memory_mb:.0f}MB")
 
-    def export_metrics(self, filepath: str):
+    def export_metrics(self, filepath: str) -> None:
         """Export metrics to JSON file.
 
         Args:

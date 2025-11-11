@@ -168,7 +168,7 @@ class ControlFlowDeobfuscator:
     license validation routines in commercial software.
     """
 
-    def __init__(self, binary_path: str | Path, radare2_path: str | None = None):
+    def __init__(self, binary_path: str | Path, radare2_path: str | None = None) -> None:
         """Initialize the control flow deobfuscator.
 
         Args:
@@ -275,7 +275,7 @@ class ControlFlowDeobfuscator:
             self.logger.warning("Advanced opaque predicate analyzer not available")
 
     def deobfuscate_function(
-        self, function_address: int, function_name: str | None = None
+        self, function_address: int, function_name: str | None = None,
     ) -> DeobfuscationResult:
         """Deobfuscate a single function's control flow.
 
@@ -297,10 +297,10 @@ class ControlFlowDeobfuscator:
 
                 if dispatcher_info:
                     self.logger.info(
-                        f"Detected {len(dispatcher_info)} control flow flattening dispatchers"
+                        f"Detected {len(dispatcher_info)} control flow flattening dispatchers",
                     )
                     deobfuscated_cfg = self._unflatten_control_flow(
-                        r2, original_cfg, dispatcher_info, function_address
+                        r2, original_cfg, dispatcher_info, function_address,
                     )
                 else:
                     self.logger.info("No control flow flattening detected")
@@ -311,7 +311,7 @@ class ControlFlowDeobfuscator:
                 if opaque_predicates:
                     self.logger.info(f"Detected {len(opaque_predicates)} opaque predicates")
                     deobfuscated_cfg = self._remove_opaque_predicates(
-                        r2, deobfuscated_cfg, opaque_predicates
+                        r2, deobfuscated_cfg, opaque_predicates,
                     )
 
                 bogus_blocks = self._detect_bogus_blocks(r2, deobfuscated_cfg, function_address)
@@ -321,13 +321,13 @@ class ControlFlowDeobfuscator:
                     deobfuscated_cfg = self._remove_bogus_blocks(deobfuscated_cfg, bogus_blocks)
 
                 patch_info = self._generate_patch_information(
-                    r2, original_cfg, deobfuscated_cfg, dispatcher_info, function_address
+                    r2, original_cfg, deobfuscated_cfg, dispatcher_info, function_address,
                 )
 
                 metrics = self._calculate_deobfuscation_metrics(original_cfg, deobfuscated_cfg)
 
                 confidence = self._calculate_confidence_score(
-                    dispatcher_info, opaque_predicates, bogus_blocks, metrics
+                    dispatcher_info, opaque_predicates, bogus_blocks, metrics,
                 )
 
                 removed_blocks = bogus_blocks
@@ -413,7 +413,7 @@ class ControlFlowDeobfuscator:
             raise
 
     def _detect_dispatchers(
-        self, r2, cfg: nx.DiGraph, function_address: int
+        self, r2, cfg: nx.DiGraph, function_address: int,
     ) -> list[DispatcherInfo]:
         """Detect control flow flattening dispatchers in the CFG.
 
@@ -499,7 +499,7 @@ class ControlFlowDeobfuscator:
         return (has_comparison or has_jump_table or has_switch) and (out_degree >= 5 or high_loop_back)
 
     def _identify_state_variable(
-        self, r2, basic_block: BasicBlock, function_address: int
+        self, r2, basic_block: BasicBlock, function_address: int,
     ) -> dict[str, Any]:
         """Identify the state variable used by a dispatcher.
 
@@ -530,7 +530,7 @@ class ControlFlowDeobfuscator:
                                     "type": "stack",
                                     "access": location_str,
                                     "instruction": disasm,
-                                }
+                                },
                             )
                         elif "rip" in location_str:
                             state_var_candidates.append(
@@ -539,7 +539,7 @@ class ControlFlowDeobfuscator:
                                     "type": "global",
                                     "access": location_str,
                                     "instruction": disasm,
-                                }
+                                },
                             )
 
         if state_var_candidates:
@@ -579,7 +579,7 @@ class ControlFlowDeobfuscator:
         return list(controlled_extended)
 
     def _extract_switch_cases(
-        self, r2, basic_block: BasicBlock, controlled_blocks: list[int], function_address: int
+        self, r2, basic_block: BasicBlock, controlled_blocks: list[int], function_address: int,
     ) -> dict[int, int]:
         """Extract switch case mappings from dispatcher block.
 
@@ -597,7 +597,7 @@ class ControlFlowDeobfuscator:
 
         try:
             switch_info = r2._execute_command(
-                f"afi @ {hex(basic_block.address)}", expect_json=False
+                f"afi @ {hex(basic_block.address)}", expect_json=False,
             )
 
             if "switch" in str(switch_info).lower():
@@ -633,7 +633,7 @@ class ControlFlowDeobfuscator:
             return "Generic"
 
     def _unflatten_control_flow(
-        self, r2, cfg: nx.DiGraph, dispatchers: list[DispatcherInfo], function_address: int
+        self, r2, cfg: nx.DiGraph, dispatchers: list[DispatcherInfo], function_address: int,
     ) -> nx.DiGraph:
         """Unflatten control flow by removing dispatcher blocks and recovering original edges.
 
@@ -653,16 +653,16 @@ class ControlFlowDeobfuscator:
             self.logger.debug(f"Unflattening dispatcher at 0x{dispatcher.dispatcher_address:x}")
 
             original_edges = self._recover_original_edges(
-                r2, cfg, dispatcher, function_address
+                r2, cfg, dispatcher, function_address,
             )
 
             for source, target in original_edges:
-                if source != dispatcher.dispatcher_address and target != dispatcher.dispatcher_address:
+                if dispatcher.dispatcher_address not in (source, target):
                     deobfuscated.add_edge(source, target, edge_type="recovered")
 
             edges_to_remove = []
             for source, target in deobfuscated.edges():
-                if source == dispatcher.dispatcher_address or target == dispatcher.dispatcher_address:
+                if dispatcher.dispatcher_address in (source, target):
                     edges_to_remove.append((source, target))
 
             for edge in edges_to_remove:
@@ -671,7 +671,7 @@ class ControlFlowDeobfuscator:
         return deobfuscated
 
     def _recover_original_edges(
-        self, r2, cfg: nx.DiGraph, dispatcher: DispatcherInfo, function_address: int
+        self, r2, cfg: nx.DiGraph, dispatcher: DispatcherInfo, function_address: int,
     ) -> list[tuple[int, int]]:
         """Recover original control flow edges from flattened structure.
 
@@ -709,7 +709,7 @@ class ControlFlowDeobfuscator:
         return recovered_edges
 
     def _extract_state_assignment(
-        self, basic_block: BasicBlock, dispatcher: DispatcherInfo
+        self, basic_block: BasicBlock, dispatcher: DispatcherInfo,
     ) -> int | None:
         """Extract state variable assignment from a basic block.
 
@@ -739,7 +739,7 @@ class ControlFlowDeobfuscator:
         return None
 
     def _detect_opaque_predicates(
-        self, r2, cfg: nx.DiGraph, function_address: int
+        self, r2, cfg: nx.DiGraph, function_address: int,
     ) -> list[dict[str, Any]]:
         """Detect opaque predicates using advanced analysis techniques.
 
@@ -777,11 +777,11 @@ class ControlFlowDeobfuscator:
                             "analysis_method": result.analysis_method,
                             "dead_branch": result.dead_branch,
                             "symbolic_proof": result.symbolic_proof,
-                        }
+                        },
                     )
 
                 self.logger.info(
-                    f"Advanced analysis detected {len(advanced_results)} opaque predicates"
+                    f"Advanced analysis detected {len(advanced_results)} opaque predicates",
                 )
 
                 if advanced_results:
@@ -811,7 +811,7 @@ class ControlFlowDeobfuscator:
                                         "analysis_method": "heuristic",
                                         "dead_branch": None,
                                         "symbolic_proof": None,
-                                    }
+                                    },
                                 )
 
                     if "jmp" not in disasm and any(
@@ -832,18 +832,18 @@ class ControlFlowDeobfuscator:
                                             "address": node,
                                             "instruction": f"{prev_inst.get('disasm', '')}; {inst.get('disasm', '')}",
                                             "type": "invariant_test",
-                                            "always_value": True if "jz" in disasm else False,
+                                            "always_value": "jz" in disasm,
                                             "confidence": 0.75,
                                             "analysis_method": "heuristic",
                                             "dead_branch": None,
                                             "symbolic_proof": None,
-                                        }
+                                        },
                                     )
 
         return opaque_predicates
 
     def _remove_opaque_predicates(
-        self, r2, cfg: nx.DiGraph, opaque_predicates: list[dict[str, Any]]
+        self, r2, cfg: nx.DiGraph, opaque_predicates: list[dict[str, Any]],
     ) -> nx.DiGraph:
         """Remove opaque predicates and perform comprehensive dead code elimination.
 
@@ -884,7 +884,7 @@ class ControlFlowDeobfuscator:
                     simplified.remove_edge(node, dead_branch)
                     dead_branches_removed.append(dead_branch)
                     self.logger.debug(
-                        f"Removed dead branch from 0x{node:x} to 0x{dead_branch:x}"
+                        f"Removed dead branch from 0x{node:x} to 0x{dead_branch:x}",
                     )
             else:
                 if len(basic_block.successors) != 2:
@@ -895,9 +895,9 @@ class ControlFlowDeobfuscator:
 
                 for edge in simplified.out_edges(node, data=True):
                     edge_type = edge[2].get("edge_type", "")
-                    if "true" in edge_type or "conditional_true" == edge_type:
+                    if "true" in edge_type or edge_type == "conditional_true":
                         true_successor = edge[1]
-                    elif "false" in edge_type or "conditional_false" == edge_type:
+                    elif "false" in edge_type or edge_type == "conditional_false":
                         false_successor = edge[1]
 
                 if true_successor and false_successor:
@@ -905,13 +905,13 @@ class ControlFlowDeobfuscator:
                         simplified.remove_edge(node, false_successor)
                         dead_branches_removed.append(false_successor)
                         self.logger.debug(
-                            f"Removed false branch from 0x{node:x} to 0x{false_successor:x}"
+                            f"Removed false branch from 0x{node:x} to 0x{false_successor:x}",
                         )
                     else:
                         simplified.remove_edge(node, true_successor)
                         dead_branches_removed.append(true_successor)
                         self.logger.debug(
-                            f"Removed true branch from 0x{node:x} to 0x{true_successor:x}"
+                            f"Removed true branch from 0x{node:x} to 0x{true_successor:x}",
                         )
 
         simplified = self._eliminate_dead_code(simplified, dead_branches_removed)
@@ -921,7 +921,7 @@ class ControlFlowDeobfuscator:
         return simplified
 
     def _eliminate_dead_code(
-        self, cfg: nx.DiGraph, initial_dead_blocks: list[int]
+        self, cfg: nx.DiGraph, initial_dead_blocks: list[int],
     ) -> nx.DiGraph:
         """Perform comprehensive dead code elimination.
 
@@ -1008,7 +1008,7 @@ class ControlFlowDeobfuscator:
                 if out_degree != 1:
                     continue
 
-                successor = list(simplified.successors(node))[0]
+                successor = next(iter(simplified.successors(node)))
 
                 if successor == node:
                     continue
@@ -1037,7 +1037,7 @@ class ControlFlowDeobfuscator:
         return simplified
 
     def _detect_bogus_blocks(
-        self, r2, cfg: nx.DiGraph, function_address: int
+        self, r2, cfg: nx.DiGraph, function_address: int,
     ) -> list[int]:
         """Detect bogus/unreachable basic blocks inserted by obfuscators.
 
@@ -1145,12 +1145,12 @@ class ControlFlowDeobfuscator:
             if node not in original_cfg.nodes():
                 continue
 
-            original_successors = set(
+            original_successors = {
                 target for _, target in original_cfg.out_edges(node)
-            )
-            deobf_successors = set(
+            }
+            deobf_successors = {
                 target for _, target in deobfuscated_cfg.out_edges(node)
-            )
+            }
 
             if original_successors != deobf_successors:
                 for target in deobf_successors:
@@ -1161,7 +1161,7 @@ class ControlFlowDeobfuscator:
                                 "type": "redirect_edge",
                                 "target": target,
                                 "description": f"Redirect 0x{node:x} -> 0x{target:x}",
-                            }
+                            },
                         )
 
         return patches
@@ -1183,7 +1183,7 @@ class ControlFlowDeobfuscator:
         return 0
 
     def _calculate_deobfuscation_metrics(
-        self, original_cfg: nx.DiGraph, deobfuscated_cfg: nx.DiGraph
+        self, original_cfg: nx.DiGraph, deobfuscated_cfg: nx.DiGraph,
     ) -> dict[str, Any]:
         """Calculate metrics comparing original and deobfuscated CFGs.
 
@@ -1260,7 +1260,7 @@ class ControlFlowDeobfuscator:
         return min(score, 1.0)
 
     def _extract_recovered_edges(
-        self, original_cfg: nx.DiGraph, deobfuscated_cfg: nx.DiGraph
+        self, original_cfg: nx.DiGraph, deobfuscated_cfg: nx.DiGraph,
     ) -> list[tuple[int, int]]:
         """Extract newly recovered edges that weren't in the original CFG.
 
@@ -1342,10 +1342,10 @@ class ControlFlowDeobfuscator:
             return False
 
         last_inst = instructions[-1].get("disasm", "").lower()
-        return "ret" in last_inst or ("jmp" in last_inst and "j" != last_inst[0])
+        return "ret" in last_inst or ("jmp" in last_inst and last_inst[0] != "j")
 
     def export_deobfuscated_cfg(
-        self, result: DeobfuscationResult, output_path: str | Path
+        self, result: DeobfuscationResult, output_path: str | Path,
     ) -> bool:
         """Export deobfuscated CFG to DOT format for visualization.
 
@@ -1397,7 +1397,7 @@ class ControlFlowDeobfuscator:
                         color = "red"
 
                     f.write(
-                        f'  "{source}" -> "{target}" [color="{color}", style="{style}", label="{edge_type}"];\n'
+                        f'  "{source}" -> "{target}" [color="{color}", style="{style}", label="{edge_type}"];\n',
                     )
 
                 f.write("}\n")
@@ -1410,7 +1410,7 @@ class ControlFlowDeobfuscator:
             return False
 
     def apply_patches(
-        self, result: DeobfuscationResult, output_path: str | Path | None = None
+        self, result: DeobfuscationResult, output_path: str | Path | None = None,
     ) -> bool:
         """Apply deobfuscation patches to create a patched binary.
 

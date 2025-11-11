@@ -53,7 +53,7 @@ ANALYSIS_SCRIPTS_WHITELIST = [
 ]
 
 
-def on_frida_message(main_app, binary_path, message, data):
+def on_frida_message(main_app, binary_path, message, data) -> None:
     """Handle messages from Frida scripts."""
     try:
         if message["type"] == "send":
@@ -67,15 +67,15 @@ def on_frida_message(main_app, binary_path, message, data):
         main_app.update_output.emit(f"[Frida Message Error] Failed to process message: {e}")
 
 
-def run_frida_script_thread(main_app, binary_path, script_path):
+def run_frida_script_thread(main_app, binary_path, script_path) -> None:
     """Execute Frida script logic in a separate thread."""
     session = None
     try:
         main_app.update_output.emit(
-            f"[Frida Runner] Starting script '{os.path.basename(script_path)}' on {os.path.basename(binary_path)}..."
+            f"[Frida Runner] Starting script '{os.path.basename(script_path)}' on {os.path.basename(binary_path)}...",
         )
 
-        with open(script_path, "r", encoding="utf-8") as f:
+        with open(script_path, encoding="utf-8") as f:
             script_source = f.read()
 
         device = frida.get_local_device()
@@ -97,14 +97,13 @@ def run_frida_script_thread(main_app, binary_path, script_path):
     except Exception as e:
         main_app.update_output.emit(f"[Frida Runner] An error occurred: {e}")
     finally:
-        if binary_path in active_frida_sessions:
-            del active_frida_sessions[binary_path]
+        active_frida_sessions.pop(binary_path, None)
         main_app.update_output.emit(f"[Frida Runner] Script '{os.path.basename(script_path)}' finished.")
         if hasattr(main_app, "analysis_completed"):
             main_app.analysis_completed.emit("Frida Script Runner")
 
 
-def run_frida_analysis(main_app):
+def run_frida_analysis(main_app) -> None:
     """Present a dialog for the user to select a whitelisted analysis script,.
 
     then run it against the currently loaded binary.
@@ -133,7 +132,7 @@ def run_frida_analysis(main_app):
         return
 
     script_name, ok = QInputDialog.getItem(
-        main_app, "Select Analysis Script", "Choose a Frida script to run:", sorted(available_scripts), 0, False
+        main_app, "Select Analysis Script", "Choose a Frida script to run:", sorted(available_scripts), 0, False,
     )
 
     if not (ok and script_name):
@@ -147,7 +146,7 @@ def run_frida_analysis(main_app):
     main_app.update_output.emit("[Frida Runner] Analysis task submitted.")
 
 
-def stop_frida_analysis(main_app):
+def stop_frida_analysis(main_app) -> None:
     """Stop running Frida analysis session for the current binary."""
     if not main_app.current_binary:
         main_app.update_output.emit("[Frida Runner] Error: No binary loaded.")
@@ -240,7 +239,7 @@ def stop_stalker_session(main_app) -> bool:
             f"  - Coverage Entries: {stats.coverage_entries:,}\n"
             f"  - Licensing Routines: {stats.licensing_routines}\n"
             f"  - API Calls: {stats.api_calls}\n"
-            f"  - Duration: {stats.trace_duration:.2f}s"
+            f"  - Duration: {stats.trace_duration:.2f}s",
         )
 
         results_file = session.export_results()

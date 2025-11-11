@@ -124,7 +124,7 @@ class VMContext:
 class VMProtectHandler:
     """VMProtect-specific handling."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize VMProtect handler with logging and detection capabilities."""
         self.logger = logging.getLogger(f"{__name__}.VMProtect")
         self.key_schedules = {
@@ -365,7 +365,7 @@ class VMProtectHandler:
 class CodeVirtualizerHandler:
     """Code Virtualizer-specific handling."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize Code Virtualizer handler."""
         self.logger = logging.getLogger(f"{__name__}.CodeVirtualizer")
         self.opcode_map = self._build_cv_opcode_map()
@@ -441,7 +441,7 @@ class CodeVirtualizerHandler:
 class ThemidaHandler:
     """Themida-specific handling."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize Themida handler with logging and opcode mapping."""
         self.logger = logging.getLogger(f"{__name__}.Themida")
         self.opcode_map = self._build_themida_opcode_map()
@@ -505,7 +505,7 @@ class ThemidaHandler:
 class VMEmulator:
     """VM instruction emulator."""
 
-    def __init__(self, protection_type: ProtectionType):
+    def __init__(self, protection_type: ProtectionType) -> None:
         """Initialize VM emulator with protection type and Unicorn engine."""
         self.protection_type = protection_type
         self.context = VMContext()
@@ -524,7 +524,7 @@ class VMEmulator:
         handlers[ProtectionType.CODE_VIRTUALIZER] = CodeVirtualizerHandler()
         return handlers
 
-    def _init_unicorn(self):
+    def _init_unicorn(self) -> None:
         """Initialize Unicorn emulation engine."""
         try:
             from unicorn import UC_ARCH_X86, UC_MODE_32, Uc
@@ -534,7 +534,7 @@ class VMEmulator:
         except ImportError:
             self.logger.warning("Unicorn not available, using fallback emulation")
 
-    def _setup_unicorn(self):
+    def _setup_unicorn(self) -> None:
         """Configure Unicorn emulation engine."""
         if not self.uc:
             return
@@ -753,7 +753,7 @@ class VMEmulator:
 class VMAnalyzer:
     """VM code analyzer and pattern detector."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize VM analyzer with logging and protection patterns."""
         self.logger = logging.getLogger(f"{__name__}.VMAnalyzer")
         self.patterns = self._load_vm_patterns()
@@ -914,7 +914,7 @@ class VMAnalyzer:
                         "data": section_data,
                         "entropy": self._calculate_entropy(section_data),
                         "type": self._classify_section(section_data),
-                    }
+                    },
                 )
 
                 current_offset = section_end
@@ -952,7 +952,7 @@ class VMAnalyzer:
 class VMProtectionUnwrapper:
     """Run VM protection unwrapper."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize VM protection unwrapper with analyzer, emulators, and statistics tracking."""
         self.logger = logging.getLogger(__name__)
         self.analyzer = VMAnalyzer()
@@ -961,7 +961,7 @@ class VMProtectionUnwrapper:
             "files_processed": 0,
             "successful_unwraps": 0,
             "failed_unwraps": 0,
-            "protection_types_detected": {pt: 0 for pt in ProtectionType},
+            "protection_types_detected": dict.fromkeys(ProtectionType, 0),
         }
 
     def unwrap_file(self, input_file: str, output_file: str) -> dict[str, Any]:
@@ -1235,10 +1235,7 @@ class VMProtectionUnwrapper:
 
         # Check for null bytes concentration
         null_count = data.count(b"\x00")
-        if null_count > len(data) * 0.5:
-            return False
-
-        return True
+        return not null_count > len(data) * 0.5
 
     def _validate_key(self, key: bytes, binary_data: bytes, entry_point: int) -> bool:
         """Validate extracted key by testing decryption."""
@@ -1709,7 +1706,7 @@ class VMProtectionUnwrapper:
 
                 if asm_code:
                     # Assemble to machine code
-                    encoding, count = ks.asm(asm_code)
+                    encoding, _count = ks.asm(asm_code)
                     if encoding:
                         x86_code.extend(encoding)
                     else:
@@ -1816,7 +1813,7 @@ class VMProtectionUnwrapper:
                         "input_file": str(file_path),
                         "success": False,
                         "error": str(e),
-                    }
+                    },
                 )
 
         # Summary
@@ -1839,7 +1836,7 @@ class VMProtectionUnwrapper:
         }
 
 
-def main():
+def main() -> None:
     """Demonstrate VM protection unwrapping functionality."""
     import argparse
 

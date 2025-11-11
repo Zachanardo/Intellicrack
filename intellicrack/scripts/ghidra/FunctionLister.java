@@ -305,7 +305,7 @@ public class FunctionLister extends GhidraScript {
       metrics.basicBlockCount = 0;
       return;
     }
-    
+
     CodeBlockIterator blockIter = blockModel.getCodeBlocksContaining(body, monitor);
 
     int blockCount = 0;
@@ -360,9 +360,8 @@ public class FunctionLister extends GhidraScript {
     if (funcBody == null) {
       return;
     }
-    
-    InstructionIterator instIter =
-        currentProgram.getListing().getInstructions(funcBody, true);
+
+    InstructionIterator instIter = currentProgram.getListing().getInstructions(funcBody, true);
 
     while (instIter.hasNext()) {
       Instruction inst = instIter.next();
@@ -441,7 +440,7 @@ public class FunctionLister extends GhidraScript {
     if (body == null) {
       return;
     }
-    
+
     InstructionIterator instIter = listing.getInstructions(body, true);
 
     // Pattern detection
@@ -1165,7 +1164,7 @@ public class FunctionLister extends GhidraScript {
     for (FunctionMetrics metrics : functionMetrics.values()) {
       Function func = getFunctionAt(metrics.entryPoint);
       if (func == null) continue;
-      
+
       AddressSetView body = func.getBody();
       if (body == null) continue;
 
@@ -1261,7 +1260,7 @@ public class FunctionLister extends GhidraScript {
     // Look for patterns that indicate potential buffer overflows
     int pointerSize = language.getDefaultSpace().getPointerSize();
     boolean hasPattern = false;
-    
+
     AddressSetView body = func.getBody();
     if (body == null) {
       return false;
@@ -1732,7 +1731,7 @@ public class FunctionLister extends GhidraScript {
     for (FunctionMetrics metrics : functionMetrics.values()) {
       Function func = getFunctionAt(metrics.entryPoint);
       if (func == null) continue;
-      
+
       AddressSetView body = func.getBody();
       if (body == null) continue;
 
@@ -1996,11 +1995,12 @@ public class FunctionLister extends GhidraScript {
     }
 
     // Identify hotspots (highly referenced addresses)
-    List<Map.Entry<Address, Integer>> hotspots = referenceCountMap.entrySet().stream()
-        .filter(entry -> entry.getValue() >= 5)
-        .sorted(Map.Entry.<Address, Integer>comparingByValue().reversed())
-        .limit(15)
-        .collect(java.util.stream.Collectors.toList());
+    List<Map.Entry<Address, Integer>> hotspots =
+        referenceCountMap.entrySet().stream()
+            .filter(entry -> entry.getValue() >= 5)
+            .sorted(Map.Entry.<Address, Integer>comparingByValue().reversed())
+            .limit(15)
+            .collect(java.util.stream.Collectors.toList());
 
     println("  Top reference hotspots found: " + hotspots.size());
 
@@ -2021,19 +2021,20 @@ public class FunctionLister extends GhidraScript {
       println(String.format("  [%d refs] %s (%s)", refCount, addr, symbolName));
 
       // Check for licensing-related hotspots
-      if (symbolName.toLowerCase().contains("license") || 
-          symbolName.toLowerCase().contains("serial") ||
-          symbolName.toLowerCase().contains("activation") ||
-          symbolName.toLowerCase().contains("trial")) {
+      if (symbolName.toLowerCase().contains("license")
+          || symbolName.toLowerCase().contains("serial")
+          || symbolName.toLowerCase().contains("activation")
+          || symbolName.toLowerCase().contains("trial")) {
         println("    [!] LICENSE HOTSPOT - High-value target for bypass");
-        createBookmark(addr, "License Hotspot", "License validation with " + refCount + " references");
+        createBookmark(
+            addr, "License Hotspot", "License validation with " + refCount + " references");
       }
 
       // Analyze calling pattern
       Set<Address> callers = callerMap.get(addr);
       if (callers.size() >= 3 && hasCallRefs) {
         println("    [!] CRITICAL FUNCTION - Called from " + callers.size() + " locations");
-        
+
         // Check if callers form a validation chain
         if (analyzeValidationChain(addr, callers)) {
           println("    [!] VALIDATION CHAIN DETECTED - Potential licensing workflow");
@@ -2062,11 +2063,14 @@ public class FunctionLister extends GhidraScript {
       if (callerFunc == null) continue;
 
       String funcName = callerFunc.getName().toLowerCase();
-      
+
       // Check for validation-related function names
-      if (funcName.contains("check") || funcName.contains("verify") || 
-          funcName.contains("validate") || funcName.contains("auth") ||
-          funcName.contains("license") || funcName.contains("serial")) {
+      if (funcName.contains("check")
+          || funcName.contains("verify")
+          || funcName.contains("validate")
+          || funcName.contains("auth")
+          || funcName.contains("license")
+          || funcName.contains("serial")) {
         validationIndicators++;
       }
 
@@ -2095,10 +2099,10 @@ public class FunctionLister extends GhidraScript {
       for (Reference ref : refs) {
         if (ref.getReferenceType().isCall()) {
           Address fromAddr = ref.getFromAddress();
-          
+
           // Build chain from caller to target
           executionChains.computeIfAbsent(fromAddr, k -> new ArrayList<>()).add(targetAddr);
-          
+
           // Calculate chain depth
           int depth = calculateChainDepth(fromAddr, new HashSet<>(), 0);
           chainDepthMap.put(fromAddr, Math.max(chainDepthMap.getOrDefault(fromAddr, 0), depth));
@@ -2107,11 +2111,12 @@ public class FunctionLister extends GhidraScript {
     }
 
     // Find deep execution chains (potential protection mechanisms)
-    List<Map.Entry<Address, Integer>> deepChains = chainDepthMap.entrySet().stream()
-        .filter(entry -> entry.getValue() >= 4)
-        .sorted(Map.Entry.<Address, Integer>comparingByValue().reversed())
-        .limit(10)
-        .collect(java.util.stream.Collectors.toList());
+    List<Map.Entry<Address, Integer>> deepChains =
+        chainDepthMap.entrySet().stream()
+            .filter(entry -> entry.getValue() >= 4)
+            .sorted(Map.Entry.<Address, Integer>comparingByValue().reversed())
+            .limit(10)
+            .collect(java.util.stream.Collectors.toList());
 
     println("  Deep execution chains found: " + deepChains.size());
 
@@ -2125,13 +2130,14 @@ public class FunctionLister extends GhidraScript {
       println(String.format("  Chain depth %d: %s (%s)", depth, startAddr, funcName));
 
       // Check for licensing protection chain patterns
-      if (funcName.toLowerCase().contains("license") || 
-          funcName.toLowerCase().contains("validate") ||
-          funcName.toLowerCase().contains("check")) {
+      if (funcName.toLowerCase().contains("license")
+          || funcName.toLowerCase().contains("validate")
+          || funcName.toLowerCase().contains("check")) {
         println("    [!] PROTECTION CHAIN - License validation workflow");
-        
+
         // Trace the execution path
-        List<Address> chainPath = traceExecutionChain(startAddr, new ArrayList<>(), new HashSet<>(), 5);
+        List<Address> chainPath =
+            traceExecutionChain(startAddr, new ArrayList<>(), new HashSet<>(), 5);
         if (!chainPath.isEmpty()) {
           println("    Execution path: " + formatExecutionPath(chainPath));
         }
@@ -2156,7 +2162,8 @@ public class FunctionLister extends GhidraScript {
     if (refs != null) {
       for (Reference ref : refs) {
         if (ref.getReferenceType().isCall()) {
-          int depth = calculateChainDepth(ref.getToAddress(), new HashSet<>(visited), currentDepth + 1);
+          int depth =
+              calculateChainDepth(ref.getToAddress(), new HashSet<>(visited), currentDepth + 1);
           maxDepth = Math.max(maxDepth, depth);
         }
       }
@@ -2165,7 +2172,8 @@ public class FunctionLister extends GhidraScript {
     return maxDepth;
   }
 
-  private List<Address> traceExecutionChain(Address startAddr, List<Address> currentPath, Set<Address> visited, int maxDepth) {
+  private List<Address> traceExecutionChain(
+      Address startAddr, List<Address> currentPath, Set<Address> visited, int maxDepth) {
     if (visited.contains(startAddr) || currentPath.size() >= maxDepth) {
       return new ArrayList<>(currentPath);
     }
@@ -2177,8 +2185,12 @@ public class FunctionLister extends GhidraScript {
     if (refs != null) {
       for (Reference ref : refs) {
         if (ref.getReferenceType().isCall()) {
-          List<Address> extendedPath = traceExecutionChain(ref.getToAddress(), 
-              new ArrayList<>(currentPath), new HashSet<>(visited), maxDepth);
+          List<Address> extendedPath =
+              traceExecutionChain(
+                  ref.getToAddress(),
+                  new ArrayList<>(currentPath),
+                  new HashSet<>(visited),
+                  maxDepth);
           if (extendedPath.size() > currentPath.size()) {
             return extendedPath;
           }
@@ -2195,7 +2207,7 @@ public class FunctionLister extends GhidraScript {
       Address addr = path.get(i);
       Function func = getFunctionContaining(addr);
       String name = func != null ? func.getName() : addr.toString();
-      
+
       sb.append(name);
       if (i < path.size() - 1) {
         sb.append(" -> ");
@@ -2213,9 +2225,10 @@ public class FunctionLister extends GhidraScript {
     Map<Address, String> suspiciousPatternMap = new HashMap<>();
 
     // Analyze cached code unit data for patterns
-    List<Address> sortedAddresses = codeUnitMap.keySet().stream()
-        .sorted(Address::compareTo)
-        .collect(java.util.stream.Collectors.toList());
+    List<Address> sortedAddresses =
+        codeUnitMap.keySet().stream()
+            .sorted(Address::compareTo)
+            .collect(java.util.stream.Collectors.toList());
 
     // Analyze instruction sequences
     for (int i = 0; i < sortedAddresses.size() - 2; i++) {
@@ -2227,17 +2240,24 @@ public class FunctionLister extends GhidraScript {
       CodeUnit unit2 = codeUnitMap.get(addr2);
       CodeUnit unit3 = codeUnitMap.get(addr3);
 
-      if (unit1 instanceof Instruction && unit2 instanceof Instruction && unit3 instanceof Instruction) {
+      if (unit1 instanceof Instruction
+          && unit2 instanceof Instruction
+          && unit3 instanceof Instruction) {
         Instruction inst1 = (Instruction) unit1;
         Instruction inst2 = (Instruction) unit2;
         Instruction inst3 = (Instruction) unit3;
 
-        String sequence = inst1.getMnemonicString() + "-" + 
-                         inst2.getMnemonicString() + "-" + 
-                         inst3.getMnemonicString();
+        String sequence =
+            inst1.getMnemonicString()
+                + "-"
+                + inst2.getMnemonicString()
+                + "-"
+                + inst3.getMnemonicString();
 
         instructionSequenceMap.merge(sequence.toLowerCase(), 1, Integer::sum);
-        patternLocationMap.computeIfAbsent(sequence.toLowerCase(), k -> new ArrayList<>()).add(addr1);
+        patternLocationMap
+            .computeIfAbsent(sequence.toLowerCase(), k -> new ArrayList<>())
+            .add(addr1);
 
         // Check for suspicious patterns
         String suspiciousPattern = analyzeSuspiciousSequence(inst1, inst2, inst3);
@@ -2248,11 +2268,12 @@ public class FunctionLister extends GhidraScript {
     }
 
     // Report common instruction sequences
-    List<Map.Entry<String, Integer>> commonSequences = instructionSequenceMap.entrySet().stream()
-        .filter(entry -> entry.getValue() >= 3)
-        .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-        .limit(15)
-        .collect(java.util.stream.Collectors.toList());
+    List<Map.Entry<String, Integer>> commonSequences =
+        instructionSequenceMap.entrySet().stream()
+            .filter(entry -> entry.getValue() >= 3)
+            .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+            .limit(15)
+            .collect(java.util.stream.Collectors.toList());
 
     println("  Common instruction sequences found: " + commonSequences.size());
 
@@ -2297,27 +2318,28 @@ public class FunctionLister extends GhidraScript {
     analyzeCodeUnitSequences();
   }
 
-  private String analyzeSuspiciousSequence(Instruction inst1, Instruction inst2, Instruction inst3) {
+  private String analyzeSuspiciousSequence(
+      Instruction inst1, Instruction inst2, Instruction inst3) {
     String m1 = inst1.getMnemonicString().toLowerCase();
     String m2 = inst2.getMnemonicString().toLowerCase();
     String m3 = inst3.getMnemonicString().toLowerCase();
 
     // Anti-debug patterns
-    if ((m1.equals("int") && m2.equals("int") && m3.equals("int")) ||
-        (m1.equals("int3") && m2.equals("int3") && m3.equals("int3"))) {
+    if ((m1.equals("int") && m2.equals("int") && m3.equals("int"))
+        || (m1.equals("int3") && m2.equals("int3") && m3.equals("int3"))) {
       return "Multiple breakpoint instructions - anti-debug";
     }
 
     // Obfuscation patterns
-    if ((m1.contains("xor") && m2.contains("xor") && m3.contains("xor")) ||
-        (m1.contains("not") && m2.contains("not") && m3.contains("not"))) {
+    if ((m1.contains("xor") && m2.contains("xor") && m3.contains("xor"))
+        || (m1.contains("not") && m2.contains("not") && m3.contains("not"))) {
       return "Multiple XOR/NOT operations - potential obfuscation";
     }
 
     // Timing check patterns
-    if ((m1.equals("rdtsc") || m1.equals("rdtscp")) &&
-        (m2.contains("sub") || m2.contains("cmp")) &&
-        (m3.contains("j") || m3.contains("branch"))) {
+    if ((m1.equals("rdtsc") || m1.equals("rdtscp"))
+        && (m2.contains("sub") || m2.contains("cmp"))
+        && (m3.contains("j") || m3.contains("branch"))) {
       return "Timing check sequence - anti-analysis";
     }
 
@@ -2330,18 +2352,24 @@ public class FunctionLister extends GhidraScript {
   }
 
   private boolean isLicensingPattern(String pattern) {
-    return pattern.contains("cmp-j") || pattern.contains("test-j") ||
-           pattern.contains("mov-cmp-j") || pattern.contains("call-test-j");
+    return pattern.contains("cmp-j")
+        || pattern.contains("test-j")
+        || pattern.contains("mov-cmp-j")
+        || pattern.contains("call-test-j");
   }
 
   private boolean isAntiAnalysisPattern(String pattern) {
-    return pattern.contains("int-") || pattern.contains("rdtsc-") ||
-           pattern.contains("xor-xor-") || pattern.contains("nop-nop-");
+    return pattern.contains("int-")
+        || pattern.contains("rdtsc-")
+        || pattern.contains("xor-xor-")
+        || pattern.contains("nop-nop-");
   }
 
   private boolean isCryptoPattern(String pattern) {
-    return pattern.contains("xor-rol-") || pattern.contains("add-xor-") ||
-           pattern.contains("shl-xor-") || pattern.contains("ror-add-");
+    return pattern.contains("xor-rol-")
+        || pattern.contains("add-xor-")
+        || pattern.contains("shl-xor-")
+        || pattern.contains("ror-add-");
   }
 
   private void analyzeCodeUnitSequences() {
@@ -2360,13 +2388,13 @@ public class FunctionLister extends GhidraScript {
 
       if (unit instanceof Instruction) {
         totalInstructions++;
-        
+
         // Calculate instruction density in surrounding area
         int density = calculateInstructionDensity(addr, 32);
         instructionDensityMap.put(addr, density);
       } else if (unit instanceof Data) {
         totalData++;
-        
+
         Data data = (Data) unit;
         String dataType = data.getDataType().getName();
         dataPatternMap.merge(dataType, 1, Integer::sum);
@@ -2375,26 +2403,30 @@ public class FunctionLister extends GhidraScript {
 
     println("  Total instructions: " + totalInstructions);
     println("  Total data units: " + totalData);
-    println("  Instruction/Data ratio: " + String.format("%.2f", (double) totalInstructions / Math.max(totalData, 1)));
+    println(
+        "  Instruction/Data ratio: "
+            + String.format("%.2f", (double) totalInstructions / Math.max(totalData, 1)));
 
     // Find high-density instruction areas (potential packed/encrypted code)
-    List<Map.Entry<Address, Integer>> highDensityAreas = instructionDensityMap.entrySet().stream()
-        .filter(entry -> entry.getValue() >= 24)
-        .sorted(Map.Entry.<Address, Integer>comparingByValue().reversed())
-        .limit(10)
-        .collect(java.util.stream.Collectors.toList());
+    List<Map.Entry<Address, Integer>> highDensityAreas =
+        instructionDensityMap.entrySet().stream()
+            .filter(entry -> entry.getValue() >= 24)
+            .sorted(Map.Entry.<Address, Integer>comparingByValue().reversed())
+            .limit(10)
+            .collect(java.util.stream.Collectors.toList());
 
     if (!highDensityAreas.isEmpty()) {
       println("\n  High instruction density areas:");
       for (Map.Entry<Address, Integer> entry : highDensityAreas) {
         Address addr = entry.getKey();
         int density = entry.getValue();
-        
+
         Function func = getFunctionContaining(addr);
         String funcName = func != null ? func.getName() : "unknown";
-        
-        println(String.format("    %s (%s): %d instructions per 32 bytes", addr, funcName, density));
-        
+
+        println(
+            String.format("    %s (%s): %d instructions per 32 bytes", addr, funcName, density));
+
         // Check if this might be packed/encrypted code
         if (density >= 30) {
           println("      [!] PACKED CODE - Potential encrypted or compressed instructions");
@@ -2406,16 +2438,17 @@ public class FunctionLister extends GhidraScript {
     // Analyze data patterns
     if (!dataPatternMap.isEmpty()) {
       println("\n  Data type distribution:");
-      List<Map.Entry<String, Integer>> sortedDataTypes = dataPatternMap.entrySet().stream()
-          .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-          .limit(10)
-          .collect(java.util.stream.Collectors.toList());
+      List<Map.Entry<String, Integer>> sortedDataTypes =
+          dataPatternMap.entrySet().stream()
+              .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+              .limit(10)
+              .collect(java.util.stream.Collectors.toList());
 
       for (Map.Entry<String, Integer> entry : sortedDataTypes) {
         String dataType = entry.getKey();
         int count = entry.getValue();
         println(String.format("    %s: %d occurrences", dataType, count));
-        
+
         // Check for suspicious data types
         if (dataType.toLowerCase().contains("byte") && count >= 100) {
           println("      [!] LARGE BYTE ARRAYS - Potential embedded data or crypto keys");
@@ -2433,7 +2466,9 @@ public class FunctionLister extends GhidraScript {
       Address addr = entry.getKey();
       CodeUnit unit = entry.getValue();
 
-      if (addr.getOffset() >= startOffset && addr.getOffset() <= endOffset && unit instanceof Instruction) {
+      if (addr.getOffset() >= startOffset
+          && addr.getOffset() <= endOffset
+          && unit instanceof Instruction) {
         instructionCount++;
       }
     }
@@ -2481,12 +2516,13 @@ public class FunctionLister extends GhidraScript {
     }
 
     // Find addresses with both high reference counts and suspicious instructions
-    List<CombinedAnalysisResult> suspiciousAddresses = combinedResults.values().stream()
-        .filter(result -> result.referenceCount >= 3 && result.isInstruction)
-        .filter(this::isSuspiciousCombination)
-        .sorted((a, b) -> Integer.compare(b.referenceCount, a.referenceCount))
-        .limit(15)
-        .collect(java.util.stream.Collectors.toList());
+    List<CombinedAnalysisResult> suspiciousAddresses =
+        combinedResults.values().stream()
+            .filter(result -> result.referenceCount >= 3 && result.isInstruction)
+            .filter(this::isSuspiciousCombination)
+            .sorted((a, b) -> Integer.compare(b.referenceCount, a.referenceCount))
+            .limit(15)
+            .collect(java.util.stream.Collectors.toList());
 
     println("  Suspicious address combinations found: " + suspiciousAddresses.size());
 
@@ -2494,8 +2530,10 @@ public class FunctionLister extends GhidraScript {
       Function func = getFunctionContaining(result.address);
       String funcName = func != null ? func.getName() : "unknown";
 
-      println(String.format("  %s (%s) - %d refs, %s", 
-          result.address, funcName, result.referenceCount, result.mnemonic));
+      println(
+          String.format(
+              "  %s (%s) - %d refs, %s",
+              result.address, funcName, result.referenceCount, result.mnemonic));
 
       String suspiciousReason = getSuspiciousReason(result);
       println("    [!] " + suspiciousReason);
@@ -2503,7 +2541,9 @@ public class FunctionLister extends GhidraScript {
       // Check for licensing validation patterns
       if (isLicenseValidationCandidate(result, func)) {
         println("    [!] LICENSE VALIDATION CANDIDATE");
-        createBookmark(result.address, "License Validation", 
+        createBookmark(
+            result.address,
+            "License Validation",
             "High-value target: " + result.referenceCount + " refs, " + result.mnemonic);
       }
 
@@ -2558,19 +2598,19 @@ public class FunctionLister extends GhidraScript {
     if (result.indirectReferences > 0) {
       return "INDIRECT REFERENCES - Potential obfuscated calls";
     }
-    
+
     if (result.isControlFlow && result.referenceCount >= 5) {
       return "HIGH-TRAFFIC CONTROL FLOW - Critical execution point";
     }
-    
+
     if (result.callReferences > 0 && result.dataReferences > 0) {
       return "MIXED REFERENCE PATTERN - Potential validation logic";
     }
-    
+
     if (result.mnemonic.toLowerCase().contains("cmp") && result.dataReferences >= 3) {
       return "COMPARISON WITH DATA ACCESS - Potential key validation";
     }
-    
+
     return "SUSPICIOUS PATTERN - Requires investigation";
   }
 
@@ -2578,10 +2618,12 @@ public class FunctionLister extends GhidraScript {
     if (func == null) return false;
 
     String funcName = func.getName().toLowerCase();
-    
+
     // Function name indicates licensing
-    if (funcName.contains("license") || funcName.contains("serial") || 
-        funcName.contains("activate") || funcName.contains("validate")) {
+    if (funcName.contains("license")
+        || funcName.contains("serial")
+        || funcName.contains("activate")
+        || funcName.contains("validate")) {
       return true;
     }
 
@@ -2591,8 +2633,9 @@ public class FunctionLister extends GhidraScript {
     }
 
     // Mixed references in validation-like function
-    if (result.callReferences > 0 && result.dataReferences >= 2 &&
-        (funcName.contains("check") || funcName.contains("verify"))) {
+    if (result.callReferences > 0
+        && result.dataReferences >= 2
+        && (funcName.contains("check") || funcName.contains("verify"))) {
       return true;
     }
 
@@ -2601,10 +2644,10 @@ public class FunctionLister extends GhidraScript {
 
   private boolean isAntiAnalysisCandidate(CombinedAnalysisResult result) {
     String mnemonic = result.mnemonic.toLowerCase();
-    
+
     // Anti-debug instructions with references
-    if ((mnemonic.equals("int3") || mnemonic.equals("rdtsc") || mnemonic.equals("rdtscp")) && 
-        result.referenceCount >= 2) {
+    if ((mnemonic.equals("int3") || mnemonic.equals("rdtsc") || mnemonic.equals("rdtscp"))
+        && result.referenceCount >= 2) {
       return true;
     }
 
@@ -2631,20 +2674,23 @@ public class FunctionLister extends GhidraScript {
     println("  Cached references: " + totalCachedReferences);
     println("  Cached code units: " + totalCachedCodeUnits);
     println("  Correlated addresses: " + correlatedAddresses);
-    println("  Cache utilization: " + String.format("%.1f%%", 
-        100.0 * correlatedAddresses / Math.max(totalCachedCodeUnits, 1)));
+    println(
+        "  Cache utilization: "
+            + String.format(
+                "%.1f%%", 100.0 * correlatedAddresses / Math.max(totalCachedCodeUnits, 1)));
 
     // Summary of high-value targets identified
-    long licenseTargets = combinedResults.values().stream()
-        .filter(result -> {
-          Function func = getFunctionContaining(result.address);
-          return isLicenseValidationCandidate(result, func);
-        })
-        .count();
+    long licenseTargets =
+        combinedResults.values().stream()
+            .filter(
+                result -> {
+                  Function func = getFunctionContaining(result.address);
+                  return isLicenseValidationCandidate(result, func);
+                })
+            .count();
 
-    long antiAnalysisTargets = combinedResults.values().stream()
-        .filter(this::isAntiAnalysisCandidate)
-        .count();
+    long antiAnalysisTargets =
+        combinedResults.values().stream().filter(this::isAntiAnalysisCandidate).count();
 
     println("  License validation targets: " + licenseTargets);
     println("  Anti-analysis targets: " + antiAnalysisTargets);

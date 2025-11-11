@@ -853,6 +853,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
 
     /**
      * Get comprehensive suspicion scores for all analyzed functions
+     *
      * @return Map of function addresses to their ML-calculated suspicion scores
      */
     public Map<Address, Double> getSuspicionScores() {
@@ -861,6 +862,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
 
     /**
      * Get functions with suspicion scores above a specified threshold
+     *
      * @param threshold Minimum suspicion score (0.0 to 1.0)
      * @return List of function addresses exceeding the threshold
      */
@@ -872,19 +874,19 @@ public class LicenseValidationAnalyzer extends GhidraScript {
         }
       }
       // Sort by suspicion score (highest first)
-      highSuspicion.sort((a, b) -> Double.compare(
-          suspicionScores.get(b), suspicionScores.get(a)));
+      highSuspicion.sort((a, b) -> Double.compare(suspicionScores.get(b), suspicionScores.get(a)));
       return highSuspicion;
     }
 
     /**
      * Generate comprehensive ML suspicion report with detailed statistics
+     *
      * @return Formatted analysis report of ML suspicion data
      */
     public String generateSuspicionReport() {
       StringBuilder report = new StringBuilder();
       report.append("=== ML License Validation Suspicion Analysis Report ===\n");
-      
+
       if (suspicionScores.isEmpty()) {
         report.append("No functions analyzed for ML suspicion scores.\n");
         return report.toString();
@@ -893,13 +895,17 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       // Calculate statistics
       double totalScore = suspicionScores.values().stream().mapToDouble(Double::doubleValue).sum();
       double averageScore = totalScore / suspicionScores.size();
-      double maxScore = suspicionScores.values().stream().mapToDouble(Double::doubleValue).max().orElse(0.0);
-      double minScore = suspicionScores.values().stream().mapToDouble(Double::doubleValue).min().orElse(0.0);
-      
+      double maxScore =
+          suspicionScores.values().stream().mapToDouble(Double::doubleValue).max().orElse(0.0);
+      double minScore =
+          suspicionScores.values().stream().mapToDouble(Double::doubleValue).min().orElse(0.0);
+
       // Count by risk levels
       int criticalRisk = (int) suspicionScores.values().stream().filter(s -> s >= 0.9).count();
-      int highRisk = (int) suspicionScores.values().stream().filter(s -> s >= 0.75 && s < 0.9).count();
-      int mediumRisk = (int) suspicionScores.values().stream().filter(s -> s >= 0.5 && s < 0.75).count();
+      int highRisk =
+          (int) suspicionScores.values().stream().filter(s -> s >= 0.75 && s < 0.9).count();
+      int mediumRisk =
+          (int) suspicionScores.values().stream().filter(s -> s >= 0.5 && s < 0.75).count();
       int lowRisk = (int) suspicionScores.values().stream().filter(s -> s < 0.5).count();
 
       report.append(String.format("Total Functions Analyzed: %d\n", suspicionScores.size()));
@@ -920,8 +926,8 @@ public class LicenseValidationAnalyzer extends GhidraScript {
         double score = suspicionScores.get(addr);
         Function func = getFunctionAt(addr);
         String funcName = (func != null) ? func.getName() : "Unknown";
-        report.append(String.format("%2d. %s @ %s (Score: %.3f)\n", 
-            i + 1, funcName, addr.toString(), score));
+        report.append(
+            String.format("%2d. %s @ %s (Score: %.3f)\n", i + 1, funcName, addr.toString(), score));
       }
 
       return report.toString();
@@ -929,6 +935,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
 
     /**
      * Update suspicion score for a specific function (used for dynamic analysis updates)
+     *
      * @param functionAddr Address of the function
      * @param additionalScore Additional suspicion score to add
      * @param reason Reason for the score update
@@ -937,18 +944,18 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       double currentScore = suspicionScores.getOrDefault(functionAddr, 0.0);
       double newScore = Math.min(1.0, currentScore + additionalScore);
       suspicionScores.put(functionAddr, newScore);
-      
+
       if (additionalScore > 0.1) { // Only log significant updates
         Function func = getFunctionAt(functionAddr);
         String funcName = (func != null) ? func.getName() : "Unknown";
-        println(String.format("    [ML Engine] Updated suspicion for %s: %.3f -> %.3f (%s)", 
-            funcName, currentScore, newScore, reason));
+        println(
+            String.format(
+                "    [ML Engine] Updated suspicion for %s: %.3f -> %.3f (%s)",
+                funcName, currentScore, newScore, reason));
       }
     }
 
-    /**
-     * Clear all suspicion scores (used for re-analysis)
-     */
+    /** Clear all suspicion scores (used for re-analysis) */
     public void clearSuspicionScores() {
       suspicionScores.clear();
       println("    [ML Engine] Cleared all suspicion scores for fresh analysis");

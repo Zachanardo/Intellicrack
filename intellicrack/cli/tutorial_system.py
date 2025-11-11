@@ -74,7 +74,7 @@ class Tutorial:
 class TutorialSystem:
     """Interactive tutorial system for Intellicrack CLI."""
 
-    def __init__(self, cli_instance=None):
+    def __init__(self, cli_instance=None) -> None:
         """Initialize tutorial system.
 
         Args:
@@ -94,7 +94,7 @@ class TutorialSystem:
         self.tutorials = {}
         self._init_tutorials()
 
-    def _init_tutorials(self):
+    def _init_tutorials(self) -> None:
         """Initialize all available tutorials."""
         # Beginner Tutorial: Getting Started
         getting_started = Tutorial(
@@ -397,7 +397,7 @@ class TutorialSystem:
         if not any(self.tutorial_progress.values()):
             self.console.print("\n [bold yellow]Recommendation:[/bold yellow] Start with 'getting_started' if you're new to Intellicrack")
 
-    def _list_tutorials_basic(self):
+    def _list_tutorials_basic(self) -> None:
         """List tutorials in basic text format."""
         print("\nAvailable Tutorials:")
         print("=" * 50)
@@ -450,7 +450,7 @@ class TutorialSystem:
         self._show_tutorial_intro()
         return True
 
-    def _show_tutorial_intro(self):
+    def _show_tutorial_intro(self) -> None:
         """Show tutorial introduction."""
         tutorial = self.current_tutorial
 
@@ -483,7 +483,7 @@ class TutorialSystem:
         # Start first step
         self._show_current_step()
 
-    def _show_current_step(self):
+    def _show_current_step(self) -> None:
         """Show current tutorial step."""
         if not self.current_tutorial:
             return
@@ -545,7 +545,7 @@ class TutorialSystem:
         # Prompt for command execution
         self._prompt_for_command()
 
-    def _prompt_for_command(self):
+    def _prompt_for_command(self) -> None:
         """Prompt user to execute the tutorial command interactively."""
         if not self.current_tutorial or self.current_step >= len(self.current_tutorial.steps):
             return
@@ -665,8 +665,8 @@ class TutorialSystem:
                 import sys
 
                 # Execute command through CLI
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                    [sys.executable, "-m", "intellicrack.cli.cli"] + user_command.split(),
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                    [sys.executable, "-m", "intellicrack.cli.cli", *user_command.split()],
                     capture_output=True,
                     text=True,
                     timeout=30,
@@ -706,7 +706,7 @@ class TutorialSystem:
 
         return True, success_msg
 
-    def next_step(self):
+    def next_step(self) -> bool:
         """Move to next tutorial step."""
         if not self.current_tutorial:
             return False
@@ -723,7 +723,7 @@ class TutorialSystem:
         self._show_current_step()
         return True
 
-    def prev_step(self):
+    def prev_step(self) -> bool:
         """Move to previous tutorial step."""
         if not self.current_tutorial or self.current_step <= 0:
             return False
@@ -747,7 +747,7 @@ class TutorialSystem:
 
         return self.next_step()
 
-    def quit_tutorial(self):
+    def quit_tutorial(self) -> bool:
         """Quit current tutorial."""
         if not self.current_tutorial:
             return False
@@ -766,7 +766,7 @@ class TutorialSystem:
                 "completed_steps": self.current_step,
                 "total_steps": len(self.current_tutorial.steps),
                 "quit_time": datetime.now(),
-            }
+            },
         )
 
         if self.console:
@@ -780,7 +780,7 @@ class TutorialSystem:
         self.current_step = 0
         return True
 
-    def _complete_tutorial(self):
+    def _complete_tutorial(self) -> None:
         """Complete current tutorial."""
         if not self.current_tutorial:
             return
@@ -798,7 +798,7 @@ class TutorialSystem:
                 "completed_steps": len(tutorial.steps),
                 "total_steps": len(tutorial.steps),
                 "completion_time": datetime.now(),
-            }
+            },
         )
 
         # Show completion message
@@ -821,9 +821,9 @@ class TutorialSystem:
         self.current_tutorial = None
         self.current_step = 0
 
-    def _show_next_recommendations(self):
+    def _show_next_recommendations(self) -> None:
         """Show recommended next tutorials."""
-        completed = set(name for name, progress in self.tutorial_progress.items() if progress >= len(self.tutorials[name].steps))
+        completed = {name for name, progress in self.tutorial_progress.items() if progress >= len(self.tutorials[name].steps)}
 
         recommendations = []
 
@@ -865,7 +865,7 @@ class TutorialSystem:
 
         return False
 
-    def show_progress(self):
+    def show_progress(self) -> None:
         """Show tutorial progress summary."""
         if not self.console:
             self._show_progress_basic()
@@ -894,7 +894,7 @@ class TutorialSystem:
 
         self.console.print(progress_table)
 
-    def _show_progress_basic(self):
+    def _show_progress_basic(self) -> None:
         """Show progress in basic text format."""
         print("\nTutorial Progress:")
         print("=" * 40)
@@ -911,7 +911,7 @@ class TutorialSystem:
             print(f"  Progress: {completed_steps}/{total_steps}")
             print(f"  Status: {status}")
 
-    def show_help(self):
+    def show_help(self) -> None:
         """Show tutorial system help."""
         if self.console:
             help_content = """[bold cyan]Tutorial System Commands[/bold cyan]
@@ -1226,7 +1226,7 @@ def create_tutorial_system(cli_instance=None) -> TutorialSystem:
     return TutorialSystem(cli_instance)
 
 
-def run_interactive_tutorial(cli_instance=None):
+def run_interactive_tutorial(cli_instance=None) -> int:
     """Run the interactive tutorial system."""
     tutorial_system = TutorialSystem(cli_instance)
 

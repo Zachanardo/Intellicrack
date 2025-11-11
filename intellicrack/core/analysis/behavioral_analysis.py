@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+import contextlib
 import ctypes
 import json
 import os
@@ -99,7 +100,7 @@ class MonitorEvent:
 class QEMUController:
     """Controller for QEMU virtual machine operations."""
 
-    def __init__(self, config: QEMUConfig):
+    def __init__(self, config: QEMUConfig) -> None:
         """Initialize QEMU controller with configuration."""
         self.config = config
         self.process: Optional[subprocess.Popen] = None
@@ -172,14 +173,12 @@ class QEMUController:
             logger.error(f"Failed to start QEMU: {e}")
             return False
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop QEMU virtual machine."""
         with self._lock:
             if self.monitor_socket:
-                try:
+                with contextlib.suppress(ConnectionError, OSError):
                     self.send_monitor_command("quit")
-                except (ConnectionError, OSError):
-                    pass
                 self.monitor_socket.close()
                 self.monitor_socket = None
 
@@ -264,7 +263,7 @@ class QEMUController:
             return False
         return os.path.exists("/dev/kvm") and os.access("/dev/kvm", os.R_OK | os.W_OK)
 
-    def _prepare_disk_image(self, binary_path: Path):
+    def _prepare_disk_image(self, binary_path: Path) -> None:
         """Prepare disk image with target binary."""
         if not self.config.disk_image or not self.config.disk_image.exists():
             return
@@ -324,7 +323,7 @@ class QEMUController:
 class APIHookingFramework:
     """Framework for hooking Windows and Linux API calls."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize API hooking framework."""
         self.hooks: Dict[str, List[HookPoint]] = defaultdict(list)
         self.events: List[MonitorEvent] = []
@@ -332,7 +331,7 @@ class APIHookingFramework:
         self._lock = threading.Lock()
         self._setup_platform_hooks()
 
-    def _setup_platform_hooks(self):
+    def _setup_platform_hooks(self) -> None:
         """Set up platform-specific hooking infrastructure."""
         system = platform.system()
 
@@ -343,7 +342,7 @@ class APIHookingFramework:
         else:
             logger.warning(f"Platform {system} not fully supported for API hooking")
 
-    def _setup_windows_hooks(self):
+    def _setup_windows_hooks(self) -> None:
         """Set up Windows API hooks."""
         self.add_hook(HookPoint(module="kernel32.dll", function="CreateFileW", on_enter=self._hook_create_file, priority=100))
 
@@ -367,7 +366,7 @@ class APIHookingFramework:
 
         self.add_hook(HookPoint(module="ntdll.dll", function="NtOpenProcess", on_enter=self._hook_open_process, priority=110))
 
-    def _setup_linux_hooks(self):
+    def _setup_linux_hooks(self) -> None:
         """Set up Linux syscall hooks."""
         self.add_hook(HookPoint(module="libc.so.6", function="open", on_enter=self._hook_open, priority=100))
 
@@ -379,27 +378,27 @@ class APIHookingFramework:
 
         self.add_hook(HookPoint(module="libc.so.6", function="connect", on_enter=self._hook_connect_linux, priority=100))
 
-    def add_hook(self, hook: HookPoint):
+    def add_hook(self, hook: HookPoint) -> None:
         """Add a hook point."""
         key = f"{hook.module}:{hook.function}"
         with self._lock:
             self.hooks[key].append(hook)
             self.hooks[key].sort(key=lambda h: h.priority, reverse=True)
 
-    def remove_hook(self, module: str, function: str):
+    def remove_hook(self, module: str, function: str) -> None:
         """Remove hooks for a function."""
         key = f"{module}:{function}"
         with self._lock:
             if key in self.hooks:
                 del self.hooks[key]
 
-    def enable_hook(self, module: str, function: str):
+    def enable_hook(self, module: str, function: str) -> None:
         """Enable hooks for a function."""
         key = f"{module}:{function}"
         with self._lock:
             self.active_hooks.add(key)
 
-    def disable_hook(self, module: str, function: str):
+    def disable_hook(self, module: str, function: str) -> None:
         """Disable hooks for a function."""
         key = f"{module}:{function}"
         with self._lock:
@@ -778,7 +777,7 @@ class APIHookingFramework:
                 bytes_read = ctypes.c_size_t()
 
                 if kernel32.ReadProcessMemory(
-                    ctypes.c_void_p(-1), ctypes.c_void_p(address), buffer, max_length * 2, ctypes.byref(bytes_read)
+                    ctypes.c_void_p(-1), ctypes.c_void_p(address), buffer, max_length * 2, ctypes.byref(bytes_read),
                 ):
                     return buffer.value
 
@@ -851,7 +850,7 @@ class APIHookingFramework:
 class AntiAnalysisDetector:
     """Detector for anti-analysis techniques."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize anti-analysis detector."""
         self.detections: List[Dict[str, Any]] = []
         self.detection_methods = [
@@ -877,7 +876,7 @@ class AntiAnalysisDetector:
 
         return self.detections
 
-    def _detect_debugger_presence(self, process_id: int):
+    def _detect_debugger_presence(self, process_id: int) -> None:
         """Detect debugger presence checks."""
         checks = []
 
@@ -905,7 +904,7 @@ class AntiAnalysisDetector:
                     return_length = ctypes.c_ulong()
 
                     ntdll.NtQueryInformationProcess(
-                        process_handle, 0, ctypes.byref(process_basic_info), ctypes.sizeof(process_basic_info), ctypes.byref(return_length)
+                        process_handle, 0, ctypes.byref(process_basic_info), ctypes.sizeof(process_basic_info), ctypes.byref(return_length),
                     )
 
                     if process_basic_info.value:
@@ -923,10 +922,10 @@ class AntiAnalysisDetector:
             try:
                 status_file = f"/proc/{process_id}/status"
                 if os.path.exists(status_file):
-                    with open(status_file, "r") as f:
+                    with open(status_file) as f:
                         status = f.read()
                         if "TracerPid:" in status:
-                            tracer_line = [line for line in status.split("\n") if "TracerPid:" in line][0]
+                            tracer_line = next(line for line in status.split("\n") if "TracerPid:" in line)
                             tracer_pid = int(tracer_line.split(":")[1].strip())
                             if tracer_pid != 0:
                                 checks.append(f"TracerPid: {tracer_pid}")
@@ -942,7 +941,7 @@ class AntiAnalysisDetector:
         if checks:
             self.detections.append({"type": "debugger_presence", "methods": checks, "severity": "high"})
 
-    def _detect_vm_artifacts(self, process_id: int):
+    def _detect_vm_artifacts(self, process_id: int) -> None:
         """Detect virtual machine artifacts."""
         vm_indicators = []
 
@@ -979,7 +978,7 @@ class AntiAnalysisDetector:
                     vm_indicators.append(f"VM file: {file_path}")
 
             if platform.system() == "Linux" and os.path.exists("/sys/class/dmi/id/product_name"):
-                with open("/sys/class/dmi/id/product_name", "r") as f:
+                with open("/sys/class/dmi/id/product_name") as f:
                     product = f.read().strip()
                     if any(vm in product.lower() for vm in ["vmware", "virtualbox", "qemu", "xen"]):
                         vm_indicators.append(f"DMI product: {product}")
@@ -990,7 +989,7 @@ class AntiAnalysisDetector:
         if vm_indicators:
             self.detections.append({"type": "vm_artifacts", "indicators": vm_indicators, "severity": "medium"})
 
-    def _detect_timing_attacks(self, process_id: int):
+    def _detect_timing_attacks(self, process_id: int) -> None:
         """Detect timing-based anti-debugging."""
         timing_checks = []
 
@@ -1045,7 +1044,7 @@ class AntiAnalysisDetector:
         if timing_checks:
             self.detections.append({"type": "timing_attacks", "checks": timing_checks, "severity": "medium"})
 
-    def _detect_process_hollowing(self, process_id: int):
+    def _detect_process_hollowing(self, process_id: int) -> None:
         """Detect process hollowing indicators."""
         hollowing_indicators = []
 
@@ -1072,7 +1071,7 @@ class AntiAnalysisDetector:
         if hollowing_indicators:
             self.detections.append({"type": "process_hollowing", "indicators": hollowing_indicators, "severity": "high"})
 
-    def _detect_api_hooks(self, process_id: int):
+    def _detect_api_hooks(self, process_id: int) -> None:
         """Detect API hooking."""
         hooked_apis = []
 
@@ -1100,7 +1099,7 @@ class AntiAnalysisDetector:
                                     bytes_read = ctypes.c_size_t()
 
                                     if kernel32.ReadProcessMemory(
-                                        process_handle, ctypes.c_void_p(func_addr), first_bytes, 5, ctypes.byref(bytes_read)
+                                        process_handle, ctypes.c_void_p(func_addr), first_bytes, 5, ctypes.byref(bytes_read),
                                     ):
                                         if first_bytes[0] == 0xE9 or first_bytes[0] == 0xE8:
                                             hooked_apis.append(f"{dll_name}!{func_name}")
@@ -1117,7 +1116,7 @@ class AntiAnalysisDetector:
         if hooked_apis:
             self.detections.append({"type": "api_hooks", "hooked_functions": hooked_apis, "severity": "high"})
 
-    def _detect_sandbox_artifacts(self, process_id: int):
+    def _detect_sandbox_artifacts(self, process_id: int) -> None:
         """Detect sandbox environment indicators."""
         sandbox_indicators = []
 
@@ -1164,7 +1163,7 @@ class AntiAnalysisDetector:
         if sandbox_indicators:
             self.detections.append({"type": "sandbox_artifacts", "indicators": sandbox_indicators, "severity": "medium"})
 
-    def _detect_memory_protections(self, process_id: int):
+    def _detect_memory_protections(self, process_id: int) -> None:
         """Detect memory protection mechanisms."""
         protections = []
 
@@ -1206,7 +1205,7 @@ class AntiAnalysisDetector:
         if protections:
             self.detections.append({"type": "memory_protections", "mechanisms": protections, "severity": "low"})
 
-    def _detect_code_obfuscation(self, process_id: int):
+    def _detect_code_obfuscation(self, process_id: int) -> None:
         """Detect code obfuscation techniques."""
         obfuscation_indicators = []
 
@@ -1249,7 +1248,7 @@ class AntiAnalysisDetector:
                                 base_addr = int(region.addr.split("-")[0], 16) if isinstance(region.addr, str) else region.addr
 
                                 if kernel32.ReadProcessMemory(
-                                    process_handle, ctypes.c_void_p(base_addr), buffer, 1024, ctypes.byref(bytes_read)
+                                    process_handle, ctypes.c_void_p(base_addr), buffer, 1024, ctypes.byref(bytes_read),
                                 ):
                                     entropy = self._calculate_entropy(bytes(buffer))
                                     if entropy > 7.0:
@@ -1280,7 +1279,7 @@ class AntiAnalysisDetector:
         for count in frequency.values():
             if count > 0:
                 probability = count / data_len
-                entropy -= probability * (probability and probability * 2 or 0)
+                entropy -= probability * ((probability and probability * 2) or 0)
 
         return entropy
 
@@ -1288,7 +1287,7 @@ class AntiAnalysisDetector:
 class BehavioralAnalyzer:
     """Run behavioral analysis orchestrator."""
 
-    def __init__(self, binary_path: Path):
+    def __init__(self, binary_path: Path) -> None:
         """Initialize behavioral analyzer."""
         self.binary_path = binary_path
         self.qemu_config = QEMUConfig()
@@ -1524,7 +1523,7 @@ class BehavioralAnalyzer:
         """Generate analysis summary."""
         summary = {
             "total_events": len(self.events),
-            "unique_event_types": len(set(e.event_type for e in self.events)),
+            "unique_event_types": len({e.event_type for e in self.events}),
             "suspicious_activities": 0,
             "risk_level": "low",
             "key_findings": [],
@@ -1552,7 +1551,7 @@ class BehavioralAnalyzer:
 
         return summary
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up resources."""
         self.stop_flag.set()
 

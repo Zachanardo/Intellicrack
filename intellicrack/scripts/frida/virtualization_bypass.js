@@ -3908,45 +3908,45 @@ const virtualizationBypass = {
             } else {
                 // Emulate real hardware response
                 switch (eax) {
-                case 0x1: // Processor Info
-                    context.ecx &= ~(1 << 31); // Clear hypervisor bit
-                    break;
-                case 0x40000000: // Hypervisor vendor
-                    context.eax = 0; // No hypervisor
-                    context.ebx = 0;
-                    context.ecx = 0;
-                    context.edx = 0;
-                    break;
-                case 0x80000002: // Processor brand string
-                case 0x80000003:
-                case 0x80000004:
-                    // Return genuine Intel/AMD string
-                    var brand = 'Intel(R) Core(TM) i9-12900K';
-                    var offset = (eax - 0x80000002) * 16;
-                    var chunk = brand.substr(offset, 16);
-                    // Write to registers
-                    for (var i = 0; i < 4; i++) {
-                        var char4 = chunk.substr(i * 4, 4);
-                        var value = 0;
-                        for (var j = 0; j < 4; j++) {
-                            value |= (char4.charCodeAt(j) || 0) << (j * 8);
+                    case 0x1: // Processor Info
+                        context.ecx &= ~(1 << 31); // Clear hypervisor bit
+                        break;
+                    case 0x40000000: // Hypervisor vendor
+                        context.eax = 0; // No hypervisor
+                        context.ebx = 0;
+                        context.ecx = 0;
+                        context.edx = 0;
+                        break;
+                    case 0x80000002: // Processor brand string
+                    case 0x80000003:
+                    case 0x80000004:
+                        // Return genuine Intel/AMD string
+                        var brand = 'Intel(R) Core(TM) i9-12900K';
+                        var offset = (eax - 0x80000002) * 16;
+                        var chunk = brand.substr(offset, 16);
+                        // Write to registers
+                        for (var i = 0; i < 4; i++) {
+                            var char4 = chunk.substr(i * 4, 4);
+                            var value = 0;
+                            for (var j = 0; j < 4; j++) {
+                                value |= (char4.charCodeAt(j) || 0) << (j * 8);
+                            }
+                            switch (i) {
+                                case 0:
+                                    context.eax = value;
+                                    break;
+                                case 1:
+                                    context.ebx = value;
+                                    break;
+                                case 2:
+                                    context.ecx = value;
+                                    break;
+                                case 3:
+                                    context.edx = value;
+                                    break;
+                            }
                         }
-                        switch (i) {
-                        case 0:
-                            context.eax = value;
-                            break;
-                        case 1:
-                            context.ebx = value;
-                            break;
-                        case 2:
-                            context.ecx = value;
-                            break;
-                        case 3:
-                            context.edx = value;
-                            break;
-                        }
-                    }
-                    break;
+                        break;
                 }
 
                 // Cache the result
@@ -3986,26 +3986,26 @@ const virtualizationBypass = {
         // Emulate privileged instruction results
         var _emulateInstruction = function (instruction, _context) {
             switch (instruction) {
-            case 'smsw':
-                return this.instructionEmulator.smsw;
-            case 'sldt':
-                return this.instructionEmulator.sldt;
-            case 'sgdt':
-                if (!this.instructionEmulator.sgdt) {
-                    this.instructionEmulator.sgdt = Memory.alloc(10);
-                    this.instructionEmulator.sgdt.writeU16(0x3ff); // Limit
-                    this.instructionEmulator.sgdt.add(2).writeU64(ptr('0xFFFFF80000000000')); // Base
-                }
-                return this.instructionEmulator.sgdt;
-            case 'sidt':
-                if (!this.instructionEmulator.sidt) {
-                    this.instructionEmulator.sidt = Memory.alloc(10);
-                    this.instructionEmulator.sidt.writeU16(0xfff); // Limit
-                    this.instructionEmulator.sidt.add(2).writeU64(ptr('0xFFFFF80000001000')); // Base
-                }
-                return this.instructionEmulator.sidt;
-            default:
-                return null;
+                case 'smsw':
+                    return this.instructionEmulator.smsw;
+                case 'sldt':
+                    return this.instructionEmulator.sldt;
+                case 'sgdt':
+                    if (!this.instructionEmulator.sgdt) {
+                        this.instructionEmulator.sgdt = Memory.alloc(10);
+                        this.instructionEmulator.sgdt.writeU16(0x3ff); // Limit
+                        this.instructionEmulator.sgdt.add(2).writeU64(ptr('0xFFFFF80000000000')); // Base
+                    }
+                    return this.instructionEmulator.sgdt;
+                case 'sidt':
+                    if (!this.instructionEmulator.sidt) {
+                        this.instructionEmulator.sidt = Memory.alloc(10);
+                        this.instructionEmulator.sidt.writeU16(0xfff); // Limit
+                        this.instructionEmulator.sidt.add(2).writeU64(ptr('0xFFFFF80000001000')); // Base
+                    }
+                    return this.instructionEmulator.sidt;
+                default:
+                    return null;
             }
         }.bind(this);
 
@@ -4670,27 +4670,27 @@ const virtualizationBypass = {
                 var result = { eax: 0, ebx: 0, ecx: 0, edx: 0 };
 
                 switch (eax) {
-                case 0x1:
-                    // Feature information
-                    result.ecx &= ~(1 << 5); // Clear VMX bit
-                    result.ecx &= ~(1 << 31); // Clear hypervisor bit
-                    this.hardwareMasking.maskedFeatures.add('VMX');
-                    this.hardwareMasking.maskedFeatures.add('HYPERVISOR');
-                    break;
+                    case 0x1:
+                        // Feature information
+                        result.ecx &= ~(1 << 5); // Clear VMX bit
+                        result.ecx &= ~(1 << 31); // Clear hypervisor bit
+                        this.hardwareMasking.maskedFeatures.add('VMX');
+                        this.hardwareMasking.maskedFeatures.add('HYPERVISOR');
+                        break;
 
-                case 0x80000001:
-                    // Extended features
-                    result.ecx &= ~(1 << 2); // Clear SVM bit
-                    this.hardwareMasking.maskedFeatures.add('SVM');
-                    break;
+                    case 0x80000001:
+                        // Extended features
+                        result.ecx &= ~(1 << 2); // Clear SVM bit
+                        this.hardwareMasking.maskedFeatures.add('SVM');
+                        break;
 
-                case 0x40000000:
-                    // Hypervisor CPUID leaf
-                    result.eax = 0; // No hypervisor present
-                    result.ebx = 0;
-                    result.ecx = 0;
-                    result.edx = 0;
-                    break;
+                    case 0x40000000:
+                        // Hypervisor CPUID leaf
+                        result.eax = 0; // No hypervisor present
+                        result.ebx = 0;
+                        result.ecx = 0;
+                        result.edx = 0;
+                        break;
                 }
 
                 return result;
@@ -5024,26 +5024,26 @@ const virtualizationBypass = {
 
                                         // Manipulate specific exits
                                         switch (exitReason) {
-                                        case 0x0a: // CPUID
-                                            // Modify CPUID results to hide VM
-                                            this.modifyCpuidExit();
-                                            break;
+                                            case 0x0a: // CPUID
+                                                // Modify CPUID results to hide VM
+                                                this.modifyCpuidExit();
+                                                break;
 
-                                        case 0x10: // RDTSC
-                                            // Adjust TSC values
-                                            this.modifyRdtscExit();
-                                            break;
+                                            case 0x10: // RDTSC
+                                                // Adjust TSC values
+                                                this.modifyRdtscExit();
+                                                break;
 
-                                        case 0x21: // RDMSR
-                                        case 0x22: // WRMSR
-                                            // Handle MSR access
-                                            this.modifyMsrExit(exitReason === 0x22);
-                                            break;
+                                            case 0x21: // RDMSR
+                                            case 0x22: // WRMSR
+                                                // Handle MSR access
+                                                this.modifyMsrExit(exitReason === 0x22);
+                                                break;
 
-                                        case 0x30: // EPT_VIOLATION
-                                            // Handle EPT violations
-                                            this.handleEptViolation(exitQualification);
-                                            break;
+                                            case 0x30: // EPT_VIOLATION
+                                                // Handle EPT violations
+                                                this.handleEptViolation(exitQualification);
+                                                break;
                                         }
 
                                         this.vmExitHandlers.interceptedExits++;

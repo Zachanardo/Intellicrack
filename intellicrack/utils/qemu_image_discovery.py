@@ -54,7 +54,7 @@ class QEMUImageDiscovery:
         ".bochs",
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize QEMU image discovery."""
         self._cache = []
         self._cache_valid = False
@@ -173,13 +173,13 @@ class QEMUImageDiscovery:
         all_images = self.discover_images()
 
         for image in all_images:
-            if image.filename == filename or image.path.name == filename:
+            if filename in (image.filename, image.path.name):
                 return image
 
         logger.warning(f"QEMU image not found: {filename}")
         return None
 
-    def invalidate_cache(self):
+    def invalidate_cache(self) -> None:
         """Invalidate the image cache to force re-discovery."""
         self._cache_valid = False
         logger.debug("QEMU image cache invalidated")

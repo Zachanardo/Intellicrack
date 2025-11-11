@@ -50,8 +50,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
 )
 
-from intellicrack.core.config_manager import get_config
-
 from .advanced_search import AdvancedSearchDialog, SearchEngine
 from .file_handler import VirtualFileAccess
 from .hex_highlighter import HexHighlight, HexHighlighter, HighlightType
@@ -64,7 +62,7 @@ logger = logging.getLogger("Intellicrack.HexView")
 class FoldedRegion:
     """Represents a folded region in the hex view."""
 
-    def __init__(self, start: int, end: int, name: str = ""):
+    def __init__(self, start: int, end: int, name: str = "") -> None:
         """Initialize a folded region.
 
         Args:
@@ -126,7 +124,7 @@ class HexViewerWidget(QAbstractScrollArea):
     #: Signal emitted when view mode changes (type: ViewMode)
     view_mode_changed = pyqtSignal(ViewMode)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the hex viewer widget.
 
         Sets up the hexadecimal file viewer with support for multiple view modes,
@@ -137,6 +135,8 @@ class HexViewerWidget(QAbstractScrollArea):
             parent: Parent widget for the hex viewer.
 
         """
+        from intellicrack.core.config_manager import get_config
+
         super().__init__(parent)
 
         # Get configuration instance
@@ -191,7 +191,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
         logger.debug("HexViewerWidget initialized")
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the UI components."""
         # Set up font with configuration values
         font_family = self.config.get("hex_viewer.ui.font_family", "Consolas")
@@ -386,7 +386,7 @@ class HexViewerWidget(QAbstractScrollArea):
             logger.error(f"Error loading data: {e}", exc_info=True)
             return False
 
-    def close(self):
+    def close(self) -> None:
         """Close the current file and clean up resources."""
         if hasattr(self, "file_handler") and self.file_handler:
             del self.file_handler
@@ -403,7 +403,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
         logger.debug("Closed hex viewer")
 
-    def update_scrollbars(self):
+    def update_scrollbars(self) -> None:
         """Update scrollbar ranges based on current file size and viewport size."""
         if not self.file_handler:
             # No file loaded, disable scrollbars
@@ -453,7 +453,7 @@ class HexViewerWidget(QAbstractScrollArea):
             # Default for other view modes
             self.horizontalScrollBar().setRange(0, 0)
 
-    def handle_scroll(self, value: int):
+    def handle_scroll(self, value: int) -> None:
         """Handle scrollbar value changes."""
         if not self.file_handler:
             return
@@ -467,7 +467,7 @@ class HexViewerWidget(QAbstractScrollArea):
         # Emit signal
         self.offset_changed.emit(self.current_offset)
 
-    def paintEvent(self, event: QPaintEvent):
+    def paintEvent(self, event: QPaintEvent) -> None:
         """Handle paint events for the viewport."""
         # This is handled by viewportPaintEvent
         super().paintEvent(event)
@@ -479,7 +479,7 @@ class HexViewerWidget(QAbstractScrollArea):
             return True
         return super().viewportEvent(event)
 
-    def viewportPaintEvent(self, event: QPaintEvent):
+    def viewportPaintEvent(self, event: QPaintEvent) -> None:
         """Paint the hex view to the viewport."""
         # Create painter
         painter = QPainter(self.viewport())
@@ -611,7 +611,7 @@ class HexViewerWidget(QAbstractScrollArea):
                         folded_region = region
                         break
 
-                # If folded, draw placeholder and skip to next visible row
+                # If folded, draw folded region indicator and skip to next visible row
                 if is_folded and folded_region:
                     # Draw folded region indicator only for the first row of the fold
                     if row_offset == folded_region.start or (row > start_row and row_offset - self.bytes_per_row < folded_region.start):
@@ -662,7 +662,7 @@ class HexViewerWidget(QAbstractScrollArea):
             painter.setPen(Qt.GlobalColor.red)
             painter.drawText(10, 80, f"Error in rendering: {str(e)[:50]}...")
 
-    def draw_header(self, painter: QPainter, h_scroll: int):
+    def draw_header(self, painter: QPainter, h_scroll: int) -> None:
         """Draw the header with column labels."""
         # Draw header background
         header_rect = QRect(0, 0, self.viewport().width() + h_scroll, self.header_height)
@@ -744,7 +744,7 @@ class HexViewerWidget(QAbstractScrollArea):
         # Draw bottom border
         painter.drawLine(0, self.header_height - 1, self.viewport().width() + h_scroll, self.header_height - 1)
 
-    def draw_hex_row(self, painter: QPainter, data: bytes, offset: int, y: int):
+    def draw_hex_row(self, painter: QPainter, data: bytes, offset: int, y: int) -> None:
         """Draw a row in hex view mode."""
         try:
             # Add debug logging
@@ -838,7 +838,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
             x += self.char_width
 
-    def draw_decimal_row(self, painter: QPainter, data: bytes, offset: int, y: int):
+    def draw_decimal_row(self, painter: QPainter, data: bytes, offset: int, y: int) -> None:
         """Draw a row in decimal view mode."""
         # Draw row address
         addr_rect = QRect(0, y, self.address_width, self.char_height)
@@ -869,7 +869,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
             x += 4 * self.char_width  # 3 chars + space
 
-    def draw_binary_row(self, painter: QPainter, data: bytes, offset: int, y: int):
+    def draw_binary_row(self, painter: QPainter, data: bytes, offset: int, y: int) -> None:
         """Draw a row in binary view mode."""
         # Draw row address
         addr_rect = QRect(0, y, self.address_width, self.char_height)
@@ -908,7 +908,7 @@ class HexViewerWidget(QAbstractScrollArea):
         y: int,
         width: int,
         highlights: list[HexHighlight],
-    ):
+    ) -> None:
         """Draw highlights for a specific byte."""
         # Check if the byte is selected
         is_selected = self.selection_start >= 0 and self.selection_end >= 0 and self.selection_start <= byte_offset < self.selection_end
@@ -933,7 +933,7 @@ class HexViewerWidget(QAbstractScrollArea):
                 highlight_rect = QRect(x, y, width, self.char_height)
                 painter.fillRect(highlight_rect, highlight_color)
 
-    def set_view_mode(self, mode: ViewMode):
+    def set_view_mode(self, mode: ViewMode) -> None:
         """Set the current view mode.
 
         Args:
@@ -946,7 +946,7 @@ class HexViewerWidget(QAbstractScrollArea):
             self.viewport().update()
             self.view_mode_changed.emit(mode)
 
-    def set_bytes_per_row(self, bytes_per_row: int):
+    def set_bytes_per_row(self, bytes_per_row: int) -> None:
         """Set the number of bytes per row.
 
         Args:
@@ -959,7 +959,7 @@ class HexViewerWidget(QAbstractScrollArea):
             self.update_scrollbars()
             self.viewport().update()
 
-    def set_group_size(self, group_size: int):
+    def set_group_size(self, group_size: int) -> None:
         """Set the group size for byte grouping.
 
         Args:
@@ -971,7 +971,7 @@ class HexViewerWidget(QAbstractScrollArea):
             self.renderer.set_group_size(group_size)
             self.viewport().update()
 
-    def fold_region(self, start: int, end: int, name: str = ""):
+    def fold_region(self, start: int, end: int, name: str = "") -> None:
         """Fold a region of data.
 
         Args:
@@ -997,7 +997,7 @@ class HexViewerWidget(QAbstractScrollArea):
         self.calculate_scroll_range()
         self.viewport().update()
 
-    def unfold_region(self, offset: int):
+    def unfold_region(self, offset: int) -> None:
         """Unfold a region containing the given offset.
 
         Args:
@@ -1011,14 +1011,14 @@ class HexViewerWidget(QAbstractScrollArea):
                 self.viewport().update()
                 break
 
-    def unfold_all(self):
+    def unfold_all(self) -> None:
         """Unfold all folded regions."""
         if self.folded_regions:
             self.folded_regions.clear()
             self.calculate_scroll_range()
             self.viewport().update()
 
-    def fold_selection(self):
+    def fold_selection(self) -> None:
         """Fold the currently selected region."""
         if self.selection_start >= 0 and self.selection_end > self.selection_start:
             # Create a default name based on the selection
@@ -1083,7 +1083,7 @@ class HexViewerWidget(QAbstractScrollArea):
                 break
         return file_offset
 
-    def jump_to_offset(self, offset: int):
+    def jump_to_offset(self, offset: int) -> None:
         """Jump to a specific offset in the file.
 
         Args:
@@ -1117,7 +1117,7 @@ class HexViewerWidget(QAbstractScrollArea):
         self.offset_changed.emit(self.current_offset)
         self.selection_changed.emit(self.selection_start, self.selection_end)
 
-    def select_range(self, start: int, end: int):
+    def select_range(self, start: int, end: int) -> None:
         """Select a range of bytes.
 
         Args:
@@ -1156,7 +1156,7 @@ class HexViewerWidget(QAbstractScrollArea):
         # Emit signal
         self.selection_changed.emit(start, end)
 
-    def clear_selection(self):
+    def clear_selection(self) -> None:
         """Clear the current selection."""
         if self.selection_start >= 0 and self.selection_end >= 0:
             self.selection_start = -1
@@ -1187,7 +1187,7 @@ class HexViewerWidget(QAbstractScrollArea):
         size = self.selection_end - self.selection_start
         return self.file_handler.read(self.selection_start, size)
 
-    def add_bookmark(self, offset: int = None, size: int = 1, description: str = ""):
+    def add_bookmark(self, offset: int = None, size: int = 1, description: str = "") -> None:
         """Add a bookmark at the specified offset or current selection.
 
         Args:
@@ -1402,7 +1402,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
         return self.file_handler.apply_edits()
 
-    def discard_edits(self):
+    def discard_edits(self) -> None:
         """Discard all pending edits."""
         if not self.file_handler:
             return
@@ -1415,7 +1415,7 @@ class HexViewerWidget(QAbstractScrollArea):
         # Update the viewport
         self.viewport().update()
 
-    def show_context_menu(self, pos: QPoint):
+    def show_context_menu(self, pos: QPoint) -> None:
         """Show the context menu."""
         if not self.file_handler:
             return
@@ -1544,7 +1544,7 @@ class HexViewerWidget(QAbstractScrollArea):
         # Show the menu
         menu.exec_(self.mapToGlobal(pos))
 
-    def show_jump_dialog(self):
+    def show_jump_dialog(self) -> None:
         """Show dialog for jumping to a specific offset."""
         if not self.file_handler:
             return
@@ -1574,7 +1574,7 @@ class HexViewerWidget(QAbstractScrollArea):
                     "Please enter a valid offset in decimal or hex (0x...) format.",
                 )
 
-    def show_search_dialog(self):
+    def show_search_dialog(self) -> None:
         """Show advanced search dialog for searching patterns."""
         if not self.file_handler or not self.search_engine:
             QMessageBox.warning(self, "Search Unavailable", "Please load a file before searching.")
@@ -1594,7 +1594,7 @@ class HexViewerWidget(QAbstractScrollArea):
         # Show the dialog (non-modal so users can interact with both)
         dialog.show()
 
-    def add_bookmark_dialog(self):
+    def add_bookmark_dialog(self) -> None:
         """Show dialog for adding a bookmark."""
         if not self.file_handler:
             return
@@ -1658,7 +1658,7 @@ class HexViewerWidget(QAbstractScrollArea):
                     "Please enter a valid offset in decimal or hex (0x...) format.",
                 )
 
-    def copy_selection_as_hex(self):
+    def copy_selection_as_hex(self) -> None:
         """Copy the selected data as a hex string."""
         data = self.get_selected_data()
         if not data:
@@ -1671,7 +1671,7 @@ class HexViewerWidget(QAbstractScrollArea):
         clipboard = QApplication.clipboard()
         clipboard.setText(hex_str)
 
-    def copy_selection_as_text(self):
+    def copy_selection_as_text(self) -> None:
         """Copy the selected data as text."""
         data = self.get_selected_data()
         if not data:
@@ -1689,7 +1689,7 @@ class HexViewerWidget(QAbstractScrollArea):
         clipboard = QApplication.clipboard()
         clipboard.setText(text)
 
-    def copy_selection_as_c_array(self):
+    def copy_selection_as_c_array(self) -> None:
         """Copy the selected data as a C array initializer."""
         data = self.get_selected_data()
         if not data:
@@ -1708,7 +1708,7 @@ class HexViewerWidget(QAbstractScrollArea):
         clipboard = QApplication.clipboard()
         clipboard.setText(array_str)
 
-    def copy_selection_as_java_array(self):
+    def copy_selection_as_java_array(self) -> None:
         """Copy the selected data as a Java byte array."""
         data = self.get_selected_data()
         if not data:
@@ -1731,7 +1731,7 @@ class HexViewerWidget(QAbstractScrollArea):
         clipboard = QApplication.clipboard()
         clipboard.setText(array_str)
 
-    def copy_selection_as_python_bytes(self):
+    def copy_selection_as_python_bytes(self) -> None:
         """Copy the selected data as Python bytes literal."""
         data = self.get_selected_data()
         if not data:
@@ -1753,7 +1753,7 @@ class HexViewerWidget(QAbstractScrollArea):
         clipboard = QApplication.clipboard()
         clipboard.setText(python_str)
 
-    def copy_selection_as_base64(self):
+    def copy_selection_as_base64(self) -> None:
         """Copy the selected data as Base64 encoded string."""
         import base64
 
@@ -1768,7 +1768,7 @@ class HexViewerWidget(QAbstractScrollArea):
         clipboard = QApplication.clipboard()
         clipboard.setText(b64_str)
 
-    def copy_selection_as_data_uri(self):
+    def copy_selection_as_data_uri(self) -> None:
         """Copy the selected data as a data URI."""
         import base64
 
@@ -1799,7 +1799,7 @@ class HexViewerWidget(QAbstractScrollArea):
         clipboard = QApplication.clipboard()
         clipboard.setText(data_uri)
 
-    def copy_selection_as_formatted_hex(self):
+    def copy_selection_as_formatted_hex(self) -> None:
         """Copy the selected data as formatted hex with custom options."""
         from PyQt6.QtWidgets import (
             QDialog,
@@ -1866,7 +1866,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
         dialog.setLayout(layout)
 
-        def format_and_copy():
+        def format_and_copy() -> None:
             prefix = prefix_input.text()
             separator = sep_input.text()
             bytes_per_line = bpl_input.value()
@@ -1903,7 +1903,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
         dialog.exec()
 
-    def fill_selection(self):
+    def fill_selection(self) -> None:
         """Fill the selected range with a repeated value."""
         if not self.file_handler or self.file_handler.read_only or self.selection_start < 0 or self.selection_end <= self.selection_start:
             return
@@ -1941,7 +1941,7 @@ class HexViewerWidget(QAbstractScrollArea):
                     "Please enter a valid byte value in decimal or hex (0x...) format.",
                 )
 
-    def edit_selection_dialog(self):
+    def edit_selection_dialog(self) -> None:
         """Show dialog for editing the selected data."""
         if not self.file_handler or self.file_handler.read_only or self.selection_start < 0 or self.selection_end <= self.selection_start:
             return
@@ -1998,7 +1998,7 @@ class HexViewerWidget(QAbstractScrollArea):
             # Apply the edit
             self.edit_selection(edited_data)
 
-    def resizeEvent(self, event: QResizeEvent):
+    def resizeEvent(self, event: QResizeEvent) -> None:
         """Handle resize events."""
         super().resizeEvent(event)
         self.update_scrollbars()
@@ -2047,7 +2047,7 @@ class HexViewerWidget(QAbstractScrollArea):
         # For other keys, fall back to parent implementation
         super().keyPressEvent(event)
 
-    def handle_navigation_key(self, key: int, modifiers: Qt.KeyboardModifier):
+    def handle_navigation_key(self, key: int, modifiers: Qt.KeyboardModifier) -> None:
         """Handle navigation key events with modifier key support."""
         file_size = self.file_handler.get_file_size()
         ctrl_pressed = bool(modifiers & Qt.ControlModifier)
@@ -2278,7 +2278,7 @@ class HexViewerWidget(QAbstractScrollArea):
         """
         return self.performance_monitor.get_stats_summary()
 
-    def show_performance_dialog(self):
+    def show_performance_dialog(self) -> None:
         """Show a dialog with performance statistics."""
         try:
             from PyQt6.QtWidgets import (  # pylint: disable=redefined-outer-name
@@ -2328,7 +2328,7 @@ class HexViewerWidget(QAbstractScrollArea):
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error showing performance dialog: %s", e)
 
-    def optimize_for_large_files(self):
+    def optimize_for_large_files(self) -> None:
         """Optimize settings for large file handling."""
         if self.file_handler and hasattr(self.file_handler, "large_file_handler"):
             # Auto-optimize based on access patterns

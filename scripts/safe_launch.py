@@ -43,7 +43,7 @@ def validate_mkl_dlls():
             del handle
         except OSError as e:
             error_code = getattr(e, 'winerror', None)
-            if error_code == 0xc0000139 or error_code == 127:
+            if error_code in {3221225785, 127}:
                 return False, (
                     f"Entry point not found in {dll_name}: {e}\n\n"
                     f"This indicates ABI incompatibility - system Intel oneAPI DLLs may be loading instead of pixi environment DLLs.\n"

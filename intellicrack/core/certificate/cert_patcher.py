@@ -162,7 +162,7 @@ class CertificatePatcher:
     validation in software licensing protection mechanisms.
     """
 
-    def __init__(self, binary_path: str):
+    def __init__(self, binary_path: str) -> None:
         """Initialize certificate patcher.
 
         Args:
@@ -186,7 +186,7 @@ class CertificatePatcher:
         else:
             raise RuntimeError("LIEF library not available for patching")
 
-    def _detect_architecture(self):
+    def _detect_architecture(self) -> None:
         """Detect binary architecture."""
         if not self.binary:
             return
@@ -208,7 +208,7 @@ class CertificatePatcher:
 
     def patch_certificate_validation(
         self,
-        detection_report: DetectionReport
+        detection_report: DetectionReport,
     ) -> PatchResult:
         """Patch all certificate validation functions identified in detection report.
 
@@ -226,7 +226,7 @@ class CertificatePatcher:
                 success=True,
                 patched_functions=[],
                 failed_patches=[],
-                backup_data=b''
+                backup_data=b'',
             )
 
         patched_functions = []
@@ -244,7 +244,7 @@ class CertificatePatcher:
                     failed_patches.append(FailedPatch(
                         address=func.address,
                         api_name=func.api_name,
-                        error="Failed to generate patch"
+                        error="Failed to generate patch",
                     ))
                     continue
 
@@ -254,7 +254,7 @@ class CertificatePatcher:
                     failed_patches.append(FailedPatch(
                         address=func.address,
                         api_name=func.api_name,
-                        error="Patch safety check failed"
+                        error="Patch safety check failed",
                     ))
                     continue
 
@@ -262,7 +262,7 @@ class CertificatePatcher:
                     failed_patches.append(FailedPatch(
                         address=func.address,
                         api_name=func.api_name,
-                        error="Patch too large for available space"
+                        error="Patch too large for available space",
                     ))
                     continue
 
@@ -274,14 +274,14 @@ class CertificatePatcher:
                         api_name=func.api_name,
                         patch_type=patch_type,
                         patch_size=len(patch_bytes),
-                        original_bytes=original_bytes
+                        original_bytes=original_bytes,
                     ))
                     logger.info(f"Successfully patched {func.api_name}")
                 else:
                     failed_patches.append(FailedPatch(
                         address=func.address,
                         api_name=func.api_name,
-                        error="Failed to apply patch"
+                        error="Failed to apply patch",
                     ))
 
             except Exception as e:
@@ -289,7 +289,7 @@ class CertificatePatcher:
                 failed_patches.append(FailedPatch(
                     address=func.address,
                     api_name=func.api_name,
-                    error=str(e)
+                    error=str(e),
                 ))
 
         if patched_functions:
@@ -302,7 +302,7 @@ class CertificatePatcher:
                     success=False,
                     patched_functions=patched_functions,
                     failed_patches=failed_patches,
-                    backup_data=bytes(backup_data)
+                    backup_data=bytes(backup_data),
                 )
 
         success = len(patched_functions) > 0 and len(failed_patches) == 0
@@ -311,7 +311,7 @@ class CertificatePatcher:
             success=success,
             patched_functions=patched_functions,
             failed_patches=failed_patches,
-            backup_data=bytes(backup_data)
+            backup_data=bytes(backup_data),
         )
 
     def _select_patch_type(self, func: ValidationFunction) -> PatchType:
@@ -335,7 +335,7 @@ class CertificatePatcher:
     def _generate_patch(
         self,
         func: ValidationFunction,
-        patch_type: PatchType
+        patch_type: PatchType,
     ) -> Optional[bytes]:
         """Generate patch bytes for function.
 
@@ -363,7 +363,7 @@ class CertificatePatcher:
             else:
                 return get_patch_for_architecture(
                     self.architecture,
-                    PatchType.ALWAYS_SUCCEED
+                    PatchType.ALWAYS_SUCCEED,
                 )
 
         elif patch_type == PatchType.NOP_SLED:
@@ -477,7 +477,7 @@ class CertificatePatcher:
 
         return False
 
-    def _save_patched_binary(self):
+    def _save_patched_binary(self) -> None:
         """Save patched binary to disk."""
         if not self.binary:
             return

@@ -52,7 +52,7 @@ class HexHighlight:
         color: str = "#FFFF00",
         alpha: int = 128,
         priority: int = 0,
-    ):
+    ) -> None:
         """Initialize the HexHighlight with start, end, type, color, alpha, and priority."""
         self.start = start
         self.end = end
@@ -135,7 +135,7 @@ class HexHighlighter:
     highlights in binary data.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the HexHighlighter with default settings."""
         self.highlights: list[HexHighlight] = []
         self.bookmarks: list[dict[str, Any]] = []  # For generating unique IDs

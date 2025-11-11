@@ -111,16 +111,16 @@ const credentialGenerator = {
         const prefix = overridePrefix || pattern.prefix;
 
         switch (pattern.format) {
-        case 'jwt':
-            return this.generateJWT();
-        case 'uuid':
-            return this.generateUUID();
-        case 'base64':
-            return this.generateBase64(length);
-        case 'hex':
-            return this.generateHex(length);
-        default:
-            return this.generateWithCharset(length, prefix, pattern.charset);
+            case 'jwt':
+                return this.generateJWT();
+            case 'uuid':
+                return this.generateUUID();
+            case 'base64':
+                return this.generateBase64(length);
+            case 'hex':
+                return this.generateHex(length);
+            default:
+                return this.generateWithCharset(length, prefix, pattern.charset);
         }
     },
 
@@ -1933,7 +1933,7 @@ const websocketInterceptor = {
 
                         // Log stream details for analysis
                         if (!stream.isNull()) {
-                            send('[Cap\'n Proto] Reading from stream: ' + stream);
+                            send("[Cap'n Proto] Reading from stream: " + stream);
                         }
 
                         send({

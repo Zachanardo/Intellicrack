@@ -54,14 +54,14 @@ class TrafficAnalyzer:
     for real-time packet capture, analysis, and visualization.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize traffic analyzer with existing infrastructure integration."""
         self.logger = logging.getLogger(__name__)
         self.analyzer = None
         self.analysis_thread = None
         self.capture_active = False
 
-    def run_visual_network_traffic_analyzer(self, main_window):
+    def run_visual_network_traffic_analyzer(self, main_window) -> None:
         """Launch visual network traffic analyzer dialog.
 
         Args:
@@ -94,7 +94,7 @@ class TrafficAnalyzer:
 class NetworkTrafficAnalysisDialog(QDialog):
     """Comprehensive network traffic analysis dialog with real-time capture and visualization."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the network traffic analysis dialog.
 
         Args:
@@ -116,7 +116,7 @@ class NetworkTrafficAnalysisDialog(QDialog):
         self._setup_ui()
         self._connect_signals()
 
-    def _initialize_analyzer(self):
+    def _initialize_analyzer(self) -> None:
         """Initialize the core NetworkTrafficAnalyzer."""
         try:
             from intellicrack.core.network.traffic_analyzer import NetworkTrafficAnalyzer
@@ -128,7 +128,7 @@ class NetworkTrafficAnalysisDialog(QDialog):
             log_error(error_msg)
             self.analyzer = None
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         """Set up the comprehensive UI layout."""
         layout = QVBoxLayout(self)
 
@@ -151,7 +151,7 @@ class NetworkTrafficAnalysisDialog(QDialog):
         # Control buttons
         self._create_control_buttons(layout)
 
-    def _create_capture_config_tab(self):
+    def _create_capture_config_tab(self) -> None:
         """Create the capture configuration tab."""
         config_widget = QWidget()
         layout = QVBoxLayout(config_widget)
@@ -222,7 +222,7 @@ class NetworkTrafficAnalysisDialog(QDialog):
 
         self.tab_widget.addTab(config_widget, "Configuration")
 
-    def _create_monitoring_tab(self):
+    def _create_monitoring_tab(self) -> None:
         """Create the real-time monitoring tab."""
         monitor_widget = QWidget()
         layout = QVBoxLayout(monitor_widget)
@@ -281,7 +281,7 @@ class NetworkTrafficAnalysisDialog(QDialog):
 
         self.tab_widget.addTab(monitor_widget, "Live Monitoring")
 
-    def _create_results_tab(self):
+    def _create_results_tab(self) -> None:
         """Create the analysis results tab."""
         results_widget = QWidget()
         layout = QVBoxLayout(results_widget)
@@ -325,7 +325,7 @@ class NetworkTrafficAnalysisDialog(QDialog):
 
         self.tab_widget.addTab(results_widget, "Results")
 
-    def _create_visualization_tab(self):
+    def _create_visualization_tab(self) -> None:
         """Create the visualization tab."""
         viz_widget = QWidget()
         layout = QVBoxLayout(viz_widget)
@@ -337,7 +337,7 @@ class NetworkTrafficAnalysisDialog(QDialog):
         controls_layout.addWidget(QLabel("Chart Type:"), 0, 0)
         self.chart_type_combo = QComboBox()
         self.chart_type_combo.addItems(
-            ["Protocol Distribution", "Traffic Over Time", "Port Distribution", "License Traffic Analysis", "Connection Flow Diagram"]
+            ["Protocol Distribution", "Traffic Over Time", "Port Distribution", "License Traffic Analysis", "Connection Flow Diagram"],
         )
         controls_layout.addWidget(self.chart_type_combo, 0, 1)
 
@@ -365,7 +365,7 @@ class NetworkTrafficAnalysisDialog(QDialog):
 
         self.tab_widget.addTab(viz_widget, "Visualization")
 
-    def _create_control_buttons(self, layout):
+    def _create_control_buttons(self, layout) -> None:
         """Create main control buttons."""
         button_layout = QHBoxLayout()
 
@@ -387,7 +387,7 @@ class NetworkTrafficAnalysisDialog(QDialog):
 
         layout.addLayout(button_layout)
 
-    def _connect_signals(self):
+    def _connect_signals(self) -> None:
         """Connect UI signals to handlers."""
         self.start_capture_btn.clicked.connect(self._start_capture)
         self.stop_capture_btn.clicked.connect(self._stop_capture)
@@ -408,7 +408,7 @@ class NetworkTrafficAnalysisDialog(QDialog):
         self.update_timer = QTimer()
         self.update_timer.timeout.connect(self._update_realtime_stats)
 
-    def _start_capture(self):
+    def _start_capture(self) -> None:
         """Start network traffic capture."""
         if not self.analyzer:
             QMessageBox.warning(self, "Error", "Network traffic analyzer not available")
@@ -453,7 +453,7 @@ class NetworkTrafficAnalysisDialog(QDialog):
             log_error(error_msg)
             QMessageBox.critical(self, "Capture Error", error_msg)
 
-    def _capture_worker(self, config):
+    def _capture_worker(self, config) -> None:
         """Worker method for packet capture."""
         try:
             # Set license patterns if enabled
@@ -470,13 +470,13 @@ class NetworkTrafficAnalysisDialog(QDialog):
 
             # Start capture
             self.analyzer.start_capture(
-                interface=config.get("interface", "auto"), timeout=config.get("timeout", 60), packet_filter=config.get("filter")
+                interface=config.get("interface", "auto"), timeout=config.get("timeout", 60), packet_filter=config.get("filter"),
             )
 
         except Exception as e:
             log_error(f"Capture worker error: {e}")
 
-    def _stop_capture(self):
+    def _stop_capture(self) -> None:
         """Stop network traffic capture."""
         try:
             if self.analyzer:
@@ -499,7 +499,7 @@ class NetworkTrafficAnalysisDialog(QDialog):
             log_error(error_msg)
             QMessageBox.critical(self, "Stop Error", error_msg)
 
-    def _analyze_traffic(self):
+    def _analyze_traffic(self) -> None:
         """Analyze captured traffic."""
         if not self.analyzer:
             QMessageBox.warning(self, "Error", "Network traffic analyzer not available")
@@ -528,7 +528,7 @@ class NetworkTrafficAnalysisDialog(QDialog):
             self.status_label.setText("Analysis Failed")
             self.status_label.setStyleSheet("color: red; font-weight: bold;")
 
-    def _update_results_display(self):
+    def _update_results_display(self) -> None:
         """Update the results display with analysis data."""
         if not self.analysis_results:
             return
@@ -572,7 +572,7 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
 
         self.results_text.setPlainText(details)
 
-    def _update_realtime_stats(self):
+    def _update_realtime_stats(self) -> None:
         """Update real-time statistics during capture."""
         if not self.analyzer:
             return
@@ -596,7 +596,7 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
         except Exception as e:
             log_warning(f"Error updating real-time stats: {e}")
 
-    def _clear_data(self):
+    def _clear_data(self) -> None:
         """Clear all captured data and reset the interface."""
         try:
             if self.analyzer:
@@ -620,7 +620,7 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
         except Exception as e:
             log_error(f"Error clearing data: {e}")
 
-    def _export_json(self):
+    def _export_json(self) -> None:
         """Export analysis results to JSON."""
         if not self.analysis_results:
             QMessageBox.warning(self, "Warning", "No analysis results to export")
@@ -643,7 +643,7 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
             log_error(error_msg)
             QMessageBox.critical(self, "Export Error", error_msg)
 
-    def _export_csv(self):
+    def _export_csv(self) -> None:
         """Export packet data to CSV."""
         if not self.analyzer or not hasattr(self.analyzer, "packets"):
             QMessageBox.warning(self, "Warning", "No packet data to export")
@@ -667,7 +667,7 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
                                 packet.get("dst", ""),
                                 packet.get("protocol", ""),
                                 packet.get("length", 0),
-                            ]
+                            ],
                         )
 
                 QMessageBox.information(self, "Success", f"Packet data exported to {filename}")
@@ -678,7 +678,7 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
             log_error(error_msg)
             QMessageBox.critical(self, "Export Error", error_msg)
 
-    def _export_pcap(self):
+    def _export_pcap(self) -> None:
         """Export captured packets to PCAP file."""
         QMessageBox.information(
             self,
@@ -687,7 +687,7 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
             "Use the built-in packet capture features or external tools for PCAP generation.",
         )
 
-    def _export_report(self):
+    def _export_report(self) -> None:
         """Generate and export comprehensive analysis report."""
         if not self.analysis_results:
             QMessageBox.warning(self, "Warning", "No analysis results to export")
@@ -713,7 +713,7 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
             log_error(error_msg)
             QMessageBox.critical(self, "Export Error", error_msg)
 
-    def _generate_visualization(self):
+    def _generate_visualization(self) -> None:
         """Generate traffic visualization based on selected type."""
         if not self.analysis_results:
             QMessageBox.warning(self, "Warning", "No analysis results available for visualization")
@@ -767,7 +767,7 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
 
 
 # Network capture management functions for main_app binding
-def start_network_capture(self, interface=None, filter_str=None):
+def start_network_capture(self, interface=None, filter_str=None) -> bool | None:
     """Start network packet capture on specified interface.
 
     Args:
@@ -824,7 +824,7 @@ def start_network_capture(self, interface=None, filter_str=None):
         return False
 
 
-def stop_network_capture(self):
+def stop_network_capture(self) -> bool | None:
     """Stop active network packet capture."""
     try:
         if hasattr(self, "_capture_active"):
@@ -849,7 +849,7 @@ def stop_network_capture(self):
         return False
 
 
-def clear_network_capture(self):
+def clear_network_capture(self) -> bool | None:
     """Clear captured network packets from memory."""
     try:
         if hasattr(self, "_captured_packets"):
@@ -869,7 +869,7 @@ def clear_network_capture(self):
         return False
 
 
-def _perform_network_capture(self, interface, filter_str):
+def _perform_network_capture(self, interface, filter_str) -> None:
     """Background thread function to perform packet capture.
 
     Args:
@@ -883,7 +883,7 @@ def _perform_network_capture(self, interface, filter_str):
         try:
             from scapy.all import sniff
 
-            def packet_handler(packet):
+            def packet_handler(packet) -> None:
                 """Handle captured packets."""
                 if hasattr(self, "_captured_packets"):
                     self._captured_packets.append(packet)
@@ -932,7 +932,7 @@ def _perform_network_capture(self, interface, filter_str):
                     if hasattr(self, "update_output"):
                         self.update_output.emit(f"Captured packet: {len(packet_data)} bytes")
 
-                except socket.timeout:
+                except TimeoutError:
                     continue
                 except Exception as e:
                     if self._capture_active:

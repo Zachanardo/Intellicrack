@@ -43,7 +43,7 @@ class CloudLicenseResponseGenerator:
     authentication protocols and encryption.
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         """Initialize the cloud license response generator.
 
         Args:
@@ -70,7 +70,7 @@ class CloudLicenseResponseGenerator:
         self._init_response_templates()
         self._init_protocol_handlers()
 
-    def _init_response_templates(self):
+    def _init_response_templates(self) -> None:
         """Initialize default license response templates."""
         if not self.response_templates:
             self.response_templates = {
@@ -100,7 +100,7 @@ class CloudLicenseResponseGenerator:
                 },
             }
 
-    def _init_protocol_handlers(self):
+    def _init_protocol_handlers(self) -> None:
         """Initialize protocol-specific handlers."""
         self.protocol_handlers = {
             "http": self._handle_http_request,
@@ -110,7 +110,7 @@ class CloudLicenseResponseGenerator:
             "custom": self._handle_custom_protocol,
         }
 
-    def enable_network_api_hooks(self):
+    def enable_network_api_hooks(self) -> None:
         """Enable network API hooks for intercepting license requests."""
         if self.hooks_enabled:
             logger.warning("Network hooks already enabled")
@@ -134,7 +134,7 @@ class CloudLicenseResponseGenerator:
         except Exception as e:
             logger.error(f"Failed to enable network hooks: {e}")
 
-    def disable_network_api_hooks(self):
+    def disable_network_api_hooks(self) -> None:
         """Disable network API hooks."""
         if not self.hooks_enabled:
             return
@@ -148,7 +148,7 @@ class CloudLicenseResponseGenerator:
 
         logger.info("Network API hooks disabled")
 
-    def _port_listener(self, port: int):
+    def _port_listener(self, port: int) -> None:
         """Listen on a specific port for incoming connections.
 
         Args:
@@ -169,7 +169,7 @@ class CloudLicenseResponseGenerator:
                     client_socket, address = listener_socket.accept()
                     # Handle connection in separate thread
                     threading.Thread(target=self._handle_connection, args=(client_socket, address, port), daemon=True).start()
-                except socket.timeout:
+                except TimeoutError:
                     continue
                 except Exception as e:
                     if self.active:
@@ -180,7 +180,7 @@ class CloudLicenseResponseGenerator:
         except Exception as e:
             logger.error(f"Failed to start listener on port {port}: {e}")
 
-    def _handle_connection(self, client_socket: socket.socket, address: Tuple[str, int], port: int):
+    def _handle_connection(self, client_socket: socket.socket, address: Tuple[str, int], port: int) -> None:
         """Handle an incoming connection.
 
         Args:
@@ -230,7 +230,7 @@ class CloudLicenseResponseGenerator:
 
                     # Log generated response
                     self.generated_responses.append(
-                        {"timestamp": datetime.now().isoformat(), "request": request_info, "response": response}
+                        {"timestamp": datetime.now().isoformat(), "request": request_info, "response": response},
                     )
 
         except Exception as e:
@@ -457,13 +457,13 @@ class CloudLicenseResponseGenerator:
 
         return signature
 
-    def _install_socket_hooks(self):
+    def _install_socket_hooks(self) -> None:
         """Install hooks on socket functions for active interception."""
         # This would require more advanced hooking techniques
         # such as using ctypes or system-specific APIs
         pass
 
-    def _remove_socket_hooks(self):
+    def _remove_socket_hooks(self) -> None:
         """Remove installed socket hooks."""
         # Remove any installed hooks
         pass
@@ -486,7 +486,7 @@ class CloudLicenseResponseGenerator:
         """
         return self.generated_responses
 
-    def set_response_template(self, name: str, template: Dict[str, Any]):
+    def set_response_template(self, name: str, template: Dict[str, Any]) -> None:
         """Set a custom response template.
 
         Args:
@@ -496,13 +496,13 @@ class CloudLicenseResponseGenerator:
         """
         self.response_templates[name] = template
 
-    def clear_logs(self):
+    def clear_logs(self) -> None:
         """Clear intercepted requests and generated responses."""
         self.intercepted_requests.clear()
         self.generated_responses.clear()
 
 
-def run_cloud_license_hooker(app_instance=None):
+def run_cloud_license_hooker(app_instance=None) -> None:
     """Initialize and run the cloud license hooker.
 
     Args:

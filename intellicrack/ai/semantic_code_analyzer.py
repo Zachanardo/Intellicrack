@@ -138,7 +138,7 @@ class SemanticAnalysisResult:
 class NLPCodeProcessor:
     """Natural Language Processing for code analysis."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the NLP code processor.
 
         Sets up vocabulary, semantic patterns, intent keywords,
@@ -488,10 +488,10 @@ class NLPCodeProcessor:
         current_depth = 0
 
         for char in code:
-            if char == "{" or char == "(":
+            if char in {"{", "("}:
                 current_depth += 1
                 max_depth = max(max_depth, current_depth)
-            elif char == "}" or char == ")":
+            elif char in {"}", ")"}:
                 current_depth = max(0, current_depth - 1)
 
         return max_depth
@@ -547,7 +547,7 @@ class NLPCodeProcessor:
 class SemanticCodeAnalyzer:
     """Deep semantic code analysis system."""
 
-    def __init__(self, llm_manager: LLMManager | None = None):
+    def __init__(self, llm_manager: LLMManager | None = None) -> None:
         """Initialize the semantic code analyzer.
 
         Args:
@@ -714,7 +714,7 @@ class SemanticCodeAnalyzer:
                                 "content": self._extract_node_content(content, node),
                                 "docstring": ast.get_docstring(node),
                                 "node": node,
-                            }
+                            },
                         )
 
             else:
@@ -745,7 +745,7 @@ class SemanticCodeAnalyzer:
                         "col": match.start() - content.rfind("\n", 0, match.start()),
                         "content": self._extract_function_body(content, match.start()),
                         "docstring": None,
-                    }
+                    },
                 )
 
             # Class declarations
@@ -759,7 +759,7 @@ class SemanticCodeAnalyzer:
                         "col": match.start() - content.rfind("\n", 0, match.start()),
                         "content": self._extract_class_body(content, match.start()),
                         "docstring": None,
-                    }
+                    },
                 )
 
         # C/C++ function patterns
@@ -775,7 +775,7 @@ class SemanticCodeAnalyzer:
                         "col": match.start() - content.rfind("\n", 0, match.start()),
                         "content": self._extract_function_body(content, match.start()),
                         "docstring": None,
-                    }
+                    },
                 )
 
         return ast_nodes
@@ -1132,8 +1132,8 @@ class SemanticCodeAnalyzer:
         """Calculate complexity metrics."""
         return {
             "semantic_complexity": len(semantic_nodes),
-            "intent_diversity": len(set(node.semantic_intent for node in semantic_nodes)),
-            "business_pattern_count": len(set(node.business_pattern for node in semantic_nodes if node.business_pattern)),
+            "intent_diversity": len({node.semantic_intent for node in semantic_nodes}),
+            "business_pattern_count": len({node.business_pattern for node in semantic_nodes if node.business_pattern}),
             "avg_node_confidence": sum(node.confidence for node in semantic_nodes) / len(semantic_nodes) if semantic_nodes else 0,
             "content_length": len(content),
             "function_count": sum(1 for node in semantic_nodes if node.node_type.lower() == "functiondef"),
@@ -1272,7 +1272,7 @@ class SemanticCodeAnalyzer:
 class SemanticKnowledgeBase:
     """Knowledge base for semantic patterns and rules."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the semantic knowledge base.
 
         Sets up pattern storage, rule definitions, and anti-pattern
@@ -1284,7 +1284,7 @@ class SemanticKnowledgeBase:
 
         self._initialize_knowledge_base()
 
-    def _initialize_knowledge_base(self):
+    def _initialize_knowledge_base(self) -> None:
         """Initialize knowledge base with common patterns."""
         # Security patterns
         self.patterns["security_validation"] = {

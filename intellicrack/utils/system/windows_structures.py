@@ -43,7 +43,7 @@ else:
 class WindowsContext:
     """Windows CONTEXT structure for both 32-bit and 64-bit architectures."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize Windows context manager."""
         self.kernel32 = None
         if STRUCTURES_AVAILABLE:
@@ -361,8 +361,8 @@ def create_ssl_certificate_builder():
                         x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
                         x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack"),
                         x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
-                    ]
-                )
+                    ],
+                ),
             )
             .issuer_name(
                 x509.Name(
@@ -372,8 +372,8 @@ def create_ssl_certificate_builder():
                         x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
                         x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack"),
                         x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
-                    ]
-                )
+                    ],
+                ),
             )
             .serial_number(x509.random_serial_number())
             .not_valid_before(datetime.datetime.utcnow())
@@ -384,7 +384,7 @@ def create_ssl_certificate_builder():
                         x509.DNSName("localhost"),
                         x509.DNSName("*.localhost"),
                         x509.IPAddress(ipaddress.IPv4Address("127.0.0.1")),
-                    ]
+                    ],
                 ),
                 critical=False,
             )

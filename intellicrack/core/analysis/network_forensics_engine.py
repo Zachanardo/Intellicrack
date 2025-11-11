@@ -30,7 +30,7 @@ from typing import Any
 class NetworkForensicsEngine:
     """Network forensics analysis engine for traffic examination."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the network forensics engine."""
         self.logger = logging.getLogger(__name__)
         self.supported_formats = ["pcap", "pcapng", "cap"]
@@ -145,7 +145,7 @@ class NetworkForensicsEngine:
             }
 
             # Validate interface exists
-            available_interfaces = [iface for iface in psutil.net_if_addrs().keys()]
+            available_interfaces = list(psutil.net_if_addrs().keys())
             if interface not in available_interfaces:
                 results["error"] = f"Interface {interface} not found"
                 results["available_interfaces"] = available_interfaces
@@ -244,7 +244,7 @@ class NetworkForensicsEngine:
                                 "value": url_str,
                                 "offset": data.find(url),
                                 "length": len(url),
-                            }
+                            },
                         )
                 except Exception as e:
                     self.logger.debug(f"Error during data extraction: {e}")
@@ -261,7 +261,7 @@ class NetworkForensicsEngine:
                             "value": email_str,
                             "offset": data.find(email),
                             "length": len(email),
-                        }
+                        },
                     )
                 except Exception as e:
                     self.logger.debug(f"Error during data extraction: {e}")
@@ -281,7 +281,7 @@ class NetworkForensicsEngine:
                                 "value": ip_str,
                                 "offset": data.find(ip),
                                 "length": len(ip),
-                            }
+                            },
                         )
                 except Exception as e:
                     self.logger.debug(f"Error during data extraction: {e}")
@@ -300,7 +300,7 @@ class NetworkForensicsEngine:
                                 "offset": data.find(b64),
                                 "length": len(b64),
                                 "full_length": len(b64_str),
-                            }
+                            },
                         )
                 except Exception as e:
                     self.logger.debug(f"Error during data extraction: {e}")
@@ -325,7 +325,7 @@ class NetworkForensicsEngine:
                                     "value": value,
                                     "offset": data.find(match),
                                     "length": len(match),
-                                }
+                                },
                             )
                     except Exception as e:
                         self.logger.debug(f"Error during nested extraction: {e}")
@@ -347,7 +347,7 @@ class NetworkForensicsEngine:
                                 "value": value,
                                 "offset": data.find(match),
                                 "length": len(match),
-                            }
+                            },
                         )
                     except Exception as e:
                         self.logger.debug(f"Error during nested extraction: {e}")

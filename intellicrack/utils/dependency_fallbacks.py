@@ -115,7 +115,7 @@ def safe_import_lief():
         return create_lief_fallback()
 
 
-def safe_import_pyelftools():
+def safe_import_pyelftools() -> bool | None:
     """Safely import pyelftools with fallback."""
     global PYELFTOOLS_AVAILABLE
     try:
@@ -327,7 +327,7 @@ def create_pandas_fallback():
     class DataFrameFallback:
         """Minimal DataFrame replacement for when pandas is unavailable."""
 
-        def __init__(self, data=None):
+        def __init__(self, data=None) -> None:
             if isinstance(data, dict):
                 self.data = data
             elif isinstance(data, list):
@@ -339,7 +339,7 @@ def create_pandas_fallback():
             """Convert DataFrame to dictionary."""
             return self.data
 
-        def __len__(self):
+        def __len__(self) -> int:
             if self.data:
                 return len(next(iter(self.data.values())))
             return 0
@@ -359,7 +359,7 @@ def create_sklearn_fallback():
     class RandomForestFallback:
         """Minimal RandomForest replacement for when sklearn is unavailable."""
 
-        def __init__(self, n_estimators=100):
+        def __init__(self, n_estimators=100) -> None:
             self.n_estimators = n_estimators
 
         def fit(self, X, y):
@@ -378,7 +378,7 @@ def create_sklearn_fallback():
     class DBSCANFallback:
         """Minimal DBSCAN replacement for when sklearn is unavailable."""
 
-        def __init__(self, eps=0.5, min_samples=5):
+        def __init__(self, eps=0.5, min_samples=5) -> None:
             self.eps = eps
             self.min_samples = min_samples
 
@@ -440,12 +440,12 @@ def create_lief_fallback():
             """ELF parsing fallback."""
 
             @staticmethod
-            def parse(filename):
+            def parse(filename) -> None:
                 """Parse ELF file (fallback returns None)."""
                 logger.debug(f"ELF fallback parse called for: {filename}")
 
         @staticmethod
-        def parse(filename):
+        def parse(filename) -> None:
             """Parse binary file (fallback returns None)."""
             logger.debug(f"Lief fallback parse called for: {filename}")
 
@@ -456,12 +456,12 @@ def create_lief_fallback():
 class SafeModuleReplacer:
     """Replaces problematic modules with safe fallbacks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize safe module replacer with empty tracking state."""
         self.original_modules = {}
         self.replaced_modules = set()
 
-    def replace_module(self, module_name: str, fallback_factory):
+    def replace_module(self, module_name: str, fallback_factory) -> None:
         """Replace a module with a fallback implementation."""
         if module_name in sys.modules and module_name not in self.replaced_modules:
             # Store original
@@ -472,7 +472,7 @@ class SafeModuleReplacer:
         self.replaced_modules.add(module_name)
         logger.info(f"Replaced {module_name} with fallback implementation")
 
-    def restore_module(self, module_name: str):
+    def restore_module(self, module_name: str) -> None:
         """Restore original module if available."""
         if module_name in self.original_modules:
             sys.modules[module_name] = self.original_modules[module_name]
@@ -484,15 +484,15 @@ class SafeModuleReplacer:
 _module_replacer = SafeModuleReplacer()
 
 
-def initialize_safe_imports():
+def initialize_safe_imports() -> None:
     """Initialize safe imports by testing and replacing problematic modules."""
     logger.info("Initializing safe dependency imports...")
 
     # Test and replace numpy if needed
     try:
-        import numpy
+        import numpy as np
 
-        test_array = numpy.array([1, 2, 3])
+        test_array = np.array([1, 2, 3])
         logger.info("numpy working correctly - test array shape: %s", test_array.shape)
     except Exception as e:
         logger.warning(f"numpy issue detected: {e}")
@@ -500,9 +500,9 @@ def initialize_safe_imports():
 
     # Test and replace pandas if needed
     try:
-        import pandas
+        import pandas as pd
 
-        test_df = pandas.DataFrame({"test": [1, 2, 3]})
+        test_df = pd.DataFrame({"test": [1, 2, 3]})
         logger.info("pandas working correctly - test df shape: %s", test_df.shape)
     except Exception as e:
         logger.warning(f"pandas issue detected: {e}")

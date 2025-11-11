@@ -34,7 +34,7 @@ class ChecksumWorker(QThread):
     result = pyqtSignal(dict)
     error = pyqtSignal(str)
 
-    def __init__(self, data: bytes | None = None, file_path: str | None = None):
+    def __init__(self, data: bytes | None = None, file_path: str | None = None) -> None:
         """Initialize worker.
 
         Args:
@@ -49,7 +49,7 @@ class ChecksumWorker(QThread):
         self.calculator = ChecksumCalculator()
         self.calculator.set_progress_callback(self._progress_callback)
 
-    def set_algorithms(self, algorithms: list[str]):
+    def set_algorithms(self, algorithms: list[str]) -> None:
         """Set algorithms to calculate.
 
         Args:
@@ -58,7 +58,7 @@ class ChecksumWorker(QThread):
         """
         self.algorithms = algorithms
 
-    def _progress_callback(self, current: int, total: int):
+    def _progress_callback(self, current: int, total: int) -> None:
         """Progress callback for calculator.
 
         Args:
@@ -68,7 +68,7 @@ class ChecksumWorker(QThread):
         """
         self.progress.emit(current, total)
 
-    def run(self):
+    def run(self) -> None:
         """Run checksum calculation."""
         try:
             results = {}
@@ -98,7 +98,7 @@ class ChecksumWorker(QThread):
 class ChecksumDialog(QDialog):
     """Dialog for calculating checksums and hashes."""
 
-    def __init__(self, parent=None, hex_viewer=None):
+    def __init__(self, parent=None, hex_viewer=None) -> None:
         """Initialize checksum dialog.
 
         Args:
@@ -113,7 +113,7 @@ class ChecksumDialog(QDialog):
         self.setWindowTitle("Calculate Checksums")
         self.resize(600, 500)
 
-    def init_ui(self):
+    def init_ui(self) -> None:
         """Initialize UI components."""
         layout = QVBoxLayout()
 
@@ -222,12 +222,12 @@ class ChecksumDialog(QDialog):
 
         self.setLayout(layout)
 
-    def select_all_algorithms(self):
+    def select_all_algorithms(self) -> None:
         """Select all algorithm checkboxes."""
         for checkbox in self.algorithm_checkboxes.values():
             checkbox.setChecked(True)
 
-    def select_no_algorithms(self):
+    def select_no_algorithms(self) -> None:
         """Deselect all algorithm checkboxes."""
         for checkbox in self.algorithm_checkboxes.values():
             checkbox.setChecked(False)
@@ -245,7 +245,7 @@ class ChecksumDialog(QDialog):
                 selected.append(algo)
         return selected
 
-    def calculate_checksums(self):
+    def calculate_checksums(self) -> None:
         """Start checksum calculation."""
         # Get selected algorithms
         algorithms = self.get_selected_algorithms()
@@ -306,7 +306,7 @@ class ChecksumDialog(QDialog):
         self.worker.error.connect(self.display_error)
         self.worker.start()
 
-    def update_progress(self, current: int, total: int):
+    def update_progress(self, current: int, total: int) -> None:
         """Update progress bar.
 
         Args:
@@ -316,7 +316,7 @@ class ChecksumDialog(QDialog):
         """
         self.progress_bar.setValue(current)
 
-    def display_results(self, results: dict[str, str]):
+    def display_results(self, results: dict[str, str]) -> None:
         """Display calculation results.
 
         Args:
@@ -352,7 +352,7 @@ class ChecksumDialog(QDialog):
         self.progress_bar.setVisible(False)
         self.calculate_btn.setEnabled(True)
 
-    def display_error(self, error: str):
+    def display_error(self, error: str) -> None:
         """Display error message.
 
         Args:
@@ -363,7 +363,7 @@ class ChecksumDialog(QDialog):
         self.progress_bar.setVisible(False)
         self.calculate_btn.setEnabled(True)
 
-    def copy_results(self):
+    def copy_results(self) -> None:
         """Copy results to clipboard."""
         text = self.results_text.toPlainText()
         if text:

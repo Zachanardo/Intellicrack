@@ -62,7 +62,7 @@ class ProtectionClassifier:
 
     MODEL_VERSION = '1.0.0'
 
-    def __init__(self, model_path: Path | None = None):
+    def __init__(self, model_path: Path | None = None) -> None:
         """Initialize the protection classifier.
 
         Args:
@@ -121,7 +121,7 @@ class ProtectionClassifier:
         X_scaled = self.scaler.fit_transform(X)
 
         X_train, X_test, y_train, y_test = train_test_split(
-            X_scaled, y_encoded, test_size=test_size, random_state=random_state, stratify=y_encoded
+            X_scaled, y_encoded, test_size=test_size, random_state=random_state, stratify=y_encoded,
         )
 
         self.model = RandomForestClassifier(
@@ -132,7 +132,7 @@ class ProtectionClassifier:
             max_features='sqrt',
             random_state=random_state,
             n_jobs=-1,
-            class_weight='balanced'
+            class_weight='balanced',
         )
 
         self.logger.info("Training Random Forest with %d estimators", n_estimators)
@@ -159,20 +159,20 @@ class ProtectionClassifier:
         if cross_validate:
             self.logger.info("Performing 5-fold cross-validation")
             cv_scores = cross_val_score(
-                self.model, X_scaled, y_encoded, cv=5, scoring='accuracy', n_jobs=-1
+                self.model, X_scaled, y_encoded, cv=5, scoring='accuracy', n_jobs=-1,
             )
             results['cv_mean_accuracy'] = float(cv_scores.mean())
             results['cv_std_accuracy'] = float(cv_scores.std())
             self.logger.info(
                 "Cross-validation accuracy: %.4f (+/- %.4f)",
                 cv_scores.mean(),
-                cv_scores.std() * 2
+                cv_scores.std() * 2,
             )
 
         class_names = self.label_encoder.classes_.tolist()
         conf_matrix = confusion_matrix(y_test, y_test_pred)
         class_report = classification_report(
-            y_test, y_test_pred, target_names=class_names, output_dict=True
+            y_test, y_test_pred, target_names=class_names, output_dict=True,
         )
 
         results['confusion_matrix'] = conf_matrix.tolist()
@@ -229,7 +229,7 @@ class ProtectionClassifier:
         self.logger.info(
             "Predicted protection: %s (confidence: %.4f)",
             predicted_class,
-            confidence
+            confidence,
         )
 
         return ClassificationResult(
@@ -303,7 +303,7 @@ class ProtectionClassifier:
         self.label_encoder = joblib.load(self.encoder_file)
 
         if self.metadata_file.exists():
-            with open(self.metadata_file, 'r', encoding='utf-8') as f:
+            with open(self.metadata_file, encoding='utf-8') as f:
                 self.metadata = json.load(f)
 
         self.logger.info("Model loaded from %s", self.model_path)

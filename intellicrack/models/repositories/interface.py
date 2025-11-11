@@ -51,7 +51,7 @@ class ModelInfo:
         checksum: str | None = None,
         download_url: str | None = None,
         local_path: str | None = None,
-    ):
+    ) -> None:
         """Initialize a ModelInfo object.
 
         Args:
@@ -188,7 +188,7 @@ class ModelRepositoryInterface(ABC):
 class DownloadProgressCallback:
     """Interface for download progress callbacks."""
 
-    def on_progress(self, bytes_downloaded: int, total_bytes: int):
+    def on_progress(self, bytes_downloaded: int, total_bytes: int) -> None:
         """Handle download progress updates.
 
         Args:
@@ -197,7 +197,7 @@ class DownloadProgressCallback:
 
         """
 
-    def on_complete(self, success: bool, message: str):
+    def on_complete(self, success: bool, message: str) -> None:
         """Handle download completion.
 
         Args:

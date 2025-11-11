@@ -42,7 +42,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Awaitable, Callable
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -51,6 +51,7 @@ import yaml
 from jsonschema import ValidationError, validate
 
 from intellicrack.handlers.psutil_handler import psutil
+from intellicrack.utils.logger import log_all_methods
 
 """
 Intellicrack Core Engine
@@ -115,6 +116,7 @@ class WorkflowStatus(Enum):
     CANCELLED = "cancelled"
 
 
+@log_all_methods
 @dataclass
 class PluginMetadata:
     """Plugin metadata structure."""
@@ -148,6 +150,7 @@ class PluginMetadata:
         }
 
 
+@log_all_methods
 @dataclass
 class Event:
     """Event structure for inter-component communication."""
@@ -177,6 +180,7 @@ class Event:
         }
 
 
+@log_all_methods
 @dataclass
 class WorkflowStep:
     """Individual step in a workflow."""
@@ -208,6 +212,7 @@ class WorkflowStep:
         }
 
 
+@log_all_methods
 @dataclass
 class WorkflowDefinition:
     """Complete workflow definition."""
@@ -237,10 +242,11 @@ class WorkflowDefinition:
         }
 
 
+@log_all_methods
 class LoggingManager:
     """Advanced logging manager with structured logging and multiple outputs."""
 
-    def __init__(self, config: dict[str, Any]):
+    def __init__(self, config: dict[str, Any]) -> None:
         """Initialize advanced logging manager with configuration."""
         self.config = config
         self.loggers: dict[str, logging.Logger] = {}
@@ -255,7 +261,7 @@ class LoggingManager:
                 with open(config) as f:
                     self.config = yaml.safe_load(f)
             except Exception as e:
-                logging.warning(f"Failed to load YAML config: {e}, using default config")
+                self.logger.exception(f"Failed to load YAML config: {e}, using default config")
                 self.config = {}
 
         # Setup root logger
@@ -264,7 +270,7 @@ class LoggingManager:
         # Setup component loggers
         self._setup_component_loggers()
 
-    def _setup_root_logger(self):
+    def _setup_root_logger(self) -> None:
         """Set up root logger with multiple handlers."""
         root_logger = logging.getLogger()
         root_logger.setLevel(logging.DEBUG)
@@ -323,7 +329,7 @@ class LoggingManager:
         root_logger.addHandler(error_handler)
         self.handlers["error"] = error_handler
 
-    def _setup_component_loggers(self):
+    def _setup_component_loggers(self) -> None:
         """Set up specialized loggers for different components."""
         components = [
             "plugin_manager",
@@ -348,7 +354,7 @@ class LoggingManager:
 
         return self.loggers[name]
 
-    def log_event(self, event: Event):
+    def log_event(self, event: Event) -> None:
         """Log an event with structured data."""
         logger = self.get_logger("events")
         logger.info(
@@ -359,7 +365,7 @@ class LoggingManager:
             },
         )
 
-    def log_plugin_operation(self, plugin_name: str, operation: str, status: str, details: dict[str, Any] = None):
+    def log_plugin_operation(self, plugin_name: str, operation: str, status: str, details: dict[str, Any] = None) -> None:
         """Log plugin operation."""
         logger = self.get_logger("plugins")
         logger.info(
@@ -380,7 +386,7 @@ class LoggingManager:
         status: str,
         duration: float = None,
         result: Any = None,
-    ):
+    ) -> None:
         """Log workflow step execution."""
         logger = self.get_logger("workflows")
         logger.info(
@@ -396,13 +402,14 @@ class LoggingManager:
         )
 
 
+@log_all_methods
 class JSONFormatter(logging.Formatter):
     """JSON formatter for structured logging."""
 
     def format(self, record):
         """Format log record as JSON structure."""
         log_entry = {
-            "timestamp": datetime.utcfromtimestamp(record.created).isoformat(),
+            "timestamp": datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
@@ -431,10 +438,11 @@ class JSONFormatter(logging.Formatter):
         return json.dumps(log_entry)
 
 
+@log_all_methods
 class ConfigurationManager:
     """Configuration management with validation and hot reloading."""
 
-    def __init__(self, config_path: str | None = None):
+    def __init__(self, config_path: str | None = None) -> None:
         """Initialize configuration manager with optional config path."""
         self.config_path = Path(config_path) if config_path else Path("config/intellicrack.json")
         self.config: dict[str, Any] = {}
@@ -453,7 +461,7 @@ class ConfigurationManager:
         # Start file watcher for hot reloading
         self._start_file_watcher()
 
-    def _load_schema(self):
+    def _load_schema(self) -> None:
         """Load configuration schema for validation."""
         self.schema = {
             "type": "object",
@@ -566,7 +574,7 @@ class ConfigurationManager:
             },
         }
 
-    def reload_config(self):
+    def reload_config(self) -> None:
         """Reload configuration from file."""
         try:
             if self.config_path.exists():
@@ -592,7 +600,7 @@ class ConfigurationManager:
                 try:
                     watcher(self.config)
                 except Exception as e:
-                    self.logger.debug("Watcher error: %s", e)
+                    self.logger.exception("Watcher error: %s", e)
 
         except (json.JSONDecodeError, ValidationError) as e:
             print(f"Configuration error: {e}")
@@ -611,17 +619,17 @@ class ConfigurationManager:
 
         return result
 
-    def _save_config(self):
+    def _save_config(self) -> None:
         """Save current configuration to file."""
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
 
         with open(self.config_path, "w") as f:
             json.dump(self.config, f, indent=2)
 
-    def _start_file_watcher(self):
+    def _start_file_watcher(self) -> None:
         """Start file watcher for hot reloading."""
 
-        def watch_file():
+        def watch_file() -> None:
             while True:
                 try:
                     if self.config_path.exists():
@@ -633,7 +641,7 @@ class ConfigurationManager:
 
                 except Exception as e:
                     # Continue watching despite errors
-                    self.logger.debug("File watcher error: %s", e)
+                    self.logger.exception("File watcher error: %s", e)
                     time.sleep(5)
 
         self.file_watcher = threading.Thread(target=watch_file, daemon=True)
@@ -652,7 +660,7 @@ class ConfigurationManager:
 
         return value
 
-    def set(self, key: str, value: Any):
+    def set(self, key: str, value: Any) -> None:
         """Set configuration value with dot notation support."""
         keys = key.split(".")
         config = self.config
@@ -665,20 +673,21 @@ class ConfigurationManager:
         config[keys[-1]] = value
         self._save_config()
 
-    def add_watcher(self, callback: Callable[[dict[str, Any]], None]):
+    def add_watcher(self, callback: Callable[[dict[str, Any]], None]) -> None:
         """Add configuration change watcher."""
         self.watchers.append(callback)
 
-    def remove_watcher(self, callback: Callable[[dict[str, Any]], None]):
+    def remove_watcher(self, callback: Callable[[dict[str, Any]], None]) -> None:
         """Remove configuration change watcher."""
         if callback in self.watchers:
             self.watchers.remove(callback)
 
 
+@log_all_methods
 class AbstractPlugin(ABC):
     """Abstract base class for all plugins."""
 
-    def __init__(self, name: str, version: str = "1.0.0"):
+    def __init__(self, name: str, version: str = "1.0.0") -> None:
         """Initialize abstract plugin with name and version."""
         self.name = name
         self.version = version
@@ -720,19 +729,19 @@ class AbstractPlugin(ABC):
     async def execute_operation(self, operation: str, parameters: dict[str, Any]) -> Any:
         """Execute a specific operation."""
 
-    def set_logger(self, logger: logging.Logger):
+    def set_logger(self, logger: logging.Logger) -> None:
         """Set plugin logger."""
         self.logger = logger
 
-    def set_event_bus(self, event_bus: "EventBus"):
+    def set_event_bus(self, event_bus: "EventBus") -> None:
         """Set event bus for communication."""
         self.event_bus = event_bus
 
-    def update_config(self, config: dict[str, Any]):
+    def update_config(self, config: dict[str, Any]) -> None:
         """Update plugin configuration."""
         self.config.update(config)
 
-    def emit_event(self, event_type: str, data: dict[str, Any] = None, target: str = None):
+    def emit_event(self, event_type: str, data: dict[str, Any] = None, target: str = None) -> None:
         """Emit an event."""
         if self.event_bus:
             event = Event(
@@ -743,7 +752,7 @@ class AbstractPlugin(ABC):
             )
             asyncio.create_task(self.event_bus.emit(event))
 
-    def log_performance_metric(self, metric_name: str, value: Any):
+    def log_performance_metric(self, metric_name: str, value: Any) -> None:
         """Log performance metric."""
         self.performance_metrics[metric_name] = {
             "value": value,
@@ -762,10 +771,11 @@ class AbstractPlugin(ABC):
         }
 
 
+@log_all_methods
 class GhidraPlugin(AbstractPlugin):
     """Base class for Ghidra script plugins."""
 
-    def __init__(self, name: str, script_path: str, version: str = "1.0.0"):
+    def __init__(self, name: str, script_path: str, version: str = "1.0.0") -> None:
         """Initialize Ghidra plugin with name, script path, and version."""
         super().__init__(name, version)
         self.script_path = Path(script_path)
@@ -806,7 +816,7 @@ class GhidraPlugin(AbstractPlugin):
             self.last_error = str(e)
             self.status = PluginStatus.ERROR
             if self.logger:
-                self.logger.error(f"Ghidra plugin initialization failed: {e}")
+                self.logger.exception(f"Ghidra plugin initialization failed: {e}")
             return False
 
     async def activate(self) -> bool:
@@ -865,7 +875,7 @@ class GhidraPlugin(AbstractPlugin):
         except Exception as e:
             self.last_error = str(e)
             if self.logger:
-                self.logger.error(f"Ghidra operation failed: {e}")
+                self.logger.exception(f"Ghidra operation failed: {e}")
 
             self.emit_event(
                 "operation_failed",
@@ -910,7 +920,7 @@ class GhidraPlugin(AbstractPlugin):
                 "binary_size": binary_stats.st_size,
                 "operation": operation,
                 "timestamp": time.time(),
-            }
+            },
         )
 
         # Prepare Ghidra command
@@ -964,13 +974,13 @@ class GhidraPlugin(AbstractPlugin):
                 except Exception as term_error:
                     # Use traceback for detailed error logging
                     error_trace = traceback.format_exc()
-                    self.logger.warning(f"Process termination failed: {term_error}\n{error_trace}")
+                    self.logger.exception(f"Process termination failed: {term_error}\n{error_trace}")
                     process.kill()
             raise Exception("Ghidra execution timed out") from timeout_error
         except Exception as e:
             # Use traceback for comprehensive error reporting
             error_trace = traceback.format_exc()
-            self.logger.error(f"Ghidra execution error: {e}\n{error_trace}")
+            self.logger.exception(f"Ghidra execution error: {e}\n{error_trace}")
             raise
 
     def _parse_ghidra_output(self, output: str, operation: str) -> dict[str, Any]:
@@ -993,7 +1003,7 @@ class GhidraPlugin(AbstractPlugin):
                                 "name": parts[0],
                                 "address": parts[1],
                                 "size": parts[2] if len(parts) > 2 else "unknown",
-                            }
+                            },
                         )
             result["functions"] = functions
 
@@ -1016,10 +1026,11 @@ class GhidraPlugin(AbstractPlugin):
         return result
 
 
+@log_all_methods
 class FridaPlugin(AbstractPlugin):
     """Base class for Frida script plugins."""
 
-    def __init__(self, name: str, script_path: str, version: str = "1.0.0"):
+    def __init__(self, name: str, script_path: str, version: str = "1.0.0") -> None:
         """Initialize Frida plugin with name, script path, and version."""
         super().__init__(name, version)
         self.script_path = Path(script_path)
@@ -1069,7 +1080,7 @@ class FridaPlugin(AbstractPlugin):
             self.last_error = str(e)
             self.status = PluginStatus.ERROR
             if self.logger:
-                self.logger.error(f"Frida plugin initialization failed: {e}")
+                self.logger.exception(f"Frida plugin initialization failed: {e}")
             return False
 
     async def activate(self) -> bool:
@@ -1146,7 +1157,7 @@ class FridaPlugin(AbstractPlugin):
         except Exception as e:
             self.last_error = str(e)
             if self.logger:
-                self.logger.error(f"Frida operation failed: {e}")
+                self.logger.exception(f"Frida operation failed: {e}")
 
             self.emit_event(
                 "operation_failed",
@@ -1199,7 +1210,7 @@ class FridaPlugin(AbstractPlugin):
         except Exception as e:
             raise Exception(f"Failed to attach to process: {e}") from e
 
-    def _on_message(self, message, data):
+    def _on_message(self, message, data) -> None:
         """Handle Frida script messages."""
         if self.logger:
             self.logger.debug(f"Frida message: {message}")
@@ -1230,7 +1241,7 @@ class FridaPlugin(AbstractPlugin):
                         "function": func,
                         "status": "hooked",
                         "result": result,
-                    }
+                    },
                 )
             except Exception as e:
                 results.append(
@@ -1238,7 +1249,7 @@ class FridaPlugin(AbstractPlugin):
                         "function": func,
                         "status": "failed",
                         "error": str(e),
-                    }
+                    },
                 )
 
         return {"hooked_functions": results}
@@ -1291,7 +1302,7 @@ class FridaPlugin(AbstractPlugin):
                         "protection": protection,
                         "status": "bypassed",
                         "result": result,
-                    }
+                    },
                 )
             except Exception as e:
                 results.append(
@@ -1299,7 +1310,7 @@ class FridaPlugin(AbstractPlugin):
                         "protection": protection,
                         "status": "failed",
                         "error": str(e),
-                    }
+                    },
                 )
 
         return {"bypass_results": results}
@@ -1319,10 +1330,11 @@ class FridaPlugin(AbstractPlugin):
         return {"extracted_data": extracted_data}
 
 
+@log_all_methods
 class PythonPlugin(AbstractPlugin):
     """Base class for Python module plugins."""
 
-    def __init__(self, name: str, module_path: str, version: str = "1.0.0"):
+    def __init__(self, name: str, module_path: str, version: str = "1.0.0") -> None:
         """Initialize Python plugin with name, module path, and version."""
         super().__init__(name, version)
         self.module_path = Path(module_path)
@@ -1381,7 +1393,7 @@ class PythonPlugin(AbstractPlugin):
             self.last_error = str(e)
             self.status = PluginStatus.ERROR
             if self.logger:
-                self.logger.error(f"Python plugin initialization failed: {e}")
+                self.logger.exception(f"Python plugin initialization failed: {e}")
             return False
 
     async def activate(self) -> bool:
@@ -1402,7 +1414,7 @@ class PythonPlugin(AbstractPlugin):
         except Exception as e:
             self.last_error = str(e)
             if self.logger:
-                self.logger.error(f"Python plugin activation failed: {e}")
+                self.logger.exception(f"Python plugin activation failed: {e}")
             return False
 
     async def deactivate(self) -> bool:
@@ -1420,7 +1432,7 @@ class PythonPlugin(AbstractPlugin):
         except Exception as e:
             self.last_error = str(e)
             if self.logger:
-                self.logger.error(f"Python plugin deactivation failed: {e}")
+                self.logger.exception(f"Python plugin deactivation failed: {e}")
             return False
 
     async def cleanup(self) -> bool:
@@ -1439,7 +1451,7 @@ class PythonPlugin(AbstractPlugin):
         except Exception as e:
             self.last_error = str(e)
             if self.logger:
-                self.logger.error(f"Python plugin cleanup failed: {e}")
+                self.logger.exception(f"Python plugin cleanup failed: {e}")
             return False
 
     def get_supported_operations(self) -> list[str]:
@@ -1472,7 +1484,7 @@ class PythonPlugin(AbstractPlugin):
                 if isinstance(plugin_ops, list):
                     operations.extend(plugin_ops)
             except Exception as e:
-                self.logger.debug("Plugin operation error: %s", e)
+                self.logger.exception("Plugin operation error: %s", e)
 
         return list(set(operations))
 
@@ -1510,7 +1522,7 @@ class PythonPlugin(AbstractPlugin):
         except Exception as e:
             self.last_error = str(e)
             if self.logger:
-                self.logger.error(f"Python plugin operation failed: {e}")
+                self.logger.exception(f"Python plugin operation failed: {e}")
 
             self.emit_event(
                 "operation_failed",
@@ -1524,10 +1536,11 @@ class PythonPlugin(AbstractPlugin):
             raise
 
 
+@log_all_methods
 class EventBus:
     """Async event bus for inter-component communication."""
 
-    def __init__(self, max_queue_size: int = 10000):
+    def __init__(self, max_queue_size: int = 10000) -> None:
         """Initialize event bus with maximum queue size."""
         self.subscribers: dict[str, list[Callable]] = {}
         self.event_queue: asyncio.Queue = asyncio.Queue(maxsize=max_queue_size)
@@ -1543,11 +1556,11 @@ class EventBus:
             "queue_size": 0,
         }
 
-    def set_logger(self, logger: logging.Logger):
+    def set_logger(self, logger: logging.Logger) -> None:
         """Set logger for event bus."""
         self.logger = logger
 
-    async def start(self):
+    async def start(self) -> None:
         """Start event processing."""
         if self.running:
             return
@@ -1558,7 +1571,7 @@ class EventBus:
         if self.logger:
             self.logger.info("Event bus started")
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop event processing."""
         if not self.running:
             return
@@ -1570,12 +1583,12 @@ class EventBus:
             try:
                 await self.processor_task
             except asyncio.CancelledError as e:
-                self.logger.debug("Plugin operation error: %s", e)
+                self.logger.exception("Plugin operation error: %s", e)
 
         if self.logger:
             self.logger.info("Event bus stopped")
 
-    def subscribe(self, event_type: str, handler: Callable[[Event], Awaitable[None]]):
+    def subscribe(self, event_type: str, handler: Callable[[Event], Awaitable[None]]) -> None:
         """Subscribe to events of specific type."""
         if event_type not in self.subscribers:
             self.subscribers[event_type] = []
@@ -1586,7 +1599,7 @@ class EventBus:
         if self.logger:
             self.logger.debug(f"New subscriber for event type: {event_type}")
 
-    def unsubscribe(self, event_type: str, handler: Callable[[Event], Awaitable[None]]):
+    def unsubscribe(self, event_type: str, handler: Callable[[Event], Awaitable[None]]) -> None:
         """Unsubscribe from events."""
         if event_type in self.subscribers and handler in self.subscribers[event_type]:
             self.subscribers[event_type].remove(handler)
@@ -1599,7 +1612,7 @@ class EventBus:
             if self.logger:
                 self.logger.debug(f"Unsubscribed from event type: {event_type}")
 
-    async def emit(self, event: Event):
+    async def emit(self, event: Event) -> None:
         """Emit an event."""
         try:
             # Check TTL
@@ -1621,7 +1634,7 @@ class EventBus:
             if self.logger:
                 self.logger.error(f"Event queue full, dropping event: {event.event_type}")
 
-    async def _process_events(self):
+    async def _process_events(self) -> None:
         """Process events from queue."""
         while self.running:
             try:
@@ -1644,9 +1657,9 @@ class EventBus:
             except Exception as e:
                 self.stats["events_failed"] += 1
                 if self.logger:
-                    self.logger.error(f"Event processing error: {e}")
+                    self.logger.exception(f"Event processing error: {e}")
 
-    async def _handle_event(self, event: Event):
+    async def _handle_event(self, event: Event) -> None:
         """Handle individual event."""
         handlers = []
 
@@ -1675,7 +1688,7 @@ class EventBus:
                         tasks.append(asyncio.create_task(self._run_sync_handler(handler, event)))
                 except Exception as e:
                     if self.logger:
-                        self.logger.error(f"Error creating task for handler: {e}")
+                        self.logger.exception(f"Error creating task for handler: {e}")
 
             # Wait for all handlers to complete with timeout using timedelta
             if tasks:
@@ -1701,8 +1714,8 @@ class EventBus:
                     for i, result in enumerate(results):
                         if isinstance(result, Exception):
                             if self.logger:
-                                self.logger.error(
-                                    f"Handler {i} ({handler_types[i].__name__}) failed for event {event.event_type}: {result}"
+                                self.logger.exception(
+                                    f"Handler {i} ({handler_types[i].__name__}) failed for event {event.event_type}: {result}",
                                 )
                 except asyncio.TimeoutError:
                     if self.logger:
@@ -1711,12 +1724,12 @@ class EventBus:
                     for task in tasks:
                         task.cancel()
 
-    async def _run_sync_handler(self, handler: Callable, event: Event):
+    async def _run_sync_handler(self, handler: Callable, event: Event) -> None:
         """Run synchronous handler in executor."""
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, handler, event)
 
-    def _add_to_history(self, event: Event):
+    def _add_to_history(self, event: Event) -> None:
         """Add event to history."""
         self.event_history.append(event)
 
@@ -1738,10 +1751,11 @@ class EventBus:
         return self.event_history[-count:]
 
 
+@log_all_methods
 class PluginManager:
     """Plugin discovery, loading, and lifecycle management."""
 
-    def __init__(self, config: dict[str, Any], event_bus: EventBus, logger: logging.Logger):
+    def __init__(self, config: dict[str, Any], event_bus: EventBus, logger: logging.Logger) -> None:
         """Initialize plugin manager with configuration, event bus, and logger."""
         self.config = config
         self.event_bus = event_bus
@@ -1776,11 +1790,10 @@ class PluginManager:
         for directory in self.discovery_paths:
             dir_path = Path(directory)
             if not dir_path.exists():
-                self.logger.warning(f"Plugin directory not found: {directory}")
+                self.logger.exception(f"Plugin directory not found: {directory}")
                 continue
 
             self.logger.info(f"Discovering plugins in: {directory}")
-
             # Discover different plugin types
             discovered.extend(await self._discover_ghidra_scripts(dir_path))
             discovered.extend(await self._discover_frida_scripts(dir_path))
@@ -1807,7 +1820,7 @@ class PluginManager:
                     self.logger.debug(f"Discovered Ghidra script: {script_file}")
 
             except Exception as e:
-                self.logger.error(f"Error discovering Ghidra script {script_file}: {e}")
+                self.logger.exception(f"Error discovering Ghidra script {script_file}: {e}")
 
         return scripts
 
@@ -1827,7 +1840,7 @@ class PluginManager:
                     self.logger.debug(f"Discovered Frida script: {script_file}")
 
             except Exception as e:
-                self.logger.error(f"Error discovering Frida script {script_file}: {e}")
+                self.logger.exception(f"Error discovering Frida script {script_file}: {e}")
 
         return scripts
 
@@ -1851,7 +1864,7 @@ class PluginManager:
                     self.logger.debug(f"Discovered Python module: {module_file}")
 
             except Exception as e:
-                self.logger.error(f"Error discovering Python module {module_file}: {e}")
+                self.logger.exception(f"Error discovering Python module {module_file}: {e}")
 
         return modules
 
@@ -1897,7 +1910,7 @@ class PluginManager:
             )
 
         except Exception as e:
-            self.logger.error(f"Error extracting Ghidra metadata from {script_file}: {e}")
+            self.logger.exception(f"Error extracting Ghidra metadata from {script_file}: {e}")
             return None
 
     async def _extract_frida_metadata(self, script_file: Path) -> PluginMetadata | None:
@@ -1945,7 +1958,7 @@ class PluginManager:
             )
 
         except Exception as e:
-            self.logger.error(f"Error extracting Frida metadata from {script_file}: {e}")
+            self.logger.exception(f"Error extracting Frida metadata from {script_file}: {e}")
             return None
 
     async def _extract_python_metadata(self, module_file: Path) -> PluginMetadata | None:
@@ -1999,7 +2012,7 @@ class PluginManager:
             )
 
         except Exception as e:
-            self.logger.error(f"Error extracting Python metadata from {module_file}: {e}")
+            self.logger.exception(f"Error extracting Python metadata from {module_file}: {e}")
             return None
 
     async def load_plugin(self, plugin_name: str) -> bool:
@@ -2048,14 +2061,14 @@ class PluginManager:
                     event_type="plugin_loaded",
                     source="plugin_manager",
                     data={"plugin_name": plugin_name, "metadata": metadata.to_dict()},
-                )
+                ),
             )
 
             return True
 
         except Exception as e:
             self.stats["failed"] += 1
-            self.logger.error(f"Failed to load plugin {plugin_name}: {e}")
+            self.logger.exception(f"Failed to load plugin {plugin_name}: {e}")
             return False
 
     async def _create_plugin_instance(self, plugin_name: str, metadata: PluginMetadata) -> AbstractPlugin | None:
@@ -2094,7 +2107,7 @@ class PluginManager:
             return None
 
         except Exception as e:
-            self.logger.error(f"Error creating plugin instance for {plugin_name}: {e}")
+            self.logger.exception(f"Error creating plugin instance for {plugin_name}: {e}")
             return None
 
     async def load_all_plugins(self) -> int:
@@ -2121,10 +2134,10 @@ class PluginManager:
         temp_visited = set()
         result = []
 
-        def visit(plugin_name: str):
+        def visit(plugin_name: str) -> None:
             if plugin_name in temp_visited:
                 # Circular dependency detected
-                self.logger.warning(f"Circular dependency detected involving: {plugin_name}")
+                self.logger.exception(f"Circular dependency detected involving: {plugin_name}")
                 return
 
             if plugin_name in visited:
@@ -2143,7 +2156,7 @@ class PluginManager:
             result.append(plugin_name)
 
         # Visit all plugins
-        for plugin_name in self.plugin_metadata.keys():
+        for plugin_name in self.plugin_metadata:
             if plugin_name not in visited:
                 visit(plugin_name)
 
@@ -2168,15 +2181,15 @@ class PluginManager:
                         event_type="plugin_activated",
                         source="plugin_manager",
                         data={"plugin_name": plugin_name},
-                    )
+                    ),
                 )
 
                 return True
-            self.logger.error(f"Plugin {plugin_name} activation failed")
+            self.logger.exception(f"Plugin {plugin_name} activation failed")
             return False
 
         except Exception as e:
-            self.logger.error(f"Error activating plugin {plugin_name}: {e}")
+            self.logger.exception(f"Error activating plugin {plugin_name}: {e}")
             return False
 
     async def deactivate_plugin(self, plugin_name: str) -> bool:
@@ -2200,15 +2213,15 @@ class PluginManager:
                         event_type="plugin_deactivated",
                         source="plugin_manager",
                         data={"plugin_name": plugin_name},
-                    )
+                    ),
                 )
 
                 return True
-            self.logger.error(f"Plugin {plugin_name} deactivation failed")
+            self.logger.exception(f"Plugin {plugin_name} deactivation failed")
             return False
 
         except Exception as e:
-            self.logger.error(f"Error deactivating plugin {plugin_name}: {e}")
+            self.logger.exception(f"Error deactivating plugin {plugin_name}: {e}")
             return False
 
     async def unload_plugin(self, plugin_name: str) -> bool:
@@ -2237,13 +2250,13 @@ class PluginManager:
                     event_type="plugin_unloaded",
                     source="plugin_manager",
                     data={"plugin_name": plugin_name},
-                )
+                ),
             )
 
             return True
 
         except Exception as e:
-            self.logger.error(f"Error unloading plugin {plugin_name}: {e}")
+            self.logger.exception(f"Error unloading plugin {plugin_name}: {e}")
             return False
 
     def get_plugin(self, plugin_name: str) -> AbstractPlugin | None:
@@ -2290,10 +2303,11 @@ class PluginManager:
         }
 
 
+@log_all_methods
 class WorkflowEngine:
     """Configurable workflow execution engine."""
 
-    def __init__(self, plugin_manager: PluginManager, event_bus: EventBus, logger: logging.Logger):
+    def __init__(self, plugin_manager: PluginManager, event_bus: EventBus, logger: logging.Logger) -> None:
         """Initialize workflow engine with plugin manager, event bus, and logger."""
         self.plugin_manager = plugin_manager
         self.event_bus = event_bus
@@ -2309,7 +2323,7 @@ class WorkflowEngine:
         # Workflow templates
         self._load_default_workflows()
 
-    def _load_default_workflows(self):
+    def _load_default_workflows(self) -> None:
         """Load default workflow templates."""
         # Binary Analysis Workflow
         self.register_workflow(
@@ -2351,7 +2365,7 @@ class WorkflowEngine:
                 parallel_execution=False,
                 timeout=1800,
                 error_handling="continue",
-            )
+            ),
         )
 
         # License Bypass Workflow
@@ -2394,10 +2408,10 @@ class WorkflowEngine:
                 parallel_execution=True,
                 timeout=600,
                 error_handling="continue",
-            )
+            ),
         )
 
-    def register_workflow(self, workflow: WorkflowDefinition):
+    def register_workflow(self, workflow: WorkflowDefinition) -> None:
         """Register a workflow definition."""
         self.workflows[workflow.workflow_id] = workflow
         self.logger.info(f"Registered workflow: {workflow.name}")
@@ -2438,7 +2452,7 @@ class WorkflowEngine:
 
         return execution_id
 
-    async def _execute_workflow_async(self, context: dict[str, Any]):
+    async def _execute_workflow_async(self, context: dict[str, Any]) -> None:
         """Execute workflow asynchronously."""
         execution_id = context["execution_id"]
         workflow = context["workflow"]
@@ -2456,7 +2470,7 @@ class WorkflowEngine:
                         "workflow_id": workflow.workflow_id,
                         "workflow_name": workflow.name,
                     },
-                )
+                ),
             )
 
             if workflow.parallel_execution:
@@ -2480,7 +2494,7 @@ class WorkflowEngine:
                         "results": context["step_results"],
                         "duration": (context["end_time"] - context["start_time"]).total_seconds(),
                     },
-                )
+                ),
             )
 
         except Exception as e:
@@ -2488,7 +2502,7 @@ class WorkflowEngine:
             context["end_time"] = datetime.utcnow()
             context["errors"].append(str(e))
 
-            self.logger.error(f"Workflow failed: {execution_id} - {e}")
+            self.logger.exception(f"Workflow failed: {execution_id} - {e}")
 
             # Emit failure event
             await self.event_bus.emit(
@@ -2500,7 +2514,7 @@ class WorkflowEngine:
                         "error": str(e),
                         "completed_steps": context["completed_steps"],
                     },
-                )
+                ),
             )
 
         finally:
@@ -2509,7 +2523,7 @@ class WorkflowEngine:
             if execution_id in self.running_workflows:
                 del self.running_workflows[execution_id]
 
-    async def _execute_sequential_workflow(self, context: dict[str, Any]):
+    async def _execute_sequential_workflow(self, context: dict[str, Any]) -> None:
         """Execute workflow steps sequentially."""
         workflow = context["workflow"]
         total_steps = len(workflow.steps)
@@ -2547,10 +2561,10 @@ class WorkflowEngine:
                         "step_name": step.name,
                         "progress": context["progress"],
                     },
-                )
+                ),
             )
 
-    async def _execute_parallel_workflow(self, context: dict[str, Any]):
+    async def _execute_parallel_workflow(self, context: dict[str, Any]) -> None:
         """Execute workflow steps in parallel where possible."""
         workflow = context["workflow"]
 
@@ -2651,10 +2665,10 @@ class WorkflowEngine:
             return False
 
         except Exception as e:
-            self.logger.error(f"Error evaluating condition '{condition}': {e}")
+            self.logger.exception(f"Error evaluating condition '{condition}': {e}")
             return False
 
-    async def _execute_step(self, step: WorkflowStep, context: dict[str, Any]):
+    async def _execute_step(self, step: WorkflowStep, context: dict[str, Any]) -> None:
         """Execute individual workflow step."""
         start_time = datetime.utcnow()
 
@@ -2688,7 +2702,7 @@ class WorkflowEngine:
             # Retry logic
             if step.retry_count < step.max_retries:
                 step.retry_count += 1
-                self.logger.warning(f"Retrying step {step.step_id} (attempt {step.retry_count})")
+                self.logger.exception(f"Retrying step {step.step_id} (attempt {step.retry_count})")
                 await self._execute_step(step, context)
             else:
                 raise Exception(error_msg) from timeout_error
@@ -2700,7 +2714,7 @@ class WorkflowEngine:
             # Retry logic
             if step.retry_count < step.max_retries:
                 step.retry_count += 1
-                self.logger.warning(f"Retrying step {step.step_id} (attempt {step.retry_count})")
+                self.logger.exception(f"Retrying step {step.step_id} (attempt {step.retry_count})")
                 await self._execute_step(step, context)
             else:
                 raise Exception(error_msg) from e
@@ -2765,6 +2779,7 @@ class WorkflowEngine:
         ]
 
 
+@log_all_methods
 class AnalysisCoordinator:
     """Real-time analysis coordination and orchestration."""
 
@@ -2774,7 +2789,7 @@ class AnalysisCoordinator:
         workflow_engine: WorkflowEngine,
         event_bus: EventBus,
         logger: logging.Logger,
-    ):
+    ) -> None:
         """Initialize analysis coordinator with plugin manager, workflow engine, event bus, and logger."""
         self.plugin_manager = plugin_manager
         self.workflow_engine = workflow_engine
@@ -2810,7 +2825,7 @@ class AnalysisCoordinator:
         self.event_bus.subscribe("workflow_completed", self._handle_workflow_completed)
         self.event_bus.subscribe("workflow_failed", self._handle_workflow_failed)
 
-    async def start(self):
+    async def start(self) -> None:
         """Start analysis coordinator."""
         if self.running:
             return
@@ -2820,7 +2835,7 @@ class AnalysisCoordinator:
 
         self.logger.info("Analysis coordinator started")
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop analysis coordinator."""
         if not self.running:
             return
@@ -2880,7 +2895,7 @@ class AnalysisCoordinator:
 
         return analysis_id
 
-    async def _coordination_loop(self):
+    async def _coordination_loop(self) -> None:
         """Run main coordination loop."""
         while self.running:
             try:
@@ -2896,9 +2911,9 @@ class AnalysisCoordinator:
                 # Continue processing
                 continue
             except Exception as e:
-                self.logger.error(f"Error in coordination loop: {e}")
+                self.logger.exception(f"Error in coordination loop: {e}")
 
-    async def _start_analysis(self, analysis_context: dict[str, Any]):
+    async def _start_analysis(self, analysis_context: dict[str, Any]) -> None:
         """Start individual analysis."""
         analysis_id = analysis_context["analysis_id"]
 
@@ -2930,7 +2945,7 @@ class AnalysisCoordinator:
                         "analysis_type": analysis_context["analysis_type"],
                         "execution_id": execution_id,
                     },
-                )
+                ),
             )
 
             self.logger.info(f"Started analysis: {analysis_id}")
@@ -2939,7 +2954,7 @@ class AnalysisCoordinator:
             analysis_context["status"] = "failed"
             analysis_context["error"] = str(e)
 
-            self.logger.error(f"Failed to start analysis {analysis_id}: {e}")
+            self.logger.exception(f"Failed to start analysis {analysis_id}: {e}")
 
             # Emit failure event
             await self.event_bus.emit(
@@ -2950,7 +2965,7 @@ class AnalysisCoordinator:
                         "analysis_id": analysis_id,
                         "error": str(e),
                     },
-                )
+                ),
             )
 
     async def _extract_file_info(self, file_path: str) -> dict[str, Any]:
@@ -2984,7 +2999,7 @@ class AnalysisCoordinator:
             return info
 
         except Exception as e:
-            self.logger.error(f"Error extracting file info: {e}")
+            self.logger.exception(f"Error extracting file info: {e}")
             return {"name": Path(file_path).name, "error": str(e)}
 
     def _detect_file_type(self, file_path: str) -> str:
@@ -3012,7 +3027,7 @@ class AnalysisCoordinator:
         except Exception:
             return "Unknown"
 
-    async def _handle_analysis_request(self, event: Event):
+    async def _handle_analysis_request(self, event: Event) -> None:
         """Handle analysis request event."""
         try:
             data = event.data
@@ -3030,13 +3045,13 @@ class AnalysisCoordinator:
                         source="analysis_coordinator",
                         target=event.source,
                         data={"analysis_id": analysis_id, "request_id": event.event_id},
-                    )
+                    ),
                 )
 
         except Exception as e:
-            self.logger.error(f"Error handling analysis request: {e}")
+            self.logger.exception(f"Error handling analysis request: {e}")
 
-    async def _handle_workflow_completed(self, event: Event):
+    async def _handle_workflow_completed(self, event: Event) -> None:
         """Handle workflow completion."""
         execution_id = event.data.get("execution_id")
         results = event.data.get("results", {})
@@ -3059,13 +3074,13 @@ class AnalysisCoordinator:
                             "results": results,
                             "duration": (context["end_time"] - context["start_time"]).total_seconds(),
                         },
-                    )
+                    ),
                 )
 
                 self.logger.info(f"Analysis completed: {analysis_id}")
                 break
 
-    async def _handle_workflow_failed(self, event: Event):
+    async def _handle_workflow_failed(self, event: Event) -> None:
         """Handle workflow failure."""
         execution_id = event.data.get("execution_id")
         error = event.data.get("error")
@@ -3086,10 +3101,10 @@ class AnalysisCoordinator:
                             "analysis_id": analysis_id,
                             "error": error,
                         },
-                    )
+                    ),
                 )
 
-                self.logger.error(f"Analysis failed: {analysis_id} - {error}")
+                self.logger.exception(f"Analysis failed: {analysis_id} - {error}")
                 break
 
     def get_analysis_status(self, analysis_id: str) -> dict[str, Any] | None:
@@ -3113,13 +3128,14 @@ class AnalysisCoordinator:
 
     def get_active_analyses(self) -> list[dict[str, Any]]:
         """Get all active analyses."""
-        return [self.get_analysis_status(analysis_id) for analysis_id in self.active_analyses.keys()]
+        return [self.get_analysis_status(analysis_id) for analysis_id in self.active_analyses]
 
 
+@log_all_methods
 class ResourceManager:
     """System resource monitoring and management."""
 
-    def __init__(self, config: dict[str, Any], logger: logging.Logger):
+    def __init__(self, config: dict[str, Any], logger: logging.Logger) -> None:
         """Initialize resource manager with configuration and logger."""
         self.config = config
         self.logger = logger
@@ -3150,7 +3166,7 @@ class ResourceManager:
         # Process tracking
         self.tracked_processes: dict[int, psutil.Process] = {}
 
-    async def start(self):
+    async def start(self) -> None:
         """Start resource manager."""
         if self.running:
             return
@@ -3167,7 +3183,7 @@ class ResourceManager:
 
         self.logger.info("Resource manager started")
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop resource manager."""
         if not self.running:
             return
@@ -3180,7 +3196,7 @@ class ResourceManager:
             try:
                 await self.monitoring_task
             except asyncio.CancelledError as e:
-                self.logger.debug("Plugin operation error: %s", e)
+                self.logger.exception("Plugin operation error: %s", e)
 
         # Shutdown pools
         if self.process_pool:
@@ -3194,7 +3210,7 @@ class ResourceManager:
 
         self.logger.info("Resource manager stopped")
 
-    async def _monitoring_loop(self):
+    async def _monitoring_loop(self) -> None:
         """Resource monitoring loop."""
         while self.running:
             try:
@@ -3207,10 +3223,10 @@ class ResourceManager:
                 await asyncio.sleep(5)  # Monitor every 5 seconds
 
             except Exception as e:
-                self.logger.error(f"Error in resource monitoring: {e}")
+                self.logger.exception(f"Error in resource monitoring: {e}")
                 await asyncio.sleep(10)
 
-    async def _update_resource_stats(self):
+    async def _update_resource_stats(self) -> None:
         """Update resource statistics."""
         try:
             # CPU usage
@@ -3230,20 +3246,20 @@ class ResourceManager:
             self.resource_stats["active_threads"] = current_process.num_threads()
 
         except Exception as e:
-            self.logger.error(f"Error updating resource stats: {e}")
+            self.logger.exception(f"Error updating resource stats: {e}")
 
-    async def _check_resource_limits(self):
+    async def _check_resource_limits(self) -> None:
         """Check resource limits and warn if exceeded."""
         cpu_usage = self.resource_stats["cpu_usage"]
         memory_usage = self.resource_stats["memory_usage"]
 
         if cpu_usage > self.max_cpu_usage:
-            self.logger.warning(f"High CPU usage: {cpu_usage:.1f}%")
+            self.logger.exception(f"High CPU usage: {cpu_usage:.1f}%")
 
         if memory_usage > self.max_memory_usage:
-            self.logger.warning(f"High memory usage: {memory_usage:.1f}%")
+            self.logger.exception(f"High memory usage: {memory_usage:.1f}%")
 
-    async def _auto_cleanup(self):
+    async def _auto_cleanup(self) -> None:
         """Automatic cleanup of resources."""
         try:
             # Clean up completed processes
@@ -3266,7 +3282,7 @@ class ResourceManager:
                 self.logger.info("Performed garbage collection due to high memory usage")
 
         except Exception as e:
-            self.logger.error(f"Error in auto cleanup: {e}")
+            self.logger.exception(f"Error in auto cleanup: {e}")
 
     async def execute_in_process(self, func: Callable, *args, **kwargs):
         """Execute function in process pool."""
@@ -3301,17 +3317,17 @@ class ResourceManager:
                     psutil_process = psutil.Process(process.pid)
                     self.tracked_processes[process.pid] = psutil_process
                 except psutil.NoSuchProcess as e:
-                    self.logger.debug("Plugin operation error: %s", e)
+                    self.logger.exception("Plugin operation error: %s", e)
 
             self.logger.debug(f"Started external process: {' '.join(cmd)} (PID: {process.pid})")
 
             return process
 
         except Exception as e:
-            self.logger.error(f"Error starting external process: {e}")
+            self.logger.exception(f"Error starting external process: {e}")
             raise
 
-    async def kill_process(self, pid: int, force: bool = False):
+    async def kill_process(self, pid: int, force: bool = False) -> None:
         """Kill tracked process."""
         if pid in self.tracked_processes:
             try:
@@ -3334,9 +3350,9 @@ class ResourceManager:
                 if pid in self.tracked_processes:
                     del self.tracked_processes[pid]
             except Exception as e:
-                self.logger.error(f"Error killing process {pid}: {e}")
+                self.logger.exception(f"Error killing process {pid}: {e}")
 
-    async def _cleanup_processes(self):
+    async def _cleanup_processes(self) -> None:
         """Cleanup all tracked processes."""
         for pid in list(self.tracked_processes.keys()):
             await self.kill_process(pid, force=True)
@@ -3352,10 +3368,11 @@ class ResourceManager:
         }
 
 
+@log_all_methods
 class IntellicrackcoreEngine:
     """Run Intellicrack core engine - orchestrates all components."""
 
-    def __init__(self, config_path: str | None = None):
+    def __init__(self, config_path: str | None = None) -> None:
         """Initialize Intellicrack core engine with optional configuration path."""
         # Initialize configuration
         self.config_manager = ConfigurationManager(config_path)
@@ -3410,7 +3427,7 @@ class IntellicrackcoreEngine:
 
         self.logger.info("Intellicrack Core Engine initialized")
 
-    async def start(self):
+    async def start(self) -> None:
         """Start the core engine."""
         if self.running:
             self.logger.warning("Engine already running")
@@ -3446,17 +3463,17 @@ class IntellicrackcoreEngine:
                         "startup_time": self.startup_time.isoformat(),
                         "loaded_plugins": loaded_plugins,
                     },
-                )
+                ),
             )
 
             self.logger.info("Intellicrack Core Engine started successfully")
 
         except Exception as e:
-            self.logger.error(f"Failed to start engine: {e}")
+            self.logger.exception(f"Failed to start engine: {e}")
             await self.stop()
             raise
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop the core engine."""
         if not self.running:
             return
@@ -3478,9 +3495,9 @@ class IntellicrackcoreEngine:
             self.logger.info("Intellicrack Core Engine stopped")
 
         except Exception as e:
-            self.logger.error(f"Error stopping engine: {e}")
+            self.logger.exception(f"Error stopping engine: {e}")
 
-    async def _activate_core_plugins(self):
+    async def _activate_core_plugins(self) -> None:
         """Activate core plugins required for operation."""
         core_plugins = [
             "python_neural_network_detector",
@@ -3493,7 +3510,7 @@ class IntellicrackcoreEngine:
             if plugin_name in self.plugin_manager.plugins:
                 await self.plugin_manager.activate_plugin(plugin_name)
 
-    async def _deactivate_all_plugins(self):
+    async def _deactivate_all_plugins(self) -> None:
         """Deactivate all active plugins."""
         active_plugins = list(self.plugin_manager.plugins.keys())
 
@@ -3563,7 +3580,7 @@ class IntellicrackcoreEngine:
                         "status": plugin.status.value,
                         "metadata": metadata.to_dict(),
                         "operations": plugin.get_supported_operations(),
-                    }
+                    },
                 )
 
         return {"plugins": plugins}
@@ -3644,7 +3661,7 @@ class IntellicrackcoreEngine:
             }
 
         except Exception as e:
-            self.logger.error(f"API request failed: {method} - {e}")
+            self.logger.exception(f"API request failed: {method} - {e}")
 
             return {
                 "success": False,
@@ -3653,7 +3670,7 @@ class IntellicrackcoreEngine:
             }
 
 
-def main():
+def main() -> None:
     """Run the core engine."""
     import argparse
 
@@ -3663,7 +3680,7 @@ def main():
 
     args = parser.parse_args()
 
-    async def run_engine():
+    async def run_engine() -> None:
         engine = IntellicrackcoreEngine(args.config)
 
         try:

@@ -562,7 +562,7 @@ def _get_protocol_handler_requests(limit: int) -> list[dict[str, Any]]:
                     # Check for FlexLM request log file
                     flexlm_log = Path("logs/flexlm_requests.json")
                     if flexlm_log.exists():
-                        with open(flexlm_log, "r") as f:
+                        with open(flexlm_log) as f:
                             try:
                                 flexlm_requests = json.load(f)
                                 request_list.extend(flexlm_requests[: limit // 4])
@@ -572,7 +572,7 @@ def _get_protocol_handler_requests(limit: int) -> list[dict[str, Any]]:
                     # Check for cloud license API request log
                     cloud_log = Path("logs/cloud_api_requests.json")
                     if cloud_log.exists():
-                        with open(cloud_log, "r") as f:
+                        with open(cloud_log) as f:
                             try:
                                 cloud_requests = json.load(f)
                                 request_list.extend(cloud_requests[: limit // 4])
@@ -610,7 +610,7 @@ def _get_protocol_handler_requests(limit: int) -> list[dict[str, Any]]:
                                     "request_data": row[7],
                                     "response_data": row[8],
                                     "status": row[9],
-                                }
+                                },
                             )
                         conn.close()
 
@@ -667,7 +667,7 @@ def _get_network_interceptor_requests(limit: int) -> list[dict[str, Any]]:
                     "bytes_sent": 200 + (i * 50),
                     "bytes_received": 150 + (i * 30),
                     "connection_id": f"conn_{hash(f'{req_type}_{i}') % 10000}",
-                }
+                },
             )
 
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
@@ -763,7 +763,7 @@ def _get_system_network_requests(limit: int) -> list[dict[str, Any]]:
                                 "status": conn.status,
                                 "pid": conn.pid,
                                 "connection_type": "system_monitored",
-                            }
+                            },
                         )
 
             except (AttributeError, OSError) as e:
@@ -790,7 +790,7 @@ def _get_system_network_requests(limit: int) -> list[dict[str, Any]]:
                                         "process_name": child.name(),
                                         "process_pid": child.pid,
                                         "status": conn.status,
-                                    }
+                                    },
                                 )
                     except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
                         logger.error("Error in final_utilities: %s", e)
@@ -1111,7 +1111,7 @@ def sandbox_process(command: list[str], timeout: int = 60) -> dict[str, Any]:
     """Run a process in a sandboxed environment."""
     try:
         # Basic sandboxing using subprocess with timeout
-        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
             command,
             capture_output=True,
             text=True,
@@ -1232,13 +1232,13 @@ def copy_to_clipboard(text: str) -> bool:
                 clipboard.setText(text)
                 return True
         elif platform.system() == "Windows":
-            subprocess.run(["clip"], input=text, text=True, check=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
+            subprocess.run(["clip"], input=text, text=True, check=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis
             return True
         elif platform.system() == "Darwin":  # macOS
-            subprocess.run(["pbcopy"], input=text, text=True, check=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
+            subprocess.run(["pbcopy"], input=text, text=True, check=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis
             return True
         elif platform.system() == "Linux":
-            subprocess.run(["xclip", "-selection", "clipboard"], input=text, text=True, check=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
+            subprocess.run(["xclip", "-selection", "clipboard"], input=text, text=True, check=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis
             return True
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Failed to copy to clipboard: %s", e)
@@ -1615,7 +1615,7 @@ def _submit_to_local_storage(report_data: dict[str, Any], report_id: str) -> dic
                         "format": "archive",
                         "path": archive_path,
                         "size": os.path.getsize(archive_path),
-                    }
+                    },
                 )
         except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
             logger.debug("Could not create archive: %s", e)
@@ -2491,7 +2491,7 @@ def add_code_snippet(snippets: list[dict[str, Any]], title: str, code: str, lang
             "code": code,
             "language": language,
             "timestamp": time.time(),
-        }
+        },
     )
 
 

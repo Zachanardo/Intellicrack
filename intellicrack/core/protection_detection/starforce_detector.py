@@ -107,7 +107,7 @@ class StarForceDetector:
 
     SECTION_NAMES = [".sforce", ".sf", ".protect", ".sfdata", ".sfcode", ".sfeng", ".sfrsc"]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize StarForce detector."""
         self.logger = logging.getLogger(__name__)
         self._advapi32 = None
@@ -310,7 +310,7 @@ class StarForceDetector:
                 key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_READ)
                 winreg.CloseKey(key)
                 detected.append(key_path)
-            except WindowsError:
+            except OSError:
                 pass
 
         return detected
@@ -406,7 +406,7 @@ class StarForceDetector:
 
             for match in results:
                 matches.append(
-                    {"rule": match.rule, "version": match.meta.get("version", "unknown"), "description": match.meta.get("description", "")}
+                    {"rule": match.rule, "version": match.meta.get("version", "unknown"), "description": match.meta.get("description", "")},
                 )
 
         except Exception as e:
@@ -416,7 +416,7 @@ class StarForceDetector:
         return matches
 
     def _calculate_confidence(
-        self, drivers: List[str], services: List[str], registry_keys: List[str], sections: List[str], yara_matches: List[Dict[str, str]]
+        self, drivers: List[str], services: List[str], registry_keys: List[str], sections: List[str], yara_matches: List[Dict[str, str]],
     ) -> float:
         """Calculate detection confidence score."""
         score = 0.0
@@ -514,18 +514,18 @@ class StarForceDetector:
                             winreg.CloseKey(subkey)
                             winreg.CloseKey(key)
                             return True
-                    except WindowsError:
+                    except OSError:
                         pass
 
                     winreg.CloseKey(subkey)
                     i += 1
 
-                except WindowsError:
+                except OSError:
                     break
 
             winreg.CloseKey(key)
 
-        except WindowsError:
+        except OSError:
             pass
 
         return False

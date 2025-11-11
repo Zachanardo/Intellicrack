@@ -143,7 +143,7 @@ class PinningDetector:
     across different platforms and frameworks using static analysis.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize pinning detector."""
         self.binary: Optional[lief.Binary] = None
         self.binary_path: Optional[Path] = None
@@ -228,7 +228,7 @@ class PinningDetector:
         logger.info(f"Detected {len(locations)} pinning logic locations")
         return locations
 
-    def _determine_platform(self):
+    def _determine_platform(self) -> None:
         """Determine binary platform."""
         if isinstance(self.binary, lief.PE.Binary):
             self.platform = "windows"
@@ -263,7 +263,7 @@ class PinningDetector:
                                 pinning_type="okhttp",
                                 confidence=pin.confidence,
                                 evidence=[f"Domains: {', '.join(pin.domains)}", f"Hashes: {', '.join(pin.hashes)}"],
-                            )
+                            ),
                         )
             except Exception as e:
                 logger.debug(f"APK analysis failed: {e}")
@@ -288,8 +288,8 @@ class PinningDetector:
         if evidence:
             locations.append(
                 PinningLocation(
-                    address=0, function_name="AFNetworking_pinning", pinning_type="afnetworking", confidence=0.85, evidence=evidence
-                )
+                    address=0, function_name="AFNetworking_pinning", pinning_type="afnetworking", confidence=0.85, evidence=evidence,
+                ),
             )
 
         evidence = []
@@ -299,7 +299,7 @@ class PinningDetector:
 
         if evidence:
             locations.append(
-                PinningLocation(address=0, function_name="Alamofire_pinning", pinning_type="alamofire", confidence=0.85, evidence=evidence)
+                PinningLocation(address=0, function_name="Alamofire_pinning", pinning_type="alamofire", confidence=0.85, evidence=evidence),
             )
 
         if "SecTrustEvaluate" in strings and any(h in strings for h in ["sha256", "SHA256"]):
@@ -310,7 +310,7 @@ class PinningDetector:
                     pinning_type="custom",
                     confidence=0.70,
                     evidence=["SecTrustEvaluate + SHA256 references"],
-                )
+                ),
             )
 
         return locations
@@ -339,7 +339,7 @@ class PinningDetector:
                         pinning_type="custom",
                         confidence=0.75,
                         evidence=[f"APIs: {', '.join(found_apis)}", f"Found {len(hashes)} hashes"],
-                    )
+                    ),
                 )
 
         return locations
@@ -368,7 +368,7 @@ class PinningDetector:
                         pinning_type="openssl",
                         confidence=0.80,
                         evidence=[f"APIs: {', '.join(found_apis)}", f"Found {len(hashes)} hashes"],
-                    )
+                    ),
                 )
 
         return locations
@@ -431,7 +431,7 @@ class PinningDetector:
                         hashes=hashes[:10],
                         confidence=0.80,
                         additional_info={"framework": "AFNetworking"},
-                    )
+                    ),
                 )
 
         return pins
@@ -471,7 +471,7 @@ class PinningDetector:
                         hashes=hashes[:10],
                         confidence=0.80,
                         additional_info={"framework": "Alamofire"},
-                    )
+                    ),
                 )
 
         return pins
@@ -538,7 +538,7 @@ class PinningDetector:
 
         detected_pins = []
         pinning_locations = self.detect_pinning_logic(str(self.binary_path))
-        pinning_methods = list(set(loc.pinning_type for loc in pinning_locations))
+        pinning_methods = list({loc.pinning_type for loc in pinning_locations})
 
         if self.platform == "android" and self.binary_path.suffix.lower() in [".apk", ".aab"]:
             try:
@@ -556,7 +556,7 @@ class PinningDetector:
                                         domains=dc.domains,
                                         hashes=[p.hash_value for p in dc.pins],
                                         confidence=1.0,
-                                    )
+                                    ),
                                 )
 
                     okhttp_pins = analyzer.detect_okhttp_pinning()
@@ -566,7 +566,7 @@ class PinningDetector:
                     detected_pins.extend(hardcoded_certs)
 
                     if not pinning_methods:
-                        pinning_methods = list(set(p.pin_type for p in detected_pins))
+                        pinning_methods = list({p.pin_type for p in detected_pins})
 
             except Exception as e:
                 logger.error(f"APK analysis failed: {e}")
@@ -588,7 +588,7 @@ class PinningDetector:
                     hashes=hashes[:20],
                     confidence=0.50,
                     additional_info={"detection_method": "hash_scan"},
-                )
+                ),
             )
 
         bypass_recommendations = self._generate_bypass_recommendations(pinning_methods, detected_pins)
@@ -620,7 +620,7 @@ class PinningDetector:
         if "network_security_config" in pinning_methods:
             recommendations.append(
                 "Network Security Config: Modify network_security_config.xml to remove <pin-set> "
-                "or use Frida to hook NetworkSecurityConfig validation"
+                "or use Frida to hook NetworkSecurityConfig validation",
             )
 
         if "okhttp" in pinning_methods:
@@ -634,7 +634,7 @@ class PinningDetector:
 
         if "openssl" in pinning_methods:
             recommendations.append(
-                "OpenSSL: Hook SSL_get_verify_result() to return X509_V_OK, or hook SSL_CTX_set_verify() to set mode to SSL_VERIFY_NONE"
+                "OpenSSL: Hook SSL_get_verify_result() to return X509_V_OK, or hook SSL_CTX_set_verify() to set mode to SSL_VERIFY_NONE",
             )
 
         if "custom" in pinning_methods:

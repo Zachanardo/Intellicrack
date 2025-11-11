@@ -70,7 +70,7 @@ class WindowsActivator:
     using the MAS (Microsoft Activation Scripts) approach.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the Windows activator with script path and temporary directory setup."""
         self.script_path = Path(__file__).parent.parent.parent / "ui" / "Windows_Patch" / "WindowsActivator.cmd"
         self.temp_dir = Path(tempfile.gettempdir()) / "intellicrack_activation"
@@ -174,7 +174,7 @@ class WindowsActivator:
             try:
                 mac = uuid.getnode()
                 machine_info += f"|{mac:012X}"
-            except (OSError, IOError):
+            except OSError:
                 pass
 
             # Generate fallback HWID
@@ -223,7 +223,7 @@ class WindowsActivator:
         try:
             # Use slmgr to check activation status
             result = subprocess.run(
-                ["cscript", "//nologo", "C:\\Windows\\System32\\slmgr.vbs", "/xpr"],  # noqa: S607
+                ["cscript", "//nologo", "C:\\Windows\\System32\\slmgr.vbs", "/xpr"],
                 capture_output=True,
                 text=True,
                 timeout=30,
@@ -291,7 +291,7 @@ class WindowsActivator:
             logger.info("Starting Windows activation with method: %s", method.value)
 
             # Run the activation script
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 cmd_args,
                 capture_output=True,
                 text=True,
@@ -342,7 +342,7 @@ class WindowsActivator:
         try:
             # Reset activation using slmgr
             result = subprocess.run(
-                ["cscript", "//nologo", "C:\\Windows\\System32\\slmgr.vbs", "/rearm"],  # noqa: S607
+                ["cscript", "//nologo", "C:\\Windows\\System32\\slmgr.vbs", "/rearm"],
                 capture_output=True,
                 text=True,
                 timeout=60,
@@ -372,7 +372,7 @@ class WindowsActivator:
         """
         try:
             result = subprocess.run(
-                ["cscript", "//nologo", "C:\\Windows\\System32\\slmgr.vbs", "/dli"],  # noqa: S607
+                ["cscript", "//nologo", "C:\\Windows\\System32\\slmgr.vbs", "/dli"],
                 capture_output=True,
                 text=True,
                 timeout=30,
@@ -565,7 +565,7 @@ class WindowsActivator:
 
             logger.info("Running Office C2R activation: %s", " ".join(cmd_args))
 
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 cmd_args,
                 capture_output=True,
                 text=True,
@@ -675,8 +675,8 @@ class WindowsActivator:
 
             logger.info("Activating Office using MSI method")
 
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                activate_cmd, capture_output=True, text=True, timeout=120, check=False
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                activate_cmd, capture_output=True, text=True, timeout=120, check=False,
             )
 
             success = result.returncode == 0
@@ -735,8 +735,8 @@ class WindowsActivator:
                 }
 
             # Check activation status
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                ["cscript", "//nologo", ospp_script, "/dstatus"],  # noqa: S607
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                ["cscript", "//nologo", ospp_script, "/dstatus"],
                 capture_output=True,
                 text=True,
                 timeout=60,

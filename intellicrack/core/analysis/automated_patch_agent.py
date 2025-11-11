@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 class AutomatedPatchAgent:
     """Real-time automated binary patching agent for exploitation."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the Automated Patch Agent.
 
         Sets up the agent's core attributes including patch history tracking,
@@ -181,7 +181,7 @@ class AutomatedPatchAgent:
                             "offset": point["offset"],
                             "patch": self.bypass_patterns["license_check_ret_true"],
                             "description": "Bypass license validation",
-                        }
+                        },
                     )
                 elif point["type"] == "anti_debug":
                     analysis_results["recommended_patches"].append(
@@ -189,7 +189,7 @@ class AutomatedPatchAgent:
                             "offset": point["offset"],
                             "patch": self.bypass_patterns["isdebuggerpresent_bypass"],
                             "description": "Bypass anti-debugging",
-                        }
+                        },
                     )
 
         except Exception as e:
@@ -254,7 +254,7 @@ class AutomatedPatchAgent:
 
                 # Log patch
                 self.patch_history.append(
-                    {"timestamp": time.time(), "file": binary_path, "offset": offset, "patch": patch_bytes.hex(), "backup": backup_path}
+                    {"timestamp": time.time(), "file": binary_path, "offset": offset, "patch": patch_bytes.hex(), "backup": backup_path},
                 )
 
                 return True

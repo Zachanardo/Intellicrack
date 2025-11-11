@@ -55,7 +55,7 @@ class SampleDatabase:
     deduplication, and metadata tracking.
     """
 
-    def __init__(self, database_path: Path | None = None):
+    def __init__(self, database_path: Path | None = None) -> None:
         """Initialize sample database.
 
         Args:
@@ -83,7 +83,7 @@ class SampleDatabase:
         source: str = "manual",
         verified: bool = False,
         notes: str = "",
-        copy_file: bool = True
+        copy_file: bool = True,
     ) -> tuple[bool, str]:
         """Add a sample to the database.
 
@@ -115,7 +115,7 @@ class SampleDatabase:
                 self.logger.warning(
                     "Duplicate file with different label: %s vs %s",
                     existing.protection_type,
-                    protection_type
+                    protection_type,
                 )
 
                 if confidence > existing.confidence:
@@ -137,7 +137,7 @@ class SampleDatabase:
                 confidence=confidence,
                 source=source,
                 verified=verified,
-                notes=notes
+                notes=notes,
             )
 
             if copy_file:
@@ -155,7 +155,7 @@ class SampleDatabase:
 
             self.logger.info(
                 "Added sample %s (%s, confidence: %.2f)",
-                file_hash[:16], protection_type, confidence
+                file_hash[:16], protection_type, confidence,
             )
 
             return True, file_hash
@@ -225,7 +225,7 @@ class SampleDatabase:
     def extract_training_data(
         self,
         min_confidence: float = 0.5,
-        verified_only: bool = False
+        verified_only: bool = False,
     ) -> tuple[np.ndarray, np.ndarray]:
         """Extract feature vectors and labels for training.
 
@@ -292,7 +292,7 @@ class SampleDatabase:
 
         for metadata in self.index.values():
             protection_counts[metadata.protection_type] = protection_counts.get(
-                metadata.protection_type, 0
+                metadata.protection_type, 0,
             ) + 1
             source_counts[metadata.source] = source_counts.get(metadata.source, 0) + 1
 
@@ -385,7 +385,7 @@ class SampleDatabase:
         self,
         output_dir: Path,
         min_confidence: float = 0.7,
-        verified_only: bool = False
+        verified_only: bool = False,
     ) -> dict[str, int]:
         """Export dataset in organized directory structure.
 
@@ -422,7 +422,7 @@ class SampleDatabase:
             try:
                 shutil.copy2(sample_path, dest_file)
                 export_counts[metadata.protection_type] = export_counts.get(
-                    metadata.protection_type, 0
+                    metadata.protection_type, 0,
                 ) + 1
             except Exception as e:
                 self.logger.error("Failed to copy %s: %s", sample_path, e)
@@ -453,7 +453,7 @@ class SampleDatabase:
         """Load database index from disk."""
         if self.index_file.exists():
             try:
-                with open(self.index_file, 'r', encoding='utf-8') as f:
+                with open(self.index_file, encoding='utf-8') as f:
                     data = json.load(f)
 
                 self.index = {

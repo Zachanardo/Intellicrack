@@ -68,7 +68,7 @@ class ExceptionInfo:
 class FridaStalkerEngine:
     """Advanced instruction-level tracing with Stalker."""
 
-    def __init__(self, session: frida.core.Session):
+    def __init__(self, session: frida.core.Session) -> None:
         """Initialize the FridaStalkerEngine with a Frida session.
 
         Args:
@@ -80,7 +80,7 @@ class FridaStalkerEngine:
         self.script = None
         self._init_stalker()
 
-    def _init_stalker(self):
+    def _init_stalker(self) -> None:
         """Initialize Stalker script."""
         stalker_script = """
 // Stalker Configuration
@@ -263,7 +263,7 @@ startThreadTrace(Process.getCurrentThreadId());
         self.script.on("message", self._on_message)
         self.script.load()
 
-    def _on_message(self, message, data):
+    def _on_message(self, message, data) -> None:
         """Handle Stalker messages."""
         if message["type"] == "send":
             payload = message.get("payload", {})
@@ -306,7 +306,7 @@ startThreadTrace(Process.getCurrentThreadId());
 class FridaHeapTracker:
     """Heap allocation tracking."""
 
-    def __init__(self, session: frida.core.Session):
+    def __init__(self, session: frida.core.Session) -> None:
         """Initialize the FridaHeapTracker with a Frida session.
 
         Args:
@@ -318,7 +318,7 @@ class FridaHeapTracker:
         self.script = None
         self._init_heap_tracker()
 
-    def _init_heap_tracker(self):
+    def _init_heap_tracker(self) -> None:
         """Initialize heap tracking script."""
         heap_script = """
 // Heap allocation tracking
@@ -501,7 +501,7 @@ send({ type: 'heap_tracking_ready' });
         self.script.on("message", self._on_message)
         self.script.load()
 
-    def _on_message(self, message, data):
+    def _on_message(self, message, data) -> None:
         """Handle heap tracking messages."""
         if message["type"] == "send":
             payload = message.get("payload", {})
@@ -536,7 +536,7 @@ send({ type: 'heap_tracking_ready' });
 class FridaThreadMonitor:
     """Thread creation and termination monitoring."""
 
-    def __init__(self, session: frida.core.Session):
+    def __init__(self, session: frida.core.Session) -> None:
         """Initialize the FridaThreadMonitor with a Frida session.
 
         Args:
@@ -548,7 +548,7 @@ class FridaThreadMonitor:
         self.script = None
         self._init_thread_monitor()
 
-    def _init_thread_monitor(self):
+    def _init_thread_monitor(self) -> None:
         """Initialize thread monitoring script."""
         thread_script = """
 // Thread monitoring
@@ -695,7 +695,7 @@ send({ type: 'thread_monitor_ready' });
         self.script.on("message", self._on_message)
         self.script.load()
 
-    def _on_message(self, message, data):
+    def _on_message(self, message, data) -> None:
         """Handle thread monitoring messages."""
         if message["type"] == "send":
             payload = message.get("payload", {})
@@ -729,7 +729,7 @@ send({ type: 'thread_monitor_ready' });
 class FridaExceptionHooker:
     """Exception handler hooking."""
 
-    def __init__(self, session: frida.core.Session):
+    def __init__(self, session: frida.core.Session) -> None:
         """Initialize the FridaExceptionHooker with a Frida session.
 
         Args:
@@ -741,7 +741,7 @@ class FridaExceptionHooker:
         self.script = None
         self._init_exception_hooker()
 
-    def _init_exception_hooker(self):
+    def _init_exception_hooker(self) -> None:
         """Initialize exception hooking script."""
         exception_script = """
 // Exception handling hooks
@@ -868,7 +868,7 @@ send({ type: 'exception_hooking_ready' });
         self.script.on("message", self._on_message)
         self.script.load()
 
-    def _on_message(self, message, data):
+    def _on_message(self, message, data) -> None:
         """Handle exception messages."""
         if message["type"] == "send":
             payload = message.get("payload", {})
@@ -884,7 +884,7 @@ send({ type: 'exception_hooking_ready' });
                         timestamp=payload["timestamp"],
                         handled=False,
                         exception_record=payload,
-                    )
+                    ),
                 )
 
             elif msg_type == "exception_handled":
@@ -895,7 +895,7 @@ send({ type: 'exception_hooking_ready' });
         """Get all tracked exceptions."""
         return self.exceptions
 
-    def clear_exceptions(self):
+    def clear_exceptions(self) -> None:
         """Clear exception history."""
         self.exceptions.clear()
         self.script.exports.clear_exceptions()
@@ -904,7 +904,7 @@ send({ type: 'exception_hooking_ready' });
 class FridaNativeReplacer:
     """Native function replacement system."""
 
-    def __init__(self, session: frida.core.Session):
+    def __init__(self, session: frida.core.Session) -> None:
         """Initialize the FridaNativeReplacer with a Frida session.
 
         Args:
@@ -916,7 +916,7 @@ class FridaNativeReplacer:
         self.script = None
         self._init_replacer()
 
-    def _init_replacer(self):
+    def _init_replacer(self) -> None:
         """Initialize native function replacement."""
         replacer_script = """
 // Native function replacement
@@ -1054,7 +1054,7 @@ send({ type: 'replacer_ready' });
         self.script.on("message", self._on_message)
         self.script.load()
 
-    def _on_message(self, message, data):
+    def _on_message(self, message, data) -> None:
         """Handle replacement messages."""
         if message["type"] == "send":
             payload = message.get("payload", {})
@@ -1084,7 +1084,7 @@ send({ type: 'replacer_ready' });
 class FridaRPCInterface:
     """RPC interface for complex operations."""
 
-    def __init__(self, session: frida.core.Session):
+    def __init__(self, session: frida.core.Session) -> None:
         """Initialize the FridaRPCInterface with a Frida session.
 
         Args:
@@ -1095,7 +1095,7 @@ class FridaRPCInterface:
         self.script = None
         self._init_rpc()
 
-    def _init_rpc(self):
+    def _init_rpc(self) -> None:
         """Initialize RPC interface."""
         rpc_script = """
 // RPC Interface for complex operations
@@ -1454,7 +1454,7 @@ send({ type: 'rpc_ready' });
 class FridaAdvancedHooking:
     """Run class for advanced hooking features."""
 
-    def __init__(self, session: frida.core.Session):
+    def __init__(self, session: frida.core.Session) -> None:
         """Initialize the FridaAdvancedHooking with a Frida session.
 
         Args:

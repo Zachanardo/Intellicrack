@@ -51,13 +51,13 @@ class ConfigManager:
     during migration, never written to. Single source of truth: central config.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize configuration manager with central config delegation."""
         self.central_config = IntellicrackConfig()
         self.config_file = Path.home() / ".intellicrack" / "config.json"
         self._migrate_if_needed()
 
-    def _migrate_if_needed(self):
+    def _migrate_if_needed(self) -> None:
         """One-time migration from old JSON file to central config."""
         # Check if we need to migrate
         if self.config_file.exists() and not self.central_config.get("cli_configuration.migrated", False):
@@ -65,7 +65,7 @@ class ConfigManager:
                 logger.info(f"Migrating CLI config from {self.config_file} to central config")
 
                 # Load old config
-                with open(self.config_file, "r") as f:
+                with open(self.config_file) as f:
                     old_config = json.load(f)
 
                 # Get current CLI config
@@ -107,13 +107,13 @@ class ConfigManager:
                 logger.error(f"Failed to migrate CLI config: {e}")
                 # Continue without migration, use defaults
 
-    def load_config(self):
+    def load_config(self) -> None:
         """Load configuration - now a no-op since we use central config directly."""
         # This method kept for backward compatibility
         # Central config is already loaded in __init__
         pass
 
-    def save_config(self):
+    def save_config(self) -> None:
         """Save configuration to central config immediately."""
         self.central_config.save()
         logger.debug("CLI configuration saved to central config")
@@ -135,7 +135,7 @@ class ConfigManager:
 
         return self.central_config.get(key, default)
 
-    def set(self, key: str, value: Any):
+    def set(self, key: str, value: Any) -> None:
         """Set configuration value in cli_configuration section.
 
         Args:
@@ -161,7 +161,7 @@ class ConfigManager:
         return self.central_config.get("cli_configuration", {})
 
 
-def main():
+def main() -> int:
     """Run configuration management CLI."""
     import argparse
 

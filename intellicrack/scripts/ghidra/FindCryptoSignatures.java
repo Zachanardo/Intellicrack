@@ -1216,8 +1216,9 @@ public class FindCryptoSignatures extends GhidraScript {
       double rotateDensity = (double) rotateCount / totalInstructions;
       double shiftDensity = (double) shiftCount / totalInstructions;
 
-      if (xorDensity > 0.15 || rotateDensity > 0.10 ||
-          (shiftCount > 5 && multiplyCount > 3 && xorCount > 5)) {
+      if (xorDensity > 0.15
+          || rotateDensity > 0.10
+          || (shiftCount > 5 && multiplyCount > 3 && xorCount > 5)) {
         foundCryptoPatterns = true;
       }
 
@@ -1260,8 +1261,9 @@ public class FindCryptoSignatures extends GhidraScript {
           PcodeOp current = allOps[i];
           PcodeOp next = allOps[i + 1];
 
-          if ((current.getOpcode() == PcodeOp.INT_LEFT && next.getOpcode() == PcodeOp.INT_RIGHT) ||
-              (current.getOpcode() == PcodeOp.INT_RIGHT && next.getOpcode() == PcodeOp.INT_LEFT)) {
+          if ((current.getOpcode() == PcodeOp.INT_LEFT && next.getOpcode() == PcodeOp.INT_RIGHT)
+              || (current.getOpcode() == PcodeOp.INT_RIGHT
+                  && next.getOpcode() == PcodeOp.INT_LEFT)) {
 
             if (current.getOutput() != null && next.getOutput() != null) {
               Varnode out1 = current.getOutput();
@@ -1304,11 +1306,18 @@ public class FindCryptoSignatures extends GhidraScript {
 
   private boolean isPermutationMask(long value) {
     long[] commonMasks = {
-      0xFF, 0xFF00, 0xFF0000, 0xFF000000,
-      0xFFFF, 0xFFFF0000,
-      0xF0F0F0F0L, 0x0F0F0F0FL,
-      0xAAAAAAAAL, 0x55555555L,
-      0xCCCCCCCCL, 0x33333333L
+      0xFF,
+      0xFF00,
+      0xFF0000,
+      0xFF000000,
+      0xFFFF,
+      0xFFFF0000,
+      0xF0F0F0F0L,
+      0x0F0F0F0FL,
+      0xAAAAAAAAL,
+      0x55555555L,
+      0xCCCCCCCCL,
+      0x33333333L
     };
 
     for (long mask : commonMasks) {
@@ -2231,25 +2240,25 @@ public class FindCryptoSignatures extends GhidraScript {
     if (hex == null || hex.isEmpty()) {
       return new byte[0];
     }
-    
+
     // Ensure even length by padding with leading zero if needed
     if (hex.length() % 2 != 0) {
       hex = "0" + hex;
     }
-    
+
     int len = hex.length();
     byte[] data = new byte[len / 2];
-    
+
     for (int i = 0; i < len; i += 2) {
       // Bounds-safe access with validation
       if (i + 1 < len) {
         char c1 = hex.charAt(i);
         char c2 = hex.charAt(i + 1);
-        
+
         // Validate hex characters
         int digit1 = Character.digit(c1, 16);
         int digit2 = Character.digit(c2, 16);
-        
+
         if (digit1 == -1 || digit2 == -1) {
           // Invalid hex character - use zero byte for robustness
           data[i / 2] = 0;

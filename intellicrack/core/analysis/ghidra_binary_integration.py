@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class GhidraBinaryIntegration:
     """Integration layer between binary analyzer and Ghidra scripts."""
 
-    def __init__(self, ghidra_path: Path):
+    def __init__(self, ghidra_path: Path) -> None:
         """Initialize Ghidra integration.
 
         Args:
@@ -34,7 +34,7 @@ class GhidraBinaryIntegration:
     def analyze_license_validation(
         self,
         binary_path: Path,
-        deep_analysis: bool = True
+        deep_analysis: bool = True,
     ) -> Dict[str, Any]:
         """Analyze license validation routines in binary.
 
@@ -52,12 +52,12 @@ class GhidraBinaryIntegration:
             result = self.script_runner.run_script(
                 binary_path=binary_path,
                 script_name=script_name,
-                parameters={}
+                parameters={},
             )
 
             self.logger.info(
                 f"License validation analysis completed for {binary_path.name}: "
-                f"{result.get('validation_functions', 0)} functions found"
+                f"{result.get('validation_functions', 0)} functions found",
             )
 
             return result
@@ -80,7 +80,7 @@ class GhidraBinaryIntegration:
             result = self.script_runner.run_script(
                 binary_path=binary_path,
                 script_name="modern_packer_detector",
-                parameters={}
+                parameters={},
             )
 
             protections_found = []
@@ -93,13 +93,13 @@ class GhidraBinaryIntegration:
 
             self.logger.info(
                 f"Protection detection completed for {binary_path.name}: "
-                f"{len(protections_found)} protections found"
+                f"{len(protections_found)} protections found",
             )
 
             return {
                 "protections": protections_found,
                 "details": result,
-                "success": True
+                "success": True,
             }
 
         except Exception as e:
@@ -120,13 +120,13 @@ class GhidraBinaryIntegration:
             signature_result = self.script_runner.run_script(
                 binary_path=binary_path,
                 script_name="crypto_signature_finder",
-                parameters={}
+                parameters={},
             )
 
             identifier_result = self.script_runner.run_script(
                 binary_path=binary_path,
                 script_name="crypto_routine_identifier",
-                parameters={}
+                parameters={},
             )
 
             algorithms_found = signature_result.get("algorithms", [])
@@ -134,7 +134,7 @@ class GhidraBinaryIntegration:
 
             self.logger.info(
                 f"Crypto analysis completed for {binary_path.name}: "
-                f"{len(algorithms_found)} algorithms, {len(custom_crypto)} custom routines"
+                f"{len(algorithms_found)} algorithms, {len(custom_crypto)} custom routines",
             )
 
             return {
@@ -142,7 +142,7 @@ class GhidraBinaryIntegration:
                 "custom_crypto": custom_crypto,
                 "signature_details": signature_result,
                 "identifier_details": identifier_result,
-                "success": True
+                "success": True,
             }
 
         except Exception as e:
@@ -163,12 +163,12 @@ class GhidraBinaryIntegration:
             result = self.script_runner.run_script(
                 binary_path=binary_path,
                 script_name="keygen_template_generator",
-                parameters={}
+                parameters={},
             )
 
             self.logger.info(
                 f"Keygen template generated for {binary_path.name}: "
-                f"algorithm={result.get('algorithm_type', 'unknown')}"
+                f"algorithm={result.get('algorithm_type', 'unknown')}",
             )
 
             return result
@@ -191,12 +191,12 @@ class GhidraBinaryIntegration:
             result = self.script_runner.run_script(
                 binary_path=binary_path,
                 script_name="control_flow_deobfuscator",
-                parameters={}
+                parameters={},
             )
 
             self.logger.info(
                 f"Control flow deobfuscation completed for {binary_path.name}: "
-                f"{result.get('blocks_deobfuscated', 0)} blocks processed"
+                f"{result.get('blocks_deobfuscated', 0)} blocks processed",
             )
 
             return result
@@ -219,14 +219,14 @@ class GhidraBinaryIntegration:
             result = self.script_runner.run_script(
                 binary_path=binary_path,
                 script_name="string_decryption_automator",
-                parameters={}
+                parameters={},
             )
 
             decrypted_count = len(result.get("decrypted_strings", []))
 
             self.logger.info(
                 f"String decryption completed for {binary_path.name}: "
-                f"{decrypted_count} strings decrypted"
+                f"{decrypted_count} strings decrypted",
             )
 
             return result
@@ -249,7 +249,7 @@ class GhidraBinaryIntegration:
             result = self.script_runner.run_script(
                 binary_path=binary_path,
                 script_name="anti_analysis_detector",
-                parameters={}
+                parameters={},
             )
 
             techniques = []
@@ -262,13 +262,13 @@ class GhidraBinaryIntegration:
 
             self.logger.info(
                 f"Anti-analysis detection completed for {binary_path.name}: "
-                f"{len(techniques)} techniques found"
+                f"{len(techniques)} techniques found",
             )
 
             return {
                 "techniques": techniques,
                 "details": result,
-                "success": True
+                "success": True,
             }
 
         except Exception as e:
@@ -278,7 +278,7 @@ class GhidraBinaryIntegration:
     def perform_comprehensive_analysis(
         self,
         binary_path: Path,
-        include_decompilation: bool = False
+        include_decompilation: bool = False,
     ) -> Dict[str, Any]:
         """Perform comprehensive binary analysis using multiple Ghidra scripts.
 
@@ -296,12 +296,12 @@ class GhidraBinaryIntegration:
             result = self.script_runner.run_script(
                 binary_path=binary_path,
                 script_name=script_name,
-                parameters={}
+                parameters={},
             )
 
             self.logger.info(
                 f"Comprehensive analysis completed for {binary_path.name}: "
-                f"{result.get('function_count', 0)} functions analyzed"
+                f"{result.get('function_count', 0)} functions analyzed",
             )
 
             return result
@@ -325,12 +325,12 @@ class GhidraBinaryIntegration:
             result = self.script_runner.run_script(
                 binary_path=binary_path,
                 script_name="automated_unpacker",
-                parameters={"max_iterations": max_iterations}
+                parameters={"max_iterations": max_iterations},
             )
 
             self.logger.info(
                 f"Unpacking completed for {binary_path.name}: "
-                f"OEP={hex(result.get('oep', 0))}"
+                f"OEP={hex(result.get('oep', 0))}",
             )
 
             return result
@@ -353,12 +353,12 @@ class GhidraBinaryIntegration:
             result = self.script_runner.run_script(
                 binary_path=binary_path,
                 script_name="network_analysis",
-                parameters={}
+                parameters={},
             )
 
             self.logger.info(
                 f"Network analysis completed for {binary_path.name}: "
-                f"{len(result.get('network_functions', []))} functions found"
+                f"{len(result.get('network_functions', []))} functions found",
             )
 
             return result
@@ -391,7 +391,7 @@ class GhidraBinaryIntegration:
         workflow_results = {
             "binary": str(binary_path),
             "success": True,
-            "stages": {}
+            "stages": {},
         }
 
         workflow_results["stages"]["protection_detection"] = self.detect_protections(binary_path)
@@ -443,7 +443,7 @@ class GhidraBinaryIntegration:
                 "timeout": script.timeout,
                 "output_format": script.output_format,
                 "parameters": script.parameters,
-                "path": str(script.path)
+                "path": str(script.path),
             }
         return None
 

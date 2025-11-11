@@ -87,7 +87,7 @@ class VisualPatchEditorDialog(QDialog):
     with real-time disassembly view and byte preview capabilities.
     """
 
-    def __init__(self, binary_path: str, patches: list[dict[str, Any]], parent=None):
+    def __init__(self, binary_path: str, patches: list[dict[str, Any]], parent=None) -> None:
         """Initialize the Visual Patch Editor dialog.
 
         Args:

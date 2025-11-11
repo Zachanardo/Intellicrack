@@ -35,7 +35,7 @@ class ComprehensiveR2Integration:
     functionality into any Intellicrack application variant.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the ComprehensiveR2Integration with default values."""
         self.logger = logger
         self.ui_manager = None
@@ -236,7 +236,7 @@ class ComprehensiveR2Integration:
             self.logger.error(f"Fallback integration failed: {e}")
             return False
 
-    def _integrate_intellicrack_specific_features(self, main_app):
+    def _integrate_intellicrack_specific_features(self, main_app) -> None:
         """Add IntellicrackApp specific integrations."""
         try:
             # Connect to existing signals if they exist
@@ -260,11 +260,11 @@ class ComprehensiveR2Integration:
         except Exception as e:
             self.logger.error(f"IntellicrackApp specific integration failed: {e}")
 
-    def _setup_intellicrack_binary_sync(self, main_app):
+    def _setup_intellicrack_binary_sync(self, main_app) -> None:
         """Set up binary path synchronization for IntellicrackApp."""
         try:
             # Create a method to update binary path
-            def update_binary_path():
+            def update_binary_path() -> None:
                 if hasattr(main_app, "binary_path") and main_app.binary_path:
                     self.ui_manager.set_binary_path(main_app.binary_path)
 
@@ -280,7 +280,7 @@ class ComprehensiveR2Integration:
         except Exception as e:
             self.logger.error(f"Binary path sync setup failed: {e}")
 
-    def _setup_intellicrack_signals(self, main_app):
+    def _setup_intellicrack_signals(self, main_app) -> None:
         """Set up signal connections for IntellicrackApp."""
         try:
             # Connect analysis completion to main app
@@ -299,7 +299,7 @@ class ComprehensiveR2Integration:
         except Exception as e:
             self.logger.error(f"Signal setup failed: {e}")
 
-    def _setup_main_window_features(self, main_app):
+    def _setup_main_window_features(self, main_app) -> None:
         """Set up features specific to QMainWindow."""
         try:
             # Add toolbar items if toolbar exists
@@ -315,7 +315,7 @@ class ComprehensiveR2Integration:
         except Exception as e:
             self.logger.error(f"Main window features setup failed: {e}")
 
-    def _add_radare2_menu_items(self, main_app):
+    def _add_radare2_menu_items(self, main_app) -> None:
         """Add radare2 menu items to application."""
         try:
             from .menu_utils import find_or_create_menu
@@ -360,7 +360,7 @@ class ComprehensiveR2Integration:
         except Exception as e:
             self.logger.error(f"Failed to add menu items: {e}")
 
-    def _add_radare2_toolbar(self, main_app):
+    def _add_radare2_toolbar(self, main_app) -> None:
         """Add radare2 toolbar to main window."""
         try:
             toolbar = main_app.addToolBar("Radare2")
@@ -389,7 +389,7 @@ class ComprehensiveR2Integration:
         except Exception as e:
             self.logger.error(f"Failed to add toolbar: {e}")
 
-    def _integrate_status_bar(self, main_app):
+    def _integrate_status_bar(self, main_app) -> None:
         """Integrate with application status bar."""
         try:
             if hasattr(main_app, "statusBar"):
@@ -405,7 +405,7 @@ class ComprehensiveR2Integration:
         except Exception as e:
             self.logger.error(f"Status bar integration failed: {e}")
 
-    def _add_fallback_functionality(self, main_app):
+    def _add_fallback_functionality(self, main_app) -> None:
         """Add basic functionality for fallback integration."""
         try:
             # Try to add at least a way to start analysis
@@ -419,7 +419,7 @@ class ComprehensiveR2Integration:
                 main_app.start_radare2_analysis = start_r2_analysis
 
                 # Add configuration method
-                def show_r2_config():
+                def show_r2_config() -> None:
                     if self.ui_manager:
                         self.ui_manager.show_configuration()
 
@@ -438,7 +438,7 @@ class ComprehensiveR2Integration:
         """Get the UI manager instance."""
         return self.ui_manager
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Cleanup all integrations."""
         try:
             if self.ui_manager:
@@ -492,7 +492,7 @@ def get_integration_status() -> dict[str, bool]:
     return integration.get_integration_status()
 
 
-def cleanup_integration():
+def cleanup_integration() -> None:
     """Cleanup all radare2 integrations."""
     global _GLOBAL_INTEGRATION
     if _GLOBAL_INTEGRATION:

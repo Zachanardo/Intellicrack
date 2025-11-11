@@ -41,14 +41,14 @@ class SerialGeneratorWorker(QThread):
     result = pyqtSignal(dict)
     error = pyqtSignal(str)
 
-    def __init__(self, generator: SerialNumberGenerator, operation: str, params: Dict[str, Any]):
+    def __init__(self, generator: SerialNumberGenerator, operation: str, params: Dict[str, Any]) -> None:
         """Initialize the SerialGeneratorWorker with a generator, operation, and parameters."""
         super().__init__()
         self.generator = generator
         self.operation = operation
         self.params = params
 
-    def run(self):
+    def run(self) -> None:
         """Execute serial generation operation in background thread."""
         try:
             if self.operation == "analyze":
@@ -107,7 +107,7 @@ class SerialGeneratorWorker(QThread):
                             validation_details["checksum_check"] = checksum_valid
 
                 self.result.emit(
-                    {"operation": "validation", "data": {"serial": serial, "is_valid": is_valid, "details": validation_details}}
+                    {"operation": "validation", "data": {"serial": serial, "is_valid": is_valid, "details": validation_details}},
                 )
 
             elif self.operation == "crack_pattern":
@@ -140,7 +140,7 @@ class SerialGeneratorWorker(QThread):
 class SerialGeneratorDialog(QDialog):
     """Comprehensive serial number generator interface."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the SerialNumberGeneratorDialog with an optional parent."""
         super().__init__(parent)
         self.generator = SerialNumberGenerator()
@@ -151,7 +151,7 @@ class SerialGeneratorDialog(QDialog):
         self.init_ui()
         self.load_presets()
 
-    def init_ui(self):
+    def init_ui(self) -> None:
         """Initialize the user interface."""
         self.setWindowTitle("Serial Number Generator")
         self.setMinimumSize(900, 650)
@@ -246,7 +246,7 @@ class SerialGeneratorDialog(QDialog):
         checksum_layout.addWidget(QLabel("Algorithm:"))
         self.checksum_combo = QComboBox()
         self.checksum_combo.addItems(
-            ["none", "luhn", "verhoeff", "damm", "crc16", "crc32", "fletcher16", "fletcher32", "adler32", "mod11", "mod37", "mod97"]
+            ["none", "luhn", "verhoeff", "damm", "crc16", "crc32", "fletcher16", "fletcher32", "adler32", "mod11", "mod37", "mod97"],
         )
         self.checksum_combo.setEnabled(False)
         self.enable_checksum.toggled.connect(self.checksum_combo.setEnabled)
@@ -603,7 +603,7 @@ class SerialGeneratorDialog(QDialog):
         builder_layout = QVBoxLayout()
 
         builder_text = QLabel(
-            "Build custom serial patterns using the generation tab settings.\nTest your patterns with sample data before deployment."
+            "Build custom serial patterns using the generation tab settings.\nTest your patterns with sample data before deployment.",
         )
         builder_layout.addWidget(builder_text)
 
@@ -662,7 +662,7 @@ class SerialGeneratorDialog(QDialog):
         widget.setLayout(layout)
         return widget
 
-    def on_format_changed(self, format_str: str):
+    def on_format_changed(self, format_str: str) -> None:
         """Handle format change."""
         if format_str == "custom":
             self.custom_alphabet_widget.setVisible(True)
@@ -677,7 +677,7 @@ class SerialGeneratorDialog(QDialog):
             self.length_spin.setValue(32)
             self.groups_spin.setValue(5)
 
-    def generate_single_serial(self):
+    def generate_single_serial(self) -> None:
         """Generate a single serial number."""
         try:
             constraints = self.build_constraints()
@@ -729,7 +729,7 @@ class SerialGeneratorDialog(QDialog):
             cannot_contain=cannot_contain,
         )
 
-    def analyze_serials(self):
+    def analyze_serials(self) -> None:
         """Analyze sample serials."""
         text = self.samples_input.toPlainText().strip()
         if not text:
@@ -747,7 +747,7 @@ class SerialGeneratorDialog(QDialog):
         self.worker.error.connect(self.handle_worker_error)
         self.worker.start()
 
-    def generate_from_analysis(self):
+    def generate_from_analysis(self) -> None:
         """Generate serials based on analysis."""
         if not self.analyzed_pattern:
             return
@@ -765,7 +765,7 @@ class SerialGeneratorDialog(QDialog):
         self.worker.error.connect(self.handle_worker_error)
         self.worker.start()
 
-    def generate_batch_serials(self):
+    def generate_batch_serials(self) -> None:
         """Generate batch of serials."""
         count = self.batch_count.value()
         constraints = self.build_constraints()
@@ -791,7 +791,7 @@ class SerialGeneratorDialog(QDialog):
         self.worker.error.connect(self.handle_worker_error)
         self.worker.start()
 
-    def validate_serial(self):
+    def validate_serial(self) -> None:
         """Validate a serial number."""
         serial = self.validation_input.text().strip()
         if not serial:
@@ -815,7 +815,7 @@ class SerialGeneratorDialog(QDialog):
         self.worker.error.connect(self.handle_worker_error)
         self.worker.start()
 
-    def copy_serial(self):
+    def copy_serial(self) -> None:
         """Copy generated serial to clipboard."""
         serial = self.serial_output.text()
         if serial:
@@ -823,14 +823,14 @@ class SerialGeneratorDialog(QDialog):
             clipboard.setText(serial)
             self.log("Serial copied to clipboard")
 
-    def save_serial(self):
+    def save_serial(self) -> None:
         """Save generated serial to file."""
         serial = self.serial_output.text()
         if not serial:
             return
 
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Save Serial", f"serial_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt", "Text Files (*.txt);;All Files (*.*)"
+            self, "Save Serial", f"serial_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt", "Text Files (*.txt);;All Files (*.*)",
         )
 
         if file_path:
@@ -843,7 +843,7 @@ class SerialGeneratorDialog(QDialog):
             except Exception as e:
                 self.handle_worker_error(f"Failed to save: {e}")
 
-    def export_batch(self):
+    def export_batch(self) -> None:
         """Export batch serials to file."""
         text = self.batch_output.toPlainText()
         if not text:
@@ -864,33 +864,33 @@ class SerialGeneratorDialog(QDialog):
             except Exception as e:
                 self.handle_worker_error(f"Failed to export: {e}")
 
-    def clear_batch(self):
+    def clear_batch(self) -> None:
         """Clear batch output."""
         self.batch_output.clear()
         self.batch_stats.setText("No serials generated")
         self.generated_serials.clear()
         self.btn_export_batch.setEnabled(False)
 
-    def load_sample_serials(self):
+    def load_sample_serials(self) -> None:
         """Load sample serials from file."""
         file_path, _ = QFileDialog.getOpenFileName(self, "Load Sample Serials", "", "Text Files (*.txt);;All Files (*.*)")
 
         if file_path:
             try:
-                with open(file_path, "r") as f:
+                with open(file_path) as f:
                     content = f.read()
                 self.samples_input.setPlainText(content)
                 self.log(f"Loaded samples from {file_path}")
             except Exception as e:
                 self.handle_worker_error(f"Failed to load: {e}")
 
-    def load_validation_batch(self):
+    def load_validation_batch(self) -> None:
         """Load serials for batch validation."""
         file_path, _ = QFileDialog.getOpenFileName(self, "Load Serials for Validation", "", "Text Files (*.txt);;All Files (*.*)")
 
         if file_path:
             try:
-                with open(file_path, "r") as f:
+                with open(file_path) as f:
                     content = f.read()
                 self.batch_validation_input.setPlainText(content)
                 self.btn_validate_batch.setEnabled(True)
@@ -898,7 +898,7 @@ class SerialGeneratorDialog(QDialog):
             except Exception as e:
                 self.handle_worker_error(f"Failed to load: {e}")
 
-    def validate_batch(self):
+    def validate_batch(self) -> None:
         """Validate batch of serials."""
         text = self.batch_validation_input.toPlainText().strip()
         if not text:
@@ -915,7 +915,7 @@ class SerialGeneratorDialog(QDialog):
         self.validation_output.setText("\n".join(results))
         self.log(f"Validated {len(serials)} serials")
 
-    def use_selected_pattern(self):
+    def use_selected_pattern(self) -> None:
         """Use selected pattern from patterns table."""
         current_row = self.patterns_table.currentRow()
         if current_row < 0:
@@ -939,7 +939,7 @@ class SerialGeneratorDialog(QDialog):
 
         self.log(f"Applied pattern for {self.patterns_table.item(current_row, 0).text()}")
 
-    def export_patterns(self):
+    def export_patterns(self) -> None:
         """Export patterns to file."""
         patterns = []
         for row in range(self.patterns_table.rowCount()):
@@ -949,7 +949,7 @@ class SerialGeneratorDialog(QDialog):
                     "format": self.patterns_table.item(row, 1).text(),
                     "length": self.patterns_table.item(row, 2).text(),
                     "algorithm": self.patterns_table.item(row, 3).text(),
-                }
+                },
             )
 
         file_path, _ = QFileDialog.getSaveFileName(self, "Export Patterns", "serial_patterns.json", "JSON Files (*.json);;All Files (*.*)")
@@ -962,13 +962,13 @@ class SerialGeneratorDialog(QDialog):
             except Exception as e:
                 self.handle_worker_error(f"Failed to export: {e}")
 
-    def import_patterns(self):
+    def import_patterns(self) -> None:
         """Import patterns from file."""
         file_path, _ = QFileDialog.getOpenFileName(self, "Import Patterns", "", "JSON Files (*.json);;All Files (*.*)")
 
         if file_path:
             try:
-                with open(file_path, "r") as f:
+                with open(file_path) as f:
                     patterns = json.load(f)
 
                 # Clear existing patterns
@@ -987,7 +987,7 @@ class SerialGeneratorDialog(QDialog):
             except Exception as e:
                 self.handle_worker_error(f"Failed to import: {e}")
 
-    def save_preset(self):
+    def save_preset(self) -> None:
         """Save current settings as preset."""
         from PyQt6.QtWidgets import QInputDialog
 
@@ -1014,7 +1014,7 @@ class SerialGeneratorDialog(QDialog):
 
             if os.path.exists(presets_file):
                 try:
-                    with open(presets_file, "r") as f:
+                    with open(presets_file) as f:
                         presets = json.load(f)
                 except (FileNotFoundError, json.JSONDecodeError, PermissionError):
                     pass
@@ -1030,7 +1030,7 @@ class SerialGeneratorDialog(QDialog):
             except Exception as e:
                 self.handle_worker_error(f"Failed to save preset: {e}")
 
-    def load_preset(self):
+    def load_preset(self) -> None:
         """Load selected preset."""
         current_item = self.presets_list.currentItem()
         if not current_item:
@@ -1042,7 +1042,7 @@ class SerialGeneratorDialog(QDialog):
         presets_file = "serial_generator_presets.json"
         if os.path.exists(presets_file):
             try:
-                with open(presets_file, "r") as f:
+                with open(presets_file) as f:
                     presets = json.load(f)
 
                 if name in presets:
@@ -1073,7 +1073,7 @@ class SerialGeneratorDialog(QDialog):
             except Exception as e:
                 self.handle_worker_error(f"Failed to load preset: {e}")
 
-    def delete_preset(self):
+    def delete_preset(self) -> None:
         """Delete selected preset."""
         current_item = self.presets_list.currentItem()
         if not current_item:
@@ -1083,14 +1083,14 @@ class SerialGeneratorDialog(QDialog):
         name = current_item.text()
 
         reply = QMessageBox.question(
-            self, "Confirm Delete", f"Delete preset '{name}'?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            self, "Confirm Delete", f"Delete preset '{name}'?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
 
         if reply == QMessageBox.StandardButton.Yes:
             presets_file = "serial_generator_presets.json"
             if os.path.exists(presets_file):
                 try:
-                    with open(presets_file, "r") as f:
+                    with open(presets_file) as f:
                         presets = json.load(f)
 
                     if name in presets:
@@ -1104,22 +1104,22 @@ class SerialGeneratorDialog(QDialog):
                 except Exception as e:
                     self.handle_worker_error(f"Failed to delete preset: {e}")
 
-    def load_presets(self):
+    def load_presets(self) -> None:
         """Load saved presets."""
         self.presets_list.clear()
 
         presets_file = "serial_generator_presets.json"
         if os.path.exists(presets_file):
             try:
-                with open(presets_file, "r") as f:
+                with open(presets_file) as f:
                     presets = json.load(f)
 
-                for name in presets.keys():
+                for name in presets:
                     self.presets_list.addItem(name)
             except (AttributeError, KeyError, TypeError):
                 pass
 
-    def on_preset_selected(self):
+    def on_preset_selected(self) -> None:
         """Handle preset selection."""
         current_item = self.presets_list.currentItem()
         if not current_item:
@@ -1131,7 +1131,7 @@ class SerialGeneratorDialog(QDialog):
         presets_file = "serial_generator_presets.json"
         if os.path.exists(presets_file):
             try:
-                with open(presets_file, "r") as f:
+                with open(presets_file) as f:
                     presets = json.load(f)
 
                 if name in presets:
@@ -1141,7 +1141,7 @@ class SerialGeneratorDialog(QDialog):
             except (json.JSONDecodeError, TypeError, AttributeError):
                 pass
 
-    def handle_worker_result(self, result: dict):
+    def handle_worker_result(self, result: dict) -> None:
         """Handle worker thread results."""
         operation = result.get("operation")
         data = result.get("data")
@@ -1223,12 +1223,12 @@ Generated Test Serials:
             self.analysis_output.setText(output)
             self.log("Pattern cracking complete")
 
-    def handle_worker_error(self, error: str):
+    def handle_worker_error(self, error: str) -> None:
         """Handle worker thread errors."""
         self.log(f"Error: {error}")
         QMessageBox.critical(self, "Error", error)
 
-    def log(self, message: str):
+    def log(self, message: str) -> None:
         """Log message to console."""
         timestamp = datetime.now().strftime("%H:%M:%S")
         self.console.append(f"[{timestamp}] {message}")

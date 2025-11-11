@@ -104,7 +104,7 @@ class IconManager:
         "help_support": "🆘",
     }
 
-    def __init__(self, icon_path: Optional[Path] = None):
+    def __init__(self, icon_path: Optional[Path] = None) -> None:
         """Initialize the icon manager.
 
         Args:

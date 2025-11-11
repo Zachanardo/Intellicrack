@@ -49,7 +49,7 @@ class ProtocolFingerprinter:
     license verification protocols, enabling more effective bypasses.
     """
 
-    def __init__(self, config: dict[str, Any] | None = None):
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
         """Initialize the protocol fingerprinter.
 
         Args:
@@ -98,7 +98,7 @@ class ProtocolFingerprinter:
         # Load known signatures
         self._load_signatures()
 
-    def _load_signatures(self):
+    def _load_signatures(self) -> None:
         """Load known protocol signatures from database."""
         try:
             if os.path.exists(self.config["signature_db_path"]):
@@ -115,7 +115,7 @@ class ProtocolFingerprinter:
             self.logger.error("Error loading signatures: %s", e)
             self._initialize_signatures()
 
-    def _save_signatures(self):
+    def _save_signatures(self) -> None:
         """Save protocol signatures to database."""
         try:
             # Create directory if it doesn't exist
@@ -130,7 +130,7 @@ class ProtocolFingerprinter:
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error saving signatures: %s", e)
 
-    def _initialize_signatures(self):
+    def _initialize_signatures(self) -> None:
         """Initialize with built-in protocol signatures."""
         # FlexLM protocol
         self.signatures["flexlm"] = {
@@ -268,7 +268,7 @@ class ProtocolFingerprinter:
                 "data": packet_data,
                 "port": port,
                 "timestamp": time.time(),
-            }
+            },
         )
 
         if len(self.traffic_samples) > 1000:
@@ -290,7 +290,7 @@ class ProtocolFingerprinter:
                         "confidence": confidence,
                         "header_format": signature["header_format"],
                         "response_templates": signature["response_templates"],
-                    }
+                    },
                 )
 
         return results
@@ -413,7 +413,7 @@ class ProtocolFingerprinter:
             return 0.3 * match_ratio
 
     def _process_analysis_results(
-        self, results: list[dict[str, Any]], packet_data: bytes | bytearray, port: int | None
+        self, results: list[dict[str, Any]], packet_data: bytes | bytearray, port: int | None,
     ) -> dict[str, Any] | None:
         """Process analysis results and return best match or learn new signature."""
         results.sort(key=lambda x: x["confidence"], reverse=True)
@@ -537,7 +537,7 @@ class ProtocolFingerprinter:
 
                 if field_type == "uint8":
                     result[field_name] = packet_data[offset]
-                elif field_type == "uint16" or field_type == "uint32":
+                elif field_type in {"uint16", "uint32"}:
                     result[field_name] = int.from_bytes(packet_data[offset : offset + field_length], byteorder="big")
                 elif field_type == "string":
                     result[field_name] = packet_data[offset : offset + field_length].decode("utf-8", errors="ignore").rstrip("\x00")
@@ -722,7 +722,7 @@ class ProtocolFingerprinter:
         # Find longest common prefix
         prefix_len = 0
         for _i in range(min_len):
-            byte_values = set(_sample["data"][_i] for _sample in samples)
+            byte_values = {_sample["data"][_i] for _sample in samples}
             if len(byte_values) == 1:
                 prefix_len += 1
             else:
@@ -835,7 +835,7 @@ class ProtocolFingerprinter:
                                                     "dst": f"{packet.ip.dst}:{dst_port}",
                                                     "size": len(payload),
                                                     "entropy": calculate_entropy(payload),
-                                                }
+                                                },
                                             )
 
                                 except Exception as e:
@@ -994,7 +994,7 @@ class ProtocolFingerprinter:
                                 "protocol": protocol,
                                 "indicator": indicator.decode("utf-8", errors="ignore"),
                                 "context": context.hex(),
-                            }
+                            },
                         )
 
                 if matches >= 2:  # At least 2 indicators for confidence

@@ -45,7 +45,7 @@ class FridaWorkerThread(QThread):
     bypass_complete = pyqtSignal(dict)
     error_occurred = pyqtSignal(str)
 
-    def __init__(self, wizard: FridaBypassWizard, target_process: str, mode: str, options: dict):
+    def __init__(self, wizard: FridaBypassWizard, target_process: str, mode: str, options: dict) -> None:
         """Initialize the FridaBypassWorker with wizard and process information.
 
         Args:
@@ -62,7 +62,7 @@ class FridaWorkerThread(QThread):
         self.options = options
         self._stop_requested = False
 
-    def run(self):
+    def run(self) -> None:
         """Execute the bypass operation."""
         try:
             self.status_update.emit("Starting bypass operation...", "blue")
@@ -95,9 +95,9 @@ class FridaWorkerThread(QThread):
 
         except Exception as e:
             self.error_occurred.emit(str(e))
-            self.status_update.emit(f"Error: {str(e)}", "red")
+            self.status_update.emit(f"Error: {e!s}", "red")
 
-    def run_auto_bypass(self):
+    def run_auto_bypass(self) -> None:
         """Run automatic protection detection and bypass."""
         self.progress_update.emit("Detecting protection mechanisms...")
 
@@ -121,7 +121,7 @@ class FridaWorkerThread(QThread):
         self.progress_update.emit("Auto-bypass complete")
         self.bypass_complete.emit({"detections": detections, "mode": "auto"})
 
-    def run_manual_bypass(self):
+    def run_manual_bypass(self) -> None:
         """Run manual script injection."""
         script_path = self.options.get("script_path")
         if not script_path:
@@ -129,7 +129,7 @@ class FridaWorkerThread(QThread):
 
         self.progress_update.emit(f"Loading script: {script_path}")
 
-        with open(script_path, "r") as f:
+        with open(script_path) as f:
             script_content = f.read()
 
         self.progress_update.emit("Injecting custom script...")
@@ -138,7 +138,7 @@ class FridaWorkerThread(QThread):
         self.progress_update.emit("Custom script injected successfully")
         self.bypass_complete.emit({"script": script_path, "mode": "manual"})
 
-    def run_analysis(self):
+    def run_analysis(self) -> None:
         """Run protection analysis only."""
         self.progress_update.emit("Analyzing protection mechanisms...")
 
@@ -151,7 +151,7 @@ class FridaWorkerThread(QThread):
 
         self.bypass_complete.emit({"analysis": analysis, "mode": "analysis"})
 
-    def run_hook_monitoring(self):
+    def run_hook_monitoring(self) -> None:
         """Monitor API hooks in real-time."""
         self.progress_update.emit("Starting hook monitoring...")
 
@@ -265,7 +265,7 @@ setInterval(function() {
         self.wizard.inject_script(monitor_script, "api_monitor")
 
         # Set up message handler for receiving data from script
-        def on_message(message, data):
+        def on_message(message, data) -> None:
             if message["type"] == "send":
                 payload = message["payload"]
                 if payload["type"] == "api_call":
@@ -299,7 +299,7 @@ setInterval(function() {
 
         self.progress_update.emit("Hook monitoring stopped")
 
-    def stop(self):
+    def stop(self) -> None:
         """Request the thread to stop."""
         self._stop_requested = True
 
@@ -307,7 +307,7 @@ setInterval(function() {
 class FridaBypassWizardDialog(QDialog):
     """Advanced dialog for Frida Bypass Wizard with full functionality."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the FridaBypassWizardDialog with wizard and UI components."""
         super().__init__(parent)
         self.wizard = FridaBypassWizard()
@@ -315,7 +315,7 @@ class FridaBypassWizardDialog(QDialog):
         self.init_ui()
         self.load_settings()
 
-    def init_ui(self):
+    def init_ui(self) -> None:
         """Initialize the user interface."""
         self.setWindowTitle("Frida Bypass Wizard - Advanced Protection Bypass")
         self.setMinimumSize(1000, 700)
@@ -441,7 +441,7 @@ class FridaBypassWizardDialog(QDialog):
 
         self.mode_combo = QComboBox()
         self.mode_combo.addItems(
-            ["Auto-detect & Bypass", "Manual Script Injection", "Protection Analysis", "Hook Monitoring", "Custom Workflow"]
+            ["Auto-detect & Bypass", "Manual Script Injection", "Protection Analysis", "Hook Monitoring", "Custom Workflow"],
         )
         self.mode_combo.currentTextChanged.connect(self.on_mode_changed)
         mode_layout.addWidget(self.mode_combo)
@@ -679,7 +679,7 @@ class FridaBypassWizardDialog(QDialog):
 
         return tab
 
-    def create_status_bar(self, parent_layout):
+    def create_status_bar(self, parent_layout) -> None:
         """Create status bar."""
         status_layout = QHBoxLayout()
 
@@ -696,7 +696,7 @@ class FridaBypassWizardDialog(QDialog):
 
         parent_layout.addLayout(status_layout)
 
-    def create_control_buttons(self, parent_layout):
+    def create_control_buttons(self, parent_layout) -> None:
         """Create main control buttons."""
         button_layout = QHBoxLayout()
 
@@ -722,7 +722,7 @@ class FridaBypassWizardDialog(QDialog):
 
         parent_layout.addLayout(button_layout)
 
-    def refresh_process_list(self):
+    def refresh_process_list(self) -> None:
         """Refresh the list of running processes."""
         self.process_table.setRowCount(0)
 
@@ -739,7 +739,7 @@ class FridaBypassWizardDialog(QDialog):
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
 
-    def on_mode_changed(self, mode):
+    def on_mode_changed(self, mode) -> None:
         """Update description when mode changes."""
         descriptions = {
             "Auto-detect & Bypass": "Automatically detects protection mechanisms and applies appropriate bypasses",
@@ -751,7 +751,7 @@ class FridaBypassWizardDialog(QDialog):
 
         self.mode_description.setText(descriptions.get(mode, ""))
 
-    def load_script_templates(self):
+    def load_script_templates(self) -> None:
         """Load available script templates."""
         templates = [
             "Generic License Bypass",
@@ -767,7 +767,7 @@ class FridaBypassWizardDialog(QDialog):
 
         self.template_list.addItems(templates)
 
-    def on_template_selected(self, item):
+    def on_template_selected(self, item) -> None:
         """Load selected template into editor."""
         template_name = item.text()
 
@@ -787,7 +787,7 @@ class FridaBypassWizardDialog(QDialog):
         content = templates.get(template_name, "// Custom template\n")
         self.script_editor.setText(content)
 
-    def get_generic_bypass_template(self):
+    def get_generic_bypass_template(self) -> str:
         """Get generic license bypass template."""
         return """// Generic License Bypass Template
 // Hooks common license validation functions
@@ -811,7 +811,7 @@ Interceptor.attach(Module.findExportByName(null, "IsRegistered"), {
 console.log("[+] Generic license bypass active");
 """
 
-    def get_hwid_template(self):
+    def get_hwid_template(self) -> str:
         """Get hardware ID spoofing template."""
         return """// Hardware ID Spoofing Template
 // Spoofs various hardware identifiers
@@ -840,7 +840,7 @@ Interceptor.attach(Module.findExportByName("iphlpapi.dll", "GetAdaptersInfo"), {
 console.log("[+] Hardware ID spoofing active");
 """
 
-    def get_trial_reset_template(self):
+    def get_trial_reset_template(self) -> str:
         """Get trial reset template."""
         return """// Trial Reset Template
 // Resets trial period and removes time restrictions
@@ -868,7 +868,7 @@ Interceptor.attach(GetSystemTime, {
 console.log("[+] Trial reset active");
 """
 
-    def get_antidebug_template(self):
+    def get_antidebug_template(self) -> str:
         """Get anti-debugging bypass template."""
         return """// Anti-Debug Bypass Template
 // Bypasses common anti-debugging techniques
@@ -917,7 +917,7 @@ Interceptor.attach(NtQueryInformationProcess, {
 console.log("[+] Anti-debug bypass active");
 """
 
-    def get_network_license_template(self):
+    def get_network_license_template(self) -> str:
         """Get network license emulator template."""
         return """// Network License Emulator Template
 // Emulates network license server responses
@@ -975,7 +975,7 @@ Interceptor.attach(Module.findExportByName("ws2_32.dll", "recv"), {
 console.log("[+] Network license emulator active");
 """
 
-    def get_steam_api_template(self):
+    def get_steam_api_template(self) -> str:
         """Get Steam API hooks template."""
         return """// Steam API Hooks Template
 // Hooks Steam DRM and ownership checks
@@ -1023,7 +1023,7 @@ if (steamapi) {
 console.log("[+] Steam API hooks active");
 """
 
-    def get_denuvo_template(self):
+    def get_denuvo_template(self) -> str:
         """Get Denuvo trigger bypass template."""
         return """// Denuvo Trigger Bypass Template
 // Attempts to identify and bypass Denuvo triggers
@@ -1080,7 +1080,7 @@ console.log("[+] Denuvo bypass hooks active");
 console.log("[!] Note: Full Denuvo bypass requires extensive analysis");
 """
 
-    def get_vmprotect_template(self):
+    def get_vmprotect_template(self) -> str:
         """Get VMProtect analysis template."""
         return """// VMProtect Analysis Template
 // Helps analyze VMProtect protected binaries
@@ -1159,7 +1159,7 @@ Process.enumerateModules().forEach(function(module) {
 console.log("[+] VMProtect analyzer active");
 """
 
-    def get_custom_template(self):
+    def get_custom_template(self) -> str:
         """Get custom template."""
         return """// Custom Frida Script Template
 // Add your custom bypass code here
@@ -1217,7 +1217,7 @@ exports.forEach(function(exp) {
 console.log("[+] Custom script loaded");
 """
 
-    def validate_process_input(self, text):
+    def validate_process_input(self, text) -> None:
         """Validate the manually entered process input."""
         if not text:
             self.input_valid_label.setVisible(False)
@@ -1255,7 +1255,7 @@ console.log("[+] Custom script loaded");
                 self.input_valid_label.setStyleSheet("QLabel { color: red; font-weight: bold; }")
                 self.input_valid_label.setVisible(True)
 
-    def validate_script(self):
+    def validate_script(self) -> None:
         """Validate the current script."""
         script = self.script_editor.toPlainText()
 
@@ -1270,7 +1270,7 @@ console.log("[+] Custom script loaded");
 
         QMessageBox.information(self, "Validation", "Script appears valid")
 
-    def test_script(self):
+    def test_script(self) -> None:
         """Test the current script."""
         script = self.script_editor.toPlainText()
         if not script:
@@ -1305,11 +1305,11 @@ setTimeout(function() {{
 
             self.wizard.inject_script(test_wrapper, "test_script")
 
-            def on_test_message(message, data):
+            def on_test_message(message, data) -> None:
                 if message["type"] == "send" and message["payload"].get("type") == "test_complete":
                     duration = message["payload"]["duration"]
                     QMessageBox.information(
-                        self, "Test Complete", f"Script executed successfully\nDuration: {duration}ms\n\nCheck monitor output for details"
+                        self, "Test Complete", f"Script executed successfully\nDuration: {duration}ms\n\nCheck monitor output for details",
                     )
                     self.wizard.detach()
 
@@ -1319,10 +1319,10 @@ setTimeout(function() {{
             self.log_message("Test script injected - will auto-detach in 5 seconds", "blue")
 
         except Exception as e:
-            QMessageBox.critical(self, "Test Failed", f"Script test failed: {str(e)}")
-            self.log_message(f"Test failed: {str(e)}", "red")
+            QMessageBox.critical(self, "Test Failed", f"Script test failed: {e!s}")
+            self.log_message(f"Test failed: {e!s}", "red")
 
-    def inject_script(self):
+    def inject_script(self) -> None:
         """Inject the current script."""
         script = self.script_editor.toPlainText()
 
@@ -1348,9 +1348,9 @@ setTimeout(function() {{
             self.log_message("Script injected successfully", "green")
 
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to inject script: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to inject script: {e!s}")
 
-    def start_monitoring(self):
+    def start_monitoring(self) -> None:
         """Start real-time monitoring."""
         target = self.get_selected_process()
         if not target:
@@ -1363,18 +1363,18 @@ setTimeout(function() {{
         # Start monitoring in worker thread
         self.log_message("Starting API monitoring...", "blue")
 
-    def stop_monitoring(self):
+    def stop_monitoring(self) -> None:
         """Stop real-time monitoring."""
         self.monitor_start_btn.setEnabled(True)
         self.monitor_stop_btn.setEnabled(False)
 
         self.log_message("Monitoring stopped", "orange")
 
-    def clear_monitor(self):
+    def clear_monitor(self) -> None:
         """Clear monitor output."""
         self.monitor_output.clear()
 
-    def apply_monitor_filter(self, filter_text):
+    def apply_monitor_filter(self, filter_text) -> None:
         """Apply filter to monitor output."""
         if not filter_text:
             # Show all content
@@ -1396,7 +1396,7 @@ setTimeout(function() {{
         for line in filtered_lines:
             self.monitor_output.append(line)
 
-    def start_bypass(self):
+    def start_bypass(self) -> None:
         """Start the bypass operation."""
         target = self.get_selected_process()
         if not target:
@@ -1423,7 +1423,7 @@ setTimeout(function() {{
 
         self.log_message(f"Starting bypass operation in {mode} mode", "blue")
 
-    def stop_bypass(self):
+    def stop_bypass(self) -> None:
         """Stop the bypass operation."""
         if self.worker_thread and self.worker_thread.isRunning():
             self.worker_thread.stop()
@@ -1462,17 +1462,17 @@ setTimeout(function() {{
             "persistent": self.persistent_check.isChecked(),
         }
 
-    def on_progress_update(self, message):
+    def on_progress_update(self, message) -> None:
         """Handle progress updates from worker thread."""
         self.log_message(message)
         self.monitor_output.append(message)
 
-    def on_status_update(self, status, color):
+    def on_status_update(self, status, color) -> None:
         """Handle status updates from worker thread."""
         self.status_label.setText(status)
         self.status_label.setStyleSheet(f"QLabel {{ padding: 5px; color: {color}; }}")
 
-    def on_bypass_complete(self, results):
+    def on_bypass_complete(self, results) -> None:
         """Handle bypass completion."""
         self.start_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
@@ -1491,7 +1491,7 @@ setTimeout(function() {{
 
         self.log_message("Bypass operation completed successfully", "green")
 
-    def on_error(self, error_msg):
+    def on_error(self, error_msg) -> None:
         """Handle errors from worker thread."""
         self.start_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
@@ -1500,7 +1500,7 @@ setTimeout(function() {{
         QMessageBox.critical(self, "Bypass Error", error_msg)
         self.log_message(f"Error: {error_msg}", "red")
 
-    def log_message(self, message, color="black"):
+    def log_message(self, message, color="black") -> None:
         """Add message to log output."""
         timestamp = datetime.now().strftime("%H:%M:%S")
         formatted_msg = f"[{timestamp}] {message}"
@@ -1515,7 +1515,7 @@ setTimeout(function() {{
         cursor.insertText(formatted_msg + "\n")
         self.log_output.setTextCursor(cursor)
 
-    def save_configuration(self):
+    def save_configuration(self) -> None:
         """Save current configuration to file."""
         config = {
             "mode": self.mode_combo.currentText(),
@@ -1532,12 +1532,12 @@ setTimeout(function() {{
 
             QMessageBox.information(self, "Success", "Configuration saved successfully")
 
-    def load_configuration(self):
+    def load_configuration(self) -> None:
         """Load configuration from file."""
         file_path, _ = QFileDialog.getOpenFileName(self, "Load Configuration", "", "JSON Files (*.json)")
 
         if file_path:
-            with open(file_path, "r") as f:
+            with open(file_path) as f:
                 config = json.load(f)
 
             # Apply configuration
@@ -1551,10 +1551,10 @@ setTimeout(function() {{
 
             QMessageBox.information(self, "Success", "Configuration loaded successfully")
 
-    def export_logs(self):
+    def export_logs(self) -> None:
         """Export logs to file."""
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Export Logs", f"frida_bypass_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log", "Log Files (*.log);;Text Files (*.txt)"
+            self, "Export Logs", f"frida_bypass_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log", "Log Files (*.log);;Text Files (*.txt)",
         )
 
         if file_path:
@@ -1563,7 +1563,7 @@ setTimeout(function() {{
 
             QMessageBox.information(self, "Success", "Logs exported successfully")
 
-    def load_settings(self):
+    def load_settings(self) -> None:
         """Load saved settings."""
         import json
 
@@ -1571,7 +1571,7 @@ setTimeout(function() {{
 
         if os.path.exists(settings_file):
             try:
-                with open(settings_file, "r") as f:
+                with open(settings_file) as f:
                     settings = json.load(f)
 
                 # Apply loaded settings
@@ -1607,9 +1607,9 @@ setTimeout(function() {{
                     self.hook_delay_spin.setValue(settings["hook_delay"])
 
             except Exception as e:
-                self.log_message(f"Failed to load settings: {str(e)}", "orange")
+                self.log_message(f"Failed to load settings: {e!s}", "orange")
 
-    def closeEvent(self, event):
+    def closeEvent(self, event) -> None:
         """Handle dialog close."""
         if self.worker_thread and self.worker_thread.isRunning():
             reply = QMessageBox.question(

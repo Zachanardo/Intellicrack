@@ -22,7 +22,7 @@ import logging
 from collections import defaultdict
 
 try:
-    import capstone  # noqa: F401
+    import capstone
     CAPSTONE_AVAILABLE = True
 except ImportError:
     CAPSTONE_AVAILABLE = False
@@ -37,7 +37,7 @@ class OpaquePredicateDetector:
     skip redundant path exploration.
     """
 
-    def __init__(self, confidence_threshold: float = 0.95):
+    def __init__(self, confidence_threshold: float = 0.95) -> None:
         """Initialize opaque predicate detection system.
 
         Args:
@@ -78,17 +78,17 @@ class OpaquePredicateDetector:
                     "condition": condition,
                     "type": "always_true",
                     "confidence": taken_ratio,
-                    "samples": total_count
+                    "samples": total_count,
                 }
                 self.logger.info(
                     f"Opaque predicate detected at 0x{address:x}: always TRUE "
-                    f"(confidence: {taken_ratio:.2%}, samples: {total_count})"
+                    f"(confidence: {taken_ratio:.2%}, samples: {total_count})",
                 )
                 return {
                     "opaque": True,
                     "always_true": True,
                     "always_false": False,
-                    "skip_false_path": True
+                    "skip_false_path": True,
                 }
 
             elif taken_ratio <= (1 - self.confidence_threshold):
@@ -97,17 +97,17 @@ class OpaquePredicateDetector:
                     "condition": condition,
                     "type": "always_false",
                     "confidence": 1 - taken_ratio,
-                    "samples": total_count
+                    "samples": total_count,
                 }
                 self.logger.info(
                     f"Opaque predicate detected at 0x{address:x}: always FALSE "
-                    f"(confidence: {1-taken_ratio:.2%}, samples: {total_count})"
+                    f"(confidence: {1-taken_ratio:.2%}, samples: {total_count})",
                 )
                 return {
                     "opaque": True,
                     "always_true": False,
                     "always_false": True,
-                    "skip_true_path": True
+                    "skip_true_path": True,
                 }
 
         return {"opaque": False}
@@ -142,7 +142,7 @@ class OpaquePredicateDetector:
             "total_detected": len(self.detected_predicates),
             "always_true_count": always_true,
             "always_false_count": always_false,
-            "predicates": list(self.detected_predicates.values())
+            "predicates": list(self.detected_predicates.values()),
         }
 
     def get_detected_opaques(self) -> dict:
@@ -154,7 +154,7 @@ class OpaquePredicateDetector:
         """
         return self.detected_predicates.copy()
 
-    def clear_detected_opaques(self):
+    def clear_detected_opaques(self) -> None:
         """Clear all detected opaque predicates."""
         self.detected_predicates.clear()
         self.detected_opaques.clear()
@@ -169,7 +169,7 @@ class ControlFlowFlatteningHandler:
     dispatcher pattern and reconstructs the original control flow.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize control flow flattening detection system."""
         self.logger = logging.getLogger(__name__)
         self.dispatcher_candidates = {}
@@ -222,7 +222,7 @@ class ControlFlowFlatteningHandler:
             self.dispatcher_candidates[address] = {
                 "score": switch_pattern_score,
                 "instruction_count": len(instructions),
-                "detected_at": address
+                "detected_at": address,
             }
 
             if switch_pattern_score >= 8 and len(instructions) < 20:
@@ -233,17 +233,17 @@ class ControlFlowFlatteningHandler:
                 self.dispatcher_address = address
                 self.logger.info(
                     f"Control flow flattening dispatcher detected at 0x{address:x} "
-                    f"(score: {switch_pattern_score})"
+                    f"(score: {switch_pattern_score})",
                 )
                 return {
                     "is_dispatcher": True,
                     "dispatcher_address": address,
-                    "priority": "high"
+                    "priority": "high",
                 }
 
         return {"is_dispatcher": False}
 
-    def record_state_transition(self, from_state: int, to_state: int):
+    def record_state_transition(self, from_state: int, to_state: int) -> None:
         """Record a state transition in the flattened control flow.
 
         Args:
@@ -267,7 +267,7 @@ class ControlFlowFlatteningHandler:
                 state: list(targets)
                 for state, targets in self.state_transitions.items()
             },
-            "is_flattened": self.dispatcher_detected
+            "is_flattened": self.dispatcher_detected,
         }
 
     def get_dispatcher_blocks(self) -> set:
@@ -288,7 +288,7 @@ class VirtualizationDetector:
     and bytecode interpretation patterns.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize virtualization detection system."""
         self.logger = logging.getLogger(__name__)
         self.vm_candidates = []
@@ -316,7 +316,7 @@ class VirtualizationDetector:
             "fetch": 0,
             "decode": 0,
             "dispatch": 0,
-            "context_switch": 0
+            "context_switch": 0,
         }
 
         for insn in loop_body:
@@ -360,24 +360,24 @@ class VirtualizationDetector:
                 "address": loop_address,
                 "score": total_score,
                 "indicators": vm_indicators.copy(),
-                "instruction_count": len(loop_body)
+                "instruction_count": len(loop_body),
             })
 
             self.logger.info(
                 f"VM dispatch loop detected at 0x{loop_address:x} "
-                f"(score: {total_score}, indicators: {vm_indicators})"
+                f"(score: {total_score}, indicators: {vm_indicators})",
             )
 
             return {
                 "is_vm": True,
                 "dispatch_loop": loop_address,
                 "confidence": min(total_score / 20, 1.0),
-                "indicators": vm_indicators
+                "indicators": vm_indicators,
             }
 
         return {"is_vm": False, "score": total_score}
 
-    def identify_bytecode_handler(self, address: int, handler_type: str):
+    def identify_bytecode_handler(self, address: int, handler_type: str) -> None:
         """Register a bytecode handler function.
 
         Args:
@@ -388,7 +388,7 @@ class VirtualizationDetector:
         self.bytecode_handlers[address] = handler_type
         self.logger.debug(f"Bytecode handler registered: 0x{address:x} -> {handler_type}")
 
-    def analyze_handler(self, address: int, handler_code: list):
+    def analyze_handler(self, address: int, handler_code: list) -> None:
         """Analyze a potential bytecode handler.
 
         Args:
@@ -413,7 +413,7 @@ class VirtualizationDetector:
             "dispatch_loop": self.dispatch_loop,
             "handler_count": len(self.bytecode_handlers),
             "handlers": self.bytecode_handlers.copy(),
-            "vm_detected": self.dispatch_loop is not None
+            "vm_detected": self.dispatch_loop is not None,
         }
 
 
@@ -424,7 +424,7 @@ class StringDeobfuscation:
     This class detects string decryption routines and recovers plaintext strings.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize string deobfuscation system."""
         self.logger = logging.getLogger(__name__)
         self.decryption_routines = {}
@@ -466,7 +466,7 @@ class StringDeobfuscation:
             self.decryption_routines[address] = {
                 "type": "xor_loop",
                 "xor_count": xor_operations,
-                "has_loop": loop_detected
+                "has_loop": loop_detected,
             }
 
             self.logger.info(f"String decryption routine detected at 0x{address:x} (XOR-based)")
@@ -474,7 +474,7 @@ class StringDeobfuscation:
             return {
                 "is_decryptor": True,
                 "type": "xor_loop",
-                "address": address
+                "address": address,
             }
 
         return {"is_decryptor": False}
@@ -537,13 +537,13 @@ class StringDeobfuscation:
         """
         self.decryption_routines[address] = {
             "encryption_type": "xor",
-            "key": key
+            "key": key,
         }
 
         return {
             "encryption_type": "xor",
             "key": key,
-            "address": address
+            "address": address,
         }
 
 
@@ -555,7 +555,7 @@ class ObfuscationAwareConcolicEngine:
     control flow flattening recovery, and VM-based obfuscation handling.
     """
 
-    def __init__(self, base_engine):
+    def __init__(self, base_engine) -> None:
         """Initialize obfuscation-aware enhancements.
 
         Args:
@@ -576,7 +576,7 @@ class ObfuscationAwareConcolicEngine:
             "vm_handlers_identified": 0,
             "strings_decrypted": 0,
             "paths_pruned": 0,
-            "execution_speedup": 0.0
+            "execution_speedup": 0.0,
         }
 
         self.logger.info("Obfuscation-aware concolic engine initialized")
@@ -658,7 +658,7 @@ class ObfuscationAwareConcolicEngine:
         results = {
             "address": address,
             "obfuscation_detected": False,
-            "techniques": []
+            "techniques": [],
         }
 
         cff_analysis = self.cff_handler.analyze_block(address, instructions)
@@ -699,29 +699,29 @@ class ObfuscationAwareConcolicEngine:
                 "prioritize_state_changes": True,
                 "track_state_variable": True,
                 "max_dispatcher_iterations": 100,
-                "reconstruct_cfg": True
+                "reconstruct_cfg": True,
             },
             "virtualization": {
                 "identify_handlers": True,
                 "trace_bytecode": True,
                 "build_instruction_mapping": True,
-                "max_vm_iterations": 1000
+                "max_vm_iterations": 1000,
             },
             "string_encryption": {
                 "hook_decryption": True,
                 "collect_keys": True,
-                "decrypt_on_access": True
+                "decrypt_on_access": True,
             },
             "opaque_predicates": {
                 "prune_dead_paths": True,
                 "track_branch_outcomes": True,
-                "confidence_threshold": 0.95
-            }
+                "confidence_threshold": 0.95,
+            },
         }
 
         return strategies.get(obfuscation_type, {
             "default": True,
-            "conservative_exploration": True
+            "conservative_exploration": True,
         })
 
     def get_obfuscation_report(self) -> dict:
@@ -740,7 +740,7 @@ class ObfuscationAwareConcolicEngine:
                 "opaque_predicates": opaque_stats["total_detected"],
                 "control_flow_flattening": cff_graph["is_flattened"],
                 "virtualization": vm_context["vm_detected"],
-                "strings_decrypted": len(self.string_deobf.get_decrypted_strings())
+                "strings_decrypted": len(self.string_deobf.get_decrypted_strings()),
             },
             "details": {
                 "statistics": self.obfuscation_stats.copy(),
@@ -749,8 +749,8 @@ class ObfuscationAwareConcolicEngine:
                 "virtualization": vm_context,
                 "decrypted_strings": self.string_deobf.get_decrypted_strings(),
                 "paths_pruned": self.obfuscation_stats["paths_pruned"],
-                "execution_improvement": f"{self.obfuscation_stats['paths_pruned']} paths avoided"
-            }
+                "execution_improvement": f"{self.obfuscation_stats['paths_pruned']} paths avoided",
+            },
         }
 
     def is_dispatcher_block(self, address: int) -> bool:
@@ -794,10 +794,10 @@ class ObfuscationAwareConcolicEngine:
             "opaque_predicates": self.opaque_detector.get_detected_opaques(),
             "control_flow_flattening": self.cff_handler.dispatcher_detected,
             "virtualization": self.vm_detector.vm_detected,
-            "encrypted_strings": len(self.string_deobf.decryption_routines)
+            "encrypted_strings": len(self.string_deobf.decryption_routines),
         }
 
-    def clear_analysis_data(self):
+    def clear_analysis_data(self) -> None:
         """Clear all analysis data."""
         self.opaque_detector.clear_detected_opaques()
         self.cff_handler.dispatcher_blocks.clear()
@@ -828,5 +828,5 @@ __all__ = [
     "VirtualizationDetector",
     "StringDeobfuscation",
     "ObfuscationAwareConcolicEngine",
-    "create_obfuscation_aware_engine"
+    "create_obfuscation_aware_engine",
 ]

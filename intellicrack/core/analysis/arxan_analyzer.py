@@ -212,7 +212,7 @@ class ArxanAnalyzer:
         ],
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize ArxanAnalyzer with disassemblers and pattern matchers."""
         self.logger = logging.getLogger(__name__)
 
@@ -686,7 +686,7 @@ class ArxanAnalyzer:
         return tables
 
 
-def main():
+def main() -> None:
     """Test entry point for Arxan analyzer."""
     import argparse
     import json

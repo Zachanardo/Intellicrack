@@ -45,13 +45,13 @@ class FileMetadataWidget(QWidget):
     # Signal emitted when a file is analyzed
     file_analyzed = pyqtSignal(str, dict)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the file metadata widget."""
         super().__init__(parent)
         self.current_file = None
         self.init_ui()
 
-    def init_ui(self):
+    def init_ui(self) -> None:
         """Initialize the user interface."""
         layout = QVBoxLayout()
 
@@ -281,12 +281,12 @@ class FileMetadataWidget(QWidget):
 
         return metadata
 
-    def refresh_metadata(self):
+    def refresh_metadata(self) -> None:
         """Refresh the metadata for the current file."""
         if self.current_file:
             self.analyze_file(self.current_file)
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear all metadata displays."""
         self.current_file = None
         self.refresh_button.setEnabled(False)
@@ -324,7 +324,7 @@ class FileMetadataWidget(QWidget):
 class FileTimestampTracker:
     """Helper class for tracking file timestamps and changes."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the timestamp tracker."""
         self.tracked_files = {}
 
@@ -410,7 +410,7 @@ class FileTimestampTracker:
 
         return self.tracked_files[file_path]
 
-    def stop_tracking(self, file_path: str):
+    def stop_tracking(self, file_path: str) -> None:
         """Stop tracking a file.
 
         Args:
@@ -420,6 +420,6 @@ class FileTimestampTracker:
         if file_path in self.tracked_files:
             del self.tracked_files[file_path]
 
-    def clear_all(self):
+    def clear_all(self) -> None:
         """Stop tracking all files."""
         self.tracked_files.clear()

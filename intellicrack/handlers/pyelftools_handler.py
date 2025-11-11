@@ -214,7 +214,7 @@ except ImportError as e:
     class Container(dict):
         """Container for parsed structures."""
 
-        def __init__(self, **kwargs):
+        def __init__(self, **kwargs) -> None:
             """Initialize container with keyword arguments as both dict entries and attributes."""
             super().__init__(**kwargs)
             self.__dict__.update(kwargs)
@@ -222,7 +222,7 @@ except ImportError as e:
     class Struct:
         """Structure parser."""
 
-        def __init__(self, name, *fields):
+        def __init__(self, name, *fields) -> None:
             """Initialize structure parser with name and field definitions."""
             self.name = name
             self.fields = fields
@@ -231,7 +231,7 @@ except ImportError as e:
     class FallbackELFFile:
         """Functional ELF file parser implementation."""
 
-        def __init__(self, stream):
+        def __init__(self, stream) -> None:
             """Initialize ELF file parser."""
             self.stream = stream
             self.little_endian = True
@@ -246,7 +246,7 @@ except ImportError as e:
             self._parse_program_headers()
             self._parse_section_headers()
 
-        def _parse_elf_header(self):
+        def _parse_elf_header(self) -> None:
             """Parse ELF header."""
             self.stream.seek(0)
 
@@ -337,7 +337,7 @@ except ImportError as e:
                 e_shstrndx=e_shstrndx,
             )
 
-        def _parse_program_headers(self):
+        def _parse_program_headers(self) -> None:
             """Parse program headers."""
             if not self.header or self.header.e_phoff == 0:
                 return
@@ -377,7 +377,7 @@ except ImportError as e:
                 segment = FallbackSegment(ph, self.stream)
                 self._segments.append(segment)
 
-        def _parse_section_headers(self):
+        def _parse_section_headers(self) -> None:
             """Parse section headers."""
             if not self.header or self.header.e_shoff == 0:
                 return
@@ -393,7 +393,7 @@ except ImportError as e:
                         break
 
                     (sh_name, sh_type, sh_flags, sh_addr, sh_offset, sh_size, sh_link, sh_info, sh_addralign, sh_entsize) = struct.unpack(
-                        f"{endian}IIIIIIIIII", sh_data
+                        f"{endian}IIIIIIIIII", sh_data,
                     )
                 else:
                     # 64-bit section header
@@ -402,7 +402,7 @@ except ImportError as e:
                         break
 
                     (sh_name, sh_type, sh_flags, sh_addr, sh_offset, sh_size, sh_link, sh_info, sh_addralign, sh_entsize) = struct.unpack(
-                        f"{endian}IIQQQQIIQQ", sh_data
+                        f"{endian}IIQQQQIIQQ", sh_data,
                     )
 
                 sh = Container(
@@ -431,9 +431,9 @@ except ImportError as e:
 
                 if sh.sh_type == ENUM_SH_TYPE.SHT_STRTAB:
                     section = FallbackStringTableSection(sh, name, self.stream)
-                elif sh.sh_type == ENUM_SH_TYPE.SHT_SYMTAB or sh.sh_type == ENUM_SH_TYPE.SHT_DYNSYM:
+                elif sh.sh_type in (ENUM_SH_TYPE.SHT_SYMTAB, ENUM_SH_TYPE.SHT_DYNSYM):
                     section = FallbackSymbolTableSection(sh, name, self.stream, self)
-                elif sh.sh_type == ENUM_SH_TYPE.SHT_REL or sh.sh_type == ENUM_SH_TYPE.SHT_RELA:
+                elif sh.sh_type in (ENUM_SH_TYPE.SHT_REL, ENUM_SH_TYPE.SHT_RELA):
                     section = FallbackRelocationSection(sh, name, self.stream, self)
                 elif sh.sh_type == ENUM_SH_TYPE.SHT_DYNAMIC:
                     section = FallbackDynamicSection(sh, name, self.stream, self)
@@ -490,7 +490,7 @@ except ImportError as e:
             """Iterate over segments."""
             return iter(self._segments)
 
-        def has_dwarf_info(self):
+        def has_dwarf_info(self) -> bool:
             """Check if file has DWARF debug info."""
             for section in self._sections:
                 if section.name.startswith(".debug_"):
@@ -514,7 +514,7 @@ except ImportError as e:
     class FallbackSection:
         """Functional ELF section implementation."""
 
-        def __init__(self, header, name, stream):
+        def __init__(self, header, name, stream) -> None:
             """Initialize section."""
             self.header = header
             self.name = name
@@ -560,7 +560,7 @@ except ImportError as e:
     class FallbackSymbol:
         """Symbol representation."""
 
-        def __init__(self, st_name, st_value, st_size, st_info, st_other, st_shndx, name=""):
+        def __init__(self, st_name, st_value, st_size, st_info, st_other, st_shndx, name="") -> None:
             """Initialize symbol."""
             self.st_name = st_name
             self.st_value = st_value
@@ -589,14 +589,14 @@ except ImportError as e:
     class FallbackSymbolTableSection(FallbackSection):
         """Symbol table section."""
 
-        def __init__(self, header, name, stream, elffile):
+        def __init__(self, header, name, stream, elffile) -> None:
             """Initialize symbol table."""
             super().__init__(header, name, stream)
             self.elffile = elffile
             self._symbols = []
             self._parse_symbols()
 
-        def _parse_symbols(self):
+        def _parse_symbols(self) -> None:
             """Parse symbol table."""
             data = self.data()
             if not data:
@@ -622,11 +622,11 @@ except ImportError as e:
             while offset + entry_size <= len(data):
                 if self.elffile.elfclass == 32:
                     (st_name, st_value, st_size, st_info, st_other, st_shndx) = struct.unpack(
-                        entry_format, data[offset : offset + entry_size]
+                        entry_format, data[offset : offset + entry_size],
                     )
                 else:
                     (st_name, st_info, st_other, st_shndx, st_value, st_size) = struct.unpack(
-                        entry_format, data[offset : offset + entry_size]
+                        entry_format, data[offset : offset + entry_size],
                     )
 
                 # Get symbol name
@@ -655,7 +655,7 @@ except ImportError as e:
     class FallbackRelocation:
         """Relocation entry."""
 
-        def __init__(self, r_offset, r_info, r_addend=0):
+        def __init__(self, r_offset, r_info, r_addend=0) -> None:
             """Initialize relocation."""
             self.r_offset = r_offset
             self.r_info = r_info
@@ -677,14 +677,14 @@ except ImportError as e:
     class FallbackRelocationSection(FallbackSection):
         """Relocation section."""
 
-        def __init__(self, header, name, stream, elffile):
+        def __init__(self, header, name, stream, elffile) -> None:
             """Initialize relocation section."""
             super().__init__(header, name, stream)
             self.elffile = elffile
             self._relocations = []
             self._parse_relocations()
 
-        def _parse_relocations(self):
+        def _parse_relocations(self) -> None:
             """Parse relocations."""
             data = self.data()
             if not data:
@@ -731,7 +731,7 @@ except ImportError as e:
     class FallbackDynamic:
         """Dynamic entry."""
 
-        def __init__(self, d_tag, d_val):
+        def __init__(self, d_tag, d_val) -> None:
             """Initialize dynamic entry."""
             self.d_tag = d_tag
             self.d_val = d_val
@@ -744,14 +744,14 @@ except ImportError as e:
     class FallbackDynamicSection(FallbackSection):
         """Dynamic section."""
 
-        def __init__(self, header, name, stream, elffile):
+        def __init__(self, header, name, stream, elffile) -> None:
             """Initialize dynamic section."""
             super().__init__(header, name, stream)
             self.elffile = elffile
             self._dynamics = []
             self._parse_dynamics()
 
-        def _parse_dynamics(self):
+        def _parse_dynamics(self) -> None:
             """Parse dynamic entries."""
             data = self.data()
             if not data:
@@ -825,7 +825,7 @@ except ImportError as e:
     class FallbackSegment:
         """Functional ELF segment implementation."""
 
-        def __init__(self, header, stream):
+        def __init__(self, header, stream) -> None:
             """Initialize segment."""
             self.header = header
             self.stream = stream
@@ -923,7 +923,7 @@ except ImportError as e:
     class FallbackDWARFInfo:
         """Basic DWARF info fallback."""
 
-        def __init__(self, elffile):
+        def __init__(self, elffile) -> None:
             """Initialize DWARF info."""
             self.elffile = elffile
 
@@ -931,21 +931,21 @@ except ImportError as e:
             """Iterate over compilation units (empty for fallback)."""
             return iter([])
 
-        def get_DIE_from_refaddr(self, refaddr):
+        def get_DIE_from_refaddr(self, refaddr) -> None:
             """Get DIE from reference address."""
-            return None
+            return
 
     class FallbackDIE:
         """Debug Information Entry."""
 
-        def __init__(self, tag, attributes=None):
+        def __init__(self, tag, attributes=None) -> None:
             """Initialize DIE."""
             self.tag = tag
             self.attributes = attributes or {}
 
-        def get_parent(self):
+        def get_parent(self) -> None:
             """Get parent DIE."""
-            return None
+            return
 
         def iter_children(self):
             """Iterate over children."""

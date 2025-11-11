@@ -275,7 +275,7 @@ class ONNXBackend(ModelBackend):
                         "name": _input_meta.name,
                         "shape": _input_meta.shape,
                         "type": _input_meta.type,
-                    }
+                    },
                 )
 
             for _output_meta in model.get_outputs():
@@ -284,7 +284,7 @@ class ONNXBackend(ModelBackend):
                         "name": _output_meta.name,
                         "shape": _output_meta.shape,
                         "type": _output_meta.type,
-                    }
+                    },
                 )
         except (AttributeError, RuntimeError) as e:
             logger.debug("Failed to get ONNX model input/output info: %s", e)
@@ -340,7 +340,7 @@ class SklearnBackend(ModelBackend):
 class ModelCache:
     """Model caching system for efficient model management."""
 
-    def __init__(self, cache_dir: str = None, max_cache_size: int = 5):
+    def __init__(self, cache_dir: str = None, max_cache_size: int = 5) -> None:
         """Initialize the model cache system.
 
         Args:
@@ -381,7 +381,7 @@ class ModelCache:
 
             return None
 
-    def put(self, model_path: str, model: Any):
+    def put(self, model_path: str, model: Any) -> None:
         """Put model in cache."""
         with self.lock:
             cache_key = self._get_cache_key(model_path)
@@ -394,7 +394,7 @@ class ModelCache:
             self.access_times[cache_key] = time.time()
             logger.debug("Model cached for %s", model_path)
 
-    def _evict_oldest(self):
+    def _evict_oldest(self) -> None:
         """Evict the oldest accessed model from cache."""
         if not self.access_times:
             return
@@ -404,7 +404,7 @@ class ModelCache:
         del self.access_times[oldest_key]
         logger.debug("Evicted model from cache: %s", oldest_key)
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear the cache."""
         with self.lock:
             self.cache.clear()
@@ -425,7 +425,7 @@ class ModelCache:
 class ModelManager:
     """Comprehensive AI model manager for Intellicrack."""
 
-    def __init__(self, models_dir: str = None, cache_size: int = 5):
+    def __init__(self, models_dir: str = None, cache_size: int = 5) -> None:
         """Initialize the AI model manager.
 
         Args:
@@ -477,7 +477,7 @@ class ModelManager:
 
         return backends
 
-    def _load_model_metadata(self):
+    def _load_model_metadata(self) -> None:
         """Load model metadata from disk."""
         metadata_file = os.path.join(self.models_dir, "model_metadata.json")
 
@@ -489,7 +489,7 @@ class ModelManager:
                 logger.warning("Failed to load model metadata: %s", e)
                 self.model_metadata = {}
 
-    def _save_model_metadata(self):
+    def _save_model_metadata(self) -> None:
         """Save model metadata to disk."""
         metadata_file = os.path.join(self.models_dir, "model_metadata.json")
 
@@ -525,7 +525,7 @@ class ModelManager:
         model_path: str,
         model_type: str = None,
         metadata: dict[str, Any] = None,
-    ):
+    ) -> None:
         """Register a model with the manager."""
         with self.lock:
             if not os.path.exists(model_path):
@@ -630,7 +630,7 @@ class ModelManager:
             class VulnerabilityDetector(nn.Module):
                 """Neural network for detecting vulnerabilities in binary code patterns."""
 
-                def __init__(self, input_size=1024, hidden_size=512, num_classes=10):
+                def __init__(self, input_size=1024, hidden_size=512, num_classes=10) -> None:
                     super().__init__()
                     self.fc1 = nn.Linear(input_size, hidden_size)
                     self.relu1 = nn.ReLU()
@@ -718,7 +718,7 @@ class ModelManager:
             class ProtectionClassifier(nn.Module):
                 """Classifies protection mechanisms in binaries."""
 
-                def __init__(self, input_size=512, num_classes=15):
+                def __init__(self, input_size=512, num_classes=15) -> None:
                     super().__init__()
                     self.conv1 = nn.Conv1d(1, 32, kernel_size=3, padding=1)
                     self.conv2 = nn.Conv1d(32, 64, kernel_size=3, padding=1)
@@ -775,7 +775,7 @@ class ModelManager:
         class SimpleProtectionClassifier:
             """Perform rule-based protection classifier."""
 
-            def __init__(self):
+            def __init__(self) -> None:
                 self.protection_patterns = {
                     "anti_debug": [b"IsDebuggerPresent", b"CheckRemoteDebuggerPresent"],
                     "anti_vm": [b"VMware", b"VirtualBox", b"QEMU"],
@@ -797,13 +797,13 @@ class ModelManager:
     def _create_script_generator_model(self) -> Any:
         """Create a model to assist in script generation."""
         if HAS_TORCH:
-            import torch  # noqa: F401
+            import torch
             import torch.nn as nn
 
             class ScriptGeneratorModel(nn.Module):
                 """LSTM-based model for generating exploitation scripts."""
 
-                def __init__(self, vocab_size=10000, embedding_dim=256, hidden_dim=512):
+                def __init__(self, vocab_size=10000, embedding_dim=256, hidden_dim=512) -> None:
                     super().__init__()
                     self.embedding = nn.Embedding(vocab_size, embedding_dim)
                     self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers=2, batch_first=True, dropout=0.2)
@@ -857,7 +857,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
 
         # Fallback template-based generator
         class TemplateScriptGenerator:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.templates = {
                     "license": "Interceptor.replace(ptr({addr}), new NativeCallback(() => 1, 'int', []));",
                     "anti_debug": "Interceptor.attach(Module.findExportByName(null, 'IsDebuggerPresent'), {onLeave: (r) => r.replace(0)});",
@@ -878,7 +878,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
             class BinaryAnalyzerModel(nn.Module):
                 """Comprehensive binary analysis using CNN + attention."""
 
-                def __init__(self, input_channels=1, num_features=128):
+                def __init__(self, input_channels=1, num_features=128) -> None:
                     super().__init__()
                     # Convolutional layers for pattern extraction
                     self.conv1 = nn.Conv2d(input_channels, 32, kernel_size=3, padding=1)
@@ -1168,7 +1168,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
                         "confidence": confidence,
                         "severity": self._calculate_severity("buffer_overflow", confidence),
                         "cve_similar": self._find_similar_cves("buffer_overflow"),
-                    }
+                    },
                 )
 
             # Format string detection - look for format string functions without proper validation
@@ -1182,7 +1182,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
                         "confidence": confidence,
                         "severity": self._calculate_severity("format_string", confidence),
                         "cve_similar": self._find_similar_cves("format_string"),
-                    }
+                    },
                 )
 
             # Integer overflow detection - look for arithmetic operations without bounds checking
@@ -1198,7 +1198,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
                             "confidence": confidence,
                             "severity": self._calculate_severity("integer_overflow", confidence),
                             "cve_similar": self._find_similar_cves("integer_overflow"),
-                        }
+                        },
                     )
 
             # Use-after-free detection - look for free() followed by dereference patterns
@@ -1214,7 +1214,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
                             "confidence": confidence,
                             "severity": self._calculate_severity("use_after_free", confidence),
                             "cve_similar": self._find_similar_cves("use_after_free"),
-                        }
+                        },
                     )
 
             # Null dereference detection - check for pointer operations without validation
@@ -1226,7 +1226,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
                         "confidence": confidence,
                         "severity": self._calculate_severity("null_dereference", confidence),
                         "cve_similar": self._find_similar_cves("null_dereference"),
-                    }
+                    },
                 )
 
             # Race condition detection - look for threading/locking issues
@@ -1243,7 +1243,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
                             "confidence": confidence,
                             "severity": self._calculate_severity("race_condition", confidence),
                             "cve_similar": self._find_similar_cves("race_condition"),
-                        }
+                        },
                     )
 
         # Calculate overall security score
@@ -1557,7 +1557,7 @@ Interceptor.attach(IsDebuggerPresent, {
                     "size": 0x1000,
                     "entropy": self._calculate_entropy(binary_data[0x1000:0x2000]),
                     "executable": True,
-                }
+                },
             )
             sections.append(
                 {
@@ -1565,7 +1565,7 @@ Interceptor.attach(IsDebuggerPresent, {
                     "size": 0x500,
                     "entropy": self._calculate_entropy(binary_data[0x2000:0x2500]),
                     "executable": False,
-                }
+                },
             )
 
         return sections
@@ -1626,7 +1626,7 @@ Interceptor.attach(IsDebuggerPresent, {
                 "Map imported functions",
                 "Identify key algorithms",
                 "Trace execution flow",
-            ]
+            ],
         )
 
         return steps
@@ -1686,14 +1686,14 @@ Interceptor.attach(IsDebuggerPresent, {
         """List all registered models."""
         return list(self.model_metadata.keys())
 
-    def unload_model(self, model_id: str):
+    def unload_model(self, model_id: str) -> None:
         """Unload a model from memory."""
         with self.lock:
             if model_id in self.loaded_models:
                 del self.loaded_models[model_id]
                 logger.info("Unloaded model: %s", model_id)
 
-    def unregister_model(self, model_id: str):
+    def unregister_model(self, model_id: str) -> None:
         """Unregister a model."""
         with self.lock:
             if model_id in self.model_metadata:
@@ -1709,7 +1709,7 @@ Interceptor.attach(IsDebuggerPresent, {
         """Get list of available backends."""
         return list(self.backends.keys())
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear the model cache."""
         self.cache.clear()
 
@@ -1976,7 +1976,7 @@ Interceptor.attach(IsDebuggerPresent, {
                     class SimpleNN(nn.Module):
                         """Perform neural network for basic classification tasks."""
 
-                        def __init__(self, input_size, num_classes):
+                        def __init__(self, input_size, num_classes) -> None:
                             """Initialize simple neural network with specified input size and number of classes.
 
                             Args:
@@ -1984,7 +1984,7 @@ Interceptor.attach(IsDebuggerPresent, {
                                 num_classes: Number of output classes
 
                             """
-                            super(SimpleNN, self).__init__()
+                            super().__init__()
                             self.fc1 = nn.Linear(input_size, 128)
                             self.fc2 = nn.Linear(128, 64)
                             self.fc3 = nn.Linear(64, num_classes)
@@ -2054,7 +2054,7 @@ Interceptor.attach(IsDebuggerPresent, {
                             f"Epoch [{epoch + 1}/{num_epochs}], "
                             f"Train Loss: {train_loss / len(train_loader):.4f}, "
                             f"Train Acc: {train_acc:.2f}%, "
-                            f"Val Acc: {val_acc:.2f}%"
+                            f"Val Acc: {val_acc:.2f}%",
                         )
 
                         best_val_acc = max(best_val_acc, val_acc)
@@ -2138,7 +2138,7 @@ Interceptor.attach(IsDebuggerPresent, {
                                 num_classes if num_classes > 2 else 1,
                                 activation="softmax" if num_classes > 2 else "sigmoid",
                             ),
-                        ]
+                        ],
                     )
 
                     # Compile model
@@ -2291,7 +2291,7 @@ Interceptor.attach(IsDebuggerPresent, {
         return self.get_available_repositories()
 
     def evaluate_model_with_split(
-        self, model_id: str, data: Any, labels: Any, test_size: float = 0.2, random_state: int = 42
+        self, model_id: str, data: Any, labels: Any, test_size: float = 0.2, random_state: int = 42,
     ) -> dict[str, Any]:
         """Evaluate a model using train_test_split for proper validation.
 
@@ -2356,7 +2356,7 @@ Interceptor.attach(IsDebuggerPresent, {
                         "train_score": train_score,
                         "test_score": test_score,
                         "overfitting_gap": train_score - test_score,
-                    }
+                    },
                 )
 
                 # Get predictions for additional metrics
@@ -2373,7 +2373,7 @@ Interceptor.attach(IsDebuggerPresent, {
                         {
                             "classification_report": report,
                             "confusion_matrix": cm.tolist(),
-                        }
+                        },
                     )
 
             elif isinstance(backend, PyTorchBackend) and HAS_TORCH:
@@ -2407,11 +2407,11 @@ Interceptor.attach(IsDebuggerPresent, {
                         "train_accuracy": train_accuracy,
                         "test_accuracy": test_accuracy,
                         "backend": "pytorch",
-                    }
+                    },
                 )
 
             logger.info(
-                f"Model evaluation completed with test score: {evaluation_results.get('test_score', evaluation_results.get('test_accuracy', 'N/A'))}"
+                f"Model evaluation completed with test score: {evaluation_results.get('test_score', evaluation_results.get('test_accuracy', 'N/A'))}",
             )
             return evaluation_results
 
@@ -2426,7 +2426,7 @@ Interceptor.attach(IsDebuggerPresent, {
 class AsyncModelManager:
     """Asynchronous wrapper for model operations."""
 
-    def __init__(self, model_manager: ModelManager):
+    def __init__(self, model_manager: ModelManager) -> None:
         """Initialize the asynchronous model manager wrapper.
 
         Args:
@@ -2446,7 +2446,7 @@ class AsyncModelManager:
                 callback(False, None, "Async loading disabled in testing mode")
             return None
 
-        def load_worker():
+        def load_worker() -> None:
             """Worker function to load a model asynchronously.
 
             Attempts to load the specified model and calls the callback with the result.
@@ -2476,7 +2476,7 @@ class AsyncModelManager:
                 callback(False, None, "Async prediction disabled in testing mode")
             return None
 
-        def predict_worker():
+        def predict_worker() -> None:
             """Worker function to make predictions asynchronously.
 
             Attempts to make predictions using the specified model and input data,
@@ -2519,7 +2519,7 @@ def get_global_model_manager() -> ModelManager:
 class ModelFineTuner:
     """Fine-tuning support for AI models."""
 
-    def __init__(self, model_manager: ModelManager):
+    def __init__(self, model_manager: ModelManager) -> None:
         """Initialize the model fine-tuner.
 
         Args:
@@ -2763,7 +2763,7 @@ class ModelFineTuner:
                 and forward progress information to the user-provided callback function.
                 """
 
-                def on_epoch_end(self, epoch, logs=None):
+                def on_epoch_end(self, epoch, logs=None) -> None:
                     """Call at the end of each training epoch.
 
                     Args:

@@ -673,29 +673,29 @@ const ObfuscationDetector = {
 
         obfuscations.forEach(function (obfuscation) {
             switch (obfuscation.type) {
-            case 'control_flow_flattening':
-                if (self.config.bypass.autoDeobfuscate) {
-                    bypassed |= self.bypassControlFlow(address, obfuscation);
-                }
-                break;
+                case 'control_flow_flattening':
+                    if (self.config.bypass.autoDeobfuscate) {
+                        bypassed |= self.bypassControlFlow(address, obfuscation);
+                    }
+                    break;
 
-            case 'opaque_predicates':
-                if (self.config.bypass.patchPredicates) {
-                    bypassed |= self.bypassOpaquePredicates(address, obfuscation);
-                }
-                break;
+                case 'opaque_predicates':
+                    if (self.config.bypass.patchPredicates) {
+                        bypassed |= self.bypassOpaquePredicates(address, obfuscation);
+                    }
+                    break;
 
-            case 'virtualization':
-                if (self.config.bypass.devirtualize) {
-                    bypassed |= self.bypassVirtualization(address, obfuscation);
-                }
-                break;
+                case 'virtualization':
+                    if (self.config.bypass.devirtualize) {
+                        bypassed |= self.bypassVirtualization(address, obfuscation);
+                    }
+                    break;
 
-            case 'string_encryption':
-                if (self.config.bypass.decryptStrings) {
-                    bypassed |= self.bypassStringEncryption(address, obfuscation);
-                }
-                break;
+                case 'string_encryption':
+                    if (self.config.bypass.decryptStrings) {
+                        bypassed |= self.bypassStringEncryption(address, obfuscation);
+                    }
+                    break;
             }
         });
 
@@ -773,25 +773,25 @@ const ObfuscationDetector = {
             function (predicate) {
                 try {
                     switch (predicate.type) {
-                    case 'always_taken':
-                        // Convert conditional jump to unconditional
-                        this.patchToUnconditionalJump(predicate.address);
-                        patched++;
-                        break;
+                        case 'always_taken':
+                            // Convert conditional jump to unconditional
+                            this.patchToUnconditionalJump(predicate.address);
+                            patched++;
+                            break;
 
-                    case 'never_taken':
-                        // NOP out the jump
-                        this.nopInstruction(predicate.address);
-                        patched++;
-                        break;
+                        case 'never_taken':
+                            // NOP out the jump
+                            this.nopInstruction(predicate.address);
+                            patched++;
+                            break;
 
-                    case 'square_non_negative':
-                    case 'power_of_two':
-                    case 'modular_arithmetic':
-                        // Simplify the predicate
-                        this.simplifyPredicate(predicate.address);
-                        patched++;
-                        break;
+                        case 'square_non_negative':
+                        case 'power_of_two':
+                        case 'modular_arithmetic':
+                            // Simplify the predicate
+                            this.simplifyPredicate(predicate.address);
+                            patched++;
+                            break;
                     }
                 } catch (e) {
                     send({
@@ -828,17 +828,17 @@ const ObfuscationDetector = {
 
         try {
             switch (obfuscation.vmType) {
-            case 'vmprotect':
-                return this.bypassVMProtect(address, obfuscation);
+                case 'vmprotect':
+                    return this.bypassVMProtect(address, obfuscation);
 
-            case 'themida':
-                return this.bypassThemida(address, obfuscation);
+                case 'themida':
+                    return this.bypassThemida(address, obfuscation);
 
-            case 'cv':
-                return this.bypassCodeVirtualizer(address, obfuscation);
+                case 'cv':
+                    return this.bypassCodeVirtualizer(address, obfuscation);
 
-            default:
-                return this.bypassGenericVM(address, obfuscation);
+                default:
+                    return this.bypassGenericVM(address, obfuscation);
             }
         } catch (e) {
             send({
@@ -867,21 +867,21 @@ const ObfuscationDetector = {
             function (method) {
                 try {
                     switch (method) {
-                    case 'xor_loop':
-                        decrypted += this.decryptXorStrings(address);
-                        break;
+                        case 'xor_loop':
+                            decrypted += this.decryptXorStrings(address);
+                            break;
 
-                    case 'rc4_init':
-                        decrypted += this.decryptRC4Strings(address);
-                        break;
+                        case 'rc4_init':
+                            decrypted += this.decryptRC4Strings(address);
+                            break;
 
-                    case 'base64_decode':
-                        decrypted += this.decryptBase64Strings(address);
-                        break;
+                        case 'base64_decode':
+                            decrypted += this.decryptBase64Strings(address);
+                            break;
 
-                    case 'decryptor_call':
-                        decrypted += this.hookStringDecryptor(address);
-                        break;
+                        case 'decryptor_call':
+                            decrypted += this.hookStringDecryptor(address);
+                            break;
                     }
                 } catch (e) {
                     send({
@@ -1945,8 +1945,8 @@ const ObfuscationDetector = {
                                         data[caveStart] === 0x00
                                             ? 'null'
                                             : data[caveStart] === 0x90
-                                                ? 'nop'
-                                                : 'int3',
+                                              ? 'nop'
+                                              : 'int3',
                                 });
                             }
                             caveStart = -1;
@@ -2807,10 +2807,10 @@ const ObfuscationDetector = {
         // Monitor SEH/VEH registration using configuration
         var sehAPIs = exceptionAnalysisConfig.seh_monitoring
             ? [
-                'SetUnhandledExceptionFilter',
-                'AddVectoredExceptionHandler',
-                'RemoveVectoredExceptionHandler',
-            ]
+                  'SetUnhandledExceptionFilter',
+                  'AddVectoredExceptionHandler',
+                  'RemoveVectoredExceptionHandler',
+              ]
             : ['SetUnhandledExceptionFilter'];
 
         sehAPIs.forEach(function (api) {
@@ -3037,13 +3037,13 @@ const ObfuscationDetector = {
         // Monitor heap allocations based on configuration
         var heapAPIs = heapSprayAnalysisConfig.allocation_monitoring
             ? [
-                { name: 'HeapAlloc', module: 'kernel32.dll' },
-                { name: 'GlobalAlloc', module: 'kernel32.dll' },
-                { name: 'LocalAlloc', module: 'kernel32.dll' },
-                { name: 'VirtualAlloc', module: 'kernel32.dll' },
-                { name: 'malloc', module: null },
-                { name: 'calloc', module: null },
-            ]
+                  { name: 'HeapAlloc', module: 'kernel32.dll' },
+                  { name: 'GlobalAlloc', module: 'kernel32.dll' },
+                  { name: 'LocalAlloc', module: 'kernel32.dll' },
+                  { name: 'VirtualAlloc', module: 'kernel32.dll' },
+                  { name: 'malloc', module: null },
+                  { name: 'calloc', module: null },
+              ]
             : [{ name: 'VirtualAlloc', module: 'kernel32.dll' }];
 
         heapAPIs.forEach(function (api) {

@@ -28,7 +28,7 @@ from typing import Any, Dict, List, Optional
 try:
     import defusedxml.ElementTree as ET  # noqa: N817
 except ImportError:
-    import xml.etree.ElementTree as ET  # noqa: N817, S314
+    import xml.etree.ElementTree as ET
 
 try:
     from jinja2 import Environment, FileSystemLoader, Template
@@ -62,7 +62,8 @@ try:
     )
 
     # Verify reportlab page size formats are available for document layout
-    assert isinstance(A4, tuple) and len(A4) == 2  # A4 is a tuple of (width, height)
+    assert isinstance(A4, tuple)
+    assert len(A4) == 2
 
     # Verify reportlab image handling components are available
     assert Image is not None  # Image class is available for embedding
@@ -93,7 +94,7 @@ class AnalysisResult:
 class ReportGenerator:
     """Generate analysis reports in multiple formats."""
 
-    def __init__(self, output_dir: str = "reports"):
+    def __init__(self, output_dir: str = "reports") -> None:
         """Initialize report generator."""
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -240,7 +241,7 @@ class ReportGenerator:
 
         # Title
         title_style = ParagraphStyle(
-            "CustomTitle", parent=styles["Heading1"], fontSize=24, textColor=colors.HexColor("#333333"), spaceAfter=30
+            "CustomTitle", parent=styles["Heading1"], fontSize=24, textColor=colors.HexColor("#333333"), spaceAfter=30,
         )
         story.append(Paragraph("Binary Analysis Report", title_style))
         story.append(Spacer(1, 12))
@@ -266,8 +267,8 @@ class ReportGenerator:
                     ("FONTSIZE", (0, 0), (-1, -1), 10),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
                     ("GRID", (0, 0), (-1, -1), 1, colors.black),
-                ]
-            )
+                ],
+            ),
         )
         story.append(file_table)
         story.append(Spacer(1, 20))
@@ -282,7 +283,7 @@ class ReportGenerator:
                         v.get("type", "Unknown"),
                         v.get("severity", "Unknown"),
                         v.get("description", "")[:50] + "..." if len(v.get("description", "")) > 50 else v.get("description", ""),
-                    ]
+                    ],
                 )
 
             vuln_table = Table(vuln_data, colWidths=[1.5 * inch, 1.5 * inch, 3 * inch])
@@ -297,8 +298,8 @@ class ReportGenerator:
                         ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
                         ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
                         ("GRID", (0, 0), (-1, -1), 1, colors.black),
-                    ]
-                )
+                    ],
+                ),
             )
             story.append(vuln_table)
             story.append(Spacer(1, 20))
@@ -313,7 +314,7 @@ class ReportGenerator:
                         p.get("type", "Unknown"),
                         p.get("status", "Unknown"),
                         p.get("details", "")[:50] + "..." if len(p.get("details", "")) > 50 else p.get("details", ""),
-                    ]
+                    ],
                 )
 
             prot_table = Table(prot_data, colWidths=[2 * inch, 1.5 * inch, 2.5 * inch])
@@ -328,8 +329,8 @@ class ReportGenerator:
                         ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
                         ("BACKGROUND", (0, 1), (-1, -1), colors.lightgreen),
                         ("GRID", (0, 0), (-1, -1), 1, colors.black),
-                    ]
-                )
+                    ],
+                ),
             )
             story.append(prot_table)
             story.append(Spacer(1, 20))
@@ -569,7 +570,7 @@ RECOMMENDATIONS
 class ComparisonReportGenerator:
     """Generate comparison reports between multiple binaries."""
 
-    def __init__(self, output_dir: str = "reports/comparisons"):
+    def __init__(self, output_dir: str = "reports/comparisons") -> None:
         """Initialize comparison report generator."""
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -606,14 +607,14 @@ class ComparisonReportGenerator:
         # Extract file information
         for r in results:
             comparison["files_compared"].append(
-                {"file": r.get("target_file", "Unknown"), "hash": r.get("file_hash", ""), "size": r.get("file_size", 0)}
+                {"file": r.get("target_file", "Unknown"), "hash": r.get("file_hash", ""), "size": r.get("file_size", 0)},
             )
 
         # Find common and unique vulnerabilities
         all_vulns = []
         for i, r in enumerate(results):
             vulns = r.get("vulnerabilities", [])
-            all_vulns.append(set(v.get("type", "") for v in vulns))
+            all_vulns.append({v.get("type", "") for v in vulns})
             comparison["unique_vulnerabilities"][f"file_{i + 1}"] = vulns
 
         if all_vulns:

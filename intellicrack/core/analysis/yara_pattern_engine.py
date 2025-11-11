@@ -113,7 +113,7 @@ class YaraPatternEngine:
     to provide supplemental pattern-based detection alongside ICP analysis.
     """
 
-    def __init__(self, custom_rules_path: str | None = None):
+    def __init__(self, custom_rules_path: str | None = None) -> None:
         """Initialize YARA pattern engine.
 
         Args:
@@ -131,7 +131,7 @@ class YaraPatternEngine:
         self.scanned_files: dict[str, tuple[float, int, str]] = {}  # path -> (mtime, size, hash)
         self._load_rules()
 
-    def _load_rules(self):
+    def _load_rules(self) -> None:
         """Load and compile YARA rules."""
         try:
             # Get built-in rules directory
@@ -150,7 +150,7 @@ class YaraPatternEngine:
                 rule_files[namespace] = str(rule_file)
                 # Store rule source for metadata extraction
                 try:
-                    with open(rule_file, "r", encoding="utf-8") as f:
+                    with open(rule_file, encoding="utf-8") as f:
                         self.rule_sources[namespace] = f.read()
                 except Exception as e:
                     logger.debug(f"Could not read rule source from {rule_file}: {e}")
@@ -164,7 +164,7 @@ class YaraPatternEngine:
                         rule_files[namespace] = str(rule_file)
                         # Store rule source for metadata extraction
                         try:
-                            with open(rule_file, "r", encoding="utf-8") as f:
+                            with open(rule_file, encoding="utf-8") as f:
                                 self.rule_sources[namespace] = f.read()
                         except Exception as e:
                             logger.debug(f"Could not read rule source from {rule_file}: {e}")
@@ -175,7 +175,7 @@ class YaraPatternEngine:
                 rule_files["basic"] = str(rules_dir / "basic.yar")
                 # Store the created minimal rules source
                 try:
-                    with open(rules_dir / "basic.yar", "r", encoding="utf-8") as f:
+                    with open(rules_dir / "basic.yar", encoding="utf-8") as f:
                         self.rule_sources["basic"] = f.read()
                 except Exception as e:
                     logger.warning(f"Failed to read basic.yar rule file: {e}")
@@ -190,7 +190,7 @@ class YaraPatternEngine:
             logger.error(f"Failed to load YARA rules: {e}")
             self.compiled_rules = None
 
-    def _create_default_rules(self, rules_dir: Path):
+    def _create_default_rules(self, rules_dir: Path) -> None:
         """Create comprehensive default YARA rules."""
         # Protection detection rules
         protection_rules = """
@@ -484,7 +484,7 @@ rule GCC_Compiler
         (rules_dir / "antidebug.yar").write_text(antidebug_rules)
         (rules_dir / "compilers.yar").write_text(compiler_rules)
 
-    def _create_minimal_rules(self, rules_dir: Path):
+    def _create_minimal_rules(self, rules_dir: Path) -> None:
         """Create minimal rules as fallback."""
         minimal_rules = """
 rule Basic_PE_Detection
@@ -503,7 +503,7 @@ rule Basic_PE_Detection
 """
         (rules_dir / "basic.yar").write_text(minimal_rules)
 
-    def _extract_rule_metadata(self):
+    def _extract_rule_metadata(self) -> None:
         """Extract metadata from compiled rules by parsing rule sources."""
         import re
 
@@ -989,12 +989,12 @@ rule Basic_PE_Detection
             if namespace not in namespace_dist:
                 namespace_dist[namespace] = (0, [])
             count, rules = namespace_dist[namespace]
-            namespace_dist[namespace] = (count + 1, rules + [rule_id])
+            namespace_dist[namespace] = (count + 1, [*rules, rule_id])
 
         return {
             "total_rules": self._count_total_rules(),
             "categories": categories,
-            "namespaces": list(set(meta.get("namespace", "unknown") for meta in self.rule_metadata.values())),
+            "namespaces": list({meta.get("namespace", "unknown") for meta in self.rule_metadata.values()}),
             "namespace_distribution": namespace_dist,
             "yara_available": YARA_AVAILABLE,
         }
@@ -1018,7 +1018,7 @@ rule Basic_PE_Detection
                 "total_matches": len(scan_result.matches),
                 "high_confidence_matches": len(scan_result.high_confidence_matches),
                 "scan_time": scan_result.scan_time,
-                "categories_detected": list(set(m.category.value for m in scan_result.matches)),
+                "categories_detected": list({m.category.value for m in scan_result.matches}),
             },
             "protection_indicators": [],
             "licensing_indicators": [],
@@ -1031,7 +1031,7 @@ rule Basic_PE_Detection
             scan_summary = {
                 "file": scan_result.file_path,
                 "matches": len(scan_result.matches),
-                "categories": list(set(m.category.value for m in scan_result.matches)),
+                "categories": list({m.category.value for m in scan_result.matches}),
                 "high_confidence_count": len(scan_result.high_confidence_matches),
             }
             json_summary = json.dumps(scan_summary, indent=2)
@@ -1047,7 +1047,7 @@ rule Basic_PE_Detection
                     "confidence": match.confidence,
                     "offset": match.offset,
                     "technique": "pattern_matching",
-                }
+                },
             )
 
         # Process licensing matches
@@ -1058,7 +1058,7 @@ rule Basic_PE_Detection
                     "confidence": match.confidence,
                     "offset": match.offset,
                     "type": "licensing_system",
-                }
+                },
             )
 
         # Process packer matches
@@ -1069,7 +1069,7 @@ rule Basic_PE_Detection
                     "confidence": match.confidence,
                     "offset": match.offset,
                     "packer_type": "signature_based",
-                }
+                },
             )
 
         # Process anti-analysis matches
@@ -1082,7 +1082,7 @@ rule Basic_PE_Detection
                         "confidence": match.confidence,
                         "offset": match.offset,
                         "category": category.value,
-                    }
+                    },
                 )
 
         return supplemental_data

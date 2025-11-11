@@ -38,25 +38,9 @@ from ..core.logging import AuditEvent, AuditEventType, AuditSeverity, get_audit_
 from ..core.resources import get_resource_manager
 from ..utils.logger import get_logger
 from .ai_script_generator import AIScriptGenerator, GeneratedScript, ScriptType
+from .common_types import ExecutionResult
 
 logger = get_logger(__name__)
-
-
-@dataclass
-class ExecutionResult:
-    """Result from script execution."""
-
-    success: bool
-    output: str
-    error: str
-    exit_code: int
-    runtime_ms: int
-    timestamp: Optional[datetime] = None
-
-    def __post_init__(self) -> None:
-        """Initialize timestamp if not provided."""
-        if self.timestamp is None:
-            self.timestamp = datetime.now()
 
 
 class ValidationEnvironment(Enum):
@@ -386,7 +370,7 @@ class AIAgent:
         """Filter strings for license-related content based on keywords."""
         license_keywords = [
             'license', 'trial', 'demo', 'expire', 'activate',
-            'register', 'serial', 'key', 'validation', 'auth', 'check'
+            'register', 'serial', 'key', 'validation', 'auth', 'check',
         ]
 
         filtered_strings = []
@@ -582,7 +566,7 @@ class AIAgent:
             'address': hex(func_addr) if isinstance(func_addr, int) else func_addr,
             'type': func_type,
             'size': func_entry.get('size', 0),
-            'binary': Path(binary_path).name
+            'binary': Path(binary_path).name,
         }
 
     def _classify_function_type(self, func_name: str) -> str:
@@ -590,7 +574,7 @@ class AIAgent:
         license_keywords = [
             'license', 'serial', 'activation', 'registration', 'trial',
             'expire', 'valid', 'key', 'unlock', 'authenticate',
-            'authorize', 'verify', 'check', 'eval', 'demo', 'install'
+            'authorize', 'verify', 'check', 'eval', 'demo', 'install',
         ]
         time_keywords = ['time', 'date', 'clock', 'timer', 'expire', 'elapsed']
         trial_keywords = ['trial', 'demo', 'eval', 'expire', 'period']
@@ -684,7 +668,7 @@ class AIAgent:
                             'description': detection_data.get('description', f'{protection_name} detected'),
                             'indicators': detection_data.get('indicators', []),
                             'binary_path': binary_path,
-                            'details': detection_data.get('details', {})
+                            'details': detection_data.get('details', {}),
                         })
                 elif detection_data:
                     protections.append({
@@ -693,7 +677,7 @@ class AIAgent:
                         'description': f'{protection_name} detected',
                         'indicators': [],
                         'binary_path': binary_path,
-                        'details': {}
+                        'details': {},
                     })
 
             logger.info(f"Detected {len(protections)} protection mechanisms in {binary_path}")
@@ -1097,7 +1081,7 @@ class AIAgent:
             logger.debug(f"Binary format analysis failed for {binary_path}: {e}")
             return {"has_network": False, "endpoints": [], "protocols": [], "indicators": []}
 
-    def _analyze_pe_format(self, binary_path: str, result: dict[str, Any]):
+    def _analyze_pe_format(self, binary_path: str, result: dict[str, Any]) -> None:
         """Analyze PE-specific networking features."""
         try:
             import pefile
@@ -1121,7 +1105,7 @@ class AIAgent:
         except Exception as e:
             logger.debug(f"PE analysis failed: {e}")
 
-    def _analyze_elf_format(self, binary_path: str, result: dict[str, Any]):
+    def _analyze_elf_format(self, binary_path: str, result: dict[str, Any]) -> None:
         """Analyze ELF-specific networking features."""
         try:
             import lief
@@ -1658,7 +1642,7 @@ class AIAgent:
             return None
 
     def _apply_failure_refinements(
-        self, script: GeneratedScript, validation_result: ExecutionResult, content: str
+        self, script: GeneratedScript, validation_result: ExecutionResult, content: str,
     ) -> tuple[str, list[str]]:
         """Apply refinements based on test failures."""
         refinement_notes = []
@@ -1838,7 +1822,7 @@ class AIAgent:
         # For GUI or other interfaces, assume approval for now
         return True
 
-    def _log_to_user(self, message: str):
+    def _log_to_user(self, message: str) -> None:
         """Log progress to user via CLI or UI."""
         timestamp = datetime.now().strftime("%H:%M:%S")
         formatted_message = f"[{timestamp}] {message}"
@@ -2023,7 +2007,7 @@ class AIAgent:
                 script_name=script_name if script in self.frida_manager.scripts else Path(script_name).name,
                 target=target_binary,
                 mode="spawn",
-                parameters={}
+                parameters={},
             )
 
             return self._process_frida_result(result, output_lines)
@@ -2111,7 +2095,7 @@ class AIAgent:
                 "category": script_config.category.value,
                 "description": script_config.description,
                 "parameters": script_config.parameters,
-                "example_usage": script_config.example_usage
+                "example_usage": script_config.example_usage,
             }
 
         return available_scripts
@@ -2121,7 +2105,7 @@ class AIAgent:
         script_name: str,
         target_binary: str,
         parameters: Optional[dict] = None,
-        mode: str = "spawn"
+        mode: str = "spawn",
     ) -> tuple[bool, list[str]]:
         """Execute a Frida script from the library by name.
 
@@ -2150,7 +2134,7 @@ class AIAgent:
                 script_name=script_name,
                 target=target_binary,
                 mode=mode,
-                parameters=parameters or {}
+                parameters=parameters or {},
             )
 
             return self._process_library_script_result(result, output_lines)
@@ -2219,7 +2203,7 @@ class AIAgent:
         return success, output_lines
 
     def _generate_execution_output(
-        self, target_binary: str, script: str, runtime_ms: int, temp_dir: str, output_lines: list[str], success: bool
+        self, target_binary: str, script: str, runtime_ms: int, temp_dir: str, output_lines: list[str], success: bool,
     ) -> str:
         """Generate comprehensive output for execution results."""
         return "\n".join(
@@ -2233,7 +2217,7 @@ class AIAgent:
                 *output_lines,
                 "",
                 f"Test completed: {success}",
-            ]
+            ],
         )
 
     def _fallback_analysis(self, script: str, target_binary: str) -> ExecutionResult:

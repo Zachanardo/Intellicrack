@@ -355,7 +355,7 @@ Provide only the JSON response, no explanations."""
 class ScriptVersionManager:
     """Manages script versions and evolution history."""
 
-    def __init__(self, base_path: str):
+    def __init__(self, base_path: str) -> None:
         """Initialize version manager with base path for version storage."""
         self.base_path = Path(base_path)
         self.versions_dir = self.base_path / "versions"
@@ -402,7 +402,7 @@ class ScriptVersionManager:
 
         for version_file in self.versions_dir.glob("*.json"):
             try:
-                with open(version_file, "r", encoding="utf-8") as f:
+                with open(version_file, encoding="utf-8") as f:
                     data = json.load(f)
 
                 version = ScriptVersion(
@@ -431,7 +431,7 @@ class ScriptVersionManager:
             return None
 
         try:
-            with open(version_file, "r", encoding="utf-8") as f:
+            with open(version_file, encoding="utf-8") as f:
                 data = json.load(f)
 
             return data["content"]
@@ -628,7 +628,7 @@ class AIScriptEditor:
                         "result": {"success": True, "message": "Goals achieved"},
                         "qemu_result": qemu_result,
                         "goals_achieved": True,
-                    }
+                    },
                 )
                 break
 
@@ -644,7 +644,7 @@ class AIScriptEditor:
                     "result": edit_result,
                     "qemu_result": qemu_result,
                     "goals_achieved": goals_achieved,
-                }
+                },
             )
 
             # Update current content if edit was successful
@@ -745,7 +745,7 @@ class AIScriptEditor:
                     "priority": "high",
                     "description": "Address security warnings",
                     "details": security_issues["warnings"],
-                }
+                },
             )
 
         # Performance suggestions
@@ -757,7 +757,7 @@ class AIScriptEditor:
                     "priority": "medium",
                     "description": "Optimize performance",
                     "details": perf_metrics["optimization_suggestions"],
-                }
+                },
             )
 
         # Binary-specific suggestions
@@ -770,13 +770,13 @@ class AIScriptEditor:
     def _load_script(self, script_path: str) -> Optional[str]:
         """Load script content from file."""
         try:
-            with open(script_path, "r", encoding="utf-8") as f:
+            with open(script_path, encoding="utf-8") as f:
                 return f.read()
         except Exception as e:
             logger.error(f"Failed to load script {script_path}: {e}")
             return None
 
-    def _save_script(self, script_path: str, content: str, edit_record: ScriptEdit):
+    def _save_script(self, script_path: str, content: str, edit_record: ScriptEdit) -> None:
         """Save modified script content."""
         try:
             # Create backup of original
@@ -1073,7 +1073,7 @@ Generate the complete modified script:"""
         return fixes
 
     def _generate_binary_specific_suggestions(
-        self, script_content: str, script_type: str, binary_analysis: Dict[str, Any]
+        self, script_content: str, script_type: str, binary_analysis: Dict[str, Any],
     ) -> List[Dict[str, Any]]:
         """Generate suggestions specific to the target binary."""
         suggestions = []
@@ -1087,7 +1087,7 @@ Generate the complete modified script:"""
                         "type": "compatibility",
                         "priority": "medium",
                         "description": "Consider using ptr() for 64-bit address handling",
-                    }
+                    },
                 )
 
         # Protection-specific suggestions
@@ -1098,7 +1098,7 @@ Generate the complete modified script:"""
                     "type": "enhancement",
                     "priority": "high",
                     "description": "Add anti-debug bypass mechanisms",
-                }
+                },
             )
 
         return suggestions

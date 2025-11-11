@@ -58,7 +58,7 @@ class GhidraProject:
 class GhidraProjectManager:
     """Manages persistent Ghidra projects with versioning and collaboration."""
 
-    def __init__(self, projects_dir: str = None):
+    def __init__(self, projects_dir: str = None) -> None:
         """Initialize the GhidraProjectManager with an optional projects directory."""
         self.projects_dir = Path(projects_dir) if projects_dir else Path.home() / ".intellicrack" / "ghidra_projects"
         self.projects_dir.mkdir(parents=True, exist_ok=True)
@@ -66,7 +66,7 @@ class GhidraProjectManager:
         self._init_database()
         self._init_cache()
 
-    def _init_database(self):
+    def _init_database(self) -> None:
         """Initialize SQLite database for project metadata."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -134,7 +134,7 @@ class GhidraProjectManager:
         conn.commit()
         conn.close()
 
-    def _init_cache(self):
+    def _init_cache(self) -> None:
         """Initialize in-memory cache for frequently accessed data."""
         self.cache = {"projects": {}, "versions": {}, "analysis_results": {}}
 
@@ -274,7 +274,7 @@ class GhidraProjectManager:
         return project
 
     def save_version(
-        self, project_id: str, analysis_result: GhidraAnalysisResult, description: str = "", tags: List[str] = None
+        self, project_id: str, analysis_result: GhidraAnalysisResult, description: str = "", tags: List[str] = None,
     ) -> ProjectVersion:
         """Save a new version of the project."""
         project = self.load_project(project_id)
@@ -381,7 +381,7 @@ class GhidraProjectManager:
 
             if self._function_changed(func1, func2):
                 diff_result["modified_functions"].append(
-                    {"address": hex(addr), "name": func2.name, "changes": self._analyze_function_changes(func1, func2)}
+                    {"address": hex(addr), "name": func2.name, "changes": self._analyze_function_changes(func1, func2)},
                 )
 
         # Compare strings
@@ -426,10 +426,7 @@ class GhidraProjectManager:
             return True
 
         # Check parameters
-        if func1.parameters != func2.parameters:
-            return True
-
-        return False
+        return func1.parameters != func2.parameters
 
     def _analyze_function_changes(self, func1: GhidraFunction, func2: GhidraFunction) -> Dict[str, Any]:
         """Analyze specific changes in a function."""
@@ -575,7 +572,7 @@ class GhidraProjectManager:
 
             return project
 
-    def add_collaborator(self, project_id: str, user_id: str, role: str = "viewer"):
+    def add_collaborator(self, project_id: str, user_id: str, role: str = "viewer") -> None:
         """Add a collaborator to the project."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -595,14 +592,14 @@ class GhidraProjectManager:
         if project_id in self.cache["projects"]:
             self.cache["projects"][project_id].collaborators.append(user_id)
 
-    def lock_project(self, project_id: str):
+    def lock_project(self, project_id: str) -> None:
         """Lock a project to prevent modifications."""
         project = self.load_project(project_id)
         if project:
             project.is_locked = True
             self._update_project_in_db(project)
 
-    def unlock_project(self, project_id: str):
+    def unlock_project(self, project_id: str) -> None:
         """Unlock a project to allow modifications."""
         project = self.load_project(project_id)
         if project:
@@ -689,7 +686,7 @@ class GhidraProjectManager:
                 sha256_hash.update(byte_block)
         return sha256_hash.hexdigest()
 
-    def _save_project_to_db(self, project: GhidraProject):
+    def _save_project_to_db(self, project: GhidraProject) -> None:
         """Save project to database."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -718,7 +715,7 @@ class GhidraProjectManager:
         conn.commit()
         conn.close()
 
-    def _save_version_to_db(self, project_id: str, version: ProjectVersion, data_path: str):
+    def _save_version_to_db(self, project_id: str, version: ProjectVersion, data_path: str) -> None:
         """Save version to database."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -747,7 +744,7 @@ class GhidraProjectManager:
         conn.commit()
         conn.close()
 
-    def _update_project_in_db(self, project: GhidraProject):
+    def _update_project_in_db(self, project: GhidraProject) -> None:
         """Update project in database."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()

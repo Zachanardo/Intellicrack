@@ -10,9 +10,10 @@ Licensed under GNU General Public License v3.0
 import json
 import os
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from intellicrack.core.config_manager import get_config
+if TYPE_CHECKING:
+    from intellicrack.core.config_manager import IntellicrackConfig
 
 from .logger import get_logger
 
@@ -95,9 +96,9 @@ class SecretsManager:
         "PRIVATE_KEY",
     ]
 
-    def __init__(self, config_dir: Path | None = None):
+    def __init__(self, config_dir: Path | None = None) -> None:
         """Initialize the secrets manager."""
-        # Get central configuration
+        from intellicrack.core.config_manager import get_config
         self.central_config = get_config()
 
         # Get config directory from central config or use provided/default
@@ -323,7 +324,7 @@ class SecretsManager:
 
         return self._cache.get(key) or default
 
-    def set(self, key: str, value: str, use_keychain: bool = True):
+    def set(self, key: str, value: str, use_keychain: bool = True) -> None:
         """Set a secret value.
 
         Args:
@@ -349,7 +350,7 @@ class SecretsManager:
         # Sync metadata to central config
         self._sync_metadata_to_central_config()
 
-    def delete(self, key: str):
+    def delete(self, key: str) -> None:
         """Delete a secret."""
         # Remove from cache
         self._cache.pop(key, None)
@@ -395,7 +396,7 @@ class SecretsManager:
 
         return result
 
-    def import_secrets(self, secrets: dict[str, str], use_keychain: bool = True):
+    def import_secrets(self, secrets: dict[str, str], use_keychain: bool = True) -> None:
         """Import secrets from a dictionary."""
         for key, value in secrets.items():
             if value and not value.endswith("*" * 4):  # Skip redacted values
@@ -428,7 +429,7 @@ class SecretsManager:
         # Try direct lookup or generic
         return self.get(f"{service_lower.upper()}_API_KEY") or self.get("API_KEY")
 
-    def rotate_key(self, old_key: str, new_key: str):
+    def rotate_key(self, old_key: str, new_key: str) -> None:
         """Rotate a secret key."""
         if value := self.get(old_key):
             self.set(new_key, value)
@@ -577,7 +578,7 @@ def get_secret(key: str, default: str | None = None) -> str | None:
     return get_secrets_manager().get(key, default)
 
 
-def set_secret(key: str, value: str, use_keychain: bool = True):
+def set_secret(key: str, value: str, use_keychain: bool = True) -> None:
     """Set a secret value."""
     get_secrets_manager().set(key, value, use_keychain)
 

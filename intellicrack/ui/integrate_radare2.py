@@ -213,7 +213,7 @@ def show_integration_status(app_instance=None) -> dict:
 
 
 # Example usage functions for documentation
-def example_manual_integration():
+def example_manual_integration() -> None:
     """Show example of manual integration with existing app.
 
     This shows how to manually integrate radare2 with an existing app instance.
@@ -232,7 +232,7 @@ def example_manual_integration():
     #     print("Integration failed - check logs for details")
 
 
-def example_automatic_integration():
+def example_automatic_integration() -> None:
     """Show example of automatic integration.
 
     This shows how to automatically integrate radare2 without knowing the app instance.
@@ -248,7 +248,7 @@ def example_automatic_integration():
     #     print("Automatic integration failed - try manual integration")
 
 
-def example_standalone_app():
+def example_standalone_app() -> None:
     """Show example of creating a standalone radare2 application.
 
     This shows how to create a dedicated radare2 analysis application.

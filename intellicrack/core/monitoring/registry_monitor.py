@@ -48,7 +48,7 @@ class RegistryMonitor(BaseMonitor):
     providing comprehensive coverage independent of API hooks.
     """
 
-    def __init__(self, process_info: Optional[ProcessInfo] = None):
+    def __init__(self, process_info: Optional[ProcessInfo] = None) -> None:
         """Initialize registry monitor.
 
         Args:

@@ -70,7 +70,7 @@ class ResourceState(Enum):
 class ResourceUsage:
     """Track resource usage statistics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize resource usage statistics tracker."""
         self.cpu_percent = 0.0
         self.memory_mb = 0.0
@@ -79,7 +79,7 @@ class ResourceUsage:
         self.start_time = datetime.now()
         self.last_update = datetime.now()
 
-    def update(self, process: psutil.Process):
+    def update(self, process: psutil.Process) -> None:
         """Update usage statistics from a process."""
         try:
             self.cpu_percent = process.cpu_percent(interval=0.1)
@@ -106,7 +106,7 @@ class ManagedResource:
         resource_type: ResourceType,
         cleanup_func: Callable | None = None,
         metadata: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         """Initialize a managed resource.
 
         Args:
@@ -125,7 +125,7 @@ class ManagedResource:
         self.created_at = datetime.now()
         self.cleaned_at: datetime | None = None
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up the resource."""
         if self.state == ResourceState.CLEANED:
             return
@@ -143,7 +143,7 @@ class ManagedResource:
             logger.error(f"Failed to cleanup {self.resource_type.value} {self.resource_id}: {e}")
             raise
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Ensure cleanup on deletion."""
         if self.state not in (ResourceState.CLEANED, ResourceState.CLEANING):
             try:
@@ -155,7 +155,7 @@ class ManagedResource:
 class ProcessResource(ManagedResource):
     """Managed process resource."""
 
-    def __init__(self, process: subprocess.Popen, command: str):
+    def __init__(self, process: subprocess.Popen, command: str) -> None:
         """Initialize process resource.
 
         Args:
@@ -167,10 +167,8 @@ class ProcessResource(ManagedResource):
         self.command = command
         self.psutil_process = None
 
-        try:
+        with contextlib.suppress(psutil.NoSuchProcess):
             self.psutil_process = psutil.Process(process.pid)
-        except psutil.NoSuchProcess:
-            pass
 
         super().__init__(
             resource_id=str(process.pid),
@@ -179,7 +177,7 @@ class ProcessResource(ManagedResource):
             metadata={"command": command},
         )
 
-    def _cleanup_process(self):
+    def _cleanup_process(self) -> None:
         """Clean up the process."""
         if self.process.poll() is None:
             # Try graceful termination first
@@ -194,7 +192,7 @@ class ProcessResource(ManagedResource):
             except Exception as e:
                 logger.error(f"Error terminating process {self.resource_id}: {e}")
 
-    def update_usage(self):
+    def update_usage(self) -> None:
         """Update resource usage statistics."""
         if self.psutil_process:
             self.usage.update(self.psutil_process)
@@ -203,7 +201,7 @@ class ProcessResource(ManagedResource):
 class VMResource(ManagedResource):
     """Managed virtual machine resource."""
 
-    def __init__(self, vm_name: str, vm_process: subprocess.Popen | None = None):
+    def __init__(self, vm_name: str, vm_process: subprocess.Popen | None = None) -> None:
         """Initialize VM resource.
 
         Args:
@@ -221,12 +219,12 @@ class VMResource(ManagedResource):
             metadata={"vm_name": vm_name},
         )
 
-    def _cleanup_vm(self):
+    def _cleanup_vm(self) -> None:
         """Clean up the virtual machine."""
         # Use QEMU monitor command to shutdown gracefully
         try:
-            subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                [  # noqa: S607
+            subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                [
                     "qemu-system-x86_64",
                     "-monitor",
                     f"unix:/tmp/qemu-{self.vm_name}.sock,server,nowait",
@@ -258,7 +256,7 @@ class ResourceManager:
         max_containers: int = 20,
         max_memory_mb: int = 4096,
         cleanup_interval: int = 60,
-    ):
+    ) -> None:
         """Initialize the resource manager.
 
         Args:
@@ -294,7 +292,7 @@ class ResourceManager:
 
         logger.info("Resource manager initialized")
 
-    def _cleanup_loop(self):
+    def _cleanup_loop(self) -> None:
         """Background cleanup thread."""
         while True:
             try:
@@ -304,7 +302,7 @@ class ResourceManager:
             except Exception as e:
                 logger.error(f"Error in cleanup loop: {e}")
 
-    def _check_resource_limits(self):
+    def _check_resource_limits(self) -> None:
         """Check and enforce resource limits."""
         with self._lock:
             # Check process limit
@@ -323,7 +321,7 @@ class ResourceManager:
             if total_memory > self.max_memory_mb:
                 logger.warning(f"Memory limit exceeded: {total_memory:.1f}/{self.max_memory_mb} MB")
 
-    def _cleanup_stale_resources(self):
+    def _cleanup_stale_resources(self) -> None:
         """Clean up stale or dead resources."""
         with self._lock:
             stale_resources = []
@@ -367,7 +365,7 @@ class ResourceManager:
 
             return resource.resource_id
 
-    def release_resource(self, resource_id: str):
+    def release_resource(self, resource_id: str) -> None:
         """Release and cleanup a resource.
 
         Args:
@@ -417,7 +415,7 @@ class ResourceManager:
         if isinstance(command, str):
             kwargs["shell"] = True
 
-        process = subprocess.Popen(command, **kwargs)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+        process = subprocess.Popen(command, **kwargs)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
         resource = ProcessResource(process, str(command))
 
         try:
@@ -463,7 +461,7 @@ class ResourceManager:
         temp_dir = tempfile.mkdtemp(prefix=prefix)
         temp_path = Path(temp_dir)
 
-        def cleanup_temp():
+        def cleanup_temp() -> None:
             try:
                 shutil.rmtree(temp_dir)
             except Exception as e:
@@ -477,7 +475,7 @@ class ResourceManager:
         finally:
             self.release_resource(resource.resource_id)
 
-    def cleanup_all(self):
+    def cleanup_all(self) -> None:
         """Clean up all managed resources."""
         with self._lock:
             logger.info(f"Cleaning up {len(self._resources)} resources")
@@ -578,7 +576,7 @@ class ResourceManager:
         logger.info(f"Force cleaned {cleaned_count} expired resources (older than {max_age_seconds}s)")
         return cleaned_count
 
-    def set_resource_limits(self, **limits):
+    def set_resource_limits(self, **limits) -> None:
         """Update resource limits dynamically."""
         with self._lock:
             if "max_processes" in limits:
@@ -706,7 +704,7 @@ class ResourceManager:
 class ResourceContext:
     """Context manager for managing multiple resources together."""
 
-    def __init__(self, resource_manager: ResourceManager, owner: str = None):
+    def __init__(self, resource_manager: ResourceManager, owner: str = None) -> None:
         """Initialize resource context.
 
         Args:
@@ -769,7 +767,7 @@ class ResourceContext:
 class AutoCleanupResource:
     """Automatic cleanup decorator for functions that create resources."""
 
-    def __init__(self, resource_manager: ResourceManager, resource_type: ResourceType):
+    def __init__(self, resource_manager: ResourceManager, resource_type: ResourceType) -> None:
         """Initialize auto-cleanup decorator.
 
         Args:
@@ -829,10 +827,10 @@ def auto_cleanup(resource_type: ResourceType):
                 "total_cpu_percent": 0,
             }
 
-            for resource_type in ResourceType:
-                count = len(self._resources_by_type.get(resource_type, set()))
+            for resource_category in ResourceType:
+                count = len(self._resources_by_type.get(resource_category, set()))
                 if count > 0:
-                    stats["by_type"][resource_type.value] = count
+                    stats["by_type"][resource_category.value] = count
 
             # Calculate totals
             for resource in self._resources.values():
@@ -884,13 +882,13 @@ def auto_cleanup(resource_type: ResourceType):
 class FallbackHandler:
     """Handles fallback mechanisms for unavailable tools and dependencies."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize fallback handler with tool alternatives."""
         self.fallback_registry = {}
         self.python_alternatives = {}
         self._setup_builtin_fallbacks()
 
-    def _setup_builtin_fallbacks(self):
+    def _setup_builtin_fallbacks(self) -> None:
         """Set up built-in fallback mechanisms."""
         # Binary analysis fallbacks
         self.fallback_registry["strings"] = self._strings_fallback
@@ -1221,7 +1219,7 @@ class FallbackHandler:
             ],
         }
 
-    def register_fallback(self, tool_name: str, fallback_func: Callable):
+    def register_fallback(self, tool_name: str, fallback_func: Callable) -> None:
         """Register a custom fallback function."""
         self.fallback_registry[tool_name] = fallback_func
         logger.info(f"Registered fallback for {tool_name}")
@@ -1252,8 +1250,8 @@ def execute_with_fallback(
     """Execute command with automatic fallback on failure."""
     try:
         # Try primary command first
-        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-            primary_command, check=False, capture_output=True, text=True, timeout=30
+        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+            primary_command, check=False, capture_output=True, text=True, timeout=30,
         )
         if result.returncode == 0:
             return {"status": "success", "output": result.stdout, "method": "primary"}
@@ -1315,10 +1313,10 @@ def validate_external_dependencies() -> dict[str, Any]:
         }
 
 
-def setup_resource_monitoring():
+def setup_resource_monitoring() -> None:
     """Set up comprehensive resource monitoring."""
 
-    def log_resource_stats():
+    def log_resource_stats() -> None:
         """Periodic resource statistics logging."""
         try:
             stats = resource_manager.get_resource_usage_stats()
@@ -1342,7 +1340,7 @@ def setup_resource_monitoring():
     # Start monitoring thread (skip during testing)
     import threading
 
-    def monitoring_loop():
+    def monitoring_loop() -> None:
         while True:
             try:
                 time.sleep(300)  # Log every 5 minutes

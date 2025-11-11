@@ -51,7 +51,7 @@ class ProtectionInfo:
 class FridaProtectionBypasser:
     """Automated protection detection and bypass using Frida."""
 
-    def __init__(self, process_name: Optional[str] = None, pid: Optional[int] = None):
+    def __init__(self, process_name: Optional[str] = None, pid: Optional[int] = None) -> None:
         """Initialize the FridaProtectionBypasser to detect and bypass application protections.
 
         Args:
@@ -275,7 +275,7 @@ class FridaProtectionBypasser:
         });
         """
 
-        def on_message(message, data):
+        def on_message(message, data) -> None:
             if message["type"] == "send":
                 payload = message["payload"]
                 if payload["type"] == "anti_debug":
@@ -438,7 +438,7 @@ class FridaProtectionBypasser:
         });
         """
 
-        def on_message(message, data):
+        def on_message(message, data) -> None:
             if message["type"] == "send":
                 payload = message["payload"]
                 if payload["type"] == "cert_pinning":
@@ -619,7 +619,7 @@ class FridaProtectionBypasser:
         });
         """
 
-        def on_message(message, data):
+        def on_message(message, data) -> None:
             if message["type"] == "send":
                 payload = message["payload"]
                 if payload["type"] == "integrity_check":
@@ -829,7 +829,7 @@ class FridaProtectionBypasser:
         });
         """
 
-        def on_message(message, data):
+        def on_message(message, data) -> None:
             if message["type"] == "send":
                 payload = message["payload"]
                 if payload["type"] == "vm_detection":
@@ -1002,7 +1002,7 @@ class FridaProtectionBypasser:
             }
             """
 
-            def on_message(message, data):
+            def on_message(message, data) -> None:
                 if message["type"] == "send":
                     payload = message["payload"]
                     if payload["type"] == "packer_heuristic":
@@ -1422,7 +1422,7 @@ class FridaProtectionBypasser:
             combined_script = "\n\n".join(all_scripts)
             self.script = self.session.create_script(combined_script)
 
-            def on_message(message, data):
+            def on_message(message, data) -> None:
                 if message["type"] == "send":
                     logger.info(f"Bypass result: {message['payload']}")
                 elif message["type"] == "error":
@@ -1516,7 +1516,7 @@ class FridaProtectionBypasser:
         return "\n".join(report)
 
 
-def main():
+def main() -> None:
     """Demonstrate usage of FridaProtectionBypasser."""
     import argparse
 

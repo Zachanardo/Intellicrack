@@ -35,7 +35,7 @@ class R2DecompilationEngine:
     specifically tailored for license analysis and vulnerability detection.
     """
 
-    def __init__(self, binary_path: str, radare2_path: str | None = None):
+    def __init__(self, binary_path: str, radare2_path: str | None = None) -> None:
         """Initialize decompilation engine.
 
         Args:
@@ -177,7 +177,7 @@ class R2DecompilationEngine:
                             "offset": var.get("delta", 0),
                             "kind": var.get("kind", ""),
                             "size": var.get("size", 0),
-                        }
+                        },
                     )
         except R2Exception as e:
             self.logger.error("R2Exception in radare2_decompiler: %s", e)
@@ -226,7 +226,7 @@ class R2DecompilationEngine:
                             "line": line.strip(),
                             "line_number": i + 1,
                             "confidence": 0.7,
-                        }
+                        },
                     )
 
             # Check for validation patterns
@@ -239,7 +239,7 @@ class R2DecompilationEngine:
                             "line": line.strip(),
                             "line_number": i + 1,
                             "confidence": 0.9,
-                        }
+                        },
                     )
 
         return patterns
@@ -284,7 +284,7 @@ class R2DecompilationEngine:
                             "line": line.strip(),
                             "line_number": i + 1,
                             "severity": "high",
-                        }
+                        },
                     )
 
             # Check format string patterns
@@ -297,7 +297,7 @@ class R2DecompilationEngine:
                             "line": line.strip(),
                             "line_number": i + 1,
                             "severity": "medium",
-                        }
+                        },
                     )
 
             # Check memory management patterns
@@ -310,7 +310,7 @@ class R2DecompilationEngine:
                             "line": line.strip(),
                             "line_number": i + 1,
                             "severity": "high",
-                        }
+                        },
                     )
 
         return patterns
@@ -405,7 +405,7 @@ class R2DecompilationEngine:
                             "line": line.strip(),
                             "line_number": i + 1,
                             "context": "decompiled_code",
-                        }
+                        },
                     )
 
         return api_calls
@@ -432,7 +432,7 @@ class R2DecompilationEngine:
                                             "address": hex(addr),
                                             "content": string_data.strip(),
                                             "reference_type": "direct",
-                                        }
+                                        },
                                     )
                             except R2Exception as e:
                                 logger.error("R2Exception in radare2_decompiler: %s", e)
@@ -523,7 +523,7 @@ class R2DecompilationEngine:
                                 "line_number": i + 1,
                                 "confidence": 0.7,
                                 "context": "pseudocode_analysis",
-                            }
+                            },
                         )
 
         for pattern in license_patterns:
@@ -540,7 +540,7 @@ class R2DecompilationEngine:
                             "line_number": pattern["line_number"],
                             "confidence": 0.8,
                             "risk": "low",
-                        }
+                        },
                     )
 
                 # Suggest return value modification
@@ -553,7 +553,7 @@ class R2DecompilationEngine:
                             "line_number": pattern["line_number"],
                             "confidence": 0.9,
                             "risk": "medium",
-                        }
+                        },
                     )
 
                 # Suggest jump modification
@@ -566,7 +566,7 @@ class R2DecompilationEngine:
                             "line_number": pattern["line_number"],
                             "confidence": 0.7,
                             "risk": "medium",
-                        }
+                        },
                     )
 
         return suggestions
@@ -672,7 +672,7 @@ class R2DecompilationEngine:
                                         "address": hex(func_addr),
                                         "confidence": license_func_info["confidence_score"],
                                         "reason": self._get_confidence_reason(func_name, license_patterns),
-                                    }
+                                    },
                                 )
 
                 result["license_patterns_summary"] = pattern_counts

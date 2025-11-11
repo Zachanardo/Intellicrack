@@ -31,6 +31,13 @@ class SecurityError(Exception):
     """Raised when a security policy is violated."""
 
 
+import logging
+from intellicrack.utils.logger import log_function_call
+
+logger = logging.getLogger(__name__)
+
+
+@log_function_call
 def secure_hash(data: str | bytes, algorithm: str = "sha256") -> str:
     """Generate a secure hash of the given data.
 
@@ -42,19 +49,29 @@ def secure_hash(data: str | bytes, algorithm: str = "sha256") -> str:
         Hex digest of the hash
 
     """
+    logger.debug(f"Generating secure hash for data (type: {type(data)}) using algorithm: {algorithm}")
     if isinstance(data, str):
         data = data.encode("utf-8")
+        logger.debug("Data converted to UTF-8 bytes.")
 
     if algorithm == "md5":
         # MD5 only for non-security purposes
-        return hashlib.md5(data, usedforsecurity=False).hexdigest()
+        hashed_data = hashlib.md5(data, usedforsecurity=False).hexdigest()
+        logger.debug(f"MD5 hash generated (non-security): {hashed_data}")
+        return hashed_data
     if algorithm == "sha256":
-        return hashlib.sha256(data).hexdigest()
+        hashed_data = hashlib.sha256(data).hexdigest()
+        logger.debug(f"SHA256 hash generated: {hashed_data}")
+        return hashed_data
     if algorithm == "sha512":
-        return hashlib.sha512(data).hexdigest()
+        hashed_data = hashlib.sha512(data).hexdigest()
+        logger.debug(f"SHA512 hash generated: {hashed_data}")
+        return hashed_data
+    logger.error(f"Unsupported algorithm: {algorithm}")
     raise ValueError(f"Unsupported algorithm: {algorithm}")
 
 
+@log_function_call
 def secure_subprocess(command: str | list[str], shell: bool = False, timeout: int | None = 30, **kwargs) -> subprocess.CompletedProcess:
     """Execute a subprocess command securely.
 
@@ -71,7 +88,9 @@ def secure_subprocess(command: str | list[str], shell: bool = False, timeout: in
         SecurityError: If shell=True without whitelist
 
     """
+    logger.debug(f"Executing secure_subprocess command: {command}, shell: {shell}, timeout: {timeout}")
     if shell:
+        logger.error("Attempted to execute subprocess with shell=True, which is not allowed for security reasons.")
         raise SecurityError(
             "shell=True is not allowed for security reasons. Use a list of arguments instead.",
         )
@@ -79,17 +98,31 @@ def secure_subprocess(command: str | list[str], shell: bool = False, timeout: in
     if isinstance(command, str):
         # Parse command string into list safely
         command = shlex.split(command)
+        logger.debug(f"Command string split into list: {command}")
 
-    return subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-        command,
-        shell=False,
-        timeout=timeout,
-        capture_output=True,
-        text=True,
-        **kwargs,
-    )
+    try:
+        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+            command,
+            shell=False,
+            timeout=timeout,
+            capture_output=True,
+            text=True,
+            **kwargs,
+        )
+        logger.debug(f"Subprocess command completed. Return code: {result.returncode}, Stdout: {result.stdout.strip()}, Stderr: {result.stderr.strip()}")
+        return result
+    except subprocess.TimeoutExpired:
+        logger.error(f"Subprocess command timed out after {timeout} seconds: {command}")
+        raise
+    except FileNotFoundError:
+        logger.error(f"Subprocess command failed: Command not found: {command[0]}")
+        raise
+    except Exception as e:
+        logger.error(f"Subprocess command failed with an unexpected error: {e}", exc_info=True)
+        raise
 
 
+@log_function_call
 def secure_yaml_load(data: str) -> Any:
     """Safely load YAML data.
 
@@ -100,9 +133,11 @@ def secure_yaml_load(data: str) -> Any:
         Parsed YAML data
 
     """
+    logger.debug("Safely loading YAML data.")
     return yaml.safe_load(data)
 
 
+@log_function_call
 def secure_json_load(data: str) -> Any:
     """Safely load JSON data.
 
@@ -113,9 +148,11 @@ def secure_json_load(data: str) -> Any:
         Parsed JSON data
 
     """
+    logger.debug("Safely loading JSON data.")
     return json.loads(data)
 
 
+@log_function_call
 def validate_file_path(path: str, allowed_extensions: list[str] | None = None) -> bool:
     """Validate a file path for security.
 
@@ -131,20 +168,25 @@ def validate_file_path(path: str, allowed_extensions: list[str] | None = None) -
 
     """
     import os
-
+    logger.debug(f"Validating file path: '{path}' with allowed extensions: {allowed_extensions}")
     # Prevent path traversal
     if ".." in path or path.startswith("/"):
+        logger.error(f"SecurityError: Potentially malicious path detected: {path}")
         raise SecurityError(f"Potentially malicious path: {path}")
+    logger.debug("Path traversal check passed.")
 
     # Check file extension
     if allowed_extensions:
         ext = os.path.splitext(path)[1].lower()
         if ext not in allowed_extensions:
+            logger.error(f"SecurityError: File extension '{ext}' not allowed. Allowed: {allowed_extensions}")
             raise SecurityError(f"File extension not allowed: {ext}")
-
+        logger.debug(f"File extension '{ext}' is allowed.")
+    logger.debug(f"File path '{path}' validated successfully.")
     return True
 
 
+@log_function_call
 def sanitize_input(text: str, max_length: int = 1024) -> str:
     """Sanitize user input.
 
@@ -156,15 +198,19 @@ def sanitize_input(text: str, max_length: int = 1024) -> str:
         Sanitized text
 
     """
+    logger.debug(f"Sanitizing input text (length: {len(text)}, max_length: {max_length}).")
     # Remove null bytes
     text = text.replace("\x00", "")
+    logger.debug("Null bytes removed.")
 
     # Limit length
     text = text[:max_length]
+    logger.debug(f"Text length limited to {max_length}.")
 
     # Remove control characters
     import re
 
     text = re.sub(r"[\x00-\x1F\x7F-\x9F]", "", text)
-
-    return text.strip()
+    sanitized_text = text.strip()
+    logger.debug(f"Control characters removed and text stripped. Sanitized output (length: {len(sanitized_text)}): '{sanitized_text[:100]}...'")
+    return sanitized_text

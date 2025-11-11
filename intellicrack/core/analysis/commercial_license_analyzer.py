@@ -33,6 +33,8 @@ sys.stdout.flush()
 
 print("[DEBUG commercial_license_analyzer] Importing get_logger...")
 sys.stdout.flush()
+import contextlib
+
 from ...utils.logger import get_logger
 
 print("[DEBUG commercial_license_analyzer] get_logger imported OK")
@@ -66,7 +68,7 @@ sys.stdout.flush()
 class CommercialLicenseAnalyzer:
     """Comprehensive analyzer for commercial license protection systems."""
 
-    def __init__(self, binary_path: str | None = None):
+    def __init__(self, binary_path: str | None = None) -> None:
         """Initialize the commercial license analyzer.
 
         Args:
@@ -345,7 +347,7 @@ class CommercialLicenseAnalyzer:
                             "type": fingerprint.get("protocol_type"),
                             "port": fingerprint.get("server_port"),
                             "hostname": fingerprint.get("server_hostname", "localhost"),
-                        }
+                        },
                     )
 
                 # Extract feature information
@@ -381,7 +383,7 @@ class CommercialLicenseAnalyzer:
                 with open(self.binary_path, "rb") as f:
                     binary_data = f.read()
                     self._binary_data = binary_data
-            except (FileNotFoundError, IOError, OSError):
+            except (FileNotFoundError, OSError):
                 binary_data = b""
 
         # Detect FlexLM version and configuration
@@ -682,7 +684,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
                 with open(self.binary_path, "rb") as f:
                     binary_data = f.read()
                     self._binary_data = binary_data
-            except (FileNotFoundError, IOError, OSError):
+            except (FileNotFoundError, OSError):
                 binary_data = b""
 
         # Detect HASP version and type
@@ -746,7 +748,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
                     offset = match.start()
 
                     # Generate appropriate hook based on API
-                    if api_name == "hasp_login" or api_name == "hasp_login_scope":
+                    if api_name in {"hasp_login", "hasp_login_scope"}:
                         # Analyze vendor code
                         vendor_code = self._extract_vendor_code(binary_data, offset)
                         hook = {
@@ -898,7 +900,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
                 idx = search_area.rfind(b"\x68")
                 if idx >= 0 and idx + 5 <= len(search_area):
                     vendor_code = struct.unpack("<I", search_area[idx + 1 : idx + 5])[0]
-                    if vendor_code != 0 and vendor_code != 0xFFFFFFFF:
+                    if vendor_code not in {0, 4294967295}:
                         return vendor_code
 
         return 0x12345678  # Default vendor code
@@ -941,7 +943,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
                     0x31,
                     0xC0,  # xor eax,eax
                     0xC3,  # ret
-                ]
+                ],
             )
         else:
             # 32-bit XOR encryption
@@ -971,7 +973,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
                     0x31,
                     0xC0,  # xor eax,eax
                     0xC3,  # ret
-                ]
+                ],
             )
 
     def _generate_hasp_decrypt_patch(self) -> bytes:
@@ -1017,7 +1019,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
                     0x31,
                     0xC0,  # xor rax,rax
                     0xC3,  # ret
-                ]
+                ],
             )
         else:
             return bytes(
@@ -1047,7 +1049,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
                     0x31,
                     0xC0,  # xor eax,eax
                     0xC3,  # ret
-                ]
+                ],
             )
 
     def _is_hasp_check_context(self, binary_data: bytes, offset: int) -> bool:
@@ -1077,10 +1079,8 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
             # Extract feature IDs from scope
             id_pattern = rb'id="(\d+)"'
             for id_match in re.finditer(id_pattern, scope_data):
-                try:
+                with contextlib.suppress(ValueError, AttributeError):
                     features.append(int(id_match.group(1)))
-                except (ValueError, AttributeError):
-                    pass
 
         return list(set(features))  # Remove duplicates
 
@@ -1176,7 +1176,7 @@ console.log('[HASP] Patched at {patch["offset"]}');
                 with open(self.binary_path, "rb") as f:
                     binary_data = f.read()
                     self._binary_data = binary_data
-            except (FileNotFoundError, IOError, OSError):
+            except (FileNotFoundError, OSError):
                 binary_data = b""
 
         # Detect CodeMeter version and configuration
@@ -1400,10 +1400,8 @@ console.log('[HASP] Patched at {patch["offset"]}');
         firm_pattern = rb'FirmCode["\s]*[:=]\s*(\d+)'
         match = re.search(firm_pattern, binary_data)
         if match:
-            try:
+            with contextlib.suppress(ValueError, AttributeError):
                 firm_code = int(match.group(1))
-            except (ValueError, AttributeError):
-                pass
 
         # Alternative: look for hex values
         if firm_code == 100000:
@@ -1419,10 +1417,8 @@ console.log('[HASP] Patched at {patch["offset"]}');
         product_pattern = rb'ProductCode["\s]*[:=]\s*(\d+)'
         match = re.search(product_pattern, binary_data)
         if match:
-            try:
+            with contextlib.suppress(ValueError, AttributeError):
                 product_code = int(match.group(1))
-            except (ValueError, AttributeError):
-                pass
 
         return firm_code, product_code
 
@@ -1474,7 +1470,7 @@ console.log('[HASP] Patched at {patch["offset"]}');
                     0x31,
                     0xC0,  # xor rax,rax (CM_OK)
                     0xC3,  # ret
-                ]
+                ],
             )
         else:
             return bytes(
@@ -1497,7 +1493,7 @@ console.log('[HASP] Patched at {patch["offset"]}');
                     0x31,
                     0xC0,  # xor eax,eax (CM_OK)
                     0xC3,  # ret
-                ]
+                ],
             )
 
     def _generate_codemeter_license_info(self) -> bytes:
@@ -1553,7 +1549,7 @@ console.log('[HASP] Patched at {patch["offset"]}');
                     0x31,
                     0xC0,  # xor rax,rax
                     0xC3,  # ret
-                ]
+                ],
             )
         else:
             return bytes(
@@ -1597,7 +1593,7 @@ console.log('[HASP] Patched at {patch["offset"]}');
                     0x31,
                     0xC0,  # xor eax,eax
                     0xC3,  # ret
-                ]
+                ],
             )
 
     def _generate_cm_info_response(self, version: str) -> bytes:
@@ -1615,16 +1611,16 @@ console.log('[HASP] Patched at {patch["offset"]}');
                 [0x48, 0xB8]
                 + list(struct.pack("<Q", info_value))
                 + [  # mov rax,info_value
-                    0xC3  # ret
-                ]
+                    0xC3,  # ret
+                ],
             )
         else:
             return bytes(
                 [0xB8]
                 + list(struct.pack("<I", info_value))
                 + [  # mov eax,info_value
-                    0xC3  # ret
-                ]
+                    0xC3,  # ret
+                ],
             )
 
     def _detect_cm_crypto_mode(self, binary_data: bytes, offset: int) -> str:
@@ -1678,7 +1674,7 @@ console.log('[HASP] Patched at {patch["offset"]}');
                     0x31,
                     0xC0,  # xor rax,rax
                     0xC3,  # ret
-                ]
+                ],
             )
         else:
             return bytes(
@@ -1707,7 +1703,7 @@ console.log('[HASP] Patched at {patch["offset"]}');
                     0x31,
                     0xC0,  # xor eax,eax
                     0xC3,  # ret
-                ]
+                ],
             )
 
     def _generate_cm_secure_data_hook(self) -> bytes:
@@ -1747,7 +1743,7 @@ console.log('[HASP] Patched at {patch["offset"]}');
                     0x31,
                     0xC0,  # xor rax,rax
                     0xC3,  # ret
-                ]
+                ],
             )
         else:
             return bytes(
@@ -1777,7 +1773,7 @@ console.log('[HASP] Patched at {patch["offset"]}');
                     0x31,
                     0xC0,  # xor eax,eax
                     0xC3,  # ret
-                ]
+                ],
             )
 
     def _is_cm_check_context(self, binary_data: bytes, offset: int) -> bool:
@@ -1795,26 +1791,20 @@ console.log('[HASP] Patched at {patch["offset"]}');
         # Look for feature codes
         feature_pattern = rb'FeatureCode["\s]*[:=]\s*(\d+)'
         for match in re.finditer(feature_pattern, binary_data):
-            try:
+            with contextlib.suppress(ValueError, AttributeError):
                 features.append(int(match.group(1)))
-            except (ValueError, AttributeError):
-                pass
 
         # Look for product items
         item_pattern = rb'ProductItem["\s]*[:=]\s*(\d+)'
         for match in re.finditer(item_pattern, binary_data):
-            try:
+            with contextlib.suppress(ValueError, AttributeError):
                 product_items.append(int(match.group(1)))
-            except (ValueError, AttributeError):
-                pass
 
         # Look for hex feature codes
         hex_pattern = rb"0x([0-9a-fA-F]+).*Feature"
         for match in re.finditer(hex_pattern, binary_data):
-            try:
+            with contextlib.suppress(ValueError, AttributeError):
                 features.append(int(match.group(1), 16))
-            except (ValueError, AttributeError):
-                pass
 
         return list(set(features)), list(set(product_items))
 
@@ -1993,7 +1983,7 @@ try {{
 
                     # Generate serial from binary
                     binary_hash = struct.unpack("<I", hash_bytes[4:8])[0]
-            except (OSError, IOError, struct.error, ValueError):
+            except (OSError, struct.error, ValueError):
                 # Use fallback values if binary reading fails
                 vendor_id = 0x0500 | (int(time.time()) & 0x0FFF)
                 product_id = 1
@@ -2111,7 +2101,7 @@ try {{
                     if "cmserial" in data_str:
                         feature_map |= 0x00000040  # Serial functions
 
-            except (OSError, IOError, struct.error, ValueError, UnicodeDecodeError):
+            except (OSError, struct.error, ValueError, UnicodeDecodeError):
                 # Use fallback values if binary analysis fails
                 firm_code = 100000 + (hash(self.binary_path) % 900000)
                 product_code = 1

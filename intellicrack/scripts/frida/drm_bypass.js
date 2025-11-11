@@ -2048,8 +2048,8 @@ const DrmBypass = {
                             telemetryAnalysis.privacy_implications.length > 2
                                 ? 'high'
                                 : telemetryAnalysis.privacy_implications.length > 0
-                                    ? 'medium'
-                                    : 'low',
+                                  ? 'medium'
+                                  : 'low',
                     };
                 },
             });

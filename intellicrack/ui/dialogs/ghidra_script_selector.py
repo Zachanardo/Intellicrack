@@ -54,13 +54,13 @@ logger = get_logger(__name__)
 class ScriptInfoWidget(QWidget):
     """Widget to display detailed script information."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the ScriptInfoWidget with default values."""
         super().__init__(parent)
         self.current_script = None
         self._init_ui()
 
-    def _init_ui(self):
+    def _init_ui(self) -> None:
         """Initialize the UI."""
         layout = QVBoxLayout()
 
@@ -128,7 +128,7 @@ class ScriptInfoWidget(QWidget):
         layout.addStretch()
         self.setLayout(layout)
 
-    def update_script_info(self, script: GhidraScript | None):
+    def update_script_info(self, script: GhidraScript | None) -> None:
         """Update displayed information for a script."""
         self.current_script = script
 
@@ -189,7 +189,7 @@ class GhidraScriptSelector(QDialog):
     #: Emits script path (type: str)
     script_selected = pyqtSignal(str)
 
-    def __init__(self, parent=None, show_invalid=False):
+    def __init__(self, parent=None, show_invalid=False) -> None:
         """Initialize the GhidraScriptSelector with default values."""
         super().__init__(parent)
         self.script_manager = get_script_manager()
@@ -204,7 +204,7 @@ class GhidraScriptSelector(QDialog):
         self._init_ui()
         self._load_scripts()
 
-    def _init_ui(self):
+    def _init_ui(self) -> None:
         """Initialize the UI."""
         layout = QVBoxLayout()
 
@@ -302,7 +302,7 @@ class GhidraScriptSelector(QDialog):
 
         self.setLayout(layout)
 
-    def _load_scripts(self):
+    def _load_scripts(self) -> None:
         """Load and display scripts."""
         # Clear tree
         self.script_tree.clear()
@@ -322,7 +322,7 @@ class GhidraScriptSelector(QDialog):
         # Populate tree
         self._populate_tree()
 
-    def _populate_tree(self):
+    def _populate_tree(self) -> None:
         """Populate the script tree based on current filters."""
         self.script_tree.clear()
 
@@ -339,7 +339,7 @@ class GhidraScriptSelector(QDialog):
                 if not self.show_invalid and not script.is_valid:
                     continue
 
-                if selected_category != "All Categories" and script.category != selected_category:
+                if selected_category not in ("All Categories", script.category):
                     continue
 
                 self._add_script_item(script)
@@ -384,7 +384,7 @@ class GhidraScriptSelector(QDialog):
         for i in range(3):
             self.script_tree.resizeColumnToContents(i)
 
-    def _add_script_item(self, script: GhidraScript):
+    def _add_script_item(self, script: GhidraScript) -> None:
         """Add a script item to the tree."""
         item = self._create_script_item(script)
         self.script_tree.addTopLevelItem(item)
@@ -412,7 +412,7 @@ class GhidraScriptSelector(QDialog):
 
         return item
 
-    def _on_selection_changed(self):
+    def _on_selection_changed(self) -> None:
         """Handle selection change."""
         items = self.script_tree.selectedItems()
 
@@ -440,7 +440,7 @@ class GhidraScriptSelector(QDialog):
             self.info_widget.update_script_info(None)
             self.select_btn.setEnabled(False)
 
-    def _on_search_changed(self, text):
+    def _on_search_changed(self, text) -> None:
         """Handle search text change."""
         _ = text
         # Debounce search with timer
@@ -452,17 +452,17 @@ class GhidraScriptSelector(QDialog):
         self._search_timer.setSingleShot(True)
         self._search_timer.start(300)  # 300ms delay
 
-    def _on_category_changed(self, category):
+    def _on_category_changed(self, category) -> None:
         """Handle category filter change."""
         _ = category
         self._populate_tree()
 
-    def _on_show_invalid_changed(self, state):
+    def _on_show_invalid_changed(self, state) -> None:
         """Handle show invalid checkbox change."""
         self.show_invalid = state == Qt.Checked
         self._populate_tree()
 
-    def _on_item_double_clicked(self, item, column):
+    def _on_item_double_clicked(self, item, column) -> None:
         """Handle double-click on item."""
         _ = column
         script_path = item.data(0, Qt.UserRole)
@@ -471,24 +471,24 @@ class GhidraScriptSelector(QDialog):
             if script and script.is_valid:
                 self._on_select_clicked()
 
-    def _on_select_clicked(self):
+    def _on_select_clicked(self) -> None:
         """Handle select button click."""
         if self.selected_script_path:
             self.script_selected.emit(self.selected_script_path)
             self.accept()
 
-    def _use_default_script(self):
+    def _use_default_script(self) -> None:
         """Use the default AdvancedAnalysis.java script."""
         # Emit special marker for default script
         self.script_selected.emit("__DEFAULT__")
         self.accept()
 
-    def _refresh_scripts(self):
+    def _refresh_scripts(self) -> None:
         """Refresh the script list."""
         self.script_manager.scan_scripts(force_rescan=True)
         self._load_scripts()
 
-    def _add_user_script(self):
+    def _add_user_script(self) -> None:
         """Add a user script."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
@@ -517,7 +517,7 @@ class GhidraScriptSelector(QDialog):
                 "The script could not be added. Please check that it's a valid Ghidra script.",
             )
 
-    def _open_scripts_folder(self):
+    def _open_scripts_folder(self) -> None:
         """Open the user scripts folder."""
         user_scripts_dir = "intellicrack/intellicrack/scripts/ghidra"
         os.makedirs(user_scripts_dir, exist_ok=True)
@@ -531,9 +531,9 @@ class GhidraScriptSelector(QDialog):
             if system == "Windows" and hasattr(os, "startfile"):
                 os.startfile(user_scripts_dir)  # noqa: S606  # Legitimate directory opening for security research script access  # pylint: disable=no-member
             elif system == "Darwin":  # macOS
-                subprocess.run(["open", user_scripts_dir], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
+                subprocess.run(["open", user_scripts_dir], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
             else:  # Linux and others
-                subprocess.run(["xdg-open", user_scripts_dir], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
+                subprocess.run(["xdg-open", user_scripts_dir], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
         except Exception as e:
             logger.error(f"Failed to open folder: {e}")
             QMessageBox.warning(

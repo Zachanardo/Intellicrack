@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 class DirectR2Session:
     """Direct r2pipe session without pooling for legacy compatibility."""
 
-    def __init__(self, binary_path: str, flags: Optional[list[str]] = None):
+    def __init__(self, binary_path: str, flags: Optional[list[str]] = None) -> None:
         """Initialize direct session.
 
         Args:
@@ -74,7 +74,7 @@ class DirectR2Session:
             logger.error(f"Failed to connect: {e}")
             return False
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         """Disconnect from radare2."""
         if self.r2:
             try:
@@ -109,7 +109,7 @@ def get_r2_session(
     binary_path: str,
     flags: Optional[list[str]] = None,
     use_pooling: bool = True,
-    auto_analyze: bool = True
+    auto_analyze: bool = True,
 ):
     """Get an r2 session with automatic pooling.
 
@@ -144,7 +144,7 @@ def execute_r2_command(
     command: str,
     expect_json: bool = False,
     flags: Optional[list[str]] = None,
-    use_pooling: bool = True
+    use_pooling: bool = True,
 ) -> Any:
     """Execute a single r2 command on a binary.
 
@@ -195,7 +195,7 @@ def get_all_session_metrics() -> list[dict[str, Any]]:
         return []
 
 
-def cleanup_idle_sessions():
+def cleanup_idle_sessions() -> None:
     """Force cleanup of idle sessions in the pool."""
     if SESSION_MANAGER_AVAILABLE:
         pool = get_global_pool()
@@ -207,8 +207,8 @@ def configure_global_pool(
     max_sessions: int = 10,
     max_idle_time: float = 300.0,
     auto_analyze: bool = True,
-    analysis_level: str = "aaa"
-):
+    analysis_level: str = "aaa",
+) -> None:
     """Configure the global session pool.
 
     Args:
@@ -223,18 +223,18 @@ def configure_global_pool(
             max_sessions=max_sessions,
             max_idle_time=max_idle_time,
             auto_analyze=auto_analyze,
-            analysis_level=analysis_level
+            analysis_level=analysis_level,
         )
         logger.info(
             f"Configured global pool: max_sessions={max_sessions}, "
-            f"max_idle_time={max_idle_time}, analysis_level={analysis_level}"
+            f"max_idle_time={max_idle_time}, analysis_level={analysis_level}",
         )
 
 
 class R2CommandBatch:
     """Batch multiple r2 commands for efficient execution."""
 
-    def __init__(self, binary_path: str, use_pooling: bool = True):
+    def __init__(self, binary_path: str, use_pooling: bool = True) -> None:
         """Initialize command batch.
 
         Args:
@@ -246,7 +246,7 @@ class R2CommandBatch:
         self.use_pooling = use_pooling
         self.commands: list[tuple[str, bool]] = []
 
-    def add_command(self, command: str, expect_json: bool = False):
+    def add_command(self, command: str, expect_json: bool = False) -> None:
         """Add command to batch.
 
         Args:
@@ -280,7 +280,7 @@ class R2CommandBatch:
 def migrate_r2pipe_to_pooled(
     original_r2: r2pipe.open,
     binary_path: str,
-    flags: Optional[list[str]] = None
+    flags: Optional[list[str]] = None,
 ) -> R2SessionWrapper:
     """Migrate from direct r2pipe usage to pooled sessions.
 

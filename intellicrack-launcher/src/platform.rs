@@ -202,9 +202,8 @@ impl PlatformInfo {
 
             let mut adapter_index = 0;
             while let Ok(adapter) = factory.EnumAdapters1(adapter_index) {
-                let mut desc = std::mem::zeroed::<DXGI_ADAPTER_DESC1>();
-                adapter
-                    .GetDesc1(&mut desc)
+                let desc = adapter
+                    .GetDesc1()
                     .context("Failed to get adapter description")?;
 
                 let device_name = String::from_utf16_lossy(&desc.Description)

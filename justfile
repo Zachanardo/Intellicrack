@@ -204,11 +204,11 @@ lint-js-fix:
 
 # Lint Java files with PMD
 lint-java:
-    ./tools/pmd/bin/pmd.bat check -d intellicrack/scripts/ghidra -R tools/pmd/intellicrack-ruleset.xml -f text
+    java -cp "tools/pmd/conf;tools/pmd/lib/*" net.sourceforge.pmd.cli.PmdCli check -d intellicrack/scripts/ghidra -R tools/pmd/intellicrack-ruleset.xml -f text
 
 # Format Java files with google-java-format
 lint-java-fix:
-    Get-ChildItem -Recurse -Path intellicrack -Filter *.java | ForEach-Object { java -jar tools/google-java-format/google-java-format.jar --replace $_.FullName }
+    Get-ChildItem -Recurse -Path intellicrack -Filter *.java | ForEach-Object { Write-Host "Formatting: $($_.FullName)"; java -jar tools/google-java-format/google-java-format.jar --replace $_.FullName; if ($LASTEXITCODE -eq 0) { Write-Host "  ✓ Formatted" -ForegroundColor Green } else { Write-Host "  ✗ Error" -ForegroundColor Red } }
 
 # Lint Markdown files with markdownlint
 lint-md:

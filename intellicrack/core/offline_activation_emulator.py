@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional
 try:
     import defusedxml.ElementTree as ET  # noqa: N817
 except ImportError:
-    import xml.etree.ElementTree as ET  # noqa: N817, S314
+    import xml.etree.ElementTree as ET
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -31,7 +31,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC as PBKDF2
 
 from intellicrack.handlers.wmi_handler import wmi
-from intellicrack.utils.logger import logger
+from intellicrack.utils.logger import log_all_methods, logger
 
 SERIAL_NUMBER_LABEL = "Serial Number:"
 
@@ -139,6 +139,7 @@ class ExtendedActivationRequest:
     format: RequestFormat = RequestFormat.XML
 
 
+@log_all_methods
 class OfflineActivationEmulator:
     """Production-ready offline activation emulation system."""
 
@@ -151,7 +152,7 @@ class OfflineActivationEmulator:
 
     def _initialize_algorithms(self) -> Dict[str, Any]:
         """Initialize known activation algorithms."""
-        return {
+        algorithms = {
             "microsoft": self._microsoft_activation,
             "adobe": self._adobe_activation,
             "autodesk": self._autodesk_activation,
@@ -162,10 +163,12 @@ class OfflineActivationEmulator:
             "custom_aes": self._aes_based_activation,
             "custom_ecc": self._ecc_based_activation,
         }
+        logger.debug(f"Initialized {len(algorithms)} activation algorithms.")
+        return algorithms
 
     def _load_known_schemes(self) -> Dict[str, Dict]:
         """Load database of known activation schemes."""
-        return {
+        schemes = {
             "microsoft_office": {
                 "type": ActivationType.CHALLENGE_RESPONSE,
                 "algorithm": "microsoft",
@@ -180,19 +183,54 @@ class OfflineActivationEmulator:
                 "request_format": "alphanumeric",
             },
         }
+        logger.debug(f"Loaded {len(schemes)} known activation schemes.")
+        return schemes
 
     def get_hardware_profile(self) -> HardwareProfile:
         """Get actual hardware profile from system."""
+        logger.debug("Retrieving CPU ID...")
+        cpu_id = self._get_cpu_id()
+        logger.debug(f"CPU ID: {cpu_id}")
+
+        logger.debug("Retrieving Motherboard Serial...")
+        motherboard_serial = self._get_motherboard_serial()
+        logger.debug(f"Motherboard Serial: {motherboard_serial}")
+
+        logger.debug("Retrieving Disk Serial...")
+        disk_serial = self._get_disk_serial()
+        logger.debug(f"Disk Serial: {disk_serial}")
+
+        logger.debug("Retrieving MAC Addresses...")
+        mac_addresses = self._get_mac_addresses()
+        logger.debug(f"MAC Addresses: {mac_addresses}")
+
+        logger.debug("Retrieving BIOS Serial...")
+        bios_serial = self._get_bios_serial()
+        logger.debug(f"BIOS Serial: {bios_serial}")
+
+        logger.debug("Retrieving System UUID...")
+        system_uuid = self._get_system_uuid()
+        logger.debug(f"System UUID: {system_uuid}")
+
+        logger.debug("Retrieving Volume Serial...")
+        volume_serial = self._get_volume_serial()
+        logger.debug(f"Volume Serial: {volume_serial}")
+
+        logger.debug("Retrieving Machine GUID...")
+        machine_guid = self._get_machine_guid()
+        logger.debug(f"Machine GUID: {machine_guid}")
+
         profile = HardwareProfile(
-            cpu_id=self._get_cpu_id(),
-            motherboard_serial=self._get_motherboard_serial(),
-            disk_serial=self._get_disk_serial(),
-            mac_addresses=self._get_mac_addresses(),
-            bios_serial=self._get_bios_serial(),
-            system_uuid=self._get_system_uuid(),
-            volume_serial=self._get_volume_serial(),
-            machine_guid=self._get_machine_guid(),
+            cpu_id=cpu_id,
+            motherboard_serial=motherboard_serial,
+            disk_serial=disk_serial,
+            mac_addresses=mac_addresses,
+            bios_serial=bios_serial,
+            system_uuid=system_uuid,
+            volume_serial=volume_serial,
+            machine_guid=machine_guid,
         )
+        logger.debug("Hardware profile generated.")
         return profile
 
     def _get_cpu_id(self) -> str:
@@ -284,7 +322,7 @@ class OfflineActivationEmulator:
     def _get_fallback_mac(self) -> List[str]:
         # Fallback to uuid-based MAC
         node = uuid.getnode()
-        mac = ":".join(("%012X" % node)[i : i + 2] for i in range(0, 12, 2))
+        mac = ":".join((f"{node:012X}")[i : i + 2] for i in range(0, 12, 2))
         return [mac.replace(":", "")]
 
     def _get_bios_serial(self) -> str:
@@ -341,7 +379,7 @@ class OfflineActivationEmulator:
                     return winreg.QueryValueEx(key, "MachineGuid")[0]
             else:
                 # Linux machine-id
-                with open("/etc/machine-id", "r") as f:
+                with open("/etc/machine-id") as f:
                     return f.read().strip()
         except Exception as e:
             logger.debug(f"Machine ID extraction failed: {e}")
@@ -350,10 +388,15 @@ class OfflineActivationEmulator:
 
     def generate_hardware_id(self, profile: Optional[HardwareProfile] = None, algorithm: str = "standard") -> str:
         """Generate hardware ID from profile."""
+        logger.debug(f"Generating hardware ID using algorithm: {algorithm}")
         if not profile:
             profile = self.get_hardware_profile()
+            logger.debug("Using current system hardware profile.")
+        else:
+            logger.debug("Using provided hardware profile.")
 
         if algorithm == "standard":
+            logger.debug("Using standard hardware ID generation.")
             # Combine hardware components
             components = [
                 profile.cpu_id,
@@ -372,9 +415,11 @@ class OfflineActivationEmulator:
 
             # Add separators for readability
             formatted = "-".join([hw_id[i : i + 5] for i in range(0, len(hw_id), 5)])
+            logger.debug(f"Generated standard hardware ID: {formatted}")
             return formatted
 
         elif algorithm == "microsoft":
+            logger.debug("Using Microsoft-style hardware ID generation.")
             # Microsoft-style hardware hash
             components = [
                 profile.cpu_id[:8],
@@ -391,9 +436,12 @@ class OfflineActivationEmulator:
                 except ValueError:
                     result ^= int(hashlib.sha256(comp.encode()).hexdigest()[:8], 16)
 
-            return format(result, "08X")
+            formatted = format(result, "08X")
+            logger.debug(f"Generated Microsoft-style hardware ID: {formatted}")
+            return formatted
 
         elif algorithm == "adobe":
+            logger.debug("Using Adobe-style hardware ID generation.")
             # Adobe-style LEID (License Encryption ID) - using SHA256 instead of SHA1 for security
             h = hashlib.sha256()
             h.update(profile.cpu_id.encode())
@@ -401,11 +449,16 @@ class OfflineActivationEmulator:
             h.update(profile.system_uuid.encode())
 
             digest = h.hexdigest().upper()
-            return f"{digest[:8]}-{digest[8:12]}-{digest[12:16]}-{digest[16:20]}"
+            formatted = f"{digest[:8]}-{digest[8:12]}-{digest[12:16]}-{digest[16:20]}"
+            logger.debug(f"Generated Adobe-style hardware ID: {formatted}")
+            return formatted
 
         else:
+            logger.debug("Using custom hardware ID generation.")
             # Custom algorithm
-            return self._custom_hardware_id(profile)
+            formatted = self._custom_hardware_id(profile)
+            logger.debug(f"Generated custom hardware ID: {formatted}")
+            return formatted
 
     def _custom_hardware_id(self, profile: HardwareProfile) -> str:
         """Generate custom hardware ID."""
@@ -425,6 +478,7 @@ class OfflineActivationEmulator:
 
     def generate_installation_id(self, product_id: str, hardware_id: str) -> str:
         """Generate installation ID for product."""
+        logger.debug(f"Generating installation ID for product '{product_id}' with hardware ID '{hardware_id}'.")
         # Combine product and hardware
 
         # Generate installation ID
@@ -434,10 +488,13 @@ class OfflineActivationEmulator:
 
         # Format as groups
         groups = [install_id[i : i + 6] for i in range(0, 36, 6)]
-        return "-".join(groups)
+        formatted_install_id = "-".join(groups)
+        logger.debug(f"Generated installation ID: {formatted_install_id}")
+        return formatted_install_id
 
     def generate_request_code(self, installation_id: str) -> str:
         """Generate activation request code."""
+        logger.debug(f"Generating request code for installation ID: {installation_id}")
         # Hash installation ID
         h = hashlib.sha256(installation_id.encode())
 
@@ -449,37 +506,47 @@ class OfflineActivationEmulator:
         request_code = request_code.ljust(54, "0")
 
         groups = [request_code[i : i + 6] for i in range(0, 54, 6)]
-        return "-".join(groups)
+        formatted_request_code = "-".join(groups)
+        logger.debug(f"Generated request code: {formatted_request_code}")
+        return formatted_request_code
 
     def generate_activation_response(self, request: ActivationRequest, product_key: str = None) -> ActivationResponse:
         """Generate activation response for request."""
+        logger.debug(f"Generating activation response for product ID: {request.product_id}")
         # Determine activation algorithm
         algorithm = self._detect_activation_algorithm(request.product_id)
+        logger.debug(f"Detected activation algorithm: {algorithm}")
 
         if algorithm in self.activation_algorithms:
-            return self.activation_algorithms[algorithm](request, product_key)
+            response = self.activation_algorithms[algorithm](request, product_key)
+            logger.debug(f"Generated activation response using {algorithm} algorithm.")
+            return response
         else:
             # Default activation
-            return self._default_activation(request, product_key)
+            response = self._default_activation(request, product_key)
+            logger.debug("Generated activation response using default algorithm.")
+            return response
 
     def _detect_activation_algorithm(self, product_id: str) -> str:
         """Detect which activation algorithm to use."""
         product_lower = product_id.lower()
 
         if "microsoft" in product_lower or "office" in product_lower:
-            return "microsoft"
+            detected_algo = "microsoft"
         elif "adobe" in product_lower:
-            return "adobe"
+            detected_algo = "adobe"
         elif "autodesk" in product_lower:
-            return "autodesk"
+            detected_algo = "autodesk"
         elif "vmware" in product_lower:
-            return "vmware"
+            detected_algo = "vmware"
         elif "matlab" in product_lower:
-            return "matlab"
+            detected_algo = "matlab"
         elif "solidworks" in product_lower:
-            return "solidworks"
+            detected_algo = "solidworks"
         else:
-            return "custom_rsa"
+            detected_algo = "custom_rsa"
+        logger.debug(f"Detected activation algorithm for product '{product_id}': {detected_algo}")
+        return detected_algo
 
     def _microsoft_activation(self, request: ActivationRequest, product_key: str = None) -> ActivationResponse:
         """Microsoft-style activation (simplified MAK/KMS emulation)."""
@@ -506,6 +573,7 @@ class OfflineActivationEmulator:
             confirmation_blocks.append(str(value).zfill(6))
 
         confirmation_id = "-".join(confirmation_blocks)
+        logger.debug(f"Generated Microsoft-style confirmation ID: {confirmation_id}")
 
         return ActivationResponse(
             activation_code=confirmation_id,
@@ -527,10 +595,12 @@ class OfflineActivationEmulator:
         h.update(request.hardware_id.encode())
 
         response_hash = h.hexdigest()
+        logger.debug(f"Adobe activation response hash: {response_hash}")
 
         # Format as Adobe response code
         response_code = response_hash[:24].upper()
         formatted = "-".join([response_code[i : i + 4] for i in range(0, 24, 4)])
+        logger.debug(f"Formatted Adobe activation code: {formatted}")
 
         # Generate license content
         license_data = self._generate_adobe_license(request, response_code)
@@ -589,10 +659,12 @@ class OfflineActivationEmulator:
 
         # Generate response
         response_value = (request_value ^ magic1) + magic2
+        logger.debug(f"Autodesk activation raw response value: {response_value}")
         response_code = format(response_value, "016X")
 
         # Format as Autodesk activation code
         formatted = "-".join([response_code[i : i + 4] for i in range(0, 16, 4)])
+        logger.debug(f"Formatted Autodesk activation code: {formatted}")
 
         return ActivationResponse(
             activation_code=formatted,
@@ -615,9 +687,11 @@ class OfflineActivationEmulator:
         for i in range(20):
             idx = hw_hash[i] % len(chars)
             activation_code += chars[idx]
+        logger.debug(f"VMware activation raw activation code: {activation_code}")
 
         # Format as VMware key
         formatted = "-".join([activation_code[i : i + 5] for i in range(0, 20, 5)])
+        logger.debug(f"Formatted VMware activation key: {formatted}")
 
         return ActivationResponse(
             activation_code=formatted,
@@ -638,7 +712,9 @@ class OfflineActivationEmulator:
         h.update(request.hardware_id.encode())
 
         activation_hash = h.hexdigest().upper()
+        logger.debug(f"MATLAB activation hash: {activation_hash}")
         activation_code = "-".join([activation_hash[i : i + 5] for i in range(0, 20, 5)])
+        logger.debug(f"Formatted MATLAB activation code: {activation_code}")
 
         # Generate license file content
         license_content = self._generate_matlab_license(request)
@@ -683,8 +759,10 @@ class OfflineActivationEmulator:
             value = sum(ord(c) for c in part)
             transformed = (value * 12345) % 1000000
             response_parts.append(str(transformed).zfill(6))
+        logger.debug(f"SolidWorks activation response parts: {response_parts}")
 
         activation_code = "-".join(response_parts)
+        logger.debug(f"Formatted SolidWorks activation code: {activation_code}")
 
         return ActivationResponse(
             activation_code=activation_code,
@@ -712,11 +790,12 @@ class OfflineActivationEmulator:
         # Sign activation data
         data_bytes = json.dumps(activation_data).encode()
         signature = private_key.sign(
-            data_bytes, padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), hashes.SHA256()
+            data_bytes, padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), hashes.SHA256(),
         )
 
         # Generate activation code
         activation_code = base64.b64encode(signature[:32]).decode("ascii")
+        logger.debug(f"Generated RSA-based activation code: {activation_code}")
 
         return ActivationResponse(
             activation_code=activation_code,
@@ -750,6 +829,7 @@ class OfflineActivationEmulator:
 
         # Create activation code
         activation_code = base64.b64encode(iv + encrypted[:32]).decode("ascii")
+        logger.debug(f"Generated AES-based activation code: {activation_code}")
 
         return ActivationResponse(
             activation_code=activation_code,
@@ -775,6 +855,7 @@ class OfflineActivationEmulator:
 
         # Create activation code from signature
         activation_code = base64.b32encode(signature[:30]).decode("ascii").rstrip("=")
+        logger.debug(f"Generated ECC-based activation code: {activation_code}")
 
         return ActivationResponse(
             activation_code=activation_code,
@@ -795,6 +876,7 @@ class OfflineActivationEmulator:
 
         activation_hash = h.hexdigest()
         activation_code = "-".join([activation_hash[i : i + 8] for i in range(0, 32, 8)])
+        logger.debug(f"Generated default activation code: {activation_code}")
 
         return ActivationResponse(
             activation_code=activation_code,
@@ -834,7 +916,9 @@ class OfflineActivationEmulator:
             # Generic format
             chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"  # pragma: allowlist secret
             key = "".join(random.choices(chars, k=25))  # noqa: S311
-            return "-".join([key[i : i + 5] for i in range(0, 25, 5)])
+            formatted_key = "-".join([key[i : i + 5] for i in range(0, 25, 5)])
+            logger.debug(f"Generated generic product key: {formatted_key}")
+            return formatted_key
 
     def _sign_license_data(self, data: bytes) -> bytes:
         """Sign license data with private key."""
@@ -843,13 +927,14 @@ class OfflineActivationEmulator:
 
         # Sign data
         signature = private_key.sign(
-            data, padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), hashes.SHA256()
+            data, padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), hashes.SHA256(),
         )
 
         return signature
 
     def create_license_file(self, response: ActivationResponse, format: str = "xml") -> bytes:
         """Create license file in specified format."""
+        logger.debug(f"Creating license file in format: {format}")
         if format == "xml":
             return self._create_xml_license(response)
         elif format == "json":
@@ -997,6 +1082,7 @@ class OfflineActivationEmulator:
 
     def bypass_trial_restrictions(self, product_id: str) -> Dict[str, Any]:
         """Generate data to bypass trial restrictions."""
+        logger.debug(f"Generating trial restriction bypass data for product: {product_id}")
         bypass_data = {
             "trial_reset": self._generate_trial_reset_data(product_id),
             "registry_keys": self._generate_registry_keys(product_id),
@@ -1004,7 +1090,7 @@ class OfflineActivationEmulator:
             "date_bypass": self._generate_date_bypass_data(),
             "network_bypass": self._generate_network_bypass_data(),
         }
-
+        logger.debug(f"Generated trial bypass data: {bypass_data}")
         return bypass_data
 
     def _generate_trial_reset_data(self, product_id: str) -> Dict[str, Any]:
@@ -1187,9 +1273,13 @@ class OfflineActivationEmulator:
 
     def generate_activation_request(self, product_id: str, serial_number: str, format: RequestFormat = RequestFormat.XML) -> str:
         """Generate offline activation request."""
+        logger.debug(f"Generating activation request for product '{product_id}' with serial '{serial_number}' in format: {format.value}")
         # Generate machine profile if not exists
         if not hasattr(self, "machine_profile"):
             self.machine_profile = self._generate_machine_profile()
+            logger.debug("Generated new machine profile for activation request.")
+        else:
+            logger.debug("Using existing machine profile for activation request.")
 
         request = ExtendedActivationRequest(
             request_id=str(uuid.uuid4()),
@@ -1200,6 +1290,7 @@ class OfflineActivationEmulator:
             timestamp=int(time.time()),
             format=format,
         )
+        logger.debug(f"Generated activation request ID: {request.request_id}")
 
         # Format based on type
         if format == RequestFormat.XML:
@@ -1311,7 +1402,7 @@ class OfflineActivationEmulator:
 
         # Machine fingerprint
         fingerprint = hashlib.sha256(
-            f"{request.machine_profile.machine_id}{request.machine_profile.cpu_id}{request.machine_profile.disk_serial}".encode()
+            f"{request.machine_profile.machine_id}{request.machine_profile.cpu_id}{request.machine_profile.disk_serial}".encode(),
         ).digest()
         packet.extend(fingerprint)
 
@@ -1335,7 +1426,7 @@ class OfflineActivationEmulator:
 
         # Sign data
         signature = private_key.sign(
-            data, padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), hashes.SHA256()
+            data, padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), hashes.SHA256(),
         )
 
         return signature
@@ -1347,7 +1438,7 @@ class OfflineActivationEmulator:
 
         # Generate key using PBKDF2
         kdf = PBKDF2(
-            algorithm=hashes.SHA256(), length=32, salt=request.machine_profile.cpu_id.encode(), iterations=100000, backend=default_backend()
+            algorithm=hashes.SHA256(), length=32, salt=request.machine_profile.cpu_id.encode(), iterations=100000, backend=default_backend(),
         )
         key = kdf.derive(data.encode())
 
@@ -1407,30 +1498,40 @@ class OfflineActivationEmulator:
 
     def bypass_challenge_response(self, challenge: str) -> str:
         """Generate valid response for challenge-based activation."""
+        logger.debug(f"Bypassing challenge-response for challenge: {challenge}")
         # Decode challenge
         try:
             challenge_bytes = base64.b64decode(challenge)
+            logger.debug("Challenge successfully base64 decoded.")
         except (base64.binascii.Error, ValueError):
             challenge_bytes = challenge.encode()
+            logger.debug("Challenge not base64 encoded, using raw bytes.")
 
         # Extract challenge components
         if len(challenge_bytes) >= 16:
             nonce = challenge_bytes[:16]
             data = challenge_bytes[16:]
+            logger.debug(f"Extracted nonce ({nonce.hex()}) and data ({data.hex()}) from challenge.")
         else:
             nonce = challenge_bytes
             data = b""
+            logger.debug(f"Challenge too short, using full challenge as nonce ({nonce.hex()}).")
 
         # Generate machine profile if not exists
         if not hasattr(self, "machine_profile"):
             self.machine_profile = self._generate_machine_profile()
+            logger.debug("Generated new machine profile for challenge-response bypass.")
+        else:
+            logger.debug("Using existing machine profile for challenge-response bypass.")
 
         # Generate response using machine profile and challenge data
         response_data = hashlib.sha256(
-            nonce + data + self.machine_profile.machine_id.encode() + self.machine_profile.cpu_id.encode()
+            nonce + data + self.machine_profile.machine_id.encode() + self.machine_profile.cpu_id.encode(),
         ).digest()
+        logger.debug(f"Generated raw response data: {response_data.hex()}")
 
         # Format response
         response = base64.b64encode(response_data).decode("ascii")
+        logger.debug(f"Formatted challenge-response: {response}")
 
         return response

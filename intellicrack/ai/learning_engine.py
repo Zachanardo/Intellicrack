@@ -93,7 +93,7 @@ class FailureAnalysis:
 class AILearningDatabase:
     """Persistent database for AI learning records."""
 
-    def __init__(self, db_path: Path | None = None):
+    def __init__(self, db_path: Path | None = None) -> None:
         """Initialize the AI learning database.
 
         Args:
@@ -106,7 +106,7 @@ class AILearningDatabase:
         self.lock = threading.Lock()
         self._init_database()
 
-    def _init_database(self):
+    def _init_database(self) -> None:
         """Initialize database schema."""
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
@@ -167,81 +167,78 @@ class AILearningDatabase:
 
             conn.commit()
 
-    def save_learning_record(self, record: LearningRecord):
+    def save_learning_record(self, record: LearningRecord) -> None:
         """Save learning record to database."""
-        with self.lock:
-            with sqlite3.connect(self.db_path) as conn:
-                conn.execute(
-                    """
+        with self.lock, sqlite3.connect(self.db_path) as conn:
+            conn.execute(
+                """
                     INSERT OR REPLACE INTO learning_records VALUES
                     (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                    (
-                        record.record_id,
-                        record.task_type,
-                        record.input_hash,
-                        record.output_hash,
-                        record.success,
-                        record.confidence,
-                        record.execution_time,
-                        record.memory_usage,
-                        record.error_message,
-                        json.dumps(record.context),
-                        json.dumps(record.metadata),
-                        record.timestamp.isoformat(),
-                        json.dumps(record.learned_patterns),
-                        json.dumps(record.improvement_suggestions),
-                    ),
-                )
-                conn.commit()
+                (
+                    record.record_id,
+                    record.task_type,
+                    record.input_hash,
+                    record.output_hash,
+                    record.success,
+                    record.confidence,
+                    record.execution_time,
+                    record.memory_usage,
+                    record.error_message,
+                    json.dumps(record.context),
+                    json.dumps(record.metadata),
+                    record.timestamp.isoformat(),
+                    json.dumps(record.learned_patterns),
+                    json.dumps(record.improvement_suggestions),
+                ),
+            )
+            conn.commit()
 
-    def save_pattern_rule(self, rule: PatternRule):
+    def save_pattern_rule(self, rule: PatternRule) -> None:
         """Save pattern rule to database."""
-        with self.lock:
-            with sqlite3.connect(self.db_path) as conn:
-                conn.execute(
-                    """
+        with self.lock, sqlite3.connect(self.db_path) as conn:
+            conn.execute(
+                """
                     INSERT OR REPLACE INTO pattern_rules VALUES
                     (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                    (
-                        rule.rule_id,
-                        rule.pattern_name,
-                        rule.condition,
-                        rule.action,
-                        rule.confidence,
-                        rule.success_rate,
-                        rule.usage_count,
-                        rule.created_at.isoformat(),
-                        rule.last_used.isoformat() if rule.last_used else None,
-                        rule.effectiveness_score,
-                    ),
-                )
-                conn.commit()
+                (
+                    rule.rule_id,
+                    rule.pattern_name,
+                    rule.condition,
+                    rule.action,
+                    rule.confidence,
+                    rule.success_rate,
+                    rule.usage_count,
+                    rule.created_at.isoformat(),
+                    rule.last_used.isoformat() if rule.last_used else None,
+                    rule.effectiveness_score,
+                ),
+            )
+            conn.commit()
 
-    def save_failure_analysis(self, analysis: FailureAnalysis):
+    def save_failure_analysis(self, analysis: FailureAnalysis) -> None:
         """Save failure analysis to database."""
-        with self.lock:
-            with sqlite3.connect(self.db_path) as conn:
-                conn.execute(
-                    """
+        with self.lock, sqlite3.connect(self.db_path) as conn:
+            conn.execute(
+                """
                     INSERT OR REPLACE INTO failure_analyses VALUES
                     (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                    (
-                        analysis.failure_id,
-                        analysis.failure_type,
-                        analysis.frequency,
-                        analysis.impact_level,
-                        analysis.root_cause,
-                        json.dumps(analysis.suggested_fixes),
-                        analysis.pattern_signature,
-                        json.dumps(analysis.affected_components),
-                        json.dumps(analysis.mitigation_strategies),
-                        analysis.resolution_status,
-                    ),
-                )
-                conn.commit()
+                (
+                    analysis.failure_id,
+                    analysis.failure_type,
+                    analysis.frequency,
+                    analysis.impact_level,
+                    analysis.root_cause,
+                    json.dumps(analysis.suggested_fixes),
+                    analysis.pattern_signature,
+                    json.dumps(analysis.affected_components),
+                    json.dumps(analysis.mitigation_strategies),
+                    analysis.resolution_status,
+                ),
+            )
+            conn.commit()
 
     def get_learning_records(self, task_type: str | None = None, success: bool | None = None, limit: int = 1000) -> list[LearningRecord]:
         """Get learning records from database."""
@@ -349,7 +346,7 @@ class AILearningDatabase:
 class PatternEvolutionEngine:
     """Engine for evolving AI patterns based on learning."""
 
-    def __init__(self, database: AILearningDatabase):
+    def __init__(self, database: AILearningDatabase) -> None:
         """Initialize the pattern evolution engine.
 
         Args:
@@ -630,7 +627,7 @@ class PatternEvolutionEngine:
 
         return insights
 
-    def _update_pattern_cache(self):
+    def _update_pattern_cache(self) -> None:
         """Update pattern cache with latest rules."""
         self.pattern_cache.clear()
         all_rules = self.database.get_pattern_rules()
@@ -737,7 +734,7 @@ class PatternEvolutionEngine:
 class FailureAnalysisEngine:
     """Engine for analyzing and learning from failures."""
 
-    def __init__(self, database: AILearningDatabase):
+    def __init__(self, database: AILearningDatabase) -> None:
         """Initialize the failure analysis engine.
 
         Args:
@@ -911,8 +908,8 @@ class FailureAnalysisEngine:
     def _generate_pattern_signature(self, records: list[LearningRecord]) -> str:
         """Generate unique signature for failure pattern."""
         # Create signature based on task types, error messages, and contexts
-        task_types = sorted(set(r.task_type for r in records))
-        error_types = sorted(set(self._extract_error_type(r.error_message) for r in records if r.error_message))
+        task_types = sorted({r.task_type for r in records})
+        error_types = sorted({self._extract_error_type(r.error_message) for r in records if r.error_message})
 
         signature_parts = [
             f"tasks:{','.join(task_types)}",
@@ -943,7 +940,7 @@ class FailureAnalysisEngine:
                     "Implement async processing for long operations",
                     "Add progress tracking and cancellation support",
                     "Optimize algorithm performance",
-                ]
+                ],
             )
 
         elif "memory" in failure_type:
@@ -953,7 +950,7 @@ class FailureAnalysisEngine:
                     "Add garbage collection triggers",
                     "Use streaming for large data processing",
                     "Implement memory cleanup in error paths",
-                ]
+                ],
             )
 
         elif "connection" in failure_type:
@@ -963,7 +960,7 @@ class FailureAnalysisEngine:
                     "Implement connection pooling",
                     "Add network connectivity checks",
                     "Use exponential backoff for retries",
-                ]
+                ],
             )
 
         elif "permission" in failure_type:
@@ -973,7 +970,7 @@ class FailureAnalysisEngine:
                     "Implement graceful permission error handling",
                     "Add user guidance for permission issues",
                     "Use fallback methods when permissions limited",
-                ]
+                ],
             )
 
         else:
@@ -983,7 +980,7 @@ class FailureAnalysisEngine:
                     "Implement input validation",
                     "Add logging for debugging",
                     "Create fallback mechanisms",
-                ]
+                ],
             )
 
         return fixes
@@ -1022,7 +1019,7 @@ class FailureAnalysisEngine:
                 failed_patterns.append(record.context.get("strategy", "unknown"))
 
         logger.debug(
-            f"Analyzed {len(records)} records for {failure_type}: {len(successful_patterns)} successful, {len(failed_patterns)} failed patterns"
+            f"Analyzed {len(records)} records for {failure_type}: {len(successful_patterns)} successful, {len(failed_patterns)} failed patterns",
         )
 
         # Add type-specific strategies based on failure_type
@@ -1032,7 +1029,7 @@ class FailureAnalysisEngine:
                     "Increase timeout thresholds",
                     "Implement asynchronous processing",
                     "Add progress monitoring",
-                ]
+                ],
             )
         elif "memory" in failure_type.lower():
             strategies.extend(
@@ -1040,7 +1037,7 @@ class FailureAnalysisEngine:
                     "Implement memory optimization",
                     "Add garbage collection triggers",
                     "Use streaming processing",
-                ]
+                ],
             )
         elif "network" in failure_type.lower():
             strategies.extend(
@@ -1048,7 +1045,7 @@ class FailureAnalysisEngine:
                     "Add retry mechanisms",
                     "Implement connection pooling",
                     "Add network error handling",
-                ]
+                ],
             )
 
         strategies.extend(
@@ -1057,7 +1054,7 @@ class FailureAnalysisEngine:
                 "Add automated failure detection",
                 "Create fallback mechanisms",
                 "Implement graceful degradation",
-            ]
+            ],
         )
 
         if len(records) >= 20:
@@ -1094,7 +1091,7 @@ class FailureAnalysisEngine:
                 "Enhance monitoring and alerting",
                 "Create automated recovery procedures",
                 "Develop comprehensive testing strategies",
-            ]
+            ],
         )
 
         return strategies
@@ -1103,7 +1100,7 @@ class FailureAnalysisEngine:
 class AILearningEngine:
     """Run AI learning and evolution engine."""
 
-    def __init__(self, db_path: Path | None = None):
+    def __init__(self, db_path: Path | None = None) -> None:
         """Initialize the AI learning engine.
 
         Args:
@@ -1130,7 +1127,7 @@ class AILearningEngine:
 
         logger.info("AI Learning Engine initialized")
 
-    def _init_ml_models(self):
+    def _init_ml_models(self) -> None:
         """Initialize machine learning models for pattern recognition and prediction."""
         try:
             from sklearn.ensemble import IsolationForest, RandomForestClassifier
@@ -1237,14 +1234,14 @@ class AILearningEngine:
         time_since_last = datetime.now() - self.last_evolution
         return time_since_last.total_seconds() >= self.auto_evolution_interval
 
-    def _trigger_background_evolution(self):
+    def _trigger_background_evolution(self) -> None:
         """Trigger background evolution process."""
         # Skip thread creation during testing
         if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
             logger.info("Skipping background evolution (testing mode)")
             return
 
-        def evolution_worker():
+        def evolution_worker() -> None:
             try:
                 self.evolve_patterns()
                 self.analyze_failures()
@@ -1334,7 +1331,7 @@ class AILearningEngine:
             metadata=metadata,
         )
 
-    def learn(self, min_samples: int = 50):
+    def learn(self, min_samples: int = 50) -> None:
         """Perform actual machine learning based on collected data.
 
         Args:
@@ -1373,7 +1370,7 @@ class AILearningEngine:
                             "technique": record["exploit_data"].get("technique"),
                             "target_type": record["exploit_data"].get("target_type"),
                             "timestamp": record["timestamp"],
-                        }
+                        },
                     )
 
             if len(features) < min_samples:
@@ -1553,7 +1550,7 @@ class AILearningEngine:
 
         return vector
 
-    def _discover_patterns(self, X: np.ndarray, y: np.ndarray, metadata: list[dict]):
+    def _discover_patterns(self, X: np.ndarray, y: np.ndarray, metadata: list[dict]) -> None:
         """Discover new patterns from trained models.
 
         Args:

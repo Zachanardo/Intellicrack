@@ -71,8 +71,8 @@ class R2SessionWrapper:
         flags: Optional[list[str]] = None,
         timeout: float = 30.0,
         auto_analyze: bool = True,
-        analysis_level: str = "aaa"
-    ):
+        analysis_level: str = "aaa",
+    ) -> None:
         """Initialize session wrapper.
 
         Args:
@@ -136,7 +136,7 @@ class R2SessionWrapper:
                 self.metrics.errors_count += 1
                 return False
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         """Close the session connection."""
         with self._lock:
             if self.r2 is not None:
@@ -282,8 +282,8 @@ class R2SessionPool:
         session_timeout: float = 30.0,
         auto_analyze: bool = True,
         analysis_level: str = "aaa",
-        cleanup_interval: float = 60.0
-    ):
+        cleanup_interval: float = 60.0,
+    ) -> None:
         """Initialize session pool.
 
         Args:
@@ -347,7 +347,7 @@ class R2SessionPool:
         self,
         binary_path: str,
         flags: Optional[list[str]] = None,
-        timeout: Optional[float] = None
+        timeout: Optional[float] = None,
     ) -> R2SessionWrapper:
         """Get or create a session from the pool.
 
@@ -399,7 +399,7 @@ class R2SessionPool:
                 flags=flags,
                 timeout=timeout or self.session_timeout,
                 auto_analyze=self.auto_analyze,
-                analysis_level=self.analysis_level
+                analysis_level=self.analysis_level,
             )
 
             if not session.connect():
@@ -411,7 +411,7 @@ class R2SessionPool:
             logger.info(f"Created new session {session_id} for {binary_path}")
             return session
 
-    def return_session(self, session: R2SessionWrapper):
+    def return_session(self, session: R2SessionWrapper) -> None:
         """Return a session to the pool.
 
         Args:
@@ -432,7 +432,7 @@ class R2SessionPool:
                 logger.warning(f"Session {session.session_id} not alive, removing from pool")
                 self._remove_session(session.session_id)
 
-    def _remove_session(self, session_id: str):
+    def _remove_session(self, session_id: str) -> None:
         """Remove session from pool.
 
         Args:
@@ -446,7 +446,7 @@ class R2SessionPool:
                 del self._sessions[session_id]
                 logger.debug(f"Removed session {session_id} from pool")
 
-    def _cleanup_idle_sessions(self, force: bool = False):
+    def _cleanup_idle_sessions(self, force: bool = False) -> None:
         """Clean up idle sessions.
 
         Args:
@@ -463,7 +463,7 @@ class R2SessionPool:
             if force and not sessions_to_remove and self._sessions:
                 oldest_session = min(
                     self._sessions.values(),
-                    key=lambda s: s.last_used
+                    key=lambda s: s.last_used,
                 )
                 sessions_to_remove.append(oldest_session.session_id)
 
@@ -473,7 +473,7 @@ class R2SessionPool:
             if sessions_to_remove:
                 logger.info(f"Cleaned up {len(sessions_to_remove)} idle sessions")
 
-    def _cleanup_loop(self):
+    def _cleanup_loop(self) -> None:
         """Background cleanup thread."""
         logger.info("Session pool cleanup thread started")
 
@@ -487,18 +487,18 @@ class R2SessionPool:
 
         logger.info("Session pool cleanup thread stopped")
 
-    def _start_cleanup_thread(self):
+    def _start_cleanup_thread(self) -> None:
         """Start the cleanup thread."""
         if self._cleanup_thread is None or not self._cleanup_thread.is_alive():
             self._stop_cleanup.clear()
             self._cleanup_thread = threading.Thread(
                 target=self._cleanup_loop,
                 daemon=True,
-                name="R2SessionPoolCleanup"
+                name="R2SessionPoolCleanup",
             )
             self._cleanup_thread.start()
 
-    def close_all(self):
+    def close_all(self) -> None:
         """Close all sessions in the pool."""
         with self._lock:
             logger.info(f"Closing all {len(self._sessions)} sessions in pool")
@@ -508,7 +508,7 @@ class R2SessionPool:
 
             self._available_sessions.clear()
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown the session pool."""
         logger.info("Shutting down session pool")
         self._stop_cleanup.set()
@@ -569,7 +569,7 @@ class R2SessionPool:
         self,
         binary_path: str,
         flags: Optional[list[str]] = None,
-        timeout: Optional[float] = None
+        timeout: Optional[float] = None,
     ):
         """Context manager for session pooling.
 
@@ -599,7 +599,7 @@ def get_global_pool(
     max_sessions: int = 10,
     max_idle_time: float = 300.0,
     auto_analyze: bool = True,
-    analysis_level: str = "aaa"
+    analysis_level: str = "aaa",
 ) -> R2SessionPool:
     """Get or create the global session pool.
 
@@ -621,7 +621,7 @@ def get_global_pool(
                 max_sessions=max_sessions,
                 max_idle_time=max_idle_time,
                 auto_analyze=auto_analyze,
-                analysis_level=analysis_level
+                analysis_level=analysis_level,
             )
 
         return _global_pool
@@ -632,7 +632,7 @@ def r2_session_pooled(
     binary_path: str,
     flags: Optional[list[str]] = None,
     timeout: Optional[float] = None,
-    pool: Optional[R2SessionPool] = None
+    pool: Optional[R2SessionPool] = None,
 ):
     """Context manager for pooled r2pipe sessions.
 
@@ -652,7 +652,7 @@ def r2_session_pooled(
         yield session
 
 
-def shutdown_global_pool():
+def shutdown_global_pool() -> None:
     """Shutdown the global session pool."""
     global _global_pool
 

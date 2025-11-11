@@ -45,7 +45,7 @@ class SplashScreen(QSplashScreen):
 
     progress_updated = pyqtSignal(int, str)
 
-    def __init__(self, pixmap_path: str | None = None):
+    def __init__(self, pixmap_path: str | None = None) -> None:
         """Initialize the splash screen.
 
         Args:
@@ -96,13 +96,13 @@ class SplashScreen(QSplashScreen):
         # Set window flags
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint)
 
-    def update_progress(self, value: int, message: str):
+    def update_progress(self, value: int, message: str) -> None:
         """Update progress bar and status message."""
         self.progress_bar.setValue(value)
         self.status_label.setText(message)
         QApplication.processEvents()
 
-    def set_progress(self, value: int, message: str = ""):
+    def set_progress(self, value: int, message: str = "") -> None:
         """Set progress value and optional message."""
         self.progress_updated.emit(value, message)
 

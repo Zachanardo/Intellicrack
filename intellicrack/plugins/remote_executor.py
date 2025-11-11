@@ -28,7 +28,7 @@ import tempfile
 import threading
 from typing import Any
 
-from intellicrack.utils.logger import logger
+from intellicrack.utils.logger import log_all_methods, logger
 from intellicrack.utils.service_utils import get_service_url
 
 from ..utils.secrets_manager import get_secret
@@ -58,6 +58,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 __all__ = ["RemotePluginExecutor"]
 
 
+@log_all_methods
 class RemotePluginExecutor:
     """Execute plugins on remote systems.
 
@@ -65,7 +66,7 @@ class RemotePluginExecutor:
     and network communication for distributed analysis tasks.
     """
 
-    def __init__(self, remote_host: str | None = None, remote_port: int | None = None):
+    def __init__(self, remote_host: str | None = None, remote_port: int | None = None) -> None:
         """Initialize the remote plugin executor.
 
         Args:
@@ -100,7 +101,7 @@ class RemotePluginExecutor:
                 store_secret("INTELLICRACK_REMOTE_SECRET", secret)
                 self.logger.info("Generated and stored new secure remote execution secret")
             except Exception as e:
-                self.logger.warning(f"Could not store generated secret: {e}")
+                logger.warning(f"Could not store generated secret: {e}")
         self.shared_secret = secret.encode()
 
     def _serialize_safe(self, data: Any) -> str:
@@ -151,7 +152,7 @@ class RemotePluginExecutor:
         try:
             return json.loads(decoded.decode("utf-8"))
         except (json.JSONDecodeError, UnicodeDecodeError) as e:
-            self.logger.error(f"Failed to deserialize as JSON: {e}")
+            logger.exception(f"Failed to deserialize as JSON: {e}")
             raise ValueError("Invalid JSON data") from e
 
     def execute_plugin(self, plugin_path: str, method_name: str, *args, **kwargs) -> list[str]:
@@ -225,24 +226,24 @@ class RemotePluginExecutor:
                     results = self._deserialize_safe(encoded_results, expected_type=serialization_type)
                     return results
                 except Exception as e:
-                    self.logger.error("Failed to deserialize results: %s", e)
+                    logger.exception("Failed to deserialize results: %s", e)
                     return [f"Deserialization error: {e}"]
             else:
                 error = response_data.get("error", "Unknown error")
-                self.logger.error("Remote execution error: %s", error)
+                logger.exception("Remote execution error: %s", error)
                 return [f"Remote execution error: {error}"]
 
         except ConnectionError as e:
             error_msg = f"Connection error: {e}"
-            self.logger.error(error_msg)
+            logger.exception(error_msg)
             return [error_msg]
         except TimeoutError:
             error_msg = "Connection timeout"
-            self.logger.error(error_msg)
+            logger.exception(error_msg)
             return [error_msg]
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error executing remote plugin: {e}"
-            self.logger.error(error_msg)
+            logger.exception(error_msg)
             return [error_msg]
 
     @staticmethod
@@ -288,7 +289,7 @@ class RemotePluginExecutor:
                     # Get shared secret
                     secret = get_secret("INTELLICRACK_REMOTE_SECRET", None)
                     if not secret:
-                        logger.error("No remote execution secret configured - rejecting request")
+                        logger.exception("No remote execution secret configured - rejecting request")
                         response = {"status": "error", "error": "Server not configured"}
                         client_socket.sendall(json.dumps(response).encode("utf-8") + b"\n")
                         return
@@ -299,7 +300,7 @@ class RemotePluginExecutor:
                     expected_sig = hmac.new(shared_secret, request_json.encode("utf-8"), hashlib.sha256).hexdigest()
 
                     if not hmac.compare_digest(signature, expected_sig):
-                        logger.error("Invalid HMAC signature in request")
+                        logger.exception("Invalid HMAC signature in request")
                         response = {"status": "error", "error": "Authentication failed"}
                         client_socket.sendall(json.dumps(response).encode("utf-8") + b"\n")
                         return
@@ -315,7 +316,7 @@ class RemotePluginExecutor:
                     args = executor._deserialize_safe(request.get("args", ""), expected_type=serialization_type)
                     kwargs = executor._deserialize_safe(request.get("kwargs", ""), expected_type=serialization_type)
                 except Exception as e:
-                    logger.error("Failed to deserialize arguments: %s", e)
+                    logger.exception("Failed to deserialize arguments: %s", e)
                     response = {"status": "error", "error": f"Deserialization failed: {e}"}
                     client_socket.sendall(json.dumps(response).encode("utf-8") + b"\n")
                     return
@@ -360,7 +361,7 @@ class RemotePluginExecutor:
 
                 except (OSError, ValueError, RuntimeError) as e:
                     # Create error response
-                    logger.error("Plugin execution error: %s", e)
+                    logger.exception("Plugin execution error: %s", e)
                     response = {
                         "status": "error",
                         "error": str(e),
@@ -371,7 +372,7 @@ class RemotePluginExecutor:
                     try:
                         os.unlink(plugin_path)
                     except OSError as e:
-                        logger.error("OS error in remote_executor: %s", e)
+                        logger.exception("OS error in remote_executor: %s", e)
 
                     # Remove plugin path from sys.path
                     plugin_dir = os.path.dirname(plugin_path)
@@ -383,7 +384,7 @@ class RemotePluginExecutor:
                 client_socket.sendall(response_data)
 
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error handling client: %s", e)
+                logger.exception("Error handling client: %s", e)
 
                 # Send error response
                 try:
@@ -394,14 +395,14 @@ class RemotePluginExecutor:
                     response_data = json.dumps(response).encode("utf-8") + b"\n"
                     client_socket.sendall(response_data)
                 except (OSError, ValueError, RuntimeError) as e:
-                    logger.error("Error in remote_executor: %s", e)
+                    logger.exception("Error in remote_executor: %s", e)
                     # Client may have disconnected
 
             finally:
                 try:
                     client_socket.close()
                 except (OSError, ValueError, RuntimeError) as e:
-                    logger.error("Error in remote_executor: %s", e)
+                    logger.exception("Error in remote_executor: %s", e)
 
         # Get configuration if not provided
         if host is None or port is None:
@@ -440,15 +441,15 @@ class RemotePluginExecutor:
                     logger.info("Server shutting down")
                     break
                 except (OSError, ValueError, RuntimeError) as e:
-                    logger.error("Error accepting connection: %s", e)
+                    logger.exception("Error accepting connection: %s", e)
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Server error: %s", e)
+            logger.exception("Server error: %s", e)
         finally:
             try:
                 server_socket.close()
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in remote_executor: %s", e)
+                logger.exception("Error in remote_executor: %s", e)
 
     def test_connection(self) -> bool:
         """Test connection to the remote server.
@@ -463,7 +464,7 @@ class RemotePluginExecutor:
                 s.connect((self.remote_host, self.remote_port))
                 return True
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Connection test failed: %s", e)
+            logger.exception("Connection test failed: %s", e)
             return False
 
 

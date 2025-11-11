@@ -7,5 +7,5 @@ __all__ = [
     'ServiceInfo',
     'ServiceState',
     'ServiceType',
-    'ServiceStartType'
+    'ServiceStartType',
 ]

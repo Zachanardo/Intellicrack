@@ -304,7 +304,7 @@ class DetectionReport:
             List of unique API names
 
         """
-        return list(set(func.api_name for func in self.validation_functions))
+        return list({func.api_name for func in self.validation_functions})
 
     def get_unique_libraries(self) -> List[str]:
         """Get list of unique libraries containing validation functions.
@@ -313,4 +313,4 @@ class DetectionReport:
             List of unique library names
 
         """
-        return list(set(func.library for func in self.validation_functions))
+        return list({func.library for func in self.validation_functions})

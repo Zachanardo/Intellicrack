@@ -28,7 +28,7 @@ class IntellicrackError(Exception):
 class ConfigurationError(IntellicrackError):
     """Raised when configuration is missing, invalid, or incomplete."""
 
-    def __init__(self, message: str, service_name: str | None = None, config_key: str | None = None):
+    def __init__(self, message: str, service_name: str | None = None, config_key: str | None = None) -> None:
         """Initialize configuration error.
 
         Args:
@@ -45,7 +45,7 @@ class ConfigurationError(IntellicrackError):
 class ServiceUnavailableError(IntellicrackError):
     """Raised when a required service is unavailable."""
 
-    def __init__(self, message: str, service_name: str, url: str | None = None):
+    def __init__(self, message: str, service_name: str, url: str | None = None) -> None:
         """Initialize service unavailable error.
 
         Args:
@@ -62,7 +62,7 @@ class ServiceUnavailableError(IntellicrackError):
 class ToolNotFoundError(IntellicrackError):
     """Raised when a required tool is not found or configured."""
 
-    def __init__(self, message: str, tool_name: str, search_paths: list[str] | None = None):
+    def __init__(self, message: str, tool_name: str, search_paths: list[str] | None = None) -> None:
         """Initialize tool not found error.
 
         Args:
@@ -79,7 +79,7 @@ class ToolNotFoundError(IntellicrackError):
 class ValidationError(IntellicrackError):
     """Raised when data validation fails."""
 
-    def __init__(self, message: str, field_name: str | None = None, value: str | None = None):
+    def __init__(self, message: str, field_name: str | None = None, value: str | None = None) -> None:
         """Initialize validation error.
 
         Args:
@@ -102,7 +102,7 @@ class SecurityError(IntellicrackError):
 class AnalysisError(IntellicrackError):
     """Raised when binary analysis fails."""
 
-    def __init__(self, message: str, binary_path: str | None = None, analysis_type: str | None = None):
+    def __init__(self, message: str, binary_path: str | None = None, analysis_type: str | None = None) -> None:
         """Initialize analysis error.
 
         Args:
@@ -119,7 +119,7 @@ class AnalysisError(IntellicrackError):
 class ExploitationError(IntellicrackError):
     """Raised when exploitation operations fail."""
 
-    def __init__(self, message: str, target: str | None = None, technique: str | None = None):
+    def __init__(self, message: str, target: str | None = None, technique: str | None = None) -> None:
         """Initialize exploitation error.
 
         Args:
@@ -136,7 +136,7 @@ class ExploitationError(IntellicrackError):
 class NetworkError(IntellicrackError):
     """Raised when network operations fail."""
 
-    def __init__(self, message: str, host: str | None = None, port: int | None = None):
+    def __init__(self, message: str, host: str | None = None, port: int | None = None) -> None:
         """Initialize network error.
 
         Args:

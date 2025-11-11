@@ -175,7 +175,7 @@ class DenuvoAnalyzer:
         b"\xFF\x15\x00\x00\x00\x00\x85\xC0\x75",
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize Denuvo analyzer."""
         self.md = None
         if CAPSTONE_AVAILABLE:
@@ -261,7 +261,7 @@ class DenuvoAnalyzer:
                 detected = False
 
             bypass_recommendations = self._generate_bypass_recommendations(
-                version, triggers, integrity_checks, timing_checks, vm_regions
+                version, triggers, integrity_checks, timing_checks, vm_regions,
             )
 
             return DenuvoAnalysisResult(
@@ -504,7 +504,7 @@ class DenuvoAnalyzer:
                         address = section.virtual_address + pos
 
                         check_type, algorithm = self._identify_integrity_algorithm(
-                            content[pos:pos+50] if pos+50 < len(content) else content[pos:]
+                            content[pos:pos+50] if pos+50 < len(content) else content[pos:],
                         )
 
                         integrity_checks.append(IntegrityCheck(
@@ -558,7 +558,7 @@ class DenuvoAnalyzer:
                         address = section.virtual_address + pos
 
                         method = self._identify_timing_method(
-                            content[pos:pos+30] if pos+30 < len(content) else content[pos:]
+                            content[pos:pos+30] if pos+30 < len(content) else content[pos:],
                         )
 
                         timing_checks.append(TimingCheck(
@@ -611,7 +611,7 @@ class DenuvoAnalyzer:
                         address = section.virtual_address + pos
 
                         trigger_type, description = self._identify_trigger_type(
-                            content[pos:pos+40] if pos+40 < len(content) else content[pos:]
+                            content[pos:pos+40] if pos+40 < len(content) else content[pos:],
                         )
 
                         triggers.append(DenuvoTrigger(
@@ -804,58 +804,58 @@ class DenuvoAnalyzer:
         if version:
             if version.major >= 7:
                 recommendations.append(
-                    "Denuvo 7.x+ detected - Consider VM devirtualization approach"
+                    "Denuvo 7.x+ detected - Consider VM devirtualization approach",
                 )
                 recommendations.append(
-                    "Use Scylla Hide or similar anti-anti-debugging tools"
+                    "Use Scylla Hide or similar anti-anti-debugging tools",
                 )
             elif version.major >= 5:
                 recommendations.append(
-                    "Denuvo 5.x/6.x detected - Focus on trigger point analysis"
+                    "Denuvo 5.x/6.x detected - Focus on trigger point analysis",
                 )
                 recommendations.append(
-                    "Monitor activation server communication for offline bypass"
+                    "Monitor activation server communication for offline bypass",
                 )
             else:
                 recommendations.append(
-                    "Denuvo 4.x detected - Older version, more susceptible to patching"
+                    "Denuvo 4.x detected - Older version, more susceptible to patching",
                 )
 
         if triggers:
             recommendations.append(
-                f"Found {len(triggers)} activation triggers - NOP or bypass recommended"
+                f"Found {len(triggers)} activation triggers - NOP or bypass recommended",
             )
             recommendations.append(
-                "Use Frida or similar hooking framework to intercept triggers"
+                "Use Frida or similar hooking framework to intercept triggers",
             )
 
         if integrity_checks:
             recommendations.append(
-                f"Found {len(integrity_checks)} integrity checks - Patch or hook hash functions"
+                f"Found {len(integrity_checks)} integrity checks - Patch or hook hash functions",
             )
             recommendations.append(
-                "Consider memory dumping after integrity checks complete"
+                "Consider memory dumping after integrity checks complete",
             )
 
         if timing_checks:
             recommendations.append(
-                f"Found {len(timing_checks)} timing checks - Hook RDTSC and timing APIs"
+                f"Found {len(timing_checks)} timing checks - Hook RDTSC and timing APIs",
             )
             recommendations.append(
-                "Use ScyllaHide RDTSC feature or manual timing manipulation"
+                "Use ScyllaHide RDTSC feature or manual timing manipulation",
             )
 
         if vm_regions:
             recommendations.append(
-                f"Found {len(vm_regions)} VM-protected regions - Devirtualization required"
+                f"Found {len(vm_regions)} VM-protected regions - Devirtualization required",
             )
             recommendations.append(
-                "Consider VMProtect devirtualization tools adapted for Denuvo"
+                "Consider VMProtect devirtualization tools adapted for Denuvo",
             )
 
         if not recommendations:
             recommendations.append(
-                "Advanced analysis required - Consider manual reversing with IDA/Ghidra"
+                "Advanced analysis required - Consider manual reversing with IDA/Ghidra",
             )
 
         return recommendations

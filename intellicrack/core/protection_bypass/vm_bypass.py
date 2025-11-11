@@ -43,7 +43,7 @@ class VirtualizationDetectionBypass:
     - Timing attack mitigation
     """
 
-    def __init__(self, app: Any | None = None):
+    def __init__(self, app: Any | None = None) -> None:
         """Initialize the virtualization detection bypass engine.
 
         Args:
@@ -234,7 +234,7 @@ class VirtualizationDetectionBypass:
                 "type": "frida",
                 "script": frida_script,
                 "target": "VM Detection APIs",
-            }
+            },
         )
         self.logger.info("VM detection API hooks installed")
 
@@ -274,7 +274,7 @@ class VirtualizationDetectionBypass:
                             "offset": offset,
                             "original": pattern,
                             "patch": patch,
-                        }
+                        },
                     )
                     patches_applied += 1
                     offset = binary_data.find(pattern, offset + 1)
@@ -413,7 +413,7 @@ class VirtualizationDetectionBypass:
                         "type": "frida",
                         "script": hide_process_script,
                         "target": "Process Hiding",
-                    }
+                    },
                 )
 
             # Hide VM files
@@ -557,7 +557,7 @@ class VirtualizationDetectionBypass:
                         "type": "frida",
                         "script": wmi_hook_script,
                         "target": "WMI Modification",
-                    }
+                    },
                 )
 
             return modifications_applied > 0
@@ -662,7 +662,7 @@ class VirtualizationDetectionBypass:
                 "type": "frida",
                 "script": timing_script,
                 "target": "Timing Functions",
-            }
+            },
         )
 
     def generate_bypass_script(self) -> str:
@@ -721,7 +721,7 @@ def bypass_vm_detection(app: Any) -> dict[str, Any]:
 class VMDetector:
     """Detect if running inside a virtual machine or container."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize VM detector."""
         self.logger = logging.getLogger("IntellicrackLogger.VMDetector")
         self.vm_indicators = []
@@ -765,7 +765,7 @@ class VMDetector:
             if platform.system() == "Windows":
                 wmic_path = shutil.which("wmic")
                 if wmic_path:
-                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                         [wmic_path, "cpu", "get", "name"],
                         capture_output=True,
                         text=True,
@@ -814,7 +814,7 @@ class VMDetector:
             import subprocess
 
             if platform.system() == "Windows":
-                result = subprocess.run(["getmac"], capture_output=True, text=True, check=False)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
+                result = subprocess.run(["getmac"], capture_output=True, text=True, check=False)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis
                 for prefix in vm_mac_prefixes:
                     if prefix.lower() in result.stdout.lower():
                         indicators.append(f"VM MAC prefix detected: {prefix}")
@@ -877,20 +877,20 @@ class VMDetector:
                         "Spoof MAC address ranges",
                         "Hide VMware services and processes",
                         "Modify registry keys related to VMware",
-                    ]
+                    ],
                 )
                 registry_modifications.extend(
                     [
                         "HKLM\\SOFTWARE\\VMware, Inc.\\VMware Tools",
                         "HKLM\\SYSTEM\\ControlSet001\\Services\\vmware*",
-                    ]
+                    ],
                 )
                 file_operations.extend(
                     [
                         "Rename vmware*.dll files",
                         "Hide VMware driver files",
                         "Spoof system BIOS information",
-                    ]
+                    ],
                 )
 
             elif "virtualbox" in vm_type_lower or "vbox" in vm_type_lower:
@@ -900,20 +900,20 @@ class VMDetector:
                         "Spoof VBox hardware identifiers",
                         "Hide VBoxService processes",
                         "Modify VirtualBox registry entries",
-                    ]
+                    ],
                 )
                 registry_modifications.extend(
                     [
                         "HKLM\\SOFTWARE\\Oracle\\VirtualBox",
                         "HKLM\\SYSTEM\\ControlSet001\\Services\\VBox*",
-                    ]
+                    ],
                 )
                 file_operations.extend(
                     [
                         "Hide VBox*.dll files",
                         "Spoof mouse and video drivers",
                         "Modify hardware device names",
-                    ]
+                    ],
                 )
 
             elif "qemu" in vm_type_lower:
@@ -923,7 +923,7 @@ class VMDetector:
                         "Hide QEMU processes and services",
                         "Modify ACPI and DMI information",
                         "Hook QEMU-specific instructions",
-                    ]
+                    ],
                 )
 
             else:
@@ -934,7 +934,7 @@ class VMDetector:
                         "Spoof CPU and motherboard information",
                         "Hide VM-related processes and services",
                         "Modify system timing characteristics",
-                    ]
+                    ],
                 )
 
             # Generate implementation script
@@ -1002,7 +1002,7 @@ class VMDetector:
                 [
                     "    # Technique-specific bypass implementations",
                     "    try:",
-                ]
+                ],
             )
             for technique in techniques[:5]:  # Limit to first 5 techniques
                 if "timing" in technique.lower():
@@ -1011,28 +1011,28 @@ class VMDetector:
                             "        # Timing-based bypass",
                             "        import time",
                             "        time.sleep(0.1)  # Add delay to confuse timing checks",
-                        ]
+                        ],
                     )
                 elif "process" in technique.lower():
                     script_lines.extend(
                         [
                             "        # Process-based bypass",
                             "        # Hide suspicious processes from detection",
-                        ]
+                        ],
                     )
                 elif "memory" in technique.lower():
                     script_lines.extend(
                         [
                             "        # Memory-based bypass",
                             "        # Modify memory patterns that VMs look for",
-                        ]
+                        ],
                     )
                 elif "hardware" in technique.lower():
                     script_lines.extend(
                         [
                             "        # Hardware-based bypass",
                             "        # Spoof hardware identifiers",
-                        ]
+                        ],
                     )
                 else:
                     script_lines.append(f"        # Apply {technique} bypass technique")
@@ -1041,7 +1041,7 @@ class VMDetector:
                     "    except Exception as e:",
                     "        print(f'Technique implementation failed: {e}')",
                     "",
-                ]
+                ],
             )
 
         # Add registry modifications
@@ -1050,7 +1050,7 @@ class VMDetector:
                 [
                     "    # Registry modifications",
                     "    try:",
-                ]
+                ],
             )
             for reg_key in registry_mods[:3]:  # Limit to first 3 for safety
                 script_lines.append(f"        # Hide/modify {reg_key}")
@@ -1060,7 +1060,7 @@ class VMDetector:
                     "    except Exception as e:",
                     "        print(f'Registry modification failed: {e}')",
                     "",
-                ]
+                ],
             )
 
         # Add file operations
@@ -1069,7 +1069,7 @@ class VMDetector:
                 [
                     "    # File system modifications",
                     "    try:",
-                ]
+                ],
             )
             for file_op in file_ops[:3]:  # Limit for safety
                 script_lines.append(f"        # {file_op}")
@@ -1078,7 +1078,7 @@ class VMDetector:
                     "    except Exception as e:",
                     "        print(f'File operation failed: {e}')",
                     "",
-                ]
+                ],
             )
 
         script_lines.extend(
@@ -1087,7 +1087,7 @@ class VMDetector:
                 "",
                 "if __name__ == '__main__':",
                 "    apply_vm_bypass()",
-            ]
+            ],
         )
 
         return "\n".join(script_lines)
@@ -1111,7 +1111,7 @@ class VMDetector:
 class VirtualizationAnalyzer:
     """Analyzes virtualization usage in applications."""
 
-    def __init__(self, binary_path: str | None = None):
+    def __init__(self, binary_path: str | None = None) -> None:
         """Initialize virtualization analyzer."""
         self.binary_path = binary_path
         self.logger = logging.getLogger("IntellicrackLogger.VirtualizationAnalyzer")

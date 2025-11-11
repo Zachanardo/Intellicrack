@@ -56,7 +56,7 @@ class BinaryContextBuilder:
     to provide rich context for AI analysis.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the binary context builder."""
 
     def build_context(
@@ -176,7 +176,7 @@ class BinaryContextBuilder:
                     "size": len(block),
                     "entropy": entropy,
                     "high_entropy": entropy > 7.0,
-                }
+                },
             )
 
         return segments
@@ -205,7 +205,7 @@ class BinaryContextBuilder:
                         "size": len(match.group(0)),
                         "value": string_value,
                         "encoding": "ASCII",
-                    }
+                    },
                 )
             except (UnicodeDecodeError, ValueError) as e:
                 logger.error("Error in ai_bridge: %s", e)
@@ -238,7 +238,7 @@ class BinaryContextBuilder:
                                     "size": len(utf16_chars) * 2,
                                     "value": string_value,
                                     "encoding": "UTF-16LE",
-                                }
+                                },
                             )
                         except (ValueError, OverflowError) as e:
                             logger.error("Error in ai_bridge: %s", e)
@@ -254,7 +254,7 @@ class BinaryContextBuilder:
                                     "size": len(utf16_chars) * 2,
                                     "value": string_value,
                                     "encoding": "UTF-16LE",
-                                }
+                                },
                             )
                         except (ValueError, OverflowError) as e:
                             logger.error("Error in ai_bridge: %s", e)
@@ -300,7 +300,7 @@ class BinaryContextBuilder:
                         "type": "file_signature",
                         "value": signature.hex(),
                         "description": file_type,
-                    }
+                    },
                 )
                 break
 
@@ -319,7 +319,7 @@ class BinaryContextBuilder:
                             "size": 2,
                             "value": length_16,
                             "description": f"Possible 16-bit length prefix ({length_16} bytes)",
-                        }
+                        },
                     )
 
             if i + 4 < len(data):
@@ -332,7 +332,7 @@ class BinaryContextBuilder:
                             "size": 4,
                             "value": length_32,
                             "description": f"Possible 32-bit length prefix ({length_32} bytes)",
-                        }
+                        },
                     )
 
         # Check for potential arrays/tables
@@ -380,7 +380,7 @@ class BinaryContextBuilder:
                             "total_size": pattern_len * repeat_count,
                             "pattern": pattern.hex(),
                             "description": f"Repeating pattern of {pattern_len} bytes, repeated {repeat_count} times",
-                        }
+                        },
                     )
 
                     # Skip ahead
@@ -471,7 +471,7 @@ class AIBinaryBridge:
     including pattern recognition, anomaly detection, and edit suggestions.
     """
 
-    def __init__(self, model_manager=None):
+    def __init__(self, model_manager=None) -> None:
         """Initialize the AI binary bridge.
 
         Args:
@@ -549,13 +549,13 @@ class AIBinaryBridge:
                             "data_meaning": "Analysis not available",
                             "anomalies": [],
                             "summary": "Real-time analysis unavailable",
-                        }
+                        },
                     )
                 )
             except Exception as e:
                 logger.warning("LLM analysis failed: %s - using fallback", e)
                 response = json.dumps(
-                    {"patterns": [], "data_meaning": "Analysis not available", "anomalies": [], "summary": "Real-time analysis unavailable"}
+                    {"patterns": [], "data_meaning": "Analysis not available", "anomalies": [], "summary": "Real-time analysis unavailable"},
                 )
         elif self.model_manager:
             # Legacy model manager support
@@ -563,7 +563,7 @@ class AIBinaryBridge:
         else:
             # Fallback response when no AI backend available
             response = json.dumps(
-                {"patterns": [], "data_meaning": "Analysis not available", "anomalies": [], "summary": "No AI backend configured"}
+                {"patterns": [], "data_meaning": "Analysis not available", "anomalies": [], "summary": "No AI backend configured"},
             )
 
         # Parse the response
@@ -620,7 +620,7 @@ class AIBinaryBridge:
                             "new_bytes": "",
                             "explanation": "No AI backend available",
                             "consequences": "Unknown",
-                        }
+                        },
                     )
                 )
             except Exception as e:
@@ -633,7 +633,7 @@ class AIBinaryBridge:
                         "new_bytes": "",
                         "explanation": "No AI backend available",
                         "consequences": "Unknown",
-                    }
+                    },
                 )
         elif self.model_manager:
             # Legacy model manager support
@@ -648,7 +648,7 @@ class AIBinaryBridge:
                     "new_bytes": "",
                     "explanation": "No AI backend available",
                     "consequences": "Unknown",
-                }
+                },
             )
 
         # Parse the response
@@ -717,7 +717,7 @@ class AIBinaryBridge:
         return patterns
 
     def search_binary_semantic(
-        self, binary_data: bytes, query: str, start_offset: int = 0, end_offset: int | None = None
+        self, binary_data: bytes, query: str, start_offset: int = 0, end_offset: int | None = None,
     ) -> list[dict[str, Any]]:
         """Search binary data based on semantic meaning.
 

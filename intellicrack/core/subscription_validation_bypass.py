@@ -73,7 +73,7 @@ class JWTManipulator:
     def _generate_default_rsa_keypair(self) -> tuple[Any, Any]:
         """Generate 2048-bit RSA keypair with public exponent 65537 for instance default, returning private and public key objects."""
         private_key = rsa.generate_private_key(
-            public_exponent=65537, key_size=2048, backend=default_backend()
+            public_exponent=65537, key_size=2048, backend=default_backend(),
         )
         public_key = private_key.public_key()
         return private_key, public_key
@@ -87,7 +87,7 @@ class JWTManipulator:
     def generate_rsa_keypair(self, key_size: int = 2048) -> tuple[bytes, bytes]:
         """Generate RSA keypair with configurable key size (default 2048-bit) using public exponent 65537 and return PKCS8 private key and SubjectPublicKeyInfo public key as PEM-encoded bytes."""
         private_key = rsa.generate_private_key(
-            public_exponent=65537, key_size=key_size, backend=default_backend()
+            public_exponent=65537, key_size=key_size, backend=default_backend(),
         )
         public_key = private_key.public_key()
 
@@ -134,7 +134,7 @@ class JWTManipulator:
 
         header = json.loads(base64.urlsafe_b64decode(header_data + "=" * (4 - len(header_data) % 4)))
         payload = json.loads(
-            base64.urlsafe_b64decode(payload_data + "=" * (4 - len(payload_data) % 4))
+            base64.urlsafe_b64decode(payload_data + "=" * (4 - len(payload_data) % 4)),
         )
 
         return header, payload, signature
@@ -202,7 +202,7 @@ class JWTManipulator:
         """Iterate through wordlist attempting to verify HS256 JWT signature with each candidate secret until valid signature found, returning discovered secret or None."""
         import jwt
 
-        header, payload, signature = self.parse_jwt(token)
+        _header, _payload, _signature = self.parse_jwt(token)
 
         for secret in wordlist:
             try:
@@ -217,7 +217,7 @@ class JWTManipulator:
 
     def modify_jwt_claims(self, token: str, modifications: dict[str, Any]) -> dict[str, Any]:
         """Parse JWT token, apply claim modifications from dictionary, set expiration to one year from now, update issued-at to current time, and return modified payload."""
-        header, payload, signature = self.parse_jwt(token)
+        _header, payload, _signature = self.parse_jwt(token)
 
         payload.update(modifications)
 
@@ -483,7 +483,7 @@ class APIResponseSynthesizer:
             "status": "success",
             "tier": tier.value,
             "enabled_features": features,
-            "feature_flags": {feature: True for feature in features},
+            "feature_flags": dict.fromkeys(features, True),
         }
 
     def synthesize_quota_validation(

@@ -91,7 +91,7 @@ class CorrelationCluster:
 class IntelligentCorrelationEngine:
     """Advanced correlation engine for multi-tool analysis results."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the correlation engine."""
         self.results: Dict[str, BaseResult] = {}
         self.correlations: List[Correlation] = []
@@ -197,7 +197,7 @@ class IntelligentCorrelationEngine:
             },
         }
 
-    def add_result(self, result: BaseResult):
+    def add_result(self, result: BaseResult) -> None:
         """Add analysis result to correlation engine."""
         self.results[result.id] = result
         self.correlation_graph.add_node(result.id, result=result)
@@ -205,7 +205,7 @@ class IntelligentCorrelationEngine:
         # Trigger incremental correlation
         self._correlate_with_existing(result)
 
-    def add_results_batch(self, results: List[BaseResult]):
+    def add_results_batch(self, results: List[BaseResult]) -> None:
         """Add multiple results and perform batch correlation."""
         for result in results:
             self.results[result.id] = result
@@ -214,7 +214,7 @@ class IntelligentCorrelationEngine:
         # Perform comprehensive correlation
         self._perform_comprehensive_correlation()
 
-    def _correlate_with_existing(self, new_result: BaseResult):
+    def _correlate_with_existing(self, new_result: BaseResult) -> None:
         """Correlate new result with existing results."""
         for result_id, existing_result in self.results.items():
             if result_id == new_result.id:
@@ -269,10 +269,7 @@ class IntelligentCorrelationEngine:
 
         # Check if they share common callees
         common_calls = set(func1.xrefs_from) & set(func2.xrefs_from)
-        if len(common_calls) > 2:
-            return True
-
-        return False
+        return len(common_calls) > 2
 
     def _check_string_reference(self, string: StringResult, result: BaseResult) -> bool:
         """Check if string is referenced by result."""
@@ -398,7 +395,7 @@ class IntelligentCorrelationEngine:
             description=f"Semantic similarity detected (Jaccard: {similarity:.2f})",
         )
 
-    def _perform_comprehensive_correlation(self):
+    def _perform_comprehensive_correlation(self) -> None:
         """Perform comprehensive correlation analysis on all results."""
         # Pattern-based correlation
         self._correlate_license_patterns()
@@ -411,7 +408,7 @@ class IntelligentCorrelationEngine:
         # Graph analysis
         self._analyze_correlation_graph()
 
-    def _correlate_license_patterns(self):
+    def _correlate_license_patterns(self) -> None:
         """Identify license check patterns across results."""
         for pattern_name, pattern in self.license_patterns.items():
             matching_results = []
@@ -443,7 +440,7 @@ class IntelligentCorrelationEngine:
                     for j in range(i + 1, len(matching_results)):
                         self.correlation_graph.add_edge(matching_results[i], matching_results[j], weight=0.85, correlation=correlation)
 
-    def _correlate_crypto_patterns(self):
+    def _correlate_crypto_patterns(self) -> None:
         """Identify cryptographic patterns across results."""
         for algo_name, pattern in self.crypto_patterns.items():
             matching_results = []
@@ -469,7 +466,7 @@ class IntelligentCorrelationEngine:
                 )
                 self.correlations.append(correlation)
 
-    def _correlate_protection_patterns(self):
+    def _correlate_protection_patterns(self) -> None:
         """Identify protection scheme patterns."""
         for protection_name, pattern in self.protection_patterns.items():
             matching_results = []
@@ -495,7 +492,7 @@ class IntelligentCorrelationEngine:
                 )
                 self.correlations.append(correlation)
 
-    def _perform_clustering(self):
+    def _perform_clustering(self) -> None:
         """Perform clustering analysis on correlated results."""
         if len(self.results) < self.min_cluster_size:
             return
@@ -571,7 +568,7 @@ class IntelligentCorrelationEngine:
 
         return np.array(features)
 
-    def _analyze_correlation_graph(self):
+    def _analyze_correlation_graph(self) -> None:
         """Analyze the correlation graph for patterns."""
         # Find strongly connected components
         if self.correlation_graph.number_of_nodes() > 0:
@@ -669,7 +666,7 @@ class IntelligentCorrelationEngine:
 
         return report
 
-    def export_to_json(self, output_path: str):
+    def export_to_json(self, output_path: str) -> None:
         """Export correlation analysis to JSON."""
         export_data = {
             "report": self.generate_correlation_report(),

@@ -480,7 +480,11 @@ public class ControlFlowDeobfuscator extends GhidraScript {
         Varnode target = op.getInput(0);
         if (target != null && target.isConstant()) {
           try {
-            Address addr = currentProgram.getAddressFactory().getDefaultAddressSpace().getAddress(target.getOffset());
+            Address addr =
+                currentProgram
+                    .getAddressFactory()
+                    .getDefaultAddressSpace()
+                    .getAddress(target.getOffset());
             return addr;
           } catch (Exception e) {
           }
@@ -597,7 +601,11 @@ public class ControlFlowDeobfuscator extends GhidraScript {
     try {
       Instruction inst = currentProgram.getListing().getInstructionAt(addr);
       if (inst != null) {
-        setEOLComment(addr, "OPAQUE PREDICATE - Always takes same branch (confidence: " + String.format("%.2f", pattern.confidence) + ")");
+        setEOLComment(
+            addr,
+            "OPAQUE PREDICATE - Always takes same branch (confidence: "
+                + String.format("%.2f", pattern.confidence)
+                + ")");
         patchesApplied++;
       }
     } catch (Exception e) {
@@ -607,7 +615,11 @@ public class ControlFlowDeobfuscator extends GhidraScript {
 
   private void patchDeadCode(Address addr, ControlFlowPattern pattern) {
     try {
-      setPreComment(addr, "DEAD CODE - Unreachable block (confidence: " + String.format("%.2f", pattern.confidence) + ")");
+      setPreComment(
+          addr,
+          "DEAD CODE - Unreachable block (confidence: "
+              + String.format("%.2f", pattern.confidence)
+              + ")");
       patchesApplied++;
     } catch (Exception e) {
       println("Failed to mark dead code at " + addr + ": " + e.getMessage());
@@ -637,7 +649,10 @@ public class ControlFlowDeobfuscator extends GhidraScript {
 
   private void addDispatcherComment(Address addr, ControlFlowPattern pattern) {
     try {
-      setPreComment(addr, "CONTROL FLOW FLATTENING DISPATCHER\nThis block acts as a state machine dispatcher for obfuscated control flow");
+      setPreComment(
+          addr,
+          "CONTROL FLOW FLATTENING DISPATCHER\n"
+              + "This block acts as a state machine dispatcher for obfuscated control flow");
       patchesApplied++;
     } catch (Exception e) {
       println("Failed to add dispatcher comment at " + addr + ": " + e.getMessage());

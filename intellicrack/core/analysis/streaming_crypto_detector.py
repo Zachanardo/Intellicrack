@@ -54,7 +54,7 @@ class ChunkCryptoResults:
 class StreamingCryptoDetector(StreamingAnalyzer):
     """Streaming analyzer for cryptographic routine detection in large binaries."""
 
-    def __init__(self, quick_mode: bool = False, use_radare2: bool = False):
+    def __init__(self, quick_mode: bool = False, use_radare2: bool = False) -> None:
         """Initialize streaming crypto detector.
 
         Args:
@@ -125,12 +125,12 @@ class StreamingCryptoDetector(StreamingAnalyzer):
                         "algorithm": detection.algorithm.name,
                         "variant": detection.variant,
                         "confidence": detection.confidence,
-                    }
+                    },
                 )
 
             logger.debug(
                 f"Chunk {context.chunk_number}/{context.total_chunks}: "
-                f"Found {len(filtered_detections)} crypto routines at offset 0x{context.offset:08x}"
+                f"Found {len(filtered_detections)} crypto routines at offset 0x{context.offset:08x}",
             )
 
             return {
@@ -172,7 +172,7 @@ class StreamingCryptoDetector(StreamingAnalyzer):
             for chunk_result in results:
                 if "error" in chunk_result:
                     errors.append(
-                        f"Chunk at 0x{chunk_result.get('chunk_offset', 0):08x}: " f"{chunk_result['error']}"
+                        f"Chunk at 0x{chunk_result.get('chunk_offset', 0):08x}: {chunk_result['error']}",
                     )
                     continue
 
@@ -195,7 +195,7 @@ class StreamingCryptoDetector(StreamingAnalyzer):
                         "algorithm": algo,
                         "occurrences": count,
                         "percentage": round((count / len(all_detections)) * 100, 2) if all_detections else 0,
-                    }
+                    },
                 )
 
             merged = {
@@ -214,7 +214,7 @@ class StreamingCryptoDetector(StreamingAnalyzer):
             logger.info(
                 f"Merged {len(results)} chunk results: "
                 f"{len(all_detections)} total detections across "
-                f"{len(total_algorithm_counts)} algorithm types"
+                f"{len(total_algorithm_counts)} algorithm types",
             )
 
             return merged
@@ -242,7 +242,7 @@ class StreamingCryptoDetector(StreamingAnalyzer):
                 if algo in ["RSA", "AES", "ECC", "SHA256", "SHA512"]:
                     licensing_relevant.append(detection)
 
-            unique_algorithms = list(set(d.get("algorithm", "") for d in detections))
+            unique_algorithms = list({d.get("algorithm", "") for d in detections})
 
             key_sizes = defaultdict(list)
             for detection in detections:
@@ -258,12 +258,12 @@ class StreamingCryptoDetector(StreamingAnalyzer):
                     "key_size_analysis": dict(key_sizes),
                     "complexity_score": complexity_score,
                     "analysis_summary": self._generate_summary(merged_results),
-                }
+                },
             )
 
             logger.info(
                 f"Finalized analysis: {len(unique_algorithms)} unique algorithms, "
-                f"{len(licensing_relevant)} licensing-relevant routines"
+                f"{len(licensing_relevant)} licensing-relevant routines",
             )
 
             return merged_results

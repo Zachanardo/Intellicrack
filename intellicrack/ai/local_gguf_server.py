@@ -90,7 +90,7 @@ except ImportError:
 class LocalGGUFServer:
     """Local GGUF model server using llama.cpp Python bindings."""
 
-    def __init__(self, host: str = "127.0.0.1", port: int = 8000):
+    def __init__(self, host: str = "127.0.0.1", port: int = 8000) -> None:
         """Initialize the local GGUF model server.
 
         Args:
@@ -119,7 +119,7 @@ class LocalGGUFServer:
         # Detect Intel GPU capabilities
         self._detect_intel_gpu()
 
-    def _detect_intel_gpu(self):
+    def _detect_intel_gpu(self) -> None:
         """Detect available Intel GPU backends and devices."""
         self.gpu_backend = None
         self.gpu_devices = []
@@ -278,7 +278,7 @@ class LocalGGUFServer:
                         "main_gpu": kwargs.get("main_gpu", 0),
                         "tensor_split": kwargs.get("tensor_split"),
                         "mul_mat_q": kwargs.get("mul_mat_q", True),
-                    }
+                    },
                 )
             elif self.gpu_backend == "ipex" and HAS_INTEL_GPU:
                 # Apply IPEX optimizations if using Intel GPU
@@ -290,7 +290,7 @@ class LocalGGUFServer:
                         "gpu_backend": "intel",
                         "use_fp16": True,
                         "optimize_for_intel": True,
-                    }
+                    },
                 )
 
             # Filter out None values
@@ -318,7 +318,7 @@ class LocalGGUFServer:
             self.model_path = None
             return False
 
-    def unload_model(self):
+    def unload_model(self) -> None:
         """Unload the current model."""
         if self.model:
             try:
@@ -370,7 +370,7 @@ class LocalGGUFServer:
             logger.error(f"Failed to start GGUF server: {e}")
             return False
 
-    def stop_server(self):
+    def stop_server(self) -> None:
         """Stop the local GGUF server."""
         self.is_running = False
         if self.server_thread:
@@ -378,7 +378,7 @@ class LocalGGUFServer:
             # In production, you'd use a proper WSGI server
             logger.info("Server stop requested (thread will continue until process ends)")
 
-    def _setup_routes(self):
+    def _setup_routes(self) -> None:
         """Set up Flask routes for the server."""
 
         @self.app.route("/health", methods=["GET"])
@@ -393,7 +393,7 @@ class LocalGGUFServer:
                     "gpu_devices": self.gpu_devices,
                     "gpu_enabled": bool(self.gpu_backend),
                     "gpu_layers": self.model_config.get("n_gpu_layers", 0) if self.model else 0,
-                }
+                },
             )
 
         @self.app.route("/models", methods=["GET"])
@@ -403,7 +403,7 @@ class LocalGGUFServer:
                 {
                     "models": [self.model_config] if self.model else [],
                     "current_model": self.model_config.get("model_name", None),
-                }
+                },
             )
 
         @self.app.route("/gpu_info", methods=["GET"])
@@ -510,7 +510,7 @@ class LocalGGUFServer:
                         {
                             "status": "success",
                             "model": self.model_config,
-                        }
+                        },
                     )
                 return jsonify({"error": "Failed to load model"}), 500
 
@@ -576,14 +576,14 @@ class LocalGGUFServer:
                                 "content": content,
                             },
                             "finish_reason": response["choices"][0]["finish_reason"],
-                        }
+                        },
                     ],
                     "usage": {
                         "prompt_tokens": response.get("usage", {}).get("prompt_tokens", 0),
                         "completion_tokens": response.get("usage", {}).get("completion_tokens", 0),
                         "total_tokens": response.get("usage", {}).get("total_tokens", 0),
                     },
-                }
+                },
             )
 
         except Exception as e:
@@ -618,7 +618,7 @@ class LocalGGUFServer:
                                 "index": 0,
                                 "delta": delta,
                                 "finish_reason": chunk["choices"][0].get("finish_reason"),
-                            }
+                            },
                         ],
                     }
 
@@ -641,7 +641,7 @@ class LocalGGUFServer:
             logger.error(f"Streaming error: {e}")
             raise
 
-    def _run_server(self):
+    def _run_server(self) -> None:
         """Run the Flask server."""
         try:
             self.app.run(
@@ -694,7 +694,7 @@ class LocalGGUFServer:
 class GGUFModelManager:
     """Manager for GGUF models and local server."""
 
-    def __init__(self, models_directory: str | None = None):
+    def __init__(self, models_directory: str | None = None) -> None:
         """Initialize the GGUF model manager.
 
         Args:
@@ -711,7 +711,7 @@ class GGUFModelManager:
 
         self.scan_models()
 
-    def scan_models(self):
+    def scan_models(self) -> None:
         """Scan for available GGUF models."""
         self.available_models = {}
 
@@ -795,7 +795,7 @@ class GGUFModelManager:
 
         return success
 
-    def unload_model(self):
+    def unload_model(self) -> None:
         """Unload the current model."""
         self.server.unload_model()
         self.current_model = None
@@ -804,7 +804,7 @@ class GGUFModelManager:
         """Start the local GGUF server."""
         return self.server.start_server()
 
-    def stop_server(self):
+    def stop_server(self) -> None:
         """Stop the local GGUF server."""
         self.server.stop_server()
 

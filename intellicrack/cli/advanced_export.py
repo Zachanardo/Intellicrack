@@ -29,7 +29,7 @@ from typing import Any
 try:
     import defusedxml.ElementTree as ET  # noqa: N817
 except ImportError:
-    import xml.etree.ElementTree as ET  # noqa: N817, S314
+    import xml.etree.ElementTree as ET
 
 # Create logger for this module
 logger = logging.getLogger(__name__)
@@ -60,7 +60,7 @@ except ImportError:
 class AdvancedExporter:
     """Advanced export system with multiple formats and detailed reporting."""
 
-    def __init__(self, binary_path: str, analysis_results: dict[str, Any]):
+    def __init__(self, binary_path: str, analysis_results: dict[str, Any]) -> None:
         """Initialize exporter with analysis data.
 
         Args:
@@ -370,7 +370,7 @@ class AdvancedExporter:
                     "bg_color": "#4472C4",
                     "font_color": "white",
                     "border": 1,
-                }
+                },
             )
 
             cell_format = workbook.add_format({"border": 1})
@@ -411,7 +411,7 @@ class AdvancedExporter:
 
         # Count different analysis types
         for analysis_type, results in self.analysis_results.items():
-            if isinstance(results, dict) or isinstance(results, list):
+            if isinstance(results, (dict, list)):
                 summary["analysis_overview"][analysis_type] = len(results)
             else:
                 summary["analysis_overview"][analysis_type] = 1
@@ -443,7 +443,7 @@ class AdvancedExporter:
         }
 
         for category, data in self.analysis_results.items():
-            if isinstance(data, dict) or isinstance(data, list):
+            if isinstance(data, (dict, list)):
                 count = len(data)
             else:
                 count = 1
@@ -480,7 +480,7 @@ class AdvancedExporter:
                 "Keep all dependencies and libraries updated",
                 "Implement proper error handling and logging",
                 "Use secure coding practices and code reviews",
-            ]
+            ],
         )
 
         return recommendations
@@ -743,7 +743,7 @@ KEY FINDINGS
 
         return min(score, 100.0)
 
-    def _dict_to_xml(self, data: Any, parent: ET.Element):
+    def _dict_to_xml(self, data: Any, parent: ET.Element) -> None:
         """Convert dictionary to XML elements."""
         if isinstance(data, dict):
             for key, value in data.items():
@@ -799,7 +799,7 @@ KEY FINDINGS
                             "description": vuln.get("description", "No description"),
                             "impact": vuln.get("impact", "Unknown"),
                             "recommendation": vuln.get("recommendation", "Review manually"),
-                        }
+                        },
                     )
 
         return True
@@ -827,7 +827,7 @@ KEY FINDINGS
                         "recommendation": vuln.get("recommendation", "Manual review required"),
                         "cve_references": vuln.get("cve_references", []),
                         "exploit_likelihood": vuln.get("exploit_likelihood", "Unknown"),
-                    }
+                    },
                 )
 
         return formatted
@@ -882,7 +882,7 @@ KEY FINDINGS
                                 string_item.get("section", ""),
                                 string_item.get("type", ""),
                                 string_item.get("length", 0),
-                            ]
+                            ],
                         )
                     else:
                         # Fallback for simple string list
@@ -914,7 +914,7 @@ KEY FINDINGS
                                         func.get("name", ""),
                                         func.get("address", ""),
                                         func.get("ordinal", ""),
-                                    ]
+                                    ],
                                 )
                             else:
                                 writer.writerow([library, str(func), "", ""])
@@ -952,7 +952,7 @@ KEY FINDINGS
                         "Vulnerabilities",
                         len(vulnerabilities),
                         f"Found {len(vulnerabilities)} vulnerabilities",
-                    ]
+                    ],
                 )
                 writer.writerow(["Strings", len(strings), f"Extracted {len(strings)} strings"])
                 writer.writerow(["Imports", len(imports), f"Found {len(imports)} imported libraries"])
@@ -1123,7 +1123,7 @@ KEY FINDINGS
                     "bold": True,
                     "bg_color": "#D7E4BC",
                     "border": 1,
-                }
+                },
             )
 
             # Write headers
@@ -1179,7 +1179,7 @@ KEY FINDINGS
                     "bold": True,
                     "bg_color": "#FFB3B3",
                     "border": 1,
-                }
+                },
             )
 
             # Write headers
@@ -1216,7 +1216,7 @@ KEY FINDINGS
                     "bold": True,
                     "bg_color": "#B3D9FF",
                     "border": 1,
-                }
+                },
             )
 
             # Write headers
@@ -1256,7 +1256,7 @@ KEY FINDINGS
                     "bold": True,
                     "bg_color": "#FFE6B3",
                     "border": 1,
-                }
+                },
             )
 
             # Write headers
@@ -1301,7 +1301,7 @@ KEY FINDINGS
                     "bold": True,
                     "bg_color": "#E6E6FA",
                     "border": 1,
-                }
+                },
             )
 
             # Write headers

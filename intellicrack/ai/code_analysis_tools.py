@@ -294,7 +294,7 @@ class AIAssistant:
                     "Search for activation key checks",
                     "Look for trial period limitations",
                     "Examine license file dependencies",
-                ]
+                ],
             )
         elif "protection" in context_lower or "obfuscation" in context_lower:
             suggestions.extend(
@@ -303,7 +303,7 @@ class AIAssistant:
                     "Identify anti-debugging techniques",
                     "Look for virtual machine detection",
                     "Analyze code flow obfuscation",
-                ]
+                ],
             )
         elif "network" in context_lower or "communication" in context_lower:
             suggestions.extend(
@@ -312,7 +312,7 @@ class AIAssistant:
                     "Analyze protocol communications",
                     "Check for license server connections",
                     "Examine SSL/TLS certificate validation",
-                ]
+                ],
             )
         elif "vulnerability" in context_lower or "exploit" in context_lower:
             suggestions.extend(
@@ -321,7 +321,7 @@ class AIAssistant:
                     "Look for privilege escalation vectors",
                     "Analyze input validation weaknesses",
                     "Check for race condition vulnerabilities",
-                ]
+                ],
             )
         else:
             # Default general suggestions
@@ -332,7 +332,7 @@ class AIAssistant:
                     "Check for network communications and protocols",
                     "Examine string patterns and embedded data",
                     "Review import tables and external dependencies",
-                ]
+                ],
             )
 
         return suggestions[:5]  # Return top 5 suggestions
@@ -1025,7 +1025,7 @@ class CodeAnalyzer:
                     "patterns": all_patterns,
                     "vulnerabilities": all_vulnerabilities,
                     "recommendations": all_recommendations,
-                    "insights": ai_insights + [f"AI analysis: {response.content[:200]}..."],
+                    "insights": [*ai_insights, f"AI analysis: {response.content[:200]}..."],
                 }
 
         except (ConnectionError, TimeoutError, AttributeError, ValueError) as e:

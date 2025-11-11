@@ -45,7 +45,7 @@ class PreferencesDialog(BaseDialog):
 
     preferences_changed = pyqtSignal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the PreferencesDialog with default values."""
         super().__init__(parent, "Preferences")
         self.config = get_config()
@@ -61,7 +61,7 @@ class PreferencesDialog(BaseDialog):
         self.apply_btn = self.button_box.addButton("Apply", self.button_box.ButtonRole.ApplyRole)
         self.apply_btn.clicked.connect(self.apply_preferences)
 
-    def setup_content(self, layout):
+    def setup_content(self, layout) -> None:
         """Set up the preferences UI."""
         if not layout:
             layout = QVBoxLayout()
@@ -125,7 +125,7 @@ class PreferencesDialog(BaseDialog):
                 "Always ask",
                 "Always test in QEMU first",
                 "Never test in QEMU",
-            ]
+            ],
         )
         qemu_layout.addRow("QEMU testing preference:", self.qemu_preference_combo)
 
@@ -225,7 +225,7 @@ class PreferencesDialog(BaseDialog):
                 "GPT-3.5-turbo",
                 "Claude",
                 "Local Model",
-            ]
+            ],
         )
         model_layout.addRow("Default AI model:", self.default_model_combo)
 
@@ -386,12 +386,12 @@ class PreferencesDialog(BaseDialog):
         layout.addStretch()
         return widget
 
-    def on_hex_viewer_setting_changed(self):
+    def on_hex_viewer_setting_changed(self) -> None:
         """Handle immediate saving of hex viewer settings when auto-save is enabled."""
         if self.config.get("general_preferences.auto_save", True):
             self.save_hex_viewer_settings()
 
-    def save_hex_viewer_settings(self):
+    def save_hex_viewer_settings(self) -> None:
         """Save hex viewer settings to configuration."""
         # Display settings
         self.config.set("hex_viewer.ui.bytes_per_row", self.hex_bytes_per_row.value())
@@ -421,7 +421,7 @@ class PreferencesDialog(BaseDialog):
             self.config.save()
             self.preferences_changed.emit()
 
-    def load_preferences(self):
+    def load_preferences(self) -> None:
         """Load preferences from central config."""
         # General
         self.theme_combo.setCurrentText(
@@ -534,7 +534,7 @@ class PreferencesDialog(BaseDialog):
             return False, "\n".join(errors)
         return True, ""
 
-    def save_preferences(self):
+    def save_preferences(self) -> bool:
         """Save preferences to central config."""
         # Validate preferences first
         is_valid, error_msg = self.validate_preferences()
@@ -589,7 +589,7 @@ class PreferencesDialog(BaseDialog):
         self.preferences_changed.emit()
         return True
 
-    def apply_preferences(self):
+    def apply_preferences(self) -> None:
         """Apply preferences without closing dialog."""
         result = self.save_preferences()
         if result is False:
@@ -597,7 +597,7 @@ class PreferencesDialog(BaseDialog):
             return
         # Successfully saved preferences
 
-    def accept_preferences(self):
+    def accept_preferences(self) -> None:
         """Save preferences and close dialog."""
         result = self.save_preferences()
         if result is False:

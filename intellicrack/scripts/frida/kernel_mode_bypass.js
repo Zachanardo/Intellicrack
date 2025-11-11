@@ -200,28 +200,28 @@ const KernelModeBypass = {
                 spoofSsdtInformation: function () {
                     try {
                         switch (this.systemInformationClass) {
-                        case 11: // SystemModuleInformation
-                            this.spoofModuleInformation();
-                            break;
+                            case 11: // SystemModuleInformation
+                                this.spoofModuleInformation();
+                                break;
 
-                        case 16: // SystemHandleInformation
-                        case 44: // SystemExtendedHandleInformation
-                            this.spoofHandleInformation();
-                            break;
+                            case 16: // SystemHandleInformation
+                            case 44: // SystemExtendedHandleInformation
+                                this.spoofHandleInformation();
+                                break;
 
-                        case 64: // SystemExtendedServiceTableInformation
-                        case 78: // SystemServiceDescriptorTableInformation
-                            this.spoofSsdtTable();
-                            break;
+                            case 64: // SystemExtendedServiceTableInformation
+                            case 78: // SystemServiceDescriptorTableInformation
+                                this.spoofSsdtTable();
+                                break;
 
-                        default:
-                            send({
-                                type: 'warning',
-                                target: 'kernel_mode_bypass',
-                                action: 'unknown_ssdt_class',
-                                information_class: this.systemInformationClass,
-                            });
-                            break;
+                            default:
+                                send({
+                                    type: 'warning',
+                                    target: 'kernel_mode_bypass',
+                                    action: 'unknown_ssdt_class',
+                                    information_class: this.systemInformationClass,
+                                });
+                                break;
                         }
                     } catch (e) {
                         send({

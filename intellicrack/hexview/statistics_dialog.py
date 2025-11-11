@@ -47,7 +47,7 @@ class StatisticsWorker(QThread):
     result = pyqtSignal(dict)
     error = pyqtSignal(str)
 
-    def __init__(self, data: bytes | None = None, file_path: str | None = None):
+    def __init__(self, data: bytes | None = None, file_path: str | None = None) -> None:
         """Initialize worker.
 
         Args:
@@ -61,7 +61,7 @@ class StatisticsWorker(QThread):
         self.calculator = StatisticsCalculator()
         self.calculator.set_progress_callback(self._progress_callback)
 
-    def _progress_callback(self, current: int, total: int):
+    def _progress_callback(self, current: int, total: int) -> None:
         """Progress callback for calculator.
 
         Args:
@@ -71,7 +71,7 @@ class StatisticsWorker(QThread):
         """
         self.progress.emit(current, total)
 
-    def run(self):
+    def run(self) -> None:
         """Run statistics calculation."""
         try:
             # Get data if file path provided
@@ -94,7 +94,7 @@ class StatisticsWorker(QThread):
 class StatisticsDialog(QDialog):
     """Dialog for displaying statistical analysis."""
 
-    def __init__(self, parent=None, hex_viewer=None):
+    def __init__(self, parent=None, hex_viewer=None) -> None:
         """Initialize statistics dialog.
 
         Args:
@@ -109,7 +109,7 @@ class StatisticsDialog(QDialog):
         self.setWindowTitle("Statistical Analysis")
         self.resize(700, 600)
 
-    def init_ui(self):
+    def init_ui(self) -> None:
         """Initialize UI components."""
         layout = QVBoxLayout()
 
@@ -188,7 +188,7 @@ class StatisticsDialog(QDialog):
 
         self.setLayout(layout)
 
-    def analyze_data(self):
+    def analyze_data(self) -> None:
         """Start statistical analysis."""
         # Clear previous results
         self.overview_text.clear()
@@ -245,7 +245,7 @@ class StatisticsDialog(QDialog):
         self.worker.error.connect(self.display_error)
         self.worker.start()
 
-    def update_progress(self, current: int, total: int):
+    def update_progress(self, current: int, total: int) -> None:
         """Update progress bar.
 
         Args:
@@ -255,7 +255,7 @@ class StatisticsDialog(QDialog):
         """
         self.progress_bar.setValue(current)
 
-    def display_results(self, results: dict):
+    def display_results(self, results: dict) -> None:
         """Display analysis results.
 
         Args:
@@ -362,7 +362,7 @@ class StatisticsDialog(QDialog):
         self.progress_bar.setVisible(False)
         self.analyze_btn.setEnabled(True)
 
-    def display_error(self, error: str):
+    def display_error(self, error: str) -> None:
         """Display error message.
 
         Args:
@@ -373,7 +373,7 @@ class StatisticsDialog(QDialog):
         self.progress_bar.setVisible(False)
         self.analyze_btn.setEnabled(True)
 
-    def copy_results(self):
+    def copy_results(self) -> None:
         """Copy results to clipboard."""
         # Combine all tabs into one text
         text = "=== OVERVIEW ===\n"

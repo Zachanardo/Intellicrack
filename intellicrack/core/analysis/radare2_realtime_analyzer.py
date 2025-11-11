@@ -42,12 +42,12 @@ except ImportError:
     class FileSystemEventHandler:
         """Fallback FileSystemEventHandler when watchdog is not available."""
 
-        def __init__(self):
+        def __init__(self) -> None:
             self.event_queue = []
             self.last_modified = {}
             self.debounce_time = 0.5  # 500ms debounce
 
-        def on_modified(self, event):
+        def on_modified(self, event) -> None:
             """Handle file modification events."""
             import time
 
@@ -67,10 +67,10 @@ except ImportError:
                     "path": getattr(event, "src_path", ""),
                     "timestamp": current_time,
                     "is_directory": getattr(event, "is_directory", False),
-                }
+                },
             )
 
-        def on_created(self, event):
+        def on_created(self, event) -> None:
             """Handle file creation events."""
             import time
 
@@ -81,14 +81,14 @@ except ImportError:
                     "path": getattr(event, "src_path", ""),
                     "timestamp": time.time(),
                     "is_directory": getattr(event, "is_directory", False),
-                }
+                },
             )
 
-        def on_deleted(self, event):
+        def on_deleted(self, event) -> None:
             """Handle file deletion events."""
             pass
 
-        def on_moved(self, event):
+        def on_moved(self, event) -> None:
             """Handle file move events."""
             pass
 
@@ -182,7 +182,7 @@ class AnalysisUpdate:
 class BinaryFileWatcher(FileSystemEventHandler):
     """File system watcher for binary file changes."""
 
-    def __init__(self, callback: Callable, watched_files: set[str]):
+    def __init__(self, callback: Callable, watched_files: set[str]) -> None:
         """Initialize the binary file watcher with callback and file monitoring."""
         self.callback = callback
         self.watched_files = watched_files
@@ -192,7 +192,7 @@ class BinaryFileWatcher(FileSystemEventHandler):
         self.last_modified = {}
         self.debounce_delay = 1.0  # 1 second  # 1 second
 
-    def on_modified(self, event):
+    def on_modified(self, event) -> None:
         """Handle file modification events."""
         if event.is_directory:
             return
@@ -235,7 +235,7 @@ class R2RealtimeAnalyzer:
         update_mode: UpdateMode = UpdateMode.HYBRID,
         update_interval: float = 30.0,
         max_concurrent_analyses: int = 3,
-    ):
+    ) -> None:
         """Initialize the Radare2 real-time analyzer.
 
         Args:
@@ -373,7 +373,7 @@ class R2RealtimeAnalyzer:
             self.logger.error(f"Failed to remove binary {binary_path}: {e}")
             return False
 
-    def start_realtime_analysis(self):
+    def start_realtime_analysis(self) -> None:
         """Start real-time analysis system."""
         if self.running:
             self.logger.warning("Real-time analysis already running")
@@ -414,7 +414,7 @@ class R2RealtimeAnalyzer:
             self.logger.error(f"Failed to start real-time analysis: {e}")
             self.running = False
 
-    def stop_realtime_analysis(self):
+    def stop_realtime_analysis(self) -> None:
         """Stop real-time analysis system."""
         if not self.running:
             return
@@ -454,7 +454,7 @@ class R2RealtimeAnalyzer:
         except Exception as e:
             self.logger.error(f"Failed to stop real-time analysis: {e}")
 
-    def _start_file_monitoring(self):
+    def _start_file_monitoring(self) -> None:
         """Start file system monitoring."""
         try:
             if not WATCHDOG_AVAILABLE:
@@ -486,7 +486,7 @@ class R2RealtimeAnalyzer:
         except Exception as e:
             self.logger.error(f"Failed to start file monitoring: {e}")
 
-    def _stop_file_monitoring(self):
+    def _stop_file_monitoring(self) -> None:
         """Stop file system monitoring."""
         try:
             if self.file_observer:
@@ -500,7 +500,7 @@ class R2RealtimeAnalyzer:
         except Exception as e:
             self.logger.error(f"Failed to stop file monitoring: {e}")
 
-    def _on_file_changed(self, file_path: str, event_type: AnalysisEvent):
+    def _on_file_changed(self, file_path: str, event_type: AnalysisEvent) -> None:
         """Handle file change events."""
         try:
             # Check if file hash actually changed
@@ -525,7 +525,7 @@ class R2RealtimeAnalyzer:
                         binary_path=file_path,
                         data={"file_hash": current_hash, "previous_hash": previous_hash},
                         source_component="file_watcher",
-                    )
+                    ),
                 )
 
                 self.logger.info(f"File change detected: {file_path}")
@@ -533,7 +533,7 @@ class R2RealtimeAnalyzer:
         except Exception as e:
             self.logger.error(f"Error handling file change for {file_path}: {e}")
 
-    def _schedule_analysis(self, binary_path: str, event_type: AnalysisEvent, priority: str = "normal"):
+    def _schedule_analysis(self, binary_path: str, event_type: AnalysisEvent, priority: str = "normal") -> None:
         """Schedule analysis for binary."""
         try:
             # Check if analysis is already running for this binary
@@ -584,7 +584,7 @@ class R2RealtimeAnalyzer:
         except Exception as e:
             self.logger.error(f"Failed to schedule analysis for {binary_path}: {e}")
 
-    def _analysis_worker(self):
+    def _analysis_worker(self) -> None:
         """Worker thread for processing analysis tasks."""
         while self.running:
             try:
@@ -618,7 +618,7 @@ class R2RealtimeAnalyzer:
                 self.logger.error(f"Analysis worker error: {e}")
                 time.sleep(1)  # Prevent tight error loops
 
-    def _perform_incremental_analysis(self, binary_path: str, trigger_event: AnalysisEvent):
+    def _perform_incremental_analysis(self, binary_path: str, trigger_event: AnalysisEvent) -> None:
         """Perform incremental analysis on binary."""
         try:
             start_time = time.time()
@@ -631,7 +631,7 @@ class R2RealtimeAnalyzer:
                     binary_path=binary_path,
                     data={"trigger_event": trigger_event.value},
                     source_component="realtime_analyzer",
-                )
+                ),
             )
 
             # Get configuration
@@ -645,29 +645,31 @@ class R2RealtimeAnalyzer:
             analysis_id = f"rt_{int(time.time())}_{hash(binary_path) % 10000}"
 
             # Perform analysis using r2
-            with r2_error_context("realtime_analysis", binary_path=binary_path):
-                with r2pipe.open(binary_path, flags=config.get("r2_flags", [])) as r2:
-                    # Apply optimizations
-                    self.performance_optimizer.optimize_r2_session(r2, config)
+            with r2_error_context("realtime_analysis", binary_path=binary_path), r2pipe.open(
+                binary_path,
+                flags=config.get("r2_flags", []),
+            ) as r2:
+                # Apply optimizations
+                self.performance_optimizer.optimize_r2_session(r2, config)
 
-                    # Perform initial analysis if needed
-                    if not self._is_analysis_cached(binary_path, "basic"):
-                        r2.cmd(config.get("analysis_level", "aa"))
-                        self._cache_analysis_result(binary_path, "basic", {"completed": True})
+                # Perform initial analysis if needed
+                if not self._is_analysis_cached(binary_path, "basic"):
+                    r2.cmd(config.get("analysis_level", "aa"))
+                    self._cache_analysis_result(binary_path, "basic", {"completed": True})
 
-                    # Run specific analysis components
-                    for component in analysis_components:
-                        try:
-                            component_result = self._run_analysis_component(r2, component, binary_path)
-                            if component_result:
-                                results[component] = component_result
+                # Run specific analysis components
+                for component in analysis_components:
+                    try:
+                        component_result = self._run_analysis_component(r2, component, binary_path)
+                        if component_result:
+                            results[component] = component_result
 
-                                # Check for significant findings
-                                self._check_for_significant_findings(binary_path, component, component_result)
+                            # Check for significant findings
+                            self._check_for_significant_findings(binary_path, component, component_result)
 
-                        except Exception as e:
-                            self.logger.error(f"Component {component} failed for {binary_path}: {e}")
-                            results[component] = {"error": str(e)}
+                    except Exception as e:
+                        self.logger.error(f"Component {component} failed for {binary_path}: {e}")
+                        results[component] = {"error": str(e)}
 
             # Calculate analysis duration
             duration = time.time() - start_time
@@ -702,7 +704,7 @@ class R2RealtimeAnalyzer:
                     data=standardized_results,
                     analysis_id=analysis_id,
                     source_component="realtime_analyzer",
-                )
+                ),
             )
 
             self.logger.info(f"Real-time analysis completed for {binary_path} in {duration:.2f}s")
@@ -719,7 +721,7 @@ class R2RealtimeAnalyzer:
                     data={"error": str(e)},
                     severity="error",
                     source_component="realtime_analyzer",
-                )
+                ),
             )
 
     def _determine_analysis_components(self, binary_path: str, trigger_event: AnalysisEvent) -> list[str]:
@@ -910,7 +912,7 @@ class R2RealtimeAnalyzer:
                 if file_size > 100 * 1024 * 1024:  # > 100MB
                     result = {
                         "function_count": len(functions),
-                        "main_functions": [f for f in functions[:20]],  # First 20 functions
+                        "main_functions": list(functions[:20]),  # First 20 functions
                         "large_file": True,
                     }
                 else:
@@ -1082,7 +1084,7 @@ class R2RealtimeAnalyzer:
             self.logger.error(f"Analysis component {component} failed for {binary_path}: {e}")
             return None
 
-    def _check_for_significant_findings(self, binary_path: str, component: str, result: dict[str, Any]):
+    def _check_for_significant_findings(self, binary_path: str, component: str, result: dict[str, Any]) -> None:
         """Check analysis results for significant findings and emit events."""
         try:
             if component == "vulnerabilities" and result.get("potential_vulnerabilities"):
@@ -1094,7 +1096,7 @@ class R2RealtimeAnalyzer:
                         data=result,
                         severity="high",
                         source_component=component,
-                    )
+                    ),
                 )
 
             elif component == "strings":
@@ -1112,7 +1114,7 @@ class R2RealtimeAnalyzer:
                             data={"license_strings": license_strings},
                             severity="medium",
                             source_component=component,
-                        )
+                        ),
                     )
 
         except Exception as e:
@@ -1131,7 +1133,7 @@ class R2RealtimeAnalyzer:
         cache_time = cache_entry.get("timestamp", 0)
         return time.time() - cache_time < 300
 
-    def _cache_analysis_result(self, binary_path: str, analysis_type: str, result: dict[str, Any]):
+    def _cache_analysis_result(self, binary_path: str, analysis_type: str, result: dict[str, Any]) -> None:
         """Cache analysis result."""
         if binary_path not in self.analysis_cache:
             self.analysis_cache[binary_path] = {}
@@ -1154,7 +1156,7 @@ class R2RealtimeAnalyzer:
             self.logger.error(f"Failed to calculate hash for {file_path}: {e}")
             return str(time.time())  # Fallback to timestamp
 
-    def _update_loop(self):
+    def _update_loop(self) -> None:
         """Update at intervals in main loop."""
         while self.running:
             try:
@@ -1182,7 +1184,7 @@ class R2RealtimeAnalyzer:
                 self.logger.error(f"Update loop error: {e}")
                 time.sleep(10)  # Wait longer on error
 
-    def register_event_callback(self, event_type: AnalysisEvent, callback: Callable):
+    def register_event_callback(self, event_type: AnalysisEvent, callback: Callable) -> None:
         """Register callback for analysis events."""
         if event_type not in self.event_callbacks:
             self.event_callbacks[event_type] = []
@@ -1190,7 +1192,7 @@ class R2RealtimeAnalyzer:
         self.event_callbacks[event_type].append(callback)
         self.logger.debug(f"Registered callback for {event_type.value}")
 
-    def unregister_event_callback(self, event_type: AnalysisEvent, callback: Callable):
+    def unregister_event_callback(self, event_type: AnalysisEvent, callback: Callable) -> None:
         """Unregister callback for analysis events."""
         if event_type in self.event_callbacks:
             try:
@@ -1199,7 +1201,7 @@ class R2RealtimeAnalyzer:
             except ValueError as e:
                 self.logger.error("Value error in radare2_realtime_analyzer: %s", e)
 
-    def _emit_event(self, update: AnalysisUpdate):
+    def _emit_event(self, update: AnalysisUpdate) -> None:
         """Emit analysis event to registered callbacks."""
         try:
             # Store in history
@@ -1349,7 +1351,7 @@ class R2RealtimeAnalyzer:
                         data=result["analysis_summary"],
                         severity="high" if len(license_keys) > 0 else "medium",
                         source_component="enhanced_strings",
-                    )
+                    ),
                 )
 
             return result
@@ -1401,7 +1403,7 @@ class R2RealtimeAnalyzer:
                                         }
                                         for s in mem_strings
                                         if len(s) > 4
-                                    ]
+                                    ],
                                 )
                     except Exception as e:
                         logger.debug(f"Skipping problematic memory region: {e}")
@@ -1460,7 +1462,7 @@ class R2RealtimeAnalyzer:
                             "address": imp.get("plt", 0),
                             "type": "string_manipulation",
                             "dynamic_potential": "high",
-                        }
+                        },
                     )
 
             return {
@@ -1473,7 +1475,7 @@ class R2RealtimeAnalyzer:
             self.logger.error(f"String API monitoring failed: {e}")
             return {"error": str(e), "monitoring_active": False}
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Cleanup resources."""
         try:
             self.stop_realtime_analysis()

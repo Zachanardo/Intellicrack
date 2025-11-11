@@ -33,7 +33,7 @@ logger = get_logger(__name__)
 class APIKeyConfigDialog(QDialog):
     """Enhanced dialog for configuring API providers with dynamic model discovery."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the API configuration dialog.
 
         Args:
@@ -48,7 +48,7 @@ class APIKeyConfigDialog(QDialog):
         self.available_models = []
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the user interface with provider selection and dynamic model discovery."""
         layout = QVBoxLayout(self)
 
@@ -62,7 +62,7 @@ class APIKeyConfigDialog(QDialog):
                 "Ollama (Local)",
                 "LM Studio (Local)",
                 "Custom OpenAI-Compatible",
-            ]
+            ],
         )
         self.provider_combo.currentTextChanged.connect(self.on_provider_changed)
         form_layout.addRow("Provider:", self.provider_combo)
@@ -120,7 +120,7 @@ class APIKeyConfigDialog(QDialog):
 
         self.on_provider_changed(self.provider_combo.currentText())
 
-    def on_provider_changed(self, provider_name: str):
+    def on_provider_changed(self, provider_name: str) -> None:
         """Handle provider selection change."""
         self.model_combo.clear()
         self.model_info_label.clear()
@@ -157,7 +157,7 @@ class APIKeyConfigDialog(QDialog):
 
         self.status_label.setText("Click 'Refresh Models' to load available models")
 
-    def fetch_available_models(self):
+    def fetch_available_models(self) -> None:
         """Fetch available models from the selected provider."""
         provider_name = self.provider_combo.currentText()
         api_key = self.api_key_edit.text() if self.api_key_edit.isVisible() else None
@@ -210,12 +210,12 @@ class APIKeyConfigDialog(QDialog):
 
         except Exception as e:
             logger.error(f"Error fetching models: {e}")
-            self.status_label.setText(f"Error: {str(e)}")
+            self.status_label.setText(f"Error: {e!s}")
 
         finally:
             self.fetch_models_btn.setEnabled(True)
 
-    def on_model_selected(self, model_display_name: str):
+    def on_model_selected(self, model_display_name: str) -> None:
         """Handle model selection and show model information."""
         if not self.available_models:
             return
@@ -254,7 +254,7 @@ class APIKeyConfigDialog(QDialog):
             "max_tokens": self.max_tokens_spin.value(),
         }
 
-    def set_config(self, config):
+    def set_config(self, config) -> None:
         """Populate the dialog with existing configuration."""
         if config.get("provider"):
             index = self.provider_combo.findText(config["provider"])
@@ -280,13 +280,13 @@ class APIKeyConfigDialog(QDialog):
 class AIAssistantTab(BaseTab):
     """AI Assistant tab providing AI-powered analysis and script generation."""
 
-    def __init__(self, shared_context=None, parent=None):
+    def __init__(self, shared_context=None, parent=None) -> None:
         """Initialize the AI Assistant tab."""
         super().__init__(shared_context, parent)
         self.ai_assistant = None
         self.model_configs = {}
 
-    def setup_content(self):
+    def setup_content(self) -> None:
         """Initialize the user interface."""
         layout = self.layout()  # Use existing layout from BaseTab
 
@@ -332,7 +332,7 @@ class AIAssistantTab(BaseTab):
 
         self.input_text = QTextEdit()
         self.input_text.setToolTip(
-            "Input area for questions, code snippets, or analysis requests. Supports multiple languages and binary formats"
+            "Input area for questions, code snippets, or analysis requests. Supports multiple languages and binary formats",
         )
         input_layout.addWidget(self.input_text)
 
@@ -396,7 +396,7 @@ class AIAssistantTab(BaseTab):
         self.load_available_models()
         self.is_loaded = True
 
-    def setup_ai_assistant(self):
+    def setup_ai_assistant(self) -> None:
         """Initialize the AI assistant."""
         try:
             self.ai_assistant = IntellicrackAIAssistant()
@@ -406,7 +406,7 @@ class AIAssistantTab(BaseTab):
             logger.error(f"Failed to initialize AI Assistant: {e}")
             self.status_label.setText(f"Error: {e}")
 
-    def configure_model(self):
+    def configure_model(self) -> None:
         """Configure API model with provider selection and dynamic model discovery."""
         model = self.model_combo.currentText()
 
@@ -476,12 +476,12 @@ class AIAssistantTab(BaseTab):
 
             except Exception as e:
                 logger.error(f"Failed to configure model: {e}")
-                QMessageBox.critical(self, "Configuration Error", f"Failed to configure model: {str(e)}")
+                QMessageBox.critical(self, "Configuration Error", f"Failed to configure model: {e!s}")
                 self.status_label.setText("Configuration failed")
 
         logger.info("Model configuration dialog completed")
 
-    def perform_analysis(self):
+    def perform_analysis(self) -> None:
         """Perform AI-powered analysis on input."""
         input_text = self.input_text.toPlainText()
 
@@ -504,12 +504,12 @@ class AIAssistantTab(BaseTab):
                 self.status_label.setText("Error: AI Assistant not available")
         except Exception as e:
             logger.error(f"Analysis failed: {e}")
-            self.output_text.setPlainText(f"Analysis failed: {str(e)}")
+            self.output_text.setPlainText(f"Analysis failed: {e!s}")
             self.status_label.setText("Analysis failed")
         finally:
             self.analyze_btn.setEnabled(True)
 
-    def generate_script(self):
+    def generate_script(self) -> None:
         """Generate script based on input."""
         input_text = self.input_text.toPlainText()
 
@@ -535,12 +535,12 @@ class AIAssistantTab(BaseTab):
                 self.status_label.setText("Error: AI Assistant not available")
         except Exception as e:
             logger.error(f"Script generation failed: {e}")
-            self.output_text.setPlainText(f"Script generation failed: {str(e)}")
+            self.output_text.setPlainText(f"Script generation failed: {e!s}")
             self.status_label.setText("Script generation failed")
         finally:
             self.generate_script_btn.setEnabled(True)
 
-    def export_script(self):
+    def export_script(self) -> None:
         """Export generated script to file."""
         from intellicrack.handlers.pyqt6_handler import QFileDialog
 
@@ -559,17 +559,17 @@ class AIAssistantTab(BaseTab):
                 QMessageBox.information(self, "Success", f"Script exported to {file_path}")
                 logger.info(f"Script exported to {file_path}")
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Failed to export script: {str(e)}")
+                QMessageBox.critical(self, "Error", f"Failed to export script: {e!s}")
                 logger.error(f"Failed to export script: {e}")
 
-    def copy_to_clipboard(self):
+    def copy_to_clipboard(self) -> None:
         """Copy output to clipboard."""
         clipboard = QApplication.clipboard()
         clipboard.setText(self.output_text.toPlainText())
 
         self.status_label.setText("Copied to clipboard")
 
-    def load_available_models(self):
+    def load_available_models(self) -> None:
         """Load all available AI models dynamically from configured providers."""
         try:
             self.model_combo.clear()
@@ -646,12 +646,12 @@ class AIAssistantTab(BaseTab):
             self.model_combo.addItem("FAIL Error loading models - Check configuration")
             self.model_combo.setEnabled(False)
 
-    def upload_local_model(self):
+    def upload_local_model(self) -> None:
         """Upload a local model file."""
         from intellicrack.handlers.pyqt6_handler import QFileDialog, QMessageBox
 
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select Model File", "", "GGUF Files (*.gguf);;ONNX Files (*.onnx);;All Files (*.*)"
+            self, "Select Model File", "", "GGUF Files (*.gguf);;ONNX Files (*.onnx);;All Files (*.*)",
         )
 
         if file_path:
@@ -678,9 +678,9 @@ class AIAssistantTab(BaseTab):
 
             except Exception as e:
                 logger.error(f"Failed to upload model: {e}")
-                QMessageBox.critical(self, "Error", f"Failed to upload model: {str(e)}")
+                QMessageBox.critical(self, "Error", f"Failed to upload model: {e!s}")
 
-    def open_model_manager(self):
+    def open_model_manager(self) -> None:
         """Open the model manager dialog."""
         try:
             from intellicrack.ui.dialogs.model_manager_dialog import ModelManagerDialog
@@ -694,9 +694,9 @@ class AIAssistantTab(BaseTab):
             logger.error(f"Failed to open model manager: {e}")
             from intellicrack.handlers.pyqt6_handler import QMessageBox
 
-            QMessageBox.critical(self, "Error", f"Failed to open model manager: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to open model manager: {e!s}")
 
-    def clear_all(self):
+    def clear_all(self) -> None:
         """Clear all text fields."""
         self.input_text.clear()
         self.output_text.clear()

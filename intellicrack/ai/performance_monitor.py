@@ -73,7 +73,7 @@ class PerformanceProfile:
 class PerformanceMonitor:
     """Comprehensive performance monitoring system."""
 
-    def __init__(self, max_history: int = 1000):
+    def __init__(self, max_history: int = 1000) -> None:
         """Initialize the performance monitoring system.
 
         Args:
@@ -116,7 +116,7 @@ class PerformanceMonitor:
 
         logger.info("Performance monitor initialized")
 
-    def start_monitoring(self, interval: float = 1.0):
+    def start_monitoring(self, interval: float = 1.0) -> None:
         """Start background system monitoring."""
         if self._monitoring_active:
             return
@@ -130,14 +130,14 @@ class PerformanceMonitor:
         self._monitor_thread.start()
         logger.info("Background performance monitoring started")
 
-    def stop_monitoring(self):
+    def stop_monitoring(self) -> None:
         """Stop background monitoring."""
         self._monitoring_active = False
         if self._monitor_thread:
             self._monitor_thread.join(timeout=2.0)
         logger.info("Background performance monitoring stopped")
 
-    def _monitor_system(self, interval: float):
+    def _monitor_system(self, interval: float) -> None:
         """Background system monitoring loop."""
         while self._monitoring_active:
             try:
@@ -163,7 +163,7 @@ class PerformanceMonitor:
                 logger.error(f"Error in system monitoring: {e}")
                 time.sleep(interval)
 
-    def _check_thresholds(self, cpu_usage: float, memory_usage: int, memory_growth: int):
+    def _check_thresholds(self, cpu_usage: float, memory_usage: int, memory_growth: int) -> None:
         """Check if metrics exceed thresholds."""
         checks = [
             ("cpu_usage", cpu_usage),
@@ -181,7 +181,7 @@ class PerformanceMonitor:
                 logger.warning(f"High {metric_name}: {value}")
                 self._trigger_optimization(metric_name, "warning", value)
 
-    def _trigger_optimization(self, metric_name: str, level: str, value: float):
+    def _trigger_optimization(self, metric_name: str, level: str, value: float) -> None:
         """Trigger optimization based on threshold breach."""
         if metric_name == "memory_growth" and level in ["warning", "critical"]:
             logger.info("Triggering garbage collection due to memory growth")
@@ -201,7 +201,7 @@ class PerformanceMonitor:
         unit: str,
         category: str = "general",
         context: dict[str, Any] = None,
-    ):
+    ) -> None:
         """Record a performance metric."""
         metric = PerformanceMetric(
             name=name,
@@ -385,7 +385,7 @@ class PerformanceMonitor:
             logger.error(f"Error assessing system health: {e}")
             return {"score": 0, "status": "unknown", "error": str(e)}
 
-    def add_optimization_rule(self, rule: Callable[[str, str, float], None]):
+    def add_optimization_rule(self, rule: Callable[[str, str, float], None]) -> None:
         """Add optimization rule."""
         self.optimization_rules.append(rule)
 
@@ -415,7 +415,7 @@ class PerformanceMonitor:
 
         return recommendations
 
-    def export_metrics(self, file_path: Path, format: str = "json"):
+    def export_metrics(self, file_path: Path, format: str = "json") -> None:
         """Export metrics to file."""
         try:
             summary = self.get_metrics_summary(timedelta(hours=24))
@@ -431,7 +431,7 @@ class PerformanceMonitor:
         except Exception as e:
             logger.error(f"Failed to export metrics: {e}")
 
-    def optimize_cache(self):
+    def optimize_cache(self) -> None:
         """Optimize performance cache."""
         current_time = time.time()
         expired_keys = [key for key, (timestamp, _) in self.performance_cache.items() if current_time - timestamp > self.cache_ttl]
@@ -451,11 +451,11 @@ class PerformanceMonitor:
             del self.performance_cache[cache_key]
         return None
 
-    def cache_result(self, cache_key: str, result: Any):
+    def cache_result(self, cache_key: str, result: Any) -> None:
         """Cache performance result."""
         self.performance_cache[cache_key] = (time.time(), result)
 
-    def _log_final_metrics(self):
+    def _log_final_metrics(self) -> None:
         """Log final performance metrics before exit."""
         try:
             current_stats = self.get_metrics_summary()
@@ -529,7 +529,7 @@ def monitor_memory_usage(threshold_mb: float = 100.0):
 class AsyncPerformanceMonitor:
     """Asynchronous performance monitoring for async operations."""
 
-    def __init__(self, base_monitor: PerformanceMonitor):
+    def __init__(self, base_monitor: PerformanceMonitor) -> None:
         """Initialize the async performance monitor.
 
         Args:

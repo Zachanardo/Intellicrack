@@ -97,7 +97,7 @@ class ToolStatus:
 class SharedMemoryManager:
     """Manages shared memory for inter-process communication."""
 
-    def __init__(self, name: str, size: int = 1024 * 1024 * 10):  # 10MB default
+    def __init__(self, name: str, size: int = 1024 * 1024 * 10) -> None:  # 10MB default
         """Initialize the SharedMemoryManager with name and size.
 
         Args:
@@ -111,7 +111,7 @@ class SharedMemoryManager:
         self.lock = threading.Lock()
         self._init_shared_memory()
 
-    def _init_shared_memory(self):
+    def _init_shared_memory(self) -> None:
         """Initialize shared memory segment."""
         if sys.platform == "win32":
             # Windows shared memory
@@ -139,7 +139,7 @@ class SharedMemoryManager:
                 if self.memory[0:4] != b"INTC":
                     self._write_header()
 
-    def _write_header(self):
+    def _write_header(self) -> None:
         """Write header to shared memory."""
         with self.lock:
             self.memory.seek(0)
@@ -238,7 +238,7 @@ class SharedMemoryManager:
                 logger.error(f"Failed to read message: {e}")
                 return None
 
-    def _reset_pointers(self):
+    def _reset_pointers(self) -> None:
         """Reset read/write pointers."""
         with self.lock:
             self.memory.seek(8)
@@ -246,7 +246,7 @@ class SharedMemoryManager:
             self.memory.write(struct.pack("<I", 64))  # Read pointer
             self.memory.write(struct.pack("<I", 0))  # Message count
 
-    def close(self):
+    def close(self) -> None:
         """Close shared memory."""
         if self.memory:
             self.memory.close()
@@ -312,14 +312,14 @@ class SerializationProtocol:
 class ToolMonitor:
     """Monitors tool status and health."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the ToolMonitor with empty tools dictionary and lock."""
         self.tools: Dict[ToolType, ToolStatus] = {}
         self.lock = threading.Lock()
         self.monitoring = False
         self.monitor_thread: Optional[threading.Thread] = None
 
-    def register_tool(self, tool: ToolType, pid: int):
+    def register_tool(self, tool: ToolType, pid: int) -> None:
         """Register a tool for monitoring."""
         with self.lock:
             self.tools[tool] = ToolStatus(
@@ -334,7 +334,7 @@ class ToolMonitor:
                 success_count=0,
             )
 
-    def update_status(self, tool: ToolType, **kwargs):
+    def update_status(self, tool: ToolType, **kwargs) -> None:
         """Update tool status."""
         with self.lock:
             if tool in self.tools:
@@ -342,14 +342,14 @@ class ToolMonitor:
                     if hasattr(self.tools[tool], key):
                         setattr(self.tools[tool], key, value)
 
-    def start_monitoring(self):
+    def start_monitoring(self) -> None:
         """Start monitoring tools."""
         self.monitoring = True
         self.monitor_thread = threading.Thread(target=self._monitor_loop)
         self.monitor_thread.daemon = True
         self.monitor_thread.start()
 
-    def _monitor_loop(self):
+    def _monitor_loop(self) -> None:
         """Run main monitoring loop."""
         while self.monitoring:
             with self.lock:
@@ -377,7 +377,7 @@ class ToolMonitor:
 
             time.sleep(1)
 
-    def stop_monitoring(self):
+    def stop_monitoring(self) -> None:
         """Stop monitoring tools."""
         self.monitoring = False
         if self.monitor_thread:
@@ -397,13 +397,13 @@ class ToolMonitor:
 class FailureRecovery:
     """Handles failure recovery for tool communication."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the FailureRecovery with retry configuration."""
         self.retry_config = {"max_retries": 3, "base_delay": 1.0, "max_delay": 30.0, "exponential_base": 2}
         self.failed_messages: Dict[str, List[ToolMessage]] = {}
         self.recovery_handlers: Dict[ToolType, Callable] = {}
 
-    def add_recovery_handler(self, tool: ToolType, handler: Callable):
+    def add_recovery_handler(self, tool: ToolType, handler: Callable) -> None:
         """Add recovery handler for a tool."""
         self.recovery_handlers[tool] = handler
 
@@ -425,7 +425,7 @@ class FailureRecovery:
 
         # Calculate retry delay
         delay = min(
-            self.retry_config["base_delay"] * (self.retry_config["exponential_base"] ** (retry_count - 1)), self.retry_config["max_delay"]
+            self.retry_config["base_delay"] * (self.retry_config["exponential_base"] ** (retry_count - 1)), self.retry_config["max_delay"],
         )
 
         # Schedule retry
@@ -434,7 +434,7 @@ class FailureRecovery:
 
         return True
 
-    def _retry_message(self, message: ToolMessage):
+    def _retry_message(self, message: ToolMessage) -> None:
         """Retry sending a message."""
         if message.destination in self.recovery_handlers:
             try:
@@ -445,7 +445,7 @@ class FailureRecovery:
             except Exception as e:
                 self.handle_failure(message, e)
 
-    def _handle_permanent_failure(self, message: ToolMessage, error: Exception):
+    def _handle_permanent_failure(self, message: ToolMessage, error: Exception) -> None:
         """Handle permanent failure."""
         logger.error(f"Permanent failure for message {message.correlation_id}: {error}")
 
@@ -460,7 +460,7 @@ class FailureRecovery:
 class ConflictResolver:
     """Resolves conflicts between tool results."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the ConflictResolver with resolution strategies and tool weights."""
         self.resolution_strategies = {
             "majority_vote": self._majority_vote,
@@ -573,14 +573,14 @@ class ConflictResolver:
 class LoadBalancer:
     """Balances load across multiple tool instances."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the LoadBalancer with empty tool instances and task queues."""
         self.tool_instances: Dict[ToolType, List[int]] = {}  # Tool -> PIDs
         self.task_queues: Dict[ToolType, queue.Queue] = {}
         self.load_metrics: Dict[int, Dict[str, float]] = {}  # PID -> metrics
         self.lock = threading.Lock()
 
-    def register_instance(self, tool: ToolType, pid: int):
+    def register_instance(self, tool: ToolType, pid: int) -> None:
         """Register a tool instance."""
         with self.lock:
             if tool not in self.tool_instances:
@@ -625,7 +625,7 @@ class LoadBalancer:
             scores.sort(key=lambda x: x[0])
             return scores[0][1]
 
-    def update_metrics(self, pid: int, **metrics):
+    def update_metrics(self, pid: int, **metrics) -> None:
         """Update instance metrics."""
         with self.lock:
             if pid in self.load_metrics:
@@ -649,7 +649,7 @@ class LoadBalancer:
 class RealToolCommunicator:
     """Run communicator for real tool integration."""
 
-    def __init__(self, name: str = "intellicrack"):
+    def __init__(self, name: str = "intellicrack") -> None:
         """Initialize the RealToolCommunicator with all required components.
 
         Args:
@@ -666,7 +666,7 @@ class RealToolCommunicator:
         self.message_handlers: Dict[ToolType, Callable] = {}
         self.worker_thread: Optional[threading.Thread] = None
 
-    def register_tool(self, tool: ToolType, pid: int, handler: Optional[Callable] = None):
+    def register_tool(self, tool: ToolType, pid: int, handler: Optional[Callable] = None) -> None:
         """Register a tool with the communicator."""
         self.monitor.register_tool(tool, pid)
         self.balancer.register_instance(tool, pid)
@@ -677,7 +677,7 @@ class RealToolCommunicator:
 
         logger.info(f"Registered tool {tool.value} with PID {pid}")
 
-    def start(self):
+    def start(self) -> None:
         """Start the communicator."""
         self.running = True
         self.monitor.start_monitoring()
@@ -686,7 +686,7 @@ class RealToolCommunicator:
         self.worker_thread.start()
         logger.info("Tool communicator started")
 
-    def _message_loop(self):
+    def _message_loop(self) -> None:
         """Run main message processing loop."""
         while self.running:
             try:
@@ -707,7 +707,7 @@ class RealToolCommunicator:
             except Exception as e:
                 logger.error(f"Error in message loop: {e}")
 
-    def _process_message(self, message: ToolMessage):
+    def _process_message(self, message: ToolMessage) -> None:
         """Process incoming message."""
         # Update heartbeat
         if message.message_type == MessageType.HEARTBEAT:
@@ -725,7 +725,7 @@ class RealToolCommunicator:
             try:
                 handler(message)
                 self.monitor.update_status(
-                    message.destination, success_count=self.monitor.get_status(message.destination).success_count + 1
+                    message.destination, success_count=self.monitor.get_status(message.destination).success_count + 1,
                 )
             except Exception as e:
                 logger.error(f"Handler failed for {message.destination.value}: {e}")
@@ -751,7 +751,7 @@ class RealToolCommunicator:
             self.recovery.handle_failure(message, e)
             return False
 
-    def broadcast_message(self, source: ToolType, data: Any, message_type: MessageType = MessageType.DATA):
+    def broadcast_message(self, source: ToolType, data: Any, message_type: MessageType = MessageType.DATA) -> None:
         """Broadcast message to all tools."""
         for tool in ToolType:
             if tool != source:
@@ -778,7 +778,7 @@ class RealToolCommunicator:
         """Get status of all tools."""
         return self.monitor.get_all_status()
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the communicator."""
         self.running = False
         self.monitor.stop_monitoring()
@@ -790,7 +790,7 @@ class RealToolCommunicator:
         logger.info("Tool communicator stopped")
 
 
-def main():
+def main() -> None:
     """Demonstrate example usage of real tool communication."""
     import argparse
 
@@ -839,7 +839,7 @@ def main():
         # Create communicator
         communicator = RealToolCommunicator()
 
-        def message_handler(msg: ToolMessage):
+        def message_handler(msg: ToolMessage) -> None:
             print(f"Received message: {msg.data}")
 
         communicator.register_tool(tool_type, args.pid, message_handler)

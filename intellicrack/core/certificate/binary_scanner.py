@@ -92,8 +92,8 @@ class ContextInfo:
         address: int,
         function_name: str = "",
         surrounding_code: str = "",
-        cross_references: Optional[List[int]] = None
-    ):
+        cross_references: Optional[List[int]] = None,
+    ) -> None:
         """Initialize context information.
 
         Args:
@@ -112,7 +112,7 @@ class ContextInfo:
 class BinaryScanner:
     """Scans binaries for certificate validation API usage."""
 
-    def __init__(self, binary_path: str):
+    def __init__(self, binary_path: str) -> None:
         """Initialize binary scanner.
 
         Args:
@@ -171,7 +171,7 @@ class BinaryScanner:
 
         tls_keywords = [
             "ssl", "tls", "crypt", "winhttp", "schannel", "sspicli",
-            "nss", "security", "cfnetwork"
+            "nss", "security", "cfnetwork",
         ]
 
         tls_libs = []
@@ -227,7 +227,7 @@ class BinaryScanner:
 
         cert_keywords = [
             "certificate", "cert", "ssl", "tls", "x509", "pem", "der",
-            "ca_bundle", "trusted", "verify", "pinning", "sha256", "sha1"
+            "ca_bundle", "trusted", "verify", "pinning", "sha256", "sha1",
         ]
 
         cert_strings = []
@@ -338,7 +338,7 @@ class BinaryScanner:
                 address=address,
                 function_name=func_name,
                 surrounding_code=disasm,
-                cross_references=xrefs
+                cross_references=xrefs,
             )
 
         except Exception:
@@ -381,7 +381,7 @@ class BinaryScanner:
 
         return min(confidence, 1.0)
 
-    def close(self):
+    def close(self) -> None:
         """Clean up resources."""
         if self.r2_handle:
             try:

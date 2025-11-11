@@ -40,7 +40,7 @@ class BinaryAnalyzer:
     CHUNK_SIZE = 8 * 1024 * 1024
     HASH_CHUNK_SIZE = 64 * 1024
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the binary analyzer.
 
         Sets up the core binary analysis engine with support for multiple
@@ -329,8 +329,8 @@ class BinaryAnalyzer:
                     machine,
                     num_sections,
                     timestamp,
-                    symbol_table_offset,
-                    num_symbols,
+                    _symbol_table_offset,
+                    _num_symbols,
                     optional_header_size,
                     characteristics,
                 ) = struct.unpack("<HHIIIHH", coff_header)
@@ -342,7 +342,7 @@ class BinaryAnalyzer:
                         "timestamp": datetime.fromtimestamp(timestamp).isoformat() if timestamp > 0 else "N/A",
                         "characteristics": f"0x{characteristics:04x}",
                         "sections": [],
-                    }
+                    },
                 )
 
                 section_table_offset = pe_offset + 24 + optional_header_size
@@ -362,7 +362,7 @@ class BinaryAnalyzer:
                             "virtual_size": virtual_size,
                             "raw_size": raw_size,
                             "raw_address": f"0x{raw_address:08x}",
-                        }
+                        },
                     )
 
                 return pe_info
@@ -406,14 +406,14 @@ class BinaryAnalyzer:
                         "version": ei_version,
                         "segments": [],
                         "sections": [],
-                    }
+                    },
                 )
 
                 if ei_class == 2:
                     e_type, e_machine, e_version, e_entry, e_phoff, e_shoff = struct.unpack("<HHIQQQQ", mm[16:48])[:6]
                     e_phentsize, e_phnum = struct.unpack("<HH", mm[54:58])
                 else:
-                    e_type, e_machine, e_version, e_entry, e_phoff, e_shoff = struct.unpack("<HHIIII", mm[16:36])[:6]
+                    e_type, e_machine, _e_version, e_entry, e_phoff, _e_shoff = struct.unpack("<HHIIII", mm[16:36])[:6]
                     e_phentsize, e_phnum = struct.unpack("<HH", mm[42:46])
 
                 elf_info.update(
@@ -421,7 +421,7 @@ class BinaryAnalyzer:
                         "type": {1: "REL", 2: "EXEC", 3: "DYN", 4: "CORE"}.get(e_type, f"Unknown({e_type})"),
                         "machine": f"0x{e_machine:04x}",
                         "entry_point": f"0x{e_entry:08x}",
-                    }
+                    },
                 )
 
                 for i in range(min(e_phnum, 20)):
@@ -431,11 +431,11 @@ class BinaryAnalyzer:
 
                     if ei_class == 2:
                         p_type, p_flags, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_align = struct.unpack(
-                            "<IIQQQQQQ", mm[ph_offset : ph_offset + 56]
+                            "<IIQQQQQQ", mm[ph_offset : ph_offset + 56],
                         )
                     else:
-                        p_type, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_flags, p_align = struct.unpack(
-                            "<IIIIIIII", mm[ph_offset : ph_offset + 32]
+                        p_type, p_offset, p_vaddr, _p_paddr, p_filesz, p_memsz, p_flags, _p_align = struct.unpack(
+                            "<IIIIIIII", mm[ph_offset : ph_offset + 32],
                         )
 
                     segment_types = {
@@ -457,7 +457,7 @@ class BinaryAnalyzer:
                             "filesz": p_filesz,
                             "memsz": p_memsz,
                             "flags": self._get_segment_flags(p_flags),
-                        }
+                        },
                     )
 
                 return elf_info
@@ -508,7 +508,7 @@ class BinaryAnalyzer:
                     cpu_type, cpu_subtype, file_type, ncmds, sizeofcmds, flags = struct.unpack(endian + "IIIIII", mm[4:28])
                     offset = 32
                 else:
-                    cpu_type, cpu_subtype, file_type, ncmds, sizeofcmds, flags = struct.unpack(endian + "IIIIII", mm[4:28])
+                    cpu_type, _cpu_subtype, file_type, ncmds, sizeofcmds, flags = struct.unpack(endian + "IIIIII", mm[4:28])
                     offset = 28
 
                 macho_info.update(
@@ -520,7 +520,7 @@ class BinaryAnalyzer:
                         "commands_size": sizeofcmds,
                         "flags": f"0x{flags:08x}",
                         "load_commands": [],
-                    }
+                    },
                 )
 
                 for _i in range(min(ncmds, 50)):
@@ -533,7 +533,7 @@ class BinaryAnalyzer:
                         {
                             "cmd": f"0x{cmd:08x}",
                             "cmdsize": cmdsize,
-                        }
+                        },
                     )
 
                     offset += cmdsize
@@ -653,7 +653,7 @@ class BinaryAnalyzer:
             current_stage = 0
             total_stages = len(stages)
 
-            def update_progress(stage_name: str):
+            def update_progress(stage_name: str) -> None:
                 nonlocal current_stage
                 if progress_callback:
                     progress_callback(stage_name, current_stage, total_stages)
@@ -664,7 +664,7 @@ class BinaryAnalyzer:
 
             update_progress(stages[1])
 
-            def hash_progress(current: int, total: int):
+            def hash_progress(current: int, total: int) -> None:
                 if progress_callback:
                     progress_callback(f"hash_calculation: {current}/{total}", current, total)
 
@@ -796,7 +796,7 @@ class BinaryAnalyzer:
                                 "context_before": search_data[max(0, pos - context_bytes) : pos].hex(),
                                 "match": pattern.hex(),
                                 "context_after": search_data[pos + len(pattern) : context_end].hex(),
-                            }
+                            },
                         )
 
                         offset = pos + 1
@@ -858,7 +858,7 @@ class BinaryAnalyzer:
                                                 "string": decoded_string,
                                                 "pattern_matched": pattern.decode("ascii"),
                                                 "length": len(string_bytes),
-                                            }
+                                            },
                                         )
                                     except Exception as e:
                                         self.logger.debug(f"Error decoding license string at offset {chunk_offset + string_start}: {e}")
@@ -1034,8 +1034,8 @@ class BinaryAnalyzer:
                 machine,
                 num_sections,
                 timestamp,
-                symbol_table_offset,
-                num_symbols,
+                _symbol_table_offset,
+                _num_symbols,
                 optional_header_size,
                 characteristics,
             ) = struct.unpack("<HHIIIHH", coff_header)
@@ -1047,7 +1047,7 @@ class BinaryAnalyzer:
                     "timestamp": datetime.fromtimestamp(timestamp).isoformat() if timestamp > 0 else "N/A",
                     "characteristics": f"0x{characteristics:04x}",
                     "sections": [],
-                }
+                },
             )
 
             # Parse sections
@@ -1068,7 +1068,7 @@ class BinaryAnalyzer:
                         "virtual_size": virtual_size,
                         "raw_size": raw_size,
                         "raw_address": f"0x{raw_address:08x}",
-                    }
+                    },
                 )
 
             return pe_info
@@ -1099,7 +1099,7 @@ class BinaryAnalyzer:
                     "version": ei_version,
                     "segments": [],
                     "sections": [],
-                }
+                },
             )
 
             # Parse program headers (segments)
@@ -1107,7 +1107,7 @@ class BinaryAnalyzer:
                 e_type, e_machine, e_version, e_entry, e_phoff, e_shoff = struct.unpack("<HHIQQQQ", data[16:48])[:6]
                 e_phentsize, e_phnum = struct.unpack("<HH", data[54:58])
             else:  # 32-bit
-                e_type, e_machine, e_version, e_entry, e_phoff, e_shoff = struct.unpack("<HHIIII", data[16:36])[:6]
+                e_type, e_machine, _e_version, e_entry, e_phoff, _e_shoff = struct.unpack("<HHIIII", data[16:36])[:6]
                 e_phentsize, e_phnum = struct.unpack("<HH", data[42:46])
 
             elf_info.update(
@@ -1115,7 +1115,7 @@ class BinaryAnalyzer:
                     "type": {1: "REL", 2: "EXEC", 3: "DYN", 4: "CORE"}.get(e_type, f"Unknown({e_type})"),
                     "machine": f"0x{e_machine:04x}",
                     "entry_point": f"0x{e_entry:08x}",
-                }
+                },
             )
 
             # Parse program headers
@@ -1126,11 +1126,11 @@ class BinaryAnalyzer:
 
                 if ei_class == 2:  # 64-bit
                     p_type, p_flags, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_align = struct.unpack(
-                        "<IIQQQQQQ", data[ph_offset : ph_offset + 56]
+                        "<IIQQQQQQ", data[ph_offset : ph_offset + 56],
                     )
                 else:  # 32-bit
-                    p_type, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_flags, p_align = struct.unpack(
-                        "<IIIIIIII", data[ph_offset : ph_offset + 32]
+                    p_type, p_offset, p_vaddr, _p_paddr, p_filesz, p_memsz, p_flags, _p_align = struct.unpack(
+                        "<IIIIIIII", data[ph_offset : ph_offset + 32],
                     )
 
                 segment_types = {
@@ -1152,7 +1152,7 @@ class BinaryAnalyzer:
                         "filesz": p_filesz,
                         "memsz": p_memsz,
                         "flags": self._get_segment_flags(p_flags),
-                    }
+                    },
                 )
 
             return elf_info
@@ -1205,7 +1205,7 @@ class BinaryAnalyzer:
                 cpu_type, cpu_subtype, file_type, ncmds, sizeofcmds, flags = struct.unpack(endian + "IIIIII", data[4:28])
                 offset = 32
             else:
-                cpu_type, cpu_subtype, file_type, ncmds, sizeofcmds, flags = struct.unpack(endian + "IIIIII", data[4:28])
+                cpu_type, _cpu_subtype, file_type, ncmds, sizeofcmds, flags = struct.unpack(endian + "IIIIII", data[4:28])
                 offset = 28
 
             macho_info.update(
@@ -1217,7 +1217,7 @@ class BinaryAnalyzer:
                     "commands_size": sizeofcmds,
                     "flags": f"0x{flags:08x}",
                     "load_commands": [],
-                }
+                },
             )
 
             # Parse load commands (limit to prevent excessive parsing)
@@ -1231,7 +1231,7 @@ class BinaryAnalyzer:
                     {
                         "cmd": f"0x{cmd:08x}",
                         "cmdsize": cmdsize,
-                    }
+                    },
                 )
 
                 offset += cmdsize
@@ -1269,7 +1269,7 @@ class BinaryAnalyzer:
                         "signature": signature,
                         "declared_size": file_size,
                         "header_size": header_size,
-                    }
+                    },
                 )
 
                 # String IDs
@@ -1339,7 +1339,7 @@ class BinaryAnalyzer:
                             "compressed_size": file_info.compress_size,
                             "uncompressed_size": file_info.file_size,
                             "crc32": f"0x{file_info.CRC:08x}",
-                        }
+                        },
                     )
 
                     archive_info["compressed_size"] += file_info.compress_size
@@ -1459,13 +1459,13 @@ class BinaryAnalyzer:
                                 "anti_tampering": arxan_result.features.anti_tampering,
                                 "rasp": arxan_result.features.rasp_protection,
                                 "license_validation": arxan_result.features.license_validation,
-                            }
+                            },
                         }
                         security_info["suspicious_indicators"].append(
-                            f"Protected with Arxan TransformIT {arxan_result.version.value}"
+                            f"Protected with Arxan TransformIT {arxan_result.version.value}",
                         )
                         security_info["recommendations"].append(
-                            "Use Arxan bypass tools for analysis"
+                            "Use Arxan bypass tools for analysis",
                         )
 
                 except Exception as e:

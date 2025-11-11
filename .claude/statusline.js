@@ -20,6 +20,7 @@ process.stdin.on('end', () => {
         const reset = '\x1b[0m';
 
         const model = data.model?.display_name || 'Unknown';
+        const modelId = data.model?.id || '';
         const projectName = data.workspace?.current_dir?.split(/[\/\\]/).pop() || 'Unknown';
         const sessionId = data.session_id || '';
         const transcriptPath = data.transcript_path || '';
@@ -31,7 +32,7 @@ process.stdin.on('end', () => {
         const linesRemoved = data.cost?.total_lines_removed || 0;
 
         const totalTokens = calculateSessionTokens(sessionId, transcriptPath);
-        const contextPercentage = calculateContextPercentage(transcriptPath);
+        const contextPercentage = calculateContextPercentage(transcriptPath, modelId);
 
         const formattedTokens = formatTokenCount(totalTokens);
         const { text: contextText, color: contextColor } =
@@ -82,8 +83,8 @@ function calculateSessionTokens(sessionId, transcriptPath) {
             }
         }
 
-        const processedHashes = new Set(cache?.processedHashes || []);
-        let totalTokens = cache?.totalTokens || 0;
+        let baseline = cache?.baseline || 0;
+        let maxCumulativeTokens = cache?.maxCumulativeTokens || 0;
 
         const content = fs.readFileSync(transcriptPath, 'utf8');
         const lines = content
@@ -91,33 +92,48 @@ function calculateSessionTokens(sessionId, transcriptPath) {
             .split('\n')
             .filter((line) => line.trim());
 
+        let currentMaxTokens = 0;
+
         for (const line of lines) {
             try {
                 const entry = JSON.parse(line);
-                const messageId = entry.message_id || entry.message?.id;
-                const requestId = entry.requestId || entry.request_id;
 
-                if (!messageId || !requestId) continue;
+                if (entry.isSidechain === true) continue;
+                if (entry.isApiErrorMessage === true) continue;
 
-                const hash = `${messageId}:${requestId}`;
-                if (processedHashes.has(hash)) continue;
+                const usage = entry.message?.usage || entry.usage;
+                if (!usage) continue;
 
-                const tokens = extractTokensFromEntry(entry);
-                if (tokens.totalTokens <= 0) continue;
+                const cumulativeTokens =
+                    (usage.input_tokens || 0) +
+                    (usage.output_tokens || 0) +
+                    (usage.cache_read_input_tokens || 0) +
+                    (usage.cache_creation_input_tokens || 0);
 
-                totalTokens += tokens.totalTokens;
-                processedHashes.add(hash);
+                if (cumulativeTokens > currentMaxTokens) {
+                    currentMaxTokens = cumulativeTokens;
+                }
             } catch (e) {
                 continue;
             }
         }
+
+        if (currentMaxTokens < maxCumulativeTokens) {
+            baseline += maxCumulativeTokens;
+            maxCumulativeTokens = currentMaxTokens;
+        } else {
+            maxCumulativeTokens = currentMaxTokens;
+        }
+
+        const totalTokens = baseline + maxCumulativeTokens;
 
         fs.writeFileSync(
             cacheFile,
             JSON.stringify({
                 timestamp: now,
                 totalTokens,
-                processedHashes: Array.from(processedHashes),
+                baseline,
+                maxCumulativeTokens,
             })
         );
 
@@ -127,7 +143,26 @@ function calculateSessionTokens(sessionId, transcriptPath) {
     }
 }
 
-function calculateContextPercentage(transcriptPath) {
+function getModelContextLimit(modelId) {
+    const modelLimits = {
+        'claude-sonnet-4-5': 200000,
+        'claude-sonnet-4': 200000,
+        'claude-opus-4-1': 200000,
+        'claude-opus-4': 200000,
+        'claude-haiku-4-5': 200000,
+        'claude-haiku-4': 200000,
+    };
+
+    for (const [key, limit] of Object.entries(modelLimits)) {
+        if (modelId && modelId.includes(key)) {
+            return limit;
+        }
+    }
+
+    return 200000;
+}
+
+function calculateContextPercentage(transcriptPath, modelId) {
     if (!transcriptPath || !fs.existsSync(transcriptPath)) {
         return 0;
     }
@@ -139,30 +174,43 @@ function calculateContextPercentage(transcriptPath) {
             .split('\n')
             .filter((line) => line.trim());
 
-        let totalContextTokens = 0;
-        const processedHashes = new Set();
+        let mostRecentEntry = null;
+        let mostRecentTimestamp = 0;
 
         for (const line of lines) {
             try {
                 const entry = JSON.parse(line);
-                const messageId = entry.message_id || entry.message?.id;
-                const requestId = entry.requestId || entry.request_id;
 
-                if (messageId && requestId) {
-                    const hash = `${messageId}:${requestId}`;
-                    if (processedHashes.has(hash)) continue;
-                    processedHashes.add(hash);
+                if (entry.isSidechain === true) continue;
+                if (entry.isApiErrorMessage === true) continue;
+
+                const usage = entry.message?.usage || entry.usage;
+                if (!usage) continue;
+
+                const timestamp = new Date(entry.timestamp || 0).getTime();
+                if (!timestamp) continue;
+
+                if (timestamp > mostRecentTimestamp) {
+                    mostRecentTimestamp = timestamp;
+                    mostRecentEntry = entry;
                 }
-
-                const tokens = extractTokensFromEntry(entry);
-                totalContextTokens += tokens.totalTokens;
             } catch (e) {
                 continue;
             }
         }
 
-        const contextLimit = 200000;
-        const percentage = (totalContextTokens / contextLimit) * 100;
+        if (!mostRecentEntry) {
+            return 0;
+        }
+
+        const usage = mostRecentEntry.message?.usage || mostRecentEntry.usage;
+        const totalInputTokens =
+            (usage.input_tokens || 0) +
+            (usage.cache_read_input_tokens || 0) +
+            (usage.cache_creation_input_tokens || 0);
+
+        const contextLimit = getModelContextLimit(modelId);
+        const percentage = (totalInputTokens / contextLimit) * 100;
         return Math.min(percentage, 100);
     } catch (error) {
         return 0;
@@ -216,7 +264,7 @@ function extractTokensFromEntry(entry) {
             tokens.outputTokens = output;
             tokens.cacheCreationTokens = cacheCreation;
             tokens.cacheReadTokens = cacheRead;
-            tokens.totalTokens = input + output;
+            tokens.totalTokens = input + output + cacheCreation + cacheRead;
             break;
         }
     }

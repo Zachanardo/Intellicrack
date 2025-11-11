@@ -29,13 +29,13 @@ import tempfile
 try:
     import defusedxml.ElementTree as ET  # noqa: N817
 except ImportError:
-    import xml.etree.ElementTree as ET  # noqa: N817, S314
+    import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from pathlib import Path
 from threading import Thread
 from typing import Any, Dict, List, Optional, Tuple
 
-from intellicrack.config import get_config
+from intellicrack.core.config_manager import get_config
 from intellicrack.utils.subprocess_security import secure_popen
 
 
@@ -95,7 +95,7 @@ class GhidraAnalysisResult:
 class GhidraOutputParser:
     """Parses various Ghidra output formats."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the GhidraOutputParser with an empty result."""
         self.result = None
 
@@ -159,7 +159,7 @@ class GhidraOutputParser:
                         "size": int(sec_elem.get("LENGTH", "0"), 16),
                         "permissions": sec_elem.get("PERMISSIONS", ""),
                         "type": sec_elem.get("TYPE", ""),
-                    }
+                    },
                 )
 
             # Parse entry point
@@ -181,7 +181,7 @@ class GhidraOutputParser:
                         "address": int(eh_elem.get("ADDRESS", "0"), 16),
                         "type": eh_elem.get("TYPE", ""),
                         "handler": int(eh_elem.get("HANDLER", "0"), 16),
-                    }
+                    },
                 )
 
             return GhidraAnalysisResult(
@@ -288,7 +288,7 @@ class GhidraOutputParser:
                     "type": member_elem.get("DATATYPE", ""),
                     "offset": int(member_elem.get("OFFSET", "0"), 10),
                     "size": int(member_elem.get("SIZE", "0"), 10),
-                }
+                },
             )
 
         base_type = dt_elem.get("BASE_TYPE")
@@ -545,14 +545,14 @@ class GhidraOutputParser:
         )
 
 
-def _run_ghidra_thread(main_app, command, temp_dir):
+def _run_ghidra_thread(main_app, command, temp_dir) -> None:
     """Run the Ghidra command in a background thread and clean up afterward."""
     try:
         main_app.update_output.emit(f"[Ghidra] Running command: {' '.join(command)}")
         # Use secure subprocess wrapper with validation
         # This prevents command injection while maintaining functionality
         process = secure_popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8", errors="ignore", shell=False, cwd=temp_dir
+            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8", errors="ignore", shell=False, cwd=temp_dir,
         )
 
         stdout, stderr = process.communicate()
@@ -571,7 +571,7 @@ def _run_ghidra_thread(main_app, command, temp_dir):
                 # Parse structured output files
                 for output_file in output_files:
                     try:
-                        with open(output_file, "r", encoding="utf-8") as f:
+                        with open(output_file, encoding="utf-8") as f:
                             content = f.read()
 
                         if output_file.suffix == ".xml":
@@ -689,7 +689,7 @@ class GhidraScriptManager:
         },
     ]
 
-    def __init__(self, ghidra_install_dir: str):
+    def __init__(self, ghidra_install_dir: str) -> None:
         """Initialize the GhidraAnalyzer with the Ghidra installation directory."""
         self.ghidra_install_dir = Path(ghidra_install_dir)
         self.scripts_dir = self.ghidra_install_dir / "Ghidra" / "Features" / "Base" / "ghidra_scripts"
@@ -742,7 +742,7 @@ class GhidraScriptManager:
                 elif "@output" in line:
                     metadata["output_format"] = line.split("@output")[-1].strip()
         except (IndexError, ValueError):
-            pass  # noqa: S110 - Metadata parsing failures are non-critical
+            pass
 
         return metadata
 
@@ -792,7 +792,7 @@ class GhidraScriptManager:
         return script_args
 
 
-def run_advanced_ghidra_analysis(main_app, analysis_type: str = "comprehensive", scripts: Optional[List[str]] = None):
+def run_advanced_ghidra_analysis(main_app, analysis_type: str = "comprehensive", scripts: Optional[List[str]] = None) -> None:
     """Launch a Ghidra headless analysis session with intelligent script selection."""
     if not main_app.current_binary:
         main_app.update_output.emit("[Ghidra] Error: No binary loaded.")
@@ -866,7 +866,7 @@ def run_advanced_ghidra_analysis(main_app, analysis_type: str = "comprehensive",
             "-max-cpu",
             str(os.cpu_count() or 4),  # Use all available CPUs
             "-deleteProject",  # Clean up after analysis
-        ]
+        ],
     )
 
     # Store selected scripts info for result processing

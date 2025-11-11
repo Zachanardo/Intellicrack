@@ -230,8 +230,8 @@ class SecureSubprocess:
                 raise ValueError(f"Invalid working directory: {cwd}")
 
         # Execute with security flags
-        return subprocess.run(  # noqa: S603
-            command, shell=shell, capture_output=capture_output, text=text, timeout=timeout, check=check, cwd=cwd, env=env, **kwargs
+        return subprocess.run(
+            command, shell=shell, capture_output=capture_output, text=text, timeout=timeout, check=check, cwd=cwd, env=env, **kwargs,
         )
 
     @staticmethod
@@ -281,8 +281,8 @@ class SecureSubprocess:
                 raise ValueError(f"Invalid working directory: {cwd}")
 
         # Execute with security flags
-        return subprocess.Popen(  # noqa: S603
-            command, shell=shell, stdout=stdout, stderr=stderr, stdin=stdin, cwd=cwd, env=env, **kwargs
+        return subprocess.Popen(
+            command, shell=shell, stdout=stdout, stderr=stderr, stdin=stdin, cwd=cwd, env=env, **kwargs,
         )
 
 

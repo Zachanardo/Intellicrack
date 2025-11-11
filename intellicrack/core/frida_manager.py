@@ -29,6 +29,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from ..utils.core.import_checks import FRIDA_AVAILABLE, frida, psutil
+from ..utils.logger import log_all_methods
 from .frida_constants import HookCategory, ProtectionType
 
 """
@@ -48,6 +49,7 @@ logger = logging.getLogger(__name__)
 # Import constants from separate module to avoid cyclic imports
 
 
+@log_all_methods
 class FridaOperationLogger:
     """Comprehensive logging system for Frida operations.
 
@@ -71,7 +73,7 @@ class FridaOperationLogger:
 
     """
 
-    def __init__(self, log_dir: str = None):
+    def __init__(self, log_dir: str = None) -> None:
         """Initialize the Frida operation logger.
 
         Args:
@@ -117,7 +119,7 @@ class FridaOperationLogger:
 
         self._init_loggers()
 
-    def _init_loggers(self):
+    def _init_loggers(self) -> None:
         """Initialize separate loggers for different operation types.
 
         Creates four specialized loggers:
@@ -138,7 +140,7 @@ class FridaOperationLogger:
         op_handler.setFormatter(
             logging.Formatter(
                 "%(asctime)s - %(levelname)s - %(message)s",
-            )
+            ),
         )
         self.op_logger.addHandler(op_handler)
         self.op_logger.setLevel(logging.DEBUG)
@@ -149,7 +151,7 @@ class FridaOperationLogger:
         hook_handler.setFormatter(
             logging.Formatter(
                 "%(asctime)s - %(message)s",
-            )
+            ),
         )
         self.hook_logger.addHandler(hook_handler)
         self.hook_logger.setLevel(logging.DEBUG)
@@ -160,7 +162,7 @@ class FridaOperationLogger:
         perf_handler.setFormatter(
             logging.Formatter(
                 "%(asctime)s - %(message)s",
-            )
+            ),
         )
         self.perf_logger.addHandler(perf_handler)
         self.perf_logger.setLevel(logging.INFO)
@@ -171,12 +173,12 @@ class FridaOperationLogger:
         bypass_handler.setFormatter(
             logging.Formatter(
                 "%(asctime)s - %(levelname)s - %(message)s",
-            )
+            ),
         )
         self.bypass_logger.addHandler(bypass_handler)
         self.bypass_logger.setLevel(logging.INFO)
 
-    def log_operation(self, operation: str, details: dict[str, Any], success: bool = True, error: str = None):
+    def log_operation(self, operation: str, details: dict[str, Any], success: bool = True, error: str = None) -> None:
         """Log a Frida operation with comprehensive details.
 
         Records operation details to both file and in-memory buffer,
@@ -239,7 +241,7 @@ class FridaOperationLogger:
         arguments: list[Any],
         return_value: Any = None,
         modified: bool = False,
-    ):
+    ) -> None:
         """Log individual hook executions.
 
         Records details of each hook invocation for monitoring and
@@ -284,7 +286,7 @@ class FridaOperationLogger:
         entry["readable_msg"] = f"Hook: {module}!{function_name} | Modified: {modified}"
         self.hook_logger.log(level, json.dumps(entry, default=str))
 
-    def log_performance(self, metric_name: str, value: float, unit: str = "ms", metadata: dict = None):
+    def log_performance(self, metric_name: str, value: float, unit: str = "ms", metadata: dict = None) -> None:
         """Log performance metrics.
 
         Records performance measurements for analysis and optimization.
@@ -337,7 +339,7 @@ class FridaOperationLogger:
         technique: str,
         success: bool,
         details: dict[str, Any] = None,
-    ):
+    ) -> None:
         """Log bypass attempts with classification.
 
         Records protection bypass attempts with detailed classification
@@ -484,12 +486,13 @@ class FridaOperationLogger:
 
         return str(export_dir)
 
-    def error(self, message: str):
+    def error(self, message: str) -> None:
         """Log error message using operation logger."""
         self.log_operation("error", {"message": message, "level": "error"})
         self.op_logger.error(message)
 
 
+@log_all_methods
 class ProtectionDetector:
     """Real-time protection detection and classification.
 
@@ -511,7 +514,7 @@ class ProtectionDetector:
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the protection detector.
 
         Sets up signature database and prepares detection system.
@@ -681,23 +684,24 @@ class ProtectionDetector:
 
         return detected
 
-    def register_adaptation_callback(self, callback: Callable):
+    def register_adaptation_callback(self, callback: Callable) -> None:
         """Register callback for protection detection events."""
         self.adaptation_callbacks.append(callback)
 
-    def notify_protection_detected(self, protection_type: ProtectionType, details: dict[str, Any]):
+    def notify_protection_detected(self, protection_type: ProtectionType, details: dict[str, Any]) -> None:
         """Notify registered callbacks of detected protection."""
         for callback in self.adaptation_callbacks:
             try:
                 callback(protection_type, details)
             except Exception as e:
-                logger.error(f"Adaptation callback error: {e}")
+                logger.exception(f"Adaptation callback error: {e}")
 
     def get_detected_protections(self) -> dict[str, list[str]]:
         """Get all detected protections with evidence."""
         return {prot_type.value: list(evidence) for prot_type, evidence in self.detected_protections.items()}
 
 
+@log_all_methods
 class HookBatcher:
     """Batch hooks for improved performance.
 
@@ -721,7 +725,7 @@ class HookBatcher:
 
     """
 
-    def __init__(self, max_batch_size: int = 50, batch_timeout_ms: int = 100):
+    def __init__(self, max_batch_size: int = 50, batch_timeout_ms: int = 100) -> None:
         """Initialize the hook batcher.
 
         Args:
@@ -741,7 +745,7 @@ class HookBatcher:
         self.batch_thread = None
         self.running = False
 
-    def add_hook(self, category: HookCategory, hook_spec: dict[str, Any]):
+    def add_hook(self, category: HookCategory, hook_spec: dict[str, Any]) -> None:
         """Add a hook to the batch queue.
 
         Timestamps the hook and queues it for batch processing based
@@ -764,14 +768,14 @@ class HookBatcher:
         hook_spec["category"] = category
         self.hook_queue.put(hook_spec)
 
-    def start_batching(self):
+    def start_batching(self) -> None:
         """Start the batching thread."""
         self.running = True
         self.batch_thread = threading.Thread(target=self._batch_processor)
         self.batch_thread.daemon = True
         self.batch_thread.start()
 
-    def stop_batching(self):
+    def stop_batching(self) -> None:
         """Stop the batching thread."""
         self.running = False
         if self.batch_thread:
@@ -790,7 +794,7 @@ class HookBatcher:
                     hook = self.hook_queue.get(timeout=timeout)
                     batch.append(hook)
                 except queue.Empty as e:
-                    self.logger.error("queue.Empty in frida_manager: %s", e)
+                    self.logger.exception("queue.Empty in frida_manager: %s", e)
                     break
 
             if batch:
@@ -803,8 +807,7 @@ class HookBatcher:
                     module_groups[hook.get("module", "unknown")].append(hook)
 
                 # Return batched hooks
-                for module, hooks in module_groups.items():
-                    yield module, hooks
+                yield from module_groups.items()
 
     def get_batch_stats(self) -> dict[str, int]:
         """Get batching statistics."""
@@ -814,6 +817,7 @@ class HookBatcher:
         }
 
 
+@log_all_methods
 class FridaPerformanceOptimizer:
     """Optimize Frida operations for performance.
 
@@ -839,7 +843,7 @@ class FridaPerformanceOptimizer:
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the performance optimizer.
 
         Side Effects:
@@ -854,7 +858,7 @@ class FridaPerformanceOptimizer:
         self.hook_cache = {}
         self.performance_history = deque(maxlen=100)
 
-    def measure_baseline(self):
+    def measure_baseline(self) -> None:
         """Measure baseline resource usage."""
         self.baseline_memory = self.process.memory_info().rss
         self.baseline_cpu = self.process.cpu_percent(interval=0.1)
@@ -964,7 +968,7 @@ class FridaPerformanceOptimizer:
         # Combine optimizations with original script
         return "\n".join(optimizations) + "\n" + script_code
 
-    def track_hook_performance(self, module: str, function: str, execution_time: float):
+    def track_hook_performance(self, module: str, function: str, execution_time: float) -> None:
         """Track individual hook performance."""
         hook_key = f"{module}!{function}"
 
@@ -1013,6 +1017,7 @@ class FridaPerformanceOptimizer:
         return recommendations
 
 
+@log_all_methods
 class DynamicScriptGenerator:
     """Dynamic Frida script generation based on target analysis.
 
@@ -1031,7 +1036,7 @@ class DynamicScriptGenerator:
     - Performance optimization
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the dynamic script generator."""
         self.protection_handlers = self._init_protection_handlers()
         self.hook_strategies = self._init_hook_strategies()
@@ -2594,6 +2599,7 @@ setInterval(() => {
         return "\n".join(lines)
 
 
+@log_all_methods
 class FridaManager:
     """Run Frida management class with all advanced features.
 
@@ -2623,7 +2629,7 @@ class FridaManager:
 
     """
 
-    def __init__(self, log_dir: str = None, script_dir: str = None):
+    def __init__(self, log_dir: str = None, script_dir: str = None) -> None:
         """Initialize the Frida manager.
 
         Args:
@@ -2776,6 +2782,7 @@ class FridaManager:
                 success=False,
                 error=str(e),
             )
+            logger.exception(f"Failed to attach to process: {e}")
             return False
 
     def add_custom_script(self, script_content: str, script_name: str) -> Path:
@@ -2846,11 +2853,11 @@ class FridaManager:
                             "size": stat.st_size,
                             "modified": datetime.fromtimestamp(stat.st_mtime).isoformat(),
                             "protection_type": protection_type,
-                        }
+                        },
                     )
 
                 except Exception as e:
-                    logger.error(f"Error reading script {script_file}: {e}")
+                    logger.exception(f"Error reading script {script_file}: {e}")
 
         return scripts
 
@@ -2932,6 +2939,7 @@ class FridaManager:
                 success=False,
                 error=str(e),
             )
+            logger.exception(f"Failed to load script: {e}")
             return False
 
     def load_dynamic_script(
@@ -2973,7 +2981,7 @@ class FridaManager:
 
             # Generate dynamic script
             script_code = self.script_generator.generate_script(
-                target_info=target_info, detected_protections=detected_protections, strategy=strategy, obfuscate=obfuscate
+                target_info=target_info, detected_protections=detected_protections, strategy=strategy, obfuscate=obfuscate,
             )
 
             # Save generated script for reference
@@ -3037,7 +3045,7 @@ class FridaManager:
                 success=False,
                 error=str(e),
             )
-            logger.error(f"Failed to load dynamic script: {e}")
+            logger.exception(f"Failed to load dynamic script: {e}")
             return False
 
     def _detect_protections_for_session(self, session_id: str) -> list:
@@ -3084,7 +3092,7 @@ class FridaManager:
             detection = session.create_script(detection_script)
             protections_found = []
 
-            def on_message(message, data):
+            def on_message(message, data) -> None:
                 if message["type"] == "send":
                     payload = message.get("payload", {})
                     if payload.get("type") == "protections":
@@ -3116,7 +3124,7 @@ class FridaManager:
                 detected = [ProtectionType.ANTI_DEBUG, ProtectionType.LICENSE]
 
         except Exception as e:
-            logger.error(f"Protection detection failed: {e}")
+            logger.exception(f"Protection detection failed: {e}")
             # Default to common protections
             detected = [ProtectionType.ANTI_DEBUG, ProtectionType.LICENSE]
 
@@ -3167,7 +3175,7 @@ class FridaManager:
             # Create temporary analysis script
             analyzer = session.create_script(analysis_script)
 
-            def on_message(message, data):
+            def on_message(message, data) -> None:
                 if message["type"] == "send":
                     payload = message.get("payload", {})
                     if payload.get("type") == "target_info":
@@ -3184,7 +3192,7 @@ class FridaManager:
             analyzer.unload()
 
         except Exception as e:
-            logger.error(f"Target analysis failed: {e}")
+            logger.exception(f"Target analysis failed: {e}")
 
         return target_info
 
@@ -3290,7 +3298,7 @@ class FridaManager:
 
         return instrumentation + "\n" + script_code
 
-    def _on_script_message(self, session_id: str, script_name: str, message: dict, data: Any):
+    def _on_script_message(self, session_id: str, script_name: str, message: dict, data: Any) -> None:
         """Handle messages from Frida scripts including binary data."""
         msg_type = message.get("type")
         payload = message.get("payload", {})
@@ -3410,7 +3418,7 @@ class FridaManager:
                 error=str(payload),
             )
 
-    def _on_session_detached(self, session_id: str, reason: str):
+    def _on_session_detached(self, session_id: str, reason: str) -> None:
         """Handle session detachment."""
         self.logger.log_operation(
             "session_detached",
@@ -3426,11 +3434,11 @@ class FridaManager:
             del self.sessions[session_id]
 
         # Remove associated scripts
-        script_keys = [k for k in self.scripts.keys() if k.startswith(session_id)]
+        script_keys = [k for k in self.scripts if k.startswith(session_id)]
         for key in script_keys:
             del self.scripts[key]
 
-    def _on_protection_detected(self, protection_type: ProtectionType, details: dict[str, Any]):
+    def _on_protection_detected(self, protection_type: ProtectionType, details: dict[str, Any]) -> None:
         """Handle protection detection events."""
         # Log detection
         self.logger.log_bypass_attempt(
@@ -3446,10 +3454,10 @@ class FridaManager:
             try:
                 adaptation_func(details)
             except Exception as e:
-                logger.error(f"Adaptation failed for {protection_type}: {e}")
+                logger.exception(f"Adaptation failed for {protection_type}: {e}")
 
     # Protection adaptation methods
-    def _adapt_anti_debug(self, details: dict[str, Any]):
+    def _adapt_anti_debug(self, details: dict[str, Any]) -> None:
         """Adapt to anti-debugging protections."""
         session_id = details.get("session")
         if not session_id:
@@ -3472,7 +3480,7 @@ class FridaManager:
             {"method": "script_injection"},
         )
 
-    def _adapt_anti_vm(self, details: dict[str, Any]):
+    def _adapt_anti_vm(self, details: dict[str, Any]) -> None:
         """Adapt to anti-VM protections."""
         session_id = details.get("session")
         if not session_id:
@@ -3495,7 +3503,7 @@ class FridaManager:
             {"method": "hardware_spoofing"},
         )
 
-    def _adapt_license(self, details: dict[str, Any]):
+    def _adapt_license(self, details: dict[str, Any]) -> None:
         """Adapt to license verification."""
         session_id = details.get("session")
         if not session_id:
@@ -3524,7 +3532,7 @@ class FridaManager:
             {"method": "api_hooking", "script": script_name},
         )
 
-    def _adapt_integrity(self, details: dict[str, Any]):
+    def _adapt_integrity(self, details: dict[str, Any]) -> None:
         """Adapt to integrity checks."""
         session_id = details.get("session")
         if not session_id:
@@ -3547,7 +3555,7 @@ class FridaManager:
             {"method": "checksum_patching"},
         )
 
-    def _adapt_hardware(self, details: dict[str, Any]):
+    def _adapt_hardware(self, details: dict[str, Any]) -> None:
         """Adapt to hardware binding."""
         session_id = details.get("session")
         if not session_id:
@@ -3569,7 +3577,7 @@ class FridaManager:
             {"method": "hwid_spoofing"},
         )
 
-    def _adapt_cloud(self, details: dict[str, Any]):
+    def _adapt_cloud(self, details: dict[str, Any]) -> None:
         """Adapt to cloud verification."""
         session_id = details.get("session")
         if not session_id:
@@ -3597,7 +3605,7 @@ class FridaManager:
             {"method": "network_interception"},
         )
 
-    def _adapt_time(self, details: dict[str, Any]):
+    def _adapt_time(self, details: dict[str, Any]) -> None:
         """Adapt to time-based protections."""
         session_id = details.get("session")
         if not session_id:
@@ -3620,7 +3628,7 @@ class FridaManager:
             {"method": "time_manipulation"},
         )
 
-    def _adapt_memory(self, details: dict[str, Any]):
+    def _adapt_memory(self, details: dict[str, Any]) -> None:
         """Adapt to memory protections."""
         session_id = details.get("session")
         if not session_id:
@@ -3643,7 +3651,7 @@ class FridaManager:
             {"method": "memory_patching"},
         )
 
-    def _adapt_kernel(self, details: dict[str, Any]):
+    def _adapt_kernel(self, details: dict[str, Any]) -> None:
         """Adapt to kernel-mode protections."""
         session_id = details.get("session")
         if not session_id:
@@ -3666,7 +3674,7 @@ class FridaManager:
             {"method": "usermode_emulation"},
         )
 
-    def _handle_memory_dump(self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]):
+    def _handle_memory_dump(self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]) -> None:
         """Handle memory dump data from Frida scripts."""
         # Extract metadata from payload
         address = payload.get("address", "0x0")
@@ -3703,9 +3711,9 @@ class FridaManager:
             self._analyze_memory_dump(data, payload)
 
         except Exception as e:
-            logger.error(f"Failed to save memory dump: {e}")
+            logger.exception(f"Failed to save memory dump: {e}")
 
-    def _handle_screenshot_data(self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]):
+    def _handle_screenshot_data(self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]) -> None:
         """Handle screenshot data from Frida scripts."""
         # Extract metadata
         window_title = payload.get("window_title", "unknown")
@@ -3737,9 +3745,9 @@ class FridaManager:
                 self._analyze_screenshot(data, payload)
 
         except Exception as e:
-            logger.error(f"Failed to save screenshot: {e}")
+            logger.exception(f"Failed to save screenshot: {e}")
 
-    def _handle_file_content(self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]):
+    def _handle_file_content(self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]) -> None:
         """Handle file content intercepted by Frida scripts."""
         # Extract file information
         file_path = payload.get("file_path", "unknown")
@@ -3767,7 +3775,7 @@ class FridaManager:
             # Monitor for persistence or modification attempts
             self._analyze_file_write(data, file_path, payload)
 
-    def _handle_network_packet(self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]):
+    def _handle_network_packet(self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]) -> None:
         """Handle network packet data from Frida scripts."""
         # Extract packet information
         direction = payload.get("direction", "unknown")  # send/recv
@@ -3797,7 +3805,7 @@ class FridaManager:
             # Potential license server communication
             self._analyze_license_traffic(data, payload)
 
-    def _handle_encrypted_data(self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]):
+    def _handle_encrypted_data(self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]) -> None:
         """Handle encrypted data intercepted by Frida scripts."""
         # Extract encryption information
         algorithm = payload.get("algorithm", "unknown")
@@ -3832,9 +3840,9 @@ class FridaManager:
                 self._analyze_decrypted_data(data, payload)
 
         except Exception as e:
-            logger.error(f"Failed to save crypto data: {e}")
+            logger.exception(f"Failed to save crypto data: {e}")
 
-    def _handle_generic_binary_data(self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]):
+    def _handle_generic_binary_data(self, session_id: str, script_name: str, data: Any, payload: dict[str, Any]) -> None:
         """Handle generic binary data from Frida scripts."""
         # Extract any available metadata
         data_type = payload.get("data_type", "binary")
@@ -3860,9 +3868,9 @@ class FridaManager:
             with open(data_file, "wb") as f:
                 f.write(data if isinstance(data, bytes) else bytes(data))
         except Exception as e:
-            logger.error(f"Failed to save binary data: {e}")
+            logger.exception(f"Failed to save binary data: {e}")
 
-    def _analyze_memory_dump(self, data: Any, payload: dict[str, Any]):
+    def _analyze_memory_dump(self, data: Any, payload: dict[str, Any]) -> None:
         """Analyze memory dump for interesting patterns."""
         # Convert to bytes if necessary
         if not isinstance(data, bytes):
@@ -3893,7 +3901,7 @@ class FridaManager:
                             "pattern": pattern.decode("utf-8", errors="ignore"),
                             "offset": idx,
                             "context": context.hex(),
-                        }
+                        },
                     )
 
         if findings:
@@ -3906,7 +3914,7 @@ class FridaManager:
                 success=True,
             )
 
-    def _analyze_screenshot(self, data: Any, payload: dict[str, Any]):
+    def _analyze_screenshot(self, data: Any, payload: dict[str, Any]) -> None:
         """Analyze screenshot for UI elements or text."""
         # Analyze screenshot data for UI elements
         analysis_results = {
@@ -3943,7 +3951,7 @@ class FridaManager:
                                     "type": "button",
                                     "text": pattern.decode("utf-8", errors="ignore"),
                                     "confidence": 0.7,
-                                }
+                                },
                             )
 
             except Exception as e:
@@ -3960,7 +3968,7 @@ class FridaManager:
             success=True,
         )
 
-    def _analyze_license_file(self, data: Any, file_path: str, payload: dict[str, Any]):
+    def _analyze_license_file(self, data: Any, file_path: str, payload: dict[str, Any]) -> None:
         """Analyze potential license file content."""
         try:
             # Try to decode as text
@@ -4003,7 +4011,7 @@ class FridaManager:
         except Exception as e:
             logger.debug(f"Failed to analyze license file: {e}")
 
-    def _analyze_file_write(self, data: Any, file_path: str, payload: dict[str, Any]):
+    def _analyze_file_write(self, data: Any, file_path: str, payload: dict[str, Any]) -> None:
         """Analyze file write operations for suspicious activity."""
         # Use payload data for comprehensive analysis
         write_context = {
@@ -4025,7 +4033,7 @@ class FridaManager:
                 success=True,
             )
 
-    def _analyze_http_traffic(self, data: Any, payload: dict[str, Any]):
+    def _analyze_http_traffic(self, data: Any, payload: dict[str, Any]) -> None:
         """Analyze HTTP/HTTPS traffic for license checks."""
         try:
             if isinstance(data, bytes):
@@ -4050,7 +4058,7 @@ class FridaManager:
         except Exception as e:
             logger.debug(f"Failed to analyze HTTP traffic: {e}")
 
-    def _analyze_license_traffic(self, data: Any, payload: dict[str, Any]):
+    def _analyze_license_traffic(self, data: Any, payload: dict[str, Any]) -> None:
         """Analyze potential license server communication."""
         self.logger.log_operation(
             "license_server_communication",
@@ -4071,7 +4079,7 @@ class FridaManager:
             },
         )
 
-    def _analyze_decrypted_data(self, data: Any, payload: dict[str, Any]):
+    def _analyze_decrypted_data(self, data: Any, payload: dict[str, Any]) -> None:
         """Analyze decrypted data for interesting content."""
         try:
             # Try to interpret as text
@@ -4294,7 +4302,7 @@ class FridaManager:
 
         return log_dir
 
-    def save_script_output(self, script_name: str, output: dict):
+    def save_script_output(self, script_name: str, output: dict) -> None:
         """Save script output for persistence.
 
         Args:
@@ -4309,8 +4317,8 @@ class FridaManager:
         output_with_metadata = {
             "timestamp": datetime.now().isoformat(),
             "script_name": script_name,
-            "pid": output.get("pid", None),
-            "process_name": output.get("process_name", None),
+            "pid": output.get("pid"),
+            "process_name": output.get("process_name"),
             "data": output,
         }
 
@@ -4351,18 +4359,18 @@ class FridaManager:
         results = []
         for result_file in script_dir.glob("*.json"):
             try:
-                with open(result_file, "r") as f:
+                with open(result_file) as f:
                     result = json.load(f)
                     results.append(result)
             except Exception as e:
-                logger.warning(f"Failed to load result file {result_file}: {e}")
+                logger.exception(f"Failed to load result file {result_file}: {e}")
 
         # Sort by timestamp
         results.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
 
         return results
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up resources."""
         # Stop batching
         self.batcher.stop_batching()
@@ -4373,13 +4381,13 @@ class FridaManager:
                 session.detach()
                 logger.debug(f"Detached session {session_id}")
             except Exception as e:
-                logger.warning(f"Failed to detach session {session_id}: {e}")
+                logger.exception(f"Failed to detach session {session_id}: {e}")
 
         # Clear collections
         self.sessions.clear()
         self.scripts.clear()
 
-    def _handle_structured_message(self, session_id: str, script_name: str, payload: dict[str, Any]):
+    def _handle_structured_message(self, session_id: str, script_name: str, payload: dict[str, Any]) -> None:
         """Handle structured messages from updated Frida scripts."""
         msg_type = payload.get("type")
         target = payload.get("target", script_name)
@@ -4415,7 +4423,7 @@ class FridaManager:
             success=True,
         )
 
-    def _handle_info_message(self, session_id: str, script_name: str, payload: dict[str, Any]):
+    def _handle_info_message(self, session_id: str, script_name: str, payload: dict[str, Any]) -> None:
         """Handle informational messages."""
         target = payload.get("target", script_name)
         action = payload.get("action", "info")
@@ -4435,7 +4443,7 @@ class FridaManager:
         if hasattr(self, "_ui_message_callback") and self._ui_message_callback:
             self._ui_message_callback("info", session_id, script_name, payload)
 
-    def _handle_warning_message(self, session_id: str, script_name: str, payload: dict[str, Any]):
+    def _handle_warning_message(self, session_id: str, script_name: str, payload: dict[str, Any]) -> None:
         """Handle warning messages."""
         target = payload.get("target", script_name)
         action = payload.get("action", "warning")
@@ -4457,7 +4465,7 @@ class FridaManager:
         if hasattr(self, "_ui_message_callback") and self._ui_message_callback:
             self._ui_message_callback("warning", session_id, script_name, payload)
 
-    def _handle_error_message(self, session_id: str, script_name: str, payload: dict[str, Any]):
+    def _handle_error_message(self, session_id: str, script_name: str, payload: dict[str, Any]) -> None:
         """Handle error messages."""
         target = payload.get("target", script_name)
         action = payload.get("action", "error")
@@ -4482,7 +4490,7 @@ class FridaManager:
         if hasattr(self, "_ui_message_callback") and self._ui_message_callback:
             self._ui_message_callback("error", session_id, script_name, payload)
 
-    def _handle_status_message(self, session_id: str, script_name: str, payload: dict[str, Any]):
+    def _handle_status_message(self, session_id: str, script_name: str, payload: dict[str, Any]) -> None:
         """Handle status messages."""
         target = payload.get("target", script_name)
         action = payload.get("action", "status")
@@ -4504,7 +4512,7 @@ class FridaManager:
         if hasattr(self, "_ui_message_callback") and self._ui_message_callback:
             self._ui_message_callback("status", session_id, script_name, payload)
 
-    def _handle_bypass_message(self, session_id: str, script_name: str, payload: dict[str, Any]):
+    def _handle_bypass_message(self, session_id: str, script_name: str, payload: dict[str, Any]) -> None:
         """Handle bypass attempt messages."""
         target = payload.get("target", script_name)
         action = payload.get("action", "bypass_attempt")
@@ -4543,7 +4551,7 @@ class FridaManager:
         if hasattr(self, "_ui_message_callback") and self._ui_message_callback:
             self._ui_message_callback("bypass", session_id, script_name, payload)
 
-    def _handle_success_message(self, session_id: str, script_name: str, payload: dict[str, Any]):
+    def _handle_success_message(self, session_id: str, script_name: str, payload: dict[str, Any]) -> None:
         """Handle success messages."""
         target = payload.get("target", script_name)
         action = payload.get("action", "success")
@@ -4563,7 +4571,7 @@ class FridaManager:
         if hasattr(self, "_ui_message_callback") and self._ui_message_callback:
             self._ui_message_callback("success", session_id, script_name, payload)
 
-    def _handle_detection_message(self, session_id: str, script_name: str, payload: dict[str, Any]):
+    def _handle_detection_message(self, session_id: str, script_name: str, payload: dict[str, Any]) -> None:
         """Handle detection messages."""
         target = payload.get("target", script_name)
         action = payload.get("action", "detection")
@@ -4599,7 +4607,7 @@ class FridaManager:
         if hasattr(self, "_ui_message_callback") and self._ui_message_callback:
             self._ui_message_callback("detection", session_id, script_name, payload)
 
-    def _handle_notification_message(self, session_id: str, script_name: str, payload: dict[str, Any]):
+    def _handle_notification_message(self, session_id: str, script_name: str, payload: dict[str, Any]) -> None:
         """Handle notification messages."""
         target = payload.get("target", script_name)
         action = payload.get("action", "notification")

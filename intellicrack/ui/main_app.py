@@ -36,13 +36,16 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 """
 
+import contextlib
 import logging
 import os
 import traceback
 from functools import partial
 
 from intellicrack.ai.model_manager_module import ModelManager
-from intellicrack.config import CONFIG
+from intellicrack.core.config_manager import get_config
+
+CONFIG = get_config()
 from intellicrack.core.analysis.automated_patch_agent import run_automated_patch_agent
 from intellicrack.core.analysis.concolic_executor import (
     run_concolic_execution,
@@ -108,12 +111,14 @@ from intellicrack.ui.traffic_analyzer import TrafficAnalyzer, clear_network_capt
 from intellicrack.utils import run_frida_script, run_qemu_analysis, run_selected_analysis, run_ssl_tls_interceptor
 from intellicrack.utils.core.plugin_paths import get_frida_scripts_dir, get_ghidra_scripts_dir
 from intellicrack.utils.log_message import log_message
+from intellicrack.utils.logger import log_all_methods
 from intellicrack.utils.protection_utils import inject_comprehensive_api_hooks
 from intellicrack.utils.resource_helper import get_resource_path
 
 logger = logging.getLogger(__name__)
 
 
+@log_all_methods
 class IntellicrackApp(QMainWindow):
     """Run application window for Intellicrack, a comprehensive binary analysis and security research toolkit.
 
@@ -202,19 +207,19 @@ class IntellicrackApp(QMainWindow):
     PLUGIN_TYPE_FRIDA = "frida"
     PLUGIN_TYPE_GHIDRA = "ghidra"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the main Intellicrack application window.
 
         Sets up the logger, model manager, and other core components.
         """
-        print("[INIT] IntellicrackApp.__init__ started")
+        logger.debug("IntellicrackApp.__init__ started")
 
         # Initialize UI attributes first
         self._initialize_ui_attributes()
 
-        print("[INIT] Calling super().__init__()...")
+        logger.debug("Calling super().__init__()...")
         super().__init__()
-        print("[INIT] super().__init__() completed")
+        logger.debug("super().__init__() completed")
 
         # Flag to track if UI is initialized
         self._ui_initialized = False
@@ -247,11 +252,11 @@ class IntellicrackApp(QMainWindow):
         # Finalize initialization
         self._finalize_ui_initialization()
 
-        print("[INIT] IntellicrackApp.__init__ completed")
+        logger.debug("IntellicrackApp.__init__ completed")
 
-    def _initialize_ui_attributes(self):
+    def _initialize_ui_attributes(self) -> None:
         """Initialize all UI-related attributes to None."""
-        print("[INIT] Initializing UI attributes...")
+        logger.debug("Initializing UI attributes...")
 
         # UI component attributes (only attributes that are actually used)
         self.activity_log = None
@@ -273,11 +278,11 @@ class IntellicrackApp(QMainWindow):
         self.log_access_history = []
         self.reports = []
 
-        print("[INIT] UI attributes initialized")
+        logger.debug("UI attributes initialized")
 
-    def _initialize_core_components(self):
+    def _initialize_core_components(self) -> None:
         """Initialize core application components and managers."""
-        print("[INIT] Initializing core components...")
+        logger.debug("Initializing core components...")
 
         # Initialize logger first
         self.logger = logging.getLogger("IntellicrackLogger.Main")
@@ -297,11 +302,11 @@ class IntellicrackApp(QMainWindow):
             self.model_manager = None
             self.logger.warning("ModelManager not available - AI features will be limited")
 
-        print("[INIT] Core components initialized")
+        logger.debug("Core components initialized")
 
-    def _initialize_ai_orchestrator(self):
+    def _initialize_ai_orchestrator(self) -> None:
         """Initialize AI orchestration and coordination components."""
-        print("[INIT] Initializing AI Orchestrator...")
+        logger.debug("Initializing AI Orchestrator...")
 
         try:
             self.logger.info("Initializing AI Orchestrator for agentic environment...")
@@ -336,9 +341,9 @@ class IntellicrackApp(QMainWindow):
             self.ai_coordinator = None
             self.logger.warning("Continuing without agentic AI system")
 
-    def _connect_signals(self):
+    def _connect_signals(self) -> None:
         """Connect all Qt signals to their respective slots."""
-        print("[INIT] Connecting signals...")
+        logger.debug("Connecting signals...")
 
         # Connect internal signals
         self.update_output.connect(self.append_output)
@@ -362,11 +367,11 @@ class IntellicrackApp(QMainWindow):
         self.app_context.task_completed.connect(self._on_task_completed)
         self.app_context.task_failed.connect(self._on_task_failed)
 
-        print("[INIT] Signals connected")
+        logger.debug("Signals connected")
 
-    def _setup_main_window_properties(self):
+    def _setup_main_window_properties(self) -> None:
         """Set up main window properties, geometry, and icon."""
-        print("[INIT] Setting up main window properties...")
+        logger.debug("Setting up main window properties...")
 
         # Set up main window
         self.setWindowTitle("Intellicrack")
@@ -396,20 +401,20 @@ class IntellicrackApp(QMainWindow):
                         app = QApplication.instance()
                         if app:
                             app.setWindowIcon(icon)
-                        print(f"[INIT] Icon loaded successfully from: {icon_path}")
+                        logger.debug(f"Icon loaded successfully from: {icon_path}")
                         icon_loaded = True
                         break
                 except Exception as e:
-                    print(f"[INIT] Failed to load icon from {icon_path}: {e}")
+                    logger.debug(f"Failed to load icon from {icon_path}: {e}")
 
         if not icon_loaded:
-            print("[INIT] Failed to load application icon from any path")
+            logger.debug("Failed to load application icon from any path")
 
-        print("[INIT] Main window properties set")
+        logger.debug("Main window properties set")
 
-    def _initialize_application_properties(self):
+    def _initialize_application_properties(self) -> None:
         """Initialize important application properties and variables."""
-        print("[INIT] Initializing application properties...")
+        logger.debug("Initializing application properties...")
 
         # Initialize important properties
         self.binary_path = None
@@ -439,11 +444,11 @@ class IntellicrackApp(QMainWindow):
         self.patches = []
         self.binary_info = None
 
-        print("[INIT] Application properties initialized")
+        logger.debug("Application properties initialized")
 
-    def _bind_external_functions(self):
+    def _bind_external_functions(self) -> None:
         """Bind external function wrappers as instance methods using partial."""
-        print("[INIT] Binding external functions...")
+        logger.debug("Binding external functions...")
 
         # Connect external function wrappers as instance methods using partial
         self.inject_comprehensive_api_hooks = partial(inject_comprehensive_api_hooks, self)
@@ -475,22 +480,22 @@ class IntellicrackApp(QMainWindow):
         self.run_dynamic_instrumentation = partial(run_dynamic_instrumentation, self)
         self.run_frida_script = partial(run_frida_script, self)
 
-        print("[INIT] External functions bound")
+        logger.debug("External functions bound")
 
-    def _bind_exploitation_handlers(self):
+    def _bind_exploitation_handlers(self) -> None:
         """Bind exploitation handler methods from separate module."""
-        print("[INIT] Binding exploitation handlers...")
+        logger.debug("Binding exploitation handlers...")
 
         from . import exploitation_handlers
 
         self.cleanup_exploitation = partial(exploitation_handlers.cleanup_exploitation, self)
         self.save_exploitation_output = partial(exploitation_handlers.save_exploitation_output, self)
 
-        print("[INIT] Exploitation handlers bound")
+        logger.debug("Exploitation handlers bound")
 
-    def _bind_class_methods(self):
+    def _bind_class_methods(self) -> None:
         """Bind standalone method definitions to the class."""
-        print("[INIT] Binding class methods...")
+        logger.debug("Binding class methods...")
 
         # Bind network and license server methods
         self.__class__.start_network_capture = start_network_capture
@@ -503,11 +508,11 @@ class IntellicrackApp(QMainWindow):
         self.__class__.generate_report = generate_report
         self.__class__.view_report = view_report
 
-        print("[INIT] Class methods bound")
+        logger.debug("Class methods bound")
 
-    def _initialize_analyzer_engines(self):
+    def _initialize_analyzer_engines(self) -> None:
         """Initialize various analyzer engines with graceful fallbacks."""
-        print("[INIT] Initializing analyzer engines...")
+        logger.debug("Initializing analyzer engines...")
 
         # Initialize AI components
         try:
@@ -565,11 +570,11 @@ class IntellicrackApp(QMainWindow):
             self.gpu_accelerator = None
             logger.warning("Failed to initialize GPUAccelerator: %s", e)
 
-        print("[INIT] Analyzer engines initialized")
+        logger.debug("Analyzer engines initialized")
 
-    def _initialize_network_components(self):
+    def _initialize_network_components(self) -> None:
         """Initialize network analysis and traffic components."""
-        print("[INIT] Initializing network components...")
+        logger.debug("Initializing network components...")
 
         try:
             from ..core.network.traffic_analyzer import NetworkTrafficAnalyzer
@@ -603,11 +608,11 @@ class IntellicrackApp(QMainWindow):
             self.network_license_server = None
             logger.warning("Failed to initialize NetworkLicenseServerEmulator: %s", e)
 
-        print("[INIT] Network components initialized")
+        logger.debug("Network components initialized")
 
-    def _create_main_ui_layout(self):
+    def _create_main_ui_layout(self) -> None:
         """Create the main UI layout with central widget, tabs, and output panel."""
-        print("[INIT] Creating main UI layout...")
+        logger.debug("Creating main UI layout...")
 
         # Add TOOL_REGISTRY for hexview integration
         self.TOOL_REGISTRY = TOOL_REGISTRY.copy()
@@ -616,118 +621,118 @@ class IntellicrackApp(QMainWindow):
         self.ghidra_path_edit = None
 
         # Create PDF report generator
-        print("[INIT] Creating PDFReportGenerator...")
+        logger.debug("Creating PDFReportGenerator...")
         if PDFReportGenerator is not None:
             self.pdf_report_generator = PDFReportGenerator()
-            print("[INIT] PDFReportGenerator created")
+            logger.debug("PDFReportGenerator created")
         else:
             self.pdf_report_generator = None
-            print("[INIT] PDFReportGenerator not available - reporting features limited")
+            logger.debug("PDFReportGenerator not available - reporting features limited")
             self.logger.warning("PDFReportGenerator not available - reporting features will be limited")
 
         # Create central widget and layout
-        print("[INIT] Creating central widget...")
+        logger.debug("Creating central widget...")
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
-        print("[INIT] Central widget created")
+        logger.debug("Central widget created")
 
-        print("[INIT] Creating main layout...")
+        logger.debug("Creating main layout...")
         self.main_layout = QVBoxLayout(self.central_widget)
-        print("[INIT] Main layout created")
+        logger.debug("Main layout created")
 
-        print("[INIT] Creating toolbar...")
+        logger.debug("Creating toolbar...")
         self.create_toolbar()
-        print("[INIT] Toolbar created")
+        logger.debug("Toolbar created")
 
-        print("[INIT] Creating main splitter...")
+        logger.debug("Creating main splitter...")
         self.main_splitter = QSplitter(Qt.Orientation.Horizontal)
-        print("[INIT] Adding splitter to layout...")
+        logger.debug("Adding splitter to layout...")
         self.main_layout.addWidget(self.main_splitter)
-        print("[INIT] Splitter added to layout")
+        logger.debug("Splitter added to layout")
 
-        print("[INIT] Main UI layout created")
+        logger.debug("Main UI layout created")
 
-    def _setup_tabs_and_themes(self):
+    def _setup_tabs_and_themes(self) -> None:
         """Set up tab widget and apply themes."""
-        print("[INIT] Setting up tabs and themes...")
+        logger.debug("Setting up tabs and themes...")
 
-        print("[INIT] Creating tab widget...")
+        logger.debug("Creating tab widget...")
         self.tabs = QTabWidget()
-        print("[INIT] Tab widget created")
+        logger.debug("Tab widget created")
 
         # Style main tabs differently from sub-tabs to avoid visual confusion
-        print("[INIT] Setting tab position...")
+        logger.debug("Setting tab position...")
         self.tabs.setTabPosition(QTabWidget.TabPosition.North)
-        print("[INIT] Setting tabs closable...")
+        logger.debug("Setting tabs closable...")
         self.tabs.setTabsClosable(False)
 
-        print("[INIT] Applying theme stylesheet...")
+        logger.debug("Applying theme stylesheet...")
         try:
             # Initialize and apply theme using ThemeManager
             self.theme_manager = get_theme_manager()
             self.theme_manager.set_theme(self.theme_manager.get_current_theme())
-            print(f"[INIT] Theme '{self.theme_manager.get_current_theme()}' applied successfully")
+            logger.debug(f"Theme '{self.theme_manager.get_current_theme()}' applied successfully")
 
             # Initialize icon manager for consistent iconography
             self.icon_manager = IconManager()
-            print("[INIT] Icon manager initialized successfully")
+            logger.debug("Icon manager initialized successfully")
         except Exception as e:
-            print(f"[INIT] Failed to apply theme: {e}")
+            logger.debug(f"Failed to apply theme: {e}")
             # Continue initialization even if theme application fails
 
-        print("[INIT] Setting additional tab properties...")
+        logger.debug("Setting additional tab properties...")
         self.tabs.setTabPosition(QTabWidget.TabPosition.North)
         self.tabs.setTabsClosable(False)
-        print("[INIT] Tab properties set")
+        logger.debug("Tab properties set")
 
-        print("[INIT] Adding tabs to splitter...")
+        logger.debug("Adding tabs to splitter...")
         self.main_splitter.addWidget(self.tabs)
-        print("[INIT] Tabs added to splitter")
+        logger.debug("Tabs added to splitter")
 
-        print("[INIT] Tabs and themes setup complete")
+        logger.debug("Tabs and themes setup complete")
 
-    def _create_output_panel(self):
+    def _create_output_panel(self) -> None:
         """Create the output panel with console and clear functionality."""
-        print("[INIT] Creating output panel...")
+        logger.debug("Creating output panel...")
 
         self.output_panel = QWidget()
-        print("[INIT] Output panel created")
+        logger.debug("Output panel created")
 
-        print("[INIT] Creating output layout...")
+        logger.debug("Creating output layout...")
         self.output_layout = QVBoxLayout(self.output_panel)
 
-        print("[INIT] Creating output text widget...")
+        logger.debug("Creating output text widget...")
         self.output = QTextEdit()
-        print("[INIT] Setting output readonly...")
+        logger.debug("Setting output readonly...")
         self.output.setReadOnly(True)
 
-        print("[INIT] Creating raw console output widget...")
+        logger.debug("Creating raw console output widget...")
         self.raw_console_output = QPlainTextEdit()
         self.raw_console_output.setReadOnly(True)
         self.raw_console_output.setMaximumBlockCount(1000)
 
-        print("[INIT] Creating clear button...")
+        logger.debug("Creating clear button...")
         self.clear_output_btn = QPushButton("Clear Output")
-        print("[INIT] Connecting clear button...")
+        logger.debug("Connecting clear button...")
         self.clear_output_btn.clicked.connect(self.clear_output)
 
-        print("[INIT] Adding widgets to output layout...")
+        logger.debug("Adding widgets to output layout...")
         self.output_layout.addWidget(QLabel("<b>Output</b>"))
         self.output_layout.addWidget(self.output)
         self.output_layout.addWidget(QLabel("<b>Raw Console</b>"))
         self.output_layout.addWidget(self.raw_console_output)
         self.output_layout.addWidget(self.clear_output_btn)
-        print("[INIT] Output layout complete")
+        logger.debug("Output layout complete")
 
-        print("[INIT] Adding output panel to splitter...")
+        logger.debug("Adding output panel to splitter...")
         self.main_splitter.addWidget(self.output_panel)
-        print("[INIT] Setting splitter sizes...")
+        logger.debug("Setting splitter sizes...")
         self.main_splitter.setSizes([700, 500])
-        print("[INIT] Splitter configuration complete")
+        logger.debug("Splitter configuration complete")
 
-    def _create_modular_tabs(self):
+    def _create_modular_tabs(self) -> None:
         """Create all modular tab instances with shared context."""
-        print("[INIT] Creating modular tabs...")
+        logger.debug("Creating modular tabs...")
 
         # Create shared context for tabs
         shared_context = {
@@ -774,11 +779,11 @@ class IntellicrackApp(QMainWindow):
         # Initialize dashboard manager
         self.dashboard_manager = DashboardManager(self)
 
-        print("[INIT] Modular tabs created")
+        logger.debug("Modular tabs created")
 
-    def _setup_individual_tabs(self):
+    def _setup_individual_tabs(self) -> None:
         """Set up each individual tab with error handling."""
-        print("[INIT] Setting up individual tabs...")
+        logger.debug("Setting up individual tabs...")
 
         # Initialize the binary_path variable before setting up tabs
         self.binary_path = None
@@ -848,11 +853,11 @@ class IntellicrackApp(QMainWindow):
             raise
 
         self.logger.info("All tab setup complete - constructor finished")
-        print("[INIT] Individual tabs setup complete")
+        logger.debug("Individual tabs setup complete")
 
-    def _finalize_ui_initialization(self):
+    def _finalize_ui_initialization(self) -> None:
         """Finalize UI initialization with tooltips, plugins, and final configuration."""
-        print("[INIT] Finalizing UI initialization...")
+        logger.debug("Finalizing UI initialization...")
 
         # Register terminal manager with main app
         from intellicrack.core.terminal_manager import get_terminal_manager
@@ -869,7 +874,7 @@ class IntellicrackApp(QMainWindow):
         try:
             self.apply_comprehensive_tooltips()
             self.logger.info("Applied tooltips to UI elements")
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) as e:
+        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.logger.warning(f"Could not apply tooltips: {e}")
 
         # Ensure window is properly configured
@@ -886,7 +891,7 @@ class IntellicrackApp(QMainWindow):
             self.logger.info(
                 f"Loaded {len(self.available_plugins.get('custom', []))} custom plugins, "
                 f"{len(self.available_plugins.get('frida', []))} Frida scripts, "
-                f"{len(self.available_plugins.get('ghidra', []))} Ghidra scripts"
+                f"{len(self.available_plugins.get('ghidra', []))} Ghidra scripts",
             )
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.warning(f"Failed to initialize plugins: {e}")
@@ -897,9 +902,9 @@ class IntellicrackApp(QMainWindow):
             }
 
         self.logger.info("IntellicrackApp.__init__ completed successfully")
-        print("[INIT] UI initialization finalized")
+        logger.debug("UI initialization finalized")
 
-    def _on_ai_task_complete(self, event_data):
+    def _on_ai_task_complete(self, event_data) -> None:
         """Handle AI task completion events from the orchestrator.
 
         Args:
@@ -927,7 +932,7 @@ class IntellicrackApp(QMainWindow):
         except Exception as e:
             self.logger.error(f"Error handling AI task completion: {e}")
 
-    def _on_coordinated_analysis_complete(self, event_data):
+    def _on_coordinated_analysis_complete(self, event_data) -> None:
         """Handle coordinated analysis completion events from AI coordinator.
 
         Args:
@@ -960,31 +965,31 @@ class IntellicrackApp(QMainWindow):
         except Exception as e:
             self.logger.error(f"Error handling coordinated analysis completion: {e}")
 
-    def append_output(self, text: str):
+    def append_output(self, text: str) -> None:
         """Append text to the main output widget."""
         if hasattr(self, "output") and self.output:
             self.output.append(text)
         if hasattr(self, "raw_console_output") and self.raw_console_output:
             self.raw_console_output.appendPlainText(text)
 
-    def set_status_message(self, message: str):
+    def set_status_message(self, message: str) -> None:
         """Set status message in the application."""
         if hasattr(self, "statusBar") and self.statusBar():
             self.statusBar().showMessage(message, 5000)
         self.logger.info(f"Status: {message}")
 
-    def append_analysis_results(self, results: str):
+    def append_analysis_results(self, results: str) -> None:
         """Append analysis results to appropriate display."""
         if hasattr(self, "output") and self.output:
             formatted_results = f"[ANALYSIS] {results}"
             self.output.append(formatted_results)
         self.logger.info(f"Analysis results: {results}")
 
-    def set_progress_value(self, value: int):
+    def set_progress_value(self, value: int) -> None:
         """Set progress value for any active progress indicators."""
         self.logger.debug(f"Progress updated: {value}%")
 
-    def set_assistant_status(self, status: str):
+    def set_assistant_status(self, status: str) -> None:
         """Set AI assistant status."""
         if hasattr(self, "assistant_status") and self.assistant_status:
             try:
@@ -994,7 +999,7 @@ class IntellicrackApp(QMainWindow):
                 pass
         self.logger.info(f"Assistant status: {status}")
 
-    def append_chat_display(self, message: str):
+    def append_chat_display(self, message: str) -> None:
         """Append message to chat display."""
         if hasattr(self, "chat_display") and self.chat_display:
             try:
@@ -1004,7 +1009,7 @@ class IntellicrackApp(QMainWindow):
                 pass
         self.logger.info(f"Chat: {message}")
 
-    def replace_last_chat_message(self, message: str):
+    def replace_last_chat_message(self, message: str) -> None:
         """Replace the last message in chat display."""
         if hasattr(self, "chat_display") and self.chat_display:
             try:
@@ -1016,34 +1021,32 @@ class IntellicrackApp(QMainWindow):
                 self.append_chat_display(message)
         self.logger.info(f"Chat replaced: {message}")
 
-    def handle_log_user_question(self, question: str):
+    def handle_log_user_question(self, question: str) -> None:
         """Handle user question logging."""
         if hasattr(self, "ai_conversation_history"):
             self.ai_conversation_history.append({"type": "question", "content": question})
         self.logger.info(f"User question logged: {question}")
 
-    def handle_set_keygen_name(self, name: str):
+    def handle_set_keygen_name(self, name: str) -> None:
         """Handle setting keygen name."""
         self.logger.info(f"Keygen name set: {name}")
 
-    def handle_set_keygen_version(self, version: str):
+    def handle_set_keygen_version(self, version: str) -> None:
         """Handle setting keygen version."""
         self.logger.info(f"Keygen version set: {version}")
 
-    def handle_switch_tab(self, tab_index: int):
+    def handle_switch_tab(self, tab_index: int) -> None:
         """Handle tab switching."""
         if hasattr(self, "tabs") and self.tabs:
-            try:
+            with contextlib.suppress(AttributeError, IndexError):
                 self.tabs.setCurrentIndex(tab_index)
-            except (AttributeError, IndexError):
-                pass
         self.logger.info(f"Switched to tab index: {tab_index}")
 
-    def handle_generate_key(self):
+    def handle_generate_key(self) -> None:
         """Handle key generation request."""
         self.logger.info("Key generation requested")
 
-    def clear_output(self):
+    def clear_output(self) -> None:
         """Clear all output displays."""
         if hasattr(self, "output") and self.output:
             self.output.clear()
@@ -1058,7 +1061,7 @@ class IntellicrackApp(QMainWindow):
         timestamp = datetime.datetime.now().strftime("%H:%M:%S")
         return f"[{timestamp}] {message}"
 
-    def _on_binary_loaded(self, binary_info: dict):
+    def _on_binary_loaded(self, binary_info: dict) -> None:
         """Handle binary loaded event from app context."""
         if isinstance(binary_info, dict) and "path" in binary_info:
             self.binary_path = binary_info["path"]
@@ -1075,32 +1078,32 @@ class IntellicrackApp(QMainWindow):
             self.update_output.emit(self.log_message(f"Binary loaded: {binary_info}"))
             self.logger.info(f"Binary loaded: {binary_info}")
 
-    def _on_analysis_completed(self, results):
+    def _on_analysis_completed(self, results) -> None:
         """Handle analysis completion event from app context."""
         self.update_analysis_results.emit(f"Analysis completed with {len(results)} results")
         self.logger.info("Analysis completed")
 
-    def _on_task_started(self, task_name: str):
+    def _on_task_started(self, task_name: str) -> None:
         """Handle task started event from app context."""
         self.update_status.emit(f"Task started: {task_name}")
         self.logger.info(f"Task started: {task_name}")
 
-    def _on_task_progress(self, progress: int):
+    def _on_task_progress(self, progress: int) -> None:
         """Handle task progress event from app context."""
         self.update_progress.emit(progress)
         self.logger.debug(f"Task progress: {progress}%")
 
-    def _on_task_completed(self, task_name: str):
+    def _on_task_completed(self, task_name: str) -> None:
         """Handle task completed event from app context."""
         self.update_status.emit(f"Task completed: {task_name}")
         self.logger.info(f"Task completed: {task_name}")
 
-    def _on_task_failed(self, task_name: str, error: str):
+    def _on_task_failed(self, task_name: str, error: str) -> None:
         """Handle task failed event from app context."""
         self.update_status.emit(f"Task failed: {task_name} - {error}")
         self.logger.error(f"Task failed: {task_name} - {error}")
 
-    def apply_comprehensive_tooltips(self):
+    def apply_comprehensive_tooltips(self) -> None:
         """Apply comprehensive tooltips to UI elements."""
         try:
             from intellicrack.ui.tooltip_helper import apply_tooltips_to_all_elements
@@ -1119,7 +1122,7 @@ class IntellicrackApp(QMainWindow):
         except Exception as e:
             self.logger.warning(f"Failed to apply tooltips: {e}")
 
-    def restore_window_state(self):
+    def restore_window_state(self) -> None:
         """Restore window state from configuration."""
         try:
             from ..core.config_manager import get_config
@@ -1132,11 +1135,11 @@ class IntellicrackApp(QMainWindow):
         except Exception as e:
             self.logger.debug(f"Could not restore window state: {e}")
 
-    def _initialize_font_manager(self):
+    def _initialize_font_manager(self) -> None:
         """Initialize custom fonts."""
         self.logger.debug("Font manager initialized")
 
-    def create_toolbar(self):
+    def create_toolbar(self) -> None:
         """Create application toolbar."""
         from PyQt6.QtWidgets import QToolBar
 
@@ -1144,7 +1147,7 @@ class IntellicrackApp(QMainWindow):
         self.addToolBar(toolbar)
         self.logger.debug("Toolbar created")
 
-    def on_theme_changed(self, theme_name: str):
+    def on_theme_changed(self, theme_name: str) -> None:
         """Handle theme change event."""
         if hasattr(self, "theme_manager") and self.theme_manager:
             self.theme_manager.set_theme(theme_name)
@@ -1166,7 +1169,7 @@ class IntellicrackApp(QMainWindow):
             return None
 
         try:
-            with open(cache_file, "r", encoding="utf-8") as f:
+            with open(cache_file, encoding="utf-8") as f:
                 return json.load(f)
         except (json.JSONDecodeError, OSError) as e:
             self.logger.debug(f"Failed to load cache data: {e}")
@@ -1378,7 +1381,7 @@ class IntellicrackApp(QMainWindow):
                                         with open(entry, "rb") as f:
                                             f.read(512)
                                     else:
-                                        with open(entry, "r", encoding="utf-8") as f:
+                                        with open(entry, encoding="utf-8") as f:
                                             f.read(512)
 
                                     plugin_info = {
@@ -1403,7 +1406,7 @@ class IntellicrackApp(QMainWindow):
                                             "type": plugin_type,
                                             "valid": False,
                                             "error": str(file_error),
-                                        }
+                                        },
                                     )
 
                 except (OSError, PermissionError) as dir_error:
@@ -1414,7 +1417,7 @@ class IntellicrackApp(QMainWindow):
                 with lock, open(cache_file, "w", encoding="utf-8") as f:
                     json.dump({"plugins": plugins, "cache_version": "1.0"}, f, indent=2)
                 self.logger.debug(f"Plugin cache saved to {cache_file}")
-            except (OSError, IOError) as cache_error:
+            except OSError as cache_error:
                 self.logger.warning(f"Failed to save plugin cache: {cache_error}")
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -1428,7 +1431,7 @@ class IntellicrackApp(QMainWindow):
         self.logger.info(f"Loaded {sum(len(p) for p in plugins.values())} plugins across {len(plugins)} categories")
         return plugins
 
-    def setup_project_dashboard_tab(self):
+    def setup_project_dashboard_tab(self) -> None:
         """Set up project dashboard tab with real-time monitoring."""
         try:
             if hasattr(self, "dashboard_tab") and self.dashboard_tab:
@@ -1439,7 +1442,7 @@ class IntellicrackApp(QMainWindow):
             if hasattr(self, "dashboard_tab"):
                 self.dashboard_tab.setVisible(True)
 
-    def setup_analysis_tab(self):
+    def setup_analysis_tab(self) -> None:
         """Set up analysis tab with licensing protection analysis capabilities."""
         try:
             if hasattr(self, "analysis_tab") and self.analysis_tab:
@@ -1453,7 +1456,7 @@ class IntellicrackApp(QMainWindow):
             if hasattr(self, "analysis_tab"):
                 self.analysis_tab.setVisible(True)
 
-    def setup_patching_exploitation_tab(self):
+    def setup_patching_exploitation_tab(self) -> None:
         """Set up patching exploitation tab with advanced license bypass capabilities."""
         try:
             if hasattr(self, "exploitation_tab") and self.exploitation_tab:
@@ -1464,7 +1467,7 @@ class IntellicrackApp(QMainWindow):
             if hasattr(self, "exploitation_tab"):
                 self.exploitation_tab.setVisible(True)
 
-    def setup_ai_assistant_tab(self):
+    def setup_ai_assistant_tab(self) -> None:
         """Set up AI assistant tab with license protection research capabilities."""
         try:
             if hasattr(self, "ai_assistant_tab") and self.ai_assistant_tab:
@@ -1475,14 +1478,14 @@ class IntellicrackApp(QMainWindow):
             if hasattr(self, "ai_assistant_tab"):
                 self.ai_assistant_tab.setVisible(True)
 
-    def setup_netanalysis_emulation_tab(self):
+    def setup_netanalysis_emulation_tab(self) -> None:
         """Set up network analysis emulation tab with license server bypass capabilities."""
         try:
             self.logger.info("Network analysis emulation tab initialized successfully")
         except Exception as e:
             self.logger.error(f"Failed to setup network analysis emulation tab: {e}")
 
-    def setup_tools_plugins_tab(self):
+    def setup_tools_plugins_tab(self) -> None:
         """Set up tools plugins tab with license protection research tool integration."""
         try:
             if hasattr(self, "tools_tab") and self.tools_tab:
@@ -1493,7 +1496,7 @@ class IntellicrackApp(QMainWindow):
             if hasattr(self, "tools_tab"):
                 self.tools_tab.setVisible(True)
 
-    def setup_settings_tab(self):
+    def setup_settings_tab(self) -> None:
         """Set up settings tab with license protection research configuration."""
         try:
             if hasattr(self, "settings_tab") and self.settings_tab:
@@ -1545,7 +1548,7 @@ def launch():
                 get_resource_path("assets/icon.ico"),
                 os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "assets", "icon.ico"),
                 os.path.join(
-                    os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "intellicrack", "assets", "icon.ico"
+                    os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "intellicrack", "assets", "icon.ico",
                 ),
             ]
 

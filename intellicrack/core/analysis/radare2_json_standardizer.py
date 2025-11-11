@@ -58,7 +58,7 @@ class R2JSONStandardizer:
         "comprehensive": "Comprehensive Analysis",
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the Radare2 JSON standardizer.
 
         Sets up a unique analysis ID and timestamp for result tracking.
@@ -292,7 +292,7 @@ class R2JSONStandardizer:
             "summary_statistics": {
                 "total_imports": len(raw_result.get("imports", [])),
                 "total_exports": len(raw_result.get("exports", [])),
-                "unique_libraries": len(set(imp.get("library", "") for imp in raw_result.get("imports", []))),
+                "unique_libraries": len({imp.get("library", "") for imp in raw_result.get("imports", [])}),
                 "suspicious_api_count": len(raw_result.get("suspicious_apis", [])),
                 "anti_analysis_count": len(raw_result.get("anti_analysis_apis", [])),
                 "api_diversity_score": self._calculate_api_diversity(raw_result),
@@ -602,7 +602,7 @@ class R2JSONStandardizer:
                     "type": func.get("type", "unknown"),
                     "attributes": func.get("attributes", {}),
                     "cross_references": func.get("cross_references", []),
-                }
+                },
             )
         return normalized
 
@@ -644,7 +644,7 @@ class R2JSONStandardizer:
 
             radare2_path = shutil.which("radare2")
             if radare2_path:
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     [radare2_path, "-v"],
                     check=False,
                     capture_output=True,
@@ -684,12 +684,12 @@ class R2JSONStandardizer:
         total_fields = 0
         filled_fields = 0
 
-        def count_fields(obj, path=""):
+        def count_fields(obj, path="") -> None:
             nonlocal total_fields, filled_fields
             if isinstance(obj, dict):
                 for key, value in obj.items():
                     total_fields += 1
-                    if value is not None and value != "" and value != [] and value != {}:
+                    if value is not None and value not in ("", [], {}):
                         filled_fields += 1
                     if isinstance(value, (dict, list)):
                         count_fields(value, f"{path}.{key}")
@@ -751,7 +751,7 @@ class R2JSONStandardizer:
                     "pattern": pattern.get("pattern", ""),
                     "confidence": pattern.get("confidence", 0.5),
                     "matches": pattern.get("matches", []),
-                }
+                },
             )
         return normalized
 
@@ -766,7 +766,7 @@ class R2JSONStandardizer:
                     "address": self._normalize_address(routine.get("address", 0)),
                     "complexity": routine.get("complexity", "medium"),
                     "bypassed": routine.get("bypassed", False),
-                }
+                },
             )
         return normalized
 
@@ -793,7 +793,7 @@ class R2JSONStandardizer:
             "total_functions": len(functions),
             "avg_function_size": sum(f.get("size", 0) for f in functions) / max(1, len(functions)),
             "max_function_size": max((f.get("size", 0) for f in functions), default=0),
-            "function_types": list(set(f.get("type", "unknown") for f in functions)),
+            "function_types": list({f.get("type", "unknown") for f in functions}),
             "call_depth_avg": sum(f.get("call_depth", 0) for f in functions) / max(1, len(functions)),
         }
 
@@ -802,7 +802,7 @@ class R2JSONStandardizer:
         patterns = raw_result.get("license_patterns", [])
         return {
             "pattern_count": len(patterns),
-            "pattern_types": list(set(p.get("type", "unknown") for p in patterns)),
+            "pattern_types": list({p.get("type", "unknown") for p in patterns}),
             "avg_confidence": sum(p.get("confidence", 0) for p in patterns) / max(1, len(patterns)),
             "high_confidence_patterns": len([p for p in patterns if p.get("confidence", 0) > 0.8]),
         }
@@ -872,7 +872,7 @@ class R2JSONStandardizer:
             "file_path_patterns": len([s for s in strings if "\\" in s.get("value", "") or "/" in s.get("value", "")]),
             "registry_patterns": len([s for s in strings if "HKEY_" in s.get("value", "")]),
             "crypto_patterns": len(
-                [s for s in strings if any(crypto in s.get("value", "").lower() for crypto in ["aes", "rsa", "md5", "sha"])]
+                [s for s in strings if any(crypto in s.get("value", "").lower() for crypto in ["aes", "rsa", "md5", "sha"])],
             ),
         }
 
@@ -891,7 +891,7 @@ class R2JSONStandardizer:
         imports = raw_result.get("imports", [])
         exports = raw_result.get("exports", [])
         return {
-            "library_count": len(set(i.get("library", "") for i in imports)),
+            "library_count": len({i.get("library", "") for i in imports}),
             "export_count": len(exports),
             "import_export_ratio": len(imports) / max(1, len(exports)),
             "common_libraries": self._get_common_libraries(imports),
@@ -946,7 +946,7 @@ class R2JSONStandardizer:
         return {
             "prediction_count": len(predictions),
             "avg_confidence": sum(p.get("confidence", 0) for p in predictions) / max(1, len(predictions)),
-            "prediction_types": list(set(p.get("type", "unknown") for p in predictions)),
+            "prediction_types": list({p.get("type", "unknown") for p in predictions}),
             "high_confidence_predictions": len([p for p in predictions if p.get("confidence", 0) > 0.8]),
         }
 
@@ -965,7 +965,7 @@ class R2JSONStandardizer:
         anomalies = raw_result.get("anomalies", [])
         return {
             "anomaly_count": len(anomalies),
-            "anomaly_types": list(set(a.get("type", "unknown") for a in anomalies)),
+            "anomaly_types": list({a.get("type", "unknown") for a in anomalies}),
             "avg_anomaly_score": sum(a.get("score", 0) for a in anomalies) / max(1, len(anomalies)),
             "critical_anomalies": len([a for a in anomalies if a.get("severity") == "critical"]),
         }
@@ -1268,7 +1268,7 @@ class R2JSONStandardizer:
         """Analyze data types in the structure."""
         type_counts = {}
 
-        def count_types(obj):
+        def count_types(obj) -> None:
             if isinstance(obj, dict):
                 type_counts["dict"] = type_counts.get("dict", 0) + 1
                 for value in obj.values():
@@ -1295,7 +1295,7 @@ class R2JSONStandardizer:
         """Extract numeric values from nested data structure."""
         values = []
 
-        def extract_values(obj):
+        def extract_values(obj) -> None:
             if isinstance(obj, dict):
                 for value in obj.values():
                     extract_values(value)
@@ -2087,7 +2087,7 @@ class R2JSONStandardizer:
                                 "function": func.get("name"),
                                 "import": imp_name,
                                 "confidence": 0.8,
-                            }
+                            },
                         )
 
         return interactions
@@ -2128,7 +2128,7 @@ class R2JSONStandardizer:
                         "value": string_val,
                         "components": appearing_in,
                         "significance": len(appearing_in) / len(components),
-                    }
+                    },
                 )
 
         return shared_indicators
@@ -2163,7 +2163,7 @@ class R2JSONStandardizer:
                         "type": "architecture_mismatch",
                         "description": f"Multiple architectures detected: {list(architectures)}",
                         "components": list(binary_info.keys()),
-                    }
+                    },
                 )
 
         return consistency_report
@@ -2194,7 +2194,7 @@ class R2JSONStandardizer:
                                 "function": func.get("name"),
                                 "import": sus_imp.get("name"),
                                 "risk_level": "high",
-                            }
+                            },
                         )
 
         return complementary
@@ -2224,7 +2224,7 @@ class R2JSONStandardizer:
                         "description": "Components disagree on risk assessment",
                         "assessments": protection_assessments,
                         "severity": "medium",
-                    }
+                    },
                 )
 
         return conflicts
@@ -2363,7 +2363,7 @@ class R2JSONStandardizer:
                                 "component2": component_names[j],
                                 "correlation": correlation,
                                 "significance": "high" if correlation > 0.8 else "medium",
-                            }
+                            },
                         )
 
         return significant_correlations
@@ -2381,7 +2381,7 @@ class R2JSONStandardizer:
                     "relationship_type": "dependency",
                     "description": "Functions depend on imported APIs",
                     "strength": 0.9,
-                }
+                },
             )
 
         # Identify strings->protections causality (strings indicate protection mechanisms)
@@ -2393,7 +2393,7 @@ class R2JSONStandardizer:
                     "relationship_type": "indication",
                     "description": "String content indicates protection mechanisms",
                     "strength": 0.7,
-                }
+                },
             )
 
         return causal_relationships
@@ -2459,7 +2459,7 @@ class R2JSONStandardizer:
                         "component": comp_name,
                         "priority": component_priority.get(comp_name, 999),
                         "dependencies": [],
-                    }
+                    },
                 )
 
         temporal_analysis["execution_order"] = ordered_components

@@ -35,7 +35,7 @@ class BaseSnapshotHandler(ABC):
     Provides common snapshot comparison logic.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the base snapshot handler with snapshot tracking and logging setup."""
         self.snapshots: dict[str, dict[str, Any]] = {}
         self.logger = logging.getLogger("IntellicrackLogger.SnapshotHandler")

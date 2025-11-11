@@ -267,7 +267,7 @@ class HASPFeature:
 class HASPCrypto:
     """HASP cryptographic operations handler."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize HASP crypto handler with keys."""
         self.aes_keys: dict[int, bytes] = {}
         self.rsa_keys: dict[int, tuple[rsa.RSAPrivateKey, rsa.RSAPublicKey]] = {}
@@ -518,7 +518,7 @@ class HASPSentinelParser:
         0xDDCCBBAA: "SOLIDWORKS",
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize HASP Sentinel parser with full protocol support."""
         self.logger = get_logger(__name__)
         self.active_sessions: dict[int, HASPSession] = {}
@@ -641,7 +641,7 @@ class HASPSentinelParser:
         memory[8:12] = struct.pack("<I", int(time.time()))
         memory[12:16] = struct.pack("<I", feature.max_users)
 
-        license_string = f"{feature.name}:{feature.expiry}".encode("utf-8")
+        license_string = f"{feature.name}:{feature.expiry}".encode()
         memory[16 : 16 + len(license_string)] = license_string
 
         for i in range(256, len(memory)):
@@ -1004,7 +1004,7 @@ class HASPSentinelParser:
 
         encryption_type = request.encryption_type if request.encryption_type != HASPEncryptionType.NONE else HASPEncryptionType.AES256
 
-        if encryption_type == HASPEncryptionType.AES128 or encryption_type == HASPEncryptionType.AES256:
+        if encryption_type in (HASPEncryptionType.AES128, HASPEncryptionType.AES256):
             encrypted_data = self.crypto.aes_encrypt(request.encryption_data, request.session_id)
         elif encryption_type == HASPEncryptionType.HASP4:
             seed = hash(request.session_id) & 0xFFFFFFFF
@@ -1031,7 +1031,7 @@ class HASPSentinelParser:
 
         encryption_type = request.encryption_type if request.encryption_type != HASPEncryptionType.NONE else HASPEncryptionType.AES256
 
-        if encryption_type == HASPEncryptionType.AES128 or encryption_type == HASPEncryptionType.AES256:
+        if encryption_type in (HASPEncryptionType.AES128, HASPEncryptionType.AES256):
             decrypted_data = self.crypto.aes_decrypt(request.encryption_data, request.session_id)
         elif encryption_type == HASPEncryptionType.HASP4:
             seed = hash(request.session_id) & 0xFFFFFFFF
@@ -1523,7 +1523,7 @@ class HASPSentinelParser:
                     "last_heartbeat": session.last_heartbeat,
                     "client_info": session.client_info,
                     "uptime": int(time.time() - session.login_time),
-                }
+                },
             )
         return sessions
 
@@ -1556,7 +1556,7 @@ class HASPSentinelParser:
 class HASPPacketAnalyzer:
     """Production-ready HASP network packet capture analyzer."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize HASP packet analyzer."""
         self.logger = get_logger(__name__)
         self.parser = HASPSentinelParser()
@@ -1746,7 +1746,7 @@ class HASPPacketAnalyzer:
                             "feature_id": req.feature_id,
                             "vendor_code": req.vendor_code,
                             "scope": req.scope,
-                        }
+                        },
                     )
 
         license_info["vendor_codes"] = list(license_info["vendor_codes"])
@@ -1825,7 +1825,7 @@ class HASPPacketAnalyzer:
                     "dest": f"{packet.dest_ip}:{packet.dest_port}",
                     "protocol": packet.protocol,
                     "type": packet.packet_type,
-                }
+                },
             )
 
         analysis["packet_types"] = packet_type_counts
@@ -1839,7 +1839,7 @@ class HASPPacketAnalyzer:
 class HASPUSBEmulator:
     """Production-ready HASP USB dongle emulator."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize HASP USB emulator."""
         self.logger = get_logger(__name__)
         self.parser = HASPSentinelParser()
@@ -1996,7 +1996,7 @@ class HASPUSBEmulator:
 class HASPServerEmulator:
     """Production-ready HASP license server emulator."""
 
-    def __init__(self, bind_address: str = "0.0.0.0", port: int = 1947):
+    def __init__(self, bind_address: str = "0.0.0.0", port: int = 1947) -> None:
         """Initialize HASP server emulator.
 
         Args:
@@ -2020,7 +2020,7 @@ class HASPServerEmulator:
         """
         response = HASPNetworkProtocol.SERVER_READY_MAGIC
         response += b" SERVER"
-        response += f" SERVER_ID={self.server_id}".encode("utf-8")
+        response += f" SERVER_ID={self.server_id}".encode()
         response += b" VERSION=7.50"
         response += b" FEATURES="
         response += str(len(self.parser.features)).encode("utf-8")

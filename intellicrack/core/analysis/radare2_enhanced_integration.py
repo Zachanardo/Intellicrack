@@ -65,7 +65,7 @@ class EnhancedR2Integration:
     - Circuit breaker pattern implementation
     """
 
-    def __init__(self, binary_path: str, config: dict[str, Any] | None = None):
+    def __init__(self, binary_path: str, config: dict[str, Any] | None = None) -> None:
         """Initialize the enhanced Radare2 integration.
 
         Args:
@@ -115,7 +115,7 @@ class EnhancedR2Integration:
 
         self.logger.info(f"EnhancedR2Integration initialized for {binary_path}")
 
-    def _initialize_components(self):
+    def _initialize_components(self) -> None:
         """Initialize all analysis components with error handling."""
         if not self.r2pipe_available:
             self.logger.warning("r2pipe not available, skipping component initialization")
@@ -197,7 +197,7 @@ class EnhancedR2Integration:
                         "component": analysis_type,
                         "error": str(e),
                         "timestamp": time.time(),
-                    }
+                    },
                 )
 
         # Add performance metrics
@@ -360,7 +360,7 @@ class EnhancedR2Integration:
                 del self.results_cache[cache_key]
         return None
 
-    def _cache_result(self, cache_key: str, result: dict[str, Any]):
+    def _cache_result(self, cache_key: str, result: dict[str, Any]) -> None:
         """Cache analysis result."""
         with self._lock:
             self.results_cache[cache_key] = {
@@ -379,7 +379,7 @@ class EnhancedR2Integration:
                 for key, _ in sorted_items[:10]:  # Remove 10 oldest
                     del self.results_cache[key]
 
-    def _record_analysis_time(self, analysis_type: str, duration: float, success: bool = True):
+    def _record_analysis_time(self, analysis_type: str, duration: float, success: bool = True) -> None:
         """Record analysis performance."""
         with self._lock:
             if analysis_type not in self.performance_stats["analysis_times"]:
@@ -401,7 +401,7 @@ class EnhancedR2Integration:
             if len(stats["times"]) > 50:
                 stats["times"] = stats["times"][-50:]
 
-    def start_real_time_monitoring(self, callback: Callable | None = None):
+    def start_real_time_monitoring(self, callback: Callable | None = None) -> None:
         """Start real-time monitoring of analysis results."""
         if self.monitoring_enabled and not self.monitoring_thread:
             self.monitoring_thread = threading.Thread(
@@ -412,7 +412,7 @@ class EnhancedR2Integration:
             self.monitoring_thread.start()
             self.logger.info("Real-time monitoring started")
 
-    def stop_real_time_monitoring(self):
+    def stop_real_time_monitoring(self) -> None:
         """Stop real-time monitoring."""
         self.monitoring_enabled = False
         if self.monitoring_thread:
@@ -420,7 +420,7 @@ class EnhancedR2Integration:
             self.monitoring_thread = None
             self.logger.info("Real-time monitoring stopped")
 
-    def _monitoring_loop(self, callback: Callable | None):
+    def _monitoring_loop(self, callback: Callable | None) -> None:
         """Real-time monitoring loop."""
         while self.monitoring_enabled:
             try:
@@ -433,7 +433,7 @@ class EnhancedR2Integration:
                             "type": "real_time_update",
                             "results": quick_results,
                             "timestamp": time.time(),
-                        }
+                        },
                     )
 
                 time.sleep(self.config.get("monitoring_interval", 30))  # 30 seconds default
@@ -468,7 +468,7 @@ class EnhancedR2Integration:
 
             return stats
 
-    def optimize_performance(self):
+    def optimize_performance(self) -> None:
         """Optimize performance based on collected metrics."""
         stats = self.get_performance_stats()
 
@@ -488,7 +488,7 @@ class EnhancedR2Integration:
 
         self.logger.info(f"Performance optimized: cache_ttl={self.cache_ttl}")
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear results cache."""
         with self._lock:
             self.results_cache.clear()
@@ -641,7 +641,7 @@ class EnhancedR2Integration:
             "full_report": full_report,
         }
 
-    def export_performance_metrics(self, filepath: str):
+    def export_performance_metrics(self, filepath: str) -> None:
         """Export performance metrics to a file.
 
         Args:
@@ -801,7 +801,7 @@ class EnhancedR2Integration:
             self.logger.error(f"Failed to visualize graph: {e}")
             return False
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Cleanup resources."""
         try:
             self.stop_real_time_monitoring()
@@ -813,7 +813,7 @@ class EnhancedR2Integration:
                 self.logger.info(f"Performance session ended: {final_metrics.session_id}")
                 self.logger.info(
                     f"Total operations: {final_metrics.total_operations}, "
-                    f"Success rate: {final_metrics.successful_operations / max(1, final_metrics.total_operations):.2%}"
+                    f"Success rate: {final_metrics.successful_operations / max(1, final_metrics.total_operations):.2%}",
                 )
 
             # Cleanup components

@@ -43,7 +43,7 @@ class R2ImportExportAnalyzer:
     - Anti-analysis API detection
     """
 
-    def __init__(self, binary_path: str, radare2_path: str | None = None):
+    def __init__(self, binary_path: str, radare2_path: str | None = None) -> None:
         """Initialize import/export analyzer.
 
         Args:
@@ -402,7 +402,7 @@ class R2ImportExportAnalyzer:
                             "category": category,
                             "risk_level": "high",
                             "description": f"API commonly used for {category.replace('_', ' ')}",
-                        }
+                        },
                     )
                     break
 
@@ -442,7 +442,7 @@ class R2ImportExportAnalyzer:
                             "license_category": category,
                             "usage_purpose": self._get_license_usage_purpose(category),
                             "bypass_difficulty": self._assess_bypass_difficulty(category),
-                        }
+                        },
                     )
                     break
 
@@ -472,7 +472,7 @@ class R2ImportExportAnalyzer:
                             "crypto_category": category,
                             "algorithm_type": self._identify_crypto_algorithm(api_name),
                             "security_strength": self._assess_crypto_strength(api_name),
-                        }
+                        },
                     )
                     break
 
@@ -508,7 +508,7 @@ class R2ImportExportAnalyzer:
                             "anti_analysis_category": category,
                             "evasion_technique": self._identify_evasion_technique(category),
                             "countermeasure": self._suggest_countermeasure(category),
-                        }
+                        },
                     )
                     break
 
@@ -537,7 +537,7 @@ class R2ImportExportAnalyzer:
                         "api": imp,
                         "network_purpose": self._identify_network_purpose(api_name),
                         "protocol": self._identify_network_protocol(api_name),
-                    }
+                    },
                 )
 
         return network_apis
@@ -564,7 +564,7 @@ class R2ImportExportAnalyzer:
                         "api": imp,
                         "file_operation": self._identify_file_operation(api_name),
                         "access_type": self._identify_file_access_type(api_name),
-                    }
+                    },
                 )
 
         return file_apis
@@ -583,7 +583,7 @@ class R2ImportExportAnalyzer:
                         "api": imp,
                         "registry_operation": self._identify_registry_operation(api_name),
                         "typical_usage": self._identify_registry_usage(api_name),
-                    }
+                    },
                 )
 
         return registry_apis
@@ -608,7 +608,7 @@ class R2ImportExportAnalyzer:
                         "api": imp,
                         "process_operation": self._identify_process_operation(api_name),
                         "security_implications": self._assess_process_security_implications(api_name),
-                    }
+                    },
                 )
 
         return process_apis
@@ -635,7 +635,7 @@ class R2ImportExportAnalyzer:
                         "api": imp,
                         "memory_operation": self._identify_memory_operation(api_name),
                         "allocation_type": self._identify_allocation_type(api_name),
-                    }
+                    },
                 )
 
         return memory_apis
@@ -659,7 +659,7 @@ class R2ImportExportAnalyzer:
                         "api": imp,
                         "debug_purpose": self._identify_debug_purpose(api_name),
                         "anti_debug_potential": self._assess_anti_debug_potential(api_name),
-                    }
+                    },
                 )
 
         return debug_apis
@@ -714,7 +714,7 @@ class R2ImportExportAnalyzer:
 
         return api_descriptions.get(api_name.lower(), "Unknown API function")
 
-    def _parse_plt_data(self, plt_data: str, imports: list[dict[str, Any]]):
+    def _parse_plt_data(self, plt_data: str, imports: list[dict[str, Any]]) -> None:
         """Parse PLT data and add to imports."""
         import re
 
@@ -749,7 +749,7 @@ class R2ImportExportAnalyzer:
                         "type": "plt",
                         "source": "PLT section",
                         "calling_convention": "cdecl",  # Default for PLT
-                    }
+                    },
                 )
 
     def _guess_library_from_function(self, function_name: str) -> str:
@@ -1104,7 +1104,7 @@ class R2ImportExportAnalyzer:
         if len(access_types) == 1:
             return access_types[0]
         # Remove duplicates and sort
-        unique_types = sorted(list(set(access_types)))
+        unique_types = sorted(set(access_types))
         return "/".join(unique_types)
 
     def _identify_registry_operation(self, api_name: str) -> str:

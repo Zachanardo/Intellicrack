@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class HardwareTokenBypass:
     """Advanced hardware token bypass and emulation system."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize hardware token bypass with sophisticated emulation capabilities."""
         self.yubikey_secrets = {}
         self.rsa_seeds = {}
@@ -66,7 +66,7 @@ class HardwareTokenBypass:
                 self.winscard = None
                 self.kernel32 = None
 
-    def _init_scard_constants(self):
+    def _init_scard_constants(self) -> None:
         """Initialize Windows smart card constants."""
         # SCard context scope
         self.SCARD_SCOPE_USER = 0
@@ -116,7 +116,7 @@ class HardwareTokenBypass:
 
         # Generate YubiKey OTP
         otp = self._generate_yubikey_otp(
-            secrets_data["public_id"], secrets_data["private_id"], secrets_data["aes_key"], secrets_data["counter"], secrets_data["session"]
+            secrets_data["public_id"], secrets_data["private_id"], secrets_data["aes_key"], secrets_data["counter"], secrets_data["session"],
         )
 
         # Increment counters
@@ -444,7 +444,7 @@ class HardwareTokenBypass:
 
         # Sign the CHUID data with RSA-PSS signature
         signature = self._issuer_key.sign(
-            bytes(chuid), padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), hashes.SHA256()
+            bytes(chuid), padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), hashes.SHA256(),
         )
 
         # Truncate or pad signature to exactly 64 bytes for PIV standard
@@ -477,7 +477,7 @@ class HardwareTokenBypass:
                 x509.NameAttribute(NameOID.LOCALITY_NAME, "Arlington"),
                 x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Test Organization"),
                 x509.NameAttribute(NameOID.COMMON_NAME, cn),
-            ]
+            ],
         )
 
         cert = (
@@ -538,7 +538,7 @@ class HardwareTokenBypass:
             if result == 0:  # SCARD_S_SUCCESS
                 # Store context for later use
                 self.smartcard_config["card_readers"].append(
-                    {"name": reader_name, "context": h_context.value, "card_id": card_id, "card_type": card_type}
+                    {"name": reader_name, "context": h_context.value, "card_id": card_id, "card_type": card_type},
                 )
 
                 # Release context (in production, keep it for actual operations)
@@ -704,7 +704,7 @@ class HardwareTokenBypass:
                 0x00,
                 0x00,
                 0x00,  # e_lfanew
-            ]
+            ],
         )
 
         pe_header = b"PE\x00\x00"
@@ -888,7 +888,7 @@ class HardwareTokenBypass:
         for count in freq.values():
             if count > 0:
                 probability = count / data_len
-                entropy -= probability * (probability and probability * 2 or 0)
+                entropy -= probability * ((probability and probability * 2) or 0)
 
         return entropy * 3.32193  # Convert to bits
 

@@ -212,7 +212,7 @@ def calculate_checksum_chunked(file_path: str, algorithm: str, chunk_size: int =
 class ChecksumCalculator:
     """Helper class for managing checksum calculations with progress tracking."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize checksum calculator."""
         self.algorithms = {
             "CRC-16": calculate_crc16,
@@ -224,7 +224,7 @@ class ChecksumCalculator:
         }
         self.progress_callback = None
 
-    def set_progress_callback(self, callback):
+    def set_progress_callback(self, callback) -> None:
         """Set callback for progress updates.
 
         Args:

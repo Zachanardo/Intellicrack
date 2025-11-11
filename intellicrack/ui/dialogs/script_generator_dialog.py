@@ -77,7 +77,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 class TestScriptDialog(BaseDialog):
     """Comprehensive script testing dialog with validation and security analysis."""
 
-    def __init__(self, parent=None, script_content="", script_type=""):
+    def __init__(self, parent=None, script_content="", script_type="") -> None:
         """Initialize the TestScriptDialog with script content and type."""
         super().__init__(parent, "Script Testing & Validation")
         self.setMinimumSize(800, 600)
@@ -91,7 +91,7 @@ class TestScriptDialog(BaseDialog):
         self.setup_test_environment()
         self.start_comprehensive_test()
 
-    def setup_content(self, layout):
+    def setup_content(self, layout) -> None:
         """Set up the testing dialog UI content."""
         if layout is None:
             layout = QVBoxLayout(self.content_widget)
@@ -171,7 +171,7 @@ class TestScriptDialog(BaseDialog):
 
         layout.addLayout(button_layout)
 
-    def setup_test_environment(self):
+    def setup_test_environment(self) -> None:
         """Set up secure testing environment for script validation."""
         self.test_environment = {
             "sandbox_enabled": True,
@@ -204,7 +204,7 @@ class TestScriptDialog(BaseDialog):
         self.test_timer.setSingleShot(False)
         self.test_timer.timeout.connect(self.update_test_progress)
 
-    def start_comprehensive_test(self):
+    def start_comprehensive_test(self) -> None:
         """Start comprehensive script testing process."""
         if self.is_testing:
             return
@@ -234,7 +234,7 @@ class TestScriptDialog(BaseDialog):
         self.test_timer.start(500)  # Update every 500ms
         self.execute_next_test_phase()
 
-    def execute_next_test_phase(self):
+    def execute_next_test_phase(self) -> None:
         """Execute the next test phase in sequence."""
         if self.current_test_phase >= len(self.test_phases):
             self.complete_testing()
@@ -254,7 +254,7 @@ class TestScriptDialog(BaseDialog):
         # Schedule next phase
         QTimer.singleShot(1000, self.execute_next_test_phase)
 
-    def test_syntax(self):
+    def test_syntax(self) -> None:
         """Perform comprehensive syntax validation."""
         results = {"status": "running", "tests": [], "warnings": [], "errors": [], "timestamp": time.time()}
 
@@ -279,7 +279,7 @@ class TestScriptDialog(BaseDialog):
         self.test_results["syntax_validation"] = results
         self.update_syntax_display()
 
-    def detect_script_language(self):
+    def detect_script_language(self) -> str:
         """Detect the programming language of the script."""
         content = self.script_content.lower()
 
@@ -420,7 +420,7 @@ class TestScriptDialog(BaseDialog):
 
         return checks
 
-    def test_security(self):
+    def test_security(self) -> None:
         """Perform comprehensive security analysis."""
         security_results = {
             "status": "completed",
@@ -449,7 +449,7 @@ class TestScriptDialog(BaseDialog):
                         "category": category,
                         "patterns": found_patterns,
                         "severity": "high" if category in ["system_execution", "registry_access"] else "medium",
-                    }
+                    },
                 )
                 risk_score += len(found_patterns) * (3 if category in ["system_execution"] else 1)
 
@@ -474,7 +474,7 @@ class TestScriptDialog(BaseDialog):
         self.test_results["security_analysis"] = security_results
         self.update_security_display()
 
-    def test_performance(self):
+    def test_performance(self) -> None:
         """Analyze script performance characteristics."""
         performance_results = {
             "status": "completed",
@@ -532,7 +532,7 @@ class TestScriptDialog(BaseDialog):
         self.test_results["performance_analysis"] = performance_results
         self.update_performance_display()
 
-    def test_effectiveness(self):
+    def test_effectiveness(self) -> None:
         """Test script effectiveness for its intended purpose."""
         effectiveness_results = {
             "status": "completed",
@@ -639,7 +639,7 @@ class TestScriptDialog(BaseDialog):
         analysis["effectiveness_score"] = min(score, 100)
         return analysis
 
-    def generate_summary(self):
+    def generate_summary(self) -> None:
         """Generate comprehensive test summary."""
         summary = {"status": "completed", "overall_score": 0, "test_results_summary": {}, "recommendations": [], "timestamp": time.time()}
 
@@ -684,7 +684,7 @@ class TestScriptDialog(BaseDialog):
         self.test_results["summary"] = summary
         self.update_summary_display()
 
-    def update_test_progress(self):
+    def update_test_progress(self) -> None:
         """Update the progress bar and status during testing."""
         if not self.is_testing:
             return
@@ -692,7 +692,7 @@ class TestScriptDialog(BaseDialog):
         progress = (self.current_test_phase / len(self.test_phases)) * 100
         self.progress_bar.setValue(int(progress))
 
-    def complete_testing(self):
+    def complete_testing(self) -> None:
         """Complete the testing process."""
         self.is_testing = False
         self.test_timer.stop()
@@ -701,7 +701,7 @@ class TestScriptDialog(BaseDialog):
         self.retest_btn.setEnabled(True)
         self.export_btn.setEnabled(True)
 
-    def update_syntax_display(self):
+    def update_syntax_display(self) -> None:
         """Update the syntax validation display."""
         results = self.test_results.get("syntax_validation", {})
         lines = ["Syntax Validation Results", "=" * 30, ""]
@@ -742,7 +742,7 @@ class TestScriptDialog(BaseDialog):
 
         self.syntax_results.setText("\n".join(lines))
 
-    def update_security_display(self):
+    def update_security_display(self) -> None:
         """Update the security analysis display."""
         results = self.test_results.get("security_analysis", {})
         lines = ["Security Analysis Results", "=" * 30, ""]
@@ -780,7 +780,7 @@ class TestScriptDialog(BaseDialog):
 
         self.security_results.setText("\n".join(lines))
 
-    def update_performance_display(self):
+    def update_performance_display(self) -> None:
         """Update the performance analysis display."""
         results = self.test_results.get("performance_analysis", {})
         lines = ["Performance Analysis Results", "=" * 30, ""]
@@ -812,7 +812,7 @@ class TestScriptDialog(BaseDialog):
 
         self.performance_results.setText("\n".join(lines))
 
-    def update_effectiveness_display(self):
+    def update_effectiveness_display(self) -> None:
         """Update the effectiveness testing display."""
         results = self.test_results.get("effectiveness_testing", {})
         lines = ["Effectiveness Analysis Results", "=" * 30, ""]
@@ -857,7 +857,7 @@ class TestScriptDialog(BaseDialog):
 
         self.effectiveness_results.setText("\n".join(lines))
 
-    def update_summary_display(self):
+    def update_summary_display(self) -> None:
         """Update the summary display."""
         results = self.test_results.get("summary", {})
         lines = ["Comprehensive Test Summary", "=" * 35, ""]
@@ -904,7 +904,7 @@ class TestScriptDialog(BaseDialog):
 
         self.summary_results.setText("\n".join(lines))
 
-    def export_results(self):
+    def export_results(self) -> None:
         """Export test results to file."""
         if not self.test_results:
             QMessageBox.warning(self, "Warning", "No test results to export.")
@@ -914,7 +914,7 @@ class TestScriptDialog(BaseDialog):
         default_name = f"script_test_results_{timestamp}.txt"
 
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Export Test Results", default_name, "Text Files (*.txt);;JSON Files (*.json);;All Files (*)"
+            self, "Export Test Results", default_name, "Text Files (*.txt);;JSON Files (*.json);;All Files (*)",
         )
 
         if file_path:
@@ -956,7 +956,7 @@ class TestScriptDialog(BaseDialog):
 class PythonHighlighter(QSyntaxHighlighter):
     """Perform Python syntax highlighter."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the PythonHighlighter with default values."""
         super().__init__(parent)
         self.highlighting_rules = []
@@ -995,7 +995,7 @@ class PythonHighlighter(QSyntaxHighlighter):
         comment_format.setColor(QColor(128, 128, 128))
         self.highlighting_rules.append(("#.*", comment_format))
 
-    def highlightBlock(self, text):
+    def highlightBlock(self, text) -> None:
         """Highlight a block of text."""
         import re
 
@@ -1011,7 +1011,7 @@ class ScriptGeneratorWorker(QThread):
     script_generated = pyqtSignal(dict)
     error_occurred = pyqtSignal(str)
 
-    def __init__(self, binary_path: str, script_type: str, **kwargs):
+    def __init__(self, binary_path: str, script_type: str, **kwargs) -> None:
         """Initialize the ScriptGeneratorWorker with default values."""
         super().__init__()
         self.binary_path = binary_path
@@ -1020,7 +1020,7 @@ class ScriptGeneratorWorker(QThread):
         self.logger = logger
         self.ai_generator = None
 
-    def run(self):
+    def run(self) -> None:
         """Execute the script generation."""
         try:
             if self.script_type == "bypass":
@@ -1033,7 +1033,7 @@ class ScriptGeneratorWorker(QThread):
             self.logger.error("Error in script_generator_dialog: %s", e)
             self.error_occurred.emit(str(e))
 
-    def _generate_bypass_script(self):
+    def _generate_bypass_script(self) -> None:
         """Generate bypass script."""
         # Try AI-powered generation first
         try:
@@ -1076,7 +1076,7 @@ class ScriptGeneratorWorker(QThread):
             )
             self.script_generated.emit(result)
 
-    def _generate_exploit_script(self):
+    def _generate_exploit_script(self) -> None:
         """Generate exploit script."""
         from ...utils.exploitation import generate_exploit
 
@@ -1087,7 +1087,7 @@ class ScriptGeneratorWorker(QThread):
         )
         self.script_generated.emit(result)
 
-    def _generate_exploit_strategy(self):
+    def _generate_exploit_strategy(self) -> None:
         """Generate exploit strategy."""
         from ...utils.exploitation import generate_exploit_strategy
 
@@ -1101,7 +1101,7 @@ class ScriptGeneratorWorker(QThread):
 class ScriptGeneratorDialog(BaseDialog):
     """Script Generation Dialog with multiple script types."""
 
-    def __init__(self, parent=None, binary_path: str = ""):
+    def __init__(self, parent=None, binary_path: str = "") -> None:
         """Initialize the ScriptGeneratorDialog with default values."""
         # Initialize UI attributes
         self.analysis_depth = None
@@ -1146,7 +1146,7 @@ class ScriptGeneratorDialog(BaseDialog):
         self.setup_content(self.content_widget.layout() or QVBoxLayout(self.content_widget))
         self.connect_signals()
 
-    def setup_content(self, layout):
+    def setup_content(self, layout) -> None:
         """Set up the user interface content."""
         if layout is None:
             layout = QVBoxLayout(self.content_widget)
@@ -1160,12 +1160,12 @@ class ScriptGeneratorDialog(BaseDialog):
         # Footer
         self.setup_footer(layout)
 
-    def setup_header(self, layout):
+    def setup_header(self, layout) -> None:
         """Set up header with binary selection."""
         # Use the base class method
         super().setup_header(layout, show_label=True)
 
-    def setup_main_content(self, layout):
+    def setup_main_content(self, layout) -> None:
         """Set up main content area."""
         splitter = QSplitter(Qt.Horizontal)
 
@@ -1180,7 +1180,7 @@ class ScriptGeneratorDialog(BaseDialog):
 
         layout.addWidget(splitter)
 
-    def setup_left_panel(self, splitter):
+    def setup_left_panel(self, splitter) -> None:
         """Set up left configuration panel."""
         left_widget = QWidget()
         left_layout = QVBoxLayout(left_widget)
@@ -1196,7 +1196,7 @@ class ScriptGeneratorDialog(BaseDialog):
                 "Exploit Script",
                 "Exploit Strategy",
                 "Custom Script",
-            ]
+            ],
         )
         self.script_type_combo.currentTextChanged.connect(self.on_script_type_changed)
 
@@ -1222,7 +1222,7 @@ class ScriptGeneratorDialog(BaseDialog):
         left_layout.addStretch()
         splitter.addWidget(left_widget)
 
-    def setup_bypass_config(self):
+    def setup_bypass_config(self) -> None:
         """Set up bypass script configuration."""
         self.bypass_config = QGroupBox("Bypass Script Configuration")
         layout = QGridLayout(self.bypass_config)
@@ -1261,7 +1261,7 @@ class ScriptGeneratorDialog(BaseDialog):
 
         self.config_layout.addWidget(self.bypass_config)
 
-    def setup_exploit_config(self):
+    def setup_exploit_config(self) -> None:
         """Set up exploit script configuration."""
         self.exploit_config = QGroupBox("Exploit Script Configuration")
         layout = QGridLayout(self.exploit_config)
@@ -1276,7 +1276,7 @@ class ScriptGeneratorDialog(BaseDialog):
                 "Feature Unlock",
                 "Authentication Bypass",
                 "Custom Exploit",
-            ]
+            ],
         )
         layout.addWidget(self.exploit_type, 0, 1)
 
@@ -1299,7 +1299,7 @@ class ScriptGeneratorDialog(BaseDialog):
         self.config_layout.addWidget(self.exploit_config)
         self.exploit_config.hide()
 
-    def setup_strategy_config(self):
+    def setup_strategy_config(self) -> None:
         """Set up strategy configuration."""
         self.strategy_config = QGroupBox("Exploit Strategy Configuration")
         layout = QGridLayout(self.strategy_config)
@@ -1314,7 +1314,7 @@ class ScriptGeneratorDialog(BaseDialog):
                 "Stealth Approach",
                 "Brute Force",
                 "Custom Strategy",
-            ]
+            ],
         )
         layout.addWidget(self.strategy_type, 0, 1)
 
@@ -1347,7 +1347,7 @@ class ScriptGeneratorDialog(BaseDialog):
         self.config_layout.addWidget(self.strategy_config)
         self.strategy_config.hide()
 
-    def setup_right_panel(self, splitter):
+    def setup_right_panel(self, splitter) -> None:
         """Set up right script display panel."""
         right_widget = QWidget()
         right_layout = QVBoxLayout(right_widget)
@@ -1402,7 +1402,7 @@ class ScriptGeneratorDialog(BaseDialog):
 
         splitter.addWidget(right_widget)
 
-    def setup_footer(self, layout):
+    def setup_footer(self, layout) -> None:
         """Set up footer with status and close button."""
         footer_layout = QHBoxLayout()
 
@@ -1418,15 +1418,15 @@ class ScriptGeneratorDialog(BaseDialog):
 
         layout.addLayout(footer_layout)
 
-    def connect_signals(self):
+    def connect_signals(self) -> None:
         """Connect internal signals."""
         self.binary_path_edit.textChanged.connect(self.on_binary_path_changed)
 
-    def on_binary_path_changed(self, text):
+    def on_binary_path_changed(self, text) -> None:
         """Handle binary path change."""
         self.binary_path = text
 
-    def on_script_type_changed(self, script_type):
+    def on_script_type_changed(self, script_type) -> None:
         """Handle script type change."""
         # Hide all config groups
         self.bypass_config.hide()
@@ -1441,7 +1441,7 @@ class ScriptGeneratorDialog(BaseDialog):
         elif script_type == "Exploit Strategy":
             self.strategy_config.show()
 
-    def generate_script(self):
+    def generate_script(self) -> None:
         """Generate script based on configuration."""
         if not self.binary_path or not os.path.exists(self.binary_path):
             QMessageBox.warning(self, "Warning", "Please select a valid binary file first.")
@@ -1512,7 +1512,7 @@ class ScriptGeneratorDialog(BaseDialog):
             "include_persistence": self.include_persistence.isChecked(),
         }
 
-    def on_script_generated(self, result):
+    def on_script_generated(self, result) -> None:
         """Handle script generation completion."""
         self.generated_scripts[self.script_type_combo.currentText()] = result
 
@@ -1531,7 +1531,7 @@ class ScriptGeneratorDialog(BaseDialog):
         self.status_label.setText("Script generated successfully")
         self.generate_btn.setEnabled(True)
 
-    def copy_script(self):
+    def copy_script(self) -> None:
         """Copy script to clipboard."""
         script_content = self.script_display.toPlainText()
         if script_content:
@@ -1542,7 +1542,7 @@ class ScriptGeneratorDialog(BaseDialog):
                 self.logger.error("Error in script_generator_dialog: %s", e)
                 QMessageBox.information(self, "Copy", "Script copied to clipboard (fallback)")
 
-    def save_script(self):
+    def save_script(self) -> None:
         """Save script to file."""
         script_content = self.script_display.toPlainText()
         if not script_content:
@@ -1582,7 +1582,7 @@ class ScriptGeneratorDialog(BaseDialog):
                 logger.error("Error in script_generator_dialog: %s", e)
                 QMessageBox.critical(self, "Save Error", f"Failed to save script: {e!s}")
 
-    def test_script(self):
+    def test_script(self) -> None:
         """Test the generated script with comprehensive validation."""
         script_content = self.script_display.toPlainText()
         if not script_content:
@@ -1593,7 +1593,7 @@ class ScriptGeneratorDialog(BaseDialog):
         test_dialog = TestScriptDialog(self, script_content, self.script_type_combo.currentText())
         test_dialog.exec()
 
-    def analyze_script(self):
+    def analyze_script(self) -> None:
         """Analyze the generated script for vulnerabilities, patterns, and improvements."""
         script_content = self.script_display.toPlainText()
         if not script_content:
@@ -1707,13 +1707,13 @@ class ScriptGeneratorDialog(BaseDialog):
 
         return "\n".join(lines)
 
-    def on_error(self, error_msg):
+    def on_error(self, error_msg) -> None:
         """Handle worker thread errors."""
         QMessageBox.critical(self, "Error", f"Script generation failed: {error_msg}")
         self.status_label.setText("Error occurred")
         self.generate_btn.setEnabled(True)
 
-    def closeEvent(self, event):
+    def closeEvent(self, event) -> None:
         """Handle dialog close event."""
         if self.worker and self.worker.isRunning():
             self.worker.wait()

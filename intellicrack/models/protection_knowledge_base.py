@@ -90,7 +90,7 @@ class ProtectionSchemeInfo:
 class ProtectionKnowledgeBase:
     """Knowledge base for software protection schemes."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the protection knowledge base with schemes, strategies, and workflows."""
         self.protection_schemes = self._initialize_protection_schemes()
         self.bypass_strategies = self._initialize_bypass_strategies()
@@ -1404,7 +1404,7 @@ class ProtectionKnowledgeBase:
         for technique in info.bypass_techniques:
             tools.update(technique.tools_required)
 
-        return sorted(list(tools))
+        return sorted(tools)
 
     def estimate_bypass_time(self, protection_name: str, skill_level: str = "intermediate") -> str:
         """Estimate time to bypass a protection based on skill level."""
@@ -1456,7 +1456,7 @@ class ProtectionKnowledgeBase:
 
         return "Variable"
 
-    def export_knowledge_base(self, output_path: str):
+    def export_knowledge_base(self, output_path: str) -> None:
         """Export knowledge base to JSON."""
         data = {
             "protection_schemes": {},

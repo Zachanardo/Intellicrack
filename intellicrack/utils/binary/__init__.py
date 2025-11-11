@@ -29,4 +29,4 @@ try:
 except ImportError:
     _elf_imports = []
 
-__all__ = ["extract_pe_imports", "iterate_pe_imports_with_dll"] + _elf_imports
+__all__ = ["extract_pe_imports", "iterate_pe_imports_with_dll", *_elf_imports]

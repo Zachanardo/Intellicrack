@@ -18,7 +18,7 @@ def is_legitimate_error_handling(file_path: str, line_num: int, code_line: str) 
     """
     # Read surrounding context
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             lines = f.readlines()
     except (OSError, UnicodeDecodeError, PermissionError) as e:
         return False, f"Failed to read file: {e}"
@@ -80,7 +80,7 @@ def is_legitimate_error_handling(file_path: str, line_num: int, code_line: str) 
 
 def analyze_findings(scan_results_path: str) -> Dict:
     """Analyze scan results and classify findings."""
-    with open(scan_results_path, 'r') as f:
+    with open(scan_results_path) as f:
         data = json.load(f)
 
     true_positives = []
@@ -126,11 +126,11 @@ def analyze_findings(scan_results_path: str) -> Dict:
         'false_positives': fp_count,
         'false_positive_rate': fp_rate,
         'true_positive_examples': true_positives[:5],  # First 5 TPs
-        'false_positive_examples': false_positives[:5]  # First 5 FPs
+        'false_positive_examples': false_positives[:5],  # First 5 FPs
     }
 
 
-def main():
+def main() -> None:
     """Run enhanced analysis on scanner results."""
     # First, run the scanner to get fresh results
     import os
@@ -144,7 +144,7 @@ def main():
         './target/release/scanner',
         '--directory', 'D:/Intellicrack/intellicrack',
         '--min-confidence', '50',
-        '--output-format', 'json'
+        '--output-format', 'json',
     ], capture_output=True, text=True)
 
     # Save results

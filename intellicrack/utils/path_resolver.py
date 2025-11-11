@@ -77,7 +77,7 @@ def resolve_qemu_image_path(image_name: str) -> Path:
     return get_qemu_images_dir() / image_name
 
 
-def ensure_data_directories():
+def ensure_data_directories() -> None:
     """Ensure all data directories exist."""
     directories = [
         get_data_dir(),

@@ -181,7 +181,7 @@ def format_analysis_output(results: Dict[str, Any], output_format: str) -> str:
         for key, value in results.items():
             if isinstance(value, (dict, list)):
                 lines.append(f"{key.upper()}:")
-                lines.append(f"  {str(value)}")
+                lines.append(f"  {value!s}")
             else:
                 lines.append(f"{key.upper()}: {value}")
         return "\n".join(lines)
@@ -273,7 +273,7 @@ def main() -> int:
                 with open(args.output, "w", encoding="utf-8") as f:
                     f.write(output)
                 logger.info(f"Results saved to: {args.output}")
-            except IOError as e:
+            except OSError as e:
                 logger.error(f"Failed to save results: {e}")
                 return 1
         else:

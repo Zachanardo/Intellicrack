@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 class SyntaxHighlighter(QSyntaxHighlighter):
     """Unified syntax highlighter supporting multiple languages."""
 
-    def __init__(self, document: QTextDocument, language: str = "python"):
+    def __init__(self, document: QTextDocument, language: str = "python") -> None:
         """Initialize the syntax highlighter.
 
         Args:
@@ -53,17 +53,17 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         """Set up highlighting rules based on the selected language."""
         if self.language == "python":
             self._setup_python_rules()
-        elif self.language == "javascript" or self.language == "js":
+        elif self.language in {"javascript", "js"}:
             self._setup_javascript_rules()
         elif self.language == "json":
             self._setup_json_rules()
-        elif self.language == "assembly" or self.language == "asm":
+        elif self.language in {"assembly", "asm"}:
             self._setup_assembly_rules()
-        elif self.language == "c" or self.language == "cpp":
+        elif self.language in {"c", "cpp"}:
             self._setup_c_rules()
-        elif self.language == "xml" or self.language == "html":
+        elif self.language in {"xml", "html"}:
             self._setup_xml_rules()
-        elif self.language == "shell" or self.language == "bash":
+        elif self.language in {"shell", "bash"}:
             self._setup_shell_rules()
         else:
             logger.warning(f"Unsupported language: {self.language}, using default")

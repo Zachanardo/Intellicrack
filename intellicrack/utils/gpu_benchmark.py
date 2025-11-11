@@ -104,7 +104,7 @@ def run_gpu_accelerated_analysis(app, binary_data: bytes) -> dict[str, Any]:
                             "block_index": i,
                             "offset": i * 4096,
                             "entropy": entropy,
-                        }
+                        },
                     )
 
             if high_entropy_blocks and hasattr(app, "update_output"):
@@ -410,7 +410,7 @@ def benchmark_gpu_frameworks(app, test_sizes: list[int] = None) -> dict[str, Any
             _benchmark_cpu_framework(framework_results, test_data)
 
         # Calculate total time
-        for size_mb in framework_results["pattern_search"].keys():
+        for size_mb in framework_results["pattern_search"]:
             search_time = framework_results["pattern_search"].get(size_mb, 0)
             transfer_time = framework_results.get("data_transfer", {}).get(size_mb, 0)
             framework_results["total_time"] += search_time + transfer_time

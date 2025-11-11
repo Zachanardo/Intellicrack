@@ -109,7 +109,7 @@ class FallbackChain:
         retry_delay: float = 1.0,
         circuit_failure_threshold: int = 5,
         enable_adaptive_ordering: bool = True,
-    ):
+    ) -> None:
         """Initialize fallback chain.
 
         Args:
@@ -142,7 +142,7 @@ class FallbackChain:
 
         logger.info(f"Initialized fallback chain '{chain_id}' with {len(model_configs)} models")
 
-    def _register_models(self):
+    def _register_models(self) -> None:
         """Register all models in the chain with the LLM manager."""
         for model_id, config in self.model_configs:
             try:
@@ -173,7 +173,7 @@ class FallbackChain:
 
         return FailureType.UNKNOWN
 
-    def _update_health_stats(self, model_id: str, success: bool, response_time: float = 0.0, error: Exception = None):
+    def _update_health_stats(self, model_id: str, success: bool, response_time: float = 0.0, error: Exception = None) -> None:
         """Update health statistics for a model."""
         with self.lock:
             health = self.health_stats[model_id]
@@ -347,7 +347,7 @@ class FallbackChain:
 
             return report
 
-    def reset_health_stats(self, model_id: str | None = None):
+    def reset_health_stats(self, model_id: str | None = None) -> None:
         """Reset health statistics for specific model or all models."""
         with self.lock:
             if model_id:
@@ -363,7 +363,7 @@ class FallbackChain:
 class FallbackManager:
     """Manages multiple fallback chains for different use cases."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the fallback manager."""
         self.chains = {}
         self.default_chain_id = None
@@ -401,7 +401,7 @@ class FallbackManager:
         """Get a fallback chain by ID."""
         return self.chains.get(chain_id)
 
-    def set_default_chain(self, chain_id: str):
+    def set_default_chain(self, chain_id: str) -> None:
         """Set the default fallback chain."""
         if chain_id not in self.chains:
             raise ValueError(f"Chain {chain_id} does not exist")
@@ -581,7 +581,7 @@ class FallbackManager:
 
         return config
 
-    def import_configuration(self, config: dict[str, Any], replace: bool = False):
+    def import_configuration(self, config: dict[str, Any], replace: bool = False) -> None:
         """Import chains configuration from a dictionary.
 
         Args:

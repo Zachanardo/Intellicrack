@@ -43,7 +43,7 @@ class RepositoryFactory:
     _repository_types: dict[str, type[ModelRepositoryInterface]] = {}
 
     @classmethod
-    def register_repository_type(cls, type_name: str, repository_class: type[ModelRepositoryInterface]):
+    def register_repository_type(cls, type_name: str, repository_class: type[ModelRepositoryInterface]) -> None:
         """Register a repository type.
 
         Args:

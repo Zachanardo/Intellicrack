@@ -24,16 +24,18 @@ import os
 import time
 import uuid
 from collections import defaultdict, deque
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from ..utils.logger import get_logger
 from .learning_engine_simple import get_learning_engine
 from .performance_monitor import performance_monitor, profile_ai_operation
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 logger = get_logger(__name__)
 
@@ -119,7 +121,7 @@ class Dashboard:
 class DataCollector:
     """Collects data from various AI components for visualization."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the data collector for visualization.
 
         Sets up metric storage, collection functions, and automated
@@ -142,7 +144,7 @@ class DataCollector:
 
         logger.info("Data collector initialized")
 
-    def _initialize_collectors(self):
+    def _initialize_collectors(self) -> None:
         """Initialize metric collectors."""
         self.collectors = {
             MetricType.PERFORMANCE: self._collect_performance_metrics,
@@ -154,7 +156,7 @@ class DataCollector:
             MetricType.AGENT_ACTIVITY: self._collect_agent_activity_metrics,
         }
 
-    def _start_data_collection(self):
+    def _start_data_collection(self) -> None:
         """Start background data collection."""
         # Skip thread creation during testing
         if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
@@ -163,7 +165,7 @@ class DataCollector:
 
         import threading
 
-        def collection_worker():
+        def collection_worker() -> None:
             while self.collection_enabled:
                 try:
                     for metric_type, collector in self.collectors.items():
@@ -196,7 +198,7 @@ class DataCollector:
                         value=system_health.get("score", 0),
                         label="System Health Score",
                         category="health",
-                    )
+                    ),
                 )
 
             # Operation performance
@@ -209,7 +211,7 @@ class DataCollector:
                         value=avg_time,
                         label=f"{op_name} Avg Time",
                         category="execution_time",
-                    )
+                    ),
                 )
 
             return data_points
@@ -232,7 +234,7 @@ class DataCollector:
                         value=insights["success_rate"] * 100,  # Convert to percentage
                         label="Overall Success Rate",
                         category="success_rate",
-                    )
+                    ),
                 )
 
             if "avg_confidence" in insights:
@@ -242,7 +244,7 @@ class DataCollector:
                         value=insights["avg_confidence"] * 100,
                         label="Average Confidence",
                         category="confidence",
-                    )
+                    ),
                 )
 
             return data_points
@@ -271,7 +273,7 @@ class DataCollector:
                         label="Memory Usage",
                         category="memory",
                     ),
-                ]
+                ],
             )
             return data_points
 
@@ -284,7 +286,7 @@ class DataCollector:
                     value=cpu_percent,
                     label="CPU Usage",
                     category="cpu",
-                )
+                ),
             )
 
             # Memory usage
@@ -295,7 +297,7 @@ class DataCollector:
                     value=memory.percent,
                     label="Memory Usage",
                     category="memory",
-                )
+                ),
             )
 
             # Disk I/O
@@ -307,7 +309,7 @@ class DataCollector:
                         value=disk_io.read_bytes / (1024 * 1024),  # MB
                         label="Disk Read MB",
                         category="disk_io",
-                    )
+                    ),
                 )
 
             return data_points
@@ -332,7 +334,7 @@ class DataCollector:
                     value=error_rate,
                     label="Error Rate",
                     category="errors",
-                )
+                ),
             )
 
             return data_points
@@ -522,7 +524,7 @@ class DataCollector:
                         value=insights["total_records"],
                         label="Total Learning Records",
                         category="learning_volume",
-                    )
+                    ),
                 )
 
             # Learning stats
@@ -535,7 +537,7 @@ class DataCollector:
                             value=value,
                             label=f"Learning {stat_name}",
                             category="learning_progress",
-                        )
+                        ),
                     )
 
             return data_points
@@ -564,7 +566,7 @@ class DataCollector:
                     value=active_agents,
                     label="Active Agents",
                     category="agent_activity",
-                )
+                ),
             )
 
             data_points.append(
@@ -573,7 +575,7 @@ class DataCollector:
                     value=total_tasks,
                     label="Total Tasks Processed",
                     category="task_volume",
-                )
+                ),
             )
 
             return data_points
@@ -593,7 +595,7 @@ class DataCollector:
 
         return filtered_data
 
-    def stop_collection(self):
+    def stop_collection(self) -> None:
         """Stop data collection."""
         self.collection_enabled = False
         logger.info("Stopped data collection")
@@ -602,7 +604,7 @@ class DataCollector:
 class ChartGenerator:
     """Generates various types of charts for visualization."""
 
-    def __init__(self, data_collector: DataCollector):
+    def __init__(self, data_collector: DataCollector) -> None:
         """Initialize the chart generator.
 
         Args:
@@ -741,7 +743,7 @@ class ChartGenerator:
 class DashboardManager:
     """Manages visualization dashboards."""
 
-    def __init__(self, data_collector: DataCollector):
+    def __init__(self, data_collector: DataCollector) -> None:
         """Initialize the dashboard manager for real-time visualization.
 
         Args:
@@ -794,7 +796,7 @@ class DashboardManager:
             },
         }
 
-    def _create_default_dashboards(self):
+    def _create_default_dashboards(self) -> None:
         """Create default dashboards."""
         for template_name, template in self.dashboard_templates.items():
             dashboard = self.create_dashboard_from_template(template_name)
@@ -949,7 +951,7 @@ class DashboardManager:
 class AnalyticsEngine:
     """Advanced analytics engine for AI metrics."""
 
-    def __init__(self, data_collector: DataCollector):
+    def __init__(self, data_collector: DataCollector) -> None:
         """Initialize the analytics engine.
 
         Args:
@@ -1166,7 +1168,7 @@ class AnalyticsEngine:
 class VisualizationAnalytics:
     """Run visualization and analytics system."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the visualization and analytics system.
 
         Creates and initializes the data collector, dashboard manager, and

@@ -29,7 +29,7 @@ class MemoryMonitor(BaseMonitor):
     Periodically scans process memory for patterns indicating license data.
     """
 
-    def __init__(self, pid: int, process_info: Optional[ProcessInfo] = None, scan_interval: float = 5.0):
+    def __init__(self, pid: int, process_info: Optional[ProcessInfo] = None, scan_interval: float = 5.0) -> None:
         """Initialize memory monitor.
 
         Args:

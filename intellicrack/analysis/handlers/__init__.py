@@ -78,8 +78,4 @@ def is_handler_available(handler_name):
     return handler_name in _available_handlers
 
 
-__all__ = [
-    "get_available_handlers",
-    "get_handler",
-    "is_handler_available",
-] + list(_available_handlers.keys())
+__all__ = ["get_available_handlers", "get_handler", "is_handler_available", *list(_available_handlers.keys())]

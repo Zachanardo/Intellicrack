@@ -109,7 +109,7 @@ class ChecksumLocation:
 class ChecksumRecalculator:
     """Recalculates checksums for patched binaries with production-grade algorithms."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the ChecksumRecalculator with lookup tables."""
         self.crc32_table = self._generate_crc32_table()
         self.crc32_reversed_table = self._generate_crc32_reversed_table()
@@ -337,10 +337,7 @@ class ChecksumRecalculator:
             return False
 
         repeating_patterns = [data[i:i+2] for i in range(len(data)-1)]
-        if len(set(repeating_patterns)) < len(data) * 0.4:
-            return False
-
-        return True
+        return not len(set(repeating_patterns)) < len(data) * 0.4
 
     def _calculate_key_confidence(self, data: bytes, entropy: float) -> float:
         """Calculate confidence score for potential key material."""
@@ -473,7 +470,7 @@ class ChecksumRecalculator:
             return offset > 0x400
 
     def recalculate_for_patched_binary(
-        self, original_path: str, patched_path: str
+        self, original_path: str, patched_path: str,
     ) -> ChecksumRecalculation:
         """Recalculate all checksums for patched binary."""
         with open(original_path, "rb") as f:
@@ -508,7 +505,7 @@ class ChecksumRecalculator:
 class IntegrityCheckDetector:
     """Detect integrity checking mechanisms in binaries."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the IntegrityCheckDetector with disassembler and pattern databases."""
         self.md_32 = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
         self.md_32.detail = True
@@ -824,7 +821,7 @@ class IntegrityCheckDetector:
 class IntegrityBypassEngine:
     """Bypasses detected integrity checks using Frida runtime hooks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the IntegrityBypassEngine with bypass strategies and Frida session."""
         self.bypass_strategies = self._load_bypass_strategies()
         self.session = None
@@ -884,7 +881,7 @@ class IntegrityBypassEngine:
             """,
                 success_rate=0.95,
                 priority=1,
-            )
+            ),
         )
 
         strategies.append(
@@ -929,7 +926,7 @@ class IntegrityBypassEngine:
             """,
                 success_rate=0.92,
                 priority=1,
-            )
+            ),
         )
 
         strategies.append(
@@ -1095,7 +1092,7 @@ class IntegrityBypassEngine:
             """,
                 success_rate=0.90,
                 priority=2,
-            )
+            ),
         )
 
         strategies.append(
@@ -1157,7 +1154,7 @@ class IntegrityBypassEngine:
             """,
                 success_rate=0.85,
                 priority=2,
-            )
+            ),
         )
 
         strategies.append(
@@ -1247,7 +1244,7 @@ class IntegrityBypassEngine:
             """,
                 success_rate=0.88,
                 priority=3,
-            )
+            ),
         )
 
         strategies.append(
@@ -1300,7 +1297,7 @@ class IntegrityBypassEngine:
             """,
                 success_rate=0.85,
                 priority=3,
-            )
+            ),
         )
 
         strategies.append(
@@ -1335,7 +1332,7 @@ class IntegrityBypassEngine:
             """,
                 success_rate=0.92,
                 priority=4,
-            )
+            ),
         )
 
         strategies.append(
@@ -1383,7 +1380,7 @@ class IntegrityBypassEngine:
             """,
                 success_rate=0.88,
                 priority=5,
-            )
+            ),
         )
 
         strategies.append(
@@ -1422,7 +1419,7 @@ class IntegrityBypassEngine:
             """,
                 success_rate=0.80,
                 priority=6,
-            )
+            ),
         )
 
         return strategies
@@ -1530,7 +1527,7 @@ class IntegrityBypassEngine:
                             protected_regions.append({
                                 "start": check.address,
                                 "end": check.address + check.size,
-                                "original": list(binary_data[check.address:check.address + check.size]) if check.address < len(binary_data) else []
+                                "original": list(binary_data[check.address:check.address + check.size]) if check.address < len(binary_data) else [],
                             })
 
                     script = script.replace("%PROTECTED_REGIONS%", str(protected_regions))
@@ -1551,14 +1548,14 @@ class IntegrityBypassEngine:
 
         return script
 
-    def _on_message(self, message, data):
+    def _on_message(self, message, data) -> None:
         """Handle Frida script messages."""
         if message["type"] == "send":
             logger.info(f"[Frida] {message['payload']}")
         elif message["type"] == "error":
             logger.error(f"[Frida Error] {message['stack']}")
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up Frida session."""
         if self.script:
             self.script.unload()
@@ -1569,13 +1566,13 @@ class IntegrityBypassEngine:
 class BinaryPatcher:
     """Patches binaries to remove integrity checks and recalculates checksums."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the BinaryPatcher with checksum calculator."""
         self.checksum_calc = ChecksumRecalculator()
         self.patch_history = []
 
     def patch_integrity_checks(
-        self, binary_path: str, checks: List[IntegrityCheck], output_path: str = None
+        self, binary_path: str, checks: List[IntegrityCheck], output_path: str = None,
     ) -> Tuple[bool, Optional[ChecksumRecalculation]]:
         """Patch binary to remove integrity checks and recalculate all checksums."""
         if output_path is None:
@@ -1658,7 +1655,7 @@ class BinaryPatcher:
 class IntegrityCheckDefeatSystem:
     """Complete integrity check defeat system with detection, bypass, and patching."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the IntegrityCheckDefeatSystem with all components."""
         self.detector = IntegrityCheckDetector()
         self.bypasser = IntegrityBypassEngine()
@@ -1674,7 +1671,7 @@ class IntegrityCheckDefeatSystem:
         return self.checksum_calc.extract_hmac_keys(binary_path)
 
     def patch_embedded_checksums(
-        self, binary_path: str, checksum_locations: List[ChecksumLocation], output_path: str = None
+        self, binary_path: str, checksum_locations: List[ChecksumLocation], output_path: str = None,
     ) -> bool:
         """Patch embedded checksums in binary with recalculated values."""
         if output_path is None:
@@ -1700,7 +1697,7 @@ class IntegrityCheckDefeatSystem:
             return False
 
     def defeat_integrity_checks(
-        self, binary_path: str, process_name: str = None, patch_binary: bool = False
+        self, binary_path: str, process_name: str = None, patch_binary: bool = False,
     ) -> Dict[str, Any]:
         """Complete integrity check defeat workflow."""
         result = {
@@ -1709,7 +1706,7 @@ class IntegrityCheckDefeatSystem:
             "checks_bypassed": 0,
             "binary_patched": False,
             "checksums": None,
-            "details": []
+            "details": [],
         }
 
         logger.info(f"Detecting integrity checks: {binary_path}")
@@ -1785,7 +1782,7 @@ class IntegrityCheckDefeatSystem:
         return self.checksum_calc.recalculate_for_patched_binary(original_path, patched_path)
 
 
-def main():
+def main() -> None:
     """Test entry point."""
     import argparse
 
@@ -1831,7 +1828,7 @@ def main():
         print(script)
     else:
         result = defeat_system.defeat_integrity_checks(
-            args.binary, args.process, patch_binary=args.patch
+            args.binary, args.process, patch_binary=args.patch,
         )
 
         print("\n=== Integrity Check Defeat Results ===")

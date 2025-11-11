@@ -28,6 +28,7 @@ class IntellicrackMonkeyTypeConfig(DefaultConfig):
 
         Returns:
             SQLiteStore: Configured SQLite store instance for persisting type traces
+
         """
         return SQLiteStore.make_store(str(self.db_path))
 
@@ -36,8 +37,9 @@ class IntellicrackMonkeyTypeConfig(DefaultConfig):
 
         Returns:
             None: No custom filtering applied, traces all Intellicrack code
+
         """
-        return None
+        return
 
 
 CONFIG = IntellicrackMonkeyTypeConfig()

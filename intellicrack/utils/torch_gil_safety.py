@@ -106,7 +106,7 @@ def with_torch_gil_safety(torch_func: Callable) -> Callable:
     return safe_func
 
 
-def configure_pybind11_environment():
+def configure_pybind11_environment() -> None:
     """Configure environment for pybind11 GIL safety.
 
     This should be called very early in application startup,
@@ -140,7 +140,7 @@ def configure_pybind11_environment():
         logger.debug("Could not configure GIL warnings: %s", e)
 
 
-def initialize_gil_safety():
+def initialize_gil_safety() -> None:
     """Initialize GIL safety measures for the application.
 
     This function should be called at the very beginning of the application

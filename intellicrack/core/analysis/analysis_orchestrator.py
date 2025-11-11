@@ -65,16 +65,16 @@ class OrchestrationResult:
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
 
-    def add_result(self, phase: AnalysisPhase, result: Any):
+    def add_result(self, phase: AnalysisPhase, result: Any) -> None:
         """Add result for a phase."""
         self.phases_completed.append(phase)
         self.results[phase.value] = result
 
-    def add_error(self, phase: AnalysisPhase, error: str):
+    def add_error(self, phase: AnalysisPhase, error: str) -> None:
         """Add error for a phase."""
         self.errors.append(f"{phase.value}: {error}")
 
-    def add_warning(self, phase: AnalysisPhase, warning: str):
+    def add_warning(self, phase: AnalysisPhase, warning: str) -> None:
         """Add warning for a phase."""
         self.warnings.append(f"{phase.value}: {warning}")
 
@@ -94,7 +94,7 @@ class AnalysisOrchestrator(QObject):
     #: Signal emitted when analysis is completed (type: OrchestrationResult)
     analysis_completed = pyqtSignal(OrchestrationResult)
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the analysis orchestrator.
 
         Sets up all analysis engines including binary analyzer, entropy analyzer,
@@ -223,7 +223,7 @@ class AnalysisOrchestrator(QObject):
 
             # Run comprehensive analysis using the correct method
             analysis_result = self.radare2.run_comprehensive_analysis(
-                analysis_types=["imports", "strings", "signatures", "decompiler", "esil"]
+                analysis_types=["imports", "strings", "signatures", "decompiler", "esil"],
             )
 
             # Extract relevant information from the comprehensive analysis result
@@ -291,7 +291,7 @@ class AnalysisOrchestrator(QObject):
                             result["errors"].append("Failed to start QEMU VM for Ghidra analysis")
                             return result
                 except Exception as vm_error:
-                    result["errors"].append(f"QEMU VM initialization failed: {str(vm_error)}")
+                    result["errors"].append(f"QEMU VM initialization failed: {vm_error!s}")
                     return result
 
             # Select appropriate Ghidra script based on binary
@@ -441,7 +441,7 @@ class AnalysisOrchestrator(QObject):
                                 "function": func_match,
                                 "address": self._extract_address(line),
                                 "confidence": "high" if "LICENSE_CHECK" in line else "medium",
-                            }
+                            },
                         )
 
                 # Parse cryptographic routine detection
@@ -451,7 +451,7 @@ class AnalysisOrchestrator(QObject):
                             "type": self._identify_crypto_type(line),
                             "location": self._extract_address(line),
                             "details": line.strip(),
-                        }
+                        },
                     )
 
                 # Parse protection mechanism detection
@@ -464,7 +464,7 @@ class AnalysisOrchestrator(QObject):
                         {
                             "pattern": line.strip(),
                             "type": "algorithmic" if "algorithm" in line.lower() else "serial",
-                        }
+                        },
                     )
 
                 # Count analyzed functions
@@ -572,7 +572,7 @@ class AnalysisOrchestrator(QObject):
                             "size": len(chunk_data),
                             "entropy": entropy,
                             "suspicious": entropy > self.entropy_analyzer.high_entropy_threshold,
-                        }
+                        },
                     )
 
             result["chunks"] = chunks

@@ -24,7 +24,7 @@ from intellicrack.handlers.pyqt6_handler import QRegularExpression
 class PythonHighlighter(QSyntaxHighlighter):
     """Syntax highlighter for Python code."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize Python syntax highlighter with comprehensive language support."""
         super().__init__(parent)
 
@@ -201,7 +201,7 @@ class PythonHighlighter(QSyntaxHighlighter):
         self.triple_single_quote_format = QTextCharFormat()
         self.triple_single_quote_format.setForeground(QColor("#CE9178"))  # Orange
 
-    def highlightBlock(self, text):
+    def highlightBlock(self, text) -> None:
         """Apply syntax highlighting to block."""
         # Single line rules
         for pattern, format in self.highlighting_rules:
@@ -217,7 +217,7 @@ class PythonHighlighter(QSyntaxHighlighter):
         self.match_multiline_string(text, QRegularExpression('"""'), 1, self.triple_double_quote_format)
         self.match_multiline_string(text, QRegularExpression("'''"), 2, self.triple_single_quote_format)
 
-    def match_multiline_string(self, text, expression, state, format):
+    def match_multiline_string(self, text, expression, state, format) -> None:
         """Handle multi-line string highlighting."""
         if self.previousBlockState() == state:
             start_index = 0
@@ -249,7 +249,7 @@ class PythonHighlighter(QSyntaxHighlighter):
 class JavaScriptHighlighter(QSyntaxHighlighter):
     """Syntax highlighter for JavaScript/Frida code."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize JavaScript syntax highlighter with ES6+ language support."""
         super().__init__(parent)
 
@@ -447,7 +447,7 @@ class JavaScriptHighlighter(QSyntaxHighlighter):
         self.multiline_comment_format.setForeground(QColor("#6A9955"))  # Green
         self.multiline_comment_format.setFontItalic(True)
 
-    def highlightBlock(self, text):
+    def highlightBlock(self, text) -> None:
         """Apply syntax highlighting to block."""
         # Single line rules
         for pattern, format in self.highlighting_rules:

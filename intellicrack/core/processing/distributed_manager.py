@@ -23,6 +23,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+import contextlib
 import heapq
 import json
 import logging
@@ -159,8 +160,8 @@ class DistributedAnalysisManager:
         self,
         mode: str = "auto",
         config: dict[str, Any] | None = None,
-        enable_networking: bool = True
-    ):
+        enable_networking: bool = True,
+    ) -> None:
         """Initialize the distributed analysis manager.
 
         Args:
@@ -205,13 +206,13 @@ class DistributedAnalysisManager:
             "total_processing_time": 0.0,
             "average_task_time": 0.0,
             "node_utilization": {},
-            "task_distribution": defaultdict(int)
+            "task_distribution": defaultdict(int),
         }
 
         self._register_self_as_worker()
         self.logger.info(f"Distributed manager initialized in {self.mode} mode (Node ID: {self.node_id})")
 
-    def _register_self_as_worker(self):
+    def _register_self_as_worker(self) -> None:
         """Register this instance as a worker node."""
         worker_count = self.config.get("num_workers", multiprocessing.cpu_count() if MULTIPROCESSING_AVAILABLE else 4)
 
@@ -229,7 +230,7 @@ class DistributedAnalysisManager:
                 "supports_radare2": self._check_capability("radare2"),
                 "supports_angr": self._check_capability("angr"),
                 "supports_pefile": self._check_capability("pefile"),
-                "supports_lief": self._check_capability("lief")
+                "supports_lief": self._check_capability("lief"),
             },
             current_load=0.0,
             max_load=float(worker_count),
@@ -242,9 +243,9 @@ class DistributedAnalysisManager:
                 "release": platform.release(),
                 "version": platform.version(),
                 "machine": platform.machine(),
-                "processor": platform.processor()
+                "processor": platform.processor(),
             },
-            resource_usage={}
+            resource_usage={},
         )
 
         with self.nodes_lock:
@@ -259,7 +260,7 @@ class DistributedAnalysisManager:
             ip_address = s.getsockname()[0]
             s.close()
             return ip_address
-        except (OSError, socket.error):
+        except OSError:
             return "127.0.0.1"
 
     def _check_capability(self, module_name: str) -> bool:
@@ -311,12 +312,12 @@ class DistributedAnalysisManager:
             self.logger.info(f"Cluster started on port {port} (coordinator: {self.is_coordinator})")
             return True
 
-        except (OSError, socket.error) as e:
+        except OSError as e:
             self.logger.error(f"Failed to start cluster: {e}")
             self.running = False
             return False
 
-    def _start_coordinator_server(self, port: int):
+    def _start_coordinator_server(self, port: int) -> None:
         """Start the coordinator server for network communication."""
         try:
             self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -333,11 +334,11 @@ class DistributedAnalysisManager:
 
             self.logger.info(f"Coordinator server started on {self.coordinator_address}")
 
-        except (OSError, socket.error) as e:
+        except OSError as e:
             self.logger.error(f"Failed to start coordinator server: {e}")
             raise
 
-    def _accept_connections_loop(self):
+    def _accept_connections_loop(self) -> None:
         """Accept incoming worker connections."""
         while self.running and self.server_socket:
             try:
@@ -347,19 +348,19 @@ class DistributedAnalysisManager:
                 handler_thread = threading.Thread(
                     target=self._handle_client_connection,
                     args=(client_socket, client_address),
-                    daemon=True
+                    daemon=True,
                 )
                 handler_thread.start()
                 self.background_threads.append(handler_thread)
 
-            except socket.timeout:
+            except TimeoutError:
                 continue
-            except (OSError, socket.error) as e:
+            except OSError as e:
                 if self.running:
                     self.logger.error(f"Error accepting connection: {e}")
                 break
 
-    def _handle_client_connection(self, client_socket: socket.socket, client_address: tuple):
+    def _handle_client_connection(self, client_socket: socket.socket, client_address: tuple) -> None:
         """Handle communication with a connected worker node."""
         node_id = None
         try:
@@ -399,22 +400,20 @@ class DistributedAnalysisManager:
                     if task:
                         self._send_message(client_socket, {
                             "type": "task_assigned",
-                            "task": asdict(task)
+                            "task": asdict(task),
                         })
                     else:
                         self._send_message(client_socket, {"type": "no_tasks"})
 
-        except (OSError, socket.error) as e:
+        except OSError as e:
             self.logger.error(f"Client connection error from {client_address}: {e}")
         finally:
             if node_id:
                 self._mark_node_offline(node_id)
-            try:
+            with contextlib.suppress(OSError, socket.error):
                 client_socket.close()
-            except (OSError, socket.error):
-                pass
 
-    def _connect_to_coordinator(self):
+    def _connect_to_coordinator(self) -> None:
         """Connect to a coordinator node as a worker."""
         coordinator_host = self.config.get("coordinator_host", "localhost")
         coordinator_port = self.config.get("coordinator_port", self.DEFAULT_PORT)
@@ -427,13 +426,13 @@ class DistributedAnalysisManager:
                 "hostname": socket.gethostname(),
                 "ip_address": self._get_local_ip(),
                 "capabilities": self.nodes[self.node_id].capabilities,
-                "platform_info": self.nodes[self.node_id].platform_info
+                "platform_info": self.nodes[self.node_id].platform_info,
             }
 
             self._send_message(client_socket, {
                 "type": "register",
                 "node_id": self.node_id,
-                "node_info": node_info
+                "node_info": node_info,
             })
 
             response = self._receive_message(client_socket)
@@ -444,24 +443,24 @@ class DistributedAnalysisManager:
                 comm_thread = threading.Thread(
                     target=self._worker_communication_loop,
                     args=(client_socket,),
-                    daemon=True
+                    daemon=True,
                 )
                 comm_thread.start()
                 self.background_threads.append(comm_thread)
             else:
                 raise ConnectionError("Failed to register with coordinator")
 
-        except (OSError, socket.error, ConnectionError) as e:
+        except (OSError, ConnectionError) as e:
             self.logger.error(f"Failed to connect to coordinator: {e}")
             raise
 
-    def _worker_communication_loop(self, coordinator_socket: socket.socket):
+    def _worker_communication_loop(self, coordinator_socket: socket.socket) -> None:
         """Worker communication loop with coordinator."""
         try:
             while self.running:
                 self._send_message(coordinator_socket, {
                     "type": "request_task",
-                    "node_id": self.node_id
+                    "node_id": self.node_id,
                 })
 
                 response = self._receive_message(coordinator_socket)
@@ -475,16 +474,16 @@ class DistributedAnalysisManager:
                 elif response.get("type") == "no_tasks":
                     time.sleep(2.0)
 
-        except (OSError, socket.error) as e:
+        except OSError as e:
             self.logger.error(f"Worker communication error: {e}")
 
-    def _send_message(self, sock: socket.socket, message: dict[str, Any]):
+    def _send_message(self, sock: socket.socket, message: dict[str, Any]) -> None:
         """Send a message over socket with length prefix."""
         try:
             data = pickle.dumps(message)
             length = struct.pack("!I", len(data))
             sock.sendall(length + data)
-        except (OSError, socket.error, pickle.PickleError) as e:
+        except (OSError, pickle.PickleError) as e:
             self.logger.error(f"Error sending message: {e}")
             raise
 
@@ -502,7 +501,7 @@ class DistributedAnalysisManager:
 
             return pickle.loads(data)  # noqa: S301
 
-        except (OSError, socket.error, pickle.PickleError, struct.error) as e:
+        except (OSError, pickle.PickleError, struct.error) as e:
             self.logger.error(f"Error receiving message: {e}")
             return None
 
@@ -516,7 +515,7 @@ class DistributedAnalysisManager:
             data += chunk
         return data
 
-    def _register_worker_node(self, node_id: str, node_info: dict[str, Any], connection: socket.socket):
+    def _register_worker_node(self, node_id: str, node_info: dict[str, Any], connection: socket.socket) -> None:
         """Register a new worker node."""
         with self.nodes_lock:
             worker_node = WorkerNode(
@@ -533,14 +532,14 @@ class DistributedAnalysisManager:
                 failed_tasks=0,
                 last_heartbeat=time.time(),
                 platform_info=node_info.get("platform_info", {}),
-                resource_usage={}
+                resource_usage={},
             )
 
             self.nodes[node_id] = worker_node
             self.client_connections[node_id] = connection
             self.logger.info(f"Registered worker node: {node_id} ({worker_node.hostname})")
 
-    def _update_node_heartbeat(self, node_id: str, status: dict[str, Any]):
+    def _update_node_heartbeat(self, node_id: str, status: dict[str, Any]) -> None:
         """Update node heartbeat and status."""
         with self.nodes_lock:
             if node_id in self.nodes:
@@ -550,12 +549,10 @@ class DistributedAnalysisManager:
                 node.resource_usage = status.get("resource_usage", {})
 
                 if status.get("status"):
-                    try:
+                    with contextlib.suppress(ValueError):
                         node.status = NodeStatus(status["status"])
-                    except ValueError:
-                        pass
 
-    def _mark_node_offline(self, node_id: str):
+    def _mark_node_offline(self, node_id: str) -> None:
         """Mark a node as offline and reassign its tasks."""
         with self.nodes_lock:
             if node_id in self.nodes:
@@ -574,7 +571,7 @@ class DistributedAnalysisManager:
 
                 self.nodes[node_id].active_tasks.clear()
 
-    def _heartbeat_loop(self):
+    def _heartbeat_loop(self) -> None:
         """Send periodic heartbeat messages."""
         while self.running:
             try:
@@ -591,7 +588,7 @@ class DistributedAnalysisManager:
             except Exception as e:
                 self.logger.error(f"Heartbeat error: {e}")
 
-    def _task_monitor_loop(self):
+    def _task_monitor_loop(self) -> None:
         """Monitor task execution and handle timeouts."""
         while self.running:
             try:
@@ -615,7 +612,7 @@ class DistributedAnalysisManager:
             except Exception as e:
                 self.logger.error(f"Task monitor error: {e}")
 
-    def _task_scheduler_loop(self):
+    def _task_scheduler_loop(self) -> None:
         """Schedule tasks to available worker nodes."""
         while self.running:
             try:
@@ -689,7 +686,7 @@ class DistributedAnalysisManager:
         scored_nodes.sort(reverse=True, key=lambda x: x[0])
         return scored_nodes[0][1] if scored_nodes else None
 
-    def _assign_task(self, task: AnalysisTask, node: WorkerNode):
+    def _assign_task(self, task: AnalysisTask, node: WorkerNode) -> None:
         """Assign a task to a worker node."""
         task.assigned_node = node.node_id
         task.status = TaskStatus.ASSIGNED
@@ -718,7 +715,7 @@ class DistributedAnalysisManager:
 
         return None
 
-    def _execute_task_locally(self, task: AnalysisTask, coordinator_socket: socket.socket | None = None):
+    def _execute_task_locally(self, task: AnalysisTask, coordinator_socket: socket.socket | None = None) -> None:
         """Execute a task locally on this worker node."""
         try:
             task.status = TaskStatus.RUNNING
@@ -734,7 +731,7 @@ class DistributedAnalysisManager:
                 self._send_message(coordinator_socket, {
                     "type": "task_result",
                     "task_id": task.task_id,
-                    "result": result
+                    "result": result,
                 })
             else:
                 self._handle_task_result(task.task_id, result)
@@ -742,7 +739,7 @@ class DistributedAnalysisManager:
             self.logger.info(f"Completed task {task.task_id} in {time.time() - start_time:.2f}s")
 
         except Exception as e:
-            error_msg = f"Task execution failed: {str(e)}\n{traceback.format_exc()}"
+            error_msg = f"Task execution failed: {e!s}\n{traceback.format_exc()}"
             self.logger.error(error_msg)
 
             task.status = TaskStatus.FAILED
@@ -752,7 +749,7 @@ class DistributedAnalysisManager:
                 self._send_message(coordinator_socket, {
                     "type": "task_failed",
                     "task_id": task.task_id,
-                    "error": error_msg
+                    "error": error_msg,
                 })
             else:
                 self._handle_task_failure(task.task_id, error_msg)
@@ -808,14 +805,14 @@ class DistributedAnalysisManager:
                     matches.append({
                         "pattern": pattern.decode() if isinstance(pattern, bytes) else pattern,
                         "offset": chunk_start + match.start(),
-                        "context": data[max(0, match.start()-20):match.end()+20].hex()
+                        "context": data[max(0, match.start()-20):match.end()+20].hex(),
                     })
 
         return {
             "task_type": "pattern_search",
             "matches": matches,
             "patterns_searched": len(patterns),
-            "chunk_analyzed": chunk_size
+            "chunk_analyzed": chunk_size,
         }
 
     def _task_entropy_analysis(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
@@ -847,7 +844,7 @@ class DistributedAnalysisManager:
             windows.append({
                 "offset": chunk_start + i,
                 "entropy": entropy,
-                "high_entropy": entropy > 7.0
+                "high_entropy": entropy > 7.0,
             })
 
         return {
@@ -855,7 +852,7 @@ class DistributedAnalysisManager:
             "overall_entropy": overall_entropy,
             "window_count": len(windows),
             "high_entropy_regions": sum(1 for w in windows if w["high_entropy"]),
-            "windows": windows
+            "windows": windows,
         }
 
     def _task_section_analysis(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
@@ -878,13 +875,13 @@ class DistributedAnalysisManager:
                     "virtual_size": section.Misc_VirtualSize,
                     "raw_size": section.SizeOfRawData,
                     "characteristics": section.Characteristics,
-                    "entropy": section.get_entropy()
+                    "entropy": section.get_entropy(),
                 })
 
             return {
                 "task_type": "section_analysis",
                 "sections": sections_info,
-                "section_count": len(sections_info)
+                "section_count": len(sections_info),
             }
 
         except ImportError:
@@ -914,7 +911,7 @@ class DistributedAnalysisManager:
                         strings.append({
                             "string": current_string.decode("ascii"),
                             "offset": chunk_start + offset,
-                            "length": len(current_string)
+                            "length": len(current_string),
                         })
                     current_string = b""
                     offset = i + 1
@@ -923,13 +920,13 @@ class DistributedAnalysisManager:
                 strings.append({
                     "string": current_string.decode("ascii"),
                     "offset": chunk_start + offset,
-                    "length": len(current_string)
+                    "length": len(current_string),
                 })
 
         return {
             "task_type": "string_extraction",
             "strings": strings[:1000],
-            "total_strings": len(strings)
+            "total_strings": len(strings),
         }
 
     def _task_import_analysis(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
@@ -950,19 +947,19 @@ class DistributedAnalysisManager:
                         functions.append({
                             "name": func_name,
                             "ordinal": imp.ordinal,
-                            "address": imp.address
+                            "address": imp.address,
                         })
 
                     imports.append({
                         "dll": dll_name,
-                        "functions": functions
+                        "functions": functions,
                     })
 
             return {
                 "task_type": "import_analysis",
                 "imports": imports,
                 "dll_count": len(imports),
-                "total_imports": sum(len(i["functions"]) for i in imports)
+                "total_imports": sum(len(i["functions"]) for i in imports),
             }
 
         except ImportError:
@@ -980,7 +977,7 @@ class DistributedAnalysisManager:
             "DES": [b"\x1f\x8b\x08"],
             "RSA": [b"\x30\x82"],
             "MD5": [b"\x01\x23\x45\x67", b"\x89\xab\xcd\xef"],
-            "SHA256": [b"\x6a\x09\xe6\x67", b"\xbb\x67\xae\x85"]
+            "SHA256": [b"\x6a\x09\xe6\x67", b"\xbb\x67\xae\x85"],
         }
 
         detections = []
@@ -995,13 +992,13 @@ class DistributedAnalysisManager:
                         detections.append({
                             "algorithm": algo,
                             "offset": chunk_start + offset,
-                            "confidence": "high"
+                            "confidence": "high",
                         })
 
         return {
             "task_type": "crypto_detection",
             "detections": detections,
-            "algorithms_found": len(set(d["algorithm"] for d in detections))
+            "algorithms_found": len({d["algorithm"] for d in detections}),
         }
 
     def _task_frida_analysis(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
@@ -1009,7 +1006,7 @@ class DistributedAnalysisManager:
         return {
             "task_type": "frida_analysis",
             "error": "Frida analysis requires runtime execution environment",
-            "binary": binary_path
+            "binary": binary_path,
         }
 
     def _task_radare2_analysis(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
@@ -1030,7 +1027,7 @@ class DistributedAnalysisManager:
                 "function_count": len(functions),
                 "string_count": len(strings),
                 "functions": functions[:100],
-                "strings": strings[:100]
+                "strings": strings[:100],
             }
 
         except ImportError:
@@ -1052,7 +1049,7 @@ class DistributedAnalysisManager:
                 "function_count": len(cfg.functions),
                 "basic_block_count": len(list(cfg.nodes())),
                 "entry_point": hex(proj.entry),
-                "architecture": proj.arch.name
+                "architecture": proj.arch.name,
             }
 
         except ImportError:
@@ -1077,10 +1074,10 @@ class DistributedAnalysisManager:
             "task_type": "generic_analysis",
             "file_size": file_size,
             "file_type": file_type,
-            "params": params
+            "params": params,
         }
 
-    def _handle_task_result(self, task_id: str, result: dict[str, Any]):
+    def _handle_task_result(self, task_id: str, result: dict[str, Any]) -> None:
         """Handle successful task completion."""
         with self.task_lock:
             if task_id in self.tasks:
@@ -1108,7 +1105,7 @@ class DistributedAnalysisManager:
 
                 self.logger.info(f"Task {task_id} completed successfully")
 
-    def _handle_task_failure(self, task_id: str, error: str):
+    def _handle_task_failure(self, task_id: str, error: str) -> None:
         """Handle task failure and schedule retry if applicable."""
         with self.task_lock:
             if task_id in self.tasks:
@@ -1143,7 +1140,7 @@ class DistributedAnalysisManager:
         binary_path: str,
         params: dict[str, Any] | None = None,
         priority: TaskPriority = TaskPriority.NORMAL,
-        timeout: float = 3600.0
+        timeout: float = 3600.0,
     ) -> str:
         """Submit a task for distributed analysis.
 
@@ -1168,7 +1165,7 @@ class DistributedAnalysisManager:
             params=params or {},
             status=TaskStatus.PENDING,
             created_at=time.time(),
-            timeout=timeout
+            timeout=timeout,
         )
 
         with self.task_lock:
@@ -1185,7 +1182,7 @@ class DistributedAnalysisManager:
         self,
         binary_path: str,
         chunk_size: int = 5 * 1024 * 1024,
-        priority: TaskPriority = TaskPriority.NORMAL
+        priority: TaskPriority = TaskPriority.NORMAL,
     ) -> list[str]:
         """Submit a complete binary analysis as multiple distributed tasks.
 
@@ -1210,7 +1207,7 @@ class DistributedAnalysisManager:
         for offset in range(0, file_size, chunk_size):
             chunk_params = {
                 "chunk_start": offset,
-                "chunk_size": min(chunk_size, file_size - offset)
+                "chunk_size": min(chunk_size, file_size - offset),
             }
 
             task_ids.append(self.submit_task("entropy_analysis", binary_path, chunk_params, priority))
@@ -1243,7 +1240,7 @@ class DistributedAnalysisManager:
                     "created_at": task.created_at,
                     "started_at": task.started_at,
                     "completed_at": task.completed_at,
-                    "error": task.error
+                    "error": task.error,
                 }
         return None
 
@@ -1307,14 +1304,14 @@ class DistributedAnalysisManager:
                 return {
                     "status": "timeout",
                     "remaining_tasks": len(remaining),
-                    "timeout": timeout
+                    "timeout": timeout,
                 }
 
             time.sleep(1.0)
 
         return {
             "status": "completed",
-            "total_time": time.time() - start_time
+            "total_time": time.time() - start_time,
         }
 
     def get_cluster_status(self) -> dict[str, Any]:
@@ -1337,7 +1334,7 @@ class DistributedAnalysisManager:
                     "completed_tasks": node.completed_tasks,
                     "failed_tasks": node.failed_tasks,
                     "last_heartbeat": node.last_heartbeat,
-                    "capabilities": node.capabilities
+                    "capabilities": node.capabilities,
                 }
 
         with self.task_lock:
@@ -1347,7 +1344,7 @@ class DistributedAnalysisManager:
                 "running": sum(1 for t in self.tasks.values() if t.status == TaskStatus.RUNNING),
                 "completed": sum(1 for t in self.tasks.values() if t.status == TaskStatus.COMPLETED),
                 "failed": sum(1 for t in self.tasks.values() if t.status == TaskStatus.FAILED),
-                "total": len(self.tasks)
+                "total": len(self.tasks),
             }
 
         return {
@@ -1358,7 +1355,7 @@ class DistributedAnalysisManager:
             "nodes": nodes_info,
             "node_count": len(self.nodes),
             "tasks": task_stats,
-            "performance": self.performance_metrics
+            "performance": self.performance_metrics,
         }
 
     def get_results_summary(self) -> dict[str, Any]:
@@ -1378,7 +1375,7 @@ class DistributedAnalysisManager:
             return {
                 "total_results": len(self.completed_results),
                 "results_by_type": dict(results_by_type),
-                "task_types": list(results_by_type.keys())
+                "task_types": list(results_by_type.keys()),
             }
 
     def export_results(self, output_path: str) -> bool:
@@ -1395,7 +1392,7 @@ class DistributedAnalysisManager:
             results = {
                 "cluster_status": self.get_cluster_status(),
                 "completed_results": self.completed_results,
-                "tasks": {}
+                "tasks": {},
             }
 
             with self.task_lock:
@@ -1408,7 +1405,7 @@ class DistributedAnalysisManager:
                         "binary_path": task.binary_path,
                         "created_at": task.created_at,
                         "completed_at": task.completed_at,
-                        "error": task.error
+                        "error": task.error,
                     }
 
             with open(output_path, "w", encoding="utf-8") as f:
@@ -1421,7 +1418,7 @@ class DistributedAnalysisManager:
             self.logger.error(f"Failed to export results: {e}")
             return False
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown the distributed manager and cleanup resources."""
         self.logger.info("Shutting down distributed manager...")
         self.running = False
@@ -1431,16 +1428,12 @@ class DistributedAnalysisManager:
                 thread.join(timeout=2.0)
 
         if self.server_socket:
-            try:
+            with contextlib.suppress(OSError, socket.error):
                 self.server_socket.close()
-            except (OSError, socket.error):
-                pass
 
         for conn in self.client_connections.values():
-            try:
+            with contextlib.suppress(OSError, socket.error):
                 conn.close()
-            except (OSError, socket.error):
-                pass
 
         if self.local_manager:
             self.local_manager.cleanup()
@@ -1451,7 +1444,7 @@ class DistributedAnalysisManager:
 def create_distributed_manager(
     mode: str = "auto",
     config: dict[str, Any] | None = None,
-    enable_networking: bool = True
+    enable_networking: bool = True,
 ) -> DistributedAnalysisManager:
     """Create a DistributedAnalysisManager instance.
 
@@ -1474,5 +1467,5 @@ __all__ = [
     "WorkerNode",
     "TaskPriority",
     "TaskStatus",
-    "NodeStatus"
+    "NodeStatus",
 ]

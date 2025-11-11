@@ -139,7 +139,7 @@ def generate_always_succeed_x86() -> bytes:
     """
     return bytes([
         0xB8, 0x01, 0x00, 0x00, 0x00,
-        0xC3
+        0xC3,
     ])
 
 
@@ -152,7 +152,7 @@ def generate_always_succeed_x64() -> bytes:
     """
     return bytes([
         0x48, 0xC7, 0xC0, 0x01, 0x00, 0x00, 0x00,
-        0xC3
+        0xC3,
     ])
 
 
@@ -165,7 +165,7 @@ def generate_always_succeed_arm32() -> bytes:
     """
     return bytes([
         0x01, 0x00, 0xA0, 0xE3,
-        0x1E, 0xFF, 0x2F, 0xE1
+        0x1E, 0xFF, 0x2F, 0xE1,
     ])
 
 
@@ -178,7 +178,7 @@ def generate_always_succeed_arm64() -> bytes:
     """
     return bytes([
         0x20, 0x00, 0x80, 0xD2,
-        0xC0, 0x03, 0x5F, 0xD6
+        0xC0, 0x03, 0x5F, 0xD6,
     ])
 
 
@@ -282,7 +282,7 @@ def generate_nop_sled(size: int, arch: Architecture = Architecture.X86) -> bytes
         NOP instruction bytes
 
     """
-    if arch == Architecture.X86 or arch == Architecture.X64:
+    if arch in (Architecture.X86, Architecture.X64):
         return bytes([0x90] * size)
     elif arch == Architecture.ARM32:
         nop_count = size // 4
@@ -337,9 +337,9 @@ def generate_trampoline_x64(target_addr: int, hook_addr: int) -> bytes:
     else:
         hook_bytes = hook_addr.to_bytes(8, byteorder='little')
         return bytes([
-            0x48, 0xB8
+            0x48, 0xB8,
         ]) + hook_bytes + bytes([
-            0xFF, 0xE0
+            0xFF, 0xE0,
         ])
 
 
@@ -392,12 +392,12 @@ def wrap_patch_fastcall(patch: bytes) -> bytes:
     """
     push_regs = bytes([
         0x51,
-        0x52
+        0x52,
     ])
 
     pop_regs = bytes([
         0x5A,
-        0x59
+        0x59,
     ])
 
     return push_regs + patch + pop_regs
@@ -419,14 +419,14 @@ def wrap_patch_x64_convention(patch: bytes) -> bytes:
         0x51,
         0x52,
         0x41, 0x50,
-        0x41, 0x51
+        0x41, 0x51,
     ])
 
     pop_regs = bytes([
         0x41, 0x59,
         0x41, 0x58,
         0x5A,
-        0x59
+        0x59,
     ])
 
     return push_regs + patch + pop_regs
@@ -475,7 +475,7 @@ def generate_register_save_x64() -> bytes:
         0x41, 0x54,
         0x41, 0x55,
         0x41, 0x56,
-        0x41, 0x57
+        0x41, 0x57,
     ])
 
 
@@ -502,7 +502,7 @@ def generate_register_restore_x64() -> bytes:
         0x5B,
         0x5A,
         0x59,
-        0x58
+        0x58,
     ])
 
 
@@ -543,7 +543,7 @@ def validate_patch_alignment(patch: bytes, address: int) -> bool:
 def get_patch_for_architecture(
     arch: Architecture,
     patch_type: PatchType,
-    **kwargs
+    **kwargs,
 ) -> Optional[bytes]:
     """Get appropriate patch for target architecture.
 

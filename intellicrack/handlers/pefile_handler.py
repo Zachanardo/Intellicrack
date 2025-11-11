@@ -20,7 +20,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import hashlib
 import struct
 
-from intellicrack.utils.logger import logger
+from intellicrack.utils.logger import log_all_methods, logger
 
 logger.debug("PEfile handler module loaded")
 
@@ -240,7 +240,7 @@ except ImportError as e:
     class Structure:
         """Base structure for PE components."""
 
-        def __init__(self, format_str=None, name=None):
+        def __init__(self, format_str=None, name=None) -> None:
             """Initialize structure."""
             self.format_str = format_str
             self.name = name or "Structure"
@@ -253,10 +253,11 @@ except ImportError as e:
                 return struct.unpack(self.format_str, data[: self.sizeof])
             return ()
 
+    @log_all_methods
     class FallbackPE:
         """Functional PE file parser implementation."""
 
-        def __init__(self, name=None, data=None, fast_load=None):
+        def __init__(self, name=None, data=None, fast_load=None) -> None:
             """Initialize PE parser."""
             self.name = name
             self.fast_load = fast_load
@@ -285,7 +286,7 @@ except ImportError as e:
             if self.__data__:
                 self._parse()
 
-        def _parse(self):
+        def _parse(self) -> None:
             """Parse PE file structure."""
             # Parse DOS header
             if len(self.__data__) < 64:
@@ -465,7 +466,7 @@ except ImportError as e:
 
             return header
 
-        def _parse_sections(self, offset, count):
+        def _parse_sections(self, offset, count) -> None:
             """Parse section headers."""
             for i in range(count):
                 section_offset = offset + i * 40
@@ -499,7 +500,7 @@ except ImportError as e:
 
                 self.sections.append(section)
 
-        def _parse_imports(self):
+        def _parse_imports(self) -> None:
             """Parse import directory."""
             if not self.OPTIONAL_HEADER or not self.OPTIONAL_HEADER.DATA_DIRECTORY:
                 return
@@ -554,7 +555,7 @@ except ImportError as e:
 
                 offset += 20
 
-        def _parse_import_thunks(self, import_desc, offset):
+        def _parse_import_thunks(self, import_desc, offset) -> None:
             """Parse import thunks."""
             is_64bit = self.OPTIONAL_HEADER.Magic == 0x20B
             thunk_size = 8 if is_64bit else 4
@@ -595,7 +596,7 @@ except ImportError as e:
                 import_desc.imports.append(import_data)
                 offset += thunk_size
 
-        def _parse_exports(self):
+        def _parse_exports(self) -> None:
             """Parse export directory."""
             if not self.OPTIONAL_HEADER or not self.OPTIONAL_HEADER.DATA_DIRECTORY:
                 return
@@ -678,7 +679,7 @@ except ImportError as e:
                             symbol = ExportSymbol()
                             symbol.ordinal = export.Base + i
                             symbol.address = func_rva
-                            symbol.name = name_ordinals.get(i, None)
+                            symbol.name = name_ordinals.get(i)
                             symbol.forwarder = None
 
                             # Check if it's a forwarder
@@ -691,17 +692,17 @@ except ImportError as e:
 
             self.DIRECTORY_ENTRY_EXPORT = export
 
-        def _parse_resources(self):
+        def _parse_resources(self) -> None:
             """Parse resource directory."""
             # Basic resource parsing - implement if needed
             pass
 
-        def _parse_debug(self):
+        def _parse_debug(self) -> None:
             """Parse debug directory."""
             # Basic debug info parsing - implement if needed
             pass
 
-        def _parse_relocations(self):
+        def _parse_relocations(self) -> None:
             """Parse base relocations."""
             # Basic relocation parsing - implement if needed
             pass
@@ -768,8 +769,7 @@ except ImportError as e:
             imp_str = ""
             for entry in self.DIRECTORY_ENTRY_IMPORT:
                 dll_name = entry.dll.lower() if hasattr(entry, "dll") else ""
-                if dll_name.endswith(".dll"):
-                    dll_name = dll_name[:-4]
+                dll_name = dll_name.removesuffix(".dll")
 
                 for imp in entry.imports:
                     if hasattr(imp, "name") and imp.name:
@@ -843,11 +843,11 @@ except ImportError as e:
                     f.write(self.__data__)
             return self.__data__
 
-        def close(self):
+        def close(self) -> None:
             """Close PE file."""
             self.__data__ = None
 
-        def __str__(self):
+        def __str__(self) -> str:
             """Return string representation."""
             return f"PE({self.name})"
 

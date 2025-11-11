@@ -87,7 +87,7 @@ class MonitorEvent:
 class MonitorStats:
     """Monitor statistics tracking."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize statistics."""
         self.total_events = 0
         self.events_by_type: Dict[str, int] = {}
@@ -149,7 +149,7 @@ class BaseMonitor(ABC):
     Implements Dependency Inversion: Depends on abstractions, not implementations.
     """
 
-    def __init__(self, name: str, process_info: Optional[ProcessInfo] = None):
+    def __init__(self, name: str, process_info: Optional[ProcessInfo] = None) -> None:
         """Initialize base monitor.
 
         Args:

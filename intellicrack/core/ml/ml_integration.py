@@ -43,8 +43,8 @@ class MLAnalysisIntegration:
         self,
         model_path: Path | None = None,
         enable_incremental_learning: bool = True,
-        enable_sample_database: bool = True
-    ):
+        enable_sample_database: bool = True,
+    ) -> None:
         """Initialize ML analysis integration.
 
         Args:
@@ -60,7 +60,7 @@ class MLAnalysisIntegration:
         if not self.classifier.model_file.exists():
             self.logger.warning(
                 "No trained model found at %s. ML classification disabled.",
-                self.classifier.model_file
+                self.classifier.model_file,
             )
             self.enabled = False
         else:
@@ -71,7 +71,7 @@ class MLAnalysisIntegration:
         if enable_incremental_learning and self.enabled:
             self.incremental_learner = IncrementalLearner(
                 classifier=self.classifier,
-                auto_retrain=True
+                auto_retrain=True,
             )
             self.logger.info("Incremental learning enabled")
 
@@ -83,7 +83,7 @@ class MLAnalysisIntegration:
     def classify_binary(
         self,
         binary_path: str | Path,
-        include_alternatives: bool = True
+        include_alternatives: bool = True,
     ) -> dict[str, Any]:
         """Classify a binary using ML model.
 
@@ -98,7 +98,7 @@ class MLAnalysisIntegration:
         if not self.enabled:
             return {
                 'enabled': False,
-                'error': 'ML classifier not available'
+                'error': 'ML classifier not available',
             }
 
         try:
@@ -132,7 +132,7 @@ class MLAnalysisIntegration:
             self.logger.error("Classification failed for %s: %s", binary_path, e)
             return {
                 'enabled': True,
-                'error': str(e)
+                'error': str(e),
             }
 
     def analyze_with_ml(self, binary_path: str | Path) -> dict[str, Any]:
@@ -160,19 +160,19 @@ class MLAnalysisIntegration:
 
         if classification.get('reliable'):
             results['recommended_tools'] = self._get_recommended_tools(
-                classification['primary_protection']
+                classification['primary_protection'],
             )
 
         if self.incremental_learner:
             uncertain = self.incremental_learner.get_uncertain_predictions(
                 min_uncertainty=0.4,
-                max_count=5
+                max_count=5,
             )
 
             if any(str(path) == str(binary_path) for path, _ in uncertain):
                 results['active_learning'] = {
                     'requires_labeling': True,
-                    'reason': 'Model is uncertain about this sample'
+                    'reason': 'Model is uncertain about this sample',
                 }
 
         if self.sample_database:
@@ -186,7 +186,7 @@ class MLAnalysisIntegration:
         binary_path: Path,
         protection_type: str,
         verified: bool = True,
-        notes: str = ""
+        notes: str = "",
     ) -> bool:
         """Add a verified sample to the learning system.
 
@@ -209,7 +209,7 @@ class MLAnalysisIntegration:
                 confidence=1.0,
                 source='manual',
                 verified=verified,
-                notes=notes
+                notes=notes,
             )
 
             if not db_success:
@@ -222,7 +222,7 @@ class MLAnalysisIntegration:
                 protection_type=protection_type,
                 confidence=1.0,
                 source='manual',
-                metadata={'verified': verified, 'notes': notes}
+                metadata={'verified': verified, 'notes': notes},
             )
 
             if not learner_success:
@@ -233,7 +233,7 @@ class MLAnalysisIntegration:
             self.logger.info(
                 "Added verified sample: %s (%s)",
                 binary_path.name,
-                protection_type
+                protection_type,
             )
 
         return success
@@ -242,7 +242,7 @@ class MLAnalysisIntegration:
         self,
         use_database: bool = True,
         min_confidence: float = 0.7,
-        n_estimators: int = 200
+        n_estimators: int = 200,
     ) -> dict[str, Any]:
         """Retrain model with new samples.
 
@@ -262,20 +262,20 @@ class MLAnalysisIntegration:
             self.logger.info("Retraining from sample database")
 
             X, y = self.sample_database.extract_training_data(
-                min_confidence=min_confidence
+                min_confidence=min_confidence,
             )
 
             if len(X) < 50:
                 return {
                     'error': f'Insufficient samples ({len(X)}) for training',
-                    'minimum_required': 50
+                    'minimum_required': 50,
                 }
 
             results = self.classifier.train(
                 X=X,
                 y=y,
                 n_estimators=n_estimators,
-                cross_validate=True
+                cross_validate=True,
             )
 
             self.classifier.save_model()
@@ -286,7 +286,7 @@ class MLAnalysisIntegration:
         if self.incremental_learner:
             self.logger.info("Retraining from incremental learner buffer")
             return self.incremental_learner.retrain_incremental(
-                n_estimators=n_estimators
+                n_estimators=n_estimators,
             )
 
         return {'error': 'No training data available'}
@@ -351,26 +351,26 @@ class MLAnalysisIntegration:
             'VMProtect': {
                 'unpackers': ['VMProtect Unpacker', 'Scylla Dumper'],
                 'analyzers': ['Ghidra', 'IDA Pro with VMP plugin'],
-                'techniques': ['ESIL emulation', 'Control flow deobfuscation']
+                'techniques': ['ESIL emulation', 'Control flow deobfuscation'],
             },
             'Themida': {
                 'unpackers': ['Themida Unpacker', 'Manual OEP finder'],
                 'analyzers': ['x64dbg', 'Ghidra'],
-                'techniques': ['Anti-debug bypass', 'VM detection bypass']
+                'techniques': ['Anti-debug bypass', 'VM detection bypass'],
             },
             'Enigma': {
                 'unpackers': ['Enigma Unpacker'],
                 'analyzers': ['Ghidra', 'x64dbg'],
-                'techniques': ['Resource extraction', 'License check removal']
+                'techniques': ['Resource extraction', 'License check removal'],
             },
             'UPX': {
                 'unpackers': ['UPX -d', 'Generic PE unpacker'],
                 'analyzers': ['Any disassembler'],
-                'techniques': ['Standard unpacking']
+                'techniques': ['Standard unpacking'],
             },
         }
 
         return tool_recommendations.get(protection, {
             'analyzers': ['Ghidra', 'radare2'],
-            'techniques': ['Standard analysis']
+            'techniques': ['Standard analysis'],
         })

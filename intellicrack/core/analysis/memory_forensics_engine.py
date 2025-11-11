@@ -180,7 +180,7 @@ class MemoryForensicsEngine:
     - Rootkit detection
     """
 
-    def __init__(self, cache_directory: str | None = None):
+    def __init__(self, cache_directory: str | None = None) -> None:
         """Initialize the memory forensics engine with cache configuration and plugin detection."""
         self.logger = logging.getLogger("IntellicrackLogger.MemoryForensics")
 
@@ -200,7 +200,7 @@ class MemoryForensicsEngine:
         # Results storage
         self.analysis_results = {}
 
-    def _init_volatility(self):
+    def _init_volatility(self) -> None:
         """Initialize Volatility3 framework."""
         try:
             # Initialize Volatility3 context
@@ -323,7 +323,7 @@ class MemoryForensicsEngine:
             try:
                 file_cmd_path = shutil.which("file")
                 if file_cmd_path:
-                    file_result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    file_result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                         [file_cmd_path, dump_path],
                         check=False,
                         capture_output=True,
@@ -448,7 +448,7 @@ class MemoryForensicsEngine:
             logger.debug(f"Profile detection failed for {dump_path}: {e}")
             return AnalysisProfile.WINDOWS_10.value
 
-    def _configure_volatility(self, dump_path: str, profile: str):
+    def _configure_volatility(self, dump_path: str, profile: str) -> None:
         """Configure Volatility3 for analysis."""
         try:
             # Clear existing configuration
@@ -822,7 +822,7 @@ class MemoryForensicsEngine:
 
         return indicators
 
-    def _detect_hidden_processes(self, processes: list[MemoryProcess]):
+    def _detect_hidden_processes(self, processes: list[MemoryProcess]) -> None:
         """Detect hidden processes using psxview-like analysis."""
         try:
             # This would involve comparing multiple process listing methods
@@ -911,7 +911,7 @@ class MemoryForensicsEngine:
                         "severity": "high",
                         "description": f"Found {hidden_count} potentially hidden processes",
                         "count": hidden_count,
-                    }
+                    },
                 )
 
             # Check for suspicious modules
@@ -923,7 +923,7 @@ class MemoryForensicsEngine:
                         "severity": "medium",
                         "description": f"Found {len(suspicious_modules)} suspicious modules",
                         "modules": [m.name for m in suspicious_modules[:5]],
-                    }
+                    },
                 )
 
             # Check for unusual network connections
@@ -937,7 +937,7 @@ class MemoryForensicsEngine:
                         "severity": "medium",
                         "description": f"Found {len(external_connections)} external network connections",
                         "count": len(external_connections),
-                    }
+                    },
                 )
 
             # Check for credential-related strings
@@ -953,7 +953,7 @@ class MemoryForensicsEngine:
                         "severity": "high",
                         "description": f"Found {len(credential_strings)} potential credential strings",
                         "count": len(credential_strings),
-                    }
+                    },
                 )
 
         except Exception as e:
@@ -990,7 +990,7 @@ class MemoryForensicsEngine:
                 return {
                     "process_id": process_id,
                     "process_info": target_process,
-                    "modules": [m for m in full_analysis.modules],  # All modules for context
+                    "modules": list(full_analysis.modules),  # All modules for context
                     "connections": [c for c in full_analysis.network_connections if c.pid == process_id],
                     "analysis_status": "completed",
                 }
@@ -1046,9 +1046,9 @@ class MemoryForensicsEngine:
                             "base": hex(module),
                             "name": module_name,
                             "path": module_name,
-                        }
+                        },
                     )
-                except (OSError, WindowsError, Exception) as e:
+                except (OSError, Exception) as e:
                     logger.debug(f"Failed to get module info for {hex(module)}: {e}")
                     continue
 
@@ -1120,7 +1120,7 @@ class MemoryForensicsEngine:
                                         ]
                                     )
                                 ][:10],  # Limit to 10 interesting strings
-                            }
+                            },
                         )
 
                 address += mbi.RegionSize
@@ -1141,7 +1141,7 @@ class MemoryForensicsEngine:
                                 "type": "file",
                                 "path": file_obj.path,
                                 "fd": getattr(file_obj, "fd", "N/A"),
-                            }
+                            },
                         )
                 except (psutil.AccessDenied, AttributeError):
                     pass
@@ -1156,7 +1156,7 @@ class MemoryForensicsEngine:
                                     "type": "memory_map",
                                     "path": mmap.path,
                                     "size": getattr(mmap, "rss", 0),
-                                }
+                                },
                             )
                 except (psutil.AccessDenied, AttributeError):
                     pass
@@ -1177,7 +1177,7 @@ class MemoryForensicsEngine:
                             "local": f"{conn.laddr.ip}:{conn.laddr.port}" if conn.laddr else "N/A",
                             "remote": f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else "N/A",
                             "status": conn.status,
-                        }
+                        },
                     )
             except (ImportError, AttributeError) as e:
                 logger.debug(f"psutil not available for network connections: {e}")
@@ -1301,9 +1301,9 @@ class MemoryForensicsEngine:
                                             "name": os.path.basename(pathname),
                                             "path": pathname,
                                             "size": end - start,
-                                        }
+                                        },
                                     )
-                        except (IOError, OSError, PermissionError) as e:
+                        except (OSError, PermissionError) as e:
                             region_info["read_error"] = True
                             logger.debug(f"Failed to read memory region {hex(start)}-{hex(end)}: {e}")
                         except ValueError as e:
@@ -1320,7 +1320,7 @@ class MemoryForensicsEngine:
                         if ":" in line:
                             key, value = line.split(":", 1)
                             status_info[key.strip()] = value.strip()
-            except (FileNotFoundError, IOError, OSError) as e:
+            except (FileNotFoundError, OSError) as e:
                 logger.debug(f"Failed to read process status for PID {process_id}: {e}")
             except ValueError as e:
                 logger.debug(f"Error parsing process status line: {e}")
@@ -1352,7 +1352,7 @@ class MemoryForensicsEngine:
                                                             "local": local_addr,
                                                             "remote": remote_addr,
                                                             "state": fields[3],
-                                                        }
+                                                        },
                                                     )
                                             except (OSError, FileNotFoundError) as e:
                                                 # File descriptor might have closed
@@ -1361,7 +1361,7 @@ class MemoryForensicsEngine:
                                             except Exception as e:
                                                 logger.debug(f"Error processing fd {fd}: {e}")
                                                 continue
-            except (FileNotFoundError, IOError, OSError) as e:
+            except (FileNotFoundError, OSError) as e:
                 logger.debug(f"Failed to read network connections from /proc/net: {e}")
             except Exception as e:
                 logger.debug(f"Error parsing network connections: {e}")
@@ -1510,7 +1510,7 @@ class MemoryForensicsEngine:
                         "is_hidden": process.is_hidden,
                         "indicators": process.suspicious_indicators,
                         "parent_pid": process.ppid,
-                    }
+                    },
                 )
 
         # Process suspicious modules
@@ -1522,7 +1522,7 @@ class MemoryForensicsEngine:
                         "path": module.path,
                         "base_address": hex(module.base_address),
                         "size": module.size,
-                    }
+                    },
                 )
 
         # Process network connections
@@ -1535,7 +1535,7 @@ class MemoryForensicsEngine:
                         "protocol": conn.protocol,
                         "state": conn.state,
                         "pid": conn.pid,
-                    }
+                    },
                 )
 
         # Process security findings
@@ -1546,7 +1546,7 @@ class MemoryForensicsEngine:
                     "severity": finding.get("severity", "low"),
                     "description": finding.get("description", ""),
                     "evidence": finding,
-                }
+                },
             )
 
         return supplemental_data

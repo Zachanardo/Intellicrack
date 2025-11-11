@@ -34,7 +34,7 @@ class BaseTab(QWidget):
     Provides common functionality including loading states, shared context, and consistent styling.
     """
 
-    def __init__(self, shared_context=None, parent=None):
+    def __init__(self, shared_context=None, parent=None) -> None:
         """Initialize base tab with shared application context and parent widget."""
         super().__init__(parent)
         self.shared_context = shared_context or {}
@@ -46,7 +46,7 @@ class BaseTab(QWidget):
         # Auto-load content immediately
         self.lazy_load_content()
 
-    def setup_loading_ui(self):
+    def setup_loading_ui(self) -> None:
         """Set up initial loading state UI."""
         layout = QVBoxLayout(self)
 
@@ -58,7 +58,7 @@ class BaseTab(QWidget):
 
         layout.addWidget(loading_label)
 
-    def lazy_load_content(self):
+    def lazy_load_content(self) -> None:
         """Override this method in subclasses to implement lazy loading.
 
         This method should create and setup the actual tab content.
@@ -68,10 +68,10 @@ class BaseTab(QWidget):
             self.setup_content()
             self.is_loaded = True
 
-    def setup_content(self):
+    def setup_content(self) -> None:
         """Override this method to setup the actual tab content."""
 
-    def clear_layout(self):
+    def clear_layout(self) -> None:
         """Clear all widgets from the current layout."""
         layout = self.layout()
         if layout:
@@ -80,7 +80,7 @@ class BaseTab(QWidget):
                 if child.widget():
                     child.widget().deleteLater()
 
-    def log_activity(self, message):
+    def log_activity(self, message) -> None:
         """Log activity to shared context if available."""
         if self.shared_context and hasattr(self.shared_context, "log_activity"):
             self.shared_context.log_activity(message)

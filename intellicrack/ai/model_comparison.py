@@ -65,7 +65,7 @@ class ComparisonReport:
 class ModelComparison:
     """Tool for comparing outputs and performance of multiple models."""
 
-    def __init__(self, llm_manager: LLMManager | None = None):
+    def __init__(self, llm_manager: LLMManager | None = None) -> None:
         """Initialize the model comparison tool.
 
         Args:
@@ -299,7 +299,7 @@ class ModelComparison:
 
         return analysis
 
-    def _calculate_similarities(self, results: list[ComparisonResult]):
+    def _calculate_similarities(self, results: list[ComparisonResult]) -> None:
         """Calculate similarity scores between outputs."""
         try:
             from sklearn.feature_extraction.text import TfidfVectorizer
@@ -519,7 +519,7 @@ class ModelComparison:
 
         return benchmark_results
 
-    def _save_report(self, report: ComparisonReport):
+    def _save_report(self, report: ComparisonReport) -> None:
         """Save comparison report to disk."""
         report_file = self.save_dir / f"{report.comparison_id}_report.json"
 

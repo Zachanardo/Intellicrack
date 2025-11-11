@@ -104,7 +104,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         architecture: str = "x86_64",
         rootfs_path: str | None = None,
         config: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         """Initialize QEMU system emulator.
 
         Args:
@@ -287,7 +287,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             self.logger.info(f"Starting QEMU system: {' '.join(qemu_cmd[:5])}...")
 
             # Start QEMU process
-            self.qemu_process = subprocess.Popen(  # nosec S603 - Using QEMU for secure virtual testing environment in security research  # noqa: S603
+            self.qemu_process = subprocess.Popen(  # nosec S603 - Using QEMU for secure virtual testing environment in security research
                 qemu_cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -364,7 +364,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                     f"user,id=net0,hostfwd=tcp::{self.config['ssh_port']}-:22",
                     "-device",
                     "virtio-net,netdev=net0",
-                ]
+                ],
             )
 
         # Monitor socket for management
@@ -377,7 +377,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 [
                     "-virtfs",
                     f"local,path={self.config['shared_folder']},mount_tag=shared,security_model=passthrough",
-                ]
+                ],
             )
 
         # Snapshot support
@@ -788,7 +788,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                             "address": region.get("address", "0x0"),
                             "size": region.get("size", 0),
                             "type": region.get("type", "unknown"),
-                        }
+                        },
                     )
 
             # Check for modified regions
@@ -800,7 +800,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                                 "address": r1.get("address"),
                                 "old_size": r1.get("size"),
                                 "new_size": r2.get("size"),
-                            }
+                            },
                         )
 
             # Analyze heap growth (simplified)
@@ -881,7 +881,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                                     "size": size,
                                     "type": region_type,
                                     "description": desc,
-                                }
+                                },
                             )
                     except (ValueError, IndexError) as e:
                         logger.error("Error in qemu_emulator: %s", e)
@@ -1061,7 +1061,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                                                         "memory": int(float(parts[3]) * 1024),
                                                         "cpu": float(parts[2]),
                                                         "user": parts[0],
-                                                    }
+                                                    },
                                                 )
                                             except (ValueError, IndexError):
                                                 continue
@@ -1282,7 +1282,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                                 "path": file_path,
                                 "size": file_info.get("size", 0),
                                 "timestamp": file_info.get("mtime", time.time()),
-                            }
+                            },
                         )
 
                     # Find modified files
@@ -1293,7 +1293,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
                             # Check if file was modified
                             if current_info.get("mtime", 0) != baseline_info.get("mtime", 0) or current_info.get(
-                                "size", 0
+                                "size", 0,
                             ) != baseline_info.get("size", 0):
                                 files_modified.append(
                                     {
@@ -1301,7 +1301,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                                         "old_size": baseline_info.get("size", 0),
                                         "new_size": current_info.get("size", 0),
                                         "timestamp": current_info.get("mtime", time.time()),
-                                    }
+                                    },
                                 )
 
                 else:
@@ -1363,8 +1363,8 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
             # Compare process lists between snapshots
             if snap1_processes and snap2_processes:
-                snap1_pids = set(p.get("pid") for p in snap1_processes if p.get("pid"))
-                snap2_pids = set(p.get("pid") for p in snap2_processes if p.get("pid"))
+                snap1_pids = {p.get("pid") for p in snap1_processes if p.get("pid")}
+                snap2_pids = {p.get("pid") for p in snap2_processes if p.get("pid")}
 
                 # Find new processes (started between snapshots)
                 new_pids = snap2_pids - snap1_pids
@@ -1448,14 +1448,14 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                                             "name": process.get("name", "unknown"),
                                             "cmdline": process.get("cmdline", ""),
                                             "timestamp": time.time(),
-                                        }
+                                        },
                                     )
 
                         # Monitor memory changes for existing processes
                         for current_proc in current_processes:
                             for baseline_proc in self._baseline_processes:
                                 if current_proc["pid"] == baseline_proc["pid"] and current_proc.get("memory", 0) != baseline_proc.get(
-                                    "memory", 0
+                                    "memory", 0,
                                 ):
                                     memory_diff = current_proc.get("memory", 0) - baseline_proc.get("memory", 0)
                                     if abs(memory_diff) > 1024 * 1024:  # Only significant changes > 1MB
@@ -1466,7 +1466,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                                                 "memory_before": baseline_proc.get("memory", 0),
                                                 "memory_after": current_proc.get("memory", 0),
                                                 "growth": memory_diff,
-                                            }
+                                            },
                                         )
                     else:
                         # First run - establish baseline
@@ -1541,8 +1541,8 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 snap2_conns = snap2_network.get("connections", [])
 
                 # Simple comparison based on connection strings
-                snap1_conn_strs = set(f"{c.get('local', '')}:{c.get('remote', '')}" for c in snap1_conns)
-                snap2_conn_strs = set(f"{c.get('local', '')}:{c.get('remote', '')}" for c in snap2_conns)
+                snap1_conn_strs = {f"{c.get('local', '')}:{c.get('remote', '')}" for c in snap1_conns}
+                snap2_conn_strs = {f"{c.get('local', '')}:{c.get('remote', '')}" for c in snap2_conns}
 
                 # Find new connections
                 new_conn_strs = snap2_conn_strs - snap1_conn_strs
@@ -1594,7 +1594,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                                             "state": conn.get("state", "UNKNOWN"),
                                             "timestamp": time.time(),
                                             "likely_license": conn.get("dst_port") in [27000, 27001, 1947],
-                                        }
+                                        },
                                     )
                                     traffic_volume += conn.get("bytes_transferred", 0)
 
@@ -1611,7 +1611,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                                             "type": query.get("type", "A"),
                                             "response": query.get("response", ""),
                                             "timestamp": time.time(),
-                                        }
+                                        },
                                     )
                     else:
                         # First run - establish baselines
@@ -2310,7 +2310,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
                 # Look for new processes that might be related to our binary
                 binary_name = os.path.basename(guest_path) if guest_path else "unknown"
-                stdin, stdout, stderr = self.ssh_client.exec_command(f"pgrep -f {binary_name} 2>/dev/null")
+                stdin, stdout, _stderr = self.ssh_client.exec_command(f"pgrep -f {binary_name} 2>/dev/null")
                 if stdout:
                     proc_output = stdout.read().decode("utf-8", errors="ignore")
                     if proc_output.strip():
@@ -2365,7 +2365,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             if hasattr(self, "ssh_client") and self.ssh_client:
                 # Get file listing via SSH
                 stdin, stdout, stderr = self.ssh_client.exec_command(
-                    'find /var /etc /opt -type f -exec stat --format="%n|%s|%Y" {} + 2>/dev/null | head -1000'
+                    'find /var /etc /opt -type f -exec stat --format="%n|%s|%Y" {} + 2>/dev/null | head -1000',
                 )
                 output = stdout.read().decode("utf-8", errors="ignore")
 
@@ -2434,7 +2434,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                                 "name": parts[1],
                                 "cmdline": parts[3] if len(parts) > 3 else "",
                                 "memory": int(parts[2]) * 1024 if len(parts) > 2 and parts[2].isdigit() else 0,  # VSZ in KB
-                            }
+                            },
                         )
 
             return processes
@@ -2490,7 +2490,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                                         "protocol": parts[0].upper(),
                                         "state": state,
                                         "bytes_transferred": 0,
-                                    }
+                                    },
                                 )
 
             return connections
@@ -2604,7 +2604,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                                         "server": line.split()[4] if len(line.split()) > 4 else "unknown",
                                         "timestamp": time.time(),
                                         "source": "network_analysis",
-                                    }
+                                    },
                                 )
 
                 except (
@@ -2725,7 +2725,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                                             "details": line.strip(),
                                             "timestamp": time.time(),
                                             "source": "systemd_resolve",
-                                        }
+                                        },
                                     )
 
                         elif "hosts" in cmd and "hosts_failed" not in output:
@@ -2741,7 +2741,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                                                 "ip": parts[0],
                                                 "timestamp": time.time(),
                                                 "source": "hosts_file",
-                                            }
+                                            },
                                         )
 
                     except (
@@ -2817,7 +2817,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                                                 "connection": parts[8] if len(parts) > 8 else "unknown",
                                                 "timestamp": time.time(),
                                                 "source": "lsof",
-                                            }
+                                            },
                                         )
 
                         elif "ps aux" in cmd and "ps_failed" not in output:
@@ -2834,7 +2834,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                                                 "pid": parts[1],
                                                 "timestamp": time.time(),
                                                 "source": "process_monitor",
-                                            }
+                                            },
                                         )
 
                     except (
@@ -2906,7 +2906,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                                             "details": line.strip(),
                                             "timestamp": time.time(),
                                             "source": "systemd_journal",
-                                        }
+                                        },
                                     )
 
                         elif "dnsmasq" in cmd and "dnsmasq_log_failed" not in output:
@@ -2926,7 +2926,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                                                     "query_type": parts[1].split("]")[0] if "]" in parts[1] else "A",
                                                     "timestamp": time.time(),
                                                     "source": "dnsmasq_log",
-                                                }
+                                                },
                                             )
 
                     except (

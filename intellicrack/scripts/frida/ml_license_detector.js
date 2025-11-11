@@ -1502,8 +1502,8 @@ const MlLicenseDetector = {
                 strategy: this.config.hook_strategy.aggressive
                     ? 'Aggressive'
                     : this.config.hook_strategy.conservative
-                        ? 'Conservative'
-                        : 'Adaptive',
+                      ? 'Conservative'
+                      : 'Adaptive',
             });
 
             send({

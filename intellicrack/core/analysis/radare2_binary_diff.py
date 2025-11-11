@@ -80,7 +80,7 @@ class StringDiff:
 class R2BinaryDiff:
     """Production-ready binary diff engine using radare2."""
 
-    def __init__(self, primary_path: str, secondary_path: Optional[str] = None):
+    def __init__(self, primary_path: str, secondary_path: Optional[str] = None) -> None:
         """Initialize binary diff engine.
 
         Args:
@@ -103,7 +103,7 @@ class R2BinaryDiff:
             self.r2_secondary = None
             self._initialize_r2_sessions()
 
-    def _initialize_r2_sessions(self):
+    def _initialize_r2_sessions(self) -> None:
         """Initialize r2pipe sessions for both binaries."""
         if not self.r2pipe_available:
             return
@@ -122,7 +122,7 @@ class R2BinaryDiff:
             self.r2_primary = None
             self.r2_secondary = None
 
-    def set_secondary_binary(self, secondary_path: str):
+    def set_secondary_binary(self, secondary_path: str) -> None:
         """Set or update the secondary binary for comparison.
 
         Args:
@@ -293,7 +293,7 @@ class R2BinaryDiff:
 
             # Find added blocks
             for addr, bb in secondary_by_addr.items():
-                if addr not in [v for v in matched_blocks.values()]:
+                if addr not in list(matched_blocks.values()):
                     diff = BasicBlockDiff(address=addr, status="added", secondary_size=bb.get("size", 0))
                     diffs.append(diff)
 
@@ -557,8 +557,8 @@ class R2BinaryDiff:
             secondary_calls = json.loads(secondary_calls) if secondary_calls else []
 
             # Extract call targets
-            primary_targets = set(c.get("ref", "") for c in primary_calls if c.get("type", "") == "call")
-            secondary_targets = set(c.get("ref", "") for c in secondary_calls if c.get("type", "") == "call")
+            primary_targets = {c.get("ref", "") for c in primary_calls if c.get("type", "") == "call"}
+            secondary_targets = {c.get("ref", "") for c in secondary_calls if c.get("type", "") == "call"}
 
             # Find differences
             added = secondary_targets - primary_targets
@@ -600,10 +600,7 @@ class R2BinaryDiff:
         # Compare jump targets
         if bb1.get("jump", 0) != bb2.get("jump", 0):
             return True
-        if bb1.get("fail", 0) != bb2.get("fail", 0):
-            return True
-
-        return False
+        return bb1.get("fail", 0) != bb2.get("fail", 0)
 
     def _get_string_xrefs(self, r2_session, address: int) -> List[int]:
         """Get cross-references to a string."""
@@ -636,7 +633,7 @@ class R2BinaryDiff:
             self.logger.warning(f"Failed to get file size: {e}")
         return 0
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up r2 sessions."""
         if self.r2_primary:
             try:

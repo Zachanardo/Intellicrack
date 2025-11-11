@@ -130,7 +130,7 @@ except ImportError as e:
     class PlotWidget:
         """Matplotlib-based PlotWidget for when pyqtgraph is not available."""
 
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs) -> None:
             """Initialize matplotlib-based PlotWidget with full plotting functionality."""
             self.parent = kwargs.get("parent")
             self._enabled = True
@@ -176,7 +176,7 @@ except ImportError as e:
 
             return self
 
-        def clear(self):
+        def clear(self) -> None:
             """Clear all plots."""
             self.ax.clear()
             self._plots = []
@@ -184,7 +184,7 @@ except ImportError as e:
             self._data_y = []
             self._update_display()
 
-        def setLabel(self, axis, text, **kwargs):
+        def setLabel(self, axis, text, **kwargs) -> None:
             """Set axis labels using matplotlib."""
             if not hasattr(self, "_labels"):
                 self._labels = {}
@@ -199,14 +199,14 @@ except ImportError as e:
 
             self._update_display()
 
-        def enableAutoRange(self, *args, **kwargs):
+        def enableAutoRange(self, *args, **kwargs) -> None:
             """Enable auto range for axes."""
             self._auto_range_enabled = True
             if self._auto_range_enabled:
                 self.ax.autoscale(enable=True)
             self._update_display()
 
-        def showGrid(self, x=None, y=None, **kwargs):
+        def showGrid(self, x=None, y=None, **kwargs) -> None:
             """Show grid on the plot."""
             if not hasattr(self, "_grid_settings"):
                 self._grid_settings = {}
@@ -222,7 +222,7 @@ except ImportError as e:
             self.ax.grid(True, which="both", axis="both" if show_x and show_y else ("x" if show_x else "y"))
             self._update_display()
 
-        def setBackground(self, *args, **kwargs):
+        def setBackground(self, *args, **kwargs) -> None:
             """Set background color of the plot."""
             if args:
                 color = args[0]
@@ -244,14 +244,14 @@ except ImportError as e:
             self._update_display()
             return self
 
-        def _update_display(self):
+        def _update_display(self) -> None:
             """Update the plot display."""
             try:
                 self.figure.canvas.draw()
             except Exception as e:
                 logger.debug(f"PlotWidget display update: {e}")
 
-        def export(self, filename, dpi=100):
+        def export(self, filename, dpi=100) -> bool:
             """Export plot to file."""
             self.figure.savefig(filename, dpi=dpi, bbox_inches="tight")
             return True
@@ -339,14 +339,14 @@ class TrainingThread(QThread):
     training_completed = pyqtSignal(dict)
     error_occurred = pyqtSignal(str)
 
-    def __init__(self, config: TrainingConfiguration):
+    def __init__(self, config: TrainingConfiguration) -> None:
         """Initialize training thread with configuration."""
         super().__init__()
         self.config = config
         self.should_stop = False
         self.paused = False
 
-    def run(self):
+    def run(self) -> None:
         """Run the training process."""
         try:
             self.log_message.emit("Starting model training...")
@@ -506,15 +506,15 @@ class TrainingThread(QThread):
             logger.error("Error in enhanced_training_interface: %s", e)
             self.error_occurred.emit(str(e))
 
-    def stop_training(self):
+    def stop_training(self) -> None:
         """Stop the training process."""
         self.should_stop = True
 
-    def pause_training(self):
+    def pause_training(self) -> None:
         """Pause the training process."""
         self.paused = True
 
-    def resume_training(self):
+    def resume_training(self) -> None:
         """Resume the training process."""
         self.paused = False
 
@@ -630,7 +630,7 @@ class TrainingThread(QThread):
         if session_dir.exists():
             for session_file in session_dir.glob("*.json"):
                 try:
-                    with open(session_file, "r") as f:
+                    with open(session_file) as f:
                         session_data = json.load(f)
 
                     # Extract real features from analysis sessions
@@ -650,7 +650,7 @@ class TrainingThread(QThread):
                                         float(info.get("entropy", 0.5)),
                                         float(info.get("is_packed", 0)),
                                         float(info.get("has_signature", 0)),
-                                    ]
+                                    ],
                                 )
 
                             # Protection detection results
@@ -666,7 +666,7 @@ class TrainingThread(QThread):
                                             "file": str(session_file.name),
                                             "timestamp": result.get("timestamp", ""),
                                         },
-                                    }
+                                    },
                                 )
 
                             if len(real_data) >= batch_size:
@@ -723,7 +723,7 @@ class TrainingThread(QThread):
         if cache_dir.exists():
             for cache_file in cache_dir.glob("*.json"):
                 try:
-                    with open(cache_file, "r") as f:
+                    with open(cache_file) as f:
                         cached_features = json.load(f)
 
                     for entry in cached_features.get("samples", []):
@@ -733,7 +733,7 @@ class TrainingThread(QThread):
                                     "features": entry["features"],
                                     "label": entry["label"],
                                     "metadata": {"source": "cache", "file": cache_file.name},
-                                }
+                                },
                             )
 
                             if len(real_data) >= batch_size:
@@ -870,7 +870,7 @@ class TrainingThread(QThread):
             logger.debug(f"Forward pass error: {e}")
             return 0.5
 
-    def _initialize_model_weights(self, input_size):
+    def _initialize_model_weights(self, input_size) -> None:
         """Initialize neural network weights using He initialization."""
         import numpy as np
 
@@ -1054,13 +1054,13 @@ class TrainingThread(QThread):
 class TrainingVisualizationWidget(QWidget):
     """Widget for visualizing training progress and metrics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize training visualization widget with plots and metrics display."""
         super().__init__()
         self.setup_ui()
         self.training_data = {"epochs": [], "loss": [], "accuracy": []}
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the user interface for training visualization."""
         layout = QVBoxLayout()
 
@@ -1081,7 +1081,7 @@ class TrainingVisualizationWidget(QWidget):
 
         self.setLayout(layout)
 
-    def update_plots(self, epoch, loss, accuracy):
+    def update_plots(self, epoch, loss, accuracy) -> None:
         """Update training plots with new data point."""
         self.training_data["epochs"].append(epoch)
         self.training_data["loss"].append(loss)
@@ -1093,13 +1093,13 @@ class TrainingVisualizationWidget(QWidget):
         self.accuracy_plot.clear()
         self.accuracy_plot.plot(self.training_data["epochs"], self.training_data["accuracy"], pen="g", symbol="s")
 
-    def clear_plots(self):
+    def clear_plots(self) -> None:
         """Clear all training visualization plots."""
         self.training_data = {"epochs": [], "loss": [], "accuracy": []}
         self.loss_plot.clear()
         self.accuracy_plot.clear()
 
-    def export_data(self, filename):
+    def export_data(self, filename) -> None:
         """Export training data to CSV file."""
         import csv
 
@@ -1112,20 +1112,20 @@ class TrainingVisualizationWidget(QWidget):
                         self.training_data["epochs"][i],
                         self.training_data["loss"][i],
                         self.training_data["accuracy"][i],
-                    ]
+                    ],
                 )
 
 
 class DatasetAnalysisWidget(QWidget):
     """Widget for analyzing training datasets and data quality."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize dataset analysis widget with data quality metrics and visualization."""
         super().__init__()
         self.setup_ui()
         self.current_dataset = None
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the user interface for dataset analysis."""
         layout = QVBoxLayout()
 
@@ -1209,7 +1209,7 @@ class DatasetAnalysisWidget(QWidget):
 
         self.setLayout(layout)
 
-    def browse_dataset(self):
+    def browse_dataset(self) -> None:
         """Open file dialog to browse for dataset file."""
         filename, _ = QFileDialog.getOpenFileName(
             self,
@@ -1220,7 +1220,7 @@ class DatasetAnalysisWidget(QWidget):
         if filename:
             self.dataset_path_edit.setText(filename)
 
-    def load_dataset(self):
+    def load_dataset(self) -> None:
         """Load and analyze the selected dataset."""
         dataset_path = self.dataset_path_edit.text()
         if not dataset_path or not os.path.exists(dataset_path):
@@ -1275,7 +1275,7 @@ class DatasetAnalysisWidget(QWidget):
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to load dataset: {e!s}")
 
-    def analyze_dataset(self):
+    def analyze_dataset(self) -> None:
         """Analyze the loaded dataset and display statistics."""
         if self.current_dataset is None:
             return
@@ -1287,7 +1287,7 @@ class DatasetAnalysisWidget(QWidget):
                 stats.append(f"Shape: {self.current_dataset.shape}")
                 stats.append(f"Columns: {list(self.current_dataset.columns)}")
                 stats.append(f"Data Types: {self.current_dataset.dtypes.to_dict()}")
-                stats.append(f"Missing Values: {self.current_dataset.isnull().sum().to_dict()}")
+                stats.append(f"Missing Values: {self.current_dataset.isna().sum().to_dict()}")
 
                 # Class distribution if target column exists
                 if "target" in self.current_dataset.columns:
@@ -1335,13 +1335,13 @@ class DatasetAnalysisWidget(QWidget):
 class HyperparameterOptimizationWidget(QWidget):
     """Widget for hyperparameter optimization and tuning."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize hyperparameter optimization widget with parameter controls and optimization algorithms."""
         super().__init__()
         self.setup_ui()
         self.optimization_history = []
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the user interface for hyperparameter optimization."""
         layout = QVBoxLayout()
 
@@ -1406,7 +1406,7 @@ class HyperparameterOptimizationWidget(QWidget):
                 "Grid Search",
                 "Bayesian Optimization",
                 "Genetic Algorithm",
-            ]
+            ],
         )
 
         self.num_trials_spin = QSpinBox()
@@ -1448,7 +1448,7 @@ class HyperparameterOptimizationWidget(QWidget):
                 "Hidden Layers",
                 "Accuracy",
                 "Loss",
-            ]
+            ],
         )
 
         self.best_params_text = QTextEdit()
@@ -1474,7 +1474,7 @@ class HyperparameterOptimizationWidget(QWidget):
 
         self.setLayout(layout)
 
-    def start_optimization(self):
+    def start_optimization(self) -> None:
         """Start hyperparameter optimization process."""
         self.start_optimization_btn.setEnabled(False)
         self.stop_optimization_btn.setEnabled(True)
@@ -1497,12 +1497,12 @@ class HyperparameterOptimizationWidget(QWidget):
         # Start optimization in separate thread (simplified for example)
         self.run_optimization(strategy, param_ranges, num_trials)
 
-    def stop_optimization(self):
+    def stop_optimization(self) -> None:
         """Stop the ongoing optimization process."""
         self.start_optimization_btn.setEnabled(True)
         self.stop_optimization_btn.setEnabled(False)
 
-    def run_optimization(self, strategy, param_ranges, num_trials):
+    def run_optimization(self, strategy, param_ranges, num_trials) -> None:
         """Run the hyperparameter optimization."""
         import random
 
@@ -1731,7 +1731,7 @@ class HyperparameterOptimizationWidget(QWidget):
         except Exception:
             return []
 
-    def add_result_to_table(self, result):
+    def add_result_to_table(self, result) -> None:
         """Add optimization result to the results table."""
         row = self.results_table.rowCount()
         self.results_table.insertRow(row)
@@ -1743,7 +1743,7 @@ class HyperparameterOptimizationWidget(QWidget):
         self.results_table.setItem(row, 4, QTableWidgetItem(f"{result['accuracy']:.4f}"))
         self.results_table.setItem(row, 5, QTableWidgetItem(f"{result['loss']:.4f}"))
 
-    def update_progress_plot(self):
+    def update_progress_plot(self) -> None:
         """Update the optimization progress plot."""
         if not self.optimization_history:
             return
@@ -1760,7 +1760,7 @@ class HyperparameterOptimizationWidget(QWidget):
         self.progress_plot.clear()
         self.progress_plot.plot(trials, best_accuracies, pen="b", symbol="o")
 
-    def update_best_params(self, best_params, best_accuracy):
+    def update_best_params(self, best_params, best_accuracy) -> None:
         """Update the best parameters display."""
         text = f"Best Accuracy: {best_accuracy:.4f}\n"
         text += f"Learning Rate: {best_params['learning_rate']:.6f}\n"
@@ -1781,7 +1781,7 @@ class HyperparameterOptimizationWidget(QWidget):
 class EnhancedTrainingInterface(QDialog):
     """Enhanced AI model training interface."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the enhanced training interface dialog.
 
         Args:
@@ -1816,7 +1816,7 @@ class EnhancedTrainingInterface(QDialog):
         self.init_ui()
         self.connect_signals()
 
-    def init_ui(self):
+    def init_ui(self) -> None:
         """Initialize the user interface."""
         layout = QVBoxLayout()
 
@@ -1900,7 +1900,7 @@ class EnhancedTrainingInterface(QDialog):
 
         self.setLayout(layout)
 
-    def apply_styling(self):
+    def apply_styling(self) -> None:
         """Apply consistent styling to the interface."""
         # Set application font
         app_font = QFont("Arial", 10)
@@ -1912,7 +1912,7 @@ class EnhancedTrainingInterface(QDialog):
         palette.setColor(QPalette.WindowText, Qt.GlobalColor.black)
         self.setPalette(palette)
 
-    def _apply_button_icons(self):
+    def _apply_button_icons(self) -> None:
         """Apply icons to buttons using SVG icons."""
         from PyQt6.QtCore import QByteArray
         from PyQt6.QtSvg import QSvgRenderer
@@ -2008,7 +2008,7 @@ class EnhancedTrainingInterface(QDialog):
                 "bypass_classifier",
                 "license_detector",
                 "packer_identifier",
-            ]
+            ],
         )
 
         model_layout.addRow("Model Name:", self.model_name_edit)
@@ -2099,7 +2099,7 @@ class EnhancedTrainingInterface(QDialog):
         scroll_area.setWidget(tab)
         return scroll_area
 
-    def connect_signals(self):
+    def connect_signals(self) -> None:
         """Connect UI signals."""
         self.start_btn.clicked.connect(self.start_training)
         self.pause_btn.clicked.connect(self.pause_training)
@@ -2107,7 +2107,7 @@ class EnhancedTrainingInterface(QDialog):
         self.save_config_btn.clicked.connect(self.save_configuration)
         self.load_config_btn.clicked.connect(self.load_configuration)
 
-    def start_training(self):
+    def start_training(self) -> None:
         """Start the training process."""
         # Update configuration from UI
         self.update_config_from_ui()
@@ -2135,7 +2135,7 @@ class EnhancedTrainingInterface(QDialog):
         # Clear previous visualization
         self.viz_tab.clear_history()
 
-    def pause_training(self):
+    def pause_training(self) -> None:
         """Pause the training process."""
         if self.training_thread:
             self.training_thread.pause_training()
@@ -2144,7 +2144,7 @@ class EnhancedTrainingInterface(QDialog):
             self.pause_btn.clicked.connect(self.resume_training)
             self.status_label.setText("Training paused")
 
-    def resume_training(self):
+    def resume_training(self) -> None:
         """Resume the training process."""
         if self.training_thread:
             self.training_thread.resume_training()
@@ -2153,7 +2153,7 @@ class EnhancedTrainingInterface(QDialog):
             self.pause_btn.clicked.connect(self.pause_training)
             self.status_label.setText("Training resumed")
 
-    def stop_training(self):
+    def stop_training(self) -> None:
         """Stop the training process."""
         if self.training_thread:
             self.training_thread.stop_training()
@@ -2162,7 +2162,7 @@ class EnhancedTrainingInterface(QDialog):
         self.reset_ui_state()
         self.status_label.setText("Training stopped")
 
-    def training_completed(self, results: dict[str, Any]):
+    def training_completed(self, results: dict[str, Any]) -> None:
         """Handle training completion."""
         self.reset_ui_state()
         accuracy = results.get("final_accuracy", 0)
@@ -2174,13 +2174,13 @@ class EnhancedTrainingInterface(QDialog):
             f"Model training completed successfully!\n\nFinal accuracy: {accuracy:.4f}",
         )
 
-    def training_error(self, error_message: str):
+    def training_error(self, error_message: str) -> None:
         """Handle training errors."""
         self.reset_ui_state()
         self.status_label.setText(f"Training error: {error_message}")
         QMessageBox.critical(self, "Training Error", f"An error occurred during training:\n\n{error_message}")
 
-    def reset_ui_state(self):
+    def reset_ui_state(self) -> None:
         """Reset UI to initial state."""
         self.start_btn.setEnabled(True)
         self.pause_btn.setEnabled(False)
@@ -2194,7 +2194,7 @@ class EnhancedTrainingInterface(QDialog):
             logger.error("Error in enhanced_training_interface: %s", e)
         self.pause_btn.clicked.connect(self.pause_training)
 
-    def update_config_from_ui(self):
+    def update_config_from_ui(self) -> None:
         """Update configuration from UI values."""
         self.config.model_name = self.model_name_edit.text()
         self.config.model_type = self.model_type_combo.currentText()
@@ -2219,11 +2219,11 @@ class EnhancedTrainingInterface(QDialog):
 
         return True
 
-    def update_status(self, message: str):
+    def update_status(self, message: str) -> None:
         """Update status label."""
         self.status_label.setText(message)
 
-    def save_configuration(self):
+    def save_configuration(self) -> None:
         """Save current configuration to file."""
         file_path, _ = QFileDialog.getSaveFileName(
             self,
@@ -2242,7 +2242,7 @@ class EnhancedTrainingInterface(QDialog):
                 logger.error("Error in enhanced_training_interface: %s", e)
                 QMessageBox.critical(self, "Save Error", f"Error saving configuration: {e}")
 
-    def load_configuration(self):
+    def load_configuration(self) -> None:
         """Load configuration from file."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
@@ -2269,7 +2269,7 @@ class EnhancedTrainingInterface(QDialog):
                 logger.error("Error in enhanced_training_interface: %s", e)
                 QMessageBox.critical(self, "Load Error", f"Error loading configuration: {e}")
 
-    def update_ui_from_config(self):
+    def update_ui_from_config(self) -> None:
         """Update UI from configuration values."""
         self.model_name_edit.setText(self.config.model_name)
         index = self.model_type_combo.findText(self.config.model_type)
@@ -2285,7 +2285,7 @@ class EnhancedTrainingInterface(QDialog):
         self.transfer_learning_cb.setChecked(self.config.use_transfer_learning)
         self.gpu_cb.setChecked(self.config.use_gpu)
 
-    def _update_status_display(self):
+    def _update_status_display(self) -> None:
         """Update the status display during training."""
         if hasattr(self, "training_thread") and self.training_thread and self.training_thread.isRunning():
             current_time = datetime.now().strftime("%H:%M:%S")

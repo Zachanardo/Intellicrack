@@ -62,7 +62,7 @@ class ProtectionType(Enum):
     CLOUD = "Cloud Verification"  # Online license/integrity checks
     TIME = "Time-based Protection"  # Trial periods, expiration
     MEMORY = "Memory Protection"  # Memory access restrictions
-    MEMORY_PROTECTION = "Memory Protection"  # Duplicate for compatibility
+    MEMORY_PROTECTION = "Memory Protection Flags"  # Distinct label for memory flag checks
     KERNEL = "Kernel-mode Protection"  # Driver-based protections
     BEHAVIOR = "Behavioral Analysis"  # Runtime behavior monitoring
     ROOT_DETECTION = "Root Detection"  # Mobile root/jailbreak detection

@@ -64,7 +64,7 @@ MANTICORE_AVAILABLE = False
 class ConcolicExecutionEngine:
     """Unified concolic execution engine supporting multiple backends."""
 
-    def __init__(self, binary_path: str, max_iterations: int = 100, timeout: int = 300):
+    def __init__(self, binary_path: str, max_iterations: int = 100, timeout: int = 300) -> None:
         """Initialize the concolic execution engine.
 
         Sets up the unified concolic execution engine with support for multiple
@@ -152,7 +152,7 @@ class ConcolicExecutionEngine:
                         {
                             "stdin": stdin_data.hex() if stdin_data else None,
                             "constraints": len(found_state.solver.constraints),
-                        }
+                        },
                     )
 
             return results
@@ -234,7 +234,7 @@ class ConcolicExecutionEngine:
                                     "pattern": pattern.decode("utf-8", errors="ignore"),
                                     "string_addr": addr,
                                     "ref_addr": xref.addr,
-                                }
+                                },
                             )
                             license_addrs.append(xref.addr)
                 except Exception as e:

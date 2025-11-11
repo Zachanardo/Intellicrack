@@ -49,13 +49,13 @@ class DashboardTab(BaseTab):
     binary_selected = pyqtSignal(str)
     analysis_saved = pyqtSignal(str)
 
-    def __init__(self, shared_context=None, parent=None):
+    def __init__(self, shared_context=None, parent=None) -> None:
         """Initialize project workspace tab with file management and workspace overview."""
         super().__init__(shared_context, parent)
         self.current_binary_path = None
         self.recent_files = []
 
-    def setup_content(self):
+    def setup_content(self) -> None:
         """Set up the complete Project Workspace tab content."""
         main_layout = QVBoxLayout(self)
 
@@ -217,12 +217,12 @@ class DashboardTab(BaseTab):
 
         return panel
 
-    def create_new_project(self):
+    def create_new_project(self) -> None:
         """Create a new project."""
         self.log_activity("Creating new project...")
         # Implementation would go here
 
-    def open_project(self):
+    def open_project(self) -> None:
         """Open an existing project."""
         file_dialog = QFileDialog()
         project_file, _ = file_dialog.getOpenFileName(
@@ -235,7 +235,7 @@ class DashboardTab(BaseTab):
             self.log_activity(f"Opening project: {project_file}")
             # Implementation would go here
 
-    def save_project(self):
+    def save_project(self) -> None:
         """Save the current project."""
         if not self.current_binary_path:
             QMessageBox.information(self, "Save Project", "No binary loaded to save.")
@@ -252,7 +252,7 @@ class DashboardTab(BaseTab):
             self.log_activity(f"Saving project: {project_file}")
             # Implementation would go here
 
-    def select_binary(self):
+    def select_binary(self) -> None:
         """Select a binary file for analysis."""
         file_dialog = QFileDialog()
         binary_file, _ = file_dialog.getOpenFileName(
@@ -264,7 +264,7 @@ class DashboardTab(BaseTab):
         if binary_file:
             self.load_binary(binary_file)
 
-    def load_binary(self, file_path):
+    def load_binary(self, file_path) -> None:
         """Load a binary file and update the UI."""
         self.current_binary_path = file_path
         self.add_to_recent_files(file_path)
@@ -283,7 +283,7 @@ class DashboardTab(BaseTab):
 
         self.log_activity(f"Loaded binary: {file_name}")
 
-    def close_binary(self):
+    def close_binary(self) -> None:
         """Close the current binary."""
         if self.current_binary_path:
             file_name = os.path.basename(self.current_binary_path)
@@ -297,7 +297,7 @@ class DashboardTab(BaseTab):
 
             self.log_activity(f"Closed binary: {file_name}")
 
-    def add_to_recent_files(self, file_path):
+    def add_to_recent_files(self, file_path) -> None:
         """Add file to recent files list."""
         if file_path in self.recent_files:
             self.recent_files.remove(file_path)
@@ -305,7 +305,7 @@ class DashboardTab(BaseTab):
         self.recent_files = self.recent_files[:10]  # Keep only last 10
         self.update_recent_files_menu()
 
-    def update_recent_files_menu(self):
+    def update_recent_files_menu(self) -> None:
         """Update the recent files menu."""
         self.recent_files_menu.clear()
         for file_path in self.recent_files:
@@ -315,7 +315,7 @@ class DashboardTab(BaseTab):
             action = self.recent_files_menu.addAction(file_name)
             action.triggered.connect(lambda checked, path=file_path: self.load_binary(path))
 
-    def save_analysis_results(self):
+    def save_analysis_results(self) -> None:
         """Save analysis results."""
         if not self.current_binary_path:
             QMessageBox.information(self, "Save Results", "No binary loaded to save results for.")
@@ -332,12 +332,12 @@ class DashboardTab(BaseTab):
             self.log_activity(f"Saving analysis results: {results_file}")
             self.analysis_saved.emit(results_file)
 
-    def export_results(self):
+    def export_results(self) -> None:
         """Export results in various formats."""
         self.log_activity("Exporting results...")
         # Implementation would go here
 
-    def clear_analysis(self):
+    def clear_analysis(self) -> None:
         """Clear current analysis results."""
         reply = QMessageBox.question(
             self,
@@ -349,11 +349,11 @@ class DashboardTab(BaseTab):
             self.log_activity("Cleared analysis results")
             # Implementation would go here
 
-    def clear_activity_log(self):
+    def clear_activity_log(self) -> None:
         """Clear the activity log."""
         self.activity_log.clear()
 
-    def log_activity(self, message):
+    def log_activity(self, message) -> None:
         """Log activity to the activity log."""
         from datetime import datetime
 
@@ -363,14 +363,14 @@ class DashboardTab(BaseTab):
         # Also call parent log method
         super().log_activity(message)
 
-    def format_file_size(self, size_bytes):
+    def format_file_size(self, size_bytes) -> str:
         """Format file size in human readable format."""
         if size_bytes == 0:
             return "0 B"
         size_names = ["B", "KB", "MB", "GB"]
         import math
 
-        i = int(math.floor(math.log(size_bytes, 1024)))
+        i = math.floor(math.log(size_bytes, 1024))
         p = math.pow(1024, i)
         s = round(size_bytes / p, 2)
         return f"{s} {size_names[i]}"

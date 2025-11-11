@@ -162,7 +162,7 @@ class R2PerformanceOptimizer:
         ),
     }
 
-    def __init__(self, strategy: OptimizationStrategy = OptimizationStrategy.BALANCED):
+    def __init__(self, strategy: OptimizationStrategy = OptimizationStrategy.BALANCED) -> None:
         """Initialize the Radare2 performance optimizer.
 
         Args:
@@ -507,7 +507,7 @@ class R2PerformanceOptimizer:
             "binary_info": {},
         }
 
-    def start_monitoring(self, interval: float = 1.0):
+    def start_monitoring(self, interval: float = 1.0) -> None:
         """Start resource monitoring."""
         if not self._monitoring:
             self._monitoring = True
@@ -519,7 +519,7 @@ class R2PerformanceOptimizer:
             self._monitor_thread.start()
             self.logger.info("Resource monitoring started")
 
-    def stop_monitoring(self):
+    def stop_monitoring(self) -> None:
         """Stop resource monitoring."""
         self._monitoring = False
         if self._monitor_thread:
@@ -527,7 +527,7 @@ class R2PerformanceOptimizer:
             self._monitor_thread = None
             self.logger.info("Resource monitoring stopped")
 
-    def _monitor_resources(self, interval: float):
+    def _monitor_resources(self, interval: float) -> None:
         """Monitor system resources during analysis."""
         while self._monitoring:
             try:
@@ -566,7 +566,7 @@ class R2PerformanceOptimizer:
                 self.logger.error(f"Resource monitoring error: {e}")
                 time.sleep(interval * 2)
 
-    def _trigger_emergency_optimization(self, reason: str):
+    def _trigger_emergency_optimization(self, reason: str) -> None:
         """Trigger emergency optimization due to resource pressure."""
         self.logger.warning(f"Emergency optimization triggered: {reason}")
 
@@ -584,7 +584,7 @@ class R2PerformanceOptimizer:
             # Throttle operations
             time.sleep(1)
 
-    def optimize_r2_session(self, r2_session, config: dict[str, Any]):
+    def optimize_r2_session(self, r2_session, config: dict[str, Any]) -> None:
         """Apply optimizations to active r2 session."""
         try:
             # Apply configuration flags
@@ -601,7 +601,7 @@ class R2PerformanceOptimizer:
         except Exception as e:
             self.logger.error(f"Failed to optimize r2 session: {e}")
 
-    def _track_profile_usage(self, profile_name: str, file_size: int):
+    def _track_profile_usage(self, profile_name: str, file_size: int) -> None:
         """Track profile usage for optimization insights."""
         if not hasattr(self, "profile_usage_stats"):
             self.profile_usage_stats = {}
@@ -713,7 +713,7 @@ class R2PerformanceOptimizer:
 
         return results
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Cleanup optimizer resources."""
         try:
             self.stop_monitoring()

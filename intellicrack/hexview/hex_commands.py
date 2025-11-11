@@ -53,7 +53,7 @@ class OperationType(Enum):
 class HexCommand(ABC):
     """Abstract base class for hex editor commands."""
 
-    def __init__(self, description: str, operation_type: OperationType):
+    def __init__(self, description: str, operation_type: OperationType) -> None:
         """Initialize the HexCommand with description and operation type."""
         self.description = description
         self.operation_type = operation_type
@@ -127,7 +127,7 @@ class HexCommand(ABC):
 class ReplaceCommand(HexCommand):
     """Command for replacing bytes at a specific offset."""
 
-    def __init__(self, offset: int, new_data: bytes, old_data: bytes = None):
+    def __init__(self, offset: int, new_data: bytes, old_data: bytes = None) -> None:
         """Initialize the ReplaceCommand with offset and data."""
         super().__init__(f"Replace {len(new_data)} bytes at 0x{offset:X}", OperationType.REPLACE)
         self.offset = offset
@@ -194,7 +194,7 @@ class ReplaceCommand(HexCommand):
 class InsertCommand(HexCommand):
     """Command for inserting bytes at a specific offset."""
 
-    def __init__(self, offset: int, data: bytes):
+    def __init__(self, offset: int, data: bytes) -> None:
         """Initialize the InsertCommand with offset and data."""
         super().__init__(f"Insert {len(data)} bytes at 0x{offset:X}", OperationType.INSERT)
         self.offset = offset
@@ -278,7 +278,7 @@ class InsertCommand(HexCommand):
 class DeleteCommand(HexCommand):
     """Command for deleting bytes at a specific offset."""
 
-    def __init__(self, offset: int, length: int, deleted_data: bytes = None):
+    def __init__(self, offset: int, length: int, deleted_data: bytes = None) -> None:
         """Initialize the DeleteCommand with offset, length, and deleted data."""
         super().__init__(f"Delete {length} bytes at 0x{offset:X}", OperationType.DELETE)
         self.offset = offset
@@ -347,10 +347,7 @@ class DeleteCommand(HexCommand):
             return True
 
         # Check for overlap
-        if self.offset <= other.offset < self.offset + self.length or other.offset <= self.offset < other.offset + other.length:
-            return True
-
-        return False
+        return bool(self.offset <= other.offset < self.offset + self.length or other.offset <= self.offset < other.offset + other.length)
 
     def merge_with(self, other: "HexCommand") -> "HexCommand":
         """Merge with another delete command.
@@ -415,7 +412,7 @@ class DeleteCommand(HexCommand):
 class FillCommand(HexCommand):
     """Command for filling a range with a specific value."""
 
-    def __init__(self, offset: int, length: int, fill_value: int, old_data: bytes = None):
+    def __init__(self, offset: int, length: int, fill_value: int, old_data: bytes = None) -> None:
         """Initialize the FillCommand with offset, length, fill value, and old data."""
         super().__init__(f"Fill {length} bytes at 0x{offset:X} with 0x{fill_value:02X}", OperationType.FILL)
         self.offset = offset
@@ -470,7 +467,7 @@ class FillCommand(HexCommand):
 class PasteCommand(HexCommand):
     """Command for pasting data at a specific offset."""
 
-    def __init__(self, offset: int, data: bytes, insert_mode: bool = False, old_data: bytes = None):
+    def __init__(self, offset: int, data: bytes, insert_mode: bool = False, old_data: bytes = None) -> None:
         """Initialize the PasteCommand with offset, data, insert mode, and old data."""
         mode_str = "insert" if insert_mode else "overwrite"
         super().__init__(f"Paste {len(data)} bytes at 0x{offset:X} ({mode_str})", OperationType.PASTE)
@@ -532,7 +529,7 @@ class PasteCommand(HexCommand):
 class CommandManager:
     """Manages command execution and undo/redo functionality."""
 
-    def __init__(self, max_history: int = sys.maxsize):
+    def __init__(self, max_history: int = sys.maxsize) -> None:
         """Initialize the CommandManager with maximum history size.
 
         Args:
@@ -546,7 +543,7 @@ class CommandManager:
         self.file_handler = None
         self.auto_merge = True
 
-    def set_file_handler(self, file_handler):
+    def set_file_handler(self, file_handler) -> None:
         """Set the file handler for command execution."""
         self.file_handler = file_handler
 
@@ -652,7 +649,7 @@ class CommandManager:
         """Check if redo is possible."""
         return self.current_index < len(self.command_history) - 1
 
-    def clear_history(self):
+    def clear_history(self) -> None:
         """Clear the command history."""
         self.command_history.clear()
         self.current_index = -1
@@ -687,11 +684,11 @@ class CommandManager:
                     "executed": command.executed,
                     "is_current": i == self.current_index,
                     "affected_range": command.get_affected_range(),
-                }
+                },
             )
         return summary
 
-    def set_auto_merge(self, enabled: bool):
+    def set_auto_merge(self, enabled: bool) -> None:
         """Enable or disable automatic command merging."""
         self.auto_merge = enabled
         logger.debug(f"Auto-merge {'enabled' if enabled else 'disabled'}")

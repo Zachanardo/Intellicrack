@@ -92,7 +92,7 @@ class SessionInfo:
 class TerminalDashboard:
     """ASCII-based terminal dashboard for Intellicrack status overview."""
 
-    def __init__(self, update_interval: float = 1.0):
+    def __init__(self, update_interval: float = 1.0) -> None:
         """Initialize terminal dashboard.
 
         Args:
@@ -131,7 +131,7 @@ class TerminalDashboard:
         # Callbacks for external updates
         self.callbacks = {}
 
-    def register_callback(self, event: str, callback: Callable):
+    def register_callback(self, event: str, callback: Callable) -> None:
         """Register callback for dashboard events.
 
         Args:
@@ -143,7 +143,7 @@ class TerminalDashboard:
             self.callbacks[event] = []
         self.callbacks[event].append(callback)
 
-    def log_activity(self, message: str, level: str = "info"):
+    def log_activity(self, message: str, level: str = "info") -> None:
         """Log activity to dashboard.
 
         Args:
@@ -164,7 +164,7 @@ class TerminalDashboard:
         if len(self.activity_log) > self.max_activity_entries:
             self.activity_log.pop(0)
 
-    def update_analysis_stats(self, **kwargs):
+    def update_analysis_stats(self, **kwargs) -> None:
         """Update analysis statistics.
 
         Args:
@@ -175,7 +175,7 @@ class TerminalDashboard:
             if hasattr(self.analysis_stats, key):
                 setattr(self.analysis_stats, key, value)
 
-    def update_session_info(self, **kwargs):
+    def update_session_info(self, **kwargs) -> None:
         """Update session information.
 
         Args:
@@ -186,7 +186,7 @@ class TerminalDashboard:
             if hasattr(self.session_info, key):
                 setattr(self.session_info, key, value)
 
-    def increment_counter(self, counter: str):
+    def increment_counter(self, counter: str) -> None:
         """Increment a counter in session info.
 
         Args:
@@ -197,7 +197,7 @@ class TerminalDashboard:
             current = getattr(self.session_info, counter, 0)
             setattr(self.session_info, counter, current + 1)
 
-    def _update_system_metrics(self):
+    def _update_system_metrics(self) -> None:
         """Update system performance metrics."""
         try:
             # CPU and memory
@@ -483,7 +483,7 @@ Memory: {"🟢" if self.system_metrics.memory_percent < 80 else "🟡" if self.s
         hours = seconds / 3600
         return f"{hours:.1f}h"
 
-    def show_dashboard(self, duration: float | None = None):
+    def show_dashboard(self, duration: float | None = None) -> None:
         """Show dashboard for specified duration.
 
         Args:
@@ -561,7 +561,7 @@ Memory: {"🟢" if self.system_metrics.memory_percent < 80 else "🟡" if self.s
 
         return layout
 
-    def _show_basic_dashboard(self, duration: float | None = None):
+    def _show_basic_dashboard(self, duration: float | None = None) -> None:
         """Show basic text dashboard without Rich."""
         start_time = time.time()
 
@@ -569,7 +569,7 @@ Memory: {"🟢" if self.system_metrics.memory_percent < 80 else "🟡" if self.s
             while True:
                 import subprocess
 
-                subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     ["cls"] if os.name == "nt" else ["clear"],
                     shell=False,  # Explicitly secure - using list format prevents shell injection
                 )

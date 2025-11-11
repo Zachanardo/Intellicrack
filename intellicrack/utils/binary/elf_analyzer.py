@@ -49,7 +49,7 @@ class ELFAnalyzer:
     EM_ARM = 40
     EM_AARCH64 = 183
 
-    def __init__(self, file_path: Union[str, Path]):
+    def __init__(self, file_path: Union[str, Path]) -> None:
         """Initialize ELF analyzer with binary file.
 
         Args:

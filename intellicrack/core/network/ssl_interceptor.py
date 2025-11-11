@@ -51,7 +51,7 @@ class SSLTLSInterceptor:
     secure license verification mechanisms.
     """
 
-    def __init__(self, config: dict[str, Any] | None = None):
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
         """Initialize the SSL/TLS interceptor.
 
         Args:
@@ -239,7 +239,7 @@ def response(flow: http.HTTPFlow) -> None:
                     "ssl_insecure=true",
                 ]
 
-                self.proxy_process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                self.proxy_process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     cmd,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
@@ -327,7 +327,7 @@ def response(flow: http.HTTPFlow) -> None:
         """
         return self.traffic_log.copy()
 
-    def add_target_host(self, host: str):
+    def add_target_host(self, host: str) -> None:
         """Add a target host for interception.
 
         Args:
@@ -338,7 +338,7 @@ def response(flow: http.HTTPFlow) -> None:
             self.config["target_hosts"].append(host)
             self.logger.info("Added target host: %s", host)
 
-    def remove_target_host(self, host: str):
+    def remove_target_host(self, host: str) -> None:
         """Remove a target host from interception.
 
         Args:

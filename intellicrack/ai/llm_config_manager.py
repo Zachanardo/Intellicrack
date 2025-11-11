@@ -54,7 +54,7 @@ class LLMConfigManager:
     - Thread-safe operations through central config
     """
 
-    def __init__(self, config_dir: str | None = None):
+    def __init__(self, config_dir: str | None = None) -> None:
         """Initialize the LLM configuration manager.
 
         Args:
@@ -78,7 +78,7 @@ class LLMConfigManager:
 
         self._load_all_configs()
 
-    def _load_all_configs(self):
+    def _load_all_configs(self) -> None:
         """Load all configuration files."""
         from intellicrack.core.config_manager import get_config
 
@@ -197,7 +197,7 @@ class LLMConfigManager:
         }
 
     @deprecated_config_method("IntellicrackConfig.set('llm_configuration.models.{model_id}', config)")
-    def save_model_config(self, model_id: str, config: LLMConfig, metadata: dict | None = None):
+    def save_model_config(self, model_id: str, config: LLMConfig, metadata: dict | None = None) -> None:
         """Save a model configuration.
 
         Args:
@@ -363,7 +363,7 @@ class LLMConfigManager:
         return loaded, failed
 
     @deprecated_config_method("IntellicrackConfig.set('llm_configuration.profiles.{profile_id}', data)")
-    def save_profile(self, profile_id: str, profile_data: dict[str, Any]):
+    def save_profile(self, profile_id: str, profile_data: dict[str, Any]) -> None:
         """Save a model profile.
 
         Args:
@@ -461,7 +461,7 @@ class LLMConfigManager:
 
         return config
 
-    def save_metrics(self, model_id: str, metrics: dict[str, Any]):
+    def save_metrics(self, model_id: str, metrics: dict[str, Any]) -> None:
         """Save performance metrics for a model.
 
         Args:
@@ -495,7 +495,7 @@ class LLMConfigManager:
         central_config.set(f"llm_configuration.metrics.{model_id}", self.metrics[model_id])
         central_config.save()  # Persist immediately to central config
 
-    def _update_aggregate_metrics(self, model_id: str):
+    def _update_aggregate_metrics(self, model_id: str) -> None:
         """Update aggregate metrics for a model."""
         history = self.metrics[model_id]["history"]
         if not history:
@@ -541,7 +541,7 @@ class LLMConfigManager:
 
         return metrics_data
 
-    def export_config(self, export_path: str, include_api_keys: bool = False):
+    def export_config(self, export_path: str, include_api_keys: bool = False) -> None:
         """Export all configurations to a file.
 
         Args:
@@ -571,7 +571,7 @@ class LLMConfigManager:
         except Exception as e:
             logger.error(f"Failed to export configuration: {e}")
 
-    def import_config(self, import_path: str, merge: bool = True):
+    def import_config(self, import_path: str, merge: bool = True) -> None:
         """Import configurations from a file.
 
         Args:

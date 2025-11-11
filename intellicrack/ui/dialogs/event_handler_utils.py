@@ -62,7 +62,7 @@ class DialogEventHandler:
 
         """
 
-        def close_event_handler(event: QCloseEvent):
+        def close_event_handler(event: QCloseEvent) -> None:
             if condition_check():
                 reply = QMessageBox.question(
                     dialog,
@@ -82,7 +82,7 @@ class DialogEventHandler:
         return close_event_handler
 
     @staticmethod
-    def connect_thread_signals(thread: QThread, signal_connections: dict[str, Callable]):
+    def connect_thread_signals(thread: QThread, signal_connections: dict[str, Callable]) -> None:
         """Connect multiple thread signals to their handlers.
 
         Args:
@@ -115,7 +115,7 @@ class DialogEventHandler:
 
         """
 
-        def context_menu_handler(position):
+        def context_menu_handler(position) -> None:
             if condition_check and not condition_check():
                 return
 
@@ -146,7 +146,7 @@ class DialogEventHandler:
         return timer
 
     @staticmethod
-    def cleanup_thread(thread: QThread, timeout_seconds: int = 2):
+    def cleanup_thread(thread: QThread, timeout_seconds: int = 2) -> None:
         """Safely cleanup a thread.
 
         Args:
@@ -164,11 +164,11 @@ class DialogEventHandler:
 class UIStateManager:
     """Manages UI state transitions for dialogs."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the UIStateManager with default values."""
         self.state_mappings = {}
 
-    def register_state_mapping(self, state_name: str, widget_states: dict[QWidget, bool]):
+    def register_state_mapping(self, state_name: str, widget_states: dict[QWidget, bool]) -> None:
         """Register a state mapping for widgets.
 
         Args:
@@ -178,7 +178,7 @@ class UIStateManager:
         """
         self.state_mappings[state_name] = widget_states
 
-    def apply_state(self, state_name: str):
+    def apply_state(self, state_name: str) -> None:
         """Apply a registered state to all widgets.
 
         Args:

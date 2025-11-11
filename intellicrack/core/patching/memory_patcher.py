@@ -56,7 +56,7 @@ def _create_dword_type(ctypes):
     class DWORD(ctypes.c_uint32):
         """Real Windows DWORD type implementation."""
 
-        def __init__(self, value=0):
+        def __init__(self, value=0) -> None:
             """Initialize DWORD with proper value handling."""
             super().__init__(value)
 
@@ -66,7 +66,7 @@ def _create_dword_type(ctypes):
             return super().value
 
         @value.setter
-        def value(self, val):
+        def value(self, val) -> None:
             """Set the DWORD value with bounds checking."""
             if val < 0:
                 val = 0
@@ -74,10 +74,10 @@ def _create_dword_type(ctypes):
                 val = 0xFFFFFFFF
             super().__setattr__("value", val)
 
-        def __str__(self):
+        def __str__(self) -> str:
             return f"DWORD(0x{self.value:08X})"
 
-        def __repr__(self):
+        def __repr__(self) -> str:
             return f"DWORD({self.value})"
 
     return DWORD
@@ -89,7 +89,7 @@ def _create_bool_type(ctypes):
     class BOOL(ctypes.c_int32):
         """Real Windows BOOL type implementation."""
 
-        def __init__(self, value=0):
+        def __init__(self, value=0) -> None:
             """Initialize BOOL with proper value handling."""
             super().__init__(1 if value else 0)
 
@@ -99,17 +99,17 @@ def _create_bool_type(ctypes):
             return bool(super().value)
 
         @value.setter
-        def value(self, val):
+        def value(self, val) -> None:
             """Set the BOOL value."""
             super().__setattr__("value", 1 if val else 0)
 
-        def __bool__(self):
+        def __bool__(self) -> bool:
             return bool(super().value)
 
-        def __str__(self):
+        def __str__(self) -> str:
             return f"BOOL({'TRUE' if self.value else 'FALSE'})"
 
-        def __repr__(self):
+        def __repr__(self) -> str:
             return f"BOOL({self.value})"
 
     return BOOL
@@ -121,14 +121,14 @@ def _create_word_type(ctypes):
     class WORD(ctypes.c_uint16):
         """Real Windows WORD type implementation."""
 
-        def __init__(self, value=0):
+        def __init__(self, value=0) -> None:
             """Initialize WORD with proper value handling."""
             super().__init__(value & 0xFFFF)
 
-        def __str__(self):
+        def __str__(self) -> str:
             return f"WORD(0x{self.value:04X})"
 
-        def __repr__(self):
+        def __repr__(self) -> str:
             return f"WORD({self.value})"
 
     return WORD
@@ -140,14 +140,14 @@ def _create_byte_type(ctypes):
     class BYTE(ctypes.c_uint8):
         """Real Windows BYTE type implementation."""
 
-        def __init__(self, value=0):
+        def __init__(self, value=0) -> None:
             """Initialize BYTE with proper value handling."""
             super().__init__(value & 0xFF)
 
-        def __str__(self):
+        def __str__(self) -> str:
             return f"BYTE(0x{self.value:02X})"
 
-        def __repr__(self):
+        def __repr__(self) -> str:
             return f"BYTE({self.value})"
 
     return BYTE
@@ -159,48 +159,48 @@ def _create_handle_types(ctypes):
     class HANDLE(ctypes.c_void_p):
         """Real Windows HANDLE type implementation."""
 
-        def __init__(self, value=None):
+        def __init__(self, value=None) -> None:
             """Initialize HANDLE with proper value handling."""
             super().__init__(value)
 
         def is_valid(self):
             """Check if handle is valid (not NULL or INVALID_HANDLE_VALUE)."""
-            return self.value is not None and self.value != 0 and self.value != -1
+            return self.value is not None and self.value not in (0, -1)
 
-        def __bool__(self):
+        def __bool__(self) -> bool:
             return self.is_valid()
 
-        def __str__(self):
+        def __str__(self) -> str:
             return f"HANDLE(0x{self.value:08X})" if self.value else "HANDLE(NULL)"
 
-        def __repr__(self):
+        def __repr__(self) -> str:
             return f"HANDLE({self.value})"
 
     class HWND(HANDLE):
         """Real Windows HWND type implementation."""
 
-        def __str__(self):
+        def __str__(self) -> str:
             return f"HWND(0x{self.value:08X})" if self.value else "HWND(NULL)"
 
-        def __repr__(self):
+        def __repr__(self) -> str:
             return f"HWND({self.value})"
 
     class HDC(HANDLE):
         """Real Windows HDC type implementation."""
 
-        def __str__(self):
+        def __str__(self) -> str:
             return f"HDC(0x{self.value:08X})" if self.value else "HDC(NULL)"
 
-        def __repr__(self):
+        def __repr__(self) -> str:
             return f"HDC({self.value})"
 
     class HINSTANCE(HANDLE):
         """Real Windows HINSTANCE type implementation."""
 
-        def __str__(self):
+        def __str__(self) -> str:
             return f"HINSTANCE(0x{self.value:08X})" if self.value else "HINSTANCE(NULL)"
 
-        def __repr__(self):
+        def __repr__(self) -> str:
             return f"HINSTANCE({self.value})"
 
     return HANDLE, HWND, HDC, HINSTANCE
@@ -212,28 +212,28 @@ def _create_pointer_types(ctypes):
     class LPVOID(ctypes.c_void_p):
         """Real Windows LPVOID type implementation."""
 
-        def __str__(self):
+        def __str__(self) -> str:
             return f"LPVOID(0x{self.value:08X})" if self.value else "LPVOID(NULL)"
 
-        def __repr__(self):
+        def __repr__(self) -> str:
             return f"LPVOID({self.value})"
 
     class SIZE_T(ctypes.c_size_t):  # noqa: N801
         """Real Windows SIZE_T type implementation."""
 
-        def __str__(self):
+        def __str__(self) -> str:
             return f"SIZE_T({self.value})"
 
-        def __repr__(self):
+        def __repr__(self) -> str:
             return f"SIZE_T({self.value})"
 
     class ULONG_PTR(ctypes.c_void_p):  # noqa: N801
         """Real Windows ULONG_PTR type implementation."""
 
-        def __str__(self):
+        def __str__(self) -> str:
             return f"ULONG_PTR(0x{self.value:08X})" if self.value else "ULONG_PTR(0)"
 
-        def __repr__(self):
+        def __repr__(self) -> str:
             return f"ULONG_PTR({self.value})"
 
     return LPVOID, SIZE_T, ULONG_PTR

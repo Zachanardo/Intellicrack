@@ -125,7 +125,7 @@ class FridaStealth:
     - Port scanning for Frida server
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize Frida stealth module."""
         self.platform = platform.system()
         self.active_techniques: Dict[str, bool] = {
@@ -253,12 +253,12 @@ class FridaStealth:
             for tid in threads:
                 comm_file = f"{task_dir}/{tid}/comm"
                 try:
-                    with open(comm_file, 'r') as f:
+                    with open(comm_file) as f:
                         name = f.read().strip()
                         if any(frida_name in name.lower()
                                for frida_name in ['gmain', 'gdbus', 'gum-js', 'frida']):
                             return True
-                except (IOError, OSError):
+                except OSError:
                     continue
 
             return False
@@ -282,7 +282,7 @@ class FridaStealth:
                     link = os.readlink(f"{fd_dir}/{fd}")
                     if 'dbus' in link.lower():
                         return True
-                except (OSError, IOError):
+                except OSError:
                     continue
 
             return False
@@ -303,7 +303,7 @@ class FridaStealth:
 
             frida_ports = [27042, 27043]
 
-            with open(net_file, 'r') as f:
+            with open(net_file) as f:
                 lines = f.readlines()[1:]
 
                 for line in lines:
@@ -346,7 +346,7 @@ class FridaStealth:
                     None,
                     3,
                     0,
-                    None
+                    None,
                 )
 
                 if h_pipe != -1:
@@ -383,7 +383,7 @@ class FridaStealth:
             h_process = kernel32.OpenProcess(
                 PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
                 False,
-                pid
+                pid,
             )
 
             if not h_process:
@@ -397,12 +397,12 @@ class FridaStealth:
                     h_process,
                     ctypes.byref(modules),
                     ctypes.sizeof(modules),
-                    ctypes.byref(cb_needed)
+                    ctypes.byref(cb_needed),
                 ):
                     module_count = cb_needed.value // ctypes.sizeof(ctypes.c_void_p)
 
                     frida_signatures = [
-                        b'frida', b'gum', b'frida-agent', b'frida-gadget'
+                        b'frida', b'gum', b'frida-agent', b'frida-gadget',
                     ]
 
                     for i in range(module_count):
@@ -411,7 +411,7 @@ class FridaStealth:
                             h_process,
                             modules[i],
                             module_name,
-                            260
+                            260,
                         ):
                             name_lower = module_name.value.lower()
                             if any(sig.decode('latin1', errors='ignore').lower() in name_lower
@@ -435,7 +435,7 @@ class FridaStealth:
             if not os.path.exists(maps_file):
                 return False
 
-            with open(maps_file, 'r') as f:
+            with open(maps_file) as f:
                 for line in f:
                     if 'frida' in line.lower() or 'gum' in line.lower():
                         return True
@@ -469,11 +469,11 @@ class FridaStealth:
 
                 if self.platform == "Linux":
                     renamed_count = self._randomize_threads_linux(
-                        frida_thread_patterns, common_names
+                        frida_thread_patterns, common_names,
                     )
                 elif self.platform == "Windows":
                     renamed_count = self._randomize_threads_windows(
-                        frida_thread_patterns, common_names
+                        frida_thread_patterns, common_names,
                     )
 
                 if renamed_count > 0:
@@ -520,7 +520,7 @@ class FridaStealth:
     def _randomize_threads_linux(
         self,
         patterns: List[str],
-        common_names: List[str]
+        common_names: List[str],
     ) -> int:
         """Randomize thread names on Linux."""
         renamed_count = 0
@@ -536,7 +536,7 @@ class FridaStealth:
             for tid in threads:
                 comm_file = f"{task_dir}/{tid}/comm"
                 try:
-                    with open(comm_file, 'r') as f:
+                    with open(comm_file) as f:
                         current_name = f.read().strip()
 
                     if any(pattern in current_name.lower() for pattern in patterns):
@@ -549,10 +549,10 @@ class FridaStealth:
                                 f.write(new_name)
                             renamed_count += 1
                             logger.debug(f"Renamed thread {tid}: {current_name} -> {new_name}")
-                        except (IOError, OSError, PermissionError) as e:
+                        except (OSError, PermissionError) as e:
                             logger.debug(f"Failed to rename thread {tid}: {e}")
 
-                except (IOError, OSError):
+                except OSError:
                     continue
 
             return renamed_count
@@ -564,7 +564,7 @@ class FridaStealth:
     def _randomize_threads_windows(
         self,
         patterns: List[str],
-        common_names: List[str]
+        common_names: List[str],
     ) -> int:
         """Randomize thread names on Windows."""
         renamed_count = 0
@@ -603,7 +603,7 @@ class FridaStealth:
                             h_thread = kernel32.OpenThread(
                                 THREAD_SET_INFORMATION,
                                 False,
-                                te32.th32ThreadID
+                                te32.th32ThreadID,
                             )
 
                             if h_thread:
@@ -613,12 +613,12 @@ class FridaStealth:
                                     if hasattr(kernel32, 'SetThreadDescription'):
                                         result = kernel32.SetThreadDescription(
                                             h_thread,
-                                            wide_name
+                                            wide_name,
                                         )
                                         if result == 0:
                                             renamed_count += 1
                                             logger.debug(
-                                                f"Renamed thread {te32.th32ThreadID} to {new_name}"
+                                                f"Renamed thread {te32.th32ThreadID} to {new_name}",
                                             )
 
                                 finally:
@@ -670,7 +670,7 @@ class FridaStealth:
                                 logger.debug(f"Closed D-Bus file descriptor: {fd}")
                             except (OSError, ValueError):
                                 pass
-                    except (OSError, IOError):
+                    except OSError:
                         continue
 
             if closed_count > 0:
@@ -738,7 +738,7 @@ class FridaStealth:
                 b'frida-gadget',
             ]
 
-            with open(maps_file, 'r') as f:
+            with open(maps_file) as f:
                 for line in f:
                     parts = line.split()
                     if len(parts) < 6:
@@ -772,7 +772,7 @@ class FridaStealth:
                 current_process,
                 ctypes.byref(modules),
                 ctypes.sizeof(modules),
-                ctypes.byref(cb_needed)
+                ctypes.byref(cb_needed),
             ):
                 return 0
 
@@ -792,7 +792,7 @@ class FridaStealth:
                     current_process,
                     modules[i],
                     module_name,
-                    260
+                    260,
                 ):
                     name_lower = module_name.value.lower()
                     if any(sig.decode('latin1', errors='ignore').lower() in name_lower
@@ -907,7 +907,7 @@ class FridaStealth:
                         0,
                         ctypes.byref(pbi),
                         ctypes.sizeof(pbi),
-                        ctypes.byref(size)
+                        ctypes.byref(size),
                     )
 
                     if ret == 0:
@@ -924,7 +924,7 @@ class FridaStealth:
                                 ctypes.c_void_p(peb_address + being_debugged_offset),
                                 ctypes.byref(buffer),
                                 1,
-                                ctypes.byref(bytes_read)
+                                ctypes.byref(bytes_read),
                             ):
                                 if buffer.value != 0:
                                     zero = ctypes.c_ubyte(0)
@@ -935,7 +935,7 @@ class FridaStealth:
                                         ctypes.c_void_p(peb_address + being_debugged_offset),
                                         ctypes.byref(zero),
                                         1,
-                                        ctypes.byref(bytes_written)
+                                        ctypes.byref(bytes_written),
                                     ):
                                         bypassed_count += 1
                                         logger.debug("Bypassed PEB BeingDebugged flag")
@@ -956,7 +956,7 @@ class FridaStealth:
         try:
             status_file = f"/proc/{pid}/status"
             if os.path.exists(status_file):
-                with open(status_file, 'r') as f:
+                with open(status_file) as f:
                     for line in f:
                         if line.startswith('TracerPid:'):
                             tracer_pid = int(line.split(':')[1].strip())
@@ -1021,7 +1021,7 @@ class FridaStealth:
                         with open(comm_file, 'w') as f:
                             f.write(original_name)
                         logger.debug(f"Restored thread {tid} name to {original_name}")
-                    except (IOError, OSError) as e:
+                    except OSError as e:
                         logger.debug(f"Failed to restore thread {tid}: {e}")
                         restored = False
 

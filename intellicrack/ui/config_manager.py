@@ -21,11 +21,10 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+import contextlib
 import logging
 from dataclasses import asdict, dataclass
 from typing import Any, Dict, List, Optional
-
-from intellicrack.core.config_manager import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -186,8 +185,10 @@ class UIConfigManager:
         ),
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the UI configuration manager using main config."""
+        from intellicrack.core.config_manager import get_config
+
         # Get the unified config instance
         self.main_config = get_config()
 
@@ -203,7 +204,7 @@ class UIConfigManager:
 
         logger.info("UIConfigManager initialized with unified config system")
 
-    def _initialize_ui_config(self):
+    def _initialize_ui_config(self) -> None:
         """Initialize UI configuration in main config with defaults."""
         ui_config = {
             "theme": asdict(self.DEFAULT_THEMES["dark"]),
@@ -233,7 +234,7 @@ class UIConfigManager:
         self.main_config.set("ui", ui_config)
         logger.info("Initialized UI configuration in main config")
 
-    def _load_from_main_config(self):
+    def _load_from_main_config(self) -> None:
         """Load UI configurations from main config."""
         ui_config = self.main_config.get("ui", {})
 
@@ -278,7 +279,7 @@ class UIConfigManager:
         for name, theme_data in custom_themes_data.items():
             self.custom_themes[name] = ThemeConfig(**theme_data)
 
-    def _save_to_main_config(self):
+    def _save_to_main_config(self) -> None:
         """Save UI configurations to main config."""
         ui_config = {
             "theme": asdict(self.theme),
@@ -424,10 +425,8 @@ class UIConfigManager:
     def unregister_callback(self, category: str, callback) -> None:
         """Unregister a change callback."""
         if category in self.change_callbacks:
-            try:
+            with contextlib.suppress(ValueError):
                 self.change_callbacks[category].remove(callback)
-            except ValueError:
-                pass
 
     def _notify_change(self, category: str) -> None:
         """Notify all registered callbacks of a change."""

@@ -131,7 +131,7 @@ class StreamingAnalyzer(ABC):
 class StreamingAnalysisManager:
     """Production-ready manager for streaming analysis of large binaries."""
 
-    def __init__(self, config: Optional[StreamingConfig] = None):
+    def __init__(self, config: Optional[StreamingConfig] = None) -> None:
         """Initialize the streaming analysis manager.
 
         Args:
@@ -331,7 +331,7 @@ class StreamingAnalysisManager:
                     "file_size": file_size,
                     "chunks_processed": total_chunks,
                     "errors": progress.errors if progress.errors else None,
-                }
+                },
             )
 
             progress.current_stage = "completed"
@@ -503,7 +503,7 @@ class StreamingAnalysisManager:
                                 "context_before": search_data[context_start:pos].hex(),
                                 "match": pattern.hex(),
                                 "context_after": search_data[pos + len(pattern) : context_end].hex(),
-                            }
+                            },
                         )
 
                         if len(results[pattern.hex()]) >= max_matches_per_pattern:
@@ -567,7 +567,7 @@ class StreamingAnalysisManager:
                     "null_ratio": round(null_count / size, 4) if size > 0 else 0,
                     "high_entropy_ratio": round(high_entropy_count / size, 4) if size > 0 else 0,
                     "characteristics": self._classify_section(
-                        entropy, printable_count / size if size > 0 else 0, null_count / size if size > 0 else 0
+                        entropy, printable_count / size if size > 0 else 0, null_count / size if size > 0 else 0,
                     ),
                 }
 

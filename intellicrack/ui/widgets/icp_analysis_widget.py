@@ -45,14 +45,14 @@ class ICPAnalysisThread(QThread):
     error_occurred = pyqtSignal(str)
     progress_update = pyqtSignal(str)
 
-    def __init__(self, file_path: str, scan_mode: ScanMode):
+    def __init__(self, file_path: str, scan_mode: ScanMode) -> None:
         """Initialize ICP analysis thread with file path, scan mode, and backend."""
         super().__init__()
         self.file_path = file_path
         self.scan_mode = scan_mode
         self._backend = get_icp_backend()
 
-    def run(self):
+    def run(self) -> None:
         """Run analysis in background thread."""
         try:
             self.progress_update.emit(f"Analyzing {self.file_path}...")
@@ -87,7 +87,7 @@ class ICPAnalysisWidget(QWidget):
     #: ICPDetection (type: object)
     protection_selected = pyqtSignal(object)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the ICP analysis widget.
 
         Args:
@@ -99,7 +99,7 @@ class ICPAnalysisWidget(QWidget):
         self._analysis_thread: ICPAnalysisThread | None = None
         self.init_ui()
 
-    def init_ui(self):
+    def init_ui(self) -> None:
         """Initialize the UI."""
         layout = QVBoxLayout(self)
 
@@ -123,7 +123,7 @@ class ICPAnalysisWidget(QWidget):
                 "Heuristic",
                 "Aggressive",
                 "All",
-            ]
+            ],
         )
         self.scan_mode_combo.setCurrentText("Deep")
         header_layout.addWidget(self.scan_mode_combo)
@@ -182,7 +182,7 @@ class ICPAnalysisWidget(QWidget):
         self.status_label = QLabel("Ready")
         layout.addWidget(self.status_label)
 
-    def analyze_file(self, file_path: str):
+    def analyze_file(self, file_path: str) -> None:
         """Start analysis of a file."""
         if self._analysis_thread and self._analysis_thread.isRunning():
             self.status_label.setText("Analysis already in progress")
@@ -206,19 +206,19 @@ class ICPAnalysisWidget(QWidget):
         self._analysis_thread.start()
 
     @pyqtSlot()
-    def on_analyze_clicked(self):
+    def on_analyze_clicked(self) -> None:
         """Handle analyze button click."""
         # This would typically open a file dialog
         # For now, emit a signal for the parent to handle
         self.status_label.setText("Select a file to analyze")
 
     @pyqtSlot(str)
-    def on_progress_update(self, message: str):
+    def on_progress_update(self, message: str) -> None:
         """Handle progress updates."""
         self.status_label.setText(message)
 
     @pyqtSlot(object)
-    def on_analysis_complete(self, result: ICPScanResult):
+    def on_analysis_complete(self, result: ICPScanResult) -> None:
         """Handle analysis completion."""
         self._current_result = result
 
@@ -241,7 +241,7 @@ class ICPAnalysisWidget(QWidget):
                         file_info.filetype,
                         f"Size: {file_info.size}",
                         "",
-                    ]
+                    ],
                 )
                 self.detections_tree.addTopLevelItem(file_item)
 
@@ -252,7 +252,7 @@ class ICPAnalysisWidget(QWidget):
                             detection.name,
                             detection.type,
                             f"{detection.confidence * 100:.0f}%",
-                        ]
+                        ],
                     )
 
                     # Color code by type
@@ -288,13 +288,13 @@ class ICPAnalysisWidget(QWidget):
         self.analysis_complete.emit(result)
 
     @pyqtSlot(str)
-    def on_analysis_error(self, error: str):
+    def on_analysis_error(self, error: str) -> None:
         """Handle analysis errors."""
         self.analyze_btn.setEnabled(True)
         self.progress_bar.setVisible(False)
         self.status_label.setText(f"Error: {error}")
 
-    def on_detection_selected(self, item: QTreeWidgetItem, column: int):
+    def on_detection_selected(self, item: QTreeWidgetItem, column: int) -> None:
         """Handle detection selection."""
         if not item.parent():  # Skip parent items
             return
@@ -364,7 +364,7 @@ class ICPAnalysisWidget(QWidget):
 
         return methods
 
-    def clear_results(self):
+    def clear_results(self) -> None:
         """Clear all results."""
         self._current_result = None
         self.detections_tree.clear()

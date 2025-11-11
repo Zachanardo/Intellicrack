@@ -36,13 +36,13 @@ class AdobeInjectorTab(BaseTab):
     injector_started = pyqtSignal(str)
     patch_completed = pyqtSignal(bool, str)
 
-    def __init__(self, shared_context=None, parent=None):
+    def __init__(self, shared_context=None, parent=None) -> None:
         """Initialize Adobe Injector tab."""
         self.adobe_injector_process = None
         self.integration_method = "embedded"  # embedded, subprocess, terminal, dll
         super().__init__(shared_context, parent)
 
-    def setup_content(self):
+    def setup_content(self) -> None:
         """Set up the Adobe Injector tab content."""
         layout = self.layout()
 
@@ -53,7 +53,7 @@ class AdobeInjectorTab(BaseTab):
         method_layout.addWidget(QLabel("Method:"))
         self.method_combo = QComboBox()
         self.method_combo.addItems(
-            ["Embedded Window (Native)", "Subprocess Control", "Terminal Execution", "DLL Injection", "AutoIt3X COM"]
+            ["Embedded Window (Native)", "Subprocess Control", "Terminal Execution", "DLL Injection", "AutoIt3X COM"],
         )
         self.method_combo.currentTextChanged.connect(self.on_method_changed)
 
@@ -266,7 +266,7 @@ class AdobeInjectorTab(BaseTab):
 
         return tab
 
-    def launch_subprocess(self, hidden: bool = False):
+    def launch_subprocess(self, hidden: bool = False) -> None:
         """Launch Adobe Injector as subprocess with control."""
         adobe_injector_path = get_project_root() / "tools/AdobeInjector/AdobeInjector.exe"
 
@@ -316,7 +316,7 @@ class AdobeInjectorTab(BaseTab):
         except Exception as e:
             self.subprocess_output.append(f"ERROR: {e}")
 
-    def monitor_subprocess(self):
+    def monitor_subprocess(self) -> None:
         """Monitor subprocess output."""
         if not self.adobe_injector_process:
             return
@@ -331,25 +331,25 @@ class AdobeInjectorTab(BaseTab):
         except Exception as e:
             self.subprocess_output.append(f"Monitor error: {e}")
 
-    def scan_in_terminal(self):
+    def scan_in_terminal(self) -> None:
         """Run scan operation in terminal."""
         self.execute_in_terminal("AdobeInjector.exe /scan")
 
-    def patch_in_terminal(self):
+    def patch_in_terminal(self) -> None:
         """Run patch operation in terminal."""
         self.execute_in_terminal("AdobeInjector.exe /patch /silent")
 
-    def custom_terminal_command(self):
+    def custom_terminal_command(self) -> None:
         """Execute custom command in terminal."""
         cmd = self.terminal_cmd.text()
         if cmd:
             self.execute_in_terminal(cmd)
 
-    def execute_terminal_command(self):
+    def execute_terminal_command(self) -> None:
         """Execute command from input field."""
         self.custom_terminal_command()
 
-    def execute_in_terminal(self, command: str):
+    def execute_in_terminal(self, command: str) -> None:
         """Execute command in embedded terminal."""
         try:
             terminal_manager = get_terminal_manager()
@@ -366,7 +366,7 @@ class AdobeInjectorTab(BaseTab):
                 command_parts = command
 
             session_id = terminal_manager.execute_command(
-                command_parts, capture_output=False, auto_switch=True, cwd=str(adobe_injector_dir)
+                command_parts, capture_output=False, auto_switch=True, cwd=str(adobe_injector_dir),
             )
 
             self.terminal_display.append(f"Executed in terminal: {command}")
@@ -376,12 +376,12 @@ class AdobeInjectorTab(BaseTab):
         except Exception as e:
             self.terminal_display.append(f"Terminal error: {e}")
 
-    def compile_as_dll(self):
+    def compile_as_dll(self) -> None:
         """Compile AutoIt3 script as DLL."""
         # This would use AutoIt3 compiler with DLL output option
         self.subprocess_output.append("DLL compilation requires AutoIt3 compiler with DLL support")
 
-    def register_autoit_com(self):
+    def register_autoit_com(self) -> None:
         """Register AutoIt3X.dll for COM usage."""
         try:
             result = subprocess.run(["regsvr32", "/s", "AutoIt3X.dll"], capture_output=True, text=True)
@@ -392,7 +392,7 @@ class AdobeInjectorTab(BaseTab):
         except Exception as e:
             self.subprocess_output.append(f"Error: {e}")
 
-    def test_com_interface(self):
+    def test_com_interface(self) -> None:
         """Test AutoIt3X COM interface."""
         try:
             import win32com.client
@@ -403,11 +403,11 @@ class AdobeInjectorTab(BaseTab):
         except Exception as e:
             self.subprocess_output.append(f"COM test failed: {e}")
 
-    def extract_resources(self):
+    def extract_resources(self) -> None:
         """Extract resources from Adobe Injector executable."""
         self.subprocess_output.append("Resource extraction would use tools like ResourceHacker")
 
-    def modify_resources(self):
+    def modify_resources(self) -> None:
         """Modify and rebrand resources."""
         # Create rebranding configuration
         rebrand = {
@@ -425,11 +425,11 @@ class AdobeInjectorTab(BaseTab):
 
         self.subprocess_output.append(f"Rebranding configuration saved to {config_path}")
 
-    def rebuild_executable(self):
+    def rebuild_executable(self) -> None:
         """Rebuild executable with modified resources."""
         self.subprocess_output.append("Rebuild would use AutoIt3Wrapper with custom resources")
 
-    def create_silent_config(self):
+    def create_silent_config(self) -> None:
         """Create configuration for silent/automated operation."""
         config = {
             "auto_scan": True,
@@ -448,7 +448,7 @@ class AdobeInjectorTab(BaseTab):
 
         self.subprocess_output.append(f"Silent configuration created: {config_path}")
 
-    def on_method_changed(self, method: str):
+    def on_method_changed(self, method: str) -> None:
         """Handle integration method change."""
         method_map = {
             "Embedded Window (Native)": 0,
@@ -461,7 +461,7 @@ class AdobeInjectorTab(BaseTab):
         if method in method_map:
             self.method_tabs.setCurrentIndex(method_map[method])
 
-    def on_status_update(self, status: str):
+    def on_status_update(self, status: str) -> None:
         """Handle status updates from integration."""
         if hasattr(self, "subprocess_output"):
             self.subprocess_output.append(status)

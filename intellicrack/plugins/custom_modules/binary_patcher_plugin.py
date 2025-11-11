@@ -21,6 +21,8 @@ import logging
 import shutil
 from dataclasses import dataclass
 
+from intellicrack.utils.logger import log_all_methods
+
 """
 Binary Patcher Plugin Template
 Specialized template for binary patching operations
@@ -38,10 +40,11 @@ class BinaryPatch:
     patch_type: str = "defensive"
 
 
+@log_all_methods
 class BinaryPatcherPlugin:
     """Plugin for binary patching operations on executables."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the binary patcher plugin."""
         super().__init__()
         self.patches: list[BinaryPatch] = []
@@ -65,6 +68,7 @@ class BinaryPatcherPlugin:
                     results.append("Found function prologue - patchable")
 
         except Exception as e:
+            self.logger.exception(f"Analysis error: {e}")
             results.append(f"Analysis error: {e}")
 
         return results
@@ -79,6 +83,7 @@ class BinaryPatcherPlugin:
             shutil.copy2(binary_path, backup_path)
             results.append(f"Created backup: {backup_path}")
         except Exception as e:
+            self.logger.exception(f"Backup creation failed: {e}")
             results.append(f"Backup creation failed: {e}")
             return results
 
@@ -167,12 +172,14 @@ class BinaryPatcherPlugin:
                 results.append("File analysis completed - no modifications needed")
 
         except Exception as e:
+            self.logger.exception(f"Patching error: {e}")
             results.append(f"Patching error: {e}")
             # Restore from backup on error
             try:
                 shutil.copy2(backup_path, binary_path)
                 results.append("Restored original file from backup")
             except Exception:
+                self.logger.exception("Failed to restore backup - manual restoration required")
                 results.append("Failed to restore backup - manual restoration required")
 
         return results

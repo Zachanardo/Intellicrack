@@ -102,7 +102,7 @@ except ImportError as e:
 class ModelShardingManager:
     """Manages model sharding across multiple GPUs."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the model sharding manager."""
         self._initialize_gpu_info()
         self.device_properties = {}
@@ -114,7 +114,7 @@ class ModelShardingManager:
         else:
             logger.info("No GPUs detected, sharding disabled")
 
-    def _initialize_gpu_info(self):
+    def _initialize_gpu_info(self) -> None:
         """Initialize GPU device information."""
         if GPU_AUTOLOADER_AVAILABLE:
             gpu_info = get_gpu_info()
@@ -126,7 +126,7 @@ class ModelShardingManager:
             self.gpu_type = "cuda" if self.device_count > 0 else "cpu"
             self.unified_device = None
 
-    def _initialize_device_properties(self):
+    def _initialize_device_properties(self) -> None:
         """Initialize properties for all available devices."""
         for i in range(self.device_count):
             if self.gpu_type == "nvidia_cuda":
@@ -134,7 +134,7 @@ class ModelShardingManager:
             elif self.gpu_type == "intel_xpu" and hasattr(torch, "xpu"):
                 self._initialize_intel_xpu_device_properties(i)
 
-    def _initialize_nvidia_device_properties(self, device_id: int):
+    def _initialize_nvidia_device_properties(self, device_id: int) -> None:
         """Initialize NVIDIA CUDA device properties."""
         props = torch.cuda.get_device_properties(device_id)
         self.device_properties[device_id] = {
@@ -145,7 +145,7 @@ class ModelShardingManager:
             "multi_processor_count": props.multi_processor_count,
         }
 
-    def _initialize_intel_xpu_device_properties(self, device_id: int):
+    def _initialize_intel_xpu_device_properties(self, device_id: int) -> None:
         """Initialize Intel XPU device properties."""
         self.device_properties[device_id] = {
             "name": torch.xpu.get_device_name(device_id) if hasattr(torch.xpu, "get_device_name") else f"Intel XPU {device_id}",
@@ -175,7 +175,7 @@ class ModelShardingManager:
 
         return info
 
-    def _add_memory_info_to_devices(self, info: dict[str, Any]):
+    def _add_memory_info_to_devices(self, info: dict[str, Any]) -> None:
         """Add memory information to device info."""
         for i in range(self.device_count):
             if self.gpu_type == "nvidia_cuda":
@@ -183,14 +183,14 @@ class ModelShardingManager:
             elif self.gpu_type == "intel_xpu" and hasattr(torch, "xpu"):
                 self._add_intel_xpu_memory_info(info, i)
 
-    def _add_nvidia_memory_info(self, info: dict[str, Any], device_id: int):
+    def _add_nvidia_memory_info(self, info: dict[str, Any], device_id: int) -> None:
         """Add NVIDIA CUDA memory information to device info."""
         torch.cuda.set_device(device_id)
         info["devices"][device_id]["allocated_memory"] = torch.cuda.memory_allocated(device_id)
         info["devices"][device_id]["reserved_memory"] = torch.cuda.memory_reserved(device_id)
         info["devices"][device_id]["free_memory"] = info["devices"][device_id]["total_memory"] - torch.cuda.memory_allocated(device_id)
 
-    def _add_intel_xpu_memory_info(self, info: dict[str, Any], device_id: int):
+    def _add_intel_xpu_memory_info(self, info: dict[str, Any], device_id: int) -> None:
         """Add Intel XPU memory information to device info."""
         if hasattr(torch.xpu, "set_device"):
             torch.xpu.set_device(device_id)
@@ -434,7 +434,7 @@ class ModelShardingManager:
             device_map = self._create_simple_device_map()
 
         return self._load_and_dispatch_checkpoint(
-            model, checkpoint, device_map, max_memory, no_split_module_classes, dtype
+            model, checkpoint, device_map, max_memory, no_split_module_classes, dtype,
         )
 
     def _load_checkpoint_without_accelerate(self, model: Any, checkpoint: str | Path) -> Any:
@@ -674,7 +674,7 @@ class ModelShardingManager:
 
         return memory_info
 
-    def cleanup_memory(self):
+    def cleanup_memory(self) -> None:
         """Clean up GPU memory across all devices."""
         if not HAS_TORCH or self.device_count == 0:
             return
@@ -806,7 +806,7 @@ class ModelShardingManager:
         end_memory, peak_memory = self._get_final_memory(start_memory)
 
         return self._compile_profiling_results(
-            device_map, forward_times, memory_usage, start_memory, end_memory, peak_memory
+            device_map, forward_times, memory_usage, start_memory, end_memory, peak_memory,
         )
 
     def _prepare_inputs_for_profiling(self, sample_input: Any) -> Any:
@@ -818,7 +818,7 @@ class ModelShardingManager:
             return sample_input.to(device_type)
         return sample_input
 
-    def _warmup_model(self, model: Any, inputs: Any):
+    def _warmup_model(self, model: Any, inputs: Any) -> None:
         """Warmup model with a few iterations."""
         for _ in range(3):
             with torch.no_grad():
@@ -865,7 +865,7 @@ class ModelShardingManager:
         self._synchronize_devices()
         return (time.time() - start_time) * 1000
 
-    def _synchronize_devices(self):
+    def _synchronize_devices(self) -> None:
         """Synchronize all devices before timing measurements."""
         if self.gpu_type == "nvidia_cuda":
             torch.cuda.synchronize()

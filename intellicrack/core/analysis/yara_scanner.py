@@ -146,7 +146,7 @@ class YaraScanner:
         ),
     }
 
-    def __init__(self, rules_dir: Optional[Path] = None):
+    def __init__(self, rules_dir: Optional[Path] = None) -> None:
         """Initialize YARA scanner.
 
         Args:
@@ -177,7 +177,7 @@ class YaraScanner:
         if self.rules_dir.exists():
             self._load_custom_rules()
 
-    def _load_builtin_rules(self):
+    def _load_builtin_rules(self) -> None:
         """Load built-in YARA rules."""
         # Create built-in rules for each category
         builtin_rules = {
@@ -852,7 +852,7 @@ rule Delphi_Compiler {
 }
 """
 
-    def _load_custom_rules(self):
+    def _load_custom_rules(self) -> None:
         """Load custom YARA rules from directory."""
         for rule_file in self.rules_dir.glob("*.yar"):
             try:
@@ -1154,7 +1154,7 @@ rule Delphi_Compiler {
             return False
 
     def add_rule(
-        self, rule_name: str, rule_content: str, category: RuleCategory = RuleCategory.LICENSE, validate_syntax: bool = True
+        self, rule_name: str, rule_content: str, category: RuleCategory = RuleCategory.LICENSE, validate_syntax: bool = True,
     ) -> bool:
         """Add a new YARA rule with validation and categorization."""
         import re
@@ -1187,7 +1187,7 @@ rule Delphi_Compiler {
                 for i, line in enumerate(lines):
                     if "{" in line:
                         lines.insert(
-                            i + 1, f'    meta:\n        category = "{category.value}"\n        added_date = "{os.environ.get("DATE", "")}"'
+                            i + 1, f'    meta:\n        category = "{category.value}"\n        added_date = "{os.environ.get("DATE", "")}"',
                         )
                         break
                 rule_content = "\n".join(lines)
@@ -1230,7 +1230,7 @@ rule Delphi_Compiler {
             return False
 
     def scan_process(
-        self, pid: int, categories: Optional[List[RuleCategory]] = None, scan_dlls: bool = True, scan_heap: bool = True
+        self, pid: int, categories: Optional[List[RuleCategory]] = None, scan_dlls: bool = True, scan_heap: bool = True,
     ) -> List[YaraMatch]:
         """Scan a running process memory with advanced options."""
         import ctypes
@@ -1289,7 +1289,7 @@ rule Delphi_Compiler {
                                     "process_name": process_name,
                                     "strings": [(s.offset, s.matched_data) for s in match.strings],
                                 },
-                            )
+                            ),
                         )
 
                 except Exception as e:
@@ -1348,7 +1348,7 @@ rule Delphi_Compiler {
             return matches
 
     def generate_rule(
-        self, name: str, strings: List[str], condition: str = "any of them", add_wildcards: bool = True, add_case_variations: bool = True
+        self, name: str, strings: List[str], condition: str = "any of them", add_wildcards: bool = True, add_case_variations: bool = True,
     ) -> str:
         """Generate sophisticated YARA rules for licensing protection detection."""
         import re
@@ -1493,7 +1493,7 @@ rule Delphi_Compiler {
                             "base_address": base_address,
                             "strings": [(s.offset + base_address, s.matched_data) for s in match.strings],
                         },
-                    )
+                    ),
                 )
 
         except Exception as e:
@@ -1743,7 +1743,7 @@ rule Delphi_Compiler {
         return f"{data_hash}_{cat_str}"
 
     def scan_memory_concurrent(
-        self, pid: int, categories: Optional[List[RuleCategory]] = None, max_workers: int = 4, chunk_size: int = 1024 * 1024
+        self, pid: int, categories: Optional[List[RuleCategory]] = None, max_workers: int = 4, chunk_size: int = 1024 * 1024,
     ) -> List[YaraMatch]:
         """Perform concurrent YARA scanning of process memory.
 
@@ -1857,7 +1857,7 @@ rule Delphi_Compiler {
         """
 
         class MemoryFilter:
-            def __init__(self, scanner):
+            def __init__(self, scanner) -> None:
                 self.scanner = scanner
                 self.include_executable = include_executable
                 self.include_writable = include_writable
@@ -1912,7 +1912,7 @@ rule Delphi_Compiler {
         with self._scan_progress_lock:
             return dict(self._scan_progress)
 
-    def set_scan_progress_callback(self, callback):
+    def set_scan_progress_callback(self, callback) -> None:
         """Set callback for scan progress updates.
 
         Args:
@@ -1921,7 +1921,7 @@ rule Delphi_Compiler {
         """
         self._progress_callback = callback
 
-    def enable_match_caching(self, max_cache_size: int = 100, ttl_seconds: int = 300):
+    def enable_match_caching(self, max_cache_size: int = 100, ttl_seconds: int = 300) -> None:
         """Enable caching of YARA match results.
 
         Args:
@@ -1938,7 +1938,7 @@ rule Delphi_Compiler {
 
         logger.info(f"Match caching enabled: max_size={max_cache_size}, ttl={ttl_seconds}s")
 
-    def clear_match_cache(self):
+    def clear_match_cache(self) -> None:
         """Clear the match result cache."""
         if hasattr(self, "_match_cache"):
             self._match_cache.clear()
@@ -1995,7 +1995,7 @@ rule Delphi_Compiler {
         return None
 
     def convert_pattern_to_yara(
-        self, pattern: bytes, name: str = "auto_pattern", add_wildcards: bool = True, context_bytes: int = 16
+        self, pattern: bytes, name: str = "auto_pattern", add_wildcards: bool = True, context_bytes: int = 16,
     ) -> str:
         """Convert binary pattern to YARA rule.
 
@@ -2044,7 +2044,7 @@ rule Delphi_Compiler {
                     rule += f'\n        $ascii = "{ascii_str}"'
                     rule += f'\n        $wide = "{ascii_str}" wide'
             except (ValueError, OSError):
-                pass  # noqa: S110 - String encoding failures are non-critical for YARA rule generation
+                pass
 
         # Add condition
         rule += """
@@ -2139,7 +2139,7 @@ rule Delphi_Compiler {
                     if is_interesting(s):
                         extracted.add(s)
                 except (TypeError, ValueError):
-                    pass  # noqa: S110 - String decoding failures are expected with malformed data
+                    pass
 
         # Extract UTF-16BE strings
         if encoding in ["auto", "utf16be"]:
@@ -2150,7 +2150,7 @@ rule Delphi_Compiler {
                     if is_interesting(s):
                         extracted.add(s)
                 except (TypeError, ValueError):
-                    pass  # noqa: S110 - UTF-16BE decoding failures are expected with malformed data
+                    pass
 
         # Extract URLs
         if extract_urls:
@@ -2173,7 +2173,7 @@ rule Delphi_Compiler {
                 reg = match.group().decode("ascii", errors="ignore")
                 extracted.add(reg)
 
-        return sorted(list(extracted))
+        return sorted(extracted)
 
     def generate_hex_patterns(self, data: bytes, pattern_size: int = 16, step: int = 1, unique_only: bool = True) -> List[str]:
         """Generate hex patterns from binary data.
@@ -2356,7 +2356,7 @@ rule Delphi_Compiler {
                         "virtual_size": section.Misc_VirtualSize,
                         "raw_size": section.SizeOfRawData,
                         "entropy": section.get_entropy(),
-                    }
+                    },
                 )
 
             # Get imports
@@ -2924,7 +2924,7 @@ extern "C" {{
         ordered = []
         processed = set()
 
-        def add_category_patches(category):
+        def add_category_patches(category) -> None:
             if category in processed:
                 return
             processed.add(category)
@@ -3112,7 +3112,7 @@ extern "C" {{
         logger.info("Connected to debugger for breakpoint integration")
 
     def set_breakpoints_from_matches(
-        self, matches: List[YaraMatch], auto_enable: bool = True, conditional: bool = False
+        self, matches: List[YaraMatch], auto_enable: bool = True, conditional: bool = False,
     ) -> List[Dict[str, Any]]:
         """Set breakpoints at YARA match locations.
 
@@ -3159,7 +3159,7 @@ extern "C" {{
             try:
                 if bp_type == "hardware":
                     # Use hardware breakpoint for critical matches
-                    bp_id = self.debugger.set_hardware_breakpoint(match.offset, condition="exec" if not condition else condition, size=1)
+                    bp_id = self.debugger.set_hardware_breakpoint(match.offset, condition=condition if condition else "exec", size=1)
                 else:
                     # Use software breakpoint
                     bp_id = self.debugger.set_breakpoint(match.offset)
@@ -3305,7 +3305,7 @@ extern "C" {{
             try:
                 # Set trace point
                 self.debugger.trace_thread_execution(
-                    start_address=match.offset, num_instructions=trace_depth, log_registers=True, log_memory_access=True
+                    start_address=match.offset, num_instructions=trace_depth, log_registers=True, log_memory_access=True,
                 )
 
                 logger.info(f"Enabled tracing at 0x{match.offset:X} for {match.rule_name}")

@@ -30,8 +30,7 @@ pub fn detect_intel_arc_gpu() -> Result<Option<IntelGpuDetails>> {
 
         let mut adapter_index = 0;
         while let Ok(adapter) = factory.EnumAdapters1(adapter_index) {
-            let mut desc = std::mem::zeroed::<DXGI_ADAPTER_DESC1>();
-            adapter.GetDesc1(&mut desc)?;
+            let desc = adapter.GetDesc1()?;
 
             if desc.VendorId == INTEL_VENDOR_ID {
                 let gpu_details = parse_adapter_desc(&desc)?;

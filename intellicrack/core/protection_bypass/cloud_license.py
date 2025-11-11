@@ -114,7 +114,7 @@ class LicenseState(Enum):
 class TLSInterceptor:
     """TLS/SSL traffic interceptor with dynamic certificate generation for MITM attacks on cloud license servers."""
 
-    def __init__(self, target_host: str, target_port: int = 443):
+    def __init__(self, target_host: str, target_port: int = 443) -> None:
         """Initialize TLS interceptor with target configuration.
 
         Args:
@@ -137,7 +137,7 @@ class TLSInterceptor:
         self.backend = default_backend()
         self._init_ca()
 
-    def _init_ca(self):
+    def _init_ca(self) -> None:
         """Initialize or load CA certificate and private key for signing intercepted certificates.
 
         Generates a new 4096-bit RSA CA certificate if one doesn't exist, or loads existing CA from disk.
@@ -157,7 +157,7 @@ class TLSInterceptor:
             self.ca_key = rsa.generate_private_key(
                 public_exponent=65537,
                 key_size=4096,
-                backend=self.backend
+                backend=self.backend,
             )
 
             subject = issuer = x509.Name([
@@ -203,7 +203,7 @@ class TLSInterceptor:
                 f.write(self.ca_key.private_bytes(
                     encoding=serialization.Encoding.PEM,
                     format=serialization.PrivateFormat.TraditionalOpenSSL,
-                    encryption_algorithm=serialization.NoEncryption()
+                    encryption_algorithm=serialization.NoEncryption(),
                 ))
 
     def generate_certificate(self, hostname: str) -> Tuple[x509.Certificate, rsa.RSAPrivateKey]:
@@ -219,7 +219,7 @@ class TLSInterceptor:
         private_key = rsa.generate_private_key(
             public_exponent=65537,
             key_size=2048,
-            backend=self.backend
+            backend=self.backend,
         )
 
         subject = x509.Name([
@@ -288,7 +288,7 @@ class TLSInterceptor:
 class ProtocolStateMachine:
     """State machine for tracking cloud license protocol authentication and validation flows."""
 
-    def __init__(self, protocol_type: ProtocolType):
+    def __init__(self, protocol_type: ProtocolType) -> None:
         """Initialize protocol state machine.
 
         Args:
@@ -302,7 +302,7 @@ class ProtocolStateMachine:
         self.transitions = {}
         self._init_transitions()
 
-    def _init_transitions(self):
+    def _init_transitions(self) -> None:
         """Initialize valid state transition mappings for license protocol flows."""
         self.transitions = {
             LicenseState.INITIAL: [LicenseState.AUTHENTICATING],
@@ -333,7 +333,7 @@ class ProtocolStateMachine:
         logger.warning(f"Invalid state transition: {self.state} -> {new_state}")
         return False
 
-    def store_token(self, token_type: str, token: str):
+    def store_token(self, token_type: str, token: str) -> None:
         """Store an authentication/authorization token with expiration tracking.
 
         Args:
@@ -344,7 +344,7 @@ class ProtocolStateMachine:
         self.tokens[token_type] = {
             "token": token,
             "timestamp": time.time(),
-            "expires_at": time.time() + 3600
+            "expires_at": time.time() + 3600,
         }
 
     def get_token(self, token_type: str) -> Optional[str]:
@@ -362,7 +362,7 @@ class ProtocolStateMachine:
             return token_data["token"]
         return None
 
-    def store_session_data(self, key: str, value: Any):
+    def store_session_data(self, key: str, value: Any) -> None:
         """Store arbitrary session data for protocol context.
 
         Args:
@@ -388,7 +388,7 @@ class ProtocolStateMachine:
 class ResponseSynthesizer:
     """Synthesizes authentic-looking license validation responses for various cloud protocols."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize response synthesizer with RSA key generation and response templates.
 
         Raises:
@@ -403,7 +403,7 @@ class ResponseSynthesizer:
         self.templates = {}
         self._init_templates()
 
-    def _init_templates(self):
+    def _init_templates(self) -> None:
         """Initialize response templates for HTTP REST, SOAP, and other protocols."""
         self.templates = {
             ProtocolType.HTTP_REST: {
@@ -459,7 +459,7 @@ class ResponseSynthesizer:
             self.rsa_keys[key_id] = rsa.generate_private_key(
                 public_exponent=65537,
                 key_size=2048,
-                backend=self.backend
+                backend=self.backend,
             )
         return self.rsa_keys[key_id]
 
@@ -751,7 +751,7 @@ class ResponseSynthesizer:
                 "expires_at": int(time.time() + 31536000),
                 "features": [],
                 "limits": {"users": 999999, "api_calls": -1, "storage": -1},
-            }
+            },
         }
 
         return self._encode_protobuf(response_data)
@@ -776,7 +776,7 @@ class ResponseSynthesizer:
             buf.append(value)
             return bytes(buf)
 
-        def encode_field(field_num: int, value: Any):
+        def encode_field(field_num: int, value: Any) -> None:
             if isinstance(value, str):
                 wire_type = 2
                 tag = (field_num << 3) | wire_type
@@ -825,15 +825,15 @@ class ResponseSynthesizer:
                 "data": {
                     "status": "active",
                     "valid": True,
-                    "expires": int(time.time() + 365 * 86400)
-                }
+                    "expires": int(time.time() + 365 * 86400),
+                },
             },
             "heartbeat": {"op": 11, "type": "HEARTBEAT_ACK"},
             "auth_success": {
                 "op": 0,
                 "type": "AUTH_SUCCESS",
-                "data": {"token": self.generate_jwt({}), "user_id": "intellicrack"}
-            }
+                "data": {"token": self.generate_jwt({}), "user_id": "intellicrack"},
+            },
         }
 
         message = frames.get(message_type, frames["license_valid"])
@@ -884,7 +884,7 @@ class ResponseSynthesizer:
 class MITMProxyAddon:
     """mitmproxy addon for intercepting and modifying license server traffic."""
 
-    def __init__(self, intercept_rules: Dict[str, Any], state_machine: ProtocolStateMachine, synthesizer: ResponseSynthesizer):
+    def __init__(self, intercept_rules: Dict[str, Any], state_machine: ProtocolStateMachine, synthesizer: ResponseSynthesizer) -> None:
         """Initialize MITM proxy addon with interception rules.
 
         Args:
@@ -899,7 +899,7 @@ class MITMProxyAddon:
         self.request_count = 0
         self.intercepted_requests = []
 
-    def request(self, flow: http.HTTPFlow):
+    def request(self, flow: http.HTTPFlow) -> None:
         """Handle intercepted HTTP request.
 
         Args:
@@ -919,7 +919,7 @@ class MITMProxyAddon:
             flow.response = http.Response.make(
                 403,
                 b"Blocked by Intellicrack",
-                {"Content-Type": "text/plain"}
+                {"Content-Type": "text/plain"},
             )
             return
 
@@ -932,7 +932,7 @@ class MITMProxyAddon:
             "headers": headers,
         })
 
-    def response(self, flow: http.HTTPFlow):
+    def response(self, flow: http.HTTPFlow) -> None:
         """Handle intercepted HTTP response.
 
         Args:
@@ -981,7 +981,7 @@ class MITMProxyAddon:
                 return True
         return False
 
-    def _apply_request_modifications(self, flow: http.HTTPFlow):
+    def _apply_request_modifications(self, flow: http.HTTPFlow) -> None:
         """Apply modifications to intercepted request.
 
         Args:
@@ -1003,7 +1003,7 @@ class MITMProxyAddon:
             except Exception as e:
                 logger.debug(f"Failed to modify request body: {e}")
 
-    def _synthesize_response(self, flow: http.HTTPFlow):
+    def _synthesize_response(self, flow: http.HTTPFlow) -> None:
         """Synthesize license validation response.
 
         Args:
@@ -1017,12 +1017,12 @@ class MITMProxyAddon:
             response_data = self.synthesizer.synthesize_rest_response(
                 url,
                 flow.request.method,
-                self._get_request_json(flow)
+                self._get_request_json(flow),
             )
             flow.response = http.Response.make(
                 200,
                 json.dumps(response_data).encode(),
-                {"Content-Type": "application/json"}
+                {"Content-Type": "application/json"},
             )
             self.state_machine.transition(LicenseState.ACTIVE)
 
@@ -1033,7 +1033,7 @@ class MITMProxyAddon:
             flow.response = http.Response.make(
                 200,
                 response_xml.encode(),
-                {"Content-Type": "text/xml"}
+                {"Content-Type": "text/xml"},
             )
             self.state_machine.transition(LicenseState.ACTIVE)
 
@@ -1047,7 +1047,7 @@ class MITMProxyAddon:
 class CloudLicenseProtocolHandler:
     """Orchestrates TLS interception, state management, and response synthesis for cloud licenses."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize cloud license protocol handler with all components."""
         self.tls_interceptor = None
         self.state_machines = {}
@@ -1084,7 +1084,7 @@ class CloudLicenseProtocolHandler:
         self.proxy_thread = threading.Thread(
             target=self._run_mitmproxy,
             args=(listen_port, state_machine),
-            daemon=True
+            daemon=True,
         )
         self.proxy_thread.start()
 
@@ -1099,7 +1099,7 @@ class CloudLicenseProtocolHandler:
             "protocol": protocol_type.value,
         }
 
-    def _configure_intercept_rules(self, target_host: str, protocol_type: ProtocolType):
+    def _configure_intercept_rules(self, target_host: str, protocol_type: ProtocolType) -> None:
         self.intercept_rules = {
             "modify": [
                 {"url_pattern": r"/license", "action": "synthesize"},
@@ -1119,11 +1119,11 @@ class CloudLicenseProtocolHandler:
                     (b'"status":"expired"', b'"status":"active"'),
                     (b'"trial":true', b'"trial":false'),
                     (b'"valid":false', b'"valid":true'),
-                ]
-            }
+                ],
+            },
         }
 
-    def _run_mitmproxy(self, listen_port: int, state_machine: ProtocolStateMachine):
+    def _run_mitmproxy(self, listen_port: int, state_machine: ProtocolStateMachine) -> None:
         opts = Options(listen_port=listen_port, ssl_insecure=True)
 
         addon = MITMProxyAddon(self.intercept_rules, state_machine, self.synthesizer)
@@ -1168,7 +1168,7 @@ class CloudLicenseProtocolHandler:
             server_url.replace("https://", "").replace("http://", "").split(":")[0],
             443,
             8080,
-            ProtocolType.FLEXNET
+            ProtocolType.FLEXNET,
         )
 
         feature_line = config.get("feature", "PRODUCT feature_v1")
@@ -1201,7 +1201,7 @@ class CloudLicenseProtocolHandler:
             server_url.replace("https://", "").replace("http://", "").split(":")[0],
             443,
             8080,
-            ProtocolType.SENTINEL
+            ProtocolType.SENTINEL,
         )
 
         v2c_data = {
@@ -1271,7 +1271,7 @@ class CloudLicenseProtocolHandler:
 class CloudLicenseBypass:
     """High-level interface for bypassing various cloud licensing systems."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize cloud license protocol handler with all components."""
         self.protocol_handler = CloudLicenseProtocolHandler()
         self.synthesizer = ResponseSynthesizer()

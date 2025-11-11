@@ -44,7 +44,7 @@ class DistributedProcessingConfigDialog(BaseDialog):
     including worker count, chunk sizes, analysis options, and pattern types.
     """
 
-    def __init__(self, binary_path: str, parent=None):
+    def __init__(self, binary_path: str, parent=None) -> None:
         """Initialize the distributed processing configuration dialog.
 
         Args:

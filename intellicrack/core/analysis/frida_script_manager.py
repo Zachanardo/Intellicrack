@@ -80,7 +80,7 @@ class ScriptResult:
 class FridaScriptManager:
     """Manages Frida script execution and results."""
 
-    def __init__(self, scripts_dir: Path):
+    def __init__(self, scripts_dir: Path) -> None:
         """Initialize the FridaScriptManager with a directory containing scripts.
 
         Args:
@@ -121,7 +121,7 @@ class FridaScriptManager:
         prefix = random.choice(prefixes)  # noqa: S311
         # Generate alphanumeric serial
         # Note: Using random module for generating fake disk serials, not cryptographic purposes
-        serial_parts = [prefix, f"{random.randint(1000, 9999)}", "".join(random.choices("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", k=8))]  # noqa: S311, S311
+        serial_parts = [prefix, f"{random.randint(1000, 9999)}", "".join(random.choices("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", k=8))]  # noqa: S311
         return "-".join(serial_parts)
 
     def _generate_motherboard_id(self) -> str:
@@ -158,7 +158,7 @@ class FridaScriptManager:
 
         return f"{brand}-{family}-{model}-{cpuid_hash}"
 
-    def _load_script_configs(self):
+    def _load_script_configs(self) -> None:
         """Load all script configurations."""
         # Define production script configurations
         script_configs = {
@@ -273,7 +273,7 @@ class FridaScriptManager:
         # Load custom script configurations from metadata
         self._load_custom_scripts()
 
-    def _load_custom_scripts(self):
+    def _load_custom_scripts(self) -> None:
         """Load custom scripts not in the predefined list."""
         for script_file in self.scripts_dir.glob("*.js"):
             if script_file.name not in self.scripts:
@@ -291,7 +291,7 @@ class FridaScriptManager:
     def _parse_script_metadata(self, script_path: Path) -> Optional[Dict[str, Any]]:
         """Parse metadata from script header."""
         try:
-            with open(script_path, "r", encoding="utf-8") as f:
+            with open(script_path, encoding="utf-8") as f:
                 content = f.read()
 
             # Look for metadata in comments
@@ -340,7 +340,7 @@ class FridaScriptManager:
 
         try:
             # Load script content
-            with open(config.path, "r", encoding="utf-8") as f:
+            with open(config.path, encoding="utf-8") as f:
                 script_content = f.read()
 
             # Inject parameters
@@ -384,7 +384,7 @@ class FridaScriptManager:
             script = session.create_script(script_content)
 
             # Set up message handler
-            def on_message(message, data):
+            def on_message(message, data) -> None:
                 self._handle_message(result, message, data, output_callback)
 
             script.on("message", on_message)
@@ -435,7 +435,7 @@ class FridaScriptManager:
 
         return "\n".join(js_params)
 
-    def _handle_message(self, result: ScriptResult, message: Dict[str, Any], data: Any, callback: Optional[Callable]):
+    def _handle_message(self, result: ScriptResult, message: Dict[str, Any], data: Any, callback: Optional[Callable]) -> None:
         """Handle messages from Frida script."""
         try:
             msg_type = message.get("type")
@@ -465,7 +465,7 @@ class FridaScriptManager:
         except Exception as e:
             logger.error(f"Failed to handle message: {e}")
 
-    def stop_script(self, session_id: str):
+    def stop_script(self, session_id: str) -> None:
         """Stop a running script."""
         if session_id in self.active_sessions:
             try:
@@ -495,7 +495,7 @@ class FridaScriptManager:
         """Get configuration for a script."""
         return self.scripts.get(script_name)
 
-    def export_results(self, session_id: str, output_path: Path):
+    def export_results(self, session_id: str, output_path: Path) -> None:
         """Export script results to file."""
         if session_id not in self.results:
             raise ValueError(f"No results for session: {session_id}")
@@ -526,7 +526,7 @@ class FridaScriptManager:
                 dump_file.write_bytes(dump)
 
     def create_custom_script(
-        self, name: str, code: str, category: ScriptCategory, parameters: Optional[Dict[str, Any]] = None
+        self, name: str, code: str, category: ScriptCategory, parameters: Optional[Dict[str, Any]] = None,
     ) -> FridaScriptConfig:
         """Create a custom Frida script."""
         script_path = self.scripts_dir / f"custom_{name}.js"
@@ -549,7 +549,7 @@ class FridaScriptManager:
 
         # Create configuration
         config = FridaScriptConfig(
-            name=name, path=script_path, category=category, description=f"Custom script: {name}", parameters=parameters or {}
+            name=name, path=script_path, category=category, description=f"Custom script: {name}", parameters=parameters or {},
         )
 
         # Register script

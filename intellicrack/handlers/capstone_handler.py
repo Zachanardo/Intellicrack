@@ -140,7 +140,7 @@ except ImportError as e:
     class CsInsn:
         """Functional instruction representation."""
 
-        def __init__(self, address, size, mnemonic, op_str, bytes_data):
+        def __init__(self, address, size, mnemonic, op_str, bytes_data) -> None:
             """Initialize instruction."""
             self.address = address
             self.size = size
@@ -195,14 +195,14 @@ except ImportError as e:
             """Check if instruction belongs to group."""
             return group_id in self.groups
 
-        def __repr__(self):
+        def __repr__(self) -> str:
             """Represent as string."""
             return f"0x{self.address:x}:\t{self.mnemonic}\t{self.op_str}"
 
     class X86Disassembler:
         """Real x86/x64 disassembler implementation."""
 
-        def __init__(self, mode):
+        def __init__(self, mode) -> None:
             """Initialize x86 disassembler."""
             self.mode = mode
             self.is_64bit = (mode & CS_MODE_64) != 0
@@ -758,7 +758,7 @@ except ImportError as e:
     class ARMDisassembler:
         """Real ARM disassembler implementation."""
 
-        def __init__(self, mode):
+        def __init__(self, mode) -> None:
             """Initialize ARM disassembler."""
             self.mode = mode
             self.is_thumb = (mode & CS_MODE_THUMB) != 0
@@ -910,7 +910,7 @@ except ImportError as e:
     class FallbackCs:
         """Functional Capstone disassembler implementation."""
 
-        def __init__(self, arch, mode):
+        def __init__(self, arch, mode) -> None:
             """Initialize disassembler."""
             self.arch = arch
             self.mode = mode
@@ -948,7 +948,7 @@ except ImportError as e:
 
             return instructions
 
-        def set_option(self, option, value):
+        def set_option(self, option, value) -> None:
             """Set disassembler option."""
             if option == CS_OPT_SYNTAX:
                 self.syntax = value
@@ -963,7 +963,7 @@ except ImportError as e:
             class ARM64Disassembler:
                 """Basic ARM64 disassembler."""
 
-                def __init__(self, mode):
+                def __init__(self, mode) -> None:
                     self.mode = mode
                     self.is_big_endian = (mode & CS_MODE_BIG_ENDIAN) != 0
 
@@ -1026,7 +1026,7 @@ except ImportError as e:
         """Get binding version."""
         return (5, 0, 0)
 
-    def debug():
+    def debug() -> None:
         """Enable debug mode."""
         logger.info("Capstone fallback debug mode enabled")
 

@@ -29,9 +29,10 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from intellicrack.core.config_manager import get_config
+if TYPE_CHECKING:
+    from intellicrack.core.config_manager import IntellicrackConfig
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +81,7 @@ class ToolValidator:
 
             # Try to get version
             try:
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     [tool_path, "--version"],
                     check=False,
                     capture_output=True,
@@ -104,7 +105,7 @@ class ToolValidator:
                     "decompilation",
                     "static_analysis",
                     "script_execution",
-                ]
+                ],
             )
 
             validation["valid"] = True
@@ -127,7 +128,7 @@ class ToolValidator:
 
         try:
             # Test basic functionality
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 [tool_path, "-v"],
                 check=False,
                 capture_output=True,
@@ -150,7 +151,7 @@ class ToolValidator:
                         "disassembly",
                         "debugging",
                         "binary_analysis",
-                    ]
+                    ],
                 )
 
                 validation["valid"] = True
@@ -177,7 +178,7 @@ class ToolValidator:
         }
 
         try:
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 [tool_path, "--version"],
                 check=False,
                 capture_output=True,
@@ -220,7 +221,7 @@ class ToolValidator:
         }
 
         try:
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 [tool_path, "--version"],
                 check=False,
                 capture_output=True,
@@ -239,7 +240,7 @@ class ToolValidator:
                         "dynamic_instrumentation",
                         "javascript_injection",
                         "process_hooking",
-                    ]
+                    ],
                 )
 
                 validation["valid"] = True
@@ -263,7 +264,7 @@ class ToolValidator:
         }
 
         try:
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 [tool_path, "--version"],
                 check=False,
                 capture_output=True,
@@ -287,7 +288,7 @@ class ToolValidator:
                     [
                         "emulation",
                         "sandboxing",
-                    ]
+                    ],
                 )
 
                 validation["valid"] = True
@@ -311,7 +312,7 @@ class ToolValidator:
         }
 
         try:
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 [tool_path, "-v"],
                 check=False,
                 capture_output=True,
@@ -328,7 +329,7 @@ class ToolValidator:
 
                 # NASM capabilities
                 validation["capabilities"].extend(
-                    ["assembly_compilation", "x86_assembly", "x64_assembly", "multiple_formats", "macro_support"]
+                    ["assembly_compilation", "x86_assembly", "x64_assembly", "multiple_formats", "macro_support"],
                 )
 
                 validation["valid"] = True
@@ -355,7 +356,7 @@ class ToolValidator:
 
         try:
             # MASM typically shows help/version info with /? flag
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 [tool_path, "/?"],
                 check=False,
                 capture_output=True,
@@ -373,7 +374,7 @@ class ToolValidator:
 
                 # MASM capabilities
                 validation["capabilities"].extend(
-                    ["assembly_compilation", "x86_assembly", "x64_assembly", "microsoft_formats", "macro_support", "masm_syntax"]
+                    ["assembly_compilation", "x86_assembly", "x64_assembly", "microsoft_formats", "macro_support", "masm_syntax"],
                 )
 
                 validation["valid"] = True
@@ -400,7 +401,7 @@ class ToolValidator:
 
         try:
             # AccessChk shows version info with -accepteula flag to avoid EULA dialog
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 [tool_path, "-accepteula", "-?"],
                 check=False,
                 capture_output=True,
@@ -427,7 +428,7 @@ class ToolValidator:
                         "service_permissions",
                         "process_permissions",
                         "token_analysis",
-                    ]
+                    ],
                 )
 
                 validation["valid"] = True
@@ -446,7 +447,7 @@ class ToolValidator:
 class AdvancedToolDiscovery:
     """Advanced tool discovery with intelligent search and validation."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize tool discovery system."""
         self.validators = {
             "ghidra": ToolValidator.validate_ghidra,
@@ -465,6 +466,7 @@ class AdvancedToolDiscovery:
         }
 
         # Load configuration
+        from intellicrack.core.config_manager import get_config
         self.config = get_config()
 
         # Load discovered tools from config
@@ -592,7 +594,7 @@ class AdvancedToolDiscovery:
         if HAS_TERMINAL_MANAGER:
             try:
                 terminal_manager.log_terminal_message(
-                    f"Tool discovery completed. Found {len([t for t in results.values() if t.get('available')])} tools out of {len(results)}"
+                    f"Tool discovery completed. Found {len([t for t in results.values() if t.get('available')])} tools out of {len(results)}",
                 )
             except Exception as e:
                 logger.debug("Could not log to terminal manager: %s", e)
@@ -714,7 +716,7 @@ class AdvancedToolDiscovery:
                     "C:\\",
                     os.path.expanduser("~\\AppData\\Local"),
                     os.path.expanduser("~\\Documents"),
-                ]
+                ],
             )
         else:
             common_paths.extend(
@@ -726,7 +728,7 @@ class AdvancedToolDiscovery:
                     os.path.expanduser("~/bin"),
                     os.path.expanduser("~/.local/bin"),
                     os.path.expanduser("~/Tools"),
-                ]
+                ],
             )
 
         for base_path in common_paths:
@@ -796,7 +798,7 @@ class AdvancedToolDiscovery:
                         "C:\\ghidra",
                         "C:\\Tools\\ghidra",
                         os.path.expanduser("~\\ghidra"),
-                    ]
+                    ],
                 )
             else:
                 paths.extend(
@@ -806,7 +808,7 @@ class AdvancedToolDiscovery:
                         "/usr/share/ghidra",
                         os.path.expanduser("~/ghidra"),
                         "/Applications/ghidra",
-                    ]
+                    ],
                 )
 
         elif tool_name == "qemu":
@@ -815,7 +817,7 @@ class AdvancedToolDiscovery:
                     [
                         "C:\\Program Files\\qemu",
                         "C:\\qemu",
-                    ]
+                    ],
                 )
             else:
                 paths.extend(
@@ -823,7 +825,7 @@ class AdvancedToolDiscovery:
                         "/usr/bin",
                         "/usr/local/bin",
                         "/opt/qemu",
-                    ]
+                    ],
                 )
 
         elif tool_name == "nasm":
@@ -831,17 +833,17 @@ class AdvancedToolDiscovery:
                 paths.extend(
                     [
                         os.path.join(
-                            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "tools", "NASM"
+                            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "tools", "NASM",
                         ),  # Primary location
                         "C:\\Program Files\\NASM",
                         "C:\\Program Files (x86)\\NASM",
                         "C:\\NASM",
                         "C:\\Tools\\nasm",
                         os.path.expanduser(
-                            "~\\AppData\\Local\\Microsoft\\WinGet\\Packages\\NASM.NASM_Microsoft.Winget.Source_8wekyb3d8bbwe"
+                            "~\\AppData\\Local\\Microsoft\\WinGet\\Packages\\NASM.NASM_Microsoft.Winget.Source_8wekyb3d8bbwe",
                         ),
                         "C:\\Users\\%USERNAME%\\AppData\\Local\\Microsoft\\WinGet\\Packages\\NASM.NASM_Microsoft.Winget.Source_8wekyb3d8bbwe",
-                    ]
+                    ],
                 )
             else:
                 paths.extend(
@@ -849,7 +851,7 @@ class AdvancedToolDiscovery:
                         "/usr/bin",
                         "/usr/local/bin",
                         "/opt/nasm",
-                    ]
+                    ],
                 )
 
         elif tool_name == "masm":
@@ -865,7 +867,7 @@ class AdvancedToolDiscovery:
                             f"C:\\Program Files (x86)\\Microsoft Visual Studio\\{vs_version}\\Community\\VC\\Tools\\MSVC",
                             f"C:\\Program Files (x86)\\Microsoft Visual Studio\\{vs_version}\\Professional\\VC\\Tools\\MSVC",
                             f"C:\\Program Files (x86)\\Microsoft Visual Studio\\{vs_version}\\Enterprise\\VC\\Tools\\MSVC",
-                        ]
+                        ],
                     )
 
                 # Add Windows SDK paths
@@ -875,7 +877,7 @@ class AdvancedToolDiscovery:
                         [
                             f"C:\\Program Files (x86)\\Windows Kits\\{version}\\bin",
                             f"C:\\Program Files\\Windows Kits\\{version}\\bin",
-                        ]
+                        ],
                     )
 
                 paths.extend(
@@ -886,7 +888,7 @@ class AdvancedToolDiscovery:
                         "C:\\Tools\\masm",
                         "C:\\Program Files\\MASM",
                         "C:\\Program Files (x86)\\MASM",
-                    ]
+                    ],
                 )
 
         elif tool_name == "accesschk":
@@ -905,7 +907,7 @@ class AdvancedToolDiscovery:
                         os.path.expanduser("~\\Downloads"),
                         os.path.expanduser("~\\Documents\\Tools"),
                         os.path.expanduser("~\\AppData\\Local\\Microsoft\\WinGet\\Packages"),
-                    ]
+                    ],
                 )
 
         return paths
@@ -1238,7 +1240,7 @@ class AdvancedToolDiscovery:
                     Path("C:/ProgramData/chocolatey/lib") / tool_name,
                     Path("C:/tools") / tool_name,
                     Path.home() / "AppData/Local/Programs" / tool_name,
-                ]
+                ],
             )
 
         # Linux package managers
@@ -1249,7 +1251,7 @@ class AdvancedToolDiscovery:
                     Path("/usr/local/bin"),
                     Path("/snap/bin"),
                     Path.home() / ".local/bin",
-                ]
+                ],
             )
 
         # macOS package managers
@@ -1259,7 +1261,7 @@ class AdvancedToolDiscovery:
                     Path("/usr/local/bin"),
                     Path("/opt/homebrew/bin"),
                     Path("/Applications") / f"{tool_name}.app/Contents/MacOS",
-                ]
+                ],
             )
 
         for pm_path in pm_paths:
@@ -1339,14 +1341,14 @@ class AdvancedToolDiscovery:
                     "executables": ["python"],
                     "search_strategy": "path_based",
                     "description": "Python 2/3 fallback",
-                }
+                },
             },
             "frida": {
                 "frida-tools": {
                     "executables": ["frida-ps", "frida-trace"],
                     "search_strategy": "path_based",
                     "description": "Frida tools package",
-                }
+                },
             },
         }
 

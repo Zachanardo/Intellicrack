@@ -99,7 +99,7 @@ except ImportError:
 class GPUIntegration:
     """GPU Integration for AI models using unified system."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize GPU integration."""
         self.gpu_info = get_gpu_info()
         self.device = get_device()
@@ -159,7 +159,7 @@ class GPUIntegration:
             return gpu_autoloader.get_memory_info()
         return {}
 
-    def synchronize(self):
+    def synchronize(self) -> None:
         """Synchronize GPU operations."""
         if GPU_AUTOLOADER_AVAILABLE:
             gpu_autoloader.synchronize()

@@ -3,13 +3,14 @@
 
 import json
 import os
+import sys
 from collections import defaultdict
 from pathlib import Path
 
 
 def analyze_scan_results(json_file):
     """Parse and analyze scan results."""
-    with open(json_file, 'r') as f:
+    with open(json_file) as f:
         data = json.load(f)
 
     findings = data.get('findings', [])
@@ -61,14 +62,14 @@ def analyze_scan_results(json_file):
         'severity_counts': severity_counts,
         'findings_by_type': {k: len(v) for k, v in findings_by_type.items()},
         'samples': samples,
-        'all_findings': findings
+        'all_findings': findings,
     }
 
 if __name__ == "__main__":
     json_file = "clean_scan_results.json"
     if not os.path.exists(json_file):
         print(f"Error: {json_file} not found!")
-        exit(1)
+        sys.exit(1)
 
     results = analyze_scan_results(json_file)
 
@@ -77,7 +78,7 @@ if __name__ == "__main__":
         json.dump({
             'total': results['total'],
             'severity_counts': results['severity_counts'],
-            'findings_by_type': results['findings_by_type']
+            'findings_by_type': results['findings_by_type'],
         }, f, indent=2)
 
     print("\nAnalysis complete. Summary saved to analysis_summary.json")

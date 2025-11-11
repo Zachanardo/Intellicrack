@@ -75,7 +75,7 @@ class RestrictedUnpickler(pickle.Unpickler):
         raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
 
 
-def secure_pickle_dump(obj, file_path):
+def secure_pickle_dump(obj, file_path) -> None:
     """Securely dump object with integrity check."""
     # Serialize object
     data = pickle.dumps(obj)
@@ -145,15 +145,12 @@ class CacheEntry:
 
             # Check file size
             current_size = os.path.getsize(file_path)
-            if current_size != self.file_size:
-                return False
-
-            return True
+            return current_size == self.file_size
         except Exception as e:
             self.logger.error("Exception in analysis_cache: %s", e)
             return False
 
-    def update_access(self):
+    def update_access(self) -> None:
         """Update access statistics."""
         self.access_count += 1
         self.last_access = time.time()
@@ -199,7 +196,7 @@ class AnalysisCache:
         max_entries: int = 1000,
         max_size_mb: int = 100,
         auto_save: bool = True,
-    ):
+    ) -> None:
         """Initialize cache.
 
         Args:
@@ -414,7 +411,7 @@ class AnalysisCache:
                         "access_count": entry.access_count,
                         "size_kb": len(str(entry.data)) / 1024,
                         "age_hours": (time.time() - entry.timestamp) / 3600,
-                    }
+                    },
                 )
 
         return {
@@ -521,7 +518,7 @@ class AnalysisCache:
 
         import threading
 
-        def save_worker():
+        def save_worker() -> None:
             try:
                 self.save_cache()
             except Exception as e:

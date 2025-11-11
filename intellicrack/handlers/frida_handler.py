@@ -22,7 +22,7 @@ import subprocess
 import sys
 import time
 
-from intellicrack.utils.logger import logger
+from intellicrack.utils.logger import log_all_methods, logger
 
 """
 Frida Import Handler with Production-Ready Fallbacks
@@ -69,10 +69,11 @@ except ImportError as e:
 
     # Production-ready fallback implementations for Intellicrack's binary analysis needs
 
+    @log_all_methods
     class FallbackDevice:
         """Functional device implementation for process enumeration and attachment."""
 
-        def __init__(self, device_id="local", name="Local System", device_type="local"):
+        def __init__(self, device_id="local", name="Local System", device_type="local") -> None:
             """Initialize fallback device."""
             self.id = device_id
             self.name = name
@@ -126,7 +127,7 @@ except ImportError as e:
                         use_terminal = False
 
                 # Default: Capture output silently
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     cmd,
                     capture_output=True,
                     text=True,
@@ -247,7 +248,7 @@ except ImportError as e:
                         use_terminal = False
 
                 # Default: Use subprocess.Popen
-                proc = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                proc = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     cmd,
                     cwd=cwd,
                     env=process_env,
@@ -270,22 +271,21 @@ except ImportError as e:
                 logger.error("Failed to spawn process: %s", e)
                 raise
 
-        def resume(self, pid):
+        def resume(self, pid) -> None:
             """Resume a spawned process."""
             if pid in self._attached_sessions:
                 session = self._attached_sessions[pid]
                 if hasattr(session.process, "_subprocess"):
                     # Process was spawned, just mark as resumed
                     session.process._resumed = True
-            return None
 
-        def kill(self, pid):
+        def kill(self, pid) -> None:
             """Kill a process."""
             try:
                 if sys.platform == "win32":
                     taskkill_path = shutil.which("taskkill")
                     if taskkill_path:
-                        subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                        subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                             [taskkill_path, "/F", "/PID", str(pid)],
                             check=False,
                             shell=False,  # Explicitly secure - using list format prevents shell injection
@@ -305,12 +305,12 @@ except ImportError as e:
                     return process
             return None
 
-        def inject_library_file(self, pid, path, entrypoint, data):
+        def inject_library_file(self, pid, path, entrypoint, data) -> bool:
             """Inject library into process (fallback returns success)."""
             logger.info("Library injection fallback for PID %d: %s", pid, path)
             return True
 
-        def inject_library_blob(self, pid, blob, entrypoint, data):
+        def inject_library_blob(self, pid, blob, entrypoint, data) -> bool:
             """Inject library blob into process (fallback returns success)."""
             logger.info("Library blob injection fallback for PID %d", pid)
             return True
@@ -355,10 +355,11 @@ except ImportError as e:
 
             return os.getpid()
 
+    @log_all_methods
     class FallbackProcess:
         """Functional process representation."""
 
-        def __init__(self, pid, name, subprocess_obj=None):
+        def __init__(self, pid, name, subprocess_obj=None) -> None:
             """Initialize process object."""
             self.pid = pid
             self.name = name
@@ -375,14 +376,15 @@ except ImportError as e:
             }
             return params
 
-        def __repr__(self):
+        def __repr__(self) -> str:
             """Represent as string."""
             return f"Process(pid={self.pid}, name='{self.name}')"
 
+    @log_all_methods
     class FallbackSession:
         """Functional session for script injection and interaction."""
 
-        def __init__(self, process, device):
+        def __init__(self, process, device) -> None:
             """Initialize session."""
             self.process = process
             self.device = device
@@ -426,7 +428,7 @@ except ImportError as e:
 
             return FallbackScript(source, self, name, runtime)
 
-        def detach(self):
+        def detach(self) -> None:
             """Detach from the process."""
             self._detached = True
             for handler in self._on_detached_handlers:
@@ -439,16 +441,16 @@ except ImportError as e:
             if self.process.pid in self.device._attached_sessions:
                 del self.device._attached_sessions[self.process.pid]
 
-        def on(self, event, handler):
+        def on(self, event, handler) -> None:
             """Register event handler."""
             if event == "detached":
                 self._on_detached_handlers.append(handler)
 
-        def enable_child_gating(self):
+        def enable_child_gating(self) -> None:
             """Enable child process gating."""
             logger.info("Child gating enabled (fallback mode)")
 
-        def disable_child_gating(self):
+        def disable_child_gating(self) -> None:
             """Disable child process gating."""
             logger.info("Child gating disabled (fallback mode)")
 
@@ -456,10 +458,11 @@ except ImportError as e:
             """Check if session is detached."""
             return self._detached
 
+    @log_all_methods
     class FallbackScript:
         """Functional script implementation with message handling."""
 
-        def __init__(self, source, session, name=None, runtime="v8"):
+        def __init__(self, source, session, name=None, runtime="v8") -> None:
             """Initialize script."""
             self.source = source
             self.session = session
@@ -470,7 +473,7 @@ except ImportError as e:
             self._exports = {}
             self._pending_messages = []
 
-        def load(self):
+        def load(self) -> None:
             """Load the script into the process."""
             self._loaded = True
 
@@ -480,11 +483,11 @@ except ImportError as e:
             # Send load confirmation
             self._send_internal_message({"type": "send", "payload": {"type": "ready", "script": self.name}})
 
-        def unload(self):
+        def unload(self) -> None:
             """Unload the script."""
             self._loaded = False
 
-        def on(self, event, handler):
+        def on(self, event, handler) -> None:
             """Register message handler."""
             if event == "message":
                 self._message_handlers.append(handler)
@@ -494,7 +497,7 @@ except ImportError as e:
                     msg = self._pending_messages.pop(0)
                     handler(msg, None)
 
-        def post(self, message, data=None):
+        def post(self, message, data=None) -> None:
             """Post message to script."""
             if not self._loaded:
                 logger.warning("Cannot post to unloaded script")
@@ -510,7 +513,7 @@ except ImportError as e:
             """Get script exports."""
             return self._exports
 
-        def _parse_script(self):
+        def _parse_script(self) -> None:
             """Parse script for interceptors and hooks."""
             import re
 
@@ -556,7 +559,7 @@ except ImportError as e:
 
             return None
 
-        def _send_internal_message(self, message):
+        def _send_internal_message(self, message) -> None:
             """Send message to registered handlers."""
             if self._message_handlers:
                 for handler in self._message_handlers:
@@ -580,7 +583,7 @@ except ImportError as e:
     class FallbackDeviceManager:
         """Functional device manager."""
 
-        def __init__(self):
+        def __init__(self) -> None:
             """Initialize device manager."""
             self._devices = {}
             self._local_device = FallbackDevice("local", "Local System", "local")
@@ -597,7 +600,7 @@ except ImportError as e:
             self._devices[device_id] = device
             return device
 
-        def remove_remote_device(self, address):
+        def remove_remote_device(self, address) -> None:
             """Remove a remote device."""
             device_id = f"remote-{address}"
             if device_id in self._devices:
@@ -623,23 +626,23 @@ except ImportError as e:
     class FallbackFileMonitor:
         """Functional file monitor implementation."""
 
-        def __init__(self, path):
+        def __init__(self, path) -> None:
             """Initialize file monitor."""
             self.path = path
             self._monitoring = False
             self._callbacks = []
 
-        def enable(self):
+        def enable(self) -> None:
             """Enable monitoring."""
             self._monitoring = True
             logger.info("File monitoring enabled for: %s", self.path)
 
-        def disable(self):
+        def disable(self) -> None:
             """Disable monitoring."""
             self._monitoring = False
             logger.info("File monitoring disabled for: %s", self.path)
 
-        def on(self, event, callback):
+        def on(self, event, callback) -> None:
             """Register event callback."""
             if event == "change":
                 self._callbacks.append(callback)
@@ -647,7 +650,7 @@ except ImportError as e:
     class FallbackScriptMessage:
         """Script message representation."""
 
-        def __init__(self, message_type, payload, data=None):
+        def __init__(self, message_type, payload, data=None) -> None:
             """Initialize script message."""
             self.type = message_type
             self.payload = payload

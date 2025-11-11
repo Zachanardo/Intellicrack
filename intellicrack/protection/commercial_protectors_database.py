@@ -50,7 +50,7 @@ class ProtectorSignature:
 class CommercialProtectorsDatabase:
     """Database of 50+ commercial protector signatures."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the commercial protectors database."""
         self.protectors = self._build_database()
 
@@ -1116,7 +1116,7 @@ class CommercialProtectorsDatabase:
         for api in anti_debug_apis:
             if api in file_data:
                 techniques.append(
-                    {"type": "anti-debug", "method": api.decode(), "description": f"Uses {api.decode()} API for debugger detection"}
+                    {"type": "anti-debug", "method": api.decode(), "description": f"Uses {api.decode()} API for debugger detection"},
                 )
 
         # Anti-VM checks
@@ -1140,7 +1140,7 @@ class CommercialProtectorsDatabase:
                         "type": "anti-vm",
                         "method": vm_string.decode(),
                         "description": f"Checks for {vm_string.decode()} (VM/Sandbox detection)",
-                    }
+                    },
                 )
 
         # Timing checks
@@ -1153,7 +1153,7 @@ class CommercialProtectorsDatabase:
         for api in timing_apis:
             if api in file_data:
                 techniques.append(
-                    {"type": "timing", "method": api.decode(), "description": f"Uses {api.decode()} for timing-based detection"}
+                    {"type": "timing", "method": api.decode(), "description": f"Uses {api.decode()} for timing-based detection"},
                 )
 
         # Process/DLL checks
@@ -1211,7 +1211,7 @@ class CommercialProtectorsDatabase:
                         "offset": hex(i),
                         "entropy": round(entropy, 2),
                         "likely": "encrypted" if entropy > 7.8 else "compressed",
-                    }
+                    },
                 )
 
         # Check for known crypto signatures

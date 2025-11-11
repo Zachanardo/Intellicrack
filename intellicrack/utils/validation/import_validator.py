@@ -295,7 +295,7 @@ class PluginStructureValidator:
                             "line": node.lineno,
                             "args": args,
                             "type": "function",
-                        }
+                        },
                     )
                 elif isinstance(node, ast.ClassDef):
                     # Get methods from classes
@@ -312,7 +312,7 @@ class PluginStructureValidator:
                                     "args": args,
                                     "type": "method",
                                     "class": node.name,
-                                }
+                                },
                             )
 
         except Exception as e:

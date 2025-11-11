@@ -170,7 +170,7 @@ class DeprecatedConfigAccess:
             pass
     """
 
-    def __init__(self, system_name: str):
+    def __init__(self, system_name: str) -> None:
         """Initialize deprecation context.
 
         Args:
@@ -220,7 +220,7 @@ def check_deprecated_import(module_name: str) -> None:
 
 
 # Production-ready warning configuration
-def configure_deprecation_warnings(show_warnings: bool = True, error_on_deprecated: bool = False):
+def configure_deprecation_warnings(show_warnings: bool = True, error_on_deprecated: bool = False) -> None:
     """Configure how deprecation warnings are handled.
 
     Args:

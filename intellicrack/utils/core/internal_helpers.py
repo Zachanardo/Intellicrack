@@ -142,7 +142,7 @@ def _analyze_requests(requests: list[dict[str, Any]]) -> dict[str, Any]:
                 {
                     "type": "license_check",
                     "request": req,
-                }
+                },
             )
 
     analysis["unique_hosts"] = list(analysis["unique_hosts"])
@@ -390,9 +390,9 @@ def _handle_get_info() -> dict[str, Any]:
     else:
         # For Unix-like systems, read from /proc/uptime
         try:
-            with open("/proc/uptime", "r") as f:
+            with open("/proc/uptime") as f:
                 uptime_seconds = int(float(f.readline().split()[0]))
-        except (FileNotFoundError, IOError):
+        except (OSError, FileNotFoundError):
             # Fallback to boot time
             import psutil
 
@@ -667,13 +667,13 @@ def _handle_get_license(license_id: str) -> dict[str, Any]:
             with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Intellicrack\Licenses", 0, winreg.KEY_READ) as key:
                 last_checkin_str = winreg.QueryValueEx(key, f"last_check_{license_id}")[0]
                 last_checkin = datetime.fromisoformat(last_checkin_str)
-        except (WindowsError, KeyError):
+        except (OSError, KeyError):
             last_checkin = datetime.now()
     else:
         # Unix-like systems - use config file
         config_path = Path.home() / ".config" / "intellicrack" / "license_activity.json"
         if config_path.exists():
-            with open(config_path, "r") as f:
+            with open(config_path) as f:
                 activity = json.load(f)
                 last_checkin_str = activity.get(f"last_check_{license_id}", datetime.now().isoformat())
                 last_checkin = datetime.fromisoformat(last_checkin_str)
@@ -1112,7 +1112,7 @@ def _handle_read_memory(address: int, size: int) -> bytes:
                 mem.seek(address)
                 data = mem.read(size)
                 return data if data else b"\x00" * size
-        except (OSError, IOError):
+        except OSError:
             # Fallback - try ptrace or process_vm_readv
             import os
 
@@ -1233,7 +1233,7 @@ def _handle_write_memory(address: int, data: bytes) -> bool:
                 mem.seek(address)
                 mem.write(data)
                 return True
-        except (OSError, IOError):
+        except OSError:
             # Try process_vm_writev syscall
             try:
                 import ctypes
@@ -1463,7 +1463,7 @@ def _get_memory_regions() -> list[dict[str, Any]]:
                         "rss": mmap.rss,
                         "size": mmap.size,
                         "perm": mmap.perms,
-                    }
+                    },
                 )
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error getting memory regions: %s", e)
@@ -1507,7 +1507,7 @@ def _get_network_state() -> dict[str, Any]:
                             "local": f"{conn.laddr.ip}:{conn.laddr.port}",
                             "remote": f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else None,
                             "status": conn.status,
-                        }
+                        },
                     )
                 if conn.laddr:
                     state["ports"].append(conn.laddr.port)
@@ -2563,7 +2563,7 @@ def _convert_to_gguf(model_path: str, output_path: str) -> bool:
                     from safetensors import safe_open
 
                     with safe_open(model_path, framework="np") as sf:
-                        for key in sf.keys():
+                        for key in sf:
                             tensors[key] = sf.get_tensor(key)
                             tensor_count += 1
                 except ImportError:
@@ -3491,10 +3491,10 @@ def _run_ghidra_thread(ghidra_path: str, script: str, binary: str) -> threading.
 
     """
 
-    def run_ghidra():
+    def run_ghidra() -> None:
         """Thread function to run Ghidra analysis."""
         try:
-            subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 [
                     ghidra_path,
                     binary,

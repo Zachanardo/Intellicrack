@@ -21,7 +21,7 @@ import os
 from abc import ABC, abstractmethod
 from typing import Any
 
-from intellicrack.utils.logger import logger
+from intellicrack.utils.logger import log_all_methods, logger
 
 logger.debug("Plugin base module loaded")
 
@@ -37,6 +37,7 @@ to reduce code duplication and standardize plugin initialization.
 """
 
 
+@log_all_methods
 class PluginMetadata:
     """Standard plugin metadata container."""
 
@@ -49,7 +50,7 @@ class PluginMetadata:
         categories: list[str],
         supported_formats: list[str] | None = None,
         capabilities: list[str] | None = None,
-    ):
+    ) -> None:
         """Initialize plugin metadata.
 
         Args:
@@ -83,10 +84,11 @@ class PluginMetadata:
         }
 
 
+@log_all_methods
 class PluginConfigManager:
     """Manages plugin configuration with defaults."""
 
-    def __init__(self, default_config: dict[str, Any]):
+    def __init__(self, default_config: dict[str, Any]) -> None:
         """Initialize configuration manager.
 
         Args:
@@ -112,13 +114,14 @@ class PluginConfigManager:
         return self.config.copy()
 
 
+@log_all_methods
 class BasePlugin(ABC):
     """Base class for all Intellicrack plugins.
 
     Provides standard initialization, validation, and utility methods.
     """
 
-    def __init__(self, metadata: PluginMetadata, default_config: dict[str, Any] | None = None):
+    def __init__(self, metadata: PluginMetadata, default_config: dict[str, Any] | None = None) -> None:
         """Initialize base plugin.
 
         Args:
@@ -176,7 +179,7 @@ class BasePlugin(ABC):
             if file_size > max_size:
                 return False, f"File too large: {file_size} bytes (max: {max_size})"
         except OSError as e:
-            logger.error("OS error in plugin_base: %s", e)
+            logger.exception("OS error in plugin_base: %s", e)
             return False, f"Could not get file size: {e!s}"
 
         return True, "Valid"

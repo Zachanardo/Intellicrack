@@ -90,7 +90,7 @@ class ExportInfo:
 class BinaryFileModel(ABC):
     """Abstract base class for binary file models."""
 
-    def __init__(self, file_path: str):
+    def __init__(self, file_path: str) -> None:
         """Initialize binary file model with file path validation and basic file information."""
         self.file_path = Path(file_path)
         if not self.file_path.exists():
@@ -123,7 +123,7 @@ class BinaryFileModel(ABC):
 class PEFileModel(BinaryFileModel):
     """PE file model with comprehensive structure parsing."""
 
-    def __init__(self, file_path: str):
+    def __init__(self, file_path: str) -> None:
         """Initialize PE file model with comprehensive analysis of Portable Executable structure."""
         super().__init__(file_path)
 
@@ -481,7 +481,7 @@ class PEFileModel(BinaryFileModel):
                         "certificate_expired": signing_cert.is_expired,
                         "trust_status": self.certificates.trust_status,
                         "certificate_count": len(self.certificates.certificates),
-                    }
+                    },
                 )
 
         return info

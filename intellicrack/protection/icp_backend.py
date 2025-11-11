@@ -330,7 +330,7 @@ class ICPEngineError(Exception):
 class NativeICPLibrary:
     """Direct native library interface for ICP Engine."""
 
-    def __init__(self, library_path: Optional[str] = None):
+    def __init__(self, library_path: Optional[str] = None) -> None:
         """Initialize native library interface."""
         self.lib = None
         self.functions = {}
@@ -341,7 +341,7 @@ class NativeICPLibrary:
             lib_paths = [
                 Path(library_path) if library_path else None,
                 Path(sys.prefix) / "Lib" / "site-packages" / "die",
-                Path(".") / "die",
+                Path("die"),
                 Path(os.environ.get("INTELLICRACK_ROOT", ".")) / "bin",
             ]
         else:
@@ -350,7 +350,7 @@ class NativeICPLibrary:
                 Path(library_path) if library_path else None,
                 Path("/usr/local/lib"),
                 Path("/usr/lib"),
-                Path(".") / "die",
+                Path("die"),
             ]
 
         # Attempt to load library
@@ -373,7 +373,7 @@ class NativeICPLibrary:
             self.lib = _icp_module
             logger.info("Using Python ICP module as native interface")
 
-    def _setup_functions(self):
+    def _setup_functions(self) -> None:
         """Configure function prototypes for native library."""
         if not self.lib or isinstance(self.lib, type(_icp_module)):
             return
@@ -471,7 +471,7 @@ class NativeICPLibrary:
 class ResultCache:
     """SQLite-based result caching system with invalidation."""
 
-    def __init__(self, cache_dir: Optional[Path] = None):
+    def __init__(self, cache_dir: Optional[Path] = None) -> None:
         """Initialize cache system."""
         if cache_dir is None:
             cache_dir = Path.home() / ".intellicrack" / "cache"
@@ -487,7 +487,7 @@ class ResultCache:
         # Start cache cleanup thread
         self._start_cleanup_thread()
 
-    def _init_database(self):
+    def _init_database(self) -> None:
         """Initialize SQLite cache database."""
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
@@ -514,10 +514,10 @@ class ResultCache:
                 ON cache(file_path)
             """)
 
-    def _start_cleanup_thread(self):
+    def _start_cleanup_thread(self) -> None:
         """Start background thread for cache cleanup."""
 
-        def cleanup_worker():
+        def cleanup_worker() -> None:
             while True:
                 time.sleep(3600)  # Run every hour
                 self._cleanup_old_entries()
@@ -525,7 +525,7 @@ class ResultCache:
         thread = threading.Thread(target=cleanup_worker, daemon=True)
         thread.start()
 
-    def _cleanup_old_entries(self, max_age_days: int = 7):
+    def _cleanup_old_entries(self, max_age_days: int = 7) -> None:
         """Remove old cache entries."""
         cutoff_time = time.time() - (max_age_days * 86400)
 
@@ -602,7 +602,7 @@ class ResultCache:
             logger.debug(f"Cache get error: {e}")
             return None
 
-    def put(self, file_path: str, scan_mode: str, result: Dict[str, Any]):
+    def put(self, file_path: str, scan_mode: str, result: Dict[str, Any]) -> None:
         """Store result in cache."""
         try:
             # Store in memory cache
@@ -634,7 +634,7 @@ class ResultCache:
         except Exception as e:
             logger.debug(f"Cache put error: {e}")
 
-    def invalidate(self, file_path: str):
+    def invalidate(self, file_path: str) -> None:
         """Invalidate cache entries for a file."""
         try:
             # Remove from memory cache
@@ -680,7 +680,7 @@ class ResultCache:
 class ParallelScanner:
     """Parallel scanning coordinator for batch analysis."""
 
-    def __init__(self, max_workers: int = 4):
+    def __init__(self, max_workers: int = 4) -> None:
         """Initialize parallel scanner."""
         self.max_workers = max_workers
         self.executor = ThreadPoolExecutor(max_workers=max_workers)
@@ -690,7 +690,7 @@ class ParallelScanner:
         self.active_scans = set()
 
     async def scan_files_parallel(
-        self, file_paths: List[str], scan_mode: ScanMode, progress_callback: Optional[callable] = None
+        self, file_paths: List[str], scan_mode: ScanMode, progress_callback: Optional[callable] = None,
     ) -> Dict[str, ICPScanResult]:
         """Scan multiple files in parallel with progress tracking."""
         results = {}
@@ -727,25 +727,24 @@ class ParallelScanner:
         def do_scan():
             try:
                 # Memory map file for efficient access
-                with open(file_path, "rb") as f:
-                    with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ):
-                        # Perform native scan
-                        scan_flags = self._get_scan_flags(scan_mode)
-                        result_text = self.native_lib.scan_file_native(file_path, scan_flags)
+                with open(file_path, "rb") as f, mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ):
+                    # Perform native scan
+                    scan_flags = self._get_scan_flags(scan_mode)
+                    result_text = self.native_lib.scan_file_native(file_path, scan_flags)
 
-                        # Get additional data
-                        entropy = self.native_lib.get_entropy_native(file_path)
+                    # Get additional data
+                    entropy = self.native_lib.get_entropy_native(file_path)
 
-                        # Parse result
-                        scan_result = ICPScanResult.from_icp_text(file_path, result_text)
+                    # Parse result
+                    scan_result = ICPScanResult.from_icp_text(file_path, result_text)
 
-                        # Add entropy metadata
-                        if not hasattr(scan_result, "metadata"):
-                            scan_result.metadata = {}
-                        scan_result.metadata["entropy"] = entropy
-                        scan_result.metadata["entropy_high"] = entropy > 7.5
+                    # Add entropy metadata
+                    if not hasattr(scan_result, "metadata"):
+                        scan_result.metadata = {}
+                    scan_result.metadata["entropy"] = entropy
+                    scan_result.metadata["entropy_high"] = entropy > 7.5
 
-                        return scan_result
+                    return scan_result
 
             except Exception as e:
                 logger.error(f"Native scan error: {e}")
@@ -767,7 +766,7 @@ class ParallelScanner:
 
         return flags.get(scan_mode, 0)
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown the parallel scanner."""
         self.executor.shutdown(wait=True)
 
@@ -812,7 +811,7 @@ class ICPBackend:
 
     """
 
-    def __init__(self, engine_path: str | None = None, enable_cache: bool = True):
+    def __init__(self, engine_path: str | None = None, enable_cache: bool = True) -> None:
         """Initialize ICP backend with native integration.
 
         Args:
@@ -947,7 +946,7 @@ class ICPBackend:
                                     ],
                                 }
                                 for info in result.file_infos
-                            ]
+                            ],
                         }
                         self.cache.put(str(file_path), scan_mode.value, cache_data)
 
@@ -1032,7 +1031,7 @@ class ICPBackend:
                             "modified": stat_info.st_mtime,
                             "created": getattr(stat_info, "st_birthtime", stat_info.st_ctime),
                             "permissions": oct(stat_info.st_mode),
-                        }
+                        },
                     )
                 except Exception as e:
                     logger.debug(f"Could not get file info: {e}")
@@ -1299,7 +1298,7 @@ class ICPBackend:
             return self.cache.get_stats()
         return {"cache_enabled": False}
 
-    def invalidate_cache(self, file_path: str):
+    def invalidate_cache(self, file_path: str) -> None:
         """Invalidate cache for a specific file."""
         if self.cache:
             self.cache.invalidate(file_path)
@@ -1308,7 +1307,7 @@ class ICPBackend:
         """Get error recovery statistics."""
         return {"last_error": self.last_error, "error_count": self.error_count, "max_retries": self.max_retries}
 
-    def reset_error_state(self):
+    def reset_error_state(self) -> None:
         """Reset error tracking state."""
         self.last_error = None
         self.error_count = 0
@@ -1410,7 +1409,7 @@ class ICPBackend:
                                 "string": current_string,
                                 "length": len(current_string),
                                 "type": "ASCII",
-                            }
+                            },
                         )
                     current_string = ""
 
@@ -1422,7 +1421,7 @@ class ICPBackend:
                         "string": current_string,
                         "length": len(current_string),
                         "type": "ASCII",
-                    }
+                    },
                 )
 
             return strings
@@ -1484,7 +1483,7 @@ class ICPBackend:
                         "raw_offset": 0,
                         "characteristics": 0,
                         "entropy": self.get_file_entropy(file_path),
-                    }
+                    },
                 )
 
             return sections
@@ -1544,7 +1543,7 @@ class ICPBackend:
 
         return scan_result
 
-    def _merge_supplemental_detections(self, scan_result: ICPScanResult, supplemental_data: dict[str, Any]):
+    def _merge_supplemental_detections(self, scan_result: ICPScanResult, supplemental_data: dict[str, Any]) -> None:
         """Merge supplemental analysis findings into ICP detections."""
         try:
             # Process YARA pattern findings
@@ -1753,7 +1752,7 @@ class ICPBackend:
                         "severity": indicator.get("severity", "low"),
                         "description": indicator.get("description", ""),
                         "confidence": indicator.get("confidence", 0.5),
-                    }
+                    },
                 )
 
             # Firmware security indicators
@@ -1767,7 +1766,7 @@ class ICPBackend:
                         "description": indicator.get("description", ""),
                         "file": indicator.get("file", ""),
                         "remediation": indicator.get("remediation", ""),
-                    }
+                    },
                 )
 
             # Memory forensics security indicators
@@ -1780,7 +1779,7 @@ class ICPBackend:
                         "severity": indicator.get("severity", "low"),
                         "description": indicator.get("description", ""),
                         "evidence": indicator.get("evidence", {}),
-                    }
+                    },
                 )
 
         except Exception as e:
@@ -1804,7 +1803,7 @@ class ICPBackend:
                             "tools": ["UPX", "PEiD", "Universal Unpacker"],
                             "difficulty": "medium",
                             "description": f"Use specialized unpacker for {packer}",
-                        }
+                        },
                     )
 
             # YARA-based recommendations
@@ -1818,7 +1817,7 @@ class ICPBackend:
                             "tools": ["Debugger", "Hex Editor", "Patch Tool"],
                             "difficulty": "high",
                             "description": f"Patch or bypass {pattern.get('description', 'protection mechanism')}",
-                        }
+                        },
                     )
 
             # Firmware-based recommendations
@@ -1832,7 +1831,7 @@ class ICPBackend:
                             "tools": ["Binwalk", "Ghidra", "Radare2"],
                             "difficulty": "medium",
                             "description": f"Extract and analyze embedded component at offset {component.get('offset', 0)}",
-                        }
+                        },
                     )
 
             # Memory-based recommendations
@@ -1845,7 +1844,7 @@ class ICPBackend:
                         "tools": ["Volatility", "Process Hacker", "Debugging"],
                         "difficulty": "high",
                         "description": "Analyze runtime behavior and memory layout for bypass opportunities",
-                    }
+                    },
                 )
 
         except Exception as e:

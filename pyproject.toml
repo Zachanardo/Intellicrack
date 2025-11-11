@@ -1,14 +1,11 @@
 [build-system]
-requires = [
-  "setuptools>=75.8.2",
-  "wheel"
-]
+requires = ["setuptools>=75.8.2", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "Intellicrack"
 version = "0.1.0"
-authors = [ { name = "Zachary Flint", email = "zach.flint2@gmail.com" } ]
+authors = [{ name = "Zachary Flint", email = "zach.flint2@gmail.com" }]
 description = "Intellicrack: Advanced Binary Analysis and Security Research Framework with AI-driven capabilities"
 readme = "README.md"
 license = "GPL-3.0-or-later"
@@ -390,7 +387,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-linting = [ "yamllint>=1.35.1" ]
+linting = ["yamllint>=1.35.1"]
 
 [project.urls]
 Homepage = "https://github.com/zacharyflint/intellicrack"
@@ -479,7 +476,7 @@ intellicrack = [
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-testpaths = [ "tests" ]
+testpaths = ["tests"]
 addopts = [
   "-ra",
   "--strict-markers",
@@ -502,20 +499,13 @@ norecursedirs = [
   "__pycache__",
   "*.egg-info",
 ]
-python_files = [
-  "test_*.py",
-  "*_test.py"
-]
-python_classes = [ "Test*" ]
-python_functions = [ "test_*" ]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
 
 [tool.black]
 line-length = 100
-target-version = [
-  'py310',
-  'py311',
-  'py312'
-]
+target-version = ['py310', 'py311', 'py312']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
@@ -635,7 +625,7 @@ ignore_errors = true
 [tool.ty]
 
 [tool.ty.src]
-include = [ "intellicrack" ]
+include = ["intellicrack"]
 exclude = [
   "tests",
   "dev",
@@ -662,7 +652,7 @@ exclude = [
 [tool.ty.environment]
 python-platform = "win32"
 python-version = "3.12"
-root = [ "intellicrack" ]
+root = ["intellicrack"]
 
 [tool.ty.rules]
 possibly-unresolved-reference = "warn"
@@ -681,31 +671,28 @@ unresolved-attribute = "warn"
 output-format = "concise"
 
 [[tool.ty.overrides]]
-include = [
-  "tests/**",
-  "**/test_*.py"
-]
+include = ["tests/**", "**/test_*.py"]
 
 [tool.ty.overrides.rules]
 possibly-unresolved-reference = "ignore"
 unresolved-reference = "ignore"
 
 [[tool.ty.overrides]]
-include = [ "intellicrack/ai/**" ]
+include = ["intellicrack/ai/**"]
 
 [tool.ty.overrides.rules]
 call-non-callable = "warn"
 invalid-argument-type = "warn"
 
 [[tool.ty.overrides]]
-include = [ "intellicrack/core/**" ]
+include = ["intellicrack/core/**"]
 
 [tool.ty.overrides.rules]
 invalid-assignment = "error"
 invalid-return-type = "error"
 
 [tool.pyright]
-include = [ "intellicrack" ]
+include = ["intellicrack"]
 exclude = [
   "**/__pycache__",
   "**/node_modules",
@@ -752,10 +739,7 @@ analyzeUnannotatedFunctions = true
 enableTypeIgnoreComments = true
 
 [tool.pylint.main]
-extension-pkg-allow-list = [
-  "PyQt5",
-  "PyQt6"
-]
+extension-pkg-allow-list = ["PyQt5", "PyQt6"]
 ignore-paths = [
   "^tests/.*",
   "^dev/.*",
@@ -985,20 +969,99 @@ select = [
   "RUF",
 ]
 
+# Rules that should NEVER be auto-fixed (will break code)
+unfixable = [
+  "TRY400",  # Removes exception variables - causes NameError
+  "TID252",  # Relative→absolute imports - breaks circular imports
+  "Q000",    # Quote changes - breaks SQL/regex/Frida scripts
+  "Q001",    # Multiline quote changes - same risk as Q000
+  "UP035",   # Deprecated imports - may remove intentional fallbacks
+  "UP012",   # unnecessary-encode-utf8 - binary analysis needs explicit encoding
+  "RUF013",  # implicit-optional - changes function signatures
+  "PLW1510", # subprocess check=True - breaks intentional error ignoring
+  "EM101",   # exception message changes - may break error parsing
+  "EM102",   # f-string in exception - may break error parsing
+  "RUF022",  # sorts __all__ - breaks initialization order
+  "RUF019",  # changes dict access behavior
+  "PERF102", # dict iteration - may break concurrent modification
+  "PLR0402", # import structure - may break circular imports
+  "RET503",  # adds explicit returns - may affect control flow
+  "FURB122", # file writing optimization - may break generators
+  "PLR1722", # sys.exit → exit (backwards advice!)
+]
+
+# Rules to ignore (stylistic preferences, not harmful)
+ignore = [
+  # CLI output (user-facing)
+  "T201",   # print() - CLI tool needs output
+  "T203",   # pprint() - debugging tool
+  "ERA001", # commented-out-code - reference implementations
+
+  # Type annotation style (cosmetic, both forms work)
+  "UP006", # List[str] → list[str]
+  "UP045", # Optional[X] → X | None
+  "UP007", # Union[X,Y] → X | Y
+
+  # Control flow style (readability preferences)
+  "RET504", # unnecessary-assign
+  "RET505", # superfluous-else-return
+  "RET506", # superfluous-else-raise
+  "RET507", # superfluous-else-continue
+  "RET508", # superfluous-else-break
+
+  # Code structure style (readability)
+  "SIM102",  # collapsible-if
+  "SIM108",  # if-else vs ternary
+  "SIM110",  # reimplemented-builtin
+  "SIM114",  # if-with-same-arms
+  "SIM401",  # if-else vs dict.get
+  "PLR5501", # collapsible-else-if
+
+  # Security tool requirements (intentional for research)
+  "S101", # assert - validation in security tools
+  "S603", # subprocess - binary analysis requires it
+  "S607", # partial paths - tool discovery needs PATH
+  "S608", # hardcoded-sql-expression - template queries
+
+  # Import style (intentional patterns)
+  "F401",    # unused-import - __init__ exports, lazy imports
+  "F403",    # import-star - API exports
+  "PLC0415", # import-outside-toplevel - lazy loading
+
+  # Performance style (explicit loops sometimes clearer)
+  "PERF401", # manual-list-comprehension
+  "PERF403", # manual-dict-comprehension
+
+  # Binary operation style (explicit for binary analysis)
+  "PIE790",  # unnecessary-placeholder
+  "PIE810",  # multiple-starts-ends-with
+  "FURB161", # bit-count
+  "FURB166", # int-on-sliced-str
+
+  # Exception handling style
+  "TRY003", # raise-vanilla-args
+  "TRY300", # try-consider-else
+  "TRY301", # raise-within-try
+
+  # Type checking style
+  "ANN401", # any-type - dynamic binary data
+
+  # Loop variable style
+  "PLW2901", # redefined-loop-name
+
+  # Conflicting docstring rules (keep D211/D212, ignore D203/D213)
+  "D203", # incorrect-blank-line-before-class (conflicts with D211)
+  "D213", # multi-line-summary-second-line (conflicts with D212)
+]
+
 [tool.ruff.lint.mccabe]
 max-complexity = 30
 
 [tool.ruff.lint.pep8-naming]
-classmethod-decorators = [
-  "classmethod",
-  "pydantic.validator"
-]
+classmethod-decorators = ["classmethod", "pydantic.validator"]
 
 [tool.ruff.lint.flake8-bugbear]
-extend-immutable-calls = [
-  "fastapi.Depends",
-  "fastapi.Query"
-]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query"]
 
 [tool.vulture]
 exclude = [
@@ -1040,12 +1103,7 @@ ignore_decorators = [
   "@classmethod",
   "@property",
 ]
-ignore_names = [
-  "*test_*",
-  "*Test*",
-  "setUp",
-  "tearDown",
-]
+ignore_names = ["*test_*", "*Test*", "setUp", "tearDown"]
 min_confidence = 80
 paths = ["intellicrack"]
 sort_by_size = true
@@ -1078,17 +1136,14 @@ exclude_dirs = [
   "CLI Coding",
   "Screenshots",
 ]
-skips = [
-  "B101",
-  "B601"
-]
+skips = ["B101", "B601"]
 
 [tool.uv.sources]
 python-fx = { git = "https://github.com/Zachanardo/pyfx.git" }
 mitmproxy = { git = "https://github.com/Zachanardo/mitmproxy.git" }
 
 [tool.coverage.run]
-source = [ "intellicrack" ]
+source = ["intellicrack"]
 omit = [
   "*/.git/*",
   "*/.github/*",

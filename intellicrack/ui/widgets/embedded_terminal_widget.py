@@ -82,12 +82,12 @@ class ANSIParser:
         "47": QColor(229, 229, 229),  # Background White
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the ANSIParser with default text format."""
         self.current_format = QTextCharFormat()
         self.reset_format()
 
-    def reset_format(self):
+    def reset_format(self) -> None:
         """Reset formatting to defaults."""
         self.current_format = QTextCharFormat()
         self.current_format.setForeground(QColor(204, 204, 204))
@@ -114,10 +114,10 @@ class ANSIParser:
 
         return segments
 
-    def _apply_codes(self, codes):
+    def _apply_codes(self, codes) -> None:
         """Apply ANSI codes to current format."""
         for code in codes:
-            if code == "0" or code == "":
+            if code in {"0", ""}:
                 self.reset_format()
             elif code == "1":
                 font = self.current_format.font()
@@ -163,7 +163,7 @@ class EmbeddedTerminalWidget(QWidget):
     process_finished = pyqtSignal(int, int)
     output_received = pyqtSignal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize terminal widget with PTY and UI components."""
         super().__init__(parent)
 
@@ -189,7 +189,7 @@ class EmbeddedTerminalWidget(QWidget):
 
         logger.info("EmbeddedTerminalWidget initialized")
 
-    def _show_welcome_message(self):
+    def _show_welcome_message(self) -> None:
         """Display welcome message and instructions in terminal."""
         welcome_text = (
             "\033[1;36m╔═══════════════════════════════════════════════════════════════╗\033[0m\r\n"
@@ -221,7 +221,7 @@ class EmbeddedTerminalWidget(QWidget):
 
         self._handle_output(welcome_text, is_error=False)
 
-    def _show_prompt(self):
+    def _show_prompt(self) -> None:
         """Display command prompt when no process is running."""
         prompt_format = QTextCharFormat()
         prompt_format.setForeground(QColor(0, 255, 0))
@@ -240,7 +240,7 @@ class EmbeddedTerminalWidget(QWidget):
         self.terminal_display.setTextCursor(cursor)
         self.terminal_display.ensureCursorVisible()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         """Set up terminal display and input widgets."""
         from intellicrack.handlers.pyqt6_handler import QSizePolicy
 
@@ -276,7 +276,7 @@ class EmbeddedTerminalWidget(QWidget):
 
         self.setMinimumSize(600, 400)
 
-    def _show_context_menu(self, position):
+    def _show_context_menu(self, position) -> None:
         """Show context menu for copy/paste operations."""
         menu = QMenu(self)
 
@@ -306,19 +306,19 @@ class EmbeddedTerminalWidget(QWidget):
 
         menu.exec(self.terminal_display.mapToGlobal(position))
 
-    def _copy_selection(self):
+    def _copy_selection(self) -> None:
         """Copy selected text to clipboard."""
         cursor = self.terminal_display.textCursor()
         if cursor.hasSelection():
             QApplication.clipboard().setText(cursor.selectedText())
 
-    def _paste_from_clipboard(self):
+    def _paste_from_clipboard(self) -> None:
         """Paste text from clipboard and send to process."""
         text = QApplication.clipboard().text()
         if text and self._process and self._running:
             self.send_input(text)
 
-    def _export_log(self):
+    def _export_log(self) -> None:
         """Export terminal log to file."""
         from intellicrack.handlers.pyqt6_handler import QFileDialog
 
@@ -397,7 +397,7 @@ class EmbeddedTerminalWidget(QWidget):
             self._handle_output(f"\r\n[ERROR] Failed to start process: {e}\r\n", is_error=True)
             return None
 
-    def _read_output(self):
+    def _read_output(self) -> None:
         """Read output from process in background thread."""
         try:
             while self._running and self._process:
@@ -435,7 +435,7 @@ class EmbeddedTerminalWidget(QWidget):
             logger.error(f"Error in output reader thread: {e}")
             self._running = False
 
-    def _process_output_queue(self):
+    def _process_output_queue(self) -> None:
         """Process queued output in main thread (thread-safe UI update)."""
         try:
             while not self._output_queue.empty():
@@ -444,7 +444,7 @@ class EmbeddedTerminalWidget(QWidget):
         except queue.Empty:
             pass
 
-    def _handle_output(self, data, is_error=False):
+    def _handle_output(self, data, is_error=False) -> None:
         """Handle and display process output with ANSI parsing."""
         if is_error:
             cursor = self.terminal_display.textCursor()
@@ -473,7 +473,7 @@ class EmbeddedTerminalWidget(QWidget):
 
         self._manage_scrollback()
 
-    def _manage_scrollback(self):
+    def _manage_scrollback(self) -> None:
         """Manage scrollback buffer to prevent excessive memory usage."""
         document = self.terminal_display.document()
         if document.lineCount() > self._max_lines:
@@ -486,7 +486,7 @@ class EmbeddedTerminalWidget(QWidget):
                 cursor.removeSelectedText()
                 cursor.deleteChar()
 
-    def _handle_keyboard_input(self, event):
+    def _handle_keyboard_input(self, event) -> None:
         """Handle keyboard input and forward to process or buffer locally."""
         key = event.key()
         modifiers = event.modifiers()
@@ -518,7 +518,7 @@ class EmbeddedTerminalWidget(QWidget):
                 return
 
         if self._process and self._running:
-            if key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter:
+            if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
                 self.send_input("\r\n")
             elif key == Qt.Key.Key_Backspace:
                 self.send_input("\b")
@@ -537,7 +537,7 @@ class EmbeddedTerminalWidget(QWidget):
             elif text:
                 self.send_input(text)
         else:
-            if key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter:
+            if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
                 self._execute_command()
             elif key == Qt.Key.Key_Backspace:
                 self._handle_backspace()
@@ -546,7 +546,7 @@ class EmbeddedTerminalWidget(QWidget):
             elif text and text.isprintable():
                 self._append_to_command_buffer(text)
 
-    def _append_to_command_buffer(self, text):
+    def _append_to_command_buffer(self, text) -> None:
         """Append text to command buffer and display it."""
         self._command_buffer += text
 
@@ -561,7 +561,7 @@ class EmbeddedTerminalWidget(QWidget):
         self.terminal_display.setTextCursor(cursor)
         self.terminal_display.ensureCursorVisible()
 
-    def _handle_backspace(self):
+    def _handle_backspace(self) -> None:
         """Handle backspace key when editing command."""
         if not self._command_buffer:
             return
@@ -579,7 +579,7 @@ class EmbeddedTerminalWidget(QWidget):
 
         self.terminal_display.setTextCursor(cursor)
 
-    def _handle_delete(self):
+    def _handle_delete(self) -> None:
         """Handle delete key when editing command."""
         cursor = self.terminal_display.textCursor()
         current_pos = cursor.position()
@@ -590,7 +590,7 @@ class EmbeddedTerminalWidget(QWidget):
         cursor.movePosition(QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.KeepAnchor, 1)
         cursor.removeSelectedText()
 
-    def _execute_command(self):
+    def _execute_command(self) -> None:
         """Execute the buffered command."""
         if not self._command_buffer.strip():
             cursor = self.terminal_display.textCursor()
@@ -617,7 +617,7 @@ class EmbeddedTerminalWidget(QWidget):
             else:
                 self.start_process(["sh", "-c", command], cwd=os.getcwd())
 
-    def send_input(self, text):
+    def send_input(self, text) -> None:
         """Send text input to the running process.
 
         Args:
@@ -635,7 +635,7 @@ class EmbeddedTerminalWidget(QWidget):
         except Exception as e:
             logger.error(f"Error sending input to process: {e}")
 
-    def stop_process(self):
+    def stop_process(self) -> None:
         """Stop the current process."""
         if not self._process:
             return
@@ -669,7 +669,7 @@ class EmbeddedTerminalWidget(QWidget):
 
         QTimer.singleShot(100, self._show_prompt)
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear terminal display."""
         self.terminal_display.clear()
         self._ansi_parser.reset_format()

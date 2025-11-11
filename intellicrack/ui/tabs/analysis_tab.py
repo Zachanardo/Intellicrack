@@ -60,7 +60,7 @@ from .base_tab import BaseTab
 class CollapsibleGroupBox(QGroupBox):
     """A collapsible group box widget for cleaner UI organization."""
 
-    def __init__(self, title="", parent=None):
+    def __init__(self, title="", parent=None) -> None:
         """Initialize collapsible group box with title and parent."""
         super().__init__(title, parent)
         self.setCheckable(True)
@@ -73,14 +73,14 @@ class CollapsibleGroupBox(QGroupBox):
         main_layout.addWidget(self.content_widget)
         self.content_widget.setVisible(False)
 
-    def _on_toggled(self, checked):
+    def _on_toggled(self, checked) -> None:
         self.content_widget.setVisible(checked)
 
-    def add_widget(self, widget):
+    def add_widget(self, widget) -> None:
         """Add widget to the collapsible content area."""
         self.content_layout.addWidget(widget)
 
-    def add_layout(self, layout):
+    def add_layout(self, layout) -> None:
         """Add layout to the collapsible content area."""
         self.content_layout.addLayout(layout)
 
@@ -92,7 +92,7 @@ class AnalysisTab(BaseTab):
     analysis_completed = pyqtSignal(str)
     protection_detected = pyqtSignal(str, str)
 
-    def __init__(self, shared_context=None, parent=None):
+    def __init__(self, shared_context=None, parent=None) -> None:
         """Initialize analysis tab with binary analysis and reverse engineering tools."""
         super().__init__(shared_context, parent)
         self.current_binary = None
@@ -117,7 +117,7 @@ class AnalysisTab(BaseTab):
             if current_binary:
                 self.on_binary_loaded(current_binary)
 
-    def setup_content(self):
+    def setup_content(self) -> None:
         """Set up the Analysis tab content with clean, organized interface."""
         main_layout = self.layout()  # Use existing layout from BaseTab
 
@@ -167,7 +167,7 @@ class AnalysisTab(BaseTab):
 
         self.analysis_profile_combo = QComboBox()
         self.analysis_profile_combo.setToolTip(
-            "Select a predefined analysis profile or create a custom configuration for your specific needs"
+            "Select a predefined analysis profile or create a custom configuration for your specific needs",
         )
         self.analysis_profile_combo.addItems(["Quick Scan", "Static Analysis", "Dynamic Analysis", "Full Analysis", "Custom"])
         self.analysis_profile_combo.currentTextChanged.connect(self.update_profile_settings)
@@ -184,7 +184,7 @@ class AnalysisTab(BaseTab):
         # Primary action button
         self.run_analysis_btn = QPushButton("Run Analysis")
         self.run_analysis_btn.setToolTip(
-            "Execute the selected analysis profile on the loaded binary. Requires a binary file to be loaded first"
+            "Execute the selected analysis profile on the loaded binary. Requires a binary file to be loaded first",
         )
         self.run_analysis_btn.setMinimumHeight(40)
         self.run_analysis_btn.setStyleSheet("""
@@ -813,7 +813,7 @@ class AnalysisTab(BaseTab):
 
         return panel
 
-    def update_profile_settings(self, profile_name):
+    def update_profile_settings(self, profile_name) -> None:
         """Update settings based on selected profile."""
         profiles = {
             "Quick Scan": {
@@ -887,7 +887,7 @@ class AnalysisTab(BaseTab):
             self.emulation_cb.setChecked(profile["engines"]["emulation"])
             self.sandbox_execution_cb.setChecked(profile["engines"]["sandbox"])
 
-    def run_analysis(self):
+    def run_analysis(self) -> None:
         """Run analysis based on current settings."""
         if not self.current_binary:
             # Try to get binary from app context
@@ -962,7 +962,7 @@ class AnalysisTab(BaseTab):
             # Analysis will complete through callbacks
             self.analysis_started.emit(profile.lower())
 
-    def start_static_analysis(self):  # noqa: C901
+    def start_static_analysis(self) -> None:  # noqa: C901
         """Start static analysis with selected options."""
         self.log_activity("Starting static analysis...")
         self.results_display.append("=== STATIC ANALYSIS ===\n")
@@ -1051,13 +1051,13 @@ class AnalysisTab(BaseTab):
                                     ]
                                     key_results["total_keys_found"] += len(certs)
                             except Exception as cert_error:
-                                self.log_activity(f"Certificate extraction error: {str(cert_error)}")
+                                self.log_activity(f"Certificate extraction error: {cert_error!s}")
 
                             results["crypto_keys"] = key_results
                             self.log_activity(f"Found {key_results['total_keys_found']} cryptographic keys/certificates")
 
                         except Exception as key_error:
-                            self.log_activity(f"Key extraction error: {str(key_error)}")
+                            self.log_activity(f"Key extraction error: {key_error!s}")
                             results["crypto_keys"] = {"error": str(key_error)}
 
                     if self.subscription_bypass_cb.isChecked():
@@ -1083,14 +1083,14 @@ class AnalysisTab(BaseTab):
                                             "method": "Local Server Emulation",
                                             "description": "Start local license server to intercept cloud requests",
                                             "confidence": 0.85,
-                                        }
+                                        },
                                     )
                                     bypass_results["bypass_methods"].append(
                                         {
                                             "method": "Host Redirection",
                                             "description": "Redirect license server domains to localhost",
                                             "confidence": 0.90,
-                                        }
+                                        },
                                     )
 
                                 elif sub_type.value == "server_license":
@@ -1099,26 +1099,26 @@ class AnalysisTab(BaseTab):
                                             "method": "Server Response Emulation",
                                             "description": "Emulate license server responses",
                                             "confidence": 0.80,
-                                        }
+                                        },
                                     )
                                     bypass_results["bypass_methods"].append(
                                         {
                                             "method": "Certificate Replacement",
                                             "description": "Replace server certificates for validation",
                                             "confidence": 0.75,
-                                        }
+                                        },
                                     )
 
                                 elif sub_type.value == "token_based":
                                     bypass_results["bypass_methods"].append(
-                                        {"method": "Token Generation", "description": "Generate valid JWT/OAuth tokens", "confidence": 0.70}
+                                        {"method": "Token Generation", "description": "Generate valid JWT/OAuth tokens", "confidence": 0.70},
                                     )
                                     bypass_results["bypass_methods"].append(
                                         {
                                             "method": "Token Injection",
                                             "description": "Inject pre-generated tokens into memory",
                                             "confidence": 0.85,
-                                        }
+                                        },
                                     )
 
                                 # Check for specific bypass opportunities
@@ -1132,7 +1132,7 @@ class AnalysisTab(BaseTab):
                             self.log_activity(f"Found {len(bypass_results['bypass_methods'])} potential bypass methods")
 
                         except Exception as sub_error:
-                            self.log_activity(f"Subscription bypass analysis error: {str(sub_error)}")
+                            self.log_activity(f"Subscription bypass analysis error: {sub_error!s}")
                             results["subscription_bypass"] = {"error": str(sub_error)}
 
                     return results
@@ -1141,7 +1141,7 @@ class AnalysisTab(BaseTab):
                     return {"error": str(e)}
 
             # Submit task with callback
-            def on_static_analysis_complete(results):
+            def on_static_analysis_complete(results) -> None:
                 """Display static analysis results when complete."""
                 if isinstance(results, dict) and not results.get("error"):
                     # Display crypto key extraction results
@@ -1245,7 +1245,7 @@ class AnalysisTab(BaseTab):
         else:
             self.results_display.append("Static analysis components not available\n")
 
-    def start_dynamic_monitoring(self):
+    def start_dynamic_monitoring(self) -> None:
         """Start dynamic monitoring with selected options."""
         self.log_activity("Starting dynamic monitoring...")
         self.results_display.append("\n=== DYNAMIC ANALYSIS ===\n")
@@ -1306,8 +1306,8 @@ class AnalysisTab(BaseTab):
                         if not strings_path:
                             self.results_display.append("   strings command not available\n")
                         else:
-                            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                                [strings_path, self.current_file_path], capture_output=True, text=True, timeout=10, shell=False
+                            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                                [strings_path, self.current_file_path], capture_output=True, text=True, timeout=10, shell=False,
                             )
                             if result.stdout:
                                 strings_count = len(result.stdout.split("\n"))
@@ -1344,9 +1344,9 @@ class AnalysisTab(BaseTab):
             else:
                 self.results_display.append("No binary loaded for analysis.\n")
         except Exception as e:
-            self.results_display.append(f"Dynamic analysis error: {str(e)}\n")
+            self.results_display.append(f"Dynamic analysis error: {e!s}\n")
 
-    def detect_protections(self):  # noqa: C901
+    def detect_protections(self) -> None:  # noqa: C901
         """Detect binary protections."""
         self.log_activity("Detecting protections...")
         self.results_display.append("\n=== PROTECTION DETECTION ===\n")
@@ -1479,16 +1479,16 @@ class AnalysisTab(BaseTab):
             else:
                 self.results_display.append("No binary loaded for analysis.\n")
         except Exception as e:
-            self.results_display.append(f"Protection detection error: {str(e)}\n")
+            self.results_display.append(f"Protection detection error: {e!s}\n")
 
         self._analysis_completed(True, "Analysis completed")
 
-    def stop_analysis(self):
+    def stop_analysis(self) -> None:
         """Stop current analysis."""
         self.log_activity("Analysis stopped by user")
         self._analysis_completed(False, "Analysis stopped by user")
 
-    def clear_results(self):
+    def clear_results(self) -> None:
         """Clear analysis results."""
         self.results_display.clear()
         self.results_display.setText("Analysis results cleared.")
@@ -1496,7 +1496,7 @@ class AnalysisTab(BaseTab):
         self.analysis_status.setText("Ready")
         self.log_activity("Analysis results cleared")
 
-    def _analysis_completed(self, success, message):
+    def _analysis_completed(self, success, message) -> None:
         """Re-enable re-enable UI elements after analysis completion."""
         self.run_analysis_btn.setEnabled(True)
         self.stop_analysis_btn.setEnabled(False)
@@ -1509,7 +1509,7 @@ class AnalysisTab(BaseTab):
         else:
             self.analysis_status.setText(f"FAIL {message}")
 
-    def open_hex_viewer(self):
+    def open_hex_viewer(self) -> None:
         """Open hex viewer for current binary."""
         if not self.current_binary:
             QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
@@ -1529,9 +1529,9 @@ class AnalysisTab(BaseTab):
             QMessageBox.warning(self, "Error", "Hex viewer module not available.")
         except Exception as e:
             self.log_activity(f"Error opening hex viewer: {e}")
-            QMessageBox.critical(self, "Error", f"Failed to open hex viewer: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to open hex viewer: {e!s}")
 
-    def on_binary_loaded(self, binary_info):
+    def on_binary_loaded(self, binary_info) -> None:
         """Handle binary loaded signal from app_context."""
         if isinstance(binary_info, dict):
             self.current_binary = binary_info.get("path")
@@ -1548,7 +1548,7 @@ class AnalysisTab(BaseTab):
 
             self.log_activity(f"Binary loaded in Analysis tab: {binary_info.get('name', 'Unknown')}")
 
-    def on_binary_unloaded(self):
+    def on_binary_unloaded(self) -> None:
         """Handle binary unloaded signal from app_context."""
         self.current_binary = None
         self.current_file_path = None
@@ -1569,7 +1569,7 @@ class AnalysisTab(BaseTab):
 
         self.log_activity("Binary unloaded in Analysis tab")
 
-    def _format_size(self, size_bytes):
+    def _format_size(self, size_bytes) -> str:
         """Format file size in human-readable format."""
         for unit in ["B", "KB", "MB", "GB"]:
             if size_bytes < 1024.0:
@@ -1577,7 +1577,7 @@ class AnalysisTab(BaseTab):
             size_bytes /= 1024.0
         return f"{size_bytes:.1f} TB"
 
-    def embed_hex_viewer(self):
+    def embed_hex_viewer(self) -> None:
         """Embed hex viewer in the results panel."""
         if not self.current_binary:
             # Silently return if no binary is loaded (automatic call from signal)
@@ -1613,11 +1613,11 @@ class AnalysisTab(BaseTab):
             error_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.hex_view_container.layout().addWidget(error_label)
         except Exception as e:
-            error_label = QLabel(f"Error: {str(e)}")
+            error_label = QLabel(f"Error: {e!s}")
             error_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.hex_view_container.layout().addWidget(error_label)
 
-    def view_disassembly(self):
+    def view_disassembly(self) -> None:
         """View disassembly in separate window with real disassembly functionality."""
         if not self.current_binary:
             QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
@@ -1734,7 +1734,7 @@ class AnalysisTab(BaseTab):
                 except FileNotFoundError:
                     disasm_text.setPlainText("Disassembly tools not found. Please install capstone, objdump, or radare2.")
                 except Exception as e:
-                    disasm_text.setPlainText(f"Disassembly error: {str(e)}")
+                    disasm_text.setPlainText(f"Disassembly error: {e!s}")
 
             layout.addWidget(disasm_text)
 
@@ -1754,9 +1754,9 @@ class AnalysisTab(BaseTab):
             disasm_dialog.exec()
 
         except Exception as e:
-            QMessageBox.critical(self, "Disassembly Error", f"Failed to generate disassembly: {str(e)}")
+            QMessageBox.critical(self, "Disassembly Error", f"Failed to generate disassembly: {e!s}")
 
-    def save_disassembly(self, disasm_text):
+    def save_disassembly(self, disasm_text) -> None:
         """Save disassembly to file."""
         file_path, _ = QFileDialog.getSaveFileName(
             self,
@@ -1772,9 +1772,9 @@ class AnalysisTab(BaseTab):
                 self.log_activity(f"Disassembly saved to {file_path}")
                 QMessageBox.information(self, "Success", "Disassembly saved successfully!")
             except Exception as e:
-                QMessageBox.critical(self, "Save Error", f"Failed to save disassembly: {str(e)}")
+                QMessageBox.critical(self, "Save Error", f"Failed to save disassembly: {e!s}")
 
-    def attach_to_process(self):
+    def attach_to_process(self) -> None:
         """Attach to running process for license analysis and cracking."""
         pid_text, ok = QInputDialog.getText(
             self,
@@ -1851,7 +1851,7 @@ class AnalysisTab(BaseTab):
                     f" Process is protected by anti-debugging",
                 )
 
-    def take_system_snapshot(self):
+    def take_system_snapshot(self) -> None:
         """Take a comprehensive license-focused system snapshot for differential analysis."""
         import time
 
@@ -1859,7 +1859,7 @@ class AnalysisTab(BaseTab):
         from PyQt6.QtWidgets import QProgressDialog
 
         snapshot_name, ok = QInputDialog.getText(
-            self, "License System Snapshot", "Enter snapshot name:", text=f"license_snapshot_{int(time.time())}"
+            self, "License System Snapshot", "Enter snapshot name:", text=f"license_snapshot_{int(time.time())}",
         )
 
         if ok and snapshot_name:
@@ -1877,12 +1877,12 @@ class AnalysisTab(BaseTab):
                 finished = pyqtSignal(dict)
                 error = pyqtSignal(str)
 
-                def __init__(self, snapshot_obj, name):
+                def __init__(self, snapshot_obj, name) -> None:
                     super().__init__()
                     self.snapshot_obj = snapshot_obj
                     self.name = name
 
-                def run(self):
+                def run(self) -> None:
                     try:
                         self.progress.emit(10, "Capturing system info...")
                         snapshot_data = self.snapshot_obj.capture_full_snapshot(self.name)
@@ -1894,13 +1894,13 @@ class AnalysisTab(BaseTab):
             # Create and start thread
             self.snapshot_thread = SnapshotThread(self.license_snapshot, snapshot_name)
 
-            def update_progress(value, message):
+            def update_progress(value, message) -> None:
                 progress.setValue(value)
                 progress.setLabelText(message)
                 if message:
                     self.log_activity(f"Snapshot: {message}")
 
-            def on_snapshot_complete(snapshot_data):
+            def on_snapshot_complete(snapshot_data) -> None:
                 progress.close()
 
                 # Store snapshot
@@ -1947,7 +1947,7 @@ class AnalysisTab(BaseTab):
                 if hasattr(self, "export_snapshot_btn"):
                     self.export_snapshot_btn.setEnabled(len(self.snapshots) > 0)
 
-            def on_snapshot_error(error_msg):
+            def on_snapshot_error(error_msg) -> None:
                 progress.close()
                 self.log_activity(f"Snapshot error: {error_msg}")
                 QMessageBox.critical(self, "Snapshot Error", f"Failed to capture snapshot:\n{error_msg}")
@@ -1960,7 +1960,7 @@ class AnalysisTab(BaseTab):
             # Start capture
             self.snapshot_thread.start()
 
-    def update_entropy_visualization(self):
+    def update_entropy_visualization(self) -> None:
         """Update entropy visualization with current file data."""
         if not self.current_file_path:
             return
@@ -1982,7 +1982,7 @@ class AnalysisTab(BaseTab):
         except Exception as e:
             self.log_activity(f"Failed to update entropy visualization: {e}")
 
-    def update_structure_visualization(self):
+    def update_structure_visualization(self) -> None:
         """Update structure visualization with current file data."""
         if not self.current_file_path:
             return
@@ -2087,13 +2087,13 @@ class AnalysisTab(BaseTab):
         except Exception as e:
             self.log_activity(f"Failed to update structure visualization: {e}")
 
-    def clear_analysis_cache(self):
+    def clear_analysis_cache(self) -> None:
         """Clear analysis cache."""
         self.log_activity("Clearing analysis cache...")
         self.analysis_results = {}
         QMessageBox.information(self, "Cache Cleared", "Analysis cache has been cleared.")
 
-    def export_analysis_results(self):
+    def export_analysis_results(self) -> None:
         """Export analysis results to file."""
         if not self.analysis_results:
             QMessageBox.warning(self, "No Results", "No analysis results to export.")
@@ -2122,7 +2122,7 @@ class AnalysisTab(BaseTab):
 
             except Exception as e:
                 self.log_activity(f"Export failed: {e}", is_error=True)
-                QMessageBox.critical(self, "Export Failed", f"Failed to export results: {str(e)}")
+                QMessageBox.critical(self, "Export Failed", f"Failed to export results: {e!s}")
 
     def create_fallback_entropy_visualizer(self):
         """Create fallback entropy visualization using basic Qt widgets."""
@@ -2170,7 +2170,7 @@ class AnalysisTab(BaseTab):
 
         return widget
 
-    def update_fallback_entropy_visualization(self):
+    def update_fallback_entropy_visualization(self) -> None:
         """Update fallback entropy visualization with analysis results."""
         if not hasattr(self, "current_file_path") or not self.current_file_path:
             self.fallback_entropy_results.setPlainText("No binary file loaded. Please load a binary first.")
@@ -2241,11 +2241,11 @@ class AnalysisTab(BaseTab):
             self.log_activity("Entropy analysis completed")
 
         except Exception as e:
-            error_msg = f"Error during entropy analysis: {str(e)}"
+            error_msg = f"Error during entropy analysis: {e!s}"
             self.fallback_entropy_results.setPlainText(error_msg)
             self.log_activity(error_msg, is_error=True)
 
-    def analyze_binary_entropy(self):
+    def analyze_binary_entropy(self) -> None:
         """Perform detailed binary entropy analysis for license protection detection."""
         if not hasattr(self, "current_file_path") or not self.current_file_path:
             QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
@@ -2326,11 +2326,11 @@ class AnalysisTab(BaseTab):
             self.log_activity("Comprehensive entropy analysis completed")
 
         except Exception as e:
-            error_msg = f"Error during comprehensive entropy analysis: {str(e)}"
+            error_msg = f"Error during comprehensive entropy analysis: {e!s}"
             self.fallback_entropy_results.setPlainText(error_msg)
             self.log_activity(error_msg, is_error=True)
 
-    def analyze_binary_structure(self):
+    def analyze_binary_structure(self) -> None:
         """Perform detailed binary structure analysis for license protection detection."""
         if not hasattr(self, "current_file_path") or not self.current_file_path:
             QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
@@ -2383,11 +2383,11 @@ class AnalysisTab(BaseTab):
             self.log_activity("Binary structure analysis completed")
 
         except Exception as e:
-            error_msg = f"Error during structure analysis: {str(e)}"
+            error_msg = f"Error during structure analysis: {e!s}"
             self.fallback_structure_results.setPlainText(error_msg)
             self.log_activity(error_msg, is_error=True)
 
-    def export_structure_analysis(self):
+    def export_structure_analysis(self) -> None:
         """Export structure analysis results to file."""
         if not hasattr(self, "fallback_structure_results"):
             QMessageBox.warning(self, "No Analysis", "No structure analysis results to export.")
@@ -2409,11 +2409,11 @@ class AnalysisTab(BaseTab):
                 QMessageBox.information(self, "Export Successful", f"Analysis exported to:\n{file_path}")
 
         except Exception as e:
-            error_msg = f"Export failed: {str(e)}"
+            error_msg = f"Export failed: {e!s}"
             self.log_activity(error_msg, is_error=True)
             QMessageBox.critical(self, "Export Failed", error_msg)
 
-    def detect_license_protection(self):
+    def detect_license_protection(self) -> None:
         """Detect license protection mechanisms in the binary."""
         if not hasattr(self, "current_file_path") or not self.current_file_path:
             QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
@@ -2502,7 +2502,7 @@ class AnalysisTab(BaseTab):
             self.log_activity("License protection detection completed")
 
         except Exception as e:
-            error_msg = f"Error during protection detection: {str(e)}"
+            error_msg = f"Error during protection detection: {e!s}"
             self.fallback_structure_results.setPlainText(error_msg)
             self.log_activity(error_msg, is_error=True)
 
@@ -2627,7 +2627,7 @@ class AnalysisTab(BaseTab):
 
         return found_strings
 
-    def set_binary_path(self, binary_path):
+    def set_binary_path(self, binary_path) -> None:
         """Set the current binary path for analysis."""
         self.current_binary = binary_path
         self.current_file_path = binary_path
@@ -2637,7 +2637,7 @@ class AnalysisTab(BaseTab):
         # Enable analysis button
         self.run_analysis_btn.setEnabled(True)
 
-    def scan_for_protections(self):
+    def scan_for_protections(self) -> None:
         """Scan binary for protection schemes and license mechanisms."""
         if not self.current_file_path:
             return
@@ -2742,10 +2742,10 @@ class AnalysisTab(BaseTab):
                     self.subscription_bypass_btn.setEnabled(True)
 
         except Exception as e:
-            self.log_activity(f"Protection scan error: {str(e)}")
-            self.protection_display.append(f"Error: {str(e)}")
+            self.log_activity(f"Protection scan error: {e!s}")
+            self.protection_display.append(f"Error: {e!s}")
 
-    def detect_license_checks(self):
+    def detect_license_checks(self) -> None:
         """Detect license validation checks in the binary."""
         if not self.current_file_path:
             return
@@ -2880,10 +2880,10 @@ class AnalysisTab(BaseTab):
                 self.license_display.append("Binary may use alternative protection methods")
 
         except Exception as e:
-            self.log_activity(f"License detection error: {str(e)}")
-            self.license_display.append(f"Error: {str(e)}")
+            self.log_activity(f"License detection error: {e!s}")
+            self.license_display.append(f"Error: {e!s}")
 
-    def generate_bypass_strategy(self):
+    def generate_bypass_strategy(self) -> None:
         """Generate bypass strategies based on detected protections."""
         self.log_activity("Generating bypass strategies...")
         self.bypass_display.clear()
@@ -2899,7 +2899,7 @@ class AnalysisTab(BaseTab):
                     "addresses": self._find_conditional_jumps(),
                     "risk": "Low",
                     "effectiveness": "High",
-                }
+                },
             )
 
         if self.nop_check.isChecked():
@@ -2910,7 +2910,7 @@ class AnalysisTab(BaseTab):
                     "addresses": self._find_license_calls(),
                     "risk": "Medium",
                     "effectiveness": "High",
-                }
+                },
             )
 
         if self.hook_api_check.isChecked():
@@ -2921,7 +2921,7 @@ class AnalysisTab(BaseTab):
                     "apis": ["GetVolumeInformation", "RegQueryValue", "IsDebuggerPresent"],
                     "risk": "Low",
                     "effectiveness": "Medium",
-                }
+                },
             )
 
         if self.emulate_license_check.isChecked():
@@ -2932,7 +2932,7 @@ class AnalysisTab(BaseTab):
                     "port": self._detect_license_port(),
                     "risk": "High",
                     "effectiveness": "Very High",
-                }
+                },
             )
 
         if self.spoof_hwid_check.isChecked():
@@ -2943,7 +2943,7 @@ class AnalysisTab(BaseTab):
                     "components": ["Volume Serial", "MAC Address", "CPU ID"],
                     "risk": "Medium",
                     "effectiveness": "High",
-                }
+                },
             )
 
         if self.reset_trial_check.isChecked():
@@ -2954,7 +2954,7 @@ class AnalysisTab(BaseTab):
                     "targets": self._find_trial_data(),
                     "risk": "Low",
                     "effectiveness": "Medium",
-                }
+                },
             )
 
         # Display strategies
@@ -2982,7 +2982,7 @@ class AnalysisTab(BaseTab):
 
         self.log_activity(f"Generated {len(strategies)} bypass strategies")
 
-    def execute_subscription_bypass(self):
+    def execute_subscription_bypass(self) -> None:
         """Execute subscription validation bypass for detected scheme."""
         if not self.current_binary:
             QMessageBox.warning(self, "Warning", "No binary loaded for bypass")
@@ -3046,10 +3046,10 @@ class AnalysisTab(BaseTab):
                 self.log_activity("Subscription bypass execution failed")
 
         except Exception as e:
-            self.bypass_display.append(f"\nFAIL Bypass error: {str(e)}\n")
-            self.log_activity(f"Subscription bypass error: {str(e)}")
+            self.bypass_display.append(f"\nFAIL Bypass error: {e!s}\n")
+            self.log_activity(f"Subscription bypass error: {e!s}")
 
-    def stop_subscription_bypass(self):
+    def stop_subscription_bypass(self) -> None:
         """Stop active subscription bypass."""
         try:
             from intellicrack.core.subscription_validation_bypass import SubscriptionValidationBypass
@@ -3068,9 +3068,9 @@ class AnalysisTab(BaseTab):
             self.subscription_bypass_btn.clicked.connect(self.execute_subscription_bypass)
 
         except Exception as e:
-            self.log_activity(f"Error stopping subscription bypass: {str(e)}")
+            self.log_activity(f"Error stopping subscription bypass: {e!s}")
 
-    def start_license_monitoring(self):
+    def start_license_monitoring(self) -> None:
         """Start real-time license monitoring."""
         self.log_activity("Starting license monitoring...")
         self.monitor_log.clear()
@@ -3148,11 +3148,11 @@ class AnalysisTab(BaseTab):
                 self.monitoring_session = None
 
         except Exception as e:
-            self.monitor_log.append(f"\n[ERROR] Failed to initialize monitoring: {str(e)}")
-            self.log_activity(f"Monitoring error: {str(e)}")
+            self.monitor_log.append(f"\n[ERROR] Failed to initialize monitoring: {e!s}")
+            self.log_activity(f"Monitoring error: {e!s}")
             self.monitoring_session = None
 
-    def stop_license_monitoring(self):
+    def stop_license_monitoring(self) -> None:
         """Stop license monitoring."""
         self.log_activity("Stopping license monitoring...")
 
@@ -3184,15 +3184,15 @@ class AnalysisTab(BaseTab):
                 self.monitoring_session = None
 
             except Exception as e:
-                self.monitor_log.append(f"\n[ERROR] Error stopping monitoring: {str(e)}")
-                self.log_activity(f"Stop monitoring error: {str(e)}")
+                self.monitor_log.append(f"\n[ERROR] Error stopping monitoring: {e!s}")
+                self.log_activity(f"Stop monitoring error: {e!s}")
         else:
             self.monitor_log.append("\n[WARNING] No active monitoring session to stop.")
 
         self.start_monitor_btn.setEnabled(True)
         self.stop_monitor_btn.setEnabled(False)
 
-    def _on_monitoring_event(self, event):
+    def _on_monitoring_event(self, event) -> None:
         """Handle monitoring event from session.
 
         Args:
@@ -3241,11 +3241,11 @@ class AnalysisTab(BaseTab):
             address = details.get("address", "")
             log_line = f"[{timestamp}] <font color='{color}'>[{source}]</font> {prefix} {pattern_type} found: {value} @ {address}"
         else:
-            log_line = f"[{timestamp}] [{source}] {prefix} {str(details)}"
+            log_line = f"[{timestamp}] [{source}] {prefix} {details!s}"
 
         self.monitor_log.append(log_line)
 
-    def _on_monitoring_stats(self, stats):
+    def _on_monitoring_stats(self, stats) -> None:
         """Handle statistics update from monitoring session.
 
         Args:
@@ -3254,7 +3254,7 @@ class AnalysisTab(BaseTab):
         """
         pass
 
-    def _on_monitoring_error(self, error):
+    def _on_monitoring_error(self, error) -> None:
         """Handle error from monitoring session.
 
         Args:
@@ -3276,7 +3276,7 @@ class AnalysisTab(BaseTab):
         # For now, return sample addresses
         return [0x401500, 0x402800, 0x404000]
 
-    def _detect_license_port(self):
+    def _detect_license_port(self) -> int:
         """Detect network port used for license validation."""
         # This would analyze network code to find license server port
         # Common license server ports
@@ -3287,7 +3287,7 @@ class AnalysisTab(BaseTab):
         # This would locate registry keys and files storing trial info
         return ["HKLM\\SOFTWARE\\CompanyName\\ProductName\\Trial", "C:\\ProgramData\\ProductName\\trial.dat"]
 
-    def compare_snapshots(self):
+    def compare_snapshots(self) -> None:
         """Compare two license system snapshots to identify changes."""
         if len(self.snapshots) < 2:
             QMessageBox.warning(self, "Insufficient Snapshots", "At least two snapshots are required for comparison.")
@@ -3306,7 +3306,7 @@ class AnalysisTab(BaseTab):
         # First snapshot selection
         layout.addWidget(QLabel("Select first snapshot (baseline):"))
         first_list = QListWidget()
-        for name in self.snapshots.keys():
+        for name in self.snapshots:
             item = QListWidgetItem(name)
             first_list.addItem(item)
         layout.addWidget(first_list)
@@ -3314,7 +3314,7 @@ class AnalysisTab(BaseTab):
         # Second snapshot selection
         layout.addWidget(QLabel("Select second snapshot (current):"))
         second_list = QListWidget()
-        for name in self.snapshots.keys():
+        for name in self.snapshots:
             item = QListWidgetItem(name)
             second_list.addItem(item)
         layout.addWidget(second_list)
@@ -3395,7 +3395,7 @@ class AnalysisTab(BaseTab):
                             "snapshot2": snapshot2_name,
                             "timestamp": datetime.now().isoformat(),
                             "results": comparison,
-                        }
+                        },
                     )
 
                     # Summary
@@ -3405,7 +3405,7 @@ class AnalysisTab(BaseTab):
                         else sum(len(v) if isinstance(v, list) else 0 for v in comparison.get(k, {}).values())
                         if isinstance(comparison.get(k), dict)
                         else 0
-                        for k in comparison.keys()
+                        for k in comparison
                     )
 
                     self.log_activity("=" * 60)
@@ -3419,12 +3419,12 @@ class AnalysisTab(BaseTab):
                     )
 
                 except Exception as e:
-                    self.log_activity(f"Comparison error: {str(e)}")
-                    QMessageBox.critical(self, "Comparison Error", f"Failed to compare snapshots:\n{str(e)}")
+                    self.log_activity(f"Comparison error: {e!s}")
+                    QMessageBox.critical(self, "Comparison Error", f"Failed to compare snapshots:\n{e!s}")
             else:
                 QMessageBox.warning(self, "No Selection", "Please select both snapshots to compare.")
 
-    def export_snapshot(self):
+    def export_snapshot(self) -> None:
         """Export a license snapshot to file."""
         if not self.snapshots:
             QMessageBox.warning(self, "No Snapshots", "No snapshots available to export.")
@@ -3442,7 +3442,7 @@ class AnalysisTab(BaseTab):
         layout.addWidget(QLabel("Select snapshot to export:"))
 
         snapshot_list = QListWidget()
-        for name in self.snapshots.keys():
+        for name in self.snapshots:
             item = QListWidgetItem(name)
             snapshot_list.addItem(item)
         layout.addWidget(snapshot_list)
@@ -3457,7 +3457,7 @@ class AnalysisTab(BaseTab):
 
             # Get export file path
             file_path, _ = QFileDialog.getSaveFileName(
-                self, "Export Snapshot", f"{snapshot_name}.json", "JSON Files (*.json);;All Files (*.*)"
+                self, "Export Snapshot", f"{snapshot_name}.json", "JSON Files (*.json);;All Files (*.*)",
             )
 
             if file_path:
@@ -3468,10 +3468,10 @@ class AnalysisTab(BaseTab):
                     else:
                         QMessageBox.warning(self, "Export Failed", "Failed to export snapshot.")
                 except Exception as e:
-                    self.log_activity(f"Export error: {str(e)}")
-                    QMessageBox.critical(self, "Export Error", f"Failed to export snapshot:\n{str(e)}")
+                    self.log_activity(f"Export error: {e!s}")
+                    QMessageBox.critical(self, "Export Error", f"Failed to export snapshot:\n{e!s}")
 
-    def import_snapshot(self):
+    def import_snapshot(self) -> None:
         """Import a license snapshot from file."""
         file_path, _ = QFileDialog.getOpenFileName(self, "Import Snapshot", "", "JSON Files (*.json);;All Files (*.*)")
 
@@ -3481,7 +3481,7 @@ class AnalysisTab(BaseTab):
 
                 if snapshot_name:
                     # Reload the imported snapshot data
-                    with open(file_path, "r") as f:
+                    with open(file_path) as f:
                         import json
 
                         snapshot_data = json.load(f)
@@ -3514,5 +3514,5 @@ class AnalysisTab(BaseTab):
                     QMessageBox.warning(self, "Import Failed", "Failed to import snapshot.")
 
             except Exception as e:
-                self.log_activity(f"Import error: {str(e)}")
-                QMessageBox.critical(self, "Import Error", f"Failed to import snapshot:\n{str(e)}")
+                self.log_activity(f"Import error: {e!s}")
+                QMessageBox.critical(self, "Import Error", f"Failed to import snapshot:\n{e!s}")

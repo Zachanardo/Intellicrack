@@ -47,7 +47,7 @@ class AdvancedTaintTracker:
         cfg: dict[int, list[int]],
         data_flow_graph: dict[int, dict[str, Any]],
         register_state_map: dict[int, dict[str, Any]],
-    ):
+    ) -> None:
         """Initialize advanced taint tracker with program analysis data."""
         self.cfg = cfg
         self.data_flow_graph = data_flow_graph
@@ -88,7 +88,7 @@ class AdvancedTaintTracker:
         }
 
         # Depth-first search with taint tracking
-        def dfs_propagate(addr: int, current_path: list[dict[str, Any]], taint_state: dict[str, Any], depth: int):
+        def dfs_propagate(addr: int, current_path: list[dict[str, Any]], taint_state: dict[str, Any], depth: int) -> None:
             if depth > max_depth or addr in visited:
                 return
 
@@ -108,7 +108,7 @@ class AdvancedTaintTracker:
                             "reaches_sink": True,
                             "confidence": confidence,
                             "transformations": taint_state["transformations"].copy(),
-                        }
+                        },
                     )
                     return
 
@@ -123,7 +123,7 @@ class AdvancedTaintTracker:
 
                 # Only continue if taint is still present
                 if new_taint_state["registers"] or new_taint_state["memory"]:
-                    new_path = current_path + [{"address": next_addr}]
+                    new_path = [*current_path, {"address": next_addr}]
                     dfs_propagate(next_addr, new_path, new_taint_state, depth + 1)
 
             visited.remove(addr)  # Allow revisiting for different paths
@@ -191,7 +191,7 @@ class AdvancedTaintTracker:
                     "address": next_addr,
                     "operation": flow_info["operation"],
                     "type": flow_info.get("type", "unknown"),
-                }
+                },
             )
 
         # Simple taint propagation rules
@@ -229,7 +229,7 @@ class TaintAnalysisEngine:
     through a program, identifying key validation points and potential bypass targets.
     """
 
-    def __init__(self, config: dict[str, Any] | None = None):
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
         """Initialize the taint analysis engine with configuration."""
         self.config = config or {}
         self.logger = logging.getLogger("IntellicrackLogger.TaintAnalysis")
@@ -390,7 +390,7 @@ class TaintAnalysisEngine:
                                 "path": path["instructions"],
                                 "confidence": path["confidence"],
                                 "transformations": path["transformations"],
-                            }
+                            },
                         )
 
             # Perform inter-procedural analysis
@@ -471,7 +471,7 @@ class TaintAnalysisEngine:
                             "op_str": op_str,
                             "size": size,
                             "index": i,
-                        }
+                        },
                     )
 
                     # Limit to first 10000 instructions for performance
@@ -546,7 +546,7 @@ class TaintAnalysisEngine:
                                 "op_str": "unknown",
                                 "size": len(pattern),
                                 "index": len(instructions),
-                            }
+                            },
                         )
 
                 # Limit analysis scope
@@ -622,7 +622,7 @@ class TaintAnalysisEngine:
                         **instr,
                         "source_type": "file_io",
                         "taint_status": "source",
-                    }
+                    },
                 )
 
             # Registry operations
@@ -639,7 +639,7 @@ class TaintAnalysisEngine:
                         **instr,
                         "source_type": "registry",
                         "taint_status": "source",
-                    }
+                    },
                 )
 
             # Network operations
@@ -656,7 +656,7 @@ class TaintAnalysisEngine:
                         **instr,
                         "source_type": "network",
                         "taint_status": "source",
-                    }
+                    },
                 )
 
             # Hardware ID functions
@@ -673,7 +673,7 @@ class TaintAnalysisEngine:
                         **instr,
                         "source_type": "hardware_id",
                         "taint_status": "source",
-                    }
+                    },
                 )
 
         return sources
@@ -693,7 +693,7 @@ class TaintAnalysisEngine:
                         **instr,
                         "sink_type": "comparison",
                         "taint_status": "sink",
-                    }
+                    },
                 )
 
             # Conditional jumps (decision points)
@@ -703,7 +703,7 @@ class TaintAnalysisEngine:
                         **instr,
                         "sink_type": "conditional",
                         "taint_status": "sink",
-                    }
+                    },
                 )
 
             # String comparison calls
@@ -720,7 +720,7 @@ class TaintAnalysisEngine:
                         **instr,
                         "sink_type": "string_compare",
                         "taint_status": "sink",
-                    }
+                    },
                 )
 
             # Cryptographic operations
@@ -739,13 +739,13 @@ class TaintAnalysisEngine:
                         **instr,
                         "sink_type": "crypto",
                         "taint_status": "sink",
-                    }
+                    },
                 )
 
         return sinks
 
     def _trace_taint_propagation(
-        self, source: dict[str, Any], sinks: list[dict[str, Any]], cfg: dict[int, list[int]]
+        self, source: dict[str, Any], sinks: list[dict[str, Any]], cfg: dict[int, list[int]],
     ) -> list[list[dict[str, Any]]]:
         """Trace taint propagation from a source to potential sinks.
 
@@ -756,7 +756,7 @@ class TaintAnalysisEngine:
         visited = set()
         max_path_length = 50  # Prevent infinite loops
 
-        def dfs_path(current_addr: int, current_path: list[dict[str, Any]], tainted_registers: set):
+        def dfs_path(current_addr: int, current_path: list[dict[str, Any]], tainted_registers: set) -> None:
             if len(current_path) >= max_path_length or current_addr in visited:
                 return
 
@@ -766,7 +766,7 @@ class TaintAnalysisEngine:
             for sink in sinks:
                 if sink["address"] == current_addr:
                     # Create complete path from source to sink
-                    complete_path = [source] + current_path + [sink]
+                    complete_path = [source, *current_path, sink]
                     paths.append(complete_path)
                     return
 
@@ -782,7 +782,7 @@ class TaintAnalysisEngine:
                         break
 
                 if next_instr:
-                    new_path = current_path + [next_instr]
+                    new_path = [*current_path, next_instr]
                     # Simplified register tracking (could be much more sophisticated)
                     new_tainted = tainted_registers.copy()
                     dfs_path(next_addr, new_path, new_tainted)
@@ -1208,7 +1208,7 @@ class TaintAnalysisEngine:
                                         "type": "function_call",
                                         "address": call["address"],
                                         "target": hex(target_addr) if target_addr else "unknown",
-                                    }
+                                    },
                                 ],
                                 "interprocedural": True,
                             }
@@ -1217,7 +1217,7 @@ class TaintAnalysisEngine:
         return interprocedural_paths
 
     def _identify_critical_validation_points(
-        self, taint_paths: list[dict[str, Any]], sink_instructions: list[dict[str, Any]]
+        self, taint_paths: list[dict[str, Any]], sink_instructions: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
         """Identify critical validation points where license checks occur.
 
@@ -1411,7 +1411,7 @@ class TaintAnalysisEngine:
                             "type": "address",
                             "value": addr,
                             "spec": source_spec,
-                        }
+                        },
                     )
                 except ValueError:
                     self.logger.warning(f"Invalid address format: {source_spec}")
@@ -1424,7 +1424,7 @@ class TaintAnalysisEngine:
                         "type": "function",
                         "value": func_name,
                         "spec": source_spec,
-                    }
+                    },
                 )
             elif source_spec.startswith("api:"):
                 # API call source
@@ -1435,7 +1435,7 @@ class TaintAnalysisEngine:
                         "type": "api",
                         "value": api_name,
                         "spec": source_spec,
-                    }
+                    },
                 )
             else:
                 # Default: treat as function name
@@ -1445,7 +1445,7 @@ class TaintAnalysisEngine:
                         "type": "function",
                         "value": source_spec,
                         "spec": source_spec,
-                    }
+                    },
                 )
 
         # Add default sinks if none specified
@@ -1526,7 +1526,7 @@ class TaintAnalysisEngine:
                             "path_length": len(path),
                             "path": [step["address"] for step in path],
                             "transformations": self._extract_transformations(path),
-                        }
+                        },
                     )
 
         # Identify vulnerabilities based on taint flows
@@ -1541,7 +1541,7 @@ class TaintAnalysisEngine:
                         "severity": self._assess_severity(flow),
                         "description": self._generate_vuln_description(vuln_type, flow),
                         "mitigation": self._suggest_mitigation(vuln_type, flow),
-                    }
+                    },
                 )
 
         # Compile final results

@@ -41,7 +41,7 @@ from intellicrack.utils.system.os_detection import detect_file_type
 class AnalysisCLI:
     """Command-line interface for binary analysis."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the CLI."""
         self.logger = self._setup_logging()
         self.binary_analyzer = BinaryAnalyzer()
@@ -111,9 +111,9 @@ class AnalysisCLI:
                 results["findings"].append(
                     {
                         "type": "error",
-                        "description": f"Binary analysis failed: {str(e)}",
+                        "description": f"Binary analysis failed: {e!s}",
                         "impact": "high",
-                    }
+                    },
                 )
 
         # Protection analysis
@@ -131,7 +131,7 @@ class AnalysisCLI:
                                 "type": "protection",
                                 "description": f"{p['type']} protection detected",
                                 "impact": "medium",
-                            }
+                            },
                         )
             except Exception as e:
                 self.logger.error(f"Protection analysis failed: {e}")
@@ -147,7 +147,7 @@ class AnalysisCLI:
                 for v in vulnerabilities:
                     if v.get("severity") in ["critical", "high"]:
                         results["recommendations"].append(
-                            f"Address {v['type']} vulnerability: {v.get('recommendation', 'Apply security patch')}"
+                            f"Address {v['type']} vulnerability: {v.get('recommendation', 'Apply security patch')}",
                         )
             except Exception as e:
                 self.logger.error(f"Vulnerability scanning failed: {e}")
@@ -169,7 +169,7 @@ class AnalysisCLI:
                                 "type": "suspicious_api",
                                 "description": f"Suspicious API calls detected: {', '.join(suspicious_apis)}",
                                 "impact": "medium",
-                            }
+                            },
                         )
             except Exception as e:
                 self.logger.error(f"PE analysis failed: {e}")
@@ -206,7 +206,7 @@ class AnalysisCLI:
                             "description": f"Found {len(interesting)} interesting strings",
                             "impact": "low",
                             "details": interesting[:10],  # Limit to first 10
-                        }
+                        },
                     )
             except Exception as e:
                 self.logger.error(f"String extraction failed: {e}")
@@ -234,7 +234,7 @@ class AnalysisCLI:
                             "type": source.lower().replace(" ", "_"),
                             "description": f"{key}: {value}",
                             "impact": "low",
-                        }
+                        },
                     )
 
         return findings
@@ -369,13 +369,13 @@ class AnalysisCLI:
                         "target_file": file_path,
                         "error": str(e),
                         "timestamp": datetime.datetime.now().isoformat(),
-                    }
+                    },
                 )
 
         return results
 
 
-def main():
+def main() -> None:
     """Run main entry point for CLI."""
     parser = argparse.ArgumentParser(
         description="Intellicrack Binary Analysis CLI",

@@ -29,7 +29,7 @@ from typing import List, Set, Tuple
 class UnusedConfigCodeDetector(ast.NodeVisitor):
     """AST visitor to detect unused configuration-related code."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the detector."""
         self.unused_imports = set()
         self.unused_methods = set()
@@ -104,7 +104,7 @@ def analyze_file(file_path: Path) -> Tuple[Set, Set, List, List]:
 
     """
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             tree = ast.parse(f.read())
 
         detector = UnusedConfigCodeDetector()
@@ -216,7 +216,7 @@ def remove_unused_imports(file_path: Path, unused_imports: Set[Tuple[str, int]])
 
     """
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             lines = f.readlines()
 
         # Create set of line numbers to remove

@@ -43,7 +43,7 @@ class ModelLoadingDialog(BaseDialog):
     #: model_id (type: str)
     model_loaded = pyqtSignal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the ModelLoadingDialog with default values."""
         super().__init__(parent, "Model Loading Manager")
         self.setMinimumSize(800, 600)
@@ -51,7 +51,7 @@ class ModelLoadingDialog(BaseDialog):
         self.llm_manager = get_llm_manager()
         self.setup_content(self.content_widget.layout() or QVBoxLayout(self.content_widget))
 
-    def setup_content(self, layout):
+    def setup_content(self, layout) -> None:
         """Set up the UI content."""
         if layout is None:
             layout = QVBoxLayout(self.content_widget)
@@ -114,7 +114,7 @@ class ModelLoadingDialog(BaseDialog):
                 "gpt-4",
                 "claude-2",
                 "claude-instant",
-            ]
+            ],
         )
         config_layout.addRow("Model Name:", self.model_name_combo)
 
@@ -127,7 +127,7 @@ class ModelLoadingDialog(BaseDialog):
                 "http://localhost:1234",  # LM Studio
                 "https://api.openai.com/v1",
                 "https://api.anthropic.com/v1",
-            ]
+            ],
         )
         config_layout.addRow("API URL:", self.api_url_combo)
 
@@ -171,7 +171,7 @@ class ModelLoadingDialog(BaseDialog):
 
         return widget
 
-    def load_new_model(self):
+    def load_new_model(self) -> None:
         """Load a new model based on configuration."""
         try:
             # Get configuration
@@ -218,7 +218,7 @@ class ModelLoadingDialog(BaseDialog):
         all_tasks = self.llm_manager.get_all_loading_tasks()
         return len(all_tasks) + 1
 
-    def refresh_loaded_models(self):
+    def refresh_loaded_models(self) -> None:
         """Refresh the loaded models list."""
         self.models_list.clear()
 
@@ -244,7 +244,7 @@ class ModelLoadingDialog(BaseDialog):
                 item.setForeground(Qt.GlobalColor.blue)
                 self.models_list.addItem(item)
 
-    def on_model_loaded(self, model_id: str):
+    def on_model_loaded(self, model_id: str) -> None:
         """Handle model loaded signal."""
         self.model_loaded.emit(model_id)
         self.refresh_loaded_models()
@@ -252,7 +252,7 @@ class ModelLoadingDialog(BaseDialog):
         # Show notification
         QMessageBox.information(self, "Model Loaded", f"Model successfully loaded:\n{model_id}")
 
-    def closeEvent(self, event):
+    def closeEvent(self, event) -> None:
         """Handle dialog close."""
         # Cleanup progress widget
         self.progress_widget.cleanup()

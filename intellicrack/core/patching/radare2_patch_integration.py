@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 class R2PatchIntegrator:
     """Integrates Radare2 bypass generation with binary modification capabilities."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the R2 patch integrator."""
         self.bypass_generator = R2BypassGenerator()
         self.binary_patcher = BinaryPatcherPlugin()
@@ -286,7 +286,7 @@ class R2PatchIntegrator:
                             if current_bytes != patch.original_bytes:
                                 logger.warning(
                                     f"Original bytes mismatch at {hex(patch.offset)}: "
-                                    f"expected {patch.original_bytes.hex()}, found {current_bytes.hex()}"
+                                    f"expected {patch.original_bytes.hex()}, found {current_bytes.hex()}",
                                 )
 
                         # Apply patch

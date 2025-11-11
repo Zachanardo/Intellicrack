@@ -165,7 +165,7 @@ class ProgramDiscoveryEngine:
         "default": 3,
     }
 
-    def __init__(self, cache_file: str | None = None):
+    def __init__(self, cache_file: str | None = None) -> None:
         """Initialize the program discovery engine."""
         self.logger = logger
         self.path_discovery = PathDiscovery()
@@ -513,7 +513,7 @@ class ProgramDiscoveryEngine:
 
                 string_info = version_info.get("StringFileInfo", {})
                 if string_info:
-                    first_key = list(string_info.keys())[0]
+                    first_key = next(iter(string_info.keys()))
                     string_table = string_info[first_key]
                     publisher = string_table.get("CompanyName", "Unknown")
                 else:
@@ -529,8 +529,8 @@ class ProgramDiscoveryEngine:
         """Get version and publisher info from Unix executable."""
         try:
             # Try to get version from --version flag
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                [str(exe_path), "--version"], check=False, capture_output=True, text=True, timeout=5
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                [str(exe_path), "--version"], check=False, capture_output=True, text=True, timeout=5,
             )
             if result.returncode == 0 and result.stdout:
                 version_line = result.stdout.split("\n")[0]
@@ -579,7 +579,7 @@ class ProgramDiscoveryEngine:
             # Debian/Ubuntu - dpkg
             dpkg_path = shutil.which("dpkg")
             if dpkg_path:
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     [dpkg_path, "-l"],
                     check=False,
                     capture_output=True,
@@ -596,7 +596,7 @@ class ProgramDiscoveryEngine:
             # Red Hat/CentOS - rpm
             rpm_path = shutil.which("rpm")
             if rpm_path:
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     [rpm_path, "-qa"],
                     check=False,
                     capture_output=True,
@@ -666,7 +666,7 @@ class ProgramDiscoveryEngine:
                             discovery_method="dpkg",
                             confidence_score=0.9,
                             analysis_priority=self._calculate_analysis_priority(name, "/usr"),
-                        )
+                        ),
                     )
 
         return programs
@@ -704,7 +704,7 @@ class ProgramDiscoveryEngine:
                             discovery_method="rpm",
                             confidence_score=0.9,
                             analysis_priority=self._calculate_analysis_priority(name, "/usr"),
-                        )
+                        ),
                     )
 
         return programs
@@ -835,7 +835,7 @@ class ProgramDiscoveryEngine:
         program_list.sort(key=lambda p: (p.analysis_priority, p.confidence_score), reverse=True)
         return program_list
 
-    def _load_cache(self):
+    def _load_cache(self) -> None:
         """Load cached program data."""
         try:
             if os.path.exists(self.cache_file):
@@ -854,7 +854,7 @@ class ProgramDiscoveryEngine:
             self.programs_cache = {}
             self.last_scan_time = None
 
-    def _save_cache(self):
+    def _save_cache(self) -> None:
         """Save program data to cache."""
         try:
             cache_data = {

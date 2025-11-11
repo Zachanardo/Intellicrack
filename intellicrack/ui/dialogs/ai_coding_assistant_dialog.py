@@ -67,7 +67,7 @@ class FileTreeWidget(QTreeWidget):
 
     file_selected = pyqtSignal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the FileTreeWidget with default values."""
         super().__init__(parent)
         self.setHeaderLabel("Project Files")
@@ -98,7 +98,7 @@ class FileTreeWidget(QTreeWidget):
             ".css": "css",
         }
 
-    def set_root_directory(self, root_path: str):
+    def set_root_directory(self, root_path: str) -> None:
         """Set the root directory for the file tree."""
         self.current_root = Path(root_path)
         self.clear()
@@ -110,7 +110,7 @@ class FileTreeWidget(QTreeWidget):
 
         self.populate_tree()
 
-    def populate_tree(self):
+    def populate_tree(self) -> None:
         """Populate the tree with files and directories."""
         if not self.current_root or not self.current_root.exists():
             return
@@ -122,7 +122,7 @@ class FileTreeWidget(QTreeWidget):
 
         self._add_directory_items(root_item, self.current_root)
 
-    def _add_directory_items(self, parent_item: QTreeWidgetItem, directory: Path):
+    def _add_directory_items(self, parent_item: QTreeWidgetItem, directory: Path) -> None:
         """Recursively add directory items."""
         try:
             # Sort items: directories first, then files
@@ -164,7 +164,7 @@ class FileTreeWidget(QTreeWidget):
             logger.error("Permission error in ai_coding_assistant_dialog: %s", e)
             # Skip directories we can't read
 
-    def refresh_tree(self):
+    def refresh_tree(self) -> None:
         """Refresh the file tree."""
         if self.current_root:
             expanded_items = self.get_expanded_items()
@@ -176,7 +176,7 @@ class FileTreeWidget(QTreeWidget):
         """Get list of expanded item paths."""
         expanded = []
 
-        def traverse(item):
+        def traverse(item) -> None:
             if item.isExpanded():
                 path = item.data(0, Qt.UserRole)
                 if path:
@@ -190,10 +190,10 @@ class FileTreeWidget(QTreeWidget):
 
         return expanded
 
-    def restore_expanded_items(self, expanded_paths: list[str]):
+    def restore_expanded_items(self, expanded_paths: list[str]) -> None:
         """Restore expanded state of items."""
 
-        def traverse(item):
+        def traverse(item) -> None:
             path = item.data(0, Qt.UserRole)
             if path in expanded_paths:
                 item.setExpanded(True)
@@ -204,14 +204,14 @@ class FileTreeWidget(QTreeWidget):
         for i in range(self.topLevelItemCount()):
             traverse(self.topLevelItem(i))
 
-    def on_item_clicked(self, item: QTreeWidgetItem, column: int):
+    def on_item_clicked(self, item: QTreeWidgetItem, column: int) -> None:
         """Handle item click."""
         logger.debug(f"Item clicked in column {column}")
         path = item.data(0, Qt.UserRole)
         if path and Path(path).is_file():
             self.file_selected.emit(path)
 
-    def on_item_double_clicked(self, item: QTreeWidgetItem, column: int):
+    def on_item_double_clicked(self, item: QTreeWidgetItem, column: int) -> None:
         """Handle item double click."""
         logger.debug(f"Item double-clicked in column {column}")
         path = item.data(0, Qt.UserRole)
@@ -225,7 +225,7 @@ class CodeEditor(QPlainTextEdit):
     #: Signal emitted when content changes (str: file path)
     content_changed = pyqtSignal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the CodeEditor with default values."""
         super().__init__(parent)
         self.current_file = None
@@ -243,7 +243,7 @@ class CodeEditor(QPlainTextEdit):
         # Line numbers (basic implementation)
         self.setLineWrapMode(QPlainTextEdit.NoWrap)
 
-    def load_file(self, file_path: str):
+    def load_file(self, file_path: str) -> None:
         """Load a file into the editor."""
         try:
             with open(file_path, encoding="utf-8") as f:
@@ -262,7 +262,7 @@ class CodeEditor(QPlainTextEdit):
             logger.error(f"Failed to load file {file_path}: {e}")
             QMessageBox.warning(self, "Error", f"Failed to load file:\n{e}")
 
-    def save_file(self, file_path: str = None):
+    def save_file(self, file_path: str = None) -> bool | None:
         """Save the current content to file."""
         if not file_path:
             file_path = self.current_file
@@ -284,7 +284,7 @@ class CodeEditor(QPlainTextEdit):
             QMessageBox.warning(self, "Error", f"Failed to save file:\n{e}")
             return False
 
-    def set_syntax_highlighting(self, file_path: str):
+    def set_syntax_highlighting(self, file_path: str) -> None:
         """Set syntax highlighting based on file extension."""
         if self.syntax_highlighter:
             self.syntax_highlighter.setParent(None)
@@ -298,7 +298,7 @@ class CodeEditor(QPlainTextEdit):
             self.syntax_highlighter = JavaScriptHighlighter(self.document())
         # Add more syntax highlighters as needed
 
-    def on_text_changed(self):
+    def on_text_changed(self) -> None:
         """Handle text change."""
         if self.current_file:
             self.is_modified = True
@@ -309,7 +309,7 @@ class CodeEditor(QPlainTextEdit):
         cursor = self.textCursor()
         return cursor.selectedText()
 
-    def insert_text_at_cursor(self, text: str):
+    def insert_text_at_cursor(self, text: str) -> None:
         """Insert text at current cursor position."""
         cursor = self.textCursor()
         cursor.insertText(text)
@@ -321,7 +321,7 @@ class ChatWidget(QWidget):
 
     message_sent = pyqtSignal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the ChatWidget with default values."""
         super().__init__(parent)
         self.conversation_history = []
@@ -329,7 +329,7 @@ class ChatWidget(QWidget):
         self.setup_ui()
         self.load_available_models()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the chat interface."""
         layout = QVBoxLayout(self)
 
@@ -390,7 +390,7 @@ class ChatWidget(QWidget):
 
         layout.addLayout(settings_layout)
 
-    def send_message(self):
+    def send_message(self) -> None:
         """Send a message to the AI."""
         message = self.message_input.text().strip()
         if message:
@@ -398,12 +398,12 @@ class ChatWidget(QWidget):
             self.message_sent.emit(message)
             self.message_input.clear()
 
-    def send_quick_message(self, message: str):
+    def send_quick_message(self, message: str) -> None:
         """Send a predefined quick message."""
         self.add_message("User", message)
         self.message_sent.emit(message)
 
-    def add_message(self, sender: str, message: str):
+    def add_message(self, sender: str, message: str) -> None:
         """Add a message to the chat history."""
         self.conversation_history.append({"sender": sender, "message": message})
 
@@ -419,12 +419,12 @@ class ChatWidget(QWidget):
         scrollbar = self.chat_history.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
 
-    def clear_history(self):
+    def clear_history(self) -> None:
         """Clear the chat history."""
         self.chat_history.clear()
         self.conversation_history.clear()
 
-    def load_available_models(self, force_refresh: bool = False):
+    def load_available_models(self, force_refresh: bool = False) -> None:
         """Load available AI models using dynamic API-based discovery.
 
         Args:
@@ -445,7 +445,7 @@ class ChatWidget(QWidget):
             self.model_combo.clear()
 
             if configured_models:
-                for model_id in configured_models.keys():
+                for model_id in configured_models:
                     self.available_models.append(model_id)
                     self.model_combo.addItem(f" {model_id}")
 
@@ -494,9 +494,9 @@ class ChatWidget(QWidget):
             self.model_combo.clear()
             self.model_combo.addItem("Error discovering models")
             self.model_combo.setEnabled(False)
-            self._show_error_message(f"Discovery error: {str(e)}")
+            self._show_error_message(f"Discovery error: {e!s}")
 
-    def refresh_models(self):
+    def refresh_models(self) -> None:
         """Refresh available models from API providers with force refresh."""
         try:
             self.refresh_models_btn.setEnabled(False)
@@ -512,7 +512,7 @@ class ChatWidget(QWidget):
             self.refresh_models_btn.setEnabled(True)
             self.refresh_models_btn.setText("🔄")
 
-    def _show_no_models_message(self):
+    def _show_no_models_message(self) -> None:
         """Display message when no models are configured."""
         self.chat_history.setHtml(
             "<div style='padding: 10px;'>"
@@ -523,10 +523,10 @@ class ChatWidget(QWidget):
             "<li>Configure local models (GGUF, Ollama)</li>"
             "</ul>"
             "<p><b>Go to AI Assistant → Configure to set up models.</b></p>"
-            "</div>"
+            "</div>",
         )
 
-    def _show_ready_message(self, model_name: str, total_models: int = 1):
+    def _show_ready_message(self, model_name: str, total_models: int = 1) -> None:
         """Display ready message with active model.
 
         Args:
@@ -540,24 +540,24 @@ class ChatWidget(QWidget):
             f"<p><b>Active Model:</b> {model_name}</p>"
             f"<p><b>Available Models:</b> {total_models} model{'s' if total_models != 1 else ''} discovered</p>"
             "<p>Use the buttons above for quick actions or type your question below.</p>"
-            "</div>"
+            "</div>",
         )
 
-    def _show_error_message(self, error: str):
+    def _show_error_message(self, error: str) -> None:
         """Display error message."""
         self.chat_history.setHtml(
             "<div style='padding: 10px;'>"
             "<h4 style='color: #dc3545;'>FAIL Configuration Error</h4>"
             f"<p>{error}</p>"
             "<p>Check logs for details or reconfigure AI models.</p>"
-            "</div>"
+            "</div>",
         )
 
 
 class AICodingAssistantWidget(QWidget):
     """AI Coding Assistant Widget with three-panel layout - extracted from dialog for reuse."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the AICodingAssistantWidget with development environment features."""
         super().__init__(parent)
 
@@ -587,7 +587,7 @@ class AICodingAssistantWidget(QWidget):
         # Load initial state
         self.load_initial_project()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the three-panel UI layout."""
         layout = QVBoxLayout(self)
 
@@ -619,7 +619,7 @@ class AICodingAssistantWidget(QWidget):
         # Status bar
         self.setup_status_bar(layout)
 
-    def setup_menu_bar(self, layout):
+    def setup_menu_bar(self, layout) -> None:
         """Set up the menu bar."""
         # Simplified menu bar for widget - full implementation when needed
         pass
@@ -748,7 +748,7 @@ class AICodingAssistantWidget(QWidget):
                 "API Hook Script",
                 "Time Bomb Disabler",
                 "Protection Analyzer",
-            ]
+            ],
         )
         gen_layout.addWidget(self.bypass_type_combo)
 
@@ -776,7 +776,7 @@ class AICodingAssistantWidget(QWidget):
 
         analyze_license_btn = QPushButton("Analyze License")
         analyze_license_btn.clicked.connect(
-            lambda: self.send_quick_license_message("Analyze the loaded binary for license protection mechanisms")
+            lambda: self.send_quick_license_message("Analyze the loaded binary for license protection mechanisms"),
         )
 
         find_validation_btn = QPushButton("Find Validation")
@@ -794,33 +794,33 @@ class AICodingAssistantWidget(QWidget):
 
         return panel
 
-    def setup_status_bar(self, layout):
+    def setup_status_bar(self, layout) -> None:
         """Set up the status bar."""
         # Simplified status bar for widget
         pass
 
-    def setup_connections(self):
+    def setup_connections(self) -> None:
         """Set up signal connections."""
         # Simplified connections for widget
         pass
 
-    def setup_shortcuts(self):
+    def setup_shortcuts(self) -> None:
         """Set up keyboard shortcuts."""
         # Simplified shortcuts for widget
         pass
 
-    def load_initial_project(self):
+    def load_initial_project(self) -> None:
         """Load initial project state."""
         # Simplified initial loading for widget
         pass
 
-    def on_file_selected_for_analysis(self, file_path: str):
+    def on_file_selected_for_analysis(self, file_path: str) -> None:
         """Handle file selection for license protection analysis."""
         try:
             if Path(file_path).suffix.lower() in [".exe", ".dll", ".so", ".dylib"]:
                 # Binary file selected - update license analysis context
                 self.license_context.setPlainText(
-                    f"License-protected binary: {Path(file_path).name}\nPath: {file_path}\nAnalysis: Ready for license protection research"
+                    f"License-protected binary: {Path(file_path).name}\nPath: {file_path}\nAnalysis: Ready for license protection research",
                 )
                 logger.info(f"Selected binary for license analysis: {file_path}")
             else:
@@ -829,7 +829,7 @@ class AICodingAssistantWidget(QWidget):
         except Exception as e:
             logger.error(f"Error handling file selection: {e}")
 
-    def create_new_research_file(self):
+    def create_new_research_file(self) -> None:
         """Create a new license research file."""
         try:
             file_path, _ = QFileDialog.getSaveFileName(
@@ -1580,7 +1580,7 @@ def validate_license_key(key: str) -> bool:
         }
         return templates.get(file_ext, "# License research file\n# Add your analysis and bypass code here\n")
 
-    def load_target_binary(self):
+    def load_target_binary(self) -> None:
         """Load a target binary for license analysis."""
         try:
             file_path, _ = QFileDialog.getOpenFileName(
@@ -1591,14 +1591,14 @@ def validate_license_key(key: str) -> bool:
             )
             if file_path:
                 self.license_context.setPlainText(
-                    f"Target Binary: {Path(file_path).name}\nPath: {file_path}\nStatus: Ready for license protection analysis"
+                    f"Target Binary: {Path(file_path).name}\nPath: {file_path}\nStatus: Ready for license protection analysis",
                 )
                 self.current_target_binary = file_path
                 logger.info(f"Loaded target binary: {file_path}")
         except Exception as e:
             logger.error(f"Error loading target binary: {e}")
 
-    def open_file_in_research_editor(self, file_path: str):
+    def open_file_in_research_editor(self, file_path: str) -> None:
         """Open a file in the research editor tabs."""
         try:
             # Check if file is already open
@@ -1620,7 +1620,7 @@ def validate_license_key(key: str) -> bool:
         except Exception as e:
             logger.error(f"Error opening file in research editor: {e}")
 
-    def close_research_tab(self, index: int):
+    def close_research_tab(self, index: int) -> None:
         """Close a research editor tab."""
         try:
             if hasattr(self, "editor_tabs") and self.editor_tabs.count() > index:
@@ -1629,7 +1629,7 @@ def validate_license_key(key: str) -> bool:
         except Exception as e:
             logger.error(f"Error closing research tab: {e}")
 
-    def execute_license_bypass_script(self):
+    def execute_license_bypass_script(self) -> None:
         """Execute the current license bypass script."""
         try:
             logger.info("Executing license bypass script...")
@@ -1673,7 +1673,7 @@ def validate_license_key(key: str) -> bool:
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("System", f"Script execution failed: {e}")
 
-    def _execute_python_bypass_script(self, script_content: str, script_path: str):
+    def _execute_python_bypass_script(self, script_content: str, script_path: str) -> None:
         """Execute Python-based bypass script."""
         import subprocess
         import tempfile
@@ -1686,7 +1686,7 @@ def validate_license_key(key: str) -> bool:
 
             # Execute with timeout for safety
             result = secure_run(
-                [sys.executable, tmp_script_path], capture_output=True, text=True, timeout=30, cwd=os.path.dirname(tmp_script_path)
+                [sys.executable, tmp_script_path], capture_output=True, text=True, timeout=30, cwd=os.path.dirname(tmp_script_path),
             )
 
             # Report results
@@ -1705,7 +1705,7 @@ def validate_license_key(key: str) -> bool:
         except Exception as e:
             self.chat_widget.add_message("System", f"ERROR Execution error: {e}")
 
-    def _execute_frida_bypass_script(self, script_content: str, script_path: str):
+    def _execute_frida_bypass_script(self, script_content: str, script_path: str) -> None:
         """Execute Frida-based bypass script."""
         try:
             # Check if frida is available
@@ -1750,7 +1750,7 @@ def validate_license_key(key: str) -> bool:
         except Exception as e:
             self.chat_widget.add_message("System", f"ERROR Frida script execution failed: {e}")
 
-    def _execute_keygen_script(self, script_content: str):
+    def _execute_keygen_script(self, script_content: str) -> None:
         """Execute keygen template script."""
         try:
             # Parse keygen template to extract configuration
@@ -1814,14 +1814,14 @@ def validate_license_key(key: str) -> bool:
         pattern = config.get("VALIDATION_PATTERN", r"^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$")
         return bool(re.match(pattern, key))
 
-    def _on_frida_message(self, message, data):
+    def _on_frida_message(self, message, data) -> None:
         """Handle Frida script messages."""
         if message.get("type") == "send":
             payload = message.get("payload", {})
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("Frida", f"📱 {payload}")
 
-    def analyze_license_protection(self):
+    def analyze_license_protection(self) -> None:
         """Analyze the current binary for license protection."""
         try:
             logger.info("Analyzing license protection mechanisms...")
@@ -1840,7 +1840,7 @@ def validate_license_key(key: str) -> bool:
 
             # Create LicenseAnalyzer instance
             class LicenseAnalyzer:
-                def __init__(self, target_path: str):
+                def __init__(self, target_path: str) -> None:
                     self.target_path = target_path
                     self.protection_info = {}
 
@@ -1885,7 +1885,7 @@ def validate_license_key(key: str) -> bool:
                                                         "dll": dll_name,
                                                         "function": func_name,
                                                         "address": hex(imp.address) if imp.address else "N/A",
-                                                    }
+                                                    },
                                                 )
 
                         # Scan for license-related strings
@@ -1910,7 +1910,7 @@ def validate_license_key(key: str) -> bool:
                                             "type": desc,
                                             "count": len(matches),
                                             "samples": [m.decode("utf-8", errors="ignore")[:50] for m in matches[:3]],
-                                        }
+                                        },
                                     )
 
                         # Detect protection level
@@ -1963,7 +1963,7 @@ def validate_license_key(key: str) -> bool:
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("System", f"ERROR Analysis failed: {e}")
 
-    def generate_keygen_template(self):
+    def generate_keygen_template(self) -> None:
         """Generate a keygen template for the current target."""
         try:
             logger.info("Generating keygen template...")
@@ -2220,7 +2220,7 @@ if __name__ == "__main__":
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("AI", f"ERROR Template generation failed: {e}")
 
-    def generate_hwid_spoof(self):
+    def generate_hwid_spoof(self) -> None:
         """Generate hardware ID spoofing code."""
         try:
             logger.info("Generating hardware ID spoofing code...")
@@ -2671,7 +2671,7 @@ console.log("[+] All HWID hooks installed");
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("AI", f"ERROR HWID spoofing generation failed: {e}")
 
-    def open_patch_assistant(self):
+    def open_patch_assistant(self) -> None:
         """Open the binary patch assistant."""
         try:
             logger.info("Opening binary patch assistant...")
@@ -3107,7 +3107,7 @@ if __name__ == "__main__":
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("System", f"ERROR Patch assistant failed: {e}")
 
-    def handle_license_ai_message(self, message: str):
+    def handle_license_ai_message(self, message: str) -> None:
         """Handle AI messages specifically for license research."""
         try:
             logger.info(f"Processing license research AI message: {message}")
@@ -3261,7 +3261,7 @@ WARNING️  All research should be conducted on your own software in controlled 
             logger.error(f"Failed to generate license research fallback: {e}")
             return f"License research query received but AI is unavailable. Please check your configuration.\nQuery: {message}"
 
-    def ai_generate_license_bypass(self):
+    def ai_generate_license_bypass(self) -> None:
         """Generate license bypass code using AI."""
         try:
             if not self.ai_tools or not self.llm_enabled:
@@ -3356,7 +3356,7 @@ Please generate a comprehensive, production-ready bypass script with all necessa
                     logger.warning("AI response insufficient, falling back to standard bypass generation")
                     if hasattr(self, "chat_widget"):
                         self.chat_widget.add_message(
-                            "AI", f"AI response was incomplete. Falling back to standard {bypass_type} generation..."
+                            "AI", f"AI response was incomplete. Falling back to standard {bypass_type} generation...",
                         )
 
                     # Use existing bypass generation logic
@@ -3369,7 +3369,7 @@ Please generate a comprehensive, production-ready bypass script with all necessa
                 logger.error(f"AI bypass generation failed: {ai_error}")
                 if hasattr(self, "chat_widget"):
                     self.chat_widget.add_message(
-                        "AI", f"ERROR AI bypass generation failed: {ai_error}\n\nFalling back to standard bypass generation..."
+                        "AI", f"ERROR AI bypass generation failed: {ai_error}\n\nFalling back to standard bypass generation...",
                     )
 
                 # Fall back to standard bypass generation
@@ -3382,7 +3382,7 @@ Please generate a comprehensive, production-ready bypass script with all necessa
                     logger.error(f"Fallback bypass generation also failed: {fallback_error}")
                     if hasattr(self, "chat_widget"):
                         self.chat_widget.add_message(
-                            "AI", "ERROR Both AI and fallback bypass generation failed. Please check your configuration."
+                            "AI", "ERROR Both AI and fallback bypass generation failed. Please check your configuration.",
                         )
 
         except Exception as e:
@@ -3461,7 +3461,7 @@ WARNING️  Use for authorized security research only WARNING️
 # End of AI-generated bypass code
 '''
 
-    def _create_editor_tab(self, filename: str, content: str):
+    def _create_editor_tab(self, filename: str, content: str) -> None:
         """Create a new editor tab with the specified content."""
         try:
             if hasattr(self, "editor_tabs") and self.editor_tabs:
@@ -3481,7 +3481,7 @@ WARNING️  Use for authorized security research only WARNING️
         except Exception as e:
             logger.error(f"Failed to create editor tab {filename}: {e}")
 
-    def send_quick_license_message(self, message: str):
+    def send_quick_license_message(self, message: str) -> None:
         """Send a quick license research message to AI."""
         try:
             logger.info(f"Sending quick license message: {message}")
@@ -3559,7 +3559,7 @@ Keep the response focused and actionable while maintaining technical accuracy.""
                 fallback_response = self._generate_quick_license_fallback(message)
                 if hasattr(self, "chat_widget"):
                     self.chat_widget.add_message(
-                        "AI", f"WARNING️  AI temporarily unavailable. Providing offline guidance:\n\n{fallback_response}"
+                        "AI", f"WARNING️  AI temporarily unavailable. Providing offline guidance:\n\n{fallback_response}",
                     )
 
         except Exception as e:
@@ -3711,7 +3711,7 @@ For specific guidance:
 class AICodingAssistantDialog(QDialog):
     """AI Coding Assistant with three-panel layout similar to Claude Code."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the AICodingAssistantDialog as a container for the widget."""
         super().__init__(parent)
         self.setWindowTitle("AI Coding Assistant")
@@ -3737,7 +3737,7 @@ class AICodingAssistantDialog(QDialog):
 
         logger.info("AI Coding Assistant Dialog initialized with widget")
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the three-panel UI layout."""
         layout = QVBoxLayout(self)
 
@@ -3769,7 +3769,7 @@ class AICodingAssistantDialog(QDialog):
         # Status bar
         self.setup_status_bar(layout)
 
-    def setup_menu_bar(self, layout):
+    def setup_menu_bar(self, layout) -> None:
         """Set up the menu bar."""
         menubar = QMenuBar()
 
@@ -3931,7 +3931,7 @@ class AICodingAssistantDialog(QDialog):
 
         return panel
 
-    def setup_status_bar(self, layout):
+    def setup_status_bar(self, layout) -> None:
         """Set up the status bar."""
         self.status_bar = QStatusBar()
 
@@ -3949,7 +3949,7 @@ class AICodingAssistantDialog(QDialog):
 
         layout.addWidget(self.status_bar)
 
-    def setup_connections(self):
+    def setup_connections(self) -> None:
         """Set up signal connections."""
         # File tree connections
         self.file_tree.file_selected.connect(self.open_file_in_editor)
@@ -3957,26 +3957,26 @@ class AICodingAssistantDialog(QDialog):
         # Chat connections
         self.chat_widget.message_sent.connect(self.handle_ai_message)
 
-    def load_intellicrack_project(self):
+    def load_intellicrack_project(self) -> None:
         """Auto-load the Intellicrack project."""
         project_root = Path(__file__).parent.parent.parent.parent
         if project_root.exists() and (project_root / "intellicrack").exists():
             self.set_project_root(str(project_root))
             self.status_bar.showMessage(f"Loaded project: {project_root.name}", 3000)
 
-    def set_project_root(self, root_path: str):
+    def set_project_root(self, root_path: str) -> None:
         """Set the project root directory."""
         self.current_project = Path(root_path)
         self.file_tree.set_root_directory(root_path)
         self.update_context_info()
 
-    def open_project(self):
+    def open_project(self) -> None:
         """Open a project directory."""
         directory = QFileDialog.getExistingDirectory(self, "Select Project Directory")
         if directory:
             self.set_project_root(directory)
 
-    def open_file_in_editor(self, file_path: str):
+    def open_file_in_editor(self, file_path: str) -> None:
         """Open a file in the code editor."""
         # Check if file is already open
         for i in range(self.editor_tabs.count()):
@@ -3999,7 +3999,7 @@ class AICodingAssistantDialog(QDialog):
         self.current_file_label.setText(f"File: {file_name}")
         self.update_context_info()
 
-    def close_tab(self, index: int):
+    def close_tab(self, index: int) -> None:
         """Close an editor tab."""
         editor = self.editor_tabs.widget(index)
         if editor and hasattr(editor, "is_modified") and editor.is_modified:
@@ -4023,14 +4023,14 @@ class AICodingAssistantDialog(QDialog):
             self.current_file_label.setText("No file open")
             self.update_context_info()
 
-    def save_current_file(self):
+    def save_current_file(self) -> None:
         """Save the currently active file."""
         current_editor = self.get_current_editor()
         if current_editor:
             current_editor.save_file()
             self.update_modified_status()
 
-    def save_all_files(self):
+    def save_all_files(self) -> None:
         """Save all modified files."""
         for i in range(self.editor_tabs.count()):
             editor = self.editor_tabs.widget(i)
@@ -4046,20 +4046,20 @@ class AICodingAssistantDialog(QDialog):
             return current_widget
         return None
 
-    def on_file_modified(self, file_path: str):
+    def on_file_modified(self, file_path: str) -> None:
         """Handle file modification."""
         self.modified_files.add(file_path)
         self.update_modified_status()
         self.update_context_info()
 
-    def update_modified_status(self):
+    def update_modified_status(self) -> None:
         """Update the modified files indicator."""
         if self.modified_files:
             self.modified_label.setText(f"Modified: {len(self.modified_files)} files")
         else:
             self.modified_label.setText("")
 
-    def update_context_info(self):
+    def update_context_info(self) -> None:
         """Update the context information panel."""
         current_editor = self.get_current_editor()
         if current_editor and current_editor.current_file:
@@ -4078,7 +4078,7 @@ class AICodingAssistantDialog(QDialog):
         else:
             self.context_info.setPlainText("No file selected")
 
-    def handle_ai_message(self, message: str):
+    def handle_ai_message(self, message: str) -> None:
         """Handle AI assistant message."""
         try:
             self.ai_status_label.setText("AI Processing...")
@@ -4168,7 +4168,7 @@ class AICodingAssistantDialog(QDialog):
                 return f"AI generation temporarily unavailable for {script_type}."
             return f"AI processing error: {e!s}"
 
-    def ai_generate_code(self):
+    def ai_generate_code(self) -> None:
         """Generate code using AI."""
         current_editor = self.get_current_editor()
         if not current_editor:
@@ -4193,7 +4193,7 @@ def example_function():
         # Add to chat
         self.chat_widget.add_message("AI", f"Generated {script_type} code and inserted into editor.")
 
-    def run_current_script(self):
+    def run_current_script(self) -> None:
         """Run the current script with optional QEMU testing."""
         current_editor = self.get_current_editor()
         if not current_editor or not current_editor.current_file:
@@ -4252,11 +4252,11 @@ def example_function():
             error_msg = f"Script execution failed: {result.get('error', 'Unknown error')}"
             self.chat_widget.add_message("System", error_msg)
 
-    def run_python_script(self, file_path: str):
+    def run_python_script(self, file_path: str) -> None:
         """Run a Python script."""
         try:
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                ["python", file_path],  # noqa: S607
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                ["python", file_path],
                 check=False,
                 capture_output=True,
                 text=True,
@@ -4273,11 +4273,11 @@ def example_function():
             logger.error("Exception in ai_coding_assistant_dialog: %s", e)
             self.chat_widget.add_message("System", f"Script execution error: {e}")
 
-    def run_javascript_script(self, file_path: str):
+    def run_javascript_script(self, file_path: str) -> None:
         """Run a JavaScript script (if Node.js is available)."""
         try:
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                ["node", file_path],  # noqa: S607
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                ["node", file_path],
                 check=False,
                 capture_output=True,
                 text=True,
@@ -4297,7 +4297,7 @@ def example_function():
             logger.error("Exception in ai_coding_assistant_dialog: %s", e)
             self.chat_widget.add_message("System", f"Script execution error: {e}")
 
-    def format_current_code(self):
+    def format_current_code(self) -> None:
         """Format the current code."""
         current_editor = self.get_current_editor()
         if not current_editor:
@@ -4310,7 +4310,7 @@ def example_function():
         else:
             QMessageBox.information(self, "Info", "Code formatting not supported for this file type.")
 
-    def format_python_code(self, editor: CodeEditor):
+    def format_python_code(self, editor: CodeEditor) -> None:
         """Format Python code using black if available."""
         try:
             # Try to format with black
@@ -4321,8 +4321,8 @@ def example_function():
                 temp_file_path = temp_file.name
 
             try:
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                    ["black", "--quiet", temp_file_path],  # noqa: S607
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                    ["black", "--quiet", temp_file_path],
                     check=False,
                     capture_output=True,
                     text=True,
@@ -4348,7 +4348,7 @@ def example_function():
             logger.error("Exception in ai_coding_assistant_dialog: %s", e)
             self.chat_widget.add_message("System", f"Formatting error: {e}")
 
-    def analyze_current_code(self):
+    def analyze_current_code(self) -> None:
         """Analyze the current code with AI."""
         current_editor = self.get_current_editor()
         if not current_editor:
@@ -4452,7 +4452,7 @@ def example_function():
 
         return "\n".join(lines)
 
-    def _highlight_security_issues(self, security_issues: list[str]):
+    def _highlight_security_issues(self, security_issues: list[str]) -> None:
         """Highlight security issues in the code editor."""
         current_editor = self.get_current_editor()
         if not current_editor:
@@ -4471,13 +4471,13 @@ def example_function():
                 f"Found {len(security_issues)} security issue(s) in the code.\nPlease review the analysis results in the chat panel.",
             )
 
-    def generate_script_dialog(self):
+    def generate_script_dialog(self) -> None:
         """Open script generation dialog."""
         script_type = self.script_type_combo.currentText()
         message = f"Generate a {script_type} for the current context"
         self.chat_widget.send_quick_message(message)
 
-    def create_new_file(self):
+    def create_new_file(self) -> None:
         """Create a new file."""
         file_path, _ = QFileDialog.getSaveFileName(
             self,

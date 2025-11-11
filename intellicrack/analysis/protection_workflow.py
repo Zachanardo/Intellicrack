@@ -22,11 +22,13 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import os
-from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 try:
     from ..llm.llm_manager import LLMManager
@@ -71,7 +73,7 @@ except ImportError:
     GhidraScriptGenerator = None
 
 try:
-    from ..utils.logger import get_logger
+    from ..utils.logger import get_logger, log_all_methods
 except ImportError:
     import logging
 
@@ -114,10 +116,11 @@ class WorkflowResult:
     confidence: float = 0.0
 
 
+@log_all_methods
 class ProtectionAnalysisWorkflow:
     """Manages the complete protection analysis workflow."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize workflow manager."""
         self.engine = get_unified_engine() if get_unified_engine else None
         self.frida_gen = FridaScriptGenerator() if FridaScriptGenerator else None
@@ -332,7 +335,7 @@ class ProtectionAnalysisWorkflow:
         recommendations = []
 
         # Check protection types
-        protection_types = set(p["type"] for p in analysis.protections)
+        protection_types = {p["type"] for p in analysis.protections}
 
         # Priority recommendations
         if analysis.is_packed:
@@ -815,7 +818,7 @@ console.log("[+] Generic bypass active for " + protectionName);
 
         return steps
 
-    def _report_progress(self, message: str, percentage: int):
+    def _report_progress(self, message: str, percentage: int) -> None:
         """Report workflow progress."""
         if self.progress_callback is not None and callable(self.progress_callback):
             self.progress_callback(message, percentage)

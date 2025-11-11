@@ -205,9 +205,9 @@ public class LicensingAnalysisScript extends GhidraScript {
     options.put("Eliminate dead code", "true");
     options.put("Split dataflow", "true");
     options.put("Recover jump tables", "true");
-    
+
     decompOptions.grabFromProgram(program);
-    
+
     // Apply enhanced decompilation options for better licensing analysis
     for (Map.Entry<String, String> option : options.entrySet()) {
       try {
@@ -217,13 +217,16 @@ public class LicensingAnalysisScript extends GhidraScript {
         println("Warning: Could not apply option " + option.getKey() + ": " + e.getMessage());
       }
     }
-    
-    // Set additional optimization parameters for license validation analysis  
+
+    // Set additional optimization parameters for license validation analysis
     decompOptions.setMaxPayloadMBytes(100);
     decompOptions.setMaxInstructions(50000);
     decompOptions.setDefaultTimeout(120);
-    
-    println("Decompiler initialized with " + options.size() + " optimization options for licensing analysis");
+
+    println(
+        "Decompiler initialized with "
+            + options.size()
+            + " optimization options for licensing analysis");
   }
 
   private void analyzeSymbolTable() throws CancelledException {

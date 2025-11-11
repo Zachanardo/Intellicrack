@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 class ProtectionAwareScriptGenerator:
     """Generate targeted scripts based on detected protection schemes."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the protection-aware script generator.
 
         Sets up the generator with protection-specific script templates
@@ -142,7 +142,7 @@ class ProtectionAwareScriptGenerator:
 
         # If no primary protection found, use first one
         if not primary_protection and protections_to_process:
-            primary_protection = list(protections_to_process.keys())[0]
+            primary_protection = next(iter(protections_to_process.keys()))
             highest_confidence = protections_to_process[primary_protection]["confidence"]
 
         # Get protection info from knowledge base
@@ -294,7 +294,7 @@ Focus on the most effective approach for this specific protection type.
                     "success_rate": technique.success_rate,
                     "time_estimate": technique.time_estimate,
                     "tools": technique.tools_required,
-                }
+                },
             )
 
         return techniques
@@ -3846,7 +3846,7 @@ function analyzeDecryptedCode(addr, size) {
 }
 
 console.log("[+] Themida protection bypass activated");
-"""
+""",
         }
 
     def _get_ilok_scripts(self) -> dict[str, str]:
@@ -3972,7 +3972,7 @@ if (winHttp) {
 }
 
 console.log("[+] PACE iLok bypass activated");
-"""
+""",
         }
 
     def _get_securom_scripts(self) -> dict[str, str]:
@@ -4104,7 +4104,7 @@ function analyzeUnpackedCode(addr) {
 }
 
 console.log("[+] SecuROM bypass activated");
-"""
+""",
         }
 
     def _get_starforce_scripts(self) -> dict[str, str]:
@@ -4246,7 +4246,7 @@ detectStarForceDrivers();
 bypassRing0Checks();
 
 console.log("[+] StarForce protection bypass activated");
-"""
+""",
         }
 
     def _get_arxan_scripts(self) -> dict[str, str]:
@@ -4431,7 +4431,7 @@ if (winHttp) {
 }
 
 console.log("[+] Arxan TransformIT bypass activated");
-"""
+""",
         }
 
     def _get_cloud_licensing_scripts(self) -> dict[str, str]:
@@ -4625,7 +4625,7 @@ certAPIs.forEach(function(api) {
 identifyLicenseEndpoints();
 
 console.log("[+] Cloud licensing bypass activated");
-"""
+""",
         }
 
     def _get_custom_obfuscation_scripts(self) -> dict[str, str]:
@@ -4843,7 +4843,7 @@ Interceptor.attach(getProcAddress, {
 detectObfuscation();
 
 console.log("[+] Custom obfuscation bypass activated");
-"""
+""",
         }
 
     def _get_safenet_sentinel_scripts(self) -> dict[str, str]:
@@ -5055,7 +5055,7 @@ function generateHardwareKeyResponse(ioctl) {
 }
 
 console.log("[+] SafeNet Sentinel bypass activated");
-"""
+""",
         }
 
     def _get_basic_analysis_script(self, script_type: str) -> str:

@@ -48,7 +48,7 @@ else:
     class HeadlessWidget:
         """Production fallback widget for headless operation."""
 
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs) -> None:
             self._args = args
             self._kwargs = kwargs
             self._attributes = {}
@@ -58,43 +58,43 @@ else:
             self._enabled = True
             self._name = kwargs.get("objectName", f"widget_{id(self)}")
 
-        def setParent(self, parent):
+        def setParent(self, parent) -> None:
             self._parent = parent
             if parent and hasattr(parent, "_children"):
                 parent._children.append(self)
 
-        def show(self):
+        def show(self) -> None:
             self._visible = True
 
-        def hide(self):
+        def hide(self) -> None:
             self._visible = False
 
-        def setEnabled(self, enabled):
+        def setEnabled(self, enabled) -> None:
             self._enabled = enabled
 
-        def setText(self, text):
+        def setText(self, text) -> None:
             self._attributes["text"] = text
 
         def text(self):
             return self._attributes.get("text", "")
 
-        def setValue(self, value):
+        def setValue(self, value) -> None:
             self._attributes["value"] = value
 
         def value(self):
             return self._attributes.get("value", 0)
 
-        def addWidget(self, widget):
+        def addWidget(self, widget) -> None:
             if widget:
                 widget.setParent(self)
 
-        def addLayout(self, layout):
+        def addLayout(self, layout) -> None:
             if layout:
                 self._children.append(layout)
 
         def __getattr__(self, name):
             # Return a callable that stores the call but doesn't fail
-            def method(*args, **kwargs):
+            def method(*args, **kwargs) -> None:
                 return None
 
             return method
@@ -102,41 +102,41 @@ else:
     class HeadlessLayout(HeadlessWidget):
         """Production fallback layout for headless operation."""
 
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs) -> None:
             super().__init__(*args, **kwargs)
             self._spacing = 0
             self._margin = 0
 
-        def setSpacing(self, spacing):
+        def setSpacing(self, spacing) -> None:
             self._spacing = spacing
 
-        def setContentsMargins(self, left, top, right, bottom):
+        def setContentsMargins(self, left, top, right, bottom) -> None:
             self._margin = (left, top, right, bottom)
 
     class HeadlessTimer:
         """Production fallback timer for headless operation."""
 
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs) -> None:
             self._interval = 1000
             self._active = False
             self._single_shot = False
 
-        def start(self, interval=None):
+        def start(self, interval=None) -> None:
             if interval:
                 self._interval = interval
             self._active = True
 
-        def stop(self):
+        def stop(self) -> None:
             self._active = False
 
-        def setInterval(self, interval):
+        def setInterval(self, interval) -> None:
             self._interval = interval
 
-        def setSingleShot(self, single):
+        def setSingleShot(self, single) -> None:
             self._single_shot = single
 
         @staticmethod
-        def singleShot(interval, callback):
+        def singleShot(interval, callback) -> None:
             # Execute callback immediately in headless mode
             if callable(callback):
                 callback()
@@ -406,7 +406,7 @@ def setup_training_tab(parent: Any) -> Any | None:
             "SVM",
             "Logistic Regression",
             "Ensemble",
-        ]
+        ],
     )
 
     model_type_layout.addWidget(model_type_label)

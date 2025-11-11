@@ -156,7 +156,7 @@ def extract_icon_from_resources(pe) -> bytes | None:
         # Parse icon group to find best icon
         if icon_groups:
             # Get first icon group
-            group_id = list(icon_groups.keys())[0]
+            group_id = next(iter(icon_groups.keys()))
             group_data = icon_groups[group_id]
 
             # Parse GRPICONDIR structure
@@ -171,7 +171,7 @@ def extract_icon_from_resources(pe) -> bytes | None:
             for _i in range(count):
                 if offset + 14 <= len(group_data):
                     # GRPICONDIRENTRY structure
-                    width, height, colors, _, planes, bits, size, icon_id = struct.unpack(
+                    width, height, _colors, _, _planes, _bits, size, icon_id = struct.unpack(
                         "<BBBBHHIH",
                         group_data[offset : offset + 14],
                     )
@@ -392,7 +392,7 @@ def get_pe_icon_info(pe_path: str) -> dict[str, any]:
 class PEAnalyzer:
     """Production-ready PE file analyzer for comprehensive binary analysis."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize PE analyzer with logger instance."""
         self.logger = logger
 
@@ -446,7 +446,7 @@ class PEAnalyzer:
                     for imp in entry.imports:
                         if imp.name:
                             functions.append(
-                                {"name": imp.name.decode("utf-8", errors="ignore"), "address": imp.address, "ordinal": imp.ordinal}
+                                {"name": imp.name.decode("utf-8", errors="ignore"), "address": imp.address, "ordinal": imp.ordinal},
                             )
 
                     imports.append({"dll": dll_name, "functions": functions})
@@ -467,7 +467,7 @@ class PEAnalyzer:
                             "name": exp.name.decode("utf-8", errors="ignore") if exp.name else None,
                             "address": exp.address,
                             "ordinal": exp.ordinal,
-                        }
+                        },
                     )
         except Exception as e:
             self.logger.debug(f"Export extraction failed: {e}")
@@ -519,7 +519,7 @@ class PEAnalyzer:
                 for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
                     if hasattr(resource_type, "id"):
                         resources["resource_types"].append(
-                            {"type_id": resource_type.id, "name": resource_type.name if hasattr(resource_type, "name") else None}
+                            {"type_id": resource_type.id, "name": resource_type.name if hasattr(resource_type, "name") else None},
                         )
                         resources["total_resources"] += 1
         except Exception as e:
@@ -544,17 +544,15 @@ class PEAnalyzer:
         """Determine PE file architecture."""
         try:
             machine_type = pe.FILE_HEADER.Machine
-
-            if machine_type == 0x014C:  # IMAGE_FILE_MACHINE_I386
-                return "x86"
-            elif machine_type == 0x8664:  # IMAGE_FILE_MACHINE_AMD64
-                return "x64"
-            elif machine_type == 0x01C0:  # IMAGE_FILE_MACHINE_ARM
-                return "ARM"
-            elif machine_type == 0xAA64:  # IMAGE_FILE_MACHINE_ARM64
-                return "ARM64"
-            else:
-                return f"Unknown (0x{machine_type:04x})"
+            architecture_map = {
+                0x014C: "x86",  # IMAGE_FILE_MACHINE_I386
+                0x8664: "x64",  # IMAGE_FILE_MACHINE_AMD64
+                0x01C0: "ARM",  # IMAGE_FILE_MACHINE_ARM
+                0xAA64: "ARM64",  # IMAGE_FILE_MACHINE_ARM64
+            }
+            if machine_type in architecture_map:
+                return architecture_map[machine_type]
+            return f"Unknown (0x{machine_type:04x})"
         except Exception as e:
             self.logger.debug(f"Architecture detection failed: {e}")
             return "Unknown"

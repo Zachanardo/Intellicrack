@@ -152,7 +152,7 @@ class R2KeygenAssistant:
         "6x4": r"^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$",
     }
 
-    def __init__(self, r2: r2pipe.open = None, filename: str = None):
+    def __init__(self, r2: r2pipe.open = None, filename: str = None) -> None:
         """Initialize the keygen assistant."""
         self.r2 = r2 if r2 else r2pipe.open(filename)
         self.crypto_operations: list[CryptoOperation] = []
@@ -166,7 +166,7 @@ class R2KeygenAssistant:
         # Initialize analysis
         self._init_analysis()
 
-    def _init_disassemblers(self):
+    def _init_disassemblers(self) -> None:
         """Initialize disassembly engines."""
         info = self.r2.cmdj("ij")
         arch = info.get("bin", {}).get("arch", "x86")
@@ -191,7 +191,7 @@ class R2KeygenAssistant:
             else:
                 self.ks = keystone.Ks(keystone.KS_ARCH_X86, keystone.KS_MODE_32)
 
-    def _init_analysis(self):
+    def _init_analysis(self) -> None:
         """Initialize r2 analysis."""
         print("[*] Initializing analysis...")
         self.r2.cmd("aaa")
@@ -247,7 +247,7 @@ class R2KeygenAssistant:
 
         return flow
 
-    def _analyze_block_instructions(self, addr: int, block_bytes: bytes, flow: ValidationFlow):
+    def _analyze_block_instructions(self, addr: int, block_bytes: bytes, flow: ValidationFlow) -> None:
         """Analyze instructions in a basic block."""
         for insn in self.cs.disasm(block_bytes, addr):
             # Check for crypto operations
@@ -296,7 +296,7 @@ class R2KeygenAssistant:
 
         return None
 
-    def _analyze_call(self, insn, flow: ValidationFlow):
+    def _analyze_call(self, insn, flow: ValidationFlow) -> None:
         """Analyze function calls for crypto operations."""
         if insn.operands[0].type == capstone.x86.X86_OP_IMM:
             target = insn.operands[0].imm
@@ -391,7 +391,7 @@ class R2KeygenAssistant:
 
         return self.extracted_keys
 
-    def _search_constants(self, algo_name: str, constants: dict[str, Any]):
+    def _search_constants(self, algo_name: str, constants: dict[str, Any]) -> None:
         """Search for algorithm-specific constants."""
         for const_type, values in constants.items():
             if isinstance(values, list):
@@ -400,7 +400,7 @@ class R2KeygenAssistant:
             else:
                 self._search_constant_value(algo_name, const_type, values)
 
-    def _search_constant_value(self, algo_name: str, const_type: str, value: int):
+    def _search_constant_value(self, algo_name: str, const_type: str, value: int) -> None:
         """Search for a specific constant value."""
         # Search in different endianness
         search_values = []
@@ -411,7 +411,7 @@ class R2KeygenAssistant:
                 [
                     struct.pack("<I", value).hex(),  # Little endian
                     struct.pack(">I", value).hex(),  # Big endian
-                ]
+                ],
             )
         else:
             # 64-bit value
@@ -419,7 +419,7 @@ class R2KeygenAssistant:
                 [
                     struct.pack("<Q", value).hex(),
                     struct.pack(">Q", value).hex(),
-                ]
+                ],
             )
 
         for hex_val in search_values:
@@ -438,10 +438,10 @@ class R2KeygenAssistant:
                             {
                                 "address": addr,
                                 "value": value,
-                            }
+                            },
                         )
 
-    def _extract_rsa_keys(self):
+    def _extract_rsa_keys(self) -> None:
         """Extract RSA keys from binary."""
         print("[*] Searching for RSA keys...")
 
@@ -463,7 +463,7 @@ class R2KeygenAssistant:
                         # Search around this address for large integers
                         self._search_rsa_modulus(addr, exp)
 
-    def _search_rsa_modulus(self, exp_addr: int, exponent: int):
+    def _search_rsa_modulus(self, exp_addr: int, exponent: int) -> None:
         """Search for RSA modulus near exponent."""
         # RSA modulus is typically 128-512 bytes
         search_range = 0x1000
@@ -502,7 +502,7 @@ class R2KeygenAssistant:
 
                     print(f"[+] Found potential RSA-{modulus.bit_length()} key at 0x{start_addr + i:x}")
 
-    def _extract_aes_keys(self):
+    def _extract_aes_keys(self) -> None:
         """Extract AES keys from binary."""
         print("[*] Searching for AES keys...")
 
@@ -525,7 +525,7 @@ class R2KeygenAssistant:
                 0xD7,
                 0xAB,
                 0x76,
-            ]
+            ],
         )
 
         # Search for S-box
@@ -540,7 +540,7 @@ class R2KeygenAssistant:
                     # Keys are often near S-box
                     self._search_aes_keys_near(sbox_addr)
 
-    def _search_aes_keys_near(self, sbox_addr: int):
+    def _search_aes_keys_near(self, sbox_addr: int) -> None:
         """Search for AES keys near S-box."""
         # AES keys are 16, 24, or 32 bytes
         key_sizes = [16, 24, 32]
@@ -578,7 +578,7 @@ class R2KeygenAssistant:
         # High entropy if many unique bytes
         return unique_bytes > len(data) * 0.6
 
-    def _extract_custom_algorithms(self):
+    def _extract_custom_algorithms(self) -> None:
         """Extract custom algorithm patterns."""
         print("[*] Analyzing custom algorithms...")
 
@@ -588,7 +588,7 @@ class R2KeygenAssistant:
         # Look for custom constants
         self._extract_custom_constants()
 
-    def _extract_xor_keys(self):
+    def _extract_xor_keys(self) -> None:
         """Extract XOR keys from validation routines."""
         for flow in self.validation_flows:
             for op in flow.operations:
@@ -600,10 +600,10 @@ class R2KeygenAssistant:
                         {
                             "address": op.address,
                             "key": op.parameters.get("key", 0),
-                        }
+                        },
                     )
 
-    def _extract_custom_constants(self):
+    def _extract_custom_constants(self) -> None:
         """Extract custom constants from validation."""
         # Look for repeated constants in validation functions
         for flow in self.validation_flows:
@@ -645,7 +645,7 @@ class R2KeygenAssistant:
                                 "value": value,
                                 "hex": hex(value),
                                 "context": line.strip(),
-                            }
+                            },
                         )
 
         return constants
@@ -671,7 +671,7 @@ class R2KeygenAssistant:
         return templates
 
     def _generate_keygen_template(
-        self, flow: ValidationFlow, algo_chain: list[CryptoAlgorithm], language: KeygenLanguage
+        self, flow: ValidationFlow, algo_chain: list[CryptoAlgorithm], language: KeygenLanguage,
     ) -> KeygenTemplate | None:
         """Generate keygen template for specific language."""
         print(f"[*] Generating {language.value} keygen...")
@@ -754,7 +754,7 @@ class R2KeygenAssistant:
                 code.append(f"    # Step {i + 1}: AES encryption")
                 if "AES" in self.extracted_keys:
                     # Use extracted key
-                    key_info = list(self.extracted_keys["AES"].values())[0]
+                    key_info = next(iter(self.extracted_keys["AES"].values()))
                     key_hex = key_info["value"]
                     code.append(f"    aes_key = bytes.fromhex('{key_hex}')")
                 else:
@@ -801,7 +801,7 @@ class R2KeygenAssistant:
 
         return template
 
-    def _add_python_constants(self, code: list[str]):
+    def _add_python_constants(self, code: list[str]) -> None:
         """Add extracted constants to Python code."""
         code.append("# Extracted constants")
 
@@ -818,7 +818,7 @@ class R2KeygenAssistant:
             code.append("]")
             code.append("")
 
-    def _add_serial_formatting(self, code: list[str], format_pattern: str):
+    def _add_serial_formatting(self, code: list[str], format_pattern: str) -> None:
         """Add serial formatting code."""
         if format_pattern == "4x4":
             code.append("    hex_str = digest.hex().upper()[:16]")
@@ -945,7 +945,7 @@ class R2KeygenAssistant:
 
         return template
 
-    def _add_cpp_constants(self, code: list[str]):
+    def _add_cpp_constants(self, code: list[str]) -> None:
         """Add extracted constants to C++ code."""
         code.append("// Extracted constants")
 
@@ -1074,7 +1074,7 @@ class R2KeygenAssistant:
 
         return template
 
-    def _add_java_constants(self, code: list[str]):
+    def _add_java_constants(self, code: list[str]) -> None:
         """Add extracted constants to Java code."""
         code.append("    // Extracted constants")
 
@@ -1085,7 +1085,7 @@ class R2KeygenAssistant:
             code.append("    };")
             code.append("")
 
-    def export_keygens(self, templates: list[KeygenTemplate], output_dir: str = "keygens"):
+    def export_keygens(self, templates: list[KeygenTemplate], output_dir: str = "keygens") -> None:
         """Export generated keygens to files."""
         os.makedirs(output_dir, exist_ok=True)
 
@@ -1143,7 +1143,7 @@ class R2KeygenAssistant:
         return templates
 
 
-def main():
+def main() -> None:
     """Run the Radare2 keygen assistant."""
     if len(sys.argv) < 2:
         print("Usage: radare2_keygen_assistant.py <binary> [license_analysis.json]")

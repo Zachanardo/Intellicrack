@@ -928,17 +928,17 @@ const BinaryPatcher = {
                 let checksum = 0;
 
                 switch (algorithm) {
-                case 'crc32':
-                    checksum = this.crc32(buffer, start, end);
-                    break;
-                case 'sum32':
-                    checksum = this.sum32(buffer, start, end);
-                    break;
-                case 'xor32':
-                    checksum = this.xor32(buffer, start, end);
-                    break;
-                default:
-                    checksum = this.sum32(buffer, start, end);
+                    case 'crc32':
+                        checksum = this.crc32(buffer, start, end);
+                        break;
+                    case 'sum32':
+                        checksum = this.sum32(buffer, start, end);
+                        break;
+                    case 'xor32':
+                        checksum = this.xor32(buffer, start, end);
+                        break;
+                    default:
+                        checksum = this.sum32(buffer, start, end);
                 }
 
                 return checksum;
@@ -1307,14 +1307,14 @@ const BinaryPatcher = {
 
                     // Perform SIMD operation
                     switch (operation) {
-                    case 'xor':
-                        return this.simdXor(data);
-                    case 'and':
-                        return this.simdAnd(data);
-                    case 'or':
-                        return this.simdOr(data);
-                    default:
-                        return this.fallbackOperation(operation, data);
+                        case 'xor':
+                            return this.simdXor(data);
+                        case 'and':
+                            return this.simdAnd(data);
+                        case 'or':
+                            return this.simdOr(data);
+                        default:
+                            return this.fallbackOperation(operation, data);
                     }
                 },
 

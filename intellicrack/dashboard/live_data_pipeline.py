@@ -66,7 +66,7 @@ class DataEvent:
 class LiveDataPipeline:
     """Live data pipeline for real-time event processing."""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         """Initialize live data pipeline.
 
         Args:
@@ -139,7 +139,7 @@ class LiveDataPipeline:
         self.sequence_counter = 0
         self.sequence_lock = threading.Lock()
 
-    def _init_database(self):
+    def _init_database(self) -> None:
         """Initialize SQLite database for historical data."""
         conn = sqlite3.connect(str(self.db_path))
         cursor = conn.cursor()
@@ -180,7 +180,7 @@ class LiveDataPipeline:
         conn.commit()
         conn.close()
 
-    def start(self):
+    def start(self) -> None:
         """Start the data pipeline."""
         if self.running:
             return
@@ -202,7 +202,7 @@ class LiveDataPipeline:
 
         self.logger.info("Live data pipeline started")
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the data pipeline."""
         self.running = False
 
@@ -228,7 +228,7 @@ class LiveDataPipeline:
         data: Dict[str, Any],
         priority: DataPriority = DataPriority.NORMAL,
         correlation_id: Optional[str] = None,
-    ):
+    ) -> None:
         """Add event to the pipeline.
 
         Args:
@@ -303,7 +303,7 @@ class LiveDataPipeline:
         self.event_timestamps.append(current_time)
         return False
 
-    def _process_events(self):
+    def _process_events(self) -> None:
         """Process events from queues."""
         while self.running:
             try:
@@ -321,7 +321,7 @@ class LiveDataPipeline:
             except Exception as e:
                 self.logger.error(f"Error processing events: {e}")
 
-    def _process_single_event(self, event: DataEvent):
+    def _process_single_event(self, event: DataEvent) -> None:
         """Process a single event.
 
         Args:
@@ -354,7 +354,7 @@ class LiveDataPipeline:
         with self.aggregation_lock:
             self.aggregators[event.source][event.event_type].append(event)
 
-    def _flush_buffer(self):
+    def _flush_buffer(self) -> None:
         """Flush event buffer to WebSocket connections."""
         with self.buffer_lock:
             if not self.event_buffer:
@@ -381,13 +381,13 @@ class LiveDataPipeline:
             # Clear buffer
             self.event_buffer.clear()
 
-    def _flush_buffer_periodically(self):
+    def _flush_buffer_periodically(self) -> None:
         """Periodically flush the buffer."""
         while self.running:
             time.sleep(self.buffer_timeout)
             self._flush_buffer()
 
-    def _aggregate_data(self):
+    def _aggregate_data(self) -> None:
         """Aggregate data over time windows."""
         while self.running:
             time.sleep(self.aggregation_window)
@@ -448,12 +448,12 @@ class LiveDataPipeline:
                     "median": float(np.median(numeric_values)),
                     "std": float(np.std(numeric_values)),
                     "p95": float(np.percentile(numeric_values, 95)),
-                }
+                },
             )
 
         return aggregated
 
-    def _send_aggregated_data(self, aggregated: Dict[str, Any]):
+    def _send_aggregated_data(self, aggregated: Dict[str, Any]) -> None:
         """Send aggregated data to clients.
 
         Args:
@@ -464,13 +464,13 @@ class LiveDataPipeline:
 
         self._broadcast_to_websockets(message)
 
-    def _update_metrics(self):
+    def _update_metrics(self) -> None:
         """Update pipeline metrics."""
         while self.running:
             with self.metrics_lock:
                 # Calculate throughput
                 self.metrics["throughput"] = self.metrics["events_processed"] / max(
-                    1, time.time() - self.metrics.get("start_time", time.time())
+                    1, time.time() - self.metrics.get("start_time", time.time()),
                 )
 
                 # Update queue sizes
@@ -484,7 +484,7 @@ class LiveDataPipeline:
 
             time.sleep(5)  # Update every 5 seconds
 
-    def _check_alerts(self, event: DataEvent, latency: float):
+    def _check_alerts(self, event: DataEvent, latency: float) -> None:
         """Check for alert conditions.
 
         Args:
@@ -502,7 +502,7 @@ class LiveDataPipeline:
                     "source": event.source,
                     "latency_ms": latency * 1000,
                     "threshold_ms": self.alert_thresholds["latency_ms"],
-                }
+                },
             )
 
         # Check queue sizes
@@ -514,14 +514,14 @@ class LiveDataPipeline:
                         "priority": priority.name,
                         "size": queue_obj.qsize(),
                         "threshold": self.alert_thresholds["queue_size"],
-                    }
+                    },
                 )
 
         # Send alerts
         for alert in alerts:
             self._send_alert(alert)
 
-    def _send_alert(self, alert: Dict[str, Any]):
+    def _send_alert(self, alert: Dict[str, Any]) -> None:
         """Send alert to clients.
 
         Args:
@@ -539,14 +539,14 @@ class LiveDataPipeline:
             except Exception as e:
                 self.logger.error(f"Error in alert callback: {e}")
 
-    def _send_metrics_update(self):
+    def _send_metrics_update(self) -> None:
         """Send metrics update to clients."""
         with self.metrics_lock:
             message = {"type": "metrics_update", "timestamp": time.time(), "metrics": self.metrics.copy()}
 
         self._broadcast_to_websockets(message)
 
-    def _broadcast_to_websockets(self, message: Dict[str, Any]):
+    def _broadcast_to_websockets(self, message: Dict[str, Any]) -> None:
         """Broadcast message to all WebSocket connections.
 
         Args:
@@ -570,7 +570,7 @@ class LiveDataPipeline:
             # Remove disconnected clients
             self.websocket_connections -= disconnected
 
-    def _store_event(self, event: DataEvent):
+    def _store_event(self, event: DataEvent) -> None:
         """Store event in database.
 
         Args:
@@ -603,7 +603,7 @@ class LiveDataPipeline:
         except Exception as e:
             self.logger.error(f"Error storing event: {e}")
 
-    def _store_metrics(self):
+    def _store_metrics(self) -> None:
         """Store metrics in database."""
         try:
             conn = sqlite3.connect(str(self.db_path))
@@ -627,7 +627,7 @@ class LiveDataPipeline:
         except Exception as e:
             self.logger.error(f"Error storing metrics: {e}")
 
-    def add_websocket_connection(self, connection):
+    def add_websocket_connection(self, connection) -> None:
         """Add WebSocket connection.
 
         Args:
@@ -637,7 +637,7 @@ class LiveDataPipeline:
         with self.websocket_lock:
             self.websocket_connections.add(connection)
 
-    def remove_websocket_connection(self, connection):
+    def remove_websocket_connection(self, connection) -> None:
         """Remove WebSocket connection.
 
         Args:
@@ -647,7 +647,7 @@ class LiveDataPipeline:
         with self.websocket_lock:
             self.websocket_connections.discard(connection)
 
-    def register_event_callback(self, callback: Callable):
+    def register_event_callback(self, callback: Callable) -> None:
         """Register event callback.
 
         Args:
@@ -656,7 +656,7 @@ class LiveDataPipeline:
         """
         self.event_callbacks.append(callback)
 
-    def register_alert_callback(self, callback: Callable):
+    def register_alert_callback(self, callback: Callable) -> None:
         """Register alert callback.
 
         Args:
@@ -666,7 +666,7 @@ class LiveDataPipeline:
         self.alert_callbacks.append(callback)
 
     def get_historical_events(
-        self, start_time: float, end_time: float, source: Optional[str] = None, event_type: Optional[str] = None
+        self, start_time: float, end_time: float, source: Optional[str] = None, event_type: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """Get historical events from database.
 
@@ -715,7 +715,7 @@ class LiveDataPipeline:
                         "priority": row[4],
                         "sequence_id": row[5],
                         "correlation_id": row[6],
-                    }
+                    },
                 )
 
             conn.close()

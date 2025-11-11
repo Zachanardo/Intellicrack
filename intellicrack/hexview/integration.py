@@ -196,7 +196,7 @@ except ImportError as e:
                                 "original": data[i : i + 2].hex(),
                                 "patched": "9090",
                                 "type": "conditional_jump_bypass",
-                            }
+                            },
                         )
                     elif data[i : i + 2] == b"\x75\x05":
                         suggestions.append(
@@ -206,7 +206,7 @@ except ImportError as e:
                                 "original": data[i : i + 2].hex(),
                                 "patched": "9090",
                                 "type": "conditional_jump_bypass",
-                            }
+                            },
                         )
                     elif data[i : i + 5] == b"\xe8" + data[i + 1 : i + 5]:
                         suggestions.append(
@@ -216,7 +216,7 @@ except ImportError as e:
                                 "original": data[i : i + 5].hex(),
                                 "patched": "9090909090",
                                 "type": "call_bypass",
-                            }
+                            },
                         )
 
             elif context == "return_value":
@@ -229,7 +229,7 @@ except ImportError as e:
                                 "original": data[i : i + 5].hex(),
                                 "patched": "b801000000",
                                 "type": "return_value_modification",
-                            }
+                            },
                         )
                     elif data[i : i + 2] == b"\x31\xc0":
                         suggestions.append(
@@ -239,7 +239,7 @@ except ImportError as e:
                                 "original": data[i : i + 2].hex(),
                                 "patched": "b801000000",
                                 "type": "return_value_modification",
-                            }
+                            },
                         )
 
             elif context == "comparison":
@@ -252,7 +252,7 @@ except ImportError as e:
                                 "original": data[i : i + 2].hex(),
                                 "patched": "3939",
                                 "type": "comparison_bypass",
-                            }
+                            },
                         )
 
             else:
@@ -265,7 +265,7 @@ except ImportError as e:
                                 "original": data[i : i + 2].hex(),
                                 "patched": "9090",
                                 "type": "general_conditional_bypass",
-                            }
+                            },
                         )
 
             return {"suggestions": suggestions, "count": len(suggestions)}
@@ -282,7 +282,7 @@ except ImportError as e:
         length = len(data)
         for count in counter.values():
             probability = count / length
-            entropy -= probability * (probability and (probability * 0.434294482) or 0)
+            entropy -= probability * ((probability and (probability * 0.434294482)) or 0)
         return entropy * 2.302585093
 
     def _extract_strings(data, min_length=4):
@@ -448,7 +448,7 @@ def show_enhanced_hex_viewer(app_instance, file_path: str | None = None, read_on
         return None
 
 
-def initialize_hex_viewer(app_instance):
+def initialize_hex_viewer(app_instance) -> None:
     """Initialize the hex viewer functionality.
 
     This function sets up the hex viewer methods on the application instance
@@ -477,7 +477,7 @@ def initialize_hex_viewer(app_instance):
     logger.info("Initialized hex viewer functionality")
 
 
-def restore_standard_hex_viewer(app_instance):
+def restore_standard_hex_viewer(app_instance) -> None:
     """Restore the standard hex viewer.
 
     This function restores the original hex viewer function if it was
@@ -492,7 +492,7 @@ def restore_standard_hex_viewer(app_instance):
         logger.info("Restored standard hex viewer")
 
 
-def add_hex_viewer_menu(app_instance, menu_name: str = None):
+def add_hex_viewer_menu(app_instance, menu_name: str = None) -> None:
     """Add the enhanced hex viewer to a menu.
 
     This function adds a menu item for the enhanced hex viewer to the
@@ -535,7 +535,7 @@ def add_hex_viewer_menu(app_instance, menu_name: str = None):
     logger.info("Added Enhanced Hex Viewer options to %s menu", menu_name)
 
 
-def add_hex_viewer_toolbar_button(app_instance, toolbar: QToolBar | None = None):
+def add_hex_viewer_toolbar_button(app_instance, toolbar: QToolBar | None = None) -> None:
     """Add the enhanced hex viewer to a toolbar.
 
     This function adds a toolbar button for the enhanced hex viewer to the
@@ -565,7 +565,7 @@ def add_hex_viewer_toolbar_button(app_instance, toolbar: QToolBar | None = None)
     logger.info("Added Enhanced Hex Viewer button to toolbar")
 
 
-def register_hex_viewer_ai_tools(app_instance):
+def register_hex_viewer_ai_tools(app_instance) -> None:
     """Register the AI tool wrappers for the hex viewer.
 
     This function registers the AI tool wrappers that provide integration
@@ -593,7 +593,7 @@ def register_hex_viewer_ai_tools(app_instance):
     logger.info(f"Registered {len(tool_registry)} hex viewer AI tools")
 
 
-def integrate_enhanced_hex_viewer(app_instance):
+def integrate_enhanced_hex_viewer(app_instance) -> bool | None:
     """Fully integrate the enhanced hex viewer with Intellicrack.
 
     This function performs all necessary steps to integrate the enhanced hex

@@ -43,7 +43,7 @@ class HexViewerWidget(QWidget):
     #: offset, new_data (type: int, bytes)
     data_modified = pyqtSignal(int, bytes)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize hex viewer widget with binary data visualization and editing capabilities."""
         super().__init__(parent)
         self.data = b""
@@ -56,7 +56,7 @@ class HexViewerWidget(QWidget):
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the hex viewer UI."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -108,14 +108,14 @@ class HexViewerWidget(QWidget):
         self.status_label = QLabel("Offset: 0x00000000 | Selection: None")
         layout.addWidget(self.status_label)
 
-    def load_data(self, data: bytes):
+    def load_data(self, data: bytes) -> None:
         """Load binary data into the viewer."""
         self.data = bytearray(data)
         self.offset = 0
         self.update_scrollbar()
         self.hex_display.update()
 
-    def update_scrollbar(self):
+    def update_scrollbar(self) -> None:
         """Update scrollbar range based on data size."""
         if not self.data:
             self.v_scrollbar.setRange(0, 0)
@@ -127,12 +127,12 @@ class HexViewerWidget(QWidget):
         self.v_scrollbar.setRange(0, max(0, total_lines - visible_lines))
         self.v_scrollbar.setPageStep(visible_lines)
 
-    def scroll_to(self, value):
+    def scroll_to(self, value) -> None:
         """Scroll to specified line."""
         self.offset = value * self.bytes_per_line
         self.hex_display.update()
 
-    def search_hex(self):
+    def search_hex(self) -> None:
         """Search for hex pattern in data."""
         pattern = self.search_box.text().strip()
         if not pattern:
@@ -163,7 +163,7 @@ class HexViewerWidget(QWidget):
         else:
             self.status_label.setText("Pattern not found")
 
-    def goto_offset(self):
+    def goto_offset(self) -> None:
         """Jump to specified offset."""
         try:
             offset = int(self.offset_box.text(), 16)
@@ -176,18 +176,18 @@ class HexViewerWidget(QWidget):
         except ValueError:
             self.status_label.setText("Invalid offset")
 
-    def scroll_to_offset(self, offset):
+    def scroll_to_offset(self, offset) -> None:
         """Scroll to make offset visible."""
         line = offset // self.bytes_per_line
         self.v_scrollbar.setValue(line - self.hex_display.visible_lines() // 2)
 
-    def toggle_edit_mode(self, checked):
+    def toggle_edit_mode(self, checked) -> None:
         """Toggle edit mode."""
         self.edit_mode = checked
         self.hex_display.update()
         self.status_label.setText(f"Edit mode: {'ON' if checked else 'OFF'}")
 
-    def update_cursor_info(self, offset):
+    def update_cursor_info(self, offset) -> None:
         """Update status bar with cursor information."""
         if offset < 0 or offset >= len(self.data):
             return
@@ -211,7 +211,7 @@ class HexDisplay(QWidget):
 
     cursor_moved = pyqtSignal(int)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize hex display widget with scrollable hex and ASCII data view."""
         super().__init__(parent)
         self.data = b""
@@ -238,7 +238,7 @@ class HexDisplay(QWidget):
         """Calculate number of visible lines."""
         return self.height() // self.char_height
 
-    def paintEvent(self, event):
+    def paintEvent(self, event) -> None:
         """Paint the hex display."""
         if not self.hex_viewer.data:
             return
@@ -322,7 +322,7 @@ class HexDisplay(QWidget):
                 painter.drawText(x, y, ascii_char)
                 x += self.char_width
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event) -> None:
         """Handle mouse clicks."""
         pos = self.get_offset_from_pos(event.pos())
         if pos != -1:
@@ -332,7 +332,7 @@ class HexDisplay(QWidget):
             self.update()
             self.cursor_moved.emit(pos)
 
-    def mouseMoveEvent(self, event):
+    def mouseMoveEvent(self, event) -> None:
         """Handle mouse drag for selection."""
         if event.buttons() & Qt.MouseButton.LeftButton:
             pos = self.get_offset_from_pos(event.pos())
@@ -340,7 +340,7 @@ class HexDisplay(QWidget):
                 self.hex_viewer.selection_end = pos + 1
                 self.update()
 
-    def mouseReleaseEvent(self, event):
+    def mouseReleaseEvent(self, event) -> None:
         """Handle mouse release."""
         if self.hex_viewer.selection_start != -1 and self.hex_viewer.selection_end != -1:
             # Normalize selection
@@ -350,7 +350,7 @@ class HexDisplay(QWidget):
             self.hex_viewer.selection_end = end
             self.hex_viewer.selection_changed.emit(start, end)
 
-    def keyPressEvent(self, event: QKeyEvent):
+    def keyPressEvent(self, event: QKeyEvent) -> None:
         """Handle keyboard input."""
         if not self.hex_viewer.data:
             return
@@ -421,7 +421,7 @@ class HexDisplay(QWidget):
 
         return -1
 
-    def input_hex_nibble(self, char):
+    def input_hex_nibble(self, char) -> None:
         """Input a hex nibble at current position."""
         if self.hex_viewer.cursor_pos >= len(self.hex_viewer.data):
             return

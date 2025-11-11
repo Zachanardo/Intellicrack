@@ -95,12 +95,12 @@ class ModelTestThread(QThread):
     #: progress message (type: str)
     validation_progress = pyqtSignal(str)
 
-    def __init__(self, config: "LLMConfig"):
+    def __init__(self, config: "LLMConfig") -> None:
         """Initialize the ModelTestThread with default values."""
         super().__init__()
         self.config = config
 
-    def run(self):
+    def run(self) -> None:
         """Test the model configuration."""
         try:
             self.validation_progress.emit("Initializing model backend...")
@@ -148,7 +148,7 @@ class ModelTestThread(QThread):
 class LLMConfigDialog(BaseDialog):
     """Dialog for configuring LLM models in Intellicrack."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the LLMConfigDialog with default values."""
         # Initialize EnvFileManager
         self.env_manager = EnvFileManager()
@@ -255,7 +255,7 @@ class LLMConfigDialog(BaseDialog):
             if failed > 0:
                 self.status_text.append(f"WARNING Failed to load {failed} models")
 
-    def setup_content(self, layout):
+    def setup_content(self, layout) -> None:
         """Set up the user interface content."""
         if layout is None:
             layout = QVBoxLayout(self.content_widget)
@@ -352,7 +352,7 @@ class LLMConfigDialog(BaseDialog):
 
         layout.addLayout(button_layout)
 
-    def setup_openai_tab(self):
+    def setup_openai_tab(self) -> None:
         """Set up OpenAI configuration tab."""
         tab = QWidget()
         layout = QFormLayout(tab)
@@ -372,7 +372,7 @@ class LLMConfigDialog(BaseDialog):
                 "gpt-4o",
                 "gpt-3.5-turbo",
                 "gpt-3.5-turbo-16k",
-            ]
+            ],
         )
         layout.addRow("Model:", self.openai_model)
 
@@ -415,7 +415,7 @@ class LLMConfigDialog(BaseDialog):
 
         self.tabs.addTab(tab, "OpenAI")
 
-    def setup_anthropic_tab(self):
+    def setup_anthropic_tab(self) -> None:
         """Set up Anthropic configuration tab."""
         tab = QWidget()
         layout = QFormLayout(tab)
@@ -436,7 +436,7 @@ class LLMConfigDialog(BaseDialog):
                 "claude-3-haiku-20240307",
                 "claude-2.1",
                 "claude-instant-1.2",
-            ]
+            ],
         )
         layout.addRow("Model:", self.anthropic_model)
 
@@ -474,7 +474,7 @@ class LLMConfigDialog(BaseDialog):
 
         self.tabs.addTab(tab, "Anthropic")
 
-    def setup_gguf_tab(self):
+    def setup_gguf_tab(self) -> None:
         """Set up GGUF model configuration tab."""
         tab = QWidget()
         layout = QFormLayout(tab)
@@ -538,7 +538,7 @@ class LLMConfigDialog(BaseDialog):
 
         self.tabs.addTab(tab, "GGUF Models")
 
-    def setup_ollama_tab(self):
+    def setup_ollama_tab(self) -> None:
         """Set up Ollama configuration tab."""
         tab = QWidget()
         layout = QFormLayout(tab)
@@ -584,7 +584,7 @@ class LLMConfigDialog(BaseDialog):
 
         self.tabs.addTab(tab, "Ollama")
 
-    def setup_pytorch_tab(self):
+    def setup_pytorch_tab(self) -> None:
         """Set up PyTorch model configuration tab."""
         tab = QWidget()
         layout = QFormLayout(tab)
@@ -642,7 +642,7 @@ class LLMConfigDialog(BaseDialog):
 
         self.tabs.addTab(tab, "PyTorch")
 
-    def setup_tensorflow_tab(self):
+    def setup_tensorflow_tab(self) -> None:
         """Set up TensorFlow model configuration tab."""
         tab = QWidget()
         layout = QFormLayout(tab)
@@ -700,7 +700,7 @@ class LLMConfigDialog(BaseDialog):
 
         self.tabs.addTab(tab, "TensorFlow")
 
-    def setup_onnx_tab(self):
+    def setup_onnx_tab(self) -> None:
         """Set up ONNX model configuration tab."""
         tab = QWidget()
         layout = QFormLayout(tab)
@@ -758,7 +758,7 @@ class LLMConfigDialog(BaseDialog):
 
         self.tabs.addTab(tab, "ONNX")
 
-    def setup_safetensors_tab(self):
+    def setup_safetensors_tab(self) -> None:
         """Set up Safetensors model configuration tab."""
         tab = QWidget()
         layout = QFormLayout(tab)
@@ -816,7 +816,7 @@ class LLMConfigDialog(BaseDialog):
 
         self.tabs.addTab(tab, "Safetensors")
 
-    def setup_gptq_tab(self):
+    def setup_gptq_tab(self) -> None:
         """Set up GPTQ model configuration tab."""
         tab = QWidget()
         layout = QFormLayout(tab)
@@ -874,7 +874,7 @@ class LLMConfigDialog(BaseDialog):
 
         self.tabs.addTab(tab, "GPTQ")
 
-    def setup_huggingface_tab(self):
+    def setup_huggingface_tab(self) -> None:
         """Set up Hugging Face local model configuration tab."""
         tab = QWidget()
         layout = QFormLayout(tab)
@@ -932,7 +932,7 @@ class LLMConfigDialog(BaseDialog):
 
         self.tabs.addTab(tab, "HF Local")
 
-    def setup_lora_tab(self):
+    def setup_lora_tab(self) -> None:
         """Set up LoRA adapter configuration tab."""
         tab = QWidget()
         layout = QFormLayout(tab)
@@ -1020,7 +1020,7 @@ class LLMConfigDialog(BaseDialog):
 
         self.tabs.addTab(tab, "LoRA Adapters")
 
-    def browse_gguf_model(self):
+    def browse_gguf_model(self) -> None:
         """Browse for GGUF model file."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
@@ -1036,7 +1036,7 @@ class LLMConfigDialog(BaseDialog):
                 model_name = os.path.splitext(os.path.basename(file_path))[0]
                 self.gguf_model_name.setText(model_name)
 
-    def browse_pytorch_model(self):
+    def browse_pytorch_model(self) -> None:
         """Browse for PyTorch model file or directory."""
         options = QFileDialog.Options()
         path = (
@@ -1056,7 +1056,7 @@ class LLMConfigDialog(BaseDialog):
                 model_name = os.path.basename(path).replace(".pth", "").replace(".pt", "").replace(".bin", "")
                 self.pytorch_model_name.setText(model_name)
 
-    def browse_tensorflow_model(self):
+    def browse_tensorflow_model(self) -> None:
         """Browse for TensorFlow model file or directory."""
         options = QFileDialog.Options()
         path = (
@@ -1076,7 +1076,7 @@ class LLMConfigDialog(BaseDialog):
                 model_name = os.path.basename(path).replace(".h5", "")
                 self.tensorflow_model_name.setText(model_name)
 
-    def browse_onnx_model(self):
+    def browse_onnx_model(self) -> None:
         """Browse for ONNX model file."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
@@ -1091,7 +1091,7 @@ class LLMConfigDialog(BaseDialog):
                 model_name = os.path.splitext(os.path.basename(file_path))[0]
                 self.onnx_model_name.setText(model_name)
 
-    def browse_safetensors_model(self):
+    def browse_safetensors_model(self) -> None:
         """Browse for Safetensors model file or directory."""
         options = QFileDialog.Options()
         path = (
@@ -1111,7 +1111,7 @@ class LLMConfigDialog(BaseDialog):
                 model_name = os.path.basename(path).replace(".safetensors", "")
                 self.safetensors_model_name.setText(model_name)
 
-    def browse_gptq_model(self):
+    def browse_gptq_model(self) -> None:
         """Browse for GPTQ model directory."""
         directory = QFileDialog.getExistingDirectory(
             self,
@@ -1124,7 +1124,7 @@ class LLMConfigDialog(BaseDialog):
                 model_name = os.path.basename(directory)
                 self.gptq_model_name.setText(model_name)
 
-    def browse_huggingface_model(self):
+    def browse_huggingface_model(self) -> None:
         """Browse for Hugging Face model directory."""
         directory = QFileDialog.getExistingDirectory(
             self,
@@ -1137,7 +1137,7 @@ class LLMConfigDialog(BaseDialog):
                 model_name = os.path.basename(directory)
                 self.huggingface_model_name.setText(model_name)
 
-    def add_openai_model(self):
+    def add_openai_model(self) -> None:
         """Add OpenAI model configuration."""
         if not self.openai_api_key.text().strip():
             QMessageBox.warning(self, "Missing API Key", "Please enter your OpenAI API key")
@@ -1155,7 +1155,7 @@ class LLMConfigDialog(BaseDialog):
         model_id = f"openai_{self.openai_model.currentText()}"
         self.register_model(model_id, config)
 
-    def add_anthropic_model(self):
+    def add_anthropic_model(self) -> None:
         """Add Anthropic model configuration."""
         if not self.anthropic_api_key.text().strip():
             QMessageBox.warning(self, "Missing API Key", "Please enter your Anthropic API key")
@@ -1172,7 +1172,7 @@ class LLMConfigDialog(BaseDialog):
         model_id = f"anthropic_{self.anthropic_model.currentText().replace('-', '_')}"
         self.register_model(model_id, config)
 
-    def add_gguf_model(self):
+    def add_gguf_model(self) -> None:
         """Add GGUF model configuration."""
         if not self.gguf_model_path.text().strip():
             QMessageBox.warning(self, "Missing Model File", "Please select a GGUF model file")
@@ -1198,7 +1198,7 @@ class LLMConfigDialog(BaseDialog):
         model_id = f"gguf_{model_name.replace(' ', '_').replace('-', '_')}"
         self.register_model(model_id, config)
 
-    def add_ollama_model(self):
+    def add_ollama_model(self) -> None:
         """Add Ollama model configuration."""
         if not self.ollama_model.text().strip():
             QMessageBox.warning(self, "Missing Model Name", "Please enter the Ollama model name")
@@ -1214,7 +1214,7 @@ class LLMConfigDialog(BaseDialog):
         model_id = f"ollama_{self.ollama_model.text().strip().replace(':', '_')}"
         self.register_model(model_id, config)
 
-    def add_pytorch_model(self):
+    def add_pytorch_model(self) -> None:
         """Add PyTorch model configuration."""
         if not self.pytorch_model_path.text().strip():
             QMessageBox.warning(self, "Missing Model Path", "Please select a PyTorch model file or directory")
@@ -1239,7 +1239,7 @@ class LLMConfigDialog(BaseDialog):
         model_id = f"pytorch_{model_name.replace(' ', '_').replace('-', '_')}"
         self.register_model(model_id, config)
 
-    def add_tensorflow_model(self):
+    def add_tensorflow_model(self) -> None:
         """Add TensorFlow model configuration."""
         if not self.tensorflow_model_path.text().strip():
             QMessageBox.warning(self, "Missing Model Path", "Please select a TensorFlow model file or directory")
@@ -1264,7 +1264,7 @@ class LLMConfigDialog(BaseDialog):
         model_id = f"tensorflow_{model_name.replace(' ', '_').replace('-', '_')}"
         self.register_model(model_id, config)
 
-    def add_onnx_model(self):
+    def add_onnx_model(self) -> None:
         """Add ONNX model configuration."""
         if not self.onnx_model_path.text().strip():
             QMessageBox.warning(self, "Missing Model File", "Please select an ONNX model file")
@@ -1289,7 +1289,7 @@ class LLMConfigDialog(BaseDialog):
         model_id = f"onnx_{model_name.replace(' ', '_').replace('-', '_')}"
         self.register_model(model_id, config)
 
-    def add_safetensors_model(self):
+    def add_safetensors_model(self) -> None:
         """Add Safetensors model configuration."""
         if not self.safetensors_model_path.text().strip():
             QMessageBox.warning(self, "Missing Model Path", "Please select a Safetensors model file or directory")
@@ -1314,7 +1314,7 @@ class LLMConfigDialog(BaseDialog):
         model_id = f"safetensors_{model_name.replace(' ', '_').replace('-', '_')}"
         self.register_model(model_id, config)
 
-    def add_gptq_model(self):
+    def add_gptq_model(self) -> None:
         """Add GPTQ model configuration."""
         if not self.gptq_model_path.text().strip():
             QMessageBox.warning(self, "Missing Model Directory", "Please select a GPTQ model directory")
@@ -1339,7 +1339,7 @@ class LLMConfigDialog(BaseDialog):
         model_id = f"gptq_{model_name.replace(' ', '_').replace('-', '_')}"
         self.register_model(model_id, config)
 
-    def add_huggingface_model(self):
+    def add_huggingface_model(self) -> None:
         """Add Hugging Face local model configuration."""
         if not self.huggingface_model_path.text().strip():
             QMessageBox.warning(self, "Missing Model Directory", "Please select a Hugging Face model directory")
@@ -1364,7 +1364,7 @@ class LLMConfigDialog(BaseDialog):
         model_id = f"huggingface_{model_name.replace(' ', '_').replace('-', '_')}"
         self.register_model(model_id, config)
 
-    def register_model(self, model_id: str, config: LLMConfig):
+    def register_model(self, model_id: str, config: LLMConfig) -> None:
         """Register a model with the LLM manager."""
         if not self.llm_manager:
             QMessageBox.critical(self, "Error", "LLM Manager not available")
@@ -1393,7 +1393,7 @@ class LLMConfigDialog(BaseDialog):
         else:
             QMessageBox.critical(self, "Error", f"Failed to register model: {model_id}")
 
-    def update_models_list(self):
+    def update_models_list(self) -> None:
         """Update the models list widget."""
         self.models_list.clear()
 
@@ -1411,7 +1411,7 @@ class LLMConfigDialog(BaseDialog):
 
                 self.models_list.addItem(item)
 
-    def set_active_model(self):
+    def set_active_model(self) -> None:
         """Set the selected model as active."""
         current_item = self.models_list.currentItem()
         if not current_item:
@@ -1422,7 +1422,7 @@ class LLMConfigDialog(BaseDialog):
             self.update_models_list()
             self.status_text.append(f"OK Set active model: {model_id}")
 
-    def remove_model(self):
+    def remove_model(self) -> None:
         """Remove the selected model."""
         current_item = self.models_list.currentItem()
         if not current_item:
@@ -1447,7 +1447,7 @@ class LLMConfigDialog(BaseDialog):
             self.update_models_list()
             self.status_text.append(f"OK Removed model: {model_id}")
 
-    def test_selected_model(self):
+    def test_selected_model(self) -> None:
         """Test the selected model."""
         current_item = self.models_list.currentItem()
         if not current_item:
@@ -1458,7 +1458,7 @@ class LLMConfigDialog(BaseDialog):
         if model_id in self.current_configs:
             self.test_model_config(self.current_configs[model_id])
 
-    def test_openai_config(self):
+    def test_openai_config(self) -> None:
         """Test OpenAI configuration."""
         if not self.openai_api_key.text().strip():
             QMessageBox.warning(self, "Missing API Key", "Please enter your OpenAI API key")
@@ -1471,7 +1471,7 @@ class LLMConfigDialog(BaseDialog):
         )
         self.test_model_config(config)
 
-    def test_anthropic_config(self):
+    def test_anthropic_config(self) -> None:
         """Test Anthropic configuration."""
         if not self.anthropic_api_key.text().strip():
             QMessageBox.warning(self, "Missing API Key", "Please enter your Anthropic API key")
@@ -1483,7 +1483,7 @@ class LLMConfigDialog(BaseDialog):
         )
         self.test_model_config(config)
 
-    def test_gguf_config(self):
+    def test_gguf_config(self) -> None:
         """Test GGUF configuration."""
         if not self.gguf_model_path.text().strip():
             QMessageBox.warning(self, "Missing Model File", "Please select a GGUF model file")
@@ -1495,7 +1495,7 @@ class LLMConfigDialog(BaseDialog):
         )
         self.test_model_config(config)
 
-    def test_ollama_config(self):
+    def test_ollama_config(self) -> None:
         """Test Ollama configuration."""
         if not self.ollama_model.text().strip():
             QMessageBox.warning(self, "Missing Model Name", "Please enter the Ollama model name")
@@ -1507,7 +1507,7 @@ class LLMConfigDialog(BaseDialog):
         )
         self.test_model_config(config)
 
-    def test_pytorch_config(self):
+    def test_pytorch_config(self) -> None:
         """Test PyTorch configuration."""
         if not self.pytorch_model_path.text().strip():
             QMessageBox.warning(self, "Missing Model Path", "Please select a PyTorch model file or directory")
@@ -1520,7 +1520,7 @@ class LLMConfigDialog(BaseDialog):
         )
         self.test_model_config(config)
 
-    def test_tensorflow_config(self):
+    def test_tensorflow_config(self) -> None:
         """Test TensorFlow configuration."""
         if not self.tensorflow_model_path.text().strip():
             QMessageBox.warning(self, "Missing Model Path", "Please select a TensorFlow model file or directory")
@@ -1533,7 +1533,7 @@ class LLMConfigDialog(BaseDialog):
         )
         self.test_model_config(config)
 
-    def test_onnx_config(self):
+    def test_onnx_config(self) -> None:
         """Test ONNX configuration."""
         if not self.onnx_model_path.text().strip():
             QMessageBox.warning(self, "Missing Model File", "Please select an ONNX model file")
@@ -1546,7 +1546,7 @@ class LLMConfigDialog(BaseDialog):
         )
         self.test_model_config(config)
 
-    def test_safetensors_config(self):
+    def test_safetensors_config(self) -> None:
         """Test Safetensors configuration."""
         if not self.safetensors_model_path.text().strip():
             QMessageBox.warning(self, "Missing Model Path", "Please select a Safetensors model file or directory")
@@ -1559,7 +1559,7 @@ class LLMConfigDialog(BaseDialog):
         )
         self.test_model_config(config)
 
-    def test_gptq_config(self):
+    def test_gptq_config(self) -> None:
         """Test GPTQ configuration."""
         if not self.gptq_model_path.text().strip():
             QMessageBox.warning(self, "Missing Model Directory", "Please select a GPTQ model directory")
@@ -1572,7 +1572,7 @@ class LLMConfigDialog(BaseDialog):
         )
         self.test_model_config(config)
 
-    def test_huggingface_config(self):
+    def test_huggingface_config(self) -> None:
         """Test Hugging Face local configuration."""
         if not self.huggingface_model_path.text().strip():
             QMessageBox.warning(self, "Missing Model Directory", "Please select a Hugging Face model directory")
@@ -1585,7 +1585,7 @@ class LLMConfigDialog(BaseDialog):
         )
         self.test_model_config(config)
 
-    def test_model_config(self, config: "LLMConfig"):
+    def test_model_config(self, config: "LLMConfig") -> None:
         """Test a model configuration."""
         if self.validation_thread and self.validation_thread.isRunning():
             QMessageBox.warning(self, "Test In Progress", "Please wait for the current test to complete")
@@ -1600,11 +1600,11 @@ class LLMConfigDialog(BaseDialog):
         self.validation_thread.test_complete.connect(self.on_test_complete)
         self.validation_thread.start()
 
-    def on_test_progress(self, message: str):
+    def on_test_progress(self, message: str) -> None:
         """Handle test progress updates."""
         self.status_text.append(f"   {message}")
 
-    def on_test_complete(self, success: bool, message: str):
+    def on_test_complete(self, success: bool, message: str) -> None:
         """Handle test completion."""
         self.test_progress.setVisible(False)
 
@@ -1618,7 +1618,7 @@ class LLMConfigDialog(BaseDialog):
             self.validation_thread.wait()
             self.validation_thread = None
 
-    def load_existing_configs(self):
+    def load_existing_configs(self) -> None:
         """Load existing model configurations."""
         if self.llm_manager:
             self.update_models_list()
@@ -1629,7 +1629,7 @@ class LLMConfigDialog(BaseDialog):
             else:
                 self.status_text.append("No existing models found. Add models using the tabs above.")
 
-    def save_configuration(self):
+    def save_configuration(self) -> None:
         """Save the current configuration including API keys to .env file."""
         try:
             # Collect all API keys from the UI
@@ -1686,7 +1686,7 @@ class LLMConfigDialog(BaseDialog):
                     self.status_text.append(f"OK Discovered {total_models} models from {len(discovered)} providers")
                 except Exception as e:
                     logger.error(f"Failed to refresh model discovery: {e}")
-                    self.status_text.append(f"WARNING Could not refresh models: {str(e)}")
+                    self.status_text.append(f"WARNING Could not refresh models: {e!s}")
 
             # Save model configurations
             if self.current_configs:
@@ -1710,9 +1710,9 @@ class LLMConfigDialog(BaseDialog):
 
         except Exception as e:
             logger.error(f"Error saving configuration: {e}")
-            QMessageBox.critical(self, "Error", f"Failed to save configuration: {str(e)}")
+            QMessageBox.critical(self, "Error", f"Failed to save configuration: {e!s}")
 
-    def load_existing_api_keys(self):
+    def load_existing_api_keys(self) -> None:
         """Load existing API keys from .env file and populate UI fields."""
         try:
             # Read all API keys from .env file
@@ -1759,9 +1759,9 @@ class LLMConfigDialog(BaseDialog):
 
         except Exception as e:
             logger.error(f"Error loading API keys from .env: {e}")
-            self.status_text.append(f"WARNING Could not load API keys: {str(e)}")
+            self.status_text.append(f"WARNING Could not load API keys: {e!s}")
 
-    def test_api_key(self, service: str, api_key_widget: QLineEdit):
+    def test_api_key(self, service: str, api_key_widget: QLineEdit) -> None:
         """Test an API key for a specific service.
 
         Args:
@@ -1821,14 +1821,14 @@ class LLMConfigDialog(BaseDialog):
 
         return True, valid_keys
 
-    def refresh_lora_models(self):
+    def refresh_lora_models(self) -> None:
         """Refresh the list of available base models for LoRA."""
         self.lora_base_model.clear()
         if self.llm_manager:
             model_ids = list(self.llm_manager.backends.keys())
             self.lora_base_model.addItems(model_ids)
 
-    def browse_lora_adapter(self):
+    def browse_lora_adapter(self) -> None:
         """Browse for LoRA adapter directory."""
         directory = QFileDialog.getExistingDirectory(
             self,
@@ -1841,7 +1841,7 @@ class LLMConfigDialog(BaseDialog):
                 adapter_name = os.path.basename(directory)
                 self.lora_adapter_name.setText(adapter_name)
 
-    def add_lora_adapter(self):
+    def add_lora_adapter(self) -> None:
         """Load a LoRA adapter onto a base model."""
         base_model_id = self.lora_base_model.currentText()
         if not base_model_id:
@@ -1906,7 +1906,7 @@ class LLMConfigDialog(BaseDialog):
             logger.error(f"Failed to load LoRA adapter: {e}")
             QMessageBox.critical(self, "Error", f"Failed to load LoRA adapter: {e!s}")
 
-    def test_lora_adapter(self):
+    def test_lora_adapter(self) -> None:
         """Test a LoRA adapter configuration."""
         base_model_id = self.lora_base_model.currentText()
         if not base_model_id:
@@ -1943,7 +1943,7 @@ class LLMConfigDialog(BaseDialog):
             logger.error("Exception in llm_config_dialog: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to get adapter info: {e!s}")
 
-    def create_lora_adapter(self):
+    def create_lora_adapter(self) -> None:
         """Create a new LoRA adapter configuration."""
         base_model_id = self.lora_base_model.currentText()
         if not base_model_id:
@@ -2019,7 +2019,7 @@ class LLMConfigDialog(BaseDialog):
             logger.error(f"Failed to create LoRA adapter: {e}")
             QMessageBox.critical(self, "Error", f"Failed to create LoRA adapter: {e!s}")
 
-    def closeEvent(self, event):
+    def closeEvent(self, event) -> None:
         """Handle dialog close event."""
         if self.validation_thread and self.validation_thread.isRunning():
             reply = QMessageBox.question(

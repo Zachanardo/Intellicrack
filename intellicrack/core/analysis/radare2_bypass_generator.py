@@ -43,7 +43,7 @@ class R2BypassGenerator:
     - Registration bypass creation
     """
 
-    def __init__(self, binary_path: str, radare2_path: str | None = None):
+    def __init__(self, binary_path: str, radare2_path: str | None = None) -> None:
         """Initialize bypass generator."""
         self.binary_path = binary_path
         self.radare2_path = radare2_path
@@ -248,7 +248,7 @@ class R2BypassGenerator:
                         "line_number": pattern.get("line_number"),
                         "instruction": pattern.get("line"),
                         "bypass_method": self._suggest_bypass_method(pattern),
-                    }
+                    },
                 )
 
         validation_info["bypass_points"] = bypass_points
@@ -284,7 +284,7 @@ class R2BypassGenerator:
                             "full_line": line.strip(),
                             "algorithm": self._identify_crypto_algorithm(match),
                             "purpose": self._identify_crypto_purpose(line),
-                        }
+                        },
                     )
 
         return crypto_ops
@@ -325,7 +325,7 @@ class R2BypassGenerator:
                                             "content": string_content.strip(),
                                             "context": "license_string",
                                             "bypass_potential": self._assess_string_bypass_potential(string_content),
-                                        }
+                                        },
                                     )
                 except R2Exception as e:
                     logger.error("R2Exception in radare2_bypass_generator: %s", e)
@@ -361,7 +361,7 @@ class R2BypassGenerator:
                                 "api": imp,
                                 "purpose": "license_storage",
                                 "bypass_method": "registry_redirection",
-                            }
+                            },
                         )
 
                     # File operations
@@ -371,7 +371,7 @@ class R2BypassGenerator:
                                 "api": imp,
                                 "purpose": "license_file_access",
                                 "bypass_method": "file_redirection",
-                            }
+                            },
                         )
 
                     # Network operations
@@ -381,7 +381,7 @@ class R2BypassGenerator:
                                 "api": imp,
                                 "purpose": "online_validation",
                                 "bypass_method": "network_blocking",
-                            }
+                            },
                         )
 
                     # Time checks
@@ -391,7 +391,7 @@ class R2BypassGenerator:
                                 "api": imp,
                                 "purpose": "trial_expiration",
                                 "bypass_method": "time_manipulation",
-                            }
+                            },
                         )
 
                     # Hardware checks
@@ -401,7 +401,7 @@ class R2BypassGenerator:
                                 "api": imp,
                                 "purpose": "hardware_fingerprint",
                                 "bypass_method": "hardware_spoofing",
-                            }
+                            },
                         )
 
         except R2Exception as e:
@@ -445,7 +445,7 @@ class R2BypassGenerator:
                         "success_rate": 0.95,
                         "difficulty": "easy",
                         "implementation": self._generate_direct_patch_implementation(func_info),
-                    }
+                    },
                 )
 
             elif validation_type == "cryptographic":
@@ -456,7 +456,7 @@ class R2BypassGenerator:
                         "success_rate": 0.7,
                         "difficulty": "medium",
                         "implementation": self._generate_crypto_bypass_implementation(func_info),
-                    }
+                    },
                 )
 
             elif validation_type == "online":
@@ -467,7 +467,7 @@ class R2BypassGenerator:
                         "success_rate": 0.8,
                         "difficulty": "medium",
                         "implementation": self._generate_network_bypass_implementation(func_info),
-                    }
+                    },
                 )
 
             elif validation_type == "time_based":
@@ -478,7 +478,7 @@ class R2BypassGenerator:
                         "success_rate": 0.9,
                         "difficulty": "easy",
                         "implementation": self._generate_time_bypass_implementation(func_info),
-                    }
+                    },
                 )
 
         # Add registry-based strategies
@@ -490,7 +490,7 @@ class R2BypassGenerator:
                     "success_rate": 0.85,
                     "difficulty": "easy",
                     "implementation": self._generate_registry_bypass_implementation(license_analysis),
-                }
+                },
             )
 
         return strategies
@@ -659,7 +659,7 @@ class R2BypassGenerator:
                             "type": "AES",
                             "address": func_addr,
                             "data": self._extract_sbox_data(r2, func_addr),
-                        }
+                        },
                     )
 
                 # Analyze round functions (loops in crypto)
@@ -671,7 +671,7 @@ class R2BypassGenerator:
                                 {
                                     "address": loop.get("offset"),
                                     "iterations": self._analyze_loop_iterations(r2, loop.get("offset")),
-                                }
+                                },
                             )
 
                 # Extract key schedule if present
@@ -1040,7 +1040,7 @@ if __name__ == "__main__":
                 {
                     "input": {"username": "TestUser", "hwid": "1234-5678"},
                     "expected": f"TEST_{algorithm}_KEY",
-                }
+                },
             )
         return vectors
 
@@ -1304,7 +1304,7 @@ if __name__ == "__main__":
                     "value_data": self._generate_license_value(),
                     "value_type": "REG_SZ",
                     "description": "Create valid license registry entry",
-                }
+                },
             )
 
         return modifications
@@ -1322,7 +1322,7 @@ if __name__ == "__main__":
                     "file_path": self._predict_license_file_path(file_op),
                     "content": self._generate_license_file_content(),
                     "description": "Create valid license file",
-                }
+                },
             )
 
         return modifications
@@ -1344,7 +1344,7 @@ if __name__ == "__main__":
                         "original_bytes": self._get_original_bytes(r2, func_addr),
                         "patch_bytes": self._generate_patch_bytes(func_info),
                         "description": f"Runtime patch for {func_info['function']['name']}",
-                    }
+                    },
                 )
 
         return patches
@@ -1362,7 +1362,7 @@ if __name__ == "__main__":
                     "hook_type": "registry_redirect",
                     "implementation": self._generate_registry_hook_code(reg_op),
                     "description": "Hook registry access for license validation",
-                }
+                },
             )
 
         # File API hooks
@@ -1374,7 +1374,7 @@ if __name__ == "__main__":
                     "hook_type": "file_redirect",
                     "implementation": self._generate_file_hook_code(file_op),
                     "description": "Hook file access for license validation",
-                }
+                },
             )
 
         return hooks
@@ -1783,7 +1783,7 @@ void apply_patch() {{
         """Generate keygen implementation."""
         algorithm = crypto_op.get("algorithm", "Unknown")
 
-        if algorithm == "MD5" or algorithm == "SHA":
+        if algorithm in {"MD5", "SHA"}:
             return {
                 "type": "hash_based_keygen",
                 "algorithm": algorithm,
@@ -1975,7 +1975,7 @@ void apply_patch() {{
                     "dates": {"issued": now.isoformat(), "expires": expiry.isoformat(), "last_validated": now.isoformat()},
                     "features": {"max_users": "unlimited", "modules": "all", "support_level": "priority", "updates": "lifetime"},
                     "signature": hashlib.sha512(f"{license_id}{serial}{machine_id}".encode()).hexdigest(),
-                }
+                },
             }
             return json.dumps(license_data, indent=2)
 
@@ -2386,7 +2386,7 @@ void InstallRegistryHook() {{
         access_pattern = file_op.get("access_pattern", "read")
         app_name = file_op.get("app_name", "Application")
         license_format = file_op.get("format", "ini")
-        encryption = file_op.get("encryption", None)
+        encryption = file_op.get("encryption")
 
         # Build file pattern checks based on operation
         file_checks = []
@@ -2771,7 +2771,7 @@ void InstallFileHook() {{
                     "Patched binary executes without errors",
                     "License check functions return success",
                     "No integrity check failures",
-                ]
+                ],
             )
         elif method == "registry_manipulation":
             indicators.extend(
@@ -2779,7 +2779,7 @@ void InstallFileHook() {{
                     "Registry keys contain valid license data",
                     "License validation reads generated registry values",
                     "No registry access denied errors",
-                ]
+                ],
             )
         elif method == "crypto_bypass":
             indicators.extend(
@@ -2787,7 +2787,7 @@ void InstallFileHook() {{
                     "Cryptographic checks return valid results",
                     "Key validation functions bypassed",
                     "No encryption/decryption errors",
-                ]
+                ],
             )
         elif method == "network_interception":
             indicators.extend(
@@ -2795,7 +2795,7 @@ void InstallFileHook() {{
                     "Network license checks return positive response",
                     "Offline activation successful",
                     "No network connectivity errors",
-                ]
+                ],
             )
         elif method == "time_manipulation":
             indicators.extend(
@@ -2803,7 +2803,7 @@ void InstallFileHook() {{
                     "Trial period appears unlimited",
                     "Expiration dates modified successfully",
                     "System time changes not detected",
-                ]
+                ],
             )
 
         # Add target-specific indicators
@@ -2821,7 +2821,7 @@ void InstallFileHook() {{
                 "No trial limitations",
                 "No expiration warnings",
                 "Professional/registered version features accessible",
-            ]
+            ],
         )
 
         return list(set(indicators))  # Remove duplicates
@@ -3030,19 +3030,19 @@ def generate_key():
                         "Binary integrity check failures",
                         "Code section corruption",
                         "Digital signature invalidation",
-                    ]
+                    ],
                 )
                 detection_risks.extend(
                     [
                         "Hash-based detection",
                         "Binary diff detection",
-                    ]
+                    ],
                 )
                 mitigation_strategies.extend(
                     [
                         "Use stealthy patching techniques",
                         "Preserve digital signatures when possible",
-                    ]
+                    ],
                 )
 
             elif method == "registry_manipulation":
@@ -3050,19 +3050,19 @@ def generate_key():
                     [
                         "Registry corruption",
                         "Permission denied errors",
-                    ]
+                    ],
                 )
                 detection_risks.extend(
                     [
                         "Registry monitoring detection",
                         "Unusual registry access patterns",
-                    ]
+                    ],
                 )
                 mitigation_strategies.extend(
                     [
                         "Use registry redirection",
                         "Clear registry traces after testing",
-                    ]
+                    ],
                 )
 
             elif method == "crypto_bypass":
@@ -3070,19 +3070,19 @@ def generate_key():
                     [
                         "Cryptographic validation failures",
                         "Key generation errors",
-                    ]
+                    ],
                 )
                 detection_risks.extend(
                     [
                         "Crypto API monitoring",
                         "Invalid key pattern detection",
-                    ]
+                    ],
                 )
                 mitigation_strategies.extend(
                     [
                         "Use hardware-based key generation",
                         "Implement realistic crypto patterns",
-                    ]
+                    ],
                 )
 
             elif method == "network_interception":
@@ -3090,19 +3090,19 @@ def generate_key():
                     [
                         "Network connectivity issues",
                         "SSL/TLS validation failures",
-                    ]
+                    ],
                 )
                 detection_risks.extend(
                     [
                         "Network traffic analysis",
                         "Server-side validation bypass detection",
-                    ]
+                    ],
                 )
                 mitigation_strategies.extend(
                     [
                         "Use proxy servers",
                         "Implement realistic network responses",
-                    ]
+                    ],
                 )
 
         # Adjust risks based on protection mechanisms found
@@ -3354,7 +3354,7 @@ def generate_key():
                 "side_effects": ["May corrupt stack frame if not careful"],
                 "patch_location": decision_point["address"] - 4,
                 "instructions": self._generate_stack_manipulation_instructions(
-                    condition.get("stack_offset"), condition.get("expected_value")
+                    condition.get("stack_offset"), condition.get("expected_value"),
                 ),
             }
 
@@ -3562,7 +3562,7 @@ def generate_key():
                                 "line_number": i,
                                 "bypass_method": "skip_check",
                                 "importance": 0.8,
-                            }
+                            },
                         )
         except Exception as e:
             logger.error(f"Error finding entry validation checks: {e}")

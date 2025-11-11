@@ -89,11 +89,7 @@ impl PythonIntegration {
             // Verify Tkinter availability
             integration.verify_tkinter(py)?;
 
-            info!("Eagerly initializing GPU and GIL safety modules");
-            let intellicrack_module = py.import("intellicrack")?;
-            intellicrack_module.call_method0("_initialize_gil_safety")?;
-            intellicrack_module.call_method0("_initialize_gpu")?;
-            info!("GPU and GIL safety modules initialized");
+            info!("Skipping eager GIL/GPU initialization - will initialize lazily on first use");
 
             #[cfg(target_os = "windows")]
             {

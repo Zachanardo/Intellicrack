@@ -41,7 +41,7 @@ class NetworkMonitor(BaseMonitor):
     This monitor is OPTIONAL for advanced packet analysis.
     """
 
-    def __init__(self, process_info: Optional[ProcessInfo] = None, target_ports: Optional[list] = None):
+    def __init__(self, process_info: Optional[ProcessInfo] = None, target_ports: Optional[list] = None) -> None:
         """Initialize network monitor.
 
         Args:

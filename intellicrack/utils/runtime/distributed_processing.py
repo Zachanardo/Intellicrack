@@ -145,7 +145,7 @@ def process_binary_chunks(
                         {
                             "chunk": chunk,
                             "error": str(e),
-                        }
+                        },
                     )
 
         results["processing_time"] = time.time() - start_time
@@ -265,7 +265,7 @@ def process_distributed_results(results: list[dict[str, Any]], aggregation_func:
 
 
 def run_distributed_analysis(
-    binary_path: str, analysis_type: str = "comprehensive", config: dict[str, Any] | None = None
+    binary_path: str, analysis_type: str = "comprehensive", config: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run distributed analysis on a binary.
 
@@ -409,7 +409,7 @@ def run_distributed_entropy_analysis(binary_path: str, config: dict[str, Any] | 
 
 
 def run_distributed_pattern_search(
-    binary_path: str, patterns: list[bytes] | None = None, config: dict[str, Any] | None = None
+    binary_path: str, patterns: list[bytes] | None = None, config: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run distributed pattern search on a binary.
 
@@ -464,7 +464,7 @@ def run_distributed_pattern_search(
                         "offset": chunk_info["offset"] + pos,
                         "context_before": data[max(0, pos - 10) : pos].hex(),
                         "context_after": data[pos + len(pattern) : pos + len(pattern) + 10].hex(),
-                    }
+                    },
                 )
 
         return {
@@ -923,7 +923,7 @@ def _distributed_string_extraction(binary_path: str, config: dict[str, Any]) -> 
                         {
                             "text": "".join(current),
                             "offset": chunk_info["offset"] + current_offset,
-                        }
+                        },
                     )
                 current = []
 
@@ -933,7 +933,7 @@ def _distributed_string_extraction(binary_path: str, config: dict[str, Any]) -> 
                 {
                     "text": "".join(current),
                     "offset": chunk_info["offset"] + current_offset,
-                }
+                },
             )
 
         return {
@@ -1405,7 +1405,7 @@ def run_dask_distributed_analysis(
                     "data": chunk,
                     "offset": i,
                     "size": len(chunk),
-                }
+                },
             )
 
         bag = db.from_sequence(chunks, npartitions=n_partitions)
@@ -1448,7 +1448,7 @@ def run_dask_distributed_analysis(
                         "offset": chunk["offset"],
                         "size": chunk["size"],
                         "result": analysis_func(chunk["data"]),
-                    }
+                    },
                 )
 
                 # Compute results
@@ -1593,7 +1593,7 @@ def run_celery_distributed_analysis(
 
 # Joblib parallel processing implementation
 def run_joblib_parallel_analysis(
-    binary_path: str, analysis_funcs: list[Callable], n_jobs: int = -1, backend: str = "threading"
+    binary_path: str, analysis_funcs: list[Callable], n_jobs: int = -1, backend: str = "threading",
 ) -> dict[str, Any]:
     """Run parallel binary analysis using joblib for multi-core processing.
 
@@ -1709,38 +1709,37 @@ def run_joblib_mmap_analysis(binary_path: str, window_size: int = 4096, step_siz
         # Define window analysis function
         def analyze_window(offset, window_size, file_path):
             """Analyze a window of the file using memory mapping."""
-            with open(file_path, "rb") as f:
-                with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mmapped:
-                    # Read window data
-                    end = min(offset + window_size, len(mmapped))
-                    window_data = mmapped[offset:end]
+            with open(file_path, "rb") as f, mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mmapped:
+                # Read window data
+                end = min(offset + window_size, len(mmapped))
+                window_data = mmapped[offset:end]
 
-                    # Calculate entropy
-                    from ..analysis.entropy_utils import calculate_byte_entropy
+                # Calculate entropy
+                from ..analysis.entropy_utils import calculate_byte_entropy
 
-                    entropy = calculate_byte_entropy(window_data)
+                entropy = calculate_byte_entropy(window_data)
 
-                    # Check for high entropy (possible encryption/packing)
-                    is_packed = entropy > 7.5
+                # Check for high entropy (possible encryption/packing)
+                is_packed = entropy > 7.5
 
-                    # Search for strings
-                    ascii_strings = []
-                    current_string = b""
-                    for byte in window_data:
-                        if 32 <= byte <= 126:  # Printable ASCII
-                            current_string += bytes([byte])
-                        else:
-                            if len(current_string) >= 4:
-                                ascii_strings.append(current_string.decode("ascii", errors="ignore"))
-                            current_string = b""
+                # Search for strings
+                ascii_strings = []
+                current_string = b""
+                for byte in window_data:
+                    if 32 <= byte <= 126:  # Printable ASCII
+                        current_string += bytes([byte])
+                    else:
+                        if len(current_string) >= 4:
+                            ascii_strings.append(current_string.decode("ascii", errors="ignore"))
+                        current_string = b""
 
-                    return {
-                        "offset": offset,
-                        "entropy": entropy,
-                        "is_packed": is_packed,
-                        "string_count": len(ascii_strings),
-                        "notable_strings": [s for s in ascii_strings if any(k in s.lower() for k in ["license", "trial", "expire"])],
-                    }
+                return {
+                    "offset": offset,
+                    "entropy": entropy,
+                    "is_packed": is_packed,
+                    "string_count": len(ascii_strings),
+                    "notable_strings": [s for s in ascii_strings if any(k in s.lower() for k in ["license", "trial", "expire"])],
+                }
 
         # Generate window offsets
         offsets = list(range(0, file_size - window_size + 1, step_size))

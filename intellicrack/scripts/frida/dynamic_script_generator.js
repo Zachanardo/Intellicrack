@@ -1551,29 +1551,29 @@ const DynamicScriptGenerator = {
         var strategy = null;
 
         switch (mechanism.type) {
-        case 'anti_debug':
-            strategy = this.createAntiDebugStrategy(mechanism);
-            break;
+            case 'anti_debug':
+                strategy = this.createAntiDebugStrategy(mechanism);
+                break;
 
-        case 'packing':
-            strategy = this.createUnpackingStrategy(mechanism);
-            break;
+            case 'packing':
+                strategy = this.createUnpackingStrategy(mechanism);
+                break;
 
-        case 'licensing':
-            strategy = this.createLicenseBypassStrategy(mechanism);
-            break;
+            case 'licensing':
+                strategy = this.createLicenseBypassStrategy(mechanism);
+                break;
 
-        case 'drm':
-            strategy = this.createDRMBypassStrategy(mechanism);
-            break;
+            case 'drm':
+                strategy = this.createDRMBypassStrategy(mechanism);
+                break;
 
-        case 'obfuscation':
-            strategy = this.createDeobfuscationStrategy(mechanism);
-            break;
+            case 'obfuscation':
+                strategy = this.createDeobfuscationStrategy(mechanism);
+                break;
 
-        default:
-            strategy = this.createGenericBypassStrategy(mechanism);
-            break;
+            default:
+                strategy = this.createGenericBypassStrategy(mechanism);
+                break;
         }
 
         return strategy;
@@ -1849,8 +1849,8 @@ const DynamicScriptGenerator = {
         var hookCode = '';
 
         switch (hook.strategy) {
-        case 'replace_return':
-            hookCode = `
+            case 'replace_return':
+                hookCode = `
             // Hook ${hook.target} - ${hook.description}
             var ${hook.target.toLowerCase()}Func = Module.findExportByName("${hook.module}", "${hook.target}");
             if (${hook.target.toLowerCase()}Func) {
@@ -1865,10 +1865,10 @@ const DynamicScriptGenerator = {
                 }, 'int', []));
                 this.stats.hooksInstalled++;
             }`;
-            break;
+                break;
 
-        case 'manipulate_output':
-            hookCode = `
+            case 'manipulate_output':
+                hookCode = `
             // Hook ${hook.target} - ${hook.description}
             var ${hook.target.toLowerCase()}Func = Module.findExportByName("${hook.module}", "${hook.target}");
             if (${hook.target.toLowerCase()}Func) {
@@ -1885,10 +1885,10 @@ const DynamicScriptGenerator = {
                 });
                 this.stats.hooksInstalled++;
             }`;
-            break;
+                break;
 
-        default:
-            hookCode = `
+            default:
+                hookCode = `
             // Generic hook for ${hook.target}
             send({
                 type: "info",
@@ -1896,7 +1896,7 @@ const DynamicScriptGenerator = {
                 action: "generic_hook_applied",
                 function_name: "${hook.target}"
             });`;
-            break;
+                break;
         }
 
         return hookCode;
@@ -5107,7 +5107,7 @@ const DynamicScriptGenerator = {
                         installation_guidance: 'deliberately_problematic',
                     }),
                     bogus_security_advisories: () => ({
-                        title: 'Security Advisory: Emerging Threat Campaign \'Operation Shadowbyte\'',
+                        title: "Security Advisory: Emerging Threat Campaign 'Operation Shadowbyte'",
                         threat_level: 'High',
                         affected_technologies: 'Binary Protection Systems',
                         recommended_actions: 'deliberately_ineffective',

@@ -48,7 +48,7 @@ class TaskStatus(Enum):
 class FallbackSignals:
     """Fallback signals implementation when PyQt6 is not available."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize fallback signals."""
         self.started = None
         self.progress = None
@@ -97,7 +97,7 @@ except (TypeError, AttributeError, NameError):
 class BaseTask(QRunnable, ABC_BASE, metaclass=TaskMeta):
     """Base class for all background tasks."""
 
-    def __init__(self, task_id: str | None = None, description: str = ""):
+    def __init__(self, task_id: str | None = None, description: str = "") -> None:
         """Initialize the base task with ID, description, and status tracking.
 
         Args:
@@ -117,7 +117,7 @@ class BaseTask(QRunnable, ABC_BASE, metaclass=TaskMeta):
         self.should_stop = False
         self.logger = logging.getLogger(__name__)
 
-    def run(self):
+    def run(self) -> None:
         """Execute the task."""
         try:
             self._started_at = datetime.now()
@@ -151,7 +151,7 @@ class BaseTask(QRunnable, ABC_BASE, metaclass=TaskMeta):
     def execute(self) -> Any:
         """Execute the task logic. Must be implemented by subclasses."""
 
-    def cancel(self):
+    def cancel(self) -> None:
         """Cancel the task."""
         self._is_cancelled = True
         logger.info(f"Task cancellation requested: {self.task_id}")
@@ -160,7 +160,7 @@ class BaseTask(QRunnable, ABC_BASE, metaclass=TaskMeta):
         """Check if the task has been cancelled."""
         return self._is_cancelled
 
-    def emit_progress(self, percentage: int, message: str = ""):
+    def emit_progress(self, percentage: int, message: str = "") -> None:
         """Emit progress update."""
         if not self._is_cancelled:
             self.signals.progress.emit(self.task_id, percentage, message)
@@ -176,7 +176,7 @@ class CallableTask(BaseTask):
         kwargs: dict = None,
         task_id: str | None = None,
         description: str = "",
-    ):
+    ) -> None:
         """Initialize the callable task with function, arguments, and task metadata.
 
         Args:
@@ -215,7 +215,7 @@ class TaskManager(QObject):
     #: Signal emitted when active task count changes (type: count: int)
     active_task_count_changed = pyqtSignal(int)
 
-    def __init__(self, max_thread_count: int | None = None):
+    def __init__(self, max_thread_count: int | None = None) -> None:
         """Initialize the task manager.
 
         Sets up the Qt thread pool-based task management system for handling
@@ -281,7 +281,7 @@ class TaskManager(QObject):
             return True
         return False
 
-    def cancel_all_tasks(self):
+    def cancel_all_tasks(self) -> None:
         """Cancel all active tasks."""
         for task_id in list(self._active_tasks.keys()):
             self.cancel_task(task_id)
@@ -306,35 +306,35 @@ class TaskManager(QObject):
         """Get the maximum thread count."""
         return self.thread_pool.maxThreadCount()
 
-    def set_thread_count(self, count: int):
+    def set_thread_count(self, count: int) -> None:
         """Set the maximum thread count."""
         self.thread_pool.setMaxThreadCount(count)
         logger.info(f"Thread count set to {count}")
 
     # Private slot methods
     @pyqtSlot(str)
-    def _on_task_started(self, task_id: str):
+    def _on_task_started(self, task_id: str) -> None:
         """Handle task start."""
         logger.debug(f"Task started signal received: {task_id}")
 
     @pyqtSlot(str, int, str)
-    def _on_task_progress(self, task_id: str, percentage: int, message: str):
+    def _on_task_progress(self, task_id: str, percentage: int, message: str) -> None:
         """Handle task progress update."""
         logger.debug(f"Task progress: {task_id} - {percentage}% - {message}")
 
     @pyqtSlot(str, object)
-    def _on_task_result(self, task_id: str, result: Any):
+    def _on_task_result(self, task_id: str, result: Any) -> None:
         """Handle task result."""
         self._task_results[task_id] = result
         logger.debug(f"Task result received: {task_id}")
 
     @pyqtSlot(str, str, str)
-    def _on_task_error(self, task_id: str, error_type: str, error_message: str):
+    def _on_task_error(self, task_id: str, error_type: str, error_message: str) -> None:
         """Handle task error."""
         logger.error(f"Task error: {task_id} - {error_type}: {error_message}")
 
     @pyqtSlot(str)
-    def _on_task_finished(self, task_id: str):
+    def _on_task_finished(self, task_id: str) -> None:
         """Handle task completion."""
         if task_id in self._active_tasks:
             task = self._active_tasks.pop(task_id)
@@ -366,7 +366,7 @@ class TaskManager(QObject):
 class LongRunningTask(BaseTask):
     """Demonstrate of a long-running task with progress updates."""
 
-    def __init__(self, duration: int = 10, task_id: str | None = None):
+    def __init__(self, duration: int = 10, task_id: str | None = None) -> None:
         """Initialize the long running task with specified duration.
 
         Args:

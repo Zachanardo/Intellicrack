@@ -63,7 +63,7 @@ except ImportError:
         in command-line environments.
         """
 
-        def __init__(self):
+        def __init__(self) -> None:
             """Initialize the SignalTracker with empty signals and slots dictionaries."""
             self._signals = {}
             self._slots = {}
@@ -71,7 +71,7 @@ except ImportError:
             self._children = []
             self._properties = {}
 
-        def setParent(self, parent):
+        def setParent(self, parent) -> None:
             """Set parent object for hierarchy management."""
             if self._parent:
                 self._parent._children.remove(self)
@@ -87,7 +87,7 @@ except ImportError:
             """Get list of child objects."""
             return self._children.copy()
 
-        def setProperty(self, name, value):
+        def setProperty(self, name, value) -> None:
             """Set property value by name."""
             self._properties[name] = value
 
@@ -95,7 +95,7 @@ except ImportError:
             """Get property value by name."""
             return self._properties.get(name)
 
-        def deleteLater(self):
+        def deleteLater(self) -> None:
             """Mark object for deletion and clean up hierarchy."""
             if self._parent:
                 self._parent._children.remove(self)
@@ -108,20 +108,20 @@ except ImportError:
         threading module, ensuring distributed processing works without PyQt6.
         """
 
-        def __init__(self):
+        def __init__(self) -> None:
             """Initialize the WorkerThread as a daemon thread with running state set to False."""
             super().__init__(daemon=True)
             self._running = False
             self._mutex = threading.Lock()
             self._stop_event = threading.Event()
 
-        def start(self):
+        def start(self) -> None:
             """Start thread execution with tracking state."""
             self._running = True
             self._stop_event.clear()
             super().start()
 
-        def wait(self, timeout_ms=None):
+        def wait(self, timeout_ms=None) -> bool:
             """Wait for thread completion with optional timeout in milliseconds."""
             timeout = timeout_ms / 1000.0 if timeout_ms else None
             self.join(timeout)
@@ -131,7 +131,7 @@ except ImportError:
             """Check if thread is currently running."""
             return self._running and self.is_alive()
 
-        def requestInterruption(self):
+        def requestInterruption(self) -> None:
             """Request thread interruption via stop event."""
             self._stop_event.set()
 
@@ -139,12 +139,12 @@ except ImportError:
             """Check if thread interruption has been requested."""
             return self._stop_event.is_set()
 
-        def quit(self):
+        def quit(self) -> None:
             """Request thread to stop and set stop event."""
             self._running = False
             self._stop_event.set()
 
-        def run(self):
+        def run(self) -> None:
             """Thread execution method to be overridden in subclass."""
             # Override in subclass
             pass
@@ -156,7 +156,7 @@ except ImportError:
         interface when PyQt6 is not available.
         """
 
-        def __init__(self, parent=None):
+        def __init__(self, parent=None) -> None:
             """Initialize the VisibilityController with an optional parent and set visibility to False."""
             self._parent = parent
             self._visible = False
@@ -166,12 +166,12 @@ except ImportError:
             self._size = (800, 600)
             self._position = (100, 100)
 
-        def show(self):
+        def show(self) -> None:
             """Show dialog in console mode."""
             self._visible = True
             logger.info(f"Dialog '{self._title}' opened (console mode)")
 
-        def hide(self):
+        def hide(self) -> None:
             """Hide dialog and log action."""
             self._visible = False
             logger.info(f"Dialog '{self._title}' hidden")
@@ -183,37 +183,37 @@ except ImportError:
             logger.info(f"Modal dialog '{self._title}' executing")
             return self._result
 
-        def accept(self):
+        def accept(self) -> None:
             """Accept dialog with result code 1."""
             self._result = 1
             self.hide()
 
-        def reject(self):
+        def reject(self) -> None:
             """Reject dialog with result code 0."""
             self._result = 0
             self.hide()
 
-        def setWindowTitle(self, title):
+        def setWindowTitle(self, title) -> None:
             """Set dialog window title."""
             self._title = title
 
-        def resize(self, width, height):
+        def resize(self, width, height) -> None:
             """Resize dialog to specified dimensions."""
             self._size = (width, height)
 
-        def move(self, x, y):
+        def move(self, x, y) -> None:
             """Move dialog to specified position."""
             self._position = (x, y)
 
-        def raise_(self):
+        def raise_(self) -> None:
             """Raise dialog to front in console mode."""
             logger.debug(f"Raising dialog '{self._title}'")
 
-        def activateWindow(self):
+        def activateWindow(self) -> None:
             """Activate dialog window in console mode."""
             logger.debug(f"Activating dialog '{self._title}'")
 
-        def closeEvent(self, event):
+        def closeEvent(self, event) -> None:
             """Handle close event to be overridden in subclass."""
             # Override in subclass
             pass
@@ -225,7 +225,7 @@ except ImportError:
         operation when PyQt6 is not available.
         """
 
-        def __init__(self, parent=None):
+        def __init__(self, parent=None) -> None:
             """Initialize the ChildManager with an optional parent and empty children list."""
             self._parent = parent
             self._children = []
@@ -239,7 +239,7 @@ except ImportError:
             if parent:
                 parent._children.append(self)
 
-        def setParent(self, parent):
+        def setParent(self, parent) -> None:
             """Set parent widget for hierarchy management."""
             if self._parent:
                 self._parent._children.remove(self)
@@ -255,7 +255,7 @@ except ImportError:
             """Get list of child widgets."""
             return self._children.copy()
 
-        def setVisible(self, visible):
+        def setVisible(self, visible) -> None:
             """Set widget visibility state."""
             self._visible = visible
 
@@ -263,7 +263,7 @@ except ImportError:
             """Check if widget is visible."""
             return self._visible
 
-        def setEnabled(self, enabled):
+        def setEnabled(self, enabled) -> None:
             """Set widget enabled state and propagate to children."""
             self._enabled = enabled
             for child in self._children:
@@ -274,7 +274,7 @@ except ImportError:
             """Check if widget is enabled."""
             return self._enabled
 
-        def setGeometry(self, x, y, width, height):
+        def setGeometry(self, x, y, width, height) -> None:
             """Set widget geometry with position and dimensions."""
             self._geometry = (x, y, width, height)
 
@@ -282,7 +282,7 @@ except ImportError:
             """Get widget geometry tuple."""
             return self._geometry
 
-        def setLayout(self, layout):
+        def setLayout(self, layout) -> None:
             """Set widget layout manager."""
             self._layout = layout
 
@@ -290,11 +290,11 @@ except ImportError:
             """Get widget layout manager."""
             return self._layout
 
-        def setStyleSheet(self, style):
+        def setStyleSheet(self, style) -> None:
             """Set widget style sheet for appearance."""
             self._style_sheet = style
 
-        def setObjectName(self, name):
+        def setObjectName(self, name) -> None:
             """Set widget object name for identification."""
             self._object_name = name
 
@@ -302,11 +302,11 @@ except ImportError:
             """Get widget object name."""
             return self._object_name
 
-        def update(self):
+        def update(self) -> None:
             """Update widget display in console mode."""
             logger.debug(f"Widget {self._object_name} updated")
 
-        def repaint(self):
+        def repaint(self) -> None:
             """Repaint widget display in console mode."""
             logger.debug(f"Widget {self._object_name} repainted")
 
@@ -317,7 +317,7 @@ except ImportError:
         observer pattern when PyQt6 is not available.
         """
 
-        def __init__(self, *types):
+        def __init__(self, *types) -> None:
             """Initialize signal with type signatures.
 
             Args:
@@ -329,7 +329,7 @@ except ImportError:
             self._blocked = False
             self._mutex = threading.RLock()
 
-        def connect(self, slot):
+        def connect(self, slot) -> None:
             """Connect a slot function to this signal.
 
             Args:
@@ -340,7 +340,7 @@ except ImportError:
                 if slot not in self.slots:
                     self.slots.append(slot)
 
-        def disconnect(self, slot=None):
+        def disconnect(self, slot=None) -> None:
             """Disconnect a slot or all slots from this signal.
 
             Args:
@@ -353,7 +353,7 @@ except ImportError:
                 elif slot in self.slots:
                     self.slots.remove(slot)
 
-        def emit(self, *args):
+        def emit(self, *args) -> None:
             """Emit the signal with given arguments.
 
             Args:
@@ -372,7 +372,7 @@ except ImportError:
                 except Exception as e:
                     logger.error(f"Error in signal slot: {e}")
 
-        def blockSignals(self, blocked):
+        def blockSignals(self, blocked) -> None:
             """Block or unblock signal emission.
 
             Args:
@@ -397,20 +397,20 @@ except ImportError:
     class BoundSignal:
         """Bound signal for specific object instance."""
 
-        def __init__(self, signal, instance):
+        def __init__(self, signal, instance) -> None:
             """Initialize the BoundSignal with a signal and instance."""
             self.signal = signal
             self.instance = instance
             self.slots = []
             self._mutex = threading.RLock()
 
-        def connect(self, slot):
+        def connect(self, slot) -> None:
             """Connect slot to bound signal instance."""
             with self._mutex:
                 if slot not in self.slots:
                     self.slots.append(slot)
 
-        def disconnect(self, slot=None):
+        def disconnect(self, slot=None) -> None:
             """Disconnect slot from bound signal instance."""
             with self._mutex:
                 if slot is None:
@@ -418,7 +418,7 @@ except ImportError:
                 elif slot in self.slots:
                     self.slots.remove(slot)
 
-        def emit(self, *args):
+        def emit(self, *args) -> None:
             """Emit bound signal with arguments to connected slots."""
             if hasattr(self.signal, "_blocked") and self.signal._blocked:
                 return
@@ -447,7 +447,7 @@ class ProcessingStatus(Enum):
 class DistributedTask:
     """Represents a distributed processing task."""
 
-    def __init__(self, task_id: str, task_type: str, parameters: Dict[str, Any]):
+    def __init__(self, task_id: str, task_type: str, parameters: Dict[str, Any]) -> None:
         """Initialize distributed task.
 
         Args:
@@ -492,7 +492,7 @@ class DistributedWorkerThread(QThread):
     task_completed = pyqtSignal(str, dict) if HAS_PYQT6 else None
     task_failed = pyqtSignal(str, str) if HAS_PYQT6 else None
 
-    def __init__(self, worker_id: str, task_queue: List[DistributedTask]):
+    def __init__(self, worker_id: str, task_queue: List[DistributedTask]) -> None:
         """Initialize distributed worker thread.
 
         Args:
@@ -508,7 +508,7 @@ class DistributedWorkerThread(QThread):
         self.running = False
         self.queue_lock = threading.Lock()
 
-    def run(self):
+    def run(self) -> None:
         """Run worker thread execution loop."""
         self.running = True
         logger.info(f"Distributed worker {self.worker_id} started")
@@ -693,7 +693,7 @@ class DistributedWorkerThread(QThread):
 
         return results
 
-    def _update_progress(self, task: DistributedTask, progress: float, status: str):
+    def _update_progress(self, task: DistributedTask, progress: float, status: str) -> None:
         """Update task progress."""
         task.progress = progress
         if HAS_PYQT6 and self.progress_updated:
@@ -831,7 +831,7 @@ class DistributedWorkerThread(QThread):
         else:
             # Load wordlist from file
             try:
-                with open(wordlist_path, "r", encoding="utf-8", errors="ignore") as f:
+                with open(wordlist_path, encoding="utf-8", errors="ignore") as f:
                     wordlist = [line.strip() for line in f.readlines()[:max_attempts]]
             except Exception as e:
                 logger.warning(f"Failed to load wordlist: {e}")
@@ -1013,7 +1013,7 @@ class DistributedWorkerThread(QThread):
                             "type": "anti-debug",
                             "offset": data.find(api),
                             "confidence": "medium",
-                        }
+                        },
                     )
 
             # Check for encryption/obfuscation
@@ -1033,13 +1033,13 @@ class DistributedWorkerThread(QThread):
         # Check for unprotected entry points
         if not any(p["type"] == "packer" for p in protections):
             weak_points.append(
-                {"type": "unpacked_code", "description": "Binary is not packed, code is directly accessible", "severity": "high"}
+                {"type": "unpacked_code", "description": "Binary is not packed, code is directly accessible", "severity": "high"},
             )
 
         # Check for weak encryption
         if any(p.get("entropy", 0) < 6 for p in protections):
             weak_points.append(
-                {"type": "weak_encryption", "description": "Low entropy suggests weak or no encryption", "severity": "medium"}
+                {"type": "weak_encryption", "description": "Low entropy suggests weak or no encryption", "severity": "medium"},
             )
 
         # Check for missing anti-debug
@@ -1096,7 +1096,7 @@ class DistributedWorkerThread(QThread):
                         "description": match.meta.get("description", "Unknown"),
                         "matches": len(match.strings),
                         "severity": "medium",
-                    }
+                    },
                 )
 
         except Exception as e:
@@ -1109,12 +1109,12 @@ class DistributedWorkerThread(QThread):
                 # Look for weak patterns
                 if b"strcmp" in data or b"strcmpi" in data:
                     vulnerabilities.append(
-                        {"pattern": "String comparison", "description": "Direct string comparison for license check", "severity": "high"}
+                        {"pattern": "String comparison", "description": "Direct string comparison for license check", "severity": "high"},
                     )
 
                 if b"trial" in data.lower() or b"expire" in data.lower():
                     vulnerabilities.append(
-                        {"pattern": "Trial/Expiration", "description": "Trial or expiration logic detected", "severity": "medium"}
+                        {"pattern": "Trial/Expiration", "description": "Trial or expiration logic detected", "severity": "medium"},
                     )
 
             except Exception as e2:
@@ -1134,26 +1134,26 @@ class DistributedWorkerThread(QThread):
                         "technique": "Unpacking",
                         "description": f"Unpack {protection['name']} to access original code",
                         "difficulty": "medium",
-                    }
+                    },
                 )
             elif protection["type"] == "anti-debug":
                 techniques.append(
-                    {"technique": "Anti-Debug Bypass", "description": f"Patch or hook {protection['name']}", "difficulty": "easy"}
+                    {"technique": "Anti-Debug Bypass", "description": f"Patch or hook {protection['name']}", "difficulty": "easy"},
                 )
             elif protection["type"] == "virtualizer":
                 techniques.append(
-                    {"technique": "Devirtualization", "description": f"Analyze {protection['name']} VM bytecode", "difficulty": "hard"}
+                    {"technique": "Devirtualization", "description": f"Analyze {protection['name']} VM bytecode", "difficulty": "hard"},
                 )
 
         # Based on weak points
         for weak_point in weak_points:
             if weak_point["type"] == "unpacked_code":
                 techniques.append(
-                    {"technique": "Direct Patching", "description": "Patch license checks directly in unpacked code", "difficulty": "easy"}
+                    {"technique": "Direct Patching", "description": "Patch license checks directly in unpacked code", "difficulty": "easy"},
                 )
             elif weak_point["type"] == "no_anti_debug":
                 techniques.append(
-                    {"technique": "Runtime Debugging", "description": "Use debugger to trace and modify execution", "difficulty": "easy"}
+                    {"technique": "Runtime Debugging", "description": "Use debugger to trace and modify execution", "difficulty": "easy"},
                 )
             elif weak_point["type"] == "weak_encryption":
                 techniques.append({"technique": "Cryptanalysis", "description": "Analyze weak encryption scheme", "difficulty": "medium"})
@@ -1162,7 +1162,7 @@ class DistributedWorkerThread(QThread):
         techniques.append({"technique": "API Hooking", "description": "Hook license validation APIs", "difficulty": "medium"})
 
         techniques.append(
-            {"technique": "Memory Patching", "description": "Patch license checks in memory at runtime", "difficulty": "easy"}
+            {"technique": "Memory Patching", "description": "Patch license checks in memory at runtime", "difficulty": "easy"},
         )
 
         return techniques
@@ -1431,7 +1431,7 @@ class DistributedWorkerThread(QThread):
         results["status"] = "completed"
         return results
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the worker thread."""
         self.running = False
 
@@ -1439,7 +1439,7 @@ class DistributedWorkerThread(QThread):
 class DistributedProcessingDialog(QDialog):
     """Dialog for managing distributed processing tasks."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize distributed processing dialog."""
         if HAS_PYQT6:
             super().__init__(parent)
@@ -1453,7 +1453,7 @@ class DistributedProcessingDialog(QDialog):
         self.setup_ui()
         self.setup_timers()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the user interface."""
         layout = QVBoxLayout(self)
 
@@ -1519,14 +1519,14 @@ class DistributedProcessingDialog(QDialog):
 
         layout.addWidget(progress_group)
 
-    def setup_timers(self):
+    def setup_timers(self) -> None:
         """Set up update timers."""
         if HAS_PYQT6:
             self.update_timer = QTimer()
             self.update_timer.timeout.connect(self.update_status)
             self.update_timer.start(1000)  # Update every second
 
-    def start_workers(self):
+    def start_workers(self) -> None:
         """Start distributed processing workers."""
         if self.workers:
             self.stop_workers()
@@ -1550,7 +1550,7 @@ class DistributedProcessingDialog(QDialog):
         self.stop_button.setEnabled(True)
         self.update_status_text("Workers started")
 
-    def stop_workers(self):
+    def stop_workers(self) -> None:
         """Stop all distributed processing workers."""
         logger.info("Stopping distributed workers")
 
@@ -1564,7 +1564,7 @@ class DistributedProcessingDialog(QDialog):
         self.stop_button.setEnabled(False)
         self.update_status_text("Workers stopped")
 
-    def add_sample_task(self):
+    def add_sample_task(self) -> None:
         """Add a sample task for testing."""
         self.task_counter += 1
         task_type = self.task_type_combo.currentText()
@@ -1575,7 +1575,7 @@ class DistributedProcessingDialog(QDialog):
             parameters = {"binary_path": f"./test_binaries/sample_{self.task_counter}.exe"}
         elif task_type == "password_cracking":
             # Generate real test hash
-            test_password = f"test{self.task_counter}"  # noqa: S105
+            test_password = f"test{self.task_counter}"
             test_hash = hashlib.sha256(test_password.encode()).hexdigest()
             parameters = {"hash": test_hash, "hash_type": "sha256", "wordlist": "./wordlists/common.txt", "max_attempts": 1000}
         elif task_type == "vulnerability_scan":
@@ -1598,22 +1598,22 @@ class DistributedProcessingDialog(QDialog):
         self.update_status_text(f"Added task: {task_id} ({task_type})")
         logger.info(f"Added task {task_id} of type {task_type}")
 
-    def on_task_progress(self, task_id: str, progress: float):
+    def on_task_progress(self, task_id: str, progress: float) -> None:
         """Handle task progress updates."""
         if task_id in self.progress_bars:
             self.progress_bars[task_id].setValue(int(progress))
 
-    def on_task_completed(self, task_id: str, results: Dict[str, Any]):
+    def on_task_completed(self, task_id: str, results: Dict[str, Any]) -> None:
         """Handle task completion."""
         self.update_status_text(f"Task {task_id} completed successfully")
         logger.info(f"Task {task_id} completed")
 
-    def on_task_failed(self, task_id: str, error: str):
+    def on_task_failed(self, task_id: str, error: str) -> None:
         """Handle task failure."""
         self.update_status_text(f"Task {task_id} failed: {error}")
         logger.error(f"Task {task_id} failed: {error}")
 
-    def update_status(self):
+    def update_status(self) -> None:
         """Update task status display."""
         if not self.tasks:
             return
@@ -1626,13 +1626,13 @@ class DistributedProcessingDialog(QDialog):
         status_summary = ", ".join([f"{status}: {count}" for status, count in status_counts.items()])
         self.update_status_text(f"Status summary - {status_summary}")
 
-    def update_status_text(self, message: str):
+    def update_status_text(self, message: str) -> None:
         """Update status text display."""
         if HAS_PYQT6 and hasattr(self, "status_text"):
             timestamp = datetime.now().strftime("%H:%M:%S")
             self.status_text.append(f"[{timestamp}] {message}")
 
-    def closeEvent(self, event):
+    def closeEvent(self, event) -> None:
         """Handle dialog close event."""
         self.stop_workers()
         if HAS_PYQT6:
@@ -1642,13 +1642,13 @@ class DistributedProcessingDialog(QDialog):
 class DistributedProcessing:
     """Run distributed processing manager class."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize distributed processing manager."""
         self.tasks: List[DistributedTask] = []
         self.workers: List[DistributedWorkerThread] = []
         self.dialog: Optional[DistributedProcessingDialog] = None
 
-    def run_distributed_processing(self, main_app_instance=None):
+    def run_distributed_processing(self, main_app_instance=None) -> None:
         """Launch distributed processing interface.
 
         Args:

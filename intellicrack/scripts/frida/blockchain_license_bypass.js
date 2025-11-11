@@ -769,18 +769,18 @@ const BlockchainLicenseBypass = {
 
         // Return appropriate success value based on method
         switch (method) {
-        case '0x1e0263b7': // isLicensed() -> true
-            return '0x0000000000000000000000000000000000000000000000000000000000000001';
+            case '0x1e0263b7': // isLicensed() -> true
+                return '0x0000000000000000000000000000000000000000000000000000000000000001';
 
-        case '0x70a08231': // balanceOf() -> large number
-            return '0x00000000000000000000000000000000000000000000000000000000ffffffff';
+            case '0x70a08231': // balanceOf() -> large number
+                return '0x00000000000000000000000000000000000000000000000000000000ffffffff';
 
-        case '0x91d14854': // hasRole() -> true
-            return '0x0000000000000000000000000000000000000000000000000000000000000001';
+            case '0x91d14854': // hasRole() -> true
+                return '0x0000000000000000000000000000000000000000000000000000000000000001';
 
-        default:
-            // Generic success
-            return '0x0000000000000000000000000000000000000000000000000000000000000001';
+            default:
+                // Generic success
+                return '0x0000000000000000000000000000000000000000000000000000000000000001';
         }
     },
 

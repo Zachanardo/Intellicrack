@@ -105,7 +105,7 @@ class PDFReportGenerator:
     features of the application-specific implementation.
     """
 
-    def __init__(self, output_dir: str = "reports", app_instance: Any | None = None):
+    def __init__(self, output_dir: str = "reports", app_instance: Any | None = None) -> None:
         """Initialize the PDF report generator.
 
         Args:
@@ -323,14 +323,14 @@ class PDFReportGenerator:
                     fontName="Courier",
                     fontSize=8,
                     spaceAfter=6,
-                )
+                ),
             )
 
             # Build content
             content = []
 
             # Function to add page breaks between major sections
-            def add_section_break():
+            def add_section_break() -> None:
                 """Add a page break for new sections."""
                 content.append(PageBreak())
 
@@ -342,7 +342,7 @@ class PDFReportGenerator:
                 Paragraph(
                     f"Date: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
                     styles["Normal"],
-                )
+                ),
             )
             content.append(Spacer(1, 0.2 * inch))  # Use inch for spacing
 
@@ -382,8 +382,8 @@ class PDFReportGenerator:
                             ("BOTTOMPADDING", (0, 0), (1, 0), 12),
                             ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
                             ("GRID", (0, 0), (-1, -1), 1, colors.black),
-                        ]
-                    )
+                        ],
+                    ),
                 )
                 content.append(binary_table)
                 content.append(Spacer(1, 24))
@@ -613,7 +613,7 @@ class PDFReportGenerator:
                 Paragraph(
                     "PE Section visualization requires reportlab charts",
                     styles.get("Italic", styles["Normal"]),
-                )
+                ),
             )
             return False
         except (OSError, ValueError, RuntimeError) as e:
@@ -934,7 +934,7 @@ class PDFReportGenerator:
                     "Binary Name",
                     os.path.basename(binary_path),
                     "Name of analyzed binary",
-                ]
+                ],
             )
             csv_data.append(
                 [
@@ -942,7 +942,7 @@ class PDFReportGenerator:
                     "Export Timestamp",
                     datetime.datetime.now().isoformat(),
                     "When export was generated",
-                ]
+                ],
             )
             csv_data.append(["Metadata", "Intellicrack Version", "1.0.0", "Version of Intellicrack used"])
 
@@ -1140,7 +1140,7 @@ def run_report_generation(app: Any) -> None:
                         "type": vuln_type,
                         "description": description,
                         "severity": "Medium",  # Default severity
-                    }
+                    },
                 )
         elif current_section == "protections" and "detected" in line.lower():
             parts = line.split("(")
@@ -1152,7 +1152,7 @@ def run_report_generation(app: Any) -> None:
                         "type": protection_type,
                         "confidence": confidence,
                         "description": line,
-                    }
+                    },
                 )
         elif current_section == "license_checks" and "license" in line.lower():
             analysis_results["license_checks"].append(
@@ -1160,7 +1160,7 @@ def run_report_generation(app: Any) -> None:
                     "type": "License Check",
                     "address": "Unknown",
                     "description": line,
-                }
+                },
             )
 
     # Generate report
@@ -1198,9 +1198,9 @@ def run_report_generation(app: Any) -> None:
                 if platform.system() == "Windows":
                     os.startfile(report_path)  # noqa: S606  # Legitimate file opening for security research report viewing  # pylint: disable=no-member
                 elif platform.system() == "Darwin":  # macOS
-                    subprocess.call(["open", report_path])  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
+                    subprocess.call(["open", report_path])  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 else:  # Linux
-                    subprocess.call(["xdg-open", report_path])  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
+                    subprocess.call(["xdg-open", report_path])  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
 
                 app.update_output.emit(f"[Report] Opened report: {report_path}")
             except (OSError, ValueError, RuntimeError) as e:

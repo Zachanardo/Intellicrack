@@ -111,7 +111,7 @@ class UnifiedProtectionEngine:
         enable_protection: bool = True,
         enable_heuristics: bool = True,
         cache_config: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         """Initialize unified protection engine.
 
         Args:
@@ -339,7 +339,7 @@ class UnifiedProtectionEngine:
             logger.error(f"Heuristic analysis error: {e}")
             return None
 
-    def _merge_protection_results(self, result: UnifiedProtectionResult, protection_analysis: AdvancedProtectionAnalysis):
+    def _merge_protection_results(self, result: UnifiedProtectionResult, protection_analysis: AdvancedProtectionAnalysis) -> None:
         """Merge protection results into unified result."""
         result.file_type = protection_analysis.file_type
         result.architecture = protection_analysis.architecture
@@ -368,7 +368,7 @@ class UnifiedProtectionEngine:
             elif "license" in detection.type.value.lower() or "dongle" in detection.type.value.lower():
                 result.has_licensing = True
 
-    def _merge_heuristic_results(self, result: UnifiedProtectionResult, heuristics: dict[str, Any]):
+    def _merge_heuristic_results(self, result: UnifiedProtectionResult, heuristics: dict[str, Any]) -> None:
         """Merge heuristic results into unified result."""
         if heuristics.get("likely_packed"):
             result.is_packed = True
@@ -413,7 +413,7 @@ class UnifiedProtectionEngine:
             logger.error(f"ICP analysis error: {e}")
             return None
 
-    def _merge_icp_results(self, result: UnifiedProtectionResult, icp_result: ICPScanResult):
+    def _merge_icp_results(self, result: UnifiedProtectionResult, icp_result: ICPScanResult) -> None:
         """Merge ICP engine results into unified result."""
         # Update file info if not already set
         if result.file_type == "Unknown" and icp_result.file_infos:
@@ -469,7 +469,7 @@ class UnifiedProtectionEngine:
         }
         return type_mapping.get(icp_type, "unknown")
 
-    def _consolidate_results(self, result: UnifiedProtectionResult):
+    def _consolidate_results(self, result: UnifiedProtectionResult) -> None:
         """Consolidate and deduplicate results from multiple sources."""
         # Group protections by name
         protection_groups = {}
@@ -508,12 +508,12 @@ class UnifiedProtectionEngine:
 
         result.protections = consolidated
 
-    def _generate_bypass_strategies(self, result: UnifiedProtectionResult):
+    def _generate_bypass_strategies(self, result: UnifiedProtectionResult) -> None:
         """Generate comprehensive bypass strategies."""
         strategies = []
 
         # Analyze protection combinations
-        protection_types = set(p["type"] for p in result.protections)
+        protection_types = {p["type"] for p in result.protections}
 
         # Packer bypass strategies
         if "packer" in protection_types or result.is_packed:
@@ -529,7 +529,7 @@ class UnifiedProtectionEngine:
                         "Dump process memory after unpacking",
                         "Fix imports with Scylla",
                     ],
-                }
+                },
             )
 
         # Anti-debug bypass strategies
@@ -546,7 +546,7 @@ class UnifiedProtectionEngine:
                         "Patch IsDebuggerPresent checks",
                         "Handle timing-based detection",
                     ],
-                }
+                },
             )
 
         # License/DRM bypass strategies
@@ -563,7 +563,7 @@ class UnifiedProtectionEngine:
                         "Patch conditional jumps",
                         "Emulate valid license responses",
                     ],
-                }
+                },
             )
 
         # Obfuscation strategies
@@ -580,12 +580,12 @@ class UnifiedProtectionEngine:
                         "Manual pattern analysis",
                         "Reconstruct control flow",
                     ],
-                }
+                },
             )
 
         result.bypass_strategies = strategies
 
-    def _calculate_confidence(self, result: UnifiedProtectionResult):
+    def _calculate_confidence(self, result: UnifiedProtectionResult) -> None:
         """Calculate overall confidence score."""
         if not result.protections:
             result.confidence_score = 0.0

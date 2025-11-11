@@ -71,7 +71,7 @@ class HeadlessTrainingInterface:
 
         """
         try:
-            with open(config_path, "r", encoding="utf-8") as f:
+            with open(config_path, encoding="utf-8") as f:
                 config = json.load(f)
             self.config_path = config_path
             logger.info("Configuration loaded from %s", config_path)
@@ -101,7 +101,7 @@ class HeadlessTrainingInterface:
             raise
 
     def start_training(
-        self, config: Dict[str, Any], progress_callback: Optional[Callable] = None, status_callback: Optional[Callable] = None
+        self, config: Dict[str, Any], progress_callback: Optional[Callable] = None, status_callback: Optional[Callable] = None,
     ) -> None:
         """Start AI model training with given configuration.
 
@@ -241,7 +241,7 @@ class HeadlessTrainingInterface:
         model_config = self._get_model_config(model_type, learning_rate, batch_size)
         return learning_rate, batch_size, model_type, dataset_path, model_config
 
-    def _validate_dataset_path(self, dataset_path: str):
+    def _validate_dataset_path(self, dataset_path: str) -> None:
         if not dataset_path or not os.path.exists(dataset_path):
             logger.error("Invalid dataset path: %s", dataset_path)
             if self.callbacks.get("status"):
@@ -268,7 +268,7 @@ class HeadlessTrainingInterface:
         start_time: float,
     ) -> None:
         self.metrics_history.append(
-            {"epoch": epoch, "train_loss": train_loss, "train_acc": train_acc, "val_loss": val_loss, "val_acc": val_acc}
+            {"epoch": epoch, "train_loss": train_loss, "train_acc": train_acc, "val_loss": val_loss, "val_acc": val_acc},
         )
         if len(self.metrics_history) > 100:
             self.metrics_history = self.metrics_history[-100:]
@@ -284,7 +284,7 @@ class HeadlessTrainingInterface:
                 "learning_rate": learning_rate,
                 "batch_size": batch_size,
                 "elapsed_time": round(time.time() - start_time, 2),
-            }
+            },
         )
 
     def _invoke_callbacks(self, epoch: int, train_loss: float, train_acc: float, val_loss: float, val_acc: float) -> None:
@@ -314,10 +314,10 @@ class HeadlessTrainingInterface:
     def _handle_training_error(self, error: Exception) -> None:
         logger.error("Training worker error: %s", error)
         if self.callbacks.get("status"):
-            self.callbacks["status"](f"Training error: {str(error)}")
+            self.callbacks["status"](f"Training error: {error!s}")
 
     def _execute_training_epoch(
-        self, epoch: int, dataset_path: str, model_config: Dict[str, Any], training_config: Dict[str, Any]
+        self, epoch: int, dataset_path: str, model_config: Dict[str, Any], training_config: Dict[str, Any],
     ) -> tuple[float, float, float, float]:
         """Execute a real training epoch with actual data processing.
 
@@ -419,20 +419,20 @@ class HeadlessTrainingInterface:
 
             # Handle different dataset formats
             if dataset_path.endswith(".json"):
-                with open(dataset_path, "r", encoding="utf-8") as f:
+                with open(dataset_path, encoding="utf-8") as f:
                     data = json.load(f)
             elif dataset_path.endswith(".csv"):
                 # Simple CSV parsing
                 import csv
 
                 data = []
-                with open(dataset_path, "r", encoding="utf-8") as f:
+                with open(dataset_path, encoding="utf-8") as f:
                     reader = csv.DictReader(f)
                     for row in reader:
                         data.append(row)
             else:
                 # Try to read as text file with simple format
-                with open(dataset_path, "r", encoding="utf-8") as f:
+                with open(dataset_path, encoding="utf-8") as f:
                     lines = f.readlines()
                     data = [{"text": line.strip(), "label": i % 2} for i, line in enumerate(lines)]
 
@@ -485,7 +485,7 @@ class HeadlessTrainingInterface:
             return []
 
     def _process_training_batch(
-        self, batch_data: list, model_config: Dict[str, Any], learning_rate: float, epoch: int
+        self, batch_data: list, model_config: Dict[str, Any], learning_rate: float, epoch: int,
     ) -> tuple[float, int, int]:
         """Process a training batch with forward and backward passes.
 
@@ -781,7 +781,7 @@ class HeadlessTrainingInterface:
         if architecture == "transformer":
             hidden1_size = max(64, input_size * 4)
             hidden2_size = max(32, input_size * 2)
-        elif architecture == "lstm" or architecture == "gru":
+        elif architecture in {"lstm", "gru"}:
             hidden1_size = max(48, input_size * 3)
             hidden2_size = max(24, int(input_size * 1.5))
         else:  # Default for CNN and others

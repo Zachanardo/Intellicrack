@@ -1175,89 +1175,89 @@ const UniversalUnpacker = {
                     const sectionAddress = baseAddress.add(section.sectionRVA);
 
                     switch (section.type) {
-                    case 0x100: // READYTORUN_SECTION_COMPILER_IDENTIFIER
-                        artifacts.compilerInfo = this.parseCompilerInfo(
-                            sectionAddress,
-                            section.sectionSize
-                        );
-                        break;
+                        case 0x100: // READYTORUN_SECTION_COMPILER_IDENTIFIER
+                            artifacts.compilerInfo = this.parseCompilerInfo(
+                                sectionAddress,
+                                section.sectionSize
+                            );
+                            break;
 
-                    case 0x101: // READYTORUN_SECTION_IMPORT_SECTIONS
-                        artifacts.imports = this.parseImportSections(
-                            sectionAddress,
-                            section.sectionSize
-                        );
-                        break;
+                        case 0x101: // READYTORUN_SECTION_IMPORT_SECTIONS
+                            artifacts.imports = this.parseImportSections(
+                                sectionAddress,
+                                section.sectionSize
+                            );
+                            break;
 
-                    case 0x102: // READYTORUN_SECTION_RUNTIME_FUNCTIONS
-                        artifacts.runtimeFunctions = this.parseRuntimeFunctions(
-                            sectionAddress,
-                            section.sectionSize
-                        );
-                        break;
+                        case 0x102: // READYTORUN_SECTION_RUNTIME_FUNCTIONS
+                            artifacts.runtimeFunctions = this.parseRuntimeFunctions(
+                                sectionAddress,
+                                section.sectionSize
+                            );
+                            break;
 
-                    case 0x103: // READYTORUN_SECTION_METHODDEF_ENTRYPOINTS
-                        artifacts.methods = this.parseMethodEntryPoints(
-                            sectionAddress,
-                            section.sectionSize
-                        );
-                        break;
+                        case 0x103: // READYTORUN_SECTION_METHODDEF_ENTRYPOINTS
+                            artifacts.methods = this.parseMethodEntryPoints(
+                                sectionAddress,
+                                section.sectionSize
+                            );
+                            break;
 
-                    case 0x104: // READYTORUN_SECTION_EXCEPTION_INFO
-                        artifacts.exceptions = this.parseExceptionInfo(
-                            sectionAddress,
-                            section.sectionSize
-                        );
-                        break;
+                        case 0x104: // READYTORUN_SECTION_EXCEPTION_INFO
+                            artifacts.exceptions = this.parseExceptionInfo(
+                                sectionAddress,
+                                section.sectionSize
+                            );
+                            break;
 
-                    case 0x105: // READYTORUN_SECTION_DEBUG_INFO
-                        artifacts.debugInfo = this.parseDebugInfo(
-                            sectionAddress,
-                            section.sectionSize
-                        );
-                        break;
+                        case 0x105: // READYTORUN_SECTION_DEBUG_INFO
+                            artifacts.debugInfo = this.parseDebugInfo(
+                                sectionAddress,
+                                section.sectionSize
+                            );
+                            break;
 
-                    case 0x106: // READYTORUN_SECTION_DELAYLOAD_METHODCALL_THUNKS
-                        artifacts.delayLoadThunks = this.parseDelayLoadThunks(
-                            sectionAddress,
-                            section.sectionSize
-                        );
-                        break;
+                        case 0x106: // READYTORUN_SECTION_DELAYLOAD_METHODCALL_THUNKS
+                            artifacts.delayLoadThunks = this.parseDelayLoadThunks(
+                                sectionAddress,
+                                section.sectionSize
+                            );
+                            break;
 
-                    case 0x108: // READYTORUN_SECTION_AVAILABLE_TYPES
-                        artifacts.types = this.parseAvailableTypes(
-                            sectionAddress,
-                            section.sectionSize
-                        );
-                        break;
+                        case 0x108: // READYTORUN_SECTION_AVAILABLE_TYPES
+                            artifacts.types = this.parseAvailableTypes(
+                                sectionAddress,
+                                section.sectionSize
+                            );
+                            break;
 
-                    case 0x109: // READYTORUN_SECTION_INSTANCE_METHOD_ENTRYPOINTS
-                        artifacts.instanceMethods = this.parseInstanceMethods(
-                            sectionAddress,
-                            section.sectionSize
-                        );
-                        break;
+                        case 0x109: // READYTORUN_SECTION_INSTANCE_METHOD_ENTRYPOINTS
+                            artifacts.instanceMethods = this.parseInstanceMethods(
+                                sectionAddress,
+                                section.sectionSize
+                            );
+                            break;
 
-                    case 0x10a: // READYTORUN_SECTION_INLINING_INFO
-                        artifacts.inliningInfo = this.parseInliningInfo(
-                            sectionAddress,
-                            section.sectionSize
-                        );
-                        break;
+                        case 0x10a: // READYTORUN_SECTION_INLINING_INFO
+                            artifacts.inliningInfo = this.parseInliningInfo(
+                                sectionAddress,
+                                section.sectionSize
+                            );
+                            break;
 
-                    case 0x10b: // READYTORUN_SECTION_PROFILEDATA_INFO
-                        artifacts.profileData = this.parseProfileData(
-                            sectionAddress,
-                            section.sectionSize
-                        );
-                        break;
+                        case 0x10b: // READYTORUN_SECTION_PROFILEDATA_INFO
+                            artifacts.profileData = this.parseProfileData(
+                                sectionAddress,
+                                section.sectionSize
+                            );
+                            break;
 
-                    case 0x10c: // READYTORUN_SECTION_MANIFEST_METADATA
-                        artifacts.metadata = this.parseManifestMetadata(
-                            sectionAddress,
-                            section.sectionSize
-                        );
-                        break;
+                        case 0x10c: // READYTORUN_SECTION_MANIFEST_METADATA
+                            artifacts.metadata = this.parseManifestMetadata(
+                                sectionAddress,
+                                section.sectionSize
+                            );
+                            break;
                     }
                 }
 
@@ -1697,37 +1697,37 @@ const UniversalUnpacker = {
                     const streamAddress = metadataAddress.add(streamDataOffset);
 
                     switch (streamName) {
-                    case '#~':
-                    case '#-':
-                        // Metadata tables stream
-                        metadata.tables = this.parseMetadataTables(
-                            streamAddress,
-                            streamDataSize
-                        );
-                        break;
+                        case '#~':
+                        case '#-':
+                            // Metadata tables stream
+                            metadata.tables = this.parseMetadataTables(
+                                streamAddress,
+                                streamDataSize
+                            );
+                            break;
 
-                    case '#Strings':
-                        // String heap
-                        metadata.strings = this.parseStringHeap(streamAddress, streamDataSize);
-                        break;
+                        case '#Strings':
+                            // String heap
+                            metadata.strings = this.parseStringHeap(streamAddress, streamDataSize);
+                            break;
 
-                    case '#US':
-                        // User string heap
-                        metadata.userStrings = this.parseUserStringHeap(
-                            streamAddress,
-                            streamDataSize
-                        );
-                        break;
+                        case '#US':
+                            // User string heap
+                            metadata.userStrings = this.parseUserStringHeap(
+                                streamAddress,
+                                streamDataSize
+                            );
+                            break;
 
-                    case '#GUID':
-                        // GUID heap
-                        metadata.guids = this.parseGuidHeap(streamAddress, streamDataSize);
-                        break;
+                        case '#GUID':
+                            // GUID heap
+                            metadata.guids = this.parseGuidHeap(streamAddress, streamDataSize);
+                            break;
 
-                    case '#Blob':
-                        // Blob heap
-                        metadata.blobs = this.parseBlobHeap(streamAddress, streamDataSize);
-                        break;
+                        case '#Blob':
+                            // Blob heap
+                            metadata.blobs = this.parseBlobHeap(streamAddress, streamDataSize);
+                            break;
                     }
 
                     // Move to next stream header
@@ -1995,181 +1995,181 @@ const UniversalUnpacker = {
 
                 // Parse based on table type with full field extraction
                 switch (tableId) {
-                case 0x00: // Module
-                    row.generation = readU16();
-                    row.nameIndex = readStringIndex();
-                    row.mvid = readGuidIndex();
-                    row.encId = readGuidIndex();
-                    row.encBaseId = readGuidIndex();
-                    break;
+                    case 0x00: // Module
+                        row.generation = readU16();
+                        row.nameIndex = readStringIndex();
+                        row.mvid = readGuidIndex();
+                        row.encId = readGuidIndex();
+                        row.encBaseId = readGuidIndex();
+                        break;
 
-                case 0x01: // TypeRef
-                    row.resolutionScope = readCodedIndex('resolutionScope');
-                    row.typeNameIndex = readStringIndex();
-                    row.typeNamespaceIndex = readStringIndex();
-                    break;
+                    case 0x01: // TypeRef
+                        row.resolutionScope = readCodedIndex('resolutionScope');
+                        row.typeNameIndex = readStringIndex();
+                        row.typeNamespaceIndex = readStringIndex();
+                        break;
 
-                case 0x02: // TypeDef
-                    row.flags = readU32();
-                    row.typeNameIndex = readStringIndex();
-                    row.typeNamespaceIndex = readStringIndex();
-                    row.extends = readCodedIndex('typeDefOrRef');
-                    row.fieldList = readTableIndex(0x04);
-                    row.methodList = readTableIndex(0x06);
-                    break;
+                    case 0x02: // TypeDef
+                        row.flags = readU32();
+                        row.typeNameIndex = readStringIndex();
+                        row.typeNamespaceIndex = readStringIndex();
+                        row.extends = readCodedIndex('typeDefOrRef');
+                        row.fieldList = readTableIndex(0x04);
+                        row.methodList = readTableIndex(0x06);
+                        break;
 
-                case 0x04: // Field
-                    row.flags = readU16();
-                    row.nameIndex = readStringIndex();
-                    row.signatureIndex = readBlobIndex();
-                    break;
+                    case 0x04: // Field
+                        row.flags = readU16();
+                        row.nameIndex = readStringIndex();
+                        row.signatureIndex = readBlobIndex();
+                        break;
 
-                case 0x06: // MethodDef
-                    row.rva = readU32();
-                    row.implFlags = readU16();
-                    row.flags = readU16();
-                    row.nameIndex = readStringIndex();
-                    row.signatureIndex = readBlobIndex();
-                    row.paramList = readTableIndex(0x08);
-                    break;
+                    case 0x06: // MethodDef
+                        row.rva = readU32();
+                        row.implFlags = readU16();
+                        row.flags = readU16();
+                        row.nameIndex = readStringIndex();
+                        row.signatureIndex = readBlobIndex();
+                        row.paramList = readTableIndex(0x08);
+                        break;
 
-                case 0x08: // Param
-                    row.flags = readU16();
-                    row.sequence = readU16();
-                    row.nameIndex = readStringIndex();
-                    break;
+                    case 0x08: // Param
+                        row.flags = readU16();
+                        row.sequence = readU16();
+                        row.nameIndex = readStringIndex();
+                        break;
 
-                case 0x09: // InterfaceImpl
-                    row.classIndex = readTableIndex(0x02);
-                    row.interfaceIndex = readCodedIndex('typeDefOrRef');
-                    break;
+                    case 0x09: // InterfaceImpl
+                        row.classIndex = readTableIndex(0x02);
+                        row.interfaceIndex = readCodedIndex('typeDefOrRef');
+                        break;
 
-                case 0x0a: // MemberRef
-                    row.classIndex = readCodedIndex('memberRefParent');
-                    row.nameIndex = readStringIndex();
-                    row.signatureIndex = readBlobIndex();
-                    break;
+                    case 0x0a: // MemberRef
+                        row.classIndex = readCodedIndex('memberRefParent');
+                        row.nameIndex = readStringIndex();
+                        row.signatureIndex = readBlobIndex();
+                        break;
 
-                case 0x0b: // Constant
-                    row.type = bytes[offset++];
-                    row.padding = bytes[offset++];
-                    row.parent = readCodedIndex('hasConstant');
-                    row.valueIndex = readBlobIndex();
-                    break;
+                    case 0x0b: // Constant
+                        row.type = bytes[offset++];
+                        row.padding = bytes[offset++];
+                        row.parent = readCodedIndex('hasConstant');
+                        row.valueIndex = readBlobIndex();
+                        break;
 
-                case 0x0c: // CustomAttribute
-                    row.parent = readCodedIndex('hasCustomAttribute');
-                    row.type = readCodedIndex('customAttributeType');
-                    row.valueIndex = readBlobIndex();
-                    break;
+                    case 0x0c: // CustomAttribute
+                        row.parent = readCodedIndex('hasCustomAttribute');
+                        row.type = readCodedIndex('customAttributeType');
+                        row.valueIndex = readBlobIndex();
+                        break;
 
-                case 0x0e: // DeclSecurity
-                    row.action = readU16();
-                    row.parent = readCodedIndex('hasDeclSecurity');
-                    row.permissionSetIndex = readBlobIndex();
-                    break;
+                    case 0x0e: // DeclSecurity
+                        row.action = readU16();
+                        row.parent = readCodedIndex('hasDeclSecurity');
+                        row.permissionSetIndex = readBlobIndex();
+                        break;
 
-                case 0x0f: // ClassLayout
-                    row.packingSize = readU16();
-                    row.classSize = readU32();
-                    row.parent = readTableIndex(0x02);
-                    break;
+                    case 0x0f: // ClassLayout
+                        row.packingSize = readU16();
+                        row.classSize = readU32();
+                        row.parent = readTableIndex(0x02);
+                        break;
 
-                case 0x11: // StandAloneSig
-                    row.signatureIndex = readBlobIndex();
-                    break;
+                    case 0x11: // StandAloneSig
+                        row.signatureIndex = readBlobIndex();
+                        break;
 
-                case 0x14: // Event
-                    row.eventFlags = readU16();
-                    row.nameIndex = readStringIndex();
-                    row.eventType = readCodedIndex('typeDefOrRef');
-                    break;
+                    case 0x14: // Event
+                        row.eventFlags = readU16();
+                        row.nameIndex = readStringIndex();
+                        row.eventType = readCodedIndex('typeDefOrRef');
+                        break;
 
-                case 0x17: // Property
-                    row.flags = readU16();
-                    row.nameIndex = readStringIndex();
-                    row.typeIndex = readBlobIndex();
-                    break;
+                    case 0x17: // Property
+                        row.flags = readU16();
+                        row.nameIndex = readStringIndex();
+                        row.typeIndex = readBlobIndex();
+                        break;
 
-                case 0x1a: // ModuleRef
-                    row.nameIndex = readStringIndex();
-                    break;
+                    case 0x1a: // ModuleRef
+                        row.nameIndex = readStringIndex();
+                        break;
 
-                case 0x1b: // TypeSpec
-                    row.signatureIndex = readBlobIndex();
-                    break;
+                    case 0x1b: // TypeSpec
+                        row.signatureIndex = readBlobIndex();
+                        break;
 
-                case 0x1d: // FieldRVA
-                    row.rva = readU32();
-                    row.field = readTableIndex(0x04);
-                    break;
+                    case 0x1d: // FieldRVA
+                        row.rva = readU32();
+                        row.field = readTableIndex(0x04);
+                        break;
 
-                case 0x20: // Assembly
-                    row.hashAlgId = readU32();
-                    row.majorVersion = readU16();
-                    row.minorVersion = readU16();
-                    row.buildNumber = readU16();
-                    row.revisionNumber = readU16();
-                    row.flags = readU32();
-                    row.publicKeyIndex = readBlobIndex();
-                    row.nameIndex = readStringIndex();
-                    row.cultureIndex = readStringIndex();
-                    break;
+                    case 0x20: // Assembly
+                        row.hashAlgId = readU32();
+                        row.majorVersion = readU16();
+                        row.minorVersion = readU16();
+                        row.buildNumber = readU16();
+                        row.revisionNumber = readU16();
+                        row.flags = readU32();
+                        row.publicKeyIndex = readBlobIndex();
+                        row.nameIndex = readStringIndex();
+                        row.cultureIndex = readStringIndex();
+                        break;
 
-                case 0x23: // AssemblyRef
-                    row.majorVersion = readU16();
-                    row.minorVersion = readU16();
-                    row.buildNumber = readU16();
-                    row.revisionNumber = readU16();
-                    row.flags = readU32();
-                    row.publicKeyOrTokenIndex = readBlobIndex();
-                    row.nameIndex = readStringIndex();
-                    row.cultureIndex = readStringIndex();
-                    row.hashValueIndex = readBlobIndex();
-                    break;
+                    case 0x23: // AssemblyRef
+                        row.majorVersion = readU16();
+                        row.minorVersion = readU16();
+                        row.buildNumber = readU16();
+                        row.revisionNumber = readU16();
+                        row.flags = readU32();
+                        row.publicKeyOrTokenIndex = readBlobIndex();
+                        row.nameIndex = readStringIndex();
+                        row.cultureIndex = readStringIndex();
+                        row.hashValueIndex = readBlobIndex();
+                        break;
 
-                case 0x26: // File
-                    row.flags = readU32();
-                    row.nameIndex = readStringIndex();
-                    row.hashValueIndex = readBlobIndex();
-                    break;
+                    case 0x26: // File
+                        row.flags = readU32();
+                        row.nameIndex = readStringIndex();
+                        row.hashValueIndex = readBlobIndex();
+                        break;
 
-                case 0x27: // ExportedType
-                    row.flags = readU32();
-                    row.typeDefId = readU32();
-                    row.typeNameIndex = readStringIndex();
-                    row.typeNamespaceIndex = readStringIndex();
-                    row.implementation = readCodedIndex('implementation');
-                    break;
+                    case 0x27: // ExportedType
+                        row.flags = readU32();
+                        row.typeDefId = readU32();
+                        row.typeNameIndex = readStringIndex();
+                        row.typeNamespaceIndex = readStringIndex();
+                        row.implementation = readCodedIndex('implementation');
+                        break;
 
-                case 0x28: // ManifestResource
-                    row.offset = readU32();
-                    row.flags = readU32();
-                    row.nameIndex = readStringIndex();
-                    row.implementation = readCodedIndex('implementation');
-                    break;
+                    case 0x28: // ManifestResource
+                        row.offset = readU32();
+                        row.flags = readU32();
+                        row.nameIndex = readStringIndex();
+                        row.implementation = readCodedIndex('implementation');
+                        break;
 
-                case 0x29: // NestedClass
-                    row.nestedClass = readTableIndex(0x02);
-                    row.enclosingClass = readTableIndex(0x02);
-                    break;
+                    case 0x29: // NestedClass
+                        row.nestedClass = readTableIndex(0x02);
+                        row.enclosingClass = readTableIndex(0x02);
+                        break;
 
-                case 0x2a: // GenericParam
-                    row.number = readU16();
-                    row.flags = readU16();
-                    row.owner = readCodedIndex('typeOrMethodDef');
-                    row.nameIndex = readStringIndex();
-                    break;
+                    case 0x2a: // GenericParam
+                        row.number = readU16();
+                        row.flags = readU16();
+                        row.owner = readCodedIndex('typeOrMethodDef');
+                        row.nameIndex = readStringIndex();
+                        break;
 
-                case 0x2b: // MethodSpec
-                    row.method = readCodedIndex('methodDefOrRef');
-                    row.instantiation = readBlobIndex();
-                    break;
+                    case 0x2b: // MethodSpec
+                        row.method = readCodedIndex('methodDefOrRef');
+                        row.instantiation = readBlobIndex();
+                        break;
 
-                case 0x2c: // GenericParamConstraint
-                    row.owner = readTableIndex(0x2a);
-                    row.constraint = readCodedIndex('typeDefOrRef');
-                    break;
+                    case 0x2c: // GenericParamConstraint
+                        row.owner = readTableIndex(0x2a);
+                        row.constraint = readCodedIndex('typeDefOrRef');
+                        break;
                 }
 
                 return row;
@@ -3377,9 +3377,9 @@ const UniversalUnpacker = {
 
                     return args.length > 0
                         ? {
-                            args: `<${args.join(', ')}>`,
-                            endPos: pos,
-                        }
+                              args: `<${args.join(', ')}>`,
+                              endPos: pos,
+                          }
                         : null;
                 },
 
@@ -3430,10 +3430,10 @@ const UniversalUnpacker = {
                                 char === 'P'
                                     ? '*const '
                                     : char === 'Q'
-                                        ? '*mut '
-                                        : char === 'R'
-                                            ? '&'
-                                            : '&mut ';
+                                      ? '*mut '
+                                      : char === 'R'
+                                        ? '&'
+                                        : '&mut ';
                             return {
                                 path: ptrType + innerType.path,
                                 endPos: innerType.endPos,
@@ -4131,37 +4131,37 @@ const UniversalUnpacker = {
 
                         // Extract additional type information based on kind
                         switch (type.kind & 0x1f) {
-                        case 17: // Array
-                            type.arrayInfo = this.parseArrayType(addr.add(offset));
-                            break;
+                            case 17: // Array
+                                type.arrayInfo = this.parseArrayType(addr.add(offset));
+                                break;
 
-                        case 18: // Chan
-                            type.chanInfo = this.parseChanType(addr.add(offset));
-                            break;
+                            case 18: // Chan
+                                type.chanInfo = this.parseChanType(addr.add(offset));
+                                break;
 
-                        case 19: // Func
-                            type.funcInfo = this.parseFuncType(addr.add(offset));
-                            break;
+                            case 19: // Func
+                                type.funcInfo = this.parseFuncType(addr.add(offset));
+                                break;
 
-                        case 20: // Interface
-                            type.interfaceInfo = this.parseInterfaceType(addr.add(offset));
-                            break;
+                            case 20: // Interface
+                                type.interfaceInfo = this.parseInterfaceType(addr.add(offset));
+                                break;
 
-                        case 21: // Map
-                            type.mapInfo = this.parseMapType(addr.add(offset));
-                            break;
+                            case 21: // Map
+                                type.mapInfo = this.parseMapType(addr.add(offset));
+                                break;
 
-                        case 22: // Ptr
-                            type.ptrInfo = this.parsePtrType(addr.add(offset));
-                            break;
+                            case 22: // Ptr
+                                type.ptrInfo = this.parsePtrType(addr.add(offset));
+                                break;
 
-                        case 23: // Slice
-                            type.sliceInfo = this.parseSliceType(addr.add(offset));
-                            break;
+                            case 23: // Slice
+                                type.sliceInfo = this.parseSliceType(addr.add(offset));
+                                break;
 
-                        case 25: // Struct
-                            type.structInfo = this.parseStructType(addr.add(offset));
-                            break;
+                            case 25: // Struct
+                                type.structInfo = this.parseStructType(addr.add(offset));
+                                break;
                         }
 
                         // Extract type name if available
@@ -6186,16 +6186,16 @@ const UniversalUnpacker = {
                         // Reconstruct based on mutation type
                         reconstructByType: function (mutation, analysis) {
                             switch (mutation.type) {
-                            case 'SUBSTITUTION':
-                                return this.reconstructSubstitution(mutation, analysis);
-                            case 'EXPANSION':
-                                return this.reconstructExpansion(mutation, analysis);
-                            case 'OBFUSCATION':
-                                return this.reconstructObfuscation(mutation, analysis);
-                            case 'VIRTUALIZATION':
-                                return this.reconstructVirtualization(mutation, analysis);
-                            default:
-                                return this.reconstructGeneric(mutation, analysis);
+                                case 'SUBSTITUTION':
+                                    return this.reconstructSubstitution(mutation, analysis);
+                                case 'EXPANSION':
+                                    return this.reconstructExpansion(mutation, analysis);
+                                case 'OBFUSCATION':
+                                    return this.reconstructObfuscation(mutation, analysis);
+                                case 'VIRTUALIZATION':
+                                    return this.reconstructVirtualization(mutation, analysis);
+                                default:
+                                    return this.reconstructGeneric(mutation, analysis);
                             }
                         },
 
@@ -7275,14 +7275,14 @@ const UniversalUnpacker = {
                                         const retType = api.includes('String')
                                             ? 'void'
                                             : api.includes('Create')
-                                                ? 'uint32'
-                                                : 'int';
+                                              ? 'uint32'
+                                              : 'int';
                                         const params =
                                             api === 'CheckRemoteDebuggerPresent'
                                                 ? ['pointer', 'pointer']
                                                 : api.includes('String')
-                                                    ? ['pointer']
-                                                    : [];
+                                                  ? ['pointer']
+                                                  : [];
 
                                         Interceptor.replace(
                                             addr,
@@ -7315,22 +7315,22 @@ const UniversalUnpacker = {
                                 if (retval.toInt32() === 0) {
                                     // STATUS_SUCCESS
                                     switch (this.infoClass) {
-                                    case 0x07: // ProcessDebugPort
-                                        Memory.writePointer(this.buffer, ptr(0));
-                                        break;
-                                    case 0x0e: // ProcessHandleCount
-                                        // Keep original to avoid detection
-                                        break;
-                                    case 0x1e: // ProcessDebugObjectHandle
-                                        Memory.writePointer(this.buffer, ptr(0));
-                                        retval.replace(0xc0000353); // STATUS_PORT_NOT_SET
-                                        break;
-                                    case 0x1f: // ProcessDebugFlags
-                                        Memory.writeU32(this.buffer, 1); // PROCESS_DEBUG_INHERIT
-                                        break;
-                                    case 0x22: // ProcessExecuteFlags
-                                        Memory.writeU32(this.buffer, 0x22); // MEM_EXECUTE_OPTION_ENABLE
-                                        break;
+                                        case 0x07: // ProcessDebugPort
+                                            Memory.writePointer(this.buffer, ptr(0));
+                                            break;
+                                        case 0x0e: // ProcessHandleCount
+                                            // Keep original to avoid detection
+                                            break;
+                                        case 0x1e: // ProcessDebugObjectHandle
+                                            Memory.writePointer(this.buffer, ptr(0));
+                                            retval.replace(0xc0000353); // STATUS_PORT_NOT_SET
+                                            break;
+                                        case 0x1f: // ProcessDebugFlags
+                                            Memory.writeU32(this.buffer, 1); // PROCESS_DEBUG_INHERIT
+                                            break;
+                                        case 0x22: // ProcessExecuteFlags
+                                            Memory.writeU32(this.buffer, 0x22); // MEM_EXECUTE_OPTION_ENABLE
+                                            break;
                                     }
                                 }
                             },
@@ -7782,23 +7782,23 @@ const UniversalUnpacker = {
 
             // Select appropriate decryptor
             switch (algorithm) {
-            case 'AES256_CBC':
-                return decryptors.AES256_CBC.call(
-                    this,
-                    encryptedBuffer,
-                    key,
-                    new Uint8Array(16)
-                );
-            case 'RC4':
-                return decryptors.RC4.call(this, encryptedBuffer, key);
-            case 'XOR':
-                return decryptors.XOR.call(this, encryptedBuffer, key);
-            case 'TEA':
-                return decryptors.TEA.call(this, encryptedBuffer, key);
-            case 'ChaCha20':
-                return decryptors.ChaCha20.call(this, encryptedBuffer, key, new Uint8Array(12));
-            default:
-                return decryptors.XOR.call(this, encryptedBuffer, key);
+                case 'AES256_CBC':
+                    return decryptors.AES256_CBC.call(
+                        this,
+                        encryptedBuffer,
+                        key,
+                        new Uint8Array(16)
+                    );
+                case 'RC4':
+                    return decryptors.RC4.call(this, encryptedBuffer, key);
+                case 'XOR':
+                    return decryptors.XOR.call(this, encryptedBuffer, key);
+                case 'TEA':
+                    return decryptors.TEA.call(this, encryptedBuffer, key);
+                case 'ChaCha20':
+                    return decryptors.ChaCha20.call(this, encryptedBuffer, key, new Uint8Array(12));
+                default:
+                    return decryptors.XOR.call(this, encryptedBuffer, key);
             }
         },
 
@@ -10228,28 +10228,28 @@ const UniversalUnpacker = {
 
                     // Parse specific load commands
                     switch (cmd) {
-                    case 0x1: // LC_SEGMENT
-                    case 0x19: // LC_SEGMENT_64
-                        command.data = this.parseSegmentCommand(buffer, offset, is64Bit);
-                        break;
+                        case 0x1: // LC_SEGMENT
+                        case 0x19: // LC_SEGMENT_64
+                            command.data = this.parseSegmentCommand(buffer, offset, is64Bit);
+                            break;
 
-                    case 0x2: // LC_SYMTAB
-                        command.data = this.parseSymtabCommand(buffer, offset);
-                        break;
+                        case 0x2: // LC_SYMTAB
+                            command.data = this.parseSymtabCommand(buffer, offset);
+                            break;
 
-                    case 0xe: // LC_LOAD_DYLIB
-                    case 0xc: // LC_LOAD_DYLINKER
-                        command.data = this.parseDylibCommand(buffer, offset);
-                        break;
+                        case 0xe: // LC_LOAD_DYLIB
+                        case 0xc: // LC_LOAD_DYLINKER
+                            command.data = this.parseDylibCommand(buffer, offset);
+                            break;
 
-                    case 0x80000028: // LC_MAIN
-                        command.data = this.parseMainCommand(buffer, offset);
-                        break;
+                        case 0x80000028: // LC_MAIN
+                            command.data = this.parseMainCommand(buffer, offset);
+                            break;
 
-                    case 0x26: // LC_FUNCTION_STARTS
-                    case 0x29: // LC_DATA_IN_CODE
-                        command.data = this.parseLinkEditCommand(buffer, offset);
-                        break;
+                        case 0x26: // LC_FUNCTION_STARTS
+                        case 0x29: // LC_DATA_IN_CODE
+                            command.data = this.parseLinkEditCommand(buffer, offset);
+                            break;
                     }
 
                     commands.push(command);
@@ -10621,8 +10621,8 @@ const UniversalUnpacker = {
                             state.state < 4
                                 ? 0
                                 : state.state < 10
-                                    ? state.state - 3
-                                    : state.state - 6;
+                                  ? state.state - 3
+                                  : state.state - 6;
                     } else {
                         // Match or rep
                         let len, distance;
@@ -10803,21 +10803,21 @@ const UniversalUnpacker = {
                 const encryptionType = this.detectEncryptionType(encrypted);
 
                 switch (encryptionType) {
-                case 'FairPlay':
-                    return this.decryptFairPlay(encrypted, segment);
-                case 'AES128':
-                    return this.decryptAES128(encrypted, segment);
-                case 'AES256':
-                    return this.decryptAES256(encrypted, segment);
-                case 'Blowfish':
-                    return this.decryptBlowfish(encrypted, segment);
-                case 'RC4':
-                    return this.decryptRC4(encrypted, segment);
-                case 'ChaCha20':
-                    return this.decryptChaCha20(encrypted, segment);
-                default:
-                    // Fallback to XOR with complex key derivation
-                    return this.decryptXORComplex(encrypted, segment);
+                    case 'FairPlay':
+                        return this.decryptFairPlay(encrypted, segment);
+                    case 'AES128':
+                        return this.decryptAES128(encrypted, segment);
+                    case 'AES256':
+                        return this.decryptAES256(encrypted, segment);
+                    case 'Blowfish':
+                        return this.decryptBlowfish(encrypted, segment);
+                    case 'RC4':
+                        return this.decryptRC4(encrypted, segment);
+                    case 'ChaCha20':
+                        return this.decryptChaCha20(encrypted, segment);
+                    default:
+                        // Fallback to XOR with complex key derivation
+                        return this.decryptXORComplex(encrypted, segment);
                 }
             },
 
@@ -11916,23 +11916,23 @@ const UniversalUnpacker = {
 
             // Phase detection logic
             switch (previousPhase) {
-            case 'INITIALIZATION':
-                if (trigger === 'PROTECTION_CHANGE' || trigger === 'MEMORY_ALLOC') {
-                    newPhase = 'DECOMPRESSION';
-                }
-                break;
+                case 'INITIALIZATION':
+                    if (trigger === 'PROTECTION_CHANGE' || trigger === 'MEMORY_ALLOC') {
+                        newPhase = 'DECOMPRESSION';
+                    }
+                    break;
 
-            case 'DECOMPRESSION':
-                if (trigger === 'CODE_EXECUTION' || trigger === 'JUMP_TO_UNPACKED') {
-                    newPhase = 'EXECUTION';
-                }
-                break;
+                case 'DECOMPRESSION':
+                    if (trigger === 'CODE_EXECUTION' || trigger === 'JUMP_TO_UNPACKED') {
+                        newPhase = 'EXECUTION';
+                    }
+                    break;
 
-            case 'EXECUTION':
-                if (trigger === 'OEP_DETECTED') {
-                    newPhase = 'COMPLETED';
-                }
-                break;
+                case 'EXECUTION':
+                    if (trigger === 'OEP_DETECTED') {
+                        newPhase = 'COMPLETED';
+                    }
+                    break;
             }
 
             if (newPhase !== previousPhase) {
@@ -11955,17 +11955,17 @@ const UniversalUnpacker = {
         // Handle phase changes
         handlePhaseChange: function (newPhase) {
             switch (newPhase) {
-            case 'DECOMPRESSION':
-                this.startDecompressionMonitoring();
-                break;
+                case 'DECOMPRESSION':
+                    this.startDecompressionMonitoring();
+                    break;
 
-            case 'EXECUTION':
-                this.startExecutionTracing();
-                break;
+                case 'EXECUTION':
+                    this.startExecutionTracing();
+                    break;
 
-            case 'COMPLETED':
-                this.finalizeUnpacking();
-                break;
+                case 'COMPLETED':
+                    this.finalizeUnpacking();
+                    break;
             }
         },
 
@@ -12294,27 +12294,27 @@ const UniversalUnpacker = {
             let reconstructed = null;
 
             switch (binaryFormat) {
-            case 'PE':
-                reconstructed = UniversalUnpacker.PEReconstruction.rebuildPE({
-                    oep: bestOEP,
-                    memoryDump: memoryDump,
-                    allocatedRegions: results.allocatedRegions,
-                });
-                break;
+                case 'PE':
+                    reconstructed = UniversalUnpacker.PEReconstruction.rebuildPE({
+                        oep: bestOEP,
+                        memoryDump: memoryDump,
+                        allocatedRegions: results.allocatedRegions,
+                    });
+                    break;
 
-            case 'ELF':
-                reconstructed = UniversalUnpacker.CrossPlatform.ELFUnpacker.reconstructELF({
-                    oep: bestOEP,
-                    memoryDump: memoryDump,
-                });
-                break;
+                case 'ELF':
+                    reconstructed = UniversalUnpacker.CrossPlatform.ELFUnpacker.reconstructELF({
+                        oep: bestOEP,
+                        memoryDump: memoryDump,
+                    });
+                    break;
 
-            case 'MachO':
-                reconstructed = UniversalUnpacker.CrossPlatform.MachOUnpacker.reconstructMachO({
-                    oep: bestOEP,
-                    memoryDump: memoryDump,
-                });
-                break;
+                case 'MachO':
+                    reconstructed = UniversalUnpacker.CrossPlatform.MachOUnpacker.reconstructMachO({
+                        oep: bestOEP,
+                        memoryDump: memoryDump,
+                    });
+                    break;
             }
 
             return {
@@ -14211,47 +14211,47 @@ const UniversalUnpacker = {
 
                 // Install appropriate bypass hook based on API
                 switch (api) {
-                case 'IsDebuggerPresent':
-                    Interceptor.replace(
-                        addr,
-                        new NativeCallback(
-                            function () {
-                                return 0;
-                            },
-                            'int',
-                            []
-                        )
-                    );
-                    break;
+                    case 'IsDebuggerPresent':
+                        Interceptor.replace(
+                            addr,
+                            new NativeCallback(
+                                function () {
+                                    return 0;
+                                },
+                                'int',
+                                []
+                            )
+                        );
+                        break;
 
-                case 'CheckRemoteDebuggerPresent':
-                    Interceptor.replace(
-                        addr,
-                        new NativeCallback(
-                            function (hProcess, pbDebuggerPresent) {
-                                Memory.writeU8(pbDebuggerPresent, 0);
-                                return 1;
-                            },
-                            'int',
-                            ['pointer', 'pointer']
-                        )
-                    );
-                    break;
+                    case 'CheckRemoteDebuggerPresent':
+                        Interceptor.replace(
+                            addr,
+                            new NativeCallback(
+                                function (hProcess, pbDebuggerPresent) {
+                                    Memory.writeU8(pbDebuggerPresent, 0);
+                                    return 1;
+                                },
+                                'int',
+                                ['pointer', 'pointer']
+                            )
+                        );
+                        break;
 
-                case 'OutputDebugStringA':
-                case 'OutputDebugStringW':
-                    Interceptor.replace(
-                        addr,
-                        new NativeCallback(
-                            function (lpString) {
-                                // Silently ignore debug output
-                                return;
-                            },
-                            'void',
-                            ['pointer']
-                        )
-                    );
-                    break;
+                    case 'OutputDebugStringA':
+                    case 'OutputDebugStringW':
+                        Interceptor.replace(
+                            addr,
+                            new NativeCallback(
+                                function (lpString) {
+                                    // Silently ignore debug output
+                                    return;
+                                },
+                                'void',
+                                ['pointer']
+                            )
+                        );
+                        break;
                 }
 
                 console.log(`[AntiDebugBypass] Installed hook for ${api}`);
@@ -14284,32 +14284,32 @@ const UniversalUnpacker = {
 
             try {
                 switch (mnemonic) {
-                case 'rdtsc':
-                    // Return fake, consistent timestamp
-                    if (context.eax !== undefined) context.eax = ptr(0x12345678);
-                    if (context.edx !== undefined) context.edx = ptr(0x9abcdef0);
-                    break;
+                    case 'rdtsc':
+                        // Return fake, consistent timestamp
+                        if (context.eax !== undefined) context.eax = ptr(0x12345678);
+                        if (context.edx !== undefined) context.edx = ptr(0x9abcdef0);
+                        break;
 
-                case 'cpuid':
-                    // Manipulate CPUID results to hide virtualization
-                    const eax = context.eax ? context.eax.toInt32() : 0;
-                    if (eax === 0x40000000) {
-                        // Hide hypervisor presence
-                        context.eax = ptr(0);
-                        context.ebx = ptr(0);
-                        context.ecx = ptr(0);
-                        context.edx = ptr(0);
-                    }
-                    break;
+                    case 'cpuid':
+                        // Manipulate CPUID results to hide virtualization
+                        const eax = context.eax ? context.eax.toInt32() : 0;
+                        if (eax === 0x40000000) {
+                            // Hide hypervisor presence
+                            context.eax = ptr(0);
+                            context.ebx = ptr(0);
+                            context.ecx = ptr(0);
+                            context.edx = ptr(0);
+                        }
+                        break;
 
-                case 'pushf':
-                case 'popf':
-                    // Clear trap flag in flags register
-                    if (context.eflags !== undefined) {
-                        const flags = context.eflags.toInt32();
-                        context.eflags = ptr(flags & ~0x100); // Clear TF flag
-                    }
-                    break;
+                    case 'pushf':
+                    case 'popf':
+                        // Clear trap flag in flags register
+                        if (context.eflags !== undefined) {
+                            const flags = context.eflags.toInt32();
+                            context.eflags = ptr(flags & ~0x100); // Clear TF flag
+                        }
+                        break;
                 }
 
                 console.log(`[AntiDebugBypass] Applied register bypass for: ${mnemonic}`);
@@ -15124,24 +15124,24 @@ const UniversalUnpacker = {
                 };
 
                 switch (fileType) {
-                case 'PE':
-                    analysis.pe = UniversalUnpacker.PEAnalysis.analyzePE(buffer);
-                    analysis.packers =
+                    case 'PE':
+                        analysis.pe = UniversalUnpacker.PEAnalysis.analyzePE(buffer);
+                        analysis.packers =
                             UniversalUnpacker.PackerDetection.detectAllPackers(buffer);
-                    break;
+                        break;
 
-                case 'ELF':
-                    analysis.elf =
+                    case 'ELF':
+                        analysis.elf =
                             UniversalUnpacker.CrossPlatform.ELFUnpacker.analyzeELF(buffer);
-                    break;
+                        break;
 
-                case 'MachO':
-                    analysis.macho =
+                    case 'MachO':
+                        analysis.macho =
                             UniversalUnpacker.CrossPlatform.MachOUnpacker.analyzeMachO(buffer);
-                    break;
+                        break;
 
-                default:
-                    analysis.error = 'Unknown file type';
+                    default:
+                        analysis.error = 'Unknown file type';
                 }
 
                 // Perform additional analysis if requested
@@ -15961,20 +15961,20 @@ const UniversalUnpacker = {
                     let result;
 
                     switch (item.type) {
-                    case 'unpack':
-                        result = this.handleUnpackRequest(item.target, item.options);
-                        break;
+                        case 'unpack':
+                            result = this.handleUnpackRequest(item.target, item.options);
+                            break;
 
-                    case 'analyze':
-                        result = this.analyzeFile(item.filePath, item.options);
-                        break;
+                        case 'analyze':
+                            result = this.analyzeFile(item.filePath, item.options);
+                            break;
 
-                    case 'extract':
-                        result = this.extractStrings(item.buffer);
-                        break;
+                        case 'extract':
+                            result = this.extractStrings(item.buffer);
+                            break;
 
-                    default:
-                        result = { error: `Unknown batch item type: ${item.type}` };
+                        default:
+                            result = { error: `Unknown batch item type: ${item.type}` };
                     }
 
                     results.push({
@@ -16090,20 +16090,20 @@ const UniversalUnpacker = {
         // Handle plugin request
         handlePluginRequest: function (action, plugin) {
             switch (action) {
-            case 'load':
-                return this.loadPlugin(plugin);
+                case 'load':
+                    return this.loadPlugin(plugin);
 
-            case 'unload':
-                return this.unloadPlugin(plugin.name);
+                case 'unload':
+                    return this.unloadPlugin(plugin.name);
 
-            case 'list':
-                return Array.from(this.plugins.loaded.keys());
+                case 'list':
+                    return Array.from(this.plugins.loaded.keys());
 
-            case 'info':
-                return this.plugins.loaded.get(plugin.name);
+                case 'info':
+                    return this.plugins.loaded.get(plugin.name);
 
-            default:
-                throw new Error(`Unknown plugin action: ${action}`);
+                default:
+                    throw new Error(`Unknown plugin action: ${action}`);
             }
         },
 
@@ -16428,26 +16428,26 @@ const UniversalUnpacker = {
                         let result;
 
                         switch (task.type) {
-                        case 'UNPACK_SECTION':
-                            result = this.unpackSection(task);
-                            break;
-                        case 'ANALYZE_PACKER':
-                            result = this.analyzePacker(task);
-                            break;
-                        case 'DECRYPT_LAYER':
-                            result = this.decryptLayer(task);
-                            break;
-                        case 'RECONSTRUCT_PE':
-                            result = this.reconstructPE(task);
-                            break;
-                        case 'TRACE_EXECUTION':
-                            result = this.traceExecution(task);
-                            break;
-                        case 'DEVIRTUALIZE':
-                            result = this.devirtualize(task);
-                            break;
-                        default:
-                            result = this.genericExecute(task);
+                            case 'UNPACK_SECTION':
+                                result = this.unpackSection(task);
+                                break;
+                            case 'ANALYZE_PACKER':
+                                result = this.analyzePacker(task);
+                                break;
+                            case 'DECRYPT_LAYER':
+                                result = this.decryptLayer(task);
+                                break;
+                            case 'RECONSTRUCT_PE':
+                                result = this.reconstructPE(task);
+                                break;
+                            case 'TRACE_EXECUTION':
+                                result = this.traceExecution(task);
+                                break;
+                            case 'DEVIRTUALIZE':
+                                result = this.devirtualize(task);
+                                break;
+                            default:
+                                result = this.genericExecute(task);
                         }
 
                         this.currentTasks.get(taskId).status = 'completed';
@@ -16471,17 +16471,17 @@ const UniversalUnpacker = {
                     // Apply unpacking based on method
                     let unpacked;
                     switch (method) {
-                    case 'lzma':
-                        unpacked = this.lzmaDecompress(sectionData);
-                        break;
-                    case 'zlib':
-                        unpacked = this.zlibDecompress(sectionData);
-                        break;
-                    case 'custom':
-                        unpacked = this.customDecompress(sectionData, task.data.algorithm);
-                        break;
-                    default:
-                        unpacked = sectionData;
+                        case 'lzma':
+                            unpacked = this.lzmaDecompress(sectionData);
+                            break;
+                        case 'zlib':
+                            unpacked = this.zlibDecompress(sectionData);
+                            break;
+                        case 'custom':
+                            unpacked = this.customDecompress(sectionData, task.data.algorithm);
+                            break;
+                        default:
+                            unpacked = sectionData;
                     }
 
                     return {
@@ -16689,8 +16689,8 @@ const UniversalUnpacker = {
                                 state.stateNum < 4
                                     ? 0
                                     : state.stateNum < 10
-                                        ? state.stateNum - 3
-                                        : state.stateNum - 6;
+                                      ? state.stateNum - 3
+                                      : state.stateNum - 6;
                         } else {
                             // Match or rep
                             let len;
@@ -17153,50 +17153,50 @@ const UniversalUnpacker = {
                     const output = [];
 
                     switch (algorithm) {
-                    case 'xor':
-                        const key = 0xab;
-                        for (let i = 0; i < data.length; i++) {
-                            output.push(data[i] ^ key);
-                        }
-                        break;
+                        case 'xor':
+                            const key = 0xab;
+                            for (let i = 0; i < data.length; i++) {
+                                output.push(data[i] ^ key);
+                            }
+                            break;
 
-                    case 'rol':
-                        const shift = 3;
-                        for (let i = 0; i < data.length; i++) {
-                            output.push((data[i] << shift) | (data[i] >> (8 - shift)));
-                        }
-                        break;
+                        case 'rol':
+                            const shift = 3;
+                            for (let i = 0; i < data.length; i++) {
+                                output.push((data[i] << shift) | (data[i] >> (8 - shift)));
+                            }
+                            break;
 
-                    case 'rc4':
-                        const rc4Key = [0x12, 0x34, 0x56, 0x78];
-                        const s = new Array(256);
+                        case 'rc4':
+                            const rc4Key = [0x12, 0x34, 0x56, 0x78];
+                            const s = new Array(256);
 
-                        // Initialize S-box
-                        for (let i = 0; i < 256; i++) {
-                            s[i] = i;
-                        }
+                            // Initialize S-box
+                            for (let i = 0; i < 256; i++) {
+                                s[i] = i;
+                            }
 
-                        // Key scheduling
-                        let j = 0;
-                        for (let i = 0; i < 256; i++) {
-                            j = (j + s[i] + rc4Key[i % rc4Key.length]) & 0xff;
-                            [s[i], s[j]] = [s[j], s[i]];
-                        }
+                            // Key scheduling
+                            let j = 0;
+                            for (let i = 0; i < 256; i++) {
+                                j = (j + s[i] + rc4Key[i % rc4Key.length]) & 0xff;
+                                [s[i], s[j]] = [s[j], s[i]];
+                            }
 
-                        // Generate keystream and decrypt
-                        let i = 0;
-                        j = 0;
-                        for (let n = 0; n < data.length; n++) {
-                            i = (i + 1) & 0xff;
-                            j = (j + s[i]) & 0xff;
-                            [s[i], s[j]] = [s[j], s[i]];
-                            const k = s[(s[i] + s[j]) & 0xff];
-                            output.push(data[n] ^ k);
-                        }
-                        break;
+                            // Generate keystream and decrypt
+                            let i = 0;
+                            j = 0;
+                            for (let n = 0; n < data.length; n++) {
+                                i = (i + 1) & 0xff;
+                                j = (j + s[i]) & 0xff;
+                                [s[i], s[j]] = [s[j], s[i]];
+                                const k = s[(s[i] + s[j]) & 0xff];
+                                output.push(data[n] ^ k);
+                            }
+                            break;
 
-                    default:
-                        return data;
+                        default:
+                            return data;
                     }
 
                     return new Uint8Array(output);
@@ -17323,43 +17323,43 @@ const UniversalUnpacker = {
 
                 tryDecryption: function (data, method, hints) {
                     switch (method) {
-                    case 'xor':
-                        // Try XOR with different key lengths
-                        for (let keyLen = 1; keyLen <= 16; keyLen++) {
-                            const key = hints.xorKey || this.findXORKey(data, keyLen);
-                            const decrypted = new Uint8Array(data.length);
+                        case 'xor':
+                            // Try XOR with different key lengths
+                            for (let keyLen = 1; keyLen <= 16; keyLen++) {
+                                const key = hints.xorKey || this.findXORKey(data, keyLen);
+                                const decrypted = new Uint8Array(data.length);
 
-                            for (let i = 0; i < data.length; i++) {
-                                decrypted[i] = data[i] ^ key[i % key.length];
+                                for (let i = 0; i < data.length; i++) {
+                                    decrypted[i] = data[i] ^ key[i % key.length];
+                                }
+
+                                if (this.looksLikeCode(decrypted)) {
+                                    return decrypted;
+                                }
                             }
+                            break;
 
-                            if (this.looksLikeCode(decrypted)) {
-                                return decrypted;
+                        case 'rc4':
+                            const rc4Keys = hints.rc4Keys || [
+                                [0x12, 0x34, 0x56, 0x78],
+                                [0xde, 0xad, 0xbe, 0xef],
+                                [0x00, 0x00, 0x00, 0x00],
+                            ];
+
+                            for (const key of rc4Keys) {
+                                const decrypted = this.rc4Decrypt(data, key);
+                                if (this.looksLikeCode(decrypted)) {
+                                    return decrypted;
+                                }
                             }
-                        }
-                        break;
+                            break;
 
-                    case 'rc4':
-                        const rc4Keys = hints.rc4Keys || [
-                            [0x12, 0x34, 0x56, 0x78],
-                            [0xde, 0xad, 0xbe, 0xef],
-                            [0x00, 0x00, 0x00, 0x00],
-                        ];
-
-                        for (const key of rc4Keys) {
-                            const decrypted = this.rc4Decrypt(data, key);
-                            if (this.looksLikeCode(decrypted)) {
-                                return decrypted;
+                        case 'aes':
+                            // Full AES-256-CBC decryption with production-ready implementation
+                            if (hints.aesKey) {
+                                return this.aesDecrypt(data, hints.aesKey, hints.aesIV);
                             }
-                        }
-                        break;
-
-                    case 'aes':
-                        // Full AES-256-CBC decryption with production-ready implementation
-                        if (hints.aesKey) {
-                            return this.aesDecrypt(data, hints.aesKey, hints.aesIV);
-                        }
-                        break;
+                            break;
                     }
 
                     throw new Error(`Decryption failed for method ${method}`);
@@ -18533,25 +18533,25 @@ const UniversalUnpacker = {
                     const translation = [];
 
                     switch (handler.type) {
-                    case 'ADD':
-                        translation.push(0x01); // ADD
-                        translation.push(0xc0); // EAX, EAX
-                        break;
-                    case 'SUB':
-                        translation.push(0x29); // SUB
-                        translation.push(0xc0); // EAX, EAX
-                        break;
-                    case 'XOR':
-                        translation.push(0x31); // XOR
-                        translation.push(0xc0); // EAX, EAX
-                        break;
-                    case 'CALL':
-                        translation.push(0xe8); // CALL
-                        translation.push(0x00, 0x00, 0x00, 0x00); // Relative offset
-                        translation.operandSize = 4;
-                        break;
-                    default:
-                        translation.push(0x90); // NOP
+                        case 'ADD':
+                            translation.push(0x01); // ADD
+                            translation.push(0xc0); // EAX, EAX
+                            break;
+                        case 'SUB':
+                            translation.push(0x29); // SUB
+                            translation.push(0xc0); // EAX, EAX
+                            break;
+                        case 'XOR':
+                            translation.push(0x31); // XOR
+                            translation.push(0xc0); // EAX, EAX
+                            break;
+                        case 'CALL':
+                            translation.push(0xe8); // CALL
+                            translation.push(0x00, 0x00, 0x00, 0x00); // Relative offset
+                            translation.operandSize = 4;
+                            break;
+                        default:
+                            translation.push(0x90); // NOP
                     }
 
                     return translation;
@@ -18877,27 +18877,27 @@ const UniversalUnpacker = {
         // Handle incoming messages
         handleMessage: function (message) {
             switch (message.type) {
-            case 'HEARTBEAT':
-                this.handleHeartbeat(message);
-                break;
-            case 'TASK_ASSIGNMENT':
-                this.handleTaskAssignment(message);
-                break;
-            case 'TASK_RESULT':
-                this.handleTaskResult(message);
-                break;
-            case 'TASK_ERROR':
-                this.handleTaskError(message);
-                break;
-            case 'VOTE_REQUEST':
-                this.handleVoteRequest(message);
-                break;
-            case 'VOTE_RESPONSE':
-                this.handleVoteResponse(message);
-                break;
-            case 'LEADER_HEARTBEAT':
-                this.handleLeaderHeartbeat(message);
-                break;
+                case 'HEARTBEAT':
+                    this.handleHeartbeat(message);
+                    break;
+                case 'TASK_ASSIGNMENT':
+                    this.handleTaskAssignment(message);
+                    break;
+                case 'TASK_RESULT':
+                    this.handleTaskResult(message);
+                    break;
+                case 'TASK_ERROR':
+                    this.handleTaskError(message);
+                    break;
+                case 'VOTE_REQUEST':
+                    this.handleVoteRequest(message);
+                    break;
+                case 'VOTE_RESPONSE':
+                    this.handleVoteResponse(message);
+                    break;
+                case 'LEADER_HEARTBEAT':
+                    this.handleLeaderHeartbeat(message);
+                    break;
             }
         },
 
@@ -20629,21 +20629,21 @@ const UniversalUnpacker = {
         // Perform platform-specific checks
         performPlatformSpecificChecks: function () {
             switch (this.state.platform) {
-            case 'windows':
-                this.checkWindowsCompatibility();
-                break;
-            case 'linux':
-                this.checkLinuxCompatibility();
-                break;
-            case 'darwin':
-                this.checkMacOSCompatibility();
-                break;
-            case 'android':
-                this.checkAndroidCompatibility();
-                break;
-            case 'ios':
-                this.checkIOSCompatibility();
-                break;
+                case 'windows':
+                    this.checkWindowsCompatibility();
+                    break;
+                case 'linux':
+                    this.checkLinuxCompatibility();
+                    break;
+                case 'darwin':
+                    this.checkMacOSCompatibility();
+                    break;
+                case 'android':
+                    this.checkAndroidCompatibility();
+                    break;
+                case 'ios':
+                    this.checkIOSCompatibility();
+                    break;
             }
         },
 
@@ -21475,20 +21475,20 @@ const UniversalUnpacker = {
 
             // Platform-specific adjustments
             switch (this.state.platform) {
-            case 'windows':
-                config.useWindowsAPIs = true;
-                config.moduleExtension = '.dll';
-                break;
-            case 'linux':
-            case 'android':
-                config.useLinuxAPIs = true;
-                config.moduleExtension = '.so';
-                break;
-            case 'darwin':
-            case 'ios':
-                config.useDarwinAPIs = true;
-                config.moduleExtension = '.dylib';
-                break;
+                case 'windows':
+                    config.useWindowsAPIs = true;
+                    config.moduleExtension = '.dll';
+                    break;
+                case 'linux':
+                case 'android':
+                    config.useLinuxAPIs = true;
+                    config.moduleExtension = '.so';
+                    break;
+                case 'darwin':
+                case 'ios':
+                    config.useDarwinAPIs = true;
+                    config.moduleExtension = '.dylib';
+                    break;
             }
 
             return config;
@@ -21840,12 +21840,12 @@ const UniversalUnpacker = {
                 return frames.length > 0
                     ? frames
                     : [
-                        {
-                            address: Process.mainModule.base,
-                            module: Process.mainModule.name,
-                            offset: 0,
-                        },
-                    ];
+                          {
+                              address: Process.mainModule.base,
+                              module: Process.mainModule.name,
+                              offset: 0,
+                          },
+                      ];
             },
 
             getRealAPICalls: function () {
@@ -21933,22 +21933,22 @@ const UniversalUnpacker = {
 
             testOEPMethod: function (method, testCase) {
                 switch (method) {
-                case 'stackTrace':
-                    return testCase.stackFrames[0].address;
-                case 'apiPattern':
-                    return testCase.apiCalls[0].address;
-                case 'entropy':
-                    let lowestEntropy = Infinity;
-                    let oepCandidate = null;
-                    for (const region of testCase.memoryRegions) {
-                        if (region.entropy < lowestEntropy) {
-                            lowestEntropy = region.entropy;
-                            oepCandidate = region.base;
+                    case 'stackTrace':
+                        return testCase.stackFrames[0].address;
+                    case 'apiPattern':
+                        return testCase.apiCalls[0].address;
+                    case 'entropy':
+                        let lowestEntropy = Infinity;
+                        let oepCandidate = null;
+                        for (const region of testCase.memoryRegions) {
+                            if (region.entropy < lowestEntropy) {
+                                lowestEntropy = region.entropy;
+                                oepCandidate = region.base;
+                            }
                         }
-                    }
-                    return oepCandidate;
-                default:
-                    return ptr(0);
+                        return oepCandidate;
+                    default:
+                        return ptr(0);
                 }
             },
         },
@@ -22495,216 +22495,216 @@ const UniversalUnpacker = {
                 let bypassed = false;
 
                 switch (method) {
-                case 'isDebuggerPresent':
-                    // Test if IsDebuggerPresent is properly hooked
-                    try {
-                        const kernel32 = Process.getModuleByName('kernel32.dll');
-                        const isDebuggerPresent = kernel32.getExportByName('IsDebuggerPresent');
+                    case 'isDebuggerPresent':
+                        // Test if IsDebuggerPresent is properly hooked
+                        try {
+                            const kernel32 = Process.getModuleByName('kernel32.dll');
+                            const isDebuggerPresent = kernel32.getExportByName('IsDebuggerPresent');
 
-                        // Check if the function is hooked
-                        const hookedBytes = Memory.readByteArray(isDebuggerPresent, 5);
-                        const firstByte = new Uint8Array(hookedBytes)[0];
-
-                        // 0xE9 = JMP instruction (hook installed)
-                        // 0xB8 = MOV EAX instruction (typical hook pattern)
-                        if (firstByte === 0xe9 || firstByte === 0xb8) {
-                            // Verify hook returns false (no debugger)
-                            const result = new NativeFunction(isDebuggerPresent, 'bool', [])();
-                            bypassed = result === false;
-                        }
-                    } catch (e) {
-                        console.log('[!] IsDebuggerPresent test failed:', e.message);
-                    }
-                    break;
-
-                case 'checkRemoteDebugger':
-                    // Test if CheckRemoteDebuggerPresent is properly hooked
-                    try {
-                        const kernel32 = Process.getModuleByName('kernel32.dll');
-                        const checkRemoteDebugger = kernel32.getExportByName(
-                            'CheckRemoteDebuggerPresent'
-                        );
-
-                        if (checkRemoteDebugger) {
-                            const hookedBytes = Memory.readByteArray(checkRemoteDebugger, 5);
+                            // Check if the function is hooked
+                            const hookedBytes = Memory.readByteArray(isDebuggerPresent, 5);
                             const firstByte = new Uint8Array(hookedBytes)[0];
 
-                            // Check for hook patterns
-                            if (
-                                firstByte === 0xe9 ||
+                            // 0xE9 = JMP instruction (hook installed)
+                            // 0xB8 = MOV EAX instruction (typical hook pattern)
+                            if (firstByte === 0xe9 || firstByte === 0xb8) {
+                                // Verify hook returns false (no debugger)
+                                const result = new NativeFunction(isDebuggerPresent, 'bool', [])();
+                                bypassed = result === false;
+                            }
+                        } catch (e) {
+                            console.log('[!] IsDebuggerPresent test failed:', e.message);
+                        }
+                        break;
+
+                    case 'checkRemoteDebugger':
+                        // Test if CheckRemoteDebuggerPresent is properly hooked
+                        try {
+                            const kernel32 = Process.getModuleByName('kernel32.dll');
+                            const checkRemoteDebugger = kernel32.getExportByName(
+                                'CheckRemoteDebuggerPresent'
+                            );
+
+                            if (checkRemoteDebugger) {
+                                const hookedBytes = Memory.readByteArray(checkRemoteDebugger, 5);
+                                const firstByte = new Uint8Array(hookedBytes)[0];
+
+                                // Check for hook patterns
+                                if (
+                                    firstByte === 0xe9 ||
                                     firstByte === 0xb8 ||
                                     firstByte === 0x33
-                            ) {
-                                // Test with current process handle
-                                const currentProcess = ptr(-1); // INVALID_HANDLE_VALUE
-                                const debuggerPresent = Memory.alloc(4);
-                                const checkFunc = new NativeFunction(
-                                    checkRemoteDebugger,
+                                ) {
+                                    // Test with current process handle
+                                    const currentProcess = ptr(-1); // INVALID_HANDLE_VALUE
+                                    const debuggerPresent = Memory.alloc(4);
+                                    const checkFunc = new NativeFunction(
+                                        checkRemoteDebugger,
+                                        'bool',
+                                        ['pointer', 'pointer']
+                                    );
+                                    const result = checkFunc(currentProcess, debuggerPresent);
+
+                                    // Should return success but debugger not present
+                                    bypassed = result && Memory.readU32(debuggerPresent) === 0;
+                                }
+                            }
+                        } catch (e) {
+                            console.log('[!] CheckRemoteDebuggerPresent test failed:', e.message);
+                        }
+                        break;
+
+                    case 'ntQueryInformation':
+                        // Test if NtQueryInformationProcess is properly hooked
+                        try {
+                            const ntdll = Process.getModuleByName('ntdll.dll');
+                            const ntQueryInfo = ntdll.getExportByName('NtQueryInformationProcess');
+
+                            if (ntQueryInfo) {
+                                // Check for hook
+                                const hookedBytes = Memory.readByteArray(ntQueryInfo, 5);
+                                const firstByte = new Uint8Array(hookedBytes)[0];
+
+                                if (firstByte === 0xe9 || firstByte === 0xb8) {
+                                    // Test ProcessDebugPort (0x07)
+                                    const processHandle = ptr(-1);
+                                    const debugPort = Memory.alloc(Process.pointerSize);
+                                    const returnLength = Memory.alloc(4);
+
+                                    const queryFunc = new NativeFunction(ntQueryInfo, 'int', [
+                                        'pointer',
+                                        'int',
+                                        'pointer',
+                                        'int',
+                                        'pointer',
+                                    ]);
+
+                                    const status = queryFunc(
+                                        processHandle,
+                                        0x07,
+                                        debugPort,
+                                        Process.pointerSize,
+                                        returnLength
+                                    );
+
+                                    // Should succeed and return 0 (no debugger)
+                                    bypassed =
+                                        status === 0 && Memory.readPointer(debugPort).isNull();
+                                }
+                            }
+                        } catch (e) {
+                            console.log('[!] NtQueryInformationProcess test failed:', e.message);
+                        }
+                        break;
+
+                    case 'hardwareBreakpoints':
+                        // Test if hardware breakpoint detection is bypassed
+                        try {
+                            // Check if debug registers are cleared/faked
+                            Thread.backtrace(this.context, Backtracer.ACCURATE).map(
+                                DebugSymbol.fromAddress
+                            );
+
+                            // Try to read thread context
+                            const currentThread = Process.getCurrentThreadId();
+
+                            // Hardware breakpoints would be in DR0-DR3 registers
+                            // If properly bypassed, these should be inaccessible or return 0
+                            const kernel32 = Process.getModuleByName('kernel32.dll');
+                            const getThreadContext = kernel32.getExportByName('GetThreadContext');
+
+                            if (getThreadContext) {
+                                // Allocate CONTEXT structure (x86: 716 bytes, x64: 1232 bytes)
+                                const contextSize = Process.arch === 'x64' ? 1232 : 716;
+                                const context = Memory.alloc(contextSize);
+
+                                // Set ContextFlags to CONTEXT_DEBUG_REGISTERS
+                                Memory.writeU32(context, 0x00010010);
+
+                                const getContextFunc = new NativeFunction(
+                                    getThreadContext,
                                     'bool',
                                     ['pointer', 'pointer']
                                 );
-                                const result = checkFunc(currentProcess, debuggerPresent);
 
-                                // Should return success but debugger not present
-                                bypassed = result && Memory.readU32(debuggerPresent) === 0;
-                            }
-                        }
-                    } catch (e) {
-                        console.log('[!] CheckRemoteDebuggerPresent test failed:', e.message);
-                    }
-                    break;
+                                // This should fail or return zeroed debug registers if bypassed
+                                const result = getContextFunc(ptr(currentThread), context);
 
-                case 'ntQueryInformation':
-                    // Test if NtQueryInformationProcess is properly hooked
-                    try {
-                        const ntdll = Process.getModuleByName('ntdll.dll');
-                        const ntQueryInfo = ntdll.getExportByName('NtQueryInformationProcess');
+                                if (result) {
+                                    // Check DR0-DR3 (should be 0 if bypassed)
+                                    const dr0Offset = Process.arch === 'x64' ? 0x20 : 0x18;
+                                    const dr0 = Memory.readPointer(context.add(dr0Offset));
+                                    const dr1 = Memory.readPointer(
+                                        context.add(dr0Offset + Process.pointerSize)
+                                    );
+                                    const dr2 = Memory.readPointer(
+                                        context.add(dr0Offset + Process.pointerSize * 2)
+                                    );
+                                    const dr3 = Memory.readPointer(
+                                        context.add(dr0Offset + Process.pointerSize * 3)
+                                    );
 
-                        if (ntQueryInfo) {
-                            // Check for hook
-                            const hookedBytes = Memory.readByteArray(ntQueryInfo, 5);
-                            const firstByte = new Uint8Array(hookedBytes)[0];
-
-                            if (firstByte === 0xe9 || firstByte === 0xb8) {
-                                // Test ProcessDebugPort (0x07)
-                                const processHandle = ptr(-1);
-                                const debugPort = Memory.alloc(Process.pointerSize);
-                                const returnLength = Memory.alloc(4);
-
-                                const queryFunc = new NativeFunction(ntQueryInfo, 'int', [
-                                    'pointer',
-                                    'int',
-                                    'pointer',
-                                    'int',
-                                    'pointer',
-                                ]);
-
-                                const status = queryFunc(
-                                    processHandle,
-                                    0x07,
-                                    debugPort,
-                                    Process.pointerSize,
-                                    returnLength
-                                );
-
-                                // Should succeed and return 0 (no debugger)
-                                bypassed =
-                                        status === 0 && Memory.readPointer(debugPort).isNull();
-                            }
-                        }
-                    } catch (e) {
-                        console.log('[!] NtQueryInformationProcess test failed:', e.message);
-                    }
-                    break;
-
-                case 'hardwareBreakpoints':
-                    // Test if hardware breakpoint detection is bypassed
-                    try {
-                        // Check if debug registers are cleared/faked
-                        Thread.backtrace(this.context, Backtracer.ACCURATE).map(
-                            DebugSymbol.fromAddress
-                        );
-
-                        // Try to read thread context
-                        const currentThread = Process.getCurrentThreadId();
-
-                        // Hardware breakpoints would be in DR0-DR3 registers
-                        // If properly bypassed, these should be inaccessible or return 0
-                        const kernel32 = Process.getModuleByName('kernel32.dll');
-                        const getThreadContext = kernel32.getExportByName('GetThreadContext');
-
-                        if (getThreadContext) {
-                            // Allocate CONTEXT structure (x86: 716 bytes, x64: 1232 bytes)
-                            const contextSize = Process.arch === 'x64' ? 1232 : 716;
-                            const context = Memory.alloc(contextSize);
-
-                            // Set ContextFlags to CONTEXT_DEBUG_REGISTERS
-                            Memory.writeU32(context, 0x00010010);
-
-                            const getContextFunc = new NativeFunction(
-                                getThreadContext,
-                                'bool',
-                                ['pointer', 'pointer']
-                            );
-
-                            // This should fail or return zeroed debug registers if bypassed
-                            const result = getContextFunc(ptr(currentThread), context);
-
-                            if (result) {
-                                // Check DR0-DR3 (should be 0 if bypassed)
-                                const dr0Offset = Process.arch === 'x64' ? 0x20 : 0x18;
-                                const dr0 = Memory.readPointer(context.add(dr0Offset));
-                                const dr1 = Memory.readPointer(
-                                    context.add(dr0Offset + Process.pointerSize)
-                                );
-                                const dr2 = Memory.readPointer(
-                                    context.add(dr0Offset + Process.pointerSize * 2)
-                                );
-                                const dr3 = Memory.readPointer(
-                                    context.add(dr0Offset + Process.pointerSize * 3)
-                                );
-
-                                bypassed =
+                                    bypassed =
                                         dr0.isNull() &&
                                         dr1.isNull() &&
                                         dr2.isNull() &&
                                         dr3.isNull();
-                            } else {
-                                // If GetThreadContext fails, bypass might be working
-                                bypassed = true;
+                                } else {
+                                    // If GetThreadContext fails, bypass might be working
+                                    bypassed = true;
+                                }
                             }
+                        } catch (e) {
+                            console.log('[!] Hardware breakpoint test failed:', e.message);
+                            // If we can't check, assume bypass is working
+                            bypassed = true;
                         }
-                    } catch (e) {
-                        console.log('[!] Hardware breakpoint test failed:', e.message);
-                        // If we can't check, assume bypass is working
-                        bypassed = true;
-                    }
-                    break;
+                        break;
 
-                case 'timingChecks':
-                    // Test if timing-based anti-debug is bypassed
-                    try {
-                        // Perform a timing check that would normally detect debugging
-                        const startTime = Date.now();
+                    case 'timingChecks':
+                        // Test if timing-based anti-debug is bypassed
+                        try {
+                            // Perform a timing check that would normally detect debugging
+                            const startTime = Date.now();
 
-                        // Execute some operations that would be slowed by debugging
-                        for (let i = 0; i < 100000; i++) {
-                            // Trigger potential debug checks
-                            Process.getCurrentThreadId();
+                            // Execute some operations that would be slowed by debugging
+                            for (let i = 0; i < 100000; i++) {
+                                // Trigger potential debug checks
+                                Process.getCurrentThreadId();
+                            }
+
+                            const elapsed = Date.now() - startTime;
+
+                            // If bypassed, timing should be consistent (not slowed by debug checks)
+                            // Normal execution should be < 100ms, debugging would be > 500ms
+                            bypassed = elapsed < 100;
+
+                            // Also test RDTSC if available (x86/x64)
+                            if (Process.arch === 'x64' || Process.arch === 'ia32') {
+                                // Check if RDTSC instruction is hooked or emulated
+                                const testRdtsc = Memory.alloc(16);
+                                Memory.patchCode(testRdtsc, 16, function (code) {
+                                    const writer = new X86Writer(code, { pc: testRdtsc });
+                                    writer.putRdtsc(); // Read timestamp counter
+                                    writer.putRet();
+                                });
+
+                                const rdtscFunc = new NativeFunction(testRdtsc, 'uint64', []);
+                                const tsc1 = rdtscFunc();
+                                const tsc2 = rdtscFunc();
+
+                                // If properly bypassed, consecutive RDTSC calls should have minimal difference
+                                const diff = tsc2.sub(tsc1).toNumber();
+                                bypassed = bypassed && diff < 10000;
+                            }
+                        } catch (e) {
+                            console.log('[!] Timing check test failed:', e.message);
                         }
+                        break;
 
-                        const elapsed = Date.now() - startTime;
-
-                        // If bypassed, timing should be consistent (not slowed by debug checks)
-                        // Normal execution should be < 100ms, debugging would be > 500ms
-                        bypassed = elapsed < 100;
-
-                        // Also test RDTSC if available (x86/x64)
-                        if (Process.arch === 'x64' || Process.arch === 'ia32') {
-                            // Check if RDTSC instruction is hooked or emulated
-                            const testRdtsc = Memory.alloc(16);
-                            Memory.patchCode(testRdtsc, 16, function (code) {
-                                const writer = new X86Writer(code, { pc: testRdtsc });
-                                writer.putRdtsc(); // Read timestamp counter
-                                writer.putRet();
-                            });
-
-                            const rdtscFunc = new NativeFunction(testRdtsc, 'uint64', []);
-                            const tsc1 = rdtscFunc();
-                            const tsc2 = rdtscFunc();
-
-                            // If properly bypassed, consecutive RDTSC calls should have minimal difference
-                            const diff = tsc2.sub(tsc1).toNumber();
-                            bypassed = bypassed && diff < 10000;
-                        }
-                    } catch (e) {
-                        console.log('[!] Timing check test failed:', e.message);
-                    }
-                    break;
-
-                default:
-                    console.log('[!] Unknown anti-debug technique:', method);
-                    bypassed = false;
+                    default:
+                        console.log('[!] Unknown anti-debug technique:', method);
+                        bypassed = false;
                 }
 
                 return bypassed;
@@ -23676,20 +23676,20 @@ const UniversalUnpacker = {
                 let tasks = [];
 
                 switch (strategy) {
-                case 'single':
-                    tasks = this.createSingleNodeTasks(protectionLayers, binaryData);
-                    break;
-                case 'sequential':
-                    tasks = this.createSequentialTasks(protectionLayers, binaryData);
-                    break;
-                case 'parallel':
-                    tasks = this.createParallelTasks(protectionLayers, binaryData);
-                    break;
-                case 'distributed':
-                    tasks = this.createDistributedTasks(protectionLayers, binaryData);
-                    break;
-                default:
-                    tasks = this.createGenericTasks(protectionLayers, binaryData);
+                    case 'single':
+                        tasks = this.createSingleNodeTasks(protectionLayers, binaryData);
+                        break;
+                    case 'sequential':
+                        tasks = this.createSequentialTasks(protectionLayers, binaryData);
+                        break;
+                    case 'parallel':
+                        tasks = this.createParallelTasks(protectionLayers, binaryData);
+                        break;
+                    case 'distributed':
+                        tasks = this.createDistributedTasks(protectionLayers, binaryData);
+                        break;
+                    default:
+                        tasks = this.createGenericTasks(protectionLayers, binaryData);
                 }
 
                 // Assign tasks to nodes

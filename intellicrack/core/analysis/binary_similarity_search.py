@@ -46,7 +46,7 @@ class BinarySimilaritySearch:
     between binary files and associated cracking patterns.
     """
 
-    def __init__(self, database_path: str = "binary_database.json"):
+    def __init__(self, database_path: str = "binary_database.json") -> None:
         """Initialize the binary similarity search engine with database configuration."""
         self.database_path = database_path
         self.database = {}
@@ -241,7 +241,7 @@ class BinarySimilaritySearch:
                             "cracking_patterns": _binary["cracking_patterns"],
                             "added": _binary.get("added", "Unknown"),
                             "file_size": _binary.get("file_size", 0),
-                        }
+                        },
                     )
 
             # Sort by similarity (descending)

@@ -49,7 +49,7 @@ else:
         HAS_JSONSCHEMA = True
     except ImportError:
         logger.info(
-            "jsonschema not installed - using built-in validation. Install jsonschema for full JSON Schema support: pip install jsonschema"
+            "jsonschema not installed - using built-in validation. Install jsonschema for full JSON Schema support: pip install jsonschema",
         )
 
         class _BasicValidator:
@@ -58,7 +58,7 @@ else:
             class ValidationError(Exception):
                 """Validation error for basic validator."""
 
-                def __init__(self, message: str, path: list[str] | None = None):
+                def __init__(self, message: str, path: list[str] | None = None) -> None:
                     super().__init__(message)
                     self.message = message
                     self.absolute_path = path or []
@@ -97,7 +97,7 @@ else:
                 if "properties" in schema and isinstance(instance, dict):
                     for prop_name, prop_schema in schema["properties"].items():
                         if prop_name in instance:
-                            _BasicValidator._validate_recursive(instance[prop_name], prop_schema, path + [prop_name])
+                            _BasicValidator._validate_recursive(instance[prop_name], prop_schema, [*path, prop_name])
 
                     if "required" in schema:
                         for required_prop in schema["required"]:
@@ -107,7 +107,7 @@ else:
                 if "items" in schema and isinstance(instance, list):
                     item_schema = schema["items"]
                     for i, item in enumerate(instance):
-                        _BasicValidator._validate_recursive(item, item_schema, path + [str(i)])
+                        _BasicValidator._validate_recursive(item, item_schema, [*path, str(i)])
 
                 if "enum" in schema:
                     if instance not in schema["enum"]:
@@ -116,13 +116,13 @@ else:
                 if "minLength" in schema and isinstance(instance, str):
                     if len(instance) < schema["minLength"]:
                         raise _BasicValidator.ValidationError(
-                            f"String length {len(instance)} less than minimum {schema['minLength']}", path
+                            f"String length {len(instance)} less than minimum {schema['minLength']}", path,
                         )
 
                 if "maxLength" in schema and isinstance(instance, str):
                     if len(instance) > schema["maxLength"]:
                         raise _BasicValidator.ValidationError(
-                            f"String length {len(instance)} greater than maximum {schema['maxLength']}", path
+                            f"String length {len(instance)} greater than maximum {schema['maxLength']}", path,
                         )
 
                 if "minimum" in schema and isinstance(instance, (int, float)):
@@ -149,7 +149,7 @@ class ConfigValidationError(Exception):
 class ConfigAsCodeManager:
     """Manages configuration files with YAML/JSON support and schema validation."""
 
-    def __init__(self, config_dir: str | None = None):
+    def __init__(self, config_dir: str | None = None) -> None:
         """Initialize the config-as-code manager.
 
         Args:
@@ -668,7 +668,7 @@ class ConfigAsCodeManager:
 
         return config
 
-    def apply_config(self, config: dict[str, Any], llm_manager=None, fallback_manager=None):
+    def apply_config(self, config: dict[str, Any], llm_manager=None, fallback_manager=None) -> None:
         """Apply configuration to the system.
 
         Args:

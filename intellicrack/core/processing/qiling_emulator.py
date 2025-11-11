@@ -100,7 +100,7 @@ class QilingEmulator:
         ostype: str = "windows",
         arch: str = "x86_64",
         verbose: bool = False,
-    ):
+    ) -> None:
         """Initialize Qiling emulator.
 
         Args:
@@ -223,7 +223,7 @@ class QilingEmulator:
         # Return default path for Qiling to handle
         return os.path.join(os.path.dirname(__file__), "rootfs", self.ostype)
 
-    def add_api_hook(self, api_name: str, hook_func: Callable):
+    def add_api_hook(self, api_name: str, hook_func: Callable) -> None:
         """Add hook for specific API call.
 
         Args:
@@ -233,7 +233,7 @@ class QilingEmulator:
         """
         self.api_hooks[api_name.lower()] = hook_func
 
-    def map_file_to_fs(self, host_path: str, guest_path: str):
+    def map_file_to_fs(self, host_path: str, guest_path: str) -> None:
         """Map a host file or directory to the emulated filesystem.
 
         Args:
@@ -258,7 +258,7 @@ class QilingEmulator:
 
         self.logger.info("Mapped %s -> %s", host_path, guest_path)
 
-    def setup_filesystem_mappings(self):
+    def setup_filesystem_mappings(self) -> None:
         """Set up common filesystem mappings for license files."""
         if not self.ql:
             return
@@ -293,7 +293,7 @@ class QilingEmulator:
             except (AttributeError, OSError) as e:
                 self.logger.debug("Could not map %s: %s", host, e)
 
-    def add_license_detection_hooks(self):
+    def add_license_detection_hooks(self) -> None:
         """Add hooks for common license check patterns."""
         license_apis = [
             # Windows Registry APIs
@@ -338,7 +338,7 @@ class QilingEmulator:
         for api in license_apis:
             self.add_api_hook(api, self._license_api_hook)
 
-    def _license_api_hook(self, ql: Qiling, address: int, params: dict):
+    def _license_api_hook(self, ql: Qiling, address: int, params: dict) -> None:
         """Monitor license-related API calls."""
         api_name = ql.os.user_defined_api_name or "Unknown"
 
@@ -366,7 +366,7 @@ class QilingEmulator:
         # Log potential license check
         self.logger.info(f"Potential license API: {api_name} at {hex(address)}")
 
-    def hook_memory_access(self, ql: Qiling, access: int, address: int, size: int, value: int):
+    def hook_memory_access(self, ql: Qiling, access: int, address: int, size: int, value: int) -> None:
         """Monitor memory access with detailed analysis."""
         access_type = "READ" if access == 1 else "WRITE"
 
@@ -421,7 +421,7 @@ class QilingEmulator:
             },
         )
 
-    def hook_code_execution(self, ql: Qiling, address: int, size: int):
+    def hook_code_execution(self, ql: Qiling, address: int, size: int) -> None:
         """Monitor code execution."""
         # Could add disassembly here if needed
 
@@ -440,7 +440,7 @@ class QilingEmulator:
         timeout_occurred = False
         timeout_timer = None
 
-        def timeout_handler():
+        def timeout_handler() -> None:
             """Handle timeout by stopping emulation."""
             nonlocal timeout_occurred
             timeout_occurred = True
@@ -860,7 +860,7 @@ class QilingEmulator:
         """
 
         # Apply patches during emulation
-        def apply_patches(ql: Qiling):
+        def apply_patches(ql: Qiling) -> None:
             """Apply memory patches to the emulated process.
 
             Args:

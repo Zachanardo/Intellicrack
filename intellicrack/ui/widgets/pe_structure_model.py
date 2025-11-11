@@ -17,13 +17,13 @@ from .pe_file_model import FileStructure, PEFileModel, SectionInfo
 class PEStructureItem:
     """Tree item representing a PE structure element."""
 
-    def __init__(self, data: FileStructure | SectionInfo | str, parent=None):
+    def __init__(self, data: FileStructure | SectionInfo | str, parent=None) -> None:
         """Initialize PE structure item with hierarchical data representation."""
         self.parent_item = parent
         self.item_data = data
         self.child_items = []
 
-    def append_child(self, item):
+    def append_child(self, item) -> None:
         """Add a child item."""
         self.child_items.append(item)
 
@@ -85,7 +85,7 @@ class PEStructureModel(QAbstractItemModel):
     #: RVA address (type: int)
     rva_selected = pyqtSignal(int)
 
-    def __init__(self, pe_model: PEFileModel | None = None, parent=None):
+    def __init__(self, pe_model: PEFileModel | None = None, parent=None) -> None:
         """Initialize PE structure model with optional PE file data for tree representation."""
         super().__init__(parent)
         self.pe_model = pe_model
@@ -94,7 +94,7 @@ class PEStructureModel(QAbstractItemModel):
         if self.pe_model:
             self.setup_model_data()
 
-    def set_pe_model(self, pe_model: PEFileModel):
+    def set_pe_model(self, pe_model: PEFileModel) -> None:
         """Set the PE model and rebuild tree."""
         self.beginResetModel()
         self.pe_model = pe_model
@@ -102,7 +102,7 @@ class PEStructureModel(QAbstractItemModel):
         self.setup_model_data()
         self.endResetModel()
 
-    def _add_file_info_section(self):
+    def _add_file_info_section(self) -> None:
         """Add file information section to the tree."""
         file_info = PEStructureItem("File Information", self.root_item)
         self.root_item.append_child(file_info)
@@ -113,7 +113,7 @@ class PEStructureModel(QAbstractItemModel):
                 info_item = PEStructureItem(f"{key}: {value}", file_info)
                 file_info.append_child(info_item)
 
-    def _add_headers_section(self):
+    def _add_headers_section(self) -> None:
         """Add headers section to the tree."""
         headers = PEStructureItem("Headers", self.root_item)
         self.root_item.append_child(headers)
@@ -128,7 +128,7 @@ class PEStructureModel(QAbstractItemModel):
                     prop_item = PEStructureItem(f"{prop_name}: {prop_value}", header_item)
                     header_item.append_child(prop_item)
 
-    def _add_sections_section(self):
+    def _add_sections_section(self) -> None:
         """Add sections information to the tree."""
         sections = PEStructureItem("Sections", self.root_item)
         self.root_item.append_child(sections)
@@ -156,7 +156,7 @@ class PEStructureModel(QAbstractItemModel):
                 prop_item = PEStructureItem(prop, section_item)
                 section_item.append_child(prop_item)
 
-    def _add_data_directories_section(self):
+    def _add_data_directories_section(self) -> None:
         """Add data directories section to the tree."""
         directories = PEStructureItem("Data Directories", self.root_item)
         self.root_item.append_child(directories)
@@ -171,7 +171,7 @@ class PEStructureModel(QAbstractItemModel):
                     prop_item = PEStructureItem(f"{prop_name}: {prop_value}", dir_item)
                     dir_item.append_child(prop_item)
 
-    def _add_imports_section(self):
+    def _add_imports_section(self) -> None:
         """Add imports section to the tree."""
         imports = self.pe_model.get_imports()
         if not imports:
@@ -202,7 +202,7 @@ class PEStructureModel(QAbstractItemModel):
                 more_item = PEStructureItem(f"... and {len(dll_imports) - 20} more", dll_item)
                 dll_item.append_child(more_item)
 
-    def _add_exports_section(self):
+    def _add_exports_section(self) -> None:
         """Add exports section to the tree."""
         exports = self.pe_model.get_exports()
         if not exports:
@@ -222,7 +222,7 @@ class PEStructureModel(QAbstractItemModel):
             more_item = PEStructureItem(f"... and {len(exports) - 50} more", exports_root)
             exports_root.append_child(more_item)
 
-    def _add_certificate_details(self, signing_cert, certificates_root):
+    def _add_certificate_details(self, signing_cert, certificates_root) -> None:
         """Add certificate details to the tree."""
         cert_info = "Signing Certificate"
         if signing_cert.subject:
@@ -257,7 +257,7 @@ class PEStructureModel(QAbstractItemModel):
             detail_item = PEStructureItem(detail, cert_item)
             cert_item.append_child(detail_item)
 
-    def _add_certificate_chain(self, certificates, certificates_root):
+    def _add_certificate_chain(self, certificates, certificates_root) -> None:
         """Add certificate chain information to the tree."""
         if len(certificates.certificates) <= 1:
             return
@@ -283,7 +283,7 @@ class PEStructureModel(QAbstractItemModel):
             chain_cert_item = PEStructureItem(cert_name, chain_item)
             chain_item.append_child(chain_cert_item)
 
-    def _add_certificates_section(self):
+    def _add_certificates_section(self) -> None:
         """Add certificates section to the tree."""
         certificates = self.pe_model.get_certificates()
         if not certificates or not certificates.is_signed:
@@ -304,7 +304,7 @@ class PEStructureModel(QAbstractItemModel):
         # Additional certificates in chain
         self._add_certificate_chain(certificates, certificates_root)
 
-    def setup_model_data(self):
+    def setup_model_data(self) -> None:
         """Build the tree structure from PE model."""
         if not self.pe_model:
             return

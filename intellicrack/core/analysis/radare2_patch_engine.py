@@ -113,7 +113,7 @@ class Radare2PatchEngine:
         0x85: 0x84,  # JNE -> JE (extended)
     }
 
-    def __init__(self, binary_path: Path, write_mode: bool = False):
+    def __init__(self, binary_path: Path, write_mode: bool = False) -> None:
         """Initialize the patch engine.
 
         Args:
@@ -130,7 +130,7 @@ class Radare2PatchEngine:
         self.patch_sets: Dict[str, PatchSet] = {}
         self._init_r2()
 
-    def _init_r2(self):
+    def _init_r2(self) -> None:
         """Initialize Radare2 connection."""
         try:
             flags = ["-w"] if self.write_mode else []
@@ -436,7 +436,7 @@ class Radare2PatchEngine:
                     patch_bytes=patch_bytes,
                     patch_type=PatchType.RETURN_VALUE,
                     description=f"Patch function at 0x{function_address:x} to return 0x{return_value:x}",
-                )
+                ),
             )
 
             # NOP remaining bytes if function is longer
@@ -468,7 +468,7 @@ class Radare2PatchEngine:
                     patch_bytes=patch_bytes,
                     patch_type=PatchType.RETURN_VALUE,
                     description=f"Patch ARM function at 0x{function_address:x} to return 0x{return_value:x}",
-                )
+                ),
             )
 
         elif self.architecture == "arm64":
@@ -512,7 +512,7 @@ class Radare2PatchEngine:
                     patch_bytes=patch_bytes,
                     patch_type=PatchType.RETURN_VALUE,
                     description=f"Patch ARM64 function at 0x{function_address:x} to return 0x{return_value:x}",
-                )
+                ),
             )
 
         elif self.architecture == "mips":
@@ -539,7 +539,7 @@ class Radare2PatchEngine:
                     patch_bytes=patch_bytes,
                     patch_type=PatchType.RETURN_VALUE,
                     description=f"Patch MIPS function at 0x{function_address:x} to return 0x{return_value:x}",
-                )
+                ),
             )
 
         elif self.architecture == "ppc":
@@ -566,7 +566,7 @@ class Radare2PatchEngine:
                     patch_bytes=patch_bytes,
                     patch_type=PatchType.RETURN_VALUE,
                     description=f"Patch PowerPC function at 0x{function_address:x} to return 0x{return_value:x}",
-                )
+                ),
             )
 
         else:
@@ -599,7 +599,7 @@ class Radare2PatchEngine:
                         patch_bytes=patch_bytes,
                         patch_type=PatchType.RETURN_VALUE,
                         description=f"Patch function at 0x{function_address:x} to return 0x{return_value:x}",
-                    )
+                    ),
                 )
             else:
                 # Last resort - write return value directly to return register location
@@ -617,7 +617,7 @@ class Radare2PatchEngine:
                         patch_bytes=patch_bytes,
                         patch_type=PatchType.RETURN_VALUE,
                         description=f"Generic patch at 0x{function_address:x} to return 0x{return_value:x}",
-                    )
+                    ),
                 )
 
         return patches
@@ -737,7 +737,7 @@ class Radare2PatchEngine:
                     patch_bytes=patch_bytes,
                     patch_type=PatchType.VTABLE_MODIFICATION,
                     description=f"Patch jump table entry {i} at 0x{address:x}",
-                )
+                ),
             )
 
         return patches
@@ -880,7 +880,7 @@ class Radare2PatchEngine:
         self.patch_sets[name] = patch_set
         return patch_set
 
-    def export_patch_set(self, patch_set_name: str, output_path: Path):
+    def export_patch_set(self, patch_set_name: str, output_path: Path) -> None:
         """Export a patch set to a file.
 
         Args:
@@ -933,7 +933,7 @@ class Radare2PatchEngine:
         result = self.r2.cmd("ph sha256")
         return result.strip()
 
-    def close(self):
+    def close(self) -> None:
         """Close Radare2 connection."""
         if self.r2:
             self.r2.quit()

@@ -143,7 +143,7 @@ def analyze_binary_internal(binary_path: str, flags: Optional[List[str]] = None)
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.exception("Error analyzing binary: %s", binary_path)
-        results.append(f"ERROR: Failed to analyze binary - {str(e)}")
+        results.append(f"ERROR: Failed to analyze binary - {e!s}")
 
     return results
 
@@ -614,7 +614,7 @@ def decrypt_embedded_script(binary_path):
                                 "marker": start_marker.decode("utf-8", errors="ignore"),
                                 # Limit to first 1000 chars to avoid huge outputs
                                 "content": decoded_script[:1000],
-                            }
+                            },
                         )
                     except (OSError, ValueError, RuntimeError) as e:
                         logger.error("Error in core_analysis: %s", e)
@@ -652,7 +652,7 @@ def decrypt_embedded_script(binary_path):
                             "offset": start_pos,
                             "marker": "Obfuscated: " + _marker.decode("utf-8", errors="ignore"),
                             "content": decoded_context,
-                        }
+                        },
                     )
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("Error in core_analysis: %s", e)

@@ -36,7 +36,7 @@ from typing import Any
 import paramiko
 from paramiko import HostKeys, MissingHostKeyPolicy, RSAKey, SSHClient
 
-from intellicrack.config import get_config
+from intellicrack.core.config_manager import get_config
 from intellicrack.core.logging.audit_logger import (
     AuditEvent,
     AuditEventType,
@@ -50,7 +50,7 @@ from intellicrack.core.resources.resource_manager import VMResource, get_resourc
 from intellicrack.utils.logger import get_logger
 
 from ..utils.secrets_manager import get_secret, set_secret
-from .script_generation_agent import ExecutionResult
+from .common_types import ExecutionResult
 
 logger = get_logger(__name__)
 audit_logger = get_audit_logger()
@@ -85,7 +85,7 @@ class QEMUSnapshot:
 class SecureHostKeyPolicy(MissingHostKeyPolicy):
     """Secure host key policy that maintains a known_hosts file for QEMU VMs."""
 
-    def __init__(self, known_hosts_path: Path):
+    def __init__(self, known_hosts_path: Path) -> None:
         """Initialize with path to known_hosts file."""
         self.known_hosts_path = known_hosts_path
         self.host_keys = HostKeys()
@@ -97,7 +97,7 @@ class SecureHostKeyPolicy(MissingHostKeyPolicy):
             except Exception as e:
                 logger.warning(f"Could not load known_hosts file: {e}")
 
-    def missing_host_key(self, client, hostname, key):
+    def missing_host_key(self, client, hostname, key) -> None:
         """Handle missing host key by checking and storing it securely."""
         # For QEMU VMs on localhost with dynamic ports, we store by port
         # This is acceptable for local VMs in controlled environments
@@ -129,7 +129,7 @@ class QEMUManager:
     Real implementation - integrates with existing QEMU infrastructure.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the QEMU test manager.
 
         Sets up QEMU snapshots, base images for Windows and Linux,
@@ -200,7 +200,7 @@ class QEMUManager:
         # Validate QEMU setup at the end
         self._validate_qemu_setup()
 
-    def _init_ssh_keys(self):
+    def _init_ssh_keys(self) -> None:
         """Initialize or load SSH keys for VM access."""
         try:
             # Get or generate SSH key from secrets manager
@@ -331,7 +331,7 @@ class QEMUManager:
                 self._remove_invalid_connection(pool_key, client)
         return None
 
-    def _remove_invalid_connection(self, pool_key: tuple, client: SSHClient):
+    def _remove_invalid_connection(self, pool_key: tuple, client: SSHClient) -> None:
         """Remove invalid connection from the pool."""
         if pool_key in self.ssh_connection_pool:
             del self.ssh_connection_pool[pool_key]
@@ -378,7 +378,7 @@ class QEMUManager:
         )
         return client
 
-    def _handle_connection_exception(self, vm_name: str, exception: Exception, attempt: int, retries: int):
+    def _handle_connection_exception(self, vm_name: str, exception: Exception, attempt: int, retries: int) -> None:
         """Handle exceptions during SSH connection attempts."""
         if isinstance(exception, TimeoutError):
             logger.warning("SSH connection timeout (attempt %s/%s): %s", attempt + 1, retries, exception)
@@ -481,7 +481,7 @@ class QEMUManager:
         logger.error("Failed to download modified binary from %s", snapshot_id)
         return None
 
-    def _inject_ssh_key(self, snapshot: QEMUSnapshot):
+    def _inject_ssh_key(self, snapshot: QEMUSnapshot) -> None:
         """Inject our SSH public key into the VM for password-less access."""
         try:
             # Create .ssh directory if it doesn't exist
@@ -519,7 +519,7 @@ class QEMUManager:
 
         return True
 
-    def _record_connection_failure(self, vm_name: str):
+    def _record_connection_failure(self, vm_name: str) -> None:
         """Record a connection failure for circuit breaker."""
         if vm_name not in self.ssh_circuit_breaker:
             self.ssh_circuit_breaker[vm_name] = {
@@ -540,7 +540,7 @@ class QEMUManager:
                 breaker["failures"],
             )
 
-    def _reset_circuit_breaker(self, vm_name: str):
+    def _reset_circuit_breaker(self, vm_name: str) -> None:
         """Reset circuit breaker on successful connection."""
         if vm_name in self.ssh_circuit_breaker:
             self.ssh_circuit_breaker[vm_name] = {
@@ -549,7 +549,7 @@ class QEMUManager:
                 "open": False,
             }
 
-    def _close_ssh_connection(self, snapshot: QEMUSnapshot):
+    def _close_ssh_connection(self, snapshot: QEMUSnapshot) -> None:
         """Close and remove SSH connection from pool."""
         pool_key = (snapshot.vm_name, snapshot.ssh_port)
 
@@ -589,7 +589,7 @@ class QEMUManager:
         ]
 
         try:
-            subprocess.run(cmd, check=True, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            subprocess.run(cmd, check=True, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
             logger.info("Created snapshot disk: %s", snapshot_disk)
         except subprocess.CalledProcessError as e:
             logger.error("Failed to create snapshot disk: %s", e)
@@ -618,7 +618,7 @@ class QEMUManager:
         logger.info("Script test snapshot created: %s", snapshot_id)
         return snapshot_id
 
-    def _start_vm_for_snapshot(self, snapshot: QEMUSnapshot):
+    def _start_vm_for_snapshot(self, snapshot: QEMUSnapshot) -> None:
         """Start QEMU VM for a specific snapshot with resource management."""
         logger.info("Starting VM for snapshot: %s", snapshot.snapshot_id)
 
@@ -646,7 +646,7 @@ class QEMUManager:
 
         try:
             # Start the VM process
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
 
             # Wait a moment for VM to start
             time.sleep(5)
@@ -695,7 +695,7 @@ class QEMUManager:
             log_vm_operation("start", snapshot.vm_name, success=False, error=str(e))
             raise
 
-    def _wait_for_vm_ready(self, snapshot: QEMUSnapshot, timeout: int = 60):
+    def _wait_for_vm_ready(self, snapshot: QEMUSnapshot, timeout: int = 60) -> bool:
         """Wait for VM to be ready for testing."""
         logger.info("Waiting for VM to be ready: %s", snapshot.snapshot_id)
 
@@ -722,7 +722,7 @@ class QEMUManager:
         logger.warning("VM did not become ready within %ss: %s", timeout, snapshot.snapshot_id)
         return False
 
-    def _upload_file_to_vm(self, snapshot: QEMUSnapshot, content: str, remote_path: str):
+    def _upload_file_to_vm(self, snapshot: QEMUSnapshot, content: str, remote_path: str) -> None:
         """Upload text content to VM as a file."""
         # Get SSH connection
         ssh_client = self._get_ssh_connection(snapshot)
@@ -755,7 +755,7 @@ class QEMUManager:
             msg = f"Failed to upload file: {e}"
             raise RuntimeError(msg) from e
 
-    def _upload_binary_to_vm(self, snapshot: QEMUSnapshot, local_binary: str, remote_path: str):
+    def _upload_binary_to_vm(self, snapshot: QEMUSnapshot, local_binary: str, remote_path: str) -> None:
         """Upload binary file to VM."""
         # Get SSH connection
         ssh_client = self._get_ssh_connection(snapshot)
@@ -811,7 +811,7 @@ class QEMUManager:
             log_tool_execution("SSH_COMMAND", command, success=True)
 
             # Execute command with timeout
-            stdin, stdout, stderr = ssh_client.exec_command(command, timeout=timeout)
+            _stdin, stdout, stderr = ssh_client.exec_command(command, timeout=timeout)
 
             # Get exit status
             exit_code = stdout.channel.recv_exit_status()
@@ -918,7 +918,7 @@ class QEMUManager:
         # Default to success if analysis completed without errors
         return "Analysis finished" in stdout or len(stderr.strip()) == 0
 
-    def cleanup_snapshot(self, snapshot_id: str):
+    def cleanup_snapshot(self, snapshot_id: str) -> None:
         """Clean up a test snapshot and stop associated VM."""
         if snapshot_id not in self.snapshots:
             logger.warning("Snapshot not found for cleanup: %s", snapshot_id)
@@ -990,7 +990,7 @@ class QEMUManager:
             logger.error("Error during snapshot cleanup: %s", e)
             log_vm_operation("stop", snapshot.vm_name, success=False, error=str(e))
 
-    def _stop_vm_for_snapshot(self, snapshot: QEMUSnapshot):
+    def _stop_vm_for_snapshot(self, snapshot: QEMUSnapshot) -> None:
         """Stop VM for a specific snapshot."""
         try:
             if snapshot.vm_process and snapshot.vm_process.poll() is None:
@@ -1005,7 +1005,7 @@ class QEMUManager:
         except Exception as e:
             logger.error("Error stopping VM for snapshot %s: %s", snapshot.snapshot_id, e)
 
-    def cleanup_all_snapshots(self):
+    def cleanup_all_snapshots(self) -> None:
         """Clean up all active snapshots."""
         logger.info("Cleaning up all snapshots")
 
@@ -1151,9 +1151,9 @@ class QEMUManager:
 
     def list_snapshots(self) -> list[dict[str, Any]]:
         """List all active snapshots."""
-        return [self.get_snapshot_info(sid) for sid in self.snapshots.keys()]
+        return [self.get_snapshot_info(sid) for sid in self.snapshots]
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Cleanup on destruction."""
         try:
             # Close all SSH connections first
@@ -1196,19 +1196,19 @@ class QEMUManager:
             self.logger.warning(
                 "No Windows-specific images found. Using first available image: %s (format: %s)",
                 selected_image.filename,
-                selected_image.format
+                selected_image.format,
             )
             return selected_image.path
 
         qemu_dir = get_qemu_images_dir()
         self.logger.error(
             "No VM images found. Please add images to: %s",
-            qemu_dir
+            qemu_dir,
         )
         raise RuntimeError(
             f"No VM images found in QEMU images directory. "
             f"Please place a VM image file (supported formats: .qcow2, .qcow, .img, .vmdk, .vdi, .vhd, .vhdx, "
-            f".iso, .raw, .qed, .cloop, .dmg, .parallels, .bochs) in the directory: {qemu_dir}"
+            f".iso, .raw, .qed, .cloop, .dmg, .parallels, .bochs) in the directory: {qemu_dir}",
         )
 
     def _get_linux_base_image(self) -> str:
@@ -1237,19 +1237,19 @@ class QEMUManager:
             self.logger.warning(
                 "No Linux-specific images found. Using first available image: %s (format: %s)",
                 selected_image.filename,
-                selected_image.format
+                selected_image.format,
             )
             return str(selected_image.path)
 
         qemu_dir = get_qemu_images_dir()
         self.logger.error(
             "No VM images found. Please add images to: %s",
-            qemu_dir
+            qemu_dir,
         )
         raise RuntimeError(
             f"No VM images found in QEMU images directory. "
             f"Please place a VM image file (supported formats: .qcow2, .qcow, .img, .vmdk, .vdi, .vhd, .vhdx, "
-            f".iso, .raw, .qed, .cloop, .dmg, .parallels, .bochs) in the directory: {qemu_dir}"
+            f".iso, .raw, .qed, .cloop, .dmg, .parallels, .bochs) in the directory: {qemu_dir}",
         )
 
     def _detect_os_type(self, binary_path: str) -> str:
@@ -1353,7 +1353,7 @@ class QEMUManager:
                 image_size,
             ]
 
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
             if result.returncode == 0:
                 logger.info("Created minimal test image: %s", disk_path)
                 return disk_path
@@ -1386,7 +1386,7 @@ class QEMUManager:
                 str(temp_disk),
             ]
 
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
             if result.returncode == 0:
                 return temp_disk
             logger.error("Failed to create snapshot image: %s", result.stderr)
@@ -1451,9 +1451,9 @@ class QEMUManager:
             # Start the VM
             # Launch QEMU process and capture output to determine success/failure
             process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             )
-            stdout, stderr = process.communicate()
+            _stdout, stderr = process.communicate()
             if process.returncode == 0:
                 # Give VM time to start
                 time.sleep(5)
@@ -1715,7 +1715,7 @@ fi
             # Use resource manager for temporary directory
             with resource_manager.temp_directory(prefix=f"snapshot_{snapshot_id}_"):
                 # Execute qemu-img command
-                result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 if result.returncode != 0:
                     msg = f"qemu-img failed: {result.stderr}"
                     raise RuntimeError(msg)
@@ -1724,7 +1724,7 @@ fi
 
                 # Verify the snapshot was created correctly
                 info_cmd = ["qemu-img", "info", str(snapshot_disk)]
-                info_result = subprocess.run(info_cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                info_result = subprocess.run(info_cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 if info_result.returncode == 0:
                     logger.debug("Snapshot info: %s", info_result.stdout)
 
@@ -1883,7 +1883,7 @@ fi
                     str(rollback_disk),
                 ]
 
-                result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 if result.returncode != 0:
                     msg = f"Failed to create rollback disk: {result.stderr}"
                     raise RuntimeError(msg)
@@ -1919,7 +1919,7 @@ fi
                     snapshot.disk_path,
                 ]
 
-                result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 if result.returncode != 0:
                     msg = f"Failed to create clean disk: {result.stderr}"
                     raise RuntimeError(msg)
@@ -2002,7 +2002,7 @@ fi
                 # Use ps to get memory and CPU usage
                 try:
                     ps_cmd = ["ps", "-p", str(pid), "-o", "rss,pcpu", "--no-headers"]
-                    result = subprocess.run(ps_cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    result = subprocess.run(ps_cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
 
                     if result.returncode == 0:
                         parts = result.stdout.strip().split()
@@ -2035,7 +2035,7 @@ fi
             logger.error("Performance monitoring failed for %s: %s", snapshot_id, e)
             return {"error": str(e)}
 
-    def enable_network_isolation(self, snapshot_id: str, isolated: bool = True):
+    def enable_network_isolation(self, snapshot_id: str, isolated: bool = True) -> None:
         """Enable or disable network isolation for a snapshot."""
         if snapshot_id not in self.snapshots:
             msg = f"Snapshot not found: {snapshot_id}"
@@ -2248,7 +2248,7 @@ exit 0
 
                     # Check if image is already optimized (has compression)
                     info_cmd = ["qemu-img", "info", "--output=json", snapshot.disk_path]
-                    info_result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    info_result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                         info_cmd,
                         check=False,
                         capture_output=True,
@@ -2294,7 +2294,7 @@ exit 0
                     ) as process_resource:
                         # Wait for completion with timeout
                         try:
-                            stdout, stderr = process_resource.process.communicate(timeout=300)
+                            _stdout, stderr = process_resource.process.communicate(timeout=300)
 
                             if process_resource.process.returncode == 0:
                                 # Check new size
@@ -2304,7 +2304,7 @@ exit 0
                                 if space_saved > 0:
                                     # Verify integrity before replacing
                                     check_cmd = ["qemu-img", "check", str(temp_path)]
-                                    check_result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                                    check_result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                                         check_cmd,
                                         check=False,
                                         capture_output=True,
@@ -2758,7 +2758,7 @@ exit 0
 
                 # Verify qcow2 integrity
                 check_cmd = ["qemu-img", "check", "-q", snapshot.disk_path]
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     check_cmd,
                     check=False,
                     capture_output=True,
@@ -2898,18 +2898,18 @@ exit 0
             self.logger.warning(
                 "No architecture-specific image found for %s. Using first available: %s",
                 architecture,
-                selected_image.filename
+                selected_image.filename,
             )
             return str(selected_image.path)
 
         qemu_dir = get_qemu_images_dir()
         self.logger.error(
             "No VM images found. Please add images to: %s",
-            qemu_dir
+            qemu_dir,
         )
         raise RuntimeError(
             f"No VM images found in QEMU images directory. "
-            f"Please place a VM image file in the directory: {qemu_dir}"
+            f"Please place a VM image file in the directory: {qemu_dir}",
         )
 
     def _validate_qemu_setup(self) -> None:
@@ -2932,7 +2932,7 @@ exit 0
             raise FileNotFoundError(f"QEMU binary not found: {qemu_binary}")
 
         try:
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 [qemu_path, "--version"],
                 capture_output=True,
                 text=True,
@@ -3232,7 +3232,7 @@ exit 0
             # Start QEMU process
             import subprocess
 
-            self.qemu_process = subprocess.Popen(  # nosec S603 - Using QEMU for secure virtual testing environment in security research  # noqa: S603
+            self.qemu_process = subprocess.Popen(  # nosec S603 - Using QEMU for secure virtual testing environment in security research
                 qemu_cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,

@@ -26,7 +26,7 @@ Basic template for straightforward binary analysis tasks
 class SimpleAnalysisPlugin:
     """Perform analysis plugin for basic binary examination."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the simple analysis plugin."""
         super().__init__()
         self.results = {}

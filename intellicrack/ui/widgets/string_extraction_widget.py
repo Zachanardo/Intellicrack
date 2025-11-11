@@ -54,7 +54,7 @@ class StringExtractionThread(QThread):
         min_length: int = 4,
         extract_unicode: bool = True,
         extract_ascii: bool = True,
-    ):
+    ) -> None:
         """Initialize string extraction thread with file path and extraction parameters."""
         super().__init__()
         self.file_path = file_path
@@ -63,7 +63,7 @@ class StringExtractionThread(QThread):
         self.extract_ascii = extract_ascii
         self.logger = get_logger(__name__)
 
-    def run(self):
+    def run(self) -> None:
         """Extract readable strings from binary file in background thread.
 
         Reads the binary file and extracts both ASCII and Unicode strings
@@ -147,7 +147,7 @@ class StringExtractionWidget(QWidget):
     #: export path (type: str)
     strings_exported = pyqtSignal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize string extraction widget with empty state and UI setup."""
         super().__init__(parent)
         self.file_path: str | None = None
@@ -155,7 +155,7 @@ class StringExtractionWidget(QWidget):
         self.filtered_strings: list[tuple[int, str, str]] = []
         self.init_ui()
 
-    def init_ui(self):
+    def init_ui(self) -> None:
         """Initialize the UI."""
         layout = QVBoxLayout()
 
@@ -178,7 +178,7 @@ class StringExtractionWidget(QWidget):
                 "Length",
                 "Encoding",
                 "Category",
-            ]
+            ],
         )
 
         # Set column widths
@@ -300,7 +300,7 @@ class StringExtractionWidget(QWidget):
                 "Error Messages",
                 "Suspicious",
                 "Other",
-            ]
+            ],
         )
         self.category_filter.currentTextChanged.connect(self.apply_filters)
         layout.addWidget(QLabel("Category:"))
@@ -327,7 +327,7 @@ class StringExtractionWidget(QWidget):
         layout.addStretch()
         return layout
 
-    def load_file(self, file_path: str):
+    def load_file(self, file_path: str) -> None:
         """Load a file for string extraction."""
         if not os.path.exists(file_path):
             QMessageBox.warning(self, "File Not Found", f"File not found: {file_path}")
@@ -336,7 +336,7 @@ class StringExtractionWidget(QWidget):
         self.file_path = file_path
         self.extract_strings()
 
-    def extract_strings(self):
+    def extract_strings(self) -> None:
         """Extract strings from the current file."""
         if not self.file_path:
             return
@@ -366,7 +366,7 @@ class StringExtractionWidget(QWidget):
         self.extract_thread.start()
 
     @pyqtSlot(list)
-    def on_strings_found(self, strings: list[tuple[int, str, str]]):
+    def on_strings_found(self, strings: list[tuple[int, str, str]]) -> None:
         """Handle extracted strings."""
         self.all_strings = strings
         self.filtered_strings = strings
@@ -389,17 +389,17 @@ class StringExtractionWidget(QWidget):
         self.status_label.setText(f"Found {len(self.all_strings)} strings")
 
     @pyqtSlot(int)
-    def on_progress_update(self, progress: int):
+    def on_progress_update(self, progress: int) -> None:
         """Handle progress update."""
         self.progress_bar.setValue(progress)
 
     @pyqtSlot(str)
-    def on_status_update(self, status: str):
+    def on_status_update(self, status: str) -> None:
         """Handle status update."""
         self.status_label.setText(status)
 
     @pyqtSlot(str)
-    def on_error(self, error: str):
+    def on_error(self, error: str) -> None:
         """Handle extraction error."""
         QMessageBox.critical(self, "Extraction Error", f"Error extracting strings: {error}")
         self.extract_btn.setEnabled(True)
@@ -492,7 +492,7 @@ class StringExtractionWidget(QWidget):
 
         return "Other"
 
-    def display_strings(self, strings: list[tuple[int, str, str, str]]):
+    def display_strings(self, strings: list[tuple[int, str, str, str]]) -> None:
         """Display strings in the table."""
         self.string_table.setRowCount(0)
 
@@ -530,7 +530,7 @@ class StringExtractionWidget(QWidget):
 
             self.string_table.setItem(row, 4, category_item)
 
-    def apply_filters(self):
+    def apply_filters(self) -> None:
         """Apply filters to string list."""
         if not self.all_strings:
             return
@@ -550,11 +550,11 @@ class StringExtractionWidget(QWidget):
                 continue
 
             # Category filter
-            if category_filter != "All Categories" and category != category_filter:
+            if category_filter not in ("All Categories", category):
                 continue
 
             # Encoding filter
-            if encoding_filter != "All Encodings" and encoding != encoding_filter:
+            if encoding_filter not in ("All Encodings", encoding):
                 continue
 
             # Length filter
@@ -571,7 +571,7 @@ class StringExtractionWidget(QWidget):
             f"Showing {len(self.filtered_strings)} of {len(self.all_strings)} strings",
         )
 
-    def _show_context_menu(self, position):
+    def _show_context_menu(self, position) -> None:
         """Show context menu for string table."""
         if not self.string_table.selectedItems():
             return
@@ -600,7 +600,7 @@ class StringExtractionWidget(QWidget):
 
         menu.exec_(self.string_table.mapToGlobal(position))
 
-    def _copy_selected_string(self):
+    def _copy_selected_string(self) -> None:
         """Copy selected string to clipboard."""
         row = self.string_table.currentRow()
         if row >= 0:
@@ -611,7 +611,7 @@ class StringExtractionWidget(QWidget):
 
                 QApplication.clipboard().setText(full_string)
 
-    def _copy_selected_offset(self):
+    def _copy_selected_offset(self) -> None:
         """Copy selected offset to clipboard."""
         row = self.string_table.currentRow()
         if row >= 0:
@@ -619,7 +619,7 @@ class StringExtractionWidget(QWidget):
             if offset_item:
                 QApplication.clipboard().setText(offset_item.text())
 
-    def _copy_selected_row(self):
+    def _copy_selected_row(self) -> None:
         """Copy entire selected row to clipboard."""
         row = self.string_table.currentRow()
         if row >= 0:
@@ -634,7 +634,7 @@ class StringExtractionWidget(QWidget):
 
             QApplication.clipboard().setText("\t".join(row_data))
 
-    def _goto_selected_offset(self):
+    def _goto_selected_offset(self) -> None:
         """Emit signal to go to selected offset."""
         row = self.string_table.currentRow()
         if row >= 0:
@@ -645,7 +645,7 @@ class StringExtractionWidget(QWidget):
                 string = string_item.data(Qt.UserRole)
                 self.string_selected.emit(offset, string)
 
-    def _on_selection_changed(self):
+    def _on_selection_changed(self) -> None:
         """Handle selection change."""
         row = self.string_table.currentRow()
         if row >= 0:
@@ -657,7 +657,7 @@ class StringExtractionWidget(QWidget):
                 # Emit for integration with hex viewer
                 self.string_selected.emit(offset, string)
 
-    def export_strings(self):
+    def export_strings(self) -> None:
         """Export strings to file."""
         if not self.filtered_strings:
             QMessageBox.information(self, "No Strings", "No strings to export")
@@ -714,7 +714,7 @@ class StringExtractionWidget(QWidget):
                 f"Error exporting strings: {e!s}",
             )
 
-    def _export_as_text(self, file_path: str):
+    def _export_as_text(self, file_path: str) -> None:
         """Export strings as text."""
         with open(file_path, "w", encoding="utf-8") as f:
             f.write("String Extraction Report\n")
@@ -730,7 +730,7 @@ class StringExtractionWidget(QWidget):
                 f.write(f"String: {string!r}\n")
                 f.write("-" * 40 + "\n")
 
-    def _export_as_csv(self, file_path: str):
+    def _export_as_csv(self, file_path: str) -> None:
         """Export strings as CSV."""
         import csv
 
@@ -746,10 +746,10 @@ class StringExtractionWidget(QWidget):
                         len(string),
                         encoding,
                         category,
-                    ]
+                    ],
                 )
 
-    def _export_as_json(self, file_path: str):
+    def _export_as_json(self, file_path: str) -> None:
         """Export strings as JSON."""
         import json
 
@@ -768,7 +768,7 @@ class StringExtractionWidget(QWidget):
                     "length": len(string),
                     "encoding": encoding,
                     "category": category,
-                }
+                },
             )
 
         with open(file_path, "w", encoding="utf-8") as f:

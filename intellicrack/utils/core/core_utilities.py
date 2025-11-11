@@ -316,7 +316,7 @@ def register_tool(name: str, func: Callable, category: str = "general") -> bool:
         return False
 
 
-def register_default_tools():
+def register_default_tools() -> bool | None:
     """Register all default tools in the registry."""
     try:
         # Import all tool wrapper functions (moved inside function to avoid cyclic import)

@@ -47,7 +47,7 @@ PTRACE_DETACH = 17
 class DebuggerDetector(BaseDetector):
     """Comprehensive debugger detection using multiple techniques."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the debugger detector with platform-specific detection methods."""
         super().__init__()
         self.logger = logging.getLogger("IntellicrackLogger.DebuggerDetector")
@@ -110,7 +110,7 @@ class DebuggerDetector(BaseDetector):
 
         try:
             if os.path.exists(config_path):
-                with open(config_path, "r") as f:
+                with open(config_path) as f:
                     base_sigs = json.load(f)
                     # Merge base signatures
                     for platform_key in signatures:
@@ -118,7 +118,7 @@ class DebuggerDetector(BaseDetector):
                             for sig_type in signatures[platform_key]:
                                 if sig_type in base_sigs[platform_key]:
                                     signatures[platform_key][sig_type].extend(base_sigs[platform_key][sig_type])
-        except (IOError, json.JSONDecodeError):
+        except (OSError, json.JSONDecodeError):
             pass  # Use dynamic detection only
 
         # Add known debugger patterns dynamically
@@ -387,7 +387,7 @@ class DebuggerDetector(BaseDetector):
 
         return signatures
 
-    def _update_signatures_from_system(self):
+    def _update_signatures_from_system(self) -> None:
         """Scan system for additional debugger signatures."""
         import re
 
@@ -471,7 +471,7 @@ class DebuggerDetector(BaseDetector):
 
                     status_path = f"/proc/{process.pid}/status"
                     if os.path.exists(status_path):
-                        with open(status_path, "r") as f:
+                        with open(status_path) as f:
                             status = f.read()
                             # Check for TracerPid or capabilities
                             if "TracerPid" in status or "CapEff" in status:
@@ -489,7 +489,7 @@ class DebuggerDetector(BaseDetector):
             children = process.children()
             if children:
                 # Check if children have different names (sign of debugging)
-                child_names = set(child.name() for child in children)
+                child_names = {child.name() for child in children}
                 if len(child_names) > 1:
                     return True
 
@@ -504,7 +504,7 @@ class DebuggerDetector(BaseDetector):
 
         return False
 
-    def update_signatures(self, custom_signatures: dict = None):
+    def update_signatures(self, custom_signatures: dict = None) -> None:
         """Update debugger signatures with custom entries."""
         if custom_signatures:
             current_platform = "windows" if platform.system() == "Windows" else "linux"
@@ -516,7 +516,7 @@ class DebuggerDetector(BaseDetector):
         # Re-scan system for new debuggers
         self._update_signatures_from_system()
 
-    def save_signatures(self, path: str = None):
+    def save_signatures(self, path: str = None) -> None:
         """Save current signatures to file for future use."""
         import json
         import os
@@ -663,7 +663,7 @@ class DebuggerDetector(BaseDetector):
             bytes_read = ctypes.c_size_t()
 
             success = kernel32.ReadProcessMemory(
-                current_process, being_debugged_addr, ctypes.byref(being_debugged), 1, ctypes.byref(bytes_read)
+                current_process, being_debugged_addr, ctypes.byref(being_debugged), 1, ctypes.byref(bytes_read),
             )
 
             if success and bytes_read.value == 1:
@@ -677,7 +677,7 @@ class DebuggerDetector(BaseDetector):
             nt_global_flag = ctypes.c_ulong()
 
             success = kernel32.ReadProcessMemory(
-                current_process, nt_global_flag_addr, ctypes.byref(nt_global_flag), 4, ctypes.byref(bytes_read)
+                current_process, nt_global_flag_addr, ctypes.byref(nt_global_flag), 4, ctypes.byref(bytes_read),
             )
 
             if success and bytes_read.value == 4:
@@ -715,7 +715,7 @@ class DebuggerDetector(BaseDetector):
                 try:
                     # Check /proc/self/status for TracerPid on Linux
                     if platform.system() == "Linux":
-                        with open("/proc/self/status", "r") as f:
+                        with open("/proc/self/status") as f:
                             for line in f:
                                 if line.startswith("TracerPid:"):
                                     tracer_pid = int(line.split()[1])
@@ -731,7 +731,7 @@ class DebuggerDetector(BaseDetector):
                     try:
                         ps_path = shutil.which("ps")
                         if ps_path:
-                            ps_result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                            ps_result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                                 [ps_path, "aux"],
                                 capture_output=True,
                                 text=True,
@@ -749,7 +749,7 @@ class DebuggerDetector(BaseDetector):
                     except subprocess.SubprocessError:
                         pass
 
-                except (OSError, ValueError, IOError):
+                except (OSError, ValueError):
                     pass
 
             return debug_detected, confidence, details
@@ -812,7 +812,7 @@ class DebuggerDetector(BaseDetector):
             bytes_read = ctypes.c_size_t()
 
             success = kernel32.ReadProcessMemory(
-                current_process, nt_global_flag_addr, ctypes.byref(nt_global_flag), 4, ctypes.byref(bytes_read)
+                current_process, nt_global_flag_addr, ctypes.byref(nt_global_flag), 4, ctypes.byref(bytes_read),
             )
 
             if success and bytes_read.value == 4:
@@ -1035,7 +1035,7 @@ class DebuggerDetector(BaseDetector):
 
             # Check /proc/self/stat for tracer information
             try:
-                with open(f"/proc/{pid}/status", "r", encoding="utf-8") as f:
+                with open(f"/proc/{pid}/status", encoding="utf-8") as f:
                     status_content = f.read()
 
                 # Look for TracerPid field
@@ -1080,7 +1080,7 @@ class DebuggerDetector(BaseDetector):
                     details["ptrace_available"] = True
 
                     # Count potentially active registers
-                    accessible_count = sum(1 for v in debug_regs.values() if v != "inaccessible" and v != "0x0")
+                    accessible_count = sum(1 for v in debug_regs.values() if v not in {"inaccessible", "0x0"})
                     if accessible_count > 0:
                         details["accessible_registers"] = accessible_count
 
@@ -1096,7 +1096,7 @@ class DebuggerDetector(BaseDetector):
 
             # Check process tree for debugger parents
             try:
-                with open(f"/proc/{pid}/stat", "r", encoding="utf-8") as f:
+                with open(f"/proc/{pid}/stat", encoding="utf-8") as f:
                     stat_line = f.read().strip()
 
                 # Extract parent PID (field 4)
@@ -1107,7 +1107,7 @@ class DebuggerDetector(BaseDetector):
 
                     # Check parent process name
                     try:
-                        with open(f"/proc/{ppid}/comm", "r", encoding="utf-8") as f:
+                        with open(f"/proc/{ppid}/comm", encoding="utf-8") as f:
                             parent_name = f.read().strip()
 
                         details["parent_name"] = parent_name
@@ -1240,7 +1240,7 @@ class DebuggerDetector(BaseDetector):
 
             # Read process memory maps
             try:
-                with open("/proc/self/maps", "r") as maps_file:
+                with open("/proc/self/maps") as maps_file:
                     for line in maps_file:
                         parts = line.split()
                         if len(parts) < 6:
@@ -1279,7 +1279,7 @@ class DebuggerDetector(BaseDetector):
                                         if int3_count >= 50:
                                             break
 
-                        except (OSError, IOError):
+                        except OSError:
                             # Memory region not readable, skip
                             continue
 
@@ -1287,18 +1287,18 @@ class DebuggerDetector(BaseDetector):
                         if int3_count >= 50:
                             break
 
-            except (OSError, IOError):
+            except OSError:
                 # Fallback: check for common debugger artifacts in /proc
                 try:
                     # Check if being traced
-                    with open("/proc/self/status", "r") as f:
+                    with open("/proc/self/status") as f:
                         for line in f:
                             if line.startswith("TracerPid:"):
                                 tracer_pid = int(line.split()[1])
                                 if tracer_pid != 0:
                                     details["tracer_detected"] = True
                                     return True, 0.6, details
-                except (OSError, IOError):
+                except OSError:
                     pass
 
             details["int3_count"] = int3_count
@@ -1407,7 +1407,7 @@ class DebuggerDetector(BaseDetector):
             # Debuggers often handle exceptions differently
             # Try to trigger and catch exceptions
 
-            def test_exception():
+            def test_exception() -> bool:
                 try:
                     # Trigger access violation
                     ctypes.c_int.from_address(0)

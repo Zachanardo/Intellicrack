@@ -85,7 +85,7 @@ class ModelBatchTester:
         llm_manager: LLMManager | None = None,
         max_workers: int = 4,
         timeout_per_test: float = 60.0,
-    ):
+    ) -> None:
         """Initialize the batch tester.
 
         Args:
@@ -106,7 +106,7 @@ class ModelBatchTester:
         # Load default test suites
         self._load_default_test_suites()
 
-    def _load_default_test_suites(self):
+    def _load_default_test_suites(self) -> None:
         """Load default test suites."""
         # Basic functionality tests
         self.test_suites["basic"] = [
@@ -170,7 +170,7 @@ class ModelBatchTester:
             ),
         ]
 
-    def add_test_suite(self, suite_id: str, test_cases: list[TestCase]):
+    def add_test_suite(self, suite_id: str, test_cases: list[TestCase]) -> None:
         """Add a custom test suite.
 
         Args:
@@ -399,7 +399,7 @@ class ModelBatchTester:
                                 inference_time=self.timeout_per_test,
                                 tokens_generated=0,
                                 error=f"Test failed: {e!s}",
-                            )
+                            ),
                         )
 
                     completed_tests += 1

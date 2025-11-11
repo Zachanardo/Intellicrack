@@ -37,7 +37,7 @@ and provides tools for analyzing timing characteristics.
 class TimingAttackDefense:
     """Defense against timing-based analysis and sleep acceleration."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the timing attack defense system with available timing methods."""
         self.logger = logging.getLogger("IntellicrackLogger.TimingAttackDefense")
         self.timing_threads = []
@@ -187,7 +187,7 @@ class TimingAttackDefense:
 
         """
 
-        def time_bomb_thread():
+        def time_bomb_thread() -> None:
             try:
                 self.logger.info(f"Time bomb armed for {trigger_time}s")
 

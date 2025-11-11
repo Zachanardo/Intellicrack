@@ -109,7 +109,7 @@ class ProtectionSignature:
 class DynamicSignatureExtractor:
     """Extracts protection signatures dynamically from binaries."""
 
-    def __init__(self, db_path: str = "protection_signatures.db"):
+    def __init__(self, db_path: str = "protection_signatures.db") -> None:
         """Initialize the dynamic signature extractor."""
         self.db_path = db_path
         self.signatures: Dict[str, List[DynamicSignature]] = defaultdict(list)
@@ -127,7 +127,7 @@ class DynamicSignatureExtractor:
         self._initialize_database()
         self._load_signatures()
 
-    def _initialize_database(self):
+    def _initialize_database(self) -> None:
         """Initialize SQLite database for persistent signature storage."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -764,8 +764,7 @@ class DynamicSignatureExtractor:
                     call_stack.append(insn.address)
                     current_depth = len(call_stack)
 
-                    if current_depth > max_depth:
-                        max_depth = current_depth
+                    max_depth = max(max_depth, current_depth)
 
                     depths.append(current_depth)
 
@@ -788,7 +787,7 @@ class DynamicSignatureExtractor:
                     call_stack.pop()
 
                 # Track indirect calls through registers
-                elif insn.mnemonic == "call" and insn.op_str.startswith("e") or insn.op_str.startswith("r"):
+                elif (insn.mnemonic == "call" and insn.op_str.startswith("e")) or insn.op_str.startswith("r"):
                     depths.append(len(call_stack) + 1)
 
             except Exception as e:
@@ -799,7 +798,7 @@ class DynamicSignatureExtractor:
                 continue
 
         # Return unique depth levels found
-        return sorted(list(set(depths))) if depths else []
+        return sorted(set(depths)) if depths else []
 
     def _analyze_call_target(self, data: bytes, target_addr: int, current_depth: int, visited: Set[int]) -> List[int]:
         """Recursively analyze call targets to find maximum call depth."""
@@ -1070,7 +1069,7 @@ class DynamicSignatureExtractor:
         except Exception:
             return original_mask
 
-    def _store_signatures(self, signatures: List[DynamicSignature], protection_name: str):
+    def _store_signatures(self, signatures: List[DynamicSignature], protection_name: str) -> None:
         """Store signatures in database."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -1112,7 +1111,7 @@ class DynamicSignatureExtractor:
         conn.commit()
         conn.close()
 
-    def _load_signatures(self):
+    def _load_signatures(self) -> None:
         """Load signatures from database."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -1140,7 +1139,7 @@ class DynamicSignatureExtractor:
 class MutationEngine:
     """Engine for generating pattern mutations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the PatternMutator with available mutation strategies."""
         self.mutation_strategies = [
             self._byte_substitution,
@@ -1222,7 +1221,7 @@ class MutationEngine:
 class EnhancedProtectionScanner:
     """Enhanced protection scanner with dynamic signature extraction."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the EnhancedProtectionScanner with various analysis components."""
         self.signature_extractor = DynamicSignatureExtractor()
         self.binary_analyzer = BinaryAnalyzer()
@@ -1274,7 +1273,7 @@ class EnhancedProtectionScanner:
                             "confidence": sig.confidence,
                             "context": sig.context,
                             "effectiveness": sig.effectiveness_score,
-                        }
+                        },
                     )
 
                 # Update confidence scores
@@ -1302,12 +1301,12 @@ class EnhancedProtectionScanner:
                         "confidence": match.confidence,
                         "xrefs": len(match.xrefs),
                         "description": match.pattern.description,
-                    }
+                    },
                 )
 
             # Generate bypass recommendations
             results["bypass_recommendations"] = self._generate_bypass_recommendations(
-                results["confidence_scores"], results["technical_details"]
+                results["confidence_scores"], results["technical_details"],
             )
 
             # Cache results
@@ -1321,7 +1320,7 @@ class EnhancedProtectionScanner:
         return results
 
     def _generate_bypass_recommendations(
-        self, confidence_scores: Dict[str, float], technical_details: Dict[str, List]
+        self, confidence_scores: Dict[str, float], technical_details: Dict[str, List],
     ) -> List[Dict[str, Any]]:
         """Generate specific bypass recommendations based on detections."""
         recommendations = []
@@ -1336,7 +1335,7 @@ class EnhancedProtectionScanner:
                     "difficulty": "extreme",
                     "time_estimate": "2-4 weeks",
                     "success_rate": "60-70%",
-                }
+                },
             )
 
         # High confidence packer detected
@@ -1349,7 +1348,7 @@ class EnhancedProtectionScanner:
                     "difficulty": "medium",
                     "time_estimate": "2-6 hours",
                     "success_rate": "85-95%",
-                }
+                },
             )
 
         # Anti-debug detected
@@ -1362,7 +1361,7 @@ class EnhancedProtectionScanner:
                     "difficulty": "medium",
                     "time_estimate": "1-3 hours",
                     "success_rate": "90-95%",
-                }
+                },
             )
 
         # Licensing detected
@@ -1375,13 +1374,13 @@ class EnhancedProtectionScanner:
                     "difficulty": "high",
                     "time_estimate": "1-2 weeks",
                     "success_rate": "70-80%",
-                }
+                },
             )
 
         return recommendations
 
 
-def run_scan_thread(main_app, binary_path):
+def run_scan_thread(main_app, binary_path) -> None:
     """Enhanced scanning logic with dynamic signature extraction."""
     try:
         if hasattr(main_app, "update_output"):
@@ -1412,7 +1411,7 @@ def run_scan_thread(main_app, binary_path):
         if results.get("bypass_recommendations"):
             if hasattr(main_app, "update_output"):
                 main_app.update_output.emit(
-                    f"[Protection Scanner] Generated {len(results['bypass_recommendations'])} bypass recommendations"
+                    f"[Protection Scanner] Generated {len(results['bypass_recommendations'])} bypass recommendations",
                 )
 
     except Exception as e:
@@ -1430,7 +1429,7 @@ def run_scan_thread(main_app, binary_path):
             main_app.update_scan_status("Scan complete")
 
 
-def run_enhanced_protection_scan(main_app):
+def run_enhanced_protection_scan(main_app) -> None:
     """Entry point for enhanced protection scanning."""
     if not hasattr(main_app, "current_binary") or not main_app.current_binary:
         if hasattr(main_app, "update_output"):

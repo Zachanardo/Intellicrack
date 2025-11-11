@@ -58,7 +58,7 @@ class ExtractedAlgorithm:
 class ConstraintExtractor:
     """Extracts license key constraints from binary files."""
 
-    def __init__(self, binary_path: Path):
+    def __init__(self, binary_path: Path) -> None:
         """Initialize the validation analyzer.
 
         Args:
@@ -210,7 +210,7 @@ class ConstraintExtractor:
 class KeySynthesizer:
     """Synthesizes license keys based on extracted algorithms."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the key synthesizer."""
         self.logger = logging.getLogger(__name__)
         self.generator = SerialNumberGenerator()
@@ -390,7 +390,7 @@ class KeySynthesizer:
                             z3.Or(
                                 z3.And(var >= ord("0"), var <= ord("9")),
                                 z3.And(var >= ord("A"), var <= ord("Z")),
-                            )
+                            ),
                         )
 
         if self.solver.check() == z3.sat:
@@ -412,7 +412,7 @@ class KeySynthesizer:
 class LicenseKeygen:
     """Main license key generation engine."""
 
-    def __init__(self, binary_path: Optional[Path] = None):
+    def __init__(self, binary_path: Optional[Path] = None) -> None:
         """Initialize the license key generator.
 
         Args:

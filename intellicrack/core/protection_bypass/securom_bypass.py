@@ -85,7 +85,7 @@ class SecuROMBypass:
         (winreg.HKEY_CURRENT_USER, r"SOFTWARE\Sony DADC\SecuROM\Activation"),
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize SecuROM bypass system."""
         self.logger = logging.getLogger(__name__)
         self._advapi32 = None
@@ -274,14 +274,14 @@ class SecuROMBypass:
                 try:
                     subkey_name = winreg.EnumKey(key, i)
                     self._delete_registry_key_recursive(key, subkey_name)
-                except WindowsError:
+                except OSError:
                     break
 
             winreg.CloseKey(key)
             winreg.DeleteKey(root_key, subkey_path)
             return True
 
-        except WindowsError:
+        except OSError:
             return False
 
     def _bypass_activation_registry(self) -> bool:
@@ -304,7 +304,7 @@ class SecuROMBypass:
                 winreg.CloseKey(key)
                 bypassed = True
 
-            except WindowsError:
+            except OSError:
                 continue
 
         return bypassed
@@ -741,7 +741,7 @@ class SecuROMBypass:
             winreg.CloseKey(key)
             return True
 
-        except WindowsError:
+        except OSError:
             return False
 
     def bypass_product_key_validation(self, target_exe: Path) -> BypassResult:
@@ -821,7 +821,7 @@ class SecuROMBypass:
             winreg.CloseKey(key)
             return True
 
-        except WindowsError:
+        except OSError:
             return False
 
     def block_phone_home(self, target_exe: Path, server_urls: Optional[List[str]] = None) -> BypassResult:

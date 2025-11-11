@@ -32,7 +32,7 @@ class SignatureTemplates:
             "Packer Signatures",
             "Protector Signatures",
             "Cryptor Signatures",
-            "Complex Rules"
+            "Complex Rules",
         ]
 
     @staticmethod
@@ -56,7 +56,7 @@ init:
 ep:
 {
     hex = "48 65 6C 6C 6F";  // "Hello" in ASCII
-}'''
+}''',
                 },
 
                 "Wildcard Pattern": {
@@ -76,7 +76,7 @@ ep:
 {
     hex = "48 ?? 6C ?? 6F";  // "H?l?o" with wildcards
     hex = "4D 5A ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? 50 45";  // MZ...PE
-}'''
+}''',
                 },
 
                 "Multiple Patterns": {
@@ -97,8 +97,8 @@ ep:
     hex = "48 65 6C 6C 6F";  // Pattern 1
     hex = "57 6F 72 6C 64";  // Pattern 2
     hex = "54 65 73 74";     // Pattern 3
-}'''
-                }
+}''',
+                },
             }
 
         elif category == "PE Headers":
@@ -120,7 +120,7 @@ header:
 {
     hex = "4D 5A";  // MZ signature
     offset = 0;
-}'''
+}''',
                 },
 
                 "PE Header Check": {
@@ -146,7 +146,7 @@ header:
 {
     hex = "0B 01";  // Linker version check
     offset = "PE_OFFSET + 0x18";
-}'''
+}''',
                 },
 
                 "Rich Header": {
@@ -170,8 +170,8 @@ header:
 header:
 {
     hex = "44 61 6E 53";  // "DanS" (stub signature)
-}'''
-                }
+}''',
+                },
             }
 
         elif category == "Section Signatures":
@@ -194,7 +194,7 @@ section:
     name = ".text";
     hex = "55 8B EC";      // Function prologue
     hex = "C3";            // Return instruction
-}'''
+}''',
                 },
 
                 "UPX Sections": {
@@ -224,7 +224,7 @@ section:
 {
     name = ".rsrc";
     after_upx = true;
-}'''
+}''',
                 },
 
                 "High Entropy Section": {
@@ -245,8 +245,8 @@ section:
     entropy = "> 7.0";
     size = "> 1000";
     characteristics = "executable";
-}'''
-                }
+}''',
+                },
             }
 
         elif category == "Import Signatures":
@@ -271,7 +271,7 @@ import:
     api = "CryptCreateHash";
     api = "CryptHashData";
     api = "CryptDeriveKey";
-}'''
+}''',
                 },
 
                 "Debug APIs": {
@@ -300,7 +300,7 @@ import:
     dll = "ntdll.dll";
     api = "NtQueryInformationProcess";
     api = "NtSetInformationThread";
-}'''
+}''',
                 },
 
                 "Injection APIs": {
@@ -323,8 +323,8 @@ import:
     api = "WriteProcessMemory";
     api = "CreateRemoteThread";
     api = "OpenProcess";
-}'''
-                }
+}''',
+                },
             }
 
         elif category == "String Signatures":
@@ -347,7 +347,7 @@ string:
     ascii = "This program cannot be run";
     ascii = "KERNEL32.DLL";
     ascii = "GetProcAddress";
-}'''
+}''',
                 },
 
                 "Unicode Strings": {
@@ -368,7 +368,7 @@ string:
     unicode = "Hello World";
     unicode = "Error Message";
     unicode = "Configuration";
-}'''
+}''',
                 },
 
                 "Regex Patterns": {
@@ -389,8 +389,8 @@ string:
     regex = "[a-z]+@[a-z]+\\.[a-z]+";        // Email pattern
     regex = "https?://[\\w.-]+";              // URL pattern
     regex = "\\d{4}-\\d{2}-\\d{2}";          // Date pattern
-}'''
-                }
+}''',
+                },
             }
 
         elif category == "Packer Signatures":
@@ -424,7 +424,7 @@ section:
 ep:
 {
     hex = "60 BE ?? ?? ?? ?? 8D BE ?? ?? ?? ??";  // UPX stub
-}'''
+}''',
                 },
 
                 "ASPack": {
@@ -449,7 +449,7 @@ string:
 {
     ascii = "ASPack";
     ascii = "aPLib";
-}'''
+}''',
                 },
 
                 "PECompact": {
@@ -473,8 +473,8 @@ ep:
 section:
 {
     name = "PEC2TO";
-}'''
-                }
+}''',
+                },
             }
 
         elif category == "Protector Signatures":
@@ -509,7 +509,7 @@ import:
     dll = "kernel32.dll";
     api = "VirtualProtect";
     api = "IsDebuggerPresent";
-}'''
+}''',
                 },
 
                 "VMProtect": {
@@ -538,7 +538,7 @@ section:
 import:
 {
     dll = "VMProtectSDK.dll";
-}'''
+}''',
                 },
 
                 "Code Virtualizer": {
@@ -563,8 +563,8 @@ string:
 {
     ascii = "Code Virtualizer";
     ascii = "Oreans";
-}'''
-                }
+}''',
+                },
             }
 
         elif category == "Cryptor Signatures":
@@ -593,7 +593,7 @@ section:
 {
     entropy = "> 7.5";
     characteristics = "executable";
-}'''
+}''',
                 },
 
                 "XOR Cryptor": {
@@ -613,8 +613,8 @@ ep:
 {
     hex = "30 ?? ?? 40 3D ?? ?? ?? ?? 75 ??";  // XOR loop pattern
     hex = "32 ?? ?? 40 81 F? ?? ?? ?? ?? 75 ??";  // XOR with key
-}'''
-                }
+}''',
+                },
             }
 
         elif category == "Complex Rules":
@@ -640,7 +640,7 @@ rule:
     upx_section = section_upx0 or section_upx1;
     high_entropy = entropy > 7.0;
     crypto_api = import_crypto;
-}'''
+}''',
                 },
 
                 "Size Constraints": {
@@ -662,7 +662,7 @@ rule:
     sections = "> 3 and < 20";
     imports = "> 10";
     exports = "< 50";
-}'''
+}''',
                 },
 
                 "Multi-Stage Detection": {
@@ -698,8 +698,8 @@ stage3:
 rule:
 {
     condition = stage1 and (stage2 or stage3);
-}'''
-                }
+}''',
+                },
             }
 
         return {}
@@ -820,7 +820,7 @@ ep:
 {
     hex = "64 8B 30 85 F6 78 ??";  // PEB BeingDebugged check
     hex = "FF 15 ?? ?? ?? ?? 85 C0 75 ??";  // IsDebuggerPresent
-}'''
+}''',
         }
 
 

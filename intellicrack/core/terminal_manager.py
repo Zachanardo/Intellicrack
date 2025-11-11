@@ -52,7 +52,7 @@ class TerminalManager:
 
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize terminal manager."""
         if self._initialized:
             return
@@ -66,7 +66,7 @@ class TerminalManager:
 
         logger.info("TerminalManager singleton initialized")
 
-    def register_terminal_widget(self, widget):
+    def register_terminal_widget(self, widget) -> None:
         """Register the main terminal widget from Terminal tab.
 
         Args:
@@ -84,7 +84,7 @@ class TerminalManager:
         self._terminal_widget = widget
         logger.info("Terminal widget registered with TerminalManager")
 
-    def set_main_app(self, app):
+    def set_main_app(self, app) -> None:
         """Set reference to main app for tab switching.
 
         Args:
@@ -100,7 +100,7 @@ class TerminalManager:
         self._main_app = app
         logger.info("Main app registered with TerminalManager")
 
-    def _switch_to_terminal_tab(self):
+    def _switch_to_terminal_tab(self) -> None:
         """Switch main app to Terminal tab."""
         if not self._main_app:
             logger.warning("Cannot switch to terminal tab: main app not registered")
@@ -119,7 +119,7 @@ class TerminalManager:
                 logger.info(f"Switched to Terminal tab (index {i})")
 
                 if self._terminal_widget:
-                    session_id, terminal = self._terminal_widget.get_active_session()
+                    _session_id, terminal = self._terminal_widget.get_active_session()
                     if terminal:
                         terminal.terminal_display.setFocus()
 
@@ -306,7 +306,7 @@ class TerminalManager:
         """
         return self._terminal_widget
 
-    def log_terminal_message(self, message: str, level: str = "INFO"):
+    def log_terminal_message(self, message: str, level: str = "INFO") -> None:
         """Log a message to the terminal widget.
 
         Args:
@@ -316,7 +316,7 @@ class TerminalManager:
         """
         if self._terminal_widget:
             try:
-                session_id, terminal = self._terminal_widget.get_active_session()
+                _session_id, terminal = self._terminal_widget.get_active_session()
                 if terminal and hasattr(terminal, "write_output"):
                     formatted_message = f"[{level}] {message}\n"
                     terminal.write_output(formatted_message)

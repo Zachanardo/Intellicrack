@@ -115,7 +115,7 @@ class USBDescriptor:
             self.bDeviceClass, self.bDeviceSubClass, self.bDeviceProtocol,
             self.bMaxPacketSize0, self.idVendor, self.idProduct,
             self.bcdDevice, self.iManufacturer, self.iProduct,
-            self.iSerialNumber, self.bNumConfigurations
+            self.iSerialNumber, self.bNumConfigurations,
         )
 
 
@@ -189,7 +189,7 @@ class HASPDongle:
             'type': 'license',
             'expiration': 0xFFFFFFFF,
             'max_users': 10,
-            'current_users': 0
+            'current_users': 0,
         }
 
 
@@ -245,7 +245,7 @@ class WibuKeyDongle:
             'feature_code': self.feature_code,
             'quantity': 100,
             'expiration': 0xFFFFFFFF,
-            'enabled': True
+            'enabled': True,
         }
 
 
@@ -290,10 +290,10 @@ class USBEmulator:
     def get_configuration_descriptor(self) -> bytes:
         """Generate configuration descriptor."""
         config = struct.pack('<BBHBBBBB',
-            9, 2, 32, 1, 1, 0, 0x80, 100
+            9, 2, 32, 1, 1, 0, 0x80, 100,
         )
         interface = struct.pack('<BBBBBBBBB',
-            9, 4, 0, 0, 3, 0xFF, 0xFF, 0xFF, 0
+            9, 4, 0, 0, 3, 0xFF, 0xFF, 0xFF, 0,
         )
         endpoint1 = struct.pack('<BBBBH', 7, 5, 0x81, 2, 512)
         endpoint2 = struct.pack('<BBBBH', 7, 5, 0x02, 2, 512)
@@ -306,7 +306,7 @@ class USBEmulator:
             0: b'\x04\x03\x09\x04',
             1: "SafeNet Inc.",
             2: "Sentinel Hardware Key",
-            3: "0123456789ABCDEF"
+            3: "0123456789ABCDEF",
         }
         if index in strings:
             if index == 0:
@@ -530,7 +530,7 @@ class HardwareDongleEmulator:
         """Create virtual dongle devices with full memory and crypto support."""
         with self.lock:
             for dongle_type in dongle_types:
-                if dongle_type == "SafeNet" or dongle_type == "HASP":
+                if dongle_type in {"SafeNet", "HASP"}:
                     hasp_id = len(self.hasp_dongles) + 1
                     dongle = HASPDongle(hasp_id=0x12345678 + hasp_id)
                     dongle.memory.protected_areas = [(0, 1024)]
@@ -545,10 +545,10 @@ class HardwareDongleEmulator:
                         "hasp_id": dongle.hasp_id,
                         "vendor_code": dongle.vendor_code,
                         "feature_id": dongle.feature_id,
-                        "instance": dongle
+                        "instance": dongle,
                     }
 
-                elif dongle_type == "Sentinel" or dongle_type == "SafeNet":
+                elif dongle_type in {"Sentinel", "SafeNet"}:
                     sentinel_id = len(self.sentinel_dongles) + 1
                     dongle = SentinelDongle(device_id=0x87654321 + sentinel_id)
                     dongle.memory.protected_areas = [(0, 2048)]
@@ -559,7 +559,7 @@ class HardwareDongleEmulator:
                         "type": "Sentinel",
                         "device_id": dongle.device_id,
                         "serial_number": dongle.serial_number,
-                        "instance": dongle
+                        "instance": dongle,
                     }
 
                 elif dongle_type == "CodeMeter":
@@ -573,7 +573,7 @@ class HardwareDongleEmulator:
                         "firm_code": dongle.firm_code,
                         "product_code": dongle.product_code,
                         "serial_number": dongle.serial_number,
-                        "instance": dongle
+                        "instance": dongle,
                     }
 
         self.logger.info(f"Created {len(self.virtual_dongles)} virtual dongles with full memory emulation")
@@ -586,7 +586,7 @@ class HardwareDongleEmulator:
                     idVendor=0x0529,
                     idProduct=0x0001,
                     bDeviceClass=0xFF,
-                    bDeviceSubClass=0xFF
+                    bDeviceSubClass=0xFF,
                 )
                 usb = USBEmulator(descriptor)
                 usb.register_control_handler(0x40, 0x01, self._hasp_control_handler)
@@ -594,11 +594,11 @@ class HardwareDongleEmulator:
                 usb.register_bulk_handler(0x81, self._hasp_bulk_in_handler)
                 self.usb_emulators["HASP_USB"] = usb
 
-            elif dongle_type == "Sentinel" or dongle_type == "SafeNet":
+            elif dongle_type in {"Sentinel", "SafeNet"}:
                 descriptor = USBDescriptor(
                     idVendor=0x0529,
                     idProduct=0x0001,
-                    bDeviceClass=0xFF
+                    bDeviceClass=0xFF,
                 )
                 usb = USBEmulator(descriptor)
                 usb.register_control_handler(0x40, 0x02, self._sentinel_control_handler)
@@ -610,7 +610,7 @@ class HardwareDongleEmulator:
                 descriptor = USBDescriptor(
                     idVendor=0x064F,
                     idProduct=0x0BD7,
-                    bDeviceClass=0x00
+                    bDeviceClass=0x00,
                 )
                 usb = USBEmulator(descriptor)
                 usb.register_control_handler(0x40, 0x03, self._wibukey_control_handler)
@@ -670,7 +670,7 @@ class HardwareDongleEmulator:
             dongle.hasp_id,
             dongle.vendor_code,
             dongle.feature_id,
-            dongle.rtc_counter
+            dongle.rtc_counter,
         )
         response[0:len(info)] = info
 
@@ -681,7 +681,7 @@ class HardwareDongleEmulator:
         if len(data) < 4:
             return struct.pack('<I', HASPStatus.HASP_TOO_SHORT)
 
-        vendor_code, feature_id = struct.unpack('<HH', data[:4])
+        vendor_code, _feature_id = struct.unpack('<HH', data[:4])
 
         for dongle in self.hasp_dongles.values():
             if dongle.vendor_code == vendor_code:
@@ -826,7 +826,7 @@ class HardwareDongleEmulator:
             dongle.device_id,
             dongle.serial_number.encode('ascii')[:16].ljust(16, b'\x00'),
             dongle.firmware_version.encode('ascii')[:16].ljust(16, b'\x00'),
-            dongle.developer_id
+            dongle.developer_id,
         )
 
         dongle.response_buffer[0:len(query_data)] = query_data
@@ -889,7 +889,7 @@ class HardwareDongleEmulator:
             return struct.pack('<III',
                 dongle.firm_code,
                 dongle.product_code,
-                dongle.serial_number
+                dongle.serial_number,
             )
         elif wValue == 2:
             return dongle.version.encode('ascii')[:16].ljust(16, b'\x00')
@@ -926,7 +926,7 @@ class HardwareDongleEmulator:
             dongle.firm_code,
             dongle.product_code,
             dongle.feature_code,
-            dongle.serial_number
+            dongle.serial_number,
         )
         response[0:len(info)] = info
 
@@ -950,7 +950,7 @@ class HardwareDongleEmulator:
         if len(data) < 12:
             return struct.pack('<I', 1)
 
-        container_handle, feature_code, access_type = struct.unpack('<III', data[:12])
+        container_handle, feature_code, _access_type = struct.unpack('<III', data[:12])
 
         for dongle in self.wibukey_dongles.values():
             if dongle.container_handle == container_handle:
@@ -990,7 +990,7 @@ class HardwareDongleEmulator:
             if dongle.container_handle == container_handle:
                 response = self.crypto_engine.wibukey_challenge_response(
                     challenge,
-                    dongle.challenge_response_key
+                    dongle.challenge_response_key,
                 )
                 result = struct.pack('<II', 0, len(response))
                 return result + response
@@ -1003,315 +1003,313 @@ class HardwareDongleEmulator:
             self.logger.warning("Frida not available - skipping dongle API hooking")
             return
 
-        frida_script = """
+        frida_script = f"""
         console.log("[Dongle Emulator] Starting comprehensive dongle API hooking...");
 
-        if (%s.includes("HASP")) {
+        if ({dongle_types!s}.includes("HASP")) {{
             var haspModule = Process.findModuleByName("hasp_windows_x64_demo.dll");
-            if (!haspModule) { haspModule = Process.findModuleByName("aksusbd_x64.dll"); }
-            if (!haspModule) { haspModule = Process.findModuleByName("hasp_net_windows.dll"); }
+            if (!haspModule) {{ haspModule = Process.findModuleByName("aksusbd_x64.dll"); }}
+            if (!haspModule) {{ haspModule = Process.findModuleByName("hasp_net_windows.dll"); }}
 
-            if (haspModule) {
-                try {
+            if (haspModule) {{
+                try {{
                     var haspLogin = Module.findExportByName(haspModule.name, "hasp_login");
-                    if (haspLogin) {
-                        Interceptor.attach(haspLogin, {
-                            onEnter: function(args) {
+                    if (haspLogin) {{
+                        Interceptor.attach(haspLogin, {{
+                            onEnter: function(args) {{
                                 this.vendorCode = args[0].toInt32();
                                 this.featureId = args[1].toInt32();
                                 this.handlePtr = args[2];
                                 console.log("[HASP] hasp_login called: vendor=" + this.vendorCode + " feature=" + this.featureId);
-                            },
-                            onLeave: function(retval) {
-                                if (this.handlePtr) {
+                            }},
+                            onLeave: function(retval) {{
+                                if (this.handlePtr) {{
                                     this.handlePtr.writeU32(0x12345678);
-                                }
+                                }}
                                 retval.replace(0);
                                 console.log("[HASP] hasp_login returning HASP_STATUS_OK with handle 0x12345678");
-                            }
-                        });
-                    }
+                            }}
+                        }});
+                    }}
 
                     var haspEncrypt = Module.findExportByName(haspModule.name, "hasp_encrypt");
-                    if (haspEncrypt) {
-                        Interceptor.attach(haspEncrypt, {
-                            onEnter: function(args) {
+                    if (haspEncrypt) {{
+                        Interceptor.attach(haspEncrypt, {{
+                            onEnter: function(args) {{
                                 this.handle = args[0].toInt32();
                                 this.dataPtr = args[1];
                                 this.dataLen = args[2].toInt32();
                                 console.log("[HASP] hasp_encrypt called: handle=0x" + this.handle.toString(16) + " len=" + this.dataLen);
-                            },
-                            onLeave: function(retval) {
+                            }},
+                            onLeave: function(retval) {{
                                 retval.replace(0);
                                 console.log("[HASP] hasp_encrypt returning HASP_STATUS_OK");
-                            }
-                        });
-                    }
+                            }}
+                        }});
+                    }}
 
                     var haspDecrypt = Module.findExportByName(haspModule.name, "hasp_decrypt");
-                    if (haspDecrypt) {
-                        Interceptor.attach(haspDecrypt, {
-                            onEnter: function(args) {
+                    if (haspDecrypt) {{
+                        Interceptor.attach(haspDecrypt, {{
+                            onEnter: function(args) {{
                                 this.handle = args[0].toInt32();
                                 console.log("[HASP] hasp_decrypt called: handle=0x" + this.handle.toString(16));
-                            },
-                            onLeave: function(retval) {
+                            }},
+                            onLeave: function(retval) {{
                                 retval.replace(0);
                                 console.log("[HASP] hasp_decrypt returning HASP_STATUS_OK");
-                            }
-                        });
-                    }
+                            }}
+                        }});
+                    }}
 
                     var haspRead = Module.findExportByName(haspModule.name, "hasp_read");
-                    if (haspRead) {
-                        Interceptor.attach(haspRead, {
-                            onEnter: function(args) {
+                    if (haspRead) {{
+                        Interceptor.attach(haspRead, {{
+                            onEnter: function(args) {{
                                 this.handle = args[0].toInt32();
                                 this.fileId = args[1].toInt32();
                                 this.offset = args[2].toInt32();
                                 this.length = args[3].toInt32();
                                 this.buffer = args[4];
                                 console.log("[HASP] hasp_read: file=" + this.fileId + " offset=" + this.offset + " len=" + this.length);
-                            },
-                            onLeave: function(retval) {
-                                if (this.buffer && this.length > 0) {
+                            }},
+                            onLeave: function(retval) {{
+                                if (this.buffer && this.length > 0) {{
                                     var memoryData = new Uint8Array(this.length);
                                     var baseValue = (this.fileId * 17 + this.offset * 3) & 0xFF;
-                                    for (var i = 0; i < this.length; i++) {
+                                    for (var i = 0; i < this.length; i++) {{
                                         var value = (baseValue + i * 7 + (this.handle & 0xFF)) & 0xFF;
                                         memoryData[i] = value;
-                                    }
+                                    }}
                                     this.buffer.writeByteArray(Array.from(memoryData));
-                                }
+                                }}
                                 retval.replace(0);
                                 console.log("[HASP] hasp_read returning HASP_STATUS_OK");
-                            }
-                        });
-                    }
+                            }}
+                        }});
+                    }}
 
                     var haspWrite = Module.findExportByName(haspModule.name, "hasp_write");
-                    if (haspWrite) {
-                        Interceptor.attach(haspWrite, {
-                            onLeave: function(retval) {
+                    if (haspWrite) {{
+                        Interceptor.attach(haspWrite, {{
+                            onLeave: function(retval) {{
                                 retval.replace(0);
-                            }
-                        });
-                    }
+                            }}
+                        }});
+                    }}
 
                     var haspGetSize = Module.findExportByName(haspModule.name, "hasp_get_size");
-                    if (haspGetSize) {
-                        Interceptor.attach(haspGetSize, {
-                            onEnter: function(args) {
+                    if (haspGetSize) {{
+                        Interceptor.attach(haspGetSize, {{
+                            onEnter: function(args) {{
                                 this.sizePtr = args[3];
-                            },
-                            onLeave: function(retval) {
-                                if (this.sizePtr) {
+                            }},
+                            onLeave: function(retval) {{
+                                if (this.sizePtr) {{
                                     this.sizePtr.writeU32(4096);
-                                }
+                                }}
                                 retval.replace(0);
-                            }
-                        });
-                    }
+                            }}
+                        }});
+                    }}
 
                     console.log("[HASP] Comprehensive HASP API hooks installed");
-                } catch(e) {
+                }} catch(e) {{
                     console.log("[HASP] Error installing hooks: " + e);
-                }
-            }
-        }
+                }}
+            }}
+        }}
 
-        if (%s.includes("Sentinel") || %s.includes("SafeNet")) {
+        if ({dongle_types!s}.includes("Sentinel") || {dongle_types!s}.includes("SafeNet")) {{
             var sentinelModule = Process.findModuleByName("sentinel.dll");
-            if (!sentinelModule) { sentinelModule = Process.findModuleByName("sentinelkeyW.dll"); }
-            if (!sentinelModule) { sentinelModule = Process.findModuleByName("sx32w.dll"); }
+            if (!sentinelModule) {{ sentinelModule = Process.findModuleByName("sentinelkeyW.dll"); }}
+            if (!sentinelModule) {{ sentinelModule = Process.findModuleByName("sx32w.dll"); }}
 
-            if (sentinelModule) {
-                try {
+            if (sentinelModule) {{
+                try {{
                     var sentinelFind = Module.findExportByName(sentinelModule.name, "RNBOsproFindFirstUnit");
-                    if (sentinelFind) {
-                        Interceptor.attach(sentinelFind, {
-                            onEnter: function(args) {
+                    if (sentinelFind) {{
+                        Interceptor.attach(sentinelFind, {{
+                            onEnter: function(args) {{
                                 this.devIdPtr = args[0];
                                 console.log("[Sentinel] RNBOsproFindFirstUnit called");
-                            },
-                            onLeave: function(retval) {
-                                if (this.devIdPtr) {
+                            }},
+                            onLeave: function(retval) {{
+                                if (this.devIdPtr) {{
                                     this.devIdPtr.writeU32(0x87654321);
-                                }
+                                }}
                                 retval.replace(0);
                                 console.log("[Sentinel] RNBOsproFindFirstUnit returning SP_SUCCESS");
-                            }
-                        });
-                    }
+                            }}
+                        }});
+                    }}
 
                     var sentinelQuery = Module.findExportByName(sentinelModule.name, "RNBOsproQuery");
-                    if (sentinelQuery) {
-                        Interceptor.attach(sentinelQuery, {
-                            onEnter: function(args) {
+                    if (sentinelQuery) {{
+                        Interceptor.attach(sentinelQuery, {{
+                            onEnter: function(args) {{
                                 this.queryBuf = args[1];
                                 this.respBuf = args[2];
                                 console.log("[Sentinel] RNBOsproQuery called");
-                            },
-                            onLeave: function(retval) {
-                                if (this.respBuf) {
+                            }},
+                            onLeave: function(retval) {{
+                                if (this.respBuf) {{
                                     var response = new Uint8Array(64);
                                     response[0] = 0x87; response[1] = 0x65; response[2] = 0x43; response[3] = 0x21;
                                     var serial = "SN123456789ABCDEF";
-                                    for (var i = 0; i < serial.length; i++) {
+                                    for (var i = 0; i < serial.length; i++) {{
                                         response[4 + i] = serial.charCodeAt(i);
-                                    }
+                                    }}
                                     response[20] = 0x08; response[21] = 0x00; response[22] = 0x00;
-                                    for (var j = 23; j < 64; j++) {
+                                    for (var j = 23; j < 64; j++) {{
                                         response[j] = (j * 13) & 0xFF;
-                                    }
+                                    }}
                                     this.respBuf.writeByteArray(Array.from(response));
-                                }
+                                }}
                                 retval.replace(0);
                                 console.log("[Sentinel] RNBOsproQuery returning SP_SUCCESS");
-                            }
-                        });
-                    }
+                            }}
+                        }});
+                    }}
 
                     var sentinelRead = Module.findExportByName(sentinelModule.name, "RNBOsproRead");
-                    if (sentinelRead) {
-                        Interceptor.attach(sentinelRead, {
-                            onEnter: function(args) {
+                    if (sentinelRead) {{
+                        Interceptor.attach(sentinelRead, {{
+                            onEnter: function(args) {{
                                 this.address = args[1].toInt32();
                                 this.length = args[2].toInt32();
                                 this.buffer = args[3];
                                 console.log("[Sentinel] RNBOsproRead: addr=" + this.address + " len=" + this.length);
-                            },
-                            onLeave: function(retval) {
-                                if (this.buffer && this.length > 0) {
+                            }},
+                            onLeave: function(retval) {{
+                                if (this.buffer && this.length > 0) {{
                                     var cellData = new Uint8Array(this.length);
                                     var seed = (this.address * 23 + 0x87654321) & 0xFFFFFFFF;
-                                    for (var i = 0; i < this.length; i++) {
+                                    for (var i = 0; i < this.length; i++) {{
                                         seed = ((seed * 1103515245) + 12345) & 0xFFFFFFFF;
                                         cellData[i] = (seed >> 16) & 0xFF;
-                                    }
+                                    }}
                                     this.buffer.writeByteArray(Array.from(cellData));
-                                }
+                                }}
                                 retval.replace(0);
-                            }
-                        });
-                    }
+                            }}
+                        }});
+                    }}
 
                     console.log("[Sentinel] Comprehensive Sentinel API hooks installed");
-                } catch(e) {
+                }} catch(e) {{
                     console.log("[Sentinel] Error installing hooks: " + e);
-                }
-            }
-        }
+                }}
+            }}
+        }}
 
-        if (%s.includes("CodeMeter")) {
+        if ({dongle_types!s}.includes("CodeMeter")) {{
             var wibuModule = Process.findModuleByName("WibuCm64.dll");
-            if (!wibuModule) { wibuModule = Process.findModuleByName("WibuKey64.dll"); }
+            if (!wibuModule) {{ wibuModule = Process.findModuleByName("WibuKey64.dll"); }}
 
-            if (wibuModule) {
-                try {
+            if (wibuModule) {{
+                try {{
                     var cmAccess = Module.findExportByName(wibuModule.name, "CmAccess");
-                    if (cmAccess) {
-                        Interceptor.attach(cmAccess, {
-                            onEnter: function(args) {
+                    if (cmAccess) {{
+                        Interceptor.attach(cmAccess, {{
+                            onEnter: function(args) {{
                                 this.firmCode = args[0].toInt32();
                                 this.productCode = args[1].toInt32();
                                 this.handlePtr = args[2];
                                 console.log("[CodeMeter] CmAccess: firm=" + this.firmCode + " product=" + this.productCode);
-                            },
-                            onLeave: function(retval) {
-                                if (this.handlePtr) {
+                            }},
+                            onLeave: function(retval) {{
+                                if (this.handlePtr) {{
                                     this.handlePtr.writeU32(0x12345678);
-                                }
+                                }}
                                 retval.replace(0);
                                 console.log("[CodeMeter] CmAccess returning success");
-                            }
-                        });
-                    }
+                            }}
+                        }});
+                    }}
 
                     var cmCrypt = Module.findExportByName(wibuModule.name, "CmCrypt");
-                    if (cmCrypt) {
-                        Interceptor.attach(cmCrypt, {
-                            onLeave: function(retval) {
+                    if (cmCrypt) {{
+                        Interceptor.attach(cmCrypt, {{
+                            onLeave: function(retval) {{
                                 retval.replace(0);
-                            }
-                        });
-                    }
+                            }}
+                        }});
+                    }}
 
                     var cmGetInfo = Module.findExportByName(wibuModule.name, "CmGetInfo");
-                    if (cmGetInfo) {
-                        Interceptor.attach(cmGetInfo, {
-                            onEnter: function(args) {
+                    if (cmGetInfo) {{
+                        Interceptor.attach(cmGetInfo, {{
+                            onEnter: function(args) {{
                                 this.infoPtr = args[1];
-                            },
-                            onLeave: function(retval) {
-                                if (this.infoPtr) {
+                            }},
+                            onLeave: function(retval) {{
+                                if (this.infoPtr) {{
                                     var info = new Uint8Array(256);
                                     info[0] = 0x65; info[1] = 0x00; info[2] = 0xE8; info[3] = 0x03;
                                     info[4] = 0x01; info[5] = 0x00; info[6] = 0x00; info[7] = 0x00;
                                     info[8] = 0x40; info[9] = 0x42; info[10] = 0x0F; info[11] = 0x00;
                                     var versionStr = "6.90";
-                                    for (var i = 0; i < versionStr.length; i++) {
+                                    for (var i = 0; i < versionStr.length; i++) {{
                                         info[12 + i] = versionStr.charCodeAt(i);
-                                    }
-                                    for (var j = 16; j < 256; j++) {
+                                    }}
+                                    for (var j = 16; j < 256; j++) {{
                                         info[j] = ((j * 19 + 0x42) ^ (j >> 2)) & 0xFF;
-                                    }
+                                    }}
                                     this.infoPtr.writeByteArray(Array.from(info));
-                                }
+                                }}
                                 retval.replace(0);
-                            }
-                        });
-                    }
+                            }}
+                        }});
+                    }}
 
                     console.log("[CodeMeter] Comprehensive CodeMeter API hooks installed");
-                } catch(e) {
+                }} catch(e) {{
                     console.log("[CodeMeter] Error installing hooks: " + e);
-                }
-            }
-        }
+                }}
+            }}
+        }}
 
         var kernel32 = Module.findModuleByName("kernel32.dll");
-        if (kernel32) {
+        if (kernel32) {{
             var deviceIoControl = Module.findExportByName("kernel32.dll", "DeviceIoControl");
-            if (deviceIoControl) {
-                Interceptor.attach(deviceIoControl, {
-                    onEnter: function(args) {
+            if (deviceIoControl) {{
+                Interceptor.attach(deviceIoControl, {{
+                    onEnter: function(args) {{
                         this.ioControlCode = args[1].toInt32();
                         this.outBuffer = args[4];
                         this.outBufferSize = args[5].toInt32();
                         this.bytesReturned = args[6];
-                    },
-                    onLeave: function(retval) {
+                    }},
+                    onLeave: function(retval) {{
                         var isDongleIoctl = (this.ioControlCode & 0xFFFF0000) === 0x00220000 ||
                                           (this.ioControlCode & 0xFFFF0000) === 0x00320000;
 
-                        if (isDongleIoctl) {
-                            if (this.outBuffer && this.outBufferSize > 0) {
+                        if (isDongleIoctl) {{
+                            if (this.outBuffer && this.outBufferSize > 0) {{
                                 var responseLen = Math.min(this.outBufferSize, 64);
                                 var ioctlResponse = new Uint8Array(responseLen);
                                 var ctrlType = (this.ioControlCode >> 8) & 0xFF;
                                 ioctlResponse[0] = 0x01; ioctlResponse[1] = 0x00;
                                 ioctlResponse[2] = ctrlType; ioctlResponse[3] = 0x00;
-                                for (var k = 4; k < responseLen; k++) {
+                                for (var k = 4; k < responseLen; k++) {{
                                     ioctlResponse[k] = ((k * 11 + this.ioControlCode) ^ (k << 3)) & 0xFF;
-                                }
+                                }}
                                 this.outBuffer.writeByteArray(Array.from(ioctlResponse));
-                            }
-                            if (this.bytesReturned) {
+                            }}
+                            if (this.bytesReturned) {{
                                 this.bytesReturned.writeU32(Math.min(this.outBufferSize, 64));
-                            }
+                            }}
                             retval.replace(1);
                             console.log("[Dongle] DeviceIoControl for dongle IOCTL: 0x" + this.ioControlCode.toString(16));
-                        }
-                    }
-                });
-            }
-        }
+                        }}
+                    }}
+                }});
+            }}
+        }}
 
         console.log("[Dongle Emulator] All comprehensive dongle API hooks installed!");
-        """ % (
-            str(dongle_types), str(dongle_types), str(dongle_types), str(dongle_types)
-        )
+        """
 
         self.hooks.append({
             "type": "frida",

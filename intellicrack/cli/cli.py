@@ -23,6 +23,7 @@ import os
 import sys
 import threading
 import time
+from typing import NoReturn
 
 from intellicrack.utils.analysis.binary_analysis import analyze_binary
 from intellicrack.utils.exploitation.exploitation import exploit
@@ -106,7 +107,7 @@ logger = logging.getLogger("IntellicrackLogger.CLI")
 @click.group()
 @click.option("--verbose", "-v", is_flag=True, help="Enable verbose output", envvar="INTELLICRACK_VERBOSE")
 @click.option("--quiet", "-q", is_flag=True, help="Suppress non-essential output", envvar="INTELLICRACK_QUIET")
-def cli(verbose: bool, quiet: bool):
+def cli(verbose: bool, quiet: bool) -> None:
     """Intellicrack - Advanced Binary Analysis and Exploitation Framework."""
     # Configure logging
     if verbose:
@@ -130,7 +131,7 @@ def cli(verbose: bool, quiet: bool):
 @click.option("--vulns", is_flag=True, help="Perform vulnerability scan")
 @click.option("--output", "-o", help="Save scan results")
 @click.option("--verbose", "-v", is_flag=True, help="Verbose output")
-def scan(binary_path: str, vulns: bool, output: str | None, verbose: bool):
+def scan(binary_path: str, vulns: bool, output: str | None, verbose: bool) -> None:
     """Scan binary for vulnerabilities and security issues."""
     try:
         click.echo(f"Scanning binary: {binary_path}")
@@ -213,7 +214,7 @@ def scan(binary_path: str, vulns: bool, output: str | None, verbose: bool):
 )
 @click.option("--output", "-o", help="Save strings to file")
 @click.option("--filter", "-f", help="Filter strings by pattern")
-def strings(binary_path: str, min_length: int, encoding: str, output: str | None, filter: str | None):
+def strings(binary_path: str, min_length: int, encoding: str, output: str | None, filter: str | None) -> None:
     """Extract strings from binary file."""
     try:
         click.echo(f"Extracting strings from: {binary_path}")
@@ -258,7 +259,7 @@ def strings(binary_path: str, min_length: int, encoding: str, output: str | None
 
 
 @cli.group()
-def payload():
+def payload() -> None:
     """Payload generation commands."""
 
 
@@ -304,7 +305,7 @@ def generate(
     encoding: tuple,
     output: str | None,
     output_format: str,
-):
+) -> None:
     """Generate a custom payload with various options."""
     try:
         engine = PayloadEngine()
@@ -393,11 +394,11 @@ def generate(
             "shell",
             "steganography",
             "anti_analysis",
-        ]
+        ],
     ),
     help="Template category",
 )
-def list_templates(category: str | None):
+def list_templates(category: str | None) -> None:
     """List available payload templates."""
     try:
         templates = PayloadTemplates()
@@ -436,7 +437,7 @@ def list_templates(category: str | None):
 )
 @click.option("--param", "-p", multiple=True, help="Template parameters (key=value)")
 @click.option("--output", "-o", help="Output file path")
-def from_template(category: str, template_name: str, architecture: str, param: tuple, output: str | None):
+def from_template(category: str, template_name: str, architecture: str, param: tuple, output: str | None) -> None:
     """Generate payload from template."""
     try:
         engine = PayloadEngine()
@@ -526,7 +527,7 @@ def from_template(category: str, template_name: str, architecture: str, param: t
 )
 @click.option("--payload", "-p", "payload_data", help="Custom payload or payload file")
 @click.option("--output", "-o", help="Output exploit to file")
-def exploit_target(target: str, exploit_type: str, payload_data: str | None, output: str | None):
+def exploit_target(target: str, exploit_type: str, payload_data: str | None, output: str | None) -> None:
     """Exploit a target binary or service."""
     try:
         click.echo(f"Exploiting target: {target}")
@@ -569,7 +570,7 @@ def exploit_target(target: str, exploit_type: str, payload_data: str | None, out
 
 
 def _get_analysis_types(
-    mode: str, gpu_accelerate: bool, distributed: bool, symbolic_execution: bool, concolic_execution: bool
+    mode: str, gpu_accelerate: bool, distributed: bool, symbolic_execution: bool, concolic_execution: bool,
 ) -> list[str]:
     """Determine analysis types based on mode and options."""
     if mode == "comprehensive":
@@ -753,7 +754,7 @@ def analyze(
     distributed: bool,
     symbolic_execution: bool,
     concolic_execution: bool,
-):
+) -> None:
     """Comprehensive binary analysis with multiple modes and options."""
     from intellicrack.cli.progress_manager import ProgressManager
 
@@ -763,7 +764,7 @@ def analyze(
         analysis_types = _get_analysis_types(mode, gpu_accelerate, distributed, symbolic_execution, concolic_execution)
         progress_manager.start_analysis(binary_path, analysis_types)
 
-        def progress_callback(step: str, progress: float, message: str = ""):
+        def progress_callback(step: str, progress: float, message: str = "") -> None:
             """Update progress for current analysis step."""
             if step in progress_manager.task_ids:
                 task_id = progress_manager.task_ids[step]
@@ -830,7 +831,7 @@ def analyze(
 @click.option("--deep", "-d", is_flag=True, help="Perform deep analysis")
 @click.option("--output", "-o", help="Save analysis report")
 @click.option("--no-ai", is_flag=True, help="Disable AI integration")
-def basic_analyze(binary_path: str, deep: bool, output: str | None, no_ai: bool):
+def basic_analyze(binary_path: str, deep: bool, output: str | None, no_ai: bool) -> None:
     """Analyze a binary file with AI integration."""
     try:
         click.echo(f"Analyzing binary: {binary_path}")
@@ -938,7 +939,7 @@ def patch(
     data: str | None,
     nop_range: str | None,
     output: str | None,
-):
+) -> None:
     """Patch a binary file."""
     try:
         patches = []
@@ -948,7 +949,7 @@ def patch(
                 {
                     "offset": int(offset, 16),
                     "data": bytes.fromhex(data.replace(" ", "")),
-                }
+                },
             )
 
         if nop_range:
@@ -958,7 +959,7 @@ def patch(
                     "type": "nop",
                     "start": int(nop_start, 16),
                     "end": int(nop_end, 16),
-                }
+                },
             )
 
         if not patches:
@@ -1001,7 +1002,7 @@ def patch(
 
 
 @cli.group()
-def advanced():
+def advanced() -> None:
     """Advanced exploitation commands."""
     if not ADVANCED_MODULES_AVAILABLE:
         click.echo("Advanced modules not available. Please check installation.", err=True)
@@ -1009,7 +1010,7 @@ def advanced():
 
 
 @advanced.group()
-def advanced_payload():
+def advanced_payload() -> None:
     """Advanced payload generation commands."""
 
 
@@ -1060,7 +1061,7 @@ def advanced_generate(
     evasion: str,
     output: str | None,
     output_format: str,
-):
+) -> None:
     """Generate advanced payload with evasion techniques."""
     try:
         # This functionality has been removed as it was part of out-of-scope exploitation code.
@@ -1085,7 +1086,7 @@ def advanced_generate(
 
 
 @advanced.group()
-def research():
+def research() -> None:
     """Vulnerability research commands."""
 
 
@@ -1102,7 +1103,7 @@ def research():
             "vulnerability_assessment",
             "patch_analysis",
             "hybrid_research",
-        ]
+        ],
     ),
     default="binary_analysis",
     help="Research campaign type",
@@ -1110,7 +1111,7 @@ def research():
 @click.option("--output", "-o", help="Output directory for results")
 @click.option("--timeout", type=int, default=3600, help="Analysis timeout (seconds)")
 @click.option("--use-ai", is_flag=True, help="Use AI-guided analysis")
-def run(target_path: str, campaign_type: str, output: str | None, timeout: int, use_ai: bool):
+def run(target_path: str, campaign_type: str, output: str | None, timeout: int, use_ai: bool) -> None:
     """Run vulnerability research analysis."""
     try:
         if not os.path.exists(target_path):
@@ -1129,7 +1130,7 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
             try:
                 if platform.system() != "Windows" and hasattr(signal, "SIGALRM") and hasattr(signal, "alarm"):
 
-                    def timeout_handler(signum, frame):
+                    def timeout_handler(signum, frame) -> NoReturn:
                         logger.warning("AI analysis timeout handler: signal %s, frame %s", signum, frame)
                         raise TimeoutError(f"Analysis timed out after {timeout} seconds")
 
@@ -1150,7 +1151,7 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
                 exception_holder = [None]
                 result = None
 
-                def run_analysis():
+                def run_analysis() -> None:
                     try:
                         nonlocal result
                         result = ai_researcher.analyze_licensing_protection(target_path)
@@ -1224,7 +1225,7 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
             try:
                 if platform.system() != "Windows" and hasattr(signal, "SIGALRM") and hasattr(signal, "alarm"):
 
-                    def timeout_handler(signum, frame):
+                    def timeout_handler(signum, frame) -> NoReturn:
                         logger.warning(
                             "Binary analysis timeout handler: signal %s, frame %s",
                             signum,
@@ -1294,7 +1295,7 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
 
 
 @advanced.group()
-def post_exploit():
+def post_exploit() -> None:
     """Post-exploitation commands."""
 
 
@@ -1306,7 +1307,7 @@ def post_exploit():
     help="Target platform",
 )
 @click.option("--output", "-o", help="Save detailed results to file")
-def auto_exploit(target_path: str, lhost: str, lport: int, target_platform: str, output: str | None):
+def auto_exploit(target_path: str, lhost: str, lport: int, target_platform: str, output: str | None) -> None:
     """Run full automated exploitation workflow."""
     try:
         if not os.path.exists(target_path):
@@ -1378,7 +1379,7 @@ def auto_exploit(target_path: str, lhost: str, lport: int, target_platform: str,
 
 
 @cli.group()
-def ai():
+def ai() -> None:
     """AI-powered script generation and analysis commands."""
 
 
@@ -1413,7 +1414,7 @@ def ai_generate(
     output: str | None,
     autonomous_mode: bool,
     preview: bool,
-):
+) -> None:
     """Generate AI scripts for binary protection bypass."""
     try:
         if not os.path.exists(binary_path):
@@ -1562,7 +1563,7 @@ def ai_generate(
 )
 @click.option("--timeout", default=60, help="Test timeout in seconds")
 @click.option("--verbose", "-v", is_flag=True, help="Verbose output")
-def test(script_path: str, binary: str | None, environment: str, timeout: int, verbose: bool):
+def test(script_path: str, binary: str | None, environment: str, timeout: int, verbose: bool) -> None:
     """Test AI-generated scripts in safe environments."""
     try:
         if not os.path.exists(script_path):
@@ -1651,7 +1652,7 @@ def test(script_path: str, binary: str | None, environment: str, timeout: int, v
 @click.option("--output", "-o", help="Save analysis report to file")
 @click.option("--format", type=click.Choice(["text", "json", "html"]), default="text", help="Output format")
 @click.option("--deep", is_flag=True, help="Enable deep AI analysis")
-def ai_analyze(binary_path: str, output: str | None, output_format: str, deep: bool):
+def ai_analyze(binary_path: str, output: str | None, output_format: str, deep: bool) -> None:
     """Analyze binary for protection mechanisms using AI."""
     try:
         if not os.path.exists(binary_path):
@@ -1817,7 +1818,7 @@ def autonomous(
     test_environment: str,
     save_all: bool,
     verbose: bool,
-):
+) -> None:
     """Run autonomous AI workflow for complex tasks."""
     try:
         from intellicrack.ai.orchestrator import get_orchestrator
@@ -1912,7 +1913,7 @@ def autonomous(
 @click.argument("binary_path", type=click.Path(exists=True))
 @click.option("--output", "-o", help="Output file for session data")
 @click.option("--include-ui", is_flag=True, help="Include UI conversation history")
-def save_session(binary_path: str, output: str | None, include_ui: bool):
+def save_session(binary_path: str, output: str | None, include_ui: bool) -> None:
     """Save AI session data including conversation history."""
     try:
         from intellicrack.ai.script_generation_agent import AIAgent
@@ -1991,7 +1992,7 @@ def save_session(binary_path: str, output: str | None, include_ui: bool):
 
 @ai.command()
 @click.option("--confirm", is_flag=True, help="Confirm reset without prompt")
-def reset(confirm: bool):
+def reset(confirm: bool) -> None:
     """Reset AI agent state for new analysis."""
     try:
         from intellicrack.ai.script_generation_agent import AIAgent
@@ -2046,7 +2047,7 @@ def task(
     script: str | None,
     output: str | None,
     verbose: bool,
-):
+) -> None:
     """Execute specific autonomous AI task."""
     try:
         from intellicrack.ai.script_generation_agent import AIAgent
@@ -2126,7 +2127,7 @@ def task(
 
 
 @cli.group()
-def frida():
+def frida() -> None:
     """Frida script management and execution commands."""
 
 
@@ -2139,9 +2140,9 @@ def frida():
 @click.option(
     "--verbose", "-v",
     is_flag=True,
-    help="Show detailed information about each script"
+    help="Show detailed information about each script",
 )
-def frida_list(category: str | None, verbose: bool):
+def frida_list(category: str | None, verbose: bool) -> None:
     """List available Frida scripts from the library."""
     try:
         from pathlib import Path
@@ -2195,7 +2196,7 @@ def frida_list(category: str | None, verbose: bool):
 
 @frida.command("info")
 @click.argument("script_name")
-def frida_info(script_name: str):
+def frida_info(script_name: str) -> None:
     """Show detailed information about a specific Frida script."""
     try:
         from pathlib import Path
@@ -2256,7 +2257,7 @@ def frida_info(script_name: str):
     type=click.Path(),
     help="Save results to file",
 )
-def frida_run(script_name: str, binary_path: str, mode: str, params: str | None, output: str | None):
+def frida_run(script_name: str, binary_path: str, mode: str, params: str | None, output: str | None) -> None:
     """Execute a Frida script from the library against a target binary."""
     try:
         import json
@@ -2297,7 +2298,7 @@ def frida_run(script_name: str, binary_path: str, mode: str, params: str | None,
             script_name=script_name,
             target=binary_path,
             mode=mode,
-            parameters=parameters
+            parameters=parameters,
         )
 
         # Display results
@@ -2348,7 +2349,7 @@ def frida_run(script_name: str, binary_path: str, mode: str, params: str | None,
 @click.option("--report", "-r", help="Export detection report to file (JSON format)")
 @click.option("--verbose", "-v", is_flag=True, help="Display detailed detection information")
 @click.option("--min-confidence", "-c", type=float, default=0.3, help="Minimum confidence threshold (0.0-1.0)")
-def cert_detect(target: str, report: str | None, verbose: bool, min_confidence: float):
+def cert_detect(target: str, report: str | None, verbose: bool, min_confidence: float) -> None:
     """Detect certificate validation in binary or process.
 
     TARGET can be a file path or process name/PID.
@@ -2432,7 +2433,7 @@ def cert_detect(target: str, report: str | None, verbose: bool, min_confidence: 
 @click.option("--verify", "-v", is_flag=True, help="Run verification after bypass")
 @click.option("--report", "-r", help="Export bypass report to file (JSON format)")
 @click.option("--force", "-f", is_flag=True, help="Force bypass even on high-risk targets")
-def cert_bypass(target: str, method: str, verify: bool, report: str | None, force: bool):
+def cert_bypass(target: str, method: str, verify: bool, report: str | None, force: bool) -> None:
     """Execute certificate validation bypass on target.
 
     TARGET can be a file path or process name/PID.
@@ -2467,7 +2468,7 @@ def cert_bypass(target: str, method: str, verify: bool, report: str | None, forc
                 "patch": BypassMethod.BINARY_PATCH,
                 "frida": BypassMethod.FRIDA_HOOK,
                 "hybrid": BypassMethod.HYBRID,
-                "mitm": BypassMethod.MITM_PROXY
+                "mitm": BypassMethod.MITM_PROXY,
             }
             bypass_method = method_map.get(method.lower())
 
@@ -2547,7 +2548,7 @@ def cert_bypass(target: str, method: str, verify: bool, report: str | None, forc
 @click.argument("target")
 @click.option("--url", "-u", default="https://www.google.com", help="HTTPS URL to test")
 @click.option("--timeout", "-t", type=int, default=10, help="Connection timeout in seconds")
-def cert_test(target: str, url: str, timeout: int):
+def cert_test(target: str, url: str, timeout: int) -> None:
     """Test if certificate bypass is working for target.
 
     TARGET can be a file path or process name/PID.
@@ -2646,7 +2647,7 @@ def cert_test(target: str, url: str, timeout: int):
 @cli.command("cert-rollback")
 @click.argument("target")
 @click.option("--force", "-f", is_flag=True, help="Force rollback even if no backup found")
-def cert_rollback(target: str, force: bool):
+def cert_rollback(target: str, force: bool) -> None:
     """Rollback certificate bypass and restore original state.
 
     TARGET can be a file path or process name/PID.

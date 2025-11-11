@@ -449,7 +449,7 @@ def get_system_processes() -> list[dict[str, Any]]:
                         "name": proc.info["name"],
                         "cmdline": " ".join(proc.info["cmdline"]) if proc.info["cmdline"] else "",
                         "create_time": proc.info["create_time"],
-                    }
+                    },
                 )
             except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
                 logger.error("Error in process_utils: %s", e)
@@ -483,7 +483,7 @@ def run_command(command: str, timeout: int = 30) -> dict[str, Any]:
     try:
         logger.info("Running command: %s", command)
 
-        process = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+        process = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
             shlex.split(command) if isinstance(command, str) else command,
             capture_output=True,
             text=True,

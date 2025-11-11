@@ -151,7 +151,7 @@ class MultiLayerResult:
 class MultiLayerBypass:
     """Orchestrates multi-layer certificate validation bypasses."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize multi-layer bypass orchestrator."""
         self._patcher = CertificatePatcher()
         self._frida_hooks = FridaCertificateHooks()
@@ -161,7 +161,7 @@ class MultiLayerBypass:
         self,
         target: str,
         layers: List[LayerInfo],
-        dependency_graph: DependencyGraph
+        dependency_graph: DependencyGraph,
     ) -> MultiLayerResult:
         """Execute multi-layer bypass with dependency handling.
 
@@ -187,23 +187,23 @@ class MultiLayerBypass:
 
             if not self._check_dependencies_satisfied(layer_type, dependency_graph, result):
                 logger.warning(
-                    f"Skipping {layer_type.value} - dependencies not satisfied"
+                    f"Skipping {layer_type.value} - dependencies not satisfied",
                 )
                 result.failed_layers.append(
-                    (layer_type, "Dependencies not satisfied")
+                    (layer_type, "Dependencies not satisfied"),
                 )
                 continue
 
             logger.info(f"Stage {stage_number}: Bypassing {layer_type.value}")
 
             stage_result = self._execute_stage_bypass(
-                stage_number, layer_type, layer_info, target
+                stage_number, layer_type, layer_info, target,
             )
             result.add_stage_result(stage_result)
 
             if not stage_result.success:
                 logger.error(
-                    f"Stage {stage_number} failed: {stage_result.error_message}"
+                    f"Stage {stage_number} failed: {stage_result.error_message}",
                 )
                 self._rollback_previous_stages(result)
                 return result
@@ -213,7 +213,7 @@ class MultiLayerBypass:
 
             if not verified:
                 logger.warning(
-                    f"Verification failed for {layer_type.value} - bypass may not be effective"
+                    f"Verification failed for {layer_type.value} - bypass may not be effective",
                 )
 
             stage_number += 1
@@ -226,7 +226,7 @@ class MultiLayerBypass:
         stage_number: int,
         layer: ValidationLayer,
         layer_info: LayerInfo,
-        target: str
+        target: str,
     ) -> StageResult:
         """Execute bypass for a specific layer."""
         if layer == ValidationLayer.OS_LEVEL:
@@ -242,14 +242,14 @@ class MultiLayerBypass:
                 stage_number=stage_number,
                 layer=layer,
                 success=False,
-                error_message=f"Unknown layer type: {layer}"
+                error_message=f"Unknown layer type: {layer}",
             )
 
     def _bypass_os_level(
         self,
         stage_number: int,
         layer: ValidationLayer,
-        target: str
+        target: str,
     ) -> StageResult:
         """Bypass OS-level validation (CryptoAPI, Schannel)."""
         logger.info("Bypassing OS-level certificate validation")
@@ -269,7 +269,7 @@ class MultiLayerBypass:
                     stage_number=stage_number,
                     layer=layer,
                     success=True,
-                    bypassed_functions=[]
+                    bypassed_functions=[],
                 )
 
             bypassed = []
@@ -278,7 +278,7 @@ class MultiLayerBypass:
                 if template:
                     try:
                         patch_result = self._patcher.patch_certificate_validation(
-                            detection_report
+                            detection_report,
                         )
                         if patch_result.success:
                             bypassed.append(func.api_name)
@@ -298,7 +298,7 @@ class MultiLayerBypass:
                 layer=layer,
                 success=len(bypassed) > 0,
                 bypassed_functions=bypassed,
-                error_message=None if bypassed else "No OS-level bypasses succeeded"
+                error_message=None if bypassed else "No OS-level bypasses succeeded",
             )
 
         except Exception as e:
@@ -307,14 +307,14 @@ class MultiLayerBypass:
                 stage_number=stage_number,
                 layer=layer,
                 success=False,
-                error_message=str(e)
+                error_message=str(e),
             )
 
     def _bypass_library_level(
         self,
         stage_number: int,
         layer: ValidationLayer,
-        target: str
+        target: str,
     ) -> StageResult:
         """Bypass library-level validation (OpenSSL, NSS, BoringSSL)."""
         logger.info("Bypassing library-level certificate validation")
@@ -334,7 +334,7 @@ class MultiLayerBypass:
                     stage_number=stage_number,
                     layer=layer,
                     success=True,
-                    bypassed_functions=[]
+                    bypassed_functions=[],
                 )
 
             bypassed = []
@@ -354,7 +354,7 @@ class MultiLayerBypass:
                     if template:
                         try:
                             patch_result = self._patcher.patch_certificate_validation(
-                                detection_report
+                                detection_report,
                             )
                             if patch_result.success:
                                 bypassed.append(func.api_name)
@@ -366,7 +366,7 @@ class MultiLayerBypass:
                 layer=layer,
                 success=len(bypassed) > 0,
                 bypassed_functions=bypassed,
-                error_message=None if bypassed else "No library-level bypasses succeeded"
+                error_message=None if bypassed else "No library-level bypasses succeeded",
             )
 
         except Exception as e:
@@ -375,14 +375,14 @@ class MultiLayerBypass:
                 stage_number=stage_number,
                 layer=layer,
                 success=False,
-                error_message=str(e)
+                error_message=str(e),
             )
 
     def _bypass_application_level(
         self,
         stage_number: int,
         layer: ValidationLayer,
-        target: str
+        target: str,
     ) -> StageResult:
         """Bypass application-level validation (custom pinning, hardcoded certs)."""
         logger.info("Bypassing application-level certificate validation")
@@ -413,7 +413,7 @@ class MultiLayerBypass:
                 for func in app_functions[:5]:
                     try:
                         patch_result = self._patcher.patch_certificate_validation(
-                            detection_report
+                            detection_report,
                         )
                         if patch_result.success:
                             bypassed.append(f"Patched: {func.api_name}")
@@ -425,7 +425,7 @@ class MultiLayerBypass:
                 layer=layer,
                 success=len(bypassed) > 0,
                 bypassed_functions=bypassed,
-                error_message=None if bypassed else "No application-level bypasses succeeded"
+                error_message=None if bypassed else "No application-level bypasses succeeded",
             )
 
         except Exception as e:
@@ -434,14 +434,14 @@ class MultiLayerBypass:
                 stage_number=stage_number,
                 layer=layer,
                 success=False,
-                error_message=str(e)
+                error_message=str(e),
             )
 
     def _bypass_server_level(
         self,
         stage_number: int,
         layer: ValidationLayer,
-        target: str
+        target: str,
     ) -> StageResult:
         """Bypass server-level validation (network-based validation)."""
         logger.info("Bypassing server-level certificate validation")
@@ -463,7 +463,7 @@ class MultiLayerBypass:
 
             logger.info(
                 "Server-level bypass may require MITM proxy - "
-                "consider using bypass_orchestrator with MITM_PROXY method"
+                "consider using bypass_orchestrator with MITM_PROXY method",
             )
 
             return StageResult(
@@ -474,7 +474,7 @@ class MultiLayerBypass:
                 error_message=(
                     "Server validation requires MITM proxy"
                     if not bypassed else None
-                )
+                ),
             )
 
         except Exception as e:
@@ -483,14 +483,14 @@ class MultiLayerBypass:
                 stage_number=stage_number,
                 layer=layer,
                 success=False,
-                error_message=str(e)
+                error_message=str(e),
             )
 
     def _check_dependencies_satisfied(
         self,
         layer: ValidationLayer,
         dependency_graph: DependencyGraph,
-        result: MultiLayerResult
+        result: MultiLayerResult,
     ) -> bool:
         """Check if all dependencies for a layer have been successfully bypassed."""
         dependencies = dependency_graph.get_dependencies(layer)

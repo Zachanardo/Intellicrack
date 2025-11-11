@@ -57,7 +57,7 @@ class HexViewRenderer:
         group_size: int = 1,
         show_ascii: bool = True,
         show_address: bool = True,
-    ):
+    ) -> None:
         """Initialize the HexViewRenderer with display configuration."""
         self.bytes_per_row = bytes_per_row
         self.group_size = group_size
@@ -75,7 +75,7 @@ class HexViewRenderer:
             if self.bytes_per_row == 0:
                 self.bytes_per_row = self.group_size
 
-    def set_bytes_per_row(self, bytes_per_row: int):
+    def set_bytes_per_row(self, bytes_per_row: int) -> None:
         """Set the number of bytes per row.
 
         Args:
@@ -88,7 +88,7 @@ class HexViewRenderer:
             if self.bytes_per_row == 0:
                 self.bytes_per_row = self.group_size
 
-    def set_group_size(self, group_size: int):
+    def set_group_size(self, group_size: int) -> None:
         """Set the group size for byte grouping.
 
         Args:

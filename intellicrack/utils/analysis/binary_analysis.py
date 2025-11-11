@@ -135,7 +135,7 @@ def _analyze_with_performance_optimizer(binary_path: str, detailed: bool) -> Dic
                     _optimized_section_analysis,
                     _optimized_import_analysis,
                     _optimized_pattern_analysis,
-                ]
+                ],
             )
 
         # Run optimized analysis
@@ -189,7 +189,7 @@ def analyze_binary(binary_path: str, detailed: bool = True, enable_ai_integratio
         binary_path = str(binary_path)
     except (ValueError, TypeError, OverflowError) as e:
         logger.error("Error in binary_analysis: %s", e)
-        return {"error": f"Invalid path value: {str(e)}"}
+        return {"error": f"Invalid path value: {e!s}"}
 
     if not os.path.exists(binary_path):
         return {"error": f"Binary not found: {binary_path}"}
@@ -286,7 +286,7 @@ def _generate_ai_script_suggestions(analysis_results: Dict[str, Any], binary_pat
                     "description": "License validation bypass script",
                     "confidence": 0.9,
                     "complexity": "advanced",
-                }
+                },
             )
             suggestions["auto_generate_confidence"] = max(suggestions["auto_generate_confidence"], 0.85)
             suggestions["priority_targets"].append("license_validation")
@@ -299,7 +299,7 @@ def _generate_ai_script_suggestions(analysis_results: Dict[str, Any], binary_pat
                     "description": "Anti-debugging bypass script",
                     "confidence": 0.8,
                     "complexity": "moderate",
-                }
+                },
             )
             suggestions["auto_generate_confidence"] = max(suggestions["auto_generate_confidence"], 0.75)
             suggestions["priority_targets"].append("anti_debugging")
@@ -313,7 +313,7 @@ def _generate_ai_script_suggestions(analysis_results: Dict[str, Any], binary_pat
                     "description": "Network validation bypass script",
                     "confidence": 0.7,
                     "complexity": "advanced",
-                }
+                },
             )
             suggestions["auto_generate_confidence"] = max(suggestions["auto_generate_confidence"], 0.65)
             suggestions["priority_targets"].append("network_validation")
@@ -327,7 +327,7 @@ def _generate_ai_script_suggestions(analysis_results: Dict[str, Any], binary_pat
                     "description": "Cryptographic function analysis script",
                     "confidence": 0.8,
                     "complexity": "advanced",
-                }
+                },
             )
             suggestions["priority_targets"].append("cryptographic_functions")
 
@@ -340,7 +340,7 @@ def _generate_ai_script_suggestions(analysis_results: Dict[str, Any], binary_pat
                     "description": "Trial/time restriction bypass script",
                     "confidence": 0.85,
                     "complexity": "moderate",
-                }
+                },
             )
             suggestions["auto_generate_confidence"] = max(suggestions["auto_generate_confidence"], 0.8)
             suggestions["priority_targets"].append("trial_restrictions")
@@ -408,7 +408,7 @@ def _identify_auto_generation_candidates(analysis_results: Dict[str, Any]) -> Li
                             "confidence": 0.9,
                             "script_type": "frida",
                             "description": f"Automatic {api} bypass hook",
-                        }
+                        },
                     )
 
         # Entropy-based candidates (packed/encrypted sections)
@@ -420,7 +420,7 @@ def _identify_auto_generation_candidates(analysis_results: Dict[str, Any]) -> Li
                     "confidence": 0.8,
                     "script_type": "frida",
                     "description": "Automatic unpacking assistance script",
-                }
+                },
             )
 
     except Exception as e:
@@ -429,7 +429,7 @@ def _identify_auto_generation_candidates(analysis_results: Dict[str, Any]) -> Li
     return candidates
 
 
-def _trigger_autonomous_script_generation(orchestrator, analysis_results: Dict[str, Any], binary_path: str):
+def _trigger_autonomous_script_generation(orchestrator, analysis_results: Dict[str, Any], binary_path: str) -> None:
     """Trigger autonomous script generation for high-confidence scenarios."""
     try:
         from ...ai.script_generation_agent import AIAgent
@@ -884,7 +884,7 @@ def analyze_patterns(binary_path: str, patterns: Optional[List[bytes]] = None) -
                         "offset": hex(pos),
                         "pattern": pattern.decode("utf-8", errors="ignore"),
                         "context": context.hex(),
-                    }
+                    },
                 )
 
                 search_offset = pos + 1
@@ -895,7 +895,7 @@ def analyze_patterns(binary_path: str, patterns: Optional[List[bytes]] = None) -
                         "pattern": pattern.decode("utf-8", errors="ignore"),
                         "count": len(matches),
                         "locations": matches[:10],  # Limit to first 10 matches
-                    }
+                    },
                 )
 
         # Calculate statistics
@@ -986,7 +986,7 @@ def analyze_traffic(pcap_file: Optional[str] = None, interface: Optional[str] = 
                     }
 
                     for port, service in license_ports.items():
-                        if dst_port == port or src_port == port:
+                        if port in (dst_port, src_port):
                             server_info = {
                                 "ip": dst_ip if dst_port == port else src_ip,
                                 "port": port,
@@ -1013,7 +1013,7 @@ def analyze_traffic(pcap_file: Optional[str] = None, interface: Optional[str] = 
                                 "dst": f"{dst_ip}:{dst_port}",
                                 "protocol": protocol,
                                 "reason": _get_suspicious_reason(dst_ip, dst_port),
-                            }
+                            },
                         )
 
         # Try pyshark as fallback
@@ -1090,12 +1090,12 @@ def analyze_traffic(pcap_file: Optional[str] = None, interface: Optional[str] = 
 
     except Exception as e:
         logger.error("Exception in binary_analysis: %s", e)
-        results["error"] = f"Traffic analysis failed: {str(e)}"
+        results["error"] = f"Traffic analysis failed: {e!s}"
 
     return results
 
 
-def _try_import_scapy():
+def _try_import_scapy() -> bool | None:
     """Try to import scapy."""
     try:
         import scapy.all as scapy
@@ -1109,7 +1109,7 @@ def _try_import_scapy():
         return False
 
 
-def _try_import_pyshark():
+def _try_import_pyshark() -> bool | None:
     """Try to import pyshark."""
     try:
         import pyshark
@@ -1125,7 +1125,7 @@ def _try_import_pyshark():
         return False
 
 
-def _is_suspicious_connection(src_ip, dst_ip, port):
+def _is_suspicious_connection(src_ip, dst_ip, port) -> bool:
     """Check if connection is suspicious."""
     # Log connection details for debugging
     logger.debug(f"Checking connection from {src_ip} to {dst_ip}:{port}")
@@ -1140,13 +1140,10 @@ def _is_suspicious_connection(src_ip, dst_ip, port):
         return True
 
     # Check for suspicious source IPs (e.g., localhost connecting externally)
-    if src_ip in ["127.0.0.1", "::1"] and not dst_ip.startswith(("127.", "::1", "localhost")):
-        return True
-
-    return False
+    return bool(src_ip in ["127.0.0.1", "::1"] and not dst_ip.startswith(("127.", "::1", "localhost")))
 
 
-def _get_suspicious_reason(ip, port):
+def _get_suspicious_reason(ip, port) -> str:
     """Get reason why connection is suspicious."""
     # Include IP in analysis for more specific reasons
     if port in [4444, 4445, 8888, 9999, 1337, 31337]:
@@ -1183,7 +1180,7 @@ def get_basic_file_info(file_path: str) -> Dict[str, Any]:
         return {"error": str(e)}
 
 
-def check_suspicious_import(func_name: str, dll_name: str, suspicious_list: List[str]):
+def check_suspicious_import(func_name: str, dll_name: str, suspicious_list: List[str]) -> None:
     """Check for suspicious imports and add to list."""
     suspicious_imports = {
         "VirtualProtect": "Memory protection modification",
@@ -1205,7 +1202,7 @@ def analyze_pe_resources(pe) -> List[Dict[str, Any]]:
     """Analyze PE resources."""
     resources = []
 
-    def walk_resources(directory, level=0):
+    def walk_resources(directory, level=0) -> None:
         """Recursively walk resource directory tree."""
         logger.debug(f"Walking resources at level {level}")
 
@@ -1743,7 +1740,7 @@ def _get_elf_entry_point(binary_path: str) -> int:
 
 
 def disassemble_with_objdump(
-    binary_path: str, extra_args: Optional[List[str]] = None, timeout: int = 30, parse_func=None
+    binary_path: str, extra_args: Optional[List[str]] = None, timeout: int = 30, parse_func=None,
 ) -> Optional[List[Any]]:
     """Provide objdump disassembly fallback function.
 

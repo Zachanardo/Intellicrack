@@ -70,7 +70,7 @@ class BypassStrategy:
         scripts: list[str],
         priority: int = 50,
         dependencies: list[ProtectionType] = None,
-    ):
+    ) -> None:
         """Initialize a bypass strategy.
 
         Args:
@@ -95,7 +95,7 @@ class BypassStrategy:
         self.applied = False
         self.success = None
 
-    def add_success_indicator(self, indicator: dict[str, Any]):
+    def add_success_indicator(self, indicator: dict[str, Any]) -> None:
         """Add an indicator of successful bypass.
 
         Args:
@@ -106,7 +106,7 @@ class BypassStrategy:
         """
         self.success_indicators.append(indicator)
 
-    def add_failure_indicator(self, indicator: dict[str, Any]):
+    def add_failure_indicator(self, indicator: dict[str, Any]) -> None:
         """Add an indicator of failed bypass.
 
         Args:
@@ -136,7 +136,7 @@ class BypassStrategy:
         """
         return all(dep in completed_protections for dep in self.dependencies)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return string representation of the bypass strategy."""
         return f"BypassStrategy({self.protection_type.value}, scripts={self.scripts})"
 
@@ -144,7 +144,7 @@ class BypassStrategy:
 class FridaBypassWizard:
     """Automated bypass wizard with intelligent decision making."""
 
-    def __init__(self, frida_manager):
+    def __init__(self, frida_manager) -> None:
         """Initialize the Frida bypass wizard.
 
         Args:
@@ -208,7 +208,7 @@ class FridaBypassWizard:
             "retry_failures": 0,
         }
 
-    def set_mode(self, mode: str):
+    def set_mode(self, mode: str) -> None:
         """Set wizard mode (safe, balanced, aggressive, stealth, analysis).
 
         Different modes optimize for different scenarios:
@@ -232,7 +232,7 @@ class FridaBypassWizard:
         else:
             logger.warning(f"Unknown mode: {mode}, using balanced")
 
-    def set_callbacks(self, progress_callback: Callable = None, status_callback: Callable = None):
+    def set_callbacks(self, progress_callback: Callable = None, status_callback: Callable = None) -> None:
         """Set callback functions for progress and status updates.
 
         Args:
@@ -249,7 +249,7 @@ class FridaBypassWizard:
         self.progress_callback = progress_callback
         self.status_callback = status_callback
 
-    def _update_progress(self, progress: int, message: str = ""):
+    def _update_progress(self, progress: int, message: str = "") -> None:
         """Update progress and notify callbacks."""
         self.progress = progress
         if self.progress_callback:
@@ -258,7 +258,7 @@ class FridaBypassWizard:
             self.status_callback(message)
         logger.info(f"Wizard progress: {progress}% - {message}")
 
-    def _update_state(self, state: WizardState):
+    def _update_state(self, state: WizardState) -> None:
         """Update wizard state."""
         self.state = state
         logger.debug(f"Wizard state changed to: {state.value}")
@@ -337,7 +337,7 @@ class FridaBypassWizard:
             logger.error(f"Bypass wizard failed: {e}")
             raise
 
-    async def _analyze_process(self):
+    async def _analyze_process(self) -> None:
         """Analyze the target process.
 
         Performs initial reconnaissance on the target:
@@ -499,7 +499,7 @@ class FridaBypassWizard:
         });
         """
 
-    async def _detect_protections(self):
+    async def _detect_protections(self) -> None:
         """Detect protection mechanisms in the target.
 
         Uses multiple detection methods:
@@ -553,7 +553,7 @@ class FridaBypassWizard:
         except Exception as e:
             logger.error(f"Protection detection failed: {e}")
 
-    def _analyze_imports_for_protections(self):
+    def _analyze_imports_for_protections(self) -> None:
         """Analyze imported functions for protection indicators.
 
         Maps common protection-related API imports to protection types:
@@ -595,7 +595,7 @@ class FridaBypassWizard:
                     self.protection_evidence[prot_type] = []
                 self.protection_evidence[prot_type].append(f"Import: {func_name}")
 
-    def _analyze_strings_for_protections(self):
+    def _analyze_strings_for_protections(self) -> None:
         """Analyze strings for protection indicators.
 
         Searches collected strings for keywords indicating protections:
@@ -638,7 +638,7 @@ class FridaBypassWizard:
                         self.protection_evidence[prot_type] = []
                     self.protection_evidence[prot_type].append(f"String: {string[:50]}")
 
-    def _guess_protections_by_target(self):
+    def _guess_protections_by_target(self) -> None:
         """Guess likely protections based on target software."""
         if not self.target_process:
             return
@@ -659,7 +659,7 @@ class FridaBypassWizard:
             # Default assumption for unknown software
             self.detected_protections[ProtectionType.LICENSE] = True
 
-    async def _plan_strategy(self):
+    async def _plan_strategy(self) -> None:
         """Plan the bypass strategy based on detected protections.
 
         Creates BypassStrategy objects for each detected protection:
@@ -726,7 +726,7 @@ class FridaBypassWizard:
         except Exception as e:
             logger.error(f"Strategy planning failed: {e}")
 
-    async def _apply_bypasses(self):
+    async def _apply_bypasses(self) -> None:
         """Apply bypass strategies in order.
 
         Executes each bypass strategy sequentially:
@@ -839,7 +839,7 @@ class FridaBypassWizard:
             logger.error(f"Strategy application failed: {e}")
             return False
 
-    async def _monitor_results(self):
+    async def _monitor_results(self) -> None:
         """Monitor and verify bypass results.
 
         Post-bypass verification phase:
@@ -1148,7 +1148,7 @@ class FridaBypassWizard:
 
         try:
             # Set up message handler to receive results
-            def on_message(message, data):
+            def on_message(message, data) -> None:
                 if message["type"] == "send":
                     payload = message["payload"]
                     if payload.get("type") == "detection":
@@ -1175,7 +1175,7 @@ class FridaBypassWizard:
             logger.error(f"Detection script execution failed: {e}")
             return {"detected": False}
 
-    async def _adaptive_retry(self, verification_results: dict[ProtectionType, bool]):
+    async def _adaptive_retry(self, verification_results: dict[ProtectionType, bool]) -> None:
         """Adaptively retry failed bypasses with alternative strategies."""
         retry_count = 0
         max_retries = 3
@@ -1281,7 +1281,7 @@ class FridaBypassWizard:
             "process": self.analysis_results["process_info"],
             "detections": {
                 "total": self.metrics["protections_detected"],
-                "types": [p.value for p in self.detected_protections.keys()],
+                "types": [p.value for p in self.detected_protections],
                 "evidence": {p.value: e for p, e in self.protection_evidence.items()},
             },
             "bypasses": {
@@ -1309,7 +1309,7 @@ class FridaBypassWizard:
 
         return report
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the wizard if running.
 
         Gracefully stops wizard execution at current stage.
@@ -1335,7 +1335,7 @@ class WizardPresetManager:
     """
 
     @staticmethod
-    def apply_software_preset(wizard: FridaBypassWizard, software_name: str):
+    def apply_software_preset(wizard: FridaBypassWizard, software_name: str) -> None:
         """Apply preset configuration based on software.
 
         Loads software-specific bypass configuration including:

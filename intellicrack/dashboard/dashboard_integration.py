@@ -49,7 +49,7 @@ class ToolIntegration:
 class DashboardIntegration:
     """Integrates dashboard with all analysis tools."""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         """Initialize dashboard integration.
 
         Args:
@@ -68,7 +68,7 @@ class DashboardIntegration:
                 "http_port": self.config.get("http_port", 5000),
                 "max_events": self.config.get("max_events", 1000),
                 "metrics_history": self.config.get("metrics_history", 100),
-            }
+            },
         }
         self.dashboard_manager = create_dashboard_manager(dashboard_config)
 
@@ -89,11 +89,11 @@ class DashboardIntegration:
         self.dashboard_manager.start()
         self.logger.info("Dashboard integration initialized")
 
-    def _initialize_custom_widgets(self):
+    def _initialize_custom_widgets(self) -> None:
         """Initialize custom analysis widgets."""
         # Binary analysis overview
         self.dashboard_manager.add_widget(
-            create_widget("binary_overview", WidgetType.TABLE, "Binary Overview", sortable=False, filterable=False)
+            create_widget("binary_overview", WidgetType.TABLE, "Binary Overview", sortable=False, filterable=False),
         )
 
         # Tool status grid
@@ -104,20 +104,20 @@ class DashboardIntegration:
 
         # Cross-tool correlation matrix
         self.dashboard_manager.add_widget(
-            create_widget("correlation_matrix", WidgetType.HEATMAP, "Cross-tool Correlation", colorscale="RdBu")
+            create_widget("correlation_matrix", WidgetType.HEATMAP, "Cross-tool Correlation", colorscale="RdBu"),
         )
 
         # Live memory usage
         self.dashboard_manager.add_widget(
-            create_widget("memory_timeline", WidgetType.LINE_CHART, "Memory Usage Timeline", history_size=100)
+            create_widget("memory_timeline", WidgetType.LINE_CHART, "Memory Usage Timeline", history_size=100),
         )
 
         # Analysis speed gauge
         self.dashboard_manager.add_widget(
-            create_widget("analysis_speed", WidgetType.GAUGE, "Analysis Speed", min=0, max=1000, units="ops/sec")
+            create_widget("analysis_speed", WidgetType.GAUGE, "Analysis Speed", min=0, max=1000, units="ops/sec"),
         )
 
-    def integrate_ghidra(self, ghidra_analyzer: Any):
+    def integrate_ghidra(self, ghidra_analyzer: Any) -> None:
         """Integrate Ghidra analyzer with dashboard.
 
         Args:
@@ -141,7 +141,7 @@ class DashboardIntegration:
 
         self.logger.info("Integrated Ghidra with dashboard")
 
-    def integrate_frida(self, frida_analyzer: Any):
+    def integrate_frida(self, frida_analyzer: Any) -> None:
         """Integrate Frida analyzer with dashboard.
 
         Args:
@@ -165,7 +165,7 @@ class DashboardIntegration:
 
         self.logger.info("Integrated Frida with dashboard")
 
-    def integrate_radare2(self, r2_analyzer: Any):
+    def integrate_radare2(self, r2_analyzer: Any) -> None:
         """Integrate Radare2 analyzer with dashboard.
 
         Args:
@@ -191,7 +191,7 @@ class DashboardIntegration:
 
         self.logger.info("Integrated Radare2 with dashboard")
 
-    def integrate_cross_tool_orchestrator(self, orchestrator: Any):
+    def integrate_cross_tool_orchestrator(self, orchestrator: Any) -> None:
         """Integrate cross-tool orchestrator with dashboard.
 
         Args:
@@ -211,7 +211,7 @@ class DashboardIntegration:
 
         self.logger.info("Integrated cross-tool orchestrator with dashboard")
 
-    def start_analysis_monitoring(self, analysis_id: str, tool: str, target: str, options: Optional[Dict[str, Any]] = None):
+    def start_analysis_monitoring(self, analysis_id: str, tool: str, target: str, options: Optional[Dict[str, Any]] = None) -> None:
         """Start monitoring an analysis.
 
         Args:
@@ -240,7 +240,7 @@ class DashboardIntegration:
         # Update tool status
         self._update_tool_status(tool, "Running")
 
-    def complete_analysis_monitoring(self, analysis_id: str, results: Dict[str, Any]):
+    def complete_analysis_monitoring(self, analysis_id: str, results: Dict[str, Any]) -> None:
         """Complete analysis monitoring.
 
         Args:
@@ -266,7 +266,7 @@ class DashboardIntegration:
         # Process results for visualization
         self._process_analysis_results(results)
 
-    def report_finding(self, finding_type: str, tool: str, data: Dict[str, Any]):
+    def report_finding(self, finding_type: str, tool: str, data: Dict[str, Any]) -> None:
         """Report analysis finding to dashboard.
 
         Args:
@@ -306,7 +306,7 @@ class DashboardIntegration:
         """
         return self.dashboard_manager.get_websocket_url()
 
-    def export_analysis_report(self, filepath: str):
+    def export_analysis_report(self, filepath: str) -> None:
         """Export comprehensive analysis report.
 
         Args:
@@ -347,7 +347,7 @@ class DashboardIntegration:
 
         self.logger.info(f"Exported analysis report to {filepath}")
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown dashboard integration."""
         self.logger.info("Shutting down dashboard integration")
 
@@ -359,7 +359,7 @@ class DashboardIntegration:
 
     # Event handlers for different tools
 
-    def _handle_ghidra_event(self, event_type: str, data: Dict[str, Any]):
+    def _handle_ghidra_event(self, event_type: str, data: Dict[str, Any]) -> None:
         """Handle Ghidra event.
 
         Args:
@@ -373,7 +373,7 @@ class DashboardIntegration:
         if event_type == "function_analyzed":
             self._update_function_analysis("ghidra", data)
 
-    def _handle_frida_event(self, event_type: str, data: Dict[str, Any]):
+    def _handle_frida_event(self, event_type: str, data: Dict[str, Any]) -> None:
         """Handle Frida event.
 
         Args:
@@ -387,7 +387,7 @@ class DashboardIntegration:
         if event_type == "hook_installed":
             self._update_hook_status(data)
 
-    def _handle_r2_event(self, event_type: str, data: Dict[str, Any]):
+    def _handle_r2_event(self, event_type: str, data: Dict[str, Any]) -> None:
         """Handle Radare2 event.
 
         Args:
@@ -401,7 +401,7 @@ class DashboardIntegration:
         if event_type == "graph_generated":
             self._update_graph_widget(data)
 
-    def _handle_r2_performance(self, metrics: Dict[str, Any]):
+    def _handle_r2_performance(self, metrics: Dict[str, Any]) -> None:
         """Handle R2 performance metrics.
 
         Args:
@@ -410,7 +410,7 @@ class DashboardIntegration:
         """
         self.dashboard_manager.dashboard.update_performance("radare2", metrics)
 
-    def _handle_orchestrator_event(self, event_type: str, data: Dict[str, Any]):
+    def _handle_orchestrator_event(self, event_type: str, data: Dict[str, Any]) -> None:
         """Handle orchestrator event.
 
         Args:
@@ -576,7 +576,7 @@ class DashboardIntegration:
 
     # Widget update methods
 
-    def _update_binary_overview(self, target: str):
+    def _update_binary_overview(self, target: str) -> None:
         """Update binary overview widget.
 
         Args:
@@ -598,7 +598,7 @@ class DashboardIntegration:
         if "binary_overview" in self.dashboard_manager.widgets:
             self.dashboard_manager.widgets["binary_overview"].update_data(widget_data)
 
-    def _update_tool_status(self, tool: str, status: str):
+    def _update_tool_status(self, tool: str, status: str) -> None:
         """Update tool status widget.
 
         Args:
@@ -621,7 +621,7 @@ class DashboardIntegration:
         if "tool_status" in self.dashboard_manager.widgets:
             self.dashboard_manager.widgets["tool_status"].update_data(widget_data)
 
-    def _update_function_analysis(self, tool: str, data: Dict[str, Any]):
+    def _update_function_analysis(self, tool: str, data: Dict[str, Any]) -> None:
         """Update function analysis widgets.
 
         Args:
@@ -642,7 +642,7 @@ class DashboardIntegration:
             widget_data = WidgetData(timestamp=datetime.now(), values=values)
             widget.update_data(widget_data)
 
-    def _update_hook_status(self, data: Dict[str, Any]):
+    def _update_hook_status(self, data: Dict[str, Any]) -> None:
         """Update hook status display.
 
         Args:
@@ -661,7 +661,7 @@ class DashboardIntegration:
         )
         self.dashboard_manager.dashboard.add_event(event)
 
-    def _update_graph_widget(self, data: Dict[str, Any]):
+    def _update_graph_widget(self, data: Dict[str, Any]) -> None:
         """Update graph visualization widget.
 
         Args:
@@ -674,7 +674,7 @@ class DashboardIntegration:
             widget_data = WidgetData(timestamp=datetime.now(), values={"nodes": data.get("nodes", []), "edges": data.get("edges", [])})
             self.dashboard_manager.widgets["call_graph"].update_data(widget_data)
 
-    def _update_correlation_matrix(self, data: Dict[str, Any]):
+    def _update_correlation_matrix(self, data: Dict[str, Any]) -> None:
         """Update correlation matrix widget.
 
         Args:
@@ -690,7 +690,7 @@ class DashboardIntegration:
             widget_data = WidgetData(timestamp=datetime.now(), values={"matrix": matrix}, labels=tools, categories=tools)
             self.dashboard_manager.widgets["correlation_matrix"].update_data(widget_data)
 
-    def _update_finding_widgets(self, finding_type: str, data: Dict[str, Any]):
+    def _update_finding_widgets(self, finding_type: str, data: Dict[str, Any]) -> None:
         """Update widgets based on findings.
 
         Args:
@@ -712,7 +712,7 @@ class DashboardIntegration:
             widget_data = WidgetData(timestamp=datetime.now(), values=values)
             widget.update_data(widget_data)
 
-    def _process_analysis_results(self, results: Dict[str, Any]):
+    def _process_analysis_results(self, results: Dict[str, Any]) -> None:
         """Process analysis results for visualization.
 
         Args:

@@ -82,7 +82,7 @@ class ResponseLineParser:
 
     @staticmethod
     def parse_lines_with_categorization(
-        response: str, category_keywords: dict[str, list[str]], default_category: str = "other"
+        response: str, category_keywords: dict[str, list[str]], default_category: str = "other",
     ) -> dict[str, list[str]]:
         """Parse response lines and categorize them based on content.
 

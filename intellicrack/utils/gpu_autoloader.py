@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class GPUAutoLoader:
     """Automatic GPU detection and configuration system."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the GPU autoloader with default values."""
         self.gpu_available = False
         self.gpu_type = None
@@ -55,7 +55,7 @@ class GPUAutoLoader:
                 self._try_amd_rocm,
                 self._try_directml,
                 self._try_cpu_fallback,
-            ]
+            ],
         )
 
         for method in methods:
@@ -90,7 +90,7 @@ class GPUAutoLoader:
                 python_path = os.path.join(conda_env["path"], "python.exe" if sys.platform == "win32" else "python")
 
                 # Test if we can import from that environment
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     [
                         python_path,
                         "-c",
@@ -377,13 +377,13 @@ class GPUAutoLoader:
                                     "name": env_name,
                                     "path": env_path,
                                     "base": base,
-                                }
+                                },
                             )
                             break
 
         return conda_envs
 
-    def _inject_conda_packages(self, conda_env_path: str):
+    def _inject_conda_packages(self, conda_env_path: str) -> None:
         """Inject conda environment packages into current Python path."""
         # Add conda environment's site-packages to Python path
         if sys.platform == "win32":
@@ -461,7 +461,7 @@ class GPUAutoLoader:
 
         return {}
 
-    def synchronize(self):
+    def synchronize(self) -> None:
         """Synchronize GPU operations."""
         if not self.gpu_available or not self._torch:
             return
@@ -547,7 +547,7 @@ def detect_gpu_frameworks() -> dict[str, Any]:
                         "index": i,
                         "name": torch.cuda.get_device_name(i),
                         "memory": torch.cuda.get_device_properties(i).total_memory,
-                    }
+                    },
                 )
     except (ImportError, AttributeError):
         pass
@@ -566,7 +566,7 @@ def detect_gpu_frameworks() -> dict[str, Any]:
                 rocm_smi_path = shutil.which("rocm-smi")
                 if not rocm_smi_path:
                     raise FileNotFoundError("rocm-smi not found in PATH")
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     [rocm_smi_path, "--version"],
                     capture_output=True,
                     text=True,
@@ -592,7 +592,7 @@ def detect_gpu_frameworks() -> dict[str, Any]:
                 devices = platform.get_devices()
                 for device in devices:
                     frameworks["gpu_devices"].append(
-                        {"type": "OpenCL", "name": device.name, "vendor": device.vendor, "memory": device.global_mem_size}
+                        {"type": "OpenCL", "name": device.name, "vendor": device.vendor, "memory": device.global_mem_size},
                     )
             # Get OpenCL version from first platform
             if platforms:
@@ -642,7 +642,7 @@ def detect_gpu_frameworks() -> dict[str, Any]:
         vulkaninfo_path = shutil.which("vulkaninfo")
         if not vulkaninfo_path:
             raise FileNotFoundError("vulkaninfo not found in PATH")
-        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
             [vulkaninfo_path, "--summary"],
             capture_output=True,
             text=True,

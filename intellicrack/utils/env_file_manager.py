@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 class EnvFileManager:
     """Manages reading and writing to .env files with safety and validation."""
 
-    def __init__(self, env_file_path: str | Path | None = None):
+    def __init__(self, env_file_path: str | Path | None = None) -> None:
         """Initialize the EnvFileManager.
 
         Args:
@@ -84,7 +84,7 @@ class EnvFileManager:
             return env_vars
 
         try:
-            with open(self.env_path, "r", encoding="utf-8") as f:
+            with open(self.env_path, encoding="utf-8") as f:
                 for line_num, line in enumerate(f, 1):
                     line = line.strip()
 
@@ -111,7 +111,7 @@ class EnvFileManager:
 
         return env_vars
 
-    def write_env(self, env_vars: dict[str, str], preserve_comments: bool = True):
+    def write_env(self, env_vars: dict[str, str], preserve_comments: bool = True) -> None:
         """Write key-value pairs to the .env file.
 
         Args:
@@ -128,7 +128,7 @@ class EnvFileManager:
             existing_keys = set()
 
             if preserve_comments and self.env_path.exists():
-                with open(self.env_path, "r", encoding="utf-8") as f:
+                with open(self.env_path, encoding="utf-8") as f:
                     for line in f:
                         line = line.rstrip("\n")
 
@@ -202,7 +202,7 @@ class EnvFileManager:
         env_vars = self.read_env()
         return env_vars.get(key)
 
-    def set_key(self, key: str, value: str):
+    def set_key(self, key: str, value: str) -> None:
         """Set a single key-value pair in the .env file.
 
         Args:
@@ -216,7 +216,7 @@ class EnvFileManager:
         # Sync to central config after updating
         self._sync_to_central_config()
 
-    def update_keys(self, updates: dict[str, str]):
+    def update_keys(self, updates: dict[str, str]) -> None:
         """Update multiple keys in the .env file.
 
         Args:
@@ -332,7 +332,7 @@ class EnvFileManager:
 
         return api_keys
 
-    def set_api_key(self, service: str, api_key: str):
+    def set_api_key(self, service: str, api_key: str) -> None:
         """Set an API key for a specific service.
 
         Args:
@@ -362,7 +362,7 @@ class EnvFileManager:
 
         self.set_key(key, api_key)
 
-    def _sync_to_central_config(self):
+    def _sync_to_central_config(self) -> None:
         """Sync environment variables from .env file to central config."""
         try:
             env_vars = self.read_env()
@@ -372,7 +372,7 @@ class EnvFileManager:
         except Exception as e:
             logger.warning(f"Could not sync environment variables to central config: {e}")
 
-    def _sync_from_central_config(self):
+    def _sync_from_central_config(self) -> None:
         """Sync environment variables from central config to .env file."""
         try:
             # Get environment variables from central config
@@ -383,7 +383,7 @@ class EnvFileManager:
         except Exception as e:
             logger.warning(f"Could not sync environment variables from central config: {e}")
 
-    def load_into_environment(self, override: bool = False):
+    def load_into_environment(self, override: bool = False) -> None:
         """Load all variables from .env file into the actual environment.
 
         Args:
@@ -397,7 +397,7 @@ class EnvFileManager:
                 logger.debug(f"Loaded {key} into environment")
         logger.info(f"Loaded {len(env_vars)} environment variables")
 
-    def auto_load(self):
+    def auto_load(self) -> None:
         """Automatically load .env file if configured to do so in central config."""
         auto_load = self.central_config.get("environment.auto_load_env", True)
         if auto_load:

@@ -55,12 +55,12 @@ class ExportWorker(QThread):
     #: progress, status (type: int, str)
     progress_update = pyqtSignal(int, str)
 
-    def __init__(self, export_config: dict[str, Any]):
+    def __init__(self, export_config: dict[str, Any]) -> None:
         """Initialize the ExportWorker with default values."""
         super().__init__()
         self.export_config = export_config
 
-    def run(self):
+    def run(self) -> None:
         """Execute export operation."""
         try:
             export_format = self.export_config["format"]
@@ -89,7 +89,7 @@ class ExportWorker(QThread):
             logger.error(f"Export failed: {e}")
             self.export_completed.emit(False, f"Export failed: {e!s}")
 
-    def _export_json(self, output_path: str, results: dict[str, Any]):
+    def _export_json(self, output_path: str, results: dict[str, Any]) -> None:
         """Export to JSON format."""
         self.progress_update.emit(30, "Formatting JSON data...")
 
@@ -108,7 +108,7 @@ class ExportWorker(QThread):
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(export_data, f, indent=2, ensure_ascii=False, default=str)
 
-    def _export_xml(self, output_path: str, results: dict[str, Any]):
+    def _export_xml(self, output_path: str, results: dict[str, Any]) -> None:
         """Export to XML format."""
         self.progress_update.emit(30, "Building XML structure...")
 
@@ -154,7 +154,7 @@ class ExportWorker(QThread):
         tree = ElementTree(root)
         tree.write(output_path, encoding="utf-8", xml_declaration=True)
 
-    def _dict_to_xml(self, parent: Element, data: dict[str, Any]):
+    def _dict_to_xml(self, parent: Element, data: dict[str, Any]) -> None:
         """Convert dictionary to XML elements."""
         for key, value in data.items():
             elem = SubElement(parent, str(key))
@@ -172,7 +172,7 @@ class ExportWorker(QThread):
             else:
                 elem.text = str(value)
 
-    def _export_csv(self, output_path: str, results: dict[str, Any]):
+    def _export_csv(self, output_path: str, results: dict[str, Any]) -> None:
         """Export to CSV format."""
         import csv
 
@@ -191,7 +191,7 @@ class ExportWorker(QThread):
                 "File Type",
                 "Architecture",
                 "Protected",
-            ]
+            ],
         )
 
         # Extract detection data
@@ -213,7 +213,7 @@ class ExportWorker(QThread):
                             file_type,
                             architecture,
                             str(is_protected),
-                        ]
+                        ],
                     )
 
         self.progress_update.emit(70, "Writing CSV file...")
@@ -222,7 +222,7 @@ class ExportWorker(QThread):
             writer = csv.writer(f)
             writer.writerows(rows)
 
-    def _export_pdf(self, output_path: str, results: dict[str, Any]):
+    def _export_pdf(self, output_path: str, results: dict[str, Any]) -> None:
         """Export to PDF format."""
         try:
             from reportlab.lib import colors
@@ -282,8 +282,8 @@ class ExportWorker(QThread):
                         ("FONTSIZE", (0, 0), (-1, -1), 10),
                         ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
                         ("GRID", (0, 0), (-1, -1), 1, colors.black),
-                    ]
-                )
+                    ],
+                ),
             )
 
             story.append(file_table)
@@ -318,7 +318,7 @@ class ExportWorker(QThread):
                             getattr(detection, "type", "Unknown"),
                             f"{getattr(detection, 'confidence', 0.0):.1%}",
                             getattr(detection, "version", "N/A"),
-                        ]
+                        ],
                     )
 
                 detection_table = Table(detection_data, colWidths=[2 * inch, 1.5 * inch, 1 * inch, 1 * inch])
@@ -333,8 +333,8 @@ class ExportWorker(QThread):
                             ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
                             ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
                             ("GRID", (0, 0), (-1, -1), 1, colors.black),
-                        ]
-                    )
+                        ],
+                    ),
                 )
 
                 story.append(detection_table)
@@ -342,7 +342,7 @@ class ExportWorker(QThread):
         self.progress_update.emit(70, "Writing PDF file...")
         doc.build(story)
 
-    def _export_html(self, output_path: str, results: dict[str, Any]):
+    def _export_html(self, output_path: str, results: dict[str, Any]) -> None:
         """Export to HTML format."""
         self.progress_update.emit(30, "Building HTML report...")
 
@@ -458,7 +458,7 @@ class ExportWorker(QThread):
 class ExportDialog(BaseDialog):
     """Export dialog for ICP analysis results."""
 
-    def __init__(self, analysis_results: dict[str, Any] | None = None, parent=None):
+    def __init__(self, analysis_results: dict[str, Any] | None = None, parent=None) -> None:
         """Initialize the ExportDialog with default values."""
         super().__init__(parent, "Export ICP Analysis Results")
         self.resize(600, 500)
@@ -472,7 +472,7 @@ class ExportDialog(BaseDialog):
 
         self.setup_content(self.content_widget.layout() or QVBoxLayout(self.content_widget))
 
-    def setup_content(self, layout):
+    def setup_content(self, layout) -> None:
         """Set up the user interface content."""
         if layout is None:
             layout = QVBoxLayout(self.content_widget)
@@ -634,7 +634,7 @@ class ExportDialog(BaseDialog):
         self.page_format_combo.addItems(["A4", "Letter"])
         self.page_format_combo.setCurrentText(self.export_prefs.get("page_format", "A4"))
         self.page_format_combo.setToolTip(
-            "Choose page size for PDF export:<br>A4: International standard (210×297mm)<br>Letter: US standard (8.5×11 inches)"
+            "Choose page size for PDF export:<br>A4: International standard (210×297mm)<br>Letter: US standard (8.5×11 inches)",
         )
         page_format_layout.addWidget(self.page_format_combo)
 
@@ -694,7 +694,7 @@ class ExportDialog(BaseDialog):
 
         return widget
 
-    def browse_output_file(self):
+    def browse_output_file(self) -> None:
         """Browse for output file."""
         # Get selected format
         selected_format = "json"
@@ -724,7 +724,7 @@ class ExportDialog(BaseDialog):
         if file_path:
             self.output_path_edit.setText(file_path)
 
-    def refresh_preview(self):
+    def refresh_preview(self) -> None:
         """Refresh export preview."""
         if not self.analysis_results:
             self.preview_text.setPlainText("No analysis results available.")
@@ -823,7 +823,7 @@ class ExportDialog(BaseDialog):
 
                 # Create filtered ICP data
                 class FilteredICPData:
-                    def __init__(self, original, filtered_detections):
+                    def __init__(self, original, filtered_detections) -> None:
                         self.file_type = getattr(original, "file_type", "Unknown")
                         self.architecture = getattr(original, "architecture", "Unknown")
                         self.is_protected = getattr(original, "is_protected", False)
@@ -835,7 +835,7 @@ class ExportDialog(BaseDialog):
 
         return filtered
 
-    def start_export(self):
+    def start_export(self) -> None:
         """Start the export process."""
         # Validate inputs
         if not self.output_path_edit.text():
@@ -898,7 +898,7 @@ class ExportDialog(BaseDialog):
         self.export_worker.start()
 
     @pyqtSlot(bool, str)
-    def on_export_completed(self, success: bool, message: str):
+    def on_export_completed(self, success: bool, message: str) -> None:
         """Handle export completion."""
         self.progress_bar.setVisible(False)
 
@@ -915,13 +915,13 @@ class ExportDialog(BaseDialog):
             QMessageBox.critical(self, "Export Failed", message)
 
     @pyqtSlot(int, str)
-    def on_progress_update(self, progress: int, status: str):
+    def on_progress_update(self, progress: int, status: str) -> None:
         """Handle progress updates."""
         self.progress_bar.setValue(progress)
         self.status_label.setText(status)
 
 
-def main():
+def main() -> None:
     """Test the export dialog."""
     app = QApplication([])
     app.setApplicationName("IntellicrackExportTest")

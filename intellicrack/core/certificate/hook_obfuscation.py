@@ -151,7 +151,7 @@ class HookObfuscator:
     - Rotate hooks periodically to avoid signature detection
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize hook obfuscator."""
         self.installed_hooks: Dict[int, HookInfo] = {}
         self.code_caves: Dict[str, List[int]] = {}
@@ -175,18 +175,18 @@ class HookObfuscator:
         """
         prefixes = [
             "process", "handle", "update", "validate", "check", "parse",
-            "format", "convert", "transform", "filter", "sort", "calculate"
+            "format", "convert", "transform", "filter", "sort", "calculate",
         ]
 
         subjects = [
             "data", "response", "request", "input", "output", "state",
             "config", "settings", "buffer", "packet", "message", "event",
-            "notification", "callback", "handler", "processor"
+            "notification", "callback", "handler", "processor",
         ]
 
         suffixes = [
             "handler", "processor", "manager", "controller", "validator",
-            "formatter", "converter", "filter", "sorter", "calculator"
+            "formatter", "converter", "filter", "sorter", "calculator",
         ]
 
         prefix = random.choice(prefixes)  # noqa: S311
@@ -202,7 +202,7 @@ class HookObfuscator:
         self,
         target: int,
         handler: int,
-        chain_length: int = 3
+        chain_length: int = 3,
     ) -> bool:
         """Create indirect hook using function pointer chains.
 
@@ -239,7 +239,7 @@ class HookObfuscator:
                     return False
 
                 chain_addresses = self._build_trampoline_chain(
-                    code_cave, handler, chain_length
+                    code_cave, handler, chain_length,
                 )
 
                 if not chain_addresses:
@@ -311,7 +311,7 @@ class HookObfuscator:
 
             null_count = 0
             for byte in data:
-                if byte == 0 or byte == 0xCC:
+                if byte in {0, 204}:
                     null_count += 1
                 else:
                     break
@@ -337,7 +337,7 @@ class HookObfuscator:
                     None,
                     size,
                     MEM_COMMIT | MEM_RESERVE,
-                    PAGE_EXECUTE_READWRITE
+                    PAGE_EXECUTE_READWRITE,
                 )
 
                 if addr:
@@ -354,7 +354,7 @@ class HookObfuscator:
         self,
         start_address: int,
         final_handler: int,
-        chain_length: int
+        chain_length: int,
     ) -> List[int]:
         """Build chain of trampolines."""
         chain_addresses = []
@@ -393,12 +393,12 @@ class HookObfuscator:
             return bytes([
                 0x48, 0xB8,
                 *target.to_bytes(8, 'little'),
-                0xFF, 0xE0
+                0xFF, 0xE0,
             ])
         else:
             return bytes([
                 0xE9,
-                *((target - 5) & 0xFFFFFFFF).to_bytes(4, 'little')
+                *((target - 5) & 0xFFFFFFFF).to_bytes(4, 'little'),
             ])
 
     def _install_jump_to_chain(self, target: int, chain_start: int) -> bool:
@@ -432,7 +432,7 @@ class HookObfuscator:
                     ctypes.c_void_p(address),
                     ctypes.byref(buffer),
                     size,
-                    ctypes.byref(bytes_read)
+                    ctypes.byref(bytes_read),
                 ):
                     return bytes(buffer)
 
@@ -457,7 +457,7 @@ class HookObfuscator:
                     ctypes.c_void_p(address),
                     len(data),
                     PAGE_EXECUTE_READWRITE,
-                    ctypes.byref(old_protect)
+                    ctypes.byref(old_protect),
                 ):
                     return False
 
@@ -469,14 +469,14 @@ class HookObfuscator:
                     ctypes.c_void_p(address),
                     ctypes.byref(buffer),
                     len(data),
-                    ctypes.byref(bytes_written)
+                    ctypes.byref(bytes_written),
                 )
 
                 kernel32.VirtualProtect(
                     ctypes.c_void_p(address),
                     len(data),
                     old_protect.value,
-                    ctypes.byref(old_protect)
+                    ctypes.byref(old_protect),
                 )
 
                 return success
@@ -496,7 +496,7 @@ class HookObfuscator:
                 kernel32.FlushInstructionCache(
                     current_process,
                     ctypes.c_void_p(address),
-                    size
+                    size,
                 )
         except Exception as e:
             logger.debug(f"Failed to flush instruction cache: {e}")
@@ -505,7 +505,7 @@ class HookObfuscator:
         self,
         target: int,
         handler: int,
-        original_bytes: bytes
+        original_bytes: bytes,
     ) -> str:
         """Calculate integrity hash for hook."""
         data = f"{target}{handler}{original_bytes.hex()}".encode()
@@ -528,7 +528,7 @@ class HookObfuscator:
 
         self._integrity_thread = threading.Thread(
             target=self._integrity_monitor_loop,
-            daemon=True
+            daemon=True,
         )
         self._integrity_thread.start()
 
@@ -568,10 +568,7 @@ class HookObfuscator:
             if not current_bytes:
                 return False
 
-            if current_bytes == hook_info.original_bytes:
-                return False
-
-            return True
+            return current_bytes != hook_info.original_bytes
 
         except Exception as e:
             logger.debug(f"Integrity check failed: {e}")
@@ -585,7 +582,7 @@ class HookObfuscator:
             if hook_info.hook_type == "indirect_chain":
                 return self.create_indirect_hook(
                     hook_info.target_address,
-                    hook_info.handler_address
+                    hook_info.handler_address,
                 )
 
             return False
@@ -726,7 +723,7 @@ class HookObfuscator:
                 kernel32.GetCurrentProcess(),
                 h_module,
                 ctypes.byref(mod_info),
-                ctypes.sizeof(mod_info)
+                ctypes.sizeof(mod_info),
             ):
                 logger.error("Failed to get module information")
                 return caves
@@ -762,7 +759,7 @@ class HookObfuscator:
         current_cave_size = 0
 
         for i, byte in enumerate(data):
-            if byte == 0 or byte == 0xCC:
+            if byte in {0, 204}:
                 if current_cave_start is None:
                     current_cave_start = base_addr + i
                 current_cave_size += 1
@@ -818,7 +815,7 @@ class HookObfuscator:
 
             return self.create_indirect_hook(
                 hook_info.target_address,
-                hook_info.handler_address
+                hook_info.handler_address,
             )
 
         except Exception as e:
@@ -835,7 +832,7 @@ class HookObfuscator:
         with self._lock:
             return {
                 "total_hooks": len(self.installed_hooks),
-                "active_hooks": [hex(addr) for addr in self.installed_hooks.keys()],
+                "active_hooks": [hex(addr) for addr in self.installed_hooks],
                 "integrity_monitor_active": self.integrity_monitor_active,
                 "total_tampering_attempts": sum(
                     h.tamper_count for h in self.installed_hooks.values()

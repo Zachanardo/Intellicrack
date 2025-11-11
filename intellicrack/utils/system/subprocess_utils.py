@@ -95,7 +95,7 @@ def run_subprocess(
         if isinstance(cmd, str):
             cmd = cmd.split()
 
-        process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+        process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
             cmd,
             stdout=subprocess.PIPE if capture_output else None,
             stderr=subprocess.PIPE if capture_output else None,
@@ -141,7 +141,7 @@ def run_subprocess_check(
 
     """
     try:
-        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
             cmd,
             capture_output=capture_output,
             text=text,
@@ -176,7 +176,7 @@ def create_popen_with_encoding(cmd: list[str], encoding: str = "utf-8", timeout:
 
     """
     try:
-        process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+        process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

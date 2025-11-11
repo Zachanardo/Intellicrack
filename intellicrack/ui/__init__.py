@@ -20,165 +20,145 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 
-# Set up package logger
 logger = logging.getLogger(__name__)
 
-# Import main UI components with error handling
-try:
-    from .main_window import IntellicrackMainWindow
-except ImportError as e:
-    logger.warning("Failed to import main_window: %s", e)
+_lazy_imports = {}
 
-try:
-    from .dashboard_manager import DashboardManager
-except ImportError as e:
-    logger.warning("Failed to import dashboard_manager: %s", e)
 
-# Import comprehensive radare2 UI integration
-try:
-    from .comprehensive_integration import (
-        ComprehensiveR2Integration,
-        cleanup_integration,
-        get_comprehensive_integration,
-        get_integration_status,
-        integrate_radare2_comprehensive,
-    )
+def __getattr__(name):
+    """Lazy load UI module attributes to prevent circular imports."""
+    if name in _lazy_imports:
+        return _lazy_imports[name]
 
-    logger.info("Radare2 comprehensive UI integration loaded successfully")
-except ImportError as e:
-    logger.warning("Failed to import radare2 UI integration: %s", e)
+    if name == "IntellicrackMainWindow":
+        try:
+            from .main_window import IntellicrackMainWindow
+            _lazy_imports[name] = IntellicrackMainWindow
+            return IntellicrackMainWindow
+        except ImportError as e:
+            logger.warning("Failed to import main_window: %s", e)
+            return None
 
-    # Provide fallback functions
-    def integrate_radare2_comprehensive(main_app):
-        """Fallback for radare2 comprehensive integration."""
-        logger.error("Radare2 integration not available")
+    elif name == "DashboardManager":
+        try:
+            from .dashboard_manager import DashboardManager
+            _lazy_imports[name] = DashboardManager
+            return DashboardManager
+        except ImportError as e:
+            logger.warning("Failed to import dashboard_manager: %s", e)
+            return None
 
-        # Use main_app to show error message if possible
-        if main_app:
-            # Update status bar if available
-            if hasattr(main_app, "status_bar"):
-                main_app.status_bar.showMessage("Radare2 integration module not available", 5000)
+    elif name in ("ComprehensiveR2Integration", "cleanup_integration", "get_comprehensive_integration",
+                  "get_integration_status", "integrate_radare2_comprehensive"):
+        try:
+            from .comprehensive_integration import (
+                ComprehensiveR2Integration,
+                cleanup_integration,
+                get_comprehensive_integration,
+                get_integration_status,
+                integrate_radare2_comprehensive,
+            )
+            _lazy_imports.update({
+                "ComprehensiveR2Integration": ComprehensiveR2Integration,
+                "cleanup_integration": cleanup_integration,
+                "get_comprehensive_integration": get_comprehensive_integration,
+                "get_integration_status": get_integration_status,
+                "integrate_radare2_comprehensive": integrate_radare2_comprehensive,
+            })
+            return _lazy_imports.get(name)
+        except ImportError as e:
+            logger.warning("Failed to import comprehensive_integration: %s", e)
+            return None
 
-            # Log to output if available
-            if hasattr(main_app, "update_output"):
-                main_app.update_output.emit("[Error] Radare2 comprehensive integration module not found")
+    elif name in ("R2ConfigurationDialog", "R2IntegrationWidget", "R2ResultsViewer", "create_radare2_tab"):
+        try:
+            from .radare2_integration_ui import (
+                R2ConfigurationDialog,
+                R2IntegrationWidget,
+                R2ResultsViewer,
+                create_radare2_tab,
+            )
+            _lazy_imports.update({
+                "R2ConfigurationDialog": R2ConfigurationDialog,
+                "R2IntegrationWidget": R2IntegrationWidget,
+                "R2ResultsViewer": R2ResultsViewer,
+                "create_radare2_tab": create_radare2_tab,
+            })
+            return _lazy_imports.get(name)
+        except ImportError as e:
+            logger.warning("Failed to import radare2_integration_ui: %s", e)
+            return None
 
-            # Show message box if Qt is available
-            try:
-                from intellicrack.handlers.pyqt6_handler import QMessageBox
+    elif name in ("EnhancedAnalysisDashboard", "EnhancedMainWindow", "create_enhanced_application"):
+        try:
+            from .enhanced_ui_integration import (
+                EnhancedAnalysisDashboard,
+                EnhancedMainWindow,
+                create_enhanced_application,
+            )
+            _lazy_imports.update({
+                "EnhancedAnalysisDashboard": EnhancedAnalysisDashboard,
+                "EnhancedMainWindow": EnhancedMainWindow,
+                "create_enhanced_application": create_enhanced_application,
+            })
+            return _lazy_imports.get(name)
+        except ImportError as e:
+            logger.warning("Failed to import enhanced_ui_integration: %s", e)
+            return None
 
-                QMessageBox.warning(
-                    main_app,
-                    "Integration Not Available",
-                    "The Radare2 comprehensive integration module is not available.\nPlease check that all dependencies are installed.",
-                )
-            except ImportError as e:
-                logger.error("Import error in __init__: %s", e)
+    elif name in ("R2UIManager", "create_r2_ui_manager"):
+        try:
+            from .radare2_ui_manager import R2UIManager, create_r2_ui_manager
+            _lazy_imports.update({
+                "R2UIManager": R2UIManager,
+                "create_r2_ui_manager": create_r2_ui_manager,
+            })
+            return _lazy_imports.get(name)
+        except ImportError as e:
+            logger.warning("Failed to import radare2_ui_manager: %s", e)
+            return None
 
-            # Try to disable radare2-related UI elements
-            if hasattr(main_app, "radare2_action"):
-                main_app.radare2_action.setEnabled(False)
-                main_app.radare2_action.setText("Radare2 (Not Available)")
+    elif name == "dialogs":
+        try:
+            from . import dialogs
+            _lazy_imports["dialogs"] = dialogs
+            return dialogs
+        except ImportError as e:
+            logger.warning("Failed to import dialogs: %s", e)
+            return None
 
-            # Track failed integration attempt
-            if hasattr(main_app, "integration_attempts"):
-                main_app.integration_attempts.append(
-                    {
-                        "module": "radare2_comprehensive",
-                        "status": "failed",
-                        "reason": "Module not available",
-                    }
-                )
+    elif name == "widgets":
+        try:
+            from . import widgets
+            _lazy_imports["widgets"] = widgets
+            return widgets
+        except ImportError as e:
+            logger.warning("Failed to import widgets: %s", e)
+            return None
 
-        return False
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
-    def get_comprehensive_integration():
-        """Fallback for getting comprehensive integration instance."""
-        logger.error("Radare2 integration not available")
 
-    def get_integration_status():
-        """Fallback for getting integration status."""
-        return {"error": "Integration not available"}
-
-    def cleanup_integration():
-        """Fallback for cleanup integration."""
-
-    # Don't set ComprehensiveR2Integration = None
-
-# Import radare2 UI components
-try:
-    from .radare2_integration_ui import (
-        R2ConfigurationDialog,
-        R2IntegrationWidget,
-        R2ResultsViewer,
-        create_radare2_tab,
-    )
-
-    logger.info("Radare2 UI components loaded successfully")
-except ImportError as e:
-    logger.warning("Failed to import radare2 UI components: %s", e)
-    # Don't set variables to None
-
-# Import enhanced UI features
-try:
-    from .enhanced_ui_integration import (
-        EnhancedAnalysisDashboard,
-        EnhancedMainWindow,
-        create_enhanced_application,
-    )
-
-    logger.info("Enhanced UI features loaded successfully")
-except ImportError as e:
-    logger.warning("Failed to import enhanced UI features: %s", e)
-    # Don't set variables to None
-
-# Import UI manager
-try:
-    from .radare2_ui_manager import R2UIManager, create_r2_ui_manager
-
-    logger.info("Radare2 UI manager loaded successfully")
-except ImportError as e:
-    logger.warning("Failed to import radare2 UI manager: %s", e)
-    # Don't set variables to None
-
-# Import subpackages
-try:
-    from . import dialogs, widgets
-except ImportError as e:
-    logger.warning("Failed to import UI subpackages: %s", e)
-
-# Define package exports
 __all__ = [
-    # From main_window
     "IntellicrackMainWindow",
-    # From dashboard_manager
     "DashboardManager",
-    # Radare2 comprehensive integration
     "integrate_radare2_comprehensive",
     "get_comprehensive_integration",
     "get_integration_status",
     "cleanup_integration",
     "ComprehensiveR2Integration",
-    # Radare2 UI components
     "R2IntegrationWidget",
     "R2ConfigurationDialog",
     "R2ResultsViewer",
     "create_radare2_tab",
-    # Enhanced UI features
     "EnhancedAnalysisDashboard",
     "EnhancedMainWindow",
     "create_enhanced_application",
-    # UI manager
     "R2UIManager",
     "create_r2_ui_manager",
-    # Subpackages
     "dialogs",
     "widgets",
 ]
 
-# Filter out items that are not available
-__all__ = [item for item in __all__ if item in locals()]
-
-# Package metadata
 __version__ = "0.1.0"
 __author__ = "Intellicrack Development Team"

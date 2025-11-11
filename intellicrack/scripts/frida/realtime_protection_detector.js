@@ -1804,30 +1804,30 @@ const RealtimeProtectionDetector = {
 
         try {
             switch (signature.countermeasure) {
-            case 'replace_return_false':
-                this.applyReplaceReturnCountermeasure(detection, 0);
-                break;
+                case 'replace_return_false':
+                    this.applyReplaceReturnCountermeasure(detection, 0);
+                    break;
 
-            case 'spoof_timing':
-                this.applySpoofTimingCountermeasure(detection);
-                break;
+                case 'spoof_timing':
+                    this.applySpoofTimingCountermeasure(detection);
+                    break;
 
-            case 'memory_patch':
-                this.applyMemoryPatchCountermeasure(detection);
-                break;
+                case 'memory_patch':
+                    this.applyMemoryPatchCountermeasure(detection);
+                    break;
 
-            case 'intercept_and_spoof':
-                this.applyInterceptSpoofCountermeasure(detection);
-                break;
+                case 'intercept_and_spoof':
+                    this.applyInterceptSpoofCountermeasure(detection);
+                    break;
 
-            default:
-                send({
-                    type: 'warning',
-                    target: 'realtime_protection_detector',
-                    action: 'unknown_countermeasure',
-                    countermeasure: signature.countermeasure,
-                });
-                break;
+                default:
+                    send({
+                        type: 'warning',
+                        target: 'realtime_protection_detector',
+                        action: 'unknown_countermeasure',
+                        countermeasure: signature.countermeasure,
+                    });
+                    break;
             }
 
             detection.countermeasureApplied = true;
@@ -3225,32 +3225,32 @@ const RealtimeProtectionDetector = {
     implementAPIEvasion: function (args, apiName) {
         // Modify API arguments to appear benign
         switch (apiName) {
-        case 'VirtualAllocEx':
-            // Reduce allocation size to appear less suspicious
-            if (args[2].toInt32() > 0x100000) {
-                // 1MB
-                args[2] = ptr(0x1000); // 4KB instead
-            }
-            break;
+            case 'VirtualAllocEx':
+                // Reduce allocation size to appear less suspicious
+                if (args[2].toInt32() > 0x100000) {
+                    // 1MB
+                    args[2] = ptr(0x1000); // 4KB instead
+                }
+                break;
 
-        case 'WriteProcessMemory':
-            // Limit write size
-            if (args[3].toInt32() > 0x1000) {
-                args[3] = ptr(0x1000);
-            }
-            break;
+            case 'WriteProcessMemory':
+                // Limit write size
+                if (args[3].toInt32() > 0x1000) {
+                    args[3] = ptr(0x1000);
+                }
+                break;
 
-        case 'CreateRemoteThread':
-            // Delay thread creation
-            setTimeout(() => {
-                send({
-                    type: 'detection',
-                    target: 'realtime_protection_detector',
-                    action: 'delayed_thread_creation',
-                    api: apiName,
-                });
-            }, Math.random() * 5000); // Random delay up to 5 seconds
-            break;
+            case 'CreateRemoteThread':
+                // Delay thread creation
+                setTimeout(() => {
+                    send({
+                        type: 'detection',
+                        target: 'realtime_protection_detector',
+                        action: 'delayed_thread_creation',
+                        api: apiName,
+                    });
+                }, Math.random() * 5000); // Random delay up to 5 seconds
+                break;
         }
     },
 
@@ -3831,18 +3831,18 @@ const RealtimeProtectionDetector = {
     // Execute specific poisoning technique
     executePoisoningTechnique: function (technique) {
         switch (technique) {
-        case 'generate_benign_api_sequences':
-            this.generateBenignAPISequences();
-            break;
-        case 'create_false_positive_patterns':
-            this.createFalsePositivePatterns();
-            break;
-        case 'inject_noise_into_features':
-            this.injectNoiseIntoFeatures();
-            break;
-        case 'manipulate_temporal_patterns':
-            this.manipulateTemporalPatterns();
-            break;
+            case 'generate_benign_api_sequences':
+                this.generateBenignAPISequences();
+                break;
+            case 'create_false_positive_patterns':
+                this.createFalsePositivePatterns();
+                break;
+            case 'inject_noise_into_features':
+                this.injectNoiseIntoFeatures();
+                break;
+            case 'manipulate_temporal_patterns':
+                this.manipulateTemporalPatterns();
+                break;
         }
     },
 
@@ -3937,18 +3937,18 @@ const RealtimeProtectionDetector = {
         });
 
         switch (technique) {
-        case 'statistical_mimicry':
-            this.performStatisticalMimicry();
-            break;
-        case 'feature_space_manipulation':
-            this.manipulateFeatureSpace();
-            break;
-        case 'outlier_suppression':
-            this.suppressOutliers();
-            break;
-        case 'normal_behavior_injection':
-            this.injectNormalBehavior();
-            break;
+            case 'statistical_mimicry':
+                this.performStatisticalMimicry();
+                break;
+            case 'feature_space_manipulation':
+                this.manipulateFeatureSpace();
+                break;
+            case 'outlier_suppression':
+                this.suppressOutliers();
+                break;
+            case 'normal_behavior_injection':
+                this.injectNormalBehavior();
+                break;
         }
     },
 
@@ -7620,32 +7620,32 @@ const RealtimeProtectionDetector = {
     handleSpecificAntiDebugTechnique: function (apiName, patternName) {
         try {
             switch (patternName) {
-            case 'debugger_check':
-                if (apiName === 'IsDebuggerPresent') {
+                case 'debugger_check':
+                    if (apiName === 'IsDebuggerPresent') {
+                        send({
+                            type: 'warning',
+                            target: 'behavioral_pattern_detector',
+                            action: 'debugger_presence_check',
+                            recommendation: 'Consider patching IsDebuggerPresent return value',
+                            timestamp: Date.now(),
+                        });
+                    }
+                    break;
+
+                case 'timing_check':
+                    this.behavioralPatterns.evasionTechniques.add('timing_based_detection');
                     send({
-                        type: 'warning',
+                        type: 'info',
                         target: 'behavioral_pattern_detector',
-                        action: 'debugger_presence_check',
-                        recommendation: 'Consider patching IsDebuggerPresent return value',
+                        action: 'timing_based_anti_debug',
+                        recommendation: 'Monitor for timing-based protection mechanisms',
                         timestamp: Date.now(),
                     });
-                }
-                break;
+                    break;
 
-            case 'timing_check':
-                this.behavioralPatterns.evasionTechniques.add('timing_based_detection');
-                send({
-                    type: 'info',
-                    target: 'behavioral_pattern_detector',
-                    action: 'timing_based_anti_debug',
-                    recommendation: 'Monitor for timing-based protection mechanisms',
-                    timestamp: Date.now(),
-                });
-                break;
-
-            case 'memory_check':
-                this.behavioralPatterns.evasionTechniques.add('memory_analysis_detection');
-                break;
+                case 'memory_check':
+                    this.behavioralPatterns.evasionTechniques.add('memory_analysis_detection');
+                    break;
             }
         } catch (error) {
             // Silent failure for specific technique handling
@@ -8581,8 +8581,8 @@ const RealtimeProtectionDetector = {
                 peHeader.machine === 0x8664
                     ? 'x64'
                     : peHeader.machine === 0x14c
-                        ? 'x86'
-                        : 'Unknown';
+                      ? 'x86'
+                      : 'Unknown';
 
             send({
                 type: 'info',

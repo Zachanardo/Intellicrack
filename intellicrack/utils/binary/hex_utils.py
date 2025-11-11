@@ -289,7 +289,7 @@ def compare_bytes(data1: bytes, data2: bytes, context: int = 3) -> list[dict]:
                 "type": "length",
                 "len1": len(data1),
                 "len2": len(data2),
-            }
+            },
         )
 
     return differences

@@ -123,7 +123,7 @@ class ResourceAllocation:
 class PerformanceOptimizer:
     """Core performance optimizer for AI operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the performance optimizer.
 
         Sets up caching, execution profiling, optimization rules, and resource management
@@ -151,7 +151,7 @@ class PerformanceOptimizer:
 
         logger.info("Performance optimizer initialized")
 
-    def _initialize_optimization_rules(self):
+    def _initialize_optimization_rules(self) -> None:
         """Initialize default optimization rules."""
         self.optimization_rules = [
             OptimizationRule(
@@ -454,7 +454,7 @@ class PerformanceOptimizer:
 class ResourceManager:
     """Manages system resource allocation and monitoring."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the resource manager.
 
         Sets up resource pools, allocation tracking, system limits detection,
@@ -501,7 +501,7 @@ class ResourceManager:
             ResourceType.NETWORK_IO: 100,  # MB/s estimate
         }
 
-    def _initialize_resource_pools(self):
+    def _initialize_resource_pools(self) -> None:
         """Initialize resource pools."""
         # Thread pool
         max_threads = min(32, self.resource_limits[ResourceType.CPU] * 4)
@@ -535,13 +535,13 @@ class ResourceManager:
                 "allocation": requirements,
                 "timestamp": datetime.now(),
                 "action": "allocate",
-            }
+            },
         )
 
         logger.debug(f"Allocated resources for operation {operation_id}")
         return True
 
-    def release_resources(self, operation_id: str):
+    def release_resources(self, operation_id: str) -> None:
         """Release resources for operation."""
         if operation_id in self.active_allocations:
             allocation = self.active_allocations[operation_id]
@@ -554,7 +554,7 @@ class ResourceManager:
                     "allocation": allocation,
                     "timestamp": datetime.now(),
                     "action": "release",
-                }
+                },
             )
 
             logger.debug(f"Released resources for operation {operation_id}")
@@ -585,10 +585,7 @@ class ResourceManager:
 
         # Check thread pool capacity
         thread_pool = self.resource_pools[ResourceType.THREADS]
-        if hasattr(thread_pool, "_threads") and len(thread_pool._threads) >= thread_pool._max_workers:
-            return False
-
-        return True
+        return not (hasattr(thread_pool, "_threads") and len(thread_pool._threads) >= thread_pool._max_workers)
 
     def get_resource_usage(self) -> dict[str, float]:
         """Get current resource usage."""
@@ -620,7 +617,7 @@ class ResourceManager:
                 {
                     "disk_read_mb": disk_io.read_bytes // (1024 * 1024),
                     "disk_write_mb": disk_io.write_bytes // (1024 * 1024),
-                }
+                },
             )
 
         return usage
@@ -651,7 +648,7 @@ class ResourceManager:
 class ParallelExecutor:
     """Manages parallel execution of AI operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the parallel executor for AI operations.
 
         Sets up execution statistics tracking for monitoring parallel vs sequential
@@ -770,7 +767,7 @@ class ParallelExecutor:
 class CacheManager:
     """Manages intelligent caching for AI operations."""
 
-    def __init__(self, max_size_mb: int = 100):
+    def __init__(self, max_size_mb: int = 100) -> None:
         """Initialize the cache manager for AI operations.
 
         Args:
@@ -806,7 +803,7 @@ class CacheManager:
         self.stats["misses"] += 1
         return None
 
-    def set(self, key: str, value: Any, ttl_seconds: int = 3600):
+    def set(self, key: str, value: Any, ttl_seconds: int = 3600) -> None:
         """Set value in cache."""
         # Estimate size of cached item
         import sys
@@ -832,7 +829,7 @@ class CacheManager:
 
         logger.debug(f"Cached item {key[:8]}... ({item_size_mb:.2f}MB)")
 
-    def _evict_lru_item(self):
+    def _evict_lru_item(self) -> None:
         """Evict least recently used item."""
         if not self.access_times:
             return
@@ -852,7 +849,7 @@ class CacheManager:
 
             logger.debug(f"Evicted LRU item {lru_key[:8]}... ({item_size:.2f}MB)")
 
-    def cleanup_expired(self):
+    def cleanup_expired(self) -> None:
         """Remove expired items from cache."""
         now = datetime.now()
         expired_keys = []
@@ -867,7 +864,7 @@ class CacheManager:
         if expired_keys:
             logger.debug(f"Removed {len(expired_keys)} expired cache items")
 
-    def _remove_item(self, key: str):
+    def _remove_item(self, key: str) -> None:
         """Remove specific item from cache."""
         if key in self.cache:
             item_size = self.cache[key]["size_mb"]
@@ -880,7 +877,7 @@ class CacheManager:
 
             self.current_size_mb -= item_size
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear entire cache."""
         self.cache.clear()
         self.access_times.clear()
@@ -905,7 +902,7 @@ class CacheManager:
 class PerformanceOptimizationLayer:
     """Run performance optimization layer."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the performance optimization layer.
 
         Sets up the optimizer, resource manager, parallel executor, and cache manager
@@ -921,14 +918,14 @@ class PerformanceOptimizationLayer:
 
         logger.info("Performance optimization layer initialized")
 
-    def _start_background_optimization(self):
+    def _start_background_optimization(self) -> None:
         """Start background optimization tasks."""
         # Skip thread creation during testing
         if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
             logger.info("Skipping background optimization worker (testing mode)")
             return
 
-        def background_worker():
+        def background_worker() -> None:
             while True:
                 try:
                     # Cleanup expired cache items
@@ -960,7 +957,7 @@ class PerformanceOptimizationLayer:
         """Allocate resources for operation."""
         return self.resource_manager.allocate_resources(operation_id, requirements)
 
-    def release_resources(self, operation_id: str):
+    def release_resources(self, operation_id: str) -> None:
         """Release resources for operation."""
         self.resource_manager.release_resources(operation_id)
 

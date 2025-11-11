@@ -1422,61 +1422,61 @@ const QuantumCryptoHandler = {
 
         // Algorithm-specific bypasses
         switch (algo.name) {
-        case 'CRYSTALS-Kyber':
-            if (lowerName.includes('decaps')) {
-                // Kyber decapsulation returns 0 on success
-                if (retval.toInt32() !== 0) {
-                    send({
-                        type: 'bypass',
-                        target: 'quantum_crypto_handler',
-                        action: 'kyber_decapsulation_bypass',
-                    });
-                    retval.replace(ptr(0));
+            case 'CRYSTALS-Kyber':
+                if (lowerName.includes('decaps')) {
+                    // Kyber decapsulation returns 0 on success
+                    if (retval.toInt32() !== 0) {
+                        send({
+                            type: 'bypass',
+                            target: 'quantum_crypto_handler',
+                            action: 'kyber_decapsulation_bypass',
+                        });
+                        retval.replace(ptr(0));
+                    }
                 }
-            }
-            break;
+                break;
 
-        case 'CRYSTALS-Dilithium':
-            if (lowerName.includes('verify')) {
-                // Dilithium verify returns 0 on success
-                if (retval.toInt32() !== 0) {
-                    send({
-                        type: 'bypass',
-                        target: 'quantum_crypto_handler',
-                        action: 'dilithium_verification_bypass',
-                    });
-                    retval.replace(ptr(0));
+            case 'CRYSTALS-Dilithium':
+                if (lowerName.includes('verify')) {
+                    // Dilithium verify returns 0 on success
+                    if (retval.toInt32() !== 0) {
+                        send({
+                            type: 'bypass',
+                            target: 'quantum_crypto_handler',
+                            action: 'dilithium_verification_bypass',
+                        });
+                        retval.replace(ptr(0));
+                    }
                 }
-            }
-            break;
+                break;
 
-        case 'SPHINCS+':
-            if (lowerName.includes('verify') || lowerName.includes('open')) {
-                // SPHINCS+ returns 0 on success
-                if (retval.toInt32() !== 0) {
-                    send({
-                        type: 'bypass',
-                        target: 'quantum_crypto_handler',
-                        action: 'sphincs_verification_bypass',
-                    });
-                    retval.replace(ptr(0));
+            case 'SPHINCS+':
+                if (lowerName.includes('verify') || lowerName.includes('open')) {
+                    // SPHINCS+ returns 0 on success
+                    if (retval.toInt32() !== 0) {
+                        send({
+                            type: 'bypass',
+                            target: 'quantum_crypto_handler',
+                            action: 'sphincs_verification_bypass',
+                        });
+                        retval.replace(ptr(0));
+                    }
                 }
-            }
-            break;
+                break;
 
-        default:
-            // Generic bypass
-            if (lowerName.includes('verify') || lowerName.includes('check')) {
-                if (retval.toInt32() !== 0) {
-                    send({
-                        type: 'bypass',
-                        target: 'quantum_crypto_handler',
-                        action: 'generic_bypass_applied',
-                        algorithm: algo.name,
-                    });
-                    retval.replace(ptr(0));
+            default:
+                // Generic bypass
+                if (lowerName.includes('verify') || lowerName.includes('check')) {
+                    if (retval.toInt32() !== 0) {
+                        send({
+                            type: 'bypass',
+                            target: 'quantum_crypto_handler',
+                            action: 'generic_bypass_applied',
+                            algorithm: algo.name,
+                        });
+                        retval.replace(ptr(0));
+                    }
                 }
-            }
         }
     },
 

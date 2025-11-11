@@ -23,7 +23,7 @@ class EventAggregator:
     applies rate limiting and filtering, and distributes to callbacks.
     """
 
-    def __init__(self, max_queue_size: int = 10000):
+    def __init__(self, max_queue_size: int = 10000) -> None:
         """Initialize event aggregator.
 
         Args:
@@ -210,7 +210,7 @@ class EventAggregator:
 class RateLimiter:
     """Token bucket rate limiter for event processing."""
 
-    def __init__(self, max_events_per_second: int = 100):
+    def __init__(self, max_events_per_second: int = 100) -> None:
         """Initialize rate limiter.
 
         Args:

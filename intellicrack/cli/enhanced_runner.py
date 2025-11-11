@@ -54,7 +54,7 @@ Integrates progress visualization and improved user experience
 class EnhancedCLIRunner:
     """Enhanced CLI runner with progress visualization."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize enhanced CLI runner with console, progress management, and logging."""
         self.console = Console()
         self.progress_manager = ProgressManager()
@@ -529,7 +529,7 @@ class EnhancedCLIRunner:
         return "\n".join(lines) if lines else "No data"
 
 
-def main():
+def main() -> None:
     """Run main entry point for enhanced CLI."""
     console = Console()
 

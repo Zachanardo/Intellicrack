@@ -61,7 +61,7 @@ class BaseDialog(QDialog):
         resizable: bool = True,
         show_help: bool = False,
         help_text: str = "",
-    ):
+    ) -> None:
         """Initialize the BaseDialog with standardized layout and behavior.
 
         Args:

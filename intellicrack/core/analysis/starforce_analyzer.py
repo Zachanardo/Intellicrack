@@ -114,7 +114,7 @@ class StarForceAnalyzer:
         "hyperv": [b"Hyper-V", b"\x4d\x69\x63\x72\x6f\x73\x6f\x66\x74\x20\x48\x76"],
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize StarForce analyzer."""
         self.logger = logging.getLogger(__name__)
         self._kernel32 = None
@@ -245,7 +245,7 @@ class StarForceAnalyzer:
                             access=access,
                             name=name,
                             purpose=purpose,
-                        )
+                        ),
                     )
 
             custom_ioctls = self._find_custom_ioctls(data)
@@ -287,7 +287,7 @@ class StarForceAnalyzer:
                                 access=access,
                                 name=f"SF_IOCTL_CUSTOM_{function:03X}",
                                 purpose="Custom IOCTL (purpose unknown)",
-                            )
+                            ),
                         )
 
             offset += 1
@@ -317,8 +317,8 @@ class StarForceAnalyzer:
 
                         techniques.append(
                             AntiDebugTechnique(
-                                technique=technique_name, address=offset, description=description, bypass_method=bypass_method
-                            )
+                                technique=technique_name, address=offset, description=description, bypass_method=bypass_method,
+                            ),
                         )
 
                         offset += len(pattern)
@@ -704,7 +704,7 @@ class StarForceAnalyzer:
         try:
             handle = self._kernel32.CreateFileW(device_name, GENERIC_READ | GENERIC_WRITE, 0, None, OPEN_EXISTING, 0, None)
 
-            if handle == -1 or handle == 0:
+            if handle in (-1, 0):
                 return None
 
             try:
@@ -715,7 +715,7 @@ class StarForceAnalyzer:
                 input_size = len(input_data) if input_data else 0
 
                 result = self._kernel32.DeviceIoControl(
-                    handle, ioctl_code, input_buffer, input_size, output_buffer, 4096, ctypes.byref(bytes_returned), None
+                    handle, ioctl_code, input_buffer, input_size, output_buffer, 4096, ctypes.byref(bytes_returned), None,
                 )
 
                 if result:

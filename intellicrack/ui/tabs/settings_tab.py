@@ -24,7 +24,6 @@ import logging
 import os
 import re
 
-from intellicrack.core.config_manager import IntellicrackConfig
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
     QColor,
@@ -61,8 +60,10 @@ class SettingsTab(BaseTab):
     settings_changed = pyqtSignal(str, object)
     theme_changed = pyqtSignal(str)
 
-    def __init__(self, shared_context=None, parent=None):
+    def __init__(self, shared_context=None, parent=None) -> None:
         """Initialize settings tab with application configuration and preferences."""
+        from intellicrack.core.config_manager import IntellicrackConfig
+
         self.logger = logging.getLogger(__name__ + ".SettingsTab")
 
         # Use centralized configuration system
@@ -79,7 +80,7 @@ class SettingsTab(BaseTab):
 
         super().__init__(shared_context, parent)
 
-    def setup_content(self):
+    def setup_content(self) -> None:
         """Set up the settings tab content."""
         layout = self.layout()  # Use existing layout from BaseTab
 
@@ -632,7 +633,7 @@ class SettingsTab(BaseTab):
 
         return container
 
-    def discover_tools(self):
+    def discover_tools(self) -> None:
         """Discover all tools and update the UI with results."""
         if not hasattr(self, "tool_discovery"):
             return
@@ -661,13 +662,13 @@ class SettingsTab(BaseTab):
             self.auto_discovery_btn.setEnabled(True)
             self.auto_discovery_btn.setText(" Discover Tools")
 
-    def refresh_tool_discovery(self):
+    def refresh_tool_discovery(self) -> None:
         """Refresh tool discovery."""
         if hasattr(self, "tool_discovery"):
             self.tool_discovery.refresh_discovery()
             self.discover_tools()
 
-    def update_tool_status(self, tool_key, tool_info):
+    def update_tool_status(self, tool_key, tool_info) -> None:
         """Update the visual status indicator for a tool."""
         if tool_key not in self.tool_widgets:
             return
@@ -716,7 +717,7 @@ class SettingsTab(BaseTab):
         # Show status details
         status_details.show()
 
-    def on_tool_path_changed(self, tool_key, path):
+    def on_tool_path_changed(self, tool_key, path) -> None:
         """Handle manual tool path changes."""
         if not path.strip():
             return
@@ -736,7 +737,7 @@ class SettingsTab(BaseTab):
             except Exception as e:
                 self.log_message(f"Failed to validate path for {tool_key}: {e}", "warning")
 
-    def reset_tool_path(self, tool_key):
+    def reset_tool_path(self, tool_key) -> None:
         """Reset tool path to auto-discovered value."""
         if tool_key not in self.tool_widgets:
             return
@@ -750,7 +751,7 @@ class SettingsTab(BaseTab):
         # Re-discover the tool
         try:
             tool_info = self.tool_discovery.discover_tool(
-                tool_key, {"executables": self.get_tool_executables(tool_key), "search_strategy": "installation_based", "required": False}
+                tool_key, {"executables": self.get_tool_executables(tool_key), "search_strategy": "installation_based", "required": False},
             )
 
             if tool_info.get("available") and tool_info.get("path"):
@@ -775,7 +776,7 @@ class SettingsTab(BaseTab):
         }
         return executables_map.get(tool_key, [tool_key])
 
-    def browse_tool_path(self, line_edit, title):
+    def browse_tool_path(self, line_edit, title) -> None:
         """Browse for a tool executable path."""
         file_path, _ = QFileDialog.getOpenFileName(self, title, "", "All Files (*)")
         if file_path:
@@ -900,7 +901,7 @@ class SettingsTab(BaseTab):
 
         return panel
 
-    def update_preview(self):
+    def update_preview(self) -> None:
         """Update the settings preview."""
         preview_text = "Current Settings:\n"
         preview_text += "=" * 40 + "\n\n"
@@ -935,7 +936,7 @@ class SettingsTab(BaseTab):
 
         self.preview_area.setText(preview_text)
 
-    def load_settings(self):
+    def load_settings(self) -> None:
         """Load settings from centralized configuration system."""
         # Initialize defaults in centralized config if not present
         default_settings = self.get_default_settings()
@@ -1012,7 +1013,7 @@ class SettingsTab(BaseTab):
             "debug_mode": False,
         }
 
-    def save_settings(self):
+    def save_settings(self) -> None:
         """Save current settings to centralized configuration system."""
         try:
             # Collect settings from UI
@@ -1036,7 +1037,7 @@ class SettingsTab(BaseTab):
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to save settings: {e!s}")
 
-    def collect_settings_from_ui(self):
+    def collect_settings_from_ui(self) -> None:
         """Collect settings from UI elements."""
         # Appearance settings
         if hasattr(self, "theme_combo"):
@@ -1098,7 +1099,7 @@ class SettingsTab(BaseTab):
         # Continue collecting other settings...
         # (Performance, Advanced settings would be collected similarly)
 
-    def reset_to_defaults(self):
+    def reset_to_defaults(self) -> None:
         """Reset settings to defaults."""
         reply = QMessageBox.question(
             self,
@@ -1125,7 +1126,7 @@ class SettingsTab(BaseTab):
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to reset settings: {e!s}")
 
-    def update_ui_from_settings(self):
+    def update_ui_from_settings(self) -> None:
         """Update UI elements from current settings."""
         # Update all UI elements to reflect current settings
         if hasattr(self, "theme_combo"):
@@ -1147,7 +1148,7 @@ class SettingsTab(BaseTab):
 
         # Continue updating other UI elements...
 
-    def export_settings(self):
+    def export_settings(self) -> None:
         """Export settings to file."""
         file_path, _ = QFileDialog.getSaveFileName(
             self,
@@ -1165,7 +1166,7 @@ class SettingsTab(BaseTab):
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to export settings: {e!s}")
 
-    def import_settings(self):
+    def import_settings(self) -> None:
         """Import settings from file."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
@@ -1194,25 +1195,25 @@ class SettingsTab(BaseTab):
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to import settings: {e!s}")
 
-    def browse_path(self, line_edit, title):
+    def browse_path(self, line_edit, title) -> None:
         """Browse for file path."""
         file_path, _ = QFileDialog.getOpenFileName(self, title, "", "All Files (*)")
         if file_path:
             line_edit.setText(file_path)
 
-    def browse_directory(self, line_edit, title):
+    def browse_directory(self, line_edit, title) -> None:
         """Browse for directory."""
         dir_path = QFileDialog.getExistingDirectory(self, title)
         if dir_path:
             line_edit.setText(dir_path)
 
-    def browse_file(self, line_edit, title):
+    def browse_file(self, line_edit, title) -> None:
         """Browse for file."""
         file_path, _ = QFileDialog.getSaveFileName(self, title, "", "All Files (*)")
         if file_path:
             line_edit.setText(file_path)
 
-    def on_theme_changed(self, theme):
+    def on_theme_changed(self, theme) -> None:
         """Handle theme change."""
         self.settings["theme"] = theme
 
@@ -1224,14 +1225,14 @@ class SettingsTab(BaseTab):
         self.theme_changed.emit(theme)
         self.update_preview()
 
-    def on_opacity_changed(self, value):
+    def on_opacity_changed(self, value) -> None:
         """Handle opacity change."""
         self.opacity_label.setText(f"{value}%")
         self.settings["window_opacity"] = value
         if hasattr(self.shared_context, "main_window"):
             self.shared_context.main_window.setWindowOpacity(value / 100.0)
 
-    def select_accent_color(self):
+    def select_accent_color(self) -> None:
         """Select accent color and apply it dynamically to the application stylesheet."""
         color = QColorDialog.getColor(QColor(self.settings.get("accent_color", "#0078d4")), self)
         if color.isValid():
@@ -1241,7 +1242,7 @@ class SettingsTab(BaseTab):
             self.apply_accent_color(color_hex)
             self.update_preview()
 
-    def apply_accent_color(self, color_hex):
+    def apply_accent_color(self, color_hex) -> None:
         """Apply accent color by re-applying the theme and replacing default accent colors."""
         from intellicrack.handlers.pyqt6_handler import QApplication
 
@@ -1272,19 +1273,19 @@ class SettingsTab(BaseTab):
 
         self.logger.info(f"Applied accent color: {color_hex}")
 
-    def on_ui_font_changed(self, font):
+    def on_ui_font_changed(self, font) -> None:
         """Handle UI font change."""
         self.settings["ui_font"] = font.family()
         self.apply_ui_font()
         self.update_preview()
 
-    def on_ui_font_size_changed(self, size):
+    def on_ui_font_size_changed(self, size) -> None:
         """Handle UI font size change."""
         self.settings["ui_font_size"] = size
         self.apply_ui_font()
         self.update_preview()
 
-    def apply_ui_font(self):
+    def apply_ui_font(self) -> None:
         """Apply UI font to the application."""
         from intellicrack.handlers.pyqt6_handler import QApplication
 
@@ -1295,19 +1296,19 @@ class SettingsTab(BaseTab):
         font = QFont(self.settings.get("ui_font", "Segoe UI"), self.settings.get("ui_font_size", 10))
         app.setFont(font)
 
-    def on_console_font_changed(self, font):
+    def on_console_font_changed(self, font) -> None:
         """Handle console font change."""
         self.settings["console_font"] = font.family()
         self.apply_console_font()
         self.update_preview()
 
-    def on_console_font_size_changed(self, size):
+    def on_console_font_size_changed(self, size) -> None:
         """Handle console font size change."""
         self.settings["console_font_size"] = size
         self.apply_console_font()
         self.update_preview()
 
-    def apply_console_font(self):
+    def apply_console_font(self) -> None:
         """Apply console font to all console/terminal widgets in the application."""
         from intellicrack.handlers.pyqt6_handler import QApplication, QPlainTextEdit, QTextEdit
 
@@ -1336,14 +1337,14 @@ class SettingsTab(BaseTab):
         if widgets_updated > 0:
             self.logger.info(f"Applied console font to {widgets_updated} widgets")
 
-    def on_tooltips_toggled(self, state):
+    def on_tooltips_toggled(self, state) -> None:
         """Handle tooltips toggle."""
         enabled = state == 2
         self.settings["show_tooltips"] = enabled
         self.apply_tooltip_settings(enabled)
         self.update_preview()
 
-    def apply_tooltip_settings(self, enabled):
+    def apply_tooltip_settings(self, enabled) -> None:
         """Apply tooltip settings to all widgets in the application.
 
         Args:
@@ -1387,14 +1388,14 @@ class SettingsTab(BaseTab):
                     pass
             self.logger.info(f"Tooltips enabled. Restored {restored_count} tooltips.")
 
-    def on_animations_toggled(self, state):
+    def on_animations_toggled(self, state) -> None:
         """Handle animations toggle."""
         enabled = state == 2
         self.settings["enable_animations"] = enabled
         self.apply_animation_settings(enabled)
         self.update_preview()
 
-    def apply_animation_settings(self, enabled):
+    def apply_animation_settings(self, enabled) -> None:
         """Apply smooth animation settings to UI elements.
 
         Args:
@@ -1464,7 +1465,7 @@ QPushButton:hover, QComboBox:hover, QTabBar::tab:hover {
 
         app.setStyleSheet(current_stylesheet)
 
-    def populate_ai_providers(self):
+    def populate_ai_providers(self) -> None:
         """Populate AI provider dropdown with dynamically detected providers."""
         current_selection = (
             self.ai_provider_combo.currentText() if self.ai_provider_combo.count() > 0 else self.settings.get("ai_provider", "")
@@ -1498,7 +1499,7 @@ QPushButton:hover, QComboBox:hover, QTabBar::tab:hover {
         elif available_providers:
             self.ai_provider_combo.setCurrentIndex(0)
 
-    def log_message(self, message, level="info"):
+    def log_message(self, message, level="info") -> None:
         """Log message to console or status."""
         if hasattr(self.shared_context, "log_message"):
             self.shared_context.log_message(message, level)

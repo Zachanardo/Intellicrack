@@ -88,7 +88,7 @@ class AddressMapping:
 class FuzzyMatcher:
     """Fuzzy matching for names and patterns."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the FuzzyMatcher with similarity thresholds."""
         self.similarity_threshold = 0.7
         self.exact_match_boost = 0.2
@@ -138,8 +138,7 @@ class FuzzyMatcher:
         # Remove common prefixes
         prefixes = ["sub_", "loc_", "func_", "FUN_", "j_"]
         for prefix in prefixes:
-            if name.startswith(prefix):
-                name = name[len(prefix) :]
+            name = name.removeprefix(prefix)
 
         # Remove address suffixes
         name = re.sub(r"_[0-9a-fA-F]{6,}$", "", name)
@@ -207,10 +206,7 @@ class FuzzyMatcher:
             return True
 
         # MSVC mangling
-        if "@@" in name or name.startswith("?"):
-            return True
-
-        return False
+        return bool("@@" in name or name.startswith("?"))
 
     def _match_mangled_names(self, name1: str, name2: str) -> float:
         """Match mangled names."""
@@ -293,7 +289,7 @@ class FuzzyMatcher:
         }
 
         for base_type, equiv_list in equivalents.items():
-            if type1 in [base_type] + equiv_list and type2 in [base_type] + equiv_list:
+            if type1 in [base_type, *equiv_list] and type2 in [base_type, *equiv_list]:
                 return 0.9
 
         return Levenshtein.jaro_winkler(type1, type2)
@@ -302,21 +298,21 @@ class FuzzyMatcher:
 class AddressTranslator:
     """Translates addresses between different tools' address spaces."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the AddressTranslator with empty mappings and base addresses."""
         self.mappings: List[AddressMapping] = []
         self.base_addresses: Dict[str, int] = {}
         self.relocations: Dict[str, List[Tuple[int, int]]] = {}
 
-    def add_mapping(self, mapping: AddressMapping):
+    def add_mapping(self, mapping: AddressMapping) -> None:
         """Add address space mapping."""
         self.mappings.append(mapping)
 
-    def set_base_address(self, tool: str, base: int):
+    def set_base_address(self, tool: str, base: int) -> None:
         """Set base address for a tool."""
         self.base_addresses[tool] = base
 
-    def add_relocation(self, tool: str, old_addr: int, new_addr: int):
+    def add_relocation(self, tool: str, old_addr: int, new_addr: int) -> None:
         """Add relocation entry."""
         if tool not in self.relocations:
             self.relocations[tool] = []
@@ -414,7 +410,7 @@ class AddressTranslator:
 class ConfidenceScorer:
     """Calculates confidence scores for correlations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the ConfidenceScorer with weighting factors for correlation scoring."""
         self.weights = {"name_similarity": 0.3, "address_proximity": 0.2, "size_match": 0.1, "attribute_match": 0.2, "pattern_match": 0.2}
 
@@ -552,7 +548,7 @@ class ConfidenceScorer:
 class AnomalyDetector:
     """Detect anomalies in correlation data."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the AnomalyDetector with isolation forest and threshold settings."""
         self.isolation_forest = IsolationForest(contamination=0.1, random_state=42)
         self.threshold_multiplier = 2.0
@@ -609,7 +605,7 @@ class AnomalyDetector:
             features.append(0)
 
         # Tool diversity
-        tools = set(item.tool for item in correlation.items)
+        tools = {item.tool for item in correlation.items}
         features.append(len(tools))
 
         return np.array(features)
@@ -637,7 +633,7 @@ class AnomalyDetector:
 class PatternClusterer:
     """Clusters patterns in correlation data."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the PatternClusterer with clustering algorithms and scaler."""
         self.dbscan = DBSCAN(eps=0.3, min_samples=5)
         self.kmeans = None
@@ -721,7 +717,7 @@ class PatternClusterer:
         return np.array(features)
 
     def find_similar_patterns(
-        self, query: CorrelationItem, items: List[CorrelationItem], top_k: int = 5
+        self, query: CorrelationItem, items: List[CorrelationItem], top_k: int = 5,
     ) -> List[Tuple[CorrelationItem, float]]:
         """Find items with similar patterns."""
         if not items:
@@ -755,7 +751,7 @@ class PatternClusterer:
 class MachineLearningCorrelator:
     """Machine learning-based correlation."""
 
-    def __init__(self, model_path: Optional[str] = None):
+    def __init__(self, model_path: Optional[str] = None) -> None:
         """Initialize the MachineLearningCorrelator with optional model path.
 
         Args:
@@ -773,13 +769,13 @@ class MachineLearningCorrelator:
         else:
             self._initialize_model()
 
-    def _initialize_model(self):
+    def _initialize_model(self) -> None:
         """Initialize ML model."""
         self.classifier = RandomForestClassifier(n_estimators=100, max_depth=10, random_state=42)
 
     def train(
-        self, positive_pairs: List[Tuple[CorrelationItem, CorrelationItem]], negative_pairs: List[Tuple[CorrelationItem, CorrelationItem]]
-    ):
+        self, positive_pairs: List[Tuple[CorrelationItem, CorrelationItem]], negative_pairs: List[Tuple[CorrelationItem, CorrelationItem]],
+    ) -> None:
         """Train the correlation model."""
         X = []
         y = []
@@ -878,7 +874,7 @@ class MachineLearningCorrelator:
 
         return np.array(features)
 
-    def save_model(self, path: str):
+    def save_model(self, path: str) -> None:
         """Save trained model."""
         model_data = {
             "classifier": self.classifier,
@@ -889,7 +885,7 @@ class MachineLearningCorrelator:
         joblib.dump(model_data, path)
         logger.info(f"Model saved to {path}")
 
-    def load_model(self, path: str):
+    def load_model(self, path: str) -> None:
         """Load trained model."""
         try:
             model_data = joblib.load(path)
@@ -906,7 +902,7 @@ class MachineLearningCorrelator:
 class IntelligentCorrelator:
     """Run intelligent correlation system."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the IntelligentCorrelator with all required components."""
         self.fuzzy_matcher = FuzzyMatcher()
         self.address_translator = AddressTranslator()
@@ -1115,7 +1111,7 @@ class IntelligentCorrelator:
         return translated
 
 
-def main():
+def main() -> None:
     """Demonstrate example usage of intelligent correlation."""
     import argparse
 
@@ -1181,7 +1177,7 @@ def main():
         print(f"Loading training data from {args.train}...")
 
         try:
-            with open(args.train, "r") as f:
+            with open(args.train) as f:
                 training_data = json.load(f)
 
             # Parse positive pairs

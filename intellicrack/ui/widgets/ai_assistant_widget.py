@@ -49,7 +49,7 @@ class AIAssistantWidget(QWidget):
     code_generated = pyqtSignal(str)
     script_generated = pyqtSignal(str, str)  # script_type, content
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the AI Assistant Widget."""
         super().__init__(parent)
 
@@ -64,7 +64,7 @@ class AIAssistantWidget(QWidget):
         self.setup_ui()
         self.load_available_models()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the AI assistant interface."""
         layout = QVBoxLayout(self)
         layout.setSpacing(10)
@@ -215,7 +215,7 @@ class AIAssistantWidget(QWidget):
                 "WinDbg Script",
                 "Unicorn Emulation",
                 "Angr Symbolic Execution",
-            ]
+            ],
         )
         type_layout.addWidget(self.script_type_combo)
         type_layout.addStretch()
@@ -324,7 +324,7 @@ class AIAssistantWidget(QWidget):
                 "Anti-Pattern Detection",
                 "Complexity Analysis",
                 "Dependency Analysis",
-            ]
+            ],
         )
         type_layout.addWidget(self.analysis_type_combo)
         type_layout.addStretch()
@@ -392,7 +392,7 @@ class AIAssistantWidget(QWidget):
                 "Custom Algorithm",
                 "License File",
                 "Activation Code",
-            ]
+            ],
         )
         algo_layout.addWidget(self.keygen_algo_combo)
         algo_layout.addStretch()
@@ -468,7 +468,7 @@ class AIAssistantWidget(QWidget):
 
         return tab
 
-    def send_message(self):
+    def send_message(self) -> None:
         """Send a message to the AI."""
         message = self.message_input.text().strip()
         if message:
@@ -482,7 +482,7 @@ class AIAssistantWidget(QWidget):
 
             self.process_ai_request(message, context)
 
-    def send_quick_message(self, message: str):
+    def send_quick_message(self, message: str) -> None:
         """Send a predefined quick message."""
         self.add_message("User", message)
 
@@ -493,7 +493,7 @@ class AIAssistantWidget(QWidget):
 
         self.process_ai_request(message, context)
 
-    def add_message(self, sender: str, message: str):
+    def add_message(self, sender: str, message: str) -> None:
         """Add a message to the chat history."""
         self.conversation_history.append({"sender": sender, "message": message})
 
@@ -509,7 +509,7 @@ class AIAssistantWidget(QWidget):
         scrollbar = self.chat_history.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
 
-    def process_ai_request(self, message: str, context: str = ""):
+    def process_ai_request(self, message: str, context: str = "") -> None:
         """Process AI request using available AI backends."""
         model = self.model_combo.currentText()
         temperature = float(self.temperature_spin.currentText())
@@ -540,7 +540,7 @@ class AIAssistantWidget(QWidget):
             response = self._generate_fallback_response(message, model, temperature, context)
         except Exception as e:
             # Error handling for AI backend issues
-            response = f"Error processing AI request: {str(e)}. Using fallback response."
+            response = f"Error processing AI request: {e!s}. Using fallback response."
 
         self.add_message("AI", response)
         self.message_sent.emit(message)
@@ -599,18 +599,18 @@ class AIAssistantWidget(QWidget):
                 f"{'Context considered: ' + context if context else 'No additional context provided'}"
             )
 
-    def clear_chat(self):
+    def clear_chat(self) -> None:
         """Clear the chat history."""
         self.chat_history.clear()
         self.conversation_history.clear()
         self.chat_history.setText("Chat cleared. Ready for new conversation.\n")
 
-    def on_model_changed(self, model: str):
+    def on_model_changed(self, model: str) -> None:
         """Handle model change."""
         logger.info(f"AI model changed to: {model}")
         self.add_message("System", f"Switched to {model} model")
 
-    def set_current_context(self, file_path: str, content: str = ""):
+    def set_current_context(self, file_path: str, content: str = "") -> None:
         """Set the current file context for AI assistance."""
         self.current_file = file_path
         self.current_context = content[:1000] if content else ""  # Limit context size
@@ -620,7 +620,7 @@ class AIAssistantWidget(QWidget):
         else:
             self.context_label.setText("Context: No file loaded")
 
-    def generate_script(self):
+    def generate_script(self) -> None:
         """Generate protection-aware bypass script using actual binary analysis."""
         script_type = self.script_type_combo.currentText()
         target = self.target_input.text()
@@ -667,10 +667,10 @@ class AIAssistantWidget(QWidget):
                 self.script_output.setPlainText(f"Error: {error_msg}")
 
         except Exception as e:
-            self.script_output.setPlainText(f"Error: {str(e)}")
+            self.script_output.setPlainText(f"Error: {e!s}")
             logger.error(f"Script generation failed: {e}")
 
-    def copy_script(self):
+    def copy_script(self) -> None:
         """Copy generated script to clipboard."""
         from PyQt6.QtWidgets import QApplication
 
@@ -678,7 +678,7 @@ class AIAssistantWidget(QWidget):
         clipboard.setText(self.script_output.toPlainText())
         logger.info("Script copied to clipboard")
 
-    def save_script(self):
+    def save_script(self) -> None:
         """Save generated script to file."""
         from PyQt6.QtWidgets import QFileDialog
 
@@ -693,7 +693,7 @@ class AIAssistantWidget(QWidget):
             except Exception as e:
                 logger.error(f"Failed to save script: {e}")
 
-    def test_script(self):
+    def test_script(self) -> None:
         """Test the generated script in appropriate execution environment."""
         script_content = self.script_output.toPlainText()
         script_type = self.script_type_combo.currentText()
@@ -722,12 +722,12 @@ class AIAssistantWidget(QWidget):
                             f"{script_content}\n\n{'=' * 50}\n"
                             f"OK Frida validation passed\n"
                             f"Script saved to: {script_file}\n"
-                            f"Run with: frida -f <target> -l {script_file.name}"
+                            f"Run with: frida -f <target> -l {script_file.name}",
                         )
                         logger.info("Frida script validation successful")
                     else:
                         self.script_output.setPlainText(
-                            f"{script_content}\n\n{'=' * 50}\n⚠ Frida not found. Install with: pip install frida-tools"
+                            f"{script_content}\n\n{'=' * 50}\n⚠ Frida not found. Install with: pip install frida-tools",
                         )
 
                 elif "Python" in script_type or script_type == "Angr Symbolic Execution":
@@ -738,7 +738,7 @@ class AIAssistantWidget(QWidget):
 
                     if result.returncode == 0:
                         self.script_output.setPlainText(
-                            f"{script_content}\n\n{'=' * 50}\nOK Python syntax validation passed\nScript is syntactically correct"
+                            f"{script_content}\n\n{'=' * 50}\nOK Python syntax validation passed\nScript is syntactically correct",
                         )
                         logger.info("Python script validation successful")
                     else:
@@ -754,7 +754,7 @@ class AIAssistantWidget(QWidget):
 
                     if result.returncode == 0:
                         self.script_output.setPlainText(
-                            f"{script_content}\n\n{'=' * 50}\nOK Ghidra script syntax validated\nPlace in Ghidra scripts directory to use"
+                            f"{script_content}\n\n{'=' * 50}\nOK Ghidra script syntax validated\nPlace in Ghidra scripts directory to use",
                         )
                         logger.info("Ghidra script validation successful")
                     else:
@@ -768,7 +768,7 @@ class AIAssistantWidget(QWidget):
 
                     if result.returncode == 0:
                         self.script_output.setPlainText(
-                            f"{script_content}\n\n{'=' * 50}\nOK Radare2 available\nRun with: r2 -i {script_file.name} <target>"
+                            f"{script_content}\n\n{'=' * 50}\nOK Radare2 available\nRun with: r2 -i {script_file.name} <target>",
                         )
                         logger.info("Radare2 script prepared")
                     else:
@@ -778,7 +778,7 @@ class AIAssistantWidget(QWidget):
                     self.script_output.setPlainText(
                         f"{script_content}\n\n{'=' * 50}\n"
                         f"OK Script generated for {script_type}\n"
-                        f"Manual testing required for this script type"
+                        f"Manual testing required for this script type",
                     )
                     logger.info(f"Script prepared for {script_type}")
 
@@ -786,17 +786,17 @@ class AIAssistantWidget(QWidget):
             self.script_output.setPlainText(f"{script_content}\n\n{'=' * 50}\nFAIL Test timed out")
             logger.error("Script test timed out")
         except Exception as e:
-            self.script_output.setPlainText(f"{script_content}\n\n{'=' * 50}\nFAIL Test error: {str(e)}")
+            self.script_output.setPlainText(f"{script_content}\n\n{'=' * 50}\nFAIL Test error: {e!s}")
             logger.error(f"Script test failed: {e}")
 
-    def load_current_file_for_analysis(self):
+    def load_current_file_for_analysis(self) -> None:
         """Load current file content for analysis."""
         if self.current_context:
             self.code_input.setPlainText(self.current_context)
         else:
             self.code_input.setPlainText("No file context available. Load a file first.")
 
-    def analyze_code(self):
+    def analyze_code(self) -> None:
         """Analyze code using AI-powered analysis."""
         code = self.code_input.toPlainText()
         analysis_type = self.analysis_type_combo.currentText()
@@ -838,13 +838,13 @@ Format as clear, actionable analysis."""
 
         except ImportError:
             self.analysis_results.setText(
-                "Error: AI integration not available.\n\nPlease configure an AI model in Settings to use code analysis."
+                "Error: AI integration not available.\n\nPlease configure an AI model in Settings to use code analysis.",
             )
         except Exception as e:
-            self.analysis_results.setText(f"Error during analysis: {str(e)}")
+            self.analysis_results.setText(f"Error during analysis: {e!s}")
             logger.error(f"Code analysis failed: {e}")
 
-    def generate_keygen(self):
+    def generate_keygen(self) -> None:
         """Generate keygen using AI-powered code generation."""
         algo_type = self.keygen_algo_combo.currentText()
         details = self.keygen_details.toPlainText()
@@ -884,13 +884,13 @@ Return ONLY the code, no explanations."""
 
         except ImportError:
             self.keygen_output.setPlainText(
-                "Error: AI integration not available.\n\nPlease configure an AI model in Settings to use keygen generation."
+                "Error: AI integration not available.\n\nPlease configure an AI model in Settings to use keygen generation.",
             )
         except Exception as e:
-            self.keygen_output.setPlainText(f"Error generating keygen: {str(e)}")
+            self.keygen_output.setPlainText(f"Error generating keygen: {e!s}")
             logger.error(f"Keygen generation failed: {e}")
 
-    def copy_keygen(self):
+    def copy_keygen(self) -> None:
         """Copy keygen code to clipboard."""
         from PyQt6.QtWidgets import QApplication
 
@@ -898,7 +898,7 @@ Return ONLY the code, no explanations."""
         clipboard.setText(self.keygen_output.toPlainText())
         logger.info("Keygen code copied to clipboard")
 
-    def save_keygen(self):
+    def save_keygen(self) -> None:
         """Save keygen to file."""
         from PyQt6.QtWidgets import QFileDialog
 
@@ -916,7 +916,7 @@ Return ONLY the code, no explanations."""
             except Exception as e:
                 logger.error(f"Failed to save keygen: {e}")
 
-    def compile_keygen(self):
+    def compile_keygen(self) -> None:
         """Compile the keygen code into standalone executable."""
         keygen_content = self.keygen_output.toPlainText()
         language = self.keygen_lang_combo.currentText()
@@ -945,13 +945,13 @@ Return ONLY the code, no explanations."""
                             f"{keygen_content}\n\n{'=' * 50}\n"
                             "⚠ PyInstaller not found\n"
                             "Install with: pip install pyinstaller\n"
-                            f"Then run: pyinstaller --onefile {keygen_file.name}"
+                            f"Then run: pyinstaller --onefile {keygen_file.name}",
                         )
                         logger.warning("PyInstaller not available")
                         return
 
                     self.keygen_output.setPlainText(
-                        f"{keygen_content}\n\n{'=' * 50}\n🔨 Compiling with PyInstaller...\nThis may take a moment..."
+                        f"{keygen_content}\n\n{'=' * 50}\n🔨 Compiling with PyInstaller...\nThis may take a moment...",
                     )
 
                     compile_result = subprocess.run(
@@ -977,12 +977,12 @@ Return ONLY the code, no explanations."""
                                     f"{keygen_content}\n\n{'=' * 50}\n"
                                     f"OK Compilation successful!\n"
                                     f"Executable saved to: {save_path}\n"
-                                    f"Size: {Path(save_path).stat().st_size // 1024} KB"
+                                    f"Size: {Path(save_path).stat().st_size // 1024} KB",
                                 )
                                 logger.info(f"Keygen compiled successfully: {save_path}")
                         else:
                             self.keygen_output.setPlainText(
-                                f"{keygen_content}\n\n{'=' * 50}\n⚠ Compilation succeeded but executable not found"
+                                f"{keygen_content}\n\n{'=' * 50}\n⚠ Compilation succeeded but executable not found",
                             )
                     else:
                         error_msg = compile_result.stderr[-500:] if compile_result.stderr else "Unknown error"
@@ -1002,7 +1002,7 @@ Return ONLY the code, no explanations."""
                             f"{keygen_content}\n\n{'=' * 50}\n"
                             f"⚠ {compiler} not found\n"
                             f"Install MinGW-w64 or MSVC\n"
-                            f"Then run: {compiler} -o keygen.exe {keygen_file.name}"
+                            f"Then run: {compiler} -o keygen.exe {keygen_file.name}",
                         )
                         logger.warning(f"{compiler} not available")
                         return
@@ -1010,7 +1010,7 @@ Return ONLY the code, no explanations."""
                     output_exe = temp_path / "keygen.exe"
 
                     self.keygen_output.setPlainText(
-                        f"{keygen_content}\n\n{'=' * 50}\n🔨 Compiling with {compiler}...\nThis may take a moment..."
+                        f"{keygen_content}\n\n{'=' * 50}\n🔨 Compiling with {compiler}...\nThis may take a moment...",
                     )
 
                     compile_result = subprocess.run(
@@ -1034,7 +1034,7 @@ Return ONLY the code, no explanations."""
                                 f"{keygen_content}\n\n{'=' * 50}\n"
                                 f"OK Compilation successful!\n"
                                 f"Executable saved to: {save_path}\n"
-                                f"Size: {Path(save_path).stat().st_size // 1024} KB"
+                                f"Size: {Path(save_path).stat().st_size // 1024} KB",
                             )
                             logger.info(f"Keygen compiled successfully: {save_path}")
                     else:
@@ -1047,7 +1047,7 @@ Return ONLY the code, no explanations."""
                         f"{keygen_content}\n\n{'=' * 50}\n"
                         "ℹ JavaScript keygens run with Node.js\n"
                         "Save as keygen.js and run with: node keygen.js\n"
-                        "For executable, use pkg: npm install -g pkg && pkg keygen.js"
+                        "For executable, use pkg: npm install -g pkg && pkg keygen.js",
                     )
                     logger.info("JavaScript keygen - manual compilation instructions provided")
 
@@ -1057,23 +1057,23 @@ Return ONLY the code, no explanations."""
                         "ℹ Assembly keygens require NASM or MASM\n"
                         "Save as keygen.asm and compile with:\n"
                         "NASM: nasm -f win64 keygen.asm && gcc keygen.o -o keygen.exe\n"
-                        "MASM: ml64 keygen.asm /link /out:keygen.exe"
+                        "MASM: ml64 keygen.asm /link /out:keygen.exe",
                     )
                     logger.info("Assembly keygen - manual compilation instructions provided")
 
                 else:
                     self.keygen_output.setPlainText(
-                        f"{keygen_content}\n\n{'=' * 50}\n⚠ Compilation not supported for {language}\nSave and compile manually"
+                        f"{keygen_content}\n\n{'=' * 50}\n⚠ Compilation not supported for {language}\nSave and compile manually",
                     )
 
         except subprocess.TimeoutExpired:
             self.keygen_output.setPlainText(f"{keygen_content}\n\n{'=' * 50}\nFAIL Compilation timed out")
             logger.error("Keygen compilation timed out")
         except Exception as e:
-            self.keygen_output.setPlainText(f"{keygen_content}\n\n{'=' * 50}\nFAIL Compilation error: {str(e)}")
+            self.keygen_output.setPlainText(f"{keygen_content}\n\n{'=' * 50}\nFAIL Compilation error: {e!s}")
             logger.error(f"Keygen compilation failed: {e}")
 
-    def load_available_models(self, force_refresh: bool = False):
+    def load_available_models(self, force_refresh: bool = False) -> None:
         """Load available AI models using dynamic API-based discovery."""
         try:
             from ...ai.llm_config_manager import get_llm_config_manager
@@ -1089,7 +1089,7 @@ Return ONLY the code, no explanations."""
             self.model_combo.clear()
 
             if configured_models:
-                for model_id in configured_models.keys():
+                for model_id in configured_models:
                     self.available_models.append(model_id)
                     self.model_combo.addItem(f" {model_id}")
 
@@ -1125,7 +1125,7 @@ Return ONLY the code, no explanations."""
             self.model_combo.setEnabled(False)
             self._show_error_message(str(e))
 
-    def _show_no_models_prompt(self):
+    def _show_no_models_prompt(self) -> None:
         """Display prompt when no models are configured."""
         self.chat_history.setHtml(
             "<div style='padding: 20px;'>"
@@ -1142,10 +1142,10 @@ Return ONLY the code, no explanations."""
             "<p style='color: #666; font-style: italic; margin-top: 20px;'>"
             "After configuration, click the 🔄 button to refresh available models."
             "</p>"
-            "</div>"
+            "</div>",
         )
 
-    def _show_welcome_message(self, total_models: int):
+    def _show_welcome_message(self, total_models: int) -> None:
         """Display welcome message with model count."""
         self.chat_history.setHtml(
             "<div style='padding: 20px;'>"
@@ -1165,10 +1165,10 @@ Return ONLY the code, no explanations."""
             "<p style='color: #666; font-style: italic; margin-top: 20px;'>"
             "Select a model from the dropdown below and start chatting, or use the tabs above for specific tasks."
             "</p>"
-            "</div>"
+            "</div>",
         )
 
-    def _show_error_message(self, error: str):
+    def _show_error_message(self, error: str) -> None:
         """Display error message when model loading fails."""
         self.chat_history.setHtml(
             "<div style='padding: 20px;'>"
@@ -1184,5 +1184,5 @@ Return ONLY the code, no explanations."""
             "<p style='color: #666; font-style: italic; margin-top: 20px;'>"
             "Click the 🔄 button to try again."
             "</p>"
-            "</div>"
+            "</div>",
         )

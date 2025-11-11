@@ -36,13 +36,13 @@ class BaseWindowsPatcher(ABC):
     Provides common Windows constants and library initialization.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the base Windows patcher with logging and NTDLL detection."""
         self.logger = logging.getLogger(self.__class__.__name__)
         # Optional flag that derived classes can set to require ntdll
         self.requires_ntdll = False
 
-    def _initialize_windows_libraries(self):
+    def _initialize_windows_libraries(self) -> None:
         """Initialize Windows libraries required for patching operations."""
         self.kernel32 = get_windows_kernel32()
         if not self.kernel32:
@@ -53,7 +53,7 @@ class BaseWindowsPatcher(ABC):
         if hasattr(self, "_requires_ntdll") and self._requires_ntdll and not self.ntdll:
             raise RuntimeError("Failed to load required Windows libraries")
 
-    def _initialize_windows_constants(self):
+    def _initialize_windows_constants(self) -> None:
         """Initialize common Windows constants for patching operations."""
         # Process creation constants
         self.CREATE_SUSPENDED = WindowsConstants.CREATE_SUSPENDED

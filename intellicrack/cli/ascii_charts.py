@@ -39,7 +39,7 @@ except ImportError:
 class ASCIIChartGenerator:
     """Generate ASCII charts and graphs for analysis data visualization."""
 
-    def __init__(self, width: int = 80, height: int = 20):
+    def __init__(self, width: int = 80, height: int = 20) -> None:
         """Initialize chart generator.
 
         Args:
@@ -438,7 +438,7 @@ class ASCIIChartGenerator:
         # 1. Analysis categories bar chart
         category_counts = {}
         for category, data in analysis_results.items():
-            if isinstance(data, dict) or isinstance(data, list):
+            if isinstance(data, (dict, list)):
                 category_counts[category.replace("_", " ").title()] = len(data)
             else:
                 category_counts[category.replace("_", " ").title()] = 1
@@ -448,7 +448,7 @@ class ASCIIChartGenerator:
                 self.generate_bar_chart(
                     category_counts,
                     "Analysis Categories",
-                )
+                ),
             )
 
         # 2. Vulnerability severity distribution
@@ -468,7 +468,7 @@ class ASCIIChartGenerator:
                         self.generate_pie_chart(
                             dict(severity_counts),
                             "Vulnerability Severity Distribution",
-                        )
+                        ),
                     )
 
         # 3. Protection status
@@ -483,7 +483,7 @@ class ASCIIChartGenerator:
                     self.generate_pie_chart(
                         {"Enabled": enabled_count, "Disabled": disabled_count},
                         "Security Protections Status",
-                    )
+                    ),
                 )
 
         # 4. String analysis histogram
@@ -497,7 +497,7 @@ class ASCIIChartGenerator:
                         string_lengths,
                         bins=8,
                         title="String Length Distribution",
-                    )
+                    ),
                 )
 
         return "\n".join(charts) if charts else "No chartable data available"

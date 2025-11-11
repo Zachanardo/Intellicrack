@@ -48,7 +48,7 @@ __all__ = ["PerformanceMonitor", "PerformanceWidget"]
 class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
     """Widget for displaying performance statistics."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the performance widget."""
         if not PYQT6_AVAILABLE:
             logger.warning("PyQt6 not available, PerformanceWidget cannot be created")
@@ -94,7 +94,7 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
         self.update_timer.timeout.connect(self.update_display)
         self.update_timer.start(2000)  # Update every 2 seconds
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the user interface."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(4, 4, 4, 4)
@@ -125,7 +125,7 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
         # Controls
         self.create_controls()
 
-    def create_overview_tab(self):
+    def create_overview_tab(self) -> None:
         """Create the overview tab."""
         tab = QWidget()
         layout = QVBoxLayout(tab)
@@ -177,7 +177,7 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
         layout.addStretch()
         self.tab_widget.addTab(tab, "Overview")
 
-    def create_memory_tab(self):
+    def create_memory_tab(self) -> None:
         """Create the memory usage tab."""
         tab = QWidget()
         layout = QVBoxLayout(tab)
@@ -226,7 +226,7 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
         layout.addStretch()
         self.tab_widget.addTab(tab, "Memory")
 
-    def create_cache_tab(self):
+    def create_cache_tab(self) -> None:
         """Create the cache statistics tab."""
         tab = QWidget()
         layout = QVBoxLayout(tab)
@@ -262,7 +262,7 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
         layout.addStretch()
         self.tab_widget.addTab(tab, "Cache")
 
-    def create_patterns_tab(self):
+    def create_patterns_tab(self) -> None:
         """Create the access patterns tab."""
         tab = QWidget()
         layout = QVBoxLayout(tab)
@@ -293,7 +293,7 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
 
         self.tab_widget.addTab(tab, "Patterns")
 
-    def create_controls(self):
+    def create_controls(self) -> None:
         """Create control buttons."""
         controls_layout = QHBoxLayout()
 
@@ -309,13 +309,13 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
 
         self.layout().addLayout(controls_layout)
 
-    def set_file_handler(self, file_handler):
+    def set_file_handler(self, file_handler) -> None:
         """Set the file handler to monitor."""
         self.file_handler = file_handler
         self.stats_history.clear()
         self.update_display()
 
-    def update_display(self):
+    def update_display(self) -> None:
         """Update the display with current statistics."""
         if not self.file_handler:
             return
@@ -347,7 +347,7 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error updating performance display: %s", e)
 
-    def update_overview_tab(self, stats: dict[str, Any]):
+    def update_overview_tab(self, stats: dict[str, Any]) -> None:
         """Update the overview tab."""
         # File information
         self.file_size_label.setText(f"{stats.get('file_size_mb', 0):.1f} MB")
@@ -373,7 +373,7 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
             "color: green;" if loader_active else "color: gray;",
         )
 
-    def update_memory_tab(self, stats: dict[str, Any]):
+    def update_memory_tab(self, stats: dict[str, Any]) -> None:
         """Update the memory tab."""
         cache_stats = stats.get("cache_stats", {})
 
@@ -399,7 +399,7 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
             self.system_memory_label.setText("N/A (psutil not available)")
             self.system_memory_progress.setValue(50)  # Default to 50%
 
-    def update_cache_tab(self, stats: dict[str, Any]):
+    def update_cache_tab(self, stats: dict[str, Any]) -> None:
         """Update the cache tab."""
         cache_stats = stats.get("cache_stats", {})
 
@@ -412,7 +412,7 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
         self.cache_utilization_label.setText(f"{utilization:.1f}%")
         self.cache_progress.setValue(int(utilization))
 
-    def update_patterns_tab(self, stats: dict[str, Any]):
+    def update_patterns_tab(self, stats: dict[str, Any]) -> None:
         """Update the access patterns tab."""
         # This would require more detailed access pattern tracking
         # For now, just show basic statistics
@@ -426,7 +426,7 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
         self.sequential_count_label.setText(f"Sequential: {sequential_count}")
         self.random_count_label.setText(f"Random: {random_count}")
 
-    def auto_optimize(self):
+    def auto_optimize(self) -> None:
         """Automatically optimize based on access patterns."""
         if not self.file_handler:
             return
@@ -452,7 +452,7 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Auto-optimization failed: %s", e)
 
-    def clear_stats(self):
+    def clear_stats(self) -> None:
         """Clear statistics history."""
         self.stats_history.clear()
         self.pattern_table.setRowCount(0)
@@ -461,7 +461,7 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
 class PerformanceMonitor:
     """Run performance monitoring controller."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the performance monitor with widget and file handler references."""
         self.widget = None
         self.file_handler = None
@@ -477,7 +477,7 @@ class PerformanceMonitor:
 
         return self.widget
 
-    def set_file_handler(self, file_handler):
+    def set_file_handler(self, file_handler) -> None:
         """Set the file handler to monitor."""
         self.file_handler = file_handler
         if self.widget:

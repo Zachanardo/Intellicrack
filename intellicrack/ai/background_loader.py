@@ -39,11 +39,11 @@ logger = logging.getLogger(__name__)
 class ConsoleProgressCallback(ProgressCallback):
     """Console-based progress callback for debugging."""
 
-    def on_progress(self, progress: LoadingProgress):
+    def on_progress(self, progress: LoadingProgress) -> None:
         """Print progress to console."""
         print(f"[{progress.model_id}] {progress.state.value}: {progress.progress:.1%} - {progress.message}")
 
-    def on_completed(self, model_id: str, success: bool, error: str | None = None):
+    def on_completed(self, model_id: str, success: bool, error: str | None = None) -> None:
         """Print completion status."""
         status = "SUCCESS" if success else f"FAILED: {error}"
         print(f"[{model_id}] Loading completed: {status}")
@@ -52,7 +52,7 @@ class ConsoleProgressCallback(ProgressCallback):
 class QueuedProgressCallback(ProgressCallback):
     """Queue-based progress callback for GUI integration."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the queue-based progress callback.
 
         Sets up queues for progress updates and completion notifications
@@ -62,11 +62,11 @@ class QueuedProgressCallback(ProgressCallback):
         self.completion_queue = queue.Queue()
         self.logger = logging.getLogger(__name__ + ".QueuedProgressCallback")
 
-    def on_progress(self, progress: LoadingProgress):
+    def on_progress(self, progress: LoadingProgress) -> None:
         """Add progress to queue."""
         self.progress_queue.put(progress)
 
-    def on_completed(self, model_id: str, success: bool, error: str | None = None):
+    def on_completed(self, model_id: str, success: bool, error: str | None = None) -> None:
         """Add completion to queue."""
         self.completion_queue.put((model_id, success, error))
 
@@ -102,7 +102,7 @@ class LoadingTask:
         config: "LLMConfig",
         priority: int = 0,
         callback: ProgressCallback | None = None,
-    ):
+    ) -> None:
         """Initialize a model loading task.
 
         Args:
@@ -127,7 +127,7 @@ class LoadingTask:
         self.error: str | None = None
         self.cancelled = False
 
-    def update_progress(self, progress: float, message: str, state: LoadingState | None = None):
+    def update_progress(self, progress: float, message: str, state: LoadingState | None = None) -> None:
         """Update task progress."""
         if state:
             self.state = state
@@ -150,7 +150,7 @@ class LoadingTask:
             )
             self.callback.on_progress(progress_info)
 
-    def mark_completed(self, success: bool, result: Optional["LLMBackend"] = None, error: str | None = None):
+    def mark_completed(self, success: bool, result: Optional["LLMBackend"] = None, error: str | None = None) -> None:
         """Mark task as completed."""
         self.end_time = time.time()
         self.result = result
@@ -162,7 +162,7 @@ class LoadingTask:
         if self.callback:
             self.callback.on_completed(self.model_id, success, error)
 
-    def cancel(self):
+    def cancel(self) -> None:
         """Cancel the task."""
         self.cancelled = True
         self.state = LoadingState.CANCELLED
@@ -178,7 +178,7 @@ class BackgroundModelLoader:
     Loads models in background threads with priority queuing and progress updates.
     """
 
-    def __init__(self, max_concurrent_loads: int = 2):
+    def __init__(self, max_concurrent_loads: int = 2) -> None:
         """Initialize the background model loader.
 
         Args:
@@ -296,7 +296,7 @@ class BackgroundModelLoader:
 
             return stats
 
-    def _worker_thread(self):
+    def _worker_thread(self) -> None:
         """Worker thread for loading models."""
         thread_name = threading.current_thread().name
         logger.info(f"Model loader worker {thread_name} started")
@@ -330,7 +330,7 @@ class BackgroundModelLoader:
             except Exception as e:
                 logger.error(f"Error in worker thread {thread_name}: {e}")
 
-    def _load_model(self, task: LoadingTask):
+    def _load_model(self, task: LoadingTask) -> None:
         """Load a model with progress tracking."""
         task.start_time = time.time()
 
@@ -379,7 +379,7 @@ class BackgroundModelLoader:
                 task.mark_completed(False, error=error_msg)
                 logger.error(f"Error loading model {task.model_id}: {e}")
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown the background loader."""
         logger.info("Shutting down background model loader...")
         self.shutdown_event.set()
@@ -402,7 +402,7 @@ class IntegratedBackgroundLoader:
     Provides seamless integration with lazy loading and model management.
     """
 
-    def __init__(self, llm_manager, max_concurrent_loads: int = 2):
+    def __init__(self, llm_manager, max_concurrent_loads: int = 2) -> None:
         """Initialize the integrated background loader.
 
         Args:
@@ -415,11 +415,11 @@ class IntegratedBackgroundLoader:
         self.progress_callbacks: list[ProgressCallback] = []
         self.model_tasks: dict[str, LoadingTask] = {}
 
-    def add_progress_callback(self, callback: ProgressCallback):
+    def add_progress_callback(self, callback: ProgressCallback) -> None:
         """Add a progress callback."""
         self.progress_callbacks.append(callback)
 
-    def remove_progress_callback(self, callback: ProgressCallback):
+    def remove_progress_callback(self, callback: ProgressCallback) -> None:
         """Remove a progress callback."""
         if callback in self.progress_callbacks:
             self.progress_callbacks.remove(callback)
@@ -429,18 +429,18 @@ class IntegratedBackgroundLoader:
 
         # Create a callback that notifies all registered callbacks
         class MultiCallback(ProgressCallback):
-            def __init__(self, callbacks):
+            def __init__(self, callbacks) -> None:
                 """Initialize multi-callback handler with list of callbacks."""
                 self.callbacks = callbacks
 
-            def on_progress(self, progress):
+            def on_progress(self, progress) -> None:
                 for callback in self.callbacks:
                     try:
                         callback.on_progress(progress)
                     except Exception as e:
                         logger.warning(f"Error in progress callback: {e}")
 
-            def on_completed(self, model_id, success, error=None):
+            def on_completed(self, model_id, success, error=None) -> None:
                 for callback in self.callbacks:
                     try:
                         callback.on_completed(model_id, success, error)
@@ -476,7 +476,7 @@ class IntegratedBackgroundLoader:
         """Get loading statistics."""
         return self.background_loader.get_loading_statistics()
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown the integrated loader."""
         self.background_loader.shutdown()
 

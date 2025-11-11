@@ -51,7 +51,7 @@ class DebuggerBypass:
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize user-mode debugger bypass system."""
         self.logger = logging.getLogger("IntellicrackLogger.DebuggerBypass")
         self.hooks_installed = False
@@ -64,7 +64,7 @@ class DebuggerBypass:
         else:
             self._init_linux_bypass()
 
-    def _init_windows_bypass(self):
+    def _init_windows_bypass(self) -> None:
         """Initialize Windows-specific bypass mechanisms."""
         try:
             self.kernel32 = ctypes.windll.kernel32
@@ -89,7 +89,7 @@ class DebuggerBypass:
         except Exception as e:
             self.logger.error(f"Failed to initialize Windows bypass: {e}")
 
-    def _init_linux_bypass(self):
+    def _init_linux_bypass(self) -> None:
         """Initialize Linux-specific bypass mechanisms."""
         try:
             self.bypass_methods = {
@@ -175,7 +175,7 @@ class DebuggerBypass:
             bytes_written = ctypes.c_size_t()
 
             success = self.kernel32.WriteProcessMemory(
-                current_process, being_debugged_addr, ctypes.byref(zero_byte), 1, ctypes.byref(bytes_written)
+                current_process, being_debugged_addr, ctypes.byref(zero_byte), 1, ctypes.byref(bytes_written),
             )
 
             if success and bytes_written.value == 1:
@@ -264,7 +264,7 @@ class DebuggerBypass:
 
                 self.kernel32.WriteProcessMemory(current_process, flags_addr, ctypes.byref(normal_flags), 4, ctypes.byref(bytes_written))
                 self.kernel32.WriteProcessMemory(
-                    current_process, force_flags_addr, ctypes.byref(zero_flags), 4, ctypes.byref(bytes_written)
+                    current_process, force_flags_addr, ctypes.byref(zero_flags), 4, ctypes.byref(bytes_written),
                 )
 
             self.logger.debug("PEB flags neutralized")
@@ -331,7 +331,7 @@ class DebuggerBypass:
                         0x89,
                         0x01,  # mov [rcx], rax (write 0 to output)
                         0xC3,  # ret
-                    ]
+                    ],
                 )
             else:
                 hook_code = bytes(
@@ -354,7 +354,7 @@ class DebuggerBypass:
                         0xC2,
                         0x14,
                         0x00,  # ret 0x14
-                    ]
+                    ],
                 )
 
             return hook_code
@@ -576,7 +576,7 @@ class DebuggerBypass:
             libc = ctypes.CDLL(libc_path)
 
             try:
-                with open("/proc/self/status", "r") as f:
+                with open("/proc/self/status") as f:
                     content = f.read()
 
                 if "TracerPid:\t0" not in content:
@@ -658,7 +658,7 @@ class DebuggerBypass:
                 return "Hyper-V" in result.stdout or "Hypervisor" in result.stdout
             else:
                 try:
-                    with open("/proc/cpuinfo", "r") as f:
+                    with open("/proc/cpuinfo") as f:
                         cpuinfo = f.read()
                     return "vmx" in cpuinfo or "svm" in cpuinfo
                 except Exception:

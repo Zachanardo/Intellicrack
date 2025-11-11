@@ -232,7 +232,7 @@ class TrainingThread(QThread):
 
     progress_signal = pyqtSignal(dict) if PYQT6_AVAILABLE else None
 
-    def __init__(self, config: TrainingConfig):
+    def __init__(self, config: TrainingConfig) -> None:
         """Initialize training thread.
 
         Args:
@@ -249,7 +249,7 @@ class TrainingThread(QThread):
         self.status = TrainingStatus.IDLE
         self.logger = logging.getLogger(__name__)
 
-    def run(self):
+    def run(self) -> None:
         """Run the model training process."""
         try:
             self.status = TrainingStatus.PREPARING
@@ -261,7 +261,7 @@ class TrainingThread(QThread):
                         "status": self.status.value,
                         "message": "Preparing training",
                         "step": 0,
-                    }
+                    },
                 )
 
             # Load model and tokenizer
@@ -281,7 +281,7 @@ class TrainingThread(QThread):
                         "status": self.status.value,
                         "message": "Training in progress",
                         "step": 1,
-                    }
+                    },
                 )
             self._train_model()
 
@@ -292,7 +292,7 @@ class TrainingThread(QThread):
                         "status": self.status.value,
                         "message": "Training completed successfully",
                         "step": 100,
-                    }
+                    },
                 )
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -304,10 +304,10 @@ class TrainingThread(QThread):
                         "status": self.status.value,
                         "error": str(e),
                         "step": -1,
-                    }
+                    },
                 )
 
-    def _load_model(self):
+    def _load_model(self) -> None:
         """Load the base model and tokenizer."""
         try:
             model_path = self.config.model_path
@@ -345,14 +345,14 @@ class TrainingThread(QThread):
                         "status": self.status.value,
                         "message": "Model loaded successfully",
                         "step": 0,
-                    }
+                    },
                 )
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Failed to load model: %s", e)
             raise
 
-    def _create_minimal_model(self):
+    def _create_minimal_model(self) -> None:
         """Create a comprehensive model architecture for testing and demonstration.
 
         This function creates a realistic transformer model with proper initialization,
@@ -422,7 +422,7 @@ class TrainingThread(QThread):
             encoding, and layer normalization placement following GPT architecture.
             """
 
-            def __init__(self, vocab_size, hidden_size, num_layers, num_heads):
+            def __init__(self, vocab_size, hidden_size, num_layers, num_heads) -> None:
                 """Initialize GPT model architecture with specified parameters."""
                 super().__init__()
                 self.hidden_size = hidden_size
@@ -449,7 +449,7 @@ class TrainingThread(QThread):
                 class GPTBlock(nn.Module):
                     """A single GPT transformer block with attention and feed-forward layers."""
 
-                    def __init__(self, hidden_size, num_heads):
+                    def __init__(self, hidden_size, num_heads) -> None:
                         """Initialize GPT block with attention and feed-forward layers."""
                         super().__init__()
                         self.attention = nn.MultiheadAttention(
@@ -520,7 +520,7 @@ class TrainingThread(QThread):
             and masked language modeling head.
             """
 
-            def __init__(self, vocab_size, hidden_size, num_layers, num_heads):
+            def __init__(self, vocab_size, hidden_size, num_layers, num_heads) -> None:
                 """Initialize BERT model architecture with specified parameters."""
                 super().__init__()
                 self.hidden_size = hidden_size
@@ -607,7 +607,7 @@ class TrainingThread(QThread):
             RMSNorm, SwiGLU activation, and rotary positional embeddings.
             """
 
-            def __init__(self, vocab_size, hidden_size, num_layers, num_heads):
+            def __init__(self, vocab_size, hidden_size, num_layers, num_heads) -> None:
                 """Initialize LLaMA model architecture with specified parameters."""
                 super().__init__()
                 self.hidden_size = hidden_size
@@ -629,7 +629,7 @@ class TrainingThread(QThread):
                 class RMSNorm(nn.Module):
                     """RMS normalization layer for transformer models."""
 
-                    def __init__(self, hidden_size, eps=1e-6):
+                    def __init__(self, hidden_size, eps=1e-6) -> None:
                         """Initialize RMS normalization with hidden size and epsilon."""
                         super().__init__()
                         self.weight = nn.Parameter(torch.ones(hidden_size))
@@ -649,7 +649,7 @@ class TrainingThread(QThread):
                 class LlamaLayer(nn.Module):
                     """Single layer of a LLaMA transformer model."""
 
-                    def __init__(self, hidden_size, num_heads):
+                    def __init__(self, hidden_size, num_heads) -> None:
                         """Initialize LLaMA layer with attention and feed-forward networks."""
                         super().__init__()
                         self.attention_norm = parent._create_rms_norm(hidden_size)
@@ -717,7 +717,7 @@ class TrainingThread(QThread):
             and optional techniques like gradient checkpointing support.
             """
 
-            def __init__(self, vocab_size, hidden_size, num_layers, num_heads):
+            def __init__(self, vocab_size, hidden_size, num_layers, num_heads) -> None:
                 """Initialize enhanced transformer with modern architectural improvements."""
                 super().__init__()
                 self.hidden_size = hidden_size
@@ -744,7 +744,7 @@ class TrainingThread(QThread):
                 class EnhancedTransformerLayer(nn.Module):
                     """Enhanced transformer layer with modern improvements and optimizations."""
 
-                    def __init__(self, hidden_size, num_heads):
+                    def __init__(self, hidden_size, num_heads) -> None:
                         """Initialize enhanced transformer layer with pre-norm and improved attention."""
                         super().__init__()
                         # Pre-norm attention
@@ -830,12 +830,12 @@ class TrainingThread(QThread):
             special tokens, and padding functionality.
             """
 
-            def __init__(self, vocab_size):
+            def __init__(self, vocab_size) -> None:
                 self.vocab_size = vocab_size
                 # Create basic vocabulary
                 self.vocab = self._create_vocabulary(vocab_size)
                 self.token_to_id = {token: idx for idx, token in enumerate(self.vocab)}
-                self.id_to_token = {idx: token for idx, token in enumerate(self.vocab)}
+                self.id_to_token = dict(enumerate(self.vocab))
 
                 # Special tokens
                 self.pad_token = "[PAD]"  # noqa: S105
@@ -954,7 +954,7 @@ class TrainingThread(QThread):
 
                     # Apply max_length truncation
                     if max_length and len(token_ids) > max_length:
-                        token_ids = token_ids[: max_length - 1] + [self.eos_token_id]
+                        token_ids = [*token_ids[:max_length - 1], self.eos_token_id]
 
                     encoded_sequences.append(token_ids)
 
@@ -990,17 +990,17 @@ class TrainingThread(QThread):
 
                 return " ".join(tokens)
 
-            def __len__(self):
+            def __len__(self) -> int:
                 return self.vocab_size
 
         return MinimalTokenizer(vocab_size)
 
-    def _initialize_model_weights(self):
+    def _initialize_model_weights(self) -> None:
         """Initialize model weights with proper initialization strategies."""
         if self.model is None:
             return
 
-        def init_weights(module):
+        def init_weights(module) -> None:
             if isinstance(module, nn.Linear):
                 # Xavier uniform initialization for linear layers
                 torch.nn.init.xavier_uniform_(module.weight)
@@ -1023,7 +1023,7 @@ class TrainingThread(QThread):
         self.model.apply(init_weights)
         self.logger.info("Model weights initialized with Xavier/normal initialization")
 
-    def _add_model_metadata(self, model_type: str, vocab_size: int, hidden_size: int, num_layers: int):
+    def _add_model_metadata(self, model_type: str, vocab_size: int, hidden_size: int, num_layers: int) -> None:
         """Add comprehensive metadata to the model."""
         if not hasattr(self.model, "config"):
             self.model.config = {}
@@ -1039,7 +1039,7 @@ class TrainingThread(QThread):
                 "created_timestamp": time.time(),
                 "framework": "pytorch",
                 "version": "1.0.0",
-            }
+            },
         )
 
         # Add training configuration
@@ -1068,7 +1068,7 @@ class TrainingThread(QThread):
 class LicenseAnalysisNeuralNetwork:
     """Production-ready neural network for binary analysis when PyTorch unavailable."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize license analysis neural network with sophisticated architecture."""
         import json
 
@@ -1108,7 +1108,7 @@ class LicenseAnalysisNeuralNetwork:
             "protection_strength": np.random.randn(16, 8),  # Protection complexity assessment
         }
 
-    def _initialize_weights(self):
+    def _initialize_weights(self) -> None:
         """Initialize network weights using Xavier/Glorot initialization for optimal training."""
         self.weights = {}
         self.biases = {}
@@ -1330,7 +1330,7 @@ class LicenseAnalysisNeuralNetwork:
 
         return avg_loss, avg_accuracy
 
-    def _validate_epoch(self, validation_data, training_metrics, epoch, epochs, epoch_loss, epoch_accuracy):
+    def _validate_epoch(self, validation_data, training_metrics, epoch, epochs, epoch_loss, epoch_accuracy) -> None:
         """Run validation for one epoch."""
         val_x, val_y = validation_data
         val_pred = self.forward(val_x)
@@ -1343,10 +1343,10 @@ class LicenseAnalysisNeuralNetwork:
         training_metrics["validation_accuracy"].append(val_accuracy)
 
         self.logger.info(
-            f"Epoch {epoch + 1}/{epochs}: Loss={epoch_loss:.4f}, Acc={epoch_accuracy:.4f}, Val_Loss={val_loss:.4f}, Val_Acc={val_accuracy:.4f}"
+            f"Epoch {epoch + 1}/{epochs}: Loss={epoch_loss:.4f}, Acc={epoch_accuracy:.4f}, Val_Loss={val_loss:.4f}, Val_Acc={val_accuracy:.4f}",
         )
 
-    def _update_weights(self, gradients, learning_rate):
+    def _update_weights(self, gradients, learning_rate) -> None:
         """Update weights using gradient descent with momentum."""
         # Initialize momentum if not exists
         if not hasattr(self, "momentum"):
@@ -1485,7 +1485,7 @@ class LicenseAnalysisNeuralNetwork:
                     {
                         "status": f"Dataset loaded: {len(data)} samples",
                         "step": 1,
-                    }
+                    },
                 )
 
             return data
@@ -1494,7 +1494,7 @@ class LicenseAnalysisNeuralNetwork:
             self.logger.error("Failed to load dataset: %s", e)
             raise
 
-    def _setup_training(self, dataset):
+    def _setup_training(self, dataset) -> None:
         _ = dataset
         """Set up training configuration and prepare for training."""
         try:
@@ -1530,14 +1530,14 @@ class LicenseAnalysisNeuralNetwork:
                     {
                         "status": "Training setup complete",
                         "step": 2,
-                    }
+                    },
                 )
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Failed to setup training: %s", e)
             raise
 
-    def _train_model(self):
+    def _train_model(self) -> None:
         """Execute sophisticated license-focused model training with real neural network optimization."""
         try:
             if self.model is None:
@@ -1606,7 +1606,7 @@ class LicenseAnalysisNeuralNetwork:
                                         "status": f"Training license analysis epoch {epoch + 1}/{self.config.epochs}",
                                         "message": f"Loss: {loss:.4f}, Accuracy: {acc:.4f}",
                                         "history": self.training_history[-5:],
-                                    }
+                                    },
                                 )
 
                             # Real validation phase
@@ -1618,7 +1618,7 @@ class LicenseAnalysisNeuralNetwork:
                                             "status": self.status.value,
                                             "message": f"Validation - Loss: {training_metrics['validation_loss']:.4f}, Acc: {training_metrics['validation_accuracy']:.4f}",
                                             "step": current_step,
-                                        }
+                                        },
                                     )
                                 self.status = TrainingStatus.TRAINING
 
@@ -1651,7 +1651,7 @@ class LicenseAnalysisNeuralNetwork:
                                 "status": "Model switched to evaluation mode",
                                 "message": str(eval_results),
                                 "step": 1,
-                            }
+                            },
                         )
 
             else:
@@ -1665,7 +1665,7 @@ class LicenseAnalysisNeuralNetwork:
                         "status": "Training failed",
                         "error": str(e),
                         "step": -1,
-                    }
+                    },
                 )
             raise
 
@@ -1732,7 +1732,7 @@ class LicenseAnalysisNeuralNetwork:
                     protection_features,
                     anti_debug_features,
                     registry_features,
-                ]
+                ],
             )
 
             # Ensure exact feature count
@@ -1808,7 +1808,7 @@ class LicenseAnalysisNeuralNetwork:
 
         return labels
 
-    def _train_pytorch_license_model(self, training_data, validation_data):
+    def _train_pytorch_license_model(self, training_data, validation_data) -> None:
         """Advanced PyTorch training implementation for license protection analysis."""
         try:
             import torch
@@ -1932,20 +1932,31 @@ class LicenseAnalysisNeuralNetwork:
 
                 # Emit progress
                 if PYQT6_AVAILABLE and self.progress_signal:
+                    message = f"Loss: {avg_loss:.4f}, Acc: {avg_accuracy:.4f}"
+                    if val_loader:
+                        message = (
+                            f"{message}, Val_Loss: {val_loss:.4f}, Val_Acc: {val_accuracy:.4f}"
+                        )
                     progress_data = {
                         **training_metrics,
                         "status": f"PyTorch license training epoch {epoch + 1}/{self.config.epochs}",
-                        "message": f"Loss: {avg_loss:.4f}, Acc: {avg_accuracy:.4f}"
-                        + (f", Val_Loss: {val_loss:.4f}, Val_Acc: {val_accuracy:.4f}" if val_loader else ""),
+                        "message": message,
                         "history": self.training_history[-5:],
                     }
                     self.progress_signal.emit(progress_data)
 
-                self.logger.info(
-                    f"Epoch {epoch + 1}/{self.config.epochs}: "
-                    + f"Loss={avg_loss:.4f}, Acc={avg_accuracy:.4f}"
-                    + (f", Val_Loss={val_loss:.4f}, Val_Acc={val_accuracy:.4f}" if val_loader else "")
-                )
+                if val_loader:
+                    log_message = (
+                        f"Epoch {epoch + 1}/{self.config.epochs}: "
+                        f"Loss={avg_loss:.4f}, Acc={avg_accuracy:.4f}, "
+                        f"Val_Loss={val_loss:.4f}, Val_Acc={val_accuracy:.4f}"
+                    )
+                else:
+                    log_message = (
+                        f"Epoch {epoch + 1}/{self.config.epochs}: "
+                        f"Loss={avg_loss:.4f}, Acc={avg_accuracy:.4f}"
+                    )
+                self.logger.info(log_message)
 
             # Final completion signal
             if PYQT6_AVAILABLE and self.progress_signal:
@@ -1956,7 +1967,7 @@ class LicenseAnalysisNeuralNetwork:
                         "final_loss": self.training_history[-1]["loss"] if self.training_history else 0,
                         "final_accuracy": self.training_history[-1]["accuracy"] if self.training_history else 0,
                         "message": "Advanced license analysis model training completed successfully",
-                    }
+                    },
                 )
 
         except ImportError:
@@ -1966,13 +1977,13 @@ class LicenseAnalysisNeuralNetwork:
             self.logger.error("PyTorch training failed: %s", e)
             raise
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the training process."""
         self.is_stopped = True
         self.status = TrainingStatus.ERROR  # Set to error as training was interrupted
         self.logger.info("Training stop requested")
 
-    def pause(self):
+    def pause(self) -> None:
         """Pause the training process."""
         self.status = TrainingStatus.PAUSED
         self.logger.info("Training paused")
@@ -1982,10 +1993,10 @@ class LicenseAnalysisNeuralNetwork:
                     "status": self.status.value,
                     "message": "Training paused",
                     "step": -1,
-                }
+                },
             )
 
-    def resume(self):
+    def resume(self) -> None:
         """Resume the training process."""
         self.status = TrainingStatus.TRAINING
         self.logger.info("Training resumed")
@@ -1995,7 +2006,7 @@ class LicenseAnalysisNeuralNetwork:
                     "status": self.status.value,
                     "message": "Training resumed",
                     "step": -1,
-                }
+                },
             )
 
 
@@ -2012,7 +2023,7 @@ class ModelFinetuningDialog(QDialog):
     - Error handling and reporting
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the AI Model Fine-Tuning dialog.
 
         Args:
@@ -2089,7 +2100,7 @@ class ModelFinetuningDialog(QDialog):
 
         self.logger.info("ModelFinetuningDialog initialized")
 
-    def _initialize_knowledge_base(self):
+    def _initialize_knowledge_base(self) -> None:
         """Initialize the knowledge base for training data."""
         try:
             self.knowledge_base = {
@@ -2113,7 +2124,7 @@ class ModelFinetuningDialog(QDialog):
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.warning("Failed to initialize knowledge base: %s", e)
 
-    def _initialize_gpu_system(self):
+    def _initialize_gpu_system(self) -> None:
         """Initialize GPU system and check available devices."""
         try:
             if GPU_AUTOLOADER_AVAILABLE:
@@ -2157,7 +2168,7 @@ class ModelFinetuningDialog(QDialog):
             self.logger.warning(f"Failed to get device info: {e}")
             return "Training Device: CPU (Error getting device info)\n"
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         """Set up the dialog user interface."""
         main_layout = QVBoxLayout(self)
 
@@ -2204,7 +2215,7 @@ class ModelFinetuningDialog(QDialog):
 
         main_layout.addLayout(button_layout)
 
-    def _setup_training_tab(self):
+    def _setup_training_tab(self) -> None:
         """Set up the model training tab."""
         layout = QVBoxLayout(self.training_tab)
 
@@ -2237,7 +2248,7 @@ class ModelFinetuningDialog(QDialog):
                 "ONNX",
                 "Transformers",
                 "TensorFlow",
-            ]
+            ],
         )
         model_layout.addRow("Model Format:", self.model_format_combo)
 
@@ -2332,7 +2343,7 @@ class ModelFinetuningDialog(QDialog):
         scroll_area.setWidgetResizable(True)
         layout.addWidget(scroll_area)
 
-    def _setup_dataset_tab(self):
+    def _setup_dataset_tab(self) -> None:
         """Set up the dataset management tab."""
         layout = QVBoxLayout(self.dataset_tab)
 
@@ -2405,7 +2416,7 @@ class ModelFinetuningDialog(QDialog):
         management_group.setLayout(management_layout)
         layout.addWidget(management_group)
 
-    def _setup_augmentation_tab(self):
+    def _setup_augmentation_tab(self) -> None:
         """Set up the data augmentation tab."""
         layout = QVBoxLayout(self.augmentation_tab)
 
@@ -2493,7 +2504,7 @@ class ModelFinetuningDialog(QDialog):
 
         layout.addStretch()
 
-    def _setup_metrics_tab(self):
+    def _setup_metrics_tab(self) -> None:
         """Set up the training metrics and visualization tab."""
         layout = QVBoxLayout(self.metrics_tab)
 
@@ -2537,7 +2548,7 @@ class ModelFinetuningDialog(QDialog):
         viz_group.setLayout(viz_layout)
         layout.addWidget(viz_group)
 
-    def _browse_model(self):
+    def _browse_model(self) -> None:
         """Browse for model file."""
         file_filter = (
             "Model Files (*.bin *.pt *.pth *.gguf *.ggml *.onnx);;"
@@ -2575,7 +2586,7 @@ class ModelFinetuningDialog(QDialog):
                 if index >= 0:
                     self.model_format_combo.setCurrentIndex(index)
 
-    def _browse_dataset(self):
+    def _browse_dataset(self) -> None:
         """Browse for dataset file."""
         file_filter = (
             "Dataset Files (*.json *.jsonl *.csv *.txt);;JSON Files (*.json *.jsonl);;CSV Files (*.csv);;Text Files (*.txt);;All Files (*)"
@@ -2607,7 +2618,7 @@ class ModelFinetuningDialog(QDialog):
                 if index >= 0:
                     self.dataset_format_combo.setCurrentIndex(index)
 
-    def _start_training(self):
+    def _start_training(self) -> None:
         """Start the model training process."""
         try:
             # Validate inputs
@@ -2656,7 +2667,7 @@ class ModelFinetuningDialog(QDialog):
             QMessageBox.critical(self, "Training Error", f"Failed to start training: {e!s}")
             self._on_training_finished()
 
-    def _stop_training(self):
+    def _stop_training(self) -> None:
         """Stop the current training process."""
         try:
             if self.training_thread and self.training_thread.isRunning():
@@ -2671,7 +2682,7 @@ class ModelFinetuningDialog(QDialog):
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error stopping training: %s", e)
 
-    def _update_training_progress(self, progress: dict[str, Any]):
+    def _update_training_progress(self, progress: dict[str, Any]) -> None:
         """Update training progress display."""
         try:
             if "error" in progress:
@@ -2716,7 +2727,7 @@ class ModelFinetuningDialog(QDialog):
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error updating training progress: %s", e)
 
-    def _on_training_finished(self):
+    def _on_training_finished(self) -> None:
         """Handle training completion."""
         try:
             self.train_button.setEnabled(True)
@@ -2740,7 +2751,7 @@ class ModelFinetuningDialog(QDialog):
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error handling training completion: %s", e)
 
-    def _save_model(self):
+    def _save_model(self) -> None:
         """Save the fine-tuned model."""
         try:
             save_path, _ = QFileDialog.getSaveFileName(
@@ -2790,7 +2801,7 @@ class ModelFinetuningDialog(QDialog):
             self.logger.error("Failed to save model: %s", e)
             QMessageBox.critical(self, "Save Error", f"Failed to save model: {e!s}")
 
-    def _load_dataset_preview(self):
+    def _load_dataset_preview(self) -> None:
         """Load and display dataset preview."""
         try:
             dataset_path = self.dataset_path_edit.text()
@@ -2846,7 +2857,7 @@ class ModelFinetuningDialog(QDialog):
             self.logger.error("Failed to load dataset preview: %s", e)
             QMessageBox.warning(self, "Preview Error", f"Error loading dataset preview: {e!s}")
 
-    def _add_dataset_row(self, sample: dict[str, Any]):
+    def _add_dataset_row(self, sample: dict[str, Any]) -> None:
         """Add a sample to the dataset preview table."""
         row = self.dataset_preview.rowCount()
         self.dataset_preview.insertRow(row)
@@ -2868,7 +2879,7 @@ class ModelFinetuningDialog(QDialog):
             return text[:max_length] + "..."
         return text
 
-    def _create_dataset(self):
+    def _create_dataset(self) -> None:
         """Create a new dataset from templates or examples."""
         try:
             # Show dataset creation dialog
@@ -2923,7 +2934,7 @@ class ModelFinetuningDialog(QDialog):
                 lambda: self._generate_dataset(
                     template_combo.currentText(),
                     dialog,
-                )
+                ),
             )
 
             dialog.exec()
@@ -2970,7 +2981,7 @@ class ModelFinetuningDialog(QDialog):
         }
         return samples.get(template, "")
 
-    def _generate_dataset(self, template: str, dialog: QDialog):
+    def _generate_dataset(self, template: str, dialog: QDialog) -> None:
         """Generate a dataset from template."""
         try:
             save_path, _ = QFileDialog.getSaveFileName(
@@ -2998,7 +3009,7 @@ class ModelFinetuningDialog(QDialog):
             self.logger.error("Failed to generate dataset: %s", e)
             QMessageBox.critical(dialog, "Generation Error", str(e))
 
-    def _validate_dataset(self):
+    def _validate_dataset(self) -> None:
         """Validate the current dataset."""
         try:
             dataset_path = self.dataset_path_edit.text()
@@ -3046,7 +3057,7 @@ class ModelFinetuningDialog(QDialog):
             self.logger.error("Dataset validation failed: %s", e)
             QMessageBox.critical(self, "Validation Error", str(e))
 
-    def _export_dataset(self):
+    def _export_dataset(self) -> None:
         """Export dataset in different format."""
         try:
             source_path = self.dataset_path_edit.text()
@@ -3094,7 +3105,7 @@ class ModelFinetuningDialog(QDialog):
             self.logger.error("Dataset export failed: %s", e)
             QMessageBox.critical(self, "Export Error", str(e))
 
-    def _preview_augmentation(self):
+    def _preview_augmentation(self) -> None:
         """Preview data augmentation results."""
         try:
             # Check if dataset is loaded
@@ -3216,7 +3227,7 @@ class ModelFinetuningDialog(QDialog):
 
         return " ".join(words)
 
-    def _apply_augmentation(self):
+    def _apply_augmentation(self) -> None:
         """Apply augmentation to the dataset."""
         try:
             dataset_path = self.dataset_path_edit.text()
@@ -3300,7 +3311,7 @@ class ModelFinetuningDialog(QDialog):
             self.logger.error("Augmentation failed: %s", e)
             QMessageBox.critical(self, "Augmentation Error", str(e))
 
-    def _update_visualization(self, history: list[dict[str, Any]]):
+    def _update_visualization(self, history: list[dict[str, Any]]) -> None:
         """Update training visualization with loss curve."""
         try:
             if not history or not MATPLOTLIB_AVAILABLE:
@@ -3344,7 +3355,7 @@ class ModelFinetuningDialog(QDialog):
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Failed to update visualization: %s", e)
 
-    def _export_metrics(self):
+    def _export_metrics(self) -> None:
         """Export training metrics to file."""
         try:
             if self.training_thread is None or not self.training_thread.training_history:
@@ -3387,7 +3398,7 @@ class ModelFinetuningDialog(QDialog):
             self.logger.error("Failed to export metrics: %s", e)
             QMessageBox.critical(self, "Export Error", str(e))
 
-    def _save_plot(self):
+    def _save_plot(self) -> None:
         """Save the current training plot."""
         try:
             if self.training_thread is None or not self.training_thread.training_history:
@@ -3430,7 +3441,7 @@ class ModelFinetuningDialog(QDialog):
                         stats_text,
                         transform=ax.transAxes,
                         verticalalignment="top",
-                        bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.8),
+                        bbox={"boxstyle": "round", "facecolor": "wheat", "alpha": 0.8},
                     )
 
                 fig.savefig(save_path, dpi=300, bbox_inches="tight")
@@ -3446,7 +3457,7 @@ class ModelFinetuningDialog(QDialog):
             self.logger.error("Failed to save plot: %s", e)
             QMessageBox.critical(self, "Save Error", str(e))
 
-    def _open_enhanced_training(self):
+    def _open_enhanced_training(self) -> None:
         """Open the enhanced training interface with current configuration."""
         try:
             if not ENHANCED_TRAINING_AVAILABLE:
@@ -3502,7 +3513,7 @@ class ModelFinetuningDialog(QDialog):
 
         return config
 
-    def _show_help(self):
+    def _show_help(self) -> None:
         """Show help dialog with usage instructions."""
         help_text = """
 <h2>AI Model Fine-Tuning Help</h2>
@@ -3559,7 +3570,7 @@ class ModelFinetuningDialog(QDialog):
 
         help_dialog.exec()
 
-    def closeEvent(self, event):
+    def closeEvent(self, event) -> None:
         """Handle dialog close event."""
         try:
             # Stop training if running

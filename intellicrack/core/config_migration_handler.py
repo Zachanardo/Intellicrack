@@ -140,7 +140,7 @@ class MigrationValidator:
 class MigrationBackup:
     """Handles backup and restore for configuration migration."""
 
-    def __init__(self, config_path: Path):
+    def __init__(self, config_path: Path) -> None:
         """Initialize backup handler.
 
         Args:
@@ -184,7 +184,7 @@ class MigrationBackup:
 
         """
         try:
-            with open(backup_file, "r") as f:
+            with open(backup_file) as f:
                 config_data = json.load(f)
             logger.info(f"Restored configuration from: {backup_file}")
             return config_data
@@ -208,7 +208,7 @@ class MigrationBackup:
 class ConfigMigrationHandler:
     """Comprehensive handler for configuration migration with error recovery."""
 
-    def __init__(self, config_path: Path):
+    def __init__(self, config_path: Path) -> None:
         """Initialize migration handler.
 
         Args:
@@ -222,7 +222,7 @@ class ConfigMigrationHandler:
         self.migration_status = MigrationStatus.NOT_STARTED
 
     def migrate_with_recovery(
-        self, config_data: Dict[str, Any], migration_func: callable, migration_name: str
+        self, config_data: Dict[str, Any], migration_func: callable, migration_name: str,
     ) -> Tuple[bool, Dict[str, Any]]:
         """Execute migration with error handling and recovery.
 
@@ -386,7 +386,7 @@ class SafeMigrationWrapper:
         result = [None]
         exception = [None]
 
-        def run_migration():
+        def run_migration() -> None:
             try:
                 result[0] = migration_func(config_data)
             except Exception as e:

@@ -1,6 +1,7 @@
 """Hardware ID spoofing for bypassing hardware-locked license checks."""
 
 import base64
+import contextlib
 import ctypes
 import ctypes.wintypes
 import hashlib
@@ -27,7 +28,7 @@ logger = logging.getLogger(__name__)
 class HardwareIDSpoofer:
     """Advanced hardware identifier spoofing system for defeating hardware-based licensing."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize hardware ID spoofer with system handles."""
         self.original_values = {}
         self.spoofed_values = {}
@@ -39,12 +40,12 @@ class HardwareIDSpoofer:
         self.driver_path = Path(__file__).parent / "drivers" / "hwid_spoof.sys"
         self._init_driver()
 
-    def _init_driver(self):
+    def _init_driver(self) -> None:
         if not self.driver_path.exists():
             self._create_driver()
         self._load_driver()
 
-    def _create_driver(self):
+    def _create_driver(self) -> None:
         os.makedirs(self.driver_path.parent, exist_ok=True)
         driver_code = self._generate_driver_code()
 
@@ -328,7 +329,7 @@ class HardwareIDSpoofer:
     def _align(self, value: int, alignment: int) -> int:
         return ((value + alignment - 1) // alignment) * alignment
 
-    def _load_driver(self):
+    def _load_driver(self) -> None:
         SC_MANAGER_ALL_ACCESS = 0xF003F
         SERVICE_ALL_ACCESS = 0xF01FF
         SERVICE_KERNEL_DRIVER = 0x1
@@ -450,12 +451,12 @@ class HardwareIDSpoofer:
                         0x0C,  # mov [rdi+12], edx
                         0x5B,  # pop rbx
                         0xC3,  # ret
-                    ]
+                    ],
                 )
 
                 code_buffer = ctypes.create_string_buffer(CPUID_CODE)
                 func_ptr = ctypes.cast(
-                    code_buffer, ctypes.CFUNCTYPE(None, ctypes.c_uint32, ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint32))
+                    code_buffer, ctypes.CFUNCTYPE(None, ctypes.c_uint32, ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint32)),
                 )
 
                 result = (ctypes.c_uint32 * 4)()
@@ -495,7 +496,7 @@ class HardwareIDSpoofer:
                 mb_info["system_manufacturer"] = winreg.QueryValueEx(key, "SystemManufacturer")[0]
                 mb_info["system_product"] = winreg.QueryValueEx(key, "SystemProductName")[0]
                 mb_info["system_uuid"] = winreg.QueryValueEx(key, "ComputerHardwareId")[0]
-        except (OSError, WindowsError):
+        except OSError:
             pass
 
         return mb_info
@@ -552,7 +553,7 @@ class HardwareIDSpoofer:
                     "serial": f"{volume_serial.value:08X}",
                     "file_system": file_sys_name.value,
                 }
-        except (OSError, WindowsError):
+        except OSError:
             pass
 
         return None
@@ -612,10 +613,8 @@ class HardwareIDSpoofer:
         except (AttributeError, TypeError):
             pass
 
-        try:
+        with contextlib.suppress(OSError, WindowsError):
             sys_info["machine_guid"] = self._get_machine_guid()
-        except (OSError, WindowsError):
-            pass
 
         return sys_info
 
@@ -623,7 +622,7 @@ class HardwareIDSpoofer:
         try:
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography") as key:
                 return winreg.QueryValueEx(key, "MachineGuid")[0]
-        except (OSError, WindowsError):
+        except OSError:
             return ""
 
     def _get_gpu_info(self) -> List[Dict[str, str]]:
@@ -710,7 +709,7 @@ class HardwareIDSpoofer:
 
             original_cpuid = ctypes.WINFUNCTYPE(None, ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint32))
 
-            def hooked_cpuid(eax_in, regs):
+            def hooked_cpuid(eax_in, regs) -> None:
                 if eax_in == 0:
                     regs[0] = 0x0D
                     regs[1] = int.from_bytes(vendor[:4].encode(), "little")
@@ -767,10 +766,10 @@ class HardwareIDSpoofer:
                                 if adapter_name in driver_desc:
                                     adapter_key = f"{base_key}\\{subkey_name}"
                                     break
-                            except (OSError, WindowsError):
+                            except OSError:
                                 pass
                         i += 1
-                    except WindowsError:
+                    except OSError:
                         break
 
             if adapter_key:
@@ -794,15 +793,15 @@ class HardwareIDSpoofer:
         mac.extend([random.randint(0, 255) for _ in range(5)])  # noqa: S311
         return ":".join(f"{byte:02X}" for byte in mac)
 
-    def _restart_network_adapter(self, adapter_name: str):
+    def _restart_network_adapter(self, adapter_name: str) -> None:
         try:
             # Sanitize adapter_name to prevent command injection
             adapter_name_clean = str(adapter_name).replace('"', "").replace("'", "").replace(";", "").replace("|", "").replace("&", "")
             subprocess.run(
-                ["netsh", "interface", "set", "interface", adapter_name_clean, "disable"], capture_output=True, check=True, shell=False
+                ["netsh", "interface", "set", "interface", adapter_name_clean, "disable"], capture_output=True, check=True, shell=False,
             )
             subprocess.run(
-                ["netsh", "interface", "set", "interface", adapter_name_clean, "enable"], capture_output=True, check=True, shell=False
+                ["netsh", "interface", "set", "interface", adapter_name_clean, "enable"], capture_output=True, check=True, shell=False,
             )
         except (subprocess.CalledProcessError, FileNotFoundError):
             try:
@@ -1020,7 +1019,7 @@ objInstance.Put_
             results[f"disk_{drive}"] = self.spoof_disk_serial(drive, serial)
 
         results["motherboard"] = self.spoof_motherboard_serial(
-            profile.get("motherboard_manufacturer"), profile.get("motherboard_product"), profile.get("motherboard_serial")
+            profile.get("motherboard_manufacturer"), profile.get("motherboard_product"), profile.get("motherboard_serial"),
         )
 
         results["system_uuid"] = self.spoof_system_uuid(profile.get("system_uuid"))
@@ -1051,7 +1050,7 @@ objInstance.Put_
 
         return profile
 
-    def save_profile(self, profile: Dict[str, Any], filepath: Path):
+    def save_profile(self, profile: Dict[str, Any], filepath: Path) -> None:
         """Save hardware spoofing profile to encrypted file."""
         filepath = Path(filepath)
         filepath.parent.mkdir(parents=True, exist_ok=True)
@@ -1111,7 +1110,7 @@ objInstance.Put_
             logger.error(f"Failed to restore original values: {e}")
             return False
 
-    def _restore_mac_address(self, adapter: str, original_mac: str):
+    def _restore_mac_address(self, adapter: str, original_mac: str) -> None:
         try:
             base_key = r"SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002bE10318}"
 
@@ -1127,18 +1126,18 @@ objInstance.Put_
                                     winreg.DeleteValue(subkey, "NetworkAddress")
                                     self._restart_network_adapter(adapter)
                                     return
-                            except (OSError, WindowsError):
+                            except OSError:
                                 pass
                         i += 1
-                    except WindowsError:
+                    except OSError:
                         break
         except (AttributeError, TypeError):
             pass
 
-    def _restore_disk_serial(self, drive: str, original_serial: str):
+    def _restore_disk_serial(self, drive: str, original_serial: str) -> None:
         pass
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up kernel driver and resources."""
         if self.driver_handle:
             self.kernel32.CloseHandle(self.driver_handle)

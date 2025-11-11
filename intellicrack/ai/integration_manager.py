@@ -46,7 +46,7 @@ except ImportError:
     class QEMUManager:
         """Fallback QEMUManager when real implementation not available."""
 
-        def __init__(self, *_args, **_kwargs):
+        def __init__(self, *_args, **_kwargs) -> None:
             """Initialize the fallback QEMU test manager.
 
             Args:
@@ -209,7 +209,7 @@ Script Analysis:
                     "analysis": f"Analysis failed: {analysis_error}",
                 }
 
-        def _create_protected_binary(self, target_path):
+        def _create_protected_binary(self, target_path) -> None:
             """Create a protected binary with real license checking for testing."""
             try:
                 import struct
@@ -353,8 +353,8 @@ Script Analysis:
                 if os.name == "nt":
                     qemu_cmd.extend(["-nographic", "-no-reboot"])
 
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                    qemu_cmd + [str(target_file)],
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                    [*qemu_cmd, str(target_file)],
                     capture_output=True,
                     text=True,
                     timeout=vm_config.get("timeout", 30),
@@ -388,7 +388,7 @@ Script Analysis:
                     # Generic execution attempt
                     cmd = ["cat", str(script_file)]  # At least validate file content
 
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     cmd,
                     capture_output=True,
                     text=True,
@@ -484,7 +484,7 @@ class WorkflowResult:
 class IntegrationManager:
     """Manages integration and coordination of AI components."""
 
-    def __init__(self, llm_manager: LLMManager | None = None):
+    def __init__(self, llm_manager: LLMManager | None = None) -> None:
         """Initialize the integration manager.
 
         Args:
@@ -526,7 +526,7 @@ class IntegrationManager:
 
         logger.info("Integration manager initialized")
 
-    def start(self):
+    def start(self) -> None:
         """Start the integration manager."""
         if self.running:
             return
@@ -546,7 +546,7 @@ class IntegrationManager:
 
         logger.info(f"Integration manager started with {self.max_workers} workers")
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the integration manager."""
         if not self.running:
             return
@@ -562,7 +562,7 @@ class IntegrationManager:
 
         logger.info("Integration manager stopped")
 
-    def _worker_loop(self):
+    def _worker_loop(self) -> None:
         """Process tasks in the main worker loop."""
         while self.running:
             try:
@@ -597,7 +597,7 @@ class IntegrationManager:
         return True
 
     @profile_ai_operation("integration.execute_task")
-    def _execute_task(self, task: IntegrationTask):
+    def _execute_task(self, task: IntegrationTask) -> None:
         """Execute a single task."""
         task.status = "running"
         task.started_at = datetime.now()
@@ -744,10 +744,10 @@ class IntegrationManager:
                         best_confidence = confidence
                         best_result = result
 
-            return best_result or list(results.values())[0]
+            return best_result or next(iter(results.values()))
 
         # Default: return first result
-        return list(results.values())[0]
+        return next(iter(results.values()))
 
     def create_task(
         self,
@@ -970,13 +970,13 @@ class IntegrationManager:
 
         return cancelled
 
-    def add_event_handler(self, event_type: str, handler: Callable):
+    def add_event_handler(self, event_type: str, handler: Callable) -> None:
         """Add event handler."""
         if event_type not in self.event_handlers:
             self.event_handlers[event_type] = []
         self.event_handlers[event_type].append(handler)
 
-    def _emit_event(self, event_type: str, data: Any):
+    def _emit_event(self, event_type: str, data: Any) -> None:
         """Emit event to handlers."""
         handlers = self.event_handlers.get(event_type, [])
         for handler in handlers:
@@ -1066,13 +1066,13 @@ class IntegrationManager:
         """Get performance summary for integration operations."""
         return performance_monitor.get_metrics_summary()
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Cleanup resources and old data."""
         # Clean old completed tasks (keep last 100)
         if len(self.completed_tasks) > 100:
             sorted_tasks = sorted(
                 self.completed_tasks.items(),
-                key=lambda x: x[1].completed_at or datetime.min,
+                key=lambda item: (item[1].completed_at.timestamp() if isinstance(item[1].completed_at, datetime) else float("-inf")),
                 reverse=True,
             )
 

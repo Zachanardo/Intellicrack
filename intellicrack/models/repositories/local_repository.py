@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 class LocalFileRepository(ModelRepositoryInterface):
     """Repository adapter for the local file system."""
 
-    def __init__(self, models_directory: str = "models"):
+    def __init__(self, models_directory: str = "models") -> None:
         """Initialize the local file repository.
 
         Args:
@@ -58,7 +58,7 @@ class LocalFileRepository(ModelRepositoryInterface):
         # Load existing metadata
         self._load_metadata()
 
-    def _load_metadata(self):
+    def _load_metadata(self) -> None:
         """Load metadata for local models."""
         if os.path.exists(self.models_metadata_file):
             try:
@@ -73,7 +73,7 @@ class LocalFileRepository(ModelRepositoryInterface):
                 logger.warning(f"Failed to load local models metadata: {e}")
                 self.models_cache = {}
 
-    def _save_metadata(self):
+    def _save_metadata(self) -> None:
         """Save metadata for local models."""
         with self._cache_lock:
             metadata = {model_id: model_info.to_dict() for model_id, model_info in self.models_cache.items()}
@@ -84,7 +84,7 @@ class LocalFileRepository(ModelRepositoryInterface):
         except OSError as e:
             logger.warning(f"Failed to save local models metadata: {e}")
 
-    def _scan_for_models(self):
+    def _scan_for_models(self) -> None:
         """Scan the models directory for GGUF files that are not in the cache."""
         # Find all GGUF files in the models directory
         gguf_pattern = os.path.join(self.models_directory, "**", "*.gguf")
@@ -120,7 +120,7 @@ class LocalFileRepository(ModelRepositoryInterface):
         # Save metadata after scan
         self._save_metadata()
 
-    def _compute_checksum(self, model_info: ModelInfo):
+    def _compute_checksum(self, model_info: ModelInfo) -> None:
         """Compute the SHA256 checksum for a model file.
 
         Args:
@@ -140,7 +140,7 @@ class LocalFileRepository(ModelRepositoryInterface):
         except OSError as e:
             logger.warning(f"Failed to compute checksum for {model_info.name}: {e}")
 
-    def _compute_checksum_async(self, model_info: ModelInfo):
+    def _compute_checksum_async(self, model_info: ModelInfo) -> None:
         """Compute checksum in background thread and save metadata.
 
         Args:
@@ -337,11 +337,11 @@ class LocalFileRepository(ModelRepositoryInterface):
 
         return True
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown the repository and cleanup resources."""
         self._executor.shutdown(wait=True)
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Cleanup on deletion."""
         try:
             self._executor.shutdown(wait=False)

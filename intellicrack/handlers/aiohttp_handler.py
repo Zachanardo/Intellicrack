@@ -79,7 +79,7 @@ except ImportError as e:
     class ClientResponse:
         """Async HTTP response."""
 
-        def __init__(self, url, status=200, headers=None, content=b""):
+        def __init__(self, url, status=200, headers=None, content=b"") -> None:
             """Initialize response."""
             self.url = url
             self.status = status
@@ -101,7 +101,7 @@ except ImportError as e:
             """Read response content."""
             return self._content
 
-        def raise_for_status(self):
+        def raise_for_status(self) -> None:
             """Raise exception for bad status."""
             if 400 <= self.status < 600:
                 raise ClientError(f"{self.status} Error: {self.reason}")
@@ -123,7 +123,7 @@ except ImportError as e:
     class ClientTimeout:
         """Client timeout configuration."""
 
-        def __init__(self, total=None, connect=None, sock_connect=None, sock_read=None):
+        def __init__(self, total=None, connect=None, sock_connect=None, sock_read=None) -> None:
             """Initialize timeout."""
             self.total = total or 300
             self.connect = connect
@@ -134,7 +134,7 @@ except ImportError as e:
     class TCPConnector:
         """TCP connector for connection pooling."""
 
-        def __init__(self, limit=100, limit_per_host=30, ttl_dns_cache=10, enable_cleanup_closed=False, force_close=False, ssl=True):
+        def __init__(self, limit=100, limit_per_host=30, ttl_dns_cache=10, enable_cleanup_closed=False, force_close=False, ssl=True) -> None:
             """Initialize connector."""
             self.limit = limit
             self.limit_per_host = limit_per_host
@@ -144,7 +144,7 @@ except ImportError as e:
             self.ssl = ssl
             self._closed = False
 
-        async def close(self):
+        async def close(self) -> None:
             """Close connector."""
             self._closed = True
 
@@ -152,7 +152,7 @@ except ImportError as e:
     class ClientSession:
         """Async HTTP session."""
 
-        def __init__(self, connector=None, timeout=None, headers=None, cookies=None, auth=None, json_serialize=json.dumps):
+        def __init__(self, connector=None, timeout=None, headers=None, cookies=None, auth=None, json_serialize=json.dumps) -> None:
             """Initialize session."""
             self.connector = connector or TCPConnector()
             self.timeout = timeout or ClientTimeout()
@@ -198,20 +198,22 @@ except ImportError as e:
             # Create request
             req = urllib.request.Request(url, data=body, headers=req_headers, method=method)  # noqa: S310  # Legitimate HTTP request for security research tool
 
-            # Send request using asyncio
-            loop = asyncio.get_event_loop()
-
             try:
-                # Run urllib request in thread pool
-                response = await loop.run_in_executor(
-                    None,
-                    lambda: urllib.request.urlopen(req, timeout=timeout.total if hasattr(timeout, "total") else timeout),  # noqa: S310  # Legitimate HTTP request for security research tool
-                )
+                timeout_value = timeout.total if hasattr(timeout, "total") else timeout
 
-                content = response.read()
+                def _execute_request():
+                    with urllib.request.urlopen(req, timeout=timeout_value) as response:  # noqa: S310 - Controlled URL for analysis tooling
+                        return (
+                            response.geturl(),
+                            getattr(response, "status", response.getcode()),
+                            dict(response.headers),
+                            response.read(),
+                        )
+
+                response_url, status_code, headers, content = await asyncio.to_thread(_execute_request)
 
                 # Create ClientResponse
-                resp = ClientResponse(url=response.url, status=response.code, headers=dict(response.headers), content=content)
+                resp = ClientResponse(url=response_url, status=status_code, headers=headers, content=content)
 
                 return resp
 
@@ -261,7 +263,7 @@ except ImportError as e:
             """Send OPTIONS request."""
             return await self.request("OPTIONS", url, **kwargs)
 
-        async def close(self):
+        async def close(self) -> None:
             """Close session."""
             await self.connector.close()
             self._closed = True
@@ -278,7 +280,7 @@ except ImportError as e:
     class Request:
         """Web request object."""
 
-        def __init__(self, method="GET", path="/", headers=None, body=b""):
+        def __init__(self, method="GET", path="/", headers=None, body=b"") -> None:
             """Initialize request."""
             self.method = method
             self.path = path
@@ -307,7 +309,7 @@ except ImportError as e:
     class Response:
         """Web response object."""
 
-        def __init__(self, text="", status=200, headers=None, content_type="text/plain"):
+        def __init__(self, text="", status=200, headers=None, content_type="text/plain") -> None:
             """Initialize response."""
             self.text = text
             self.status = status
@@ -318,7 +320,7 @@ except ImportError as e:
     class RouteTableDef:
         """Route table definition."""
 
-        def __init__(self):
+        def __init__(self) -> None:
             """Initialize route table."""
             self.routes = []
 
@@ -370,7 +372,7 @@ except ImportError as e:
     class Application:
         """Web application."""
 
-        def __init__(self):
+        def __init__(self) -> None:
             """Initialize application."""
             self.router = type("Router", (), {"routes": []})()
             self.middlewares = []
@@ -385,13 +387,13 @@ except ImportError as e:
                 self._state = {}
             return self._state.get(key)
 
-        def __setitem__(self, key, value):
+        def __setitem__(self, key, value) -> None:
             """Set app state item."""
             if not hasattr(self, "_state"):
                 self._state = {}
             self._state[key] = value
 
-        def add_routes(self, routes):
+        def add_routes(self, routes) -> None:
             """Add routes to application."""
             if hasattr(routes, "routes"):
                 # RouteTableDef
@@ -402,22 +404,22 @@ except ImportError as e:
                 for route in routes:
                     self.router.routes.append(route)
 
-        async def startup(self):
+        async def startup(self) -> None:
             """Run startup handlers."""
             for handler in self.on_startup:
                 await handler(self)
 
-        async def cleanup(self):
+        async def cleanup(self) -> None:
             """Run cleanup handlers."""
             for handler in self.on_cleanup:
                 await handler(self)
 
-        async def shutdown(self):
+        async def shutdown(self) -> None:
             """Run shutdown handlers."""
             for handler in self.on_shutdown:
                 await handler(self)
 
-    def run_app(app, host="127.0.0.1", port=8080, print=print):
+    def run_app(app, host="127.0.0.1", port=8080, print=print) -> None:
         """Run web application."""
         logger.info("Starting aiohttp fallback server on %s:%d", host, port)
         print(f"======== Running on http://{host}:{port} ========")
@@ -428,7 +430,7 @@ except ImportError as e:
         import socketserver
 
         class Handler(http.server.SimpleHTTPRequestHandler):
-            def do_GET(self):
+            def do_GET(self) -> None:
                 self.send_response(200)
                 self.end_headers()
                 self.wfile.write(b"AioHTTP fallback server running")

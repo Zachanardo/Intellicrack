@@ -26,7 +26,7 @@ class IntellicrackHexProtectionIntegration(QObject):
     #: Signal to request jumping to a specific section (type: str)
     section_requested = pyqtSignal(str)
 
-    def __init__(self, hex_widget=None):
+    def __init__(self, hex_widget=None) -> None:
         """Initialize hex protection integration.
 
         Args:
@@ -45,7 +45,7 @@ class IntellicrackHexProtectionIntegration(QObject):
         self.last_synced_offset = -1
         self.sync_timer.start(500)  # Check every 500ms
 
-    def open_in_protection_viewer(self, file_path: str, offset: int | None = None):
+    def open_in_protection_viewer(self, file_path: str, offset: int | None = None) -> None:
         """Open file in protection analysis hex viewer.
 
         Args:
@@ -112,7 +112,7 @@ class IntellicrackHexProtectionIntegration(QObject):
         """Alias for open_in_protection_viewer to maintain ICP naming consistency."""
         return self.open_in_protection_viewer(file_path, offset)
 
-    def _cleanup_sync_files(self):
+    def _cleanup_sync_files(self) -> None:
         """Clean up temporary sync files after protection viewer closes."""
         # Stop the sync timer
         if hasattr(self, "sync_timer") and self.sync_timer:
@@ -134,7 +134,7 @@ class IntellicrackHexProtectionIntegration(QObject):
         except OSError as e:
             logger.debug(f"Failed to cleanup sync files: {e}")
 
-    def sync_offset_from_protection_viewer(self, offset: int):
+    def sync_offset_from_protection_viewer(self, offset: int) -> None:
         """Sync offset from protection viewer to our hex viewer.
 
         Args:
@@ -145,7 +145,7 @@ class IntellicrackHexProtectionIntegration(QObject):
             self.hex_widget.goto_offset(offset)
             self.offset_requested.emit(offset)
 
-    def sync_offset_to_protection_viewer(self, offset: int):
+    def sync_offset_to_protection_viewer(self, offset: int) -> None:
         """Sync offset from our hex viewer to protection viewer.
 
         Args:
@@ -177,7 +177,7 @@ class IntellicrackHexProtectionIntegration(QObject):
             except Exception as e:
                 logger.error(f"Failed to send command to protection viewer process: {e}")
 
-    def _monitor_protection_viewer_offset(self):
+    def _monitor_protection_viewer_offset(self) -> None:
         """Monitor for offset changes from protection viewer."""
         sync_dir = os.path.join(os.path.expanduser("~"), ".intellicrack", "hex_sync")
         incoming_sync_file = os.path.join(sync_dir, "protection_to_hex_offset.txt")
@@ -186,7 +186,7 @@ class IntellicrackHexProtectionIntegration(QObject):
             return
 
         try:
-            with open(incoming_sync_file, "r") as f:
+            with open(incoming_sync_file) as f:
                 offset_str = f.read().strip()
                 if offset_str:
                     offset = int(offset_str, 0)  # Support both decimal and hex (0x prefix)
@@ -434,7 +434,7 @@ class IntellicrackHexProtectionIntegration(QObject):
 class ProtectionIntegrationWidget(QWidget):
     """Widget for protection viewer hex viewer integration controls."""
 
-    def __init__(self, hex_widget=None, parent=None):
+    def __init__(self, hex_widget=None, parent=None) -> None:
         """Initialize protection viewer integration widget.
 
         Args:
@@ -447,7 +447,7 @@ class ProtectionIntegrationWidget(QWidget):
         self.integration = IntellicrackHexProtectionIntegration(hex_widget)
         self.init_ui()
 
-    def init_ui(self):
+    def init_ui(self) -> None:
         """Initialize UI."""
         layout = QVBoxLayout()
 
@@ -479,7 +479,7 @@ class ProtectionIntegrationWidget(QWidget):
         layout.addStretch()
         self.setLayout(layout)
 
-    def _open_in_protection_viewer(self):
+    def _open_in_protection_viewer(self) -> None:
         """Open current file in protection viewer."""
         if self.hex_widget and hasattr(self.hex_widget, "file_path"):
             file_path = self.hex_widget.file_path
@@ -491,7 +491,7 @@ class ProtectionIntegrationWidget(QWidget):
         else:
             self.info_label.setText("Hex viewer not available")
 
-    def sync_sections_from_icp(self):
+    def sync_sections_from_icp(self) -> None:
         """Sync section information from protection viewer."""
         if self.hex_widget and hasattr(self.hex_widget, "file_path"):
             file_path = self.hex_widget.file_path

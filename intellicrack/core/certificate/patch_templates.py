@@ -150,7 +150,7 @@ WINHTTP_IGNORE_ALL_CERT_ERRORS_X86 = PatchTemplate(
             0x00,
             0x00,
             0xC3,
-        ]
+        ],
     ),
 )
 
@@ -263,7 +263,7 @@ CRYPTOAPI_BYPASS_CHAIN_POLICY_X86 = PatchTemplate(
             0x00,
             0x00,
             0xC3,
-        ]
+        ],
     ),
 )
 
@@ -305,7 +305,7 @@ CRYPTOAPI_BYPASS_CHAIN_POLICY_X64 = PatchTemplate(
             0x00,
             0x00,
             0xC3,
-        ]
+        ],
     ),
 )
 

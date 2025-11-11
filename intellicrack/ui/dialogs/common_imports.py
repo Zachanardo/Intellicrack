@@ -71,7 +71,7 @@ try:
     # Utility functions for unused imports
     def create_icon(path_or_pixmap):
         """Create a QIcon from a path or pixmap."""
-        if isinstance(path_or_pixmap, str) or isinstance(path_or_pixmap, QPixmap):
+        if isinstance(path_or_pixmap, (str, QPixmap)):
             return QIcon(path_or_pixmap)
         return QIcon()
 
@@ -153,13 +153,13 @@ except ImportError as e:
     QWidget = None
 
     # Fallback functions for non-PyQt environments
-    def create_icon(path_or_pixmap):
+    def create_icon(path_or_pixmap) -> None:
         """Create icon fallback."""
-        return None
+        return
 
-    def create_pixmap_from_file(path, size=None):
+    def create_pixmap_from_file(path, size=None) -> None:
         """Create pixmap fallback."""
-        return None
+        return
 
     def get_user_input(parent, title, label, default="", password=False):
         """Get user input fallback."""
@@ -169,21 +169,21 @@ except ImportError as e:
         """Create slider fallback."""
 
         class MockSlider:
-            def __init__(self):
+            def __init__(self) -> None:
                 self._value = value
                 self._min = min_val
                 self._max = max_val
 
-            def setValue(self, val):
+            def setValue(self, val) -> None:
                 self._value = val
 
             def value(self):
                 return self._value
 
-            def setMinimum(self, val):
+            def setMinimum(self, val) -> None:
                 self._min = val
 
-            def setMaximum(self, val):
+            def setMaximum(self, val) -> None:
                 self._max = val
 
         return MockSlider()

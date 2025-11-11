@@ -87,7 +87,7 @@ def dumps(obj: Any, **kwargs) -> str:
     return json.dumps(obj, **kwargs)
 
 
-def dump(obj: Any, fp, **kwargs):
+def dump(obj: Any, fp, **kwargs) -> None:
     """Serialize object to JSON file with datetime support.
 
     Args:
@@ -131,7 +131,7 @@ def load(fp, **kwargs) -> Any:
     return json.load(fp, **kwargs)
 
 
-def safe_serialize(obj: Any, filepath: Path, use_pickle: bool = False):
+def safe_serialize(obj: Any, filepath: Path, use_pickle: bool = False) -> None:
     """Safely serialize object to file, preferring JSON over pickle.
 
     Args:
@@ -204,7 +204,7 @@ def safe_deserialize(filepath: Path, use_pickle: bool = False) -> Any:
             return unpickler.load()
     else:
         try:
-            with open(filepath, "r") as f:
+            with open(filepath) as f:
                 return load(f)
         except (json.JSONDecodeError, UnicodeDecodeError):
             logger.warning("JSON deserialization failed, trying pickle from %s", filepath)

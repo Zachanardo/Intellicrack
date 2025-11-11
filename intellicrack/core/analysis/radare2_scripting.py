@@ -50,7 +50,7 @@ class R2ScriptingEngine:
     - Vulnerability detection scripts
     """
 
-    def __init__(self, binary_path: str, radare2_path: str | None = None):
+    def __init__(self, binary_path: str, radare2_path: str | None = None) -> None:
         """Initialize scripting engine."""
         self.binary_path = binary_path
         self.radare2_path = radare2_path
@@ -88,7 +88,7 @@ class R2ScriptingEngine:
                                 "result": cmd_result,
                                 "success": True,
                                 "index": i,
-                            }
+                            },
                         )
 
                     except R2Exception as e:
@@ -99,7 +99,7 @@ class R2ScriptingEngine:
                                 "error": str(e),
                                 "success": False,
                                 "index": i,
-                            }
+                            },
                         )
                         result["errors"].append(f"Command {i}: {command} failed: {e}")
 
@@ -375,7 +375,7 @@ class R2ScriptingEngine:
                 result["output"] = "Script running in terminal"
             else:
                 # Standard execution with captured output
-                process = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                process = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     cmd,
                     check=False,
                     capture_output=True,
@@ -486,7 +486,7 @@ class R2ScriptingEngine:
                     f"wx {patch_bytes}",
                     f"# Patched at {address}",
                     "",
-                ]
+                ],
             )
 
         script_commands.extend(
@@ -494,7 +494,7 @@ class R2ScriptingEngine:
                 "# Save patched binary",
                 "wtf patched_binary",
                 "q",
-            ]
+            ],
         )
 
         return self.create_custom_r2_script("autopatcher", script_commands, "Automated binary patcher")
@@ -530,7 +530,7 @@ class R2ScriptingEngine:
                         "/j valid",  # Search for validation strings
                         "/j key",  # Search for key strings
                         "",
-                    ]
+                    ],
                 )
 
                 # If we have an address, add direct address analysis
@@ -543,7 +543,7 @@ class R2ScriptingEngine:
                             "px 64",  # Print hex dump
                             f"axf @ {address}",  # Cross-references from this address
                             "",
-                        ]
+                        ],
                     )
 
         script_commands.extend(
@@ -556,7 +556,7 @@ class R2ScriptingEngine:
                 "# Generate summary",
                 "aflj",  # List all functions
                 "q",
-            ]
+            ],
         )
 
         return self.create_custom_r2_script("license_analyzer", script_commands, "License validation analysis")
@@ -593,7 +593,7 @@ class R2ScriptingEngine:
                                 "address": hex(func.get("offset", 0)),
                                 "size": func.get("size", 0),
                                 "type": "license_related",
-                            }
+                            },
                         )
 
         return license_functions
@@ -624,7 +624,7 @@ class R2ScriptingEngine:
                                 "keyword": keyword,
                                 "address": hex(result.get("offset", 0)),
                                 "context": "string_search",
-                            }
+                            },
                         )
 
         return license_strings
@@ -648,7 +648,7 @@ class R2ScriptingEngine:
                                 "name": imp.get("name", ""),
                                 "library": imp.get("libname", ""),
                                 "type": "license_related_api",
-                            }
+                            },
                         )
 
         return license_imports
@@ -669,7 +669,7 @@ class R2ScriptingEngine:
                             "algorithm_type": keyword,
                             "occurrences": len(results),
                             "addresses": [hex(r.get("offset", 0)) for r in results[:5]],  # Limit to 5
-                        }
+                        },
                     )
 
         return crypto_usage
@@ -722,7 +722,7 @@ class R2ScriptingEngine:
                     "method": "nop_function_or_force_return_true",
                     "difficulty": "easy",
                     "success_probability": 0.9,
-                }
+                },
             )
 
         # Registry bypass opportunities
@@ -734,7 +734,7 @@ class R2ScriptingEngine:
                     "method": "create_fake_registry_entries",
                     "difficulty": "easy",
                     "success_probability": 0.95,
-                }
+                },
             )
 
         # Time bypass opportunities
@@ -746,7 +746,7 @@ class R2ScriptingEngine:
                     "method": "hook_time_functions",
                     "difficulty": "medium",
                     "success_probability": 0.8,
-                }
+                },
             )
 
         return opportunities
@@ -787,7 +787,7 @@ class R2ScriptingEngine:
                             "risk_level": "high",
                             "occurrences": len(results),
                             "addresses": [hex(r.get("offset", 0)) for r in results[:3]],
-                        }
+                        },
                     )
 
         return risks
@@ -809,7 +809,7 @@ class R2ScriptingEngine:
                             "risk_level": "medium",
                             "occurrences": len(results),
                             "description": "Potential format string vulnerability",
-                        }
+                        },
                     )
 
         return risks
@@ -831,7 +831,7 @@ class R2ScriptingEngine:
                             "risk_level": "medium",
                             "occurrences": len(results),
                             "description": "Memory management function usage",
-                        }
+                        },
                     )
 
         return risks
@@ -853,7 +853,7 @@ class R2ScriptingEngine:
                             "risk_level": "critical",
                             "occurrences": len(results),
                             "description": "Code injection capability detected",
-                        }
+                        },
                     )
 
         return risks
@@ -875,7 +875,7 @@ class R2ScriptingEngine:
                             "risk_level": "high",
                             "occurrences": len(results),
                             "description": "Privilege escalation capability",
-                        }
+                        },
                     )
 
         return risks
@@ -897,7 +897,7 @@ class R2ScriptingEngine:
                             "risk_level": "medium",
                             "occurrences": len(results),
                             "description": "Network communication capability",
-                        }
+                        },
                     )
 
         return risks

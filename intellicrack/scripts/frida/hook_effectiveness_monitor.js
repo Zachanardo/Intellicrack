@@ -764,29 +764,29 @@ const HookEffectivenessMonitor = {
             this.statistics.averageResponseTime < this.config.thresholds.maxResponseTime
                 ? 1.0
                 : Math.max(
-                    0,
-                    1.0 -
+                      0,
+                      1.0 -
                           (this.statistics.averageResponseTime -
                               this.config.thresholds.maxResponseTime) /
                               100
-                );
+                  );
 
         var cpuUsageScore =
             this.estimateCpuUsage() < this.config.thresholds.maxCpuUsage
                 ? 1.0
                 : Math.max(
-                    0,
-                    1.0 - (this.estimateCpuUsage() - this.config.thresholds.maxCpuUsage) / 10
-                );
+                      0,
+                      1.0 - (this.estimateCpuUsage() - this.config.thresholds.maxCpuUsage) / 10
+                  );
 
         var memoryUsageScore =
             this.estimateMemoryUsage() < this.config.thresholds.maxMemoryUsage
                 ? 1.0
                 : Math.max(
-                    0,
-                    1.0 -
+                      0,
+                      1.0 -
                           (this.estimateMemoryUsage() - this.config.thresholds.maxMemoryUsage) / 50
-                );
+                  );
 
         this.statistics.performanceScore =
             (responseTimeScore + cpuUsageScore + memoryUsageScore) / 3;
@@ -4758,48 +4758,48 @@ const HookEffectivenessMonitor = {
     executeValidationCheck: function (checkName) {
         // Execute individual validation checks
         switch (checkName) {
-        case 'hook_installation':
-            return {
-                passed: this.metrics.totalHooks > 0,
-                value: this.metrics.totalHooks,
-                timestamp: Date.now(),
-            };
+            case 'hook_installation':
+                return {
+                    passed: this.metrics.totalHooks > 0,
+                    value: this.metrics.totalHooks,
+                    timestamp: Date.now(),
+                };
 
-        case 'hook_execution':
-            return {
-                passed: this.metrics.successfulHooks > 0,
-                value: this.metrics.successfulHooks,
-                timestamp: Date.now(),
-            };
+            case 'hook_execution':
+                return {
+                    passed: this.metrics.successfulHooks > 0,
+                    value: this.metrics.successfulHooks,
+                    timestamp: Date.now(),
+                };
 
-        case 'execution_time':
-            return {
-                passed: this.metrics.averageExecutionTime < 500,
-                value: this.metrics.averageExecutionTime,
-                timestamp: Date.now(),
-            };
+            case 'execution_time':
+                return {
+                    passed: this.metrics.averageExecutionTime < 500,
+                    value: this.metrics.averageExecutionTime,
+                    timestamp: Date.now(),
+                };
 
-        case 'memory_usage':
-            return {
-                passed: this.metrics.memoryUsage < 1000000,
-                value: this.metrics.memoryUsage,
-                timestamp: Date.now(),
-            };
+            case 'memory_usage':
+                return {
+                    passed: this.metrics.memoryUsage < 1000000,
+                    value: this.metrics.memoryUsage,
+                    timestamp: Date.now(),
+                };
 
-        case 'success_rate':
-            const successRate = this.metrics.successfulHooks / (this.metrics.totalHooks || 1);
-            return {
-                passed: successRate > 0.8,
-                value: successRate,
-                timestamp: Date.now(),
-            };
+            case 'success_rate':
+                const successRate = this.metrics.successfulHooks / (this.metrics.totalHooks || 1);
+                return {
+                    passed: successRate > 0.8,
+                    value: successRate,
+                    timestamp: Date.now(),
+                };
 
-        default:
-            return {
-                passed: true,
-                value: 1,
-                timestamp: Date.now(),
-            };
+            default:
+                return {
+                    passed: true,
+                    value: 1,
+                    timestamp: Date.now(),
+                };
         }
     },
 

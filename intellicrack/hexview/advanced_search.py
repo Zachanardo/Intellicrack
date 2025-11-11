@@ -23,9 +23,10 @@ import logging
 import re
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from intellicrack.core.config_manager import get_config
+if TYPE_CHECKING:
+    from intellicrack.core.config_manager import IntellicrackConfig
 
 from ..handlers.pyqt6_handler import (
     PYQT6_AVAILABLE,
@@ -82,14 +83,14 @@ class SearchType(Enum):
 class SearchResult:
     """Represents a single search result."""
 
-    def __init__(self, offset: int, length: int, data: bytes, context: bytes = None):
+    def __init__(self, offset: int, length: int, data: bytes, context: bytes = None) -> None:
         """Initialize the SearchResult with offset, length, data, and context."""
         self.offset = offset
         self.length = length
         self.data = data
         self.context = context or b""
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return string representation of the search result."""
         return f"SearchResult(offset=0x{self.offset:X}, length={self.length})"
 
@@ -116,9 +117,10 @@ class SearchResult:
 class SearchHistory:
     """Manages search history persistence."""
 
-    def __init__(self, max_entries: int = None):
+    def __init__(self, max_entries: int = None) -> None:
         """Initialize the SearchHistory with maximum entries limit."""
         # Get configuration instance
+        from intellicrack.core.config_manager import get_config
         config = get_config()
 
         # Use provided max_entries or get from config
@@ -130,7 +132,7 @@ class SearchHistory:
         self.entries: list[dict[str, Any]] = []
         self.load_history()
 
-    def add_search(self, pattern: str, search_type: SearchType, options: dict[str, Any]):
+    def add_search(self, pattern: str, search_type: SearchType, options: dict[str, Any]) -> None:
         """Add a search to history."""
         entry = {
             "pattern": pattern,
@@ -159,7 +161,7 @@ class SearchHistory:
 
         return [e["pattern"] for e in filtered_entries[:limit]]
 
-    def load_history(self):
+    def load_history(self) -> None:
         """Load history from file."""
         try:
             if self.history_file.exists():
@@ -170,7 +172,7 @@ class SearchHistory:
             logger.warning("Could not load search history: %s", e)
             self.entries = []
 
-    def save_history(self):
+    def save_history(self) -> None:
         """Save history to file."""
         try:
             self.history_file.parent.mkdir(parents=True, exist_ok=True)
@@ -183,11 +185,12 @@ class SearchHistory:
 class SearchEngine:
     """Core search engine for finding patterns in binary data."""
 
-    def __init__(self, file_handler):
+    def __init__(self, file_handler) -> None:
         """Initialize the SearchEngine with file handler and chunk size."""
         self.file_handler = file_handler
 
         # Get configuration instance
+        from intellicrack.core.config_manager import get_config
         config = get_config()
 
         # Get chunk size from config (convert KB to bytes)
@@ -654,7 +657,7 @@ class SearchThread(QThread if PYQT6_AVAILABLE else object):
         search_type: SearchType,
         find_all: bool = False,
         **kwargs,
-    ):
+    ) -> None:
         """Initialize the SearchThread with search parameters."""
         if PYQT6_AVAILABLE:
             super().__init__()
@@ -665,7 +668,7 @@ class SearchThread(QThread if PYQT6_AVAILABLE else object):
         self.kwargs = kwargs
         self.should_stop = False
 
-    def run(self):
+    def run(self) -> None:
         """Run the search operation."""
         try:
             if self.find_all:
@@ -687,7 +690,7 @@ class SearchThread(QThread if PYQT6_AVAILABLE else object):
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Search thread error: %s", e)
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the search operation."""
         self.should_stop = True
 
@@ -695,7 +698,7 @@ class SearchThread(QThread if PYQT6_AVAILABLE else object):
 class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
     """Advanced search dialog with comprehensive search options."""
 
-    def __init__(self, parent=None, search_engine: SearchEngine = None):
+    def __init__(self, parent=None, search_engine: SearchEngine = None) -> None:
         """Initialize the advanced search dialog with parent widget and search engine."""
         if not PYQT6_AVAILABLE:
             return
@@ -742,7 +745,7 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
         self.setup_ui()
         self.load_recent_searches()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the user interface."""
         layout = QVBoxLayout(self)
 
@@ -975,7 +978,7 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
         layout.addWidget(history_group)
         return tab
 
-    def load_recent_searches(self):
+    def load_recent_searches(self) -> None:
         """Load recent searches into combo boxes."""
         recent_searches = self.search_history.get_recent_searches(limit=10)
 
@@ -990,7 +993,7 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
 
         self.update_history_list()
 
-    def update_history_list(self):
+    def update_history_list(self) -> None:
         """Update the history list widget."""
         self.history_list.clear()
 
@@ -1000,7 +1003,7 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
             item.setData(Qt.UserRole, entry)
             self.history_list.addItem(item)
 
-    def find_next(self):
+    def find_next(self) -> None:
         """Find next occurrence."""
         pattern = self.search_pattern_combo.currentText()
         if not pattern:
@@ -1038,7 +1041,7 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
                 logger.error("Error in advanced_search: %s", e)
                 self.search_status_label.setText(f"Search error: {e}")
 
-    def find_previous(self):
+    def find_previous(self) -> None:
         """Find previous occurrence."""
         pattern = self.search_pattern_combo.currentText()
         if not pattern:
@@ -1068,12 +1071,12 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
                 logger.error("Error in advanced_search: %s", e)
                 self.search_status_label.setText(f"Search error: {e}")
 
-    def replace_current(self):
+    def replace_current(self) -> None:
         """Replace current selection."""
         # Implementation depends on hex viewer integration
         self.replace_status_label.setText("Replace functionality requires hex viewer integration")
 
-    def replace_all(self):
+    def replace_all(self) -> None:
         """Replace all occurrences."""
         find_pattern = self.find_pattern_combo.currentText()
         replace_pattern = self.replace_pattern_edit.text()
@@ -1099,7 +1102,7 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
                 self.logger.error("Error in advanced_search: %s", e)
                 self.replace_status_label.setText(f"Replace error: {e}")
 
-    def find_all(self):
+    def find_all(self) -> None:
         """Find all occurrences."""
         pattern = self.find_all_pattern_combo.currentText()
         if not pattern:
@@ -1127,7 +1130,7 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
             self.current_search_thread.search_completed.connect(self.on_find_all_completed)
         self.current_search_thread.start()
 
-    def on_find_all_completed(self, results: list[SearchResult]):
+    def on_find_all_completed(self, results: list[SearchResult]) -> None:
         """Handle find all completion."""
         self.search_progress.setVisible(False)
         self.find_all_button.setEnabled(True)
@@ -1142,7 +1145,7 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
             self.results_table.setItem(i, 2, QTableWidgetItem(result.data.hex(" ")[:32] + "..."))
             self.results_table.setItem(i, 3, QTableWidgetItem(result.context.hex(" ")[:48] + "..."))
 
-    def cancel_search(self):
+    def cancel_search(self) -> None:
         """Cancel current search."""
         if self.current_search_thread:
             self.current_search_thread.stop()
@@ -1152,7 +1155,7 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
         self.find_all_button.setEnabled(True)
         self.cancel_search_button.setEnabled(False)
 
-    def use_history_item(self, item: QListWidgetItem):
+    def use_history_item(self, item: QListWidgetItem) -> None:
         """Use selected history item."""
         entry = item.data(Qt.UserRole)
         if entry:
@@ -1161,13 +1164,13 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
             if type_index >= 0:
                 self.search_type_combo.setCurrentIndex(type_index)
 
-    def use_selected_history(self):
+    def use_selected_history(self) -> None:
         """Use currently selected history item."""
         current_item = self.history_list.currentItem()
         if current_item:
             self.use_history_item(current_item)
 
-    def clear_history(self):
+    def clear_history(self) -> None:
         """Clear search history."""
         reply = QMessageBox.question(
             self,
@@ -1195,7 +1198,7 @@ class AdvancedSearchDialog(QDialog if PYQT6_AVAILABLE else object):
 class FindAllDialog(QDialog):
     """Dialog for displaying find all results."""
 
-    def __init__(self, parent=None, results=None):
+    def __init__(self, parent=None, results=None) -> None:
         """Initialize find all dialog."""
         super().__init__(parent)
         self.results = results or []
@@ -1203,7 +1206,7 @@ class FindAllDialog(QDialog):
         self.setMinimumSize(800, 600)
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the dialog UI."""
         layout = QVBoxLayout(self)
 
@@ -1241,14 +1244,14 @@ class FindAllDialog(QDialog):
 class ReplaceDialog(QDialog):
     """Dialog for replace operations."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize replace dialog."""
         super().__init__(parent)
         self.setWindowTitle("Replace")
         self.setMinimumSize(500, 300)
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the dialog UI."""
         layout = QVBoxLayout(self)
 

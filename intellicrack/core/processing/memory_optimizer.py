@@ -606,7 +606,7 @@ class MemoryOptimizer:
                     "issues": len(critical_issues),
                     "memory_mb": current_memory,
                     "objects": gc_after,
-                }
+                },
             )
 
             if len(self._leak_history) > 20:
@@ -778,7 +778,7 @@ class MemoryOptimizer:
                 "check_interval": self.check_interval,
                 "techniques_enabled": sum(1 for enabled in self.optimization_techniques.values() if enabled),
                 "total_techniques": len(self.optimization_techniques),
-            }
+            },
         )
 
         return stats

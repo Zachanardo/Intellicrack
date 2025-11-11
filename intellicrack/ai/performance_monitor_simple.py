@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 class PerformanceMonitor:
     """Real-time performance monitoring for AI operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize performance monitor with metric tracking."""
         self.metrics = defaultdict(list)
         self.operation_counts = defaultdict(int)
@@ -45,7 +45,7 @@ class PerformanceMonitor:
             self.start_times[operation_id] = time.time()
         return operation_id
 
-    def end_operation(self, operation_id: str, operation_name: str, success: bool = True):
+    def end_operation(self, operation_id: str, operation_name: str, success: bool = True) -> None:
         """End timing an operation and record metrics."""
         end_time = time.time()
         with self.lock:
@@ -56,7 +56,7 @@ class PerformanceMonitor:
                         "duration": duration,
                         "timestamp": end_time,
                         "success": success,
-                    }
+                    },
                 )
                 self.operation_counts[operation_name] += 1
                 if not success:
@@ -90,7 +90,7 @@ class PerformanceMonitor:
 class AsyncPerformanceMonitor:
     """Async performance monitoring for concurrent operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize async performance monitor with operation tracking."""
         self.active_operations = {}
         self.completed_operations = deque(maxlen=10000)
@@ -125,7 +125,7 @@ class AsyncPerformanceMonitor:
                             "duration": end_time - op_info["start_time"],
                             "success": success,
                             "timestamp": end_time,
-                        }
+                        },
                     )
 
         return result

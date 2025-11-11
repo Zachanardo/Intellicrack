@@ -24,7 +24,7 @@ import json
 import os
 from pathlib import Path
 
-from intellicrack.config import get_config
+from intellicrack.core.config_manager import get_config
 
 
 def get_cache_path(binary_path: str) -> Path:
@@ -39,7 +39,7 @@ def get_cache_path(binary_path: str) -> Path:
     return cache_dir / f"{file_hash}.json"
 
 
-def run_incremental_analysis(main_app):
+def run_incremental_analysis(main_app) -> None:
     """Run analysis on the target binary, using cached results if available.
 
     to speed up the process. This is a production-ready implementation.
@@ -58,7 +58,7 @@ def run_incremental_analysis(main_app):
         current_size = os.path.getsize(binary_path)
 
         if cache_file.exists():
-            with open(cache_file, "r", encoding="utf-8") as f:
+            with open(cache_file, encoding="utf-8") as f:
                 cached_data = json.load(f)
 
             if cached_data.get("mtime") == current_mtime and cached_data.get("size") == current_size:

@@ -193,7 +193,7 @@ class ArxanDetector:
         b"\x66\x0f\x38\x00",
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize ArxanDetector with pattern databases."""
         self.logger = logging.getLogger(__name__)
 
@@ -242,7 +242,7 @@ class ArxanDetector:
 
             self.logger.info(
                 f"Arxan detection complete: protected={is_protected}, "
-                f"confidence={confidence:.2%}, version={version.value}"
+                f"confidence={confidence:.2%}, version={version.value}",
             )
 
             return ArxanDetectionResult(
@@ -367,7 +367,7 @@ class ArxanDetector:
 
     def _detect_version(self, binary_data: bytes, metadata: dict[str, Any]) -> ArxanVersion:
         """Detect Arxan TransformIT version."""
-        version_scores = {version: 0 for version in ArxanVersion}
+        version_scores = dict.fromkeys(ArxanVersion, 0)
 
         for version, patterns in self.VERSION_SIGNATURES.items():
             for pattern in patterns:
@@ -389,7 +389,7 @@ class ArxanDetector:
         return best_version
 
     def _heuristic_analysis(
-        self, binary_data: bytes, features: ArxanProtectionFeatures, metadata: dict[str, Any]
+        self, binary_data: bytes, features: ArxanProtectionFeatures, metadata: dict[str, Any],
     ) -> float:
         """Perform heuristic analysis for Arxan protection features."""
         score = 0.0
@@ -490,10 +490,7 @@ class ArxanDetector:
             1 for b in binary_data[:10000] if 32 <= b < 127
         ) / min(len(binary_data), 10000)
 
-        if printable_ratio < 0.05:
-            return True
-
-        return False
+        return printable_ratio < 0.05
 
     def _check_control_flow_obfuscation(self, binary_data: bytes) -> bool:
         """Check for control flow obfuscation patterns."""
@@ -608,7 +605,7 @@ class ArxanDetector:
         return False
 
 
-def main():
+def main() -> None:
     """Test entry point for Arxan detector."""
     import argparse
 

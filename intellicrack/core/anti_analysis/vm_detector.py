@@ -99,7 +99,7 @@ class HardwareFingerprint:
 class VMDetector(BaseDetector):
     """Comprehensive virtual machine detection using multiple techniques."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the virtual machine detector with detection methods and signatures."""
         super().__init__()
         self.logger = logging.getLogger("IntellicrackLogger.VMDetector")
@@ -159,7 +159,7 @@ class VMDetector(BaseDetector):
                         os.environ.get("ProgramFiles", r"C:\\Program Files"),
                         "Oracle",
                         "VirtualBox Guest Additions",
-                    )
+                    ),
                 ],
                 "registry": [r"HKLM\\SOFTWARE\\Oracle\\VirtualBox Guest Additions"],
                 "hardware": ["VirtualBox", "VBOX HARDDISK", "VBOX CD-ROM"],
@@ -175,7 +175,7 @@ class VMDetector(BaseDetector):
                         "System32",
                         "drivers",
                         "vmbus.sys",
-                    )
+                    ),
                 ],
                 "registry": [r"HKLM\\SOFTWARE\\Microsoft\\Virtual Machine\\Guest\\Parameters"],
                 "hardware": ["Microsoft Corporation Virtual Machine"],
@@ -214,7 +214,7 @@ class VMDetector(BaseDetector):
                         os.environ.get("ProgramFiles", r"C:\\Program Files"),
                         "Parallels",
                         "Parallels Tools",
-                    )
+                    ),
                 ],
                 "hardware": ["Parallels Virtual Platform"],
                 "mac_prefixes": ["00:1C:42"],
@@ -412,7 +412,7 @@ class VMDetector(BaseDetector):
         try:
             result = self._execute_cpuid(0x1)
             if result:
-                eax, ebx, ecx, edx = result
+                _eax, _ebx, ecx, _edx = result
                 details["ecx_value"] = ecx
                 hypervisor_bit = (ecx >> 31) & 1
                 details["hypervisor_bit"] = bool(hypervisor_bit)
@@ -503,7 +503,7 @@ class VMDetector(BaseDetector):
             # Try to get hypervisor brand
             if platform.system() == "Linux":
                 result = subprocess.run(
-                    ["dmidecode", "-s", "system-product-name"],  # noqa: S607
+                    ["dmidecode", "-s", "system-product-name"],
                     check=False,
                     capture_output=True,
                     text=True,
@@ -755,7 +755,7 @@ class VMDetector(BaseDetector):
                     confidence = min(0.85, (avg_delta / 1000) * 0.4 + (std_dev / 500) * 0.3 + 0.15)
                     self.logger.info(
                         f"RDTSC timing anomaly detected: avg={avg_delta:.0f} cycles, "
-                        f"std={std_dev:.0f}, min={min_delta}, max={max_delta}"
+                        f"std={std_dev:.0f}, min={min_delta}, max={max_delta}",
                     )
                     return True, confidence, details
 
@@ -849,7 +849,7 @@ class VMDetector(BaseDetector):
             if platform.system() == "Windows":
                 ipconfig_path = shutil.which("ipconfig")
                 if ipconfig_path:
-                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                         [ipconfig_path, "/all"],
                         check=False,
                         capture_output=True,
@@ -862,7 +862,7 @@ class VMDetector(BaseDetector):
             else:
                 ip_path = shutil.which("ip")
                 if ip_path:
-                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                         [ip_path, "link"],
                         check=False,
                         capture_output=True,
@@ -1136,7 +1136,7 @@ class VMDetector(BaseDetector):
                                 for pattern in vm_serial_patterns:
                                     if pattern.lower() in serial.lower():
                                         details["vm_patterns_found"].append(
-                                            f"{serial} contains '{pattern}'"
+                                            f"{serial} contains '{pattern}'",
                                         )
 
                 except ImportError:
@@ -1166,7 +1166,7 @@ class VMDetector(BaseDetector):
                                 for pattern in vm_serial_patterns:
                                     if pattern.lower() in serial.lower():
                                         details["vm_patterns_found"].append(
-                                            f"{serial} contains '{pattern}'"
+                                            f"{serial} contains '{pattern}'",
                                         )
                 except FileNotFoundError:
                     pass
@@ -1231,7 +1231,7 @@ class VMDetector(BaseDetector):
                                     "mac": mac_formatted,
                                     "vendor": vm_type,
                                     "prefix": prefix,
-                                }
+                                },
                             )
 
             if details["vm_macs"]:
@@ -1251,13 +1251,13 @@ class VMDetector(BaseDetector):
             "feature_flags": {},
             "vm_indicators": [],
             "ecx_features": [],
-            "edx_features": []
+            "edx_features": [],
         }
 
         try:
             result = self._execute_cpuid(0x1)
             if result:
-                eax, ebx, ecx, edx = result
+                _eax, _ebx, ecx, _edx = result
 
                 details["hypervisor_present"] = bool((ecx >> 31) & 1)
 
@@ -1314,7 +1314,7 @@ class VMDetector(BaseDetector):
 
                 details["hypervisor_info"]["base_leaf"] = {
                     "max_leaf": hex(max_leaf),
-                    "vendor": vendor
+                    "vendor": vendor,
                 }
 
                 if vendor:
@@ -1331,7 +1331,7 @@ class VMDetector(BaseDetector):
                                 "eax": hex(leaf_eax),
                                 "ebx": hex(leaf_ebx),
                                 "ecx": hex(leaf_ecx),
-                                "edx": hex(leaf_edx)
+                                "edx": hex(leaf_edx),
                             })
 
                     if "VMware" in vendor or "VBox" in vendor or "Microsoft Hv" in vendor or "KVM" in vendor:
@@ -1383,7 +1383,7 @@ class VMDetector(BaseDetector):
             "max_delta": 0,
             "avg_delta": 0,
             "vmexit_threshold": 1000,
-            "samples": 0
+            "samples": 0,
         }
 
         try:
@@ -1402,7 +1402,7 @@ class VMDetector(BaseDetector):
                     0x48, 0xC1, 0xE2, 0x20,
                     0x48, 0x09, 0xD0,
                     0x48, 0x29, 0xC8,
-                    0xC3
+                    0xC3,
                 ])
             else:
                 code = bytes([
@@ -1414,7 +1414,7 @@ class VMDetector(BaseDetector):
                     0x0F, 0x31,
                     0x29, 0xC8,
                     0x19, 0xDA,
-                    0xC3
+                    0xC3,
                 ])
 
             VirtualAlloc = ctypes.windll.kernel32.VirtualAlloc
@@ -1587,7 +1587,7 @@ class VMDetector(BaseDetector):
                     check=False,
                     capture_output=True,
                     text=True,
-                    shell=False
+                    shell=False,
                 )
 
                 if result.returncode == 0:
@@ -1596,7 +1596,7 @@ class VMDetector(BaseDetector):
 
                     vm_device_patterns = [
                         "vmware", "virtualbox", "qemu", "virtio",
-                        "red hat", "xen", "hyper-v", "parallels"
+                        "red hat", "xen", "hyper-v", "parallels",
                     ]
 
                     for pattern in vm_device_patterns:
@@ -1645,7 +1645,7 @@ class VMDetector(BaseDetector):
                 b"Xen",
                 b"Microsoft Hv",
                 b"Hyper-V",
-                b"Parallels"
+                b"Parallels",
             ]
 
             kernel32 = ctypes.windll.kernel32
@@ -1661,7 +1661,7 @@ class VMDetector(BaseDetector):
                     process_handle,
                     ctypes.c_void_p(address),
                     ctypes.byref(mbi),
-                    ctypes.sizeof(mbi)
+                    ctypes.sizeof(mbi),
                 )
 
                 if result == 0:
@@ -1682,7 +1682,7 @@ class VMDetector(BaseDetector):
                             ctypes.c_void_p(base_address),
                             buffer,
                             scan_size,
-                            ctypes.byref(bytes_read)
+                            ctypes.byref(bytes_read),
                         ):
                             memory_data = buffer.raw[:bytes_read.value]
 
@@ -1733,7 +1733,7 @@ class VMDetector(BaseDetector):
 
                             if interrupt_time > 15:
                                 details["counter_anomalies"].append(
-                                    f"High interrupt time: {interrupt_time}% (VM overhead indicator)"
+                                    f"High interrupt time: {interrupt_time}% (VM overhead indicator)",
                                 )
 
                 except ImportError:
@@ -1753,7 +1753,7 @@ class VMDetector(BaseDetector):
         details = {
             "tsc_frequency_hz": 0,
             "measurement_variance": 0,
-            "anomaly_detected": False
+            "anomaly_detected": False,
         }
 
         try:
@@ -1765,12 +1765,12 @@ class VMDetector(BaseDetector):
                     0x0F, 0x31,
                     0x48, 0xC1, 0xE2, 0x20,
                     0x48, 0x09, 0xD0,
-                    0xC3
+                    0xC3,
                 ])
             else:
                 code = bytes([
                     0x0F, 0x31,
-                    0xC3
+                    0xC3,
                 ])
 
             VirtualAlloc = ctypes.windll.kernel32.VirtualAlloc
@@ -1832,7 +1832,7 @@ class VMDetector(BaseDetector):
             "l2_cache_timing_ns": 0,
             "memory_timing_ns": 0,
             "timing_ratios": {},
-            "anomaly_detected": False
+            "anomaly_detected": False,
         }
 
         try:
@@ -2340,7 +2340,7 @@ Interceptor.attach(Module.findExportByName(null, 'IsDebuggerPresent'), {
                         "new_name": "svchost_helper",
                         "description": "Rename VMware Tools service",
                     },
-                ]
+                ],
             )
         elif vm_type.lower() == "virtualbox":
             mods.extend(
@@ -2350,7 +2350,7 @@ Interceptor.attach(Module.findExportByName(null, 'IsDebuggerPresent'), {
                         "key": r"HKLM\SOFTWARE\Oracle\VirtualBox Guest Additions",
                         "description": "Remove VirtualBox guest additions keys",
                     },
-                ]
+                ],
             )
 
         return mods
@@ -2373,7 +2373,7 @@ Interceptor.attach(Module.findExportByName(null, 'IsDebuggerPresent'), {
                         "path": r"C:\Windows\System32\drivers\vmmouse.sys",
                         "description": "Hide VMware mouse driver",
                     },
-                ]
+                ],
             )
 
         return ops

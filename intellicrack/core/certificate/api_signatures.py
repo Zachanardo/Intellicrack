@@ -109,7 +109,7 @@ WINHTTP_SIGNATURES = [
         platforms=[Platform.WINDOWS],
         calling_convention=CallingConvention.STDCALL,
         return_type="BOOL",
-        description="Sets WinHTTP options including certificate validation flags"
+        description="Sets WinHTTP options including certificate validation flags",
     ),
     APISignature(
         name="WinHttpSendRequest",
@@ -117,7 +117,7 @@ WINHTTP_SIGNATURES = [
         platforms=[Platform.WINDOWS],
         calling_convention=CallingConvention.STDCALL,
         return_type="BOOL",
-        description="Sends HTTP request with certificate validation"
+        description="Sends HTTP request with certificate validation",
     ),
     APISignature(
         name="WinHttpQueryOption",
@@ -125,7 +125,7 @@ WINHTTP_SIGNATURES = [
         platforms=[Platform.WINDOWS],
         calling_convention=CallingConvention.STDCALL,
         return_type="BOOL",
-        description="Queries WinHTTP options including security flags"
+        description="Queries WinHTTP options including security flags",
     ),
     APISignature(
         name="WinHttpReceiveResponse",
@@ -133,7 +133,7 @@ WINHTTP_SIGNATURES = [
         platforms=[Platform.WINDOWS],
         calling_convention=CallingConvention.STDCALL,
         return_type="BOOL",
-        description="Receives HTTP response after certificate validation"
+        description="Receives HTTP response after certificate validation",
     ),
 ]
 
@@ -144,7 +144,7 @@ SCHANNEL_SIGNATURES = [
         platforms=[Platform.WINDOWS],
         calling_convention=CallingConvention.STDCALL,
         return_type="SECURITY_STATUS",
-        description="Initiates TLS context with certificate validation"
+        description="Initiates TLS context with certificate validation",
     ),
     APISignature(
         name="InitializeSecurityContextW",
@@ -152,7 +152,7 @@ SCHANNEL_SIGNATURES = [
         platforms=[Platform.WINDOWS],
         calling_convention=CallingConvention.STDCALL,
         return_type="SECURITY_STATUS",
-        description="Unicode version of InitializeSecurityContext"
+        description="Unicode version of InitializeSecurityContext",
     ),
     APISignature(
         name="QueryContextAttributes",
@@ -160,7 +160,7 @@ SCHANNEL_SIGNATURES = [
         platforms=[Platform.WINDOWS],
         calling_convention=CallingConvention.STDCALL,
         return_type="SECURITY_STATUS",
-        description="Queries security context attributes including remote certificate"
+        description="Queries security context attributes including remote certificate",
     ),
     APISignature(
         name="QueryContextAttributesW",
@@ -168,7 +168,7 @@ SCHANNEL_SIGNATURES = [
         platforms=[Platform.WINDOWS],
         calling_convention=CallingConvention.STDCALL,
         return_type="SECURITY_STATUS",
-        description="Unicode version of QueryContextAttributes"
+        description="Unicode version of QueryContextAttributes",
     ),
     APISignature(
         name="EncryptMessage",
@@ -176,7 +176,7 @@ SCHANNEL_SIGNATURES = [
         platforms=[Platform.WINDOWS],
         calling_convention=CallingConvention.STDCALL,
         return_type="SECURITY_STATUS",
-        description="Encrypts message after certificate validation"
+        description="Encrypts message after certificate validation",
     ),
     APISignature(
         name="DecryptMessage",
@@ -184,7 +184,7 @@ SCHANNEL_SIGNATURES = [
         platforms=[Platform.WINDOWS],
         calling_convention=CallingConvention.STDCALL,
         return_type="SECURITY_STATUS",
-        description="Decrypts message in established TLS context"
+        description="Decrypts message in established TLS context",
     ),
 ]
 
@@ -195,7 +195,7 @@ CRYPTOAPI_SIGNATURES = [
         platforms=[Platform.WINDOWS],
         calling_convention=CallingConvention.STDCALL,
         return_type="BOOL",
-        description="Verifies certificate chain against policy"
+        description="Verifies certificate chain against policy",
     ),
     APISignature(
         name="CertGetCertificateChain",
@@ -203,7 +203,7 @@ CRYPTOAPI_SIGNATURES = [
         platforms=[Platform.WINDOWS],
         calling_convention=CallingConvention.STDCALL,
         return_type="BOOL",
-        description="Builds certificate chain for validation"
+        description="Builds certificate chain for validation",
     ),
     APISignature(
         name="CertFreeCertificateChain",
@@ -211,7 +211,7 @@ CRYPTOAPI_SIGNATURES = [
         platforms=[Platform.WINDOWS],
         calling_convention=CallingConvention.STDCALL,
         return_type="void",
-        description="Frees certificate chain context"
+        description="Frees certificate chain context",
     ),
     APISignature(
         name="CertCreateCertificateChainEngine",
@@ -219,7 +219,7 @@ CRYPTOAPI_SIGNATURES = [
         platforms=[Platform.WINDOWS],
         calling_convention=CallingConvention.STDCALL,
         return_type="BOOL",
-        description="Creates certificate chain engine for validation"
+        description="Creates certificate chain engine for validation",
     ),
     APISignature(
         name="CertVerifyTimeValidity",
@@ -227,7 +227,7 @@ CRYPTOAPI_SIGNATURES = [
         platforms=[Platform.WINDOWS],
         calling_convention=CallingConvention.STDCALL,
         return_type="LONG",
-        description="Verifies certificate time validity"
+        description="Verifies certificate time validity",
     ),
 ]
 
@@ -238,7 +238,7 @@ OPENSSL_SIGNATURES = [
         platforms=[Platform.LINUX, Platform.ANDROID],
         calling_convention=CallingConvention.CDECL,
         return_type="void",
-        description="Sets certificate verification mode for SSL context"
+        description="Sets certificate verification mode for SSL context",
     ),
     APISignature(
         name="SSL_get_verify_result",
@@ -246,7 +246,7 @@ OPENSSL_SIGNATURES = [
         platforms=[Platform.LINUX, Platform.ANDROID],
         calling_convention=CallingConvention.CDECL,
         return_type="long",
-        description="Gets certificate verification result"
+        description="Gets certificate verification result",
     ),
     APISignature(
         name="SSL_set_verify",
@@ -254,7 +254,7 @@ OPENSSL_SIGNATURES = [
         platforms=[Platform.LINUX, Platform.ANDROID],
         calling_convention=CallingConvention.CDECL,
         return_type="void",
-        description="Sets certificate verification mode for SSL object"
+        description="Sets certificate verification mode for SSL object",
     ),
     APISignature(
         name="SSL_CTX_set_cert_verify_callback",
@@ -262,7 +262,7 @@ OPENSSL_SIGNATURES = [
         platforms=[Platform.LINUX, Platform.ANDROID],
         calling_convention=CallingConvention.CDECL,
         return_type="void",
-        description="Sets custom certificate verification callback"
+        description="Sets custom certificate verification callback",
     ),
     APISignature(
         name="SSL_CTX_load_verify_locations",
@@ -270,7 +270,7 @@ OPENSSL_SIGNATURES = [
         platforms=[Platform.LINUX, Platform.ANDROID],
         calling_convention=CallingConvention.CDECL,
         return_type="int",
-        description="Loads CA certificates for verification"
+        description="Loads CA certificates for verification",
     ),
     APISignature(
         name="X509_verify_cert",
@@ -278,7 +278,7 @@ OPENSSL_SIGNATURES = [
         platforms=[Platform.LINUX, Platform.ANDROID],
         calling_convention=CallingConvention.CDECL,
         return_type="int",
-        description="Verifies X509 certificate"
+        description="Verifies X509 certificate",
     ),
     APISignature(
         name="X509_STORE_CTX_get_error",
@@ -286,7 +286,7 @@ OPENSSL_SIGNATURES = [
         platforms=[Platform.LINUX, Platform.ANDROID],
         calling_convention=CallingConvention.CDECL,
         return_type="int",
-        description="Gets certificate verification error code"
+        description="Gets certificate verification error code",
     ),
     APISignature(
         name="SSL_CTX_set_verify_depth",
@@ -294,7 +294,7 @@ OPENSSL_SIGNATURES = [
         platforms=[Platform.LINUX, Platform.ANDROID],
         calling_convention=CallingConvention.CDECL,
         return_type="void",
-        description="Sets maximum certificate chain depth"
+        description="Sets maximum certificate chain depth",
     ),
     APISignature(
         name="SSL_set_verify_depth",
@@ -302,7 +302,7 @@ OPENSSL_SIGNATURES = [
         platforms=[Platform.LINUX, Platform.ANDROID],
         calling_convention=CallingConvention.CDECL,
         return_type="void",
-        description="Sets maximum certificate chain depth for SSL object"
+        description="Sets maximum certificate chain depth for SSL object",
     ),
 ]
 
@@ -313,7 +313,7 @@ OPENSSL_WINDOWS_SIGNATURES = [
         platforms=[Platform.WINDOWS],
         calling_convention=CallingConvention.X64_MS,
         return_type="void",
-        description="Sets certificate verification mode for SSL context (Windows)"
+        description="Sets certificate verification mode for SSL context (Windows)",
     ),
     APISignature(
         name="SSL_get_verify_result",
@@ -321,7 +321,7 @@ OPENSSL_WINDOWS_SIGNATURES = [
         platforms=[Platform.WINDOWS],
         calling_convention=CallingConvention.X64_MS,
         return_type="long",
-        description="Gets certificate verification result (Windows)"
+        description="Gets certificate verification result (Windows)",
     ),
     APISignature(
         name="SSL_CTX_set_verify",
@@ -329,7 +329,7 @@ OPENSSL_WINDOWS_SIGNATURES = [
         platforms=[Platform.WINDOWS],
         calling_convention=CallingConvention.STDCALL,
         return_type="void",
-        description="Sets certificate verification mode for SSL context (Windows 32-bit)"
+        description="Sets certificate verification mode for SSL context (Windows 32-bit)",
     ),
 ]
 
@@ -340,7 +340,7 @@ NSS_SIGNATURES = [
         platforms=[Platform.LINUX],
         calling_convention=CallingConvention.CDECL,
         return_type="SECStatus",
-        description="Verifies certificate using NSS (Firefox)"
+        description="Verifies certificate using NSS (Firefox)",
     ),
     APISignature(
         name="CERT_PKIXVerifyCert",
@@ -348,7 +348,7 @@ NSS_SIGNATURES = [
         platforms=[Platform.LINUX],
         calling_convention=CallingConvention.CDECL,
         return_type="SECStatus",
-        description="PKIX certificate verification in NSS"
+        description="PKIX certificate verification in NSS",
     ),
     APISignature(
         name="SSL_AuthCertificateHook",
@@ -356,7 +356,7 @@ NSS_SIGNATURES = [
         platforms=[Platform.LINUX],
         calling_convention=CallingConvention.CDECL,
         return_type="SECStatus",
-        description="Sets SSL certificate authentication hook"
+        description="Sets SSL certificate authentication hook",
     ),
     APISignature(
         name="CERT_VerifyCertificate",
@@ -364,7 +364,7 @@ NSS_SIGNATURES = [
         platforms=[Platform.WINDOWS],
         calling_convention=CallingConvention.STDCALL,
         return_type="SECStatus",
-        description="Verifies certificate using NSS on Windows"
+        description="Verifies certificate using NSS on Windows",
     ),
 ]
 
@@ -375,7 +375,7 @@ BORINGSSL_SIGNATURES = [
         platforms=[Platform.ANDROID],
         calling_convention=CallingConvention.CDECL,
         return_type="void",
-        description="Sets custom certificate verification callback (BoringSSL)"
+        description="Sets custom certificate verification callback (BoringSSL)",
     ),
     APISignature(
         name="SSL_CTX_set_custom_verify",
@@ -383,7 +383,7 @@ BORINGSSL_SIGNATURES = [
         platforms=[Platform.ANDROID],
         calling_convention=CallingConvention.CDECL,
         return_type="void",
-        description="Sets custom certificate verification for context (BoringSSL)"
+        description="Sets custom certificate verification for context (BoringSSL)",
     ),
 ]
 
@@ -394,7 +394,7 @@ IOS_SIGNATURES = [
         platforms=[Platform.IOS, Platform.MACOS],
         calling_convention=CallingConvention.X64_SYSV,
         return_type="OSStatus",
-        description="Evaluates certificate trust on iOS/macOS"
+        description="Evaluates certificate trust on iOS/macOS",
     ),
     APISignature(
         name="SSLHandshake",
@@ -402,7 +402,7 @@ IOS_SIGNATURES = [
         platforms=[Platform.IOS, Platform.MACOS],
         calling_convention=CallingConvention.X64_SYSV,
         return_type="OSStatus",
-        description="Performs SSL handshake with certificate validation"
+        description="Performs SSL handshake with certificate validation",
     ),
     APISignature(
         name="SSLSetSessionOption",
@@ -410,7 +410,7 @@ IOS_SIGNATURES = [
         platforms=[Platform.IOS, Platform.MACOS],
         calling_convention=CallingConvention.X64_SYSV,
         return_type="OSStatus",
-        description="Sets SSL session options including certificate pinning"
+        description="Sets SSL session options including certificate pinning",
     ),
 ]
 

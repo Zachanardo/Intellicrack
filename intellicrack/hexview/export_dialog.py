@@ -61,7 +61,7 @@ class ExportDialog(QDialog):
         "Data URI": "uri",
     }
 
-    def __init__(self, parent=None, hex_viewer=None):
+    def __init__(self, parent=None, hex_viewer=None) -> None:
         """Initialize export dialog.
 
         Args:
@@ -75,7 +75,7 @@ class ExportDialog(QDialog):
         self.resize(500, 400)
         self.init_ui()
 
-    def init_ui(self):
+    def init_ui(self) -> None:
         """Initialize UI components."""
         layout = QVBoxLayout()
 
@@ -179,7 +179,7 @@ class ExportDialog(QDialog):
         # Initialize format options
         self.on_format_changed(self.format_combo.currentText())
 
-    def on_format_changed(self, format_name: str):
+    def on_format_changed(self, format_name: str) -> None:
         """Handle format selection change.
 
         Args:
@@ -201,7 +201,7 @@ class ExportDialog(QDialog):
             ext = self.FORMATS.get(format_name, "bin")
             self.file_path_edit.setText(f"{base_name}.{ext}")
 
-    def browse_file(self):
+    def browse_file(self) -> None:
         """Show file save dialog."""
         format_name = self.format_combo.currentText()
         ext = self.FORMATS.get(format_name, "bin")
@@ -226,7 +226,7 @@ class ExportDialog(QDialog):
         if file_path:
             self.file_path_edit.setText(file_path)
 
-    def export_data(self):
+    def export_data(self) -> None:
         """Export the data in the selected format."""
         if not self.file_path_edit.text():
             QMessageBox.warning(self, "No File", "Please specify an output file.")
@@ -277,7 +277,7 @@ class ExportDialog(QDialog):
 
         except Exception as e:
             logger.error(f"Export failed: {e}")
-            QMessageBox.critical(self, "Export Failed", f"Failed to export data:\n{str(e)}")
+            QMessageBox.critical(self, "Export Failed", f"Failed to export data:\n{e!s}")
 
     def get_export_data(self) -> Optional[bytes]:
         """Get the data to export based on selection.

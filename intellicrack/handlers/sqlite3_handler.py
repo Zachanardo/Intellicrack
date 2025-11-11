@@ -89,7 +89,7 @@ except ImportError as e:
     class FallbackTable:
         """In-memory table implementation."""
 
-        def __init__(self, name, columns):
+        def __init__(self, name, columns) -> None:
             """Initialize table."""
             self.name = name
             self.columns = columns  # List of (name, type, constraints) tuples
@@ -255,7 +255,7 @@ except ImportError as e:
     class FallbackDatabase:
         """In-memory database implementation."""
 
-        def __init__(self, path=":memory:"):
+        def __init__(self, path=":memory:") -> None:
             """Initialize database."""
             self.path = path
             self.tables = {}
@@ -267,14 +267,14 @@ except ImportError as e:
             if path != ":memory:" and os.path.exists(path):
                 self._load_from_file()
 
-        def create_table(self, name, columns):
+        def create_table(self, name, columns) -> None:
             """Create a new table."""
             if name in self.tables:
                 raise OperationalError(f"table {name} already exists")
 
             self.tables[name] = FallbackTable(name, columns)
 
-        def drop_table(self, name):
+        def drop_table(self, name) -> None:
             """Drop a table."""
             if name not in self.tables:
                 raise OperationalError(f"no such table: {name}")
@@ -314,7 +314,7 @@ except ImportError as e:
             else:
                 raise ProgrammingError(f"Unsupported SQL: {sql}")
 
-        def _execute_create_table(self, sql):
+        def _execute_create_table(self, sql) -> None:
             """Execute CREATE TABLE statement."""
             # Parse table name and columns
             match = re.match(r"CREATE TABLE\s+(\w+)\s*\((.*)\)", sql, re.IGNORECASE | re.DOTALL)
@@ -336,9 +336,8 @@ except ImportError as e:
                     columns.append((col_name, col_type, constraints))
 
             self.create_table(table_name, columns)
-            return None
 
-        def _execute_drop_table(self, sql):
+        def _execute_drop_table(self, sql) -> None:
             """Execute DROP TABLE statement."""
             match = re.match(r"DROP TABLE\s+(\w+)", sql, re.IGNORECASE)
             if not match:
@@ -346,9 +345,8 @@ except ImportError as e:
 
             table_name = match.group(1)
             self.drop_table(table_name)
-            return None
 
-        def _execute_insert(self, sql, params):
+        def _execute_insert(self, sql, params) -> None:
             """Execute INSERT statement."""
             match = re.match(r"INSERT INTO\s+(\w+)\s*(?:\((.*?)\))?\s*VALUES\s*\((.*?)\)", sql, re.IGNORECASE | re.DOTALL)
             if not match:
@@ -382,7 +380,6 @@ except ImportError as e:
                             values.append(val)
 
             self.tables[table_name].insert(values)
-            return None
 
         def _execute_select(self, sql, params):
             """Execute SELECT statement."""
@@ -514,7 +511,7 @@ except ImportError as e:
 
             return self.tables[table_name].delete(where)
 
-        def _save_to_file(self):
+        def _save_to_file(self) -> None:
             """Save database to file."""
             if self.path != ":memory:":
                 try:
@@ -537,10 +534,10 @@ except ImportError as e:
                 except Exception as e:
                     logger.error("Failed to save database: %s", e)
 
-        def _load_from_file(self):
+        def _load_from_file(self) -> None:
             """Load database from file."""
             try:
-                with open(self.path, "r", encoding="utf-8") as f:
+                with open(self.path, encoding="utf-8") as f:
                     data = json.load(f)
 
                     # Reconstruct tables
@@ -560,7 +557,7 @@ except ImportError as e:
     class Cursor:
         """Database cursor implementation."""
 
-        def __init__(self, connection):
+        def __init__(self, connection) -> None:
             """Initialize cursor."""
             self.connection = connection
             self.description = None
@@ -625,7 +622,7 @@ except ImportError as e:
                 rows.append(row)
             return rows
 
-        def close(self):
+        def close(self) -> None:
             """Close cursor."""
             self._results = []
 
@@ -640,7 +637,7 @@ except ImportError as e:
     class Connection:
         """Database connection implementation."""
 
-        def __init__(self, database=":memory:"):
+        def __init__(self, database=":memory:") -> None:
             """Initialize connection."""
             self.database = database
             self._db = FallbackDatabase(database)
@@ -661,15 +658,15 @@ except ImportError as e:
             cursor = self.cursor()
             return cursor.executemany(sql, params_list)
 
-        def commit(self):
+        def commit(self) -> None:
             """Commit transaction."""
             self._db.execute_sql("COMMIT")
 
-        def rollback(self):
+        def rollback(self) -> None:
             """Rollback transaction."""
             self._db.execute_sql("ROLLBACK")
 
-        def close(self):
+        def close(self) -> None:
             """Close connection."""
             if self._db.path != ":memory:":
                 self._db._save_to_file()
@@ -689,7 +686,7 @@ except ImportError as e:
     class Row:
         """Row object that supports both index and column name access."""
 
-        def __init__(self, cursor, row):
+        def __init__(self, cursor, row) -> None:
             """Initialize row."""
             self.cursor = cursor
             self.row = row
@@ -713,11 +710,11 @@ except ImportError as e:
         """Connect to database."""
         return Connection(database)
 
-    def register_adapter(type, adapter):
+    def register_adapter(type, adapter) -> None:
         """Register type adapter."""
         logger.info("Adapter registration not supported in fallback mode")
 
-    def register_converter(name, converter):
+    def register_converter(name, converter) -> None:
         """Register type converter."""
         logger.info("Converter registration not supported in fallback mode")
 

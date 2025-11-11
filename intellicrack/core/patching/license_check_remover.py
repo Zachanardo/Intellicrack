@@ -145,7 +145,7 @@ class LicenseCheck:
 class PatternMatcher:
     """Advanced pattern matching engine for modern license checks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the ModernLicenseCheckRemover with pattern databases."""
         self.patterns = self._initialize_patterns()
         self.obfuscation_patterns = self._initialize_obfuscation_patterns()
@@ -286,7 +286,7 @@ class PatternMatcher:
                             "confidence": pattern_data["confidence"],
                             "start": i,
                             "length": len(pattern),
-                        }
+                        },
                     )
 
         for pattern_name, pattern_data in self.obfuscation_patterns.items():
@@ -301,7 +301,7 @@ class PatternMatcher:
                             "confidence": pattern_data["confidence"] * 0.9,
                             "start": i,
                             "length": len(pattern),
-                        }
+                        },
                     )
 
         for pattern_name, pattern_data in self.vm_patterns.items():
@@ -316,7 +316,7 @@ class PatternMatcher:
                             "confidence": pattern_data["confidence"] * 0.85,
                             "start": i,
                             "length": len(pattern),
-                        }
+                        },
                     )
 
         return matches
@@ -356,7 +356,7 @@ class PatternMatcher:
 class DataFlowAnalyzer:
     """Advanced data flow analysis for tracking license-related data."""
 
-    def __init__(self, cfg_analyzer):
+    def __init__(self, cfg_analyzer) -> None:
         """Initialize data flow analyzer."""
         self.cfg_analyzer = cfg_analyzer
         self.reaching_defs = {}
@@ -460,7 +460,7 @@ class DataFlowAnalyzer:
             "eax", "ebx", "ecx", "edx", "esi", "edi", "esp", "ebp",
             "rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rsp", "rbp",
             "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
-            "al", "ah", "bl", "bh", "cl", "ch", "dl", "dh"
+            "al", "ah", "bl", "bh", "cl", "ch", "dl", "dh",
         ]
 
     def _compute_reaching_definitions(self, definitions: Dict[str, Set[int]]) -> Dict[int, Set[Tuple[str, int]]]:
@@ -645,7 +645,7 @@ class DataFlowAnalyzer:
 class ControlFlowAnalyzer:
     """Sophisticated control flow analysis for identifying optimal patch points."""
 
-    def __init__(self, disassembler):
+    def __init__(self, disassembler) -> None:
         """Initialize control flow analyzer."""
         self.disassembler = disassembler
         self.basic_blocks = {}
@@ -679,7 +679,7 @@ class ControlFlowAnalyzer:
                 if i + 1 < len(instructions):
                     leaders.add(instructions[i + 1][0])
 
-                if mnem != "ret" and mnem != "retn":
+                if mnem not in {"ret", "retn"}:
                     target = self._parse_jump_target(ops, addr)
                     if target:
                         leaders.add(target)
@@ -743,7 +743,7 @@ class ControlFlowAnalyzer:
 
         return blocks
 
-    def _link_basic_blocks(self):
+    def _link_basic_blocks(self) -> None:
         """Link basic blocks by computing successors and predecessors."""
         for start_addr, block in self.basic_blocks.items():
             last_insn = block.instructions[-1]
@@ -783,7 +783,7 @@ class ControlFlowAnalyzer:
             pass
         return None
 
-    def _compute_dominators(self):
+    def _compute_dominators(self) -> None:
         """Compute dominator sets for all basic blocks."""
         if not self.basic_blocks:
             return
@@ -823,7 +823,7 @@ class ControlFlowAnalyzer:
                     block.dominators = new_dom
                     changed = True
 
-    def _compute_post_dominators(self):
+    def _compute_post_dominators(self) -> None:
         """Compute post-dominator sets for all basic blocks."""
         if not self.basic_blocks:
             return
@@ -866,7 +866,7 @@ class ControlFlowAnalyzer:
                     block.post_dominators = new_post_dom
                     changed = True
 
-    def _classify_blocks(self):
+    def _classify_blocks(self) -> None:
         """Classify basic blocks by type."""
         for _addr, block in self.basic_blocks.items():
             last_insn = block.instructions[-1] if block.instructions else None
@@ -886,7 +886,7 @@ class ControlFlowAnalyzer:
             else:
                 block.block_type = "normal"
 
-    def _build_networkx_graph(self):
+    def _build_networkx_graph(self) -> None:
         """Build NetworkX graph for advanced analysis."""
         if not NETWORKX_AVAILABLE:
             return
@@ -952,7 +952,7 @@ class ControlFlowAnalyzer:
 class SideEffectAnalyzer:
     """Analyzes side effects of instructions and patch points."""
 
-    def __init__(self, cfg_analyzer, data_flow_analyzer):
+    def __init__(self, cfg_analyzer, data_flow_analyzer) -> None:
         """Initialize side effect analyzer."""
         self.cfg_analyzer = cfg_analyzer
         self.data_flow_analyzer = data_flow_analyzer
@@ -966,7 +966,7 @@ class SideEffectAnalyzer:
             "breaks_stack": False,
             "invalidates_assumptions": False,
             "risk_level": "low",
-            "mitigation_strategies": []
+            "mitigation_strategies": [],
         }
 
         block = patch_point.block
@@ -996,10 +996,7 @@ class SideEffectAnalyzer:
         if block.block_type == "return" and len(block.predecessors) > 5:
             return True
 
-        if any("main" in str(insn) for insn in block.instructions):
-            return True
-
-        return False
+        return bool(any("main" in str(insn) for insn in block.instructions))
 
     def _breaks_stack_integrity(self, patch_point: PatchPoint) -> bool:
         """Check if patching would break stack integrity."""
@@ -1010,10 +1007,7 @@ class SideEffectAnalyzer:
                 if mnem in stack_ops:
                     return True
 
-        if "esp" in patch_point.registers_modified or "rsp" in patch_point.registers_modified:
-            return True
-
-        return False
+        return bool("esp" in patch_point.registers_modified or "rsp" in patch_point.registers_modified)
 
     def _corrupts_data_dependencies(self, patch_point: PatchPoint) -> bool:
         """Check if patching would corrupt data dependencies."""
@@ -1034,16 +1028,13 @@ class SideEffectAnalyzer:
             if len(patch_point.alternative_points) == 0:
                 return True
 
-        if patch_point.block.block_type == "conditional_branch" and len(patch_point.block.successors) != 2:
-            return True
-
-        return False
+        return bool(patch_point.block.block_type == "conditional_branch" and len(patch_point.block.successors) != 2)
 
 
 class RiskAssessmentEngine:
     """Advanced risk assessment for patch points."""
 
-    def __init__(self, cfg_analyzer, data_flow_analyzer, side_effect_analyzer):
+    def __init__(self, cfg_analyzer, data_flow_analyzer, side_effect_analyzer) -> None:
         """Initialize risk assessment engine."""
         self.cfg_analyzer = cfg_analyzer
         self.data_flow_analyzer = data_flow_analyzer
@@ -1131,7 +1122,7 @@ class RiskAssessmentEngine:
 class PatchPointSelector:
     """Select optimal patch points with safety analysis."""
 
-    def __init__(self, cfg_analyzer, disassembler):
+    def __init__(self, cfg_analyzer, disassembler) -> None:
         """Initialize patch point selector."""
         self.cfg_analyzer = cfg_analyzer
         self.disassembler = disassembler
@@ -1238,7 +1229,7 @@ class PatchPointSelector:
 
         if block.block_type == "conditional_branch":
             last_insn = block.instructions[-1]
-            insn_addr, mnem, ops = last_insn
+            insn_addr, mnem, _ops = last_insn
 
             if mnem.startswith("j") and mnem != "jmp":
                 side_effects = ["control_flow_redirect"]
@@ -1262,7 +1253,7 @@ class PatchPointSelector:
                     can_use_nop=False,
                     can_use_jump=True,
                     can_modify_return=False,
-                    alternative_points=[s for s in block.successors],
+                    alternative_points=list(block.successors),
                     control_dependencies=control_deps,
                 )
                 jump_points.append(patch_point)
@@ -1280,7 +1271,7 @@ class PatchPointSelector:
             if mnem in ["mov", "xor", "or"] and ("eax" in ops or "rax" in ops):
                 side_effects = ["register_modification"]
                 regs_modified = {"eax", "rax"}
-                flags_modified = mnem == "xor" or mnem == "or"
+                flags_modified = mnem in {"xor", "or"}
 
                 safety_score = 0.8
                 if i < len(block.instructions) - 1:
@@ -1385,7 +1376,7 @@ class PatchPointSelector:
 class LicenseCheckRemover:
     """Advanced license check removal engine for modern software."""
 
-    def __init__(self, binary_path: str):
+    def __init__(self, binary_path: str) -> None:
         """Initialize the license check remover."""
         self.binary_path = binary_path
         self.pe = None
@@ -1409,7 +1400,7 @@ class LicenseCheckRemover:
         self._initialize_engines()
         self._detect_binary_characteristics()
 
-    def _initialize_engines(self):
+    def _initialize_engines(self) -> None:
         """Initialize Capstone disassembler and Keystone assembler."""
         try:
             self.pe = pefile.PE(self.binary_path)
@@ -1432,7 +1423,7 @@ class LicenseCheckRemover:
             logger.error(f"Failed to initialize engines: {e}")
             raise
 
-    def _detect_binary_characteristics(self):
+    def _detect_binary_characteristics(self) -> None:
         """Detect characteristics of the binary for specialized handling."""
         if not self.pe:
             return
@@ -1487,7 +1478,7 @@ class LicenseCheckRemover:
                     logger.info("Code virtualization detected")
                     break
 
-    def _build_control_flow_graph(self, instructions: List[Tuple[int, str, str]]):
+    def _build_control_flow_graph(self, instructions: List[Tuple[int, str, str]]) -> None:
         """Build control flow graph for advanced analysis."""
         cfg = {}
         current_block = []
@@ -1515,7 +1506,7 @@ class LicenseCheckRemover:
 
         self.control_flow_graph = cfg
 
-    def _perform_taint_analysis(self, start_addr: int, taint_source: str):
+    def _perform_taint_analysis(self, start_addr: int, taint_source: str) -> None:
         """Perform taint analysis to track license data flow."""
         tainted = {taint_source}
         worklist = [(start_addr, tainted.copy())]
@@ -1565,7 +1556,7 @@ class LicenseCheckRemover:
         logger.info(f"Found {len(self.detected_checks)} potential license checks")
         return self.detected_checks
 
-    def _analyze_section(self, section):
+    def _analyze_section(self, section) -> None:
         """Analyze a code section for license checks."""
         section_data = section.get_data()
         section_va = self.pe.OPTIONAL_HEADER.ImageBase + section.VirtualAddress
@@ -1635,7 +1626,7 @@ class LicenseCheckRemover:
 
                 self.detected_checks.append(check)
 
-    def _analyze_imports(self):
+    def _analyze_imports(self) -> None:
         """Analyze import table for license-related functions."""
         license_apis = {
             "IsDebuggerPresent": CheckType.INTEGRITY_CHECK,
@@ -1663,7 +1654,7 @@ class LicenseCheckRemover:
                             if api_name.lower() in func_name.lower():
                                 self._find_import_references(imp.address, check_type)
 
-    def _find_import_references(self, import_address: int, check_type: CheckType):
+    def _find_import_references(self, import_address: int, check_type: CheckType) -> None:
         """Find references to an imported function."""
         for section in self.pe.sections:
             if section.IMAGE_SCN_MEM_EXECUTE:
@@ -1703,7 +1694,7 @@ class LicenseCheckRemover:
 
                         offset = pos + 1
 
-    def _analyze_strings(self):
+    def _analyze_strings(self) -> None:
         """Analyze string references for license-related checks."""
         license_strings = [
             "Invalid license",
@@ -1728,7 +1719,7 @@ class LicenseCheckRemover:
                         string_va = self.pe.OPTIONAL_HEADER.ImageBase + section.VirtualAddress + pos
                         self._find_string_references(string_va, target_string)
 
-    def _find_string_references(self, string_address: int, string_content: str):
+    def _find_string_references(self, string_address: int, string_content: str) -> None:
         """Find references to a string address."""
         addr_bytes = struct.pack("<I", string_address)
 
@@ -2009,7 +2000,7 @@ class LicenseCheckRemover:
                 return section.PointerToRawData + (rva - section.VirtualAddress)
         return None
 
-    def _update_checksum(self):
+    def _update_checksum(self) -> None:
         """Update PE checksum after patching."""
         try:
             pe = pefile.PE(self.binary_path)
@@ -2095,7 +2086,7 @@ class LicenseCheckRemover:
                     patched_count += 1
                     logger.info(
                         f"Patched {check.check_type.value} at 0x{best_point.address:08X} "
-                        f"using {best_point.patch_type} (safety: {best_point.safety_score:.2f}, risk: {best_point.risk_assessment})"
+                        f"using {best_point.patch_type} (safety: {best_point.safety_score:.2f}, risk: {best_point.risk_assessment})",
                     )
 
             with open(self.binary_path, "wb") as f:
@@ -2209,7 +2200,7 @@ class LicenseCheckRemover:
         return "\n".join(report)
 
 
-def main():
+def main() -> None:
     """Command-line interface for license check remover."""
     import argparse
 

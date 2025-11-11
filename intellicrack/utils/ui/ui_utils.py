@@ -41,7 +41,7 @@ class MessageType(Enum):
 class ProgressTracker:
     """Track and manage progress updates."""
 
-    def __init__(self, total: int = 100, callback: Callable[[int], None] | None = None):
+    def __init__(self, total: int = 100, callback: Callable[[int], None] | None = None) -> None:
         """Initialize progress tracker.
 
         Args:
@@ -54,7 +54,7 @@ class ProgressTracker:
         self.callback = callback
         self.is_cancelled = False
 
-    def update(self, value: int | None = None, increment: int | None = None):
+    def update(self, value: int | None = None, increment: int | None = None) -> None:
         """Update progress value."""
         if self.is_cancelled:
             return
@@ -73,11 +73,11 @@ class ProgressTracker:
             return 100
         return int((self.current / self.total) * 100)
 
-    def cancel(self):
+    def cancel(self) -> None:
         """Cancel the progress operation."""
         self.is_cancelled = True
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset progress to zero."""
         self.current = 0
         self.is_cancelled = False
@@ -128,7 +128,7 @@ def show_message(message: str, msg_type: MessageType = MessageType.INFO, title: 
                 "title": title,
                 "message": message,
                 "timestamp": datetime.now().isoformat(),
-            }
+            },
         )
 
 
@@ -183,7 +183,7 @@ def get_user_input(prompt: str, default: str = "", title: str = "Input Required"
                     "prompt": prompt,
                     "result": result,
                     "title": title,
-                }
+                },
             )
 
         return result
@@ -378,15 +378,15 @@ def format_table_data(headers: list[str], rows: list[list[Any]], max_width: int 
 class UIUpdateQueue:
     """Queue for batching UI updates."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the update queue."""
         self.updates: list[tuple[str, Any]] = []
 
-    def add_update(self, update_type: str, data: Any):
+    def add_update(self, update_type: str, data: Any) -> None:
         """Add an update to the queue."""
         self.updates.append((update_type, data))
 
-    def flush(self, callback: Callable[[str, Any], None]):
+    def flush(self, callback: Callable[[str, Any], None]) -> None:
         """Flush all queued updates.
 
         Args:
@@ -397,7 +397,7 @@ class UIUpdateQueue:
             callback(update_type, data)
         self.updates.clear()
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear all queued updates."""
         self.updates.clear()
 

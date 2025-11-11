@@ -76,14 +76,14 @@ class SecuROMDetector:
         'secdrv.sys', 'SecuROM.sys',
         'SR7.sys', 'SR8.sys',
         'SecuROMv7.sys', 'SecuROMv8.sys',
-        'atapi.sys'
+        'atapi.sys',
     ]
 
     SERVICE_NAMES = [
         'SecuROM', 'SecuROM User Access Service',
         'SecuROM7', 'SecuROM8',
         'UserAccess7', 'UserAccess8',
-        'SecDrv', 'SRService'
+        'SecDrv', 'SRService',
     ]
 
     REGISTRY_KEYS = [
@@ -94,22 +94,22 @@ class SecuROMDetector:
         r'SOFTWARE\SecuROM',
         r'SOFTWARE\Wow6432Node\SecuROM',
         r'SOFTWARE\Sony DADC',
-        r'SOFTWARE\Wow6432Node\Sony DADC'
+        r'SOFTWARE\Wow6432Node\Sony DADC',
     ]
 
     ACTIVATION_KEYS = [
         r'SOFTWARE\SecuROM\Activation',
         r'SOFTWARE\Wow6432Node\SecuROM\Activation',
         r'SOFTWARE\Sony DADC\SecuROM\Activation',
-        r'SOFTWARE\Wow6432Node\Sony DADC\SecuROM\Activation'
+        r'SOFTWARE\Wow6432Node\Sony DADC\SecuROM\Activation',
     ]
 
     SECTION_NAMES = [
         '.securom', '.sdata', '.cms_t', '.cms_d',
-        '.rdata2', '.protec', '.sr7', '.sr8'
+        '.rdata2', '.protec', '.sr7', '.sr8',
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize SecuROM detector."""
         self._advapi32 = None
         self._kernel32 = None
@@ -123,12 +123,12 @@ class SecuROMDetector:
             self._kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
 
             self._advapi32.OpenSCManagerW.argtypes = [
-                wintypes.LPCWSTR, wintypes.LPCWSTR, wintypes.DWORD
+                wintypes.LPCWSTR, wintypes.LPCWSTR, wintypes.DWORD,
             ]
             self._advapi32.OpenSCManagerW.restype = wintypes.HANDLE
 
             self._advapi32.OpenServiceW.argtypes = [
-                wintypes.HANDLE, wintypes.LPCWSTR, wintypes.DWORD
+                wintypes.HANDLE, wintypes.LPCWSTR, wintypes.DWORD,
             ]
             self._advapi32.OpenServiceW.restype = wintypes.HANDLE
 
@@ -271,7 +271,7 @@ class SecuROMDetector:
                 yara_matches = self._yara_scan(target_path)
 
         confidence = self._calculate_confidence(
-            drivers, services, registry_keys, sections, yara_matches, activation_state
+            drivers, services, registry_keys, sections, yara_matches, activation_state,
         )
 
         detected = confidence > 0.5
@@ -282,7 +282,7 @@ class SecuROMDetector:
             'service_status': self._get_service_status(services),
             'disc_auth_present': self._detect_disc_authentication(target_path) if target_path.exists() else False,
             'online_activation_present': self._detect_online_activation(target_path) if target_path.exists() else False,
-            'encryption_detected': self._detect_encryption(target_path) if target_path.exists() else False
+            'encryption_detected': self._detect_encryption(target_path) if target_path.exists() else False,
         }
 
         return SecuROMDetection(
@@ -294,7 +294,7 @@ class SecuROMDetector:
             protected_sections=sections,
             activation_state=activation_state,
             confidence=confidence,
-            details=details
+            details=details,
         )
 
     def _detect_drivers(self) -> List[str]:
@@ -322,7 +322,7 @@ class SecuROMDetector:
                 b'SecuROM',
                 b'UserAccess',
                 b'SR7',
-                b'SR8'
+                b'SR8',
             ]
 
             return any(indicator in data for indicator in securom_indicators)
@@ -347,7 +347,7 @@ class SecuROMDetector:
             try:
                 for service_name in self.SERVICE_NAMES:
                     service_handle = self._advapi32.OpenServiceW(
-                        sc_manager, service_name, SERVICE_QUERY_CONFIG
+                        sc_manager, service_name, SERVICE_QUERY_CONFIG,
                     )
                     if service_handle:
                         detected.append(service_name)
@@ -370,7 +370,7 @@ class SecuROMDetector:
                 key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_READ)
                 winreg.CloseKey(key)
                 detected.append(key_path)
-            except WindowsError:
+            except OSError:
                 pass
 
         for key_path in self.ACTIVATION_KEYS:
@@ -378,7 +378,7 @@ class SecuROMDetector:
                 key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_READ)
                 winreg.CloseKey(key)
                 detected.append(key_path)
-            except WindowsError:
+            except OSError:
                 pass
 
         return detected
@@ -392,33 +392,33 @@ class SecuROMDetector:
                 try:
                     is_activated_val, _ = winreg.QueryValueEx(key, 'Activated')
                     is_activated = bool(is_activated_val)
-                except WindowsError:
+                except OSError:
                     is_activated = False
 
                 try:
                     activation_date, _ = winreg.QueryValueEx(key, 'ActivationDate')
-                except WindowsError:
+                except OSError:
                     activation_date = None
 
                 try:
                     product_key, _ = winreg.QueryValueEx(key, 'ProductKey')
-                except WindowsError:
+                except OSError:
                     product_key = None
 
                 try:
                     machine_id, _ = winreg.QueryValueEx(key, 'MachineID')
-                except WindowsError:
+                except OSError:
                     machine_id = None
 
                 try:
                     activation_count, _ = winreg.QueryValueEx(key, 'ActivationCount')
-                except WindowsError:
+                except OSError:
                     activation_count = 0
 
                 try:
                     max_activations, _ = winreg.QueryValueEx(key, 'MaxActivations')
                     remaining = max_activations - activation_count
-                except WindowsError:
+                except OSError:
                     remaining = -1
 
                 winreg.CloseKey(key)
@@ -429,10 +429,10 @@ class SecuROMDetector:
                     product_key=product_key,
                     machine_id=machine_id,
                     activation_count=activation_count,
-                    remaining_activations=remaining
+                    remaining_activations=remaining,
                 )
 
-            except WindowsError:
+            except OSError:
                 continue
 
         return None
@@ -559,7 +559,7 @@ class SecuROMDetector:
                 matches.append({
                     'rule': match.rule,
                     'version': match.meta.get('version', 'unknown'),
-                    'description': match.meta.get('description', '')
+                    'description': match.meta.get('description', ''),
                 })
 
         except Exception as e:
@@ -575,7 +575,7 @@ class SecuROMDetector:
         registry_keys: List[str],
         sections: List[str],
         yara_matches: List[Dict[str, str]],
-        activation_state: Optional[SecuROMActivation]
+        activation_state: Optional[SecuROMActivation],
     ) -> float:
         """Calculate detection confidence score."""
         score = 0.0
@@ -639,7 +639,7 @@ class SecuROMDetector:
             4: 'RUNNING',
             5: 'CONTINUE_PENDING',
             6: 'PAUSE_PENDING',
-            7: 'PAUSED'
+            7: 'PAUSED',
         }
 
         try:
@@ -650,13 +650,13 @@ class SecuROMDetector:
             try:
                 for service_name in services:
                     service_handle = self._advapi32.OpenServiceW(
-                        sc_manager, service_name, SERVICE_QUERY_STATUS
+                        sc_manager, service_name, SERVICE_QUERY_STATUS,
                     )
                     if service_handle:
                         status = SERVICE_STATUS()
                         if hasattr(self._advapi32, 'QueryServiceStatus'):
                             self._advapi32.QueryServiceStatus.argtypes = [
-                                wintypes.HANDLE, ctypes.POINTER(SERVICE_STATUS)
+                                wintypes.HANDLE, ctypes.POINTER(SERVICE_STATUS),
                             ]
                             if self._advapi32.QueryServiceStatus(service_handle, ctypes.byref(status)):
                                 status_info[service_name] = states.get(status.dwCurrentState, 'UNKNOWN')
@@ -682,7 +682,7 @@ class SecuROMDetector:
                 b'DiscFingerprint',
                 b'\\\\.\\Scsi',
                 b'\\\\.\\CdRom',
-                b'DeviceIoControl'
+                b'DeviceIoControl',
             ]
 
             return any(indicator in data for indicator in disc_indicators)
@@ -702,7 +702,7 @@ class SecuROMDetector:
                 b'ActivationServer',
                 b'https://',
                 b'WinHttpSendRequest',
-                b'InternetOpenUrl'
+                b'InternetOpenUrl',
             ]
 
             return sum(1 for indicator in activation_indicators if indicator in data) >= 2

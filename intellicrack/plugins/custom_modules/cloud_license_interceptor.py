@@ -58,6 +58,7 @@ from intellicrack.handlers.cryptography_handler import (
     x509,
 )
 from intellicrack.handlers.sqlite3_handler import sqlite3
+from intellicrack.utils.logger import log_all_methods
 
 """
 Cloud License Interceptor
@@ -138,7 +139,7 @@ class InterceptorConfig:
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
             "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
-        ]
+        ],
     )
 
 
@@ -191,7 +192,7 @@ class BypassOperation:
 class UpstreamResponseWrapper:
     """Wrap for upstream response data compatible with aiohttp.ClientResponse interface."""
 
-    def __init__(self, status: int, headers: dict[str, str]):
+    def __init__(self, status: int, headers: dict[str, str]) -> None:
         """Initialize response wrapper with status and headers.
 
         Args:
@@ -203,10 +204,11 @@ class UpstreamResponseWrapper:
         self.headers = headers
 
 
+@log_all_methods
 class CertificateManager:
     """Manages SSL certificates for HTTPS interception."""
 
-    def __init__(self, config: InterceptorConfig):
+    def __init__(self, config: InterceptorConfig) -> None:
         """Initialize with configuration and network interception capabilities."""
         self.config = config
         self.logger = logging.getLogger(f"{__name__}.CertManager")
@@ -235,7 +237,7 @@ class CertificateManager:
                 return self._generate_ca()
 
         except Exception as e:
-            self.logger.error(f"CA initialization failed: {e}")
+            self.logger.exception(f"CA initialization failed: {e}")
             return False
 
     def _generate_ca(self) -> bool:
@@ -254,7 +256,7 @@ class CertificateManager:
                     x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
                     x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack CA"),
                     x509.NameAttribute(NameOID.COMMON_NAME, "Intellicrack Root CA"),
-                ]
+                ],
             )
             self.ca_cert = (
                 x509.CertificateBuilder()
@@ -281,7 +283,7 @@ class CertificateManager:
                         [
                             x509.DNSName("localhost"),
                             x509.IPAddress(ipaddress.IPv4Address("127.0.0.1")),
-                        ]
+                        ],
                     ),
                     critical=False,
                 )
@@ -315,14 +317,14 @@ class CertificateManager:
                         encoding=serialization.Encoding.PEM,
                         format=serialization.PrivateFormat.PKCS8,
                         encryption_algorithm=serialization.NoEncryption(),
-                    )
+                    ),
                 )
 
             self.logger.info("Generated new CA certificate")
             return True
 
         except Exception as e:
-            self.logger.error(f"CA generation failed: {e}")
+            self.logger.exception(f"CA generation failed: {e}")
             return False
 
     def get_server_certificate(self, hostname: str) -> tuple[ssl.SSLContext, str]:
@@ -346,7 +348,7 @@ class CertificateManager:
                         x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
                         x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack"),
                         x509.NameAttribute(NameOID.COMMON_NAME, hostname),
-                    ]
+                    ],
                 )
                 server_cert = (
                     x509.CertificateBuilder()
@@ -373,7 +375,7 @@ class CertificateManager:
                             [
                                 x509.DNSName(hostname),
                                 x509.DNSName(f"*.{hostname}"),
-                            ]
+                            ],
                         ),
                         critical=False,
                     )
@@ -416,14 +418,15 @@ class CertificateManager:
                 return cert_data
 
             except Exception as e:
-                self.logger.error(f"Server certificate generation failed for {hostname}: {e}")
+                self.logger.exception(f"Server certificate generation failed for {hostname}: {e}")
                 raise
 
 
+@log_all_methods
 class RequestClassifier:
     """Classifies and analyzes intercepted requests."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize request classifier with cloud provider and license patterns."""
         self.logger = logging.getLogger(f"{__name__}.RequestClassifier")
 
@@ -557,7 +560,7 @@ class RequestClassifier:
                         if re.search(pattern, body_str):
                             return auth_type
             except Exception as e:
-                self.logger.debug("Error detecting auth type: %s", e)
+                self.logger.exception("Error detecting auth type: %s", e)
 
         return AuthenticationType.CUSTOM
 
@@ -586,7 +589,7 @@ class RequestClassifier:
                     body_hints.add("heartbeat")
 
             except UnicodeDecodeError as e:
-                self.logger.debug("Error detecting auth type: %s", e)  # Body is binary, continue with URL/header analysis
+                self.logger.exception("Error detecting auth type: %s", e)  # Body is binary, continue with URL/header analysis
 
         # Check URL patterns with body content validation
         for pattern in self.license_patterns:
@@ -663,17 +666,18 @@ class RequestClassifier:
         return min(confidence, 1.0)
 
 
+@log_all_methods
 class AuthenticationManager:
     """Manages authentication tokens and credentials."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize authentication manager with token caching and signing capabilities."""
         self.logger = logging.getLogger(f"{__name__}.AuthManager")
         self.token_cache = {}
         self.signing_keys = {}
         self._generate_signing_keys()
 
-    def _generate_signing_keys(self):
+    def _generate_signing_keys(self) -> None:
         """Generate JWT signing keys for different algorithms."""
         # RSA key for RS256
         rsa_key = rsa.generate_private_key(
@@ -700,7 +704,7 @@ class AuthenticationManager:
                 "valid": True,
             }
         except Exception as e:
-            self.logger.debug(f"JWT parsing failed: {e}")
+            self.logger.exception(f"JWT parsing failed: {e}")
             return {"valid": False, "error": str(e)}
 
     def modify_jwt_token(self, token: str, modifications: dict[str, Any]) -> str:
@@ -757,7 +761,7 @@ class AuthenticationManager:
             return new_token
 
         except Exception as e:
-            self.logger.error(f"JWT modification failed: {e}")
+            self.logger.exception(f"JWT modification failed: {e}")
             return token
 
     def generate_license_token(self, provider: CloudProvider, auth_type: AuthenticationType) -> str:
@@ -798,7 +802,7 @@ class AuthenticationManager:
                     "token_type": "bearer",
                     "scope": "license:read license:validate features:all",
                     "bearer_format": "JWT",
-                }
+                },
             )
         elif auth_type == AuthenticationType.API_KEY:
             payload.update(
@@ -806,7 +810,7 @@ class AuthenticationManager:
                     "token_type": "api_key",
                     "api_key_id": str(uuid.uuid4()),
                     "key_permissions": ["validate", "check_features", "usage_report"],
-                }
+                },
             )
         elif auth_type == AuthenticationType.OAUTH:
             payload.update(
@@ -815,7 +819,7 @@ class AuthenticationManager:
                     "oauth_scope": "license.validate",
                     "client_id": f"client-{secrets.token_hex(8)}",
                     "grant_type": "client_credentials",
-                }
+                },
             )
         elif auth_type == AuthenticationType.CUSTOM:
             payload.update(
@@ -823,7 +827,7 @@ class AuthenticationManager:
                     "token_type": "custom",
                     "custom_auth_method": "proprietary",
                     "auth_level": "enterprise",
-                }
+                },
             )
 
         # Provider-specific claims
@@ -833,7 +837,7 @@ class AuthenticationManager:
                     "aws:userid": str(uuid.uuid4()),
                     "aws:marketplace_token": secrets.token_hex(32),
                     "aws:entitlements": ["full_access"],
-                }
+                },
             )
         elif provider == CloudProvider.AZURE:
             payload.update(
@@ -841,14 +845,14 @@ class AuthenticationManager:
                     "azure:tenant_id": str(uuid.uuid4()),
                     "azure:subscription_id": str(uuid.uuid4()),
                     "azure:marketplace_token": secrets.token_hex(32),
-                }
+                },
             )
         elif provider == CloudProvider.GCP:
             payload.update(
                 {
                     "gcp:project_id": f"project-{secrets.token_hex(8)}",
                     "gcp:service_account": f"sa-{secrets.token_hex(8)}@project.iam.gserviceaccount.com",
-                }
+                },
             )
 
         # Generate token
@@ -875,16 +879,17 @@ class AuthenticationManager:
         return new_key
 
 
+@log_all_methods
 class ResponseModifier:
     """Modifies responses to bypass license validation."""
 
-    def __init__(self, auth_manager: AuthenticationManager):
+    def __init__(self, auth_manager: AuthenticationManager) -> None:
         """Initialize response generator with authentication manager and response templates."""
         self.auth_manager = auth_manager
         self.logger = logging.getLogger(f"{__name__}.ResponseModifier")
 
     def modify_response(
-        self, request: RequestInfo, original_response: aiohttp.ClientResponse, response_body: bytes
+        self, request: RequestInfo, original_response: aiohttp.ClientResponse, response_body: bytes,
     ) -> tuple[int, dict[str, str], bytes]:
         """Modify response based on request type."""
         if request.request_type == RequestType.LICENSE_VALIDATION:
@@ -900,7 +905,7 @@ class ResponseModifier:
         return original_response.status, headers, response_body
 
     def _modify_license_response(
-        self, request: RequestInfo, original_response: aiohttp.ClientResponse, response_body: bytes
+        self, request: RequestInfo, original_response: aiohttp.ClientResponse, response_body: bytes,
     ) -> tuple[int, dict[str, str], bytes]:
         try:
             # Try to parse as JSON
@@ -930,7 +935,7 @@ class ResponseModifier:
                         "entitlements": [{"name": "FullAccess", "enabled": True}],
                         "marketplace_token": secrets.token_hex(32),
                         "customer_identifier": str(uuid.uuid4()),
-                    }
+                    },
                 )
             elif request.provider == CloudProvider.AZURE:
                 license_data.update(
@@ -939,7 +944,7 @@ class ResponseModifier:
                         "tenant_id": str(uuid.uuid4()),
                         "plan_id": "enterprise",
                         "offer_id": "premium",
-                    }
+                    },
                 )
             elif request.provider == CloudProvider.GCP:
                 license_data.update(
@@ -947,7 +952,7 @@ class ResponseModifier:
                         "project_id": f"project-{secrets.token_hex(8)}",
                         "billing_account": f"billing-{secrets.token_hex(8)}",
                         "service_level": "premium",
-                    }
+                    },
                 )
 
             # Merge with original response if it's a dict
@@ -979,12 +984,12 @@ class ResponseModifier:
             return original_response.status, headers, response_body
 
         except Exception as e:
-            self.logger.error(f"License response modification failed: {e}")
+            self.logger.exception(f"License response modification failed: {e}")
             headers = dict(original_response.headers)
             return original_response.status, headers, response_body
 
     def _modify_feature_response(
-        self, request: RequestInfo, original_response: aiohttp.ClientResponse, response_body: bytes
+        self, request: RequestInfo, original_response: aiohttp.ClientResponse, response_body: bytes,
     ) -> tuple[int, dict[str, str], bytes]:
         try:
             response_data = json.loads(response_body.decode("utf-8"))
@@ -1022,7 +1027,7 @@ class ResponseModifier:
                         "aws_integration": True,
                         "marketplace_billing": True,
                         "ec2_scaling": True,
-                    }
+                    },
                 )
             elif request.provider == CloudProvider.AZURE:
                 feature_data["features"].update(
@@ -1030,7 +1035,7 @@ class ResponseModifier:
                         "azure_ad_sso": True,
                         "resource_management": True,
                         "cost_optimization": True,
-                    }
+                    },
                 )
             elif request.provider == CloudProvider.GCP:
                 feature_data["features"].update(
@@ -1038,7 +1043,7 @@ class ResponseModifier:
                         "gcp_apis": True,
                         "big_query": True,
                         "cloud_functions": True,
-                    }
+                    },
                 )
 
             # Customize based on auth type
@@ -1059,12 +1064,12 @@ class ResponseModifier:
             return 200, headers, modified_body
 
         except Exception as e:
-            self.logger.error(f"Feature response modification failed: {e}")
+            self.logger.exception(f"Feature response modification failed: {e}")
             headers = dict(original_response.headers)
             return original_response.status, headers, response_body
 
     def _modify_token_response(
-        self, request: RequestInfo, original_response: aiohttp.ClientResponse, response_body: bytes
+        self, request: RequestInfo, original_response: aiohttp.ClientResponse, response_body: bytes,
     ) -> tuple[int, dict[str, str], bytes]:
         try:
             response_data = json.loads(response_body.decode("utf-8"))
@@ -1093,12 +1098,12 @@ class ResponseModifier:
 
             return 200, headers, modified_body
         except Exception as e:
-            self.logger.error(f"Token response modification failed: {e}")
+            self.logger.exception(f"Token response modification failed: {e}")
             headers = dict(original_response.headers)
             return original_response.status, headers, response_body
 
     def _modify_usage_response(
-        self, request: RequestInfo, original_response: aiohttp.ClientResponse, response_body: bytes
+        self, request: RequestInfo, original_response: aiohttp.ClientResponse, response_body: bytes,
     ) -> tuple[int, dict[str, str], bytes]:
         try:
             # Always report successful usage submission with request context
@@ -1151,15 +1156,16 @@ class ResponseModifier:
             return 200, headers, modified_body
 
         except Exception as e:
-            self.logger.error(f"Usage response modification failed: {e}")
+            self.logger.exception(f"Usage response modification failed: {e}")
             headers = dict(original_response.headers)
             return original_response.status, headers, response_body
 
 
+@log_all_methods
 class CacheManager:
     """Manages response caching with TTL."""
 
-    def __init__(self, config: InterceptorConfig):
+    def __init__(self, config: InterceptorConfig) -> None:
         """Initialize with configuration and network interception capabilities."""
         self.config = config
         self.logger = logging.getLogger(f"{__name__}.CacheManager")
@@ -1206,7 +1212,7 @@ class CacheManager:
 
         return None
 
-    def store_response(self, request: RequestInfo, response: ResponseInfo):
+    def store_response(self, request: RequestInfo, response: ResponseInfo) -> None:
         """Store response in cache."""
         cache_key = self._generate_cache_key(request)
 
@@ -1234,7 +1240,7 @@ class CacheManager:
 
         self.logger.debug(f"Cached response for {request.url}")
 
-    def _store_in_sqlite(self, cache_key: str, encoded_data: str):
+    def _store_in_sqlite(self, cache_key: str, encoded_data: str) -> None:
         """Store cache data in SQLite database."""
         try:
             conn = sqlite3.connect(":memory:")  # In-memory database for this example
@@ -1248,7 +1254,7 @@ class CacheManager:
             conn.commit()
             conn.close()
         except Exception as e:
-            self.logger.debug(f"SQLite storage failed: {e}")
+            self.logger.exception(f"SQLite storage failed: {e}")
 
     def _check_network_connectivity(self, url: str) -> bool:
         """Check network connectivity using socket."""
@@ -1289,7 +1295,7 @@ class CacheManager:
 
             return result == 0
         except Exception as e:
-            self.logger.debug(f"Network connectivity check failed: {e}")
+            self.logger.exception(f"Network connectivity check failed: {e}")
             return False
 
     def _compress_cache_data(self, data: bytes) -> bytes:
@@ -1299,7 +1305,7 @@ class CacheManager:
             self.logger.debug(f"Compressed {len(data)} bytes to {len(compressed)} bytes")
             return compressed
         except Exception as e:
-            self.logger.debug(f"Compression failed: {e}")
+            self.logger.exception(f"Compression failed: {e}")
             return data
 
     def _analyze_response_content(self, response_body: bytes, content_type: str) -> dict[str, Any]:
@@ -1332,11 +1338,11 @@ class CacheManager:
             }
 
         except Exception as e:
-            self.logger.debug(f"Content analysis failed: {e}")
+            self.logger.exception(f"Content analysis failed: {e}")
 
         return analysis
 
-    def _evict_oldest(self):
+    def _evict_oldest(self) -> None:
         """Evict oldest cache entry based on access time."""
         if not self.cache:
             return
@@ -1351,7 +1357,7 @@ class CacheManager:
 
         self.logger.debug(f"Evicted cache entry: {oldest_key}")
 
-    def _cleanup_loop(self):
+    def _cleanup_loop(self) -> None:
         """Background cleanup of expired cache entries."""
         while True:
             try:
@@ -1376,9 +1382,9 @@ class CacheManager:
                     self.logger.debug(f"Cleaned up {len(expired_keys)} expired cache entries")
 
             except Exception as e:
-                self.logger.error(f"Cache cleanup error: {e}")
+                self.logger.exception(f"Cache cleanup error: {e}")
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear all cached responses."""
         with self.cache_lock:
             self.cache.clear()
@@ -1386,10 +1392,11 @@ class CacheManager:
         self.logger.info("Cache cleared")
 
 
+@log_all_methods
 class LocalLicenseServer:
     """Local license server for fallback scenarios."""
 
-    def __init__(self, auth_manager: AuthenticationManager):
+    def __init__(self, auth_manager: AuthenticationManager) -> None:
         """Initialize response generator with authentication manager and response templates."""
         self.auth_manager = auth_manager
         self.logger = logging.getLogger(f"{__name__}.LocalServer")
@@ -1398,7 +1405,7 @@ class LocalLicenseServer:
         self.license_db = {}
         self._initialize_licenses()
 
-    def _initialize_licenses(self):
+    def _initialize_licenses(self) -> None:
         """Initialize default license data."""
         default_license = {
             "id": str(uuid.uuid4()),
@@ -1542,10 +1549,11 @@ class LocalLicenseServer:
         }
 
 
+@log_all_methods
 class CloudLicenseInterceptor:
     """Run cloud license interceptor service."""
 
-    def __init__(self, config: InterceptorConfig = None):
+    def __init__(self, config: InterceptorConfig = None) -> None:
         """Initialize the cloud license interceptor.
 
         Sets up the comprehensive cloud license interception and bypass system.
@@ -1614,10 +1622,10 @@ class CloudLicenseInterceptor:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to start interceptor: {e}")
+            self.logger.exception(f"Failed to start interceptor: {e}")
             return False
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop the interceptor service."""
         self.running = False
 
@@ -1711,7 +1719,7 @@ class CloudLicenseInterceptor:
             return await self._forward_request(request_info)
 
         except Exception as e:
-            self.logger.error(f"Request handling error: {e}")
+            self.logger.exception(f"Request handling error: {e}")
             return aiohttp.web.Response(
                 status=500,
                 text="Internal Server Error",
@@ -1751,7 +1759,7 @@ class CloudLicenseInterceptor:
             return self._create_response(local_response)
 
         except Exception as e:
-            self.logger.error(f"License request handling failed: {e}")
+            self.logger.exception(f"License request handling failed: {e}")
 
             # Generate emergency fallback response
             fallback_response = self._generate_fallback_response(request)
@@ -1771,7 +1779,7 @@ class CloudLicenseInterceptor:
             )
 
         except Exception as e:
-            self.logger.error(f"Request forwarding failed: {e}")
+            self.logger.exception(f"Request forwarding failed: {e}")
             return aiohttp.web.Response(
                 status=502,
                 text="Bad Gateway",
@@ -1811,10 +1819,10 @@ class CloudLicenseInterceptor:
                 )
 
         except asyncio.TimeoutError:
-            self.logger.warning(f"Upstream request timeout: {request.url}")
+            self.logger.exception(f"Upstream request timeout: {request.url}")
             return None
         except Exception as e:
-            self.logger.warning(f"Upstream request error: {e}")
+            self.logger.exception(f"Upstream request error: {e}")
             return None
 
     def _modify_upstream_response(self, request: RequestInfo, upstream_response: ResponseInfo) -> ResponseInfo:
@@ -1904,7 +1912,7 @@ class CloudLicenseInterceptor:
         }
 
 
-async def main():
+async def main() -> int:
     """Run main CLI interface."""
     import argparse
 

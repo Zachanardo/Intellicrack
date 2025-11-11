@@ -21,33 +21,82 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-try:
-    from .intellicrack_protection_core import (
-        DetectionResult,
-        IntellicrackProtectionCore,
-        ProtectionAnalysis,
-        ProtectionType,
-    )
-except ImportError as e:
-    logger.warning(f"Failed to import intellicrack_protection_core: {e}")
-    DetectionResult = None
-    IntellicrackProtectionCore = None
-    ProtectionAnalysis = None
-    ProtectionType = None
+DetectionResult = None
+IntellicrackProtectionCore = None
+ProtectionAnalysis = None
+ProtectionType = None
+ProtectionDetector = None
+deep_analyze = None
+get_protection_detector = None
+quick_analyze = None
 
-try:
-    from .protection_detector import (
-        ProtectionDetector,
-        deep_analyze,
-        get_protection_detector,
-        quick_analyze,
-    )
-except ImportError as e:
-    logger.warning(f"Failed to import protection_detector: {e}")
-    ProtectionDetector = None
-    deep_analyze = None
-    get_protection_detector = None
-    quick_analyze = None
+_lazy_imports = {}
+
+def __getattr__(name):
+    """Lazy load protection module components to prevent circular imports."""
+    if name in ('DetectionResult', 'IntellicrackProtectionCore', 'ProtectionAnalysis', 'ProtectionType'):
+        if 'core_module' not in _lazy_imports:
+            try:
+                from .intellicrack_protection_core import (
+                    DetectionResult as DR,
+                )
+                from .intellicrack_protection_core import (
+                    IntellicrackProtectionCore as IPC,
+                )
+                from .intellicrack_protection_core import (
+                    ProtectionAnalysis as PA,
+                )
+                from .intellicrack_protection_core import (
+                    ProtectionType as PT,
+                )
+                _lazy_imports['core_module'] = {
+                    'DetectionResult': DR,
+                    'IntellicrackProtectionCore': IPC,
+                    'ProtectionAnalysis': PA,
+                    'ProtectionType': PT,
+                }
+            except ImportError as e:
+                logger.warning(f"Failed to import intellicrack_protection_core: {e}")
+                _lazy_imports['core_module'] = {
+                    'DetectionResult': None,
+                    'IntellicrackProtectionCore': None,
+                    'ProtectionAnalysis': None,
+                    'ProtectionType': None,
+                }
+        return _lazy_imports['core_module'].get(name)
+
+    if name in ('ProtectionDetector', 'deep_analyze', 'get_protection_detector', 'quick_analyze'):
+        if 'detector_module' not in _lazy_imports:
+            try:
+                from .protection_detector import (
+                    ProtectionDetector as PD,
+                )
+                from .protection_detector import (
+                    deep_analyze as da,
+                )
+                from .protection_detector import (
+                    get_protection_detector as gpd,
+                )
+                from .protection_detector import (
+                    quick_analyze as qa,
+                )
+                _lazy_imports['detector_module'] = {
+                    'ProtectionDetector': PD,
+                    'deep_analyze': da,
+                    'get_protection_detector': gpd,
+                    'quick_analyze': qa,
+                }
+            except ImportError as e:
+                logger.warning(f"Failed to import protection_detector: {e}")
+                _lazy_imports['detector_module'] = {
+                    'ProtectionDetector': None,
+                    'deep_analyze': None,
+                    'get_protection_detector': None,
+                    'quick_analyze': None,
+                }
+        return _lazy_imports['detector_module'].get(name)
+
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 try:
     from .unified_protection_engine import (

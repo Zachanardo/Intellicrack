@@ -162,7 +162,7 @@ class DependencyFeedback:
         },
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize dependency feedback system."""
         self.system = platform.system()
         self.missing_critical = []
@@ -387,7 +387,7 @@ class DependencyFeedback:
 
         return "\n".join(suggestion_lines)
 
-    def log_dependency_status(self, dep_name: str, context: str = ""):
+    def log_dependency_status(self, dep_name: str, context: str = "") -> None:
         """Log dependency status with appropriate level."""
         status = self.get_dependency_status(dep_name)
 
@@ -404,7 +404,7 @@ class DependencyFeedback:
         """Create user-friendly error message with helpful guidance."""
         status = self.get_dependency_status(dep_name)
 
-        error_lines = [f"ERROR ERROR in {operation}:", f"   {str(error)}", "", status["message"], ""]
+        error_lines = [f"ERROR ERROR in {operation}:", f"   {error!s}", "", status["message"], ""]
 
         # Add quick fix suggestion
         if not status["available"]:

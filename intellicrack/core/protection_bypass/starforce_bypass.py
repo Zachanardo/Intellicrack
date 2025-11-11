@@ -97,7 +97,7 @@ class StarForceBypass:
         (winreg.HKEY_CURRENT_USER, r"SOFTWARE\Protection Technology\StarForce"),
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize StarForce bypass system."""
         self.logger = logging.getLogger(__name__)
         self._advapi32 = None
@@ -293,14 +293,14 @@ class StarForceBypass:
                 try:
                     subkey_name = winreg.EnumKey(key, i)
                     self._delete_registry_key_recursive(key, subkey_name)
-                except WindowsError:
+                except OSError:
                     break
 
             winreg.CloseKey(key)
             winreg.DeleteKey(root_key, subkey_path)
             return True
 
-        except WindowsError:
+        except OSError:
             return False
 
     def _remove_driver_files(self) -> List[str]:
@@ -406,7 +406,7 @@ class StarForceBypass:
 
                 if hasattr(self._ntdll, "NtQueryInformationProcess"):
                     status = self._ntdll.NtQueryInformationProcess(
-                        process_handle, 0, ctypes.byref(pbi), ctypes.sizeof(pbi), ctypes.byref(return_length)
+                        process_handle, 0, ctypes.byref(pbi), ctypes.sizeof(pbi), ctypes.byref(return_length),
                     )
 
                     if status == 0:
@@ -419,7 +419,7 @@ class StarForceBypass:
 
                         if hasattr(self._kernel32, "WriteProcessMemory"):
                             self._kernel32.WriteProcessMemory(
-                                process_handle, being_debugged_address, ctypes.byref(zero_byte), 1, ctypes.byref(bytes_written)
+                                process_handle, being_debugged_address, ctypes.byref(zero_byte), 1, ctypes.byref(bytes_written),
                             )
                             return bytes_written.value == 1
 
@@ -671,7 +671,7 @@ class StarForceBypass:
             winreg.CloseKey(key)
             return True
 
-        except WindowsError:
+        except OSError:
             return False
 
     def spoof_hardware_id(self) -> BypassResult:
@@ -712,7 +712,7 @@ class StarForceBypass:
             winreg.CloseKey(key)
             return True
 
-        except WindowsError:
+        except OSError:
             return False
 
     def _spoof_mac_address(self) -> bool:
@@ -736,13 +736,13 @@ class StarForceBypass:
                         finally:
                             winreg.CloseKey(adapter_key)
                     i += 1
-                except WindowsError:
+                except OSError:
                     break
 
             winreg.CloseKey(key)
             return True
 
-        except WindowsError:
+        except OSError:
             return False
 
     def _spoof_cpu_id(self) -> bool:
@@ -756,5 +756,5 @@ class StarForceBypass:
             winreg.CloseKey(key)
             return True
 
-        except WindowsError:
+        except OSError:
             return False

@@ -15,6 +15,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
+from typing import NoReturn
 
 """Anti-Analysis Technique Detector.
 
@@ -47,7 +48,7 @@ except ImportError:
         can run both inside and outside the Ghidra environment.
         """
 
-        def __init__(self):
+        def __init__(self) -> None:
             """Initialize the GhidraScript base class."""
             self.script_name = self.__class__.__name__
             self.state = ScriptState()
@@ -55,7 +56,7 @@ except ImportError:
             self._script_args = []
             self._script_dir = os.path.dirname(os.path.abspath(__file__))
 
-        def run(self):
+        def run(self) -> NoReturn:
             """Execute the script logic.
 
             This method should be overridden by subclasses to implement
@@ -63,7 +64,7 @@ except ImportError:
             """
             raise NotImplementedError("Subclasses must implement the run() method")
 
-        def println(self, message):
+        def println(self, message) -> None:
             """Print a message to the console.
 
             Args:
@@ -72,7 +73,7 @@ except ImportError:
             """
             print(message)
 
-        def printerr(self, message):
+        def printerr(self, message) -> None:
             """Print an error message to the console.
 
             Args:
@@ -81,7 +82,7 @@ except ImportError:
             """
             print(f"ERROR: {message}", file=sys.stderr)
 
-        def askYesNo(self, title, question):
+        def askYesNo(self, title, question) -> bool:
             """Ask a yes/no question (returns False in non-interactive mode).
 
             Args:
@@ -143,7 +144,7 @@ except ImportError:
             """
             return self._script_args
 
-        def setScriptArgs(self, args):
+        def setScriptArgs(self, args) -> None:
             """Set script arguments.
 
             Args:
@@ -170,7 +171,7 @@ except ImportError:
             """
             return self._script_dir
 
-        def popup(self, message):
+        def popup(self, message) -> None:
             """Show a popup message.
 
             Args:
@@ -179,7 +180,7 @@ except ImportError:
             """
             print(f"POPUP: {message}")
 
-        def isRunningHeadless(self):
+        def isRunningHeadless(self) -> bool:
             """Check if running in headless mode.
 
             Returns:
@@ -191,12 +192,12 @@ except ImportError:
     class ScriptState:
         """Represents the state of a script execution."""
 
-        def __init__(self):
+        def __init__(self) -> None:
             """Initialize the script state with empty variables and environment."""
             self._variables = {}
             self._environment = {}
 
-        def addEnvironmentVar(self, name, value):
+        def addEnvironmentVar(self, name, value) -> None:
             """Add an environment variable."""
             self._environment[name] = value
 
@@ -204,7 +205,7 @@ except ImportError:
             """Get an environment variable."""
             return self._environment.get(name)
 
-        def setValue(self, name, value):
+        def setValue(self, name, value) -> None:
             """Set a state variable."""
             self._variables[name] = value
 
@@ -215,7 +216,7 @@ except ImportError:
     class TaskMonitor:
         """Monitor for long-running tasks."""
 
-        def __init__(self):
+        def __init__(self) -> None:
             """Initialize the task monitor with default progress tracking state."""
             self._cancelled = False
             self._message = ""
@@ -226,11 +227,11 @@ except ImportError:
             """Check if task was cancelled."""
             return self._cancelled
 
-        def cancel(self):
+        def cancel(self) -> None:
             """Cancel the task."""
             self._cancelled = True
 
-        def setMessage(self, message):
+        def setMessage(self, message) -> None:
             """Set status message."""
             self._message = message
             print(f"STATUS: {message}")
@@ -239,7 +240,7 @@ except ImportError:
             """Get current status message."""
             return self._message
 
-        def setProgress(self, progress):
+        def setProgress(self, progress) -> None:
             """Set progress value."""
             self._progress = progress
 
@@ -247,7 +248,7 @@ except ImportError:
             """Get current progress."""
             return self._progress
 
-        def setMaximum(self, maximum):
+        def setMaximum(self, maximum) -> None:
             """Set maximum progress value."""
             self._max = maximum
 
@@ -347,7 +348,7 @@ class AntiAnalysisDetector(GhidraScript):
         "str",  # Store task register
     ]
 
-    def run(self):
+    def run(self) -> None:
         """Execute anti-analysis detection scan on the current program.
 
         Performs comprehensive analysis to identify anti-debugging, anti-VM,
@@ -400,7 +401,7 @@ class AntiAnalysisDetector(GhidraScript):
         # Generate report
         self.generate_report(findings)
 
-    def find_anti_debug_apis(self, findings):
+    def find_anti_debug_apis(self, findings) -> None:
         """Find references to anti-debugging APIs."""
         program = get_current_program()
         symbol_table = program.getSymbolTable()
@@ -419,12 +420,12 @@ class AntiAnalysisDetector(GhidraScript):
                                     "name": api,
                                     "address": ref.getFromAddress(),
                                     "description": self.get_api_description(api),
-                                }
+                                },
                             )
                             print(f"  [+] Found {api} at {ref.getFromAddress()}")
                             safe_ghidra_call("createBookmark", ref.getFromAddress(), "AntiDebug", f"{api} call")
 
-    def find_vm_artifacts(self, findings):
+    def find_vm_artifacts(self, findings) -> None:
         """Search for VM-related strings and artifacts."""
         program = get_current_program()
         memory = program.getMemory()
@@ -444,12 +445,12 @@ class AntiAnalysisDetector(GhidraScript):
                                     "name": artifact,
                                     "address": addr,
                                     "description": "Potential VM detection string",
-                                }
+                                },
                             )
                             print(f"  [+] Found VM artifact '{artifact}' at {addr}")
                             safe_ghidra_call("createBookmark", addr, "AntiVM", f"VM artifact: {artifact}")
 
-    def find_detection_instructions(self, findings):
+    def find_detection_instructions(self, findings) -> None:
         """Find CPU instructions used for detection."""
         program = get_current_program()
         listing = program.getListing()
@@ -466,12 +467,12 @@ class AntiAnalysisDetector(GhidraScript):
                         "instruction": mnemonic,
                         "address": instr.getAddress(),
                         "description": self.get_instruction_description(mnemonic),
-                    }
+                    },
                 )
                 print(f"  [+] Found {mnemonic} instruction at {instr.getAddress()}")
                 safe_ghidra_call("createBookmark", instr.getAddress(), "Detection", f"{mnemonic} instruction")
 
-    def find_timing_checks(self, findings):
+    def find_timing_checks(self, findings) -> None:
         """Find potential timing-based anti-analysis."""
         # Look for GetTickCount patterns
         tick_refs = self.find_api_refs("GetTickCount")
@@ -495,12 +496,12 @@ class AntiAnalysisDetector(GhidraScript):
                         "start": addr1,
                         "end": addr2,
                         "description": "Potential timing-based anti-debugging check",
-                    }
+                    },
                 )
                 print(f"  [+] Found timing check between {addr1} and {addr2}")
                 safe_ghidra_call("createBookmark", addr1, "Timing", "Timing check start")
 
-    def find_exception_tricks(self, findings):
+    def find_exception_tricks(self, findings) -> None:
         """Find exception-based anti-analysis tricks."""
         # Look for SetUnhandledExceptionFilter
         seh_refs = self.find_api_refs("SetUnhandledExceptionFilter")
@@ -511,7 +512,7 @@ class AntiAnalysisDetector(GhidraScript):
                     "api": "SetUnhandledExceptionFilter",
                     "address": ref,
                     "description": "Custom exception handler (possible anti-debug)",
-                }
+                },
             )
             safe_ghidra_call("createBookmark", ref, "Exception", "SEH manipulation")
 
@@ -523,7 +524,7 @@ class AntiAnalysisDetector(GhidraScript):
                     "type": "INT3 Breakpoint",
                     "address": addr,
                     "description": "Hardcoded breakpoint (possible anti-debug trap)",
-                }
+                },
             )
             safe_ghidra_call("createBookmark", addr, "Exception", "INT3 trap")
 
@@ -581,7 +582,7 @@ class AntiAnalysisDetector(GhidraScript):
         }
         return descriptions.get(instr, "Detection instruction")
 
-    def generate_report(self, findings):
+    def generate_report(self, findings) -> None:
         """Generate analysis report."""
         print("\n=== Anti-Analysis Technique Report ===")
 
@@ -613,7 +614,7 @@ class AntiAnalysisDetector(GhidraScript):
         print(f"\n[*] Protection Level: {protection_level}")
         print("[*] Check bookmarks for all findings")
 
-    def assess_protection_level(self, findings):
+    def assess_protection_level(self, findings) -> str:
         """Assess overall protection level."""
         score = 0
 

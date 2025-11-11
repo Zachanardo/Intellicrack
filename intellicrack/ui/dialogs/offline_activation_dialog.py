@@ -45,7 +45,7 @@ class ActivationWorker(QThread):
     result = pyqtSignal(dict)
     error = pyqtSignal(str)
 
-    def __init__(self, emulator: OfflineActivationEmulator, operation: str, params: Dict[str, Any]):
+    def __init__(self, emulator: OfflineActivationEmulator, operation: str, params: Dict[str, Any]) -> None:
         """Initialize the OfflineActivationWorker with emulator and operation parameters.
 
         Args:
@@ -59,7 +59,7 @@ class ActivationWorker(QThread):
         self.operation = operation
         self.params = params
 
-    def run(self):
+    def run(self) -> None:
         """Execute offline activation operation in background thread."""
         try:
             if self.operation == "get_hardware_profile":
@@ -70,7 +70,7 @@ class ActivationWorker(QThread):
             elif self.operation == "generate_hardware_id":
                 self.progress.emit("Generating hardware ID...")
                 hw_id = self.emulator.generate_hardware_id(
-                    profile=self.params.get("profile"), algorithm=self.params.get("algorithm", "standard")
+                    profile=self.params.get("profile"), algorithm=self.params.get("algorithm", "standard"),
                 )
                 self.result.emit({"operation": "hardware_id", "data": hw_id})
 
@@ -115,7 +115,7 @@ class ActivationWorker(QThread):
 class OfflineActivationDialog(QDialog):
     """Comprehensive offline activation emulator interface."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the OfflineActivationDialog with an optional parent."""
         super().__init__(parent)
         self.emulator = OfflineActivationEmulator()
@@ -130,7 +130,7 @@ class OfflineActivationDialog(QDialog):
         self.init_ui()
         self.load_saved_profiles()
 
-    def init_ui(self):
+    def init_ui(self) -> None:
         """Initialize the user interface."""
         self.setWindowTitle("Offline Activation Emulator")
         self.setMinimumSize(1000, 700)
@@ -544,7 +544,7 @@ class OfflineActivationDialog(QDialog):
                 "Custom RSA Activation",
                 "Hardware-Locked License",
                 "Time-Limited Trial",
-            ]
+            ],
         )
         scenario_layout.addWidget(self.test_scenario)
 
@@ -573,7 +573,7 @@ class OfflineActivationDialog(QDialog):
         widget.setLayout(layout)
         return widget
 
-    def capture_hardware(self):
+    def capture_hardware(self) -> None:
         """Capture current hardware profile."""
         self.log("Capturing hardware profile...")
         self.worker = ActivationWorker(self.emulator, "get_hardware_profile", {})
@@ -582,7 +582,7 @@ class OfflineActivationDialog(QDialog):
         self.worker.error.connect(self.handle_worker_error)
         self.worker.start()
 
-    def generate_hardware_id(self):
+    def generate_hardware_id(self) -> None:
         """Generate hardware ID from current profile."""
         if not self.current_profile:
             QMessageBox.warning(self, "Warning", "Please capture hardware profile first")
@@ -597,7 +597,7 @@ class OfflineActivationDialog(QDialog):
         self.worker.error.connect(self.handle_worker_error)
         self.worker.start()
 
-    def generate_installation_id(self):
+    def generate_installation_id(self) -> None:
         """Generate installation ID."""
         product_id = self.product_id_input.text().strip()
         if not product_id:
@@ -610,14 +610,14 @@ class OfflineActivationDialog(QDialog):
 
         self.log("Generating installation ID...")
         self.worker = ActivationWorker(
-            self.emulator, "generate_installation_id", {"product_id": product_id, "hardware_id": self.current_hardware_id}
+            self.emulator, "generate_installation_id", {"product_id": product_id, "hardware_id": self.current_hardware_id},
         )
         self.worker.progress.connect(self.log)
         self.worker.result.connect(self.handle_worker_result)
         self.worker.error.connect(self.handle_worker_error)
         self.worker.start()
 
-    def generate_request_code(self):
+    def generate_request_code(self) -> None:
         """Generate request code."""
         if not self.current_installation_id:
             QMessageBox.warning(self, "Warning", "Please generate installation ID first")
@@ -630,7 +630,7 @@ class OfflineActivationDialog(QDialog):
         self.worker.error.connect(self.handle_worker_error)
         self.worker.start()
 
-    def generate_activation_response(self):
+    def generate_activation_response(self) -> None:
         """Generate complete activation response."""
         product_id = self.product_id_input.text().strip()
         product_version = self.product_version_input.text().strip()
@@ -665,7 +665,7 @@ class OfflineActivationDialog(QDialog):
         self.worker.error.connect(self.handle_worker_error)
         self.worker.start()
 
-    def format_installation_id(self):
+    def format_installation_id(self) -> None:
         """Format installation ID for phone activation."""
         if not self.current_installation_id:
             return
@@ -676,14 +676,14 @@ class OfflineActivationDialog(QDialog):
         self.install_id_output.setText(formatted)
         self.log("Installation ID formatted for phone activation")
 
-    def export_license_file(self):
+    def export_license_file(self) -> None:
         """Export activation response as license file."""
         if not self.current_response:
             QMessageBox.warning(self, "Warning", "No activation response to export")
             return
 
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Export License File", "", "XML Files (*.xml);;JSON Files (*.json);;License Files (*.lic);;All Files (*.*)"
+            self, "Export License File", "", "XML Files (*.xml);;JSON Files (*.json);;License Files (*.lic);;All Files (*.*)",
         )
 
         if file_path:
@@ -694,7 +694,7 @@ class OfflineActivationDialog(QDialog):
                 file_format = format_map.get(ext, "xml")
 
                 self.worker = ActivationWorker(
-                    self.emulator, "export_license", {"response": self.current_response, "file_path": file_path, "format": file_format}
+                    self.emulator, "export_license", {"response": self.current_response, "file_path": file_path, "format": file_format},
                 )
                 self.worker.progress.connect(self.log)
                 self.worker.result.connect(self.handle_worker_result)
@@ -703,26 +703,26 @@ class OfflineActivationDialog(QDialog):
             except Exception as e:
                 self.handle_worker_error(str(e))
 
-    def validate_license_file(self):
+    def validate_license_file(self) -> None:
         """Validate an existing license file."""
         file_path, _ = QFileDialog.getOpenFileName(self, "Select License File", "", "License Files (*.xml *.json *.lic);;All Files (*.*)")
 
         if file_path:
             self.worker = ActivationWorker(
-                self.emulator, "validate_license", {"file_path": file_path, "hardware_id": self.current_hardware_id}
+                self.emulator, "validate_license", {"file_path": file_path, "hardware_id": self.current_hardware_id},
             )
             self.worker.progress.connect(self.log)
             self.worker.result.connect(self.handle_worker_result)
             self.worker.error.connect(self.handle_worker_error)
             self.worker.start()
 
-    def import_hardware_profile(self):
+    def import_hardware_profile(self) -> None:
         """Import hardware profile from file."""
         file_path, _ = QFileDialog.getOpenFileName(self, "Import Hardware Profile", "", "JSON Files (*.json);;All Files (*.*)")
 
         if file_path:
             try:
-                with open(file_path, "r") as f:
+                with open(file_path) as f:
                     data = json.load(f)
 
                 self.current_profile = HardwareProfile(**data)
@@ -733,7 +733,7 @@ class OfflineActivationDialog(QDialog):
             except Exception as e:
                 self.handle_worker_error(f"Failed to import profile: {e}")
 
-    def export_hardware_profile(self):
+    def export_hardware_profile(self) -> None:
         """Export current hardware profile to file."""
         if not self.current_profile:
             return
@@ -760,7 +760,7 @@ class OfflineActivationDialog(QDialog):
             except Exception as e:
                 self.handle_worker_error(f"Failed to export profile: {e}")
 
-    def save_custom_scheme(self):
+    def save_custom_scheme(self) -> None:
         """Save custom activation scheme."""
         name = self.scheme_name_input.text().strip()
         if not name:
@@ -788,7 +788,7 @@ class OfflineActivationDialog(QDialog):
         self.log(f"Custom scheme '{name}' saved")
         self.scheme_name_input.clear()
 
-    def save_current_profile(self):
+    def save_current_profile(self) -> None:
         """Save current activation profile."""
         if not self.current_profile:
             QMessageBox.warning(self, "Warning", "No profile to save")
@@ -813,7 +813,7 @@ class OfflineActivationDialog(QDialog):
             self.save_profiles_to_disk()
             self.log(f"Profile '{name}' saved")
 
-    def load_profile(self):
+    def load_profile(self) -> None:
         """Load selected profile."""
         current_row = self.profiles_table.currentRow()
         if current_row < 0:
@@ -850,7 +850,7 @@ class OfflineActivationDialog(QDialog):
 
             self.log(f"Profile '{name}' loaded")
 
-    def delete_profile(self):
+    def delete_profile(self) -> None:
         """Delete selected profile."""
         current_row = self.profiles_table.currentRow()
         if current_row < 0:
@@ -860,7 +860,7 @@ class OfflineActivationDialog(QDialog):
         name = self.profiles_table.item(current_row, 0).text()
 
         reply = QMessageBox.question(
-            self, "Confirm Delete", f"Delete profile '{name}'?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            self, "Confirm Delete", f"Delete profile '{name}'?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
 
         if reply == QMessageBox.StandardButton.Yes:
@@ -869,7 +869,7 @@ class OfflineActivationDialog(QDialog):
             self.save_profiles_to_disk()
             self.log(f"Profile '{name}' deleted")
 
-    def run_test_scenario(self):
+    def run_test_scenario(self) -> None:
         """Run selected test scenario."""
         scenario = self.test_scenario.currentText()
         self.test_results.clear()
@@ -943,9 +943,9 @@ class OfflineActivationDialog(QDialog):
             self.test_results.append("\nOK Test scenario completed successfully")
 
         except Exception as e:
-            self.test_results.append(f"\nFAIL Test failed: {str(e)}")
+            self.test_results.append(f"\nFAIL Test failed: {e!s}")
 
-    def display_hardware_profile(self, profile: HardwareProfile):
+    def display_hardware_profile(self, profile: HardwareProfile) -> None:
         """Display hardware profile in table."""
         self.hardware_table.setRowCount(0)
 
@@ -966,7 +966,7 @@ class OfflineActivationDialog(QDialog):
             self.hardware_table.setItem(row, 0, QTableWidgetItem(name))
             self.hardware_table.setItem(row, 1, QTableWidgetItem(value))
 
-    def update_profiles_table(self):
+    def update_profiles_table(self) -> None:
         """Update saved profiles table."""
         self.profiles_table.setRowCount(0)
 
@@ -976,7 +976,7 @@ class OfflineActivationDialog(QDialog):
             self.profiles_table.setItem(row, 0, QTableWidgetItem(name))
             self.profiles_table.setItem(row, 1, QTableWidgetItem(profile.get("product_id", "")))
             self.profiles_table.setItem(
-                row, 2, QTableWidgetItem(profile.get("hardware_id", "")[:20] + "..." if profile.get("hardware_id") else "")
+                row, 2, QTableWidgetItem(profile.get("hardware_id", "")[:20] + "..." if profile.get("hardware_id") else ""),
             )
             self.profiles_table.setItem(row, 3, QTableWidgetItem(profile.get("created", "")[:10]))
             self.profiles_table.setItem(row, 4, QTableWidgetItem(profile.get("notes", "")))
@@ -984,7 +984,7 @@ class OfflineActivationDialog(QDialog):
         # Connect selection change
         self.profiles_table.itemSelectionChanged.connect(self.on_profile_selected)
 
-    def on_profile_selected(self):
+    def on_profile_selected(self) -> None:
         """Handle profile selection."""
         current_row = self.profiles_table.currentRow()
         if current_row >= 0:
@@ -995,18 +995,18 @@ class OfflineActivationDialog(QDialog):
                 details = json.dumps(profile, indent=2, default=str)
                 self.profile_details.setText(details)
 
-    def load_saved_profiles(self):
+    def load_saved_profiles(self) -> None:
         """Load saved profiles from disk."""
         profiles_file = "activation_profiles.json"
         if os.path.exists(profiles_file):
             try:
-                with open(profiles_file, "r") as f:
+                with open(profiles_file) as f:
                     self.saved_profiles = json.load(f)
                 self.update_profiles_table()
             except Exception as e:
                 self.log(f"Failed to load profiles: {e}")
 
-    def save_profiles_to_disk(self):
+    def save_profiles_to_disk(self) -> None:
         """Save profiles to disk."""
         profiles_file = "activation_profiles.json"
         try:
@@ -1015,7 +1015,7 @@ class OfflineActivationDialog(QDialog):
         except Exception as e:
             self.log(f"Failed to save profiles: {e}")
 
-    def handle_worker_result(self, result: dict):
+    def handle_worker_result(self, result: dict) -> None:
         """Handle worker thread results."""
         operation = result.get("operation")
         data = result.get("data")
@@ -1080,12 +1080,12 @@ Details:
                 self.log(f"License file exported to {data.get('path')}")
                 QMessageBox.information(self, "Success", f"License file exported successfully to:\n{data.get('path')}")
 
-    def handle_worker_error(self, error: str):
+    def handle_worker_error(self, error: str) -> None:
         """Handle worker thread errors."""
         self.log(f"Error: {error}")
         QMessageBox.critical(self, "Error", error)
 
-    def log(self, message: str):
+    def log(self, message: str) -> None:
         """Log message to console."""
         timestamp = datetime.now().strftime("%H:%M:%S")
         self.console.append(f"[{timestamp}] {message}")

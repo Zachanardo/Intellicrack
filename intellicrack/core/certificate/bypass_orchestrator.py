@@ -186,7 +186,7 @@ class BypassResult:
 class CertificateBypassOrchestrator:
     """Orchestrates complete certificate validation bypass workflow."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize bypass orchestrator."""
         self.detector = CertificateValidationDetector()
         self.strategy_selector = BypassStrategySelector()
@@ -195,7 +195,7 @@ class CertificateBypassOrchestrator:
     def bypass(
         self,
         target: str,
-        method: Optional[BypassMethod] = None
+        method: Optional[BypassMethod] = None,
     ) -> BypassResult:
         """Execute certificate validation bypass on target.
 
@@ -227,7 +227,7 @@ class CertificateBypassOrchestrator:
                 raise FileNotFoundError(f"Target not found: {target}")
 
             detection_report = self.detector.detect_certificate_validation(
-                str(target_path)
+                str(target_path),
             )
 
             if not detection_report.has_validation():
@@ -242,7 +242,7 @@ class CertificateBypassOrchestrator:
             if method is None:
                 target_state = "running" if is_running else "static"
                 method = self.strategy_selector.select_optimal_strategy(
-                    detection_report, target_state
+                    detection_report, target_state,
                 )
 
             logger.info(f"Executing bypass with method: {method.value}")
@@ -369,11 +369,11 @@ class CertificateBypassOrchestrator:
 
             if result.success:
                 logger.info(
-                    f"Binary patch successful: {len(result.patched_functions)} functions patched"
+                    f"Binary patch successful: {len(result.patched_functions)} functions patched",
                 )
             else:
                 logger.warning(
-                    f"Binary patch completed with failures: {len(result.failed_patches)} failed"
+                    f"Binary patch completed with failures: {len(result.failed_patches)} failed",
                 )
 
             return result
@@ -479,17 +479,17 @@ class CertificateBypassOrchestrator:
                             encoding=serialization.Encoding.PEM,
                             format=serialization.PrivateFormat.TraditionalOpenSSL,
                             encryption_algorithm=serialization.NoEncryption(),
-                        )
+                        ),
                     )
 
                 logger.info(f"Certificate exported: {cert_path}")
                 logger.info(f"Private key exported: {key_path}")
 
             logger.info(
-                f"MITM certificates ready in: {cert_dir}"
+                f"MITM certificates ready in: {cert_dir}",
             )
             logger.info(
-                "Start mitmproxy with: mitmproxy --set confdir=~/.intellicrack/mitm_certs"
+                "Start mitmproxy with: mitmproxy --set confdir=~/.intellicrack/mitm_certs",
             )
 
             return True
@@ -530,7 +530,7 @@ class CertificateBypassOrchestrator:
                 licensing_keywords = [
                     "license", "licensing", "activation", "activate",
                     "auth", "api", "server", "cloud", "online",
-                    "verify", "validation", "registration", "register"
+                    "verify", "validation", "registration", "register",
                 ]
 
                 for string in strings:
@@ -702,7 +702,7 @@ class CertificateBypassOrchestrator:
 
                 bypass_indicators = [
                     "bypass", "patched", "hooked", "disabled",
-                    "ignored", "skipped", "override"
+                    "ignored", "skipped", "override",
                 ]
 
                 bypass_count = sum(

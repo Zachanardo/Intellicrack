@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 class AIModelAdapter(ABC):
     """Abstract base class for AI model adapters."""
 
-    def __init__(self, intellicrack_interface: IntellicrackAIInterface):
+    def __init__(self, intellicrack_interface: IntellicrackAIInterface) -> None:
         """Initialize AI model adapter with Intellicrack interface and tool definitions."""
         self.interface = intellicrack_interface
         self.tools = self._create_tool_definitions()
@@ -92,7 +92,7 @@ class ClaudeAdapter(AIModelAdapter):
                     },
                     "required": ["binary_path"],
                 },
-            }
+            },
         )
 
         # Suggest patches tool
@@ -110,7 +110,7 @@ class ClaudeAdapter(AIModelAdapter):
                     },
                     "required": ["binary_path"],
                 },
-            }
+            },
         )
 
         # Apply patch tool
@@ -132,7 +132,7 @@ class ClaudeAdapter(AIModelAdapter):
                     },
                     "required": ["binary_path", "patch_file"],
                 },
-            }
+            },
         )
 
         # Generic CLI command tool
@@ -159,7 +159,7 @@ class ClaudeAdapter(AIModelAdapter):
                     },
                     "required": ["args", "description"],
                 },
-            }
+            },
         )
 
         return tools
@@ -239,7 +239,7 @@ class OpenAIAdapter(AIModelAdapter):
                         "required": ["binary_path"],
                     },
                 },
-            }
+            },
         )
 
         # Suggest patches function
@@ -260,7 +260,7 @@ class OpenAIAdapter(AIModelAdapter):
                         "required": ["binary_path"],
                     },
                 },
-            }
+            },
         )
 
         # Apply patch function
@@ -285,7 +285,7 @@ class OpenAIAdapter(AIModelAdapter):
                         "required": ["binary_path", "patch_file"],
                     },
                 },
-            }
+            },
         )
 
         return tools
@@ -316,7 +316,7 @@ class OpenAIAdapter(AIModelAdapter):
 
             elif tool_name == "generate_ghidra_script":
                 return self.interface.generate_ghidra_script(
-                    parameters.get("binary_path"), parameters.get("analysis_type", "comprehensive")
+                    parameters.get("binary_path"), parameters.get("analysis_type", "comprehensive"),
                 )
 
             else:
@@ -344,7 +344,7 @@ class OpenAIAdapter(AIModelAdapter):
         except Exception as e:
             return {
                 "status": "error",
-                "message": f"Tool execution failed: {str(e)}",
+                "message": f"Tool execution failed: {e!s}",
                 "tool": tool_name,
                 "error_type": type(e).__name__,
             }
@@ -353,7 +353,7 @@ class OpenAIAdapter(AIModelAdapter):
 class LangChainIntegration:
     """Integration for LangChain-based AI applications."""
 
-    def __init__(self, intellicrack_interface: IntellicrackAIInterface):
+    def __init__(self, intellicrack_interface: IntellicrackAIInterface) -> None:
         """Initialize LangChain integration with Intellicrack interface."""
         self.interface = intellicrack_interface
 
@@ -370,7 +370,7 @@ class LangChainIntegration:
                     name="analyze_binary",
                     func=lambda input_str: self._handle_analyze(input_str),
                     description="Analyze a binary file. Input: 'path/to/binary [analysis_types]'",
-                )
+                ),
             )
 
             # Suggest patches tool
@@ -379,7 +379,7 @@ class LangChainIntegration:
                     name="suggest_patches",
                     func=lambda input_str: self._handle_suggest_patches(input_str),
                     description="Suggest patches for a binary. Input: 'path/to/binary'",
-                )
+                ),
             )
 
             # CLI command tool
@@ -388,7 +388,7 @@ class LangChainIntegration:
                     name="intellicrack_cli",
                     func=lambda input_str: self._handle_cli_command(input_str),
                     description="Run Intellicrack CLI command. Input: 'description | command args'",
-                )
+                ),
             )
 
             return tools
@@ -429,7 +429,7 @@ class LangChainIntegration:
 class IntellicrackAIServer:
     """Server for AI model interactions."""
 
-    def __init__(self, auto_approve_low_risk: bool = False):
+    def __init__(self, auto_approve_low_risk: bool = False) -> None:
         """Initialize AI server with confirmation manager and multiple AI adapters."""
         self.confirmation_manager = ConfirmationManager(auto_approve_low_risk)
         self.interface = IntellicrackAIInterface(self.confirmation_manager)
@@ -515,7 +515,7 @@ def create_ai_system_prompt() -> str:
 You have access to all 78 Intellicrack features through these tools. Use them wisely to help users understand and analyze binary programs."""
 
 
-def main():
+def main() -> None:
     """Demonstrate AI integration usage."""
     # Initialize server
     server = IntellicrackAIServer(auto_approve_low_risk=False)

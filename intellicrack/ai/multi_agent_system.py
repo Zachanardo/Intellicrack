@@ -19,6 +19,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import asyncio
+import contextlib
 import logging
 import os
 import re
@@ -143,7 +144,7 @@ class CollaborationResult:
 class BaseAgent:
     """Base class for all specialized agents."""
 
-    def __init__(self, agent_id: str, role: AgentRole, llm_manager: LLMManager | None = None):
+    def __init__(self, agent_id: str, role: AgentRole, llm_manager: LLMManager | None = None) -> None:
         """Initialize the base agent.
 
         Args:
@@ -187,7 +188,7 @@ class BaseAgent:
 
         logger.info(f"Agent {self.agent_id} ({self.role.value}) initialized")
 
-    def _initialize_capabilities(self):
+    def _initialize_capabilities(self) -> None:
         """Initialize agent-specific capabilities."""
         base_capabilities = [
             AgentCapability(
@@ -442,7 +443,7 @@ class BaseAgent:
             self.current_task = None
             self.busy = False
 
-    async def _update_knowledge_base(self, task: AgentTask, result: dict[str, Any]):
+    async def _update_knowledge_base(self, task: AgentTask, result: dict[str, Any]) -> None:
         """Update the agent's knowledge base with task results."""
         knowledge_entry = {
             "task_type": task.task_type,
@@ -779,13 +780,23 @@ payload = exploit.generate_payload()
         script_validation_result = None
         try:
             validation_cmd = ["python", "-c", "import ast; print('syntax_valid')"]
-            validation_process = subprocess.run(validation_cmd, capture_output=True, text=True, timeout=5)  # noqa: S603
+            validation_process = await asyncio.create_subprocess_exec(
+                *validation_cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            try:
+                stdout, stderr = await asyncio.wait_for(validation_process.communicate(), timeout=5)
+            except asyncio.TimeoutError:
+                validation_process.kill()
+                await validation_process.communicate()
+                raise
             script_validation_result = {
                 "syntax_check": "passed" if validation_process.returncode == 0 else "failed",
-                "validation_output": validation_process.stdout.strip(),
-                "validation_errors": validation_process.stderr.strip(),
+                "validation_output": stdout.decode().strip() if stdout else "",
+                "validation_errors": stderr.decode().strip() if stderr else "",
             }
-        except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):
+        except (asyncio.TimeoutError, subprocess.SubprocessError, FileNotFoundError):
             script_validation_result = {"syntax_check": "skipped", "reason": "validation_unavailable"}
 
         if script_type == "frida":
@@ -946,7 +957,7 @@ if __name__ == "__main__":
             ],
         }
 
-    def start(self):
+    def start(self) -> None:
         """Start the agent."""
         self.active = True
 
@@ -959,12 +970,12 @@ if __name__ == "__main__":
 
         logger.info(f"Agent {self.agent_id} started")
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the agent."""
         self.active = False
         logger.info(f"Agent {self.agent_id} stopped")
 
-    def _message_processing_loop(self):
+    def _message_processing_loop(self) -> None:
         """Process messages in the main loop."""
         while self.active:
             try:
@@ -976,7 +987,7 @@ if __name__ == "__main__":
             except Exception as e:
                 logger.error(f"Error processing message in {self.agent_id}: {e}")
 
-    def _process_message(self, message: AgentMessage):
+    def _process_message(self, message: AgentMessage) -> None:
         """Process incoming message."""
         try:
             if message.message_type == MessageType.TASK_REQUEST:
@@ -994,7 +1005,7 @@ if __name__ == "__main__":
             logger.error(f"Error handling message {message.message_id}: {e}")
             self._send_error_response(message, str(e))
 
-    def _handle_task_request(self, message: AgentMessage):
+    def _handle_task_request(self, message: AgentMessage) -> None:
         """Handle task request from another agent."""
         task_data = message.content.get("task", {})
 
@@ -1016,7 +1027,7 @@ if __name__ == "__main__":
         # Execute task asynchronously
         asyncio.create_task(self._execute_task_async(task, message))
 
-    async def _execute_task_async(self, task: AgentTask, original_message: AgentMessage):
+    async def _execute_task_async(self, task: AgentTask, original_message: AgentMessage) -> None:
         """Execute task asynchronously and send response."""
         self.busy = True
         self.current_task = task
@@ -1080,7 +1091,7 @@ if __name__ == "__main__":
 
         return False
 
-    def _handle_knowledge_share(self, message: AgentMessage):
+    def _handle_knowledge_share(self, message: AgentMessage) -> None:
         """Handle knowledge sharing from another agent."""
         knowledge = message.content.get("knowledge", {})
         source_agent = message.sender_id
@@ -1098,7 +1109,7 @@ if __name__ == "__main__":
 
         logger.info(f"Agent {self.agent_id} received knowledge from {source_agent}")
 
-    def _handle_collaboration_request(self, message: AgentMessage):
+    def _handle_collaboration_request(self, message: AgentMessage) -> None:
         """Handle collaboration request."""
         collaboration_type = message.content.get("type", "")
 
@@ -1117,7 +1128,7 @@ if __name__ == "__main__":
             else:
                 self._send_collaboration_response(message, False, {"available": False})
 
-    def _handle_capability_query(self, message: AgentMessage):
+    def _handle_capability_query(self, message: AgentMessage) -> None:
         """Handle capability query."""
         capabilities_data = []
         for capability in self.capabilities:
@@ -1129,7 +1140,7 @@ if __name__ == "__main__":
                     "output_types": capability.output_types,
                     "confidence": capability.confidence_level,
                     "estimated_time": capability.processing_time_estimate,
-                }
+                },
             )
 
         response = AgentMessage(
@@ -1143,13 +1154,13 @@ if __name__ == "__main__":
 
         self._send_message(response)
 
-    def _handle_task_response(self, message: AgentMessage):
+    def _handle_task_response(self, message: AgentMessage) -> None:
         """Handle task response."""
         correlation_id = message.correlation_id
         if correlation_id and correlation_id in self.response_waiters:
             self.response_waiters[correlation_id].put(message)
 
-    def _send_task_response(self, original_message: AgentMessage, success: bool, result: dict[str, Any]):
+    def _send_task_response(self, original_message: AgentMessage, success: bool, result: dict[str, Any]) -> None:
         """Send task response."""
         response = AgentMessage(
             message_id=str(uuid.uuid4()),
@@ -1166,7 +1177,7 @@ if __name__ == "__main__":
 
         self._send_message(response)
 
-    def _send_task_rejection(self, original_message: AgentMessage, reason: str):
+    def _send_task_rejection(self, original_message: AgentMessage, reason: str) -> None:
         """Send task rejection."""
         response = AgentMessage(
             message_id=str(uuid.uuid4()),
@@ -1183,7 +1194,7 @@ if __name__ == "__main__":
 
         self._send_message(response)
 
-    def _send_collaboration_response(self, original_message: AgentMessage, available: bool, data: dict[str, Any]):
+    def _send_collaboration_response(self, original_message: AgentMessage, available: bool, data: dict[str, Any]) -> None:
         """Send collaboration response."""
         response = AgentMessage(
             message_id=str(uuid.uuid4()),
@@ -1199,7 +1210,7 @@ if __name__ == "__main__":
 
         self._send_message(response)
 
-    def _send_error_response(self, original_message: AgentMessage, error: str):
+    def _send_error_response(self, original_message: AgentMessage, error: str) -> None:
         """Send error response."""
         response = AgentMessage(
             message_id=str(uuid.uuid4()),
@@ -1212,7 +1223,7 @@ if __name__ == "__main__":
 
         self._send_message(response)
 
-    def _send_message(self, message: AgentMessage):
+    def _send_message(self, message: AgentMessage) -> None:
         """Send message through collaboration system."""
         if self.collaboration_system:
             self.collaboration_system.route_message(message)
@@ -1235,7 +1246,7 @@ if __name__ == "__main__":
                 return capability.confidence_level
         return 0.0
 
-    def share_knowledge(self, knowledge: dict[str, Any], target_agents: list[str] | None = None):
+    def share_knowledge(self, knowledge: dict[str, Any], target_agents: list[str] | None = None) -> None:
         """Share knowledge with other agents."""
         if not self.collaboration_system:
             return
@@ -1280,7 +1291,7 @@ if __name__ == "__main__":
 class StaticAnalysisAgent(BaseAgent):
     """Agent specialized in static analysis."""
 
-    def _initialize_capabilities(self):
+    def _initialize_capabilities(self) -> None:
         """Initialize static analysis capabilities."""
         self.capabilities = [
             AgentCapability(
@@ -1398,7 +1409,7 @@ class StaticAnalysisAgent(BaseAgent):
         # Get imports
         imports = r2.cmdj("iij")
         if imports:
-            analysis_result["imports"] = list(set([imp.get("libname", "") for imp in imports if imp.get("libname")]))
+            analysis_result["imports"] = list({imp.get("libname", "") for imp in imports if imp.get("libname")})
 
         # Get exports
         exports = r2.cmdj("iEj")
@@ -1419,90 +1430,88 @@ class StaticAnalysisAgent(BaseAgent):
         analysis_result = {}
 
         try:
-            with open(file_path, "rb") as f:
-                # Memory-map the file for efficient reading
-                with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mmapped_file:
-                    # Check for PE signature
-                    if mmapped_file[:2] == b"MZ":
-                        analysis_result["file_type"] = "PE"
+            with open(file_path, "rb") as f, mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mmapped_file:
+                # Check for PE signature
+                if mmapped_file[:2] == b"MZ":
+                analysis_result["file_type"] = "PE"
 
-                        # Get PE header offset
-                        pe_offset = struct.unpack("<I", mmapped_file[0x3C:0x40])[0]
+                # Get PE header offset
+                pe_offset = struct.unpack("<I", mmapped_file[0x3C:0x40])[0]
 
-                        # Check PE signature
-                        if mmapped_file[pe_offset : pe_offset + 4] == b"PE\x00\x00":
-                            # Get machine type
-                            machine = struct.unpack("<H", mmapped_file[pe_offset + 4 : pe_offset + 6])[0]
-                            if machine == 0x14C:
-                                analysis_result["architecture"] = "x86"
-                            elif machine == 0x8664:
-                                analysis_result["architecture"] = "x86_64"
-                            elif machine == 0xAA64:
-                                analysis_result["architecture"] = "ARM64"
-                            else:
-                                analysis_result["architecture"] = f"Unknown ({hex(machine)})"
+                # Check PE signature
+                if mmapped_file[pe_offset : pe_offset + 4] == b"PE\x00\x00":
+                    # Get machine type
+                    machine = struct.unpack("<H", mmapped_file[pe_offset + 4 : pe_offset + 6])[0]
+                    if machine == 0x14C:
+                        analysis_result["architecture"] = "x86"
+                    elif machine == 0x8664:
+                        analysis_result["architecture"] = "x86_64"
+                    elif machine == 0xAA64:
+                        analysis_result["architecture"] = "ARM64"
+                    else:
+                        analysis_result["architecture"] = f"Unknown ({hex(machine)})"
 
-                            # Get entry point
-                            optional_header_offset = pe_offset + 24
-                            magic = struct.unpack("<H", mmapped_file[optional_header_offset : optional_header_offset + 2])[0]
+                    # Get entry point
+                    optional_header_offset = pe_offset + 24
+                    magic = struct.unpack("<H", mmapped_file[optional_header_offset : optional_header_offset + 2])[0]
 
-                            if magic == 0x10B:  # PE32
-                                entry_point = struct.unpack("<I", mmapped_file[optional_header_offset + 16 : optional_header_offset + 20])[
-                                    0
-                                ]
-                            elif magic == 0x20B:  # PE32+
-                                entry_point = struct.unpack("<I", mmapped_file[optional_header_offset + 16 : optional_header_offset + 20])[
-                                    0
-                                ]
-                            else:
-                                entry_point = 0
+                    if magic == 0x10B:  # PE32
+                        entry_point = struct.unpack("<I", mmapped_file[optional_header_offset + 16 : optional_header_offset + 20])[
+                            0
+                        ]
+                    elif magic == 0x20B:  # PE32+
+                        entry_point = struct.unpack("<I", mmapped_file[optional_header_offset + 16 : optional_header_offset + 20])[
+                            0
+                        ]
+                    else:
+                        entry_point = 0
 
-                            analysis_result["entry_point"] = hex(entry_point)
+                    analysis_result["entry_point"] = hex(entry_point)
 
-                    # Check for ELF signature
-                    elif mmapped_file[:4] == b"\x7fELF":
-                        analysis_result["file_type"] = "ELF"
+                # Check for ELF signature
+                elif mmapped_file[:4] == b"\x7fELF":
+                    analysis_result["file_type"] = "ELF"
 
-                        # Get architecture
-                        e_machine = struct.unpack("<H", mmapped_file[18:20])[0]
-                        arch_map = {
-                            0x03: "x86",
-                            0x3E: "x86_64",
-                            0x28: "ARM",
-                            0xB7: "ARM64",
-                        }
-                        analysis_result["architecture"] = arch_map.get(e_machine, f"Unknown ({hex(e_machine)})")
+                    # Get architecture
+                    e_machine = struct.unpack("<H", mmapped_file[18:20])[0]
+                    arch_map = {
+                        0x03: "x86",
+                        0x3E: "x86_64",
+                        0x28: "ARM",
+                        0xB7: "ARM64",
+                    }
+                    analysis_result["architecture"] = arch_map.get(e_machine, f"Unknown ({hex(e_machine)})")
 
-                        # Get entry point
-                        if mmapped_file[4] == 1:  # 32-bit
-                            entry_point = struct.unpack("<I", mmapped_file[24:28])[0]
-                        else:  # 64-bit
-                            entry_point = struct.unpack("<Q", mmapped_file[24:32])[0]
+                    # Get entry point
+                    if mmapped_file[4] == 1:  # 32-bit
+                        entry_point = struct.unpack("<I", mmapped_file[24:28])[0]
+                    else:  # 64-bit
+                        entry_point = struct.unpack("<Q", mmapped_file[24:32])[0]
 
-                        analysis_result["entry_point"] = hex(entry_point)
+                    analysis_result["entry_point"] = hex(entry_point)
 
                     # Check for Mach-O signature
                     elif mmapped_file[:4] in [b"\xfe\xed\xfa\xce", b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xcf", b"\xcf\xfa\xed\xfe"]:
-                        analysis_result["file_type"] = "Mach-O"
+                    analysis_result["file_type"] = "Mach-O"
 
-                        # Get CPU type
-                        cpu_type = struct.unpack("<I", mmapped_file[4:8])[0]
-                        cpu_map = {
-                            0x07: "x86",
-                            0x01000007: "x86_64",
-                            0x0C: "ARM",
-                            0x0100000C: "ARM64",
-                        }
-                        analysis_result["architecture"] = cpu_map.get(cpu_type, f"Unknown ({hex(cpu_type)})")
+                    # Get CPU type
+                    cpu_type = struct.unpack("<I", mmapped_file[4:8])[0]
+                    cpu_map = {
+                        0x07: "x86",
+                        0x01000007: "x86_64",
+                        0x0C: "ARM",
+                        0x0100000C: "ARM64",
+                    }
+                    analysis_result["architecture"] = cpu_map.get(cpu_type, f"Unknown ({hex(cpu_type)})")
 
                     else:
-                        analysis_result["file_type"] = "Unknown"
-                        analysis_result["architecture"] = "Unknown"
+                    analysis_result["file_type"] = "Unknown"
+                    analysis_result["architecture"] = "Unknown"
 
                     analysis_result["file_size"] = len(mmapped_file)
-                    analysis_result["confidence"] = 0.7
+                analysis_result["confidence"] = 0.7
 
-                    # Basic section detection for PE files
+                # Basic section detection for PE files
                     if analysis_result.get("file_type") == "PE":
                         sections = []
                         try:
@@ -1528,7 +1537,7 @@ class StaticAnalysisAgent(BaseAgent):
                     analysis_result.setdefault("exports", [])
                     analysis_result.setdefault("compiler", "Unknown")
 
-        except (OSError, IOError, struct.error) as e:
+        except (OSError, struct.error) as e:
             analysis_result = {
                 "file_type": "Unknown",
                 "architecture": "Unknown",
@@ -1580,7 +1589,7 @@ class StaticAnalysisAgent(BaseAgent):
             {
                 "binary_metadata": analysis_result,
                 "analysis_timestamp": datetime.now().isoformat(),
-            }
+            },
         )
 
         return analysis_result
@@ -1653,11 +1662,11 @@ class StaticAnalysisAgent(BaseAgent):
                     func_name = child.func.id
                     if func_name in ["eval", "exec", "compile", "__import__"]:
                         vulnerabilities.append(
-                            {"type": "dangerous_function", "function": func_name, "line": child.lineno, "severity": "high"}
+                            {"type": "dangerous_function", "function": func_name, "line": child.lineno, "severity": "high"},
                         )
                     elif func_name in ["input", "raw_input"]:
                         vulnerabilities.append(
-                            {"type": "unvalidated_input", "function": func_name, "line": child.lineno, "severity": "medium"}
+                            {"type": "unvalidated_input", "function": func_name, "line": child.lineno, "severity": "medium"},
                         )
                 elif hasattr(child.func, "attr"):
                     if child.func.attr in ["system", "popen", "subprocess"]:
@@ -1667,14 +1676,15 @@ class StaticAnalysisAgent(BaseAgent):
                                 "function": child.func.attr,
                                 "line": child.lineno,
                                 "severity": "high",
-                            }
+                            },
                         )
 
         return vulnerabilities
 
     def _calculate_python_quality_score(self, code: str, functions: list, vulnerabilities: list) -> float:
         """Calculate code quality score for Python code."""
-        lines = code.split("\n")
+        lines = code.split("
+")
         non_empty_lines = [line for line in lines if line.strip()]
         comment_lines = [line for line in lines if line.strip().startswith("#")]
 
@@ -1694,7 +1704,8 @@ class StaticAnalysisAgent(BaseAgent):
 
     def _analyze_c_cpp_code(self, code: str) -> dict[str, Any]:
         """Analyze C/C++ code for vulnerabilities and metrics."""
-        lines = code.split("\n")
+        lines = code.split("
+")
         vulnerabilities = []
 
         dangerous_functions = {
@@ -1731,7 +1742,8 @@ class StaticAnalysisAgent(BaseAgent):
 
     def _analyze_javascript_code(self, code: str) -> dict[str, Any]:
         """Analyze JavaScript/TypeScript code for vulnerabilities and metrics."""
-        lines = code.split("\n")
+        lines = code.split("
+")
         vulnerabilities = []
 
         dangerous_patterns = [
@@ -1765,7 +1777,8 @@ class StaticAnalysisAgent(BaseAgent):
 
     def _analyze_generic_code(self, code: str) -> dict[str, Any]:
         """Analyze code for unknown languages."""
-        lines = code.split("\n")
+        lines = code.split("
+")
         return {
             "functions_detected": len([line for line in lines if "(" in line and ")" in line and "{" in line]),
             "classes_detected": len([line for line in lines if "class " in line]),
@@ -1781,7 +1794,8 @@ class StaticAnalysisAgent(BaseAgent):
 
         analysis_result = {
             "language": language,
-            "lines_of_code": len(code.split("\n")),
+            "lines_of_code": len(code.split("
+")),
             "functions_detected": 0,
             "classes_detected": 0,
             "potential_vulnerabilities": [],
@@ -1894,54 +1908,53 @@ class StaticAnalysisAgent(BaseAgent):
             try:
                 import mmap
 
-                with open(binary_path, "rb") as f:
-                    with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mmapped_file:
-                        # Basic heuristic analysis
-                        file_size = len(mmapped_file)
+                with open(binary_path, "rb") as f, mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mmapped_file:
+                    # Basic heuristic analysis
+                    file_size = len(mmapped_file)
 
-                        # Look for common control flow patterns
-                        jump_instructions = 0
-                        call_instructions = 0
-                        ret_instructions = 0
+                    # Look for common control flow patterns
+                    jump_instructions = 0
+                    call_instructions = 0
+                    ret_instructions = 0
 
-                        # x86/x64 instruction patterns
-                        for i in range(file_size - 1):
-                            byte = mmapped_file[i]
-                            next_byte = mmapped_file[i + 1] if i + 1 < file_size else 0
+                    # x86/x64 instruction patterns
+                    for i in range(file_size - 1):
+                        byte = mmapped_file[i]
+                        next_byte = mmapped_file[i + 1] if i + 1 < file_size else 0
 
-                            # Jump instructions (JMP, JE, JNE, etc.)
-                            if byte in [0xEB, 0xE9] or (byte == 0x0F and next_byte in range(0x80, 0x90)):
-                                jump_instructions += 1
+                        # Jump instructions (JMP, JE, JNE, etc.)
+                        if byte in [0xEB, 0xE9] or (byte == 0x0F and next_byte in range(0x80, 0x90)):
+                            jump_instructions += 1
 
-                            # Call instructions
-                            elif byte in [0xE8, 0xFF] and (next_byte & 0x38) == 0x10:
-                                call_instructions += 1
+                        # Call instructions
+                        elif byte in [0xE8, 0xFF] and (next_byte & 0x38) == 0x10:
+                            call_instructions += 1
 
-                            # Return instructions
-                            elif byte in [0xC3, 0xCB, 0xC2, 0xCA]:
-                                ret_instructions += 1
+                        # Return instructions
+                        elif byte in [0xC3, 0xCB, 0xC2, 0xCA]:
+                            ret_instructions += 1
 
-                        # Estimate basic blocks (very rough)
-                        result["basic_blocks"] = max(jump_instructions, call_instructions) + ret_instructions
+                    # Estimate basic blocks (very rough)
+                    result["basic_blocks"] = max(jump_instructions, call_instructions) + ret_instructions
 
-                        # Estimate function count
-                        result["function_count"] = max(1, ret_instructions)
+                    # Estimate function count
+                    result["function_count"] = max(1, ret_instructions)
 
-                        # Estimate cyclomatic complexity
-                        if result["function_count"] > 0:
-                            result["cyclomatic_complexity"] = (jump_instructions / result["function_count"]) + 1
+                    # Estimate cyclomatic complexity
+                    if result["function_count"] > 0:
+                        result["cyclomatic_complexity"] = (jump_instructions / result["function_count"]) + 1
 
-                        # Estimate call graph nodes
-                        result["call_graph_nodes"] = call_instructions + result["function_count"]
+                    # Estimate call graph nodes
+                    result["call_graph_nodes"] = call_instructions + result["function_count"]
 
-                        # Look for anomalies
-                        if jump_instructions > call_instructions * 3:
-                            result["control_flow_anomalies"].append({"type": "excessive_branching", "address": "0x0"})
+                    # Look for anomalies
+                    if jump_instructions > call_instructions * 3:
+                        result["control_flow_anomalies"].append({"type": "excessive_branching", "address": "0x0"})
 
-                        if ret_instructions > call_instructions * 1.5:
-                            result["control_flow_anomalies"].append({"type": "unbalanced_returns", "address": "0x0"})
+                    if ret_instructions > call_instructions * 1.5:
+                        result["control_flow_anomalies"].append({"type": "unbalanced_returns", "address": "0x0"})
 
-                        result["confidence"] = 0.6
+                    result["confidence"] = 0.6
 
             except Exception as e:
                 logger.error(f"Control flow analysis failed: {e}")
@@ -1954,7 +1967,7 @@ class StaticAnalysisAgent(BaseAgent):
 class DynamicAnalysisAgent(BaseAgent):
     """Agent specialized in dynamic analysis."""
 
-    def _initialize_capabilities(self):
+    def _initialize_capabilities(self) -> None:
         """Initialize dynamic analysis capabilities."""
         self.capabilities = [
             AgentCapability(
@@ -2020,8 +2033,9 @@ class DynamicAnalysisAgent(BaseAgent):
 
             import frida
 
-            # Start the process
-            process = subprocess.Popen(  # noqa: S603
+            # Start the process using a background thread to avoid blocking the event loop
+            process = await asyncio.to_thread(
+                subprocess.Popen,
                 [executable],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -2154,8 +2168,11 @@ class DynamicAnalysisAgent(BaseAgent):
                 import psutil
 
                 start_time = time.time()
-                process = subprocess.Popen(  # noqa: S603
-                    [executable], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                process = await asyncio.to_thread(
+                    subprocess.Popen,
+                    [executable],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
                 )
 
                 # Get process handle
@@ -2191,10 +2208,8 @@ class DynamicAnalysisAgent(BaseAgent):
                     process.terminate()
                     process.wait(timeout=5)
                 except (psutil.NoSuchProcess, psutil.TimeoutExpired, psutil.AccessDenied, OSError):
-                    try:
+                    with contextlib.suppress(psutil.NoSuchProcess, psutil.AccessDenied):
                         process.kill()
-                    except (psutil.NoSuchProcess, psutil.AccessDenied):
-                        pass
 
                 result["execution_time"] = time.time() - start_time
                 result["cpu_usage"] = max(cpu_samples) if cpu_samples else 0.0
@@ -2284,7 +2299,7 @@ class DynamicAnalysisAgent(BaseAgent):
 
                     try:
                         key = winreg.OpenKey(
-                            winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management"
+                            winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management",
                         )
                         value, _ = winreg.QueryValueEx(key, "MoveImages")
                         result["memory_protection"]["aslr_enabled"] = value != 0
@@ -2309,7 +2324,7 @@ class DynamicAnalysisAgent(BaseAgent):
                                 "size": mmap.addr[1] - mmap.addr[0],
                                 "severity": "high",
                                 "type": "executable_stack",
-                            }
+                            },
                         )
                     elif "heap" in mmap.path.lower() and "x" in mmap.perms:
                         suspicious_regions.append(
@@ -2318,7 +2333,7 @@ class DynamicAnalysisAgent(BaseAgent):
                                 "size": mmap.addr[1] - mmap.addr[0],
                                 "severity": "high",
                                 "type": "executable_heap",
-                            }
+                            },
                         )
 
                 result["buffer_overflows"] = suspicious_regions
@@ -2365,7 +2380,7 @@ class DynamicAnalysisAgent(BaseAgent):
                     avg_growth = (samples[-1] - samples[0]) / len(samples)
                     if avg_growth > 1024 * 1024:  # More than 1MB growth
                         result["memory_leaks"].append(
-                            {"type": "potential_leak", "growth_rate": f"{avg_growth / 1024:.2f} KB/sample", "severity": "medium"}
+                            {"type": "potential_leak", "growth_rate": f"{avg_growth / 1024:.2f} KB/sample", "severity": "medium"},
                         )
 
             except Exception as e:
@@ -2505,7 +2520,7 @@ class DynamicAnalysisAgent(BaseAgent):
 
             script = session.create_script(script_code)
 
-            def on_message(message, data):
+            def on_message(message, data) -> None:
                 if message["type"] == "send":
                     payload = message["payload"]
                     if payload["type"] == "api_call":
@@ -2521,9 +2536,7 @@ class DynamicAnalysisAgent(BaseAgent):
             # Monitor for specified duration
             import time
 
-            start_time = time.time()
-            while time.time() - start_time < duration:
-                await asyncio.sleep(0.1)
+            await asyncio.sleep(duration)
 
             script.unload()
             session.detach()
@@ -2559,7 +2572,7 @@ class DynamicAnalysisAgent(BaseAgent):
                             # Process debug events
                             if debug_event.dwDebugEventCode == 3:  # CREATE_PROCESS_DEBUG_EVENT
                                 api_calls.append(
-                                    {"function": "CreateProcess", "args": [f"PID: {debug_event.dwProcessId}"], "result": "success"}
+                                    {"function": "CreateProcess", "args": [f"PID: {debug_event.dwProcessId}"], "result": "success"},
                                 )
                             elif debug_event.dwDebugEventCode == 6:  # LOAD_DLL_DEBUG_EVENT
                                 api_calls.append({"function": "LoadLibrary", "args": ["DLL loaded"], "result": "success"})
@@ -2590,7 +2603,7 @@ class DynamicAnalysisAgent(BaseAgent):
                                     "function": "connect",
                                     "args": [f"{conn.raddr[0]}:{conn.raddr[1]}"] if conn.raddr else ["unknown"],
                                     "result": "success",
-                                }
+                                },
                             )
 
                         # Monitor file handles
@@ -2621,7 +2634,7 @@ class DynamicAnalysisAgent(BaseAgent):
             except (AttributeError, OSError, ValueError) as e:
                 self.logger.warning(f"Unable to access process {proc.pid}: {e}")
                 suspicious_apis.append(
-                    {"name": "protected_process", "timestamp": time.time(), "args": [f"pid_{proc.pid}"], "result": "access_denied"}
+                    {"name": "protected_process", "timestamp": time.time(), "args": [f"pid_{proc.pid}"], "result": "access_denied"},
                 )
 
         result = {
@@ -2637,7 +2650,7 @@ class DynamicAnalysisAgent(BaseAgent):
 class ReverseEngineeringAgent(BaseAgent):
     """Agent specialized in reverse engineering."""
 
-    def _initialize_capabilities(self):
+    def _initialize_capabilities(self) -> None:
         """Initialize reverse engineering capabilities."""
         self.capabilities = [
             AgentCapability(
@@ -2801,7 +2814,7 @@ class ReverseEngineeringAgent(BaseAgent):
 
             if instruction:
                 assembly_instructions.append(
-                    {"address": hex(addr), "instruction": instruction, "bytes": binary_data[offset : offset + size].hex()}
+                    {"address": hex(addr), "instruction": instruction, "bytes": binary_data[offset : offset + size].hex()},
                 )
 
                 # Detect function start
@@ -2814,7 +2827,7 @@ class ReverseEngineeringAgent(BaseAgent):
                         rel = int.from_bytes(binary_data[offset + 1 : offset + 5], "little", signed=True)
                         target = addr + 5 + rel
                         cross_references.append(
-                            {"from": hex(addr), "to": hex(target), "type": "call" if binary_data[offset] == 0xE8 else "jmp"}
+                            {"from": hex(addr), "to": hex(target), "type": "call" if binary_data[offset] == 0xE8 else "jmp"},
                         )
                 elif binary_data[offset] in [0x74, 0x75]:  # je/jne rel8
                     if offset + 1 < len(binary_data):
@@ -2823,7 +2836,7 @@ class ReverseEngineeringAgent(BaseAgent):
                             rel = rel - 256
                         target = addr + 2 + rel
                         cross_references.append(
-                            {"from": hex(addr), "to": hex(target), "type": "je" if binary_data[offset] == 0x74 else "jne"}
+                            {"from": hex(addr), "to": hex(target), "type": "je" if binary_data[offset] == 0x74 else "jne"},
                         )
 
                 # Mark function end
@@ -2925,8 +2938,11 @@ class ReverseEngineeringAgent(BaseAgent):
             # Try r2dec decompilation
             dec_output = r2.cmd(f"pdd @ {func_addr}")
             if dec_output and dec_output.strip():
-                pseudo_code += f"\n// Function: {func_name}\n"
-                pseudo_code += dec_output + "\n"
+                pseudo_code += f"
+// Function: {func_name}
+"
+                pseudo_code += dec_output + "
+"
 
             # Get function signature
             sig = r2.cmd(f"afcf @ {func_addr}")
@@ -2987,54 +3003,70 @@ class ReverseEngineeringAgent(BaseAgent):
 
         for i, block in enumerate(code_blocks):
             func_name = f"function_{i}"
-            pseudo_code += f"\nint {func_name}() {{\n"
+            pseudo_code += f"
+int {func_name}() {{
+"
 
             indent = "    "
             in_condition = False
 
             for op in block:
                 if op["type"] == "function_start":
-                    pseudo_code += f"{indent}// Function prologue\n"
+                    pseudo_code += f"{indent}// Function prologue
+"
                 elif op["type"] == "comparison":
                     parts = op["inst"].split(",")
                     if len(parts) >= 2:
-                        pseudo_code += f"{indent}if ({parts[0].replace('cmp', '').strip()} == {parts[1].strip()}) {{\n"
+                        pseudo_code += f"{indent}if ({parts[0].replace('cmp', '').strip()} == {parts[1].strip()}) {{
+"
                         in_condition = True
                         indent = "        "
                 elif op["type"] == "conditional_jump":
                     if in_condition:
-                        pseudo_code += f"{indent}// Conditional branch: {op['inst']}\n"
+                        pseudo_code += f"{indent}// Conditional branch: {op['inst']}
+"
                 elif op["type"] == "function_call":
                     target = op["target"]
                     if "strlen" in target.lower():
-                        pseudo_code += f"{indent}len = strlen(str);\n"
+                        pseudo_code += f"{indent}len = strlen(str);
+"
                     elif "strcmp" in target.lower():
-                        pseudo_code += f"{indent}result = strcmp(str1, str2);\n"
+                        pseudo_code += f"{indent}result = strcmp(str1, str2);
+"
                     elif "malloc" in target.lower():
-                        pseudo_code += f"{indent}ptr = malloc(size);\n"
+                        pseudo_code += f"{indent}ptr = malloc(size);
+"
                     elif "free" in target.lower():
-                        pseudo_code += f"{indent}free(ptr);\n"
+                        pseudo_code += f"{indent}free(ptr);
+"
                     else:
-                        pseudo_code += f"{indent}{target}();\n"
+                        pseudo_code += f"{indent}{target}();
+"
                 elif op["type"] == "assignment":
                     parts = op["inst"].split(",")
                     if len(parts) >= 2:
                         dest = parts[0].replace("mov", "").strip()
                         src = parts[1].strip()
-                        pseudo_code += f"{indent}{dest} = {src};\n"
+                        pseudo_code += f"{indent}{dest} = {src};
+"
                 elif op["type"] == "string_op":
-                    pseudo_code += f"{indent}// String operation: {op['inst']}\n"
+                    pseudo_code += f"{indent}// String operation: {op['inst']}
+"
                 elif op["type"] == "return":
                     if in_condition:
                         indent = "    "
-                        pseudo_code += "    }\n"
+                        pseudo_code += "    }
+"
                         in_condition = False
-                    pseudo_code += f"{indent}return result;\n"
+                    pseudo_code += f"{indent}return result;
+"
 
             if in_condition:
-                pseudo_code += "    }\n"
+                pseudo_code += "    }
+"
 
-            pseudo_code += "}\n"
+            pseudo_code += "}
+"
             function_signatures.append({"name": func_name, "parameters": ["void*"], "return_type": "int"})
 
         return pseudo_code, function_signatures
@@ -3091,7 +3123,7 @@ void decrypt_data(unsigned char* data, int len, unsigned char* key) {
     }
 }"""
             function_signatures = [
-                {"name": "decrypt_data", "parameters": ["unsigned char*", "int", "unsigned char*"], "return_type": "void"}
+                {"name": "decrypt_data", "parameters": ["unsigned char*", "int", "unsigned char*"], "return_type": "void"},
             ]
         else:
             pseudo_code = """
@@ -3199,7 +3231,7 @@ int process_data(void* input, int size) {
         for algo, patterns in crypto_patterns.items():
             if any(p in code_lower for p in patterns):
                 cryptographic_functions.append(
-                    {"algorithm": algo.upper(), "implementation": "detected", "confidence": 0.8 if algo != "xor" else 0.95}
+                    {"algorithm": algo.upper(), "implementation": "detected", "confidence": 0.8 if algo != "xor" else 0.95},
                 )
 
         return cryptographic_functions
@@ -3264,7 +3296,8 @@ int process_data(void* input, int size) {
 
         loop_depth = 0
         max_loop_depth = 0
-        for line in code.split("\n"):
+        for line in code.split("
+"):
             if any(keyword in line for keyword in ["for", "while", "do"]):
                 loop_depth += 1
                 max_loop_depth = max(max_loop_depth, loop_depth)
@@ -3355,7 +3388,7 @@ int process_data(void* input, int size) {
 class MultiAgentSystem:
     """Multi-agent collaboration system."""
 
-    def __init__(self, llm_manager: LLMManager | None = None):
+    def __init__(self, llm_manager: LLMManager | None = None) -> None:
         """Initialize the multi-agent collaboration system.
 
         Args:
@@ -3380,7 +3413,7 @@ class MultiAgentSystem:
 
         logger.info("Multi-agent system initialized")
 
-    def add_agent(self, agent: BaseAgent):
+    def add_agent(self, agent: BaseAgent) -> None:
         """Add agent to the system."""
         agent.collaboration_system = self
         self.agents[agent.agent_id] = agent
@@ -3388,7 +3421,7 @@ class MultiAgentSystem:
 
         logger.info(f"Added agent {agent.agent_id} to system")
 
-    def remove_agent(self, agent_id: str):
+    def remove_agent(self, agent_id: str) -> None:
         """Remove agent from system."""
         if agent_id in self.agents:
             agent = self.agents[agent_id]
@@ -3398,7 +3431,7 @@ class MultiAgentSystem:
 
             logger.info(f"Removed agent {agent_id} from system")
 
-    def start(self):
+    def start(self) -> None:
         """Start the multi-agent system."""
         self.active = True
 
@@ -3408,7 +3441,7 @@ class MultiAgentSystem:
 
         logger.info("Multi-agent system started")
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the multi-agent system."""
         self.active = False
 
@@ -3418,7 +3451,7 @@ class MultiAgentSystem:
 
         logger.info("Multi-agent system stopped")
 
-    def route_message(self, message: AgentMessage):
+    def route_message(self, message: AgentMessage) -> None:
         """Route message between agents."""
         self.message_router.route_message(message)
         self.collaboration_stats["messages_sent"] += 1
@@ -3637,7 +3670,7 @@ class MultiAgentSystem:
                         "pattern": pattern,
                         "confirmed_by": confirming_agents,
                         "confidence": len(confirming_agents) / len(results),
-                    }
+                    },
                 )
 
         return validated_findings
@@ -3678,7 +3711,7 @@ class MultiAgentSystem:
         # Use weighted average (could be more sophisticated)
         return sum(confidences) / len(confidences)
 
-    async def _share_collaboration_knowledge(self, task: AgentTask, result: CollaborationResult):
+    async def _share_collaboration_knowledge(self, task: AgentTask, result: CollaborationResult) -> None:
         """Share knowledge gained from collaboration."""
         knowledge = {
             "collaboration_pattern": {
@@ -3718,21 +3751,21 @@ class MultiAgentSystem:
 class MessageRouter:
     """Routes messages between agents."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the message router for agent communication."""
         self.agent_queues: dict[str, Queue] = {}
         self.message_log: deque = deque(maxlen=1000)
 
-    def register_agent(self, agent_id: str, message_queue: Queue):
+    def register_agent(self, agent_id: str, message_queue: Queue) -> None:
         """Register agent message queue."""
         self.agent_queues[agent_id] = message_queue
 
-    def unregister_agent(self, agent_id: str):
+    def unregister_agent(self, agent_id: str) -> None:
         """Unregister agent."""
         if agent_id in self.agent_queues:
             del self.agent_queues[agent_id]
 
-    def route_message(self, message: AgentMessage):
+    def route_message(self, message: AgentMessage) -> None:
         """Route message to target agent."""
         if message.recipient_id in self.agent_queues:
             self.agent_queues[message.recipient_id].put(message)
@@ -3743,7 +3776,7 @@ class MessageRouter:
                     "to": message.recipient_id,
                     "type": message.message_type.value,
                     "message_id": message.message_id,
-                }
+                },
             )
         else:
             logger.warning(f"No route found for agent {message.recipient_id}")
@@ -3752,7 +3785,7 @@ class MessageRouter:
 class TaskDistributor:
     """Distributes tasks among agents."""
 
-    def __init__(self, multi_agent_system: MultiAgentSystem):
+    def __init__(self, multi_agent_system: MultiAgentSystem) -> None:
         """Initialize the task distributor.
 
         Args:
@@ -3844,12 +3877,12 @@ class TaskDistributor:
 class LoadBalancer:
     """Load balancer for agent tasks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the load balancer for distributing tasks among agents."""
         self.agent_loads: dict[str, float] = {}
         self.load_history: deque = deque(maxlen=100)
 
-    def update_agent_load(self, agent_id: str, load: float):
+    def update_agent_load(self, agent_id: str, load: float) -> None:
         """Update agent load."""
         self.agent_loads[agent_id] = load
         self.load_history.append(
@@ -3857,7 +3890,7 @@ class LoadBalancer:
                 "timestamp": datetime.now(),
                 "agent_id": agent_id,
                 "load": load,
-            }
+            },
         )
 
     def get_least_loaded_agent(self, available_agents: list[str]) -> str | None:
@@ -3880,13 +3913,13 @@ class LoadBalancer:
 class KnowledgeManager:
     """Manages shared knowledge between agents."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the knowledge manager for sharing information between agents."""
         self.shared_knowledge: dict[str, dict[str, Any]] = {}
         self.knowledge_graph: dict[str, set[str]] = defaultdict(set)
         self.access_patterns: dict[str, int] = defaultdict(int)
 
-    def store_knowledge(self, category: str, key: str, value: Any, source_agent: str):
+    def store_knowledge(self, category: str, key: str, value: Any, source_agent: str) -> None:
         """Store knowledge from agent."""
         if category not in self.shared_knowledge:
             self.shared_knowledge[category] = {}

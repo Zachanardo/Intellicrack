@@ -42,14 +42,14 @@ class DropZoneWidget(QWidget):
     #: List of file paths (type: list)
     files_dropped = pyqtSignal(list)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize drop zone widget with drag and drop file handling capabilities."""
         super().__init__(parent)
         self.setAcceptDrops(True)
         self.setMinimumHeight(200)
         self._setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the UI."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
@@ -74,7 +74,7 @@ class DropZoneWidget(QWidget):
         self.setMinimumHeight(150)
         self.update_style()
 
-    def update_style(self):
+    def update_style(self) -> None:
         """Update widget style based on state."""
         if self.is_dragging:
             self.setStyleSheet("""
@@ -99,7 +99,7 @@ class DropZoneWidget(QWidget):
             """)
             self.label.setText("Drop files here for analysis")
 
-    def paintEvent(self, event):
+    def paintEvent(self, event) -> None:
         """Customize paint event."""
         super().paintEvent(event)
 
@@ -114,7 +114,7 @@ class DropZoneWidget(QWidget):
             painter.setPen(pen)
             painter.drawRoundedRect(self.rect().adjusted(5, 5, -5, -5), 10, 10)
 
-    def dragEnterEvent(self, event: QDragEnterEvent):
+    def dragEnterEvent(self, event: QDragEnterEvent) -> None:
         """Handle drag enter."""
         if event.mimeData().hasUrls():
             # Check if any files are supported
@@ -126,12 +126,12 @@ class DropZoneWidget(QWidget):
                     return
         event.ignore()
 
-    def dragLeaveEvent(self, event):
+    def dragLeaveEvent(self, event) -> None:
         """Handle drag leave."""
         self.is_dragging = False
         self.update_style()
 
-    def dropEvent(self, event: QDropEvent):
+    def dropEvent(self, event: QDropEvent) -> None:
         """Handle drop."""
         self.is_dragging = False
         self.update_style()

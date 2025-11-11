@@ -46,7 +46,7 @@ from intellicrack.handlers.pyqt6_handler import (
 class ConsoleSyntaxHighlighter(QSyntaxHighlighter):
     """Syntax highlighter for console output."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
 
         # Define highlighting rules
@@ -125,7 +125,7 @@ class ConsoleSyntaxHighlighter(QSyntaxHighlighter):
         self.rules.append((QRegularExpression(r'"[^"]*"'), string_format))
         self.rules.append((QRegularExpression(r"'[^']*'"), string_format))
 
-    def highlightBlock(self, text):
+    def highlightBlock(self, text) -> None:
         """Apply syntax highlighting to a block of text."""
         for pattern, format in self.rules:
             expression = QRegularExpression(pattern)
@@ -141,7 +141,7 @@ class ConsoleWidget(QWidget):
     # Signals
     command_entered = pyqtSignal(str)
 
-    def __init__(self, parent=None, enable_input=False):
+    def __init__(self, parent=None, enable_input=False) -> None:
         """Initialize console widget with input capability, command history, and UI setup."""
         super().__init__(parent)
         self.enable_input = enable_input
@@ -152,7 +152,7 @@ class ConsoleWidget(QWidget):
 
         self.init_ui()
 
-    def init_ui(self):
+    def init_ui(self) -> None:
         """Initialize the user interface."""
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -170,7 +170,7 @@ class ConsoleWidget(QWidget):
                 "Success",
                 "Info",
                 "Debug",
-            ]
+            ],
         )
         self.filter_combo.currentTextChanged.connect(self.apply_filter)
         toolbar_layout.addWidget(self.filter_combo)
@@ -232,7 +232,7 @@ class ConsoleWidget(QWidget):
 
         self.setLayout(layout)
 
-    def append_output(self, text: str, level: str = "INFO"):
+    def append_output(self, text: str, level: str = "INFO") -> None:
         """Append text to the console with optional level prefix."""
         timestamp = datetime.now().strftime("%H:%M:%S")
 
@@ -258,37 +258,37 @@ class ConsoleWidget(QWidget):
             scrollbar = self.output.verticalScrollBar()
             scrollbar.setValue(scrollbar.maximum())
 
-    def append_error(self, text: str):
+    def append_error(self, text: str) -> None:
         """Append error text."""
         self.append_output(text, "ERROR")
 
-    def append_warning(self, text: str):
+    def append_warning(self, text: str) -> None:
         """Append warning text."""
         self.append_output(text, "WARNING")
 
-    def append_success(self, text: str):
+    def append_success(self, text: str) -> None:
         """Append success text."""
         self.append_output(text, "SUCCESS")
 
-    def append_info(self, text: str):
+    def append_info(self, text: str) -> None:
         """Append info text."""
         self.append_output(text, "INFO")
 
-    def append_debug(self, text: str):
+    def append_debug(self, text: str) -> None:
         """Append debug text."""
         self.append_output(text, "DEBUG")
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear the console."""
         self.output.clear()
 
-    def apply_filter(self, filter_text: str):
+    def apply_filter(self, filter_text: str) -> None:
         """Apply log level filter."""
         # This is a simplified version - in production you'd actually filter the display
         if filter_text != "All":
             self.append_output(f"Filter applied: {filter_text}", "INFO")
 
-    def search_text(self, search_term: str):
+    def search_text(self, search_term: str) -> None:
         """Search for text in the console."""
         if not search_term:
             # Clear highlighting
@@ -328,14 +328,14 @@ class ConsoleWidget(QWidget):
             if not found:
                 self.output.setTextCursor(cursor)
 
-    def toggle_wrap(self, state):
+    def toggle_wrap(self, state) -> None:
         """Toggle text wrapping."""
         if state == Qt.Checked:
             self.output.setLineWrapMode(QTextEdit.WidgetWidth)
         else:
             self.output.setLineWrapMode(QTextEdit.NoWrap)
 
-    def export_log(self):
+    def export_log(self) -> None:
         """Export console log to file."""
         from intellicrack.handlers.pyqt6_handler import QFileDialog
 
@@ -355,7 +355,7 @@ class ConsoleWidget(QWidget):
                 self.logger.error("Exception in console_widget: %s", e)
                 self.append_error(f"Failed to export log: {e}")
 
-    def process_command(self):
+    def process_command(self) -> None:
         """Process entered command (if input enabled)."""
         if not hasattr(self, "command_input"):
             return
@@ -407,7 +407,7 @@ class ConsoleWidget(QWidget):
         """Get the console content."""
         return self.output.toPlainText()
 
-    def set_max_lines(self, max_lines: int):
+    def set_max_lines(self, max_lines: int) -> None:
         """Set maximum number of lines to keep."""
         self.max_lines = max_lines
 

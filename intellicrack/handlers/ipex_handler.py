@@ -21,7 +21,7 @@ HAS_IPEX = False
 ipex = None
 
 
-def _preload_critical_dlls(dll_dirs):
+def _preload_critical_dlls(dll_dirs) -> bool | None:
     """Pre-load critical DLLs in the correct dependency order.
 
     This is required for esimd_kernels.dll and unified runtime adapters to load successfully.
@@ -74,7 +74,7 @@ def _preload_critical_dlls(dll_dirs):
         return False
 
 
-def _setup_ipex_dll_paths():
+def _setup_ipex_dll_paths() -> bool | None:
     """Add Intel Extension for PyTorch and Intel oneAPI DLL directories.
 
     This ensures all IPEX DLLs, unified runtime adapters, and Intel runtime DLLs can be found.

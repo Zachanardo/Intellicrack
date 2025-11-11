@@ -82,7 +82,7 @@ class PendingAction:
 class ConfirmationManager:
     """Manages user confirmations for AI actions."""
 
-    def __init__(self, auto_approve_low_risk: bool = False):
+    def __init__(self, auto_approve_low_risk: bool = False) -> None:
         """Initialize confirmation manager with action tracking and approval settings."""
         self.pending_actions: dict[str, PendingAction] = {}
         self.action_history: list[dict[str, Any]] = []
@@ -144,7 +144,7 @@ class ConfirmationManager:
                         "action": action,
                         "approved": True,
                         "timestamp": time.time(),
-                    }
+                    },
                 )
                 return True
 
@@ -154,7 +154,7 @@ class ConfirmationManager:
                     "action": action,
                     "approved": False,
                     "timestamp": time.time(),
-                }
+                },
             )
             return False
 
@@ -189,7 +189,7 @@ class IntellicrackAIInterface:
         "--train-model": "high",
     }
 
-    def __init__(self, confirmation_manager: ConfirmationManager | None = None):
+    def __init__(self, confirmation_manager: ConfirmationManager | None = None) -> None:
         """Initialize Intellicrack AI interface with confirmation management and session handling."""
         self.confirmation_manager = confirmation_manager or ConfirmationManager()
         self.cli_path = os.path.join(script_dir, "main.py")
@@ -260,7 +260,7 @@ class IntellicrackAIInterface:
         return PendingAction(
             action_id=str(uuid.uuid4()),
             action_type=self._determine_action_type(args),
-            command=["python3", self.cli_path] + args,
+            command=["python3", self.cli_path, *args],
             description=description,
             risk_level=self._determine_risk_level(args),
             potential_impacts=self._get_potential_impacts(args),
@@ -295,7 +295,7 @@ class IntellicrackAIInterface:
         try:
             logger.info(f"Executing: {' '.join(action.command)}")
 
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 action.command,
                 check=False,
                 capture_output=True,
@@ -457,7 +457,7 @@ Example workflow:
 """
 
 
-def main():
+def main() -> None:
     """Demonstrate usage and run tests."""
     # Initialize the AI interface
     manager = ConfirmationManager(auto_approve_low_risk=False)

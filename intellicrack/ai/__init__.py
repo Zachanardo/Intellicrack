@@ -20,350 +20,204 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 
-# Set up package logger
 logger = logging.getLogger(__name__)
 logger.debug("AI module loaded")
 
-# Import AI modules with error handling - explicit imports to avoid F403/F405
-try:
-    from .code_analysis_tools import (
-        AIAssistant,
-        CodeAnalyzer,
-        analyze_with_ai,
-        explain_code,
-        get_ai_suggestions,
-    )
-except ImportError as e:
-    logger.warning("Failed to import code_analysis_tools: %s", e)
-    AIAssistant = CodeAnalyzer = analyze_with_ai = None
-    get_ai_suggestions = explain_code = None
-
-# ML predictor removed - using LLM-only approach
-MLVulnerabilityPredictor = VulnerabilityPredictor = ml_predictor = None
-predict_vulnerabilities = train_model = evaluate_model = None
-
-try:
-    from .model_manager_module import (
-        ModelBackend,
-        ModelManager,
-        ONNXBackend,
-        PyTorchBackend,
-        SklearnBackend,
-        TensorFlowBackend,
-        configure_ai_provider,
-        list_available_models,
-        load_model,
-        save_model,
-    )
-except ImportError as e:
-    logger.warning("Failed to import model_manager_module: %s", e)
-    ModelManager = ModelBackend = PyTorchBackend = None
-    TensorFlowBackend = ONNXBackend = SklearnBackend = None
-    load_model = save_model = list_available_models = configure_ai_provider = None
+_lazy_imports = {}
 
 
-try:
-    from .llm_backends import (
-        LLMBackend,
-        LLMConfig,
-        LLMManager,
-        LLMMessage,
-        LLMProvider,
-        LLMResponse,
-        create_anthropic_config,
-        create_gguf_config,
-        create_ollama_config,
-        create_openai_config,
-        get_llm_manager,
-        shutdown_llm_manager,
-    )
-except ImportError as e:
-    logger.warning("Failed to import llm_backends: %s", e)
-    LLMManager = LLMBackend = LLMConfig = LLMProvider = None
-    LLMMessage = LLMResponse = None
-    get_llm_manager = shutdown_llm_manager = None
-    create_openai_config = create_anthropic_config = None
-    create_gguf_config = create_ollama_config = None
+def __getattr__(name):
+    """Lazy load AI module attributes to prevent circular imports."""
+    if name in _lazy_imports:
+        return _lazy_imports[name]
 
-try:
-    from .api_provider_clients import (
-        AnthropicProviderClient,
-        BaseProviderClient,
-        LMStudioProviderClient,
-        LocalProviderClient,
-        ModelInfo,
-        OllamaProviderClient,
-        OpenAIProviderClient,
-        ProviderManager,
-        get_provider_manager,
-    )
-except ImportError as e:
-    logger.warning("Failed to import api_provider_clients: %s", e)
-    BaseProviderClient = OpenAIProviderClient = AnthropicProviderClient = None
-    OllamaProviderClient = LMStudioProviderClient = LocalProviderClient = None
-    ModelInfo = ProviderManager = get_provider_manager = None
+    import_map = {
+        'AIAssistant': ('code_analysis_tools', 'AIAssistant'),
+        'CodeAnalyzer': ('code_analysis_tools', 'CodeAnalyzer'),
+        'analyze_with_ai': ('code_analysis_tools', 'analyze_with_ai'),
+        'explain_code': ('code_analysis_tools', 'explain_code'),
+        'get_ai_suggestions': ('code_analysis_tools', 'get_ai_suggestions'),
+        'ModelBackend': ('model_manager_module', 'ModelBackend'),
+        'ModelManager': ('model_manager_module', 'ModelManager'),
+        'ONNXBackend': ('model_manager_module', 'ONNXBackend'),
+        'PyTorchBackend': ('model_manager_module', 'PyTorchBackend'),
+        'SklearnBackend': ('model_manager_module', 'SklearnBackend'),
+        'TensorFlowBackend': ('model_manager_module', 'TensorFlowBackend'),
+        'configure_ai_provider': ('model_manager_module', 'configure_ai_provider'),
+        'list_available_models': ('model_manager_module', 'list_available_models'),
+        'load_model': ('model_manager_module', 'load_model'),
+        'save_model': ('model_manager_module', 'save_model'),
+        'LLMBackend': ('llm_backends', 'LLMBackend'),
+        'LLMConfig': ('llm_backends', 'LLMConfig'),
+        'LLMManager': ('llm_backends', 'LLMManager'),
+        'LLMMessage': ('llm_backends', 'LLMMessage'),
+        'LLMProvider': ('llm_backends', 'LLMProvider'),
+        'LLMResponse': ('llm_backends', 'LLMResponse'),
+        'create_anthropic_config': ('llm_backends', 'create_anthropic_config'),
+        'create_gguf_config': ('llm_backends', 'create_gguf_config'),
+        'create_ollama_config': ('llm_backends', 'create_ollama_config'),
+        'create_openai_config': ('llm_backends', 'create_openai_config'),
+        'get_llm_manager': ('llm_backends', 'get_llm_manager'),
+        'shutdown_llm_manager': ('llm_backends', 'shutdown_llm_manager'),
+        'AnthropicProviderClient': ('api_provider_clients', 'AnthropicProviderClient'),
+        'BaseProviderClient': ('api_provider_clients', 'BaseProviderClient'),
+        'LMStudioProviderClient': ('api_provider_clients', 'LMStudioProviderClient'),
+        'LocalProviderClient': ('api_provider_clients', 'LocalProviderClient'),
+        'ModelInfo': ('api_provider_clients', 'ModelInfo'),
+        'OllamaProviderClient': ('api_provider_clients', 'OllamaProviderClient'),
+        'OpenAIProviderClient': ('api_provider_clients', 'OpenAIProviderClient'),
+        'ProviderManager': ('api_provider_clients', 'ProviderManager'),
+        'get_provider_manager': ('api_provider_clients', 'get_provider_manager'),
+        'ModelDiscoveryService': ('model_discovery_service', 'ModelDiscoveryService'),
+        'get_model_discovery_service': ('model_discovery_service', 'get_model_discovery_service'),
+        'LLMConfigManager': ('llm_config_manager', 'LLMConfigManager'),
+        'get_llm_config_manager': ('llm_config_manager', 'get_llm_config_manager'),
+        'AIEventBus': ('orchestrator', 'AIEventBus'),
+        'AIOrchestrator': ('orchestrator', 'AIOrchestrator'),
+        'AIResult': ('orchestrator', 'AIResult'),
+        'AISharedContext': ('orchestrator', 'AISharedContext'),
+        'AITask': ('orchestrator', 'AITask'),
+        'AITaskType': ('orchestrator', 'AITaskType'),
+        'AnalysisComplexity': ('orchestrator', 'AnalysisComplexity'),
+        'get_orchestrator': ('orchestrator', 'get_orchestrator'),
+        'shutdown_orchestrator': ('orchestrator', 'shutdown_orchestrator'),
+        'AICoordinationLayer': ('coordination_layer', 'AICoordinationLayer'),
+        'AnalysisRequest': ('coordination_layer', 'AnalysisRequest'),
+        'AnalysisStrategy': ('coordination_layer', 'AnalysisStrategy'),
+        'CoordinatedResult': ('coordination_layer', 'CoordinatedResult'),
+        'comprehensive_analysis': ('coordination_layer', 'comprehensive_analysis'),
+        'quick_vulnerability_scan': ('coordination_layer', 'quick_vulnerability_scan'),
+        'IntellicrackAIAssistant': ('interactive_assistant', 'IntellicrackAIAssistant'),
+        'Tool': ('interactive_assistant', 'Tool'),
+        'ToolCategory': ('interactive_assistant', 'ToolCategory'),
+        'ResponseLineParser': ('parsing_utils', 'ResponseLineParser'),
+        'LicensingProtectionAnalyzer': ('vulnerability_research_integration', 'LicensingProtectionAnalyzer'),
+        'AILearningEngine': ('learning_engine_simple', 'AILearningEngine'),
+        'FailureAnalysis': ('learning_engine_simple', 'FailureAnalysis'),
+        'LearningRecord': ('learning_engine_simple', 'LearningRecord'),
+        'PatternRule': ('learning_engine_simple', 'PatternRule'),
+        'get_learning_engine': ('learning_engine_simple', 'get_learning_engine'),
+        'AgentMessage': ('multi_agent_system', 'AgentMessage'),
+        'AgentRole': ('multi_agent_system', 'AgentRole'),
+        'AgentTask': ('multi_agent_system', 'AgentTask'),
+        'MessageType': ('multi_agent_system', 'MessageType'),
+        'MultiAgentSystem': ('multi_agent_system', 'MultiAgentSystem'),
+        'TaskPriority': ('multi_agent_system', 'TaskPriority'),
+        'AdaptationRule': ('realtime_adaptation_engine', 'AdaptationRule'),
+        'AdaptationType': ('realtime_adaptation_engine', 'AdaptationType'),
+        'RealTimeAdaptationEngine': ('realtime_adaptation_engine', 'RealTimeAdaptationEngine'),
+        'RuntimeMetric': ('realtime_adaptation_engine', 'RuntimeMetric'),
+        'TriggerCondition': ('realtime_adaptation_engine', 'TriggerCondition'),
+        'BusinessLogicPattern': ('semantic_code_analyzer', 'BusinessLogicPattern'),
+        'SemanticCodeAnalyzer': ('semantic_code_analyzer', 'SemanticCodeAnalyzer'),
+        'SemanticIntent': ('semantic_code_analyzer', 'SemanticIntent'),
+        'SemanticNode': ('semantic_code_analyzer', 'SemanticNode'),
+        'SemanticRelationship': ('semantic_code_analyzer', 'SemanticRelationship'),
+        'CacheManager': ('performance_optimization_layer', 'CacheManager'),
+        'OptimizationStrategy': ('performance_optimization_layer', 'OptimizationStrategy'),
+        'ParallelExecutor': ('performance_optimization_layer', 'ParallelExecutor'),
+        'PerformanceOptimizationLayer': ('performance_optimization_layer', 'PerformanceOptimizationLayer'),
+        'PerformanceOptimizer': ('performance_optimization_layer', 'PerformanceOptimizer'),
+        'ResourceManager': ('performance_optimization_layer', 'ResourceManager'),
+        'ResourceType': ('performance_optimization_layer', 'ResourceType'),
+        'performance_optimization_layer': ('performance_optimization_layer', 'performance_optimization_layer'),
+        'AnalyticsEngine': ('visualization_analytics', 'AnalyticsEngine'),
+        'ChartData': ('visualization_analytics', 'ChartData'),
+        'ChartGenerator': ('visualization_analytics', 'ChartGenerator'),
+        'ChartType': ('visualization_analytics', 'ChartType'),
+        'Dashboard': ('visualization_analytics', 'Dashboard'),
+        'DashboardManager': ('visualization_analytics', 'DashboardManager'),
+        'MetricType': ('visualization_analytics', 'MetricType'),
+        'VisualizationAnalytics': ('visualization_analytics', 'VisualizationAnalytics'),
+        'visualization_analytics': ('visualization_analytics', 'visualization_analytics'),
+        'ExecutionTimePredictor': ('predictive_intelligence', 'ExecutionTimePredictor'),
+        'PredictionConfidence': ('predictive_intelligence', 'PredictionConfidence'),
+        'PredictionResult': ('predictive_intelligence', 'PredictionResult'),
+        'PredictionType': ('predictive_intelligence', 'PredictionType'),
+        'PredictiveIntelligenceEngine': ('predictive_intelligence', 'PredictiveIntelligenceEngine'),
+        'SuccessProbabilityPredictor': ('predictive_intelligence', 'SuccessProbabilityPredictor'),
+        'VulnerabilityPredictor': ('predictive_intelligence', 'VulnerabilityPredictor'),
+        'predictive_intelligence': ('predictive_intelligence', 'predictive_intelligence'),
+        'FailureType': ('system_monitor', 'FailureType'),
+        'HealthMonitor': ('system_monitor', 'HealthMonitor'),
+        'HealthStatus': ('system_monitor', 'HealthStatus'),
+        'RecoveryStrategy': ('system_monitor', 'RecoveryStrategy'),
+        'RecoverySystem': ('system_monitor', 'RecoverySystem'),
+        'ResilienceSelfHealingSystem': ('system_monitor', 'ResilienceSelfHealingSystem'),
+        'StateManager': ('system_monitor', 'StateManager'),
+        'resilience_system': ('system_monitor', 'resilience_system'),
+        'AIScriptGenerator': ('ai_script_generator', 'AIScriptGenerator'),
+        'ScriptType': ('ai_script_generator', 'ScriptType'),
+        'AIAgent': ('script_generation_agent', 'AIAgent'),
+        'ChangeStatus': ('intelligent_code_modifier', 'ChangeStatus'),
+        'CodeChange': ('intelligent_code_modifier', 'CodeChange'),
+        'IntelligentCodeModifier': ('intelligent_code_modifier', 'IntelligentCodeModifier'),
+        'ModificationRequest': ('intelligent_code_modifier', 'ModificationRequest'),
+        'ModificationType': ('intelligent_code_modifier', 'ModificationType'),
+        'QEMUManager': ('qemu_manager', 'QEMUManager'),
+        'IntegrationManager': ('integration_manager', 'IntegrationManager'),
+        'IntegrationTask': ('integration_manager', 'IntegrationTask'),
+        'WorkflowResult': ('integration_manager', 'WorkflowResult'),
+        'PerformanceMetric': ('performance_monitor', 'PerformanceMetric'),
+        'PerformanceMonitor': ('performance_monitor', 'PerformanceMonitor'),
+        'PerformanceProfile': ('performance_monitor', 'PerformanceProfile'),
+        'monitor_memory_usage': ('performance_monitor', 'monitor_memory_usage'),
+        'performance_monitor': ('performance_monitor', 'performance_monitor'),
+        'profile_ai_operation': ('performance_monitor', 'profile_ai_operation'),
+        'OptimizationManager': ('optimization_config', 'OptimizationManager'),
+        'OptimizationRule': ('optimization_config', 'OptimizationRule'),
+        'PerformanceConfig': ('optimization_config', 'PerformanceConfig'),
+        'benchmark_ai_optimizations': ('optimization_config', 'benchmark_ai_optimizations'),
+        'get_performance_recommendations': ('optimization_config', 'get_performance_recommendations'),
+        'optimization_manager': ('optimization_config', 'optimization_manager'),
+        'optimize_ai_performance': ('optimization_config', 'optimize_ai_performance'),
+    }
 
-try:
-    from .model_discovery_service import ModelDiscoveryService, get_model_discovery_service
-except ImportError as e:
-    logger.warning("Failed to import model_discovery_service: %s", e)
-    ModelDiscoveryService = get_model_discovery_service = None
+    special_cases = {
+        'QemuTestManager': ('qemu_manager', 'QEMUManager'),
+        'learning_engine': ('learning_engine_simple', 'get_learning_engine'),
+    }
 
-try:
-    from .llm_config_manager import LLMConfigManager, get_llm_config_manager
-except ImportError as e:
-    logger.warning("Failed to import llm_config_manager: %s", e)
-    LLMConfigManager = get_llm_config_manager = None
+    if name in {'MLVulnerabilityPredictor', 'VulnerabilityPredictor'}:
+        _lazy_imports[name] = None
+        return None
+    if name in ('ml_predictor', 'predict_vulnerabilities', 'train_model', 'evaluate_model'):
+        _lazy_imports[name] = None
+        return None
 
-try:
-    from .orchestrator import (
-        AIEventBus,
-        AIOrchestrator,
-        AIResult,
-        AISharedContext,
-        AITask,
-        AITaskType,
-        AnalysisComplexity,
-        get_orchestrator,
-        shutdown_orchestrator,
-    )
-except ImportError as e:
-    logger.warning("Failed to import orchestrator: %s", e)
-    AIOrchestrator = AISharedContext = AIEventBus = AITask = AIResult = None
-    AITaskType = AnalysisComplexity = get_orchestrator = shutdown_orchestrator = None
+    if name in special_cases:
+        module_name, attr_name = special_cases[name]
+        try:
+            module = __import__(f'{__name__}.{module_name}', fromlist=[attr_name])
+            result = getattr(module, attr_name)
+            _lazy_imports[name] = result
+            return result
+        except (ImportError, AttributeError) as e:
+            logger.warning(f"Failed to import {name} from {module_name}: {e}")
+            _lazy_imports[name] = None
+            return None
 
-try:
-    from .coordination_layer import (
-        AICoordinationLayer,
-        AnalysisRequest,
-        AnalysisStrategy,
-        CoordinatedResult,
-        comprehensive_analysis,
-        quick_vulnerability_scan,
-    )
-except ImportError as e:
-    logger.warning("Failed to import coordination_layer: %s", e)
-    CoordinatedResult = quick_vulnerability_scan = comprehensive_analysis = None
+    if name in import_map:
+        module_name, attr_name = import_map[name]
+        try:
+            module = __import__(f'{__name__}.{module_name}', fromlist=[attr_name])
+            result = getattr(module, attr_name)
+            _lazy_imports[name] = result
+            return result
+        except (ImportError, AttributeError) as e:
+            logger.warning(f"Failed to import {name} from {module_name}: {e}")
+            _lazy_imports[name] = None
+            return None
 
-try:
-    from .interactive_assistant import IntellicrackAIAssistant, Tool, ToolCategory
-except ImportError as e:
-    logger.warning("Failed to import interactive_assistant: %s", e)
-    IntellicrackAIAssistant = Tool = ToolCategory = None
-
-try:
-    from .parsing_utils import ResponseLineParser
-except ImportError as e:
-    logger.warning("Failed to import parsing_utils: %s", e)
-    ResponseLineParser = None
-
-# Import licensing protection analysis AI modules
-try:
-    from .vulnerability_research_integration import LicensingProtectionAnalyzer
-except ImportError as e:
-    logger.warning("Failed to import vulnerability_research_integration: %s", e)
-    LicensingProtectionAnalyzer = None
-
-# Import advanced AI system components
-try:
-    from .learning_engine_simple import (
-        AILearningEngine,
-        FailureAnalysis,
-        LearningRecord,
-        PatternRule,
-        get_learning_engine,
-    )
-except ImportError as e:
-    logger.warning("Failed to import learning_engine: %s", e)
-    AILearningEngine = LearningRecord = PatternRule = FailureAnalysis = learning_engine = None
-
-try:
-    from .multi_agent_system import (
-        AgentMessage,
-        AgentRole,
-        AgentTask,
-        MessageType,
-        MultiAgentSystem,
-        TaskPriority,
-    )
-except ImportError as e:
-    logger.warning("Failed to import multi_agent_system: %s", e)
-    MultiAgentSystem = AgentRole = AgentMessage = AgentTask = TaskPriority = MessageType = None
-
-try:
-    from .realtime_adaptation_engine import (
-        AdaptationRule,
-        AdaptationType,
-        RealTimeAdaptationEngine,
-        RuntimeMetric,
-        TriggerCondition,
-    )
-except ImportError as e:
-    logger.warning("Failed to import realtime_adaptation_engine: %s", e)
-    RealTimeAdaptationEngine = AdaptationType = TriggerCondition = None
-    AdaptationRule = RuntimeMetric = None
-
-try:
-    from .semantic_code_analyzer import (
-        BusinessLogicPattern,
-        SemanticCodeAnalyzer,
-        SemanticIntent,
-        SemanticNode,
-        SemanticRelationship,
-    )
-except ImportError as e:
-    logger.warning("Failed to import semantic_code_analyzer: %s", e)
-    SemanticCodeAnalyzer = SemanticIntent = BusinessLogicPattern = None
-    SemanticNode = SemanticRelationship = None
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
-try:
-    from .performance_optimization_layer import (
-        CacheManager,
-        OptimizationStrategy,
-        ParallelExecutor,
-        PerformanceOptimizationLayer,
-        PerformanceOptimizer,
-        ResourceManager,
-        ResourceType,
-        performance_optimization_layer,
-    )
-except ImportError as e:
-    logger.warning("Failed to import performance_optimization_layer: %s", e)
-    PerformanceOptimizationLayer = PerformanceOptimizer = None
-    ResourceManager = ParallelExecutor = CacheManager = None
-    OptimizationStrategy = ResourceType = performance_optimization_layer = None
-
-try:
-    from .visualization_analytics import (
-        AnalyticsEngine,
-        ChartData,
-        ChartGenerator,
-        ChartType,
-        Dashboard,
-        DashboardManager,
-        MetricType,
-        VisualizationAnalytics,
-        visualization_analytics,
-    )
-except ImportError as e:
-    logger.warning("Failed to import visualization_analytics: %s", e)
-    VisualizationAnalytics = DashboardManager = ChartGenerator = AnalyticsEngine = None
-    ChartType = MetricType = Dashboard = ChartData = visualization_analytics = None
-
-try:
-    from .predictive_intelligence import (
-        ExecutionTimePredictor,
-        PredictionConfidence,
-        PredictionResult,
-        PredictionType,
-        PredictiveIntelligenceEngine,
-        SuccessProbabilityPredictor,
-        VulnerabilityPredictor,
-        predictive_intelligence,
-    )
-except ImportError as e:
-    logger.warning("Failed to import predictive_intelligence: %s", e)
-    PredictiveIntelligenceEngine = SuccessProbabilityPredictor = None
-    ExecutionTimePredictor = VulnerabilityPredictor = None
-    PredictionType = PredictionConfidence = PredictionResult = predictive_intelligence = None
-
-try:
-    from .system_monitor import (
-        FailureType,
-        HealthMonitor,
-        HealthStatus,
-        RecoveryStrategy,
-        RecoverySystem,
-        ResilienceSelfHealingSystem,
-        StateManager,
-        resilience_system,
-    )
-except ImportError as e:
-    logger.warning("Failed to import system_monitor: %s", e)
-    ResilienceSelfHealingSystem = HealthMonitor = RecoverySystem = StateManager = None
-    FailureType = RecoveryStrategy = HealthStatus = resilience_system = None
-
-# Import AI script generation system components
-try:
-    from .ai_script_generator import AIScriptGenerator, ScriptType
-except ImportError as e:
-    logger.warning("Failed to import ai_script_generator: %s", e)
-    AIScriptGenerator = ScriptType = None
-
-try:
-    from .script_generation_agent import AIAgent
-except ImportError as e:
-    logger.warning("Failed to import script_generation_agent: %s", e)
-    AIAgent = None
-
-try:
-    from .intelligent_code_modifier import (
-        ChangeStatus,
-        CodeChange,
-        IntelligentCodeModifier,
-        ModificationRequest,
-        ModificationType,
-    )
-except ImportError as e:
-    logger.warning("Failed to import intelligent_code_modifier: %s", e)
-    IntelligentCodeModifier = CodeChange = ModificationRequest = None
-    ModificationType = ChangeStatus = None
-
-try:
-    from .qemu_manager import QEMUManager
-
-    QemuTestManager = QEMUManager  # For backward compatibility
-except ImportError as e:
-    logger.warning("Failed to import qemu_manager: %s", e)
-    QemuTestManager = QEMUManager = None
-
-try:
-    from .integration_manager import IntegrationManager, IntegrationTask, WorkflowResult
-except ImportError as e:
-    logger.warning("Failed to import integration_manager: %s", e)
-    IntegrationManager = IntegrationTask = WorkflowResult = None
-
-try:
-    from .performance_monitor import (
-        PerformanceMetric,
-        PerformanceMonitor,
-        PerformanceProfile,
-        monitor_memory_usage,
-        performance_monitor,
-        profile_ai_operation,
-    )
-except ImportError as e:
-    logger.warning("Failed to import performance_monitor: %s", e)
-    PerformanceMonitor = PerformanceMetric = PerformanceProfile = None
-    performance_monitor = profile_ai_operation = monitor_memory_usage = None
-
-try:
-    from .optimization_config import (
-        OptimizationManager,
-        OptimizationRule,
-        PerformanceConfig,
-        benchmark_ai_optimizations,
-        get_performance_recommendations,
-        optimization_manager,
-        optimize_ai_performance,
-    )
-except ImportError as e:
-    logger.warning("Failed to import optimization_config: %s", e)
-    OptimizationManager = OptimizationRule = PerformanceConfig = None
-    optimization_manager = optimize_ai_performance = None
-    get_performance_recommendations = benchmark_ai_optimizations = None
-
-# Define package exports
 __all__ = [
-    # From code_analysis_tools
     "AIAssistant",
     "CodeAnalyzer",
     "analyze_with_ai",
     "get_ai_suggestions",
     "explain_code",
-    # ML predictor removed - using LLM-only approach
-    # From model_manager_module
     "ModelManager",
     "ModelBackend",
     "ONNXBackend",
@@ -374,7 +228,6 @@ __all__ = [
     "save_model",
     "list_available_models",
     "configure_ai_provider",
-    # From orchestrator (Agentic AI System)
     "AIOrchestrator",
     "AISharedContext",
     "AIEventBus",
@@ -384,20 +237,16 @@ __all__ = [
     "AnalysisComplexity",
     "get_orchestrator",
     "shutdown_orchestrator",
-    # From coordination_layer (Intelligent Coordination)
     "AICoordinationLayer",
     "AnalysisRequest",
     "CoordinatedResult",
     "AnalysisStrategy",
     "quick_vulnerability_scan",
     "comprehensive_analysis",
-    # From interactive_assistant
     "IntellicrackAIAssistant",
     "Tool",
     "ToolCategory",
-    # From licensing protection analysis modules
     "LicensingProtectionAnalyzer",
-    # From advanced AI system components
     "AILearningEngine",
     "LearningRecord",
     "PatternRule",
@@ -419,7 +268,6 @@ __all__ = [
     "BusinessLogicPattern",
     "SemanticNode",
     "SemanticRelationship",
-    # From AI script generation system
     "AIScriptGenerator",
     "ScriptType",
     "AIAgent",
@@ -445,7 +293,6 @@ __all__ = [
     "optimize_ai_performance",
     "get_performance_recommendations",
     "benchmark_ai_optimizations",
-    # From llm_backends (GGUF and API Support)
     "LLMManager",
     "LLMBackend",
     "LLMConfig",
@@ -458,7 +305,6 @@ __all__ = [
     "create_anthropic_config",
     "create_gguf_config",
     "create_ollama_config",
-    # From api_provider_clients (Dynamic Model Discovery)
     "BaseProviderClient",
     "OpenAIProviderClient",
     "AnthropicProviderClient",
@@ -468,16 +314,12 @@ __all__ = [
     "ModelInfo",
     "ProviderManager",
     "get_provider_manager",
-    # From model_discovery_service
     "ModelDiscoveryService",
     "get_model_discovery_service",
-    # From llm_config_manager
     "LLMConfigManager",
     "get_llm_config_manager",
-    # From parsing_utils
     "ResponseLineParser",
 ]
 
-# Package metadata
 __version__ = "0.1.0"
 __author__ = "Intellicrack Development Team"

@@ -49,7 +49,7 @@ logger = get_logger(__name__)
 class GPUAccelerationManager:
     """Manages GPU acceleration for analysis operations using unified GPU autoloader."""
 
-    def __init__(self, use_intel_pytorch: bool = True, prefer_intel: bool = True):
+    def __init__(self, use_intel_pytorch: bool = True, prefer_intel: bool = True) -> None:
         """Initialize GPU acceleration manager.
 
         Args:
@@ -109,7 +109,7 @@ class GPUAccelerationManager:
             return "pyopencl"
         return None
 
-    def _init_opencl(self):
+    def _init_opencl(self) -> None:
         """Initialize OpenCL context if needed."""
         try:
             # Look for the best GPU device
@@ -382,7 +382,7 @@ class GPUAccelerator(GPUAccelerationManager):
     Now inherits from GPUAccelerationManager and uses the unified GPU system.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the GPU accelerator using the new unified system."""
         super().__init__(use_intel_pytorch=True, prefer_intel=True)
 
@@ -441,13 +441,13 @@ class GPUAccelerator(GPUAccelerationManager):
             return "AMD"
         return "Unknown"
 
-    def _check_available_backends(self):
+    def _check_available_backends(self) -> None:
         """Legacy method for compatibility."""
 
-    def _select_preferred_backend(self):
+    def _select_preferred_backend(self) -> None:
         """Legacy method for compatibility."""
 
-    def _run_initial_benchmarks(self):
+    def _run_initial_benchmarks(self) -> None:
         """Legacy method for compatibility."""
 
 

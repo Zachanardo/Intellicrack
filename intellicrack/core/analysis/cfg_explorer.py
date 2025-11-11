@@ -114,7 +114,7 @@ except ImportError as e:
         class DiGraph:
             """Directed graph implementation with NetworkX-compatible interface."""
 
-            def __init__(self, data=None):
+            def __init__(self, data=None) -> None:
                 """Initialize directed graph."""
                 self._nodes = {}
                 self._edges = {}
@@ -123,13 +123,13 @@ except ImportError as e:
                 if data:
                     self.update(data)
 
-            def add_node(self, node, **attrs):
+            def add_node(self, node, **attrs) -> None:
                 """Add node to graph with optional attributes."""
                 self._nodes[node] = True
                 if attrs:
                     self._node_attrs[node] = attrs
 
-            def add_edge(self, u, v, **attrs):
+            def add_edge(self, u, v, **attrs) -> None:
                 """Add edge to graph with optional attributes."""
                 if u not in self._nodes:
                     self.add_node(u)
@@ -249,7 +249,7 @@ except ImportError as e:
             on_stack = {}
             components = []
 
-            def _strongconnect(node):
+            def _strongconnect(node) -> None:
                 index[node] = index_counter[0]
                 lowlinks[node] = index_counter[0]
                 index_counter[0] += 1
@@ -290,7 +290,7 @@ except ImportError as e:
             {node: i for i, node in enumerate(nodes)}
 
             # Initialize PageRank values
-            pr = {node: 1.0 / n for node in nodes}
+            pr = dict.fromkeys(nodes, 1.0 / n)
 
             for _ in range(max_iter):
                 new_pr = {}
@@ -318,16 +318,16 @@ except ImportError as e:
         def betweenness_centrality(graph):
             """Calculate betweenness centrality."""
             nodes = list(graph.nodes())
-            centrality = {node: 0.0 for node in nodes}
+            centrality = dict.fromkeys(nodes, 0.0)
 
             for source in nodes:
                 # Single source shortest paths using BFS
                 stack = []
                 paths = {node: [] for node in nodes}
                 paths[source] = [source]
-                sigma = {node: 0 for node in nodes}
+                sigma = dict.fromkeys(nodes, 0)
                 sigma[source] = 1
-                distances = {node: -1 for node in nodes}
+                distances = dict.fromkeys(nodes, -1)
                 distances[source] = 0
 
                 queue = [source]
@@ -345,7 +345,7 @@ except ImportError as e:
                             paths[neighbor].extend(paths[node])
 
                 # Accumulation
-                delta = {node: 0 for node in nodes}
+                delta = dict.fromkeys(nodes, 0)
                 while stack:
                     node = stack.pop()
                     for pred in graph.predecessors(node):
@@ -476,12 +476,11 @@ except ImportError as e:
             return positions
 
         @staticmethod
-        def draw_networkx(graph, pos=None, ax=None, **kwargs):
+        def draw_networkx(graph, pos=None, ax=None, **kwargs) -> None:
             """Draw graph with basic functionality."""
             # This would require matplotlib integration
             # For now, just log the drawing request
             logger.info(f"Drawing graph with {graph.number_of_nodes()} nodes and {graph.number_of_edges()} edges")
-            return None
 
         class Drawing:
             """Drawing submodule."""
@@ -490,7 +489,7 @@ except ImportError as e:
                 """PyDot interface for NetworkX compatibility."""
 
                 @staticmethod
-                def write_dot(graph, path):
+                def write_dot(graph, path) -> None:
                     """Write graph in DOT format."""
                     with open(path, "w", encoding="utf-8") as f:
                         f.write("digraph G {\n")
@@ -590,7 +589,7 @@ class CFGExplorer:
     - Multi-layer graph visualization
     """
 
-    def __init__(self, binary_path: str | None = None, radare2_path: str | None = None):
+    def __init__(self, binary_path: str | None = None, radare2_path: str | None = None) -> None:
         """Initialize the enhanced CFG explorer."""
         self.binary_path = binary_path
         self.radare2_path = radare2_path
@@ -987,7 +986,7 @@ class CFGExplorer:
                 {
                     "name": func_name,
                     "address": f"0x{func_data['addr']:x}",
-                }
+                },
             )
         return function_list
 
@@ -1100,7 +1099,7 @@ class CFGExplorer:
                         "x": float(layout[_node][0]) if _node in layout else 0.0,
                         "y": float(layout[_node][1]) if _node in layout else 0.0,
                         "size": node_data.get("size", 0),
-                    }
+                    },
                 )
 
         # Prepare edges
@@ -1111,7 +1110,7 @@ class CFGExplorer:
                     {
                         "source": source,
                         "target": target,
-                    }
+                    },
                 )
 
         return {
@@ -1212,7 +1211,7 @@ class CFGExplorer:
                                 "address": hex(node),
                                 "instruction": op.get("disasm", ""),
                                 "type": "unsafe_string_function",
-                            }
+                            },
                         )
 
                     # Format string patterns
@@ -1223,7 +1222,7 @@ class CFGExplorer:
                                 "address": hex(node),
                                 "instruction": op.get("disasm", ""),
                                 "type": "printf_without_format",
-                            }
+                            },
                         )
 
                     # License bypass opportunities
@@ -1234,7 +1233,7 @@ class CFGExplorer:
                                 "address": hex(node),
                                 "license_operations": node_data.get("license_operations", 0),
                                 "block_type": node_data.get("block_type", "unknown"),
-                            }
+                            },
                         )
 
         return patterns
@@ -1257,7 +1256,7 @@ class CFGExplorer:
                     "validation_mechanisms": license_cache.get("validation_mechanisms", []),
                     "bypass_opportunities": license_cache.get("bypass_opportunities", []),
                     "analysis_confidence": license_cache.get("analysis_confidence", 0.0),
-                }
+                },
             )
 
         # Enhance with CFG-specific analysis
@@ -1278,7 +1277,7 @@ class CFGExplorer:
                         "license_score": license_score,
                         "complexity": func_data.get("complexity", 1),
                         "size": func_data.get("size", 0),
-                    }
+                    },
                 )
 
         analysis["cfg_license_functions"] = license_related_functions
@@ -1323,7 +1322,7 @@ class CFGExplorer:
                         "function": func_name,
                         "score": func_complexity["combined_score"],
                         "metrics": func_complexity,
-                    }
+                    },
                 )
 
         # Calculate overall metrics
@@ -1444,7 +1443,7 @@ class CFGExplorer:
                             "op_addr": _op["offset"],
                             "disasm": _op["disasm"],
                             "type": "license_keyword",
-                        }
+                        },
                     )
 
                 # Check for comparison followed by conditional jump
@@ -1455,7 +1454,7 @@ class CFGExplorer:
                             "op_addr": _op["offset"],
                             "disasm": _op["disasm"],
                             "type": "conditional_check",
-                        }
+                        },
                     )
 
         return license_patterns
@@ -2109,7 +2108,7 @@ class CFGExplorer:
                             "address": node_data.get("addr", 0),
                             "size": node_data.get("size", 0),
                             "complexity": node_data.get("complexity", 1),
-                        }
+                        },
                     )
 
                 # Export call graph edges
@@ -2121,7 +2120,7 @@ class CFGExplorer:
                             "type": edge_data.get("type", "function_call"),
                             "from_addr": edge_data.get("from_addr", ""),
                             "to_addr": edge_data.get("to_addr", ""),
-                        }
+                        },
                     )
 
                 export_data["call_graph"] = call_graph_export
@@ -2184,7 +2183,7 @@ class CFGExplorer:
             return False
 
 
-def run_deep_cfg_analysis(app):
+def run_deep_cfg_analysis(app) -> None:
     """Run deep CFG analysis."""
     if not app.binary_path:
         app.update_output.emit(log_message("[CFG Analysis] No binary selected."))
@@ -2321,7 +2320,7 @@ def run_deep_cfg_analysis(app):
                 if SUBPROCESS_AVAILABLE:
                     dot_path = shutil.which("dot")
                     if dot_path:
-                        subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                        subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                             [dot_path, "-Tsvg", "-o", "license_cfg.svg", "license_cfg.dot"],
                             check=False,
                             shell=False,  # Explicitly secure - using list format prevents shell injection
@@ -2342,7 +2341,7 @@ def run_deep_cfg_analysis(app):
         app.analyze_status.setText(f"CFG analysis error: {e!s}")
 
 
-def run_cfg_explorer(app):
+def run_cfg_explorer(app) -> None:
     """Initialize and run the CFG explorer with GUI integration."""
     if not PYQT_AVAILABLE:
         print("PyQt6 not available - cannot run GUI version")
@@ -2403,7 +2402,7 @@ def run_cfg_explorer(app):
 
             if license_patterns:
                 app.update_output.emit(
-                    log_message(f"[CFG Explorer] Found {len(license_patterns)} potential license check patterns in {function_name}")
+                    log_message(f"[CFG Explorer] Found {len(license_patterns)} potential license check patterns in {function_name}"),
                 )
 
                 # Display patterns
@@ -2411,7 +2410,7 @@ def run_cfg_explorer(app):
                     app.update_output.emit(
                         log_message(
                             f"[CFG Explorer] {_pattern['type']} at 0x{_pattern['op_addr']:x}: {_pattern['disasm']}",
-                        )
+                        ),
                     )
 
             else:

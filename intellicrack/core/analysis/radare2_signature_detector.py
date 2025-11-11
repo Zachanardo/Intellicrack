@@ -79,7 +79,7 @@ class LibraryInfo:
 class Radare2SignatureDetector:
     """Advanced signature-based detection using Radare2."""
 
-    def __init__(self, binary_path: str):
+    def __init__(self, binary_path: str) -> None:
         """Initialize the Radare2SignatureDetector with a binary file path.
 
         Args:
@@ -547,7 +547,7 @@ rule CryptoAPI_Usage {
                 # Validate binary_path to prevent command injection
                 binary_path_clean = str(self.binary_path).replace(";", "").replace("|", "").replace("&", "")
                 result = subprocess.run(
-                    ["clamscan", "--no-summary", "--infected", binary_path_clean], capture_output=True, text=True, shell=False
+                    ["clamscan", "--no-summary", "--infected", binary_path_clean], capture_output=True, text=True, shell=False,
                 )
 
                 # Parse output
@@ -740,7 +740,7 @@ rule CryptoAPI_Usage {
             for count in byte_counts.values():
                 if count > 0:
                     probability = count / total
-                    entropy -= probability * (probability and probability * 2.0 or 0)
+                    entropy -= probability * ((probability and probability * 2.0) or 0)
 
             return entropy * 3.32193  # Convert to bits
 
@@ -890,7 +890,7 @@ rule CryptoAPI_Usage {
                     match = re.search(pattern, text, re.IGNORECASE)
                     if match:
                         lib_info = LibraryInfo(
-                            name=lib_name, version=match.group(1), functions=[], imports=[], metadata={"detected_from": "strings"}
+                            name=lib_name, version=match.group(1), functions=[], imports=[], metadata={"detected_from": "strings"},
                         )
                         libraries.append(lib_info)
 
@@ -976,7 +976,7 @@ rule CryptoAPI_Usage {
         ]
         if protection_matches:
             report.append("Protection/Packer Detected: YES")
-            report.append(f"Protection Types: {', '.join(set(m.name for m in protection_matches))}")
+            report.append(f"Protection Types: {', '.join({m.name for m in protection_matches})}")
         else:
             report.append("Protection/Packer Detected: NO")
 
@@ -997,7 +997,7 @@ rule CryptoAPI_Usage {
                             "size": match.size,
                             "confidence": match.confidence,
                             "metadata": match.metadata,
-                        }
+                        },
                     )
 
                 with open(output_file, "w") as f:
@@ -1020,14 +1020,14 @@ rule CryptoAPI_Usage {
             logger.error(f"Failed to export signatures: {e}")
             return False
 
-    def close(self):
+    def close(self) -> None:
         """Close Radare2 session."""
         if self.r2:
             self.r2.quit()
             self.r2 = None
 
 
-def main():
+def main() -> None:
     """Demonstrate usage of signature detector."""
     import argparse
 

@@ -1193,7 +1193,8 @@ public class ModernPackerDetector extends GhidraScript {
       return cfgScores;
     }
 
-    private Map<String, Double> performInstructionPatternAnalysis(Program program) throws Exception {
+    private Map<String, Double> performInstructionPatternAnalysis(Program program)
+        throws Exception {
       Map<String, Double> patternScores = new HashMap<>();
       Listing listing = program.getListing();
       InstructionIterator instructions = listing.getInstructions(true);
@@ -1211,7 +1212,7 @@ public class ModernPackerDetector extends GhidraScript {
       for (Map.Entry<String, Double> weightEntry : instructionPatternWeights.entrySet()) {
         String patternType = weightEntry.getKey();
         double weight = weightEntry.getValue();
-        
+
         double score = calculatePatternScore(instrList, patternType);
         patternScores.put(patternType, score * weight);
       }
@@ -1219,35 +1220,36 @@ public class ModernPackerDetector extends GhidraScript {
       return patternScores;
     }
 
-    private void calculateSuspicionScores(Program program, Map<Address, Double> anomalyScores, 
-                                         Map<String, Double> patternScores) throws Exception {
+    private void calculateSuspicionScores(
+        Program program, Map<Address, Double> anomalyScores, Map<String, Double> patternScores)
+        throws Exception {
       Memory memory = program.getMemory();
-      
+
       // Calculate base suspicion scores for all executable addresses
       for (MemoryBlock block : memory.getBlocks()) {
         if (block.isExecute()) {
           Address current = block.getStart();
           while (current != null && current.compareTo(block.getEnd()) <= 0) {
             double suspicion = 0.0;
-            
+
             // Factor in anomaly scores
             if (anomalyScores.containsKey(current)) {
               suspicion += anomalyScores.get(current) * 0.4;
             }
-            
+
             // Factor in pattern analysis
             for (double patternScore : patternScores.values()) {
               suspicion += patternScore * 0.3;
             }
-            
+
             // Add entropy-based suspicion
             double localEntropy = calculateLocalEntropy(memory, current);
             suspicion += localEntropy * 0.3;
-            
+
             if (suspicion > 0.5) {
               suspicionScores.put(current, Math.min(suspicion, 1.0));
             }
-            
+
             current = current.next();
             if (current == null) break;
           }
@@ -1257,24 +1259,25 @@ public class ModernPackerDetector extends GhidraScript {
 
     private List<PackerDetection> generateSuspicionBasedDetections() {
       List<PackerDetection> detections = new ArrayList<>();
-      
+
       if (suspicionScores.isEmpty()) return detections;
-      
+
       // Find high suspicion clusters
-      double averageSuspicion = suspicionScores.values().stream()
-          .mapToDouble(Double::doubleValue).average().orElse(0.0);
-          
-      long highSuspicionCount = suspicionScores.values().stream()
-          .mapToLong(score -> score > 0.8 ? 1 : 0).sum();
-          
+      double averageSuspicion =
+          suspicionScores.values().stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+
+      long highSuspicionCount =
+          suspicionScores.values().stream().mapToLong(score -> score > 0.8 ? 1 : 0).sum();
+
       if (highSuspicionCount > 50) {
-        detections.add(new PackerDetection(
-            "High Suspicion Density",
-            "Multiple addresses show high suspicion scores indicating potential packing",
-            averageSuspicion,
-            "High suspicion addresses: " + highSuspicionCount));
+        detections.add(
+            new PackerDetection(
+                "High Suspicion Density",
+                "Multiple addresses show high suspicion scores indicating potential packing",
+                averageSuspicion,
+                "High suspicion addresses: " + highSuspicionCount));
       }
-      
+
       return detections;
     }
 
@@ -1298,13 +1301,13 @@ public class ModernPackerDetector extends GhidraScript {
     private double analyzeCallSequences(List<Instruction> instructions) {
       int callCount = 0;
       int totalInstructions = instructions.size();
-      
+
       for (Instruction instr : instructions) {
         if (instr.getMnemonicString().toLowerCase().startsWith("call")) {
           callCount++;
         }
       }
-      
+
       return totalInstructions > 0 ? (double) callCount / totalInstructions : 0.0;
     }
 
@@ -1362,20 +1365,20 @@ public class ModernPackerDetector extends GhidraScript {
       try {
         byte[] bytes = new byte[32];
         int bytesRead = memory.getBytes(address, bytes);
-        
+
         if (bytesRead < 8) return 0.0;
-        
+
         Map<Byte, Integer> freqMap = new HashMap<>();
         for (int i = 0; i < bytesRead; i++) {
           freqMap.put(bytes[i], freqMap.getOrDefault(bytes[i], 0) + 1);
         }
-        
+
         double entropy = 0.0;
         for (int freq : freqMap.values()) {
           double prob = (double) freq / bytesRead;
           entropy -= prob * Math.log(prob) / Math.log(2);
         }
-        
+
         return entropy / 8.0; // Normalize to 0-1 range
       } catch (Exception e) {
         return 0.0;
@@ -1826,7 +1829,7 @@ public class ModernPackerDetector extends GhidraScript {
 
     public List<PackerDetection> detectObfuscationTechniques(Program program) throws Exception {
       List<PackerDetection> detections = new ArrayList<>();
-      
+
       // Initialize obfuscation scoring system
       initializeObfuscationScores();
       detectedTechniques.clear();
@@ -1932,7 +1935,7 @@ public class ModernPackerDetector extends GhidraScript {
 
       // Generate comprehensive obfuscation report
       generateObfuscationAnalysisReport();
-      
+
       return detections;
     }
 
@@ -1952,28 +1955,28 @@ public class ModernPackerDetector extends GhidraScript {
     private double calculateControlFlowFlatteningScore(Program program) throws Exception {
       FunctionManager funcManager = program.getFunctionManager();
       FunctionIterator functions = funcManager.getFunctions(true);
-      
+
       double totalComplexity = 0.0;
       int functionCount = 0;
       int flattenedCount = 0;
-      
+
       while (functions.hasNext()) {
         Function func = functions.next();
         int complexity = calculateCyclomaticComplexity(func);
         totalComplexity += complexity;
         functionCount++;
-        
+
         // Look for flattening patterns (high complexity with dispatcher patterns)
         if (complexity > 20 && hasDispatcherPattern(func)) {
           flattenedCount++;
         }
       }
-      
+
       if (functionCount == 0) return 0.0;
-      
+
       double avgComplexity = totalComplexity / functionCount;
       double flatteningRatio = (double) flattenedCount / functionCount;
-      
+
       // Score based on average complexity and flattening ratio
       return Math.min((avgComplexity / 50.0) * 0.6 + flatteningRatio * 0.4, 1.0);
     }
@@ -1981,43 +1984,45 @@ public class ModernPackerDetector extends GhidraScript {
     private double calculateMBAScore(Program program) throws Exception {
       Listing listing = program.getListing();
       InstructionIterator instructions = listing.getInstructions(true);
-      
+
       int totalInstructions = 0;
       int mbaInstructions = 0;
-      
+
       while (instructions.hasNext() && totalInstructions < 10000) {
         Instruction instr = instructions.next();
         totalInstructions++;
-        
+
         String mnemonic = instr.getMnemonicString().toLowerCase();
-        
+
         // Look for MBA patterns (complex arithmetic + boolean operations)
         if (isMBAInstruction(mnemonic)) {
           mbaInstructions++;
         }
       }
-      
-      return totalInstructions > 0 ? Math.min((double) mbaInstructions / totalInstructions * 5.0, 1.0) : 0.0;
+
+      return totalInstructions > 0
+          ? Math.min((double) mbaInstructions / totalInstructions * 5.0, 1.0)
+          : 0.0;
     }
 
     private double calculateOpaquePredicateScore(Program program) throws Exception {
       FunctionManager funcManager = program.getFunctionManager();
       FunctionIterator functions = funcManager.getFunctions(true);
-      
+
       int totalBranches = 0;
       int suspiciousBranches = 0;
-      
+
       while (functions.hasNext()) {
         Function func = functions.next();
         Listing listing = program.getListing();
         InstructionIterator instructions = listing.getInstructions(func.getBody(), true);
-        
+
         while (instructions.hasNext()) {
           Instruction instr = instructions.next();
-          
+
           if (instr.getFlowType().isConditional()) {
             totalBranches++;
-            
+
             // Check for opaque predicate patterns
             if (hasOpaquePredicatePattern(instr, program)) {
               suspiciousBranches++;
@@ -2025,14 +2030,16 @@ public class ModernPackerDetector extends GhidraScript {
           }
         }
       }
-      
-      return totalBranches > 0 ? Math.min((double) suspiciousBranches / totalBranches * 3.0, 1.0) : 0.0;
+
+      return totalBranches > 0
+          ? Math.min((double) suspiciousBranches / totalBranches * 3.0, 1.0)
+          : 0.0;
     }
 
     private boolean isMBAInstruction(String mnemonic) {
       // Identify instructions commonly used in MBA obfuscation
-      return mnemonic.matches(".*(xor|and|or|not|shl|shr|ror|rol|add|sub|mul).*") && 
-             !mnemonic.startsWith("mov");
+      return mnemonic.matches(".*(xor|and|or|not|shl|shr|ror|rol|add|sub|mul).*")
+          && !mnemonic.startsWith("mov");
     }
 
     private boolean hasOpaquePredicatePattern(Instruction instr, Program program) {
@@ -2040,7 +2047,7 @@ public class ModernPackerDetector extends GhidraScript {
       // Look for branches that seem to have trivial conditions
       try {
         String mnemonic = instr.getMnemonicString().toLowerCase();
-        
+
         // Common opaque predicate patterns
         if (mnemonic.contains("jz") || mnemonic.contains("jnz")) {
           // Check if the condition is based on complex calculations that resolve to constants
@@ -2048,12 +2055,12 @@ public class ModernPackerDetector extends GhidraScript {
           if (prevInstr != null) {
             String prevMnemonic = prevInstr.getMnemonicString().toLowerCase();
             // Look for complex operations followed by simple branches
-            return prevMnemonic.contains("xor") && 
-                   prevInstr.getNumOperands() >= 2 &&
-                   Objects.equals(prevInstr.getOpObjects(0)[0], prevInstr.getOpObjects(1)[0]);
+            return prevMnemonic.contains("xor")
+                && prevInstr.getNumOperands() >= 2
+                && Objects.equals(prevInstr.getOpObjects(0)[0], prevInstr.getOpObjects(1)[0]);
           }
         }
-        
+
         return false;
       } catch (Exception e) {
         return false;
@@ -2063,11 +2070,11 @@ public class ModernPackerDetector extends GhidraScript {
     private void generateObfuscationAnalysisReport() {
       println("\n=== Comprehensive Obfuscation Analysis Report ===");
       println("Detected Techniques: " + detectedTechniques.size());
-      
+
       for (String technique : detectedTechniques) {
         println("✓ " + technique);
       }
-      
+
       println("\nObfuscation Scores:");
       for (Map.Entry<String, Double> entry : obfuscationScores.entrySet()) {
         String technique = entry.getKey().replace("_", " ").toUpperCase();
@@ -2075,9 +2082,12 @@ public class ModernPackerDetector extends GhidraScript {
         String level = score > 0.8 ? "HIGH" : score > 0.5 ? "MEDIUM" : "LOW";
         println(String.format("  %s: %.3f (%s)", technique, score, level));
       }
-      
-      double overallObfuscation = obfuscationScores.values().stream()
-          .mapToDouble(Double::doubleValue).average().orElse(0.0);
+
+      double overallObfuscation =
+          obfuscationScores.values().stream()
+              .mapToDouble(Double::doubleValue)
+              .average()
+              .orElse(0.0);
       println(String.format("\nOverall Obfuscation Level: %.3f", overallObfuscation));
     }
 

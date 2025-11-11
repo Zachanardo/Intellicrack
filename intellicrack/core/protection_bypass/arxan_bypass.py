@@ -114,7 +114,7 @@ class ArxanBypass:
     MOV_EAX_1 = b"\xb8\x01\x00\x00\x00"
     JMP_SHORT_0 = b"\xeb\x00"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize ArxanBypass with analyzer and assemblers."""
         self.logger = logging.getLogger(__name__)
         self.detector = ArxanDetector()
@@ -475,7 +475,7 @@ class ArxanBypass:
                 "    console.log('[Arxan] Bypassed NtQueryInformationProcess');",
                 "}",
                 "",
-            ]
+            ],
         )
 
         script_parts.extend(
@@ -497,7 +497,7 @@ class ArxanBypass:
                 "    console.log('[Arxan] Bypassed CryptVerifySignature');",
                 "}",
                 "",
-            ]
+            ],
         )
 
         for routine in analysis_result.license_routines[:5]:
@@ -516,7 +516,7 @@ class ArxanBypass:
                     "    }",
                     "}",
                     "",
-                ]
+                ],
             )
 
         script_parts.extend(
@@ -533,7 +533,7 @@ class ArxanBypass:
                 "}",
                 "",
                 "console.log('[Arxan Bypass] All runtime hooks installed');",
-            ]
+            ],
         )
 
         return "\n".join(script_parts)
@@ -565,14 +565,14 @@ class ArxanBypass:
 
         return checksum & 0xFFFFFFFF
 
-    def _on_frida_message(self, message, data):
+    def _on_frida_message(self, message, data) -> None:
         """Handle Frida script messages."""
         if message["type"] == "send":
             self.logger.info(f"[Frida] {message['payload']}")
         elif message["type"] == "error":
             self.logger.error(f"[Frida Error] {message.get('stack', message)}")
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up Frida session."""
         if self.frida_script:
             try:
@@ -587,7 +587,7 @@ class ArxanBypass:
                 self.logger.debug(f"Failed to detach Frida session: {e}")
 
 
-def main():
+def main() -> None:
     """Test entry point for Arxan bypass."""
     import argparse
     import json

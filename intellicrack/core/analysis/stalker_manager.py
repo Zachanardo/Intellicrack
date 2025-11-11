@@ -94,7 +94,7 @@ class StalkerSession:
         binary_path: str,
         output_dir: Optional[str] = None,
         message_callback: Optional[Callable[[str], None]] = None,
-    ):
+    ) -> None:
         """Initialize Stalker session.
 
         Args:
@@ -210,7 +210,7 @@ class StalkerSession:
 
         self._log(
             f"Progress: {instructions} instructions, {blocks} blocks, "
-            f"{coverage} coverage entries, {licensing} licensing routines"
+            f"{coverage} coverage entries, {licensing} licensing routines",
         )
 
     def _handle_trace_complete(self, payload: Dict[str, Any]) -> None:
@@ -304,7 +304,7 @@ class StalkerSession:
                 self._log(f"Stalker script not found: {script_path}")
                 return False
 
-            with open(script_path, "r", encoding="utf-8") as f:
+            with open(script_path, encoding="utf-8") as f:
                 script_source = f.read()
 
             self.device = frida.get_local_device()

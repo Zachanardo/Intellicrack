@@ -69,7 +69,7 @@ def add_extra_buttons(header_layout, extra_buttons, widget_refs=None):
     return buttons
 
 
-def get_button_style(button_text):
+def get_button_style(button_text) -> str:
     """Get the appropriate style for a button based on its text.
 
     Args:

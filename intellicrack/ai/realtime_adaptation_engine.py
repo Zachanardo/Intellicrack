@@ -115,7 +115,7 @@ class AdaptationEvent:
 class RuntimeMonitor:
     """Real-time monitoring system."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the real-time monitoring system.
 
         Monitors system metrics, detects anomalies, and triggers adaptation
@@ -139,7 +139,7 @@ class RuntimeMonitor:
 
         logger.info("Runtime monitor initialized")
 
-    def start(self):
+    def start(self) -> None:
         """Start runtime monitoring."""
         if self.active:
             return
@@ -153,7 +153,7 @@ class RuntimeMonitor:
 
         logger.info("Runtime monitoring started")
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop runtime monitoring."""
         self.active = False
         if self.monitor_thread:
@@ -161,7 +161,7 @@ class RuntimeMonitor:
 
         logger.info("Runtime monitoring stopped")
 
-    def _monitoring_loop(self):
+    def _monitoring_loop(self) -> None:
         """Monitor continuously in the main loop."""
         while self.active:
             try:
@@ -180,7 +180,7 @@ class RuntimeMonitor:
                 logger.error(f"Error in monitoring loop: {e}")
                 time.sleep(1.0)
 
-    def _collect_system_metrics(self):
+    def _collect_system_metrics(self) -> None:
         """Collect system metrics."""
         if not PSUTIL_AVAILABLE:
             logger.debug("psutil not available - skipping system metrics collection")
@@ -212,7 +212,7 @@ class RuntimeMonitor:
         source: str,
         category: str = "general",
         metadata: dict[str, Any] = None,
-    ):
+    ) -> None:
         """Record a runtime metric."""
         metric = RuntimeMetric(
             metric_name=metric_name,
@@ -233,7 +233,7 @@ class RuntimeMonitor:
             except Exception as e:
                 logger.error(f"Error notifying metric subscriber: {e}")
 
-    def _process_metrics_buffer(self):
+    def _process_metrics_buffer(self) -> None:
         """Process metrics buffer and update aggregates."""
         if not self.metrics_buffer:
             return
@@ -257,7 +257,7 @@ class RuntimeMonitor:
                     "timestamp": datetime.now().timestamp(),
                 }
 
-    def _check_anomalies(self):
+    def _check_anomalies(self) -> None:
         """Check for anomalies in metrics."""
         for metric_name, detector in self.anomaly_detectors.items():
             if metric_name in self.metric_aggregates:
@@ -268,7 +268,7 @@ class RuntimeMonitor:
                     logger.warning(f"Anomaly detected in {metric_name}: {current_value}")
                     self._notify_anomaly(metric_name, current_value)
 
-    def _notify_anomaly(self, metric_name: str, value: float):
+    def _notify_anomaly(self, metric_name: str, value: float) -> None:
         """Notify about detected anomaly."""
         # Log the anomaly with details
         logger.warning(f"Anomaly notification: {metric_name} = {value}")
@@ -296,10 +296,10 @@ class RuntimeMonitor:
                 "metric": metric_name,
                 "value": value,
                 "adaptation_triggered": adaptation_triggered,
-            }
+            },
         )
 
-    def _execute_adaptation_rule(self, rule_id: str, metric_name: str, value: float):
+    def _execute_adaptation_rule(self, rule_id: str, metric_name: str, value: float) -> None:
         """Execute an adaptation rule in response to an anomaly."""
         try:
             rule = self.adaptation_rules.get(rule_id)
@@ -327,7 +327,7 @@ class RuntimeMonitor:
         except Exception as e:
             logger.error(f"Error executing adaptation rule {rule_id}: {e}")
 
-    def subscribe_to_metrics(self, callback: Callable[[RuntimeMetric], None]):
+    def subscribe_to_metrics(self, callback: Callable[[RuntimeMetric], None]) -> None:
         """Subscribe to real-time metrics."""
         self.subscribers.append(callback)
 
@@ -369,7 +369,7 @@ class RuntimeMonitor:
 class AnomalyDetector:
     """Anomaly detection for metrics."""
 
-    def __init__(self, metric_name: str, sensitivity: float = 2.0):
+    def __init__(self, metric_name: str, sensitivity: float = 2.0) -> None:
         """Initialize the anomaly detector for a specific metric.
 
         Args:
@@ -385,14 +385,14 @@ class AnomalyDetector:
         self.baseline_std = 0.0
         self.calibrated = False
 
-    def add_baseline_value(self, value: float):
+    def add_baseline_value(self, value: float) -> None:
         """Add value to baseline."""
         self.baseline_values.append(value)
 
         if len(self.baseline_values) >= 20:
             self._recalculate_baseline()
 
-    def _recalculate_baseline(self):
+    def _recalculate_baseline(self) -> None:
         """Recalculate baseline statistics."""
         if not self.baseline_values:
             return
@@ -429,7 +429,7 @@ class AnomalyDetector:
 class DynamicHookManager:
     """Manages dynamic code hooks for adaptation."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the dynamic hook manager.
 
         Sets up hook tracking structures for active hooks, registry,
@@ -442,7 +442,7 @@ class DynamicHookManager:
 
         logger.info("Dynamic hook manager initialized")
 
-    def register_hook_point(self, hook_id: str, target_function: Callable, hook_type: str = "around"):
+    def register_hook_point(self, hook_id: str, target_function: Callable, hook_type: str = "around") -> None:
         """Register a hook point."""
         self.hook_registry[hook_id] = {
             "target": target_function,
@@ -638,7 +638,7 @@ class DynamicHookManager:
 class LiveDebuggingSystem:
     """AI-assisted live debugging system."""
 
-    def __init__(self, runtime_monitor: RuntimeMonitor):
+    def __init__(self, runtime_monitor: RuntimeMonitor) -> None:
         """Initialize the AI-assisted live debugging system.
 
         Args:
@@ -731,7 +731,7 @@ class LiveDebuggingSystem:
 
         return True
 
-    def _analyze_metric_for_debugging(self, metric: RuntimeMetric):
+    def _analyze_metric_for_debugging(self, metric: RuntimeMetric) -> None:
         """Analyze metric for debugging insights."""
         # Check if metric indicates a problem
         problem_indicators = {
@@ -745,7 +745,7 @@ class LiveDebuggingSystem:
         if threshold and metric.value > threshold:
             self._trigger_automated_debugging(metric)
 
-    def _trigger_automated_debugging(self, metric: RuntimeMetric):
+    def _trigger_automated_debugging(self, metric: RuntimeMetric) -> None:
         """Trigger automated debugging for problematic metric."""
         debug_session_id = f"auto_debug_{metric.metric_name}_{int(datetime.now().timestamp())}"
 
@@ -777,7 +777,7 @@ class LiveDebuggingSystem:
                         },
                     )
 
-    def _log_debug_event(self, session_id: str, event_type: str, data: dict[str, Any]):
+    def _log_debug_event(self, session_id: str, event_type: str, data: dict[str, Any]) -> None:
         """Log debugging event."""
         if session_id in self.active_debug_sessions:
             event = {
@@ -787,7 +787,7 @@ class LiveDebuggingSystem:
             }
             self.active_debug_sessions[session_id]["events"].append(event)
 
-    def register_automated_fix(self, metric_name: str, fix_function: Callable):
+    def register_automated_fix(self, metric_name: str, fix_function: Callable) -> None:
         """Register automated fix for metric."""
         self.automated_fixes[metric_name] = fix_function
         logger.info(f"Registered automated fix for {metric_name}")
@@ -857,7 +857,7 @@ class LiveDebuggingSystem:
                                 "expression": watch["expression"],
                                 "value": watch["last_value"],
                                 "condition": watch["alert_condition"],
-                            }
+                            },
                         )
                 except Exception as e:
                     logger.debug(f"Error checking watch alert condition: {e}")
@@ -886,7 +886,7 @@ class LiveDebuggingSystem:
 class RealTimeAdaptationEngine:
     """Run real-time adaptation engine."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the real-time adaptation engine.
 
         Provides comprehensive real-time adaptation capabilities including
@@ -919,17 +919,17 @@ class RealTimeAdaptationEngine:
 
         logger.info("Real-time adaptation engine initialized")
 
-    def start(self):
+    def start(self) -> None:
         """Start the adaptation engine."""
         self.runtime_monitor.start()
         logger.info("Real-time adaptation engine started")
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the adaptation engine."""
         self.runtime_monitor.stop()
         logger.info("Real-time adaptation engine stopped")
 
-    def _initialize_default_rules(self):
+    def _initialize_default_rules(self) -> None:
         """Initialize default adaptation rules."""
         default_rules = [
             AdaptationRule(
@@ -976,7 +976,7 @@ class RealTimeAdaptationEngine:
 
         self.adaptation_rules.extend(default_rules)
 
-    def add_adaptation_rule(self, rule: AdaptationRule):
+    def add_adaptation_rule(self, rule: AdaptationRule) -> None:
         """Add custom adaptation rule."""
         self.adaptation_rules.append(rule)
         logger.info(f"Added adaptation rule: {rule.name}")
@@ -990,7 +990,7 @@ class RealTimeAdaptationEngine:
                 return True
         return False
 
-    def _check_adaptation_triggers(self, metric: RuntimeMetric):
+    def _check_adaptation_triggers(self, metric: RuntimeMetric) -> None:
         """Check if metric triggers any adaptation rules."""
         for rule in self.adaptation_rules:
             if not rule.enabled:
@@ -1032,7 +1032,7 @@ class RealTimeAdaptationEngine:
         return metric.value >= rule.threshold
 
     @profile_ai_operation("real_time_adaptation")
-    def _trigger_adaptation(self, rule: AdaptationRule, trigger_metric: RuntimeMetric):
+    def _trigger_adaptation(self, rule: AdaptationRule, trigger_metric: RuntimeMetric) -> None:
         """Trigger adaptation based on rule."""
         adaptation_id = f"adapt_{rule.rule_id}_{int(datetime.now().timestamp())}"
 
@@ -1123,7 +1123,7 @@ class RealTimeAdaptationEngine:
 
         try:
             logger.debug(
-                f"Executing adaptation action '{action}' triggered by metric '{trigger_metric.name}' with value {trigger_metric.value}"
+                f"Executing adaptation action '{action}' triggered by metric '{trigger_metric.name}' with value {trigger_metric.value}",
             )
 
             if action == "reduce_concurrency":
@@ -1279,7 +1279,7 @@ class RealTimeAdaptationEngine:
             "adaptation_rules": len(self.adaptation_rules),
             "active_adaptations": len(self.active_adaptations),
             "recent_adaptations": len(
-                [event for event in self.adaptation_history if event.timestamp > datetime.now() - timedelta(hours=1)]
+                [event for event in self.adaptation_history if event.timestamp > datetime.now() - timedelta(hours=1)],
             ),
             "statistics": self.adaptation_stats.copy(),
             "rule_status": [

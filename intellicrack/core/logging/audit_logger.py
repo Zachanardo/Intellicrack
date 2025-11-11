@@ -35,9 +35,29 @@ from pathlib import Path
 from typing import Any
 
 from ...utils.logger import get_logger
-from ...utils.secrets_manager import get_secret, set_secret
 
 logger = get_logger(__name__)
+
+_secrets_manager_module = None
+
+
+def _get_secrets_manager():
+    """Lazy import secrets_manager to prevent circular imports."""
+    global _secrets_manager_module
+    if _secrets_manager_module is None:
+        from ...utils import secrets_manager as _imported_secrets_manager
+        _secrets_manager_module = _imported_secrets_manager
+    return _secrets_manager_module
+
+
+def get_secret(key):
+    """Lazy wrapper for get_secret."""
+    return _get_secrets_manager().get_secret(key)
+
+
+def set_secret(key, value):
+    """Lazy wrapper for set_secret."""
+    return _get_secrets_manager().set_secret(key, value)
 
 
 class AuditEventType(Enum):
@@ -100,7 +120,7 @@ class AuditEvent:
         user: str | None = None,
         source_ip: str | None = None,
         target: str | None = None,
-    ):
+    ) -> None:
         """Initialize an audit event.
 
         Args:
@@ -175,7 +195,7 @@ class AuditLogger:
         max_file_size: int = 100 * 1024 * 1024,  # 100MB
         rotation_count: int = 10,
         enable_encryption: bool = True,
-    ):
+    ) -> None:
         """Initialize the audit logger.
 
         Args:
@@ -228,7 +248,7 @@ class AuditLogger:
 
         return base / "intellicrack" / "audit"
 
-    def _init_encryption(self):
+    def _init_encryption(self) -> None:
         """Initialize encryption for log entries."""
         try:
             from intellicrack.handlers.cryptography_handler import Fernet
@@ -256,7 +276,7 @@ class AuditLogger:
                 logger.error(f"Failed to load hash chain: {e}")
         return None
 
-    def _save_hash(self, hash_value: str):
+    def _save_hash(self, hash_value: str) -> None:
         """Save hash to the hash chain file."""
         hash_file = self.log_dir / ".hash_chain"
         try:
@@ -272,7 +292,7 @@ class AuditLogger:
         date_str = datetime.now().strftime("%Y%m%d")
         return self.log_dir / f"audit_{date_str}.log"
 
-    def _rotate_logs(self):
+    def _rotate_logs(self) -> None:
         """Rotate log files when size limit is reached."""
         current_file = self._get_current_log_file()
 
@@ -300,7 +320,7 @@ class AuditLogger:
 
         self._current_size = 0
 
-    def log_event(self, event: AuditEvent):
+    def log_event(self, event: AuditEvent) -> None:
         """Log an audit event with integrity protection."""
         with self._lock:
             try:
@@ -370,7 +390,7 @@ class AuditLogger:
         payload: str | None = None,
         success: bool = False,
         error: str | None = None,
-    ):
+    ) -> None:
         """Log an exploitation attempt."""
         event_type = AuditEventType.EXPLOIT_SUCCESS if success else AuditEventType.EXPLOIT_FAILURE
         severity = AuditSeverity.HIGH if success else AuditSeverity.MEDIUM
@@ -395,7 +415,7 @@ class AuditLogger:
             ),
         )
 
-    def log_binary_analysis(self, file_path: str, file_hash: str, protections: list[str], vulnerabilities: list[str]):
+    def log_binary_analysis(self, file_path: str, file_hash: str, protections: list[str], vulnerabilities: list[str]) -> None:
         """Log binary analysis results."""
         self.log_event(
             AuditEvent(
@@ -413,7 +433,7 @@ class AuditLogger:
             ),
         )
 
-    def log_vm_operation(self, operation: str, vm_name: str, success: bool = True, error: str | None = None):
+    def log_vm_operation(self, operation: str, vm_name: str, success: bool = True, error: str | None = None) -> None:
         """Log VM-related operations."""
         event_map = {
             "start": AuditEventType.VM_START,
@@ -438,7 +458,7 @@ class AuditLogger:
             ),
         )
 
-    def log_credential_access(self, credential_type: str, purpose: str, success: bool = True, severity: AuditSeverity = None):
+    def log_credential_access(self, credential_type: str, purpose: str, success: bool = True, severity: AuditSeverity = None) -> None:
         """Log credential access attempts.
 
         Args:
@@ -482,7 +502,7 @@ class AuditLogger:
         success: bool = True,
         output: str | None = None,
         error: str | None = None,
-    ):
+    ) -> None:
         """Log external tool execution."""
         event_type = AuditEventType.TOOL_EXECUTION if success else AuditEventType.TOOL_ERROR
         severity = AuditSeverity.LOW if success else AuditSeverity.MEDIUM
@@ -706,7 +726,7 @@ Critical Events ({len(critical_events)}):
 class PerformanceMonitor:
     """Monitors performance metrics and system health."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize performance metrics monitor."""
         self.metrics = {}
         self.start_times = {}
@@ -721,7 +741,7 @@ class PerformanceMonitor:
             self.start_times[timer_id] = time.time()
         return timer_id
 
-    def end_timer(self, timer_id: str, metadata: dict = None):
+    def end_timer(self, timer_id: str, metadata: dict = None) -> None:
         """End timing and record duration."""
         end_time = time.time()
         with self._lock:
@@ -756,7 +776,7 @@ class PerformanceMonitor:
                 if duration > 5.0:  # More than 5 seconds
                     logger.warning(f"Slow operation {operation}: {duration:.2f}s")
 
-    def increment_counter(self, metric: str, value: int = 1, tags: dict = None):
+    def increment_counter(self, metric: str, value: int = 1, tags: dict = None) -> None:
         """Increment a counter metric."""
         with self._lock:
             metric_key = f"counter.{metric}"
@@ -765,7 +785,7 @@ class PerformanceMonitor:
                 metric_key += f"_{tag_str}"
             self.counters[metric_key] += value
 
-    def record_gauge(self, metric: str, value: float, tags: dict = None):
+    def record_gauge(self, metric: str, value: float, tags: dict = None) -> None:
         """Record a gauge metric."""
         with self._lock:
             metric_key = f"gauge.{metric}"
@@ -847,7 +867,7 @@ class PerformanceMonitor:
         except Exception as e:
             return {"error": f"Failed to get system metrics: {e}"}
 
-    def reset_metrics(self):
+    def reset_metrics(self) -> None:
         """Reset all metrics."""
         with self._lock:
             self.metrics.clear()
@@ -859,7 +879,7 @@ class PerformanceMonitor:
 class TelemetryCollector:
     """Collects and exports telemetry data."""
 
-    def __init__(self, export_interval: int = 300):
+    def __init__(self, export_interval: int = 300) -> None:
         """Initialize telemetry collector with export settings.
 
         Args:
@@ -874,11 +894,11 @@ class TelemetryCollector:
         self._export_thread = None
         self._running = False
 
-    def set_audit_logger(self, audit_logger: AuditLogger):
+    def set_audit_logger(self, audit_logger: AuditLogger) -> None:
         """Set the audit logger for telemetry."""
         self.audit_logger = audit_logger
 
-    def start_collection(self):
+    def start_collection(self) -> None:
         """Start telemetry collection."""
         if self._running:
             return
@@ -893,14 +913,14 @@ class TelemetryCollector:
         self._export_thread.start()
         logger.info("Telemetry collection started")
 
-    def stop_collection(self):
+    def stop_collection(self) -> None:
         """Stop telemetry collection."""
         self._running = False
         if self._export_thread:
             self._export_thread.join(timeout=5)
         logger.info("Telemetry collection stopped")
 
-    def _export_loop(self):
+    def _export_loop(self) -> None:
         """Run main export loop."""
         while self._running:
             try:
@@ -910,7 +930,7 @@ class TelemetryCollector:
                 logger.error(f"Telemetry export error: {e}")
                 time.sleep(60)  # Wait before retrying
 
-    def _collect_and_export(self):
+    def _collect_and_export(self) -> None:
         """Collect and export telemetry data."""
         try:
             # Get performance metrics
@@ -952,7 +972,7 @@ class TelemetryCollector:
         except Exception as e:
             logger.error(f"Failed to collect telemetry: {e}")
 
-    def _log_telemetry_summary(self, metrics: dict[str, Any]):
+    def _log_telemetry_summary(self, metrics: dict[str, Any]) -> None:
         """Log telemetry summary."""
         try:
             system_metrics = metrics.get("system_metrics", {})
@@ -998,7 +1018,7 @@ class TelemetryCollector:
         with self._lock:
             return self.telemetry_data[-limit:]
 
-    def export_telemetry_json(self, filepath: str):
+    def export_telemetry_json(self, filepath: str) -> None:
         """Export telemetry data to JSON file."""
         try:
             import json
@@ -1022,7 +1042,7 @@ class TelemetryCollector:
 class ContextualLogger:
     """Logger with contextual information and structured logging."""
 
-    def __init__(self, name: str, audit_logger: AuditLogger = None):
+    def __init__(self, name: str, audit_logger: AuditLogger = None) -> None:
         """Initialize contextual logger.
 
         Args:
@@ -1034,11 +1054,11 @@ class ContextualLogger:
         self.audit_logger = audit_logger
         self.context = {}
 
-    def set_context(self, **kwargs):
+    def set_context(self, **kwargs) -> None:
         """Set contextual information."""
         self.context.update(kwargs)
 
-    def clear_context(self):
+    def clear_context(self) -> None:
         """Clear contextual information."""
         self.context.clear()
 
@@ -1049,19 +1069,19 @@ class ContextualLogger:
             return f"[{context_str}] {message}"
         return message
 
-    def debug(self, message: str, **kwargs):
+    def debug(self, message: str, **kwargs) -> None:
         """Log debug message with context."""
         self.logger.debug(self._format_message(message), extra=kwargs)
 
-    def info(self, message: str, **kwargs):
+    def info(self, message: str, **kwargs) -> None:
         """Log info message with context."""
         self.logger.info(self._format_message(message), extra=kwargs)
 
-    def warning(self, message: str, **kwargs):
+    def warning(self, message: str, **kwargs) -> None:
         """Log warning message with context."""
         self.logger.warning(self._format_message(message), extra=kwargs)
 
-    def error(self, message: str, **kwargs):
+    def error(self, message: str, **kwargs) -> None:
         """Log error message with context."""
         self.logger.error(self._format_message(message), extra=kwargs)
 
@@ -1080,7 +1100,7 @@ class ContextualLogger:
 
                 logging.getLogger(__name__).debug(f"Audit logging error: {e}")
 
-    def critical(self, message: str, **kwargs):
+    def critical(self, message: str, **kwargs) -> None:
         """Log critical message with context."""
         self.logger.critical(self._format_message(message), extra=kwargs)
 
@@ -1121,7 +1141,7 @@ def create_contextual_logger(name: str, **context) -> ContextualLogger:
     return logger
 
 
-def setup_comprehensive_logging():
+def setup_comprehensive_logging() -> None:
     """Set up comprehensive logging and monitoring system."""
     try:
         # Start telemetry collection
@@ -1161,26 +1181,26 @@ def get_audit_logger() -> AuditLogger:
     return _audit_logger
 
 
-def log_exploit_attempt(target: str, exploit_type: str, **kwargs):
+def log_exploit_attempt(target: str, exploit_type: str, **kwargs) -> None:
     """Log exploit attempts."""
     get_audit_logger().log_exploit_attempt(target, exploit_type, **kwargs)
 
 
-def log_binary_analysis(file_path: str, file_hash: str, protections: list[str], vulnerabilities: list[str]):
+def log_binary_analysis(file_path: str, file_hash: str, protections: list[str], vulnerabilities: list[str]) -> None:
     """Log binary analysis."""
     get_audit_logger().log_binary_analysis(file_path, file_hash, protections, vulnerabilities)
 
 
-def log_vm_operation(operation: str, vm_name: str, **kwargs):
+def log_vm_operation(operation: str, vm_name: str, **kwargs) -> None:
     """Log VM operations."""
     get_audit_logger().log_vm_operation(operation, vm_name, **kwargs)
 
 
-def log_credential_access(credential_type: str, purpose: str, **kwargs):
+def log_credential_access(credential_type: str, purpose: str, **kwargs) -> None:
     """Log credential access."""
     get_audit_logger().log_credential_access(credential_type, purpose, **kwargs)
 
 
-def log_tool_execution(tool_name: str, command: str, **kwargs):
+def log_tool_execution(tool_name: str, command: str, **kwargs) -> None:
     """Log tool execution."""
     get_audit_logger().log_tool_execution(tool_name, command, **kwargs)

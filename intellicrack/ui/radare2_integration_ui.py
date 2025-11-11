@@ -74,7 +74,7 @@ class R2AnalysisWorker(QThread if QThread is not None else object):
     analysis_completed = pyqtSignal(dict)
     error_occurred = pyqtSignal(str)
 
-    def __init__(self, binary_path: str, analysis_type: str, options: dict[str, Any]):
+    def __init__(self, binary_path: str, analysis_type: str, options: dict[str, Any]) -> None:
         """Initialize the radare2 analysis worker with binary path and analysis options."""
         super().__init__()
         self.binary_path = binary_path
@@ -82,7 +82,7 @@ class R2AnalysisWorker(QThread if QThread is not None else object):
         self.options = options
         self.logger = logging.getLogger(__name__)
 
-    def run(self):
+    def run(self) -> None:
         """Execute analysis in background thread."""
         try:
             self.status_updated.emit(f"Starting {self.analysis_type} analysis...")
@@ -217,7 +217,7 @@ class R2AnalysisWorker(QThread if QThread is not None else object):
 class R2ConfigurationDialog(QDialog if QDialog is not None else object):
     """Dialog for configuring radare2 analysis options."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the radare2 configuration dialog with UI setup."""
         super().__init__(parent)
         self.setWindowTitle("Radare2 Analysis Configuration")
@@ -225,7 +225,7 @@ class R2ConfigurationDialog(QDialog if QDialog is not None else object):
         self.config = {}
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         """Set up configuration dialog UI."""
         layout = QVBoxLayout(self)
 
@@ -329,13 +329,13 @@ class R2ConfigurationDialog(QDialog if QDialog is not None else object):
 class R2ResultsViewer(QWidget if QWidget is not None else object):
     """Widget for displaying comprehensive radare2 analysis results."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the radare2 results viewer with UI components."""
         super().__init__(parent)
         self.results_data = {}
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         """Set up results viewer UI."""
         layout = QVBoxLayout(self)
 
@@ -359,7 +359,7 @@ class R2ResultsViewer(QWidget if QWidget is not None else object):
         self.results_tabs = QTabWidget()
         layout.addWidget(self.results_tabs)
 
-    def display_results(self, results: dict[str, Any]):
+    def display_results(self, results: dict[str, Any]) -> None:
         """Display analysis results."""
         self.results_data = results
 
@@ -376,7 +376,7 @@ class R2ResultsViewer(QWidget if QWidget is not None else object):
             # Single component results
             self._create_component_tab("Analysis", results)
 
-    def _create_component_tab(self, component: str, data: dict[str, Any]):
+    def _create_component_tab(self, component: str, data: dict[str, Any]) -> None:
         """Create tab for component results."""
         tab_widget = QWidget()
         layout = QVBoxLayout(tab_widget)
@@ -448,7 +448,7 @@ class R2ResultsViewer(QWidget if QWidget is not None else object):
 
         return " | ".join(summary_parts) if summary_parts else "Analysis completed"
 
-    def _create_vulnerability_view(self, layout: QVBoxLayout, data: dict[str, Any]):
+    def _create_vulnerability_view(self, layout: QVBoxLayout, data: dict[str, Any]) -> None:
         """Create vulnerability-specific view."""
         table = QTableWidget()
         table.setColumnCount(4)
@@ -473,7 +473,7 @@ class R2ResultsViewer(QWidget if QWidget is not None else object):
                             "function": vuln.get("function", "Unknown"),
                             "address": vuln.get("address", "Unknown"),
                             "severity": vuln.get("severity", "Medium"),
-                        }
+                        },
                     )
 
         table.setRowCount(len(vulnerabilities))
@@ -487,7 +487,7 @@ class R2ResultsViewer(QWidget if QWidget is not None else object):
         table.resizeColumnsToContents()
         layout.addWidget(table)
 
-    def _create_strings_view(self, layout: QVBoxLayout, data: dict[str, Any]):
+    def _create_strings_view(self, layout: QVBoxLayout, data: dict[str, Any]) -> None:
         """Create strings-specific view."""
         # String categories tabs
         strings_tabs = QTabWidget()
@@ -514,7 +514,7 @@ class R2ResultsViewer(QWidget if QWidget is not None else object):
 
         layout.addWidget(strings_tabs)
 
-    def _create_imports_view(self, layout: QVBoxLayout, data: dict[str, Any]):
+    def _create_imports_view(self, layout: QVBoxLayout, data: dict[str, Any]) -> None:
         """Create imports-specific view."""
         splitter = QSplitter()
 
@@ -529,7 +529,7 @@ class R2ResultsViewer(QWidget if QWidget is not None else object):
                         imp.get("name", "Unknown"),
                         imp.get("library", "Unknown"),
                         imp.get("category", "Unknown"),
-                    ]
+                    ],
                 )
                 imports_widget.addTopLevelItem(item)
 
@@ -546,7 +546,7 @@ class R2ResultsViewer(QWidget if QWidget is not None else object):
         splitter.addWidget(categories_widget)
         layout.addWidget(splitter)
 
-    def _create_cfg_view(self, layout: QVBoxLayout, data: dict[str, Any]):
+    def _create_cfg_view(self, layout: QVBoxLayout, data: dict[str, Any]) -> None:
         """Create CFG-specific view."""
         # CFG metrics
         metrics_text = QTextEdit()
@@ -581,7 +581,7 @@ class R2ResultsViewer(QWidget if QWidget is not None else object):
 
             layout.addWidget(patterns_widget)
 
-    def _create_ai_view(self, layout: QVBoxLayout, data: dict[str, Any]):
+    def _create_ai_view(self, layout: QVBoxLayout, data: dict[str, Any]) -> None:
         """Create AI analysis-specific view."""
         ai_tabs = QTabWidget()
 
@@ -613,7 +613,7 @@ Validation Methods: {", ".join(license_data.get("validation_methods", []))}
                             vuln_type.replace("_", " ").title(),
                             f"{prediction.get('probability', 0):.3f}",
                             str(prediction.get("predicted", False)),
-                        ]
+                        ],
                     )
                     vuln_widget.addTopLevelItem(item)
 
@@ -621,7 +621,7 @@ Validation Methods: {", ".join(license_data.get("validation_methods", []))}
 
         layout.addWidget(ai_tabs)
 
-    def _create_generic_view(self, layout: QVBoxLayout, data: dict[str, Any]):
+    def _create_generic_view(self, layout: QVBoxLayout, data: dict[str, Any]) -> None:
         """Create generic JSON view."""
         text_widget = QTextEdit()
         text_widget.setReadOnly(True)
@@ -636,7 +636,7 @@ Validation Methods: {", ".join(license_data.get("validation_methods", []))}
 
         layout.addWidget(text_widget)
 
-    def _on_component_changed(self, component: str):
+    def _on_component_changed(self, component: str) -> None:
         """Handle component selection change."""
         # Find corresponding tab and activate it
         for i in range(self.results_tabs.count()):
@@ -644,7 +644,7 @@ Validation Methods: {", ".join(license_data.get("validation_methods", []))}
                 self.results_tabs.setCurrentIndex(i)
                 break
 
-    def _export_results(self):
+    def _export_results(self) -> None:
         """Export results to file."""
         if not self.results_data:
             QMessageBox.information(self, "Export", "No results to export")
@@ -670,7 +670,7 @@ Validation Methods: {", ".join(license_data.get("validation_methods", []))}
 class R2IntegrationWidget(QWidget if QWidget is not None else object):
     """Run widget for radare2 integration UI."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the radare2 integration widget with UI components and analysis functionality."""
         super().__init__(parent)
         self.logger = logging.getLogger(__name__)
@@ -679,7 +679,7 @@ class R2IntegrationWidget(QWidget if QWidget is not None else object):
         self.analysis_config = {}
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         """Set up main UI."""
         layout = QVBoxLayout(self)
 
@@ -761,7 +761,7 @@ class R2IntegrationWidget(QWidget if QWidget is not None else object):
         self.results_viewer = R2ResultsViewer()
         layout.addWidget(self.results_viewer)
 
-    def set_binary_path(self, path: str):
+    def set_binary_path(self, path: str) -> None:
         """Set binary path for analysis."""
         self.binary_path = path
         self.file_label.setText(os.path.basename(path) if path else "No file selected")
@@ -771,7 +771,7 @@ class R2IntegrationWidget(QWidget if QWidget is not None else object):
         for button in self.buttons.values():
             button.setEnabled(enabled)
 
-    def _browse_file(self):
+    def _browse_file(self) -> None:
         """Browse for binary file."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
@@ -783,14 +783,14 @@ class R2IntegrationWidget(QWidget if QWidget is not None else object):
         if file_path:
             self.set_binary_path(file_path)
 
-    def _configure_analysis(self):
+    def _configure_analysis(self) -> None:
         """Open configuration dialog."""
         dialog = R2ConfigurationDialog(self)
         if dialog.exec() == QDialog.Accepted:
             self.analysis_config = dialog.get_configuration()
             self.status_label.setText("Configuration updated")
 
-    def _start_analysis(self, analysis_type: str):
+    def _start_analysis(self, analysis_type: str) -> None:
         """Start analysis of specified type."""
         if not self.binary_path:
             QMessageBox.warning(self, "No File", "Please select a binary file first")
@@ -819,17 +819,17 @@ class R2IntegrationWidget(QWidget if QWidget is not None else object):
 
         self.current_worker.start()
 
-    def _on_analysis_completed(self, results: dict[str, Any]):
+    def _on_analysis_completed(self, results: dict[str, Any]) -> None:
         """Handle completed analysis."""
         self.results_viewer.display_results(results)
         self.status_label.setText("Analysis completed successfully")
 
-    def _on_analysis_error(self, error: str):
+    def _on_analysis_error(self, error: str) -> None:
         """Handle analysis error."""
         self.status_label.setText(f"Analysis failed: {error}")
         QMessageBox.critical(self, "Analysis Error", f"Analysis failed:\n{error}")
 
-    def _on_analysis_finished(self):
+    def _on_analysis_finished(self) -> None:
         """Handle analysis thread finished."""
         # Re-enable buttons
         for button in self.buttons.values():
@@ -844,7 +844,7 @@ def create_radare2_tab(parent=None) -> QWidget:
     return R2IntegrationWidget(parent)
 
 
-def integrate_with_main_app(main_app):
+def integrate_with_main_app(main_app) -> bool:
     """Integrate radare2 UI with main application."""
     try:
         # Add radare2 tab to main application

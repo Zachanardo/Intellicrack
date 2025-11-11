@@ -31,6 +31,7 @@ from enum import Enum
 from typing import Any
 
 from intellicrack.handlers.psutil_handler import psutil
+from intellicrack.utils.logger import log_all_methods
 
 """
 Anti-Anti-Debug Suite
@@ -80,10 +81,11 @@ class BypassOperation:
     error: str | None = None
 
 
+@log_all_methods
 class WindowsAPIHooker:
     """Hooks and neutralizes anti-debug Windows APIs."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize Windows API hooker for anti-debug function interception."""
         self.logger = logging.getLogger(f"{__name__}.APIHooker")
         self.hooked_functions = {}
@@ -143,7 +145,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to hook IsDebuggerPresent: {e}")
+            self.logger.exception(f"Failed to hook IsDebuggerPresent: {e}")
             return False
 
     def hook_check_remote_debugger_present(self) -> bool:
@@ -189,7 +191,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to hook CheckRemoteDebuggerPresent: {e}")
+            self.logger.exception(f"Failed to hook CheckRemoteDebuggerPresent: {e}")
             return False
 
     def hook_nt_query_information_process(self) -> bool:
@@ -232,7 +234,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to hook NtQueryInformationProcess: {e}")
+            self.logger.exception(f"Failed to hook NtQueryInformationProcess: {e}")
             return False
 
     def hook_nt_set_information_thread(self) -> bool:
@@ -281,7 +283,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to hook NtSetInformationThread: {e}")
+            self.logger.exception(f"Failed to hook NtSetInformationThread: {e}")
             return False
 
     def hook_output_debug_string(self) -> bool:
@@ -320,7 +322,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to hook OutputDebugStringA: {e}")
+            self.logger.exception(f"Failed to hook OutputDebugStringA: {e}")
             return False
 
     def hook_nt_close(self) -> bool:
@@ -360,7 +362,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to hook NtClose: {e}")
+            self.logger.exception(f"Failed to hook NtClose: {e}")
             return False
 
     def hook_close_handle(self) -> bool:
@@ -400,7 +402,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to hook CloseHandle: {e}")
+            self.logger.exception(f"Failed to hook CloseHandle: {e}")
             return False
 
     def hook_get_last_error(self) -> bool:
@@ -440,7 +442,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to hook GetLastError: {e}")
+            self.logger.exception(f"Failed to hook GetLastError: {e}")
             return False
 
     def hook_set_last_error(self) -> bool:
@@ -480,7 +482,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to hook SetLastError: {e}")
+            self.logger.exception(f"Failed to hook SetLastError: {e}")
             return False
 
     def hook_nt_query_object(self) -> bool:
@@ -520,7 +522,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to hook NtQueryObject: {e}")
+            self.logger.exception(f"Failed to hook NtQueryObject: {e}")
             return False
 
     def hook_nt_query_system_information(self) -> bool:
@@ -560,7 +562,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to hook NtQuerySystemInformation: {e}")
+            self.logger.exception(f"Failed to hook NtQuerySystemInformation: {e}")
             return False
 
     def hook_find_window(self) -> bool:
@@ -600,7 +602,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to hook FindWindow: {e}")
+            self.logger.exception(f"Failed to hook FindWindow: {e}")
             return False
 
     def hook_enum_windows(self) -> bool:
@@ -640,7 +642,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to hook EnumWindows: {e}")
+            self.logger.exception(f"Failed to hook EnumWindows: {e}")
             return False
 
     def hook_get_foreground_window(self) -> bool:
@@ -681,7 +683,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to hook GetForegroundWindow: {e}")
+            self.logger.exception(f"Failed to hook GetForegroundWindow: {e}")
             return False
 
     def hook_nt_yield_execution(self) -> bool:
@@ -721,7 +723,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to hook NtYieldExecution: {e}")
+            self.logger.exception(f"Failed to hook NtYieldExecution: {e}")
             return False
 
     def hook_switch_to_thread(self) -> bool:
@@ -761,7 +763,7 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to hook SwitchToThread: {e}")
+            self.logger.exception(f"Failed to hook SwitchToThread: {e}")
             return False
 
     def install_all_hooks(self) -> list[str]:
@@ -825,14 +827,15 @@ class WindowsAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to restore hooks: {e}")
+            self.logger.exception(f"Failed to restore hooks: {e}")
             return False
 
 
+@log_all_methods
 class PEBManipulator:
     """Manipulates Process Environment Block to hide debugging."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize PEB manipulator for process environment block modification."""
         self.logger = logging.getLogger(f"{__name__}.PEBManipulator")
         self.kernel32 = ctypes.windll.kernel32
@@ -875,7 +878,7 @@ class PEBManipulator:
                 return pbi.PebBaseAddress
 
         except Exception as e:
-            self.logger.error(f"Failed to get PEB address: {e}")
+            self.logger.exception(f"Failed to get PEB address: {e}")
 
         return None
 
@@ -919,7 +922,7 @@ class PEBManipulator:
                 return True
 
         except Exception as e:
-            self.logger.error(f"Failed to patch BeingDebugged flag: {e}")
+            self.logger.exception(f"Failed to patch BeingDebugged flag: {e}")
 
         return False
 
@@ -966,7 +969,7 @@ class PEBManipulator:
                 return True
 
         except Exception as e:
-            self.logger.error(f"Failed to patch NtGlobalFlag: {e}")
+            self.logger.exception(f"Failed to patch NtGlobalFlag: {e}")
 
         return False
 
@@ -1008,11 +1011,11 @@ class PEBManipulator:
                 return False
 
             except Exception as heap_error:
-                self.logger.error(f"Failed to access heap at 0x{heap_addr:08x}: {heap_error}")
+                self.logger.exception(f"Failed to access heap at 0x{heap_addr:08x}: {heap_error}")
                 return False
 
         except Exception as e:
-            self.logger.error(f"Failed to patch heap flags: {e}")
+            self.logger.exception(f"Failed to patch heap flags: {e}")
 
         return False
 
@@ -1038,6 +1041,7 @@ class PEBManipulator:
         return results
 
 
+@log_all_methods
 class ThreadContextHooker:
     """Hooks GetThreadContext to prevent detection of hardware breakpoints."""
 
@@ -1095,7 +1099,7 @@ class ThreadContextHooker:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to hook GetThreadContext: {e}")
+            self.logger.exception(f"Failed to hook GetThreadContext: {e}")
             return False
 
     def hook_set_thread_context(self) -> bool:
@@ -1149,14 +1153,15 @@ class ThreadContextHooker:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to hook SetThreadContext: {e}")
+            self.logger.exception(f"Failed to hook SetThreadContext: {e}")
             return False
 
 
+@log_all_methods
 class HardwareDebugProtector:
     """Manages hardware debug registers to prevent detection."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize hardware debug register protection and manipulation."""
         self.logger = logging.getLogger(f"{__name__}.HardwareDebugProtector")
         self.kernel32 = ctypes.windll.kernel32
@@ -1200,7 +1205,7 @@ class HardwareDebugProtector:
                 return context
 
         except Exception as e:
-            self.logger.error(f"Failed to get thread context: {e}")
+            self.logger.exception(f"Failed to get thread context: {e}")
 
         return None
 
@@ -1235,7 +1240,7 @@ class HardwareDebugProtector:
                 return True
 
         except Exception as e:
-            self.logger.error(f"Failed to clear debug registers: {e}")
+            self.logger.exception(f"Failed to clear debug registers: {e}")
 
         return False
 
@@ -1253,7 +1258,7 @@ class HardwareDebugProtector:
                     "Dr7": context.Dr7,
                 }
         except Exception as e:
-            self.logger.error(f"Failed to monitor debug registers: {e}")
+            self.logger.exception(f"Failed to monitor debug registers: {e}")
 
         return {}
 
@@ -1281,22 +1286,23 @@ class HardwareDebugProtector:
                 return True
 
         except Exception as e:
-            self.logger.error(f"Failed to restore debug registers: {e}")
+            self.logger.exception(f"Failed to restore debug registers: {e}")
 
         return False
 
 
+@log_all_methods
 class TimingNormalizer:
     """Normalizes timing to prevent timing-based detection."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize timing attack protection and normalization system."""
         self.logger = logging.getLogger(f"{__name__}.TimingNormalizer")
         self.kernel32 = ctypes.windll.kernel32
         self.timing_hooks = {}
         self.baseline_times = {}
 
-    def measure_baseline_timing(self):
+    def measure_baseline_timing(self) -> None:
         """Measure baseline timing for various operations."""
         self.logger.info("Measuring baseline timing...")
 
@@ -1363,7 +1369,7 @@ class TimingNormalizer:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to normalize GetTickCount: {e}")
+            self.logger.exception(f"Failed to normalize GetTickCount: {e}")
             return False
 
     def normalize_rdtsc(self) -> bool:
@@ -1405,7 +1411,7 @@ class TimingNormalizer:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to normalize RDTSC: {e}")
+            self.logger.exception(f"Failed to normalize RDTSC: {e}")
             return False
 
     def _find_rdtsc_instructions(self) -> list[int]:
@@ -1453,11 +1459,11 @@ class TimingNormalizer:
                     offset = pos + 2
 
         except Exception as e:
-            self.logger.warning(f"Error finding RDTSC instructions: {e}")
+            self.logger.exception(f"Error finding RDTSC instructions: {e}")
 
         return rdtsc_locations
 
-    def add_random_delays(self):
+    def add_random_delays(self) -> None:
         """Add random delays to mask debugging overhead."""
         import random
 
@@ -1486,10 +1492,11 @@ class TimingNormalizer:
         return results
 
 
+@log_all_methods
 class MemoryPatcher:
     """Patches anti-debug code patterns in target memory."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize memory patcher for anti-debug pattern modification."""
         self.logger = logging.getLogger(f"{__name__}.MemoryPatcher")
         self.kernel32 = ctypes.windll.kernel32
@@ -1550,7 +1557,7 @@ class MemoryPatcher:
                         offset = pos + 1
 
         except Exception as e:
-            self.logger.error(f"Error finding patterns: {e}")
+            self.logger.exception(f"Error finding patterns: {e}")
 
         return found_patterns
 
@@ -1591,12 +1598,12 @@ class MemoryPatcher:
                         "address": address,
                         "size": len(new_bytes),
                         "timestamp": time.time(),
-                    }
+                    },
                 )
                 return True
 
         except Exception as e:
-            self.logger.error(f"Failed to patch memory at 0x{address:08X}: {e}")
+            self.logger.exception(f"Failed to patch memory at 0x{address:08X}: {e}")
 
         return False
 
@@ -1681,17 +1688,18 @@ class MemoryPatcher:
         return results
 
 
+@log_all_methods
 class ExceptionHandler:
     """Manages exception handling to prevent anti-debug detection."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize exception handler for anti-debug exception bypass."""
         self.logger = logging.getLogger(f"{__name__}.ExceptionHandler")
         self.kernel32 = ctypes.windll.kernel32
         self.original_handler = None
         self.exception_count = 0
 
-    def custom_exception_handler(self, exception_info):
+    def custom_exception_handler(self, exception_info) -> int | None:
         """Handle custom exceptions to mask debugging based on exception info."""
         self.exception_count += 1
 
@@ -1718,7 +1726,7 @@ class ExceptionHandler:
             return 1  # EXCEPTION_EXECUTE_HANDLER
 
         except Exception as e:
-            self.logger.error(f"Error in exception handler for {exception_info}: {e}")
+            self.logger.exception(f"Error in exception handler for {exception_info}: {e}")
             return 0  # EXCEPTION_CONTINUE_SEARCH
 
     def install_exception_handler(self) -> bool:
@@ -1727,7 +1735,7 @@ class ExceptionHandler:
             # Use AddVectoredExceptionHandler for first-chance exception handling
             EXCEPTION_HANDLER = ctypes.WINFUNCTYPE(ctypes.c_long, ctypes.POINTER(ctypes.c_void_p))
 
-            def exception_filter(exception_pointers):
+            def exception_filter(exception_pointers) -> int | None:
                 """Filter exceptions to hide debugging."""
                 try:
                     # Get exception code
@@ -1764,7 +1772,7 @@ class ExceptionHandler:
             return False
 
         except Exception as e:
-            self.logger.error(f"Failed to install exception handler: {e}")
+            self.logger.exception(f"Failed to install exception handler: {e}")
             return False
 
     def remove_exception_handler(self) -> bool:
@@ -1776,7 +1784,7 @@ class ExceptionHandler:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to remove exception handler: {e}")
+            self.logger.exception(f"Failed to remove exception handler: {e}")
             return False
 
     def mask_debug_exceptions(self) -> bool:
@@ -1784,10 +1792,11 @@ class ExceptionHandler:
         return self.install_exception_handler()
 
 
+@log_all_methods
 class EnvironmentSanitizer:
     """Sanitizes process environment to remove debugging artifacts."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize environment sanitizer for debugger artifact removal."""
         self.logger = logging.getLogger(f"{__name__}.EnvironmentSanitizer")
         self.original_values = {}
@@ -1928,14 +1937,15 @@ class EnvironmentSanitizer:
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to restore environment: {e}")
+            self.logger.exception(f"Failed to restore environment: {e}")
             return False
 
 
+@log_all_methods
 class TargetAnalyzer:
     """Analyzes target application to determine anti-debug techniques in use."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize target analyzer for anti-debug technique detection."""
         self.logger = logging.getLogger(f"{__name__}.TargetAnalyzer")
         self.detected_techniques = set()
@@ -1971,7 +1981,7 @@ class TargetAnalyzer:
                 self.logger.info(f"PE analysis found {len(techniques)} indicators")
 
         except Exception as e:
-            self.logger.error(f"PE analysis failed: {e}")
+            self.logger.exception(f"PE analysis failed: {e}")
 
         return techniques
 
@@ -1998,14 +2008,8 @@ class TargetAnalyzer:
                     if api in content:
                         techniques.append(AntiDebugTechnique.API_HOOKS)
                         break
-
-                # Check for timing-related imports
-                timing_apis = [b"GetTickCount", b"QueryPerformanceCounter", b"timeGetTime"]
-                if any(api in content for api in timing_apis):
-                    techniques.append(AntiDebugTechnique.TIMING_CHECKS)
-
         except Exception as e:
-            self.logger.error(f"Import analysis failed: {e}")
+            self.logger.exception(f"Import analysis failed: {e}")
 
         return techniques
 
@@ -2126,7 +2130,7 @@ class TargetAnalyzer:
 class AntiAntiDebugSuite:
     """Run anti-anti-debug suite orchestrator."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the anti-anti-debug suite.
 
         Sets up the comprehensive anti-debugging detection bypass system.
@@ -2356,7 +2360,7 @@ class AntiAntiDebugSuite:
 
         return report
 
-    def export_report(self, output_file: str):
+    def export_report(self, output_file: str) -> None:
         """Export bypass report to file."""
         try:
             report = self.get_report()
@@ -2369,7 +2373,7 @@ class AntiAntiDebugSuite:
         except Exception as e:
             self.logger.error(f"Failed to export report: {e}")
 
-    def run_interactive_mode(self):
+    def run_interactive_mode(self) -> None:
         """Run interactive bypass mode."""
         print("=== Anti-Anti-Debug Suite Interactive Mode ===")
         print("Commands: analyze, bypass, monitor, remove, report, quit")
@@ -2378,7 +2382,7 @@ class AntiAntiDebugSuite:
             try:
                 command = input("\nADB> ").strip().lower()
 
-                if command == "quit" or command == "exit":
+                if command in {"quit", "exit"}:
                     break
 
                 if command == "analyze":
@@ -2464,7 +2468,7 @@ class AntiAntiDebugSuite:
         print("Interactive mode ended.")
 
 
-def main():
+def main() -> None:
     """Provide example usage and CLI interface."""
     import argparse
 

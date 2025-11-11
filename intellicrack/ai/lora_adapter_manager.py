@@ -94,7 +94,7 @@ class AdapterConfig:
 class LoRAAdapterManager:
     """Manages LoRA and QLoRA adapters for efficient fine-tuning."""
 
-    def __init__(self, cache_dir: str | None = None):
+    def __init__(self, cache_dir: str | None = None) -> None:
         """Initialize the LoRA adapter manager.
 
         Args:
@@ -712,7 +712,7 @@ class LoRAAdapterManager:
 
         return results
 
-    def cleanup_cache(self, keep_recent: int = 5):
+    def cleanup_cache(self, keep_recent: int = 5) -> None:
         """Clean up cached adapters, keeping only recent ones.
 
         Args:

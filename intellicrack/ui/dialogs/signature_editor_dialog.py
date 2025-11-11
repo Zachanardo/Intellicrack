@@ -54,7 +54,7 @@ logger = get_logger(__name__)
 class SignatureSyntaxHighlighter(QSyntaxHighlighter):
     """Syntax highlighter for ICP signature format."""
 
-    def __init__(self, parent):
+    def __init__(self, parent) -> None:
         """Initialize the SignatureSyntaxHighlighter with default values."""
         super().__init__(parent)
         self.highlighting_rules = []
@@ -116,7 +116,7 @@ class SignatureSyntaxHighlighter(QSyntaxHighlighter):
             escaped_op = re.escape(op)
             self.highlighting_rules.append((re.compile(escaped_op), operator_format))
 
-    def highlightBlock(self, text):
+    def highlightBlock(self, text) -> None:
         """Apply syntax highlighting to a block of text."""
         for pattern, fmt in self.highlighting_rules:
             for match in pattern.finditer(text):
@@ -132,14 +132,14 @@ class SignatureTestWorker(QThread):
     #: progress, current_file (type: int, str)
     progress_update = pyqtSignal(int, str)
 
-    def __init__(self, signature_content: str, test_files: list[str]):
+    def __init__(self, signature_content: str, test_files: list[str]) -> None:
         """Initialize the SignatureTestWorker with default values."""
         super().__init__()
         self.signature_content = signature_content
         self.test_files = test_files
         self.unified_engine = get_unified_engine()
 
-    def run(self):
+    def run(self) -> None:
         """Run signature tests."""
         for i, file_path in enumerate(self.test_files):
             try:
@@ -207,7 +207,7 @@ class SignatureTestWorker(QThread):
 class SignatureEditorDialog(QDialog):
     """Run signature editor dialog."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the signature editor dialog with UI components and data structures."""
         super().__init__(parent)
         self.setWindowTitle("ICP Signature Editor")
@@ -230,7 +230,7 @@ class SignatureEditorDialog(QDialog):
         self.init_ui()
         self.load_signature_databases()
 
-    def init_ui(self):
+    def init_ui(self) -> None:
         """Initialize the user interface."""
         layout = QVBoxLayout()
 
@@ -389,7 +389,7 @@ class SignatureEditorDialog(QDialog):
                 "Virus",
                 "Trojan",
                 "Other",
-            ]
+            ],
         )
         info_layout.addWidget(self.sig_type_combo)
 
@@ -509,7 +509,7 @@ class SignatureEditorDialog(QDialog):
                 "Message",
                 "File Size",
                 "Time",
-            ]
+            ],
         )
 
         self.test_results_table = QTableView()
@@ -607,7 +607,7 @@ class SignatureEditorDialog(QDialog):
 
         return widget
 
-    def load_signature_databases(self):
+    def load_signature_databases(self) -> None:
         """Load available signature databases."""
         self.db_combo.clear()
         self.signature_databases.clear()
@@ -629,7 +629,7 @@ class SignatureEditorDialog(QDialog):
         if self.signature_databases:
             self.load_signatures_from_database(self.db_combo.currentText())
 
-    def load_signatures_from_database(self, db_name: str):
+    def load_signatures_from_database(self, db_name: str) -> None:
         """Load signatures from selected database."""
         if not db_name or db_name not in self.signature_databases:
             return
@@ -686,7 +686,7 @@ class SignatureEditorDialog(QDialog):
 
         return signatures
 
-    def _update_signature_list(self):
+    def _update_signature_list(self) -> None:
         """Update signature list display."""
         self.signature_list.clear()
 
@@ -710,11 +710,11 @@ class SignatureEditorDialog(QDialog):
 
             self.signature_list.addItem(item)
 
-    def filter_signatures(self, text: str):
+    def filter_signatures(self, text: str) -> None:
         """Filter signatures by search text."""
         self._update_signature_list()
 
-    def load_signature_from_list(self, item: QListWidgetItem):
+    def load_signature_from_list(self, item: QListWidgetItem) -> None:
         """Load signature from list selection."""
         sig_data = item.data(Qt.UserRole)
         if not sig_data:
@@ -730,7 +730,7 @@ class SignatureEditorDialog(QDialog):
         # Update info display
         self._update_signature_info(sig_data)
 
-    def _update_signature_info(self, sig_data: dict):
+    def _update_signature_info(self, sig_data: dict) -> None:
         """Update signature info display."""
         info_text = f"""Name: {sig_data["name"]}
 Type: {sig_data["type"]}
@@ -742,7 +742,7 @@ Content Preview:
 
         self.sig_info_text.setPlainText(info_text)
 
-    def new_signature(self):
+    def new_signature(self) -> None:
         """Create new signature."""
         self.current_signature_path = None
 
@@ -776,7 +776,7 @@ ep:
 """
         self.signature_editor.setPlainText(template)
 
-    def load_signature_file(self):
+    def load_signature_file(self) -> None:
         """Load signature from file."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
@@ -800,7 +800,7 @@ ep:
                 self.logger.error("Exception in signature_editor_dialog: %s", e)
                 QMessageBox.critical(self, "Load Error", f"Failed to load file: {e!s}")
 
-    def _extract_metadata_from_content(self, content: str):
+    def _extract_metadata_from_content(self, content: str) -> None:
         """Extract metadata from signature content."""
         lines = content.split("\n")
 
@@ -820,7 +820,7 @@ ep:
                 elif comment.startswith("Description:"):
                     self.sig_description_input.setText(comment[12:].strip())
 
-    def save_signature(self):
+    def save_signature(self) -> None:
         """Save current signature."""
         if not self.signature_editor.toPlainText().strip():
             QMessageBox.warning(self, "Save Error", "No signature content to save")
@@ -878,7 +878,7 @@ ep:
 
         return metadata_header + "\n".join(filtered_lines)
 
-    def validate_signature_syntax(self):
+    def validate_signature_syntax(self) -> None:
         """Validate signature syntax."""
         content = self.signature_editor.toPlainText()
 
@@ -910,7 +910,7 @@ ep:
         else:
             QMessageBox.information(self, "Validation", "Signature syntax is valid")
 
-    def format_signature(self):
+    def format_signature(self) -> None:
         """Format signature content."""
         content = self.signature_editor.toPlainText()
 
@@ -933,7 +933,7 @@ ep:
 
         self.signature_editor.setPlainText("\n".join(formatted_lines))
 
-    def show_template_menu(self):
+    def show_template_menu(self) -> None:
         """Show template insertion menu."""
         # Switch to template tab
         parent_widget = self.signature_editor.parent()
@@ -943,7 +943,7 @@ ep:
         if isinstance(parent_widget, QTabWidget):
             parent_widget.setCurrentIndex(2)  # Template tab
 
-    def load_template_category(self, current_item, previous_item):
+    def load_template_category(self, current_item, previous_item) -> None:
         """Load templates for selected category."""
         if not current_item:
             return
@@ -967,7 +967,7 @@ ep:
 
         templates = self._get_templates_for_category(category)
 
-        for template_name in templates.keys():
+        for template_name in templates:
             self.template_list.addItem(template_name)
 
         # Restore previous selection for this category if available
@@ -1032,7 +1032,7 @@ ep:
 
         return {}
 
-    def _update_template_preview(self):
+    def _update_template_preview(self) -> None:
         """Update template preview."""
         current_item = self.template_list.currentItem()
         if not current_item:
@@ -1049,14 +1049,14 @@ ep:
         if template_name in templates:
             self.template_preview.setPlainText(templates[template_name])
 
-    def insert_template(self):
+    def insert_template(self) -> None:
         """Insert selected template into editor."""
         template_content = self.template_preview.toPlainText()
         if template_content:
             cursor = self.signature_editor.textCursor()
             cursor.insertText(template_content + "\n\n")
 
-    def add_test_file(self):
+    def add_test_file(self) -> None:
         """Add individual test file."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
@@ -1068,7 +1068,7 @@ ep:
         if file_path:
             self.test_files_list.addItem(file_path)
 
-    def add_test_folder(self):
+    def add_test_folder(self) -> None:
         """Add all files from folder for testing."""
         folder_path = QFileDialog.getExistingDirectory(
             self,
@@ -1082,11 +1082,11 @@ ep:
                 if file_path.is_file() and file_path.suffix.lower() in [".exe", ".dll", ".sys"]:
                     self.test_files_list.addItem(str(file_path))
 
-    def clear_test_files(self):
+    def clear_test_files(self) -> None:
         """Clear test files list."""
         self.test_files_list.clear()
 
-    def run_signature_tests(self):
+    def run_signature_tests(self) -> None:
         """Run signature tests."""
         signature_content = self.signature_editor.toPlainText()
         if not signature_content.strip():
@@ -1110,7 +1110,7 @@ ep:
                 "Message",
                 "File Size",
                 "Time",
-            ]
+            ],
         )
 
         # Disable test button, enable stop button
@@ -1124,7 +1124,7 @@ ep:
         self.test_worker.finished.connect(self._on_tests_finished)
         self.test_worker.start()
 
-    def stop_signature_tests(self):
+    def stop_signature_tests(self) -> None:
         """Stop running signature tests."""
         if self.test_worker and self.test_worker.isRunning():
             self.test_worker.terminate()
@@ -1133,7 +1133,7 @@ ep:
         self._on_tests_finished()
 
     @pyqtSlot(str, bool, str)
-    def _on_test_completed(self, file_path: str, success: bool, result: str):
+    def _on_test_completed(self, file_path: str, success: bool, result: str) -> None:
         """Handle individual test completion."""
         row = self.test_results_model.rowCount()
         self.test_results_model.insertRow(row)
@@ -1168,11 +1168,11 @@ ep:
         self.test_results_model.setItem(row, 4, time_item)
 
     @pyqtSlot(int, str)
-    def _on_test_progress(self, progress: int, current_file: str):
+    def _on_test_progress(self, progress: int, current_file: str) -> None:
         """Handle test progress update."""
         self.test_summary_label.setText(f"Testing: {current_file} ({progress}%)")
 
-    def _on_tests_finished(self):
+    def _on_tests_finished(self) -> None:
         """Handle test completion."""
         # Re-enable test button, disable stop button
         self.run_test_btn.setEnabled(True)
@@ -1195,7 +1195,7 @@ ep:
 
         self.test_worker = None
 
-    def add_signature_database(self):
+    def add_signature_database(self) -> None:
         """Add new signature database."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
@@ -1210,14 +1210,14 @@ ep:
             self.db_combo.addItem(db_name)
             self.db_combo.setCurrentText(db_name)
 
-    def refresh_signatures(self):
+    def refresh_signatures(self) -> None:
         """Refresh signature list."""
         current_db = self.db_combo.currentText()
         if current_db:
             self.load_signatures_from_database(current_db)
 
 
-def main():
+def main() -> None:
     """Test the signature editor dialog."""
     app = QApplication([])
 

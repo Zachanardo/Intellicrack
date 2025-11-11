@@ -90,7 +90,7 @@ class CodeSigningInfo:
 class CertificateExtractor:
     """Extract and analyze certificates from PE files."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize certificate extractor with empty PE file and path state."""
         self.pe = None
         self.file_path = None
@@ -179,7 +179,7 @@ class CertificateExtractor:
                     break
 
                 # dwLength (4 bytes) + wRevision (2 bytes) + wCertificateType (2 bytes)
-                length, revision, cert_type = struct.unpack("<LHH", cert_data[offset : offset + 8])
+                length, _revision, cert_type = struct.unpack("<LHH", cert_data[offset : offset + 8])
 
                 if length < 8 or offset + length > len(cert_data):
                     break
@@ -518,7 +518,7 @@ class CertificateExtractor:
                 if offset + 8 > len(cert_data):
                     break
 
-                length, revision, cert_type = struct.unpack("<LHH", cert_data[offset : offset + 8])
+                length, _revision, cert_type = struct.unpack("<LHH", cert_data[offset : offset + 8])
                 if length < 8 or offset + length > len(cert_data):
                     break
 

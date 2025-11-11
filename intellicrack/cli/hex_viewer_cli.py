@@ -19,6 +19,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+import contextlib
 import curses
 import os
 import sys
@@ -34,7 +35,7 @@ except ImportError:
 class TerminalHexViewer:
     """Advanced terminal-based hex viewer using ncurses."""
 
-    def __init__(self, filepath: str):
+    def __init__(self, filepath: str) -> None:
         """Initialize hex viewer with file path.
 
         Args:
@@ -81,7 +82,7 @@ class TerminalHexViewer:
 
         self._load_file()
 
-    def _load_file(self):
+    def _load_file(self) -> None:
         """Load file data using memory mapping when possible."""
         if not os.path.exists(self.filepath):
             raise FileNotFoundError(f"File not found: {self.filepath}")
@@ -108,7 +109,7 @@ class TerminalHexViewer:
             except OSError:
                 raise OSError(f"Cannot open file: {e}") from e
 
-    def _setup_colors(self):
+    def _setup_colors(self) -> None:
         """Set up color pairs for the interface."""
         if not curses.has_colors():
             return
@@ -125,7 +126,7 @@ class TerminalHexViewer:
         curses.init_pair(self.colors["status"], curses.COLOR_WHITE, curses.COLOR_BLUE)
         curses.init_pair(self.colors["help"], curses.COLOR_YELLOW, curses.COLOR_BLACK)
 
-    def run(self, stdscr):
+    def run(self, stdscr) -> None:
         """Run main application loop."""
         self.stdscr = stdscr
         self._setup_colors()
@@ -152,13 +153,13 @@ class TerminalHexViewer:
         finally:
             self._cleanup()
 
-    def _update_screen_dimensions(self):
+    def _update_screen_dimensions(self) -> None:
         """Update screen dimensions and layout."""
         self.screen_height, self.screen_width = self.stdscr.getmaxyx()
         self.hex_area_height = self.screen_height - 3  # Leave room for status and help
         self.status_line = self.screen_height - 2
 
-    def _draw_interface(self):
+    def _draw_interface(self) -> None:
         """Draw the complete hex viewer interface."""
         self.stdscr.clear()
 
@@ -171,7 +172,7 @@ class TerminalHexViewer:
 
         self.stdscr.refresh()
 
-    def _draw_hex_area(self):
+    def _draw_hex_area(self) -> None:
         """Draw the main hex viewing area."""
         lines_to_show = min(
             self.hex_area_height,
@@ -185,7 +186,7 @@ class TerminalHexViewer:
 
             self._draw_hex_line(line_idx, offset)
 
-    def _draw_hex_line(self, line_idx: int, offset: int):
+    def _draw_hex_line(self, line_idx: int, offset: int) -> None:
         """Draw a single line of hex data."""
         y = line_idx
 
@@ -241,7 +242,7 @@ class TerminalHexViewer:
             ascii_display = ascii_line[: self.screen_width - ascii_x]
             self.stdscr.addstr(y, ascii_x, ascii_display, curses.color_pair(self.colors["ascii"]))
 
-    def _draw_status_line(self):
+    def _draw_status_line(self) -> None:
         """Draw status line with current information."""
         if self.status_line >= self.screen_height:
             return
@@ -261,17 +262,15 @@ class TerminalHexViewer:
         # Pad to full width
         status = status.ljust(self.screen_width)
 
-        try:
+        with contextlib.suppress(curses.error):
             self.stdscr.addstr(
                 self.status_line,
                 0,
                 status,
                 curses.color_pair(self.colors["status"]) | curses.A_BOLD,
             )
-        except curses.error:
-            pass
 
-    def _draw_info_line(self):
+    def _draw_info_line(self) -> None:
         """Draw information/help line."""
         info_line = self.status_line + 1
         if info_line >= self.screen_height:
@@ -284,12 +283,10 @@ class TerminalHexViewer:
 
         help_text = help_text.ljust(self.screen_width)
 
-        try:
+        with contextlib.suppress(curses.error):
             self.stdscr.addstr(info_line, 0, help_text, curses.color_pair(self.colors["help"]))
-        except curses.error:
-            pass
 
-    def _draw_help(self):
+    def _draw_help(self) -> None:
         """Draw help screen."""
         help_lines = [
             "Intellicrack Terminal Hex Viewer - Help",
@@ -330,10 +327,8 @@ class TerminalHexViewer:
                 break
 
             x = max(0, (self.screen_width - len(line)) // 2)
-            try:
+            with contextlib.suppress(curses.error):
                 self.stdscr.addstr(y, x, line, curses.color_pair(self.colors["help"]))
-            except curses.error:
-                pass
 
     def _handle_input(self, key: int) -> bool:
         """Handle keyboard input. Returns False to exit."""
@@ -429,7 +424,7 @@ class TerminalHexViewer:
 
         return True
 
-    def _handle_edit_character(self, key: int):
+    def _handle_edit_character(self, key: int) -> None:
         """Handle character input during editing."""
         if self.cursor_offset >= self.file_size:
             return
@@ -451,7 +446,7 @@ class TerminalHexViewer:
             self.modified = True
             self._move_cursor(1)
 
-    def _edit_hex_digit(self, digit: int):
+    def _edit_hex_digit(self, digit: int) -> None:
         """Edit a single hex digit."""
         current_byte = self.modifications.get(self.cursor_offset, self.data[self.cursor_offset])
 
@@ -462,13 +457,13 @@ class TerminalHexViewer:
         self.modified = True
         self._move_cursor(1)
 
-    def _move_cursor(self, delta: int):
+    def _move_cursor(self, delta: int) -> None:
         """Move cursor by delta bytes."""
         new_offset = max(0, min(self.file_size - 1, self.cursor_offset + delta))
         self.cursor_offset = new_offset
         self._adjust_display()
 
-    def _adjust_display(self):
+    def _adjust_display(self) -> None:
         """Adjust display offset to keep cursor visible."""
         lines_per_screen = self.hex_area_height
         bytes_per_screen = lines_per_screen * self.bytes_per_line
@@ -484,7 +479,7 @@ class TerminalHexViewer:
             ) * self.bytes_per_line
             self.current_offset = max(0, self.current_offset)
 
-    def _start_search(self):
+    def _start_search(self) -> None:
         """Start search functionality with interactive input."""
         # Create input window for search pattern
         height, width = self.stdscr.getmaxyx()
@@ -548,7 +543,7 @@ class TerminalHexViewer:
         # Clean up
         del input_win
 
-    def _perform_search(self):
+    def _perform_search(self) -> None:
         """Perform search for current pattern (hex or text)."""
         if not self.search_pattern:
             return
@@ -598,7 +593,7 @@ class TerminalHexViewer:
             self.current_search_index = 0
             self._goto_search_result(0)
 
-    def _next_search_result(self):
+    def _next_search_result(self) -> None:
         """Go to next search result."""
         if not self.search_results:
             return
@@ -606,7 +601,7 @@ class TerminalHexViewer:
         self.current_search_index = (self.current_search_index + 1) % len(self.search_results)
         self._goto_search_result(self.current_search_index)
 
-    def _prev_search_result(self):
+    def _prev_search_result(self) -> None:
         """Go to previous search result."""
         if not self.search_results:
             return
@@ -614,14 +609,14 @@ class TerminalHexViewer:
         self.current_search_index = (self.current_search_index - 1) % len(self.search_results)
         self._goto_search_result(self.current_search_index)
 
-    def _goto_search_result(self, index: int):
+    def _goto_search_result(self, index: int) -> None:
         """Go to specific search result."""
         if 0 <= index < len(self.search_results):
-            offset, length = self.search_results[index]
+            offset, _length = self.search_results[index]
             self.cursor_offset = offset
             self._adjust_display()
 
-    def _goto_offset(self):
+    def _goto_offset(self) -> None:
         """Go to specific offset with interactive input."""
         # Create input window for offset
         height, width = self.stdscr.getmaxyx()
@@ -690,7 +685,7 @@ class TerminalHexViewer:
         # Clean up
         del input_win
 
-    def _save_changes(self):
+    def _save_changes(self) -> None:
         """Save modifications to file."""
         if not self.modified or not self.modifications:
             return
@@ -767,7 +762,7 @@ class TerminalHexViewer:
                 self.stdscr.refresh()
                 return True
 
-    def _show_error_dialog(self, error_message: str):
+    def _show_error_dialog(self, error_message: str) -> None:
         """Display an error dialog with the given message.
 
         Args:
@@ -836,7 +831,7 @@ class TerminalHexViewer:
         curses.reset_prog_mode()
         self.stdscr.refresh()
 
-    def _cleanup(self):
+    def _cleanup(self) -> None:
         """Clean up resources."""
         if self.mmap_file:
             self.mmap_file.close()
@@ -844,7 +839,7 @@ class TerminalHexViewer:
             self.file_handle.close()
 
 
-def launch_hex_viewer(filepath: str):
+def launch_hex_viewer(filepath: str) -> bool:
     """Launch the terminal hex viewer.
 
     Args:

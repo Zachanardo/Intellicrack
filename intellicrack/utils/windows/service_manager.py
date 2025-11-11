@@ -116,7 +116,7 @@ class WindowsServiceManager:
     SERVICE_CONTROL_CONTINUE = 3
     SERVICE_CONTROL_INTERROGATE = 4
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize Windows service manager."""
         self.logger = logging.getLogger(__name__)
         self._advapi32 = None
@@ -180,7 +180,7 @@ class WindowsServiceManager:
 
             try:
                 service_handle = self._advapi32.OpenServiceW(
-                    sc_manager, service_name, self.SERVICE_QUERY_CONFIG | self.SERVICE_QUERY_STATUS
+                    sc_manager, service_name, self.SERVICE_QUERY_CONFIG | self.SERVICE_QUERY_STATUS,
                 )
 
                 if not service_handle:
@@ -198,7 +198,7 @@ class WindowsServiceManager:
                     config = ctypes.cast(buffer, ctypes.POINTER(QueryServiceConfig)).contents
 
                     if self._advapi32.QueryServiceConfigW(
-                        service_handle, ctypes.byref(config), bytes_needed.value, ctypes.byref(bytes_needed)
+                        service_handle, ctypes.byref(config), bytes_needed.value, ctypes.byref(bytes_needed),
                     ):
                         return ServiceInfo(
                             name=service_name,

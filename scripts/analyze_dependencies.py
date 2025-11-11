@@ -16,7 +16,7 @@ from typing import Dict, List, Set, Tuple
 class DependencyAnalyzer:
     """Analyzes Python code to identify and validate third-party dependencies."""
 
-    def __init__(self, project_root: Path):
+    def __init__(self, project_root: Path) -> None:
         """Initialize the dependency analyzer with project root path."""
         self.project_root = project_root
         self.local_modules = self._discover_local_modules()
@@ -305,7 +305,7 @@ class DependencyAnalyzer:
         imports = set()
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 tree = ast.parse(f.read(), filename=str(file_path))
 
             for node in ast.walk(tree):
@@ -393,7 +393,7 @@ class DependencyAnalyzer:
 
         return dict(results)
 
-    def _print_summary(self, all_imports: Dict[str, Set[str]], results: Dict[str, List]):
+    def _print_summary(self, all_imports: Dict[str, Set[str]], results: Dict[str, List]) -> None:
         """Print analysis summary with colors."""
         print("\033[1;94m" + "=" * 80 + "\033[0m")
         print("\033[1;94m" + "INTELLICRACK DEPENDENCY ANALYSIS REPORT".center(80) + "\033[0m")
@@ -448,7 +448,7 @@ class DependencyAnalyzer:
             print("\033[1;92m" + "=" * 80 + "\033[0m")
 
 
-def main():
+def main() -> None:
     """Run the dependency analysis."""
     project_root = Path(__file__).parent.parent
 

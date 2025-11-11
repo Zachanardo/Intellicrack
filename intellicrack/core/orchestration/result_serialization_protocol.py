@@ -232,7 +232,7 @@ class ControlFlowResult(BaseResult):
 class ResultSerializer:
     """Unified serialization handler for all result types."""
 
-    def __init__(self, format: DataFormat = DataFormat.MSGPACK):
+    def __init__(self, format: DataFormat = DataFormat.MSGPACK) -> None:
         """Initialize serializer with specified format."""
         self.format = format
         self.compression_enabled = True

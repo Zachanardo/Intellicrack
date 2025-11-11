@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 class PathDiscovery:
     """Dynamic path discovery system for tools and resources."""
 
-    def __init__(self, config_manager=None):
+    def __init__(self, config_manager=None) -> None:
         """Initialize path discovery system.
 
         Args:
@@ -378,7 +378,7 @@ class PathDiscovery:
                     os.path.join(self.get_system_path("program_files_x86"), tool_name),
                     f"C:\\{tool_name}",
                     f"C:\\Tools\\{tool_name}",
-                ]
+                ],
             )
         else:
             search_dirs.extend(
@@ -387,7 +387,7 @@ class PathDiscovery:
                     f"/usr/local/{tool_name}",
                     os.path.expanduser(f"~/.{tool_name}"),
                     os.path.expanduser(f"~/{tool_name}"),
-                ]
+                ],
             )
 
         for directory in search_dirs:
@@ -605,8 +605,8 @@ class PathDiscovery:
     def _validate_radare2(self, path: str) -> bool:
         """Validate radare2 installation."""
         try:
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                [path, "-v"], capture_output=True, text=True, timeout=5, check=False
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                [path, "-v"], capture_output=True, text=True, timeout=5, check=False,
             )
             return "radare2" in result.stdout.lower()
         except Exception as e:
@@ -616,8 +616,8 @@ class PathDiscovery:
     def _validate_frida(self, path: str) -> bool:
         """Validate Frida installation."""
         try:
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                [path, "--version"], capture_output=True, text=True, timeout=5, check=False
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                [path, "--version"], capture_output=True, text=True, timeout=5, check=False,
             )
             return "frida" in result.stdout.lower() or result.returncode == 0
         except Exception as e:
@@ -627,8 +627,8 @@ class PathDiscovery:
     def _validate_python(self, path: str) -> bool:
         """Validate Python installation."""
         try:
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                [path, "--version"], capture_output=True, text=True, timeout=5, check=False
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                [path, "--version"], capture_output=True, text=True, timeout=5, check=False,
             )
             return "python" in result.stdout.lower() or "python" in result.stderr.lower()
         except Exception as e:

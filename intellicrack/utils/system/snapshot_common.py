@@ -50,7 +50,7 @@ def validate_snapshots(snapshots_dict, snapshot1, snapshot2, logger=None):
     return True, None
 
 
-def log_comparison_start(snapshot1, snapshot2, logger=None):
+def log_comparison_start(snapshot1, snapshot2, logger=None) -> None:
     """Log the start of snapshot comparison.
 
     Args:
@@ -64,7 +64,7 @@ def log_comparison_start(snapshot1, snapshot2, logger=None):
 
 
 def start_snapshot_comparison(
-    snapshots_dict: dict[str, Any], snapshot1: str, snapshot2: str, logger=None
+    snapshots_dict: dict[str, Any], snapshot1: str, snapshot2: str, logger=None,
 ) -> tuple[bool, dict | None, str | None]:
     """Start snapshot comparison with validation and logging.
 

@@ -53,7 +53,7 @@ logger = get_logger(__name__)
 class PrintOptionsDialog(QDialog):
     """Dialog for configuring print options."""
 
-    def __init__(self, parent=None, hex_viewer=None):
+    def __init__(self, parent=None, hex_viewer=None) -> None:
         """Initialize print options dialog.
 
         Args:
@@ -68,7 +68,7 @@ class PrintOptionsDialog(QDialog):
         self.resize(500, 600)
         self.init_ui()
 
-    def init_ui(self):
+    def init_ui(self) -> None:
         """Initialize UI components."""
         layout = QVBoxLayout()
 
@@ -235,7 +235,7 @@ class PrintOptionsDialog(QDialog):
 
         self.setLayout(layout)
 
-    def on_range_changed(self):
+    def on_range_changed(self) -> None:
         """Handle print range selection changes."""
         sender = self.sender()
 
@@ -257,11 +257,11 @@ class PrintOptionsDialog(QDialog):
                 self.from_page_spin.setEnabled(False)
                 self.to_page_spin.setEnabled(False)
 
-    def on_header_toggled(self, checked):
+    def on_header_toggled(self, checked) -> None:
         """Handle header checkbox toggle."""
         self.header_edit.setEnabled(checked)
 
-    def on_footer_toggled(self, checked):
+    def on_footer_toggled(self, checked) -> None:
         """Handle footer checkbox toggle."""
         self.footer_edit.setEnabled(checked)
 
@@ -342,7 +342,7 @@ class PrintOptionsDialog(QDialog):
 
         return line
 
-    def render_page(self, painter, page_rect, data, start_offset, page_num, total_pages):
+    def render_page(self, painter, page_rect, data, start_offset, page_num, total_pages) -> None:
         """Render a page of hex data.
 
         Args:
@@ -477,13 +477,13 @@ class PrintOptionsDialog(QDialog):
 
         return max(1, total_pages)
 
-    def show_preview(self):
+    def show_preview(self) -> None:
         """Show print preview dialog."""
         preview = QPrintPreviewDialog(self.printer, self)
         preview.paintRequested.connect(self.on_print_preview)
         preview.exec()
 
-    def on_print_preview(self, printer):
+    def on_print_preview(self, printer) -> None:
         """Handle print preview paint request.
 
         Args:
@@ -492,7 +492,7 @@ class PrintOptionsDialog(QDialog):
         """
         self.render_to_printer(printer)
 
-    def print_document(self):
+    def print_document(self) -> None:
         """Print the document."""
         # Show native print dialog
         print_dialog = QPrintDialog(self.printer, self)
@@ -500,7 +500,7 @@ class PrintOptionsDialog(QDialog):
             self.render_to_printer(self.printer)
             self.accept()
 
-    def render_to_printer(self, printer):
+    def render_to_printer(self, printer) -> None:
         """Render the hex data to a printer.
 
         Args:

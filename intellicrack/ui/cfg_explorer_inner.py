@@ -44,7 +44,7 @@ Dependencies:
 
 import logging
 
-import networkx
+import networkx as nx
 
 from intellicrack.utils.log_message import log_message
 
@@ -118,7 +118,7 @@ class CfgExplorerInner:
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[CFG Explorer] Error running CFG explorer: {explorer_error}"))
 
-    def _initialize_cfg_explorer_config(self, app):
+    def _initialize_cfg_explorer_config(self, app) -> None:
         """Initialize CFG explorer configuration."""
         if not hasattr(app, "cfg_explorer_config"):
             app.cfg_explorer_config = {
@@ -130,7 +130,7 @@ class CfgExplorerInner:
                 "export_formats": ["png", "svg", "dot", "html"],
             }
 
-    def _initialize_cfg_analysis_tools(self, app):
+    def _initialize_cfg_analysis_tools(self, app) -> None:
         """Initialize analysis tools availability tracking."""
         if not hasattr(app, "cfg_analysis_tools"):
             app.cfg_analysis_tools = {
@@ -141,17 +141,17 @@ class CfgExplorerInner:
                 "use_fallback_analysis": True,
             }
 
-    def _setup_networkx_integration(self, app):
+    def _setup_networkx_integration(self, app) -> None:
         """Set up NetworkX graph analysis integration."""
         try:
-            import networkx
+            import networkx as nx
 
             app.cfg_analysis_tools["networkx_available"] = True
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message("[CFG Explorer] NetworkX available for graph analysis"))
 
             if not hasattr(app, "cfg_graph"):
-                app.cfg_graph = networkx.DiGraph()
+                app.cfg_graph = nx.DiGraph()
 
             def build_cfg_with_networkx(functions, edges):
                 """Build Control Flow Graph using NetworkX."""
@@ -180,15 +180,15 @@ class CfgExplorerInner:
                 metrics = {
                     "nodes": app.cfg_graph.number_of_nodes(),
                     "edges": app.cfg_graph.number_of_edges(),
-                    "density": networkx.density(app.cfg_graph) if app.cfg_graph.number_of_nodes() > 0 else 0,
-                    "is_connected": networkx.is_weakly_connected(app.cfg_graph) if app.cfg_graph.number_of_nodes() > 0 else False,
+                    "density": nx.density(app.cfg_graph) if app.cfg_graph.number_of_nodes() > 0 else 0,
+                    "is_connected": nx.is_weakly_connected(app.cfg_graph) if app.cfg_graph.number_of_nodes() > 0 else False,
                 }
 
                 # Find important nodes
                 if app.cfg_graph.number_of_nodes() > 0:
                     try:
-                        metrics["centrality"] = networkx.degree_centrality(app.cfg_graph)
-                        metrics["pagerank"] = networkx.pagerank(app.cfg_graph, max_iter=100)
+                        metrics["centrality"] = nx.degree_centrality(app.cfg_graph)
+                        metrics["pagerank"] = nx.pagerank(app.cfg_graph, max_iter=100)
                     except (ImportError, AttributeError, Exception) as e:
                         logger.debug(f"Failed to compute graph metrics: {e}")
 
@@ -201,7 +201,7 @@ class CfgExplorerInner:
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message("[CFG Explorer] NetworkX not available, using basic analysis"))
 
-    def _setup_matplotlib_integration(self, app):
+    def _setup_matplotlib_integration(self, app) -> None:
         """Set up Matplotlib visualization integration."""
         try:
             from intellicrack.handlers.matplotlib_handler import HAS_MATPLOTLIB
@@ -222,9 +222,9 @@ class CfgExplorerInner:
 
                     # Generate layout
                     if app.cfg_graph.number_of_nodes() < 50:
-                        pos = networkx.spring_layout(app.cfg_graph, k=2, iterations=50)
+                        pos = nx.spring_layout(app.cfg_graph, k=2, iterations=50)
                     else:
-                        pos = networkx.kamada_kawai_layout(app.cfg_graph)
+                        pos = nx.kamada_kawai_layout(app.cfg_graph)
 
                     # Draw nodes
                     node_colors = []
@@ -236,7 +236,7 @@ class CfgExplorerInner:
                         size = min(node_data.get("size", 100) * 10, 3000)
                         node_sizes.append(max(size, 300))
 
-                    networkx.draw_networkx_nodes(
+                    nx.draw_networkx_nodes(
                         app.cfg_graph,
                         pos,
                         node_color=node_colors,
@@ -259,7 +259,7 @@ class CfgExplorerInner:
                             edge_colors.append("black")
                             edge_styles.append("solid")
 
-                    networkx.draw_networkx_edges(
+                    nx.draw_networkx_edges(
                         app.cfg_graph,
                         pos,
                         edge_color=edge_colors,
@@ -273,7 +273,7 @@ class CfgExplorerInner:
                     for node in app.cfg_graph.nodes():
                         labels[node] = app.cfg_graph.nodes[node].get("label", str(node))
 
-                    networkx.draw_networkx_labels(app.cfg_graph, pos, labels, font_size=8)
+                    nx.draw_networkx_labels(app.cfg_graph, pos, labels, font_size=8)
 
                     matplotlib_pyplot.title("Control Flow Graph Visualization")
                     matplotlib_pyplot.axis("off")
@@ -297,7 +297,7 @@ class CfgExplorerInner:
             logger.error("Import error in main_app.py: %s", e)
             pass
 
-    def _setup_radare2_integration(self, app):
+    def _setup_radare2_integration(self, app) -> None:
         """Set up Radare2 binary analysis integration."""
         try:
             import r2pipe
@@ -329,7 +329,7 @@ class CfgExplorerInner:
                                 "size": func.get("size", 0),
                                 "type": "function",
                                 "confidence": 0.9,
-                            }
+                            },
                         )
 
                         calls = r2.cmdj(f"axfj @ {func.get('offset', 0)}")
@@ -340,7 +340,7 @@ class CfgExplorerInner:
                                         "from": hex(func.get("offset", 0)),
                                         "to": hex(call.get("to", 0)),
                                         "type": "call",
-                                    }
+                                    },
                                 )
 
                     license_strings = []
@@ -352,7 +352,7 @@ class CfgExplorerInner:
                                     "address": hex(s.get("vaddr", 0)),
                                     "string": s.get("string", ""),
                                     "type": "license_related",
-                                }
+                                },
                             )
 
                     result = {
@@ -380,7 +380,7 @@ class CfgExplorerInner:
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message("[CFG Explorer] Radare2 not available, using pattern-based analysis"))
 
-    def _setup_capstone_integration(self, app):
+    def _setup_capstone_integration(self, app) -> None:
         """Set up Capstone disassembler integration."""
         try:
             from intellicrack.handlers.capstone_handler import capstone
@@ -424,8 +424,8 @@ class CfgExplorerInner:
                                     {
                                         "start": current_block[0]["address"],
                                         "end": insn_dict["address"],
-                                        "instructions": current_block + [insn_dict],
-                                    }
+                                        "instructions": [*current_block, insn_dict],
+                                    },
                                 )
                                 current_block = []
                         else:
@@ -445,7 +445,7 @@ class CfgExplorerInner:
                                 "start": current_block[0]["address"],
                                 "end": current_block[-1]["address"],
                                 "instructions": current_block,
-                            }
+                            },
                         )
 
                     return {
@@ -466,7 +466,7 @@ class CfgExplorerInner:
             logger.error("Import error in main_app.py: %s", e)
             pass
 
-    def _initialize_cfg_data_structures(self, app):
+    def _initialize_cfg_data_structures(self, app) -> None:
         """Initialize CFG-related data structures."""
         if not hasattr(app, "cfg_functions"):
             app.cfg_functions = {}
@@ -474,7 +474,7 @@ class CfgExplorerInner:
         if not hasattr(app, "cfg_current_function"):
             app.cfg_current_function = None
 
-    def _setup_license_patterns(self, app):
+    def _setup_license_patterns(self, app) -> None:
         """Set up license pattern detection."""
         if not hasattr(app, "license_patterns"):
             app.license_patterns = {
@@ -525,7 +525,7 @@ class CfgExplorerInner:
                 ],
             }
 
-    def _perform_binary_structure_analysis(self, app):
+    def _perform_binary_structure_analysis(self, app) -> None:
         """Perform basic binary structure analysis."""
         if hasattr(app, "binary_path") and app.binary_path:
             try:
@@ -589,7 +589,7 @@ class CfgExplorerInner:
                         "pattern": func["pattern_hex"],
                         "type": func["type"],
                         "confidence": func["confidence"],
-                    }
+                    },
                 )
         return function_patterns
 
@@ -604,11 +604,11 @@ class CfgExplorerInner:
                         "keyword": keyword,
                         "address": hex(0x400000 + pos),
                         "context": binary_data[max(0, pos - 10) : pos + len(keyword) + 10].hex(),
-                    }
+                    },
                 )
         return license_hits
 
-    def _initialize_graph_visualization_data(self, app):
+    def _initialize_graph_visualization_data(self, app) -> None:
         """Initialize graph visualization data structures."""
         if not hasattr(app, "cfg_graph_data"):
             app.cfg_graph_data = {
@@ -620,7 +620,7 @@ class CfgExplorerInner:
                 "edge_styles": {},
             }
 
-    def _build_sample_cfg_graph(self, app):
+    def _build_sample_cfg_graph(self, app) -> None:
         """Create sample CFG graph if functions detected."""
         if hasattr(app, "cfg_detected_functions") and app.cfg_detected_functions:
             sample_nodes = []
@@ -634,7 +634,7 @@ class CfgExplorerInner:
                         "address": func["address"],
                         "type": "function",
                         "confidence": func.get("confidence", 0.5),
-                    }
+                    },
                 )
 
             sample_edges = self._perform_real_cfg_analysis(app, sample_nodes)
@@ -644,10 +644,10 @@ class CfgExplorerInner:
 
             if hasattr(app, "update_output"):
                 app.update_output.emit(
-                    log_message(f"[CFG Explorer] Built CFG with {len(sample_nodes)} nodes and {len(sample_edges)} edges")
+                    log_message(f"[CFG Explorer] Built CFG with {len(sample_nodes)} nodes and {len(sample_edges)} edges"),
                 )
 
-    def _compile_cfg_analysis_results(self, app):
+    def _compile_cfg_analysis_results(self, app) -> None:
         """Compile and store CFG analysis results."""
         if not hasattr(app, "analyze_results"):
             app.analyze_results = []

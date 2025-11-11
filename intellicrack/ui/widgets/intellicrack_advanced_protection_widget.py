@@ -68,7 +68,7 @@ class AdvancedAnalysisThread(QThread):
     #: message, percentage (type: str, int)
     analysis_progress = pyqtSignal(str, int)
 
-    def __init__(self, file_path: str, scan_mode: ScanMode, enable_heuristic: bool, extract_strings: bool):
+    def __init__(self, file_path: str, scan_mode: ScanMode, enable_heuristic: bool, extract_strings: bool) -> None:
         """Initialize advanced analysis thread with file path, scan configuration, and analysis options."""
         super().__init__()
         self.file_path = file_path
@@ -77,7 +77,7 @@ class AdvancedAnalysisThread(QThread):
         self.extract_strings = extract_strings
         self.detector = IntellicrackAdvancedProtection()
 
-    def run(self):
+    def run(self) -> None:
         """Run advanced protection analysis in background thread."""
         try:
             self.analysis_progress.emit("Initializing analysis...", 10)
@@ -103,13 +103,13 @@ class AdvancedAnalysisThread(QThread):
 class EntropyGraphWidget(FigureCanvas):
     """Widget for displaying entropy graph."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize entropy graph widget with matplotlib figure and parent widget."""
         self.figure = Figure(figsize=(8, 4))
         super().__init__(self.figure)
         self.setParent(parent)
 
-    def plot_entropy(self, entropy_data: list[EntropyInfo]):
+    def plot_entropy(self, entropy_data: list[EntropyInfo]) -> None:
         """Plot entropy data for sections."""
         self.figure.clear()
         ax = self.figure.add_subplot(111)
@@ -174,14 +174,14 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
     #: file_path (type: str)
     analysis_requested = pyqtSignal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize advanced protection widget with parent widget and UI components."""
         super().__init__(parent)
         self.current_analysis: AdvancedProtectionAnalysis | None = None
         self.analysis_thread: AdvancedAnalysisThread | None = None
         self.init_ui()
 
-    def init_ui(self):
+    def init_ui(self) -> None:
         """Initialize the advanced UI."""
         layout = QVBoxLayout()
 
@@ -355,7 +355,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
                 "Version",
                 "Confidence",
                 "Bypass Available",
-            ]
+            ],
         )
         self.detections_table.horizontalHeader().setStretchLastSection(True)
         self.detections_table.setSelectionBehavior(QTableWidget.SelectRows)
@@ -391,7 +391,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
                 "Size",
                 "Entropy",
                 "Status",
-            ]
+            ],
         )
         self.entropy_table.horizontalHeader().setStretchLastSection(True)
         layout.addWidget(self.entropy_table)
@@ -414,7 +414,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
                 "Valid To",
                 "Algorithm",
                 "Status",
-            ]
+            ],
         )
         self.certificates_table.horizontalHeader().setStretchLastSection(True)
         layout.addWidget(self.certificates_table)
@@ -436,7 +436,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
                 "Language",
                 "Size",
                 "Hash",
-            ]
+            ],
         )
         self.resources_table.horizontalHeader().setStretchLastSection(True)
         layout.addWidget(self.resources_table)
@@ -467,7 +467,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
                 "Offset",
                 "Encoding",
                 "Suspicious",
-            ]
+            ],
         )
         self.strings_table.horizontalHeader().setStretchLastSection(True)
         layout.addWidget(self.strings_table)
@@ -545,7 +545,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         widget.setLayout(layout)
         return widget
 
-    def on_browse_clicked(self):
+    def on_browse_clicked(self) -> None:
         """Handle browse button click."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
@@ -557,7 +557,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         if file_path:
             self.file_path_edit.setText(file_path)
 
-    def on_analyze_clicked(self):
+    def on_analyze_clicked(self) -> None:
         """Handle analyze button click."""
         file_path = self.file_path_edit.text()
         if not file_path or not os.path.exists(file_path):
@@ -594,7 +594,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         self.analysis_thread.analysis_progress.connect(self.on_analysis_progress)
         self.analysis_thread.start()
 
-    def on_analysis_complete(self, analysis: AdvancedProtectionAnalysis):
+    def on_analysis_complete(self, analysis: AdvancedProtectionAnalysis) -> None:
         """Handle completed analysis."""
         self.current_analysis = analysis
         self.display_results(analysis)
@@ -611,19 +611,19 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
                 detection.bypass_recommendations,
             )
 
-    def on_analysis_error(self, error_msg: str):
+    def on_analysis_error(self, error_msg: str) -> None:
         """Handle analysis error."""
         QMessageBox.critical(self, "Analysis Error", f"Error: {error_msg}")
         self.analyze_btn.setEnabled(True)
         self.progress_bar.setVisible(False)
         self.status_label.setText("Analysis failed")
 
-    def on_analysis_progress(self, message: str, percentage: int):
+    def on_analysis_progress(self, message: str, percentage: int) -> None:
         """Update analysis progress."""
         self.status_label.setText(message)
         self.progress_bar.setValue(percentage)
 
-    def display_results(self, analysis: AdvancedProtectionAnalysis):
+    def display_results(self, analysis: AdvancedProtectionAnalysis) -> None:
         """Display analysis results."""
         # Update results tree
         self.update_results_tree(analysis)
@@ -649,7 +649,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         # Update heuristics
         self.update_heuristics(analysis)
 
-    def update_results_tree(self, analysis: AdvancedProtectionAnalysis):
+    def update_results_tree(self, analysis: AdvancedProtectionAnalysis) -> None:
         """Update results tree."""
         self.results_tree.clear()
 
@@ -699,7 +699,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
 
         self.results_tree.expandAll()
 
-    def update_overview(self, analysis: AdvancedProtectionAnalysis):
+    def update_overview(self, analysis: AdvancedProtectionAnalysis) -> None:
         """Update overview tab."""
         html = f"""
         <html>
@@ -771,7 +771,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
 
         self.overview_text.setHtml(html)
 
-    def update_detections(self, analysis: AdvancedProtectionAnalysis):
+    def update_detections(self, analysis: AdvancedProtectionAnalysis) -> None:
         """Update detections table."""
         all_detections = analysis.detections + analysis.heuristic_detections
 
@@ -802,7 +802,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
             bypass_available = "Yes" if detection.bypass_recommendations else "No"
             self.detections_table.setItem(i, 4, QTableWidgetItem(bypass_available))
 
-    def update_entropy(self, analysis: AdvancedProtectionAnalysis):
+    def update_entropy(self, analysis: AdvancedProtectionAnalysis) -> None:
         """Update entropy analysis."""
         # Update graph
         self.entropy_graph.plot_entropy(analysis.entropy_info)
@@ -829,7 +829,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
                 status = "Packed"
             self.entropy_table.setItem(i, 4, QTableWidgetItem(status))
 
-    def update_certificates(self, analysis: AdvancedProtectionAnalysis):
+    def update_certificates(self, analysis: AdvancedProtectionAnalysis) -> None:
         """Update certificates table."""
         self.certificates_table.setRowCount(len(analysis.certificates))
 
@@ -846,7 +846,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
                 status_item.setForeground(QBrush(QColor(255, 0, 0)))
             self.certificates_table.setItem(i, 5, status_item)
 
-    def update_resources(self, analysis: AdvancedProtectionAnalysis):
+    def update_resources(self, analysis: AdvancedProtectionAnalysis) -> None:
         """Update resources table."""
         self.resources_table.setRowCount(len(analysis.resources))
 
@@ -857,7 +857,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
             self.resources_table.setItem(i, 3, QTableWidgetItem(f"{resource.size:,}"))
             self.resources_table.setItem(i, 4, QTableWidgetItem(resource.data_hash[:16]))
 
-    def update_strings(self, analysis: AdvancedProtectionAnalysis):
+    def update_strings(self, analysis: AdvancedProtectionAnalysis) -> None:
         """Update strings table."""
         self.strings_table.setRowCount(len(analysis.suspicious_strings))
 
@@ -873,7 +873,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
                 suspicious_item.setForeground(QBrush(QColor(255, 152, 0)))
             self.strings_table.setItem(i, 3, suspicious_item)
 
-    def update_heuristics(self, analysis: AdvancedProtectionAnalysis):
+    def update_heuristics(self, analysis: AdvancedProtectionAnalysis) -> None:
         """Update heuristics display."""
         heuristics_text = "=== Heuristic Analysis Results ===\n\n"
 
@@ -892,7 +892,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
 
         self.heuristics_text.setText(heuristics_text)
 
-    def on_tree_selection_changed(self):
+    def on_tree_selection_changed(self) -> None:
         """Handle tree selection change."""
         items = self.results_tree.selectedItems()
         if not items:
@@ -914,7 +914,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         if category in tab_map:
             self.details_tabs.setCurrentIndex(tab_map[category])
 
-    def on_detection_selected(self):
+    def on_detection_selected(self) -> None:
         """Handle detection selection."""
         current_row = self.detections_table.currentRow()
         if current_row < 0:
@@ -935,7 +935,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
 
             self.bypass_text.setText(bypass_text)
 
-    def filter_strings(self, text: str):
+    def filter_strings(self, text: str) -> None:
         """Filter strings table."""
         for i in range(self.strings_table.rowCount()):
             row_hidden = True
@@ -946,7 +946,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
                     break
             self.strings_table.setRowHidden(i, row_hidden)
 
-    def update_export_preview(self):
+    def update_export_preview(self) -> None:
         """Update export preview."""
         if not self.current_analysis:
             return
@@ -966,7 +966,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
 
         self.export_preview.setText(preview)
 
-    def on_export_clicked(self):
+    def on_export_clicked(self) -> None:
         """Handle export button click."""
         if not self.current_analysis:
             QMessageBox.warning(self, "Error", "No analysis results to export")
@@ -1000,7 +1000,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
                     f"Error exporting results:\n{e!s}",
                 )
 
-    def clear_results(self):
+    def clear_results(self) -> None:
         """Clear all results."""
         self.results_tree.clear()
         self.overview_text.clear()
@@ -1014,7 +1014,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         self.export_preview.clear()
         self.current_analysis = None
 
-    def set_binary_path(self, file_path: str):
+    def set_binary_path(self, file_path: str) -> None:
         """Set binary path for analysis."""
         if file_path and os.path.exists(file_path):
             self.file_path_edit.setText(file_path)

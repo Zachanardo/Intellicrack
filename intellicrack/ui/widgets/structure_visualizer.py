@@ -46,7 +46,7 @@ class StructureVisualizerWidget(QWidget):
     #: header_type, field_name, value (type: str, str, Any)
     header_field_selected = pyqtSignal(str, str, Any)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize structure visualizer widget with binary structure analysis capabilities."""
         super().__init__(parent)
         self.current_binary = None
@@ -55,7 +55,7 @@ class StructureVisualizerWidget(QWidget):
         self.binary_format = "Unknown"
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         """Set up the UI components."""
         layout = QVBoxLayout(self)
 
@@ -72,7 +72,7 @@ class StructureVisualizerWidget(QWidget):
                 "Imports/Exports",
                 "Resources",
                 "Memory Map",
-            ]
+            ],
         )
         self.view_combo.currentTextChanged.connect(self.update_view)
         controls_layout.addWidget(self.view_combo)
@@ -120,7 +120,7 @@ class StructureVisualizerWidget(QWidget):
         # Initialize views
         self._init_views()
 
-    def _init_views(self):
+    def _init_views(self) -> None:
         """Initialize the different view widgets."""
         # Tree view
         self.tree_view = QTreeWidget()
@@ -146,7 +146,7 @@ class StructureVisualizerWidget(QWidget):
                 "Raw Addr",
                 "Raw Size",
                 "Characteristics",
-            ]
+            ],
         )
         self.sections_table.itemSelectionChanged.connect(self._on_section_selection)
         self.structure_widget.addTab(self.sections_table, "Sections")
@@ -175,7 +175,7 @@ class StructureVisualizerWidget(QWidget):
             self.memory_map.setLabel("bottom", "Memory Address")
             self.structure_widget.addTab(self.memory_map, "Memory Map")
 
-    def set_structure_data(self, data: dict[str, Any]):
+    def set_structure_data(self, data: dict[str, Any]) -> None:
         """Set structure data for visualization."""
         self.structure_data = data
         self.binary_format = data.get("format", "Unknown")
@@ -184,11 +184,11 @@ class StructureVisualizerWidget(QWidget):
         self.update_view()
         self.update_details()
 
-    def load_structure(self, data: dict[str, Any]):
+    def load_structure(self, data: dict[str, Any]) -> None:
         """Load structure data for visualization (alias for set_structure_data)."""
         self.set_structure_data(data)
 
-    def update_view(self):
+    def update_view(self) -> None:
         """Update the current view."""
         if not self.structure_data:
             return
@@ -212,7 +212,7 @@ class StructureVisualizerWidget(QWidget):
             if PYQTGRAPH_AVAILABLE:
                 self.structure_widget.setCurrentIndex(4)
 
-    def _update_tree_view(self):
+    def _update_tree_view(self) -> None:
         """Update the tree view with structure data."""
         self.tree_view.clear()
 
@@ -226,7 +226,7 @@ class StructureVisualizerWidget(QWidget):
             # Generic structure
             self._build_generic_tree()
 
-    def _build_pe_tree(self):
+    def _build_pe_tree(self) -> None:
         """Build PE structure tree."""
         root = QTreeWidgetItem(self.tree_view, ["PE Structure"])
 
@@ -290,7 +290,7 @@ class StructureVisualizerWidget(QWidget):
 
         self.tree_view.expandAll()
 
-    def _build_elf_tree(self):
+    def _build_elf_tree(self) -> None:
         """Build ELF structure tree."""
         root = QTreeWidgetItem(self.tree_view, ["ELF Structure"])
 
@@ -337,7 +337,7 @@ class StructureVisualizerWidget(QWidget):
 
         self.tree_view.expandAll()
 
-    def _build_generic_tree(self):
+    def _build_generic_tree(self) -> None:
         """Build generic structure tree."""
         root = QTreeWidgetItem(self.tree_view, [f"{self.binary_format} Structure"])
 
@@ -346,7 +346,7 @@ class StructureVisualizerWidget(QWidget):
 
         self.tree_view.expandAll()
 
-    def _add_dict_to_tree(self, data: dict | list, parent: QTreeWidgetItem):
+    def _add_dict_to_tree(self, data: dict | list, parent: QTreeWidgetItem) -> None:
         """Recursively add dictionary/list data to tree."""
         if isinstance(data, dict):
             for key, value in data.items():
@@ -364,7 +364,7 @@ class StructureVisualizerWidget(QWidget):
                 else:
                     QTreeWidgetItem(parent, [f"[{i}]", str(item)])
 
-    def _update_headers_view(self):
+    def _update_headers_view(self) -> None:
         """Update headers table view."""
         self.headers_table.setRowCount(0)
 
@@ -375,7 +375,7 @@ class StructureVisualizerWidget(QWidget):
         else:
             self._populate_generic_headers()
 
-    def _populate_pe_headers(self):
+    def _populate_pe_headers(self) -> None:
         """Populate PE headers in table."""
         row = 0
 
@@ -442,7 +442,7 @@ class StructureVisualizerWidget(QWidget):
                 self.headers_table.setItem(row, 2, QTableWidgetItem(self._get_subsystem_name(oh.get("subsystem", 0))))
                 row += 1
 
-    def _update_sections_view(self):
+    def _update_sections_view(self) -> None:
         """Update sections table view."""
         self.sections_table.setRowCount(0)
 
@@ -484,7 +484,7 @@ class StructureVisualizerWidget(QWidget):
                         if item:
                             item.setBackground(QBrush(QColor(255, 200, 200)))
 
-    def _update_imports_exports_view(self):
+    def _update_imports_exports_view(self) -> None:
         """Update imports/exports view."""
         # Clear tables
         self.imports_table.setRowCount(0)
@@ -521,7 +521,7 @@ class StructureVisualizerWidget(QWidget):
                 self.exports_table.setItem(row, 2, QTableWidgetItem(f"0x{export.get('address', 0):08X}"))
                 self.exports_table.setItem(row, 3, QTableWidgetItem(export.get("forwarded", "")))
 
-    def _update_memory_map(self):
+    def _update_memory_map(self) -> None:
         """Update memory map visualization."""
         if not PYQTGRAPH_AVAILABLE or "sections" not in self.structure_data:
             return
@@ -560,7 +560,7 @@ class StructureVisualizerWidget(QWidget):
         y_ticks = [(i, section.get("name", "")) for i, section in enumerate(sections)]
         self.memory_map.getAxis("left").setTicks([y_ticks])
 
-    def update_details(self):
+    def update_details(self) -> None:
         """Update the details panel."""
         if not self.structure_data:
             return
@@ -712,7 +712,7 @@ class StructureVisualizerWidget(QWidget):
         }
         return subsystems.get(subsystem, f"Unknown ({subsystem})")
 
-    def _populate_elf_headers(self):
+    def _populate_elf_headers(self) -> None:
         """Populate ELF headers in table."""
         row = 0
 
@@ -738,7 +738,7 @@ class StructureVisualizerWidget(QWidget):
                 self.headers_table.setItem(row, 2, QTableWidgetItem(desc))
                 row += 1
 
-    def _populate_generic_headers(self):
+    def _populate_generic_headers(self) -> None:
         """Populate generic headers."""
         row = 0
 
@@ -751,7 +751,7 @@ class StructureVisualizerWidget(QWidget):
                 self.headers_table.setItem(row, 2, QTableWidgetItem(""))
                 row += 1
 
-    def _on_tree_selection(self):
+    def _on_tree_selection(self) -> None:
         """Handle tree item selection."""
         items = self.tree_view.selectedItems()
         if items:
@@ -767,7 +767,7 @@ class StructureVisualizerWidget(QWidget):
             if len(path) > 1:
                 self.header_field_selected.emit(path[0], path[-1], item.text(1) if item.columnCount() > 1 else "")
 
-    def _on_section_selection(self):
+    def _on_section_selection(self) -> None:
         """Handle section selection."""
         items = self.sections_table.selectedItems()
         if items:
@@ -776,7 +776,7 @@ class StructureVisualizerWidget(QWidget):
                 section = self.structure_data["sections"][row]
                 self.section_selected.emit(section.get("name", ""), section)
 
-    def export_structure(self):
+    def export_structure(self) -> None:
         """Export structure data."""
         import json
 

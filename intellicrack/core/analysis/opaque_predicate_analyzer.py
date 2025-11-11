@@ -74,7 +74,7 @@ class PredicateAnalysis:
 class ConstantPropagationEngine:
     """Performs interprocedural constant propagation analysis."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize constant propagation engine."""
         self.logger = logging.getLogger(__name__)
         self.register_state: dict[int, dict[str, ConstantValue]] = {}
@@ -123,7 +123,7 @@ class ConstantPropagationEngine:
                     self.block_entry_states[successor] = exit_state.copy()
                 else:
                     self.block_entry_states[successor] = self._merge_states(
-                        self.block_entry_states[successor], exit_state
+                        self.block_entry_states[successor], exit_state,
                     )
 
                 if successor not in visited:
@@ -152,7 +152,7 @@ class ConstantPropagationEngine:
         return mnemonic, operands
 
     def _analyze_block(
-        self, basic_block, entry_state: dict[str, ConstantValue]
+        self, basic_block, entry_state: dict[str, ConstantValue],
     ) -> dict[str, ConstantValue]:
         """Analyze a single basic block for constant propagation.
 
@@ -200,7 +200,7 @@ class ConstantPropagationEngine:
         return state
 
     def _handle_mov(
-        self, operands: list[str], inst: dict[str, Any], state: dict[str, ConstantValue]
+        self, operands: list[str], inst: dict[str, Any], state: dict[str, ConstantValue],
     ) -> None:
         """Handle MOV instruction.
 
@@ -223,7 +223,7 @@ class ConstantPropagationEngine:
             try:
                 value = int(src, 16)
                 state[dest] = ConstantValue(
-                    register=dest, value=value, is_constant=True, source_instruction=inst
+                    register=dest, value=value, is_constant=True, source_instruction=inst,
                 )
             except ValueError:
                 state.pop(dest, None)
@@ -231,7 +231,7 @@ class ConstantPropagationEngine:
             try:
                 value = int(src)
                 state[dest] = ConstantValue(
-                    register=dest, value=value, is_constant=True, source_instruction=inst
+                    register=dest, value=value, is_constant=True, source_instruction=inst,
                 )
             except ValueError:
                 state.pop(dest, None)
@@ -248,7 +248,7 @@ class ConstantPropagationEngine:
                 state.pop(dest, None)
 
     def _handle_lea(
-        self, operands: list[str], inst: dict[str, Any], state: dict[str, ConstantValue]
+        self, operands: list[str], inst: dict[str, Any], state: dict[str, ConstantValue],
     ) -> None:
         """Handle LEA instruction.
 
@@ -404,7 +404,7 @@ class ConstantPropagationEngine:
 
         if mnemonic == "xor" and dest == src_reg:
             state[dest] = ConstantValue(
-                register=dest, value=0, is_constant=True, source_instruction=inst
+                register=dest, value=0, is_constant=True, source_instruction=inst,
             )
         elif dest in state and state[dest].is_constant and state[dest].value is not None:
             if src.startswith("0x"):
@@ -420,7 +420,7 @@ class ConstantPropagationEngine:
                         state.pop(dest, None)
                         return
                     state[dest] = ConstantValue(
-                        register=dest, value=new_val, is_constant=True, source_instruction=inst
+                        register=dest, value=new_val, is_constant=True, source_instruction=inst,
                     )
                 except ValueError:
                     state.pop(dest, None)
@@ -437,7 +437,7 @@ class ConstantPropagationEngine:
                         state.pop(dest, None)
                         return
                     state[dest] = ConstantValue(
-                        register=dest, value=new_val, is_constant=True, source_instruction=inst
+                        register=dest, value=new_val, is_constant=True, source_instruction=inst,
                     )
                 except ValueError:
                     state.pop(dest, None)
@@ -453,7 +453,7 @@ class ConstantPropagationEngine:
                         state.pop(dest, None)
                         return
                     state[dest] = ConstantValue(
-                        register=dest, value=new_val, is_constant=True, source_instruction=inst
+                        register=dest, value=new_val, is_constant=True, source_instruction=inst,
                     )
                 else:
                     state.pop(dest, None)
@@ -509,7 +509,7 @@ class ConstantPropagationEngine:
                     return
 
                 state[dest] = ConstantValue(
-                    register=dest, value=new_val, is_constant=True, source_instruction=inst
+                    register=dest, value=new_val, is_constant=True, source_instruction=inst,
                 )
             else:
                 state.pop(dest, None)
@@ -538,7 +538,7 @@ class ConstantPropagationEngine:
         state.pop("edx", None)
 
     def _handle_pop(
-        self, operands: list[str], inst: dict[str, Any], state: dict[str, ConstantValue]
+        self, operands: list[str], inst: dict[str, Any], state: dict[str, ConstantValue],
     ) -> None:
         """Handle POP instruction.
 
@@ -567,7 +567,7 @@ class ConstantPropagationEngine:
             state.pop(reg, None)
 
     def _merge_states(
-        self, state1: dict[str, ConstantValue], state2: dict[str, ConstantValue]
+        self, state1: dict[str, ConstantValue], state2: dict[str, ConstantValue],
     ) -> dict[str, ConstantValue]:
         """Merge two register states (join operation).
 
@@ -653,13 +653,13 @@ class ConstantPropagationEngine:
 class SymbolicExecutionEngine:
     """Performs symbolic execution using Z3 to prove opaque predicates."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize symbolic execution engine."""
         self.logger = logging.getLogger(__name__)
         self.solver = z3.Solver() if Z3_AVAILABLE else None
 
     def analyze_predicate(
-        self, basic_block, register_state: dict[str, ConstantValue]
+        self, basic_block, register_state: dict[str, ConstantValue],
     ) -> tuple[bool | None, str | None]:
         """Symbolically analyze a conditional predicate.
 
@@ -752,7 +752,7 @@ class SymbolicExecutionEngine:
         return None
 
     def _build_comparison_expr(
-        self, cmp_inst: dict[str, Any], jump_inst: str, symbolic_vars: dict[str, Any]
+        self, cmp_inst: dict[str, Any], jump_inst: str, symbolic_vars: dict[str, Any],
     ) -> Any:
         """Build Z3 expression for CMP instruction.
 
@@ -805,7 +805,7 @@ class SymbolicExecutionEngine:
         return None
 
     def _build_test_expr(
-        self, test_inst: dict[str, Any], jump_inst: str, symbolic_vars: dict[str, Any]
+        self, test_inst: dict[str, Any], jump_inst: str, symbolic_vars: dict[str, Any],
     ) -> Any:
         """Build Z3 expression for TEST instruction.
 
@@ -877,7 +877,7 @@ class SymbolicExecutionEngine:
 class PatternRecognizer:
     """Recognizes complex opaque predicate patterns."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize pattern recognizer."""
         self.logger = logging.getLogger(__name__)
         self.patterns = self._initialize_patterns()
@@ -978,7 +978,7 @@ class PatternRecognizer:
         for inst in basic_block.instructions:
             disasm = inst.get("disasm", "").lower()
             if "xor" in disasm:
-                mnemonic, operands = self._parse_operands(disasm)
+                _mnemonic, operands = self._parse_operands(disasm)
                 if len(operands) >= 2:
                     if operands[0] == operands[1]:
                         return True
@@ -997,7 +997,7 @@ class PatternRecognizer:
         for inst in basic_block.instructions:
             disasm = inst.get("disasm", "").lower()
             if "cmp" in disasm or "test" in disasm:
-                mnemonic, operands = self._parse_operands(disasm)
+                _mnemonic, operands = self._parse_operands(disasm)
                 if len(operands) >= 2:
                     if operands[0] == operands[1]:
                         return True
@@ -1017,7 +1017,7 @@ class PatternRecognizer:
 
         for i, inst_disasm in enumerate(instructions):
             if "imul" in inst_disasm or "mul" in inst_disasm:
-                mnemonic, operands = self._parse_operands(inst_disasm)
+                _mnemonic, operands = self._parse_operands(inst_disasm)
                 if len(operands) >= 2:
                     if operands[0] == operands[1]:
                         if i + 1 < len(instructions):
@@ -1046,7 +1046,7 @@ class PatternRecognizer:
                 if i + 1 < len(instructions):
                     next_inst = instructions[i + 1]
                     if "cmp" in next_inst:
-                        mnemonic, operands = self._parse_operands(next_inst)
+                        _mnemonic, operands = self._parse_operands(next_inst)
                         if len(operands) >= 2:
                             try:
                                 cmp_val = int(operands[1])
@@ -1093,7 +1093,7 @@ class PatternRecognizer:
 class OpaquePredicateAnalyzer:
     """Main opaque predicate analyzer combining all analysis techniques."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize opaque predicate analyzer."""
         self.logger = logging.getLogger(__name__)
         self.constant_propagation = ConstantPropagationEngine()
@@ -1129,7 +1129,7 @@ class OpaquePredicateAnalyzer:
             pattern_name, pattern_value = self.pattern_recognizer.recognize_pattern(basic_block)
 
             symbolic_value, symbolic_proof = self.symbolic_execution.analyze_predicate(
-                basic_block, register_state
+                basic_block, register_state,
             )
 
             constant_value = self._check_constant_predicate(basic_block, register_state)
@@ -1168,13 +1168,13 @@ class OpaquePredicateAnalyzer:
                         analysis_method=method,
                         dead_branch=dead_branch,
                         symbolic_proof=symbolic_proof,
-                    )
+                    ),
                 )
 
         return opaque_predicates
 
     def _check_constant_predicate(
-        self, basic_block, register_state: dict[str, ConstantValue]
+        self, basic_block, register_state: dict[str, ConstantValue],
     ) -> bool | None:
         """Check if predicate can be resolved using constant values.
 
@@ -1287,9 +1287,9 @@ class OpaquePredicateAnalyzer:
 
         for edge in cfg.out_edges(block_addr, data=True):
             edge_type = edge[2].get("edge_type", "")
-            if "true" in edge_type or "conditional_true" == edge_type:
+            if "true" in edge_type or edge_type == "conditional_true":
                 true_successor = edge[1]
-            elif "false" in edge_type or "conditional_false" == edge_type:
+            elif "false" in edge_type or edge_type == "conditional_false":
                 false_successor = edge[1]
 
         if true_successor and false_successor:

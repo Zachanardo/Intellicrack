@@ -114,14 +114,15 @@ impl IntellicrackLauncher {
             env_config_duration
         );
 
-        // Initialize GIL safety BEFORE Python initialization
-        let gil_safety_start = std::time::Instant::now();
-        GilSafetyManager::initialize_gil_safety()?;
-        let gil_safety_duration = gil_safety_start.elapsed();
-        tracing::info!(
-            "GIL safety initialization completed in {:.2?}",
-            gil_safety_duration
-        );
+        // Skip GIL safety initialization from Rust - Python will handle it lazily
+        // let gil_safety_start = std::time::Instant::now();
+        // GilSafetyManager::initialize_gil_safety()?;
+        // let gil_safety_duration = gil_safety_start.elapsed();
+        // tracing::info!(
+        //     "GIL safety initialization completed in {:.2?}",
+        //     gil_safety_duration
+        // );
+        tracing::info!("Skipping Rust-side GIL initialization - Python will initialize on first use");
 
         // NOW initialize Python with the correct environment and GIL safety
         let python_init_start = std::time::Instant::now();

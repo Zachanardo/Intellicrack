@@ -51,14 +51,14 @@ class HelpDocumentationWidget(QWidget):
     #: category, feature_name (type: str, str)
     feature_selected = pyqtSignal(str, str)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the help documentation widget."""
         super().__init__(parent)
         self.parent = parent
         self.setup_ui()
         self.load_documentation()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the user interface."""
         # Initialize UI attributes
         self.issues_tree = None
@@ -207,14 +207,14 @@ class HelpDocumentationWidget(QWidget):
 
         return widget
 
-    def load_documentation(self):
+    def load_documentation(self) -> None:
         """Load all documentation content."""
         self.populate_navigation_tree()
         self.populate_features_tree()
         self.populate_troubleshooting_tree()
         self.load_welcome_content()
 
-    def populate_navigation_tree(self):
+    def populate_navigation_tree(self) -> None:
         """Populate the navigation tree."""
         # Overview
         overview = QTreeWidgetItem(self.nav_tree, ["Overview"])
@@ -265,7 +265,7 @@ class HelpDocumentationWidget(QWidget):
 
         self.nav_tree.expandAll()
 
-    def populate_features_tree(self):
+    def populate_features_tree(self) -> None:
         """Populate the features tree with all 78 features."""
         # Binary Analysis (11 features)
         binary_analysis = QTreeWidgetItem(self.features_tree, ["Binary Analysis", "", "Core analysis capabilities"])
@@ -386,7 +386,7 @@ class HelpDocumentationWidget(QWidget):
 
         self.features_tree.expandAll()
 
-    def add_feature(self, parent: QTreeWidgetItem, name: str, status: str, description: str):
+    def add_feature(self, parent: QTreeWidgetItem, name: str, status: str, description: str) -> None:
         """Add a feature to the tree."""
         item = QTreeWidgetItem(parent, [name, status, description])
         # Color code based on status
@@ -395,7 +395,7 @@ class HelpDocumentationWidget(QWidget):
         else:
             item.setForeground(1, Qt.GlobalColor.red)
 
-    def populate_getting_started_tutorials(self, list_widget: QListWidget):
+    def populate_getting_started_tutorials(self, list_widget: QListWidget) -> None:
         """Populate getting started tutorials."""
         tutorials = [
             "1. First Time Setup",
@@ -410,7 +410,7 @@ class HelpDocumentationWidget(QWidget):
         for _tutorial in tutorials:
             list_widget.addItem(_tutorial)
 
-    def populate_analysis_tutorials(self, list_widget: QListWidget):
+    def populate_analysis_tutorials(self, list_widget: QListWidget) -> None:
         """Populate analysis tutorials."""
         tutorials = [
             "1. PE File Analysis",
@@ -427,7 +427,7 @@ class HelpDocumentationWidget(QWidget):
         for _tutorial in tutorials:
             list_widget.addItem(_tutorial)
 
-    def populate_patching_tutorials(self, list_widget: QListWidget):
+    def populate_patching_tutorials(self, list_widget: QListWidget) -> None:
         """Populate patching tutorials."""
         tutorials = [
             "1. Understanding Patch Types",
@@ -444,7 +444,7 @@ class HelpDocumentationWidget(QWidget):
         for _tutorial in tutorials:
             list_widget.addItem(_tutorial)
 
-    def populate_advanced_tutorials(self, list_widget: QListWidget):
+    def populate_advanced_tutorials(self, list_widget: QListWidget) -> None:
         """Populate advanced tutorials."""
         tutorials = [
             "1. Hardware Dongle Emulation",
@@ -461,7 +461,7 @@ class HelpDocumentationWidget(QWidget):
         for _tutorial in tutorials:
             list_widget.addItem(_tutorial)
 
-    def populate_troubleshooting_tree(self):
+    def populate_troubleshooting_tree(self) -> None:
         """Populate troubleshooting tree."""
         # Installation issues
         install = QTreeWidgetItem(self.issues_tree, ["Installation Issues", "Setup"])
@@ -488,7 +488,7 @@ class HelpDocumentationWidget(QWidget):
 
         self.issues_tree.expandAll()
 
-    def load_welcome_content(self):
+    def load_welcome_content(self) -> None:
         """Load the welcome content."""
         welcome_html = """
         <h1>Welcome to Intellicrack Help & Documentation</h1>
@@ -525,7 +525,7 @@ class HelpDocumentationWidget(QWidget):
         """
         self.doc_browser.setHtml(welcome_html)
 
-    def on_nav_item_clicked(self, item: QTreeWidgetItem, column: int):
+    def on_nav_item_clicked(self, item: QTreeWidgetItem, column: int) -> None:
         """Handle navigation item click."""
         # Note: column parameter is required by Qt signal but not used
         _ = column  # Acknowledge unused parameter
@@ -534,7 +534,7 @@ class HelpDocumentationWidget(QWidget):
             topic = item.text(0)
             self.load_documentation_content(category, topic)
 
-    def on_feature_double_clicked(self, item: QTreeWidgetItem, column: int):
+    def on_feature_double_clicked(self, item: QTreeWidgetItem, column: int) -> None:
         """Handle feature double-click to launch it."""
         # Note: column parameter is required by Qt signal but not used
         _ = column  # Acknowledge unused parameter
@@ -556,7 +556,7 @@ class HelpDocumentationWidget(QWidget):
             if reply == QMessageBox.Yes:
                 self.feature_selected.emit(category, feature)
 
-    def show_feature_details(self, category: str, feature: str):
+    def show_feature_details(self, category: str, feature: str) -> None:
         """Show detailed information about a feature."""
         _ = category
         # Feature documentation mapping
@@ -605,12 +605,12 @@ class HelpDocumentationWidget(QWidget):
         doc = feature_docs.get(feature, f"<h3>{feature}</h3><p>Documentation coming soon...</p>")
         self.feature_details.setHtml(doc)
 
-    def on_tutorial_selected(self, item: QListWidgetItem):
+    def on_tutorial_selected(self, item: QListWidgetItem) -> None:
         """Handle tutorial selection."""
         tutorial_name = item.text()
         self.load_tutorial_content(tutorial_name)
 
-    def load_tutorial_content(self, tutorial_name: str):
+    def load_tutorial_content(self, tutorial_name: str) -> None:
         """Load tutorial content."""
         # Tutorial content mapping
         tutorials = {
@@ -642,7 +642,7 @@ class HelpDocumentationWidget(QWidget):
         content = tutorials.get(tutorial_name, "<p>Tutorial content loading...</p>")
         self.tutorial_viewer.setHtml(content)
 
-    def on_issue_selected(self, item: QTreeWidgetItem, column: int):
+    def on_issue_selected(self, item: QTreeWidgetItem, column: int) -> None:
         """Handle troubleshooting issue selection."""
         # Note: column parameter is required by Qt signal but not used
         _ = column  # Acknowledge unused parameter
@@ -650,7 +650,7 @@ class HelpDocumentationWidget(QWidget):
             issue = item.text(0)
             self.load_solution(issue)
 
-    def load_solution(self, issue: str):
+    def load_solution(self, issue: str) -> None:
         """Load solution for an issue."""
         solutions = {
             "Dependencies not installing": """
@@ -696,7 +696,7 @@ class HelpDocumentationWidget(QWidget):
         solution = solutions.get(issue, "<p>Solution documentation coming soon...</p>")
         self.solution_viewer.setHtml(solution)
 
-    def load_documentation_content(self, category: str, topic: str):
+    def load_documentation_content(self, category: str, topic: str) -> None:
         """Load documentation content based on category and topic."""
         # Documentation content mapping
         content_map = {
@@ -759,7 +759,7 @@ class HelpDocumentationWidget(QWidget):
                 <p>Documentation for this topic is being prepared...</p>
             """)
 
-    def on_search_changed(self, text: str):
+    def on_search_changed(self, text: str) -> None:
         """Handle search text change."""
         if not text:
             # Show all items
@@ -767,7 +767,7 @@ class HelpDocumentationWidget(QWidget):
             self.show_all_tree_items(self.features_tree)
             self.show_all_tree_items(self.issues_tree)
 
-    def perform_search(self):
+    def perform_search(self) -> None:
         """Perform search across all documentation."""
         search_text = self.search_edit.text().lower()
         if not search_text:
@@ -790,7 +790,7 @@ class HelpDocumentationWidget(QWidget):
         """
         self.doc_browser.setHtml(results_html)
 
-    def search_tree(self, tree: QTreeWidget, search_text: str):
+    def search_tree(self, tree: QTreeWidget, search_text: str) -> None:
         """Search and highlight items in a tree widget."""
         # First hide all items
         self.hide_all_tree_items(tree)
@@ -830,23 +830,23 @@ class HelpDocumentationWidget(QWidget):
         item.setHidden(True)
         return False
 
-    def hide_all_tree_items(self, tree: QTreeWidget):
+    def hide_all_tree_items(self, tree: QTreeWidget) -> None:
         """Hide all items in a tree."""
         for _i in range(tree.topLevelItemCount()):
             self.hide_tree_item(tree.topLevelItem(_i))
 
-    def hide_tree_item(self, item: QTreeWidgetItem):
+    def hide_tree_item(self, item: QTreeWidgetItem) -> None:
         """Recursively hide tree items."""
         item.setHidden(True)
         for _i in range(item.childCount()):
             self.hide_tree_item(item.child(_i))
 
-    def show_all_tree_items(self, tree: QTreeWidget):
+    def show_all_tree_items(self, tree: QTreeWidget) -> None:
         """Show all items in a tree."""
         for _i in range(tree.topLevelItemCount()):
             self.show_tree_item(tree.topLevelItem(_i))
 
-    def show_tree_item(self, item: QTreeWidgetItem):
+    def show_tree_item(self, item: QTreeWidgetItem) -> None:
         """Recursively show tree items and clear highlights."""
         item.setHidden(False)
         for _col in range(item.columnCount()):

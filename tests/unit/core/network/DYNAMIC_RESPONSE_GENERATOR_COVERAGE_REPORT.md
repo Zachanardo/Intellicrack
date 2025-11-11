@@ -16,7 +16,7 @@ sophisticated network exploitation capabilities.
 
 ### 🟢 COMPREHENSIVE COVERAGE (3+ test methods)
 
-**DynamicResponseGenerator.**init****
+**DynamicResponseGenerator.**init\*\*\*\*
 
 - Description: Core initialization with protocol handlers and state management
 - Test Methods: test_generator_initialization_with_all_protocol_handlers,

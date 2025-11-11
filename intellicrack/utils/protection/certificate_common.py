@@ -48,7 +48,7 @@ def create_certificate_builder():
                         x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
                         x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Test Org"),
                         x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
-                    ]
+                    ],
                 ),
             )
             .issuer_name(
@@ -59,7 +59,7 @@ def create_certificate_builder():
                         x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
                         x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Test Org"),
                         x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
-                    ]
+                    ],
                 ),
             )
             .serial_number(

@@ -36,7 +36,7 @@ API monitoring and hooking.
 class APIObfuscator:
     """Obfuscate API calls to evade monitoring and analysis."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the API obfuscation system."""
         self.logger = logging.getLogger("IntellicrackLogger.APIObfuscator")
 
@@ -223,7 +223,7 @@ class APIObfuscator:
             # Check for suspiciously large export tables (possible anti-analysis)
             if num_functions > 10000:
                 self.logger.warning(
-                    f"DLL {dll_name} has unusually large export table ({num_functions} functions) - possible anti-analysis technique"
+                    f"DLL {dll_name} has unusually large export table ({num_functions} functions) - possible anti-analysis technique",
                 )
 
             # Validate that we have named exports to search through
@@ -623,7 +623,7 @@ if (p{api_name}) {{
 """
         return code
 
-    def _load_api_databases(self):
+    def _load_api_databases(self) -> None:
         """Load known API hash databases."""
         try:
             # Common Windows APIs with their hash values
@@ -853,7 +853,7 @@ if (p{api_name}) {{
                     # This sequence is longer, so we need to handle it differently
                     # For now, mark it for later expansion
                     indirect_calls.append(
-                        {"offset": i, "type": "import_table_call", "import_addr": hex(import_addr), "needs_expansion": True}
+                        {"offset": i, "type": "import_table_call", "import_addr": hex(import_addr), "needs_expansion": True},
                     )
 
             return bytes(modified_code), {"method": "indirect_calls", "modified_count": len(indirect_calls), "calls": indirect_calls}
@@ -902,7 +902,7 @@ if (p{api_name}) {{
                     modified_code[i + 1 : i + 5] = new_call_offset.to_bytes(4, "little", signed=True)
 
                     trampolines.append(
-                        {"offset": trampoline_offset, "size": len(trampoline), "target": hex(call_target), "original_call": hex(i)}
+                        {"offset": trampoline_offset, "size": len(trampoline), "target": hex(call_target), "original_call": hex(i)},
                     )
 
                     # Append trampoline to code
@@ -943,7 +943,7 @@ if (p{api_name}) {{
                 0x52,  # PUSH EDX
                 0x56,  # PUSH ESI
                 0x57,  # PUSH EDI
-            ]
+            ],
         )
 
         # Set up decryption loop
@@ -956,7 +956,7 @@ if (p{api_name}) {{
                 0x00,
                 0x00,  # CALL $+5 (get EIP)
                 0x5E,  # POP ESI (ESI = current EIP)
-            ]
+            ],
         )
 
         # Calculate actual address of encrypted section
@@ -968,7 +968,7 @@ if (p{api_name}) {{
             [
                 0x81,
                 0xC6,  # ADD ESI, imm32
-            ]
+            ],
         )
         stub.extend(struct.pack("<I", relative_offset))
 
@@ -976,7 +976,7 @@ if (p{api_name}) {{
         stub.extend(
             [
                 0xB9,  # MOV ECX, imm32 (size)
-            ]
+            ],
         )
         stub.extend(struct.pack("<I", size))
 
@@ -985,7 +985,7 @@ if (p{api_name}) {{
             [
                 0xB0,  # MOV AL, imm8 (key)
                 key & 0xFF,
-            ]
+            ],
         )
 
         # Decryption loop label
@@ -999,7 +999,7 @@ if (p{api_name}) {{
                 0x46,  # INC ESI
                 0xE2,
                 0xFC,  # LOOP -4 (back to XOR instruction)
-            ]
+            ],
         )
 
         # Restore registers
@@ -1011,14 +1011,14 @@ if (p{api_name}) {{
                 0x59,  # POP ECX
                 0x5B,  # POP EBX
                 0x58,  # POP EAX
-            ]
+            ],
         )
 
         # Jump to decrypted code
         stub.extend(
             [
                 0xE9,  # JMP rel32
-            ]
+            ],
         )
         # Calculate jump offset to skip the stub and execute decrypted code
         jmp_offset = -(len(stub) + 4)  # Jump back to original position
@@ -1069,7 +1069,7 @@ if (p{api_name}) {{
                             "stub_size": len(decrypt_stub),
                             "stub_offset": i,
                             "decryption_type": "xor_inline",
-                        }
+                        },
                     )
 
             return bytes(modified_code), {
@@ -1127,7 +1127,7 @@ if (p{api_name}) {{
                     wrapper.extend(b"\x90" * (secrets.randbelow(3) + 1))  # Random NOPs
 
                     wrappers.append(
-                        {"offset": i, "variant_used": polymorphic_variants.index(variant), "wrapper_size": len(wrapper), "original_size": 5}
+                        {"offset": i, "variant_used": polymorphic_variants.index(variant), "wrapper_size": len(wrapper), "original_size": 5},
                     )
 
             return bytes(modified_code), {
@@ -1170,7 +1170,7 @@ if (p{api_name}) {{
                         if actual_addr in self.api_hash_db:
                             api_name = self.api_hash_db[actual_addr]
                             delayed_imports.append(
-                                {"offset": i, "api": api_name, "method": "Delayed import", "thunk_addr": hex(import_addr)}
+                                {"offset": i, "api": api_name, "method": "Delayed import", "thunk_addr": hex(import_addr)},
                             )
 
                 # Check for LoadLibrary patterns for delayed loading
@@ -1191,7 +1191,7 @@ if (p{api_name}) {{
                                         "api": "LoadLibrary (delayed)",
                                         "method": "Runtime loading",
                                         "lib_addr": hex(lib_name_addr),
-                                    }
+                                    },
                                 )
 
             # Look for delay-load helper patterns
@@ -1206,7 +1206,7 @@ if (p{api_name}) {{
                         # Check for characteristic delay load helper prologue
                         if code[call_target : call_target + 3] == b"\x55\x8b\xec":  # push ebp; mov ebp, esp
                             delayed_imports.append(
-                                {"offset": i, "api": "Delay load helper", "method": "__delayLoadHelper2", "helper_addr": hex(call_target)}
+                                {"offset": i, "api": "Delay load helper", "method": "__delayLoadHelper2", "helper_addr": hex(call_target)},
                             )
 
             return bytes(resolved_code), {"method": "delayed_loading", "resolved_count": len(delayed_imports), "imports": delayed_imports}

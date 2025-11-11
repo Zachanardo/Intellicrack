@@ -41,7 +41,7 @@ class GpuAnalysis:
     acceleration, OpenCL handlers, and Intel Arc B580 optimization.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize GPU analysis with existing infrastructure integration."""
         self.logger = logging.getLogger(__name__)
         self.gpu_available = False

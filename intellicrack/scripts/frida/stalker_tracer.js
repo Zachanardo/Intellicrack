@@ -478,10 +478,10 @@ function analyzeLicensingFlow() {
                             const info = getModuleInfo(addr);
                             return info
                                 ? {
-                                    module: info.name,
-                                    offset: info.offset,
-                                    address: formatAddress(addr),
-                                }
+                                      module: info.name,
+                                      offset: info.offset,
+                                      address: formatAddress(addr),
+                                  }
                                 : null;
                         })
                         .filter((x) => x !== null);

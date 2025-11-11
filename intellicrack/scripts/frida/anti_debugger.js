@@ -209,59 +209,59 @@ const antiDebugger = {
 
                 spoofProcessInformation: function () {
                     switch (this.infoClass) {
-                    case 7: // ProcessDebugPort
-                        this.processInfo.writePointer(ptr(0));
-                        send({
-                            type: 'bypass',
-                            target: 'NtQueryInformationProcess',
-                            action: 'ProcessDebugPort_spoofed',
-                            info_class: 7,
-                            result: 'NULL',
-                        });
-                        break;
-
-                    case 30: // ProcessDebugObjectHandle
-                        this.processInfo.writePointer(ptr(0));
-                        send({
-                            type: 'bypass',
-                            target: 'NtQueryInformationProcess',
-                            action: 'ProcessDebugObjectHandle_spoofed',
-                            info_class: 30,
-                            result: 'NULL',
-                        });
-                        break;
-
-                    case 31: // ProcessDebugFlags
-                        this.processInfo.writeU32(1); // PROCESS_DEBUG_INHERIT
-                        send({
-                            type: 'bypass',
-                            target: 'NtQueryInformationProcess',
-                            action: 'ProcessDebugFlags_spoofed',
-                            info_class: 31,
-                            result: 'PROCESS_DEBUG_INHERIT',
-                        });
-                        break;
-
-                    case 0: // ProcessBasicInformation
-                        // Don't modify - might break functionality
-                        break;
-
-                    default:
-                        // Other debug-related information classes
-                        if (this.infoClass >= 60 && this.infoClass <= 70) {
-                            // Zero out potentially debug-related info
-                            Memory.protect(this.processInfo, this.processInfoLength, 'rw-');
-                            for (var i = 0; i < this.processInfoLength; i++) {
-                                this.processInfo.add(i).writeU8(0);
-                            }
+                        case 7: // ProcessDebugPort
+                            this.processInfo.writePointer(ptr(0));
                             send({
                                 type: 'bypass',
                                 target: 'NtQueryInformationProcess',
-                                action: 'unknown_debug_info_zeroed',
-                                info_class: this.infoClass,
+                                action: 'ProcessDebugPort_spoofed',
+                                info_class: 7,
+                                result: 'NULL',
                             });
-                        }
-                        break;
+                            break;
+
+                        case 30: // ProcessDebugObjectHandle
+                            this.processInfo.writePointer(ptr(0));
+                            send({
+                                type: 'bypass',
+                                target: 'NtQueryInformationProcess',
+                                action: 'ProcessDebugObjectHandle_spoofed',
+                                info_class: 30,
+                                result: 'NULL',
+                            });
+                            break;
+
+                        case 31: // ProcessDebugFlags
+                            this.processInfo.writeU32(1); // PROCESS_DEBUG_INHERIT
+                            send({
+                                type: 'bypass',
+                                target: 'NtQueryInformationProcess',
+                                action: 'ProcessDebugFlags_spoofed',
+                                info_class: 31,
+                                result: 'PROCESS_DEBUG_INHERIT',
+                            });
+                            break;
+
+                        case 0: // ProcessBasicInformation
+                            // Don't modify - might break functionality
+                            break;
+
+                        default:
+                            // Other debug-related information classes
+                            if (this.infoClass >= 60 && this.infoClass <= 70) {
+                                // Zero out potentially debug-related info
+                                Memory.protect(this.processInfo, this.processInfoLength, 'rw-');
+                                for (var i = 0; i < this.processInfoLength; i++) {
+                                    this.processInfo.add(i).writeU8(0);
+                                }
+                                send({
+                                    type: 'bypass',
+                                    target: 'NtQueryInformationProcess',
+                                    action: 'unknown_debug_info_zeroed',
+                                    info_class: this.infoClass,
+                                });
+                            }
+                            break;
                     }
                 },
             });

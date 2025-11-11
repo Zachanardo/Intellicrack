@@ -198,7 +198,7 @@ if LARGE_FILE_SUPPORT:
             "MemoryStrategy",
             "PerformanceMonitor",
             "PerformanceWidget",
-        ]
+        ],
     )
 
 # Convenience aliases

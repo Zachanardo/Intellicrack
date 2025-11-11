@@ -114,7 +114,7 @@ class HardwareSpoofingWorker(QThread):
 
         except Exception as e:
             self.error_occurred.emit(str(e))
-            self.status_update.emit(f"Error: {str(e)}", "red")
+            self.status_update.emit(f"Error: {e!s}", "red")
 
     def capture_hardware_info(self) -> None:
         """Capture current hardware information."""
@@ -184,7 +184,7 @@ class HardwareSpoofingWorker(QThread):
             # Sanitize WMIC_VALUE_FLAG to prevent command injection
             wmic_flag_clean = str(WMIC_VALUE_FLAG).replace(";", "").replace("|", "").replace("&", "")
             result = subprocess.run(
-                ["wmic", "baseboard", "get", "SerialNumber", wmic_flag_clean], capture_output=True, text=True, shell=False
+                ["wmic", "baseboard", "get", "SerialNumber", wmic_flag_clean], capture_output=True, text=True, shell=False,
             )
             for line in result.stdout.split("\n"):
                 if SERIAL_NUMBER_PREFIX in line:
@@ -199,7 +199,7 @@ class HardwareSpoofingWorker(QThread):
             # Sanitize WMIC_VALUE_FLAG to prevent command injection
             wmic_flag_clean = str(WMIC_VALUE_FLAG).replace(";", "").replace("|", "").replace("&", "")
             result = subprocess.run(
-                ["wmic", "diskdrive", "get", "SerialNumber", wmic_flag_clean], capture_output=True, text=True, shell=False
+                ["wmic", "diskdrive", "get", "SerialNumber", wmic_flag_clean], capture_output=True, text=True, shell=False,
             )
             for line in result.stdout.split("\n"):
                 if SERIAL_NUMBER_PREFIX in line:
@@ -236,7 +236,7 @@ class HardwareSpoofingWorker(QThread):
             # Sanitize WMIC_VALUE_FLAG to prevent command injection
             wmic_flag_clean = str(WMIC_VALUE_FLAG).replace(";", "").replace("|", "").replace("&", "")
             result = subprocess.run(
-                ["wmic", "logicaldisk", "get", "Name,VolumeSerialNumber", wmic_flag_clean], capture_output=True, text=True, shell=False
+                ["wmic", "logicaldisk", "get", "Name,VolumeSerialNumber", wmic_flag_clean], capture_output=True, text=True, shell=False,
             )
 
             current_name = None
@@ -270,7 +270,7 @@ class HardwareSpoofingWorker(QThread):
             # Sanitize WMIC_VALUE_FLAG to prevent command injection
             wmic_flag_clean = str(WMIC_VALUE_FLAG).replace(";", "").replace("|", "").replace("&", "")
             result = subprocess.run(
-                ["wmic", "bios", "get", "SMBIOSBIOSVersion", wmic_flag_clean], capture_output=True, text=True, shell=False
+                ["wmic", "bios", "get", "SMBIOSBIOSVersion", wmic_flag_clean], capture_output=True, text=True, shell=False,
             )
             for line in result.stdout.split("\n"):
                 if VERSION_PREFIX in line:
@@ -317,19 +317,19 @@ class HardwareSpoofingWorker(QThread):
         # Generate CPU ID (Intel format)
         cpu_vendors = ["BFEBFBFF", "AFEBFBFF", "CFEBFBFF"]  # Intel prefixes
         # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
-        cpu_id = random.choice(cpu_vendors) + "".join(random.choices("0123456789ABCDEF", k=8))  # noqa: S311, S311
+        cpu_id = random.choice(cpu_vendors) + "".join(random.choices("0123456789ABCDEF", k=8))  # noqa: S311
         spoofed_info["cpu_id"] = cpu_id
 
         # Generate motherboard serial
         mb_prefixes = ["MB", "SN", "System", "Base"]
         # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
-        mb_serial = random.choice(mb_prefixes) + "-" + "".join(random.choices(string.ascii_uppercase + string.digits, k=12))  # noqa: S311, S311
+        mb_serial = random.choice(mb_prefixes) + "-" + "".join(random.choices(string.ascii_uppercase + string.digits, k=12))  # noqa: S311
         spoofed_info["motherboard_serial"] = mb_serial
 
         # Generate HDD serial (realistic format)
         hdd_brands = ["WD-WCC", "ST", "HGST", "TOSHIBA"]
         # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
-        hdd_serial = random.choice(hdd_brands) + "".join(random.choices(string.ascii_uppercase + string.digits, k=10))  # noqa: S311, S311
+        hdd_serial = random.choice(hdd_brands) + "".join(random.choices(string.ascii_uppercase + string.digits, k=10))  # noqa: S311
         spoofed_info["hdd_serial"] = hdd_serial
 
         # Generate MAC addresses
@@ -346,7 +346,7 @@ class HardwareSpoofingWorker(QThread):
         volumes: Dict[str, str] = {}
         for drive in ["C:", "D:"]:
             # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
-            serial = f"{random.randint(1000, 9999):04X}-{random.randint(1000, 9999):04X}"  # noqa: S311, S311
+            serial = f"{random.randint(1000, 9999):04X}-{random.randint(1000, 9999):04X}"  # noqa: S311
             volumes[drive] = serial
         spoofed_info["volume_serials"] = volumes
 
@@ -354,14 +354,14 @@ class HardwareSpoofingWorker(QThread):
         bios_manufacturers = [AMI_MANUFACTURER, PHOENIX_MANUFACTURER, AWARD_MANUFACTURER, DELL_MANUFACTURER, HP_MANUFACTURER]
         bios_info = {
             "serial": "".join(random.choices(string.ascii_uppercase + string.digits, k=15)),  # noqa: S311
-            "version": f"{random.randint(1, 5)}.{random.randint(0, 99)}.{random.randint(0, 999)}",  # noqa: S311, S311, S311
+            "version": f"{random.randint(1, 5)}.{random.randint(0, 99)}.{random.randint(0, 999)}",  # noqa: S311
             "manufacturer": random.choice(bios_manufacturers),  # noqa: S311
         }
         spoofed_info["bios_info"] = bios_info
 
         # Generate Windows Product ID
         # Note: Using random module for generating fake hardware IDs, not cryptographic purposes
-        product_id = f"{random.randint(10000, 99999):05d}-{random.randint(10000, 99999):05d}-{random.randint(10000, 99999):05d}-{random.randint(10000, 99999):05d}"  # noqa: S311, S311, S311, S311
+        product_id = f"{random.randint(10000, 99999):05d}-{random.randint(10000, 99999):05d}-{random.randint(10000, 99999):05d}-{random.randint(10000, 99999):05d}"  # noqa: S311
         spoofed_info["product_id"] = product_id
 
         # Generate Machine GUID
@@ -393,7 +393,7 @@ class HardwareSpoofingWorker(QThread):
                     success_count += count
                 except Exception as e:
                     fail_count += 1
-                    self.progress_update.emit(f"Failed to apply {key}: {str(e)}")
+                    self.progress_update.emit(f"Failed to apply {key}: {e!s}")
 
         # Apply advanced spoofing using the backend
         if hasattr(self, "spoofer") and self.spoofer:
@@ -700,7 +700,7 @@ class HardwareSpoofingDialog(QDialog):
             " Volume serial numbers (most common)\n"
             " MAC addresses for network licensing\n"
             " CPU ID for high-security applications\n"
-            " Combined hardware fingerprint hashing"
+            " Combined hardware fingerprint hashing",
         )
 
         detection_layout.addWidget(self.detection_text)
@@ -875,7 +875,7 @@ class HardwareSpoofingDialog(QDialog):
             "Driver-level spoofing provides deeper system integration but requires:\n"
             " Administrator privileges\n"
             " Driver signature bypass (Test Mode)\n"
-            " System restart for some changes"
+            " System restart for some changes",
         )
         driver_layout.addWidget(driver_info)
 
@@ -1257,7 +1257,7 @@ class HardwareSpoofingDialog(QDialog):
             return
 
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Export Hardware Info", f"hardware_info_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json", JSON_FILES_FILTER
+            self, "Export Hardware Info", f"hardware_info_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json", JSON_FILES_FILTER,
         )
 
         if file_path:
@@ -1271,7 +1271,7 @@ class HardwareSpoofingDialog(QDialog):
         file_path, _ = QFileDialog.getOpenFileName(self, "Import Profile", "", JSON_FILES_FILTER)
 
         if file_path:
-            with open(file_path, "r") as f:
+            with open(file_path) as f:
                 profile = json.load(f)
 
             self.save_profile_to_file(profile)
@@ -1327,7 +1327,7 @@ class HardwareSpoofingDialog(QDialog):
         file_path = os.path.join(profiles_dir, f"{profile_name}.json")
 
         if os.path.exists(file_path):
-            with open(file_path, "r") as f:
+            with open(file_path) as f:
                 profile = json.load(f)
 
             # Apply profile
@@ -1354,7 +1354,7 @@ class HardwareSpoofingDialog(QDialog):
         profile_name = self.profiles_table.item(current_row, 0).text()
 
         reply = QMessageBox.question(
-            self, "Confirm Delete", f"Delete profile '{profile_name}'?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            self, "Confirm Delete", f"Delete profile '{profile_name}'?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
 
         if reply == QMessageBox.StandardButton.Yes:
@@ -1384,7 +1384,7 @@ class HardwareSpoofingDialog(QDialog):
             file_path, _ = QFileDialog.getSaveFileName(self, "Export Profile", f"{profile_name}.json", JSON_FILES_FILTER)
 
             if file_path:
-                with open(source_path, "r") as f:
+                with open(source_path) as f:
                     profile = json.load(f)
 
                 with open(file_path, "w") as f:
@@ -1447,7 +1447,7 @@ class HardwareSpoofingDialog(QDialog):
                 file_path = os.path.join(profiles_dir, file_name)
 
                 try:
-                    with open(file_path, "r") as f:
+                    with open(file_path) as f:
                         profile = json.load(f)
 
                     row = self.profiles_table.rowCount()
@@ -1574,7 +1574,7 @@ class CustomizeHardwareDialog(QDialog):
         template_label = QLabel("Load Template:")
         self.template_combo = QComboBox()
         self.template_combo.addItems(
-            ["Custom", "Generic PC", "Dell OptiPlex", "HP ProBook", "Lenovo ThinkPad", "ASUS ROG", "MSI Gaming", "Virtual Machine"]
+            ["Custom", "Generic PC", "Dell OptiPlex", "HP ProBook", "Lenovo ThinkPad", "ASUS ROG", "MSI Gaming", "Virtual Machine"],
         )
         self.template_combo.currentIndexChanged.connect(self._on_template_changed)
 
@@ -1778,7 +1778,7 @@ class CustomizeHardwareDialog(QDialog):
         import secrets
 
         self.basic_widgets["product_edit"].setText(
-            f"{secrets.randbelow(99999 - 10000) + 10000:05d}-{secrets.randbelow(99999 - 10000) + 10000:05d}-{secrets.randbelow(99999 - 10000) + 10000:05d}-AAAAA"
+            f"{secrets.randbelow(99999 - 10000) + 10000:05d}-{secrets.randbelow(99999 - 10000) + 10000:05d}-{secrets.randbelow(99999 - 10000) + 10000:05d}-AAAAA",
         )
         self.basic_widgets["guid_edit"].setText(str(uuid.uuid4()))
 

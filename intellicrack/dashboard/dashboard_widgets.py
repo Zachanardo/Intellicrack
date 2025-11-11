@@ -91,7 +91,7 @@ class WidgetData:
 class DashboardWidget:
     """Base class for dashboard widgets."""
 
-    def __init__(self, config: WidgetConfig):
+    def __init__(self, config: WidgetConfig) -> None:
         """Initialize widget.
 
         Args:
@@ -104,7 +104,7 @@ class DashboardWidget:
         self.last_update = datetime.now()
         self.render_cache = None
 
-    def update_data(self, data: WidgetData):
+    def update_data(self, data: WidgetData) -> None:
         """Update widget data.
 
         Args:
@@ -221,7 +221,7 @@ class LineChartWidget(DashboardWidget):
             fig.add_trace(go.Scatter(x=x_data, y=values, mode="lines+markers", name=name))
 
         fig.update_layout(
-            title=self.config.title, xaxis_title="Time", yaxis_title="Value", width=self.config.width, height=self.config.height
+            title=self.config.title, xaxis_title="Time", yaxis_title="Value", width=self.config.width, height=self.config.height,
         )
 
         return fig
@@ -265,7 +265,7 @@ class GaugeWidget(DashboardWidget):
         if not current:
             return None
 
-        value = list(current.values.values())[0] if current.values else 0
+        value = next(iter(current.values.values())) if current.values else 0
         min_val = self.config.options.get("min", 0)
         max_val = self.config.options.get("max", 100)
 
@@ -296,7 +296,7 @@ class GaugeWidget(DashboardWidget):
                             "value": self.config.options.get("threshold", max_val * 0.9),
                         },
                     },
-                )
+                ),
             )
             fig.update_layout(width=self.config.width, height=self.config.height)
             return fig
@@ -462,7 +462,7 @@ class NetworkGraphWidget(DashboardWidget):
             node_positions[node["id"]] = (x, y)
 
         # Create edge traces
-        edge_trace = go.Scatter(x=[], y=[], line=dict(width=0.5, color="#888"), hoverinfo="none", mode="lines")
+        edge_trace = go.Scatter(x=[], y=[], line={"width": 0.5, "color": "#888"}, hoverinfo="none", mode="lines")
 
         for edge in edges:
             x0, y0 = node_positions.get(edge["source"], (0, 0))
@@ -478,14 +478,14 @@ class NetworkGraphWidget(DashboardWidget):
             hoverinfo="text",
             text=[node.get("label", node["id"]) for node in nodes],
             textposition="top center",
-            marker=dict(
-                showscale=True,
-                colorscale="YlGnBu",
-                size=10,
-                color=[],
-                colorbar=dict(thickness=15, title="Node Connections", xanchor="left", titleside="right"),
-                line_width=2,
-            ),
+            marker={
+                "showscale": True,
+                "colorscale": "YlGnBu",
+                "size": 10,
+                "color": [],
+                "colorbar": {"thickness": 15, "title": "Node Connections", "xanchor": "left", "titleside": "right"},
+                "line_width": 2,
+            },
         )
 
         # Color nodes by connections
@@ -511,9 +511,9 @@ class NetworkGraphWidget(DashboardWidget):
         fig.update_layout(
             showlegend=False,
             hovermode="closest",
-            margin=dict(b=20, l=5, r=5, t=40),
-            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            margin={"b": 20, "l": 5, "r": 5, "t": 40},
+            xaxis={"showgrid": False, "zeroline": False, "showticklabels": False},
+            yaxis={"showgrid": False, "zeroline": False, "showticklabels": False},
             width=self.config.width,
             height=self.config.height,
         )
@@ -547,7 +547,7 @@ class TimelineWidget(DashboardWidget):
                         "description": event.get("description", ""),
                         "type": event.get("type", "info"),
                         "tool": event.get("tool", "unknown"),
-                    }
+                    },
                 )
 
         if format == "json":

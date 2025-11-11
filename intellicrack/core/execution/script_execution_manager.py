@@ -55,7 +55,7 @@ class ScriptExecutionManager(QObject):
     #: Signal emitted when QEMU test completes (type: script_type: str, success: bool, results: dict)
     qemu_test_completed = pyqtSignal(str, bool, dict)
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the script execution manager with task queues and monitoring."""
         super().__init__()
         self.running_scripts = {}
@@ -69,7 +69,7 @@ class ScriptExecutionManager(QObject):
         self.QEMUTestResultsDialog = None
         self._initialize_managers()
 
-    def _initialize_managers(self):
+    def _initialize_managers(self) -> None:
         try:
             from intellicrack.ai.qemu_manager import QEMUManager as EnhancedQEMUManager
             from intellicrack.ui.dialogs.qemu_test_dialog import QEMUTestDialog
@@ -376,7 +376,7 @@ class ScriptExecutionManager(QObject):
                 }
             else:
                 # Standard execution
-                result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
 
                 # Clean up
                 os.unlink(script_path)
@@ -466,8 +466,8 @@ class ScriptExecutionManager(QObject):
                 }
             else:
                 # Standard execution
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                    cmd, check=False, capture_output=True, text=True, timeout=timeout
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                    cmd, check=False, capture_output=True, text=True, timeout=timeout,
                 )
 
                 # Clean up
@@ -502,11 +502,11 @@ class ScriptExecutionManager(QObject):
                 return path
         return None
 
-    def _save_qemu_preference(self, preference: str, script_type: str):
+    def _save_qemu_preference(self, preference: str, script_type: str) -> None:
         """Save QEMU testing preference."""
         self.config.set(f"qemu_testing.script_type_preferences.{script_type}", preference)
 
-    def add_trusted_binary(self, binary_path: str):
+    def add_trusted_binary(self, binary_path: str) -> None:
         """Add binary to trusted list."""
         binary_path = os.path.abspath(binary_path)
         trusted_binaries = self.config.get("qemu_testing.trusted_binaries", [])
@@ -518,7 +518,7 @@ class ScriptExecutionManager(QObject):
             trusted_binaries.append(binary_path)
             self.config.set("qemu_testing.trusted_binaries", trusted_binaries)
 
-    def remove_trusted_binary(self, binary_path: str):
+    def remove_trusted_binary(self, binary_path: str) -> None:
         """Remove binary from trusted list."""
         binary_path = os.path.abspath(binary_path)
         trusted_binaries = self.config.get("qemu_testing.trusted_binaries", [])
@@ -539,7 +539,7 @@ class ScriptExecutionManager(QObject):
 
         return history[:limit]
 
-    def _add_to_history(self, script_type: str, target_binary: str, success: bool, timestamp: datetime.datetime):
+    def _add_to_history(self, script_type: str, target_binary: str, success: bool, timestamp: datetime.datetime) -> None:
         """Add execution to history."""
         history = self.config.get("qemu_testing.execution_history", [])
 

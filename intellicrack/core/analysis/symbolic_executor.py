@@ -52,7 +52,7 @@ class SymbolicExecutionEngine:
     and identifying conditions that could lead to security issues.
     """
 
-    def __init__(self, binary_path: str, max_paths: int = 100, timeout: int = 300, memory_limit: int = 4096):
+    def __init__(self, binary_path: str, max_paths: int = 100, timeout: int = 300, memory_limit: int = 4096) -> None:
         """Initialize the symbolic execution engine with path exploration and memory configuration."""
         self.binary_path = binary_path
         self.max_paths = max_paths
@@ -89,7 +89,7 @@ class SymbolicExecutionEngine:
 
         # Create initial state with symbolic arguments and enhanced options
         initial_state = project.factory.entry_state(
-            args=[project.filename] + symbolic_args,
+            args=[project.filename, *symbolic_args],
             add_options={
                 angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY,
                 angr.options.ZERO_FILL_UNCONSTRAINED_REGISTERS,
@@ -221,7 +221,7 @@ class SymbolicExecutionEngine:
                         freed_ptrs[ptr] = info["freed_at"]
 
     def _analyze_injection_and_race_vulns(
-        self, simgr: Any, project: Any, initial_state: Any, vulnerability_types: list[str], vulnerabilities: list[dict[str, Any]]
+        self, simgr: Any, project: Any, initial_state: Any, vulnerability_types: list[str], vulnerabilities: list[dict[str, Any]],
     ) -> None:
         """Analyze states for race conditions and command injection vulnerabilities."""
         # Check for race conditions
@@ -259,7 +259,7 @@ class SymbolicExecutionEngine:
                                     vulnerabilities.append(vuln)
 
     def _analyze_type_confusion_vulns(
-        self, simgr: Any, project: Any, vulnerability_types: list[str], vulnerabilities: list[dict[str, Any]]
+        self, simgr: Any, project: Any, vulnerability_types: list[str], vulnerabilities: list[dict[str, Any]],
     ) -> None:
         """Analyze states for type confusion vulnerabilities."""
         if "type_confusion" in vulnerability_types:
@@ -308,7 +308,7 @@ class SymbolicExecutionEngine:
 
         try:
             # Setup project and initial state
-            project, initial_state, symbolic_args = self._setup_symbolic_execution_project(vulnerability_types)
+            project, initial_state, _symbolic_args = self._setup_symbolic_execution_project(vulnerability_types)
 
             # Set up exploration technique
             simgr = project.factory.analysis_manager(initial_state)
@@ -587,7 +587,7 @@ class SymbolicExecutionEngine:
                 "count": spray_count,
                 "size": object_size,
                 "pattern": "controlled_allocation",
-            }
+            },
         )
 
         # Step 2: Trigger free of target object
@@ -597,7 +597,7 @@ class SymbolicExecutionEngine:
                 "action": "free",
                 "target": target_id,
                 "delay_ms": 10,  # Small delay for heap state stabilization
-            }
+            },
         )
 
         # Step 3: Reallocate with controlled data
@@ -654,7 +654,7 @@ class SymbolicExecutionEngine:
                     "address": vtable_addr,
                     "data": vtable_data.hex(),
                     "permissions": "rx",  # Read-execute for vtable
-                }
+                },
             )
         else:
             # Direct function pointer overwrite
@@ -685,7 +685,7 @@ class SymbolicExecutionEngine:
                 "size": object_size,
                 "data": memory_object.hex(),
                 "alignment": 16,  # Ensure proper alignment
-            }
+            },
         )
 
         # Step 4: Trigger use of freed object
@@ -716,7 +716,7 @@ class SymbolicExecutionEngine:
                     "action": "cleanup",
                     "restore_heap": True,
                     "fix_corrupted_structures": True,
-                }
+                },
             )
 
         return {
@@ -924,7 +924,7 @@ int main() {{
                 "data": source_layout.hex(),
                 "alignment": class_info["source"].get("alignment", 8),
                 "constructor": class_info["source"].get("constructor_addr"),
-            }
+            },
         )
 
         # Target object (allows type confusion exploitation)
@@ -942,7 +942,7 @@ int main() {{
                 "data": target_layout.hex(),
                 "alignment": class_info["target"].get("alignment", 8),
                 "constructor": class_info["target"].get("constructor_addr"),
-            }
+            },
         )
 
         # Create controlled vtable for exploitation
@@ -955,7 +955,7 @@ int main() {{
                     "address": controlled_vtable["address"],
                     "data": controlled_vtable["data"].hex(),
                     "permissions": "rx",
-                }
+                },
             )
 
         # Trigger phase: Cause type confusion through identified vector
@@ -1009,7 +1009,7 @@ int main() {{
             "exploit_data": exploit_data,
             "payload": exploit_data["payload"].hex(),
             "instructions": self._generate_exploit_instructions(
-                source_type, target_type, source_size, target_size, trigger_method, class_info
+                source_type, target_type, source_size, target_size, trigger_method, class_info,
             ),
             "confusion_details": {
                 "source_type": source_type,
@@ -1105,7 +1105,7 @@ int main() {{
         return layout[:size]
 
     def _build_exploitable_layout(
-        self, class_data: dict[str, Any], vtable_addr: int, size: int, process_info: dict[str, Any], confusion_info: dict[str, Any]
+        self, class_data: dict[str, Any], vtable_addr: int, size: int, process_info: dict[str, Any], confusion_info: dict[str, Any],
     ) -> bytearray:
         """Build target class layout with exploitation primitives."""
         layout = bytearray()
@@ -1154,7 +1154,7 @@ int main() {{
         return layout[:size]
 
     def _create_controlled_vtable(
-        self, class_info: dict[str, Any], process_info: dict[str, Any], confusion_info: dict[str, Any]
+        self, class_info: dict[str, Any], process_info: dict[str, Any], confusion_info: dict[str, Any],
     ) -> dict[str, Any] | None:
         """Create controlled vtable for hijacking."""
         if not confusion_info.get("vtable_hijack", True):
@@ -1301,7 +1301,7 @@ int main() {{
         source_bases = set(class_info["source"].get("base_classes", []))
         target_bases = set(class_info["target"].get("base_classes", []))
         common = source_bases & target_bases
-        return list(common)[0] if common else None
+        return next(iter(common)) if common else None
 
     def _calculate_controlled_addr(self, process_info: dict[str, Any]) -> int:
         """Calculate address for controlled memory."""
@@ -1436,7 +1436,7 @@ int main() {{
                     0x78,
                     0x65,
                     0x00,
-                ]
+                ],
             )
 
             # Patch in actual WinExec address if available
@@ -1477,14 +1477,14 @@ int main() {{
                     0x3B,  # mov al, 0x3b
                     0x0F,
                     0x05,  # syscall
-                ]
+                ],
             )
             return shellcode
 
         return None
 
     def _generate_exploit_instructions(
-        self, source_type: str, target_type: str, source_size: int, target_size: int, trigger_method: str, class_info: dict[str, Any]
+        self, source_type: str, target_type: str, source_size: int, target_size: int, trigger_method: str, class_info: dict[str, Any],
     ) -> str:
         """Generate detailed exploitation instructions."""
         instructions = []
@@ -1510,7 +1510,7 @@ int main() {{
         return " | ".join(instructions)
 
     def _calculate_confusion_reliability(
-        self, class_info: dict[str, Any], process_info: dict[str, Any], confusion_info: dict[str, Any]
+        self, class_info: dict[str, Any], process_info: dict[str, Any], confusion_info: dict[str, Any],
     ) -> float:
         """Calculate type confusion exploit reliability."""
         reliability = 0.6  # Base reliability for type confusion
@@ -1697,10 +1697,7 @@ int main() {{
                 return True
 
             # Check for heap buffer overflows by examining malloc/free patterns
-            if self._check_heap_buffer_overflow(state):
-                return True
-
-            return False
+            return bool(self._check_heap_buffer_overflow(state))
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.warning("Error during buffer overflow check: %s", e, exc_info=False)
@@ -1869,7 +1866,7 @@ int main() {{
                         "value": string_value,
                         "encoding": "ascii",
                         "length": len(string_value),
-                    }
+                    },
                 )
             except UnicodeDecodeError as e:
                 self.logger.error("UnicodeDecodeError in symbolic_executor: %s", e)
@@ -1886,7 +1883,7 @@ int main() {{
                             "value": string_value,
                             "encoding": "utf-16le",
                             "length": len(string_value),
-                        }
+                        },
                     )
             except UnicodeDecodeError as e:
                 logger.error("UnicodeDecodeError in symbolic_executor: %s", e)
@@ -2030,7 +2027,7 @@ int main() {{
                         "address": offset,
                         "pattern": pattern.hex(),
                         "description": "Potential system call",
-                    }
+                    },
                 )
                 offset += len(pattern)
 
@@ -2477,7 +2474,7 @@ int main() {{
 
         return state.heap
 
-    def _track_heap_write(self, state):
+    def _track_heap_write(self, state) -> None:
         """Track heap write operations for UAF and overflow detection."""
         if not hasattr(state, "heap"):
             return
@@ -2498,7 +2495,7 @@ int main() {{
                         "type": "use_after_free_write",
                         "address": hex(concrete_addr),
                         "size": length,
-                    }
+                    },
                 )
 
             # Check for heap overflow
@@ -2514,10 +2511,10 @@ int main() {{
                                 "type": "heap_overflow",
                                 "address": hex(concrete_addr),
                                 "overflow_size": write_end - chunk_end,
-                            }
+                            },
                         )
 
-    def _track_heap_read(self, state):
+    def _track_heap_read(self, state) -> None:
         """Track heap read operations for UAF detection."""
         if not hasattr(state, "heap"):
             return
@@ -2537,7 +2534,7 @@ int main() {{
                         "type": "use_after_free_read",
                         "address": hex(concrete_addr),
                         "size": length,
-                    }
+                    },
                 )
 
             # Track tainted data propagation
@@ -2550,7 +2547,7 @@ int main() {{
                             {
                                 "read_addr": hex(concrete_addr),
                                 "taint_source": state.taint_tracker.get_taint_source(tainted_addr),
-                            }
+                            },
                         )
 
         # Resolve malloc and free symbols for hooking
@@ -2566,7 +2563,7 @@ int main() {{
             # Symbol resolution failed - continue without hooks
             pass
 
-    def _malloc_hook(self, state):
+    def _malloc_hook(self, state) -> None:
         """Track allocations by hooking malloc."""
         size = state.solver.eval(state.regs.rdi if state.arch.bits == 64 else state.regs.eax)
 
@@ -2584,7 +2581,7 @@ int main() {{
         # Return the allocated address
         state.regs.rax = addr
 
-    def _free_hook(self, state):
+    def _free_hook(self, state) -> None:
         """Track deallocations and detect use-after-free by hooking free."""
         ptr = state.solver.eval(state.regs.rdi if state.arch.bits == 64 else state.regs.eax)
 
@@ -2602,7 +2599,7 @@ int main() {{
         # Perform the free
         state.heap._free(ptr)
 
-    def _setup_taint_tracking(self, state):
+    def _setup_taint_tracking(self, state) -> None:
         """Set up taint tracking for data flow analysis."""
         # Initialize taint tracking plugin if available
         if hasattr(state, "plugins"):
@@ -2915,7 +2912,7 @@ int main() {{
 
             # Create custom step function to track execution
             custom_step = self._create_custom_step_function(
-                results, find_addresses, track_constraints, covered_blocks, path_constraints, execution_paths
+                results, find_addresses, track_constraints, covered_blocks, path_constraints, execution_paths,
             )
 
             # Execute main exploration loop
@@ -2930,7 +2927,7 @@ int main() {{
             self.logger.info(
                 f"Exploration completed: {results['paths_found']} paths found, "
                 f"{len(results['vulnerabilities'])} vulnerabilities detected, "
-                f"{results['coverage']:.2f}% coverage"
+                f"{results['coverage']:.2f}% coverage",
             )
 
             return results
@@ -2993,7 +2990,7 @@ int main() {{
                             "path": [hex(addr) for addr in path],
                             "constraints": constraints,
                             "num_constraints": len(constraints),
-                        }
+                        },
                     )
 
             return results
@@ -3015,7 +3012,7 @@ int main() {{
                     "address": hex(state.addr),
                     "severity": "high",
                     "description": "Potential buffer overflow detected during exploration",
-                }
+                },
             )
 
         # Check for format string
@@ -3026,7 +3023,7 @@ int main() {{
                     "address": hex(state.addr),
                     "severity": "high",
                     "description": "Format string vulnerability detected",
-                }
+                },
             )
 
         # Check for integer overflow
@@ -3038,7 +3035,7 @@ int main() {{
                         "address": hex(state.addr),
                         "severity": "medium",
                         "description": "Integer overflow condition detected",
-                    }
+                    },
                 )
                 break
 
@@ -3109,7 +3106,7 @@ int main() {{
                             "mnemonic": "ret",
                             "size": 1,
                             "type": "return",
-                        }
+                        },
                     )
                     current_block_size += 1
                     # End of basic block
@@ -3137,7 +3134,7 @@ int main() {{
                                 "size": 5,
                                 "target": hex(target),
                                 "type": "control_flow",
-                            }
+                            },
                         )
 
                         if instr_type == "jmp":
@@ -3191,7 +3188,7 @@ int main() {{
                                 "size": 2,
                                 "target": hex(target),
                                 "type": "conditional_jump",
-                            }
+                            },
                         )
 
                         # Conditional jump creates two successors
@@ -3258,7 +3255,7 @@ int main() {{
             block_instructions = []
             for instr in instructions:
                 if instr.get("address") and block.get("start_address") <= instr["address"] <= block.get(
-                    "end_address", block.get("start_address", 0)
+                    "end_address", block.get("start_address", 0),
                 ):
                     block_instructions.append(instr)
 
@@ -3288,7 +3285,7 @@ int main() {{
                                 "from": hex(instr_addr),
                                 "to": hex(target),
                                 "type": "unconditional_jump",
-                            }
+                            },
                         )
 
                 # Conditional jumps
@@ -3300,7 +3297,7 @@ int main() {{
                                 "from": hex(instr_addr),
                                 "to": hex(target),
                                 "type": "conditional_jump",
-                            }
+                            },
                         )
 
                     # Also add fall-through edge
@@ -3310,7 +3307,7 @@ int main() {{
                             "from": hex(instr_addr),
                             "to": hex(next_addr),
                             "type": "fall_through",
-                        }
+                        },
                     )
 
                 # Call instructions
@@ -3322,7 +3319,7 @@ int main() {{
                                 "from": hex(instr_addr),
                                 "to": hex(target),
                                 "type": "call",
-                            }
+                            },
                         )
 
                     # Add return edge
@@ -3332,7 +3329,7 @@ int main() {{
                             "from": hex(instr_addr),
                             "to": hex(return_addr),
                             "type": "return_edge",
-                        }
+                        },
                     )
 
         # Update successor/predecessor relationships
@@ -3427,11 +3424,11 @@ int main() {{
                     {
                         "target": to_addr,
                         "type": edge.get("type", "unknown"),
-                    }
+                    },
                 )
 
         # Depth-first search to find all paths
-        def dfs_paths(current_node: str, path: list[int], visited: set, depth: int):
+        def dfs_paths(current_node: str, path: list[int], visited: set, depth: int) -> None:
             if depth >= max_depth:
                 return
 
@@ -3721,7 +3718,7 @@ int main() {{
             if b"\x89" in instr_window and b"\x8b" in instr_window:  # read-modify-write pattern
                 # Analyze path for concurrent access patterns
                 path_branches = len(
-                    [i for i in range(1, len(path)) if abs(path[i] - path[i - 1]) > 0x1000]
+                    [i for i in range(1, len(path)) if abs(path[i] - path[i - 1]) > 0x1000],
                 )  # Large jumps might indicate threading
                 concurrent_likelihood = min(path_branches / 5.0, 1.0)
 
@@ -3889,12 +3886,12 @@ int main() {{
 class TaintTracker:
     """Perform taint tracking plugin for symbolic execution."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the taint tracker with data tracking and propagation monitoring."""
         self.tainted_data = {}
         self.taint_propagation = {}
 
-    def add_taint(self, data, source):
+    def add_taint(self, data, source) -> None:
         """Mark data as tainted from a specific source."""
         self.tainted_data[str(data)] = source
 

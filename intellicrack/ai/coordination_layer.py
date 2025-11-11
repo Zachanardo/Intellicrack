@@ -106,7 +106,7 @@ class AICoordinationLayer:
     intelligent workflows that leverage LLM capabilities.
     """
 
-    def __init__(self, shared_context: Optional["AISharedContext"] = None, event_bus: Optional["AIEventBus"] = None):
+    def __init__(self, shared_context: Optional["AISharedContext"] = None, event_bus: Optional["AIEventBus"] = None) -> None:
         """Initialize the coordination layer."""
         logger.info("Initializing AI Coordination Layer...")
 
@@ -153,10 +153,12 @@ class AICoordinationLayer:
 
     def _is_cache_valid(self, cache_entry: dict) -> bool:
         """Check if cache entry is still valid."""
-        cached_time = cache_entry.get("timestamp", datetime.min)
+        cached_time = cache_entry.get("timestamp")
+        if not isinstance(cached_time, datetime):
+            return False
         return datetime.now() - cached_time < self.cache_ttl
 
-    def _cache_result(self, cache_key: str, result: CoordinatedResult):
+    def _cache_result(self, cache_key: str, result: CoordinatedResult) -> None:
         """Cache analysis result."""
         self.analysis_cache[cache_key] = {
             "result": result,
@@ -294,7 +296,7 @@ class AICoordinationLayer:
 
         return result
 
-    def _llm_thread_worker(self, request: AnalysisRequest, llm_queue):
+    def _llm_thread_worker(self, request: AnalysisRequest, llm_queue) -> None:
         """Worker function for LLM analysis thread."""
         if self.model_manager:
             try:
@@ -306,7 +308,7 @@ class AICoordinationLayer:
         else:
             llm_queue.put(("unavailable", None))
 
-    def _collect_parallel_results(self, request: AnalysisRequest, result: CoordinatedResult, ml_queue, llm_queue):
+    def _collect_parallel_results(self, request: AnalysisRequest, result: CoordinatedResult, ml_queue, llm_queue) -> None:
         """Collect results from parallel analysis threads."""
         import queue
 
@@ -327,7 +329,7 @@ class AICoordinationLayer:
         except queue.Empty:
             logger.warning("Parallel analysis timed out")
 
-    def _combine_parallel_results(self, result: CoordinatedResult):
+    def _combine_parallel_results(self, result: CoordinatedResult) -> None:
         """Combine ML and LLM results with confidence scoring."""
         if result.ml_results and result.llm_results:
             ml_conf = result.ml_results.get("confidence", 0.0)
@@ -499,7 +501,7 @@ class AICoordinationLayer:
                                 # Use shlex.quote to properly escape the binary path
                                 safe_path = shlex.quote(request.binary_path)
                                 logger.debug(f"Running file command with safe path: {safe_path}")
-                                result = subprocess.run(  # noqa: S603
+                                result = subprocess.run(
                                     [file_cmd, request.binary_path],
                                     capture_output=True,
                                     text=True,

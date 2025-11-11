@@ -121,7 +121,7 @@ class TimeSeriesData:
 class FeatureExtractor:
     """Extracts features for predictive modeling."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the feature extractor for predictive modeling.
 
         Sets up feature caching, importance tracking, and connects to the learning engine
@@ -372,7 +372,7 @@ class FeatureExtractor:
 class PredictiveModel:
     """Base class for predictive models."""
 
-    def __init__(self, model_name: str):
+    def __init__(self, model_name: str) -> None:
         """Initialize the base predictive model.
 
         Args:
@@ -386,7 +386,7 @@ class PredictiveModel:
         self.feature_importance: dict[str, float] = {}
         self.last_training: datetime | None = None
 
-    def train(self, training_data: list[dict[str, Any]]):
+    def train(self, training_data: list[dict[str, Any]]) -> None:
         """Train the model with provided data."""
         self.training_data = training_data
         self.last_training = datetime.now()
@@ -406,10 +406,10 @@ class PredictiveModel:
 
         logger.debug(f"Fallback prediction using {feature_count} features: {avg_value:.3f} (confidence: {confidence:.3f})")
         raise NotImplementedError(
-            f"Subclasses must implement predict method. Fallback for {feature_count} features would return {avg_value:.3f}"
+            f"Subclasses must implement predict method. Fallback for {feature_count} features would return {avg_value:.3f}",
         )
 
-    def update_model(self, new_data: dict[str, Any]):
+    def update_model(self, new_data: dict[str, Any]) -> None:
         """Update model with new data point."""
         self.training_data.append(new_data)
 
@@ -421,7 +421,7 @@ class PredictiveModel:
 class LinearRegressionModel(PredictiveModel):
     """Perform linear regression model for predictions."""
 
-    def __init__(self, model_name: str):
+    def __init__(self, model_name: str) -> None:
         """Initialize the linear regression model.
 
         Args:
@@ -441,12 +441,12 @@ class LinearRegressionModel(PredictiveModel):
                 feature_names.update(sample["features"].keys())
         return list(feature_names)
 
-    def _initialize_weights(self, feature_names: list[str]):
+    def _initialize_weights(self, feature_names: list[str]) -> None:
         """Initialize weights for features if not already set."""
         if not self.weights:
             self.weights = dict.fromkeys(feature_names, 0.1)
 
-    def train(self, training_data: list[dict[str, Any]]):
+    def train(self, training_data: list[dict[str, Any]]) -> None:
         """Train linear regression model."""
         super().train(training_data)
 
@@ -521,7 +521,7 @@ class LinearRegressionModel(PredictiveModel):
 class SuccessProbabilityPredictor:
     """Predicts success probability for operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the success probability predictor.
 
         Sets up a linear regression model and feature extractor for predicting
@@ -533,7 +533,7 @@ class SuccessProbabilityPredictor:
 
         logger.info("Success probability predictor initialized")
 
-    def _initialize_model(self):
+    def _initialize_model(self) -> None:
         """Initialize model with real historical training data."""
         import json
         import os
@@ -580,7 +580,7 @@ class SuccessProbabilityPredictor:
                         {
                             "features": features,
                             "target": target,
-                        }
+                        },
                     )
 
                 conn.close()
@@ -593,7 +593,7 @@ class SuccessProbabilityPredictor:
             cache_path = Path(os.path.expanduser("~/.intellicrack/training_cache/success_data.json"))
             if cache_path.exists():
                 try:
-                    with open(cache_path, "r") as f:
+                    with open(cache_path) as f:
                         cached_data = json.load(f)
 
                     for entry in cached_data.get("training_samples", []):
@@ -614,7 +614,7 @@ class SuccessProbabilityPredictor:
                             {
                                 "features": normalized_features,
                                 "target": max(0.0, min(1.0, float(target))),
-                            }
+                            },
                         )
 
                 except (json.JSONDecodeError, FileNotFoundError) as e:
@@ -626,7 +626,7 @@ class SuccessProbabilityPredictor:
             if results_dir.exists():
                 for result_file in results_dir.glob("*.json"):
                     try:
-                        with open(result_file, "r") as f:
+                        with open(result_file) as f:
                             result = json.load(f)
 
                         # Extract features from real analysis
@@ -648,7 +648,7 @@ class SuccessProbabilityPredictor:
                                 {
                                     "features": features,
                                     "target": target,
-                                }
+                                },
                             )
 
                     except (json.JSONDecodeError, KeyError, ValueError):
@@ -818,7 +818,7 @@ class SuccessProbabilityPredictor:
 class ExecutionTimePredictor:
     """Predicts execution time for operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the execution time predictor.
 
         Sets up a linear regression model and feature extractor for predicting
@@ -830,7 +830,7 @@ class ExecutionTimePredictor:
 
         logger.info("Execution time predictor initialized")
 
-    def _initialize_model(self):
+    def _initialize_model(self) -> None:
         """Initialize model with real execution time training data."""
         import json
         import os
@@ -876,7 +876,7 @@ class ExecutionTimePredictor:
                         {
                             "features": features,
                             "target": target,
-                        }
+                        },
                     )
 
                 conn.close()
@@ -889,7 +889,7 @@ class ExecutionTimePredictor:
             benchmark_path = Path(os.path.expanduser("~/.intellicrack/benchmarks/execution_times.json"))
             if benchmark_path.exists():
                 try:
-                    with open(benchmark_path, "r") as f:
+                    with open(benchmark_path) as f:
                         benchmark_data = json.load(f)
 
                     for entry in benchmark_data.get("measurements", []):
@@ -908,7 +908,7 @@ class ExecutionTimePredictor:
                             {
                                 "features": features,
                                 "target": target,
-                            }
+                            },
                         )
 
                 except (json.JSONDecodeError, FileNotFoundError) as e:
@@ -932,7 +932,7 @@ class ExecutionTimePredictor:
                         # Parse associated metadata
                         meta_file = profile_file.with_suffix(".json")
                         if meta_file.exists():
-                            with open(meta_file, "r") as f:
+                            with open(meta_file) as f:
                                 metadata = json.load(f)
 
                             features = {
@@ -947,7 +947,7 @@ class ExecutionTimePredictor:
                                 {
                                     "features": features,
                                     "target": total_time,
-                                }
+                                },
                             )
 
                     except Exception as e:
@@ -959,7 +959,7 @@ class ExecutionTimePredictor:
             log_path = Path(os.path.expanduser("~/.intellicrack/logs/execution_times.log"))
             if log_path.exists():
                 try:
-                    with open(log_path, "r") as f:
+                    with open(log_path) as f:
                         for line in f:
                             try:
                                 # Parse log entries
@@ -979,7 +979,7 @@ class ExecutionTimePredictor:
                                             {
                                                 "features": features,
                                                 "target": target,
-                                            }
+                                            },
                                         )
                             except (ValueError, IndexError):
                                 continue
@@ -1120,7 +1120,7 @@ class ExecutionTimePredictor:
 class VulnerabilityPredictor:
     """Predicts vulnerability discovery likelihood."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the vulnerability discovery predictor.
 
         Sets up the predictor for estimating vulnerability discovery likelihood
@@ -1135,7 +1135,7 @@ class VulnerabilityPredictor:
 
         logger.info("Vulnerability predictor initialized")
 
-    def _initialize_model(self):
+    def _initialize_model(self) -> None:
         """Initialize with real vulnerability training data."""
         import json
         import os
@@ -1202,7 +1202,7 @@ class VulnerabilityPredictor:
                         {
                             "features": features,
                             "target": target,
-                        }
+                        },
                     )
 
                 conn.close()
@@ -1215,7 +1215,7 @@ class VulnerabilityPredictor:
             cve_path = Path(os.path.expanduser("~/.intellicrack/cve_analysis/results.json"))
             if cve_path.exists():
                 try:
-                    with open(cve_path, "r") as f:
+                    with open(cve_path) as f:
                         cve_data = json.load(f)
 
                     for entry in cve_data.get("analyzed_binaries", []):
@@ -1246,7 +1246,7 @@ class VulnerabilityPredictor:
                             {
                                 "features": features,
                                 "target": target,
-                            }
+                            },
                         )
 
                 except (json.JSONDecodeError, FileNotFoundError) as e:
@@ -1258,7 +1258,7 @@ class VulnerabilityPredictor:
             if fuzzing_dir.exists():
                 for result_file in fuzzing_dir.glob("*.json"):
                     try:
-                        with open(result_file, "r") as f:
+                        with open(result_file) as f:
                             fuzz_result = json.load(f)
 
                         target_info = fuzz_result.get("target", {})
@@ -1280,7 +1280,7 @@ class VulnerabilityPredictor:
                             {
                                 "features": features,
                                 "target": target,
-                            }
+                            },
                         )
 
                     except (json.JSONDecodeError, KeyError):
@@ -1292,7 +1292,7 @@ class VulnerabilityPredictor:
             if reports_dir.exists():
                 for report_file in reports_dir.glob("*.json"):
                     try:
-                        with open(report_file, "r") as f:
+                        with open(report_file) as f:
                             report = json.load(f)
 
                         binary_props = report.get("binary_properties", {})
@@ -1324,7 +1324,7 @@ class VulnerabilityPredictor:
                             {
                                 "features": features,
                                 "target": target,
-                            }
+                            },
                         )
 
                     except (json.JSONDecodeError, KeyError):
@@ -1461,7 +1461,7 @@ class VulnerabilityPredictor:
                     "confidence": result.confidence_score,
                     "reasoning": result.reasoning,
                     "factors": result.factors,
-                }
+                },
             ]
 
         except Exception as e:
@@ -1494,7 +1494,7 @@ class VulnerabilityPredictor:
 class PredictiveIntelligenceEngine:
     """Run predictive intelligence engine."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the predictive intelligence engine with specialized predictors."""
         self.success_predictor = SuccessProbabilityPredictor()
         self.time_predictor = ExecutionTimePredictor()
@@ -1564,7 +1564,7 @@ class PredictiveIntelligenceEngine:
         key_data = f"{prediction_type.value}_{json.dumps(context, sort_keys=True)}"
         return hashlib.md5(key_data.encode(), usedforsecurity=False).hexdigest()
 
-    def verify_prediction_accuracy(self, prediction_id: str, actual_value: float):
+    def verify_prediction_accuracy(self, prediction_id: str, actual_value: float) -> None:
         """Record actual outcome to improve accuracy tracking."""
         # Find prediction
         prediction = None
@@ -1590,14 +1590,14 @@ class PredictiveIntelligenceEngine:
                 {
                     "features": prediction.factors,
                     "target": actual_value,
-                }
+                },
             )
         elif prediction.prediction_type == PredictionType.EXECUTION_TIME:
             self.time_predictor.model.update_model(
                 {
                     "features": prediction.factors,
                     "target": actual_value,
-                }
+                },
             )
 
         logger.info(f"Updated prediction accuracy for {prediction.prediction_type.value}: {accuracy:.3f}")

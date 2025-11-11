@@ -35,7 +35,7 @@ class ModelInfo:
 class BaseProviderClient(ABC):
     """Base class for API provider clients."""
 
-    def __init__(self, api_key: str | None = None, base_url: str | None = None):
+    def __init__(self, api_key: str | None = None, base_url: str | None = None) -> None:
         """Initialize base provider client with API key and base URL."""
         self.api_key = api_key
         self.base_url = base_url
@@ -77,13 +77,13 @@ class BaseProviderClient(ABC):
 class OpenAIProviderClient(BaseProviderClient):
     """OpenAI API provider client for dynamic model discovery."""
 
-    def __init__(self, api_key: str | None = None, base_url: str | None = None):
+    def __init__(self, api_key: str | None = None, base_url: str | None = None) -> None:
         """Initialize OpenAI provider client with API key and base URL."""
         if base_url is None:
             base_url = "https://api.openai.com/v1"
         super().__init__(api_key, base_url)
 
-    def _configure_auth(self):
+    def _configure_auth(self) -> None:
         """Configure OpenAI authentication."""
         if self.api_key:
             self.session.headers.update({"Authorization": f"Bearer {self.api_key}"})
@@ -120,7 +120,7 @@ class OpenAIProviderClient(BaseProviderClient):
                     description=f"OpenAI {model_id} model",
                     context_length=context_length,
                     capabilities=capabilities,
-                )
+                ),
             )
 
         if not models:
@@ -208,14 +208,14 @@ class OpenAIProviderClient(BaseProviderClient):
 class AnthropicProviderClient(BaseProviderClient):
     """Anthropic API provider client for dynamic model discovery."""
 
-    def __init__(self, api_key: str | None = None, base_url: str | None = None):
+    def __init__(self, api_key: str | None = None, base_url: str | None = None) -> None:
         """Initialize Anthropic provider client with API key and base URL."""
         if base_url is None:
             base_url = "https://api.anthropic.com"
         super().__init__(api_key, base_url)
         self.session.headers.update({"anthropic-version": "2023-06-01"})
 
-    def _configure_auth(self):
+    def _configure_auth(self) -> None:
         """Configure Anthropic authentication."""
         if self.api_key:
             self.session.headers.update({"x-api-key": self.api_key})
@@ -291,13 +291,13 @@ class AnthropicProviderClient(BaseProviderClient):
 class OllamaProviderClient(BaseProviderClient):
     """Ollama API provider client for dynamic model discovery."""
 
-    def __init__(self, api_key: str | None = None, base_url: str | None = None):
+    def __init__(self, api_key: str | None = None, base_url: str | None = None) -> None:
         """Initialize Ollama provider client with base URL."""
         if base_url is None:
             base_url = "http://localhost:11434"
         super().__init__(api_key, base_url)
 
-    def _configure_auth(self):
+    def _configure_auth(self) -> None:
         """Ollama typically doesn't require authentication."""
         pass
 
@@ -324,7 +324,7 @@ class OllamaProviderClient(BaseProviderClient):
                     description=f"Local Ollama model ({size_gb:.1f}GB)",
                     context_length=model_data.get("context_length", 4096),
                     capabilities=["text-generation", "chat"],
-                )
+                ),
             )
 
         return models
@@ -333,13 +333,13 @@ class OllamaProviderClient(BaseProviderClient):
 class LMStudioProviderClient(BaseProviderClient):
     """LM Studio API provider client for dynamic model discovery."""
 
-    def __init__(self, api_key: str | None = None, base_url: str | None = None):
+    def __init__(self, api_key: str | None = None, base_url: str | None = None) -> None:
         """Initialize LM Studio provider client with base URL."""
         if base_url is None:
             base_url = "http://localhost:1234/v1"
         super().__init__(api_key, base_url)
 
-    def _configure_auth(self):
+    def _configure_auth(self) -> None:
         """LM Studio typically doesn't require authentication."""
         pass
 
@@ -364,7 +364,7 @@ class LMStudioProviderClient(BaseProviderClient):
                     description="Local LM Studio model",
                     context_length=4096,
                     capabilities=["text-generation", "chat"],
-                )
+                ),
             )
 
         return models
@@ -373,11 +373,11 @@ class LMStudioProviderClient(BaseProviderClient):
 class LocalProviderClient(BaseProviderClient):
     """Local model provider client for GGUF and other local formats."""
 
-    def __init__(self, api_key: str | None = None, base_url: str | None = None):
+    def __init__(self, api_key: str | None = None, base_url: str | None = None) -> None:
         """Initialize local provider client."""
         super().__init__(api_key, base_url)
 
-    def _configure_auth(self):
+    def _configure_auth(self) -> None:
         """Local models don't require authentication."""
         pass
 
@@ -402,7 +402,7 @@ class LocalProviderClient(BaseProviderClient):
                         description=f"Local GGUF model - {quantization} ({size_mb}MB)",
                         context_length=model_info.get("context_length", 4096),
                         capabilities=["text-generation", "chat"],
-                    )
+                    ),
                 )
 
         except Exception as e:
@@ -414,11 +414,11 @@ class LocalProviderClient(BaseProviderClient):
 class ProviderManager:
     """Manager for all API provider clients."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize provider manager with empty provider dictionary."""
         self.providers: dict[str, BaseProviderClient] = {}
 
-    def register_provider(self, provider_name: str, client: BaseProviderClient):
+    def register_provider(self, provider_name: str, client: BaseProviderClient) -> None:
         """Register a provider client."""
         self.providers[provider_name] = client
         logger.info(f"Registered provider: {provider_name}")

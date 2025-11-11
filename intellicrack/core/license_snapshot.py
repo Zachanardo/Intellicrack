@@ -70,7 +70,7 @@ class LicenseSnapshot:
         "*.pfx",
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the LicenseStateSnapshotter with empty snapshots dictionary."""
         self.snapshots: Dict[str, Dict[str, Any]] = {}
         self.current_snapshot: Optional[Dict[str, Any]] = None
@@ -125,7 +125,7 @@ class LicenseSnapshot:
             import uuid
 
             mac = uuid.getnode()
-            info["mac_address"] = ":".join(("%012X" % mac)[i : i + 2] for i in range(0, 12, 2))
+            info["mac_address"] = ":".join((f"{mac:012X}")[i : i + 2] for i in range(0, 12, 2))
 
             # Get BIOS info via WMI
             try:
@@ -234,7 +234,7 @@ class LicenseSnapshot:
                         elif value_type == winreg.REG_BINARY:
                             result["values"][value_name] = {"data": value_data.hex() if value_data else "", "type": "BINARY"}
                         i += 1
-                    except WindowsError:
+                    except OSError:
                         break
 
                 # Read subkeys (limited recursion)
@@ -247,7 +247,7 @@ class LicenseSnapshot:
                             if subkey_data:
                                 result["subkeys"][subkey_name] = subkey_data
                         i += 1
-                    except WindowsError:
+                    except OSError:
                         break
 
         except Exception as e:
@@ -279,17 +279,17 @@ class LicenseSnapshot:
                                         if any(term in product_name.lower() for term in search_terms):
                                             product_path = f"{vendor_path}\\{product_name}"
                                             product_data = self._read_registry_key_recursive(
-                                                winreg.HKEY_LOCAL_MACHINE, product_path, max_depth=2
+                                                winreg.HKEY_LOCAL_MACHINE, product_path, max_depth=2,
                                             )
                                             if product_data:
                                                 license_keys[product_path] = product_data
                                         j += 1
-                                    except WindowsError:
+                                    except OSError:
                                         break
                         except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
                             logger.debug(f"Failed to query registry value: {e}")
                         i += 1
-                    except WindowsError:
+                    except OSError:
                         break
         except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
             logger.debug(f"Failed to scan process registry: {e}")
@@ -356,7 +356,7 @@ class LicenseSnapshot:
         try:
             # Get all services
             service_list = win32service.EnumServicesStatus(
-                win32service.OpenSCManager(None, None, win32service.SC_MANAGER_ENUMERATE_SERVICE)
+                win32service.OpenSCManager(None, None, win32service.SC_MANAGER_ENUMERATE_SERVICE),
             )
 
             for service in service_list:
@@ -405,7 +405,7 @@ class LicenseSnapshot:
                                 "remote": f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else "N/A",
                                 "pid": conn.pid,
                                 "status": conn.status,
-                            }
+                            },
                         )
 
                 elif conn.status == "LISTEN":
@@ -434,7 +434,7 @@ class LicenseSnapshot:
                                 "store": store_name,
                                 "subject": win32api.CertGetNameString(cert, win32api.CERT_NAME_SIMPLE_DISPLAY_TYPE, 0),
                                 "issuer": win32api.CertGetNameString(
-                                    cert, win32api.CERT_NAME_SIMPLE_DISPLAY_TYPE, win32api.CERT_NAME_ISSUER_FLAG
+                                    cert, win32api.CERT_NAME_SIMPLE_DISPLAY_TYPE, win32api.CERT_NAME_ISSUER_FLAG,
                                 ),
                             }
                             certs_in_store.append(cert_info)
@@ -543,7 +543,7 @@ class LicenseSnapshot:
                                 "display_name": row.get("Display Name", ""),
                                 "path": row.get("Path", ""),
                                 "state": row.get("State", ""),
-                            }
+                            },
                         )
         except (OSError, PermissionError) as e:
             logger.debug(f"Failed to capture drivers: {e}")
@@ -576,7 +576,7 @@ class LicenseSnapshot:
                                 "next_run": row.get("Next Run Time", ""),
                                 "status": row.get("Status", ""),
                                 "command": row.get("Task To Run", ""),
-                            }
+                            },
                         )
         except (OSError, PermissionError) as e:
             logger.debug(f"Failed to capture scheduled tasks: {e}")
@@ -591,7 +591,7 @@ class LicenseSnapshot:
                 for byte_block in iter(lambda: f.read(4096), b""):
                     sha256_hash.update(byte_block)
             return sha256_hash.hexdigest()
-        except (OSError, IOError):
+        except OSError:
             return ""
 
     def compare_snapshots(self, snapshot1_name: str, snapshot2_name: str) -> Dict[str, Any]:
@@ -640,7 +640,7 @@ class LicenseSnapshot:
                         "old_hash": files1[path]["hash"],
                         "new_hash": file["hash"],
                         "size_change": file["size"] - files1[path]["size"],
-                    }
+                    },
                 )
 
         # Compare registry (simplified)
@@ -688,7 +688,7 @@ class LicenseSnapshot:
     def import_snapshot(self, filepath: str) -> Optional[str]:
         """Import snapshot from JSON file."""
         try:
-            with open(filepath, "r") as f:
+            with open(filepath) as f:
                 snapshot = json.load(f)
 
             name = snapshot.get("name", f"imported_{int(time.time())}")

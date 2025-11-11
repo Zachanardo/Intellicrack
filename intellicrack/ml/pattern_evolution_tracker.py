@@ -79,7 +79,7 @@ if not SKLEARN_AVAILABLE:
     class DBSCAN:
         """Fallback DBSCAN clustering implementation."""
 
-        def __init__(self, eps=0.5, min_samples=5):
+        def __init__(self, eps=0.5, min_samples=5) -> None:
             """Initialize the FallbackDBSCAN clustering algorithm.
 
             Args:
@@ -125,7 +125,7 @@ if not SKLEARN_AVAILABLE:
     class KMeans:
         """Fallback K-Means clustering implementation."""
 
-        def __init__(self, n_clusters=8, random_state=None, n_init=10):
+        def __init__(self, n_clusters=8, random_state=None, n_init=10) -> None:
             """Initialize the KMeans clustering algorithm.
 
             Args:
@@ -148,7 +148,7 @@ if not SKLEARN_AVAILABLE:
     class AgglomerativeClustering:
         """Fallback agglomerative clustering implementation."""
 
-        def __init__(self, n_clusters=None, distance_threshold=None, affinity="euclidean", linkage="average"):
+        def __init__(self, n_clusters=None, distance_threshold=None, affinity="euclidean", linkage="average") -> None:
             """Initialize the AgglomerativeClustering algorithm.
 
             Args:
@@ -176,7 +176,7 @@ if not SKLEARN_AVAILABLE:
     class StandardScaler:
         """Fallback standard scaler implementation."""
 
-        def __init__(self):
+        def __init__(self) -> None:
             """Initialize the StandardScaler with empty mean and std arrays."""
             self.mean_ = None
             self.std_ = None
@@ -187,7 +187,7 @@ if not SKLEARN_AVAILABLE:
             self.std_ = np.std(X, axis=0) + 1e-10
             return (X - self.mean_) / self.std_
 
-    def silhouette_score(X, labels):
+    def silhouette_score(X, labels) -> float:
         """Fallback silhouette score calculation."""
         return 0.5
 
@@ -344,7 +344,7 @@ class PatternGene:
             pattern_data=mutated_data,
             generation=self.generation + 1,
             parent_ids=[self.id],
-            mutation_history=self.mutation_history + [mutation_type],
+            mutation_history=[*self.mutation_history, mutation_type],
             metadata=self.metadata.copy(),
         )
 
@@ -550,7 +550,7 @@ class QLearningAgent:
         epsilon: float = 1.0,
         epsilon_decay: float = 0.995,
         epsilon_min: float = 0.01,
-    ):
+    ) -> None:
         """Initialize the Q-learning agent with specified parameters and experience buffer."""
         self.state_size = state_size
         self.action_size = action_size
@@ -580,16 +580,16 @@ class QLearningAgent:
         state_key = self.get_state_key(state)
         return np.argmax(self.q_table[state_key])
 
-    def remember(self, state: np.ndarray, action: int, reward: float, next_state: np.ndarray, done: bool):
+    def remember(self, state: np.ndarray, action: int, reward: float, next_state: np.ndarray, done: bool) -> None:
         """Store experience in replay buffer."""
         self.memory.append((state, action, reward, next_state, done))
 
-    def learn(self, batch_size: int = 32):
+    def learn(self, batch_size: int = 32) -> None:
         """Learn from batch of experiences."""
         if len(self.memory) < batch_size:
             return
 
-        batch = random.sample(self.memory, batch_size)  # noqa: S311 - ML Q-learning experience replay batch sampling
+        batch = random.sample(self.memory, batch_size)
 
         for state, action, reward, next_state, done in batch:
             state_key = self.get_state_key(state)
@@ -610,7 +610,7 @@ class QLearningAgent:
 class PatternStorage:
     """SQLite-based pattern storage with versioning."""
 
-    def __init__(self, db_path: str | None = None):
+    def __init__(self, db_path: str | None = None) -> None:
         """Initialize pattern storage with SQLite database and thread safety."""
         if db_path is None:
             db_path = str(Path(__file__).parent.parent / "data" / "database" / "pattern_evolution.db")
@@ -619,7 +619,7 @@ class PatternStorage:
         self.lock = threading.Lock()
         self._init_database()
 
-    def _init_database(self):
+    def _init_database(self) -> None:
         """Initialize database schema."""
         with self.lock:
             cursor = self.conn.cursor()
@@ -673,7 +673,7 @@ class PatternStorage:
 
             self.conn.commit()
 
-    def save_pattern(self, pattern: PatternGene):
+    def save_pattern(self, pattern: PatternGene) -> None:
         """Save pattern to database."""
         with self.lock:
             cursor = self.conn.cursor()
@@ -784,7 +784,7 @@ class PatternStorage:
 
         return [self.load_pattern(pid) for pid in pattern_ids if pid]
 
-    def update_metrics(self, pattern_id: str, tp: int, fp: int, tn: int, fn: int, detection_time_ms: float):
+    def update_metrics(self, pattern_id: str, tp: int, fp: int, tn: int, fn: int, detection_time_ms: float) -> None:
         """Update pattern performance metrics."""
         with self.lock:
             cursor = self.conn.cursor()
@@ -823,7 +823,7 @@ class PatternStorage:
 class PatternMatcher:
     """Fast pattern matching engine using Bloom filters and optimized algorithms."""
 
-    def __init__(self, bloom_size: int = 1000000, num_hashes: int = 7):
+    def __init__(self, bloom_size: int = 1000000, num_hashes: int = 7) -> None:
         """Initialize pattern matcher with bloom filter and pattern caching."""
         self.bloom_size = bloom_size
         self.num_hashes = num_hashes
@@ -831,7 +831,7 @@ class PatternMatcher:
         self.pattern_cache = {}
         self.compiled_patterns = {}
 
-    def add_pattern(self, pattern: PatternGene):
+    def add_pattern(self, pattern: PatternGene) -> None:
         """Add pattern to matcher."""
         # Add to bloom filter for fast negative checks
         for i in range(self.num_hashes):
@@ -991,7 +991,7 @@ class PatternEvolutionTracker:
         elite_size: int = 10,
         mutation_rate: float = 0.1,
         crossover_rate: float = 0.7,
-    ):
+    ) -> None:
         """Initialize the pattern evolution tracker.
 
         Sets up the evolutionary machine learning system for tracking and
@@ -1047,7 +1047,7 @@ class PatternEvolutionTracker:
         # Initialize populations
         self._initialize_populations()
 
-    def _initialize_populations(self):
+    def _initialize_populations(self) -> None:
         """Initialize pattern populations from storage or create new."""
         self.logger.info("Initializing pattern populations")
 
@@ -1168,7 +1168,7 @@ class PatternEvolutionTracker:
                 contingency_table = np.array([[intersection, only_in_p2], [only_in_p1, neither + 1]])  # Adding 1 to avoid zero issues
 
                 # Calculate chi2 contingency if possible
-                chi2, p_value, dof, expected = chi2_contingency(contingency_table)
+                _chi2, p_value, _dof, _expected = chi2_contingency(contingency_table)
 
                 # Use 1-p_value as a similarity measure (higher value means more similar)
                 similarity = max(0.0, 1 - p_value)
@@ -1209,7 +1209,7 @@ class PatternEvolutionTracker:
         # Hierarchical clustering based on similarity
         distance_matrix = 1.0 - similarity_matrix
         clustering = AgglomerativeClustering(
-            n_clusters=None, distance_threshold=1.0 - similarity_threshold, affinity="precomputed", linkage="average"
+            n_clusters=None, distance_threshold=1.0 - similarity_threshold, affinity="precomputed", linkage="average",
         )
         labels = clustering.fit_predict(distance_matrix)
 
@@ -1248,7 +1248,7 @@ class PatternEvolutionTracker:
             "pattern_type": pattern_type.value,
         }
 
-    def evolve_generation(self, pattern_type: PatternType | None = None):
+    def evolve_generation(self, pattern_type: PatternType | None = None) -> None:
         """Evolve one generation of patterns with advanced learning."""
         if pattern_type:
             types_to_evolve = [pattern_type]
@@ -1334,7 +1334,7 @@ class PatternEvolutionTracker:
             temporal_analysis = self.analyze_temporal_evolution(ptype)
             self.logger.info(
                 f"Evolution rate for {ptype.value}: {temporal_analysis['evolution_rate']['rate']:.4f} "
-                f"(acceleration: {temporal_analysis['evolution_rate']['acceleration']:.4f})"
+                f"(acceleration: {temporal_analysis['evolution_rate']['acceleration']:.4f})",
             )
 
         self._notify_observers()
@@ -1386,7 +1386,7 @@ class PatternEvolutionTracker:
 
     def _tournament_selection(self, population: list[PatternGene], tournament_size: int = 3) -> PatternGene:
         """Tournament selection for genetic algorithm."""
-        tournament = random.sample(population, min(tournament_size, len(population)))  # noqa: S311 - ML genetic algorithm tournament selection
+        tournament = random.sample(population, min(tournament_size, len(population)))
         return max(tournament, key=lambda p: p.fitness)
 
     def detect(self, data: bytes, pattern_types: list[PatternType] | None = None) -> dict[str, Any]:
@@ -1413,7 +1413,7 @@ class PatternEvolutionTracker:
                             "confidence": confidence,
                             "generation": pattern.generation,
                             "pattern_data": str(pattern.pattern_data)[:100],  # Preview
-                        }
+                        },
                     )
                     results["patterns_matched"].append(pattern_id)
 
@@ -1428,7 +1428,7 @@ class PatternEvolutionTracker:
 
         return results
 
-    def _update_q_learning(self, data: bytes, results: dict[str, Any]):
+    def _update_q_learning(self, data: bytes, results: dict[str, Any]) -> None:
         """Update Q-learning agent based on detection results."""
         # Extract features for state
         state = self._extract_state_features(data)
@@ -1473,7 +1473,7 @@ class PatternEvolutionTracker:
 
         return np.array(features[:50])
 
-    def feedback(self, pattern_id: str, correct: bool, detection_time_ms: float):
+    def feedback(self, pattern_id: str, correct: bool, detection_time_ms: float) -> None:
         """Provide feedback on pattern detection."""
         pattern = self.storage.load_pattern(pattern_id)
         if not pattern:
@@ -1496,11 +1496,11 @@ class PatternEvolutionTracker:
                         self.populations[ptype][i] = updated_pattern
                         break
 
-    def add_observer(self, observer):
+    def add_observer(self, observer) -> None:
         """Add observer for pattern updates."""
         self.observers.append(observer)
 
-    def _notify_observers(self):
+    def _notify_observers(self) -> None:
         """Notify observers of pattern updates."""
         for observer in self.observers:
             try:
@@ -1508,7 +1508,7 @@ class PatternEvolutionTracker:
             except Exception as e:
                 self.logger.error(f"Error notifying observer: {e}")
 
-    def export_patterns(self, output_file: str, pattern_type: PatternType | None = None):
+    def export_patterns(self, output_file: str, pattern_type: PatternType | None = None) -> None:
         """Export patterns to JSON file."""
         patterns_data = []
 
@@ -1543,7 +1543,7 @@ class PatternEvolutionTracker:
 
         self.logger.info(f"Exported {len(patterns_data)} patterns to {output_file}")
 
-    def import_patterns(self, input_file: str):
+    def import_patterns(self, input_file: str) -> None:
         """Import patterns from JSON file."""
         with open(input_file) as f:
             data = json.load(f)
@@ -1640,7 +1640,7 @@ class PatternEvolutionTracker:
 
         return dict(clusters)
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Clean shutdown."""
         self.executor.shutdown(wait=True)
         self.storage.conn.close()
@@ -1650,13 +1650,13 @@ class PatternEvolutionTracker:
 class PatternUpdateObserver:
     """Demonstrate observer for pattern updates."""
 
-    def on_patterns_updated(self, tracker: PatternEvolutionTracker):
+    def on_patterns_updated(self, tracker: PatternEvolutionTracker) -> None:
         """Handle pattern updates."""
         stats = tracker.get_statistics()
         print(f"Generation {stats['generations']}: Best fitness: {stats.get('best_fitness', 0):.3f}, Detections: {stats['detections']}")
 
 
-def main():
+def main() -> None:
     """Run the pattern evolution command-line interface."""
     import argparse
 

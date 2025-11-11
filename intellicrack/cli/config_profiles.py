@@ -51,7 +51,7 @@ Allows saving and loading of analysis configurations
 class ConfigProfile:
     """Represents a saved configuration profile."""
 
-    def __init__(self, name: str, description: str = ""):
+    def __init__(self, name: str, description: str = "") -> None:
         """Initialize configuration profile with settings and metadata."""
         self.name = name
         self.description = description
@@ -100,7 +100,7 @@ class ProfileManager:
     migration, never written to. Single source of truth: central config.
     """
 
-    def __init__(self, profile_dir: str | None = None):
+    def __init__(self, profile_dir: str | None = None) -> None:
         """Initialize profile manager with central config delegation."""
         self.console = Console()
         self.central_config = IntellicrackConfig()
@@ -118,7 +118,7 @@ class ProfileManager:
         # Load profiles from central config
         self.profiles = self._load_profiles()
 
-    def _migrate_if_needed(self):
+    def _migrate_if_needed(self) -> None:
         """One-time migration from old profile files to central config."""
         # Check if migration is needed
         if self.profile_dir.exists() and not self.central_config.get("cli_configuration.profiles_migrated", False):
@@ -393,7 +393,7 @@ def create_default_profiles():
 
 
 # pylint: disable=too-many-branches,too-many-statements
-def main():
+def main() -> None:
     """Demo the profile system."""
     console = Console()
 
@@ -401,7 +401,7 @@ def main():
         Panel(
             "[bold cyan]Intellicrack Configuration Profile Manager[/bold cyan]",
             box=box.DOUBLE,
-        )
+        ),
     )
 
     manager = ProfileManager()

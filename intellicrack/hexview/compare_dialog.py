@@ -40,7 +40,7 @@ class ComparisonWorker(QThread):
     finished = pyqtSignal(list)  # differences list
     error = pyqtSignal(str)  # error message
 
-    def __init__(self, comparer, file1_path: str, file2_path: str):
+    def __init__(self, comparer, file1_path: str, file2_path: str) -> None:
         """Initialize the worker.
 
         Args:
@@ -54,7 +54,7 @@ class ComparisonWorker(QThread):
         self.file1_path = file1_path
         self.file2_path = file2_path
 
-    def run(self):
+    def run(self) -> None:
         """Run the comparison."""
         try:
             # Set progress callback
@@ -73,7 +73,7 @@ class ComparisonWorker(QThread):
 class CompareDialog(QDialog):
     """Dialog for selecting and comparing two binary files."""
 
-    def __init__(self, parent=None, initial_file: Optional[str] = None):
+    def __init__(self, parent=None, initial_file: Optional[str] = None) -> None:
         """Initialize the compare dialog.
 
         Args:
@@ -90,7 +90,7 @@ class CompareDialog(QDialog):
 
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the dialog UI."""
         self.setWindowTitle("Compare Files")
         self.setModal(True)
@@ -216,7 +216,7 @@ class CompareDialog(QDialog):
         if self.file1_path:
             self.update_file_info(1)
 
-    def browse_file(self, file_num: int):
+    def browse_file(self, file_num: int) -> None:
         """Browse for a file to compare.
 
         Args:
@@ -235,7 +235,7 @@ class CompareDialog(QDialog):
                 self.file2_edit.setText(file_path)
                 self.update_file_info(2)
 
-    def update_file_info(self, file_num: int):
+    def update_file_info(self, file_num: int) -> None:
         """Update file information display.
 
         Args:
@@ -274,10 +274,10 @@ class CompareDialog(QDialog):
             label.setStyleSheet("color: green; margin-left: 65px;")
 
         except Exception as e:
-            label.setText(f"Error: {str(e)}")
+            label.setText(f"Error: {e!s}")
             label.setStyleSheet("color: red; margin-left: 65px;")
 
-    def set_mode(self, mode: str):
+    def set_mode(self, mode: str) -> None:
         """Set comparison mode.
 
         Args:
@@ -286,7 +286,7 @@ class CompareDialog(QDialog):
         """
         self.comparison_mode = mode
 
-    def toggle_sync_scrolling(self, checked: bool):
+    def toggle_sync_scrolling(self, checked: bool) -> None:
         """Toggle synchronized scrolling.
 
         Args:
@@ -295,7 +295,7 @@ class CompareDialog(QDialog):
         """
         self.sync_scrolling = checked
 
-    def toggle_highlight(self, checked: bool):
+    def toggle_highlight(self, checked: bool) -> None:
         """Toggle difference highlighting.
 
         Args:
@@ -329,7 +329,7 @@ class CompareDialog(QDialog):
 
         return True
 
-    def accept(self):
+    def accept(self) -> None:
         """Accept the dialog if validation passes."""
         if self.validate_selection():
             super().accept()
@@ -350,7 +350,7 @@ class CompareDialog(QDialog):
             "ignore_case": self.ignore_case_check.isChecked(),
         }
 
-    def show_quick_stats(self, differences: list):
+    def show_quick_stats(self, differences: list) -> None:
         """Show quick statistics about the comparison.
 
         Args:

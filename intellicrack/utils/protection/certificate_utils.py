@@ -84,7 +84,7 @@ def generate_self_signed_cert(
                 x509.NameAttribute(NameOID.LOCALITY_NAME, locality),
                 x509.NameAttribute(NameOID.ORGANIZATION_NAME, organization),
                 x509.NameAttribute(NameOID.COMMON_NAME, common_name),
-            ]
+            ],
         )
 
         # Create certificate
@@ -117,7 +117,7 @@ def generate_self_signed_cert(
                         x509.DNSName(common_name),
                         x509.DNSName("localhost"),
                         x509.DNSName("127.0.0.1"),
-                    ]
+                    ],
                 ),
                 critical=False,
             )

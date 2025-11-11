@@ -87,7 +87,7 @@ def inject_comprehensive_api_hooks(app: Any, hook_types: list[str] = None) -> st
                 "    }",
                 "}",
                 "",
-            ]
+            ],
         )
 
     # Anti-debugger hooks
@@ -134,7 +134,7 @@ def inject_comprehensive_api_hooks(app: Any, hook_types: list[str] = None) -> st
                 "    }",
                 "}",
                 "",
-            ]
+            ],
         )
 
     # Time manipulation hooks
@@ -171,7 +171,7 @@ def inject_comprehensive_api_hooks(app: Any, hook_types: list[str] = None) -> st
                 "    }",
                 "}",
                 "",
-            ]
+            ],
         )
 
     # Telemetry blocking hooks
@@ -212,7 +212,7 @@ def inject_comprehensive_api_hooks(app: Any, hook_types: list[str] = None) -> st
                 "    }",
                 "}",
                 "",
-            ]
+            ],
         )
 
     # Network monitoring hooks
@@ -258,7 +258,7 @@ def inject_comprehensive_api_hooks(app: Any, hook_types: list[str] = None) -> st
                 "    }",
                 "}",
                 "",
-            ]
+            ],
         )
 
     # Add completion message
@@ -267,7 +267,7 @@ def inject_comprehensive_api_hooks(app: Any, hook_types: list[str] = None) -> st
             "console.log('[Intellicrack] API hooking setup complete');",
             "console.log('[Intellicrack] Active hooks: " + ", ".join(hook_types) + "');",
             "",
-        ]
+        ],
     )
 
     return "\n".join(script_lines)
@@ -460,28 +460,28 @@ def create_custom_hook_script(hook_config: dict[str, Any]) -> str:
                     f"    Interceptor.attach({function_name}, {{",
                     "        onEnter: function(args) {",
                     f"            console.log('[Custom] {function_name} called');",
-                ]
+                ],
             )
 
             if hook_type == "block":
                 script_lines.extend(
                     [
                         "            this.block = true;",
-                    ]
+                    ],
                 )
             elif hook_type == "modify":
                 script_lines.extend(
                     [
                         "            // Custom modification logic here",
                         "            this.modify = true;",
-                    ]
+                    ],
                 )
 
             script_lines.extend(
                 [
                     "        },",
                     "        onLeave: function(retval) {",
-                ]
+                ],
             )
 
             if hook_type == "block":
@@ -491,7 +491,7 @@ def create_custom_hook_script(hook_config: dict[str, Any]) -> str:
                         f"                console.log('[Custom] Blocking {function_name}');",
                         "                retval.replace(ptr(0));",
                         "            }",
-                    ]
+                    ],
                 )
             elif hook_type == "modify":
                 script_lines.extend(
@@ -500,7 +500,7 @@ def create_custom_hook_script(hook_config: dict[str, Any]) -> str:
                         f"                console.log('[Custom] Modifying {function_name} result');",
                         "                // Custom result modification here",
                         "            }",
-                    ]
+                    ],
                 )
 
             script_lines.extend(
@@ -511,7 +511,7 @@ def create_custom_hook_script(hook_config: dict[str, Any]) -> str:
                     f"    console.log('[Custom] Failed to hook {function_name}: ' + e);",
                     "}",
                     "",
-                ]
+                ],
             )
 
     # Process memory patches
@@ -541,14 +541,14 @@ def create_custom_hook_script(hook_config: dict[str, Any]) -> str:
                         f"    console.log('[Custom] Failed to apply patch at {address}: ' + e);",
                         "}",
                         "",
-                    ]
+                    ],
                 )
 
     script_lines.extend(
         [
             "console.log('[Custom] Custom hooks setup complete');",
             "",
-        ]
+        ],
     )
 
     return "\n".join(script_lines)
@@ -854,7 +854,7 @@ def generate_time_bomb_defuser(binary_path: str) -> dict[str, Any]:
                         "api": api.decode(),
                         "module": "kernel32.dll" if b"Get" in api else "msvcrt.dll",
                         "strategy": "return_fixed_value",
-                    }
+                    },
                 )
 
         # Look for date comparison patterns
@@ -882,7 +882,7 @@ def generate_time_bomb_defuser(binary_path: str) -> dict[str, Any]:
                         "original": pattern.hex(),
                         "replacement": b"\x07\xf3".hex(),  # 2099
                         "description": f"Change year {year} to 2099",
-                    }
+                    },
                 )
 
         # Generate defusal strategies based on findings
@@ -955,7 +955,7 @@ if (time_func) {
                 "Use Frida script for runtime bypass without modifying binary",
                 "Consider system date manipulation as alternative approach",
                 "Monitor for additional time checks during runtime",
-            ]
+            ],
         )
 
     except Exception as e:
@@ -1079,7 +1079,7 @@ def generate_telemetry_blocker(app_name: str) -> dict[str, Any]:
                 "action": "block",
                 "remoteip": domain,
                 "command": f'netsh advfirewall firewall add rule name="Block {domain}" dir=out action=block remoteip={domain} enable=yes',
-            }
+            },
         )
 
     # Generate Frida script for runtime blocking

@@ -29,7 +29,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
 
 try:
-    import r2pipe  # noqa: F401
+    import r2pipe
 
     R2PIPE_AVAILABLE = True
 except ImportError:
@@ -115,8 +115,8 @@ class RadareESILEmulator:
         base_address: int = 0x400000,
         session_pool: Optional[R2SessionPool] = None,
         auto_analyze: bool = True,
-        analysis_level: str = "aaa"
-    ):
+        analysis_level: str = "aaa",
+    ) -> None:
         """Initialize ESIL emulator with binary.
 
         Args:
@@ -166,7 +166,7 @@ class RadareESILEmulator:
         self._initialize_session()
         self._setup_esil_vm()
 
-    def _initialize_session(self):
+    def _initialize_session(self) -> None:
         """Initialize r2pipe session from pool or create new one.
 
         Raises:
@@ -181,7 +181,7 @@ class RadareESILEmulator:
             if self.session_pool:
                 self.session = self.session_pool.get_session(
                     str(self.binary_path),
-                    flags=flags
+                    flags=flags,
                 )
             else:
                 self.session = R2SessionWrapper(
@@ -189,7 +189,7 @@ class RadareESILEmulator:
                     session_id=f"esil_{id(self)}",
                     flags=flags,
                     auto_analyze=self.auto_analyze,
-                    analysis_level=self.analysis_level
+                    analysis_level=self.analysis_level,
                 )
                 if not self.session.connect():
                     raise RuntimeError("Failed to connect session")
@@ -211,7 +211,7 @@ class RadareESILEmulator:
             logger.error(f"Failed to initialize ESIL session: {e}")
             raise RuntimeError(f"ESIL session initialization failed: {e}") from e
 
-    def _setup_esil_vm(self):
+    def _setup_esil_vm(self) -> None:
         """Set up ESIL virtual machine with initial state.
 
         Raises:
@@ -244,7 +244,7 @@ class RadareESILEmulator:
             logger.error(f"Failed to setup ESIL VM: {e}")
             raise RuntimeError(f"ESIL VM setup failed: {e}") from e
 
-    def _initialize_registers(self):
+    def _initialize_registers(self) -> None:
         """Initialize register tracking based on architecture.
 
         Raises:
@@ -268,7 +268,7 @@ class RadareESILEmulator:
                 self.registers[name] = ESILRegister(
                     name=name,
                     value=value,
-                    size=size
+                    size=size,
                 )
 
             logger.debug(f"Initialized {len(self.registers)} registers")
@@ -277,7 +277,7 @@ class RadareESILEmulator:
             logger.error(f"Failed to initialize registers: {e}")
             raise RuntimeError(f"Register initialization failed: {e}") from e
 
-    def _setup_memory_regions(self):
+    def _setup_memory_regions(self) -> None:
         """Set up memory regions for emulation.
 
         Raises:
@@ -329,7 +329,7 @@ class RadareESILEmulator:
                 logger.error(f"Failed to read register {register}: {e}")
                 raise RuntimeError(f"Register read failed: {e}") from e
 
-    def set_register(self, register: str, value: Union[int, str], symbolic: bool = False):
+    def set_register(self, register: str, value: Union[int, str], symbolic: bool = False) -> None:
         """Set register value with optional symbolic marking.
 
         Args:
@@ -350,7 +350,7 @@ class RadareESILEmulator:
                         value=value if isinstance(value, int) else 0,
                         size=self.registers.get(register, ESILRegister(register, 0, 8)).size,
                         symbolic=True,
-                        constraints=[f"{sym_name} = {value}"]
+                        constraints=[f"{sym_name} = {value}"],
                     )
                     self.session.execute(f"dr {register}={sym_name}")
                 else:
@@ -387,7 +387,7 @@ class RadareESILEmulator:
                 logger.error(f"Failed to read memory at 0x{address:x}: {e}")
                 raise RuntimeError(f"Memory read failed: {e}") from e
 
-    def set_memory(self, address: int, data: bytes, symbolic: bool = False):
+    def set_memory(self, address: int, data: bytes, symbolic: bool = False) -> None:
         """Write memory with optional symbolic marking.
 
         Args:
@@ -421,7 +421,7 @@ class RadareESILEmulator:
         self,
         address: int,
         condition: Optional[str] = None,
-        callback: Optional[Callable] = None
+        callback: Optional[Callable] = None,
     ) -> ESILBreakpoint:
         """Add conditional breakpoint with optional callback.
 
@@ -448,7 +448,7 @@ class RadareESILEmulator:
                 logger.error(f"Failed to add breakpoint at 0x{address:x}: {e}")
                 raise RuntimeError(f"Breakpoint creation failed: {e}") from e
 
-    def remove_breakpoint(self, address: int):
+    def remove_breakpoint(self, address: int) -> None:
         """Remove breakpoint at address.
 
         Args:
@@ -464,7 +464,7 @@ class RadareESILEmulator:
                 except Exception as e:
                     logger.warning(f"Failed to remove breakpoint: {e}")
 
-    def add_hook(self, hook_type: str, callback: Callable):
+    def add_hook(self, hook_type: str, callback: Callable) -> None:
         """Add ESIL operation hook.
 
         Args:
@@ -478,7 +478,7 @@ class RadareESILEmulator:
             self._esil_hooks[hook_type].append(callback)
             logger.debug(f"Added hook for {hook_type}")
 
-    def add_taint_source(self, address: int, size: int = 8):
+    def add_taint_source(self, address: int, size: int = 8) -> None:
         """Mark memory region as taint source for taint analysis.
 
         Args:
@@ -511,7 +511,7 @@ class RadareESILEmulator:
                 prev_pc_info = self.session.execute("drj", expect_json=True)
                 prev_pc = next(
                     (r["value"] for r in prev_pc_info if r.get("role") == "PC" or r.get("name") in ["rip", "eip", "pc"]),
-                    0
+                    0,
                 )
 
                 inst_info = self.session.execute("pdj 1", expect_json=True)
@@ -530,7 +530,7 @@ class RadareESILEmulator:
                 new_pc_info = self.session.execute("drj", expect_json=True)
                 new_pc = next(
                     (r["value"] for r in new_pc_info if r.get("role") == "PC" or r.get("name") in ["rip", "eip", "pc"]),
-                    prev_pc
+                    prev_pc,
                 )
 
                 changed_regs = {}
@@ -549,7 +549,7 @@ class RadareESILEmulator:
                     control_flow_change = {
                         "from": prev_pc,
                         "to": new_pc,
-                        "type": self._determine_control_flow_type(inst_opcode)
+                        "type": self._determine_control_flow_type(inst_opcode),
                     }
 
                 if new_pc in self.breakpoints:
@@ -566,7 +566,7 @@ class RadareESILEmulator:
                         "from": inst_addr,
                         "to": new_pc,
                         "instruction": inst_opcode,
-                        "stack_ptr": new_registers.get("rsp", new_registers.get("esp", 0))
+                        "stack_ptr": new_registers.get("rsp", new_registers.get("esp", 0)),
                     })
                 elif "ret" in inst_opcode.lower() and self.call_stack:
                     self.call_stack.pop()
@@ -579,7 +579,7 @@ class RadareESILEmulator:
                     "memory_accesses": mem_accesses,
                     "new_pc": new_pc,
                     "call_depth": len(self.call_stack),
-                    "control_flow": control_flow_change
+                    "control_flow": control_flow_change,
                 }
 
             except Exception as e:
@@ -646,7 +646,7 @@ class RadareESILEmulator:
         self,
         esil: str,
         inst_addr: int,
-        registers: Dict[str, int]
+        registers: Dict[str, int],
     ) -> List[ESILMemoryAccess]:
         """Extract memory accesses from ESIL expression.
 
@@ -677,7 +677,7 @@ class RadareESILEmulator:
                                     value=mem_val,
                                     operation="read",
                                     instruction_address=inst_addr,
-                                    register_state=registers.copy()
+                                    register_state=registers.copy(),
                                 ))
                             except Exception as e:
                                 logger.debug(f"Failed to read memory during access tracking: {e}")
@@ -700,7 +700,7 @@ class RadareESILEmulator:
                                 value=struct.pack("<Q", value)[:8],
                                 operation="write",
                                 instruction_address=inst_addr,
-                                register_state=registers.copy()
+                                register_state=registers.copy(),
                             ))
                     except Exception as e:
                         logger.debug(f"Failed to track memory write operation: {e}")
@@ -782,7 +782,7 @@ class RadareESILEmulator:
                 ast.Lt, ast.LtE, ast.Gt, ast.GtE, ast.Add, ast.Sub,
                 ast.Mult, ast.Div, ast.Mod, ast.Pow, ast.BitAnd,
                 ast.BitOr, ast.BitXor, ast.LShift, ast.RShift,
-                ast.UAdd, ast.USub, ast.Invert
+                ast.UAdd, ast.USub, ast.Invert,
             )):
                 return False
         return True
@@ -912,7 +912,7 @@ class RadareESILEmulator:
     def run_until(
         self,
         target: Union[int, str],
-        max_steps: int = 10000
+        max_steps: int = 10000,
     ) -> List[Dict[str, Any]]:
         """Run emulation until target address or condition.
 
@@ -1011,7 +1011,7 @@ class RadareESILEmulator:
                         "address": entry["from"],
                         "api": import_addrs[entry["to"]],
                         "stack_ptr": entry["stack_ptr"],
-                        "arguments": self._extract_call_arguments(entry["from"])
+                        "arguments": self._extract_call_arguments(entry["from"]),
                     })
 
         except Exception as e:
@@ -1073,7 +1073,7 @@ class RadareESILEmulator:
             "cmp.*0x.*",
             "test.*",
             "je.*",
-            "jne.*"
+            "jne.*",
         ]
 
         try:
@@ -1100,7 +1100,7 @@ class RadareESILEmulator:
                                             "type": "conditional_branch",
                                             "pattern": pattern,
                                             "true_path": jumps[0],
-                                            "false_path": jumps[1] if len(jumps) > 1 else None
+                                            "false_path": jumps[1] if len(jumps) > 1 else None,
                                         })
                     except Exception as e:
                         logger.debug(f"Failed to analyze license check pattern: {e}")
@@ -1146,7 +1146,7 @@ class RadareESILEmulator:
 
         return constraints
 
-    def dump_execution_trace(self, output_path: str):
+    def dump_execution_trace(self, output_path: str) -> None:
         """Dump complete execution trace to JSON file.
 
         Args:
@@ -1166,7 +1166,7 @@ class RadareESILEmulator:
                     {
                         "address": addr,
                         "hits": bp.hit_count,
-                        "condition": bp.condition
+                        "condition": bp.condition,
                     }
                     for addr, bp in self.breakpoints.items()
                     if bp.hit_count > 0
@@ -1177,7 +1177,7 @@ class RadareESILEmulator:
                         "address": acc.address,
                         "size": acc.size,
                         "operation": acc.operation,
-                        "instruction": acc.instruction_address
+                        "instruction": acc.instruction_address,
                     }
                     for acc in self.memory_accesses
                 ],
@@ -1186,7 +1186,7 @@ class RadareESILEmulator:
                     if state.tainted
                 ],
                 "path_constraints": self.path_constraints,
-                "call_stack_max_depth": max(len(self.call_stack), 1)
+                "call_stack_max_depth": max(len(self.call_stack), 1),
             }
 
             with open(output_path, "w", encoding="utf-8") as f:
@@ -1198,7 +1198,7 @@ class RadareESILEmulator:
             logger.error(f"Failed to dump execution trace: {e}")
             raise RuntimeError(f"Trace dump failed: {e}") from e
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset emulator state to initial conditions.
 
         Raises:
@@ -1229,7 +1229,7 @@ class RadareESILEmulator:
                 logger.error(f"Failed to reset emulator: {e}")
                 raise RuntimeError(f"Reset failed: {e}") from e
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up resources.
 
         This method should be called when done with the emulator to properly
@@ -1271,5 +1271,5 @@ __all__ = [
     "ESILRegister",
     "ESILMemoryAccess",
     "ESILBreakpoint",
-    "RadareESILEmulator"
+    "RadareESILEmulator",
 ]

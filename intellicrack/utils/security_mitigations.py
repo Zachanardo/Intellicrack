@@ -50,7 +50,7 @@ def mitigate_future_vulnerability() -> None:
 
                     if "future" in caller_module or "nampa" in caller_module:
                         logger.warning(
-                            f"Blocked potential exploitation attempt: future/nampa tried to import 'test' module from {caller_module}"
+                            f"Blocked potential exploitation attempt: future/nampa tried to import 'test' module from {caller_module}",
                         )
                         return type(sys)("test")
 
@@ -82,7 +82,7 @@ def scan_for_malicious_test_files() -> list[Path]:
         try:
             test_file = base_path / "test.py"
             if test_file.exists() and test_file.is_file():
-                with open(test_file, "r", encoding="utf-8", errors="ignore") as f:
+                with open(test_file, encoding="utf-8", errors="ignore") as f:
                     content = f.read(1000)
 
                     suspicious_patterns = [
@@ -144,7 +144,7 @@ def _is_safe_to_remove(file_path: Path) -> bool:
 
     """
     try:
-        if not file_path.name == "test.py":
+        if file_path.name != "test.py":
             return False
 
         parent = file_path.parent.name
@@ -157,7 +157,7 @@ def _is_safe_to_remove(file_path: Path) -> bool:
         if file_path.stat().st_size < 50:
             return True
 
-        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+        with open(file_path, encoding="utf-8", errors="ignore") as f:
             first_lines = f.read(500)
             if "unittest" in first_lines or "pytest" in first_lines:
                 return False

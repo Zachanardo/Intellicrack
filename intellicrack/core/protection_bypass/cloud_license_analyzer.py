@@ -2,6 +2,7 @@
 
 import asyncio
 import base64
+import contextlib
 import hashlib
 import json
 import logging
@@ -72,7 +73,7 @@ class LicenseToken:
 class CloudLicenseAnalyzer:
     """MITM proxy-based analyzer for intercepting and manipulating cloud license traffic."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the MITMProxyAnalyzer with interception data structures and proxy settings."""
         self.intercepted_requests = []
         self.discovered_endpoints = {}
@@ -87,7 +88,7 @@ class CloudLicenseAnalyzer:
         self._init_certificates()
         self._init_proxy()
 
-    def _init_certificates(self):
+    def _init_certificates(self) -> None:
         ca_path = Path(__file__).parent / "certs"
         ca_path.mkdir(exist_ok=True)
 
@@ -100,7 +101,7 @@ class CloudLicenseAnalyzer:
         else:
             self._generate_ca_certificate(cert_file, key_file)
 
-    def _generate_ca_certificate(self, cert_file: Path, key_file: Path):
+    def _generate_ca_certificate(self, cert_file: Path, key_file: Path) -> None:
         key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
 
         subject = issuer = x509.Name(
@@ -110,7 +111,7 @@ class CloudLicenseAnalyzer:
                 x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
                 x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack CA"),
                 x509.NameAttribute(NameOID.COMMON_NAME, "Intellicrack Root CA"),
-            ]
+            ],
         )
 
         cert = (
@@ -153,9 +154,9 @@ class CloudLicenseAnalyzer:
         key_file.write_bytes(self.ca_key)
         cert_file.write_bytes(self.ca_cert)
 
-    def _init_proxy(self):
+    def _init_proxy(self) -> None:
         self.proxy_options = options.Options(
-            listen_port=self.proxy_port, ssl_insecure=True, confdir=str(Path(__file__).parent / "mitmproxy_config")
+            listen_port=self.proxy_port, ssl_insecure=True, confdir=str(Path(__file__).parent / "mitmproxy_config"),
         )
 
         self.proxy_master = DumpMaster(self.proxy_options, with_termlog=False, with_dumper=False)
@@ -177,7 +178,7 @@ class CloudLicenseAnalyzer:
                 x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
                 x509.NameAttribute(NameOID.ORGANIZATION_NAME, hostname),
                 x509.NameAttribute(NameOID.COMMON_NAME, hostname),
-            ]
+            ],
         )
 
         cert = (
@@ -193,7 +194,7 @@ class CloudLicenseAnalyzer:
                     [
                         x509.DNSName(hostname),
                         x509.DNSName(f"*.{hostname}"),
-                    ]
+                    ],
                 ),
                 critical=False,
             )
@@ -209,7 +210,7 @@ class CloudLicenseAnalyzer:
 
         return cert_pem, key_pem
 
-    def start_interception(self, target_process: Optional[int] = None):
+    def start_interception(self, target_process: Optional[int] = None) -> None:
         """Start MITM proxy to intercept cloud license traffic from target process."""
         self.target_process = target_process
 
@@ -221,11 +222,11 @@ class CloudLicenseAnalyzer:
 
         logger.info(f"TLS interception proxy started on port {self.proxy_port}")
 
-    def _run_proxy(self):
+    def _run_proxy(self) -> None:
         asyncio.set_event_loop(asyncio.new_event_loop())
         self.proxy_master.run()
 
-    def _inject_proxy_settings(self, pid: int):
+    def _inject_proxy_settings(self, pid: int) -> None:
         try:
             session = frida.attach(pid)
             script_code = self._generate_proxy_injection_script()
@@ -377,7 +378,7 @@ class CloudLicenseAnalyzer:
         """
         )
 
-    def _on_frida_message(self, message, data):
+    def _on_frida_message(self, message, data) -> None:
         if message["type"] == "send":
             payload = message["payload"]
             if payload["type"] == "hooks_installed":
@@ -414,7 +415,7 @@ class CloudLicenseAnalyzer:
         auth_type = self._detect_authentication_type(request)
 
         endpoint = CloudEndpoint(
-            url=url, method=method, headers=headers, parameters=parameters, response_schema=response_schema, authentication_type=auth_type
+            url=url, method=method, headers=headers, parameters=parameters, response_schema=response_schema, authentication_type=auth_type,
         )
 
         endpoint_key = f"{method}:{urlparse(url).path}"
@@ -595,10 +596,8 @@ class CloudLicenseAnalyzer:
                 if "expires_in" in data:
                     expires_at = datetime.now() + timedelta(seconds=data["expires_in"])
                 elif "expires_at" in data:
-                    try:
+                    with contextlib.suppress(ValueError, TypeError):
                         expires_at = datetime.fromisoformat(data["expires_at"])
-                    except (ValueError, TypeError):
-                        pass
 
                 scope = None
                 if "scope" in data:
@@ -739,7 +738,7 @@ class CloudLicenseAnalyzer:
             params = {"refresh_token": refresh_token}
             return requests.get(url, params=params, headers=headers, timeout=30)
 
-    def emulate_license_server(self, port: int = 9090):
+    def emulate_license_server(self, port: int = 9090) -> None:
         """Start local emulated license server to respond to intercepted requests."""
         from flask import Flask, jsonify, request
 
@@ -839,7 +838,7 @@ class CloudLicenseAnalyzer:
             "metadata": token.metadata,
         }
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up proxy and Frida resources."""
         if self.proxy_master:
             self.proxy_master.shutdown()
@@ -851,11 +850,11 @@ class CloudLicenseAnalyzer:
 class CloudInterceptor:
     """Mitmproxy addon for intercepting and analyzing cloud license traffic."""
 
-    def __init__(self, analyzer: CloudLicenseAnalyzer):
+    def __init__(self, analyzer: CloudLicenseAnalyzer) -> None:
         """Initialize interceptor with reference to parent analyzer."""
         self.analyzer = analyzer
 
-    def request(self, flow: mitmproxy.http.HTTPFlow):
+    def request(self, flow: mitmproxy.http.HTTPFlow) -> None:
         """Handle intercepted HTTP request."""
         request = flow.request
 
@@ -866,10 +865,10 @@ class CloudInterceptor:
                 "url": request.pretty_url,
                 "headers": dict(request.headers),
                 "content": request.content,
-            }
+            },
         )
 
-    def response(self, flow: mitmproxy.http.HTTPFlow):
+    def response(self, flow: mitmproxy.http.HTTPFlow) -> None:
         """Handle intercepted HTTP response."""
         request = flow.request
         response = flow.response
@@ -891,7 +890,7 @@ class CloudInterceptor:
 
         return any(path in url_path for path in license_paths)
 
-    def _modify_response(self, flow: mitmproxy.http.HTTPFlow):
+    def _modify_response(self, flow: mitmproxy.http.HTTPFlow) -> None:
         response = flow.response
 
         if response.content:
@@ -925,7 +924,7 @@ class CloudInterceptor:
 class CloudLicenseBypasser:
     """Cloud license bypass system for defeating cloud-based activation."""
 
-    def __init__(self, analyzer: CloudLicenseAnalyzer):
+    def __init__(self, analyzer: CloudLicenseAnalyzer) -> None:
         """Initialize the CloudLicenseBypassSystem with an analyzer instance.
 
         Args:
@@ -961,7 +960,7 @@ class CloudLicenseBypasser:
     def _send_bypass_request(self, endpoint: CloudEndpoint, token: LicenseToken) -> bool:
         headers = endpoint.headers.copy()
 
-        if token.token_type == TOKEN_TYPE_JWT or token.token_type == TOKEN_TYPE_BEARER:
+        if token.token_type in (TOKEN_TYPE_JWT, TOKEN_TYPE_BEARER):
             headers["Authorization"] = f"Bearer {token.value}"
         elif token.token_type == TOKEN_TYPE_API_KEY:
             headers["X-API-Key"] = token.value

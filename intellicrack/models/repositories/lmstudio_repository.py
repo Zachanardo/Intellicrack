@@ -50,7 +50,7 @@ class LMStudioRepository(APIRepositoryBase):
         rate_limit_config: RateLimitConfig | None = None,
         cache_config: dict[str, Any] | None = None,
         download_dir: str = os.path.join(os.path.dirname(__file__), "..", "downloads"),
-    ):
+    ) -> None:
         """Initialize the LMStudio repository.
 
         Args:

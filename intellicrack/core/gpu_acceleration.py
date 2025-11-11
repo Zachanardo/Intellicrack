@@ -66,7 +66,7 @@ if INTEL_GPU_PREFERRED or not CUDA_DISABLED:
 # Try importing CUDA frameworks only if not disabled
 if not CUDA_DISABLED:
     try:
-        import pycuda.autoinit  # noqa: F401 - Required for CUDA initialization
+        import pycuda.autoinit
         import pycuda.driver as cuda
         from pycuda import compiler, gpuarray
 
@@ -104,7 +104,7 @@ else:
 class GPUAccelerator:
     """GPU acceleration for binary analysis tasks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize GPU accelerator."""
         self.framework = self._detect_best_framework()
         self.device_info = self._get_device_info()
@@ -413,7 +413,7 @@ class GPUAccelerator:
 
     def _create_pattern_match_kernel(self):
         @numba_cuda.jit
-        def pattern_match_kernel(data, pattern, matches, positions):
+        def pattern_match_kernel(data, pattern, matches, positions) -> None:
             idx = numba_cuda.grid(1)
             if idx <= len(data) - len(pattern):
                 match = True
@@ -655,7 +655,7 @@ class GPUAccelerator:
 
     def _create_entropy_kernel(self):
         @numba_cuda.jit
-        def entropy_kernel(data, block_size, entropies):
+        def entropy_kernel(data, block_size, entropies) -> None:
             block_idx = numba_cuda.grid(1)
             if block_idx < len(entropies):
                 # Calculate histogram for this block

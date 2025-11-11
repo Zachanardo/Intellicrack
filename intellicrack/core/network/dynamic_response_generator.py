@@ -64,7 +64,7 @@ class GeneratedResponse:
 class FlexLMProtocolHandler:
     """Handle FlexLM license protocol."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize FlexLM handler with logging for license request processing."""
         self.logger = logging.getLogger("IntellicrackLogger.FlexLMHandler")
 
@@ -94,7 +94,7 @@ class FlexLMProtocolHandler:
                                 "name": parts[1],
                                 "vendor": parts[2],
                                 "version": parts[3],
-                            }
+                            },
                         )
 
                 elif line.startswith("SERVER"):
@@ -154,7 +154,7 @@ class FlexLMProtocolHandler:
 class HASPProtocolHandler:
     """Handle HASP/Sentinel license protocol."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize HASP handler with logging for license request processing."""
         self.logger = logging.getLogger("IntellicrackLogger.HASPHandler")
 
@@ -221,7 +221,7 @@ class HASPProtocolHandler:
 class AdobeProtocolHandler:
     """Handle Adobe license protocol."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize Adobe handler with logging for license request processing."""
         self.logger = logging.getLogger("IntellicrackLogger.AdobeHandler")
 
@@ -250,7 +250,7 @@ class AdobeProtocolHandler:
                         {
                             "type": "json",
                             "data": json_data,
-                        }
+                        },
                     )
 
                     # Extract common fields
@@ -315,7 +315,7 @@ class AdobeProtocolHandler:
 class MicrosoftKMSHandler:
     """Handle Microsoft KMS protocol."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize Microsoft KMS handler with logging for activation request processing."""
         self.logger = logging.getLogger("IntellicrackLogger.KMSHandler")
 
@@ -368,7 +368,7 @@ class MicrosoftKMSHandler:
 class AutodeskProtocolHandler:
     """Handle Autodesk license protocol."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize Autodesk handler with logging for license request processing."""
         self.logger = logging.getLogger("IntellicrackLogger.AutodeskHandler")
 
@@ -446,7 +446,7 @@ class DynamicResponseGenerator:
     responses based on the detected protocol and request content.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the dynamic response generator."""
         self.logger = logging.getLogger("IntellicrackLogger.ResponseGenerator")
 
@@ -592,7 +592,7 @@ class DynamicResponseGenerator:
             del self.response_cache[cache_key]
         return None
 
-    def _cache_response(self, cache_key: str, response_data: bytes):
+    def _cache_response(self, cache_key: str, response_data: bytes) -> None:
         """Cache response data."""
         self.response_cache[cache_key] = (response_data, time.time())
 
@@ -603,7 +603,7 @@ class DynamicResponseGenerator:
             for old_key, _ in sorted_items[:100]:
                 del self.response_cache[old_key]
 
-    def _learn_from_request(self, context: ResponseContext, response_data: bytes):
+    def _learn_from_request(self, context: ResponseContext, response_data: bytes) -> None:
         """Learn patterns from successful request/response pairs."""
         try:
             protocol = context.protocol_type
@@ -934,7 +934,7 @@ class DynamicResponseGenerator:
             "cache_size": len(self.response_cache),
         }
 
-    def import_learning_data(self, data: dict[str, Any]):
+    def import_learning_data(self, data: dict[str, Any]) -> None:
         """Import learning data from previous sessions."""
         try:
             if "learned_patterns" in data:

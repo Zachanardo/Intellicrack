@@ -23,7 +23,7 @@ import re
 try:
     import defusedxml.ElementTree as ET  # noqa: N817
 except ImportError:
-    import xml.etree.ElementTree as ET  # noqa: N817, S314
+    import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -87,7 +87,7 @@ class DecompiledFunction:
 class GhidraOutputParser:
     """Parses Ghidra analysis output in various formats."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the GhidraOutputParser with empty data structures."""
         self.functions: Dict[int, FunctionSignature] = {}
         self.structures: Dict[str, DataStructure] = {}
@@ -143,7 +143,7 @@ class GhidraOutputParser:
     def parse_json_output(self, json_path: Path) -> Dict[str, Any]:
         """Parse Ghidra JSON export format."""
         try:
-            with open(json_path, "r", encoding="utf-8") as f:
+            with open(json_path, encoding="utf-8") as f:
                 data = json.load(f)
 
             # Parse functions from JSON
@@ -231,7 +231,7 @@ class GhidraOutputParser:
                     blocks = func_code.count("{")
 
                     decompiled = DecompiledFunction(
-                        name=func_name, address=func_addr, pseudocode=func_code, complexity=complexity, basic_blocks=blocks
+                        name=func_name, address=func_addr, pseudocode=func_code, complexity=complexity, basic_blocks=blocks,
                     )
 
                     decompiled_functions.append(decompiled)
@@ -248,7 +248,7 @@ class GhidraOutputParser:
         call_graph = {}
 
         try:
-            with open(graph_path, "r", encoding="utf-8") as f:
+            with open(graph_path, encoding="utf-8") as f:
                 for line in f:
                     # Parse graph edges (caller -> callee)
                     match = re.match(r"([^\s]+)\s+->\s+([^\s]+)", line.strip())

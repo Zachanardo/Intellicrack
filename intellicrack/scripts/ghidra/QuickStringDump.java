@@ -1440,59 +1440,57 @@ public class QuickStringDump extends GhidraScript {
   }
 
   /**
-   * Advanced data type string mapping analysis utilizing dataTypeStringMap
-   * Maps string patterns to their data type contexts for comprehensive licensing analysis
+   * Advanced data type string mapping analysis utilizing dataTypeStringMap Maps string patterns to
+   * their data type contexts for comprehensive licensing analysis
    */
   private void performAdvancedDataTypeStringAnalysis() {
     if (currentProgram == null) return;
-    
+
     try {
       DataTypeManager dtm = currentProgram.getDataTypeManager();
       dataTypeStringMap.clear();
-      
+
       println("    Performing advanced data type string mapping analysis...");
-      
+
       // Analyze strings in context of specific data types
       analyzeStringDataTypes();
       analyzePointerStrings();
       analyzeArrayStrings();
       analyzeUnionStrings();
-      
+
       // Perform cross-reference analysis for data type strings
       performDataTypeStringCrossReference();
-      
+
       // Generate licensing-specific string patterns
       identifyLicensingDataTypePatterns();
-      
+
       println("    Mapped " + dataTypeStringMap.size() + " data types with associated strings");
-      
+
     } catch (Exception e) {
       println("    ⚠ Error in data type string analysis: " + e.getMessage());
     }
   }
 
-  /**
-   * Analyze strings within standard data type contexts
-   */
+  /** Analyze strings within standard data type contexts */
   private void analyzeStringDataTypes() {
     try {
       Memory memory = currentProgram.getMemory();
       MemoryBlock[] blocks = memory.getBlocks();
-      
+
       for (MemoryBlock block : blocks) {
         if (!block.isInitialized() || monitor.isCancelled()) continue;
-        
+
         Address start = block.getStart();
         Address end = block.getEnd();
-        
+
         // Sample analysis for performance
         long blockSize = block.getSize();
-        int sampleInterval = Math.max(1, (int)(blockSize / 5000));
-        
+        int sampleInterval = Math.max(1, (int) (blockSize / 5000));
+
         for (long offset = 0; offset < blockSize; offset += sampleInterval) {
           Address addr = start.add(offset);
           if (addr.compareTo(end) > 0) break;
-          
+
           Data data = currentProgram.getListing().getDataAt(addr);
           if (data != null) {
             DataType dataType = data.getDataType();
@@ -1500,28 +1498,28 @@ public class QuickStringDump extends GhidraScript {
           }
         }
       }
-      
+
     } catch (Exception e) {
       println("      ⚠ Error analyzing string data types: " + e.getMessage());
     }
   }
 
-  /**
-   * Analyze individual data type for string content
-   */
+  /** Analyze individual data type for string content */
   private void analyzeDataTypeForStrings(DataType dataType, Address addr, Data data) {
     try {
       String typeName = dataType.getName().toLowerCase();
-      
+
       // Check for string-related data types
-      if (typeName.contains("string") || typeName.contains("char") || 
-          typeName.contains("text") || typeName.contains("unicode")) {
-        
+      if (typeName.contains("string")
+          || typeName.contains("char")
+          || typeName.contains("text")
+          || typeName.contains("unicode")) {
+
         if (!dataTypeStringMap.containsKey(dataType)) {
           dataTypeStringMap.put(dataType, new HashSet<>());
         }
         dataTypeStringMap.get(dataType).add(addr);
-        
+
         // Extract and analyze string content
         Object value = data.getValue();
         if (value instanceof String) {
@@ -1529,7 +1527,7 @@ public class QuickStringDump extends GhidraScript {
           analyzeStringForLicensingPatterns(stringValue, addr, dataType);
         }
       }
-      
+
       // Analyze licensing-specific data types
       if (typeName.matches(".*licen.*|.*serial.*|.*key.*|.*token.*|.*auth.*|.*valid.*")) {
         if (!dataTypeStringMap.containsKey(dataType)) {
@@ -1537,55 +1535,51 @@ public class QuickStringDump extends GhidraScript {
         }
         dataTypeStringMap.get(dataType).add(addr);
       }
-      
+
     } catch (Exception e) {
       // Continue analysis
     }
   }
 
-  /**
-   * Analyze pointer-based string references
-   */
+  /** Analyze pointer-based string references */
   private void analyzePointerStrings() {
     try {
       DataTypeManager dtm = currentProgram.getDataTypeManager();
-      
+
       // Find pointer data types
       Iterator<DataType> dataTypes = dtm.getAllDataTypes();
       while (dataTypes.hasNext() && !monitor.isCancelled()) {
         DataType dt = dataTypes.next();
-        
+
         if (dt instanceof Pointer) {
           Pointer ptrType = (Pointer) dt;
           DataType referencedType = ptrType.getDataType();
-          
+
           if (referencedType != null && isStringRelatedType(referencedType)) {
             // Find instances of this pointer type
             findStringPointerInstances(ptrType);
           }
         }
       }
-      
+
     } catch (Exception e) {
       println("      ⚠ Error analyzing pointer strings: " + e.getMessage());
     }
   }
 
-  /**
-   * Find instances of string pointer types in memory
-   */
+  /** Find instances of string pointer types in memory */
   private void findStringPointerInstances(Pointer ptrType) {
     try {
       SymbolTable symbolTable = currentProgram.getSymbolTable();
       SymbolIterator symbols = symbolTable.getAllSymbols(true);
-      
+
       while (symbols.hasNext() && !monitor.isCancelled()) {
         Symbol symbol = symbols.next();
-        
+
         // Check if symbol references string pointer data
         Address addr = symbol.getAddress();
         Data data = currentProgram.getListing().getDataAt(addr);
-        
+
         if (data != null && data.getDataType().equals(ptrType)) {
           if (!dataTypeStringMap.containsKey(ptrType)) {
             dataTypeStringMap.put(ptrType, new HashSet<>());
@@ -1593,59 +1587,55 @@ public class QuickStringDump extends GhidraScript {
           dataTypeStringMap.get(ptrType).add(addr);
         }
       }
-      
+
     } catch (Exception e) {
       // Continue analysis
     }
   }
 
-  /**
-   * Analyze array-based string structures
-   */
+  /** Analyze array-based string structures */
   private void analyzeArrayStrings() {
     try {
       DataTypeManager dtm = currentProgram.getDataTypeManager();
-      
+
       Iterator<DataType> dataTypes = dtm.getAllDataTypes();
       while (dataTypes.hasNext() && !monitor.isCancelled()) {
         DataType dt = dataTypes.next();
-        
+
         if (dt instanceof Array) {
           Array arrayType = (Array) dt;
           DataType elementType = arrayType.getDataType();
-          
+
           if (elementType != null && isStringRelatedType(elementType)) {
             // Find instances of string arrays
             findStringArrayInstances(arrayType);
           }
         }
       }
-      
+
     } catch (Exception e) {
       println("      ⚠ Error analyzing array strings: " + e.getMessage());
     }
   }
 
-  /**
-   * Find instances of string array types
-   */
+  /** Find instances of string array types */
   private void findStringArrayInstances(Array arrayType) {
     try {
       Memory memory = currentProgram.getMemory();
-      
+
       for (MemoryBlock block : memory.getBlocks()) {
         if (!block.isInitialized() || monitor.isCancelled()) continue;
-        
+
         Address start = block.getStart();
         Address end = block.getEnd();
-        
+
         // Sample search for performance
         long sampleInterval = Math.max(1000, block.getSize() / 1000);
-        
+
         for (long offset = 0; offset < block.getSize(); offset += sampleInterval) {
           Address addr = start.add(offset);
           if (addr.compareTo(end) > 0) break;
-          
+
           Data data = currentProgram.getListing().getDataAt(addr);
           if (data != null && data.getDataType().equals(arrayType)) {
             if (!dataTypeStringMap.containsKey(arrayType)) {
@@ -1655,31 +1645,29 @@ public class QuickStringDump extends GhidraScript {
           }
         }
       }
-      
+
     } catch (Exception e) {
       // Continue analysis
     }
   }
 
-  /**
-   * Analyze union structures for embedded strings
-   */
+  /** Analyze union structures for embedded strings */
   private void analyzeUnionStrings() {
     try {
       DataTypeManager dtm = currentProgram.getDataTypeManager();
-      
+
       Iterator<DataType> dataTypes = dtm.getAllDataTypes();
       while (dataTypes.hasNext() && !monitor.isCancelled()) {
         DataType dt = dataTypes.next();
-        
+
         if (dt instanceof Union) {
           Union unionType = (Union) dt;
-          
+
           // Check union components for string types
           for (int i = 0; i < unionType.getNumComponents(); i++) {
             DataTypeComponent component = unionType.getComponent(i);
             DataType componentType = component.getDataType();
-            
+
             if (isStringRelatedType(componentType)) {
               if (!dataTypeStringMap.containsKey(unionType)) {
                 dataTypeStringMap.put(unionType, new HashSet<>());
@@ -1691,25 +1679,23 @@ public class QuickStringDump extends GhidraScript {
           }
         }
       }
-      
+
     } catch (Exception e) {
       println("      ⚠ Error analyzing union strings: " + e.getMessage());
     }
   }
 
-  /**
-   * Find instances of unions containing strings
-   */
+  /** Find instances of unions containing strings */
   private void findUnionStringInstances(Union unionType) {
     try {
       SymbolTable symbolTable = currentProgram.getSymbolTable();
       SymbolIterator symbols = symbolTable.getAllSymbols(true);
-      
+
       int instanceCount = 0;
       while (symbols.hasNext() && instanceCount < 100 && !monitor.isCancelled()) {
         Symbol symbol = symbols.next();
         Address addr = symbol.getAddress();
-        
+
         Data data = currentProgram.getListing().getDataAt(addr);
         if (data != null && data.getDataType().equals(unionType)) {
           if (!dataTypeStringMap.containsKey(unionType)) {
@@ -1719,179 +1705,183 @@ public class QuickStringDump extends GhidraScript {
           instanceCount++;
         }
       }
-      
+
     } catch (Exception e) {
       // Continue analysis
     }
   }
 
-  /**
-   * Check if data type is string-related
-   */
+  /** Check if data type is string-related */
   private boolean isStringRelatedType(DataType dataType) {
     if (dataType == null) return false;
-    
+
     String typeName = dataType.getName().toLowerCase();
-    return typeName.contains("string") || typeName.contains("char") || 
-           typeName.contains("text") || typeName.contains("unicode") ||
-           typeName.contains("ascii") || typeName.contains("utf");
+    return typeName.contains("string")
+        || typeName.contains("char")
+        || typeName.contains("text")
+        || typeName.contains("unicode")
+        || typeName.contains("ascii")
+        || typeName.contains("utf");
   }
 
-  /**
-   * Perform cross-reference analysis for data type strings
-   */
+  /** Perform cross-reference analysis for data type strings */
   private void performDataTypeStringCrossReference() {
     try {
       for (Map.Entry<DataType, Set<Address>> entry : dataTypeStringMap.entrySet()) {
         DataType dataType = entry.getKey();
         Set<Address> addresses = entry.getValue();
-        
+
         for (Address addr : addresses) {
           if (monitor.isCancelled()) break;
-          
+
           // Find references to this string address
           Reference[] refs = currentProgram.getReferenceManager().getReferencesTo(addr);
-          
+
           if (refs.length > 0) {
             // This string is referenced - analyze referencing functions
             for (Reference ref : refs) {
               Address fromAddr = ref.getFromAddress();
               Function func = currentProgram.getFunctionManager().getFunctionContaining(fromAddr);
-              
+
               if (func != null) {
                 // Check for licensing-related function names
                 String funcName = func.getName().toLowerCase();
                 if (funcName.matches(".*licen.*|.*valid.*|.*check.*|.*auth.*|.*serial.*")) {
                   // High-value string in licensing context
-                  println("      High-value string at " + addr + " referenced by licensing function: " + func.getName());
+                  println(
+                      "      High-value string at "
+                          + addr
+                          + " referenced by licensing function: "
+                          + func.getName());
                 }
               }
             }
           }
         }
       }
-      
+
     } catch (Exception e) {
       println("      ⚠ Error in data type string cross-reference analysis: " + e.getMessage());
     }
   }
 
-  /**
-   * Identify licensing-specific data type patterns
-   */
+  /** Identify licensing-specific data type patterns */
   private void identifyLicensingDataTypePatterns() {
     try {
       Map<String, Integer> licensingPatterns = new HashMap<>();
-      
+
       for (Map.Entry<DataType, Set<Address>> entry : dataTypeStringMap.entrySet()) {
         DataType dataType = entry.getKey();
         String typeName = dataType.getName().toLowerCase();
-        
+
         // Count licensing-related data types
         if (typeName.matches(".*licen.*|.*key.*|.*serial.*|.*auth.*|.*token.*|.*valid.*")) {
           licensingPatterns.put(typeName, entry.getValue().size());
         }
       }
-      
+
       if (!licensingPatterns.isEmpty()) {
         println("      Licensing data type patterns identified:");
         for (Map.Entry<String, Integer> pattern : licensingPatterns.entrySet()) {
           println("        " + pattern.getKey() + ": " + pattern.getValue() + " instances");
         }
       }
-      
+
     } catch (Exception e) {
       println("      ⚠ Error identifying licensing data type patterns: " + e.getMessage());
     }
   }
 
-  /**
-   * Analyze string for licensing patterns
-   */
-  private void analyzeStringForLicensingPatterns(String stringValue, Address addr, DataType dataType) {
+  /** Analyze string for licensing patterns */
+  private void analyzeStringForLicensingPatterns(
+      String stringValue, Address addr, DataType dataType) {
     try {
       if (stringValue == null || stringValue.length() < 4) return;
-      
+
       // Check for licensing patterns
       if (stringValue.matches(".*[Ll]icen.*|.*[Ss]erial.*|.*[Kk]ey.*|.*[Tt]oken.*|.*[Aa]uth.*")) {
-        println("      Licensing pattern in " + dataType.getName() + " at " + addr + ": " + 
-               stringValue.substring(0, Math.min(50, stringValue.length())));
+        println(
+            "      Licensing pattern in "
+                + dataType.getName()
+                + " at "
+                + addr
+                + ": "
+                + stringValue.substring(0, Math.min(50, stringValue.length())));
       }
-      
+
       // Check for obfuscated patterns
       if (stringValue.matches(".*[0-9a-fA-F]{16,}.*") && stringValue.length() > 20) {
         println("      Potential obfuscated string in " + dataType.getName() + " at " + addr);
       }
-      
+
     } catch (Exception e) {
       // Continue analysis
     }
   }
 
   /**
-   * Enhanced structure-based string analysis utilizing structureStrings
-   * Analyzes strings embedded within data structures for licensing patterns
+   * Enhanced structure-based string analysis utilizing structureStrings Analyzes strings embedded
+   * within data structures for licensing patterns
    */
   private void performAdvancedStructureStringAnalysis() {
     if (currentProgram == null) return;
-    
+
     try {
       DataTypeManager dtm = currentProgram.getDataTypeManager();
       structureStrings.clear();
-      
+
       println("    Performing advanced structure string analysis...");
-      
+
       // Analyze all structures for embedded strings
       Iterator<DataType> dataTypes = dtm.getAllDataTypes();
       while (dataTypes.hasNext() && !monitor.isCancelled()) {
         DataType dt = dataTypes.next();
-        
+
         if (dt instanceof Structure) {
           Structure struct = (Structure) dt;
           analyzeStructureForStrings(struct);
         }
       }
-      
+
       // Perform licensing-specific structure analysis
       identifyLicensingStructures();
-      
+
       // Cross-reference structure strings with functions
       performStructureStringCrossReference();
-      
+
       println("    Analyzed " + structureStrings.size() + " structures with embedded strings");
-      
+
     } catch (Exception e) {
       println("    ⚠ Error in structure string analysis: " + e.getMessage());
     }
   }
 
-  /**
-   * Analyze individual structure for embedded strings
-   */
+  /** Analyze individual structure for embedded strings */
   private void analyzeStructureForStrings(Structure struct) {
     try {
       List<StringAnalysisResult> structResults = new ArrayList<>();
-      
+
       // Analyze each component of the structure
       for (int i = 0; i < struct.getNumComponents(); i++) {
         DataTypeComponent component = struct.getComponent(i);
         DataType componentType = component.getDataType();
         String fieldName = component.getFieldName();
-        
+
         // Check if component is string-related
-        if (isStringRelatedType(componentType) || 
-            (fieldName != null && fieldName.toLowerCase().matches(".*str.*|.*text.*|.*name.*"))) {
-          
+        if (isStringRelatedType(componentType)
+            || (fieldName != null
+                && fieldName.toLowerCase().matches(".*str.*|.*text.*|.*name.*"))) {
+
           // Find instances of this structure in memory
           List<Address> structInstances = findStructureInstances(struct);
-          
+
           for (Address structAddr : structInstances) {
             if (monitor.isCancelled()) break;
-            
+
             try {
               Address componentAddr = structAddr.add(component.getOffset());
               Data data = currentProgram.getListing().getDataAt(componentAddr);
-              
+
               if (data != null) {
                 Object value = data.getValue();
                 if (value instanceof String) {
@@ -1904,13 +1894,13 @@ public class QuickStringDump extends GhidraScript {
                   result.confidence = calculateStringConfidence(result.value);
                   result.analysisNotes = new ArrayList<>();
                   result.referencingFunctions = new ArrayList<>();
-                  
+
                   // Analyze for licensing patterns
                   if (result.value.toLowerCase().matches(".*licen.*|.*serial.*|.*key.*|.*auth.*")) {
                     result.analysisNotes.add("LICENSING_PATTERN");
                     result.relevanceScore = 0.9;
                   }
-                  
+
                   structResults.add(result);
                 }
               }
@@ -1920,129 +1910,121 @@ public class QuickStringDump extends GhidraScript {
           }
         }
       }
-      
+
       if (!structResults.isEmpty()) {
         structureStrings.put(struct, structResults);
       }
-      
+
     } catch (Exception e) {
       // Continue with next structure
     }
   }
 
-  /**
-   * Find instances of structure in memory
-   */
+  /** Find instances of structure in memory */
   private List<Address> findStructureInstances(Structure struct) {
     List<Address> instances = new ArrayList<>();
-    
+
     try {
       SymbolTable symbolTable = currentProgram.getSymbolTable();
       SymbolIterator symbols = symbolTable.getAllSymbols(true);
-      
+
       int maxInstances = 20; // Limit for performance
       int foundInstances = 0;
-      
+
       while (symbols.hasNext() && foundInstances < maxInstances && !monitor.isCancelled()) {
         Symbol symbol = symbols.next();
         Address addr = symbol.getAddress();
-        
+
         Data data = currentProgram.getListing().getDataAt(addr);
         if (data != null && data.getDataType().equals(struct)) {
           instances.add(addr);
           foundInstances++;
         }
       }
-      
+
     } catch (Exception e) {
       // Return what we have
     }
-    
+
     return instances;
   }
 
-  /**
-   * Calculate string confidence score
-   */
+  /** Calculate string confidence score */
   private double calculateStringConfidence(String value) {
     if (value == null) return 0.0;
-    
+
     double confidence = 0.5; // Base confidence
-    
+
     // Higher confidence for longer strings
     if (value.length() > 10) confidence += 0.2;
     if (value.length() > 50) confidence += 0.2;
-    
+
     // Lower confidence for very short or very long strings
     if (value.length() < 4) confidence -= 0.3;
     if (value.length() > 1000) confidence -= 0.2;
-    
+
     // Higher confidence for printable ASCII
     boolean isPrintable = value.chars().allMatch(c -> c >= 32 && c <= 126);
     if (isPrintable) confidence += 0.2;
-    
+
     return Math.max(0.0, Math.min(1.0, confidence));
   }
 
-  /**
-   * Identify structures related to licensing
-   */
+  /** Identify structures related to licensing */
   private void identifyLicensingStructures() {
     try {
       Map<String, Integer> licensingStructures = new HashMap<>();
-      
+
       for (Map.Entry<Structure, List<StringAnalysisResult>> entry : structureStrings.entrySet()) {
         Structure struct = entry.getKey();
         String structName = struct.getName().toLowerCase();
-        
+
         // Check for licensing-related structure names
         if (structName.matches(".*licen.*|.*key.*|.*auth.*|.*valid.*|.*serial.*|.*token.*")) {
           licensingStructures.put(struct.getName(), entry.getValue().size());
         }
-        
+
         // Check for licensing patterns in embedded strings
         for (StringAnalysisResult result : entry.getValue()) {
           if (result.analysisNotes.contains("LICENSING_PATTERN")) {
-            licensingStructures.put(struct.getName(), 
-              licensingStructures.getOrDefault(struct.getName(), 0) + 1);
+            licensingStructures.put(
+                struct.getName(), licensingStructures.getOrDefault(struct.getName(), 0) + 1);
             break;
           }
         }
       }
-      
+
       if (!licensingStructures.isEmpty()) {
         println("      Licensing-related structures identified:");
         for (Map.Entry<String, Integer> struct : licensingStructures.entrySet()) {
           println("        " + struct.getKey() + ": " + struct.getValue() + " strings");
         }
       }
-      
+
     } catch (Exception e) {
       println("      ⚠ Error identifying licensing structures: " + e.getMessage());
     }
   }
 
-  /**
-   * Cross-reference structure strings with functions
-   */
+  /** Cross-reference structure strings with functions */
   private void performStructureStringCrossReference() {
     try {
       for (Map.Entry<Structure, List<StringAnalysisResult>> entry : structureStrings.entrySet()) {
         Structure struct = entry.getKey();
-        
+
         for (StringAnalysisResult result : entry.getValue()) {
           if (monitor.isCancelled()) break;
-          
+
           // Find functions that reference this string address
           Reference[] refs = currentProgram.getReferenceManager().getReferencesTo(result.address);
-          
+
           for (Reference ref : refs) {
             Address fromAddr = ref.getFromAddress();
             Function func = currentProgram.getFunctionManager().getFunctionContaining(fromAddr);
-            
+
             if (func != null) {
               result.referencingFunctions.add(func.getName());
-              
+
               // Check for licensing context
               String funcName = func.getName().toLowerCase();
               if (funcName.matches(".*licen.*|.*valid.*|.*check.*|.*auth.*|.*verify.*")) {
@@ -2053,115 +2035,121 @@ public class QuickStringDump extends GhidraScript {
           }
         }
       }
-      
+
     } catch (Exception e) {
       println("      ⚠ Error in structure string cross-reference: " + e.getMessage());
     }
   }
 
   /**
-   * Comprehensive address space string organization utilizing stringsBySpace
-   * Organizes strings by address space for efficient analysis and licensing pattern detection
+   * Comprehensive address space string organization utilizing stringsBySpace Organizes strings by
+   * address space for efficient analysis and licensing pattern detection
    */
   private void performComprehensiveAddressSpaceStringOrganization() {
     if (currentProgram == null) return;
-    
+
     try {
       stringsBySpace.clear();
       Memory memory = currentProgram.getMemory();
-      
+
       println("    Organizing strings by address space for comprehensive analysis...");
-      
+
       // Analyze each address space separately
       Set<AddressSpace> processedSpaces = new HashSet<>();
-      
+
       for (MemoryBlock block : memory.getBlocks()) {
         if (monitor.isCancelled()) break;
-        
+
         AddressSpace space = block.getStart().getAddressSpace();
         if (processedSpaces.contains(space)) continue;
-        
+
         processedSpaces.add(space);
         analyzeAddressSpaceStrings(space);
       }
-      
+
       // Perform cross-space string analysis
       performCrossSpaceStringAnalysis();
-      
+
       // Identify licensing patterns across address spaces
       identifyLicensingPatternsAcrossSpaces();
-      
+
       println("    Organized strings across " + stringsBySpace.size() + " address spaces");
-      
+
     } catch (Exception e) {
       println("    ⚠ Error in address space string organization: " + e.getMessage());
     }
   }
 
-  /**
-   * Analyze strings within specific address space
-   */
+  /** Analyze strings within specific address space */
   private void analyzeAddressSpaceStrings(AddressSpace space) {
     try {
       AddressSet spaceStrings = new AddressSet();
       Memory memory = currentProgram.getMemory();
-      
+
       // Find all strings in blocks belonging to this address space
       for (MemoryBlock block : memory.getBlocks()) {
-        if (!block.getStart().getAddressSpace().equals(space) || 
-            !block.isInitialized() || monitor.isCancelled()) continue;
-        
+        if (!block.getStart().getAddressSpace().equals(space)
+            || !block.isInitialized()
+            || monitor.isCancelled()) continue;
+
         Address start = block.getStart();
         Address end = block.getEnd();
-        
+
         // Search for strings in this block
         findStringsInBlock(block, spaceStrings);
       }
-      
+
       if (!spaceStrings.isEmpty()) {
         stringsBySpace.put(space, spaceStrings);
-        
-        println("      Address space " + space.getName() + ": " + 
-               spaceStrings.getNumAddresses() + " string addresses");
+
+        println(
+            "      Address space "
+                + space.getName()
+                + ": "
+                + spaceStrings.getNumAddresses()
+                + " string addresses");
       }
-      
+
     } catch (Exception e) {
       println("      ⚠ Error analyzing address space strings: " + e.getMessage());
     }
   }
 
-  /**
-   * Find strings within memory block
-   */
+  /** Find strings within memory block */
   private void findStringsInBlock(MemoryBlock block, AddressSet spaceStrings) {
     try {
       Address start = block.getStart();
       Address end = block.getEnd();
-      
+
       // Sample analysis for large blocks
       long blockSize = block.getSize();
-      int sampleInterval = Math.max(1, (int)(blockSize / 10000));
-      
+      int sampleInterval = Math.max(1, (int) (blockSize / 10000));
+
       for (long offset = 0; offset < blockSize; offset += sampleInterval) {
         if (monitor.isCancelled()) break;
-        
+
         Address addr = start.add(offset);
         if (addr.compareTo(end) > 0) break;
-        
+
         try {
           Data data = currentProgram.getListing().getDataAt(addr);
           if (data != null) {
             Object value = data.getValue();
             if (value instanceof String) {
               String stringValue = (String) value;
-              if (stringValue.length() >= MIN_STRING_LENGTH && 
-                  stringValue.length() <= MAX_STRING_LENGTH) {
+              if (stringValue.length() >= MIN_STRING_LENGTH
+                  && stringValue.length() <= MAX_STRING_LENGTH) {
                 spaceStrings.add(addr);
-                
+
                 // Check for licensing relevance
                 if (stringValue.toLowerCase().matches(".*licen.*|.*serial.*|.*key.*|.*auth.*")) {
-                  println("        Licensing string in " + block.getName() + " at " + addr + 
-                         ": " + stringValue.substring(0, Math.min(30, stringValue.length())));
+                  println(
+                      "        Licensing string in "
+                          + block.getName()
+                          + " at "
+                          + addr
+                          + ": "
+                          + stringValue.substring(0, Math.min(30, stringValue.length())));
                 }
               }
             }
@@ -2170,34 +2158,32 @@ public class QuickStringDump extends GhidraScript {
           // Continue scanning
         }
       }
-      
+
     } catch (Exception e) {
       // Continue with next block
     }
   }
 
-  /**
-   * Perform cross-space string analysis
-   */
+  /** Perform cross-space string analysis */
   private void performCrossSpaceStringAnalysis() {
     try {
       Map<String, Set<AddressSpace>> stringPatternSpaces = new HashMap<>();
-      
+
       for (Map.Entry<AddressSpace, AddressSet> entry : stringsBySpace.entrySet()) {
         AddressSpace space = entry.getKey();
         AddressSet addresses = entry.getValue();
-        
+
         // Analyze string patterns in this space
         for (Address addr : addresses.getAddresses(true)) {
           if (monitor.isCancelled()) break;
-          
+
           try {
             Data data = currentProgram.getListing().getDataAt(addr);
             if (data != null) {
               Object value = data.getValue();
               if (value instanceof String) {
                 String stringValue = (String) value;
-                
+
                 // Extract patterns for cross-space comparison
                 String pattern = extractStringPattern(stringValue);
                 if (pattern != null) {
@@ -2213,26 +2199,28 @@ public class QuickStringDump extends GhidraScript {
           }
         }
       }
-      
+
       // Report patterns found across multiple spaces
       for (Map.Entry<String, Set<AddressSpace>> patternEntry : stringPatternSpaces.entrySet()) {
         if (patternEntry.getValue().size() > 1) {
-          println("      Pattern '" + patternEntry.getKey() + "' found across " + 
-                 patternEntry.getValue().size() + " address spaces");
+          println(
+              "      Pattern '"
+                  + patternEntry.getKey()
+                  + "' found across "
+                  + patternEntry.getValue().size()
+                  + " address spaces");
         }
       }
-      
+
     } catch (Exception e) {
       println("      ⚠ Error in cross-space string analysis: " + e.getMessage());
     }
   }
 
-  /**
-   * Extract pattern from string for comparison
-   */
+  /** Extract pattern from string for comparison */
   private String extractStringPattern(String value) {
     if (value == null || value.length() < 4) return null;
-    
+
     // Extract licensing patterns
     if (value.toLowerCase().matches(".*licen.*")) return "LICENSE";
     if (value.toLowerCase().matches(".*serial.*")) return "SERIAL";
@@ -2240,38 +2228,40 @@ public class QuickStringDump extends GhidraScript {
     if (value.toLowerCase().matches(".*auth.*")) return "AUTH";
     if (value.toLowerCase().matches(".*token.*")) return "TOKEN";
     if (value.toLowerCase().matches(".*valid.*")) return "VALIDATION";
-    
+
     // Extract format patterns
     if (value.matches(".*[0-9a-fA-F]{8,}.*")) return "HEX_PATTERN";
     if (value.matches(".*[A-Za-z0-9+/]{20,}={0,2}.*")) return "BASE64_PATTERN";
-    if (value.matches(".*\\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\\b.*")) return "UUID_PATTERN";
-    
+    if (value.matches(
+        ".*\\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\\b.*"))
+      return "UUID_PATTERN";
+
     return null;
   }
 
-  /**
-   * Identify licensing patterns across address spaces
-   */
+  /** Identify licensing patterns across address spaces */
   private void identifyLicensingPatternsAcrossSpaces() {
     try {
       Map<AddressSpace, Integer> licensingStringCount = new HashMap<>();
-      
+
       for (Map.Entry<AddressSpace, AddressSet> entry : stringsBySpace.entrySet()) {
         AddressSpace space = entry.getKey();
         AddressSet addresses = entry.getValue();
-        
+
         int licensingStrings = 0;
-        
+
         for (Address addr : addresses.getAddresses(true)) {
           if (monitor.isCancelled()) break;
-          
+
           try {
             Data data = currentProgram.getListing().getDataAt(addr);
             if (data != null) {
               Object value = data.getValue();
               if (value instanceof String) {
                 String stringValue = (String) value;
-                if (stringValue.toLowerCase().matches(".*licen.*|.*serial.*|.*key.*|.*auth.*|.*token.*|.*valid.*")) {
+                if (stringValue
+                    .toLowerCase()
+                    .matches(".*licen.*|.*serial.*|.*key.*|.*auth.*|.*token.*|.*valid.*")) {
                   licensingStrings++;
                 }
               }
@@ -2280,76 +2270,79 @@ public class QuickStringDump extends GhidraScript {
             // Continue counting
           }
         }
-        
+
         if (licensingStrings > 0) {
           licensingStringCount.put(space, licensingStrings);
         }
       }
-      
+
       if (!licensingStringCount.isEmpty()) {
         println("      Licensing strings by address space:");
         for (Map.Entry<AddressSpace, Integer> spaceEntry : licensingStringCount.entrySet()) {
-          println("        " + spaceEntry.getKey().getName() + ": " + spaceEntry.getValue() + " licensing strings");
+          println(
+              "        "
+                  + spaceEntry.getKey().getName()
+                  + ": "
+                  + spaceEntry.getValue()
+                  + " licensing strings");
         }
       }
-      
+
     } catch (Exception e) {
       println("      ⚠ Error identifying licensing patterns across spaces: " + e.getMessage());
     }
   }
 
   /**
-   * Advanced code unit string tracking utilizing stringCodeUnits
-   * Tracks string-related code units for comprehensive context analysis
+   * Advanced code unit string tracking utilizing stringCodeUnits Tracks string-related code units
+   * for comprehensive context analysis
    */
   private void performAdvancedStringCodeUnitTracking() {
     if (currentProgram == null) return;
-    
+
     try {
       stringCodeUnits.clear();
-      
+
       println("    Performing advanced string code unit tracking...");
-      
+
       // Track all string-related code units
       trackStringCodeUnits();
-      
+
       // Analyze code unit relationships
       analyzeStringCodeUnitRelationships();
-      
+
       // Identify licensing-relevant code units
       identifyLicensingCodeUnits();
-      
+
       // Perform context analysis for tracked code units
       performStringCodeUnitContextAnalysis();
-      
+
       println("    Tracked " + stringCodeUnits.size() + " string-related code units");
-      
+
     } catch (Exception e) {
       println("    ⚠ Error in string code unit tracking: " + e.getMessage());
     }
   }
 
-  /**
-   * Track all string-related code units
-   */
+  /** Track all string-related code units */
   private void trackStringCodeUnits() {
     try {
       Memory memory = currentProgram.getMemory();
-      
+
       for (MemoryBlock block : memory.getBlocks()) {
         if (!block.isInitialized() || monitor.isCancelled()) continue;
-        
+
         Address start = block.getStart();
         Address end = block.getEnd();
-        
+
         // Sample analysis for performance
         long blockSize = block.getSize();
-        int sampleInterval = Math.max(1, (int)(blockSize / 8000));
-        
+        int sampleInterval = Math.max(1, (int) (blockSize / 8000));
+
         for (long offset = 0; offset < blockSize; offset += sampleInterval) {
           Address addr = start.add(offset);
           if (addr.compareTo(end) > 0) break;
-          
+
           try {
             CodeUnit codeUnit = currentProgram.getListing().getCodeUnitAt(addr);
             if (codeUnit != null && isStringRelatedCodeUnit(codeUnit)) {
@@ -2360,45 +2353,43 @@ public class QuickStringDump extends GhidraScript {
           }
         }
       }
-      
+
     } catch (Exception e) {
       println("      ⚠ Error tracking string code units: " + e.getMessage());
     }
   }
 
-  /**
-   * Check if code unit is string-related
-   */
+  /** Check if code unit is string-related */
   private boolean isStringRelatedCodeUnit(CodeUnit codeUnit) {
     try {
       // Check if code unit contains string data
       if (codeUnit instanceof Data) {
         Data data = (Data) codeUnit;
         DataType dataType = data.getDataType();
-        
+
         if (isStringRelatedType(dataType)) {
           return true;
         }
-        
+
         // Check value
         Object value = data.getValue();
         if (value instanceof String) {
           String stringValue = (String) value;
-          return stringValue.length() >= MIN_STRING_LENGTH && 
-                 stringValue.length() <= MAX_STRING_LENGTH;
+          return stringValue.length() >= MIN_STRING_LENGTH
+              && stringValue.length() <= MAX_STRING_LENGTH;
         }
       }
-      
+
       // Check for string references in instructions
       if (codeUnit instanceof Instruction) {
         Instruction inst = (Instruction) codeUnit;
-        
+
         for (int i = 0; i < inst.getNumOperands(); i++) {
           Reference[] refs = inst.getOperandReferences(i);
           for (Reference ref : refs) {
             Address toAddr = ref.getToAddress();
             Data data = currentProgram.getListing().getDataAt(toAddr);
-            
+
             if (data != null) {
               Object value = data.getValue();
               if (value instanceof String) {
@@ -2408,27 +2399,25 @@ public class QuickStringDump extends GhidraScript {
           }
         }
       }
-      
+
       return false;
-      
+
     } catch (Exception e) {
       return false;
     }
   }
 
-  /**
-   * Analyze relationships between string code units
-   */
+  /** Analyze relationships between string code units */
   private void analyzeStringCodeUnitRelationships() {
     try {
       Map<Function, Set<CodeUnit>> functionStringUnits = new HashMap<>();
-      
+
       for (CodeUnit codeUnit : stringCodeUnits) {
         if (monitor.isCancelled()) break;
-        
+
         Address addr = codeUnit.getAddress();
         Function func = currentProgram.getFunctionManager().getFunctionContaining(addr);
-        
+
         if (func != null) {
           if (!functionStringUnits.containsKey(func)) {
             functionStringUnits.put(func, new HashSet<>());
@@ -2436,169 +2425,172 @@ public class QuickStringDump extends GhidraScript {
           functionStringUnits.get(func).add(codeUnit);
         }
       }
-      
+
       // Report functions with multiple string units
       for (Map.Entry<Function, Set<CodeUnit>> entry : functionStringUnits.entrySet()) {
         if (entry.getValue().size() > 3) {
           Function func = entry.getKey();
-          println("      Function " + func.getName() + " contains " + 
-                 entry.getValue().size() + " string code units");
+          println(
+              "      Function "
+                  + func.getName()
+                  + " contains "
+                  + entry.getValue().size()
+                  + " string code units");
         }
       }
-      
+
     } catch (Exception e) {
       println("      ⚠ Error analyzing string code unit relationships: " + e.getMessage());
     }
   }
 
-  /**
-   * Identify licensing-relevant code units
-   */
+  /** Identify licensing-relevant code units */
   private void identifyLicensingCodeUnits() {
     try {
       Set<CodeUnit> licensingUnits = new HashSet<>();
-      
+
       for (CodeUnit codeUnit : stringCodeUnits) {
         if (monitor.isCancelled()) break;
-        
+
         if (isLicensingRelatedCodeUnit(codeUnit)) {
           licensingUnits.add(codeUnit);
         }
       }
-      
+
       if (!licensingUnits.isEmpty()) {
         println("      Identified " + licensingUnits.size() + " licensing-related code units");
-        
+
         // Analyze licensing code unit patterns
         for (CodeUnit unit : licensingUnits) {
           analyzeLicensingCodeUnit(unit);
         }
       }
-      
+
     } catch (Exception e) {
       println("      ⚠ Error identifying licensing code units: " + e.getMessage());
     }
   }
 
-  /**
-   * Check if code unit is licensing-related
-   */
+  /** Check if code unit is licensing-related */
   private boolean isLicensingRelatedCodeUnit(CodeUnit codeUnit) {
     try {
       if (codeUnit instanceof Data) {
         Data data = (Data) codeUnit;
         Object value = data.getValue();
-        
+
         if (value instanceof String) {
           String stringValue = (String) value;
-          return stringValue.toLowerCase().matches(".*licen.*|.*serial.*|.*key.*|.*auth.*|.*token.*|.*valid.*");
+          return stringValue
+              .toLowerCase()
+              .matches(".*licen.*|.*serial.*|.*key.*|.*auth.*|.*token.*|.*valid.*");
         }
       }
-      
+
       // Check function context
       Address addr = codeUnit.getAddress();
       Function func = currentProgram.getFunctionManager().getFunctionContaining(addr);
-      
+
       if (func != null) {
         String funcName = func.getName().toLowerCase();
         return funcName.matches(".*licen.*|.*valid.*|.*check.*|.*auth.*|.*serial.*|.*key.*");
       }
-      
+
       return false;
-      
+
     } catch (Exception e) {
       return false;
     }
   }
 
-  /**
-   * Analyze individual licensing code unit
-   */
+  /** Analyze individual licensing code unit */
   private void analyzeLicensingCodeUnit(CodeUnit codeUnit) {
     try {
       Address addr = codeUnit.getAddress();
-      
+
       if (codeUnit instanceof Data) {
         Data data = (Data) codeUnit;
         Object value = data.getValue();
-        
+
         if (value instanceof String) {
           String stringValue = (String) value;
-          
+
           // Analyze licensing string patterns
           if (stringValue.length() > 10 && stringValue.matches(".*[0-9a-fA-F]{8,}.*")) {
-            println("        Potential license key at " + addr + ": " + 
-                   stringValue.substring(0, Math.min(20, stringValue.length())) + "...");
+            println(
+                "        Potential license key at "
+                    + addr
+                    + ": "
+                    + stringValue.substring(0, Math.min(20, stringValue.length()))
+                    + "...");
           }
-          
+
           if (stringValue.toLowerCase().contains("serial") && stringValue.length() > 8) {
-            println("        Serial number pattern at " + addr + ": " + 
-                   stringValue.substring(0, Math.min(25, stringValue.length())));
+            println(
+                "        Serial number pattern at "
+                    + addr
+                    + ": "
+                    + stringValue.substring(0, Math.min(25, stringValue.length())));
           }
         }
       }
-      
+
     } catch (Exception e) {
       // Continue analysis
     }
   }
 
-  /**
-   * Perform context analysis for tracked code units
-   */
+  /** Perform context analysis for tracked code units */
   private void performStringCodeUnitContextAnalysis() {
     try {
       Map<String, Integer> contextCategories = new HashMap<>();
-      
+
       for (CodeUnit codeUnit : stringCodeUnits) {
         if (monitor.isCancelled()) break;
-        
+
         String context = determineCodeUnitContext(codeUnit);
         contextCategories.put(context, contextCategories.getOrDefault(context, 0) + 1);
       }
-      
+
       if (!contextCategories.isEmpty()) {
         println("      String code unit contexts:");
         for (Map.Entry<String, Integer> category : contextCategories.entrySet()) {
           println("        " + category.getKey() + ": " + category.getValue() + " units");
         }
       }
-      
+
     } catch (Exception e) {
       println("      ⚠ Error in string code unit context analysis: " + e.getMessage());
     }
   }
 
-  /**
-   * Determine context category for code unit
-   */
+  /** Determine context category for code unit */
   private String determineCodeUnitContext(CodeUnit codeUnit) {
     try {
       Address addr = codeUnit.getAddress();
       Function func = currentProgram.getFunctionManager().getFunctionContaining(addr);
-      
+
       if (func != null) {
         String funcName = func.getName().toLowerCase();
-        
+
         if (funcName.matches(".*licen.*|.*valid.*|.*auth.*")) return "LICENSING";
         if (funcName.matches(".*init.*|.*setup.*|.*config.*")) return "INITIALIZATION";
         if (funcName.matches(".*check.*|.*verify.*|.*test.*")) return "VALIDATION";
         if (funcName.matches(".*error.*|.*fail.*|.*warn.*")) return "ERROR_HANDLING";
         if (funcName.matches(".*debug.*|.*log.*|.*trace.*")) return "DEBUGGING";
       }
-      
+
       // Check memory block context
       MemoryBlock block = currentProgram.getMemory().getBlock(addr);
       if (block != null) {
         String blockName = block.getName().toLowerCase();
-        
+
         if (blockName.contains("data")) return "DATA_SECTION";
         if (blockName.contains("text") || blockName.contains("code")) return "CODE_SECTION";
         if (blockName.contains("resource") || blockName.contains("rsrc")) return "RESOURCE_SECTION";
       }
-      
+
       return "UNKNOWN";
-      
+
     } catch (Exception e) {
       return "ERROR";
     }

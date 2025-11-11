@@ -35,13 +35,13 @@ from intellicrack.utils.logger import logger
 class SecureHTTPClient:
     """HTTP client with configurable SSL verification for security research."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize HTTP client with configuration from ConfigManager."""
         self.config_manager = ConfigManager()
         self.session = requests.Session()
         self._setup_session()
 
-    def _setup_session(self):
+    def _setup_session(self) -> None:
         """Configure session with retry logic and SSL settings."""
         config = self.config_manager.get_config()
         network_config = config.get("network", {})
@@ -93,7 +93,7 @@ class SecureHTTPClient:
                 # Warn when disabling SSL verification
                 logger.warning(
                     "SSL certificate verification disabled for this request. "
-                    "This should only be used for testing with self-signed certificates."
+                    "This should only be used for testing with self-signed certificates.",
                 )
                 # Suppress only the specific InsecureRequestWarning
                 warnings.filterwarnings("ignore", category=InsecureRequestWarning)
@@ -152,7 +152,7 @@ class SecureHTTPClient:
             logger.error(f"SSL error for {url}: {e}")
             logger.info(
                 "If this is a self-signed certificate, you can disable SSL verification "
-                "by setting verify=False or providing a CA bundle path"
+                "by setting verify=False or providing a CA bundle path",
             )
             raise
         except requests.exceptions.RequestException as e:
@@ -175,7 +175,7 @@ class SecureHTTPClient:
         """Make a DELETE request."""
         return self.request("DELETE", url, **kwargs)
 
-    def close(self):
+    def close(self) -> None:
         """Close the session."""
         self.session.close()
 

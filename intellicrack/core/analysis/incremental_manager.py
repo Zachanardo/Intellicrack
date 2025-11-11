@@ -56,7 +56,7 @@ except ImportError as e:
 PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
 
 
-def secure_pickle_dump(obj, file_path):
+def secure_pickle_dump(obj, file_path) -> None:
     """Securely dump object with integrity check."""
     # Serialize object
     data = pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
@@ -147,7 +147,7 @@ class IncrementalAnalysisManager:
         - Thread-safe operations with proper file locking
     """
 
-    def __init__(self, config: dict[str, Any] | None = None):
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
         """Initialize the incremental analysis manager with configuration and cache setup."""
         self.config = config or {}
         self.logger = logging.getLogger("IntellicrackLogger.IncrementalAnalysis")
@@ -816,7 +816,7 @@ def run_analysis_manager(app: Any) -> None:
             "cache_dir": os.path.join(os.getcwd(), "analysis_cache"),
             "enable_caching": True,
             "cache_max_age": 30,
-        }
+        },
     )
 
     # Set binary and track performance metrics
@@ -882,7 +882,7 @@ def run_analysis_manager(app: Any) -> None:
             "end_time": end_time,
             "elapsed_time": elapsed_time,
             "binary_size": binary_size,
-        }
+        },
     )
 
     # Report performance metrics

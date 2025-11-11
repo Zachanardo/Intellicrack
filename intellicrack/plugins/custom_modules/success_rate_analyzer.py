@@ -171,7 +171,7 @@ class WilsonScoreInterval:
 class BayesianAnalyzer:
     """Bayesian analysis for success rates."""
 
-    def __init__(self, prior_alpha: float = 1.0, prior_beta: float = 1.0):
+    def __init__(self, prior_alpha: float = 1.0, prior_beta: float = 1.0) -> None:
         """Initialize Bayesian analyzer with Beta distribution prior parameters."""
         self.prior_alpha = prior_alpha
         self.prior_beta = prior_beta
@@ -207,11 +207,11 @@ class BayesianAnalyzer:
 class SurvivalAnalyzer:
     """Kaplan-Meier survival analysis for bypass longevity."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize survival analyzer for Kaplan-Meier analysis."""
         self.survival_data = []
 
-    def add_observation(self, duration: float, censored: bool = False):
+    def add_observation(self, duration: float, censored: bool = False) -> None:
         """Add survival observation."""
         self.survival_data.append((duration, not censored))  # True = event occurred
 
@@ -269,11 +269,11 @@ class SurvivalAnalyzer:
 class TimeSeriesAnalyzer:
     """Time series analysis and forecasting."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize time series analyzer with component history tracking."""
         self.history = defaultdict(list)
 
-    def add_data_point(self, component: str, timestamp: float, value: float):
+    def add_data_point(self, component: str, timestamp: float, value: float) -> None:
         """Add time series data point."""
         self.history[component].append((timestamp, value))
 
@@ -290,7 +290,7 @@ class TimeSeriesAnalyzer:
         times = times - times[0]
 
         # Linear regression
-        slope, intercept, r_value, p_value, std_err = stats.linregress(times, values)
+        slope, _intercept, r_value, p_value, _std_err = stats.linregress(times, values)
 
         # Determine trend direction and strength
         if abs(r_value) < 0.1:
@@ -505,13 +505,13 @@ class PerformanceMetrics:
 class EventTracker:
     """Event tracking and database management."""
 
-    def __init__(self, db_path: str = "intellicrack_success_rates.db"):
+    def __init__(self, db_path: str = "intellicrack_success_rates.db") -> None:
         """Initialize event tracker with SQLite database and threading support."""
         self.db_path = db_path
         self.lock = threading.Lock()
         self.initialize_database()
 
-    def initialize_database(self):
+    def initialize_database(self) -> None:
         """Initialize SQLite database schema."""
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
@@ -567,33 +567,32 @@ class EventTracker:
 
             conn.commit()
 
-    def log_event(self, event: AnalysisEvent):
+    def log_event(self, event: AnalysisEvent) -> None:
         """Log analysis event to database."""
-        with self.lock:
-            with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.cursor()
+        with self.lock, sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
 
-                cursor.execute(
-                    """
+            cursor.execute(
+                """
                     INSERT OR REPLACE INTO events
                     (event_id, event_type, outcome, protection_category, component,
                      timestamp, duration, metadata, error_details)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                    (
-                        event.event_id,
-                        event.event_type.value,
-                        event.outcome.value,
-                        event.protection_category.value,
-                        event.component,
-                        event.timestamp,
-                        event.duration,
-                        json.dumps(event.metadata),
-                        event.error_details,
-                    ),
-                )
+                (
+                    event.event_id,
+                    event.event_type.value,
+                    event.outcome.value,
+                    event.protection_category.value,
+                    event.component,
+                    event.timestamp,
+                    event.duration,
+                    json.dumps(event.metadata),
+                    event.error_details,
+                ),
+            )
 
-                conn.commit()
+            conn.commit()
 
     def get_events(
         self,
@@ -666,7 +665,7 @@ class EventTracker:
 class MLPredictor:
     """Machine learning-based success rate predictor."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize machine learning predictor with ensemble models and feature scaling."""
         self.models = {
             "random_forest": RandomForestRegressor(n_estimators=100, random_state=42),
@@ -747,7 +746,7 @@ class MLPredictor:
 
         return np.array(features), np.array(targets)
 
-    def train(self, events: list[AnalysisEvent]):
+    def train(self, events: list[AnalysisEvent]) -> None:
         """Train prediction models."""
         X, y = self.prepare_features(events)
 
@@ -799,7 +798,7 @@ class MLPredictor:
 class ReportGenerator:
     """Statistical report generation."""
 
-    def __init__(self, output_dir: str = "reports"):
+    def __init__(self, output_dir: str = "reports") -> None:
         """Initialize report generator with configurable output directory."""
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
@@ -1021,7 +1020,7 @@ class ReportGenerator:
 class SuccessRateAnalyzer:
     """Run success rate analysis engine."""
 
-    def __init__(self, db_path: str = "intellicrack_success_rates.db"):
+    def __init__(self, db_path: str = "intellicrack_success_rates.db") -> None:
         """Initialize comprehensive success rate analyzer with all statistical components."""
         self.event_tracker = EventTracker(db_path)
         self.bayesian_analyzer = BayesianAnalyzer()
@@ -1039,10 +1038,10 @@ class SuccessRateAnalyzer:
         self.is_running = True
         self._start_background_tasks()
 
-    def _start_background_tasks(self):
+    def _start_background_tasks(self) -> None:
         """Start background analysis tasks."""
 
-        def background_worker():
+        def background_worker() -> None:
             while self.is_running:
                 try:
                     # Update ML models every hour
@@ -1077,7 +1076,7 @@ class SuccessRateAnalyzer:
         duration: float = 0.0,
         metadata: dict[str, Any] = None,
         error_details: str = "",
-    ):
+    ) -> None:
         """Log analysis event."""
         event = AnalysisEvent(
             event_id="",  # Will be auto-generated
@@ -1222,7 +1221,7 @@ class SuccessRateAnalyzer:
         """Get statistics for all components."""
         # Get all unique components
         all_events = self.event_tracker.get_events()
-        components = set(event.component for event in all_events)
+        components = {event.component for event in all_events}
 
         stats = {}
         for component in components:
@@ -1268,7 +1267,7 @@ class SuccessRateAnalyzer:
 
         # Component breakdown
         component_performance = {}
-        components = set(event.component for event in recent_events)
+        components = {event.component for event in recent_events}
 
         for component in components:
             component_events = [e for e in recent_events if e.component == component]
@@ -1364,7 +1363,7 @@ class SuccessRateAnalyzer:
                         "Confidence Lower",
                         "Confidence Upper",
                         "Sample Size",
-                    ]
+                    ],
                 )
 
                 for component, stats in component_stats.items():
@@ -1375,14 +1374,14 @@ class SuccessRateAnalyzer:
                             stats["confidence_interval"][0],
                             stats["confidence_interval"][1],
                             stats["sample_size"],
-                        ]
+                        ],
                     )
 
             return output_file
 
         raise ValueError(f"Unsupported export format: {format}")
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown analyzer."""
         self.is_running = False
 
@@ -1530,7 +1529,7 @@ if __name__ == "__main__":
         print(
             f"  {component}: {stats['success_rate']:.3f} "
             f"({stats['confidence_interval'][0]:.3f}-{stats['confidence_interval'][1]:.3f}) "
-            f"n={stats['sample_size']}"
+            f"n={stats['sample_size']}",
         )
 
     # Bayesian analysis
@@ -1539,7 +1538,7 @@ if __name__ == "__main__":
         bayesian_result = analyzer.get_bayesian_success_rate(component)
         print(
             f"  {component}: posterior={bayesian_result['posterior_mean']:.3f}, "
-            f"P(>50%)={bayesian_result['probability_above_50_percent']:.3f}"
+            f"P(>50%)={bayesian_result['probability_above_50_percent']:.3f}",
         )
 
     # Component comparison

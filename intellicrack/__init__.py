@@ -53,7 +53,7 @@ import logging
 _gil_safety_initialized = False
 
 
-def _initialize_gil_safety():
+def _initialize_gil_safety() -> None:
     """Initialize GIL safety measures lazily."""
     global _gil_safety_initialized
     if not _gil_safety_initialized:
@@ -96,6 +96,65 @@ def _initialize_gpu():
         except Exception:
             _default_device = "cpu"
         _gpu_initialized = True
+    return _default_device
+
+
+def _initialize_gpu_with_timeout(timeout_seconds: int = 5):
+    """Initialize GPU with timeout protection to prevent hanging.
+
+    Args:
+        timeout_seconds: Maximum time to wait for GPU initialization
+
+    Returns:
+        str: Device string ("xpu", "cuda", "cpu", etc.)
+
+    Raises:
+        TimeoutError: If GPU initialization takes longer than timeout
+
+    """
+    import threading
+
+    global _default_device, _gpu_initialized
+    if _gpu_initialized:
+        return _default_device
+
+    result = {"device": "cpu", "error": None}
+
+    def gpu_init_worker() -> None:
+        """Worker thread for GPU initialization."""
+        try:
+            import os
+            os.environ.setdefault("OMP_NUM_THREADS", "1")
+            os.environ.setdefault("MKL_NUM_THREADS", "1")
+            os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
+
+            from .utils.gpu_autoloader import get_device, get_gpu_info, gpu_autoloader
+
+            gpu_autoloader.setup()
+
+            gpu_info = get_gpu_info()
+            if gpu_info.get("available", False):
+                result["device"] = get_device()
+            else:
+                result["device"] = "cpu"
+        except Exception as e:
+            result["error"] = str(e)
+            result["device"] = "cpu"
+
+    # Run GPU initialization in a daemon thread with timeout
+    init_thread = threading.Thread(target=gpu_init_worker, daemon=True)
+    init_thread.start()
+    init_thread.join(timeout=timeout_seconds)
+
+    if init_thread.is_alive():
+        logger.warning(f"GPU initialization timed out after {timeout_seconds}s - using CPU fallback")
+        _default_device = "cpu"
+    else:
+        if result["error"]:
+            logger.warning(f"GPU initialization failed: {result['error']} - using CPU fallback")
+        _default_device = result["device"]
+
+    _gpu_initialized = True
     return _default_device
 
 

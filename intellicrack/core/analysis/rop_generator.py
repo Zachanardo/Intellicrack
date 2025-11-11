@@ -42,7 +42,7 @@ class ROPChainGenerator:
     for bypassing security mechanisms, particularly in license validation routines.
     """
 
-    def __init__(self, config: dict[str, Any] | None = None):
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
         """Initialize the ROP chain generator with configuration."""
         self.config = config or {}
         self.logger = logging.getLogger("IntellicrackLogger.ROPChainGenerator")
@@ -227,7 +227,7 @@ class ROPChainGenerator:
                                 "op_str": insn.op_str,
                                 "bytes": insn.bytes,
                                 "size": insn.size,
-                            }
+                            },
                         )
 
                         # Limit to prevent excessive memory usage
@@ -289,7 +289,7 @@ class ROPChainGenerator:
                                     (
                                         section_data,
                                         section.virtual_address + binary.optional_header.imagebase,
-                                    )
+                                    ),
                                 )
                 elif binary_data[:4] == b"\x7fELF":  # ELF
                     if hasattr(lief, "parse"):
@@ -367,7 +367,7 @@ class ROPChainGenerator:
                             "op_str": " ".join(instruction.split()[1:]) if len(instruction.split()) > 1 else "",
                             "instruction": instruction,
                             "size": len(pattern),
-                        }
+                        },
                     )
 
                 # Limit results
@@ -774,7 +774,7 @@ class ROPChainGenerator:
                     "address": ret_gadgets[0]["address"],
                     "purpose": "control_flow",
                     "description": "Clean return for chain continuation",
-                }
+                },
             )
             chain_data["constraints_met"].append("control_flow")
 
@@ -788,7 +788,7 @@ class ROPChainGenerator:
                     "address": mov_gadgets[0]["address"],
                     "purpose": "register_setup",
                     "description": "Set up registers for system call",
-                }
+                },
             )
 
         if pop_gadgets:
@@ -807,7 +807,7 @@ class ROPChainGenerator:
                         "value": target_info.get("address", 0),
                         "purpose": "target_function",
                     },
-                ]
+                ],
             )
             chain_data["constraints_met"].append("stack_control")
 
@@ -820,7 +820,7 @@ class ROPChainGenerator:
                     "address": jmp_gadgets[0]["address"],
                     "purpose": "advanced_flow",
                     "description": "Jump to target function or bypass",
-                }
+                },
             )
             chain_data["constraints_met"].append("advanced_control")
 
@@ -853,7 +853,7 @@ class ROPChainGenerator:
                         "value": target_info.get("address", 0),
                         "purpose": "target_function",
                     },
-                ]
+                ],
             )
             chain_data["constraints_met"].append("memory_control")
 
@@ -886,7 +886,7 @@ class ROPChainGenerator:
                     "address": jmp_gadgets[0]["address"],
                     "purpose": "bypass_check",
                     "description": "Jump over license validation code",
-                }
+                },
             )
             chain_data["constraints_met"].append("validation_bypass")
 
@@ -899,7 +899,7 @@ class ROPChainGenerator:
                     "address": call_gadgets[0]["address"],
                     "purpose": "redirect_execution",
                     "description": "Call success function directly",
-                }
+                },
             )
             chain_data["constraints_met"].append("execution_redirect")
 
@@ -919,7 +919,7 @@ class ROPChainGenerator:
                         "value": target_info.get("address", 0),
                         "purpose": "return_address",
                     },
-                ]
+                ],
             )
             chain_data["constraints_met"].append("return_value_control")
         elif mov_gadgets:
@@ -938,7 +938,7 @@ class ROPChainGenerator:
                         "value": target_info.get("address", 0),
                         "purpose": "return_address",
                     },
-                ]
+                ],
             )
             chain_data["constraints_met"].append("return_value_control")
 
@@ -951,7 +951,7 @@ class ROPChainGenerator:
                     "address": ret_gadgets[0]["address"],
                     "purpose": "chain_termination",
                     "description": "Clean return after bypass",
-                }
+                },
             )
             chain_data["constraints_met"].append("clean_exit")
 
@@ -983,7 +983,7 @@ class ROPChainGenerator:
                     "address": jmp_gadgets[0]["address"],
                     "purpose": "skip_comparison",
                     "description": "Jump over string/memory comparison code",
-                }
+                },
             )
             chain_data["constraints_met"].append("comparison_bypass")
 
@@ -996,7 +996,7 @@ class ROPChainGenerator:
                     "address": call_gadgets[0]["address"],
                     "purpose": "call_success",
                     "description": "Direct call to success function",
-                }
+                },
             )
             chain_data["constraints_met"].append("success_redirect")
 
@@ -1015,7 +1015,7 @@ class ROPChainGenerator:
                         "value": target_info.get("address", 0),
                         "purpose": "comparison_target",
                     },
-                ]
+                ],
             )
             chain_data["constraints_met"].append("comparison_control")
 
@@ -1044,7 +1044,7 @@ class ROPChainGenerator:
                         "value": target_info.get("address", 0),
                         "purpose": "target_function",
                     },
-                ]
+                ],
             )
             chain_data["constraints_met"].append("basic_control")
 
@@ -1062,7 +1062,7 @@ class ROPChainGenerator:
                         "address": pop_gadgets[0]["address"],
                         "purpose": "stack_manipulation",
                         "description": "Generic stack control for chain execution",
-                    }
+                    },
                 )
                 chain_data["constraints_met"].append("stack_control")
 
@@ -1074,7 +1074,7 @@ class ROPChainGenerator:
                         "address": push_gadgets[0]["address"],
                         "purpose": "stack_setup",
                         "description": "Prepare stack for generic payload",
-                    }
+                    },
                 )
                 chain_data["constraints_met"].append("stack_preparation")
 
@@ -1198,7 +1198,7 @@ class ROPChainGenerator:
                         **pop_gadget,
                         "chain_role": "register_setup",
                         "target_register": reg,
-                    }
+                    },
                 )
 
         # If we couldn't find specific register gadgets, use generic ones
@@ -1209,7 +1209,7 @@ class ROPChainGenerator:
                     {
                         **generic_pops[0],
                         "chain_role": "generic_setup",
-                    }
+                    },
                 )
 
         return setup_gadgets
@@ -1230,7 +1230,7 @@ class ROPChainGenerator:
                 {
                     **mov_gadgets[0],
                     "chain_role": "argument_setup",
-                }
+                },
             )
 
         return arg_gadgets
@@ -1248,7 +1248,7 @@ class ROPChainGenerator:
                         {
                             **gadget,
                             "chain_role": "stack_pivot",
-                        }
+                        },
                     )
                     break  # One pivot gadget is usually enough
 
@@ -1268,7 +1268,7 @@ class ROPChainGenerator:
                     **call_gadgets[0],
                     "chain_role": "execution",
                     "target_function": target.get("name", "unknown"),
-                }
+                },
             )
         else:
             # Fallback to simple ret
@@ -1278,7 +1278,7 @@ class ROPChainGenerator:
                     {
                         **ret_gadgets[0],
                         "chain_role": "return",
-                    }
+                    },
                 )
 
         return exec_gadgets
@@ -1403,7 +1403,7 @@ class ROPChainGenerator:
                     {
                         **pop_gadgets[0],
                         "chain_role": "setup",
-                    }
+                    },
                 )
 
             if ret_gadgets:
@@ -1411,7 +1411,7 @@ class ROPChainGenerator:
                     {
                         **ret_gadgets[0],
                         "chain_role": "return",
-                    }
+                    },
                 )
 
             if chain_gadgets:
@@ -1712,7 +1712,7 @@ def _setup_rop_generator(app: Any) -> ROPChainGenerator:
             "max_chain_length": 20,
             "max_gadget_size": 10,
             "arch": "x86_64",  # Default to x86_64
-        }
+        },
     )
 
     if hasattr(app, "update_output"):

@@ -227,7 +227,7 @@ class FirmwareAnalyzer:
     - Integration with ICP backend for unified results
     """
 
-    def __init__(self, work_directory: str | None = None):
+    def __init__(self, work_directory: str | None = None) -> None:
         """Initialize the firmware analyzer with working directory configuration."""
         if work_directory:
             self.work_directory = Path(work_directory)
@@ -311,7 +311,7 @@ class FirmwareAnalyzer:
 
             result.analysis_time = time.time() - start_time
             logger.info(
-                f"Firmware analysis complete: {len(result.signatures)} signatures, {len(result.security_findings)} security findings"
+                f"Firmware analysis complete: {len(result.signatures)} signatures, {len(result.security_findings)} security findings",
             )
 
             return result
@@ -350,7 +350,7 @@ class FirmwareAnalyzer:
                     signature_name="Unknown Binary",
                     description="Binary file (signature scan failed)",
                     file_type="binary",
-                )
+                ),
             )
 
         return signatures
@@ -444,7 +444,7 @@ class FirmwareAnalyzer:
                                 "offset": result.offset,
                                 "entropy": entropy_val,
                                 "likely_type": "encrypted",
-                            }
+                            },
                         )
                     elif entropy_val > 6.5:
                         entropy_analysis["compressed_regions"].append(
@@ -452,7 +452,7 @@ class FirmwareAnalyzer:
                                 "offset": result.offset,
                                 "entropy": entropy_val,
                                 "likely_type": "compressed",
-                            }
+                            },
                         )
 
             # Calculate overall file entropy
@@ -553,7 +553,7 @@ class FirmwareAnalyzer:
         extraction.extraction_time = time.time() - start_time
         return extraction
 
-    def _analyze_extracted_file(self, extracted_file: ExtractedFile):
+    def _analyze_extracted_file(self, extracted_file: ExtractedFile) -> None:
         """Analyze an individual extracted file."""
         try:
             # Extract strings from the file
@@ -649,7 +649,7 @@ class FirmwareAnalyzer:
                                 severity="high",
                                 confidence=0.8,
                                 evidence=str(extracted_file.security_analysis.get("suspicious_strings", [])[:3]),
-                            )
+                            ),
                         )
 
                     if extracted_file.security_analysis.get("is_setuid"):
@@ -662,7 +662,7 @@ class FirmwareAnalyzer:
                                 severity="medium",
                                 confidence=0.9,
                                 evidence=f"Permissions: {extracted_file.security_analysis.get('file_permissions')}",
-                            )
+                            ),
                         )
 
                 except Exception as e:
@@ -700,7 +700,7 @@ class FirmwareAnalyzer:
                                 confidence=0.7,
                                 evidence=match.group(0)[:50] + "..." if len(match.group(0)) > 50 else match.group(0),
                                 remediation=f"Remove hardcoded {cred_type} and use secure configuration",
-                            )
+                            ),
                         )
 
         except Exception as e:
@@ -739,7 +739,7 @@ class FirmwareAnalyzer:
                             confidence=0.95,
                             evidence=pattern.decode(),
                             remediation="Remove embedded cryptographic material",
-                        )
+                        ),
                     )
 
         except Exception as e:
@@ -758,7 +758,7 @@ class FirmwareAnalyzer:
             try:
                 file_path_cmd = shutil.which("file")
                 if file_path_cmd:
-                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                         [file_path_cmd, file_path],
                         check=False,
                         capture_output=True,
@@ -778,7 +778,7 @@ class FirmwareAnalyzer:
                             confidence=0.8,
                             evidence=result.stdout.strip()[:100],
                             remediation="Verify executable legitimacy",
-                        )
+                        ),
                     )
             except (subprocess.TimeoutExpired, FileNotFoundError):
                 pass
@@ -806,7 +806,7 @@ class FirmwareAnalyzer:
                                 confidence=0.6,
                                 evidence=string[:100],
                                 remediation="Review and remove suspicious functionality",
-                            )
+                            ),
                         )
 
         except Exception as e:
@@ -915,7 +915,7 @@ class FirmwareAnalyzer:
                     "confidence": sig.confidence,
                     "is_executable": sig.is_executable,
                     "is_filesystem": sig.is_filesystem,
-                }
+                },
             )
 
         # Process security findings
@@ -928,7 +928,7 @@ class FirmwareAnalyzer:
                     "description": finding.description,
                     "file": finding.file_path,
                     "remediation": finding.remediation,
-                }
+                },
             )
 
         # Process entropy analysis
@@ -949,7 +949,7 @@ class FirmwareAnalyzer:
                         "hash": exe_file.hash,
                         "permissions": exe_file.permissions,
                         "security_analysis": exe_file.security_analysis,
-                    }
+                    },
                 )
 
         return supplemental_data
@@ -1007,7 +1007,7 @@ class FirmwareAnalyzer:
         except Exception as e:
             return False, f"Failed to export report: {e}"
 
-    def cleanup_extractions(self, extraction_directory: str):
+    def cleanup_extractions(self, extraction_directory: str) -> None:
         """Clean up extraction directory."""
         try:
             if os.path.exists(extraction_directory):

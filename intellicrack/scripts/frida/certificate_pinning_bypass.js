@@ -1354,10 +1354,10 @@ const CertificatePinningBypass = {
 
                         return originalCanAuthenticateAgainstProtectionSpace
                             ? originalCanAuthenticateAgainstProtectionSpace.call(
-                                this,
-                                connection,
-                                protectionSpace
-                            )
+                                  this,
+                                  connection,
+                                  protectionSpace
+                              )
                             : false;
                     };
 
@@ -4416,10 +4416,10 @@ Object.assign(CertificatePinningBypass, {
                                                 const certData = certificate.readByteArray(20);
                                                 certInfo = certData
                                                     ? Array.from(new Uint8Array(certData))
-                                                        .map((b) =>
-                                                            b.toString(16).padStart(2, '0')
-                                                        )
-                                                        .join(':')
+                                                          .map((b) =>
+                                                              b.toString(16).padStart(2, '0')
+                                                          )
+                                                          .join(':')
                                                     : 'null_data';
                                             }
 
@@ -7040,8 +7040,8 @@ Object.assign(CertificatePinningBypass, {
                                                         typeof dnssec_status === 'number'
                                                             ? dnssec_status
                                                             : typeof dnssec_status === 'object'
-                                                                ? dnssec_status.toInt32()
-                                                                : 0;
+                                                              ? dnssec_status.toInt32()
+                                                              : 0;
 
                                                     dnsSecurityAnalysis.dnssec_status_analysis = {
                                                         dnssec_status_present: true,
@@ -7095,8 +7095,8 @@ Object.assign(CertificatePinningBypass, {
                                                     totalImplications > 3
                                                         ? 'critical'
                                                         : totalImplications > 1
-                                                            ? 'high'
-                                                            : 'medium';
+                                                          ? 'high'
+                                                          : 'medium';
                                             } catch (analysisError) {
                                                 dnsSecurityAnalysis.analysis_error =
                                                     analysisError.message;
@@ -8559,8 +8559,8 @@ Object.assign(CertificatePinningBypass, {
                                                         signature_algorithm:
                                                             sct.getSignatureAlgorithm
                                                                 ? sct
-                                                                    .getSignatureAlgorithm()
-                                                                    .toString()
+                                                                      .getSignatureAlgorithm()
+                                                                      .toString()
                                                                 : 'unknown',
                                                         bypass_action:
                                                             'android_sct_validation_override',

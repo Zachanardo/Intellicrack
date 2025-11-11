@@ -32,7 +32,7 @@ import time
 try:
     import defusedxml.ElementTree as ET  # noqa: N817
 except ImportError:
-    import xml.etree.ElementTree as ET  # noqa: N817, S314
+    import xml.etree.ElementTree as ET
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -78,7 +78,7 @@ class ToolStatus(Enum):
 class SharedMemoryIPC:
     """Windows-compatible shared memory IPC implementation."""
 
-    def __init__(self, name: str, size: int = 10485760):  # 10MB default
+    def __init__(self, name: str, size: int = 10485760) -> None:  # 10MB default
         """Initialize shared memory IPC.
 
         Args:
@@ -99,7 +99,7 @@ class SharedMemoryIPC:
 
         self._initialize_shared_memory()
 
-    def _initialize_shared_memory(self):
+    def _initialize_shared_memory(self) -> None:
         """Create or connect to shared memory segment."""
         try:
             # Try to create new shared memory
@@ -197,7 +197,7 @@ class SharedMemoryIPC:
                 logger.error(f"Failed to receive message: {e}")
                 return None
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up shared memory resources."""
         if self.mmap_obj:
             try:
@@ -279,7 +279,7 @@ class ResultSerializer:
 class ToolMonitor:
     """Monitor tool processes and status."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize tool monitor."""
         self.processes: Dict[str, psutil.Process] = {}
         self.status: Dict[str, ToolStatus] = {}
@@ -287,7 +287,7 @@ class ToolMonitor:
         self.monitoring_thread = None
         self.stop_monitoring = threading.Event()
 
-    def register_process(self, tool_name: str, pid: int):
+    def register_process(self, tool_name: str, pid: int) -> None:
         """Register a tool process for monitoring.
 
         Args:
@@ -305,7 +305,7 @@ class ToolMonitor:
             logger.error(f"Process {pid} not found for tool {tool_name}")
             self.status[tool_name] = ToolStatus.FAILED
 
-    def start_monitoring(self, interval: float = 1.0):
+    def start_monitoring(self, interval: float = 1.0) -> None:
         """Start monitoring registered processes.
 
         Args:
@@ -313,7 +313,7 @@ class ToolMonitor:
 
         """
 
-        def monitor_loop():
+        def monitor_loop() -> None:
             while not self.stop_monitoring.is_set():
                 for tool_name, process in list(self.processes.items()):
                     try:
@@ -347,7 +347,7 @@ class ToolMonitor:
         self.monitoring_thread.start()
         logger.info("Started tool monitoring")
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop monitoring."""
         self.stop_monitoring.set()
         if self.monitoring_thread:
@@ -386,7 +386,7 @@ class ToolMonitor:
 class FailureRecovery:
     """Handle tool failure and recovery."""
 
-    def __init__(self, max_retries: int = 3):
+    def __init__(self, max_retries: int = 3) -> None:
         """Initialize failure recovery.
 
         Args:
@@ -398,7 +398,7 @@ class FailureRecovery:
         self.failure_history: Dict[str, List[Dict]] = defaultdict(list)
         self.recovery_strategies: Dict[str, callable] = {}
 
-    def register_recovery_strategy(self, tool_name: str, strategy: callable):
+    def register_recovery_strategy(self, tool_name: str, strategy: callable) -> None:
         """Register recovery strategy for a tool.
 
         Args:
@@ -446,7 +446,7 @@ class FailureRecovery:
             time.sleep(2 ** self.retry_counts[tool_name])  # Exponential backoff
             return True
 
-    def reset_retry_count(self, tool_name: str):
+    def reset_retry_count(self, tool_name: str) -> None:
         """Reset retry count for successful execution.
 
         Args:
@@ -471,12 +471,12 @@ class FailureRecovery:
 class ResultConflictResolver:
     """Resolve conflicts between tool results."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize conflict resolver."""
         self.resolution_rules = []
         self.conflict_log = []
 
-    def add_resolution_rule(self, rule: callable, priority: int = 0):
+    def add_resolution_rule(self, rule: callable, priority: int = 0) -> None:
         """Add conflict resolution rule.
 
         Args:
@@ -634,7 +634,7 @@ class ResultConflictResolver:
 class LoadBalancer:
     """Balance analysis load across tools and resources."""
 
-    def __init__(self, cpu_threshold: float = 80.0, memory_threshold: float = 80.0):
+    def __init__(self, cpu_threshold: float = 80.0, memory_threshold: float = 80.0) -> None:
         """Initialize load balancer.
 
         Args:
@@ -689,7 +689,7 @@ class LoadBalancer:
 
         return True
 
-    def schedule_tool(self, tool_name: str, priority: int = 5, estimated_resources: Dict[str, float] = None):
+    def schedule_tool(self, tool_name: str, priority: int = 5, estimated_resources: Dict[str, float] = None) -> None:
         """Schedule tool for execution.
 
         Args:
@@ -808,7 +808,7 @@ class UnifiedAnalysisResult:
 class CrossToolOrchestrator:
     """Orchestrates analysis across multiple binary analysis tools."""
 
-    def __init__(self, binary_path: str, main_app=None):
+    def __init__(self, binary_path: str, main_app=None) -> None:
         """Initialize the orchestrator.
 
         Args:
@@ -855,7 +855,7 @@ class CrossToolOrchestrator:
         # Setup recovery strategies
         self._setup_recovery_strategies()
 
-    def _setup_resolution_rules(self):
+    def _setup_resolution_rules(self) -> None:
         """Set up conflict resolution rules for tool results."""
 
         # Rule 1: Prefer results with debug symbols
@@ -885,11 +885,11 @@ class CrossToolOrchestrator:
         self.conflict_resolver.add_resolution_rule(prefer_debug_symbols, priority=10)
         self.conflict_resolver.add_resolution_rule(prefer_more_xrefs, priority=5)
 
-    def _setup_recovery_strategies(self):
+    def _setup_recovery_strategies(self) -> None:
         """Set up recovery strategies for tool failures."""
 
         # Ghidra recovery strategy
-        def ghidra_recovery(error: Exception, context: Dict):
+        def ghidra_recovery(error: Exception, context: Dict) -> None:
             self.logger.info("Attempting Ghidra recovery")
             # Kill any hanging Ghidra process
             for proc in psutil.process_iter(["name"]):
@@ -911,7 +911,7 @@ class CrossToolOrchestrator:
             time.sleep(2)
 
         # Radare2 recovery strategy
-        def r2_recovery(error: Exception, context: Dict):
+        def r2_recovery(error: Exception, context: Dict) -> None:
             self.logger.info("Attempting Radare2 recovery")
             # Re-initialize r2 integration
             if self.r2_integration:
@@ -920,7 +920,7 @@ class CrossToolOrchestrator:
             self.r2_integration = EnhancedR2Integration(self.binary_path)
 
         # Frida recovery strategy
-        def frida_recovery(error: Exception, context: Dict):
+        def frida_recovery(error: Exception, context: Dict) -> None:
             self.logger.info("Attempting Frida recovery")
             if self.frida_manager:
                 self.frida_manager.detach()
@@ -931,7 +931,7 @@ class CrossToolOrchestrator:
         self.failure_recovery.register_recovery_strategy("radare2", r2_recovery)
         self.failure_recovery.register_recovery_strategy("frida", frida_recovery)
 
-    def _initialize_tools(self):
+    def _initialize_tools(self) -> None:
         """Initialize analysis tools."""
         try:
             # Initialize Radare2
@@ -1058,7 +1058,7 @@ class CrossToolOrchestrator:
 
         return self._correlate_results()
 
-    def _run_ghidra_analysis_with_ipc(self, config: Optional[Dict[str, Any]] = None):
+    def _run_ghidra_analysis_with_ipc(self, config: Optional[Dict[str, Any]] = None) -> None:
         """Run Ghidra analysis with IPC communication."""
         try:
             self.tool_monitor.status["ghidra"] = ToolStatus.RUNNING
@@ -1066,7 +1066,7 @@ class CrossToolOrchestrator:
 
             # Send start message via IPC
             self.ipc_channel.send_message(
-                MessageType.STATUS, {"tool": "ghidra", "status": "starting", "timestamp": datetime.now().isoformat()}
+                MessageType.STATUS, {"tool": "ghidra", "status": "starting", "timestamp": datetime.now().isoformat()},
             )
 
             if self.main_app:
@@ -1122,7 +1122,7 @@ class CrossToolOrchestrator:
                                     "size": int(func_elem.get("size", "0")),
                                     "signature": func_elem.get("signature", ""),
                                     "xrefs": [int(x.text, 16) for x in func_elem.findall(".//xref")],
-                                }
+                                },
                             )
 
                         # Parse strings
@@ -1132,7 +1132,7 @@ class CrossToolOrchestrator:
                                     "value": str_elem.get("value"),
                                     "address": int(str_elem.get("address", "0"), 16),
                                     "xrefs": [int(x.text, 16) for x in str_elem.findall(".//xref")],
-                                }
+                                },
                             )
 
                         # Parse imports
@@ -1142,7 +1142,7 @@ class CrossToolOrchestrator:
                                     "name": imp_elem.get("name"),
                                     "library": imp_elem.get("library"),
                                     "address": int(imp_elem.get("address", "0"), 16),
-                                }
+                                },
                             )
 
                     # Create analysis result
@@ -1175,11 +1175,11 @@ class CrossToolOrchestrator:
                 with self.analysis_lock:
                     self.analysis_complete["ghidra"] = True
 
-    def _run_ghidra_analysis(self, config: Optional[Dict[str, Any]] = None):
+    def _run_ghidra_analysis(self, config: Optional[Dict[str, Any]] = None) -> None:
         """Run Ghidra analysis (legacy method for compatibility)."""
         self._run_ghidra_analysis_with_ipc(config)
 
-    def _run_radare2_analysis_with_ipc(self, config: Optional[Dict[str, Any]] = None):
+    def _run_radare2_analysis_with_ipc(self, config: Optional[Dict[str, Any]] = None) -> None:
         """Run Radare2 analysis with IPC communication."""
         try:
             self.tool_monitor.status["radare2"] = ToolStatus.RUNNING
@@ -1187,7 +1187,7 @@ class CrossToolOrchestrator:
 
             # Send start message via IPC
             self.ipc_channel.send_message(
-                MessageType.STATUS, {"tool": "radare2", "status": "starting", "timestamp": datetime.now().isoformat()}
+                MessageType.STATUS, {"tool": "radare2", "status": "starting", "timestamp": datetime.now().isoformat()},
             )
 
             if not self.r2_integration:
@@ -1221,11 +1221,11 @@ class CrossToolOrchestrator:
                 with self.analysis_lock:
                     self.analysis_complete["radare2"] = True
 
-    def _run_radare2_analysis(self, config: Optional[Dict[str, Any]] = None):
+    def _run_radare2_analysis(self, config: Optional[Dict[str, Any]] = None) -> None:
         """Run Radare2 analysis (legacy method for compatibility)."""
         self._run_radare2_analysis_with_ipc(config)
 
-    def _run_frida_analysis_with_ipc(self, config: Optional[Dict[str, Any]] = None):
+    def _run_frida_analysis_with_ipc(self, config: Optional[Dict[str, Any]] = None) -> None:
         """Run Frida analysis with IPC communication."""
         try:
             if not self.frida_manager:
@@ -1240,7 +1240,7 @@ class CrossToolOrchestrator:
 
             # Send start message via IPC
             self.ipc_channel.send_message(
-                MessageType.STATUS, {"tool": "frida", "status": "starting", "timestamp": datetime.now().isoformat()}
+                MessageType.STATUS, {"tool": "frida", "status": "starting", "timestamp": datetime.now().isoformat()},
             )
 
             # Attach to process or spawn
@@ -1295,7 +1295,7 @@ class CrossToolOrchestrator:
                 with self.analysis_lock:
                     self.analysis_complete["frida"] = True
 
-    def _run_frida_analysis(self, config: Optional[Dict[str, Any]] = None):
+    def _run_frida_analysis(self, config: Optional[Dict[str, Any]] = None) -> None:
         """Run Frida analysis (legacy method for compatibility)."""
         self._run_frida_analysis_with_ipc(config)
 
@@ -1482,9 +1482,9 @@ class CrossToolOrchestrator:
             "tools_used": list(self.analysis_complete.keys()),
             "analysis_complete": all(self.analysis_complete.values()),
             "correlation_confidence": self._calculate_correlation_confidence(),
-            "tool_metrics": {tool: self.tool_monitor.get_metrics(tool) for tool in self.analysis_complete.keys()},
+            "tool_metrics": {tool: self.tool_monitor.get_metrics(tool) for tool in self.analysis_complete},
             "conflict_count": len(self.conflict_resolver.conflict_log),
-            "failure_count": sum(len(self.failure_recovery.get_failure_history(tool)) for tool in self.analysis_complete.keys()),
+            "failure_count": sum(len(self.failure_recovery.get_failure_history(tool)) for tool in self.analysis_complete),
         }
 
         return result
@@ -1648,7 +1648,7 @@ class CrossToolOrchestrator:
                         "description": f"Detected {len(inline_hooks)} inline hooks",
                         "source": "frida",
                         "details": inline_hooks,
-                    }
+                    },
                 )
 
         return vulnerabilities
@@ -1700,7 +1700,7 @@ class CrossToolOrchestrator:
                     "tool": "frida",
                     "confidence": 0.9,
                     "implementation": "Hook protection functions and return success",
-                }
+                },
             )
 
         # Add strategies based on protections found
@@ -1713,7 +1713,7 @@ class CrossToolOrchestrator:
                         "tool": "frida",
                         "confidence": 0.8,
                         "implementation": f"Interceptor.replace({protection['mechanism']}, () => 0);",
-                    }
+                    },
                 )
 
         return strategies
@@ -1749,7 +1749,7 @@ class CrossToolOrchestrator:
 
         return tools_complete / total_tools
 
-    def export_unified_report(self, output_path: str):
+    def export_unified_report(self, output_path: str) -> None:
         """Export unified analysis report.
 
         Args:
@@ -1787,7 +1787,7 @@ class CrossToolOrchestrator:
 
         self.logger.info(f"Exported unified report to {output_path}")
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up resources."""
         # Stop monitoring
         if self.tool_monitor:

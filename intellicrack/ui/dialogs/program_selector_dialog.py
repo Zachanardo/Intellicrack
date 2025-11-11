@@ -21,6 +21,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+import contextlib
 import logging
 import os
 import shutil
@@ -54,7 +55,7 @@ logger = logging.getLogger(__name__)
 class FileSelectionPage(QWizardPage):
     """First wizard page for file selection."""
 
-    def __init__(self, wizard):
+    def __init__(self, wizard) -> None:
         """Initialize the file selection page."""
         super().__init__()
         self.wizard = wizard
@@ -71,7 +72,7 @@ class FileSelectionPage(QWizardPage):
         # Instructions
         instructions = QLabel(
             "Select an executable file (.exe, .dll, .so, .dylib) or a shortcut to analyze.\n"
-            "The wizard will analyze the installation folder for licensing files."
+            "The wizard will analyze the installation folder for licensing files.",
         )
         instructions.setWordWrap(True)
         file_layout.addWidget(instructions)
@@ -91,10 +92,8 @@ class FileSelectionPage(QWizardPage):
             try:
                 self.browse_btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView))
             except AttributeError:
-                try:
+                with contextlib.suppress(AttributeError):
                     self.browse_btn.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon))
-                except AttributeError:
-                    pass
         path_layout.addWidget(self.browse_btn)
 
         file_layout.addLayout(path_layout)
@@ -104,7 +103,7 @@ class FileSelectionPage(QWizardPage):
         layout.addStretch()
         self.setLayout(layout)
 
-    def browse_for_file(self):
+    def browse_for_file(self) -> None:
         """Open file dialog to select a file."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
@@ -116,7 +115,7 @@ class FileSelectionPage(QWizardPage):
         if file_path:
             self.file_path_edit.setText(file_path)
 
-    def validate_file_path(self):
+    def validate_file_path(self) -> None:
         """Validate the selected file path."""
         file_path = self.file_path_edit.text().strip()
 
@@ -149,7 +148,7 @@ class FileSelectionPage(QWizardPage):
 class AnalysisPage(QWizardPage):
     """Second wizard page for displaying analysis results."""
 
-    def __init__(self, wizard):
+    def __init__(self, wizard) -> None:
         """Initialize the analysis page."""
         super().__init__()
         self.wizard = wizard
@@ -198,7 +197,7 @@ class AnalysisPage(QWizardPage):
 
         self.setLayout(layout)
 
-    def initializePage(self):
+    def initializePage(self) -> None:
         """Initialize the page when it becomes active."""
         if self.wizard.selected_program:
             # Update program info
@@ -213,7 +212,7 @@ class AnalysisPage(QWizardPage):
             # Analyze installation folder
             self.analyze_installation_folder(str(file_path.parent))
 
-    def analyze_installation_folder(self, folder_path):
+    def analyze_installation_folder(self, folder_path) -> None:
         """Analyze the installation folder for licensing files."""
         self.licensing_tree.clear()
         self.licensing_files = []
@@ -259,7 +258,7 @@ class AnalysisPage(QWizardPage):
         except Exception as e:
             logger.error(f"Error analyzing installation folder: {e}")
 
-    def add_licensing_file_to_tree(self, file_path, file_type, priority):
+    def add_licensing_file_to_tree(self, file_path, file_type, priority) -> None:
         """Add a licensing file to the tree widget."""
         try:
             file_path = Path(file_path)
@@ -276,22 +275,18 @@ class AnalysisPage(QWizardPage):
                     try:
                         item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView))
                     except AttributeError:
-                        try:
+                        with contextlib.suppress(AttributeError):
                             item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon))
-                        except AttributeError:
-                            pass
                 else:
-                    try:
+                    with contextlib.suppress(AttributeError):
                         item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon))
-                    except AttributeError:
-                        pass
 
             self.licensing_tree.addTopLevelItem(item)
 
         except Exception as e:
             logger.error(f"Error adding licensing file to tree: {e}")
 
-    def format_file_size(self, size):
+    def format_file_size(self, size) -> str:
         """Format file size in human readable format."""
         for unit in ["B", "KB", "MB", "GB"]:
             if size < 1024.0:
@@ -303,7 +298,7 @@ class AnalysisPage(QWizardPage):
         """Get the list of discovered licensing files."""
         return self.licensing_files
 
-    def open_licensing_file(self, item):
+    def open_licensing_file(self, item) -> None:
         """Open the selected licensing file."""
         try:
             file_path = item.data(0, Qt.UserRole)
@@ -313,14 +308,14 @@ class AnalysisPage(QWizardPage):
                 elif sys.platform.startswith("darwin"):
                     open_path = shutil.which("open")
                     if open_path:
-                        subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                            [open_path, file_path], shell=False
+                        subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                            [open_path, file_path], shell=False,
                         )
                 else:
                     xdg_open_path = shutil.which("xdg-open")
                     if xdg_open_path:
-                        subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                            [xdg_open_path, file_path], shell=False
+                        subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                            [xdg_open_path, file_path], shell=False,
                         )
         except Exception as e:
             logger.error(f"Error opening licensing file: {e}")
@@ -333,7 +328,7 @@ class ProgramSelectorDialog(QWizard):
     and installation folder discovery.
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize program selector wizard."""
         super().__init__(parent)
         self.setWindowTitle("Program Selection Wizard")

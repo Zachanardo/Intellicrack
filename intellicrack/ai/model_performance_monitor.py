@@ -139,7 +139,7 @@ class ModelBenchmark:
 class ModelPerformanceMonitor:
     """Monitors and tracks model performance metrics."""
 
-    def __init__(self, history_size: int = 1000, save_dir: str | None = None):
+    def __init__(self, history_size: int = 1000, save_dir: str | None = None) -> None:
         """Initialize the performance monitor.
 
         Args:
@@ -184,7 +184,7 @@ class ModelPerformanceMonitor:
         else:
             self.has_nvidia_ml = False
 
-    def _load_benchmarks(self):
+    def _load_benchmarks(self) -> None:
         """Load saved benchmark data."""
         benchmark_file = self.save_dir / "benchmarks.json"
         if benchmark_file.exists():
@@ -210,7 +210,7 @@ class ModelPerformanceMonitor:
             except Exception as e:
                 logger.error(f"Failed to load benchmarks: {e}")
 
-    def _save_benchmarks(self):
+    def _save_benchmarks(self) -> None:
         """Save benchmark data."""
         benchmark_file = self.save_dir / "benchmarks.json"
         try:
@@ -395,7 +395,7 @@ class ModelPerformanceMonitor:
         except (RuntimeError, AttributeError):
             return 0
 
-    def _update_benchmark(self, model_id: str, metrics: PerformanceMetrics):
+    def _update_benchmark(self, model_id: str, metrics: PerformanceMetrics) -> None:
         """Update benchmark data for a model."""
         history = list(self.metrics_history.get(model_id, []))
         if not history:
@@ -597,7 +597,7 @@ class ModelPerformanceMonitor:
 
         return model
 
-    def clear_gpu_cache(self):
+    def clear_gpu_cache(self) -> None:
         """Clear GPU memory cache."""
         if GPU_AUTOLOADER_AVAILABLE and empty_cache:
             try:
@@ -685,7 +685,7 @@ class ModelPerformanceMonitor:
                         "device",
                         "quantization",
                         "error",
-                    ]
+                    ],
                 )
 
                 if model_id and model_id in self.metrics_history:
@@ -701,7 +701,7 @@ class ModelPerformanceMonitor:
                                 m.device,
                                 m.quantization,
                                 m.error,
-                            ]
+                            ],
                         )
                 else:
                     for mid, history in self.metrics_history.items():
@@ -717,14 +717,14 @@ class ModelPerformanceMonitor:
                                     m.device,
                                     m.quantization,
                                     m.error,
-                                ]
+                                ],
                             )
 
             return filepath
 
         return None
 
-    def clear_metrics(self, model_id: str | None = None):
+    def clear_metrics(self, model_id: str | None = None) -> None:
         """Clear metrics data.
 
         Args:

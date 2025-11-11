@@ -1401,29 +1401,29 @@ const modularHookLibrary = {
 
         try {
             switch (strategy) {
-            case 'replace_return':
-                return this.createReplaceReturnHook(hookDefinition);
+                case 'replace_return':
+                    return this.createReplaceReturnHook(hookDefinition);
 
-            case 'intercept_and_modify':
-                return this.createInterceptModifyHook(hookDefinition);
+                case 'intercept_and_modify':
+                    return this.createInterceptModifyHook(hookDefinition);
 
-            case 'monitor_and_log':
-                return this.createMonitorLogHook(hookDefinition);
+                case 'monitor_and_log':
+                    return this.createMonitorLogHook(hookDefinition);
 
-            case 'spoof_values':
-                return this.createSpoofValuesHook(hookDefinition);
+                case 'spoof_values':
+                    return this.createSpoofValuesHook(hookDefinition);
 
-            case 'block_requests':
-                return this.createBlockRequestsHook(hookDefinition);
+                case 'block_requests':
+                    return this.createBlockRequestsHook(hookDefinition);
 
-            default:
-                send({
-                    type: 'warning',
-                    target: 'hook_library',
-                    action: 'unknown_hook_strategy',
-                    strategy: strategy,
-                });
-                return null;
+                default:
+                    send({
+                        type: 'warning',
+                        target: 'hook_library',
+                        action: 'unknown_hook_strategy',
+                        strategy: strategy,
+                    });
+                    return null;
             }
         } catch (_e) {
             send({
@@ -3253,13 +3253,13 @@ const modularHookLibrary = {
 
             return common.length > 0
                 ? {
-                    hasConflict: true,
-                    commonDependents: common,
-                    severity: common.length / Math.max(deps1.length, deps2.length),
-                }
+                      hasConflict: true,
+                      commonDependents: common,
+                      severity: common.length / Math.max(deps1.length, deps2.length),
+                  }
                 : {
-                    hasConflict: false,
-                };
+                      hasConflict: false,
+                  };
         };
 
         this.dependencyResolver = resolver;

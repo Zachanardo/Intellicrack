@@ -24,7 +24,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 
-def check_binary_path_and_warn(app_instance):
+def check_binary_path_and_warn(app_instance) -> bool:
     """Check if binary path exists and show warning if not.
 
     Args:
@@ -47,7 +47,7 @@ def check_binary_path_and_warn(app_instance):
     return True
 
 
-def emit_log_message(app_instance, message):
+def emit_log_message(app_instance, message) -> None:
     """Emit log message if app instance supports it.
 
     Args:

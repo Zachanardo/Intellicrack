@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 class ServiceHealthChecker:
     """Check health status of various services and endpoints."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the service health checker."""
         self._config = None
         self.health_cache = {}
@@ -111,11 +111,13 @@ class ServiceHealthChecker:
 
         try:
             start_time = time.time()
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url, timeout=aiohttp.ClientTimeout(total=timeout)) as response:
-                    result["status_code"] = response.status
-                    result["response_time"] = time.time() - start_time
-                    result["healthy"] = 200 <= response.status < 400
+            async with aiohttp.ClientSession() as session, session.get(
+                url,
+                timeout=aiohttp.ClientTimeout(total=timeout),
+            ) as response:
+                result["status_code"] = response.status
+                result["response_time"] = time.time() - start_time
+                result["healthy"] = 200 <= response.status < 400
 
         except aiohttp.ClientError as e:
             result["error"] = str(e)
@@ -148,12 +150,11 @@ class ServiceHealthChecker:
 
         try:
             start_time = time.time()
-            async with aiohttp.ClientSession() as session:
-                async with session.ws_connect(url, timeout=timeout) as ws:
-                    result["connected"] = True
-                    result["response_time"] = time.time() - start_time
-                    result["healthy"] = True
-                    await ws.close()
+            async with aiohttp.ClientSession() as session, session.ws_connect(url, timeout=timeout) as ws:
+                result["connected"] = True
+                result["response_time"] = time.time() - start_time
+                result["healthy"] = True
+                await ws.close()
 
         except Exception as e:
             result["error"] = str(e)

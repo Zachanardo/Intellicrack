@@ -58,7 +58,7 @@ class LicenseProtocolHandler(ABC):
         Binding to all interfaces poses security risks and should be avoided in production.
     """
 
-    def __init__(self, config: dict[str, Any] | None = None):
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
         """Initialize the base LicenseProtocolHandler.
 
         Sets up the running state, proxy thread, and logger for protocol handling.
@@ -284,7 +284,7 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
     for intercepting and emulating FlexLM license verification.
     """
 
-    def __init__(self, config: dict[str, Any] | None = None):
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
         """Initialize FlexLM protocol handler."""
         super().__init__(config)
         self.flexlm_port = self.config.get("flexlm_port", 27000)
@@ -374,7 +374,7 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Failed to send FlexLM response: %s", e)
 
-    def _handle_flexlm_client(self, client_socket, client_addr):
+    def _handle_flexlm_client(self, client_socket, client_addr) -> None:
         """Handle individual FlexLM client connection.
 
         Args:
@@ -410,7 +410,7 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
                 "timestamp": time.time(),
                 "data": request_data,
                 "hex": request_data.hex(),
-            }
+            },
         )
 
         # Parse FlexLM request to determine type
@@ -467,7 +467,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
     license verification protocol communication.
     """
 
-    def __init__(self, config: dict[str, Any] | None = None):
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
         """Initialize HASP protocol handler."""
         super().__init__(config)
         self.hasp_port = self.config.get("hasp_port", 1947)
@@ -565,7 +565,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Failed to send HASP response: %s", e)
 
-    def _handle_hasp_client(self, client_socket, client_addr):
+    def _handle_hasp_client(self, client_socket, client_addr) -> None:
         """Handle individual HASP client connection.
 
         Args:
@@ -602,7 +602,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                 "timestamp": time.time(),
                 "data": request_data,
                 "hex": request_data.hex(),
-            }
+            },
         )
 
         # HASP protocol uses binary format

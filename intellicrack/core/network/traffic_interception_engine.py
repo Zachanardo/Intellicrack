@@ -88,7 +88,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
     analyzes the protocols, and enables real-time response generation.
     """
 
-    def __init__(self, bind_interface: str | None = None):
+    def __init__(self, bind_interface: str | None = None) -> None:
         """Initialize the traffic interception engine.
 
         Args:
@@ -308,7 +308,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             self.logger.error(f"Error stopping traffic interception: {e}")
             return False
 
-    def _capture_loop(self):
+    def _capture_loop(self) -> None:
         """Run main packet capture loop."""
         try:
             if self.capture_backend == "scapy":
@@ -320,7 +320,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
         except Exception as e:
             self.logger.error(f"Capture loop error: {e}")
 
-    def _scapy_capture(self):
+    def _scapy_capture(self) -> None:
         """Packet capture using Scapy."""
         if not HAS_SCAPY:
             return
@@ -333,7 +333,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             self.logger.info(f"Starting Scapy capture with filter: {filter_expr}")
 
             # Define packet processing function
-            def process_license_packet(packet, IP, TCP):
+            def process_license_packet(packet, IP, TCP) -> None:
                 """Process packets for license interception."""
                 if TCP in packet:
                     tcp_layer = packet[TCP]
@@ -380,7 +380,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
     # Note: _pcap_capture method removed - now using Scapy exclusively for packet capture
     # This provides better cross-platform compatibility and enhanced features
 
-    def _socket_capture(self):
+    def _socket_capture(self) -> None:
         """Capture localhost traffic with basic socket-based approach."""
         try:
             # Create raw socket for local traffic monitoring
@@ -421,7 +421,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             self.logger.warning(f"Raw socket capture failed, using connection monitoring: {e}")
             self._monitor_local_connections()
 
-    def _monitor_local_connections(self):
+    def _monitor_local_connections(self) -> None:
         """Monitor local connections when raw sockets aren't available."""
         self.logger.info("Monitoring localhost connections for license traffic")
 
@@ -459,7 +459,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             except Exception as e:
                 self.logger.debug(f"Connection monitoring error: {e}")
 
-    def _parse_raw_packet(self, raw_packet: bytes):
+    def _parse_raw_packet(self, raw_packet: bytes) -> None:
         """Parse raw network packet."""
         try:
             if len(raw_packet) < 20:
@@ -517,7 +517,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
         except Exception as e:
             self.logger.debug(f"Error parsing packet: {e}")
 
-    def _queue_packet(self, packet: InterceptedPacket):
+    def _queue_packet(self, packet: InterceptedPacket) -> None:
         """Add packet to analysis queue."""
         with self.queue_lock:
             self.packet_queue.append(packet)
@@ -530,7 +530,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             if len(self.packet_queue) > 10000:
                 self.packet_queue.pop(0)
 
-    def _analysis_loop(self):
+    def _analysis_loop(self) -> None:
         """Run main packet analysis loop."""
         while self.running:
             try:
@@ -629,11 +629,11 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             self.logger.error(f"Packet analysis error: {e}")
             return None
 
-    def add_analysis_callback(self, callback: Callable[[AnalyzedTraffic], None]):
+    def add_analysis_callback(self, callback: Callable[[AnalyzedTraffic], None]) -> None:
         """Add callback for analyzed traffic."""
         self.analysis_callbacks.append(callback)
 
-    def remove_analysis_callback(self, callback: Callable[[AnalyzedTraffic], None]):
+    def remove_analysis_callback(self, callback: Callable[[AnalyzedTraffic], None]) -> None:
         """Remove analysis callback."""
         if callback in self.analysis_callbacks:
             self.analysis_callbacks.remove(callback)
@@ -688,7 +688,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                         "duration": current_time - info["first_seen"],
                         "last_activity": info["last_activity"],
                         "packet_count": info["packet_count"],
-                    }
+                    },
                 )
 
         return connections

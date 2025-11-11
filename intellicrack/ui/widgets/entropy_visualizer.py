@@ -36,7 +36,7 @@ class EntropyVisualizer(QWidget):
 
     entropy_calculated = pyqtSignal(list, list)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize entropy visualizer widget with binary entropy analysis and visualization."""
         super().__init__(parent)
         self.setMinimumHeight(200)
@@ -47,7 +47,7 @@ class EntropyVisualizer(QWidget):
         self.block_positions = []
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         """Set up the entropy visualization UI."""
         layout = QVBoxLayout(self)
 
@@ -135,7 +135,7 @@ class EntropyVisualizer(QWidget):
 
         return positions, entropy_values
 
-    def load_data(self, data: bytes, block_size: int = 1024):
+    def load_data(self, data: bytes, block_size: int = 1024) -> None:
         """Load binary data and calculate entropy with comprehensive error handling."""
         try:
             if not isinstance(data, bytes):
@@ -155,13 +155,13 @@ class EntropyVisualizer(QWidget):
             self.update_plot()
 
         except (TypeError, ValueError, MemoryError) as e:
-            error_msg = f"Error loading entropy data: {str(e)}"
+            error_msg = f"Error loading entropy data: {e!s}"
             self.info_label.setText(error_msg)
             self.entropy_data = []
             self.block_positions = []
             self.entropy_curve.setData([], [])
 
-    def update_plot(self):
+    def update_plot(self) -> None:
         """Update the entropy plot with comprehensive error handling."""
         try:
             if not self.entropy_data:
@@ -207,7 +207,7 @@ class EntropyVisualizer(QWidget):
             self.entropy_calculated.emit(self.block_positions, self.entropy_data)
 
         except (ValueError, AttributeError, RuntimeError, TypeError) as e:
-            error_msg = f"Error updating entropy plot: {str(e)}"
+            error_msg = f"Error updating entropy plot: {e!s}"
             self.info_label.setText(error_msg)
             # Clear the plot on error
             if hasattr(self, "entropy_curve") and self.entropy_curve:
@@ -229,7 +229,7 @@ class EntropyVisualizer(QWidget):
                         self.block_positions[i],
                         "Sudden entropy change",
                         f"Δ = {diff:.2f}",
-                    )
+                    ),
                 )
 
         # Look for packed/encrypted sections
@@ -240,7 +240,7 @@ class EntropyVisualizer(QWidget):
                         self.block_positions[i],
                         "Possible encryption/compression",
                         f"Entropy = {entropy:.2f}",
-                    )
+                    ),
                 )
             elif entropy < 0.5:
                 suspicious.append(
@@ -248,12 +248,12 @@ class EntropyVisualizer(QWidget):
                         self.block_positions[i],
                         "Possible padding/null bytes",
                         f"Entropy = {entropy:.2f}",
-                    )
+                    ),
                 )
 
         return suspicious
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear the visualization."""
         self.file_data = None
         self.entropy_data = []

@@ -564,28 +564,28 @@ const Http3QuicInterceptor = {
 
                     // QUIC_CONNECTION_EVENT_TYPE enum values
                     switch (eventType) {
-                    case 0: // CONNECTED
-                        send({
-                            type: 'status',
-                            target: 'http3_quic_interceptor',
-                            action: 'msquic_connected',
-                        });
-                        break;
-                    case 1: // SHUTDOWN_INITIATED_BY_TRANSPORT
-                    case 2: // SHUTDOWN_INITIATED_BY_PEER
-                        send({
-                            type: 'info',
-                            target: 'http3_quic_interceptor',
-                            action: 'msquic_shutdown',
-                        });
-                        break;
-                    case 5: // STREAMS_AVAILABLE
-                        send({
-                            type: 'info',
-                            target: 'http3_quic_interceptor',
-                            action: 'msquic_streams_available',
-                        });
-                        break;
+                        case 0: // CONNECTED
+                            send({
+                                type: 'status',
+                                target: 'http3_quic_interceptor',
+                                action: 'msquic_connected',
+                            });
+                            break;
+                        case 1: // SHUTDOWN_INITIATED_BY_TRANSPORT
+                        case 2: // SHUTDOWN_INITIATED_BY_PEER
+                            send({
+                                type: 'info',
+                                target: 'http3_quic_interceptor',
+                                action: 'msquic_shutdown',
+                            });
+                            break;
+                        case 5: // STREAMS_AVAILABLE
+                            send({
+                                type: 'info',
+                                target: 'http3_quic_interceptor',
+                                action: 'msquic_streams_available',
+                            });
+                            break;
                     }
                 }
             },
@@ -607,50 +607,50 @@ const Http3QuicInterceptor = {
 
                     // QUIC_STREAM_EVENT_TYPE enum values
                     switch (eventType) {
-                    case 0: // START_COMPLETE
-                        send({
-                            type: 'success',
-                            target: 'http3_quic_interceptor',
-                            action: 'stream_start_complete',
-                        });
-                        break;
-                    case 1: // RECEIVE
-                        var bufferCount = event.add(8).readU32();
-                        var buffers = event.add(16).readPointer();
+                        case 0: // START_COMPLETE
+                            send({
+                                type: 'success',
+                                target: 'http3_quic_interceptor',
+                                action: 'stream_start_complete',
+                            });
+                            break;
+                        case 1: // RECEIVE
+                            var bufferCount = event.add(8).readU32();
+                            var buffers = event.add(16).readPointer();
 
-                        for (var i = 0; i < bufferCount; i++) {
-                            var buffer = buffers.add(i * 16); // sizeof(QUIC_BUFFER)
-                            var length = buffer.readU32();
-                            var data = buffer.add(8).readPointer();
+                            for (var i = 0; i < bufferCount; i++) {
+                                var buffer = buffers.add(i * 16); // sizeof(QUIC_BUFFER)
+                                var length = buffer.readU32();
+                                var data = buffer.add(8).readPointer();
 
-                            if (data && length > 0) {
-                                var content = data.readByteArray(Math.min(length, 1024));
+                                if (data && length > 0) {
+                                    var content = data.readByteArray(Math.min(length, 1024));
 
-                                if (self.isHttp3Data(content)) {
-                                    send({
-                                        type: 'info',
-                                        target: 'http3_quic_interceptor',
-                                        action: 'http3_data_received',
-                                    });
+                                    if (self.isHttp3Data(content)) {
+                                        send({
+                                            type: 'info',
+                                            target: 'http3_quic_interceptor',
+                                            action: 'http3_data_received',
+                                        });
 
-                                    var modified = self.processHttp3Data(content);
-                                    if (modified) {
-                                        data.writeByteArray(modified);
-                                        self.modifiedResponses++;
+                                        var modified = self.processHttp3Data(content);
+                                        if (modified) {
+                                            data.writeByteArray(modified);
+                                            self.modifiedResponses++;
+                                        }
                                     }
-                                }
 
-                                self.interceptedPackets++;
+                                    self.interceptedPackets++;
+                                }
                             }
-                        }
-                        break;
-                    case 2: // SEND_COMPLETE
-                        send({
-                            type: 'success',
-                            target: 'http3_quic_interceptor',
-                            action: 'stream_send_complete',
-                        });
-                        break;
+                            break;
+                        case 2: // SEND_COMPLETE
+                            send({
+                                type: 'success',
+                                target: 'http3_quic_interceptor',
+                                action: 'stream_send_complete',
+                            });
+                            break;
                     }
                 }
             },
@@ -1961,16 +1961,16 @@ const Http3QuicInterceptor = {
 
                         // Handle specific capsule types
                         switch (capsuleType) {
-                        case 0x00: // DATAGRAM
-                            self.processWebTransportDatagram(capsuleData, capsuleLen);
-                            break;
-                        case 0x01: // DRAIN_WEBTRANSPORT_SESSION
-                            send({
-                                type: 'info',
-                                target: 'http3_quic_interceptor',
-                                action: 'webtransport_drain_request',
-                            });
-                            break;
+                            case 0x00: // DATAGRAM
+                                self.processWebTransportDatagram(capsuleData, capsuleLen);
+                                break;
+                            case 0x01: // DRAIN_WEBTRANSPORT_SESSION
+                                send({
+                                    type: 'info',
+                                    target: 'http3_quic_interceptor',
+                                    action: 'webtransport_drain_request',
+                                });
+                                break;
                         }
                     }
                 },
@@ -2968,8 +2968,8 @@ const Http3QuicInterceptor = {
                                     originalPort === 443
                                         ? 8443
                                         : originalPort === 80
-                                            ? 8080
-                                            : originalPort + 1000;
+                                          ? 8080
+                                          : originalPort + 1000;
 
                                 const bypassAddress = Java.use('java.net.InetSocketAddress').$new(
                                     remoteAddress.getAddress(),

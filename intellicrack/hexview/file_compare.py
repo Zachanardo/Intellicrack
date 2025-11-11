@@ -63,7 +63,7 @@ class DifferenceBlock:
 class BinaryComparer:
     """Compares two binary files and identifies differences."""
 
-    def __init__(self, block_size: int = 4096):
+    def __init__(self, block_size: int = 4096) -> None:
         """Initialize the comparer.
 
         Args:
@@ -74,7 +74,7 @@ class BinaryComparer:
         self.differences = []
         self.progress_callback = None
 
-    def set_progress_callback(self, callback):
+    def set_progress_callback(self, callback) -> None:
         """Set callback for progress updates.
 
         Args:
@@ -127,7 +127,7 @@ class BinaryComparer:
 
         return self.differences
 
-    def _compare_streams(self, f1, f2, size1: int, size2: int):
+    def _compare_streams(self, f1, f2, size1: int, size2: int) -> None:
         """Compare two file streams block by block.
 
         Args:
@@ -167,7 +167,7 @@ class BinaryComparer:
                     # Start new difference
                     diff_type = self._determine_diff_type(block1, block2)
                     current_diff = DifferenceBlock(
-                        offset1=offset, offset2=offset, length1=len(block1), length2=len(block2), diff_type=diff_type
+                        offset1=offset, offset2=offset, length1=len(block1), length2=len(block2), diff_type=diff_type,
                     )
 
             offset += self.block_size
@@ -199,7 +199,7 @@ class BinaryComparer:
         else:
             return DifferenceType.MODIFIED
 
-    def _find_differences_lcs(self, data1: bytes, data2: bytes):
+    def _find_differences_lcs(self, data1: bytes, data2: bytes) -> None:
         """Find differences using LCS algorithm for smaller data.
 
         Args:
@@ -226,7 +226,7 @@ class BinaryComparer:
         # Trace back to find differences
         self._trace_lcs(data1, data2, lcs)
 
-    def _find_differences_simple(self, data1: bytes, data2: bytes):
+    def _find_differences_simple(self, data1: bytes, data2: bytes) -> None:
         """Perform simple byte-by-byte comparison for finding differences.
 
         Args:
@@ -247,7 +247,7 @@ class BinaryComparer:
                     if current_diff:
                         self.differences.append(current_diff)
                     current_diff = DifferenceBlock(
-                        offset1=i, offset2=j, length1=0, length2=len(data2) - j, diff_type=DifferenceType.INSERTED
+                        offset1=i, offset2=j, length1=0, length2=len(data2) - j, diff_type=DifferenceType.INSERTED,
                     )
                 break
 
@@ -259,7 +259,7 @@ class BinaryComparer:
                     if current_diff:
                         self.differences.append(current_diff)
                     current_diff = DifferenceBlock(
-                        offset1=i, offset2=j, length1=len(data1) - i, length2=0, diff_type=DifferenceType.DELETED
+                        offset1=i, offset2=j, length1=len(data1) - i, length2=0, diff_type=DifferenceType.DELETED,
                     )
                 break
 
@@ -286,7 +286,7 @@ class BinaryComparer:
         if current_diff:
             self.differences.append(current_diff)
 
-    def _trace_lcs(self, data1: bytes, data2: bytes, lcs):
+    def _trace_lcs(self, data1: bytes, data2: bytes, lcs) -> None:
         """Trace LCS table to find differences.
 
         Args:
@@ -320,7 +320,7 @@ class BinaryComparer:
                     i -= 1
 
                 self.differences.insert(
-                    0, DifferenceBlock(offset1=i - 1, offset2=j, length1=start_i - i + 1, length2=0, diff_type=DifferenceType.DELETED)
+                    0, DifferenceBlock(offset1=i - 1, offset2=j, length1=start_i - i + 1, length2=0, diff_type=DifferenceType.DELETED),
                 )
                 i -= 1
 
@@ -331,14 +331,14 @@ class BinaryComparer:
                     j -= 1
 
                 self.differences.insert(
-                    0, DifferenceBlock(offset1=i, offset2=j - 1, length1=0, length2=start_j - j + 1, diff_type=DifferenceType.INSERTED)
+                    0, DifferenceBlock(offset1=i, offset2=j - 1, length1=0, length2=start_j - j + 1, diff_type=DifferenceType.INSERTED),
                 )
                 j -= 1
 
         # Merge adjacent differences of the same type
         self._merge_adjacent_differences()
 
-    def _merge_adjacent_differences(self):
+    def _merge_adjacent_differences(self) -> None:
         """Merge adjacent difference blocks of the same type."""
         if len(self.differences) <= 1:
             return
@@ -394,7 +394,7 @@ class BinaryComparer:
 class ComparisonNavigator:
     """Helps navigate through differences in compared files."""
 
-    def __init__(self, differences: List[DifferenceBlock]):
+    def __init__(self, differences: List[DifferenceBlock]) -> None:
         """Initialize the navigator.
 
         Args:

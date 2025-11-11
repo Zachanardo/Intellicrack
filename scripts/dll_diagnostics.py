@@ -60,7 +60,7 @@ def check_path_priority():
     return pixi_dirs, intel_dirs, other_dirs
 
 
-def diagnose_mkl_loading():
+def diagnose_mkl_loading() -> None:
     """Comprehensive diagnostic of Intel MKL DLL loading."""
     print("=" * 80)
     print("INTEL MKL DLL LOADING DIAGNOSTICS")
@@ -81,7 +81,7 @@ def diagnose_mkl_loading():
             print(f"      ... and {len(mkl_dlls) - 10} more")
 
     print("\n[2] PATH Environment Variable Analysis")
-    pixi_dirs, intel_dirs, other_dirs = check_path_priority()
+    pixi_dirs, intel_dirs, _other_dirs = check_path_priority()
 
     print(f"    Pixi directories ({len(pixi_dirs)}):")
     for idx, directory in enumerate(pixi_dirs[:5], 1):

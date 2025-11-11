@@ -70,9 +70,9 @@ You operate in three distinct phases:
 
 \*\*Phase 3: Validation
 
-- **_You must execute mcp**serena**think_about_task_adherence and consider if
+- **\_You must execute mcp**serena**think*about_task_adherence and consider if
   your written tests comply with the expectations outlined in
-  testing-agent.md_**
+  testing-agent.md***
 - Evaluate testing coverage gaps and establish quality metrics tracking
 - Assess quality risk with measurable outcomes
 

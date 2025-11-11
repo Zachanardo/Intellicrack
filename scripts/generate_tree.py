@@ -128,7 +128,7 @@ def scan_directory(root_path):
     return html_tree, file_count, folder_count
 
 
-def format_size(bytes):
+def format_size(bytes) -> str:
     """Format file size in human readable format."""
     if bytes == 0:
         return "0 B"
@@ -141,7 +141,7 @@ def format_size(bytes):
     return f"{bytes:.2f} {sizes[i]}"
 
 
-def generate_txt_tree(root_path, output_file):
+def generate_txt_tree(root_path, output_file) -> None:
     """Generate plain text tree structure file."""
     print(f"Generating text tree for: {root_path}")
 
@@ -209,7 +209,7 @@ def generate_fallback_tree(root_path, prefix="", is_last=True):
     return tree_str
 
 
-def generate_hta(root_path, output_file):
+def generate_hta(root_path, output_file) -> None:
     """Generate HTA file with clickable directory tree."""
     print(f"Scanning directory: {root_path}")
     html_tree, file_count, folder_count = scan_directory(root_path)

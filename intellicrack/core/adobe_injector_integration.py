@@ -90,7 +90,7 @@ class Win32API:
 class AdobeInjectorProcess:
     """Manages the Adobe Injector AutoIt3 process."""
 
-    def __init__(self, adobe_injector_path: Path):
+    def __init__(self, adobe_injector_path: Path) -> None:
         """Initialize with path to Adobe Injector executable."""
         self.adobe_injector_path = adobe_injector_path
         self.process: Optional[subprocess.Popen] = None
@@ -144,7 +144,7 @@ class AdobeInjectorProcess:
             # Enumerate windows to find Adobe Injector
             windows = []
 
-            def enum_callback(hwnd, lParam, windows=windows):
+            def enum_callback(hwnd, lParam, windows=windows) -> bool:
                 length = Win32API.user32.GetWindowTextLengthW(hwnd)
                 if length > 0:
                     buffer = ctypes.create_unicode_buffer(length + 1)
@@ -196,18 +196,18 @@ class AdobeInjectorProcess:
             print(f"Failed to embed Adobe Injector window: {e}")
             return False
 
-    def resize_to_parent(self, width: int, height: int):
+    def resize_to_parent(self, width: int, height: int) -> None:
         """Resize embedded window to match parent."""
         if self.hwnd and self.embedded:
             Win32API.move_window(self.hwnd, 0, 0, width, height)
 
-    def send_command(self, command: str):
+    def send_command(self, command: str) -> None:
         """Send command to Adobe Injector process via IPC."""
         if self.process and self.process.stdin:
             self.process.stdin.write(f"{command}\n".encode())
             self.process.stdin.flush()
 
-    def terminate(self):
+    def terminate(self) -> None:
         """Terminate Adobe Injector process."""
         if self.process:
             self.process.terminate()
@@ -226,7 +226,7 @@ class AdobeInjectorWidget(QWidget if PYQT6_AVAILABLE else object):
         status_updated = None
         patch_completed = None
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the AdobeInjectorWidget.
 
         Args:
@@ -241,7 +241,7 @@ class AdobeInjectorWidget(QWidget if PYQT6_AVAILABLE else object):
         self.setup_ui()
         self.init_adobe_injector()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the UI layout."""
         layout = QVBoxLayout(self)
 
@@ -284,7 +284,7 @@ class AdobeInjectorWidget(QWidget if PYQT6_AVAILABLE else object):
 
         layout.addWidget(self.embed_container)
 
-    def init_adobe_injector(self):
+    def init_adobe_injector(self) -> None:
         """Initialize Adobe Injector integration."""
         from intellicrack.utils.path_resolver import get_project_root
 
@@ -305,7 +305,7 @@ class AdobeInjectorWidget(QWidget if PYQT6_AVAILABLE else object):
             self.status_label.setText("Adobe Injector executable not found")
             self.launch_btn.setEnabled(False)
 
-    def launch_injector(self):
+    def launch_injector(self) -> None:
         """Launch and embed Adobe Injector."""
         if not self.adobe_injector_path:
             self.status_updated.emit("Adobe Injector executable not found")
@@ -333,7 +333,7 @@ class AdobeInjectorWidget(QWidget if PYQT6_AVAILABLE else object):
         except Exception as e:
             self.status_updated.emit(f"Error: {e}")
 
-    def terminate_injector(self):
+    def terminate_injector(self) -> None:
         """Terminate embedded Adobe Injector."""
         if self.adobe_injector_process:
             self.adobe_injector_process.terminate()
@@ -347,7 +347,7 @@ class AdobeInjectorWidget(QWidget if PYQT6_AVAILABLE else object):
 
             self.status_updated.emit("Adobe Injector terminated")
 
-    def apply_rebranding(self):
+    def apply_rebranding(self) -> None:
         """Apply rebranding to Adobe Injector resources."""
         if not self.adobe_injector_path:
             return
@@ -366,14 +366,14 @@ class AdobeInjectorWidget(QWidget if PYQT6_AVAILABLE else object):
 
         self.status_updated.emit("Rebranding configuration created")
 
-    def resizeEvent(self, event):
+    def resizeEvent(self, event) -> None:
         """Handle widget resize to adjust embedded window."""
         super().resizeEvent(event)
         if self.adobe_injector_process and self.adobe_injector_process.embedded:
             size = self.embed_container.size()
             self.adobe_injector_process.resize_to_parent(size.width(), size.height())
 
-    def closeEvent(self, event):
+    def closeEvent(self, event) -> None:
         """Clean up on widget close."""
         if self.adobe_injector_process:
             self.adobe_injector_process.terminate()
@@ -383,7 +383,7 @@ class AdobeInjectorWidget(QWidget if PYQT6_AVAILABLE else object):
 class AutoIt3COMInterface:
     """Alternative integration using AutoIt3 COM interface."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize COM interface to AutoIt3."""
         try:
             import win32com.client
@@ -414,13 +414,13 @@ class AutoIt3COMInterface:
 class IPCController:
     """Inter-Process Communication controller for Adobe Injector."""
 
-    def __init__(self, adobe_injector_process: AdobeInjectorProcess):
+    def __init__(self, adobe_injector_process: AdobeInjectorProcess) -> None:
         """Initialize IPC controller."""
         self.process = adobe_injector_process
         self.pipe_name = r"\\.\pipe\IntellicrackAdobeInjector"
         self.pipe = None
 
-    def create_named_pipe(self):
+    def create_named_pipe(self) -> bool | None:
         """Create named pipe for IPC."""
         try:
             import win32pipe
@@ -439,7 +439,7 @@ class IPCController:
         except (AttributeError, OSError):
             return False
 
-    def send_command(self, command: dict):
+    def send_command(self, command: dict) -> None:
         """Send command via named pipe."""
         if self.pipe:
             import win32file

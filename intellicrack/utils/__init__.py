@@ -20,485 +20,295 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 
-# Set up package logger
 _init_logger = logging.getLogger(__name__)
 
-# Import utility modules with error handling
-try:
-    from .binary.binary_utils import (
-        analyze_binary_format,
-        check_suspicious_pe_sections,
-        compute_file_hash,
-        get_file_entropy,
-        get_file_hash,
-        is_binary_file,
-        read_binary,
-        validate_binary_path,
-        write_binary,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import binary_utils: %s", e)
-
-try:
-    from .logger import get_logger, logger, setup_logging
-except ImportError as e:
-    _init_logger.warning("Failed to import logger: %s", e)
-
-try:
-    from .patching.patch_utils import (
-        apply_patch,
-        convert_rva_to_offset,
-        create_nop_patch,
-        create_patch,
-        get_section_info,
-        parse_patch_instructions,
-        validate_patch,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import patch_utils: %s", e)
-
-try:
-    from .protection_utils import (
-        calculate_entropy,
-        detect_protection_mechanisms,
-        generate_bypass_strategy,
-        generate_hwid_spoof_config,
-        inject_comprehensive_api_hooks,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import protection_utils: %s", e)
-
-try:
-    from .report_generator import ReportGenerator, export_report, generate_report
-except ImportError as e:
-    _init_logger.warning("Failed to import report_generator: %s", e)
-
-try:
-    from .system.system_utils import (
-        check_admin_privileges,
-        extract_executable_icon,
-        get_process_list,
-        get_system_info,
-        get_target_process_pid,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import system_utils: %s", e)
-
-try:
-    from .ui.ui_utils import (
-        format_table_data,
-        get_user_input,
-        select_from_list,
-        show_message,
-        update_progress,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import ui_utils: %s", e)
-
-try:
-    from .dependencies import (
-        check_and_install_dependencies,
-        check_weasyprint_dependencies,
-        install_dependencies,
-        setup_required_environment,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import dependencies: %s", e)
-
-try:
-    from .analysis.entropy_utils import (
-        analyze_entropy_sections,
-        calculate_byte_entropy,
-        calculate_entropy,
-        calculate_frequency_distribution,
-        calculate_string_entropy,
-        is_high_entropy,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import entropy_utils: %s", e)
-
-try:
-    from .tools.tool_wrappers import log_message as tool_log_message
-    from .tools.tool_wrappers import (
-        run_ghidra_headless,
-        wrapper_deep_license_analysis,
-        wrapper_detect_protections,
-        wrapper_disassemble_address,
-        wrapper_find_file,
-        wrapper_get_file_metadata,
-        wrapper_list_relevant_files,
-        wrapper_load_binary,
-        wrapper_read_file_chunk,
-        wrapper_run_static_analysis,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import tool_wrappers: %s", e)
-
-try:
-    from .runtime.runner_functions import (
-        process_ghidra_analysis_results,
-        run_advanced_ghidra_analysis,
-        run_ai_guided_patching,
-        run_autonomous_patching,
-        run_cfg_explorer,
-        run_cloud_license_hooker,
-        run_comprehensive_analysis,
-        run_concolic_execution,
-        run_deep_license_analysis,
-        run_distributed_processing,
-        run_dynamic_instrumentation,
-        run_enhanced_protection_scan,
-        run_frida_analysis,
-        run_frida_script,
-        run_ghidra_analysis,
-        run_ghidra_analysis_gui,
-        run_ghidra_plugin_from_file,
-        run_gpu_accelerated_analysis,
-        run_incremental_analysis,
-        run_memory_analysis,
-        run_memory_optimized_analysis,
-        run_multi_format_analysis,
-        run_network_analysis,
-        run_network_license_server,
-        run_protocol_fingerprinter,
-        run_qemu_analysis,
-        run_qiling_emulation,
-        run_radare2_analysis,
-        run_rop_chain_generator,
-        run_selected_analysis,
-        run_selected_patching,
-        run_ssl_tls_interceptor,
-        run_symbolic_execution,
-        run_taint_analysis,
-        run_visual_network_traffic_analyzer,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import runner_functions: %s", e)
-
-try:
-    from .core.exception_utils import (
-        create_sample_plugins,
-        handle_exception,
-        load_ai_model,
-        load_config,
-        save_config,
-        setup_file_logging,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import exception_utils: %s", e)
-
-# Protection detection module not yet implemented
-# try:
-#     from .protection.protection_detection import (
-#         detect_anti_debugging_techniques,
-#         detect_commercial_protections,
-#         detect_virtualization_protection,
-#         scan_for_bytecode_protectors,
-#     )
-# except ImportError as e:
-#     _init_logger.warning("Failed to import protection_detection: %s", e)
-
-try:
-    from .system.process_utils import (
-        compute_file_hash,
-        detect_hardware_dongles,
-        detect_tpm_protection,
-        get_system_processes,
-        get_target_process_pid,
-        run_command,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import process_utils: %s", e)
-
-try:
-    from .patching.patch_verification import (
-        apply_parsed_patch_instructions_with_validation,
-        rewrite_license_functions_with_parsing,
-        test_patch_and_verify,
-        verify_patches,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import patch_verification: %s", e)
-
-try:
-    from .analysis.binary_analysis import (
-        analyze_binary,
-        analyze_binary_optimized,
-        analyze_elf,
-        analyze_macho,
-        analyze_patterns,
-        analyze_pe,
-        analyze_traffic,
-        extract_binary_features,
-        extract_patterns_from_binary,
-        identify_binary_format,
-        scan_binary,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import binary_analysis: %s", e)
-
-try:
-    from .analysis.security_analysis import (
-        bypass_tpm_checks,
-        check_buffer_overflow,
-        check_for_memory_leaks,
-        check_memory_usage,
-        run_tpm_bypass,
-        run_vm_bypass,
-        scan_protectors,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import security_analysis: %s", e)
-
-try:
-    from .exploitation.exploitation import (
-        generate_bypass_script,
-        generate_ca_certificate,
-        generate_key,
-        generate_license_bypass_payload,
-        generate_response,
-        patch_selected,
-        run_automated_patch_agent,
-        run_patch_validation,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import exploitation: %s", e)
-
-try:
-    from .runtime.distributed_processing import (
-        extract_binary_info,
-        process_binary_chunks,
-        process_chunk,
-        process_distributed_results,
-        run_distributed_analysis,
-        run_distributed_entropy_analysis,
-        run_distributed_pattern_search,
-        run_gpu_accelerator,
-        run_incremental_analysis,
-        run_memory_optimized_analysis,
-        run_pdf_report_generator,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import distributed_processing: %s", e)
-
-try:
-    from .runtime.additional_runners import (
-        compute_file_hash,
-        create_sample_plugins,
-        get_target_process_pid,
-        load_ai_model,
-        run_analysis,
-        run_autonomous_crack,
-        run_comprehensive_analysis,
-        run_deep_cfg_analysis,
-        run_deep_license_analysis,
-        run_detect_packing,
-        run_external_command,
-        run_external_tool,
-        run_full_autonomous_mode,
-        run_ghidra_analysis_gui,
-        run_incremental_analysis_ui,
-        run_windows_activator,
-        validate_dataset,
-        verify_hash,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import additional_runners: %s", e)
-
-try:
-    from .system.os_detection_mixin import OSDetectionMixin
-except ImportError as e:
-    _init_logger.warning("Failed to import os_detection_mixin: %s", e)
-
-try:
-    from .core.core_utilities import (
-        TOOL_REGISTRY,
-        deep_runtime_monitoring,
-        dispatch_tool,
-        main,
-        on_message,
-        register,
-        register_default_tools,
-        register_tool,
-        retrieve_few_shot_examples,
-        run_cli_mode,
-        run_gui_mode,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import core_utilities: %s", e)
-
-try:
-    from .core.final_utilities import (
-        accelerate_hash_calculation,
-        add_code_snippet,
-        add_dataset_row,
-        add_image,
-        add_recommendations,
-        add_table,
-        async_wrapper,
-        augment_dataset,
-        browse_dataset,
-        browse_model,
-        cache_analysis_results,
-        center_on_screen,
-        compute_binary_hash,
-        compute_section_hashes,
-        copy_to_clipboard,
-        create_dataset,
-        create_full_feature_model,
-        do_GET,
-        export_metrics,
-        force_memory_cleanup,
-        get_captured_requests,
-        get_file_icon,
-        get_resource_type,
-        hash_func,
-        identify_changed_sections,
-        initialize_memory_optimizer,
-        load_dataset_preview,
-        monitor_memory,
-        on_training_finished,
-        patches_reordered,
-        predict_vulnerabilities,
-        sandbox_process,
-        select_backend_for_workload,
-        show_analysis_results,
-        showEvent,
-        start_training,
-        stop_training,
-        submit_report,
-        truncate_text,
-        update_training_progress,
-        update_visualization,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import final_utilities: %s", e)
-
-# internal_helpers imports are already included earlier in the file
-
-try:
-    from .ui.ui_setup_functions import setup_dataset_tab, setup_memory_monitor, setup_training_tab
-except ImportError as e:
-    _init_logger.warning("Failed to import ui_setup_functions: %s", e)
-
-try:
-    from .tools.pcapy_compat import PCAP_AVAILABLE, create_pcap_reader, get_packet_capture_interface
-except ImportError as e:
-    _init_logger.warning("Failed to import pcapy_compat: %s", e)
-
-try:
-    from .core.internal_helpers import (
-        _add_protocol_fingerprinter_results,
-        _analyze_requests,
-        _analyze_snapshot_differences,
-        _generate_mitm_script,
-        _get_filesystem_state,
-        _get_memory_regions,
-        _get_network_state,
-        _get_process_state,
-        _handle_request,
-        _perform_augmentation,
-        _run_autonomous_patching_thread,
-        _run_ghidra_thread,
-        _run_report_generation_thread,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import internal_helpers functions: %s", e)
-
-# Import path discovery functions
-try:
-    from .core.path_discovery import (
-        PathDiscovery,
-        ensure_tool_available,
-        find_tool,
-        get_path_discovery,
-        get_system_path,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import path_discovery functions: %s", e)
-
-# Import GPU autoloader functions
-try:
-    from .gpu_autoloader import (
-        get_device,
-        get_gpu_info,
-        gpu_autoloader,
-        optimize_for_gpu,
-        to_device,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import gpu_autoloader functions: %s", e)
+_lazy_imports = {}
 
 
-# Import UI button common functions
-try:
-    from .ui.ui_button_common import add_extra_buttons, get_button_style
-except ImportError as e:
-    _init_logger.warning("Failed to import ui_button_common functions: %s", e)
+def __getattr__(name):
+    """Lazy load utility module attributes to prevent circular imports."""
+    if name in _lazy_imports:
+        return _lazy_imports[name]
 
-# Import network API common functions
-try:
-    from .binary.network_api_analysis import (
-        analyze_network_apis,
-        get_network_api_categories,
-        summarize_network_capabilities,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import network_api_analysis functions: %s", e)
+    import_map = {
+        'analyze_binary_format': ('binary.binary_utils', 'analyze_binary_format'),
+        'check_suspicious_pe_sections': ('binary.binary_utils', 'check_suspicious_pe_sections'),
+        'compute_file_hash': ('binary.binary_utils', 'compute_file_hash'),
+        'get_file_entropy': ('binary.binary_utils', 'get_file_entropy'),
+        'get_file_hash': ('binary.binary_utils', 'get_file_hash'),
+        'is_binary_file': ('binary.binary_utils', 'is_binary_file'),
+        'read_binary': ('binary.binary_utils', 'read_binary'),
+        'validate_binary_path': ('binary.binary_utils', 'validate_binary_path'),
+        'write_binary': ('binary.binary_utils', 'write_binary'),
+        'get_logger': ('logger', 'get_logger'),
+        'logger': ('logger', 'logger'),
+        'setup_logging': ('logger', 'setup_logging'),
+        'apply_patch': ('patching.patch_utils', 'apply_patch'),
+        'convert_rva_to_offset': ('patching.patch_utils', 'convert_rva_to_offset'),
+        'create_nop_patch': ('patching.patch_utils', 'create_nop_patch'),
+        'create_patch': ('patching.patch_utils', 'create_patch'),
+        'get_section_info': ('patching.patch_utils', 'get_section_info'),
+        'parse_patch_instructions': ('patching.patch_utils', 'parse_patch_instructions'),
+        'validate_patch': ('patching.patch_utils', 'validate_patch'),
+        'calculate_entropy': ('protection_utils', 'calculate_entropy'),
+        'detect_protection_mechanisms': ('protection_utils', 'detect_protection_mechanisms'),
+        'generate_bypass_strategy': ('protection_utils', 'generate_bypass_strategy'),
+        'generate_hwid_spoof_config': ('protection_utils', 'generate_hwid_spoof_config'),
+        'inject_comprehensive_api_hooks': ('protection_utils', 'inject_comprehensive_api_hooks'),
+        'ReportGenerator': ('report_generator', 'ReportGenerator'),
+        'export_report': ('report_generator', 'export_report'),
+        'generate_report': ('report_generator', 'generate_report'),
+        'check_admin_privileges': ('system.system_utils', 'check_admin_privileges'),
+        'extract_executable_icon': ('system.system_utils', 'extract_executable_icon'),
+        'get_process_list': ('system.system_utils', 'get_process_list'),
+        'get_system_info': ('system.system_utils', 'get_system_info'),
+        'get_target_process_pid': ('system.system_utils', 'get_target_process_pid'),
+        'format_table_data': ('ui.ui_utils', 'format_table_data'),
+        'get_user_input': ('ui.ui_utils', 'get_user_input'),
+        'select_from_list': ('ui.ui_utils', 'select_from_list'),
+        'show_message': ('ui.ui_utils', 'show_message'),
+        'update_progress': ('ui.ui_utils', 'update_progress'),
+        'check_and_install_dependencies': ('dependencies', 'check_and_install_dependencies'),
+        'check_weasyprint_dependencies': ('dependencies', 'check_weasyprint_dependencies'),
+        'install_dependencies': ('dependencies', 'install_dependencies'),
+        'setup_required_environment': ('dependencies', 'setup_required_environment'),
+        'analyze_entropy_sections': ('analysis.entropy_utils', 'analyze_entropy_sections'),
+        'calculate_byte_entropy': ('analysis.entropy_utils', 'calculate_byte_entropy'),
+        'calculate_frequency_distribution': ('analysis.entropy_utils', 'calculate_frequency_distribution'),
+        'calculate_string_entropy': ('analysis.entropy_utils', 'calculate_string_entropy'),
+        'is_high_entropy': ('analysis.entropy_utils', 'is_high_entropy'),
+        'tool_log_message': ('tools.tool_wrappers', 'log_message'),
+        'run_ghidra_headless': ('tools.tool_wrappers', 'run_ghidra_headless'),
+        'wrapper_deep_license_analysis': ('tools.tool_wrappers', 'wrapper_deep_license_analysis'),
+        'wrapper_detect_protections': ('tools.tool_wrappers', 'wrapper_detect_protections'),
+        'wrapper_disassemble_address': ('tools.tool_wrappers', 'wrapper_disassemble_address'),
+        'wrapper_find_file': ('tools.tool_wrappers', 'wrapper_find_file'),
+        'wrapper_get_file_metadata': ('tools.tool_wrappers', 'wrapper_get_file_metadata'),
+        'wrapper_list_relevant_files': ('tools.tool_wrappers', 'wrapper_list_relevant_files'),
+        'wrapper_load_binary': ('tools.tool_wrappers', 'wrapper_load_binary'),
+        'wrapper_read_file_chunk': ('tools.tool_wrappers', 'wrapper_read_file_chunk'),
+        'wrapper_run_static_analysis': ('tools.tool_wrappers', 'wrapper_run_static_analysis'),
+        'process_ghidra_analysis_results': ('runtime.runner_functions', 'process_ghidra_analysis_results'),
+        'run_advanced_ghidra_analysis': ('runtime.runner_functions', 'run_advanced_ghidra_analysis'),
+        'run_ai_guided_patching': ('runtime.runner_functions', 'run_ai_guided_patching'),
+        'run_autonomous_patching': ('runtime.runner_functions', 'run_autonomous_patching'),
+        'run_cfg_explorer': ('runtime.runner_functions', 'run_cfg_explorer'),
+        'run_cloud_license_hooker': ('runtime.runner_functions', 'run_cloud_license_hooker'),
+        'run_comprehensive_analysis': ('runtime.runner_functions', 'run_comprehensive_analysis'),
+        'run_concolic_execution': ('runtime.runner_functions', 'run_concolic_execution'),
+        'run_deep_license_analysis': ('runtime.runner_functions', 'run_deep_license_analysis'),
+        'run_distributed_processing': ('runtime.runner_functions', 'run_distributed_processing'),
+        'run_dynamic_instrumentation': ('runtime.runner_functions', 'run_dynamic_instrumentation'),
+        'run_enhanced_protection_scan': ('runtime.runner_functions', 'run_enhanced_protection_scan'),
+        'run_frida_analysis': ('runtime.runner_functions', 'run_frida_analysis'),
+        'run_frida_script': ('runtime.runner_functions', 'run_frida_script'),
+        'run_ghidra_analysis': ('runtime.runner_functions', 'run_ghidra_analysis'),
+        'run_ghidra_analysis_gui': ('runtime.runner_functions', 'run_ghidra_analysis_gui'),
+        'run_ghidra_plugin_from_file': ('runtime.runner_functions', 'run_ghidra_plugin_from_file'),
+        'run_gpu_accelerated_analysis': ('runtime.runner_functions', 'run_gpu_accelerated_analysis'),
+        'run_incremental_analysis': ('runtime.runner_functions', 'run_incremental_analysis'),
+        'run_memory_analysis': ('runtime.runner_functions', 'run_memory_analysis'),
+        'run_memory_optimized_analysis': ('runtime.runner_functions', 'run_memory_optimized_analysis'),
+        'run_multi_format_analysis': ('runtime.runner_functions', 'run_multi_format_analysis'),
+        'run_network_analysis': ('runtime.runner_functions', 'run_network_analysis'),
+        'run_network_license_server': ('runtime.runner_functions', 'run_network_license_server'),
+        'run_protocol_fingerprinter': ('runtime.runner_functions', 'run_protocol_fingerprinter'),
+        'run_qemu_analysis': ('runtime.runner_functions', 'run_qemu_analysis'),
+        'run_qiling_emulation': ('runtime.runner_functions', 'run_qiling_emulation'),
+        'run_radare2_analysis': ('runtime.runner_functions', 'run_radare2_analysis'),
+        'run_rop_chain_generator': ('runtime.runner_functions', 'run_rop_chain_generator'),
+        'run_selected_analysis': ('runtime.runner_functions', 'run_selected_analysis'),
+        'run_selected_patching': ('runtime.runner_functions', 'run_selected_patching'),
+        'run_ssl_tls_interceptor': ('runtime.runner_functions', 'run_ssl_tls_interceptor'),
+        'run_symbolic_execution': ('runtime.runner_functions', 'run_symbolic_execution'),
+        'run_taint_analysis': ('runtime.runner_functions', 'run_taint_analysis'),
+        'run_visual_network_traffic_analyzer': ('runtime.runner_functions', 'run_visual_network_traffic_analyzer'),
+        'create_sample_plugins': ('core.exception_utils', 'create_sample_plugins'),
+        'handle_exception': ('core.exception_utils', 'handle_exception'),
+        'load_ai_model': ('core.exception_utils', 'load_ai_model'),
+        'load_config': ('core.exception_utils', 'load_config'),
+        'save_config': ('core.exception_utils', 'save_config'),
+        'setup_file_logging': ('core.exception_utils', 'setup_file_logging'),
+        'detect_hardware_dongles': ('system.process_utils', 'detect_hardware_dongles'),
+        'detect_tpm_protection': ('system.process_utils', 'detect_tpm_protection'),
+        'get_system_processes': ('system.process_utils', 'get_system_processes'),
+        'run_command': ('system.process_utils', 'run_command'),
+        'apply_parsed_patch_instructions_with_validation': ('patching.patch_verification', 'apply_parsed_patch_instructions_with_validation'),
+        'rewrite_license_functions_with_parsing': ('patching.patch_verification', 'rewrite_license_functions_with_parsing'),
+        'test_patch_and_verify': ('patching.patch_verification', 'test_patch_and_verify'),
+        'verify_patches': ('patching.patch_verification', 'verify_patches'),
+        'analyze_binary': ('analysis.binary_analysis', 'analyze_binary'),
+        'analyze_binary_optimized': ('analysis.binary_analysis', 'analyze_binary_optimized'),
+        'analyze_elf': ('analysis.binary_analysis', 'analyze_elf'),
+        'analyze_macho': ('analysis.binary_analysis', 'analyze_macho'),
+        'analyze_patterns': ('analysis.binary_analysis', 'analyze_patterns'),
+        'analyze_pe': ('analysis.binary_analysis', 'analyze_pe'),
+        'analyze_traffic': ('analysis.binary_analysis', 'analyze_traffic'),
+        'extract_binary_features': ('analysis.binary_analysis', 'extract_binary_features'),
+        'extract_patterns_from_binary': ('analysis.binary_analysis', 'extract_patterns_from_binary'),
+        'identify_binary_format': ('analysis.binary_analysis', 'identify_binary_format'),
+        'scan_binary': ('analysis.binary_analysis', 'scan_binary'),
+        'bypass_tpm_checks': ('analysis.security_analysis', 'bypass_tpm_checks'),
+        'check_buffer_overflow': ('analysis.security_analysis', 'check_buffer_overflow'),
+        'check_for_memory_leaks': ('analysis.security_analysis', 'check_for_memory_leaks'),
+        'check_memory_usage': ('analysis.security_analysis', 'check_memory_usage'),
+        'run_tpm_bypass': ('analysis.security_analysis', 'run_tpm_bypass'),
+        'run_vm_bypass': ('analysis.security_analysis', 'run_vm_bypass'),
+        'scan_protectors': ('analysis.security_analysis', 'scan_protectors'),
+        'generate_bypass_script': ('exploitation.exploitation', 'generate_bypass_script'),
+        'generate_ca_certificate': ('exploitation.exploitation', 'generate_ca_certificate'),
+        'generate_key': ('exploitation.exploitation', 'generate_key'),
+        'generate_license_bypass_payload': ('exploitation.exploitation', 'generate_license_bypass_payload'),
+        'generate_response': ('exploitation.exploitation', 'generate_response'),
+        'patch_selected': ('exploitation.exploitation', 'patch_selected'),
+        'run_automated_patch_agent': ('exploitation.exploitation', 'run_automated_patch_agent'),
+        'run_patch_validation': ('exploitation.exploitation', 'run_patch_validation'),
+        'extract_binary_info': ('runtime.distributed_processing', 'extract_binary_info'),
+        'process_binary_chunks': ('runtime.distributed_processing', 'process_binary_chunks'),
+        'process_chunk': ('runtime.distributed_processing', 'process_chunk'),
+        'process_distributed_results': ('runtime.distributed_processing', 'process_distributed_results'),
+        'run_distributed_analysis': ('runtime.distributed_processing', 'run_distributed_analysis'),
+        'run_distributed_entropy_analysis': ('runtime.distributed_processing', 'run_distributed_entropy_analysis'),
+        'run_distributed_pattern_search': ('runtime.distributed_processing', 'run_distributed_pattern_search'),
+        'run_gpu_accelerator': ('runtime.distributed_processing', 'run_gpu_accelerator'),
+        'run_pdf_report_generator': ('runtime.distributed_processing', 'run_pdf_report_generator'),
+        'run_analysis': ('runtime.additional_runners', 'run_analysis'),
+        'run_autonomous_crack': ('runtime.additional_runners', 'run_autonomous_crack'),
+        'run_deep_cfg_analysis': ('runtime.additional_runners', 'run_deep_cfg_analysis'),
+        'run_detect_packing': ('runtime.additional_runners', 'run_detect_packing'),
+        'run_external_command': ('runtime.additional_runners', 'run_external_command'),
+        'run_external_tool': ('runtime.additional_runners', 'run_external_tool'),
+        'run_full_autonomous_mode': ('runtime.additional_runners', 'run_full_autonomous_mode'),
+        'run_incremental_analysis_ui': ('runtime.additional_runners', 'run_incremental_analysis_ui'),
+        'run_windows_activator': ('runtime.additional_runners', 'run_windows_activator'),
+        'validate_dataset': ('runtime.additional_runners', 'validate_dataset'),
+        'verify_hash': ('runtime.additional_runners', 'verify_hash'),
+        'OSDetectionMixin': ('system.os_detection_mixin', 'OSDetectionMixin'),
+        'TOOL_REGISTRY': ('core.core_utilities', 'TOOL_REGISTRY'),
+        'deep_runtime_monitoring': ('core.core_utilities', 'deep_runtime_monitoring'),
+        'dispatch_tool': ('core.core_utilities', 'dispatch_tool'),
+        'main': ('core.core_utilities', 'main'),
+        'on_message': ('core.core_utilities', 'on_message'),
+        'register': ('core.core_utilities', 'register'),
+        'register_default_tools': ('core.core_utilities', 'register_default_tools'),
+        'register_tool': ('core.core_utilities', 'register_tool'),
+        'retrieve_few_shot_examples': ('core.core_utilities', 'retrieve_few_shot_examples'),
+        'run_cli_mode': ('core.core_utilities', 'run_cli_mode'),
+        'run_gui_mode': ('core.core_utilities', 'run_gui_mode'),
+        'accelerate_hash_calculation': ('core.final_utilities', 'accelerate_hash_calculation'),
+        'add_code_snippet': ('core.final_utilities', 'add_code_snippet'),
+        'add_dataset_row': ('core.final_utilities', 'add_dataset_row'),
+        'add_image': ('core.final_utilities', 'add_image'),
+        'add_recommendations': ('core.final_utilities', 'add_recommendations'),
+        'add_table': ('core.final_utilities', 'add_table'),
+        'async_wrapper': ('core.final_utilities', 'async_wrapper'),
+        'augment_dataset': ('core.final_utilities', 'augment_dataset'),
+        'browse_dataset': ('core.final_utilities', 'browse_dataset'),
+        'browse_model': ('core.final_utilities', 'browse_model'),
+        'cache_analysis_results': ('core.final_utilities', 'cache_analysis_results'),
+        'center_on_screen': ('core.final_utilities', 'center_on_screen'),
+        'compute_binary_hash': ('core.final_utilities', 'compute_binary_hash'),
+        'compute_section_hashes': ('core.final_utilities', 'compute_section_hashes'),
+        'copy_to_clipboard': ('core.final_utilities', 'copy_to_clipboard'),
+        'create_dataset': ('core.final_utilities', 'create_dataset'),
+        'create_full_feature_model': ('core.final_utilities', 'create_full_feature_model'),
+        'do_GET': ('core.final_utilities', 'do_GET'),
+        'export_metrics': ('core.final_utilities', 'export_metrics'),
+        'force_memory_cleanup': ('core.final_utilities', 'force_memory_cleanup'),
+        'get_captured_requests': ('core.final_utilities', 'get_captured_requests'),
+        'get_file_icon': ('core.final_utilities', 'get_file_icon'),
+        'get_resource_type': ('core.final_utilities', 'get_resource_type'),
+        'hash_func': ('core.final_utilities', 'hash_func'),
+        'identify_changed_sections': ('core.final_utilities', 'identify_changed_sections'),
+        'initialize_memory_optimizer': ('core.final_utilities', 'initialize_memory_optimizer'),
+        'load_dataset_preview': ('core.final_utilities', 'load_dataset_preview'),
+        'monitor_memory': ('core.final_utilities', 'monitor_memory'),
+        'on_training_finished': ('core.final_utilities', 'on_training_finished'),
+        'patches_reordered': ('core.final_utilities', 'patches_reordered'),
+        'predict_vulnerabilities': ('core.final_utilities', 'predict_vulnerabilities'),
+        'sandbox_process': ('core.final_utilities', 'sandbox_process'),
+        'select_backend_for_workload': ('core.final_utilities', 'select_backend_for_workload'),
+        'show_analysis_results': ('core.final_utilities', 'show_analysis_results'),
+        'showEvent': ('core.final_utilities', 'showEvent'),
+        'start_training': ('core.final_utilities', 'start_training'),
+        'stop_training': ('core.final_utilities', 'stop_training'),
+        'submit_report': ('core.final_utilities', 'submit_report'),
+        'truncate_text': ('core.final_utilities', 'truncate_text'),
+        'update_training_progress': ('core.final_utilities', 'update_training_progress'),
+        'update_visualization': ('core.final_utilities', 'update_visualization'),
+        'setup_dataset_tab': ('ui.ui_setup_functions', 'setup_dataset_tab'),
+        'setup_memory_monitor': ('ui.ui_setup_functions', 'setup_memory_monitor'),
+        'setup_training_tab': ('ui.ui_setup_functions', 'setup_training_tab'),
+        'PCAP_AVAILABLE': ('tools.pcapy_compat', 'PCAP_AVAILABLE'),
+        'create_pcap_reader': ('tools.pcapy_compat', 'create_pcap_reader'),
+        'get_packet_capture_interface': ('tools.pcapy_compat', 'get_packet_capture_interface'),
+        '_add_protocol_fingerprinter_results': ('core.internal_helpers', '_add_protocol_fingerprinter_results'),
+        '_analyze_requests': ('core.internal_helpers', '_analyze_requests'),
+        '_analyze_snapshot_differences': ('core.internal_helpers', '_analyze_snapshot_differences'),
+        '_generate_mitm_script': ('core.internal_helpers', '_generate_mitm_script'),
+        '_get_filesystem_state': ('core.internal_helpers', '_get_filesystem_state'),
+        '_get_memory_regions': ('core.internal_helpers', '_get_memory_regions'),
+        '_get_network_state': ('core.internal_helpers', '_get_network_state'),
+        '_get_process_state': ('core.internal_helpers', '_get_process_state'),
+        '_handle_request': ('core.internal_helpers', '_handle_request'),
+        '_perform_augmentation': ('core.internal_helpers', '_perform_augmentation'),
+        '_run_autonomous_patching_thread': ('core.internal_helpers', '_run_autonomous_patching_thread'),
+        '_run_ghidra_thread': ('core.internal_helpers', '_run_ghidra_thread'),
+        '_run_report_generation_thread': ('core.internal_helpers', '_run_report_generation_thread'),
+        'PathDiscovery': ('core.path_discovery', 'PathDiscovery'),
+        'ensure_tool_available': ('core.path_discovery', 'ensure_tool_available'),
+        'find_tool': ('core.path_discovery', 'find_tool'),
+        'get_path_discovery': ('core.path_discovery', 'get_path_discovery'),
+        'get_system_path': ('core.path_discovery', 'get_system_path'),
+        'get_device': ('gpu_autoloader', 'get_device'),
+        'get_gpu_info': ('gpu_autoloader', 'get_gpu_info'),
+        'gpu_autoloader': ('gpu_autoloader', 'gpu_autoloader'),
+        'optimize_for_gpu': ('gpu_autoloader', 'optimize_for_gpu'),
+        'to_device': ('gpu_autoloader', 'to_device'),
+        'add_extra_buttons': ('ui.ui_button_common', 'add_extra_buttons'),
+        'get_button_style': ('ui.ui_button_common', 'get_button_style'),
+        'analyze_network_apis': ('binary.network_api_analysis', 'analyze_network_apis'),
+        'get_network_api_categories': ('binary.network_api_analysis', 'get_network_api_categories'),
+        'summarize_network_capabilities': ('binary.network_api_analysis', 'summarize_network_capabilities'),
+        'WINDOWS_AVAILABLE': ('system.windows_common', 'WINDOWS_AVAILABLE'),
+        'WindowsConstants': ('system.windows_common', 'WindowsConstants'),
+        'get_windows_kernel32': ('system.windows_common', 'get_windows_kernel32'),
+        'get_windows_ntdll': ('system.windows_common', 'get_windows_ntdll'),
+        'is_windows_available': ('system.windows_common', 'is_windows_available'),
+        'analyze_pe_imports': ('binary.pe_analysis_common', 'analyze_pe_imports'),
+        'get_pe_sections_info': ('binary.pe_analysis_common', 'get_pe_sections_info'),
+        'create_popen_safely': ('system.process_common', 'create_popen_safely'),
+        'run_subprocess_safely': ('system.process_common', 'run_subprocess_safely'),
+        'create_certificate_builder': ('protection.certificate_common', 'create_certificate_builder'),
+        'find_function_prologues': ('analysis.pattern_search', 'find_function_prologues'),
+        'find_license_patterns': ('analysis.pattern_search', 'find_license_patterns'),
+        'search_patterns_in_binary': ('analysis.pattern_search', 'search_patterns_in_binary'),
+        'DateTimeEncoder': ('json_utils', 'DateTimeEncoder'),
+        'datetime_decoder': ('json_utils', 'datetime_decoder'),
+        'dump': ('json_utils', 'dump'),
+        'dumps': ('json_utils', 'dumps'),
+        'load': ('json_utils', 'load'),
+        'loads': ('json_utils', 'loads'),
+        'safe_deserialize': ('json_utils', 'safe_deserialize'),
+        'safe_serialize': ('json_utils', 'safe_serialize'),
+    }
 
-# Import common utility modules
-try:
-    from .system.windows_common import (
-        WINDOWS_AVAILABLE,
-        WindowsConstants,
-        get_windows_kernel32,
-        get_windows_ntdll,
-        is_windows_available,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import windows_common functions: %s", e)
+    if name in import_map:
+        module_path, attr_name = import_map[name]
+        try:
+            module = __import__(f'{__name__}.{module_path}', fromlist=[attr_name])
+            result = getattr(module, attr_name)
+            _lazy_imports[name] = result
+            return result
+        except (ImportError, AttributeError) as e:
+            _init_logger.warning(f"Failed to import {name} from {module_path}: {e}")
+            _lazy_imports[name] = None
+            return None
 
-try:
-    from .binary.pe_analysis_common import analyze_pe_imports, get_pe_sections_info
-except ImportError as e:
-    _init_logger.warning("Failed to import pe_analysis_common functions: %s", e)
-
-try:
-    from .system.process_common import create_popen_safely, run_subprocess_safely
-except ImportError as e:
-    _init_logger.warning("Failed to import process_common functions: %s", e)
-
-try:
-    from .protection.certificate_common import create_certificate_builder
-except ImportError as e:
-    _init_logger.warning("Failed to import certificate_common functions: %s", e)
-
-try:
-    from .analysis.pattern_search import (
-        find_function_prologues,
-        find_license_patterns,
-        search_patterns_in_binary,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import pattern_search functions: %s", e)
-
-try:
-    from .json_utils import (
-        DateTimeEncoder,
-        datetime_decoder,
-        dump,
-        dumps,
-        load,
-        loads,
-        safe_deserialize,
-        safe_serialize,
-    )
-except ImportError as e:
-    _init_logger.warning("Failed to import json_utils functions: %s", e)
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
 __all__ = [
-    # From binary_utils
     "compute_file_hash",
     "get_file_hash",
     "read_binary",
@@ -508,13 +318,10 @@ __all__ = [
     "get_file_entropy",
     "check_suspicious_pe_sections",
     "validate_binary_path",
-    # From logger
     "get_logger",
     "setup_logging",
     "logger",
-    # From os_detection_mixin
     "OSDetectionMixin",
-    # From misc_utils
     "log_message",
     "get_timestamp",
     "format_bytes",
@@ -525,7 +332,6 @@ __all__ = [
     "parse_size_string",
     "get_file_extension",
     "ensure_directory_exists",
-    # From patch_utils
     "parse_patch_instructions",
     "create_patch",
     "apply_patch",
@@ -533,41 +339,34 @@ __all__ = [
     "convert_rva_to_offset",
     "get_section_info",
     "create_nop_patch",
-    # From protection_utils
     "detect_protection_mechanisms",
     "generate_bypass_strategy",
     "inject_comprehensive_api_hooks",
     "calculate_entropy",
     "generate_hwid_spoof_config",
-    # From report_generator
     "ReportGenerator",
     "generate_report",
     "export_report",
-    # From system_utils
     "get_system_info",
     "check_admin_privileges",
     "get_process_list",
     "extract_executable_icon",
     "get_target_process_pid",
-    # From ui_utils
     "format_table_data",
     "select_from_list",
     "show_message",
     "get_user_input",
     "update_progress",
-    # From dependencies
     "check_and_install_dependencies",
     "install_dependencies",
     "setup_required_environment",
     "check_weasyprint_dependencies",
-    # From entropy_utils
     "calculate_entropy",
     "calculate_byte_entropy",
     "calculate_string_entropy",
     "calculate_frequency_distribution",
     "is_high_entropy",
     "analyze_entropy_sections",
-    # From tool_wrappers
     "tool_log_message",
     "wrapper_find_file",
     "wrapper_load_binary",
@@ -579,7 +378,6 @@ __all__ = [
     "wrapper_detect_protections",
     "wrapper_disassemble_address",
     "run_ghidra_headless",
-    # From runner_functions
     "run_network_license_server",
     "run_ssl_tls_interceptor",
     "run_protocol_fingerprinter",
@@ -615,29 +413,20 @@ __all__ = [
     "run_autonomous_patching",
     "run_ghidra_analysis_gui",
     "run_deep_license_analysis",
-    # From exception_utils
     "handle_exception",
     "load_config",
     "save_config",
     "setup_file_logging",
     "create_sample_plugins",
     "load_ai_model",
-    # From protection_detection - module not yet implemented
-    # "detect_anti_debugging_techniques",
-    # "detect_commercial_protections",
-    # "detect_virtualization_protection",
-    # "scan_for_bytecode_protectors",
-    # From process_utils
     "detect_hardware_dongles",
     "detect_tpm_protection",
     "get_system_processes",
     "run_command",
-    # From patch_verification
     "verify_patches",
     "test_patch_and_verify",
     "apply_parsed_patch_instructions_with_validation",
     "rewrite_license_functions_with_parsing",
-    # From binary_analysis
     "analyze_binary",
     "analyze_binary_optimized",
     "identify_binary_format",
@@ -649,7 +438,6 @@ __all__ = [
     "scan_binary",
     "extract_patterns_from_binary",
     "extract_binary_features",
-    # From security_analysis
     "scan_protectors",
     "bypass_tpm_checks",
     "check_memory_usage",
@@ -657,7 +445,6 @@ __all__ = [
     "check_buffer_overflow",
     "run_tpm_bypass",
     "run_vm_bypass",
-    # From exploitation
     "generate_bypass_script",
     "generate_license_bypass_payload",
     "generate_ca_certificate",
@@ -666,7 +453,6 @@ __all__ = [
     "patch_selected",
     "run_automated_patch_agent",
     "run_patch_validation",
-    # From distributed_processing
     "process_binary_chunks",
     "process_chunk",
     "process_distributed_results",
@@ -676,7 +462,6 @@ __all__ = [
     "extract_binary_info",
     "run_gpu_accelerator",
     "run_pdf_report_generator",
-    # From additional_runners
     "run_detect_packing",
     "run_analysis",
     "run_autonomous_crack",
@@ -688,7 +473,6 @@ __all__ = [
     "validate_dataset",
     "verify_hash",
     "run_external_command",
-    # From core_utilities
     "main",
     "dispatch_tool",
     "register_tool",
@@ -700,7 +484,6 @@ __all__ = [
     "run_gui_mode",
     "run_cli_mode",
     "TOOL_REGISTRY",
-    # From final_utilities
     "add_table",
     "browse_dataset",
     "browse_model",
@@ -742,15 +525,12 @@ __all__ = [
     "add_recommendations",
     "patches_reordered",
     "do_GET",
-    # From ui_setup_functions
     "setup_dataset_tab",
     "setup_memory_monitor",
     "setup_training_tab",
-    # From pcapy_compat
     "get_packet_capture_interface",
     "create_pcap_reader",
     "PCAP_AVAILABLE",
-    # From internal_helpers
     "_add_protocol_fingerprinter_results",
     "_analyze_requests",
     "_analyze_snapshot_differences",
@@ -764,48 +544,37 @@ __all__ = [
     "_run_autonomous_patching_thread",
     "_run_ghidra_thread",
     "_run_report_generation_thread",
-    # From path_discovery
     "find_tool",
     "get_system_path",
     "ensure_tool_available",
     "PathDiscovery",
     "get_path_discovery",
-    # From ui_button_common
     "add_extra_buttons",
     "get_button_style",
-    # From network_api_common
     "analyze_network_apis",
     "get_network_api_categories",
     "summarize_network_capabilities",
-    # From windows_common
     "is_windows_available",
     "get_windows_kernel32",
     "get_windows_ntdll",
     "WindowsConstants",
     "WINDOWS_AVAILABLE",
-    # From pe_analysis_common
     "analyze_pe_imports",
     "get_pe_sections_info",
-    # From process_common
     "run_subprocess_safely",
     "create_popen_safely",
-    # From certificate_common
     "create_certificate_builder",
-    # From pattern_search
     "search_patterns_in_binary",
     "find_function_prologues",
     "find_license_patterns",
-    # From severity_levels
     "SeverityLevel",
     "SecurityRelevance",
     "VulnerabilityLevel",
-    # From gpu_autoloader
     "gpu_autoloader",
     "get_device",
     "get_gpu_info",
     "to_device",
     "optimize_for_gpu",
-    # From json_utils
     "DateTimeEncoder",
     "datetime_decoder",
     "dumps",
@@ -816,6 +585,5 @@ __all__ = [
     "safe_deserialize",
 ]
 
-# Package metadata
 __version__ = "0.1.0"
 __author__ = "Intellicrack Development Team"

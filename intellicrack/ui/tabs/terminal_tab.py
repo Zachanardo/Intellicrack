@@ -49,7 +49,7 @@ class TerminalTab(BaseTab):
     - Session status tracking
     """
 
-    def __init__(self, shared_context=None, parent=None):
+    def __init__(self, shared_context=None, parent=None) -> None:
         """Initialize terminal tab."""
         self.terminal_widget = None
         self.status_label = None
@@ -60,7 +60,7 @@ class TerminalTab(BaseTab):
 
         logger.info("TerminalTab initialized")
 
-    def setup_content(self):
+    def setup_content(self) -> None:
         """Set up the terminal tab content."""
         from intellicrack.handlers.pyqt6_handler import QSizePolicy
 
@@ -152,14 +152,14 @@ class TerminalTab(BaseTab):
 
         return status_bar
 
-    def create_new_session(self):
+    def create_new_session(self) -> None:
         """Create a new terminal session."""
         if self.terminal_widget:
             session_id = self.terminal_widget.create_new_session()
             logger.info(f"Created new terminal session: {session_id}")
             self._update_status()
 
-    def clear_current_terminal(self):
+    def clear_current_terminal(self) -> None:
         """Clear the current terminal display."""
         if not self.terminal_widget:
             return
@@ -170,12 +170,12 @@ class TerminalTab(BaseTab):
             terminal.clear()
             logger.info(f"Cleared terminal session: {session_id}")
 
-    def export_terminal_log(self):
+    def export_terminal_log(self) -> None:
         """Export current terminal log to file."""
         if not self.terminal_widget:
             return
 
-        session_id, terminal = self.terminal_widget.get_active_session()
+        _session_id, terminal = self.terminal_widget.get_active_session()
 
         if not terminal:
             logger.warning("No active terminal session to export")
@@ -196,7 +196,7 @@ class TerminalTab(BaseTab):
                 logger.error(f"Error exporting terminal log: {e}")
                 self.status_label.setText(f"Status: Export error - {e}")
 
-    def kill_current_process(self):
+    def kill_current_process(self) -> None:
         """Kill the currently running process."""
         if not self.terminal_widget:
             return
@@ -215,22 +215,22 @@ class TerminalTab(BaseTab):
             logger.info("No process running in current session")
             self.status_label.setText("Status: No process running")
 
-    def _on_session_created(self, session_id):
+    def _on_session_created(self, session_id) -> None:
         """Handle session created event."""
         self._update_status()
         logger.info(f"Session created: {session_id}")
 
-    def _on_session_closed(self, session_id):
+    def _on_session_closed(self, session_id) -> None:
         """Handle session closed event."""
         self._update_status()
         logger.info(f"Session closed: {session_id}")
 
-    def _on_active_session_changed(self, session_id):
+    def _on_active_session_changed(self, session_id) -> None:
         """Handle active session changed event."""
         self._update_status()
         logger.info(f"Active session changed: {session_id}")
 
-    def _update_status(self):
+    def _update_status(self) -> None:
         """Update status bar with current session info."""
         if not self.terminal_widget:
             return
@@ -240,7 +240,7 @@ class TerminalTab(BaseTab):
 
         self.sessions_label.setText(f"Sessions: {session_count}")
 
-        session_id, terminal = self.terminal_widget.get_active_session()
+        _session_id, terminal = self.terminal_widget.get_active_session()
 
         if terminal:
             if terminal.is_running():

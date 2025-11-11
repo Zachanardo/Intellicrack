@@ -41,13 +41,13 @@ class ModelLoadingItemWidget(QWidget):
     #: model_id (type: str)
     cancelled = pyqtSignal(str)
 
-    def __init__(self, model_id: str, parent=None):
+    def __init__(self, model_id: str, parent=None) -> None:
         """Initialize model loading item widget with model ID and parent widget."""
         super().__init__(parent)
         self.model_id = model_id
         self.init_ui()
 
-    def init_ui(self):
+    def init_ui(self) -> None:
         """Initialize the UI."""
         layout = QVBoxLayout()
         layout.setContentsMargins(5, 5, 5, 5)
@@ -79,7 +79,7 @@ class ModelLoadingItemWidget(QWidget):
 
         self.setLayout(layout)
 
-    def update_progress(self, progress: LoadingProgress):
+    def update_progress(self, progress: LoadingProgress) -> None:
         """Update progress display."""
         # Update progress bar
         self.progress_bar.setValue(int(progress.progress * 100))
@@ -116,7 +116,7 @@ class ModelLoadingItemWidget(QWidget):
                 }
             """)
 
-    def set_completed(self, success: bool, error: str | None = None):
+    def set_completed(self, success: bool, error: str | None = None) -> None:
         """Set completion state."""
         if success:
             self.progress_bar.setValue(100)
@@ -142,7 +142,7 @@ class ModelLoadingProgressWidget(QWidget):
     #: model_id (type: str)
     model_loaded = pyqtSignal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize model loading progress widget with LLM manager, progress callbacks, and UI components."""
         super().__init__(parent)
         self.llm_manager = get_llm_manager()
@@ -153,7 +153,7 @@ class ModelLoadingProgressWidget(QWidget):
         self.init_ui()
         self.setup_callbacks()
 
-    def init_ui(self):
+    def init_ui(self) -> None:
         """Initialize the UI."""
         layout = QVBoxLayout()
 
@@ -210,7 +210,7 @@ class ModelLoadingProgressWidget(QWidget):
 
         self.setLayout(layout)
 
-    def setup_callbacks(self):
+    def setup_callbacks(self) -> None:
         """Set up progress callbacks and update timer."""
         # Register callback with LLM manager
         self.llm_manager.add_progress_callback(self.progress_callback)
@@ -220,7 +220,7 @@ class ModelLoadingProgressWidget(QWidget):
         self.update_timer.timeout.connect(self.process_updates)
         self.update_timer.start(100)  # Update every 100ms
 
-    def process_updates(self):
+    def process_updates(self) -> None:
         """Process queued progress updates."""
         # Get progress updates
         progress_updates = self.progress_callback.get_progress_updates()
@@ -235,7 +235,7 @@ class ModelLoadingProgressWidget(QWidget):
         # Update statistics
         self.update_statistics()
 
-    def handle_progress_update(self, progress: LoadingProgress):
+    def handle_progress_update(self, progress: LoadingProgress) -> None:
         """Handle a progress update."""
         model_id = progress.model_id
 
@@ -249,7 +249,7 @@ class ModelLoadingProgressWidget(QWidget):
         # Update progress
         self.loading_items[model_id].update_progress(progress)
 
-    def handle_completion_update(self, model_id: str, success: bool, error: str | None):
+    def handle_completion_update(self, model_id: str, success: bool, error: str | None) -> None:
         """Handle a completion update."""
         if model_id in self.loading_items:
             self.loading_items[model_id].set_completed(success, error)
@@ -262,14 +262,14 @@ class ModelLoadingProgressWidget(QWidget):
                 if task:
                     self.llm_manager.register_background_loaded_model(model_id, task)
 
-    def cancel_loading(self, model_id: str):
+    def cancel_loading(self, model_id: str) -> None:
         """Cancel a loading task."""
         if self.llm_manager.cancel_loading(model_id):
             logger.info(f"Cancelled loading task: {model_id}")
         else:
             logger.error(f"Failed to cancel loading task: {model_id}")
 
-    def update_statistics(self):
+    def update_statistics(self) -> None:
         """Update loading statistics display."""
         stats = self.llm_manager.get_loading_statistics()
 
@@ -283,7 +283,7 @@ Active Workers: {stats.get("active_workers", 0)}
 """
         self.stats_text.setPlainText(stats_text.strip())
 
-    def test_load_model(self):
+    def test_load_model(self) -> None:
         """Test loading a model in the background."""
         # Create a test configuration
         test_config = LLMConfig(
@@ -307,7 +307,7 @@ Active Workers: {stats.get("active_workers", 0)}
         else:
             logger.error("Failed to submit test loading task")
 
-    def refresh_display(self):
+    def refresh_display(self) -> None:
         """Refresh the display with current tasks."""
         # Get all loading tasks
         all_tasks = self.llm_manager.get_all_loading_tasks()
@@ -330,7 +330,7 @@ Active Workers: {stats.get("active_workers", 0)}
         # Update statistics
         self.update_statistics()
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Cleanup resources."""
         if self.update_timer:
             self.update_timer.stop()

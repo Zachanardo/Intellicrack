@@ -76,7 +76,7 @@ class DashboardLayout:
 class DashboardManager:
     """Manages the overall dashboard system."""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         """Initialize dashboard manager.
 
         Args:
@@ -113,7 +113,7 @@ class DashboardManager:
         self._initialize_default_widgets()
         self._initialize_default_sources()
 
-    def _initialize_default_layout(self):
+    def _initialize_default_layout(self) -> None:
         """Initialize default dashboard layout."""
         default_layout = DashboardLayout(
             layout_id="default",
@@ -131,7 +131,7 @@ class DashboardManager:
         self.add_layout(default_layout)
         self.set_layout("default")
 
-    def _initialize_default_widgets(self):
+    def _initialize_default_widgets(self) -> None:
         """Initialize default widgets."""
         # Performance gauge
         self.add_widget(
@@ -143,7 +143,7 @@ class DashboardManager:
                 max=100,
                 units="%",
                 thresholds=[{"min": 0, "max": 50}, {"min": 50, "max": 75}, {"min": 75, "max": 90}, {"min": 90, "max": 100}],
-            )
+            ),
         )
 
         # Memory gauge
@@ -156,7 +156,7 @@ class DashboardManager:
                 max=2000,
                 units="MB",
                 thresholds=[{"min": 0, "max": 500}, {"min": 500, "max": 1000}, {"min": 1000, "max": 1500}, {"min": 1500, "max": 2000}],
-            )
+            ),
         )
 
         # Timeline
@@ -180,7 +180,7 @@ class DashboardManager:
         # Heatmap for code complexity
         self.add_widget(create_widget("complexity_heatmap", WidgetType.HEATMAP, "Code Complexity", colorscale="viridis"))
 
-    def _initialize_default_sources(self):
+    def _initialize_default_sources(self) -> None:
         """Initialize default data sources."""
         # Performance data source
         self.add_data_source(
@@ -190,7 +190,7 @@ class DashboardManager:
                 name="Performance Metrics",
                 poll_interval=2.0,
                 data_callback=self._collect_performance_data,
-            )
+            ),
         )
 
         # System data source
@@ -201,7 +201,7 @@ class DashboardManager:
                 name="System Metrics",
                 poll_interval=5.0,
                 data_callback=self._collect_system_data,
-            )
+            ),
         )
 
         # Subscribe widgets to sources
@@ -209,7 +209,7 @@ class DashboardManager:
         self.subscribe_widget("memory_gauge", "performance")
         self.subscribe_widget("functions_chart", "performance")
 
-    def add_widget(self, widget: DashboardWidget):
+    def add_widget(self, widget: DashboardWidget) -> None:
         """Add widget to dashboard.
 
         Args:
@@ -219,7 +219,7 @@ class DashboardManager:
         self.widgets[widget.config.widget_id] = widget
         self.logger.info(f"Added widget: {widget.config.widget_id}")
 
-    def add_data_source(self, source: DataSource):
+    def add_data_source(self, source: DataSource) -> None:
         """Add data source.
 
         Args:
@@ -229,7 +229,7 @@ class DashboardManager:
         self.data_sources[source.source_id] = source
         self.logger.info(f"Added data source: {source.source_id}")
 
-    def add_layout(self, layout: DashboardLayout):
+    def add_layout(self, layout: DashboardLayout) -> None:
         """Add dashboard layout.
 
         Args:
@@ -239,7 +239,7 @@ class DashboardManager:
         self.layouts[layout.layout_id] = layout
         self.logger.info(f"Added layout: {layout.layout_id}")
 
-    def set_layout(self, layout_id: str):
+    def set_layout(self, layout_id: str) -> None:
         """Set current dashboard layout.
 
         Args:
@@ -252,7 +252,7 @@ class DashboardManager:
         else:
             self.logger.warning(f"Layout not found: {layout_id}")
 
-    def subscribe_widget(self, widget_id: str, source_id: str):
+    def subscribe_widget(self, widget_id: str, source_id: str) -> None:
         """Subscribe widget to data source.
 
         Args:
@@ -264,7 +264,7 @@ class DashboardManager:
         self.source_subscriptions[widget_id].append(source_id)
         self.logger.debug(f"Subscribed widget {widget_id} to source {source_id}")
 
-    def integrate_tool(self, tool_name: str, handler: Any):
+    def integrate_tool(self, tool_name: str, handler: Any) -> None:
         """Integrate analysis tool with dashboard.
 
         Args:
@@ -286,7 +286,7 @@ class DashboardManager:
 
         self.logger.info(f"Integrated tool: {tool_name}")
 
-    def start(self):
+    def start(self) -> None:
         """Start dashboard manager."""
         self.logger.info("Starting dashboard manager")
 
@@ -298,7 +298,7 @@ class DashboardManager:
         # Register dashboard callbacks
         self.dashboard.register_callback(self._handle_dashboard_event)
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop dashboard manager."""
         self.logger.info("Stopping dashboard manager")
 
@@ -310,7 +310,7 @@ class DashboardManager:
         # Shutdown dashboard
         self.dashboard.shutdown()
 
-    def process_analysis_event(self, event_type: str, tool: str, data: Dict[str, Any]):
+    def process_analysis_event(self, event_type: str, tool: str, data: Dict[str, Any]) -> None:
         """Process analysis event from tools.
 
         Args:
@@ -369,7 +369,7 @@ class DashboardManager:
         ws_port = self.config.get("dashboard_config", {}).get("websocket_port", 8765)
         return f"ws://localhost:{ws_port}"
 
-    def export_dashboard_state(self, filepath: str):
+    def export_dashboard_state(self, filepath: str) -> None:
         """Export dashboard state to file.
 
         Args:
@@ -392,7 +392,7 @@ class DashboardManager:
 
         self.logger.info(f"Exported dashboard state to {filepath}")
 
-    def _polling_loop(self):
+    def _polling_loop(self) -> None:
         """Poll data source."""
         while not self.stop_polling.is_set():
             try:
@@ -423,7 +423,7 @@ class DashboardManager:
 
             self.stop_polling.wait(timeout=0.5)
 
-    def _distribute_data(self, source_id: str, data: Dict[str, Any]):
+    def _distribute_data(self, source_id: str, data: Dict[str, Any]) -> None:
         """Distribute data to subscribed widgets.
 
         Args:
@@ -503,7 +503,7 @@ class DashboardManager:
             self.logger.error(f"Error collecting data from {tool_name}: {e}")
             return {}
 
-    def _update_widgets_for_event(self, event: DashboardEvent):
+    def _update_widgets_for_event(self, event: DashboardEvent) -> None:
         """Update widgets based on dashboard event.
 
         Args:
@@ -526,7 +526,7 @@ class DashboardManager:
         if event.event_type == DashboardEventType.PROTECTION_DETECTED and "protections_table" in self.widgets:
             self._update_protection_table(event)
 
-    def _update_vulnerability_table(self, event: DashboardEvent):
+    def _update_vulnerability_table(self, event: DashboardEvent) -> None:
         """Update vulnerability table widget.
 
         Args:
@@ -546,13 +546,13 @@ class DashboardManager:
                 "Tool": event.tool,
                 "Location": event.data.get("location", ""),
                 "Description": event.description,
-            }
+            },
         )
 
         widget_data = WidgetData(timestamp=event.timestamp, values={"rows": rows, "columns": columns})
         widget.update_data(widget_data)
 
-    def _update_protection_table(self, event: DashboardEvent):
+    def _update_protection_table(self, event: DashboardEvent) -> None:
         """Update protection table widget.
 
         Args:
@@ -572,13 +572,13 @@ class DashboardManager:
                 "Strength": event.data.get("strength", "Unknown"),
                 "Location": event.data.get("location", ""),
                 "Description": event.description,
-            }
+            },
         )
 
         widget_data = WidgetData(timestamp=event.timestamp, values={"rows": rows, "columns": columns})
         widget.update_data(widget_data)
 
-    def _handle_dashboard_event(self, event: DashboardEvent):
+    def _handle_dashboard_event(self, event: DashboardEvent) -> None:
         """Handle event from dashboard.
 
         Args:

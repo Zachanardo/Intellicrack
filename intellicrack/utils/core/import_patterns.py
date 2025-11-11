@@ -94,7 +94,7 @@ try:
     XML_AVAILABLE = True
 except ImportError:
     try:
-        import xml.etree.ElementTree as ET  # noqa: N817, S314
+        import xml.etree.ElementTree as ET
 
         XML_AVAILABLE = True
     except ImportError:

@@ -68,13 +68,13 @@ class ProgramDiscoveryWorker(QThread):
     progress_updated = pyqtSignal(str)
     finished = pyqtSignal()
 
-    def __init__(self, discovery_paths: list[str]):
+    def __init__(self, discovery_paths: list[str]) -> None:
         """Initialize the program discovery worker with specified paths."""
         super().__init__()
         self.discovery_paths = discovery_paths
         self.running = True
 
-    def run(self):
+    def run(self) -> None:
         """Run program discovery in background thread."""
         if not HAS_PROGRAM_DISCOVERY:
             self.progress_updated.emit("Program discovery not available")
@@ -100,7 +100,7 @@ class ProgramDiscoveryWorker(QThread):
         self.programs_found.emit(all_programs)
         self.finished.emit()
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the discovery process."""
         self.running = False
 
@@ -108,7 +108,7 @@ class ProgramDiscoveryWorker(QThread):
 class SmartProgramSelectorDialog(QDialog):
     """Smart program selector dialog with intelligent discovery."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the smart program selector dialog with UI components and discovery functionality."""
         super().__init__(parent)
         self.setWindowTitle("Smart Program Selector")
@@ -124,7 +124,7 @@ class SmartProgramSelectorDialog(QDialog):
             self.setup_ui()
             self.connect_signals()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the user interface."""
         layout = QVBoxLayout(self)
 
@@ -154,14 +154,14 @@ class SmartProgramSelectorDialog(QDialog):
 
         layout.addLayout(button_layout)
 
-    def connect_signals(self):
+    def connect_signals(self) -> None:
         """Connect UI signals."""
         if HAS_QT:
             self.scan_button.clicked.connect(self.start_program_discovery)
             self.analyze_button.clicked.connect(self.analyze_selected_program)
             self.cancel_button.clicked.connect(self.reject)
 
-    def start_program_discovery(self):
+    def start_program_discovery(self) -> None:
         """Start program discovery process."""
         if not HAS_PROGRAM_DISCOVERY:
             self.progress_text.append("Program discovery not available")
@@ -199,13 +199,13 @@ class SmartProgramSelectorDialog(QDialog):
                             "Start Menu",
                             "Programs",
                         ),
-                    ]
+                    ],
                 )
             paths.extend(
                 [
                     r"C:\Users\Public\Desktop",
                     r"C:\ProgramData\Microsoft\Windows\Start Menu\Programs",
-                ]
+                ],
             )
         elif sys.platform.startswith("linux"):
             # Linux paths
@@ -215,13 +215,13 @@ class SmartProgramSelectorDialog(QDialog):
                     [
                         os.path.join(home, "Desktop"),
                         os.path.join(home, ".local", "share", "applications"),
-                    ]
+                    ],
                 )
             paths.extend(
                 [
                     "/usr/share/applications",
                     "/usr/local/share/applications",
-                ]
+                ],
             )
         elif sys.platform.startswith("darwin"):
             # macOS paths
@@ -231,19 +231,19 @@ class SmartProgramSelectorDialog(QDialog):
                     [
                         os.path.join(home, "Desktop"),
                         os.path.join(home, "Applications"),
-                    ]
+                    ],
                 )
             paths.extend(
                 [
                     "/Applications",
                     "/System/Applications",
-                ]
+                ],
             )
 
         # Filter to existing paths
         return [path for path in paths if os.path.exists(path)]
 
-    def handle_programs_found(self, programs: list[ProgramInfo]):
+    def handle_programs_found(self, programs: list[ProgramInfo]) -> None:
         """Handle discovered programs."""
         self.programs_list.clear()
 
@@ -252,16 +252,16 @@ class SmartProgramSelectorDialog(QDialog):
             item.setData(32, program)  # Store program object
             self.programs_list.addItem(item)
 
-    def update_progress(self, message: str):
+    def update_progress(self, message: str) -> None:
         """Update progress display."""
         self.progress_text.append(message)
 
-    def discovery_finished(self):
+    def discovery_finished(self) -> None:
         """Handle discovery completion."""
         self.scan_button.setEnabled(True)
         self.progress_text.append("Discovery completed.")
 
-    def analyze_selected_program(self):
+    def analyze_selected_program(self) -> None:
         """Analyze the selected program."""
         current_item = self.programs_list.currentItem()
         if current_item:

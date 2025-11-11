@@ -38,7 +38,7 @@ class GenericProtocolHandler(LicenseProtocolHandler):
     protocol interactions for license verification systems.
     """
 
-    def __init__(self, config: dict[str, Any] | None = None):
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
         """Initialize the generic protocol handler."""
         super().__init__(config)
         self.protocol = config.get("protocol", "tcp") if config else "tcp"
@@ -189,7 +189,7 @@ class GenericProtocolHandler(LicenseProtocolHandler):
                 "data": initial_data,
                 "hex": initial_data.hex(),
                 "source": str(client_socket.getpeername() if hasattr(client_socket, "getpeername") else "unknown"),
-            }
+            },
         )
 
         # Generate response
@@ -216,7 +216,7 @@ class GenericProtocolHandler(LicenseProtocolHandler):
                         "data": response,
                         "hex": response.hex(),
                         "destination": str(client_socket.getpeername() if hasattr(client_socket, "getpeername") else "unknown"),
-                    }
+                    },
                 )
 
             except Exception as e:

@@ -49,7 +49,7 @@ class MemoryOptimizedBinaryLoader:
     memory usage while providing efficient access to binary data.
     """
 
-    def __init__(self, config: dict[str, Any] | None = None):
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
         """Initialize the memory optimized binary loader.
 
         Args:
@@ -313,13 +313,13 @@ class MemoryOptimizedBinaryLoader:
                 self.logger.debug(f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}")
         self.close()
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Destructor to ensure resources are cleaned up."""
         self.close()
 
 
 def run_memory_optimized_analysis(
-    file_path: str, analysis_type: str = "full", chunk_size: int = 1024 * 1024, max_memory: int = 1024 * 1024 * 1024
+    file_path: str, analysis_type: str = "full", chunk_size: int = 1024 * 1024, max_memory: int = 1024 * 1024 * 1024,
 ) -> dict[str, Any]:
     """Run memory-optimized analysis on a binary file.
 
@@ -387,7 +387,7 @@ def run_memory_optimized_analysis(
                     "type": "high_entropy",
                     "severity": "high",
                     "description": f"Very high entropy ({overall_entropy:.2f} bits/byte) indicates likely packing/encryption",
-                }
+                },
             )
         elif overall_entropy > 7.0:
             results["packed_probability"] = 0.75
@@ -396,7 +396,7 @@ def run_memory_optimized_analysis(
                     "type": "elevated_entropy",
                     "severity": "medium",
                     "description": f"Elevated entropy ({overall_entropy:.2f} bits/byte) suggests possible compression",
-                }
+                },
             )
         elif overall_entropy > 6.5:
             results["packed_probability"] = 0.50
@@ -445,7 +445,7 @@ def run_memory_optimized_analysis(
                         "severity": "medium",
                         "description": f"Found {len(suspicious_sections)} sections with suspicious entropy patterns",
                         "offsets": suspicious_sections[:10],  # Limit to first 10
-                    }
+                    },
                 )
 
         # Perform entropy distribution analysis
@@ -473,7 +473,7 @@ def run_memory_optimized_analysis(
                             "type": "uniform_high_entropy",
                             "severity": "high",
                             "description": "Uniform high entropy across file indicates strong encryption/packing",
-                        }
+                        },
                     )
                 elif results["entropy"]["stdev"] > 2.5:
                     results["anomalies"].append(
@@ -481,7 +481,7 @@ def run_memory_optimized_analysis(
                             "type": "variable_entropy",
                             "severity": "low",
                             "description": "Variable entropy suggests mixed content (code + data)",
-                        }
+                        },
                     )
 
         # Close the loader to free resources

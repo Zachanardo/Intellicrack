@@ -7,6 +7,7 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
+import contextlib
 import re
 import struct
 from dataclasses import dataclass, field
@@ -95,7 +96,7 @@ class DebugSymbolInfo:
 class GhidraAdvancedAnalyzer:
     """Advanced analysis features for Ghidra integration."""
 
-    def __init__(self, binary_path: str):
+    def __init__(self, binary_path: str) -> None:
         """Initialize the GhidraAdvancedAnalyzer with a binary file path.
 
         Args:
@@ -108,7 +109,7 @@ class GhidraAdvancedAnalyzer:
         self.md = None  # Capstone disassembler
         self._init_analyzers()
 
-    def _init_analyzers(self):
+    def _init_analyzers(self) -> None:
         """Initialize binary analyzers."""
         try:
             # Load with PE parser for Windows binaries
@@ -159,10 +160,8 @@ class GhidraAdvancedAnalyzer:
             elif mnemonic == "sub" and "sp" in inst_line.lower():
                 # Extract stack size
                 if len(inst_parts) >= 3:
-                    try:
+                    with contextlib.suppress(ValueError):
                         int(inst_parts[2].replace("0x", ""), 16)
-                    except ValueError:
-                        pass
 
             # Detect local variables from stack accesses
             elif "[" in inst_line and ("bp" in inst_line.lower() or "sp" in inst_line.lower()):
@@ -256,7 +255,7 @@ class GhidraAdvancedAnalyzer:
         base_type = type_str.replace("*", "").strip()
         return type_sizes.get(base_type, 4)
 
-    def _propagate_types(self, variables: Dict[int, RecoveredVariable], function: GhidraFunction):
+    def _propagate_types(self, variables: Dict[int, RecoveredVariable], function: GhidraFunction) -> None:
         """Propagate types through data flow analysis."""
         # Analyze function parameters from calling convention
         if function.calling_convention in ["__stdcall", "__cdecl", "__fastcall"]:
@@ -327,7 +326,7 @@ class GhidraAdvancedAnalyzer:
                     alignment=8 if struct_size > 32 else 4,
                     members=members,
                     vtable_offset=vtable_offset,
-                )
+                ),
             )
 
         return structures
@@ -382,7 +381,7 @@ class GhidraAdvancedAnalyzer:
                             class_name=f"class_{vtable_addr:08x}",
                             functions=func_addrs,
                             destructor_addr=self._find_destructor(func_addrs),
-                        )
+                        ),
                     )
 
         # Analyze RTTI information if present
@@ -522,8 +521,8 @@ class GhidraAdvancedAnalyzer:
 
                             vtables.append(
                                 VTableInfo(
-                                    address=vtable_addr, class_name=class_name, functions=[], rtti_address=section.VirtualAddress + i
-                                )
+                                    address=vtable_addr, class_name=class_name, functions=[], rtti_address=section.VirtualAddress + i,
+                                ),
                             )
 
                     i += 4
@@ -582,8 +581,8 @@ class GhidraAdvancedAnalyzer:
 
                     handlers.append(
                         ExceptionHandlerInfo(
-                            type="C++", handler_address=unwind_info, try_start=begin_addr, try_end=end_addr, catch_blocks=[]
-                        )
+                            type="C++", handler_address=unwind_info, try_start=begin_addr, try_end=end_addr, catch_blocks=[],
+                        ),
                     )
 
                     i += 12
@@ -630,7 +629,7 @@ class GhidraAdvancedAnalyzer:
                     pdb_path = data[24:].decode("utf-8", errors="ignore").rstrip("\x00")
 
                     return DebugSymbolInfo(
-                        type="PDB", path=pdb_path, guid=guid, age=age, symbols={}, types={}, source_files=[], line_numbers={}
+                        type="PDB", path=pdb_path, guid=guid, age=age, symbols={}, types={}, source_files=[], line_numbers={},
                     )
 
         return None
@@ -668,7 +667,7 @@ class GhidraAdvancedAnalyzer:
             # Create array types for common sizes
             for array_size in [10, 100, 256]:
                 array_type = GhidraDataType(
-                    name=f"{struct.name}[{array_size}]", size=struct.size * array_size, category="array", base_type=struct.name
+                    name=f"{struct.name}[{array_size}]", size=struct.size * array_size, category="array", base_type=struct.name,
                 )
                 custom_types.append(array_type)
 
@@ -694,7 +693,7 @@ def apply_advanced_analysis(analysis_result: GhidraAnalysisResult, binary_path: 
     structures = analyzer.recover_structures(analysis_result)
     for struct_obj in structures:
         ghidra_type = GhidraDataType(
-            name=struct_obj.name, size=struct_obj.size, category="struct", members=struct_obj.members, alignment=struct_obj.alignment
+            name=struct_obj.name, size=struct_obj.size, category="struct", members=struct_obj.members, alignment=struct_obj.alignment,
         )
         analysis_result.data_types[struct_obj.name] = ghidra_type
 
@@ -707,7 +706,7 @@ def apply_advanced_analysis(analysis_result: GhidraAnalysisResult, binary_path: 
     handlers = analyzer.extract_exception_handlers(analysis_result)
     for handler in handlers:
         analysis_result.exception_handlers.append(
-            {"type": handler.type, "address": handler.handler_address, "try_start": handler.try_start, "try_end": handler.try_end}
+            {"type": handler.type, "address": handler.handler_address, "try_start": handler.try_start, "try_end": handler.try_end},
         )
 
     # Parse debug symbols

@@ -401,26 +401,35 @@ public class AutomatedUnpacker extends GhidraScript {
     AntiUnpackingBypass localAntiUnpackingBypass = new AntiUnpackingBypass();
     AdvancedMemoryDumper localMemoryDumper = new AdvancedMemoryDumper();
     ModernIATReconstructor localIatReconstructor = new ModernIATReconstructor();
-    
+
     // Assign local instances to class fields for proper initialization
     this.mlClassifier = localMlClassifier;
     this.behavioralAnalyzer = localBehavioralAnalyzer;
     this.antiUnpackingBypass = localAntiUnpackingBypass;
     this.memoryDumper = localMemoryDumper;
     this.iatReconstructor = localIatReconstructor;
-    
+
     // Validate component initialization
     if (this.mlClassifier != null) {
-      println("✓ Machine Learning Classifier initialized with confidence threshold: " + ML_CONFIDENCE_THRESHOLD + "%");
+      println(
+          "✓ Machine Learning Classifier initialized with confidence threshold: "
+              + ML_CONFIDENCE_THRESHOLD
+              + "%");
     }
     if (this.behavioralAnalyzer != null) {
-      println("✓ Behavioral Analyzer initialized with timeout: " + (BEHAVIORAL_ANALYSIS_TIMEOUT/1000) + " seconds");
+      println(
+          "✓ Behavioral Analyzer initialized with timeout: "
+              + (BEHAVIORAL_ANALYSIS_TIMEOUT / 1000)
+              + " seconds");
     }
     if (this.antiUnpackingBypass != null) {
       println("✓ Anti-Unpacking Bypass engine ready");
     }
     if (this.memoryDumper != null) {
-      println("✓ Memory Dumper initialized with max size: " + (MEMORY_DUMP_SIZE / (1024*1024)) + " MB");
+      println(
+          "✓ Memory Dumper initialized with max size: "
+              + (MEMORY_DUMP_SIZE / (1024 * 1024))
+              + " MB");
     }
     if (this.iatReconstructor != null) {
       println("✓ IAT Reconstructor initialized");
@@ -493,11 +502,13 @@ public class AutomatedUnpacker extends GhidraScript {
       Map<String, Double> features = classification.extractedFeatures;
       mlFeatureVector.clear();
       mlFeatureVector.putAll(features);
-      
+
       // Store confidence scores for tracking
-      confidenceScores.put(classification.primaryPacker, (int) (classification.primaryConfidence * 100));
-      confidenceScores.put(classification.secondaryPacker, (int) (classification.secondaryConfidence * 100));
-      
+      confidenceScores.put(
+          classification.primaryPacker, (int) (classification.primaryConfidence * 100));
+      confidenceScores.put(
+          classification.secondaryPacker, (int) (classification.secondaryConfidence * 100));
+
       // Display extracted features for analysis
       println("  Key Features Detected:");
       features.entrySet().stream()
@@ -507,7 +518,7 @@ public class AutomatedUnpacker extends GhidraScript {
               entry ->
                   println(
                       "    " + entry.getKey() + ": " + String.format("%.3f", entry.getValue())));
-      
+
       // Enhanced ML feature analysis
       performEnhancedMLFeatureAnalysis();
     } catch (Exception e) {
@@ -521,13 +532,13 @@ public class AutomatedUnpacker extends GhidraScript {
     try {
       BehavioralAnalysisResult behaviorResult =
           behavioralAnalyzer.analyzeBehavior(currentEntryPoint, blocks);
-      
+
       // Store behavioral events for comprehensive analysis
       storeBehavioralEvents(behaviorResult);
-      
+
       // Detect and store anti-unpacking techniques
       detectAntiUnpackingTechniques(behaviorResult);
-      
+
       println("✓ Behavioral Analysis Complete:");
       println("  Memory Allocation Patterns: " + behaviorResult.memoryPatterns.size());
       println(
@@ -715,7 +726,7 @@ public class AutomatedUnpacker extends GhidraScript {
     println(
         "Unpacking process finished with "
             + (unpackResult != null && unpackResult.success ? "SUCCESS" : "PARTIAL SUCCESS"));
-    
+
     // Cleanup decompiler resources
     if (decompiler != null) {
       decompiler.closeProgram();
@@ -6435,27 +6446,27 @@ public class AutomatedUnpacker extends GhidraScript {
     if (hex == null || hex.isEmpty()) {
       return new byte[0];
     }
-    
+
     hex = hex.replaceAll(" ", "");
-    
+
     // Ensure even length by padding with leading zero if needed
     if (hex.length() % 2 != 0) {
       hex = "0" + hex;
     }
-    
+
     int len = hex.length();
     byte[] data = new byte[len / 2];
-    
+
     for (int i = 0; i < len; i += 2) {
       // Bounds-safe access with validation
       if (i + 1 < len) {
         char c1 = hex.charAt(i);
         char c2 = hex.charAt(i + 1);
-        
+
         // Validate hex characters
         int digit1 = Character.digit(c1, 16);
         int digit2 = Character.digit(c2, 16);
-        
+
         if (digit1 == -1 || digit2 == -1) {
           // Invalid hex character - use zero byte for robustness
           data[i / 2] = 0;
@@ -6840,27 +6851,26 @@ public class AutomatedUnpacker extends GhidraScript {
     }
   }
 
-  /**
-   * Enhanced ML feature analysis utilizing the mlFeatureVector for advanced pattern recognition
-   */
+  /** Enhanced ML feature analysis utilizing the mlFeatureVector for advanced pattern recognition */
   private void performEnhancedMLFeatureAnalysis() throws Exception {
     println("  Performing enhanced ML feature analysis...");
-    
+
     if (mlFeatureVector.isEmpty()) {
       println("    No ML features available for analysis");
       return;
     }
-    
+
     // Calculate feature correlations for advanced analysis
     Map<String, Double> featureCorrelations = new HashMap<>();
-    
+
     // Entropy-based feature analysis
     double entropyThreshold = mlFeatureVector.getOrDefault("entropy_score", 0.0);
     if (entropyThreshold > 0.8) {
       featureCorrelations.put("high_entropy_correlation", entropyThreshold);
-      println("    ✓ High entropy correlation detected: " + String.format("%.3f", entropyThreshold));
+      println(
+          "    ✓ High entropy correlation detected: " + String.format("%.3f", entropyThreshold));
     }
-    
+
     // API call pattern analysis
     double apiScore = mlFeatureVector.getOrDefault("api_call_patterns", 0.0);
     double importScore = mlFeatureVector.getOrDefault("import_complexity", 0.0);
@@ -6869,7 +6879,7 @@ public class AutomatedUnpacker extends GhidraScript {
       featureCorrelations.put("api_complexity_correlation", combinedApiScore);
       println("    ✓ API complexity correlation: " + String.format("%.3f", combinedApiScore));
     }
-    
+
     // Code structure analysis
     double structuralComplexity = mlFeatureVector.getOrDefault("structural_complexity", 0.0);
     double packingIndicators = mlFeatureVector.getOrDefault("packing_indicators", 0.0);
@@ -6878,28 +6888,28 @@ public class AutomatedUnpacker extends GhidraScript {
       featureCorrelations.put("structural_packing_correlation", structuralScore);
       println("    ✓ Structural packing correlation: " + String.format("%.3f", structuralScore));
     }
-    
+
     // Advanced ML confidence calculation
-    double overallConfidence = featureCorrelations.values().stream()
-        .mapToDouble(Double::doubleValue)
-        .average()
-        .orElse(0.0);
-    
+    double overallConfidence =
+        featureCorrelations.values().stream()
+            .mapToDouble(Double::doubleValue)
+            .average()
+            .orElse(0.0);
+
     confidenceScores.put("ml_analysis_confidence", (int) (overallConfidence * 100));
-    println("    Overall ML Analysis Confidence: " + String.format("%.1f%%", overallConfidence * 100));
-    
+    println(
+        "    Overall ML Analysis Confidence: " + String.format("%.1f%%", overallConfidence * 100));
+
     // Store enhanced analysis results
     for (Map.Entry<String, Double> correlation : featureCorrelations.entrySet()) {
       mlFeatureVector.put("enhanced_" + correlation.getKey(), correlation.getValue());
     }
   }
 
-  /**
-   * Store behavioral events from analysis results for comprehensive tracking
-   */
+  /** Store behavioral events from analysis results for comprehensive tracking */
   private void storeBehavioralEvents(BehavioralAnalysisResult behaviorResult) {
     behavioralEvents.clear(); // Clear previous events
-    
+
     try {
       // Store memory allocation events
       if (behaviorResult.memoryPatterns != null) {
@@ -6912,7 +6922,7 @@ public class AutomatedUnpacker extends GhidraScript {
           behavioralEvents.add(event);
         }
       }
-      
+
       // Store process manipulation events
       if (behaviorResult.processManipulation) {
         BehavioralEvent event = new BehavioralEvent();
@@ -6922,7 +6932,7 @@ public class AutomatedUnpacker extends GhidraScript {
         event.severity = "HIGH";
         behavioralEvents.add(event);
       }
-      
+
       // Store dynamic import events
       if (behaviorResult.dynamicImports != null) {
         for (String dynamicImport : behaviorResult.dynamicImports) {
@@ -6934,7 +6944,7 @@ public class AutomatedUnpacker extends GhidraScript {
           behavioralEvents.add(event);
         }
       }
-      
+
       // Store unpacking indicator events
       if (behaviorResult.unpackingIndicators != null) {
         for (String indicator : behaviorResult.unpackingIndicators) {
@@ -6946,7 +6956,7 @@ public class AutomatedUnpacker extends GhidraScript {
           behavioralEvents.add(event);
         }
       }
-      
+
       // Store API call events
       if (behaviorResult.suspiciousApiCalls > 0) {
         BehavioralEvent event = new BehavioralEvent();
@@ -6956,39 +6966,37 @@ public class AutomatedUnpacker extends GhidraScript {
         event.severity = behaviorResult.suspiciousApiCalls > 10 ? "HIGH" : "MEDIUM";
         behavioralEvents.add(event);
       }
-      
+
       println("    Stored " + behavioralEvents.size() + " behavioral events");
-      
+
     } catch (Exception e) {
       println("    ⚠ Error storing behavioral events: " + e.getMessage());
     }
   }
 
-  /**
-   * Detect and catalog anti-unpacking techniques for comprehensive analysis
-   */
+  /** Detect and catalog anti-unpacking techniques for comprehensive analysis */
   private void detectAntiUnpackingTechniques(BehavioralAnalysisResult behaviorResult) {
     detectedAntiUnpackingTechniques.clear(); // Clear previous detections
-    
+
     try {
       // Detect debugger detection techniques
       if (behaviorResult.processManipulation) {
         detectedAntiUnpackingTechniques.add("DEBUGGER_DETECTION");
         detectedAntiUnpackingTechniques.add("PROCESS_ENVIRONMENT_CHECK");
       }
-      
+
       // Detect VM detection techniques
       if (behaviorResult.suspiciousApiCalls > 15) {
         detectedAntiUnpackingTechniques.add("VM_DETECTION");
         detectedAntiUnpackingTechniques.add("HARDWARE_FINGERPRINTING");
       }
-      
+
       // Detect API hooking techniques
       if (behaviorResult.dynamicImports != null && behaviorResult.dynamicImports.size() > 20) {
         detectedAntiUnpackingTechniques.add("API_HOOKING");
         detectedAntiUnpackingTechniques.add("DYNAMIC_API_RESOLUTION");
       }
-      
+
       // Detect anti-analysis timing techniques
       if (behaviorResult.memoryPatterns != null) {
         for (String pattern : behaviorResult.memoryPatterns) {
@@ -6999,35 +7007,36 @@ public class AutomatedUnpacker extends GhidraScript {
           }
         }
       }
-      
+
       // Detect memory scanning techniques
       if (behaviorResult.unpackingIndicators != null) {
         for (String indicator : behaviorResult.unpackingIndicators) {
-          if (indicator.toLowerCase().contains("memory") || indicator.toLowerCase().contains("scan")) {
+          if (indicator.toLowerCase().contains("memory")
+              || indicator.toLowerCase().contains("scan")) {
             detectedAntiUnpackingTechniques.add("MEMORY_SCANNING_DETECTION");
             detectedAntiUnpackingTechniques.add("BREAKPOINT_DETECTION");
             break;
           }
         }
       }
-      
+
       // Advanced technique detection based on behavioral patterns
       if (behaviorResult.processManipulation && behaviorResult.suspiciousApiCalls > 25) {
         detectedAntiUnpackingTechniques.add("MULTI_LAYER_PROTECTION");
         detectedAntiUnpackingTechniques.add("BEHAVIORAL_ANALYSIS_EVASION");
       }
-      
+
       // Store confidence scores for detected techniques
       int techniqueCount = detectedAntiUnpackingTechniques.size();
       confidenceScores.put("anti_unpacking_detection", Math.min(100, techniqueCount * 15));
-      
+
       if (!detectedAntiUnpackingTechniques.isEmpty()) {
         println("    Detected anti-unpacking techniques:");
         for (String technique : detectedAntiUnpackingTechniques) {
           println("      - " + technique.replace("_", " "));
         }
       }
-      
+
     } catch (Exception e) {
       println("    ⚠ Error detecting anti-unpacking techniques: " + e.getMessage());
     }
@@ -7039,10 +7048,10 @@ public class AutomatedUnpacker extends GhidraScript {
    */
   private void performAdvancedPackerStructureAnalysis() throws Exception {
     if (currentProgram == null) return;
-    
+
     packerStructures.clear();
     DataTypeManager dtm = currentProgram.getDataTypeManager();
-    
+
     try {
       // Analyze common packer protection structures
       String[] commonPackerStructures = {
@@ -7050,31 +7059,32 @@ public class AutomatedUnpacker extends GhidraScript {
         "RUNTIME_FUNCTION", "EXCEPTION_DIRECTORY", "LOAD_CONFIG_DIRECTORY",
         "TLS_DIRECTORY", "BOUND_IMPORT_DESCRIPTOR", "DELAY_IMPORT_DESCRIPTOR"
       };
-      
+
       for (String structName : commonPackerStructures) {
         DataType dt = dtm.getDataType(structName);
         if (dt instanceof Structure) {
           Structure struct = (Structure) dt;
           packerStructures.add(struct);
-          
+
           // Analyze structure complexity and obfuscation indicators
           analyzeStructureComplexity(struct);
         }
       }
-      
+
       // Search for custom packer structures by pattern matching
       SymbolTable symbolTable = currentProgram.getSymbolTable();
       SymbolIterator symbols = symbolTable.getAllSymbols(true);
-      
+
       while (symbols.hasNext() && !monitor.isCancelled()) {
         Symbol symbol = symbols.next();
         String name = symbol.getName();
-        
+
         // Identify potential packer-specific structures
-        if (name.matches(".*[Pp]ack.*|.*[Cc]rypt.*|.*[Pp]rotect.*|.*[Oo]bfus.*|.*[Vv]mp.*|.*[Tt]hemida.*")) {
+        if (name.matches(
+            ".*[Pp]ack.*|.*[Cc]rypt.*|.*[Pp]rotect.*|.*[Oo]bfus.*|.*[Vv]mp.*|.*[Tt]hemida.*")) {
           Address addr = symbol.getAddress();
           DataType dt = currentProgram.getListing().getDataAt(addr).getDataType();
-          
+
           if (dt instanceof Structure && !packerStructures.contains(dt)) {
             Structure packerStruct = (Structure) dt;
             packerStructures.add(packerStruct);
@@ -7082,9 +7092,9 @@ public class AutomatedUnpacker extends GhidraScript {
           }
         }
       }
-      
+
       println("    Identified " + packerStructures.size() + " packer-related structures");
-      
+
       // Calculate structure analysis confidence
       if (!packerStructures.isEmpty()) {
         int complexityScore = calculateStructureComplexityScore();
@@ -7092,69 +7102,66 @@ public class AutomatedUnpacker extends GhidraScript {
         mlFeatureVector.put("packer_structure_count", (double) packerStructures.size());
         mlFeatureVector.put("structure_complexity", (double) complexityScore / 100.0);
       }
-      
+
     } catch (Exception e) {
       println("    ⚠ Error in packer structure analysis: " + e.getMessage());
     }
   }
 
-  /**
-   * Analyze individual structure complexity for packer detection
-   */
+  /** Analyze individual structure complexity for packer detection */
   private void analyzeStructureComplexity(Structure struct) {
     try {
       int componentCount = struct.getNumComponents();
       int totalSize = struct.getLength();
-      
+
       // Calculate complexity metrics
       double complexityRatio = (double) componentCount / Math.max(1, totalSize);
-      
+
       // Check for obfuscation indicators
       boolean hasObfuscatedNames = false;
       boolean hasSuspiciousAlignment = false;
       boolean hasUnusualSizing = false;
-      
+
       for (int i = 0; i < componentCount; i++) {
         String fieldName = struct.getComponent(i).getFieldName();
         if (fieldName != null && fieldName.matches(".*[0-9]{3,}.*|.*[a-fA-F0-9]{8,}.*")) {
           hasObfuscatedNames = true;
         }
-        
+
         int fieldSize = struct.getComponent(i).getLength();
         if (fieldSize > 1024 || fieldSize == 0) {
           hasUnusualSizing = true;
         }
       }
-      
+
       // Store analysis results for ML classification
       if (hasObfuscatedNames || hasSuspiciousAlignment || hasUnusualSizing) {
-        mlFeatureVector.put("obfuscated_structures", 
-          mlFeatureVector.getOrDefault("obfuscated_structures", 0.0) + 1.0);
+        mlFeatureVector.put(
+            "obfuscated_structures",
+            mlFeatureVector.getOrDefault("obfuscated_structures", 0.0) + 1.0);
       }
-      
+
     } catch (Exception e) {
       println("      ⚠ Error analyzing structure complexity: " + e.getMessage());
     }
   }
 
-  /**
-   * Calculate overall structure complexity score for packer identification
-   */
+  /** Calculate overall structure complexity score for packer identification */
   private int calculateStructureComplexityScore() {
     if (packerStructures.isEmpty()) return 0;
-    
+
     int totalComplexity = 0;
     int structureCount = packerStructures.size();
-    
+
     for (Structure struct : packerStructures) {
       int componentCount = struct.getNumComponents();
       int size = struct.getLength();
-      
+
       // Higher complexity for structures with many components or unusual sizes
       int structComplexity = Math.min(100, (componentCount * 10) + (size > 1000 ? 30 : 0));
       totalComplexity += structComplexity;
     }
-    
+
     return Math.min(100, totalComplexity / structureCount);
   }
 
@@ -7164,142 +7171,139 @@ public class AutomatedUnpacker extends GhidraScript {
    */
   private void performComprehensiveAddressSpaceAnalysis() throws Exception {
     if (currentProgram == null) return;
-    
+
     analyzedSpaces.clear();
     Memory memory = currentProgram.getMemory();
-    
+
     try {
       // Analyze each memory block's address space
       for (MemoryBlock block : memory.getBlocks()) {
         if (monitor.isCancelled()) break;
-        
+
         AddressSpace space = block.getStart().getAddressSpace();
         if (analyzedSpaces.contains(space)) continue;
-        
+
         analyzedSpaces.add(space);
-        
+
         // Perform comprehensive analysis of this address space
         analyzeAddressSpaceCharacteristics(space, block);
-        
+
         // Check for packer-specific memory layouts
         detectPackerMemoryPatterns(space, block);
-        
+
         // Analyze code vs data distribution
         analyzeCodeDataDistribution(space, block);
       }
-      
+
       println("    Analyzed " + analyzedSpaces.size() + " distinct address spaces");
-      
+
       // Store analysis results for ML feature vector
       mlFeatureVector.put("address_space_count", (double) analyzedSpaces.size());
       mlFeatureVector.put("memory_fragmentation", calculateMemoryFragmentation());
-      
+
       // Update confidence scores
-      confidenceScores.put("address_space_analysis", 
-        Math.min(100, analyzedSpaces.size() * 25));
-        
+      confidenceScores.put("address_space_analysis", Math.min(100, analyzedSpaces.size() * 25));
+
     } catch (Exception e) {
       println("    ⚠ Error in address space analysis: " + e.getMessage());
     }
   }
 
-  /**
-   * Analyze characteristics of individual address space for packer detection
-   */
+  /** Analyze characteristics of individual address space for packer detection */
   private void analyzeAddressSpaceCharacteristics(AddressSpace space, MemoryBlock block) {
     try {
       // Analyze address space properties
       boolean isOverlay = space.isOverlaySpace();
       boolean isLoadedMemory = space.isLoadedMemorySpace();
       boolean isVariableSpace = space.isVariableSpace();
-      
+
       // Calculate entropy and pattern indicators
       long blockSize = block.getSize();
       boolean isExecutable = block.isExecute();
       boolean isWritable = block.isWrite();
       boolean isInitialized = block.isInitialized();
-      
+
       // Store characteristics for packer classification
       if (isExecutable && blockSize < 0x1000) {
-        mlFeatureVector.put("small_executable_sections", 
-          mlFeatureVector.getOrDefault("small_executable_sections", 0.0) + 1.0);
+        mlFeatureVector.put(
+            "small_executable_sections",
+            mlFeatureVector.getOrDefault("small_executable_sections", 0.0) + 1.0);
       }
-      
+
       if (isWritable && isExecutable) {
-        mlFeatureVector.put("rwx_sections", 
-          mlFeatureVector.getOrDefault("rwx_sections", 0.0) + 1.0);
+        mlFeatureVector.put(
+            "rwx_sections", mlFeatureVector.getOrDefault("rwx_sections", 0.0) + 1.0);
       }
-      
+
       if (!isInitialized && isExecutable) {
-        mlFeatureVector.put("uninitialized_executable", 
-          mlFeatureVector.getOrDefault("uninitialized_executable", 0.0) + 1.0);
+        mlFeatureVector.put(
+            "uninitialized_executable",
+            mlFeatureVector.getOrDefault("uninitialized_executable", 0.0) + 1.0);
       }
-      
+
     } catch (Exception e) {
       println("      ⚠ Error analyzing address space characteristics: " + e.getMessage());
     }
   }
 
-  /**
-   * Detect packer-specific memory patterns in address space
-   */
+  /** Detect packer-specific memory patterns in address space */
   private void detectPackerMemoryPatterns(AddressSpace space, MemoryBlock block) {
     try {
       String blockName = block.getName().toLowerCase();
-      
+
       // Check for common packer section names
       String[] packerSectionPatterns = {
         "upx", "vmprotect", "themida", "obsidium", "pecompact", "aspack", "fsg", "mew"
       };
-      
+
       for (String pattern : packerSectionPatterns) {
         if (blockName.contains(pattern)) {
           detectedAntiUnpackingTechniques.add("PACKER_SECTION_" + pattern.toUpperCase());
-          mlFeatureVector.put("known_packer_sections", 
-            mlFeatureVector.getOrDefault("known_packer_sections", 0.0) + 1.0);
+          mlFeatureVector.put(
+              "known_packer_sections",
+              mlFeatureVector.getOrDefault("known_packer_sections", 0.0) + 1.0);
           break;
         }
       }
-      
+
       // Analyze unusual section characteristics
       if (block.getSize() > 0x10000000) { // > 256MB
-        mlFeatureVector.put("oversized_sections", 
-          mlFeatureVector.getOrDefault("oversized_sections", 0.0) + 1.0);
+        mlFeatureVector.put(
+            "oversized_sections", mlFeatureVector.getOrDefault("oversized_sections", 0.0) + 1.0);
       }
-      
+
       // Check for packed section indicators
       if (block.isExecute() && !block.isInitialized()) {
-        mlFeatureVector.put("packed_section_indicators", 
-          mlFeatureVector.getOrDefault("packed_section_indicators", 0.0) + 1.0);
+        mlFeatureVector.put(
+            "packed_section_indicators",
+            mlFeatureVector.getOrDefault("packed_section_indicators", 0.0) + 1.0);
       }
-      
+
     } catch (Exception e) {
       println("      ⚠ Error detecting packer memory patterns: " + e.getMessage());
     }
   }
 
-  /**
-   * Analyze code vs data distribution for packer identification
-   */
+  /** Analyze code vs data distribution for packer identification */
   private void analyzeCodeDataDistribution(AddressSpace space, MemoryBlock block) {
     try {
       if (!block.isExecute()) return;
-      
+
       Address start = block.getStart();
       Address end = block.getEnd();
-      
+
       int instructionCount = 0;
       int dataCount = 0;
-      
+
       // Sample analysis to avoid performance issues
-      int sampleInterval = Math.max(1, (int)(block.getSize() / 1000));
-      
+      int sampleInterval = Math.max(1, (int) (block.getSize() / 1000));
+
       for (long offset = 0; offset < block.getSize(); offset += sampleInterval) {
         if (monitor.isCancelled()) break;
-        
+
         Address addr = start.add(offset);
         if (addr.compareTo(end) > 0) break;
-        
+
         try {
           Instruction inst = currentProgram.getListing().getInstructionAt(addr);
           if (inst != null) {
@@ -7311,202 +7315,200 @@ public class AutomatedUnpacker extends GhidraScript {
           // Continue sampling
         }
       }
-      
+
       // Calculate code density
       double codeDensity = (double) instructionCount / Math.max(1, instructionCount + dataCount);
-      
+
       // Store code density for packer analysis
       mlFeatureVector.put("code_density_" + block.getName(), codeDensity);
-      
+
       // Low code density in executable sections indicates packing
       if (codeDensity < 0.1) {
-        mlFeatureVector.put("low_code_density_sections", 
-          mlFeatureVector.getOrDefault("low_code_density_sections", 0.0) + 1.0);
+        mlFeatureVector.put(
+            "low_code_density_sections",
+            mlFeatureVector.getOrDefault("low_code_density_sections", 0.0) + 1.0);
       }
-      
+
     } catch (Exception e) {
       println("      ⚠ Error analyzing code/data distribution: " + e.getMessage());
     }
   }
 
-  /**
-   * Calculate memory fragmentation score
-   */
+  /** Calculate memory fragmentation score */
   private double calculateMemoryFragmentation() {
     try {
       Memory memory = currentProgram.getMemory();
       int totalBlocks = 0;
       long totalSize = 0;
       long maxBlockSize = 0;
-      
+
       for (MemoryBlock block : memory.getBlocks()) {
         totalBlocks++;
         long blockSize = block.getSize();
         totalSize += blockSize;
         maxBlockSize = Math.max(maxBlockSize, blockSize);
       }
-      
+
       if (totalBlocks == 0 || totalSize == 0) return 0.0;
-      
+
       // Higher fragmentation score indicates more fragmented memory layout
       double avgBlockSize = (double) totalSize / totalBlocks;
       double fragmentation = 1.0 - (avgBlockSize / Math.max(1, maxBlockSize));
-      
+
       return Math.max(0.0, Math.min(1.0, fragmentation));
-      
+
     } catch (Exception e) {
       return 0.0;
     }
   }
 
   /**
-   * Comprehensive register state monitoring utilizing registerStates for unpacking progression tracking
-   * Monitors register state changes to detect unpacking progression and identify key unpacking moments
+   * Comprehensive register state monitoring utilizing registerStates for unpacking progression
+   * tracking Monitors register state changes to detect unpacking progression and identify key
+   * unpacking moments
    */
   private void performAdvancedRegisterStateAnalysis() throws Exception {
     if (currentProgram == null) return;
-    
+
     registerStates.clear();
     Memory memory = currentProgram.getMemory();
-    
+
     try {
       Address entryPoint = currentProgram.getImageBase();
       if (currentProgram.getSymbolTable().getExternalEntryPointIterator().hasNext()) {
-        entryPoint = currentProgram.getSymbolTable().getExternalEntryPointIterator().next().getAddress();
+        entryPoint =
+            currentProgram.getSymbolTable().getExternalEntryPointIterator().next().getAddress();
       }
-      
+
       // Analyze register usage patterns around entry point
       analyzeEntryPointRegisterPatterns(entryPoint);
-      
+
       // Track register state changes through unpacking layers
       for (UnpackingLayer layer : unpackingLayers) {
         analyzeLayerRegisterTransitions(layer);
       }
-      
+
       // Analyze register manipulation in possible OEPs
       for (Address oep : possibleOEPs) {
         analyzeOEPRegisterState(oep);
       }
-      
+
       println("    Tracked " + registerStates.size() + " register state transitions");
-      
+
       // Calculate register analysis metrics
       calculateRegisterAnalysisMetrics();
-      
+
     } catch (Exception e) {
       println("    ⚠ Error in register state analysis: " + e.getMessage());
     }
   }
 
-  /**
-   * Analyze register usage patterns around entry point
-   */
+  /** Analyze register usage patterns around entry point */
   private void analyzeEntryPointRegisterPatterns(Address entryPoint) {
     try {
       // Analyze instructions in 64-byte window around entry point
       Address start = entryPoint.subtract(32);
       Address end = entryPoint.add(32);
-      
+
       InstructionIterator iter = currentProgram.getListing().getInstructions(start, true);
       while (iter.hasNext() && !monitor.isCancelled()) {
         Instruction inst = iter.next();
         if (inst.getAddress().compareTo(end) > 0) break;
-        
+
         // Analyze register operations
         analyzeInstructionRegisterUsage(inst);
       }
-      
+
     } catch (Exception e) {
       println("      ⚠ Error analyzing entry point register patterns: " + e.getMessage());
     }
   }
 
-  /**
-   * Track register state changes through unpacking layers
-   */
+  /** Track register state changes through unpacking layers */
   private void analyzeLayerRegisterTransitions(UnpackingLayer layer) {
     try {
       Address layerStart = layer.startAddress;
       Address layerEnd = layer.endAddress;
-      
+
       // Sample key instructions in this layer
       InstructionIterator iter = currentProgram.getListing().getInstructions(layerStart, true);
       int sampleCount = 0;
       final int MAX_SAMPLES = 50; // Limit sampling for performance
-      
+
       while (iter.hasNext() && sampleCount < MAX_SAMPLES && !monitor.isCancelled()) {
         Instruction inst = iter.next();
         if (inst.getAddress().compareTo(layerEnd) > 0) break;
-        
+
         analyzeInstructionRegisterUsage(inst);
         sampleCount++;
       }
-      
+
       // Store layer-specific register metrics
       mlFeatureVector.put("layer_" + layer.layerNumber + "_register_ops", (double) sampleCount);
-      
+
     } catch (Exception e) {
       println("      ⚠ Error analyzing layer register transitions: " + e.getMessage());
     }
   }
 
-  /**
-   * Analyze register state at possible Original Entry Points
-   */
+  /** Analyze register state at possible Original Entry Points */
   private void analyzeOEPRegisterState(Address oep) {
     try {
       // Analyze register setup at OEP
       Instruction oepInst = currentProgram.getListing().getInstructionAt(oep);
       if (oepInst == null) return;
-      
+
       // Check for typical OEP register patterns
       String mnemonic = oepInst.getMnemonicString().toLowerCase();
-      
+
       // Store register state information
       RegisterValue regValue = new RegisterValue();
       registerStates.put(oep, regValue);
-      
+
       // Analyze common OEP register operations
       if (mnemonic.equals("push") || mnemonic.equals("mov") || mnemonic.equals("call")) {
-        mlFeatureVector.put("oep_register_setup_ops", 
-          mlFeatureVector.getOrDefault("oep_register_setup_ops", 0.0) + 1.0);
+        mlFeatureVector.put(
+            "oep_register_setup_ops",
+            mlFeatureVector.getOrDefault("oep_register_setup_ops", 0.0) + 1.0);
       }
-      
+
       // Check for stack manipulation at OEP
-      if (mnemonic.contains("esp") || mnemonic.contains("rsp") || mnemonic.contains("ebp") || mnemonic.contains("rbp")) {
-        mlFeatureVector.put("oep_stack_manipulation", 
-          mlFeatureVector.getOrDefault("oep_stack_manipulation", 0.0) + 1.0);
+      if (mnemonic.contains("esp")
+          || mnemonic.contains("rsp")
+          || mnemonic.contains("ebp")
+          || mnemonic.contains("rbp")) {
+        mlFeatureVector.put(
+            "oep_stack_manipulation",
+            mlFeatureVector.getOrDefault("oep_stack_manipulation", 0.0) + 1.0);
       }
-      
+
     } catch (Exception e) {
       println("      ⚠ Error analyzing OEP register state: " + e.getMessage());
     }
   }
 
-  /**
-   * Analyze individual instruction register usage
-   */
+  /** Analyze individual instruction register usage */
   private void analyzeInstructionRegisterUsage(Instruction inst) {
     try {
       String mnemonic = inst.getMnemonicString().toLowerCase();
-      
+
       // Count different types of register operations
       if (mnemonic.equals("mov")) {
-        mlFeatureVector.put("mov_instructions", 
-          mlFeatureVector.getOrDefault("mov_instructions", 0.0) + 1.0);
+        mlFeatureVector.put(
+            "mov_instructions", mlFeatureVector.getOrDefault("mov_instructions", 0.0) + 1.0);
       } else if (mnemonic.equals("push") || mnemonic.equals("pop")) {
-        mlFeatureVector.put("stack_operations", 
-          mlFeatureVector.getOrDefault("stack_operations", 0.0) + 1.0);
+        mlFeatureVector.put(
+            "stack_operations", mlFeatureVector.getOrDefault("stack_operations", 0.0) + 1.0);
       } else if (mnemonic.equals("call") || mnemonic.equals("ret")) {
-        mlFeatureVector.put("control_transfer", 
-          mlFeatureVector.getOrDefault("control_transfer", 0.0) + 1.0);
+        mlFeatureVector.put(
+            "control_transfer", mlFeatureVector.getOrDefault("control_transfer", 0.0) + 1.0);
       }
-      
+
       // Analyze operand types for advanced pattern recognition
       int numOperands = inst.getNumOperands();
       for (int i = 0; i < numOperands; i++) {
         int opType = inst.getOperandType(i);
-        
+
         // Map register operands
         if ((opType & OperandType.REGISTER) != 0) {
           Register[] regs = inst.getOpObjects(i, Register.class);
@@ -7515,35 +7517,33 @@ public class AutomatedUnpacker extends GhidraScript {
           }
         }
       }
-      
+
     } catch (Exception e) {
       // Continue analysis
     }
   }
 
-  /**
-   * Calculate comprehensive register analysis metrics
-   */
+  /** Calculate comprehensive register analysis metrics */
   private void calculateRegisterAnalysisMetrics() {
     try {
       int totalRegisterOps = registerStates.size();
       int mappedOperands = operandTypeMap.size();
-      
+
       // Calculate register usage complexity
       double registerComplexity = (double) totalRegisterOps / Math.max(1, possibleOEPs.size());
-      
+
       // Store metrics for ML classification
       mlFeatureVector.put("register_operation_density", registerComplexity);
       mlFeatureVector.put("mapped_operand_types", (double) mappedOperands);
-      
+
       // Calculate confidence based on register analysis depth
       int analysisDepth = Math.min(100, (totalRegisterOps * 2) + (mappedOperands / 10));
       confidenceScores.put("register_analysis", analysisDepth);
-      
+
       if (registerComplexity > 10.0) {
         detectedAntiUnpackingTechniques.add("COMPLEX_REGISTER_MANIPULATION");
       }
-      
+
     } catch (Exception e) {
       println("      ⚠ Error calculating register analysis metrics: " + e.getMessage());
     }
@@ -7555,17 +7555,22 @@ public class AutomatedUnpacker extends GhidraScript {
    */
   private void performPackerEnumerationAnalysis() throws Exception {
     if (currentProgram == null) return;
-    
+
     packerEnums.clear();
     DataTypeManager dtm = currentProgram.getDataTypeManager();
-    
+
     try {
       // Search for packer-specific enumeration types
       String[] commonPackerEnums = {
-        "PROTECTION_TYPE", "PACKER_VERSION", "ENCRYPTION_METHOD", "COMPRESSION_ALGO",
-        "ANTI_DEBUG_TYPE", "VM_DETECTION_METHOD", "API_OBFUSCATION_TYPE"
+        "PROTECTION_TYPE",
+        "PACKER_VERSION",
+        "ENCRYPTION_METHOD",
+        "COMPRESSION_ALGO",
+        "ANTI_DEBUG_TYPE",
+        "VM_DETECTION_METHOD",
+        "API_OBFUSCATION_TYPE"
       };
-      
+
       for (String enumName : commonPackerEnums) {
         DataType dt = dtm.getDataType(enumName);
         if (dt instanceof Enum) {
@@ -7574,12 +7579,12 @@ public class AutomatedUnpacker extends GhidraScript {
           analyzePackerEnum(enumType);
         }
       }
-      
+
       // Scan for custom packer enumerations by analyzing constants
       scanForPackerConstants();
-      
+
       println("    Analyzed " + packerEnums.size() + " packer-related enumerations");
-      
+
       // Calculate enumeration analysis confidence
       if (!packerEnums.isEmpty()) {
         int enumComplexity = calculateEnumComplexityScore();
@@ -7587,116 +7592,117 @@ public class AutomatedUnpacker extends GhidraScript {
         mlFeatureVector.put("packer_enum_count", (double) packerEnums.size());
         mlFeatureVector.put("enum_complexity", (double) enumComplexity / 100.0);
       }
-      
+
     } catch (Exception e) {
       println("    ⚠ Error in packer enumeration analysis: " + e.getMessage());
     }
   }
 
-  /**
-   * Analyze individual packer enumeration for classification
-   */
+  /** Analyze individual packer enumeration for classification */
   private void analyzePackerEnum(Enum enumType) {
     try {
       String enumName = enumType.getName().toLowerCase();
       long enumCount = enumType.getCount();
-      
+
       // Check for known packer enumeration patterns
       if (enumName.contains("vmprotect") || enumName.contains("vmp")) {
         detectedAntiUnpackingTechniques.add("VMPROTECT_ENUMERATION");
-        mlFeatureVector.put("vmprotect_indicators", 
-          mlFeatureVector.getOrDefault("vmprotect_indicators", 0.0) + 1.0);
+        mlFeatureVector.put(
+            "vmprotect_indicators",
+            mlFeatureVector.getOrDefault("vmprotect_indicators", 0.0) + 1.0);
       } else if (enumName.contains("themida") || enumName.contains("winlicense")) {
         detectedAntiUnpackingTechniques.add("THEMIDA_ENUMERATION");
-        mlFeatureVector.put("themida_indicators", 
-          mlFeatureVector.getOrDefault("themida_indicators", 0.0) + 1.0);
+        mlFeatureVector.put(
+            "themida_indicators", mlFeatureVector.getOrDefault("themida_indicators", 0.0) + 1.0);
       } else if (enumName.contains("obsidium") || enumName.contains("obs")) {
         detectedAntiUnpackingTechniques.add("OBSIDIUM_ENUMERATION");
-        mlFeatureVector.put("obsidium_indicators", 
-          mlFeatureVector.getOrDefault("obsidium_indicators", 0.0) + 1.0);
+        mlFeatureVector.put(
+            "obsidium_indicators", mlFeatureVector.getOrDefault("obsidium_indicators", 0.0) + 1.0);
       }
-      
+
       // Analyze enumeration complexity
       if (enumCount > 50) {
-        mlFeatureVector.put("complex_enumerations", 
-          mlFeatureVector.getOrDefault("complex_enumerations", 0.0) + 1.0);
+        mlFeatureVector.put(
+            "complex_enumerations",
+            mlFeatureVector.getOrDefault("complex_enumerations", 0.0) + 1.0);
       }
-      
+
       // Check for obfuscated enumeration values
       String[] enumNames = enumType.getNames();
       for (String name : enumNames) {
         if (name.matches(".*[0-9]{4,}.*|.*[a-fA-F0-9]{8,}.*")) {
-          mlFeatureVector.put("obfuscated_enum_values", 
-            mlFeatureVector.getOrDefault("obfuscated_enum_values", 0.0) + 1.0);
+          mlFeatureVector.put(
+              "obfuscated_enum_values",
+              mlFeatureVector.getOrDefault("obfuscated_enum_values", 0.0) + 1.0);
           break;
         }
       }
-      
+
     } catch (Exception e) {
       println("      ⚠ Error analyzing packer enumeration: " + e.getMessage());
     }
   }
 
-  /**
-   * Scan for packer-specific constants that may indicate enumeration usage
-   */
+  /** Scan for packer-specific constants that may indicate enumeration usage */
   private void scanForPackerConstants() {
     try {
       SymbolTable symbolTable = currentProgram.getSymbolTable();
       SymbolIterator symbols = symbolTable.getAllSymbols(true);
-      
+
       // Known packer constant patterns
-      Map<String, String> packerConstants = new HashMap<String, String>() {{
-        put("0x564D5020", "VMProtect_Signature");
-        put("0x54484D44", "Themida_Signature");  
-        put("0x4F425349", "Obsidium_Signature");
-        put("0x555058", "UPX_Signature");
-        put("0x41534B50", "ASPack_Signature");
-      }};
-      
+      Map<String, String> packerConstants =
+          new HashMap<String, String>() {
+            {
+              put("0x564D5020", "VMProtect_Signature");
+              put("0x54484D44", "Themida_Signature");
+              put("0x4F425349", "Obsidium_Signature");
+              put("0x555058", "UPX_Signature");
+              put("0x41534B50", "ASPack_Signature");
+            }
+          };
+
       while (symbols.hasNext() && !monitor.isCancelled()) {
         Symbol symbol = symbols.next();
         String name = symbol.getName().toLowerCase();
-        
+
         // Check for packer-specific constant patterns
         for (Map.Entry<String, String> entry : packerConstants.entrySet()) {
-          if (name.contains(entry.getKey().toLowerCase()) || 
-              name.contains(entry.getValue().toLowerCase())) {
-            
+          if (name.contains(entry.getKey().toLowerCase())
+              || name.contains(entry.getValue().toLowerCase())) {
+
             // Create synthetic enum for this packer type
             mlFeatureVector.put("packer_constants_" + entry.getValue(), 1.0);
             detectedAntiUnpackingTechniques.add("CONSTANT_" + entry.getValue().toUpperCase());
             break;
           }
         }
-        
+
         // Check for generic protection constants
         if (name.matches(".*protect.*|.*crypt.*|.*guard.*|.*shield.*|.*armor.*")) {
-          mlFeatureVector.put("protection_constants", 
-            mlFeatureVector.getOrDefault("protection_constants", 0.0) + 1.0);
+          mlFeatureVector.put(
+              "protection_constants",
+              mlFeatureVector.getOrDefault("protection_constants", 0.0) + 1.0);
         }
       }
-      
+
     } catch (Exception e) {
       println("      ⚠ Error scanning for packer constants: " + e.getMessage());
     }
   }
 
-  /**
-   * Calculate enumeration complexity score for packer classification
-   */
+  /** Calculate enumeration complexity score for packer classification */
   private int calculateEnumComplexityScore() {
     if (packerEnums.isEmpty()) return 0;
-    
+
     int totalComplexity = 0;
-    
+
     for (Enum enumType : packerEnums) {
       long enumCount = enumType.getCount();
       String[] names = enumType.getNames();
-      
+
       // Base complexity from count
-      int complexity = Math.min(30, (int)(enumCount * 2));
-      
+      int complexity = Math.min(30, (int) (enumCount * 2));
+
       // Additional complexity for obfuscated names
       int obfuscatedCount = 0;
       for (String name : names) {
@@ -7704,11 +7710,11 @@ public class AutomatedUnpacker extends GhidraScript {
           obfuscatedCount++;
         }
       }
-      
+
       complexity += Math.min(20, obfuscatedCount * 5);
       totalComplexity += complexity;
     }
-    
+
     return Math.min(100, totalComplexity / packerEnums.size());
   }
 }

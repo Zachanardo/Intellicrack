@@ -64,7 +64,7 @@ class BinaryInfo:
         strings: list = None,
         md5: str = "",
         sha256: str = "",
-    ):
+    ) -> None:
         """Initialize binary information container."""
         self.file_path = file_path
         self.file_size = file_size
@@ -87,7 +87,7 @@ class MultiFormatBinaryAnalyzer:
     and extracting relevant information for security research and reverse engineering.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the multi-format binary analyzer.
 
         Sets up the multi-format binary analyzer with support for PE, ELF,
@@ -107,7 +107,7 @@ class MultiFormatBinaryAnalyzer:
 
         self._check_available_backends()
 
-    def _check_available_backends(self):
+    def _check_available_backends(self) -> None:
         """Check which binary analysis backends are available."""
         if self.lief_available:
             self.logger.info("LIEF multi-format binary analysis available")
@@ -331,7 +331,7 @@ class MultiFormatBinaryAnalyzer:
                         {
                             "dll": dll_name,
                             "functions": imports,
-                        }
+                        },
                     )
 
             # Export information
@@ -343,7 +343,7 @@ class MultiFormatBinaryAnalyzer:
                             {
                                 "name": export_name,
                                 "address": hex(_exp.address),
-                            }
+                            },
                         )
 
             return info
@@ -664,7 +664,7 @@ class MultiFormatBinaryAnalyzer:
                             "name": "String IDs",
                             "offset": f"0x{string_ids_off:08X}",
                             "count": string_ids_size,
-                        }
+                        },
                     )
 
                 if type_ids_size > 0:
@@ -673,7 +673,7 @@ class MultiFormatBinaryAnalyzer:
                             "name": "Type IDs",
                             "offset": f"0x{type_ids_off:08X}",
                             "count": type_ids_size,
-                        }
+                        },
                     )
 
                 if proto_ids_size > 0:
@@ -682,7 +682,7 @@ class MultiFormatBinaryAnalyzer:
                             "name": "Proto IDs",
                             "offset": f"0x{proto_ids_off:08X}",
                             "count": proto_ids_size,
-                        }
+                        },
                     )
 
                 if field_ids_size > 0:
@@ -691,7 +691,7 @@ class MultiFormatBinaryAnalyzer:
                             "name": "Field IDs",
                             "offset": f"0x{field_ids_off:08X}",
                             "count": field_ids_size,
-                        }
+                        },
                     )
 
                 if method_ids_size > 0:
@@ -700,7 +700,7 @@ class MultiFormatBinaryAnalyzer:
                             "name": "Method IDs",
                             "offset": f"0x{method_ids_off:08X}",
                             "count": method_ids_size,
-                        }
+                        },
                     )
 
                 if class_defs_size > 0:
@@ -709,7 +709,7 @@ class MultiFormatBinaryAnalyzer:
                             "name": "Class Definitions",
                             "offset": f"0x{class_defs_off:08X}",
                             "count": class_defs_size,
-                        }
+                        },
                     )
 
                 return info
@@ -968,7 +968,7 @@ class MultiFormatBinaryAnalyzer:
                             "transaction_signature": int.from_bytes(header[56:60], byteorder="little"),
                             "mini_stream_cutoff": int.from_bytes(header[60:64], byteorder="little"),
                         },
-                    }
+                    },
                 )
 
                 return info
@@ -1194,7 +1194,7 @@ class MultiFormatBinaryAnalyzer:
                         "virtual_size": section.virtual_size,
                         "size": section.size,
                         "entropy": section.entropy if hasattr(section, "entropy") else 0,
-                    }
+                    },
                 )
             result["sections"] = sections
 
@@ -1257,7 +1257,7 @@ def run_multi_format_analysis(app, binary_path: str | Path | None = None) -> dic
         for _section in results["sections"]:
             entropy_str = f", Entropy: {_section['entropy']:.2f}" if "entropy" in _section else ""
             app.analyze_results.append(
-                f"  {_section['name']} - VA: {_section['virtual_address']}, Size: {_section['virtual_size']}{entropy_str}"
+                f"  {_section['name']} - VA: {_section['virtual_address']}, Size: {_section['virtual_size']}{entropy_str}",
             )
 
         app.analyze_results.append("\nImports:")

@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+import builtins
 import json as json_module
 import socket
 import ssl
@@ -142,7 +143,7 @@ except ImportError as e:
     class Response:
         """HTTP response object."""
 
-        def __init__(self):
+        def __init__(self) -> None:
             """Initialize response."""
             self.status_code = 200
             self.headers = CaseInsensitiveDict()
@@ -163,7 +164,7 @@ except ImportError as e:
                 self.text = self.content.decode(self.encoding)
             return json_module.loads(self.text)
 
-        def raise_for_status(self):
+        def raise_for_status(self) -> None:
             """Raise exception for bad status."""
             if 400 <= self.status_code < 600:
                 raise HTTPError(f"{self.status_code} Error: {self.reason}")
@@ -181,21 +182,20 @@ except ImportError as e:
         def iter_lines(self, chunk_size=512, decode_unicode=True):
             """Iterate over response lines."""
             text = self.text if decode_unicode else self.content.decode(self.encoding)
-            for line in text.splitlines():
-                yield line
+            yield from text.splitlines()
 
     # Case-insensitive dictionary
     class CaseInsensitiveDict(dict):
         """Case-insensitive dictionary for headers."""
 
-        def __init__(self, data=None):
+        def __init__(self, data=None) -> None:
             """Initialize dict."""
             super().__init__()
             if data:
                 for key, value in data.items():
                     self[key] = value
 
-        def __setitem__(self, key, value):
+        def __setitem__(self, key, value) -> None:
             """Set item with case-insensitive key."""
             super().__setitem__(key.lower() if isinstance(key, str) else key, value)
 
@@ -214,7 +214,7 @@ except ImportError as e:
     class RequestsCookieJar(dict):
         """Cookie jar for storing cookies."""
 
-        def set(self, name, value, domain=None, path=None):
+        def set(self, name, value, domain=None, path=None) -> None:
             """Set cookie."""
             self[name] = value
 
@@ -226,7 +226,7 @@ except ImportError as e:
     class PreparedRequest:
         """Prepared HTTP request."""
 
-        def __init__(self):
+        def __init__(self) -> None:
             """Initialize prepared request."""
             self.method = "GET"
             self.url = ""
@@ -235,8 +235,8 @@ except ImportError as e:
             self.hooks = {}
 
         def prepare(
-            self, method=None, url=None, headers=None, files=None, data=None, params=None, auth=None, cookies=None, hooks=None, json=None
-        ):
+            self, method=None, url=None, headers=None, files=None, data=None, params=None, auth=None, cookies=None, hooks=None, json=None,
+        ) -> None:
             """Prepare the request."""
             self.method = method or self.method
             self.url = url or self.url
@@ -266,7 +266,7 @@ except ImportError as e:
     class Session:
         """HTTP session with connection pooling and cookie persistence."""
 
-        def __init__(self):
+        def __init__(self) -> None:
             """Initialize session."""
             self.headers = CaseInsensitiveDict()
             self.cookies = RequestsCookieJar()
@@ -310,7 +310,7 @@ except ImportError as e:
             """Send OPTIONS request."""
             return self.request("OPTIONS", url, **kwargs)
 
-        def close(self):
+        def close(self) -> None:
             """Close session."""
             pass
 
@@ -326,7 +326,7 @@ except ImportError as e:
     class HTTPBasicAuth:
         """HTTP Basic Authentication."""
 
-        def __init__(self, username, password):
+        def __init__(self, username, password) -> None:
             """Initialize auth."""
             self.username = username
             self.password = password
@@ -334,7 +334,7 @@ except ImportError as e:
     class HTTPDigestAuth:
         """HTTP Digest Authentication."""
 
-        def __init__(self, username, password):
+        def __init__(self, username, password) -> None:
             """Initialize auth."""
             self.username = username
             self.password = password
@@ -343,7 +343,7 @@ except ImportError as e:
     class HTTPAdapter:
         """HTTP adapter for connection pooling."""
 
-        def __init__(self, pool_connections=10, pool_maxsize=10, max_retries=0):
+        def __init__(self, pool_connections=10, pool_maxsize=10, max_retries=0) -> None:
             """Initialize adapter."""
             self.pool_connections = pool_connections
             self.pool_maxsize = pool_maxsize
@@ -352,7 +352,7 @@ except ImportError as e:
     class Retry:
         """Retry configuration."""
 
-        def __init__(self, total=10, read=None, connect=None, backoff_factor=0):
+        def __init__(self, total=10, read=None, connect=None, backoff_factor=0) -> None:
             """Initialize retry."""
             self.total = total
             self.read = read
@@ -487,7 +487,7 @@ except ImportError as e:
             else:
                 raise ConnectionError(f"Connection error: {e.reason}") from e
 
-        except socket.timeout as e:
+        except builtins.TimeoutError as e:
             raise TimeoutError(f"Request timed out: {url}") from e
 
         except Exception as e:

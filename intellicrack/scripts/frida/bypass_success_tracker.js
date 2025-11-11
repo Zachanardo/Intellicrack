@@ -684,38 +684,38 @@ const BypassSuccessTracker = {
             var retVal = returnValue.toInt32();
 
             switch (category) {
-            case 'antiDebugBypass':
-                return this.evaluateAntiDebugSuccess(method, args, retVal);
+                case 'antiDebugBypass':
+                    return this.evaluateAntiDebugSuccess(method, args, retVal);
 
-            case 'licensingBypass':
-                return this.evaluateLicensingSuccess(method, args, retVal);
+                case 'licensingBypass':
+                    return this.evaluateLicensingSuccess(method, args, retVal);
 
-            case 'drmBypass':
-                return this.evaluateDrmSuccess(method, args, retVal);
+                case 'drmBypass':
+                    return this.evaluateDrmSuccess(method, args, retVal);
 
-            case 'integrityBypass':
-                return this.evaluateIntegritySuccess(method, args, retVal);
+                case 'integrityBypass':
+                    return this.evaluateIntegritySuccess(method, args, retVal);
 
-            case 'virtualizationBypass':
-                return this.evaluateVirtualizationSuccess(method, args, retVal);
+                case 'virtualizationBypass':
+                    return this.evaluateVirtualizationSuccess(method, args, retVal);
 
-            case 'hardwareBypass':
-                return this.evaluateHardwareSuccess(method, args, retVal);
+                case 'hardwareBypass':
+                    return this.evaluateHardwareSuccess(method, args, retVal);
 
-            case 'networkBypass':
-                return this.evaluateNetworkSuccess(method, args, retVal);
+                case 'networkBypass':
+                    return this.evaluateNetworkSuccess(method, args, retVal);
 
-            case 'cryptographyBypass':
-                return this.evaluateCryptographySuccess(method, args, retVal);
+                case 'cryptographyBypass':
+                    return this.evaluateCryptographySuccess(method, args, retVal);
 
-            case 'memoryBypass':
-                return this.evaluateMemorySuccess(method, args, retVal);
+                case 'memoryBypass':
+                    return this.evaluateMemorySuccess(method, args, retVal);
 
-            case 'registryBypass':
-                return this.evaluateRegistrySuccess(method, args, retVal);
+                case 'registryBypass':
+                    return this.evaluateRegistrySuccess(method, args, retVal);
 
-            default:
-                return retVal !== 0; // Generic success evaluation
+                default:
+                    return retVal !== 0; // Generic success evaluation
             }
         } catch (e) {
             send('[Tracker] Evaluation error: ' + e.message);
@@ -726,17 +726,17 @@ const BypassSuccessTracker = {
     evaluateAntiDebugSuccess: function (method, _args, returnValue) {
         // Anti-debug bypass is successful if debugger presence is hidden
         switch (method) {
-        case 'IsDebuggerPresent':
-            return returnValue === 0; // FALSE = no debugger detected
+            case 'IsDebuggerPresent':
+                return returnValue === 0; // FALSE = no debugger detected
 
-        case 'CheckRemoteDebuggerPresent':
-            return returnValue !== 0; // Success in hooking the call
+            case 'CheckRemoteDebuggerPresent':
+                return returnValue !== 0; // Success in hooking the call
 
-        case 'NtQueryInformationProcess':
-            return returnValue !== 0; // Success in blocking/modifying the call
+            case 'NtQueryInformationProcess':
+                return returnValue !== 0; // Success in blocking/modifying the call
 
-        default:
-            return returnValue === 0;
+            default:
+                return returnValue === 0;
         }
     },
 
@@ -754,15 +754,15 @@ const BypassSuccessTracker = {
     evaluateIntegritySuccess: function (method, _args, returnValue) {
         // Integrity bypass is successful if checks pass or are bypassed
         switch (method) {
-        case 'CryptHashData':
-        case 'CryptVerifySignature':
-            return returnValue !== 0; // Non-zero = success
+            case 'CryptHashData':
+            case 'CryptVerifySignature':
+                return returnValue !== 0; // Non-zero = success
 
-        case 'MapFileAndCheckSum':
-            return returnValue === 0; // Zero = success
+            case 'MapFileAndCheckSum':
+                return returnValue === 0; // Zero = success
 
-        default:
-            return returnValue !== 0;
+            default:
+                return returnValue !== 0;
         }
     },
 
@@ -867,18 +867,18 @@ const BypassSuccessTracker = {
 
     generateAlertMessage: function (alertType, data) {
         switch (alertType) {
-        case 'low_success_rate':
-            return (
-                'Low success rate detected for ' +
+            case 'low_success_rate':
+                return (
+                    'Low success rate detected for ' +
                     data.category +
                     ': ' +
                     (data.successRate * 100).toFixed(1) +
                     '% (' +
                     data.attempts +
                     ' attempts)'
-            );
-        default:
-            return 'Alert: ' + alertType;
+                );
+            default:
+                return 'Alert: ' + alertType;
         }
     },
 
@@ -999,16 +999,16 @@ const BypassSuccessTracker = {
 
     getTimeWindow: function (timeframe) {
         switch (timeframe) {
-        case 'hourly':
-            return 3600000; // 1 hour
-        case 'daily':
-            return 86400000; // 24 hours
-        case 'weekly':
-            return 604800000; // 7 days
-        case 'monthly':
-            return 2592000000; // 30 days
-        default:
-            return 3600000;
+            case 'hourly':
+                return 3600000; // 1 hour
+            case 'daily':
+                return 86400000; // 24 hours
+            case 'weekly':
+                return 604800000; // 7 days
+            case 'monthly':
+                return 2592000000; // 30 days
+            default:
+                return 3600000;
         }
     },
 
@@ -1208,16 +1208,16 @@ const BypassSuccessTracker = {
 
     getFactorValue: function (item, factor) {
         switch (factor) {
-        case 'successRate':
-            return item.successRate;
-        case 'duration':
-            return item.avgDuration;
-        case 'attempts':
-            return item.attempts;
-        case 'timestamp':
-            return item.lastAttempt;
-        default:
-            return 0;
+            case 'successRate':
+                return item.successRate;
+            case 'duration':
+                return item.avgDuration;
+            case 'attempts':
+                return item.attempts;
+            case 'timestamp':
+                return item.lastAttempt;
+            default:
+                return 0;
         }
     },
 

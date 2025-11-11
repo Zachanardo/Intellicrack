@@ -163,7 +163,7 @@ class DenuvoTicketAnalyzer:
     HEADER_SIZE_V6 = 96
     HEADER_SIZE_V7 = 128
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize ticket analyzer."""
         self.crypto_available = CRYPTO_AVAILABLE
         self.known_keys = self._load_known_keys()
@@ -385,7 +385,7 @@ class DenuvoTicketAnalyzer:
                     expiration_time,
                     license_type,
                     features_enabled,
-                )
+                ),
             )
 
             signature = self._sign_token(bytes(token_data))

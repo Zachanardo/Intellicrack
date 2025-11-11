@@ -59,7 +59,7 @@ class AdvancedPatternLibrary:
     All patterns lead to functional bypass code generation.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the advanced pattern library.
 
         Sets up pattern storage, success tracking, and learning data structures
@@ -70,7 +70,7 @@ class AdvancedPatternLibrary:
         self.learning_data = {}
         self._initialize_patterns()
 
-    def _initialize_patterns(self):
+    def _initialize_patterns(self) -> None:
         """Initialize all protection patterns."""
         # License Check Patterns
         self.patterns["string_comparison_license"] = ProtectionPattern(
@@ -622,7 +622,7 @@ for crypto_func in crypto_functions:
 
         return detected_patterns
 
-    def update_success_rate(self, pattern_name: str, success: bool):
+    def update_success_rate(self, pattern_name: str, success: bool) -> None:
         """Update pattern success rate based on results."""
         if pattern_name not in self.success_history:
             self.success_history[pattern_name] = {"attempts": 0, "successes": 0}

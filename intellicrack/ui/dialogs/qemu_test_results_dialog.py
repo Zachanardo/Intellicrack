@@ -139,7 +139,7 @@ class QEMUExecutionThread(QThread):
         self.progress_update.emit(30, "Loading target binary in VM...")
 
         # Real execution with output streaming
-        def output_callback(line: str):
+        def output_callback(line: str) -> None:
             self.output_update.emit(line)
 
         # Execute with real-time output capture

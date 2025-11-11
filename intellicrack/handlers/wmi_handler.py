@@ -38,7 +38,7 @@ with warnings.catch_warnings():
         class FallbackWMI:
             """Fallback WMI class for non-Windows platforms."""
 
-            def __init__(self):
+            def __init__(self) -> None:
                 logger.error("WMI fallback activated due to import failure")
 
             def __getattr__(self, name):

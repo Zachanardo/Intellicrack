@@ -101,7 +101,7 @@ class PatternMatch:
 class BinaryPatternDetector:
     """Advanced binary pattern detection with production-ready algorithms."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize binary pattern detector."""
         self.patterns: Dict[str, List[BinaryPattern]] = defaultdict(list)
         self.compiled_patterns: Dict[str, Any] = {}
@@ -121,7 +121,7 @@ class BinaryPatternDetector:
 
         self._initialize_core_patterns()
 
-    def _initialize_core_patterns(self):
+    def _initialize_core_patterns(self) -> None:
         """Initialize sophisticated binary patterns for modern licensing protection detection."""
         # Advanced anti-debug patterns with mutation resistance
         self.add_pattern(
@@ -133,7 +133,7 @@ class BinaryPatternDetector:
                 match_type=PatternMatchType.EXACT,
                 description="PEB.BeingDebugged flag check",
                 confidence=0.95,
-            )
+            ),
         )
 
         # NtGlobalFlag check with position-independent matching
@@ -147,7 +147,7 @@ class BinaryPatternDetector:
                 description="NtGlobalFlag debugging detection",
                 confidence=0.9,
                 position_independent=True,
-            )
+            ),
         )
 
         # Modern VMProtect 3.x detection patterns
@@ -162,7 +162,7 @@ class BinaryPatternDetector:
                 confidence=0.96,
                 relocatable=True,
                 metadata={"version": "3.x", "bypass_difficulty": "extreme"},
-            )
+            ),
         )
 
         # Denuvo Anti-Tamper v11+ patterns
@@ -177,7 +177,7 @@ class BinaryPatternDetector:
                 confidence=0.93,
                 position_independent=True,
                 metadata={"drm_type": "denuvo", "version": "11+"},
-            )
+            ),
         )
 
         # Steam DRM with CEG (Custom Executable Generation) protection
@@ -191,7 +191,7 @@ class BinaryPatternDetector:
                 description="Steam CEG (Custom Executable Generation) DRM validation routine",
                 confidence=0.91,
                 metadata={"drm_type": "steam_ceg", "patch_priority": "high", "bypass_method": "nop_validation"},
-            )
+            ),
         )
 
         # Arxan TransformIT obfuscation pattern
@@ -206,7 +206,7 @@ class BinaryPatternDetector:
                 confidence=0.88,
                 relocatable=True,
                 metadata={"obfuscator": "arxan", "level": "aggressive"},
-            )
+            ),
         )
 
         # Modern hardware-locked licensing (HASP/Sentinel)
@@ -221,7 +221,7 @@ class BinaryPatternDetector:
                 confidence=0.94,
                 relocatable=True,
                 metadata={"license_type": "hardware_dongle", "vendor": "sentinel"},
-            )
+            ),
         )
 
         # FlexLM/FlexNet licensing system
@@ -236,7 +236,7 @@ class BinaryPatternDetector:
                 confidence=0.92,
                 relocatable=True,
                 metadata={"license_type": "floating", "vendor": "flexera"},
-            )
+            ),
         )
 
         # Themida/WinLicense advanced virtualization
@@ -251,7 +251,7 @@ class BinaryPatternDetector:
                 confidence=0.95,
                 position_independent=True,
                 metadata={"vm_type": "cisc", "complexity": "extreme"},
-            )
+            ),
         )
 
         # SecuROM v8+ activation system
@@ -266,7 +266,7 @@ class BinaryPatternDetector:
                 confidence=0.89,
                 relocatable=True,
                 metadata={"activation_type": "online", "vendor": "sony"},
-            )
+            ),
         )
 
         # Code Virtualizer polymorphic engine
@@ -280,7 +280,7 @@ class BinaryPatternDetector:
                 description="Code Virtualizer polymorphic mutation engine",
                 confidence=0.91,
                 metadata={"engine": "polymorphic", "mutation_rate": "high"},
-            )
+            ),
         )
 
         # Modern .NET licensing (ConfuserEx + custom)
@@ -294,7 +294,7 @@ class BinaryPatternDetector:
                 description=".NET ConfuserEx protected license validation",
                 confidence=0.87,
                 metadata={"platform": ".net", "obfuscator": "confuserex"},
-            )
+            ),
         )
 
         # Advanced UPX 4.x with LZMA2 compression
@@ -309,7 +309,7 @@ class BinaryPatternDetector:
                 confidence=0.93,
                 relocatable=True,
                 metadata={"compression": "lzma2", "version": "4.x"},
-            )
+            ),
         )
 
         # Intel SGX enclave licensing
@@ -324,7 +324,7 @@ class BinaryPatternDetector:
                 confidence=0.90,
                 position_independent=True,
                 metadata={"protection": "sgx", "bypass_difficulty": "extreme"},
-            )
+            ),
         )
 
         # Timing-based license expiration check
@@ -337,7 +337,7 @@ class BinaryPatternDetector:
                 match_type=PatternMatchType.WILDCARD,
                 description="RDTSC-based license expiration timing check",
                 confidence=0.86,
-            )
+            ),
         )
 
         # Elliptic Curve licensing signature (Ed25519/ECDSA)
@@ -352,7 +352,7 @@ class BinaryPatternDetector:
                 confidence=0.92,
                 relocatable=True,
                 metadata={"crypto": "ecc", "algorithm": "ed25519"},
-            )
+            ),
         )
 
         # Blockchain-based license validation
@@ -367,7 +367,7 @@ class BinaryPatternDetector:
                 confidence=0.85,
                 position_independent=True,
                 metadata={"type": "blockchain", "network": "ethereum"},
-            )
+            ),
         )
 
         # Cloud activation with certificate pinning
@@ -382,15 +382,15 @@ class BinaryPatternDetector:
                 confidence=0.91,
                 relocatable=True,
                 metadata={"activation": "cloud", "security": "cert_pinning"},
-            )
+            ),
         )
 
-    def add_pattern(self, pattern: BinaryPattern):
+    def add_pattern(self, pattern: BinaryPattern) -> None:
         """Add a pattern to the detection database."""
         self.patterns[pattern.category].append(pattern)
         self._compile_pattern(pattern)
 
-    def _compile_pattern(self, pattern: BinaryPattern):
+    def _compile_pattern(self, pattern: BinaryPattern) -> None:
         """Compile pattern for efficient matching."""
         key = f"{pattern.category}:{pattern.name}"
 
@@ -458,7 +458,7 @@ class BinaryPatternDetector:
         reloc_points = []
 
         # Look for 32/64-bit immediate values that could be addresses
-        for i in range(0, len(pattern.pattern_bytes) - 3):
+        for i in range(len(pattern.pattern_bytes) - 3):
             if pattern.mask[i : i + 4] == b"\x00\x00\x00\x00":
                 # Wildcard 4-byte value - potential relocation
                 reloc_points.append(i)
@@ -552,7 +552,7 @@ class BinaryPatternDetector:
             return matches
 
         # Find first segment (anchor)
-        first_segment, first_mask, first_offset = segments[0]
+        first_segment, _first_mask, first_offset = segments[0]
         pattern_len = len(pattern.pattern_bytes)
 
         offset = 0
@@ -692,7 +692,7 @@ class BinaryPatternDetector:
         relocations = self._get_pe_relocations(data) if PEFILE_AVAILABLE else []
 
         # Scan with relocation awareness
-        for offset in range(0, len(data) - len(base_pattern)):
+        for offset in range(len(data) - len(base_pattern)):
             if self._match_with_relocations(data[offset:], base_pattern, mask, reloc_offsets, relocations, offset):
                 # Extract context
                 pattern_len = len(base_pattern)
@@ -716,7 +716,7 @@ class BinaryPatternDetector:
         return matches
 
     def _match_with_relocations(
-        self, data: bytes, pattern: bytes, mask: bytes, reloc_offsets: List[int], relocations: List[Tuple[int, str]], base_offset: int
+        self, data: bytes, pattern: bytes, mask: bytes, reloc_offsets: List[int], relocations: List[Tuple[int, str]], base_offset: int,
     ) -> bool:
         """Match pattern considering relocations."""
         if len(data) < len(pattern):
@@ -813,7 +813,7 @@ class BinaryPatternDetector:
 
         return sorted(set(xrefs))
 
-    def _build_xrefs(self, data: bytes, matches: List[PatternMatch]):
+    def _build_xrefs(self, data: bytes, matches: List[PatternMatch]) -> None:
         """Build cross-reference information for all matches."""
         # Build xref map
         xref_map = defaultdict(list)
@@ -846,7 +846,7 @@ class BinaryPatternDetector:
         return disasm
 
     def add_custom_pattern(
-        self, pattern_bytes: str, mask: str, name: str, category: str, match_type: PatternMatchType = PatternMatchType.WILDCARD, **kwargs
+        self, pattern_bytes: str, mask: str, name: str, category: str, match_type: PatternMatchType = PatternMatchType.WILDCARD, **kwargs,
     ) -> bool:
         """Add a custom pattern from hex strings."""
         try:
@@ -882,7 +882,7 @@ class BinaryPatternDetector:
                             "confidence": pattern.confidence,
                             "description": pattern.description,
                             "metadata": pattern.metadata,
-                        }
+                        },
                     )
 
             with open(file_path, "w") as f:
@@ -900,7 +900,7 @@ class BinaryPatternDetector:
         try:
             import json
 
-            with open(file_path, "r") as f:
+            with open(file_path) as f:
                 patterns_data = json.load(f)
 
             count = 0

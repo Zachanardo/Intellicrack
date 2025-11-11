@@ -48,7 +48,7 @@ class SymbolicExecution:
     path exploration in binary analysis.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize symbolic execution with existing engine integration."""
         self.logger = logging.getLogger(__name__)
         self.engine_available = False
@@ -154,7 +154,7 @@ class SymbolicExecution:
 
             # Initialize symbolic execution engine
             engine = self.engine_class(
-                binary_path=binary_path, max_paths=self.max_paths, timeout=self.timeout, memory_limit=self.memory_limit
+                binary_path=binary_path, max_paths=self.max_paths, timeout=self.timeout, memory_limit=self.memory_limit,
             )
 
             # Update progress
@@ -510,7 +510,7 @@ class SymbolicExecution:
                                         "severity": "high",
                                         "location": f"0x{path.addr:x}" if hasattr(path, "addr") else "unknown",
                                         "constraint": str(constraint),
-                                    }
+                                    },
                                 )
 
                             if self._check_integer_overflow_constraint(constraint):
@@ -521,7 +521,7 @@ class SymbolicExecution:
                                         "severity": "medium",
                                         "location": f"0x{path.addr:x}" if hasattr(path, "addr") else "unknown",
                                         "constraint": str(constraint),
-                                    }
+                                    },
                                 )
 
                     # Check for use-after-free conditions
@@ -537,7 +537,7 @@ class SymbolicExecution:
                                         "description": f"Use-after-free detected at address 0x{access.addr:x}",
                                         "severity": "critical",
                                         "location": f"0x{access.pc:x}" if hasattr(access, "pc") else "unknown",
-                                    }
+                                    },
                                 )
 
                     # Check for null pointer dereferences
@@ -551,7 +551,7 @@ class SymbolicExecution:
                                         "severity": "high",
                                         "location": f"0x{access.pc:x}" if hasattr(access, "pc") else "unknown",
                                         "address": f"0x{access.addr:x}",
-                                    }
+                                    },
                                 )
 
             # Only report completion if we actually found something or explored paths
@@ -559,7 +559,7 @@ class SymbolicExecution:
                 # This is informational only, not a mock vulnerability
                 if hasattr(app, "update_output"):
                     app.update_output.emit(
-                        f"[SYMBOLIC] Analysis complete: {results['paths_explored']} paths explored, no vulnerabilities found"
+                        f"[SYMBOLIC] Analysis complete: {results['paths_explored']} paths explored, no vulnerabilities found",
                     )
 
             return results

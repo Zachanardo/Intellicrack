@@ -48,7 +48,7 @@ __all__ = [
 class FileApprovalDialog(QDialog if QDialog is not None else object):
     """Dialog for requesting user approval for AI file operations."""
 
-    def __init__(self, operation_type: str, details: str, parent=None):
+    def __init__(self, operation_type: str, details: str, parent=None) -> None:
         """Initialize file operation confirmation dialog."""
         super().__init__(parent)
         self.setWindowTitle(f"AI File {operation_type} Request")
@@ -100,7 +100,7 @@ def create_approval_dialog(operation_type: str, details: str, parent=None) -> bo
 class FileSearchTool:
     """Tool for AI to search the file system for licensing-related files."""
 
-    def __init__(self, app_instance: Optional[Any] = None):
+    def __init__(self, app_instance: Optional[Any] = None) -> None:
         """Initialize file search tool with app instance."""
         self.app_instance = app_instance
         self.common_license_patterns = [
@@ -184,7 +184,7 @@ Purpose: Find licensing-related files for analysis to identify protection mechan
         self._log_search_results(results)
         return results
 
-    def _process_files_in_directory(self, root: str, files: list[str], patterns: list[str], results: dict[str, Any]):
+    def _process_files_in_directory(self, root: str, files: list[str], patterns: list[str], results: dict[str, Any]) -> None:
         """Process files in a directory and update results."""
         for _file in files:
             results["total_files_checked"] += 1
@@ -202,7 +202,7 @@ Purpose: Find licensing-related files for analysis to identify protection mechan
                     results["files_found"].append(file_info)
                     break
 
-    def _log_search_results(self, results: dict[str, Any]):
+    def _log_search_results(self, results: dict[str, Any]) -> None:
         """Log the results of the file search."""
         if self.app_instance and hasattr(self.app_instance, "update_output"):
             self.app_instance.update_output.emit(
@@ -236,7 +236,7 @@ Purpose: Find licensing-related files for analysis to identify protection mechan
 class FileReadTool:
     """Tool for AI to read files with user approval."""
 
-    def __init__(self, app_instance: Optional[Any] = None, max_file_size: int = 10 * 1024 * 1024):
+    def __init__(self, app_instance: Optional[Any] = None, max_file_size: int = 10 * 1024 * 1024) -> None:
         """Initialize file read tool with app instance and optional max file size.
 
         Args:
@@ -396,7 +396,7 @@ Files:
 class AIFileTools:
     """Run class providing file system tools for AI analysis."""
 
-    def __init__(self, app_instance: Optional[Any] = None, max_file_size: int = 10 * 1024 * 1024):
+    def __init__(self, app_instance: Optional[Any] = None, max_file_size: int = 10 * 1024 * 1024) -> None:
         """Initialize AI file tools with app instance and optional max file size.
 
         Args:

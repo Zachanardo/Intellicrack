@@ -42,7 +42,7 @@ __all__ = [
 class MemoryManager:
     """Manages memory usage during large binary analysis."""
 
-    def __init__(self, max_memory_mb: int = 2048):
+    def __init__(self, max_memory_mb: int = 2048) -> None:
         """Initialize memory manager with specified memory limit and usage tracking."""
         self.max_memory_mb = max_memory_mb
         self.max_memory_bytes = max_memory_mb * 1024 * 1024
@@ -78,7 +78,7 @@ class MemoryManager:
         memory_info = self.check_memory_usage()
         return memory_info["rss_mb"] > (self.max_memory_mb * 0.8)
 
-    def cleanup_memory(self):
+    def cleanup_memory(self) -> None:
         """Force garbage collection and memory cleanup."""
         gc.collect()
 
@@ -102,7 +102,7 @@ class MemoryManager:
 class BinaryChunker:
     """Efficiently processes large binaries in chunks."""
 
-    def __init__(self, memory_manager: MemoryManager):
+    def __init__(self, memory_manager: MemoryManager) -> None:
         """Initialize binary chunker with memory manager for efficient data processing."""
         self.memory_manager = memory_manager
 
@@ -196,7 +196,7 @@ class BinaryChunker:
                             "chunk_id": chunk["id"],
                             "error": str(e),
                             "status": "failed",
-                        }
+                        },
                     )
 
         # Sort results by chunk_id to maintain order
@@ -207,7 +207,7 @@ class BinaryChunker:
 class CacheManager:
     """Manages caching of analysis results for performance."""
 
-    def __init__(self, cache_dir: str = "cache"):
+    def __init__(self, cache_dir: str = "cache") -> None:
         """Initialize cache manager with directory setup and threading synchronization."""
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(exist_ok=True)
@@ -261,7 +261,7 @@ class CacheManager:
 
         return None
 
-    def cache_result(self, file_path: str, analysis_type: str, result: dict[str, Any]):
+    def cache_result(self, file_path: str, analysis_type: str, result: dict[str, Any]) -> None:
         """Cache analysis result."""
         cache_key = self.get_cache_key(file_path, analysis_type)
 
@@ -279,7 +279,7 @@ class CacheManager:
         except (OSError, ValueError, RuntimeError) as e:
             logger.warning("Error writing cache file %s: %s", cache_file, e)
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear all cached results."""
         with self.cache_lock:
             self.memory_cache.clear()
@@ -295,7 +295,7 @@ class CacheManager:
 class AdaptiveAnalyzer:
     """Provides adaptive analysis strategies based on binary characteristics."""
 
-    def __init__(self, memory_manager: MemoryManager, cache_manager: CacheManager):
+    def __init__(self, memory_manager: MemoryManager, cache_manager: CacheManager) -> None:
         """Initialize adaptive analyzer with memory and cache management for optimized binary analysis."""
         self.memory_manager = memory_manager
         self.cache_manager = cache_manager
@@ -371,7 +371,7 @@ class AdaptiveAnalyzer:
                             "offset": 0,
                             "size": 1024,
                             "priority": "high",
-                        }
+                        },
                     )
 
                 # Look for common string patterns near end
@@ -391,7 +391,7 @@ class AdaptiveAnalyzer:
                                     "offset": offset,
                                     "size": 10000,
                                     "priority": "high",
-                                }
+                                },
                             )
                             break
 
@@ -404,7 +404,7 @@ class AdaptiveAnalyzer:
 class PerformanceOptimizer:
     """Run performance optimization controller."""
 
-    def __init__(self, max_memory_mb: int = 2048, cache_dir: str = "cache"):
+    def __init__(self, max_memory_mb: int = 2048, cache_dir: str = "cache") -> None:
         """Initialize the performance optimizer.
 
         Args:
@@ -543,9 +543,8 @@ class PerformanceOptimizer:
         _ = strategy
         try:
             # Use memory mapping for large files
-            with open(file_path, "rb") as f:
-                with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
-                    return analysis_func(mm)
+            with open(file_path, "rb") as f, mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
+                return analysis_func(mm)
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in performance_optimizer: %s", e)
             # Fallback to regular file reading

@@ -1,11 +1,11 @@
 [workspace]
 name = "Intellicrack"
 version = "0.1.0"
-authors = [ "Zachary Flint <zach.flint2@gmail.com>" ]
+authors = ["Zachary Flint <zach.flint2@gmail.com>"]
 description = "Intellicrack: Advanced Binary Analysis and Security Research Framework with AI-driven capabilities"
-channels = [ "conda-forge" ]
-platforms = [ "win-64" ]
-preview = [ "pixi-build" ]
+channels = ["conda-forge"]
+platforms = ["win-64"]
+preview = ["pixi-build"]
 
 [feature.xpu]
 
@@ -26,8 +26,8 @@ torchvision = ">=0.23.0,<1"
 torchaudio = ">=2.8.0,<3"
 
 [environments]
-default = { features = [ "xpu" ], solve-group = "default" }
-ci = { features = [ "ci-cpu" ], solve-group = "default" }
+default = { features = ["xpu"], solve-group = "default" }
+ci = { features = ["ci-cpu"], solve-group = "default" }
 
 [dependencies]
 python = "3.12.*"
@@ -43,13 +43,9 @@ intellicrack = { path = ".", editable = true }
 
 [tasks]
 # Complete installation: installs dependencies + post-install setup (skips Intel XPU in CI)
-setup = { depends-on = [ "install-linters" ] }
+setup = { depends-on = ["install-linters"] }
 # Local setup with Intel XPU support
-setup-local = { depends-on = [
-  "install-intel-xpu",
-  "install-linters",
-  "build-rust-launcher" 
-] }
+setup-local = { depends-on = ["install-intel-xpu", "install-linters", "build-rust-launcher"] }
 
 # Intel XPU installation
 install-intel-xpu = '''python -m pip install --force-reinstall torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/xpu ; python -m pip install intel-extension-for-pytorch==2.8.10+xpu --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/ ; python -c "print('\\033[1;91m\\n=== Running Intel XPU Sanity Test ===\\033[0m'); import torch; import intel_extension_for_pytorch as ipex; print(f'\\033[92mTorch version: {torch.__version__}\\033[0m'); print(f'\\033[92mIPEX version: {ipex.__version__}\\033[0m'); print(f'\\033[93mXPU devices detected: {torch.xpu.device_count()}\\033[0m'); [print(f'\\033[96m[Device {i}]: {torch.xpu.get_device_properties(i)}\\033[0m') for i in range(torch.xpu.device_count())]; print('\\033[1;92m=== Sanity Test Passed ✓ ===\\033[0m\\n')"'''
@@ -67,10 +63,7 @@ Write-Output "Shortcut created: Intellicrack.lnk"
 '''
 
 # Linter installation (Node.js based)
-install-linters = { depends-on = [
-  "install-eslint",
-  "install-markdownlint" 
-] }
+install-linters = { depends-on = ["install-eslint", "install-markdownlint"] }
 install-eslint = "npm install -g eslint@9.18.0 eslint-config-standard@17.1.0"
 install-markdownlint = "npm install -g markdownlint-cli@0.43.0"
 
@@ -78,11 +71,5 @@ install-markdownlint = "npm install -g markdownlint-cli@0.43.0"
 docs-apidoc = "sphinx-apidoc -f -o docs/source intellicrack"
 docs-build = "sphinx-build -b html docs/source docs/_build/html"
 docs-clean = "rm -rf docs/_build"
-docs-generate = { depends-on = [
-  "docs-apidoc",
-  "docs-build" 
-] }
-docs-rebuild = { depends-on = [
-  "docs-clean",
-  "docs-generate" 
-] }
+docs-generate = { depends-on = ["docs-apidoc", "docs-build"] }
+docs-rebuild = { depends-on = ["docs-clean", "docs-generate"] }

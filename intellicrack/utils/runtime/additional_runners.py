@@ -25,6 +25,7 @@ import os
 import subprocess
 import sys
 import time
+from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -446,7 +447,7 @@ def run_ghidra_analysis_gui(binary_path: str, ghidra_path: str | None = None) ->
 
             # Launch Ghidra
             cmd = [ghidra_run, binary_path]
-            subprocess.Popen(cmd, encoding="utf-8")  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            subprocess.Popen(cmd, encoding="utf-8")  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
 
             results["launched"] = True
             results["project_dir"] = project_dir
@@ -540,7 +541,7 @@ def run_deep_cfg_analysis(binary_path: str, output_format: str = "json") -> dict
                                 "function": func["name"],
                                 "address": func["address"],
                                 "complexity": cfg.get("complexity", 0),
-                            }
+                            },
                         )
 
             except (OSError, ValueError, RuntimeError) as e:
@@ -601,7 +602,7 @@ def run_external_tool(tool_name: str, binary_path: str, args: list[str] | None =
             cmd.extend(args)
 
         # Execute tool
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=60, check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=60, check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
 
         results["executed"] = True
         results["return_code"] = result.returncode
@@ -771,8 +772,8 @@ def run_external_command(command: str | list[str], timeout: int = 60) -> dict[st
         if isinstance(command, str):
             command = command.split()
 
-        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-            command, capture_output=True, text=True, timeout=timeout, check=False
+        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+            command, capture_output=True, text=True, timeout=timeout, check=False,
         )
 
         results["executed"] = True
@@ -1014,7 +1015,7 @@ def _detect_usb_dongles() -> list[dict[str, Any]]:
                                 "manufacturer": manufacturer,
                                 "product": product,
                                 "confidence": 0.9,
-                            }
+                            },
                         )
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.debug("Failed to get USB device info: %s", e)
@@ -1056,7 +1057,7 @@ def _detect_windows_usb_dongles() -> list[dict[str, Any]]:
             "Get-WmiObject -Class Win32_USBDevice | Select-Object DeviceID, Description, Manufacturer | ConvertTo-Json",
         ]
 
-        result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=10)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+        result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=10)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
         if result.returncode == 0:
             devices = json.loads(result.stdout)
             if not isinstance(devices, list):
@@ -1086,7 +1087,7 @@ def _detect_windows_usb_dongles() -> list[dict[str, Any]]:
                             "description": device.get("Description"),
                             "manufacturer": device.get("Manufacturer"),
                             "confidence": 0.85,
-                        }
+                        },
                     )
 
     except (
@@ -1113,7 +1114,7 @@ def _detect_linux_usb_dongles() -> list[dict[str, Any]]:
 
     try:
         # Use lsusb to list USB devices
-        result = subprocess.run(["lsusb"], check=False, capture_output=True, text=True, timeout=5)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
+        result = subprocess.run(["lsusb"], check=False, capture_output=True, text=True, timeout=5)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis
         if result.returncode == 0:
             for line in result.stdout.split("\n"):
                 if line.strip():
@@ -1124,7 +1125,7 @@ def _detect_linux_usb_dongles() -> list[dict[str, Any]]:
                                 "type": "linux_usb_dongle",
                                 "description": line.strip(),
                                 "confidence": 0.8,
-                            }
+                            },
                         )
 
     except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as e:
@@ -1175,7 +1176,7 @@ def _detect_dongle_processes() -> list[dict[str, Any]]:
                             "name": proc.info["name"],
                             "exe": proc.info["exe"],
                             "confidence": 0.9,
-                        }
+                        },
                     )
 
             except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
@@ -1228,7 +1229,7 @@ def _detect_windows_dongle_drivers() -> list[dict[str, Any]]:
         driver_patterns = ["hasp", "sentinel", "wibu", "aksusb", "securikey"]
 
         cmd = ["driverquery", "/v", "/fo", "csv"]
-        result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=10)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+        result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=10)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
 
         if result.returncode == 0:
             import csv
@@ -1244,7 +1245,7 @@ def _detect_windows_dongle_drivers() -> list[dict[str, Any]]:
                             "name": row.get("Display Name"),
                             "path": row.get("Path"),
                             "confidence": 0.85,
-                        }
+                        },
                     )
 
     except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as e:
@@ -1265,7 +1266,7 @@ def _detect_linux_dongle_drivers() -> list[dict[str, Any]]:
 
     try:
         # Check loaded kernel modules
-        result = subprocess.run(["lsmod"], check=False, capture_output=True, text=True, timeout=5)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
+        result = subprocess.run(["lsmod"], check=False, capture_output=True, text=True, timeout=5)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis
         if result.returncode == 0:
             for line in result.stdout.split("\n")[1:]:  # Skip header
                 if line.strip():
@@ -1276,7 +1277,7 @@ def _detect_linux_dongle_drivers() -> list[dict[str, Any]]:
                                 "type": "linux_dongle_driver",
                                 "module": module_name,
                                 "confidence": 0.8,
-                            }
+                            },
                         )
 
     except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as e:
@@ -1296,34 +1297,61 @@ def _detect_license_dongles() -> list[dict[str, Any]]:
     license_files = []
 
     try:
-        import glob
-
-        # Common license file locations and patterns
-        search_patterns = [
-            "/var/hasplm/*",
-            "/opt/*/license*",
-            "C:/ProgramData/*/license*",
-            "C:/Program Files*/*/license*",
-            "*.lic",
-            "*.key",
-            "*.dongle",
+        search_specs: list[tuple[Path, str]] = [
+            (Path("/var/hasplm"), "*"),
+            (Path("/opt"), "*/license*"),
         ]
 
-        for pattern in search_patterns:
-            try:
-                for file_path in glob.glob(pattern, recursive=True):
-                    if os.path.isfile(file_path):
-                        license_files.append(
-                            {
-                                "type": "license_file",
-                                "path": file_path,
-                                "size": os.path.getsize(file_path),
-                                "confidence": 0.7,
-                            }
-                        )
-            except (OSError, ValueError, RuntimeError) as e:
-                logger.debug("Failed to search pattern '%s': %s", pattern, e)
+        windows_roots = [
+            Path("C:/ProgramData"),
+            Path("C:/Program Files"),
+            Path("C:/Program Files (x86)"),
+        ]
+        for root in windows_roots:
+            search_specs.append((root, "*/license*"))
+
+        discovered: set[Path] = set()
+
+        for base, pattern in search_specs:
+            if not base.exists():
                 continue
+            try:
+                for candidate in base.glob(pattern):
+                    if candidate.is_file():
+                        discovered.add(candidate.resolve())
+            except (OSError, ValueError, RuntimeError) as e:
+                logger.debug("Failed to search pattern '%s' in '%s': %s", pattern, base, e)
+                continue
+
+        local_roots = {Path.cwd()}
+        try:
+            local_roots.add(Path.home())
+        except OSError:
+            logger.debug("Unable to determine user home directory for license scan")
+
+        for root in local_roots:
+            if not root.exists():
+                continue
+            for pattern in ("*.lic", "*.key", "*.dongle"):
+                try:
+                    for candidate in root.rglob(pattern):
+                        if candidate.is_file():
+                            discovered.add(candidate.resolve())
+                except (OSError, ValueError, RuntimeError) as e:
+                    logger.debug("Failed to scan '%s' for pattern '%s': %s", root, pattern, e)
+
+        for file_path in sorted(discovered):
+            try:
+                license_files.append(
+                    {
+                        "type": "license_file",
+                        "path": str(file_path),
+                        "size": file_path.stat().st_size,
+                        "confidence": 0.7,
+                    },
+                )
+            except (OSError, ValueError, RuntimeError) as e:
+                logger.debug("Failed to record license file '%s': %s", file_path, e)
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.debug("License file detection error: %s", e)
@@ -1359,7 +1387,7 @@ def _detect_network_dongles() -> list[dict[str, Any]]:
                             "host": "localhost",
                             "port": port,
                             "confidence": 0.8,
-                        }
+                        },
                     )
                 sock.close()
             except (OSError, ValueError, RuntimeError) as e:
@@ -1668,11 +1696,11 @@ def _verify_crack(binary_path: str) -> dict[str, Any]:
 
             if verification_result["verified"]:
                 verification_result["findings"].append(
-                    f"Crack verification successful with {verification_result['confidence']:.2f} confidence"
+                    f"Crack verification successful with {verification_result['confidence']:.2f} confidence",
                 )
             else:
                 verification_result["warnings"].append(
-                    f"Crack verification inconclusive (confidence: {verification_result['confidence']:.2f})"
+                    f"Crack verification inconclusive (confidence: {verification_result['confidence']:.2f})",
                 )
         else:
             verification_result["warnings"].append("No verification methods succeeded")
@@ -1782,7 +1810,7 @@ def _verify_execution_testing(binary_path: str) -> dict[str, Any]:
         # Test 1: Basic execution test (does it run without crashing?)
         try:
             # Run with timeout to prevent hanging
-            proc = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            proc = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 [binary_path, "--version"],  # Try common version flag
                 check=False,
                 capture_output=True,
@@ -1807,7 +1835,7 @@ def _verify_execution_testing(binary_path: str) -> dict[str, Any]:
 
         # Test 2: Check for license-related error messages
         try:
-            proc = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            proc = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 [binary_path],
                 check=False,
                 capture_output=True,
@@ -1859,7 +1887,7 @@ def _verify_execution_testing(binary_path: str) -> dict[str, Any]:
                 env["TEMP"] = temp_dir
                 env["TMP"] = temp_dir
 
-                proc = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                proc = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     [binary_path, "--help"],
                     check=False,
                     capture_output=True,
@@ -2692,7 +2720,7 @@ def run_weak_crypto_detection(binary_path: str) -> dict[str, Any]:
                     {
                         "algorithm": pattern.decode("utf-8", errors="ignore"),
                         "occurrences": len(matches),
-                    }
+                    },
                 )
 
         return {
@@ -2770,7 +2798,7 @@ def run_generate_patch_suggestions(binary_path: str) -> dict[str, Any]:
                         "patch": nop_patch.hex(),
                         "confidence": 0.8,
                         "size": patch_size,
-                    }
+                    },
                 )
 
                 offset = pos + 1
@@ -2796,7 +2824,7 @@ def run_generate_patch_suggestions(binary_path: str) -> dict[str, Any]:
                         "patch": "B801000000C3",  # mov eax, 1; ret
                         "confidence": 0.7,
                         "size": 6,
-                    }
+                    },
                 )
 
         # Analyze PE header for additional insights
@@ -2811,7 +2839,7 @@ def run_generate_patch_suggestions(binary_path: str) -> dict[str, Any]:
                         "patch": None,
                         "confidence": 1.0,
                         "size": 0,
-                    }
+                    },
                 )
 
         return {

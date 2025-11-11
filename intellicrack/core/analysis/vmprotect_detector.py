@@ -151,7 +151,7 @@ class VMProtectDetector:
         ".vmp2",
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize VMProtect detector."""
         if CAPSTONE_AVAILABLE:
             self.cs_x86 = Cs(CS_ARCH_X86, CS_MODE_32)
@@ -286,7 +286,7 @@ class VMProtectDetector:
                             "raw_size": section.SizeOfRawData,
                             "entropy": entropy,
                             "characteristics": section.Characteristics,
-                        }
+                        },
                     )
 
                 if entropy > 7.3:
@@ -294,7 +294,7 @@ class VMProtectDetector:
 
                 if section.Characteristics & 0xE0000000 == 0xE0000000:
                     analysis["suspicious_characteristics"].append(
-                        {"name": section_name, "flags": "CODE|READ|WRITE", "characteristics": section.Characteristics}
+                        {"name": section_name, "flags": "CODE|READ|WRITE", "characteristics": section.Characteristics},
                     )
 
             pe.close()
@@ -693,7 +693,7 @@ class VMProtectDetector:
         return min(junk_instructions / total_instructions, 1.0)
 
     def _determine_protection_level(
-        self, handlers: List[VMHandler], regions: List[VirtualizedRegion], mutation_score: float
+        self, handlers: List[VMHandler], regions: List[VirtualizedRegion], mutation_score: float,
     ) -> VMProtectLevel:
         """Determine VMProtect protection level."""
         if not handlers:
@@ -791,7 +791,7 @@ class VMProtectDetector:
 
         if detection.protection_level == VMProtectLevel.ULTRA:
             recommendations.append(
-                "Ultra protection detected - Requires advanced devirtualization techniques with symbolic execution and SMT solving"
+                "Ultra protection detected - Requires advanced devirtualization techniques with symbolic execution and SMT solving",
             )
             recommendations.append("Recommended tools: Custom devirtualizer, Triton framework, Miasm2, or commercial VMProtect devirtualizers")
             recommendations.append("Expected time: 4-8 weeks for full devirtualization")

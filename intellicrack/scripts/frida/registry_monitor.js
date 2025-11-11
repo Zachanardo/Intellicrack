@@ -536,61 +536,61 @@
 
         try {
             switch (type) {
-            case 1: // REG_SZ
-            case 2: // REG_EXPAND_SZ
-                return { formatted: dataPtr.readUtf16String(actualSize / 2) };
+                case 1: // REG_SZ
+                case 2: // REG_EXPAND_SZ
+                    return { formatted: dataPtr.readUtf16String(actualSize / 2) };
 
-            case 3: // REG_BINARY
-                const bytes = dataPtr.readByteArray(actualSize);
-                const hex = Array.from(bytes, (b) => ('0' + b.toString(16)).slice(-2)).join(
-                    ' '
-                );
-                return { formatted: null, raw: hex };
+                case 3: // REG_BINARY
+                    const bytes = dataPtr.readByteArray(actualSize);
+                    const hex = Array.from(bytes, (b) => ('0' + b.toString(16)).slice(-2)).join(
+                        ' '
+                    );
+                    return { formatted: null, raw: hex };
 
-            case 4: // REG_DWORD
-                if (dataSize >= 4) {
-                    return {
-                        formatted:
+                case 4: // REG_DWORD
+                    if (dataSize >= 4) {
+                        return {
+                            formatted:
                                 '0x' +
                                 dataPtr.readU32().toString(16) +
                                 ' (' +
                                 dataPtr.readU32() +
                                 ')',
-                    };
-                }
-                break;
+                        };
+                    }
+                    break;
 
-            case 5: // REG_DWORD_BIG_ENDIAN
-                if (dataSize >= 4) {
-                    const val =
+                case 5: // REG_DWORD_BIG_ENDIAN
+                    if (dataSize >= 4) {
+                        const val =
                             ((dataPtr.readU8() << 24) |
                                 (dataPtr.add(1).readU8() << 16) |
                                 (dataPtr.add(2).readU8() << 8) |
                                 dataPtr.add(3).readU8()) >>>
                             0;
-                    return { formatted: '0x' + val.toString(16) + ' (' + val + ')' };
-                }
-                break;
+                        return { formatted: '0x' + val.toString(16) + ' (' + val + ')' };
+                    }
+                    break;
 
-            case 7: // REG_MULTI_SZ
-                const strings = [];
-                let offset = 0;
-                while (offset < actualSize - 2) {
-                    const str = dataPtr.add(offset).readUtf16String();
-                    if (!str || str.length === 0) break;
-                    strings.push(str);
-                    offset += (str.length + 1) * 2;
-                }
-                return { formatted: strings.join('\\0') };
+                case 7: // REG_MULTI_SZ
+                    const strings = [];
+                    let offset = 0;
+                    while (offset < actualSize - 2) {
+                        const str = dataPtr.add(offset).readUtf16String();
+                        if (!str || str.length === 0) break;
+                        strings.push(str);
+                        offset += (str.length + 1) * 2;
+                    }
+                    return { formatted: strings.join('\\0') };
 
-            case 11: // REG_QWORD
-                if (dataSize >= 8) {
-                    const low = dataPtr.readU32();
-                    const high = dataPtr.add(4).readU32();
-                    const val = high * 0x100000000 + low;
-                    return { formatted: '0x' + val.toString(16) + ' (' + val + ')' };
-                }
-                break;
+                case 11: // REG_QWORD
+                    if (dataSize >= 8) {
+                        const low = dataPtr.readU32();
+                        const high = dataPtr.add(4).readU32();
+                        const val = high * 0x100000000 + low;
+                        return { formatted: '0x' + val.toString(16) + ' (' + val + ')' };
+                    }
+                    break;
             }
         } catch (e) {}
 
@@ -904,49 +904,49 @@
                 let dataPtr, dataSize, regType;
 
                 switch (this.infoClass) {
-                case 0: // KeyValueBasicInformation
-                    regType = this.keyValueInfo.add(4).readU32();
-                    evt.data_type = regType;
-                    break;
+                    case 0: // KeyValueBasicInformation
+                        regType = this.keyValueInfo.add(4).readU32();
+                        evt.data_type = regType;
+                        break;
 
-                case 1: // KeyValueFullInformation
-                    regType = this.keyValueInfo.add(4).readU32();
-                    dataSize = this.keyValueInfo.add(8).readU32();
-                    const dataOffset = this.keyValueInfo.add(12).readU32();
-                    dataPtr = this.keyValueInfo.add(dataOffset);
+                    case 1: // KeyValueFullInformation
+                        regType = this.keyValueInfo.add(4).readU32();
+                        dataSize = this.keyValueInfo.add(8).readU32();
+                        const dataOffset = this.keyValueInfo.add(12).readU32();
+                        dataPtr = this.keyValueInfo.add(dataOffset);
 
-                    evt.data_type = regType;
-                    evt.data_size = dataSize;
+                        evt.data_type = regType;
+                        evt.data_size = dataSize;
 
-                    if (dataPtr && !dataPtr.isNull() && dataSize > 0) {
-                        const formatted = formatRegData(regType, dataPtr, dataSize, true);
-                        if (formatted.formatted) evt.data_formatted = formatted.formatted;
-                        if (formatted.raw) evt.data_preview_hex = formatted.raw;
+                        if (dataPtr && !dataPtr.isNull() && dataSize > 0) {
+                            const formatted = formatRegData(regType, dataPtr, dataSize, true);
+                            if (formatted.formatted) evt.data_formatted = formatted.formatted;
+                            if (formatted.raw) evt.data_preview_hex = formatted.raw;
 
-                        if (config.performDeepAnalysis) {
-                            detectLicensePattern(this.keyPath, this.valueName, formatted);
+                            if (config.performDeepAnalysis) {
+                                detectLicensePattern(this.keyPath, this.valueName, formatted);
+                            }
                         }
-                    }
-                    break;
+                        break;
 
-                case 2: // KeyValuePartialInformation
-                    regType = this.keyValueInfo.add(4).readU32();
-                    dataSize = this.keyValueInfo.add(8).readU32();
-                    dataPtr = this.keyValueInfo.add(12);
+                    case 2: // KeyValuePartialInformation
+                        regType = this.keyValueInfo.add(4).readU32();
+                        dataSize = this.keyValueInfo.add(8).readU32();
+                        dataPtr = this.keyValueInfo.add(12);
 
-                    evt.data_type = regType;
-                    evt.data_size = dataSize;
+                        evt.data_type = regType;
+                        evt.data_size = dataSize;
 
-                    if (dataPtr && !dataPtr.isNull() && dataSize > 0) {
-                        const formatted = formatRegData(regType, dataPtr, dataSize, true);
-                        if (formatted.formatted) evt.data_formatted = formatted.formatted;
-                        if (formatted.raw) evt.data_preview_hex = formatted.raw;
+                        if (dataPtr && !dataPtr.isNull() && dataSize > 0) {
+                            const formatted = formatRegData(regType, dataPtr, dataSize, true);
+                            if (formatted.formatted) evt.data_formatted = formatted.formatted;
+                            if (formatted.raw) evt.data_preview_hex = formatted.raw;
 
-                        if (config.performDeepAnalysis) {
-                            detectLicensePattern(this.keyPath, this.valueName, formatted);
+                            if (config.performDeepAnalysis) {
+                                detectLicensePattern(this.keyPath, this.valueName, formatted);
+                            }
                         }
-                    }
-                    break;
+                        break;
                 }
             } catch (e) {
                 evt.parse_error = e.toString();
@@ -1107,25 +1107,25 @@
                 let namePtr, nameLength;
 
                 switch (this.infoClass) {
-                case 0: // KeyBasicInformation
-                    nameLength = this.keyInfo.add(4).readU32();
-                    namePtr = this.keyInfo.add(16);
-                    if (nameLength > 0) {
-                        evt.subkey_name = namePtr.readUtf16String(nameLength / 2);
-                    }
-                    break;
+                    case 0: // KeyBasicInformation
+                        nameLength = this.keyInfo.add(4).readU32();
+                        namePtr = this.keyInfo.add(16);
+                        if (nameLength > 0) {
+                            evt.subkey_name = namePtr.readUtf16String(nameLength / 2);
+                        }
+                        break;
 
-                case 1: // KeyNodeInformation
-                    nameLength = this.keyInfo.add(8).readU32();
-                    const nameOffset = this.keyInfo.add(24).readU32();
-                    namePtr = this.keyInfo.add(nameOffset);
-                    if (nameLength > 0) {
-                        evt.subkey_name = namePtr.readUtf16String(nameLength / 2);
-                    }
-                    break;
+                    case 1: // KeyNodeInformation
+                        nameLength = this.keyInfo.add(8).readU32();
+                        const nameOffset = this.keyInfo.add(24).readU32();
+                        namePtr = this.keyInfo.add(nameOffset);
+                        if (nameLength > 0) {
+                            evt.subkey_name = namePtr.readUtf16String(nameLength / 2);
+                        }
+                        break;
 
-                case 2: // KeyFullInformation
-                    break;
+                    case 2: // KeyFullInformation
+                        break;
                 }
             } catch (e) {
                 evt.parse_error = e.toString();
@@ -1172,58 +1172,58 @@
                 let namePtr, nameLength, dataPtr, dataSize, regType;
 
                 switch (this.infoClass) {
-                case 0: // KeyValueBasicInformation
-                    nameLength = this.keyValueInfo.add(4).readU32();
-                    namePtr = this.keyValueInfo.add(12);
-                    regType = this.keyValueInfo.add(8).readU32();
+                    case 0: // KeyValueBasicInformation
+                        nameLength = this.keyValueInfo.add(4).readU32();
+                        namePtr = this.keyValueInfo.add(12);
+                        regType = this.keyValueInfo.add(8).readU32();
 
-                    if (nameLength > 0) {
-                        evt.value_name = namePtr.readUtf16String(nameLength / 2);
-                    }
-                    evt.data_type = regType;
-                    break;
-
-                case 1: // KeyValueFullInformation
-                    regType = this.keyValueInfo.add(4).readU32();
-                    dataSize = this.keyValueInfo.add(12).readU32();
-                    nameLength = this.keyValueInfo.add(8).readU32();
-                    const nameOffset = this.keyValueInfo.add(16).readU32();
-                    const dataOffset = this.keyValueInfo.add(20).readU32();
-
-                    if (nameLength > 0) {
-                        namePtr = this.keyValueInfo.add(nameOffset);
-                        evt.value_name = namePtr.readUtf16String(nameLength / 2);
-                    }
-
-                    evt.data_type = regType;
-                    evt.data_size = dataSize;
-
-                    if (dataSize > 0) {
-                        dataPtr = this.keyValueInfo.add(dataOffset);
-                        const formatted = formatRegData(regType, dataPtr, dataSize, true);
-                        if (formatted.formatted) evt.data_formatted = formatted.formatted;
-                        if (formatted.raw) evt.data_preview_hex = formatted.raw;
-
-                        if (config.performDeepAnalysis) {
-                            detectLicensePattern(this.keyPath, evt.value_name, formatted);
+                        if (nameLength > 0) {
+                            evt.value_name = namePtr.readUtf16String(nameLength / 2);
                         }
-                    }
-                    break;
+                        evt.data_type = regType;
+                        break;
 
-                case 2: // KeyValuePartialInformation
-                    regType = this.keyValueInfo.add(4).readU32();
-                    dataSize = this.keyValueInfo.add(8).readU32();
-                    dataPtr = this.keyValueInfo.add(12);
+                    case 1: // KeyValueFullInformation
+                        regType = this.keyValueInfo.add(4).readU32();
+                        dataSize = this.keyValueInfo.add(12).readU32();
+                        nameLength = this.keyValueInfo.add(8).readU32();
+                        const nameOffset = this.keyValueInfo.add(16).readU32();
+                        const dataOffset = this.keyValueInfo.add(20).readU32();
 
-                    evt.data_type = regType;
-                    evt.data_size = dataSize;
+                        if (nameLength > 0) {
+                            namePtr = this.keyValueInfo.add(nameOffset);
+                            evt.value_name = namePtr.readUtf16String(nameLength / 2);
+                        }
 
-                    if (dataSize > 0) {
-                        const formatted = formatRegData(regType, dataPtr, dataSize, true);
-                        if (formatted.formatted) evt.data_formatted = formatted.formatted;
-                        if (formatted.raw) evt.data_preview_hex = formatted.raw;
-                    }
-                    break;
+                        evt.data_type = regType;
+                        evt.data_size = dataSize;
+
+                        if (dataSize > 0) {
+                            dataPtr = this.keyValueInfo.add(dataOffset);
+                            const formatted = formatRegData(regType, dataPtr, dataSize, true);
+                            if (formatted.formatted) evt.data_formatted = formatted.formatted;
+                            if (formatted.raw) evt.data_preview_hex = formatted.raw;
+
+                            if (config.performDeepAnalysis) {
+                                detectLicensePattern(this.keyPath, evt.value_name, formatted);
+                            }
+                        }
+                        break;
+
+                    case 2: // KeyValuePartialInformation
+                        regType = this.keyValueInfo.add(4).readU32();
+                        dataSize = this.keyValueInfo.add(8).readU32();
+                        dataPtr = this.keyValueInfo.add(12);
+
+                        evt.data_type = regType;
+                        evt.data_size = dataSize;
+
+                        if (dataSize > 0) {
+                            const formatted = formatRegData(regType, dataPtr, dataSize, true);
+                            if (formatted.formatted) evt.data_formatted = formatted.formatted;
+                            if (formatted.raw) evt.data_preview_hex = formatted.raw;
+                        }
+                        break;
                 }
             } catch (e) {
                 evt.parse_error = e.toString();

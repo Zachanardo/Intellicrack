@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 permissions:
   contents: read
@@ -12,130 +12,328 @@ permissions:
   pull-requests: write
 
 jobs:
-  test:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest]
-        python-version: ['3.12']
-
+  setup:
+    runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v5
-      with:
-        fetch-depth: 0
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
-    - uses: prefix-dev/setup-pixi@v0.9.2
-      with:
-        pixi-version: latest
+      - uses: prefix-dev/setup-pixi@v0.9.2
+        with:
+          pixi-version: latest
 
-    - name: Set up Rust toolchain
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        toolchain: stable
-        components: rustfmt, clippy
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
 
-    - name: Cache Rust dependencies
-      uses: Swatinem/rust-cache@v2
-      with:
-        workspaces: intellicrack-launcher
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: intellicrack-launcher
 
-    - name: Install dependencies (CI environment without Intel XPU)
-      run: |
-        pixi install --environment ci
+      - name: Install dependencies (CI environment without Intel XPU)
+        run: |
+          pixi install --environment ci
 
-    - name: Generate requirements.txt for Dependabot
-      run: |
-        pixi list --environment ci --json | python -c "import json, sys; data = json.load(sys.stdin); pypi_packages = [p for p in data if p.get('kind') == 'pypi']; [print(f\"{pkg['name']}=={pkg.get('version', '')}\") if pkg.get('version') else print(pkg['name']) for pkg in sorted(pypi_packages, key=lambda x: x['name'])]" > requirements.txt
+      - name: Generate requirements.txt for Dependabot
+        run: |
+          pixi list --environment ci --json | python -c "import json, sys; data = json.load(sys.stdin); pypi_packages = [p for p in data if p.get('kind') == 'pypi']; [print(f\"{pkg['name']}=={pkg.get('version', '')}\") if pkg.get('version') else print(pkg['name']) for pkg in sorted(pypi_packages, key=lambda x: x['name'])]" > requirements.txt
 
-    - name: Set Python Path for PyO3
-      run: |
-        echo "Python location: $(which python)"
-        echo "Python version: $(python --version)"
-      shell: bash
+  rust-check:
+    runs-on: windows-latest
+    needs: [setup]
+    if: success() || failure()
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
-    - name: Rust - Check compilation
-      run: |
-        cd intellicrack-launcher
-        pixi run --environment ci cargo check --all-features --all-targets
-      env:
-        PYO3_PYTHON: ${{ steps.setup-python.outputs.python-path }}
-        PYTHON_SYS_EXECUTABLE: ${{ steps.setup-python.outputs.python-path }}
+      - uses: prefix-dev/setup-pixi@v0.9.2
+        with:
+          pixi-version: latest
 
-    - name: Rust - Format check
-      run: |
-        cd intellicrack-launcher
-        pixi run --environment ci cargo fmt -- --check
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
 
-    - name: Rust - Clippy linting
-      run: |
-        cd intellicrack-launcher
-        pixi run --environment ci cargo clippy --all-features --all-targets -- -D warnings
-      env:
-        PYO3_PYTHON: ${{ steps.setup-python.outputs.python-path }}
-        PYTHON_SYS_EXECUTABLE: ${{ steps.setup-python.outputs.python-path }}
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: intellicrack-launcher
 
-    - name: Rust - Run tests
-      run: |
-        cd intellicrack-launcher
-        pixi run --environment ci cargo test --all-features --verbose
-      env:
-        PYO3_PYTHON: ${{ steps.setup-python.outputs.python-path }}
-        PYTHON_SYS_EXECUTABLE: ${{ steps.setup-python.outputs.python-path }}
+      - name: Install dependencies
+        run: pixi install --environment ci
 
-    - name: Rust - Build release
-      run: |
-        cd intellicrack-launcher
-        pixi run --environment ci cargo build --release --all-features
-      env:
-        PYO3_PYTHON: ${{ steps.setup-python.outputs.python-path }}
-        PYTHON_SYS_EXECUTABLE: ${{ steps.setup-python.outputs.python-path }}
+      - name: Rust - Check compilation
+        run: |
+          cd intellicrack-launcher
+          pixi run --environment ci cargo check --all-features --all-targets
 
-    - name: Lint with ruff
-      run: |
-        pixi run --environment ci ruff check intellicrack/ tests/ --output-format=github
-        pixi run --environment ci ruff format --check intellicrack/ tests/
+  rust-format:
+    runs-on: windows-latest
+    needs: [setup]
+    if: success() || failure()
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
-    - name: Security scan with bandit
-      run: |
-        pixi run --environment ci bandit -r intellicrack/ -f json -o bandit-report.json || true
-        python -c "import json; data=json.load(open('bandit-report.json')); print(f'Security Issues: {len(data.get(\"results\", []))}')"
-      continue-on-error: true
+      - uses: prefix-dev/setup-pixi@v0.9.2
+        with:
+          pixi-version: latest
 
-    - name: Type check with mypy
-      run: |
-        pixi run --environment ci mypy intellicrack/ --ignore-missing-imports --no-strict-optional
-      continue-on-error: true
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
 
-    - name: Verify No Mock Usage (Production-Ready Enforcement)
-      run: |
-        pixi run --environment ci python tests/utils/verify_no_mocks.py --ci
-      continue-on-error: false
+      - name: Install dependencies
+        run: pixi install --environment ci
 
-    - name: Test with pytest
-      run: |
-        pixi run --environment ci pytest tests/ -v --cov=intellicrack --cov-report=xml --cov-report=html --junitxml=test-results.xml
-      env:
-        PYTHONDONTWRITEBYTECODE: 1
+      - name: Rust - Format check
+        run: |
+          cd intellicrack-launcher
+          pixi run --environment ci cargo fmt -- --check
 
-    - name: Upload test results
-      if: always()
-      uses: actions/upload-artifact@v5
-      with:
-        name: test-results-${{ matrix.os }}-${{ matrix.python-version }}
-        path: |
-          test-results.xml
-          htmlcov/
-          coverage.xml
-          bandit-report.json
+  rust-clippy:
+    runs-on: windows-latest
+    needs: [setup]
+    if: success() || failure()
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v5
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}
-        fail_ci_if_error: false
-        verbose: true
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      - uses: prefix-dev/setup-pixi@v0.9.2
+        with:
+          pixi-version: latest
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: intellicrack-launcher
+
+      - name: Install dependencies
+        run: pixi install --environment ci
+
+      - name: Rust - Clippy linting
+        run: |
+          cd intellicrack-launcher
+          pixi run --environment ci cargo clippy --all-features --all-targets -- -D warnings
+
+  rust-test:
+    runs-on: windows-latest
+    needs: [setup]
+    if: success() || failure()
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: prefix-dev/setup-pixi@v0.9.2
+        with:
+          pixi-version: latest
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: intellicrack-launcher
+
+      - name: Install dependencies
+        run: pixi install --environment ci
+
+      - name: Rust - Run tests
+        run: |
+          cd intellicrack-launcher
+          pixi run --environment ci cargo test --all-features --verbose
+
+  rust-build:
+    runs-on: windows-latest
+    needs: [setup]
+    if: success() || failure()
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: prefix-dev/setup-pixi@v0.9.2
+        with:
+          pixi-version: latest
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: intellicrack-launcher
+
+      - name: Install dependencies
+        run: pixi install --environment ci
+
+      - name: Rust - Build release
+        run: |
+          cd intellicrack-launcher
+          pixi run --environment ci cargo build --release --all-features
+
+  python-lint:
+    runs-on: windows-latest
+    needs: [setup]
+    if: success() || failure()
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: prefix-dev/setup-pixi@v0.9.2
+        with:
+          pixi-version: latest
+
+      - name: Install dependencies
+        run: pixi install --environment ci
+
+      - name: Lint with ruff
+        run: |
+          pixi run --environment ci ruff check intellicrack/ tests/ --output-format=github
+          pixi run --environment ci ruff format --check intellicrack/ tests/
+
+  python-security:
+    runs-on: windows-latest
+    needs: [setup]
+    if: success() || failure()
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: prefix-dev/setup-pixi@v0.9.2
+        with:
+          pixi-version: latest
+
+      - name: Install dependencies
+        run: pixi install --environment ci
+
+      - name: Security scan with bandit
+        run: |
+          pixi run --environment ci bandit -r intellicrack/ -f json -o bandit-report.json || true
+          python -c "import json; data=json.load(open('bandit-report.json')); print(f'Security Issues: {len(data.get(\"results\", []))}')"
+
+      - name: Upload bandit report
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: bandit-report
+          path: bandit-report.json
+
+  python-typecheck:
+    runs-on: windows-latest
+    needs: [setup]
+    if: success() || failure()
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: prefix-dev/setup-pixi@v0.9.2
+        with:
+          pixi-version: latest
+
+      - name: Install dependencies
+        run: pixi install --environment ci
+
+      - name: Type check with mypy
+        run: |
+          pixi run --environment ci mypy intellicrack/ --ignore-missing-imports --no-strict-optional
+
+  python-mock-verify:
+    runs-on: windows-latest
+    needs: [setup]
+    if: success() || failure()
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: prefix-dev/setup-pixi@v0.9.2
+        with:
+          pixi-version: latest
+
+      - name: Install dependencies
+        run: pixi install --environment ci
+
+      - name: Verify No Mock Usage (Production-Ready Enforcement)
+        run: |
+          pixi run --environment ci python tests/utils/verify_no_mocks.py --ci
+
+  python-test:
+    runs-on: windows-latest
+    needs: [setup]
+    if: success() || failure()
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: prefix-dev/setup-pixi@v0.9.2
+        with:
+          pixi-version: latest
+
+      - name: Install dependencies
+        run: pixi install --environment ci
+
+      - name: Test with pytest
+        run: |
+          pixi run --environment ci pytest tests/ -v --cov=intellicrack --cov-report=xml --cov-report=html --junitxml=test-results.xml
+        env:
+          PYTHONDONTWRITEBYTECODE: 1
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: test-results
+          path: |
+            test-results.xml
+            htmlcov/
+            coverage.xml
+
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v5
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-windows-py3.12
+          fail_ci_if_error: false
+          verbose: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

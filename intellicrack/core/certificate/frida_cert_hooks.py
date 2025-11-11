@@ -204,7 +204,7 @@ class FridaCertificateHooks:
         "universal": "universal_ssl_bypass.js",
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the Frida certificate hooks manager.
 
         Sets up internal state for managing Frida session, script, messages, and bypass data.
@@ -237,7 +237,7 @@ class FridaCertificateHooks:
         """
         if script_name not in self.AVAILABLE_SCRIPTS:
             raise ValueError(
-                f"Unknown script: {script_name}. Available: {list(self.AVAILABLE_SCRIPTS.keys())}"
+                f"Unknown script: {script_name}. Available: {list(self.AVAILABLE_SCRIPTS.keys())}",
             )
 
         script_path = self.SCRIPT_DIR / self.AVAILABLE_SCRIPTS[script_name]
@@ -246,7 +246,7 @@ class FridaCertificateHooks:
             raise FileNotFoundError(f"Script file not found: {script_path}")
 
         try:
-            with open(script_path, "r", encoding="utf-8") as f:
+            with open(script_path, encoding="utf-8") as f:
                 content = f.read()
             logger.info(f"Loaded script: {script_name} ({len(content)} bytes)")
             return content
@@ -577,7 +577,7 @@ class FridaCertificateHooks:
                 hooks_installed=[],
                 detected_libraries=[],
                 message_count=len(self.messages),
-                errors=self.errors + [str(e)],
+                errors=[*self.errors, str(e)],
             )
 
     def get_intercepted_certificates(self) -> List[Dict]:

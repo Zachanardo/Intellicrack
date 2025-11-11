@@ -194,7 +194,7 @@ class AIScriptGenerator:
         analysis = {
             "has_memory_ops": bool(re.search(r"Memory\.|ptr\(", script)),
             "has_hooks": bool(re.search(r"Interceptor\.", script)),
-            "has_crypto": bool(re.search(r"crypt|hash|sign|key", script, re.I)),
+            "has_crypto": bool(re.search(r"crypt|hash|sign|key", script, re.IGNORECASE)),
             "has_timing": bool(re.search(r"setTimeout|setInterval|sleep", script)),
             "module_count": len(re.findall(r"Module\.", script)),
             "function_count": self._count_functions_robust(script),
@@ -1674,8 +1674,7 @@ DateSpoofer.spoofAllDateSources();
                 insert_index = i + 1
 
             # Handle case where entire script is comments/directives
-            if insert_index >= len(lines):
-                insert_index = len(lines)
+            insert_index = min(len(lines), insert_index)
 
             # Check if we should add spacing
             add_spacing_before = insert_index > 0 and lines[insert_index - 1].strip() != ""

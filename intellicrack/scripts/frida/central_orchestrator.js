@@ -783,25 +783,25 @@ const CentralOrchestrator = {
     // Execute automation task
     executeAutomationTask: function (task) {
         switch (task.type) {
-        case 'enableScript':
-            if (!this.scriptInstances[task.script]) {
-                this.loadScript(task.script);
-            }
-            break;
+            case 'enableScript':
+                if (!this.scriptInstances[task.script]) {
+                    this.loadScript(task.script);
+                }
+                break;
 
-        case 'disableScript':
-            if (this.scriptInstances[task.script]) {
-                this.unloadScript(task.script);
-            }
-            break;
+            case 'disableScript':
+                if (this.scriptInstances[task.script]) {
+                    this.unloadScript(task.script);
+                }
+                break;
 
-        case 'coordinate':
-            this.coordinateScripts(task.scripts, task.action);
-            break;
+            case 'coordinate':
+                this.coordinateScripts(task.scripts, task.action);
+                break;
 
-        case 'respond':
-            this.autoRespond(task.pattern, task.response);
-            break;
+            case 'respond':
+                this.autoRespond(task.pattern, task.response);
+                break;
         }
     },
 
@@ -929,42 +929,42 @@ const CentralOrchestrator = {
         });
 
         switch (action) {
-        case 'syncLicense':
-            // Synchronize license information across scripts
-            var licenseData = params || {};
+            case 'syncLicense':
+                // Synchronize license information across scripts
+                var licenseData = params || {};
 
-            ['registry', 'dotnetBypass', 'websocket'].forEach(function (script) {
-                if (this.scriptInstances[script] && script !== requester) {
-                    this.sendToScript(script, {
-                        type: 'updateLicense',
-                        data: licenseData,
-                    });
-                }
-            }, this);
-            break;
+                ['registry', 'dotnetBypass', 'websocket'].forEach(function (script) {
+                    if (this.scriptInstances[script] && script !== requester) {
+                        this.sendToScript(script, {
+                            type: 'updateLicense',
+                            data: licenseData,
+                        });
+                    }
+                }, this);
+                break;
 
-        case 'blockTime':
-            // Coordinate time blocking
-            ['timeBomb', 'ntpBlocker'].forEach(function (script) {
-                if (this.scriptInstances[script]) {
-                    this.sendToScript(script, {
-                        type: 'enforceTime',
-                        time: params.time,
-                    });
-                }
-            }, this);
-            break;
+            case 'blockTime':
+                // Coordinate time blocking
+                ['timeBomb', 'ntpBlocker'].forEach(function (script) {
+                    if (this.scriptInstances[script]) {
+                        this.sendToScript(script, {
+                            type: 'enforceTime',
+                            time: params.time,
+                        });
+                    }
+                }, this);
+                break;
 
-        case 'bypassNetwork':
-            // Coordinate network bypass
-            ['certPinner', 'websocket', 'http3Quic'].forEach(function (script) {
-                if (this.scriptInstances[script]) {
-                    this.sendToScript(script, {
-                        type: 'bypassAll',
-                    });
-                }
-            }, this);
-            break;
+            case 'bypassNetwork':
+                // Coordinate network bypass
+                ['certPinner', 'websocket', 'http3Quic'].forEach(function (script) {
+                    if (this.scriptInstances[script]) {
+                        this.sendToScript(script, {
+                            type: 'bypassAll',
+                        });
+                    }
+                }, this);
+                break;
         }
 
         return true;
@@ -987,26 +987,26 @@ const CentralOrchestrator = {
     // Handle orchestrator messages
     handleOrchestratorMessage: function (message) {
         switch (message.type) {
-        case 'loadScript':
-            this.loadScript(message.script);
-            return { success: true, action: 'loadScript' };
+            case 'loadScript':
+                this.loadScript(message.script);
+                return { success: true, action: 'loadScript' };
 
-        case 'unloadScript':
-            this.unloadScript(message.script);
-            return { success: true, action: 'unloadScript' };
+            case 'unloadScript':
+                this.unloadScript(message.script);
+                return { success: true, action: 'unloadScript' };
 
-        case 'updateConfig':
-            Object.assign(this.config, message.config);
-            return { success: true, action: 'updateConfig' };
+            case 'updateConfig':
+                Object.assign(this.config, message.config);
+                return { success: true, action: 'updateConfig' };
 
-        case 'getStatus':
-            return this.getStatus();
+            case 'getStatus':
+                return this.getStatus();
 
-        case 'executeCommand':
-            return this.executeCommand(message.command, message.params);
+            case 'executeCommand':
+                return this.executeCommand(message.command, message.params);
 
-        default:
-            return null;
+            default:
+                return null;
         }
     },
 
@@ -1048,27 +1048,27 @@ const CentralOrchestrator = {
     // Execute command
     executeCommand: function (command, params) {
         switch (command) {
-        case 'reload':
-            this.reloadAllScripts();
-            break;
+            case 'reload':
+                this.reloadAllScripts();
+                break;
 
-        case 'reset':
-            this.resetStatistics();
-            break;
+            case 'reset':
+                this.resetStatistics();
+                break;
 
-        case 'setLogLevel':
-            this.config.monitoring.logLevel = params.level;
-            break;
+            case 'setLogLevel':
+                this.config.monitoring.logLevel = params.level;
+                break;
 
-        case 'enableScript':
-            this.config.scripts[params.script].enabled = true;
-            this.loadScript(params.script);
-            break;
+            case 'enableScript':
+                this.config.scripts[params.script].enabled = true;
+                this.loadScript(params.script);
+                break;
 
-        case 'disableScript':
-            this.config.scripts[params.script].enabled = false;
-            this.unloadScript(params.script);
-            break;
+            case 'disableScript':
+                this.config.scripts[params.script].enabled = false;
+                this.unloadScript(params.script);
+                break;
         }
     },
 
@@ -2599,13 +2599,13 @@ const CentralOrchestrator = {
                                             action: 'lattice_matrix_analysis',
                                             matrix_a_sample: matrixAData
                                                 ? Array.from(
-                                                    new Uint8Array(matrixAData).slice(0, 16)
-                                                )
+                                                      new Uint8Array(matrixAData).slice(0, 16)
+                                                  )
                                                 : null,
                                             matrix_b_sample: matrixBData
                                                 ? Array.from(
-                                                    new Uint8Array(matrixBData).slice(0, 16)
-                                                )
+                                                      new Uint8Array(matrixBData).slice(0, 16)
+                                                  )
                                                 : null,
                                             dimension: n,
                                         });
@@ -2751,8 +2751,8 @@ const CentralOrchestrator = {
                                     schemeHint = e.toString().includes('access')
                                         ? 'CKKS'
                                         : parameterCount > 4
-                                            ? 'TFHE'
-                                            : 'BFV';
+                                          ? 'TFHE'
+                                          : 'BFV';
                                     send({
                                         type: 'fhe_analysis_error',
                                         error_details: e.toString(),
@@ -3245,27 +3245,27 @@ const CentralOrchestrator = {
                     detection_methods:
                         platform === 'windows'
                             ? [
-                                function () {
-                                    return Process.findModuleByName('ntdll.dll')
-                                        ? 'pe_header_analysis'
-                                        : null;
-                                },
-                                function () {
-                                    return Module.findExportByName(
-                                        'kernel32.dll',
-                                        'GetModuleHandleA'
-                                    )
-                                        ? 'import_table_scan'
-                                        : null;
-                                },
-                                function () {
-                                    return Process.arch === 'x64' || Process.arch === 'ia32'
-                                        ? 'architecture_check'
-                                        : null;
-                                },
-                            ]
+                                  function () {
+                                      return Process.findModuleByName('ntdll.dll')
+                                          ? 'pe_header_analysis'
+                                          : null;
+                                  },
+                                  function () {
+                                      return Module.findExportByName(
+                                          'kernel32.dll',
+                                          'GetModuleHandleA'
+                                      )
+                                          ? 'import_table_scan'
+                                          : null;
+                                  },
+                                  function () {
+                                      return Process.arch === 'x64' || Process.arch === 'ia32'
+                                          ? 'architecture_check'
+                                          : null;
+                                  },
+                              ]
                             : platform === 'linux'
-                                ? [
+                              ? [
                                     function () {
                                         return Process.findModuleByName('libc.so')
                                             ? 'elf_header_validation'
@@ -3282,7 +3282,7 @@ const CentralOrchestrator = {
                                             : null;
                                     },
                                 ]
-                                : [
+                              : [
                                     function () {
                                         return Process.findModuleByName('libSystem.B.dylib')
                                             ? 'mach_header_parse'
@@ -3410,8 +3410,8 @@ const CentralOrchestrator = {
                                                     currentArch === 'x64'
                                                         ? ['rcx', 'rdx', 'r8', 'r9'][i] || 'stack'
                                                         : currentArch === 'arm64'
-                                                            ? ['x0', 'x1', 'x2', 'x3'][i] || 'stack'
-                                                            : ['eax', 'edx', 'ecx'][i] || 'stack',
+                                                          ? ['x0', 'x1', 'x2', 'x3'][i] || 'stack'
+                                                          : ['eax', 'edx', 'ecx'][i] || 'stack',
                                             });
                                         } catch (e) {
                                             convAnalysis.register_analysis.push({
@@ -3461,8 +3461,8 @@ const CentralOrchestrator = {
                                         maxNum > 100
                                             ? 'full_scan'
                                             : maxNum > 50
-                                                ? 'partial_scan'
-                                                : 'limited_scan',
+                                              ? 'partial_scan'
+                                              : 'limited_scan',
                                     bypass_strategy:
                                         maxNum === 0 ? 'return_empty' : 'filter_sensitive',
                                     risk_level: maxNum > 200 ? 'high' : 'medium',
@@ -3669,8 +3669,8 @@ const CentralOrchestrator = {
                                                 paramValue === 0xdeadbeef
                                                     ? 'debug_escape'
                                                     : paramValue > 0x80000000
-                                                        ? 'kernel_space'
-                                                        : 'user_space',
+                                                      ? 'kernel_space'
+                                                      : 'user_space',
                                         });
                                     } catch (e) {
                                         hypercallAnalysis.call_signature.push({
@@ -3688,8 +3688,8 @@ const CentralOrchestrator = {
                                     )
                                         ? 'high'
                                         : hypercallAnalysis.call_signature.length > 4
-                                            ? 'medium'
-                                            : 'low';
+                                          ? 'medium'
+                                          : 'low';
 
                                 send({
                                     type: 'bypass',
@@ -3771,10 +3771,10 @@ const CentralOrchestrator = {
                                 operation_type: operation.toLowerCase().includes('open')
                                     ? 'file_open'
                                     : operation.toLowerCase().includes('edit')
-                                        ? 'file_edit'
-                                        : operation.toLowerCase().includes('run')
-                                            ? 'program_run'
-                                            : 'unknown',
+                                      ? 'file_edit'
+                                      : operation.toLowerCase().includes('run')
+                                        ? 'program_run'
+                                        : 'unknown',
                                 persistence_potential:
                                     operation &&
                                     (operation.includes('admin') || operation.includes('elevate'))

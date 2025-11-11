@@ -57,7 +57,7 @@ except ImportError as e:
     class PDFGenerator:
         """Functional PDF generator using pure Python."""
 
-        def __init__(self):
+        def __init__(self) -> None:
             """Initialize PDF generator."""
             self.object_count = 0
             self.objects = []
@@ -120,7 +120,7 @@ except ImportError as e:
             self.objects.append(obj_dict)
             return self.object_count
 
-        def _create_page(self, content, font_obj):
+        def _create_page(self, content, font_obj) -> None:
             """Create a PDF page."""
             # Create content stream
             stream = self._create_content_stream(content)
@@ -134,7 +134,7 @@ except ImportError as e:
                     "Resources": {"Font": {"F1": f"{font_obj} 0 R"}},
                     "MediaBox": "[0 0 612 792]",
                     "Contents": f"{stream_obj} 0 R",
-                }
+                },
             )
 
             self.pages.append({"obj_num": page_obj, "stream_obj": stream_obj, "stream": stream})
@@ -261,7 +261,7 @@ except ImportError as e:
                         items.append(f"/{key} {self._dict_to_pdf(value)}")
                     elif isinstance(value, list):
                         items.append(f"/{key} [{' '.join(str(v) for v in value)}]")
-                    elif key.startswith("/") or key == "Type" or key == "Subtype" or key == "BaseFont":
+                    elif key.startswith("/") or key in {"Type", "Subtype", "BaseFont"}:
                         items.append(f"/{key} {value}")
                     else:
                         items.append(f"/{key} {value}")
@@ -272,7 +272,7 @@ except ImportError as e:
     class PDFOptions:
         """PDF generation options."""
 
-        def __init__(self, options=None):
+        def __init__(self, options=None) -> None:
             """Initialize options."""
             self.options = options or {}
 
@@ -292,7 +292,7 @@ except ImportError as e:
     class PDFConfiguration:
         """PDF generation configuration."""
 
-        def __init__(self, wkhtmltopdf=None):
+        def __init__(self, wkhtmltopdf=None) -> None:
             """Initialize configuration."""
             self.wkhtmltopdf = wkhtmltopdf
 
@@ -345,20 +345,20 @@ except ImportError as e:
         except Exception as e:
             logger.error("Failed to fetch URL %s: %s", url, e)
             return from_string(
-                f"<h1>Error</h1><p>Failed to fetch URL: {url}</p>", output_path, options, toc, cover, configuration, cover_first
+                f"<h1>Error</h1><p>Failed to fetch URL: {url}</p>", output_path, options, toc, cover, configuration, cover_first,
             )
 
     def from_file(input, output_path=None, options=None, toc=None, cover=None, configuration=None, cover_first=False):
         """Generate PDF from file."""
         try:
             # Read file content
-            with open(input, "r", encoding="utf-8") as f:
+            with open(input, encoding="utf-8") as f:
                 content = f.read()
             return from_string(content, output_path, options, toc, cover, configuration, cover_first)
         except Exception as e:
             logger.error("Failed to read file %s: %s", input, e)
             return from_string(
-                f"<h1>Error</h1><p>Failed to read file: {input}</p>", output_path, options, toc, cover, configuration, cover_first
+                f"<h1>Error</h1><p>Failed to read file: {input}</p>", output_path, options, toc, cover, configuration, cover_first,
             )
 
     def configuration(**kwargs):
@@ -369,7 +369,7 @@ except ImportError as e:
     class PDFCanvas:
         """Canvas for drawing on PDF pages."""
 
-        def __init__(self, filename=None):
+        def __init__(self, filename=None) -> None:
             """Initialize canvas."""
             self.filename = filename
             self.pages = []
@@ -381,40 +381,40 @@ except ImportError as e:
             self.page_width = 612
             self.page_height = 792
 
-        def setFont(self, name, size):
+        def setFont(self, name, size) -> None:
             """Set current font."""
             self.font_name = name
             self.font_size = size
 
-        def drawString(self, x, y, text):
+        def drawString(self, x, y, text) -> None:
             """Draw string at position."""
             self.current_page.append({"type": "text", "x": x, "y": y, "text": text, "font": self.font_name, "size": self.font_size})
 
-        def drawCentredString(self, x, y, text):
+        def drawCentredString(self, x, y, text) -> None:
             """Draw centered string."""
             # Approximate centering
             offset = len(text) * self.font_size * 0.25
             self.drawString(x - offset, y, text)
 
-        def drawRightString(self, x, y, text):
+        def drawRightString(self, x, y, text) -> None:
             """Draw right-aligned string."""
             # Approximate right alignment
             offset = len(text) * self.font_size * 0.5
             self.drawString(x - offset, y, text)
 
-        def line(self, x1, y1, x2, y2):
+        def line(self, x1, y1, x2, y2) -> None:
             """Draw line."""
             self.current_page.append({"type": "line", "x1": x1, "y1": y1, "x2": x2, "y2": y2})
 
-        def rect(self, x, y, width, height, stroke=1, fill=0):
+        def rect(self, x, y, width, height, stroke=1, fill=0) -> None:
             """Draw rectangle."""
             self.current_page.append({"type": "rect", "x": x, "y": y, "width": width, "height": height, "stroke": stroke, "fill": fill})
 
-        def circle(self, x, y, radius, stroke=1, fill=0):
+        def circle(self, x, y, radius, stroke=1, fill=0) -> None:
             """Draw circle."""
             self.current_page.append({"type": "circle", "x": x, "y": y, "radius": radius, "stroke": stroke, "fill": fill})
 
-        def showPage(self):
+        def showPage(self) -> None:
             """Start new page."""
             self.pages.append(self.current_page)
             self.current_page = []
@@ -447,7 +447,7 @@ except ImportError as e:
     class PDFDocument:
         """High-level PDF document creation."""
 
-        def __init__(self):
+        def __init__(self) -> None:
             """Initialize document."""
             self.title = ""
             self.author = ""
@@ -455,23 +455,23 @@ except ImportError as e:
             self.keywords = []
             self.pages = []
 
-        def add_page(self, content):
+        def add_page(self, content) -> None:
             """Add page to document."""
             self.pages.append(content)
 
-        def set_title(self, title):
+        def set_title(self, title) -> None:
             """Set document title."""
             self.title = title
 
-        def set_author(self, author):
+        def set_author(self, author) -> None:
             """Set document author."""
             self.author = author
 
-        def set_subject(self, subject):
+        def set_subject(self, subject) -> None:
             """Set document subject."""
             self.subject = subject
 
-        def add_keyword(self, keyword):
+        def add_keyword(self, keyword) -> None:
             """Add keyword to document."""
             self.keywords.append(keyword)
 
@@ -501,7 +501,7 @@ except ImportError as e:
     class SimpleDocTemplate:
         """Perform document template for report generation."""
 
-        def __init__(self, filename, pagesize=(612, 792), **kwargs):
+        def __init__(self, filename, pagesize=(612, 792), **kwargs) -> None:
             """Initialize template."""
             self.filename = filename
             self.pagesize = pagesize
@@ -526,19 +526,19 @@ except ImportError as e:
     class Paragraph:
         """Paragraph element for documents."""
 
-        def __init__(self, text, style=None):
+        def __init__(self, text, style=None) -> None:
             """Initialize paragraph."""
             self.text = text
             self.style = style
 
-        def to_html(self):
+        def to_html(self) -> str:
             """Convert to HTML."""
             return f"<p>{self.text}</p>"
 
     class Table:
         """Table element for documents."""
 
-        def __init__(self, data, colWidths=None, rowHeights=None):
+        def __init__(self, data, colWidths=None, rowHeights=None) -> None:
             """Initialize table."""
             self.data = data
             self.colWidths = colWidths
@@ -558,13 +558,13 @@ except ImportError as e:
     class Image:
         """Image element for documents."""
 
-        def __init__(self, filename, width=None, height=None):
+        def __init__(self, filename, width=None, height=None) -> None:
             """Initialize image."""
             self.filename = filename
             self.width = width
             self.height = height
 
-        def to_html(self):
+        def to_html(self) -> str | None:
             """Convert to HTML."""
             style = ""
             if self.width:
@@ -584,7 +584,7 @@ except ImportError as e:
     class PageBreak:
         """Page break element."""
 
-        def to_html(self):
+        def to_html(self) -> str:
             """Convert to HTML."""
             return "<div style='page-break-after: always;'></div>"
 

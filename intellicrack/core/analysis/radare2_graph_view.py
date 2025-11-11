@@ -91,7 +91,7 @@ class GraphData:
 class R2GraphGenerator:
     """Generate various graph representations from radare2 analysis."""
 
-    def __init__(self, binary_path: str):
+    def __init__(self, binary_path: str) -> None:
         """Initialize graph generator.
 
         Args:
@@ -109,7 +109,7 @@ class R2GraphGenerator:
             self.r2pipe_available = True
             self._initialize_r2()
 
-    def _initialize_r2(self):
+    def _initialize_r2(self) -> None:
         """Initialize r2pipe session."""
         if not self.r2pipe_available:
             return
@@ -300,7 +300,7 @@ class R2GraphGenerator:
         try:
             # Create central node
             central_node = GraphNode(
-                id=f"addr_{hex(address)}", label=f"Address\n{hex(address)}", type="address", address=address, color="#E74C3C"
+                id=f"addr_{hex(address)}", label=f"Address\n{hex(address)}", type="address", address=address, color="#E74C3C",
             )
             graph_data.nodes.append(central_node)
 
@@ -316,7 +316,7 @@ class R2GraphGenerator:
                 node_id = f"from_{hex(from_addr)}"
                 if not any(n.id == node_id for n in graph_data.nodes):
                     node = GraphNode(
-                        id=node_id, label=f"{func_name}\n@ {hex(from_addr)}", type="reference_from", address=from_addr, color="#3498DB"
+                        id=node_id, label=f"{func_name}\n@ {hex(from_addr)}", type="reference_from", address=from_addr, color="#3498DB",
                     )
                     graph_data.nodes.append(node)
 
@@ -419,7 +419,7 @@ class R2GraphGenerator:
 
         return graph_data
 
-    def export_to_dot(self, graph_data: GraphData, output_path: str):
+    def export_to_dot(self, graph_data: GraphData, output_path: str) -> None:
         """Export graph to DOT format.
 
         Args:
@@ -511,7 +511,7 @@ class R2GraphGenerator:
 
             # Add legend
             legend_elements = []
-            node_types = set(n.type for n in graph_data.nodes)
+            node_types = {n.type for n in graph_data.nodes}
             for ntype in node_types:
                 color = next((n.color for n in graph_data.nodes if n.type == ntype), "#000000")
                 legend_elements.append(mpatches.Patch(color=color, label=ntype))
@@ -532,7 +532,7 @@ class R2GraphGenerator:
             self.logger.error(f"Failed to visualize graph: {e}")
             return False
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up resources."""
         if self.r2:
             try:

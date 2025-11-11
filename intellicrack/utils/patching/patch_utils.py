@@ -93,7 +93,7 @@ def parse_patch_instructions(text: str) -> list[dict[str, Any]]:
                     "address": address,
                     "new_bytes": new_bytes,
                     "description": description,
-                }
+                },
             )
             logger.info(
                 f"Parsed instruction: Address=0x{address:X}, Bytes='{new_bytes.hex().upper()}', Desc='{description}'",
@@ -151,7 +151,7 @@ def create_patch(original_data: bytes, modified_data: bytes, base_address: int =
                     "address": base_address + start,
                     "new_bytes": bytes(changed_bytes),
                     "description": f"Patch at offset 0x{start:X}",
-                }
+                },
             )
         else:
             i += 1

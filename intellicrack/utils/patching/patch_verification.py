@@ -118,7 +118,7 @@ def verify_patches(app: Any, patched_path: str, instructions: list[dict[str, Any
                 # Assuming address might be a direct file offset if smaller than image base
                 offset = address
                 app.update_output.emit(
-                    log_message(f"[Verify] Warning: Address 0x{address:X} seems low, treating as direct file offset 0x{offset:X}.")
+                    log_message(f"[Verify] Warning: Address 0x{address:X} seems low, treating as direct file offset 0x{offset:X}."),
                 )
 
             # Check bytes at offset
@@ -205,7 +205,7 @@ def test_patch_and_verify(binary_path: str, patches: list[dict[str, Any]]) -> li
                     (
                         True,
                         f"Patch {i + 1}: Successfully applied at offset 0x{offset:X} ({description})",
-                    )
+                    ),
                 )
             except (OSError, ValueError, RuntimeError) as patch_error:
                 logger.error("Error in patch_verification: %s", patch_error)
@@ -245,17 +245,17 @@ def test_patch_and_verify(binary_path: str, patches: list[dict[str, Any]]) -> li
 
                 if orig_section.SizeOfRawData != patched_section.SizeOfRawData:
                     results.append(
-                        f"Warning: Section {orig_name} size changed: {orig_section.SizeOfRawData} -> {patched_section.SizeOfRawData}"
+                        f"Warning: Section {orig_name} size changed: {orig_section.SizeOfRawData} -> {patched_section.SizeOfRawData}",
                     )
 
             # Check entry point
             if hasattr(original_pe, "OPTIONAL_HEADER") and hasattr(verification_pe, "OPTIONAL_HEADER"):
                 if hasattr(original_pe.OPTIONAL_HEADER, "AddressOfEntryPoint") and hasattr(
-                    verification_pe.OPTIONAL_HEADER, "AddressOfEntryPoint"
+                    verification_pe.OPTIONAL_HEADER, "AddressOfEntryPoint",
                 ):
                     if original_pe.OPTIONAL_HEADER.AddressOfEntryPoint != verification_pe.OPTIONAL_HEADER.AddressOfEntryPoint:
                         results.append(
-                            f"Warning: Entry point changed: 0x{original_pe.OPTIONAL_HEADER.AddressOfEntryPoint:X} -> 0x{verification_pe.OPTIONAL_HEADER.AddressOfEntryPoint:X}"
+                            f"Warning: Entry point changed: 0x{original_pe.OPTIONAL_HEADER.AddressOfEntryPoint:X} -> 0x{verification_pe.OPTIONAL_HEADER.AddressOfEntryPoint:X}",
                         )
                     else:
                         results.append(f"Entry point verification passed: 0x{verification_pe.OPTIONAL_HEADER.AddressOfEntryPoint:X}")
@@ -405,7 +405,7 @@ def apply_parsed_patch_instructions_with_validation(app: Any, instructions: list
                         except Exception as e_rva:
                             logger.error("Exception in patch_verification: %s", e_rva)
                             app.update_output.emit(
-                                log_message(f"[Patch {patch_num}] ERROR: Failed to get offset for RVA 0x{rva:X}: {e_rva}")
+                                log_message(f"[Patch {patch_num}] ERROR: Failed to get offset for RVA 0x{rva:X}: {e_rva}"),
                             )
                             error_count += 1
                             continue  # Skip this patch entirely rather than using risky fallback
@@ -415,15 +415,15 @@ def apply_parsed_patch_instructions_with_validation(app: Any, instructions: list
                         offset = address
                         app.update_output.emit(
                             log_message(
-                                f"[Patch {patch_num}] Warning: Address 0x{address:X} seems low, treating as direct file offset 0x{offset:X}."
-                            )
+                                f"[Patch {patch_num}] Warning: Address 0x{address:X} seems low, treating as direct file offset 0x{offset:X}.",
+                            ),
                         )
 
                     # Apply patch
                     app.update_output.emit(
                         log_message(
-                            f"[Patch {patch_num}] Applying at address 0x{address:X} (offset 0x{offset:X}): {len(new_bytes)} bytes for '{desc}'"
-                        )
+                            f"[Patch {patch_num}] Applying at address 0x{address:X} (offset 0x{offset:X}): {len(new_bytes)} bytes for '{desc}'",
+                        ),
                     )
                     f.seek(offset)
                     f.write(new_bytes)
@@ -432,13 +432,13 @@ def apply_parsed_patch_instructions_with_validation(app: Any, instructions: list
                 except pefile.PEFormatError as e_offset:
                     logger.error("pefile.PEFormatError in patch_verification: %s", e_offset)
                     app.update_output.emit(
-                        log_message(f"[Patch {patch_num}] Skipped: Error getting offset for address 0x{address:X}: {e_offset}")
+                        log_message(f"[Patch {patch_num}] Skipped: Error getting offset for address 0x{address:X}: {e_offset}"),
                     )
                     error_count += 1
                 except OSError as e_io:
                     logger.error("IO error in patch_verification: %s", e_io)
                     app.update_output.emit(
-                        log_message(f"[Patch {patch_num}] Skipped: File I/O error applying patch at offset 0x{offset:X}: {e_io}")
+                        log_message(f"[Patch {patch_num}] Skipped: File I/O error applying patch at offset 0x{offset:X}: {e_io}"),
                     )
                     error_count += 1
                 except Exception as e_apply:
@@ -466,7 +466,7 @@ def apply_parsed_patch_instructions_with_validation(app: Any, instructions: list
             except pefile.PEFormatError as e_verify:
                 logger.error("pefile.PEFormatError in patch_verification: %s", e_verify)
                 app.update_output.emit(
-                    log_message(f"[Verify] CRITICAL ERROR: Patched file '{patched_path}' failed PE validation: {e_verify}")
+                    log_message(f"[Verify] CRITICAL ERROR: Patched file '{patched_path}' failed PE validation: {e_verify}"),
                 )
                 app.update_output.emit(log_message("[Verify] The patch might have corrupted the file structure."))
                 app.update_output.emit(log_message(f"[Verify] Please examine the file or restore from backup: {backup_path}"))
@@ -713,7 +713,7 @@ def _perform_safety_check_and_patch(
         code_offset = start_addr - code_base_addr
         if not (0 <= code_offset < len(code_data)):
             app.update_output.emit(
-                log_message(f"[License Rewrite] Warning: Candidate address 0x{start_addr:X} is outside the .text section. Skipping.")
+                log_message(f"[License Rewrite] Warning: Candidate address 0x{start_addr:X} is outside the .text section. Skipping."),
             )
             return None
 
@@ -724,12 +724,12 @@ def _perform_safety_check_and_patch(
                 code_data[code_offset : code_offset + bytes_to_disassemble],
                 start_addr,
                 count=5,
-            )
+            ),
         )
 
         if not instructions:
             app.update_output.emit(
-                log_message(f"[License Rewrite] Warning: Could not disassemble instructions at 0x{start_addr:X} for size check.")
+                log_message(f"[License Rewrite] Warning: Could not disassemble instructions at 0x{start_addr:X} for size check."),
             )
             return None
 
@@ -741,7 +741,7 @@ def _perform_safety_check_and_patch(
     except Exception as e_check:
         logger.error("Exception in patch_verification: %s", e_check)
         app.update_output.emit(
-            log_message(f"[License Rewrite] Error during safety check for 0x{start_addr:X}: {e_check}. Skipping patch for this candidate.")
+            log_message(f"[License Rewrite] Error during safety check for 0x{start_addr:X}: {e_check}. Skipping patch for this candidate."),
         )
         return None
 
@@ -768,8 +768,8 @@ def _check_patch_safety_and_create(
     if prologue_size >= len(patch_bytes) and len(patch_bytes) <= 8:
         app.update_output.emit(
             log_message(
-                f"[License Rewrite] Safety Check OK: Patch size ({len(patch_bytes)} bytes) fits estimated prologue size ({prologue_size} bytes) at 0x{start_addr:X}."
-            )
+                f"[License Rewrite] Safety Check OK: Patch size ({len(patch_bytes)} bytes) fits estimated prologue size ({prologue_size} bytes) at 0x{start_addr:X}.",
+            ),
         )
         return {
             "address": start_addr,
@@ -779,8 +779,8 @@ def _check_patch_safety_and_create(
     else:
         app.update_output.emit(
             log_message(
-                f"[License Rewrite] Safety Check FAILED: Patch size ({len(patch_bytes)} bytes) may NOT fit estimated prologue size ({prologue_size} bytes) at 0x{start_addr:X}. Skipping direct rewrite."
-            )
+                f"[License Rewrite] Safety Check FAILED: Patch size ({len(patch_bytes)} bytes) may NOT fit estimated prologue size ({prologue_size} bytes) at 0x{start_addr:X}. Skipping direct rewrite.",
+            ),
         )
 
         # Add suggestions for manual review
@@ -815,7 +815,7 @@ def _calculate_safe_prologue_size(instructions: list) -> int:
 
 
 def _add_manual_review_suggestions(
-    app: Any, instructions: list, start_addr: int, code_data: bytes, code_offset: int, candidates: list, patch_bytes: bytes
+    app: Any, instructions: list, start_addr: int, code_data: bytes, code_offset: int, candidates: list, patch_bytes: bytes,
 ) -> None:
     """Add suggestions for manual review."""
     # Check first 3 instructions for conditional jumps
@@ -838,7 +838,7 @@ def _add_manual_review_suggestions(
                 app.potential_patches.append(fallback_patch)
 
                 app.update_output.emit(
-                    log_message("[License Rewrite] Added suggestion to potential_patches. Use 'Apply Patches' to apply after review.")
+                    log_message("[License Rewrite] Added suggestion to potential_patches. Use 'Apply Patches' to apply after review."),
                 )
             break
 
@@ -857,7 +857,7 @@ def _add_manual_review_suggestions(
                 "reason": "Failed automatic patch generation",
                 "needs_review": True,
                 "review_priority": "high" if "check" in (disasm_at_addr or "").lower() else "medium",
-            }
+            },
         )
 
     # Log to analysis results
@@ -939,7 +939,7 @@ def _log_application_state(app: Any) -> None:
     app.update_output.emit(log_message(f"[License Rewrite] Has binary_path: {hasattr(app, 'binary_path')}"))
     if hasattr(app, "binary_path"):
         app.update_output.emit(
-            log_message(f"[License Rewrite] Binary path exists: {os.path.exists(app.binary_path) if app.binary_path else False}")
+            log_message(f"[License Rewrite] Binary path exists: {os.path.exists(app.binary_path) if app.binary_path else False}"),
         )
 
 
@@ -965,8 +965,8 @@ def _process_ai_patches(app: Any, original_patches: list | None) -> list:
 
         app.update_output.emit(
             log_message(
-                f"[License Rewrite] Found {new_patches_count} new patches and {overlapping_patches} overlapping with previous analysis"
-            )
+                f"[License Rewrite] Found {new_patches_count} new patches and {overlapping_patches} overlapping with previous analysis",
+            ),
         )
 
         # Keep track of both sets if needed

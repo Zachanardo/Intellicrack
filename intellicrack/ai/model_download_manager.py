@@ -99,7 +99,7 @@ class ModelInfo:
 class ModelDownloadManager:
     """Manages downloading models from Hugging Face Hub."""
 
-    def __init__(self, cache_dir: str | None = None, token: str | None = None):
+    def __init__(self, cache_dir: str | None = None, token: str | None = None) -> None:
         """Initialize the model download manager.
 
         Args:
@@ -137,7 +137,7 @@ class ModelDownloadManager:
                 logger.error(f"Failed to load metadata: {e}")
         return {"models": {}, "downloads": {}}
 
-    def _save_metadata(self):
+    def _save_metadata(self) -> None:
         """Save metadata to cache."""
         try:
             with open(self.metadata_file, "w") as f:
@@ -187,7 +187,7 @@ class ModelDownloadManager:
                     sort=sort,
                     direction=-1,  # Descending
                     token=self.token,
-                )
+                ),
             )
 
             # Convert to ModelInfo
@@ -380,7 +380,7 @@ class ModelDownloadManager:
             }
 
             # Create progress tracker
-            def progress_hook(progress_dict):
+            def progress_hook(progress_dict) -> None:
                 if progress_callback and "downloaded" in progress_dict:
                     prog = DownloadProgress(
                         total_size=progress_dict.get("total", 0),

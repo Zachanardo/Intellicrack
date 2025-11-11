@@ -33,7 +33,7 @@ implementations for GUI operations used in Intellicrack dialogs and interfaces.
 """
 
 
-def _setup_tkinter_environment():
+def _setup_tkinter_environment() -> None:
     """Set up environment variables required for tkinter/TCL/TK on Windows.
 
     This ensures DLLs can be found even when Python is not launched through the launcher.
@@ -84,7 +84,7 @@ def _setup_tkinter_environment():
             [
                 str(pixi_env / "Library" / "bin"),
                 str(pixi_env / "DLLs"),
-            ]
+            ],
         )
 
         for dll_dir in dll_dirs:
@@ -133,7 +133,7 @@ except ImportError as e:
         _widget_counter = 0
         _widget_registry = {}
 
-        def __init__(self, master=None, **kwargs):
+        def __init__(self, master=None, **kwargs) -> None:
             """Initialize widget."""
             FallbackWidget._widget_counter += 1
             self.widget_id = f"widget_{FallbackWidget._widget_counter}"
@@ -156,11 +156,11 @@ except ImportError as e:
             self.borderwidth = kwargs.get("borderwidth", 1)
             self.state = kwargs.get("state", "normal")
             self.text = kwargs.get("text", "")
-            self.textvariable = kwargs.get("textvariable", None)
+            self.textvariable = kwargs.get("textvariable")
 
             # Event bindings
             self.bindings = {}
-            self.command = kwargs.get("command", None)
+            self.command = kwargs.get("command")
 
             # Grid/pack properties
             self.grid_info_dict = {}
@@ -202,7 +202,7 @@ except ImportError as e:
             """Get requested height."""
             return self.height
 
-        def configure(self, **kwargs):
+        def configure(self, **kwargs) -> None:
             """Configure widget."""
             for key, value in kwargs.items():
                 if hasattr(self, key):
@@ -217,14 +217,14 @@ except ImportError as e:
             """Get configuration value."""
             return getattr(self, key, None)
 
-        def bind(self, event, callback, add=None):
+        def bind(self, event, callback, add=None) -> None:
             """Bind event to callback."""
             if event not in self.bindings:
                 self.bindings[event] = []
             self.bindings[event].append(callback)
             logger.debug("Widget %s: Bound %s to callback", self.widget_id, event)
 
-        def unbind(self, event, callback=None):
+        def unbind(self, event, callback=None) -> None:
             """Unbind event."""
             if event in self.bindings:
                 if callback:
@@ -232,11 +232,11 @@ except ImportError as e:
                 else:
                     del self.bindings[event]
 
-        def focus(self):
+        def focus(self) -> None:
             """Set focus to widget."""
             logger.debug("Widget %s: Focus set", self.widget_id)
 
-        def focus_set(self):
+        def focus_set(self) -> None:
             """Set focus."""
             self.focus()
 
@@ -244,7 +244,7 @@ except ImportError as e:
             """Get focused widget."""
             return self
 
-        def grid(self, row=0, column=0, rowspan=1, columnspan=1, sticky="", padx=0, pady=0, ipadx=0, ipady=0):
+        def grid(self, row=0, column=0, rowspan=1, columnspan=1, sticky="", padx=0, pady=0, ipadx=0, ipady=0) -> None:
             """Grid geometry manager."""
             self.grid_info_dict = {
                 "row": row,
@@ -263,7 +263,7 @@ except ImportError as e:
             """Get grid info."""
             return self.grid_info_dict
 
-        def pack(self, side="top", fill="none", expand=False, padx=0, pady=0, ipadx=0, ipady=0, anchor="center"):
+        def pack(self, side="top", fill="none", expand=False, padx=0, pady=0, ipadx=0, ipady=0, anchor="center") -> None:
             """Pack geometry manager."""
             self.pack_info_dict = {
                 "side": side,
@@ -281,7 +281,7 @@ except ImportError as e:
             """Get pack info."""
             return self.pack_info_dict
 
-        def place(self, x=0, y=0, width=None, height=None, anchor="nw", relx=0, rely=0, relwidth=None, relheight=None):
+        def place(self, x=0, y=0, width=None, height=None, anchor="nw", relx=0, rely=0, relwidth=None, relheight=None) -> None:
             """Place geometry manager."""
             self.place_info_dict = {
                 "x": x,
@@ -306,7 +306,7 @@ except ImportError as e:
             """Get place info."""
             return self.place_info_dict
 
-        def destroy(self):
+        def destroy(self) -> None:
             """Destroy widget."""
             self.destroyed = True
             if self.widget_id in FallbackWidget._widget_registry:
@@ -315,34 +315,34 @@ except ImportError as e:
                 self.master.winfo_children_list.remove(self)
             logger.debug("Widget %s: Destroyed", self.widget_id)
 
-        def update(self):
+        def update(self) -> None:
             """Update widget."""
             logger.debug("Widget %s: Updated", self.widget_id)
 
-        def update_idletasks(self):
+        def update_idletasks(self) -> None:
             """Update idle tasks."""
             logger.debug("Widget %s: Updated idle tasks", self.widget_id)
 
-        def lift(self):
+        def lift(self) -> None:
             """Raise widget."""
             logger.debug("Widget %s: Lifted", self.widget_id)
 
-        def lower(self):
+        def lower(self) -> None:
             """Lower widget."""
             logger.debug("Widget %s: Lowered", self.widget_id)
 
-        def grab_set(self):
+        def grab_set(self) -> None:
             """Set grab."""
             logger.debug("Widget %s: Grab set", self.widget_id)
 
-        def grab_release(self):
+        def grab_release(self) -> None:
             """Release grab."""
             logger.debug("Widget %s: Grab released", self.widget_id)
 
     class FallbackTk(FallbackWidget):
         """Run application window."""
 
-        def __init__(self):
+        def __init__(self) -> None:
             """Initialize Tk window."""
             super().__init__()
             self.title_text = "Tk"
@@ -382,37 +382,37 @@ except ImportError as e:
                 logger.debug("Window %s: Geometry set to '%s'", self.widget_id, newGeometry)
             return self.geometry_string
 
-        def resizable(self, width=True, height=True):
+        def resizable(self, width=True, height=True) -> None:
             """Set window resizable."""
             logger.debug("Window %s: Resizable width=%s, height=%s", self.widget_id, width, height)
 
-        def minsize(self, width=None, height=None):
+        def minsize(self, width=None, height=None) -> None:
             """Set minimum size."""
             if width is not None and height is not None:
                 logger.debug("Window %s: Min size set to %dx%d", self.widget_id, width, height)
 
-        def maxsize(self, width=None, height=None):
+        def maxsize(self, width=None, height=None) -> None:
             """Set maximum size."""
             if width is not None and height is not None:
                 logger.debug("Window %s: Max size set to %dx%d", self.widget_id, width, height)
 
-        def withdraw(self):
+        def withdraw(self) -> None:
             """Withdraw window."""
             self.withdrawn = True
             logger.debug("Window %s: Withdrawn", self.widget_id)
 
-        def deiconify(self):
+        def deiconify(self) -> None:
             """Show window."""
             self.withdrawn = False
             self.iconified = False
             logger.debug("Window %s: Deiconified", self.widget_id)
 
-        def iconify(self):
+        def iconify(self) -> None:
             """Minimize window."""
             self.iconified = True
             logger.debug("Window %s: Iconified", self.widget_id)
 
-        def protocol(self, name, func):
+        def protocol(self, name, func) -> None:
             """Set protocol handler."""
             self.protocol_bindings[name] = func
             # For WM_DELETE_WINDOW and similar, queue for immediate processing
@@ -422,7 +422,7 @@ except ImportError as e:
                 self._pending_protocols.append((name, func))
             logger.debug("Window %s: Protocol '%s' bound", self.widget_id, name)
 
-        def mainloop(self):
+        def mainloop(self) -> None:
             """Start event loop."""
             logger.info("Window %s: Entering mainloop (fallback mode)", self.widget_id)
             # Headless event loop - processes window lifecycle without GUI rendering
@@ -443,7 +443,7 @@ except ImportError as e:
             except KeyboardInterrupt:
                 logger.info("Mainloop interrupted")
 
-        def quit(self):
+        def quit(self) -> None:
             """Quit application."""
             logger.info("Window %s: Quit called", self.widget_id)
             self.destroy()
@@ -451,7 +451,7 @@ except ImportError as e:
     class FallbackFrame(FallbackWidget):
         """Frame widget."""
 
-        def __init__(self, master=None, **kwargs):
+        def __init__(self, master=None, **kwargs) -> None:
             """Initialize frame."""
             super().__init__(master, **kwargs)
             logger.debug("Frame created: %s", self.widget_id)
@@ -459,7 +459,7 @@ except ImportError as e:
     class FallbackLabel(FallbackWidget):
         """Label widget."""
 
-        def __init__(self, master=None, **kwargs):
+        def __init__(self, master=None, **kwargs) -> None:
             """Initialize label."""
             super().__init__(master, **kwargs)
             self.text = kwargs.get("text", "")
@@ -470,14 +470,14 @@ except ImportError as e:
     class FallbackButton(FallbackWidget):
         """Button widget."""
 
-        def __init__(self, master=None, **kwargs):
+        def __init__(self, master=None, **kwargs) -> None:
             """Initialize button."""
             super().__init__(master, **kwargs)
             self.text = kwargs.get("text", "Button")
-            self.command = kwargs.get("command", None)
+            self.command = kwargs.get("command")
             logger.debug("Button created: %s with text '%s'", self.widget_id, self.text)
 
-        def invoke(self):
+        def invoke(self) -> None:
             """Invoke button command."""
             if self.command:
                 logger.debug("Button %s: Command invoked", self.widget_id)
@@ -491,7 +491,7 @@ except ImportError as e:
     class FallbackEntry(FallbackWidget):
         """Entry widget."""
 
-        def __init__(self, master=None, **kwargs):
+        def __init__(self, master=None, **kwargs) -> None:
             """Initialize entry."""
             super().__init__(master, **kwargs)
             self.value = kwargs.get("value", "")
@@ -502,12 +502,12 @@ except ImportError as e:
             """Get entry value."""
             return self.value
 
-        def set(self, value):
+        def set(self, value) -> None:
             """Set entry value."""
             self.value = str(value)
             logger.debug("Entry %s: Value set to '%s'", self.widget_id, value)
 
-        def insert(self, index, string):
+        def insert(self, index, string) -> None:
             """Insert string at index."""
             if index == "end":
                 self.value += string
@@ -515,7 +515,7 @@ except ImportError as e:
                 self.value = self.value[:index] + string + self.value[index:]
             logger.debug("Entry %s: Inserted '%s' at %s", self.widget_id, string, index)
 
-        def delete(self, first, last=None):
+        def delete(self, first, last=None) -> None:
             """Delete text."""
             if first == 0 and last == "end":
                 self.value = ""
@@ -524,7 +524,7 @@ except ImportError as e:
     class FallbackText(FallbackWidget):
         """Text widget."""
 
-        def __init__(self, master=None, **kwargs):
+        def __init__(self, master=None, **kwargs) -> None:
             """Initialize text widget."""
             super().__init__(master, **kwargs)
             self.content = kwargs.get("text", "")
@@ -539,7 +539,7 @@ except ImportError as e:
                 return self.content
             return self.content
 
-        def insert(self, index, chars):
+        def insert(self, index, chars) -> None:
             """Insert text."""
             if index == "end":
                 self.content += chars
@@ -547,20 +547,20 @@ except ImportError as e:
                 self.content += chars
             logger.debug("Text %s: Inserted text", self.widget_id)
 
-        def delete(self, start, end=None):
+        def delete(self, start, end=None) -> None:
             """Delete text."""
             if start == "1.0" and end == "end":
                 self.content = ""
             logger.debug("Text %s: Text deleted", self.widget_id)
 
-        def see(self, index):
+        def see(self, index) -> None:
             """Scroll to index."""
             logger.debug("Text %s: Scrolled to %s", self.widget_id, index)
 
     class FallbackListbox(FallbackWidget):
         """Listbox widget."""
 
-        def __init__(self, master=None, **kwargs):
+        def __init__(self, master=None, **kwargs) -> None:
             """Initialize listbox."""
             super().__init__(master, **kwargs)
             self.items = []
@@ -568,7 +568,7 @@ except ImportError as e:
             self.selectmode = kwargs.get("selectmode", "browse")
             logger.debug("Listbox created: %s", self.widget_id)
 
-        def insert(self, index, *items):
+        def insert(self, index, *items) -> None:
             """Insert items."""
             if index == "end":
                 self.items.extend(items)
@@ -577,7 +577,7 @@ except ImportError as e:
                     self.items.insert(index + i, item)
             logger.debug("Listbox %s: Inserted %d items", self.widget_id, len(items))
 
-        def delete(self, first, last=None):
+        def delete(self, first, last=None) -> None:
             """Delete items."""
             if last is None:
                 last = first
@@ -599,7 +599,7 @@ except ImportError as e:
             """Get current selection."""
             return tuple(self.selection)
 
-        def selection_set(self, first, last=None):
+        def selection_set(self, first, last=None) -> None:
             """Set selection."""
             if last is None:
                 self.selection = [first]
@@ -610,17 +610,17 @@ except ImportError as e:
     class FallbackCheckbutton(FallbackWidget):
         """Checkbutton widget."""
 
-        def __init__(self, master=None, **kwargs):
+        def __init__(self, master=None, **kwargs) -> None:
             """Initialize checkbutton."""
             super().__init__(master, **kwargs)
             self.text = kwargs.get("text", "")
             self.variable = kwargs.get("variable", FallbackIntVar())
             self.onvalue = kwargs.get("onvalue", 1)
             self.offvalue = kwargs.get("offvalue", 0)
-            self.command = kwargs.get("command", None)
+            self.command = kwargs.get("command")
             logger.debug("Checkbutton created: %s", self.widget_id)
 
-        def invoke(self):
+        def invoke(self) -> None:
             """Toggle checkbutton."""
             current = self.variable.get()
             new_value = self.offvalue if current == self.onvalue else self.onvalue
@@ -632,16 +632,16 @@ except ImportError as e:
     class FallbackRadiobutton(FallbackWidget):
         """Radiobutton widget."""
 
-        def __init__(self, master=None, **kwargs):
+        def __init__(self, master=None, **kwargs) -> None:
             """Initialize radiobutton."""
             super().__init__(master, **kwargs)
             self.text = kwargs.get("text", "")
             self.variable = kwargs.get("variable", FallbackStringVar())
             self.value = kwargs.get("value", "")
-            self.command = kwargs.get("command", None)
+            self.command = kwargs.get("command")
             logger.debug("Radiobutton created: %s", self.widget_id)
 
-        def invoke(self):
+        def invoke(self) -> None:
             """Select radiobutton."""
             self.variable.set(self.value)
             if self.command:
@@ -651,7 +651,7 @@ except ImportError as e:
     class FallbackScale(FallbackWidget):
         """Scale widget."""
 
-        def __init__(self, master=None, **kwargs):
+        def __init__(self, master=None, **kwargs) -> None:
             """Initialize scale."""
             super().__init__(master, **kwargs)
             self.from_ = kwargs.get("from_", 0)
@@ -659,14 +659,14 @@ except ImportError as e:
             self.orient = kwargs.get("orient", "horizontal")
             self.variable = kwargs.get("variable", FallbackDoubleVar())
             self.variable.set(kwargs.get("value", self.from_))
-            self.command = kwargs.get("command", None)
+            self.command = kwargs.get("command")
             logger.debug("Scale created: %s", self.widget_id)
 
         def get(self):
             """Get scale value."""
             return self.variable.get()
 
-        def set(self, value):
+        def set(self, value) -> None:
             """Set scale value."""
             self.variable.set(value)
             if self.command:
@@ -677,7 +677,7 @@ except ImportError as e:
     class FallbackVariable:
         """Base variable class."""
 
-        def __init__(self, master=None, value=None):
+        def __init__(self, master=None, value=None) -> None:
             """Initialize variable."""
             self.master = master
             self._value = value
@@ -687,57 +687,57 @@ except ImportError as e:
             """Get value."""
             return self._value
 
-        def set(self, value):
+        def set(self, value) -> None:
             """Set value."""
             self._value = value
             for callback in self._callbacks:
                 callback()
 
-        def trace(self, mode, callback):
+        def trace(self, mode, callback) -> None:
             """Trace variable changes."""
             self._callbacks.append(callback)
 
     class FallbackStringVar(FallbackVariable):
         """String variable."""
 
-        def __init__(self, master=None, value=""):
+        def __init__(self, master=None, value="") -> None:
             """Initialize string variable."""
             super().__init__(master, str(value))
 
-        def set(self, value):
+        def set(self, value) -> None:
             """Set string value."""
             super().set(str(value))
 
     class FallbackIntVar(FallbackVariable):
         """Integer variable."""
 
-        def __init__(self, master=None, value=0):
+        def __init__(self, master=None, value=0) -> None:
             """Initialize integer variable."""
             super().__init__(master, int(value))
 
-        def set(self, value):
+        def set(self, value) -> None:
             """Set integer value."""
             super().set(int(value))
 
     class FallbackDoubleVar(FallbackVariable):
         """Double variable."""
 
-        def __init__(self, master=None, value=0.0):
+        def __init__(self, master=None, value=0.0) -> None:
             """Initialize double variable."""
             super().__init__(master, float(value))
 
-        def set(self, value):
+        def set(self, value) -> None:
             """Set double value."""
             super().set(float(value))
 
     class FallbackBooleanVar(FallbackVariable):
         """Boolean variable."""
 
-        def __init__(self, master=None, value=False):
+        def __init__(self, master=None, value=False) -> None:
             """Initialize boolean variable."""
             super().__init__(master, bool(value))
 
-        def set(self, value):
+        def set(self, value) -> None:
             """Set boolean value."""
             super().set(bool(value))
 
@@ -746,43 +746,43 @@ except ImportError as e:
         """Message box dialogs."""
 
         @staticmethod
-        def showinfo(title, message, **kwargs):
+        def showinfo(title, message, **kwargs) -> str:
             """Show info dialog."""
             logger.info("INFO Dialog '%s': %s", title, message)
             return "ok"
 
         @staticmethod
-        def showwarning(title, message, **kwargs):
+        def showwarning(title, message, **kwargs) -> str:
             """Show warning dialog."""
             logger.warning("WARNING Dialog '%s': %s", title, message)
             return "ok"
 
         @staticmethod
-        def showerror(title, message, **kwargs):
+        def showerror(title, message, **kwargs) -> str:
             """Show error dialog."""
             logger.error("ERROR Dialog '%s': %s", title, message)
             return "ok"
 
         @staticmethod
-        def askquestion(title, message, **kwargs):
+        def askquestion(title, message, **kwargs) -> str:
             """Ask yes/no question."""
             logger.info("QUESTION Dialog '%s': %s", title, message)
             return "yes"  # Default to yes
 
         @staticmethod
-        def askyesno(title, message, **kwargs):
+        def askyesno(title, message, **kwargs) -> bool:
             """Ask yes/no."""
             logger.info("YES/NO Dialog '%s': %s", title, message)
             return True  # Default to yes
 
         @staticmethod
-        def askokcancel(title, message, **kwargs):
+        def askokcancel(title, message, **kwargs) -> bool:
             """Ask ok/cancel."""
             logger.info("OK/CANCEL Dialog '%s': %s", title, message)
             return True  # Default to ok
 
         @staticmethod
-        def askretrycancel(title, message, **kwargs):
+        def askretrycancel(title, message, **kwargs) -> bool:
             """Ask retry/cancel."""
             logger.info("RETRY/CANCEL Dialog '%s': %s", title, message)
             return True  # Default to retry
@@ -833,7 +833,7 @@ except ImportError as e:
     class FallbackFont:
         """Font class."""
 
-        def __init__(self, family="TkDefaultFont", size=9, weight="normal", slant="roman", **kwargs):
+        def __init__(self, family="TkDefaultFont", size=9, weight="normal", slant="roman", **kwargs) -> None:
             """Initialize font."""
             self.family = family
             self.size = size
@@ -842,7 +842,7 @@ except ImportError as e:
             self.underline = kwargs.get("underline", False)
             self.overstrike = kwargs.get("overstrike", False)
 
-        def configure(self, **kwargs):
+        def configure(self, **kwargs) -> None:
             """Configure font."""
             for key, value in kwargs.items():
                 if hasattr(self, key):
@@ -859,7 +859,7 @@ except ImportError as e:
     class FallbackScrolledText(FallbackText):
         """Scrolled text widget."""
 
-        def __init__(self, master=None, **kwargs):
+        def __init__(self, master=None, **kwargs) -> None:
             """Initialize scrolled text."""
             super().__init__(master, **kwargs)
             self.vbar = FallbackWidget(self)  # Vertical scrollbar
@@ -882,7 +882,7 @@ except ImportError as e:
         class Combobox(FallbackWidget):
             """Combobox widget."""
 
-            def __init__(self, master=None, **kwargs):
+            def __init__(self, master=None, **kwargs) -> None:
                 """Initialize combobox."""
                 super().__init__(master, **kwargs)
                 self.values_list = kwargs.get("values", [])
@@ -894,7 +894,7 @@ except ImportError as e:
                 """Get current value."""
                 return self.textvariable.get()
 
-            def set(self, value):
+            def set(self, value) -> None:
                 """Set current value."""
                 self.textvariable.set(value)
 
@@ -909,7 +909,7 @@ except ImportError as e:
         class Progressbar(FallbackWidget):
             """Progressbar widget."""
 
-            def __init__(self, master=None, **kwargs):
+            def __init__(self, master=None, **kwargs) -> None:
                 """Initialize progressbar."""
                 super().__init__(master, **kwargs)
                 self.maximum = kwargs.get("maximum", 100)
@@ -917,21 +917,21 @@ except ImportError as e:
                 self.mode = kwargs.get("mode", "determinate")
                 logger.debug("Progressbar created: %s", self.widget_id)
 
-            def configure(self, **kwargs):
+            def configure(self, **kwargs) -> None:
                 """Configure progressbar."""
                 super().configure(**kwargs)
                 if "value" in kwargs:
                     logger.debug("Progressbar %s: Value set to %s", self.widget_id, kwargs["value"])
 
-            def start(self, interval=None):
+            def start(self, interval=None) -> None:
                 """Start progress animation."""
                 logger.debug("Progressbar %s: Started", self.widget_id)
 
-            def stop(self):
+            def stop(self) -> None:
                 """Stop progress animation."""
                 logger.debug("Progressbar %s: Stopped", self.widget_id)
 
-            def step(self, delta=1):
+            def step(self, delta=1) -> None:
                 """Step progress."""
                 self.value = min(self.maximum, self.value + delta)
                 logger.debug("Progressbar %s: Stepped to %s", self.widget_id, self.value)
@@ -939,7 +939,7 @@ except ImportError as e:
         class Treeview(FallbackWidget):
             """Treeview widget."""
 
-            def __init__(self, master=None, **kwargs):
+            def __init__(self, master=None, **kwargs) -> None:
                 """Initialize treeview."""
                 super().__init__(master, **kwargs)
                 self.columns_list = kwargs.get("columns", [])
@@ -962,7 +962,7 @@ except ImportError as e:
                 logger.debug("Treeview %s: Inserted item %s", self.widget_id, iid)
                 return iid
 
-            def delete(self, *items):
+            def delete(self, *items) -> None:
                 """Delete items."""
                 for item in items:
                     if item in self.items:
@@ -981,11 +981,11 @@ except ImportError as e:
                 """Get selection."""
                 return ()  # No selection in fallback
 
-            def heading(self, column, **kwargs):
+            def heading(self, column, **kwargs) -> None:
                 """Configure column heading."""
                 logger.debug("Treeview %s: Heading for column %s configured", self.widget_id, column)
 
-            def column(self, column, **kwargs):
+            def column(self, column, **kwargs) -> None:
                 """Configure column."""
                 logger.debug("Treeview %s: Column %s configured", self.widget_id, column)
 

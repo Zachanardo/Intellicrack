@@ -40,7 +40,7 @@ except ImportError as e:
 class EmulatorStatusWidget(QWidget):
     """Widget showing emulator status with visual indicators."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the emulator status widget with UI components and status tracking."""
         super().__init__(parent)
         self.setup_ui()
@@ -51,7 +51,7 @@ class EmulatorStatusWidget(QWidget):
             "Qiling": {"running": False, "message": "Not initialized"},
         }
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Create the status indicator UI."""
         layout = QHBoxLayout(self)
         layout.setContentsMargins(5, 5, 5, 5)
@@ -73,7 +73,7 @@ class EmulatorStatusWidget(QWidget):
         layout.addWidget(self.qiling_status)
         layout.addStretch()
 
-    def update_emulator_status(self, emulator_type: str, is_running: bool, message: str):
+    def update_emulator_status(self, emulator_type: str, is_running: bool, message: str) -> None:
         """Update the status display for an emulator."""
         self.emulator_status[emulator_type] = {
             "running": is_running,
@@ -99,7 +99,7 @@ class EmulatorStatusWidget(QWidget):
             self.qiling_status.setToolTip(message)
 
 
-def add_emulator_tooltips(widget_dict: dict[str, QWidget]):
+def add_emulator_tooltips(widget_dict: dict[str, QWidget]) -> None:
     """Add informative tooltips to emulator-dependent widgets.
 
     Args:

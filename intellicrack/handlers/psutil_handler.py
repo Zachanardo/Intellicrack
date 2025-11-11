@@ -111,7 +111,7 @@ except ImportError as e:
     class NoSuchProcessError(Error):
         """Process does not exist."""
 
-        def __init__(self, pid, name=None, msg=None):
+        def __init__(self, pid, name=None, msg=None) -> None:
             """Initialize NoSuchProcess exception with process details."""
             self.pid = pid
             self.name = name
@@ -121,7 +121,7 @@ except ImportError as e:
     class ZombieProcessError(NoSuchProcessError):
         """Process is a zombie."""
 
-        def __init__(self, pid, name=None, ppid=None):
+        def __init__(self, pid, name=None, ppid=None) -> None:
             """Initialize ZombieProcess exception with process details."""
             self.pid = pid
             self.ppid = ppid
@@ -131,7 +131,7 @@ except ImportError as e:
     class AccessDeniedError(Error):
         """Access denied to process information."""
 
-        def __init__(self, pid=None, name=None, msg=None):
+        def __init__(self, pid=None, name=None, msg=None) -> None:
             """Initialize AccessDenied exception with process details."""
             self.pid = pid
             self.name = name
@@ -141,7 +141,7 @@ except ImportError as e:
     class TimeoutExpiredError(Error):
         """Timeout expired."""
 
-        def __init__(self, seconds, pid=None, name=None):
+        def __init__(self, seconds, pid=None, name=None) -> None:
             """Initialize TimeoutExpired exception with timeout details."""
             self.seconds = seconds
             self.pid = pid
@@ -152,7 +152,7 @@ except ImportError as e:
     class FallbackProcess:
         """Functional process implementation using platform commands."""
 
-        def __init__(self, pid):
+        def __init__(self, pid) -> None:
             """Initialize process object."""
             self._pid = pid
             self._name = None
@@ -162,7 +162,7 @@ except ImportError as e:
             self._init_time = time.time()
             self._get_basic_info()
 
-        def _get_basic_info(self):
+        def _get_basic_info(self) -> None:
             """Get basic process information."""
             # Skip strict process validation during testing
             if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
@@ -175,14 +175,14 @@ except ImportError as e:
             else:
                 self._get_unix_info()
 
-        def _get_windows_info(self):
+        def _get_windows_info(self) -> None:
             """Get process info on Windows."""
             try:
                 wmic_path = shutil.which("wmic")
                 if not wmic_path:
-                    return None
+                    return
 
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     [wmic_path, "process", "where", f"ProcessId={self._pid}", "get", "Name,ParentProcessId,CreationDate"],
                     capture_output=True,
                     text=True,
@@ -207,14 +207,14 @@ except ImportError as e:
             except (subprocess.TimeoutExpired, FileNotFoundError):
                 self._gone = True
 
-        def _get_unix_info(self):
+        def _get_unix_info(self) -> None:
             """Get process info on Unix-like systems."""
             try:
                 ps_path = shutil.which("ps")
                 if not ps_path:
-                    return None
+                    return
 
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     [ps_path, "-p", str(self._pid), "-o", "comm=,ppid="],
                     capture_output=True,
                     text=True,
@@ -259,7 +259,7 @@ except ImportError as e:
                     if not wmic_path:
                         return None
 
-                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                         [wmic_path, "process", "where", f"ProcessId={self._pid}", "get", "ExecutablePath"],
                         capture_output=True,
                         text=True,
@@ -294,7 +294,7 @@ except ImportError as e:
                     wmic_path = shutil.which("wmic")
                     if not wmic_path:
                         return []
-                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                         [wmic_path, "process", "where", f"ProcessId={self._pid}", "get", "CommandLine"],
                         capture_output=True,
                         text=True,
@@ -314,9 +314,9 @@ except ImportError as e:
                 proc_cmdline = f"/proc/{self._pid}/cmdline"
                 if os.path.exists(proc_cmdline):
                     try:
-                        with open(proc_cmdline, "r") as f:
+                        with open(proc_cmdline) as f:
                             return f.read().strip("\x00").split("\x00")
-                    except (IOError, OSError, FileNotFoundError) as e:
+                    except (OSError, FileNotFoundError) as e:
                         logger.debug(f"Failed to read cmdline for PID {self._pid}: {e}")
 
             return []
@@ -364,7 +364,7 @@ except ImportError as e:
                 proc_stat = f"/proc/{self._pid}/stat"
                 if os.path.exists(proc_stat):
                     try:
-                        with open(proc_stat, "r") as f:
+                        with open(proc_stat) as f:
                             stat = f.read()
                             # Status is the third field after command in parentheses
                             status_char = stat.split(")")[1].strip()[0]
@@ -377,7 +377,7 @@ except ImportError as e:
                                 "I": STATUS_IDLE,
                             }
                             return status_map.get(status_char, STATUS_RUNNING)
-                    except (IOError, OSError, FileNotFoundError, IndexError) as e:
+                    except (OSError, FileNotFoundError, IndexError) as e:
                         logger.debug(f"Failed to read process status: {e}")
 
             return STATUS_RUNNING
@@ -388,7 +388,7 @@ except ImportError as e:
                 raise NoSuchProcessError(self._pid)
             return self._create_time or self._init_time
 
-        def is_running(self):
+        def is_running(self) -> bool:
             """Check if process is running."""
             if self._gone:
                 return False
@@ -397,7 +397,7 @@ except ImportError as e:
             self._get_basic_info()
             return not self._gone
 
-        def suspend(self):
+        def suspend(self) -> None:
             """Suspend the process."""
             if self._gone:
                 raise NoSuchProcessError(self._pid)
@@ -407,7 +407,7 @@ except ImportError as e:
 
                 os.kill(self._pid, signal.SIGSTOP)
 
-        def resume(self):
+        def resume(self) -> None:
             """Resume the process."""
             if self._gone:
                 raise NoSuchProcessError(self._pid)
@@ -417,7 +417,7 @@ except ImportError as e:
 
                 os.kill(self._pid, signal.SIGCONT)
 
-        def terminate(self):
+        def terminate(self) -> None:
             """Terminate the process."""
             if self._gone:
                 raise NoSuchProcessError(self._pid)
@@ -425,13 +425,13 @@ except ImportError as e:
             if sys.platform == "win32":
                 taskkill_path = shutil.which("taskkill")
                 if taskkill_path:
-                    subprocess.run([taskkill_path, "/PID", str(self._pid)], check=False, shell=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603  # Explicitly secure - using list format prevents shell injection
+                    subprocess.run([taskkill_path, "/PID", str(self._pid)], check=False, shell=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # Explicitly secure - using list format prevents shell injection
             else:
                 import signal
 
                 os.kill(self._pid, signal.SIGTERM)
 
-        def kill(self):
+        def kill(self) -> None:
             """Kill the process."""
             if self._gone:
                 raise NoSuchProcessError(self._pid)
@@ -439,15 +439,15 @@ except ImportError as e:
             if sys.platform == "win32":
                 taskkill_path = shutil.which("taskkill")
                 if taskkill_path:
-                    subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                        [taskkill_path, "/F", "/PID", str(self._pid)], check=False, shell=False
+                    subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                        [taskkill_path, "/F", "/PID", str(self._pid)], check=False, shell=False,
                     )
             else:
                 import signal
 
                 os.kill(self._pid, signal.SIGKILL)
 
-        def wait(self, timeout=None):
+        def wait(self, timeout=None) -> int:
             """Wait for process to terminate."""
             if self._gone:
                 return 0
@@ -460,7 +460,7 @@ except ImportError as e:
 
             return 0
 
-        def cpu_percent(self, interval=None):
+        def cpu_percent(self, interval=None) -> float:
             """Get CPU usage percent."""
             if self._gone:
                 raise NoSuchProcessError(self._pid)
@@ -473,13 +473,13 @@ except ImportError as e:
                 raise NoSuchProcessError(self._pid)
 
             class MemInfo:
-                def __init__(self):
+                def __init__(self) -> None:
                     self.rss = 0
                     self.vms = 0
 
             return MemInfo()
 
-        def memory_percent(self):
+        def memory_percent(self) -> float:
             """Get memory usage percent."""
             if self._gone:
                 raise NoSuchProcessError(self._pid)
@@ -496,8 +496,8 @@ except ImportError as e:
                 wmic_path = shutil.which("wmic")
                 if not wmic_path:
                     return 0.0
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                    [wmic_path, "cpu", "get", "loadpercentage"], capture_output=True, text=True, timeout=2, shell=False
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                    [wmic_path, "cpu", "get", "loadpercentage"], capture_output=True, text=True, timeout=2, shell=False,
                 )
 
                 if result.returncode == 0:
@@ -510,12 +510,12 @@ except ImportError as e:
                             return percent
                         except ValueError:
                             logger.debug("Invalid CPU time value")
-            except (IOError, OSError, FileNotFoundError) as e:
+            except (OSError, FileNotFoundError) as e:
                 logger.debug(f"Failed to read CPU times: {e}")
         else:
             # Read /proc/stat on Linux
             try:
-                with open("/proc/stat", "r") as f:
+                with open("/proc/stat") as f:
                     lines = f.readlines()
 
                     # Parse CPU usage from /proc/stat
@@ -571,7 +571,7 @@ except ImportError as e:
         """Get CPU frequency."""
 
         class CPUFreq:
-            def __init__(self, current=0.0, min=0.0, max=0.0):
+            def __init__(self, current=0.0, min=0.0, max=0.0) -> None:
                 self.current = current
                 self.min = min
                 self.max = max
@@ -587,7 +587,7 @@ except ImportError as e:
         """Get CPU statistics."""
 
         class CPUStats:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.ctx_switches = 0
                 self.interrupts = 0
                 self.soft_interrupts = 0
@@ -599,7 +599,7 @@ except ImportError as e:
         """Get virtual memory statistics."""
 
         class VirtualMemory:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.total = 8 * 1024 * 1024 * 1024  # 8GB default
                 self.available = 4 * 1024 * 1024 * 1024  # 4GB
                 self.percent = 50.0
@@ -612,7 +612,7 @@ except ImportError as e:
                 wmic_path = shutil.which("wmic")
                 if not wmic_path:
                     return VirtualMemory()
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     [wmic_path, "OS", "get", "TotalVisibleMemorySize,FreePhysicalMemory"],
                     capture_output=True,
                     text=True,
@@ -642,7 +642,7 @@ except ImportError as e:
         else:
             # Try reading /proc/meminfo on Linux
             try:
-                with open("/proc/meminfo", "r") as f:
+                with open("/proc/meminfo") as f:
                     mem = VirtualMemory()
                     for line in f:
                         if line.startswith("MemTotal:"):
@@ -655,7 +655,7 @@ except ImportError as e:
                     mem.used = mem.total - mem.available
                     mem.percent = (mem.used / mem.total) * 100 if mem.total > 0 else 0
                     return mem
-            except (IOError, OSError, FileNotFoundError) as e:
+            except (OSError, FileNotFoundError) as e:
                 logger.debug(f"Failed to get virtual memory: {e}")
 
         return VirtualMemory()
@@ -664,7 +664,7 @@ except ImportError as e:
         """Get swap memory statistics."""
 
         class SwapMemory:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.total = 2 * 1024 * 1024 * 1024  # 2GB default
                 self.used = 512 * 1024 * 1024  # 512MB
                 self.free = self.total - self.used
@@ -678,7 +678,7 @@ except ImportError as e:
         """Get disk usage statistics."""
 
         class DiskUsage:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.total = 500 * 1024 * 1024 * 1024  # 500GB default
                 self.used = 250 * 1024 * 1024 * 1024  # 250GB
                 self.free = self.total - self.used
@@ -703,7 +703,7 @@ except ImportError as e:
         """Get disk partitions."""
 
         class DiskPartition:
-            def __init__(self, device, mountpoint, fstype, opts):
+            def __init__(self, device, mountpoint, fstype, opts) -> None:
                 self.device = device
                 self.mountpoint = mountpoint
                 self.fstype = fstype
@@ -729,7 +729,7 @@ except ImportError as e:
         """Get disk I/O statistics."""
 
         class DiskIOCounters:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.read_count = 0
                 self.write_count = 0
                 self.read_bytes = 0
@@ -745,7 +745,7 @@ except ImportError as e:
         """Get network I/O statistics."""
 
         class NetIOCounters:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.bytes_sent = 0
                 self.bytes_recv = 0
                 self.packets_sent = 0
@@ -789,8 +789,8 @@ except ImportError as e:
                 wmic_path = shutil.which("wmic")
                 if not wmic_path:
                     return processes
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                    [wmic_path, "process", "get", "ProcessId"], capture_output=True, text=True, timeout=5, shell=False
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                    [wmic_path, "process", "get", "ProcessId"], capture_output=True, text=True, timeout=5, shell=False,
                 )
 
                 if result.returncode == 0:
@@ -801,7 +801,7 @@ except ImportError as e:
                             processes.append(FallbackProcess(pid))
                         except ValueError:
                             continue
-            except (IOError, OSError, FileNotFoundError) as e:
+            except (OSError, FileNotFoundError) as e:
                 logger.debug(f"Failed to read network counters: {e}")
         else:
             # Try reading /proc on Linux
@@ -824,7 +824,7 @@ except ImportError as e:
                 wmic_path = shutil.which("wmic")
                 if not wmic_path:
                     return False
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     [wmic_path, "process", "where", f"ProcessId={pid}", "get", "ProcessId"],
                     capture_output=True,
                     text=True,
@@ -870,7 +870,7 @@ except ImportError as e:
     class Popen(subprocess.Popen):
         """Process class that wraps subprocess.Popen."""
 
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs) -> None:
             """Initialize Popen process wrapper with fallback process monitoring capabilities."""
             super().__init__(*args, **kwargs)
             self._process = FallbackProcess(self.pid) if self.pid else None

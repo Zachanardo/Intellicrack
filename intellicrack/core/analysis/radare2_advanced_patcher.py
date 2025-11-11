@@ -64,7 +64,7 @@ class PatchInfo:
 class Radare2AdvancedPatcher:
     """Advanced binary patching engine using Radare2."""
 
-    def __init__(self, binary_path: str):
+    def __init__(self, binary_path: str) -> None:
         """Initialize the Radare2AdvancedPatcher with a binary file path.
 
         Args:
@@ -1120,7 +1120,7 @@ class Radare2AdvancedPatcher:
                         "patched": patch.patched_bytes.hex(),
                         "description": patch.description,
                         "metadata": patch.metadata,
-                    }
+                    },
                 )
 
             with open(output_file, "w") as f:
@@ -1147,7 +1147,7 @@ class Radare2AdvancedPatcher:
     def load_patches(self, patch_file: str) -> bool:
         """Load and apply patches from JSON file."""
         try:
-            with open(patch_file, "r") as f:
+            with open(patch_file) as f:
                 data = json.load(f)
 
             # Verify binary checksum
@@ -1219,7 +1219,7 @@ class Radare2AdvancedPatcher:
                 "        sys.exit(1)",
                 "    apply_patches(sys.argv[1])",
                 "    print('All patches applied successfully')",
-            ]
+            ],
         )
 
         return "\n".join(script)
@@ -1282,12 +1282,12 @@ class Radare2AdvancedPatcher:
                 '    printf("All patches applied successfully\\n");',
                 "    return 0;",
                 "}",
-            ]
+            ],
         )
 
         return "\n".join(script)
 
-    def close(self):
+    def close(self) -> None:
         """Close Radare2 session."""
         if self.r2:
             self.r2.quit()
@@ -1295,7 +1295,7 @@ class Radare2AdvancedPatcher:
             logger.info("Closed Radare2 session")
 
 
-def main():
+def main() -> None:
     """Demonstrate usage of Radare2AdvancedPatcher."""
     import argparse
 

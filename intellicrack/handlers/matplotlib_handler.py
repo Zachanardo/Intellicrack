@@ -31,7 +31,7 @@ implementations for essential plotting operations used in Intellicrack.
 
 # Matplotlib availability detection and import handling
 try:
-    import matplotlib
+    import matplotlib as mpl
 
     # Determine which Qt backend to use based on available PyQt versions
     qt_backend_name = None
@@ -84,15 +84,15 @@ try:
     # Set the appropriate matplotlib backend
     if qt_backend_name:
         try:
-            matplotlib.use(qt_backend_name, force=True)
+            mpl.use(qt_backend_name, force=True)
             logger.info(f"Successfully configured matplotlib to use {qt_backend_name} backend")
         except Exception as e:
             logger.warning(f"Failed to set matplotlib backend to {qt_backend_name}, falling back to Agg: {e}")
-            matplotlib.use("Agg", force=True)
+            mpl.use("Agg", force=True)
             qt_backend_name = "Agg"
     else:
         # No Qt backend available, use Agg
-        matplotlib.use("Agg", force=True)
+        mpl.use("Agg", force=True)
         qt_backend_name = "Agg"
         logger.debug("No Qt backend available, using Agg backend for matplotlib")
 
@@ -116,7 +116,7 @@ try:
         FigureCanvasTkAgg = None
 
     HAS_MATPLOTLIB = True
-    MATPLOTLIB_VERSION = matplotlib.__version__
+    MATPLOTLIB_VERSION = mpl.__version__
 
     # If Qt backend was not available, create a basic fallback
     if FigureCanvasQTAgg is None:
@@ -124,12 +124,12 @@ try:
         class FigureCanvasQTAgg:
             """Production-ready Qt canvas fallback when Qt backend is not available."""
 
-            def __init__(self, figure):
+            def __init__(self, figure) -> None:
                 """Initialize Qt canvas with matplotlib figure."""
                 self.figure = figure
                 self._size_policy = None
 
-            def draw(self):
+            def draw(self) -> None:
                 """Draw the Qt canvas using fallback rendering."""
                 if hasattr(self.figure, "savefig"):
                     # Use the figure's built-in rendering capabilities
@@ -137,16 +137,16 @@ try:
                 else:
                     logger.debug("Qt canvas fallback draw() - no rendering available")
 
-            def setSizePolicy(self, *args):
+            def setSizePolicy(self, *args) -> None:
                 """Set size policy for Qt widget compatibility."""
                 self._size_policy = args
                 logger.debug("Qt canvas setSizePolicy() called with args: %s", args)
 
-            def update(self):
+            def update(self) -> None:
                 """Update the canvas."""
                 self.draw()
 
-            def repaint(self):
+            def repaint(self) -> None:
                 """Repaint the canvas."""
                 self.draw()
 
@@ -160,7 +160,7 @@ except ImportError as e:
     class FallbackFigure:
         """Functional figure implementation for binary analysis visualizations."""
 
-        def __init__(self, figsize=(8, 6), dpi=100, facecolor="white", edgecolor="black"):
+        def __init__(self, figsize=(8, 6), dpi=100, facecolor="white", edgecolor="black") -> None:
             """Initialize figure with dimensions and properties."""
             self.figsize = figsize
             self.dpi = dpi
@@ -186,15 +186,15 @@ except ImportError as e:
             self._current_axes = ax
             return ax
 
-        def suptitle(self, title, **kwargs):
+        def suptitle(self, title, **kwargs) -> None:
             """Set the figure's super title."""
             self._suptitle = title
 
-        def tight_layout(self, pad=1.08, h_pad=None, w_pad=None):
+        def tight_layout(self, pad=1.08, h_pad=None, w_pad=None) -> None:
             """Adjust subplot parameters for tight layout."""
             self._layout = "tight"
 
-        def subplots_adjust(self, left=None, bottom=None, right=None, top=None, wspace=None, hspace=None):
+        def subplots_adjust(self, left=None, bottom=None, right=None, top=None, wspace=None, hspace=None) -> None:
             """Adjust subplot parameters."""
             # Store subplot adjustment parameters
             if not hasattr(self, "_subplot_params"):
@@ -215,7 +215,7 @@ except ImportError as e:
 
             logger.debug("Subplot parameters adjusted: %s", self._subplot_params)
 
-        def savefig(self, fname, dpi=None, format=None, bbox_inches=None, **kwargs):
+        def savefig(self, fname, dpi=None, format=None, bbox_inches=None, **kwargs) -> None:
             """Save the figure to a file."""
             if format is None and isinstance(fname, str):
                 format = fname.split(".")[-1].lower()
@@ -253,7 +253,7 @@ except ImportError as e:
             svg += "</svg>"
             return svg
 
-        def _save_raster(self, fname, format, dpi):
+        def _save_raster(self, fname, format, dpi) -> None:
             """Save as raster image using PIL or pure Python bitmap generation."""
             try:
                 from PIL import Image, ImageDraw, ImageFont
@@ -401,7 +401,7 @@ except ImportError as e:
                     with open(fname, "wb") as f:
                         f.write(bmp_bytes)
 
-        def clear(self):
+        def clear(self) -> None:
             """Clear the figure."""
             self.axes.clear()
             self._current_axes = None
@@ -420,7 +420,7 @@ except ImportError as e:
     class FallbackAxes:
         """Functional axes implementation for plotting."""
 
-        def __init__(self, figure, nrows=1, ncols=1, index=1, rect=None, **kwargs):
+        def __init__(self, figure, nrows=1, ncols=1, index=1, rect=None, **kwargs) -> None:
             """Initialize axes."""
             self.figure = figure
             self.nrows = nrows
@@ -445,7 +445,7 @@ except ImportError as e:
             self.legend_items = []
             self.grid_enabled = False
 
-        def plot(self, x=None, y=None, *args, **kwargs):
+        def plot(self, x=None, y=None, *args, **kwargs) -> None:
             """Plot lines."""
             if x is None and y is None:
                 return
@@ -470,7 +470,7 @@ except ImportError as e:
                     "marker": marker,
                     "label": label,
                     "linewidth": linewidth,
-                }
+                },
             )
 
             if label:
@@ -479,7 +479,7 @@ except ImportError as e:
             # Update limits
             self._update_limits(x, y)
 
-        def scatter(self, x, y, s=None, c=None, marker="o", alpha=1.0, **kwargs):
+        def scatter(self, x, y, s=None, c=None, marker="o", alpha=1.0, **kwargs) -> None:
             """Create scatter plot."""
             self.scatter_data.append(
                 {
@@ -490,7 +490,7 @@ except ImportError as e:
                     "marker": marker,
                     "alpha": alpha,
                     "label": kwargs.get("label", ""),
-                }
+                },
             )
 
             if kwargs.get("label"):
@@ -498,7 +498,7 @@ except ImportError as e:
 
             self._update_limits(x, y)
 
-        def bar(self, x, height, width=0.8, bottom=None, color="blue", label="", **kwargs):
+        def bar(self, x, height, width=0.8, bottom=None, color="blue", label="", **kwargs) -> None:
             """Create bar plot."""
             if not hasattr(x, "__iter__"):
                 x = [x]
@@ -513,7 +513,7 @@ except ImportError as e:
             # Update limits
             self._update_limits(x, height)
 
-        def hist(self, x, bins=10, range=None, density=False, color="blue", label="", **kwargs):
+        def hist(self, x, bins=10, range=None, density=False, color="blue", label="", **kwargs) -> None:
             """Create histogram."""
             # Calculate histogram
             if range is None:
@@ -538,37 +538,37 @@ except ImportError as e:
 
             self.bar(bin_centers, counts, width=bin_width, color=color, label=label)
 
-        def imshow(self, X, cmap="viridis", aspect="auto", interpolation="nearest", **kwargs):
+        def imshow(self, X, cmap="viridis", aspect="auto", interpolation="nearest", **kwargs) -> None:
             """Display an image or matrix."""
             self.images.append({"data": X, "cmap": cmap, "aspect": aspect, "interpolation": interpolation, "extent": kwargs.get("extent")})
 
-        def contour(self, X, Y, Z, levels=10, colors="black", **kwargs):
+        def contour(self, X, Y, Z, levels=10, colors="black", **kwargs) -> None:
             """Create contour plot."""
             # Store contour data for later rendering
             self.patches.append({"type": "contour", "X": X, "Y": Y, "Z": Z, "levels": levels, "colors": colors})
 
-        def text(self, x, y, s, fontsize=12, color="black", ha="left", va="bottom", **kwargs):
+        def text(self, x, y, s, fontsize=12, color="black", ha="left", va="bottom", **kwargs) -> None:
             """Add text to axes."""
             self.texts.append({"x": x, "y": y, "text": str(s), "fontsize": fontsize, "color": color, "ha": ha, "va": va})
 
-        def annotate(self, text, xy, xytext=None, arrowprops=None, **kwargs):
+        def annotate(self, text, xy, xytext=None, arrowprops=None, **kwargs) -> None:
             """Add annotation with optional arrow."""
             annotation = {"text": text, "xy": xy, "xytext": xytext or xy, "arrow": arrowprops is not None}
             self.texts.append(annotation)
 
-        def set_title(self, title, fontsize=14, **kwargs):
+        def set_title(self, title, fontsize=14, **kwargs) -> None:
             """Set axes title."""
             self.title = title
 
-        def set_xlabel(self, xlabel, fontsize=12, **kwargs):
+        def set_xlabel(self, xlabel, fontsize=12, **kwargs) -> None:
             """Set x-axis label."""
             self.xlabel_text = xlabel
 
-        def set_ylabel(self, ylabel, fontsize=12, **kwargs):
+        def set_ylabel(self, ylabel, fontsize=12, **kwargs) -> None:
             """Set y-axis label."""
             self.ylabel_text = ylabel
 
-        def set_xlim(self, left=None, right=None):
+        def set_xlim(self, left=None, right=None) -> None:
             """Set x-axis limits."""
             if left is not None and right is not None:
                 self.xlim = (left, right)
@@ -577,7 +577,7 @@ except ImportError as e:
             elif right is not None:
                 self.xlim = (self.xlim[0] if self.xlim else right - 1, right)
 
-        def set_ylim(self, bottom=None, top=None):
+        def set_ylim(self, bottom=None, top=None) -> None:
             """Set y-axis limits."""
             if bottom is not None and top is not None:
                 self.ylim = (bottom, top)
@@ -586,16 +586,16 @@ except ImportError as e:
             elif top is not None:
                 self.ylim = (self.ylim[0] if self.ylim else top - 1, top)
 
-        def legend(self, labels=None, loc="best", **kwargs):
+        def legend(self, labels=None, loc="best", **kwargs) -> None:
             """Add legend to axes."""
             if labels:
                 self.legend_items = [(label, "blue") for label in labels]
 
-        def grid(self, visible=True, which="major", axis="both", **kwargs):
+        def grid(self, visible=True, which="major", axis="both", **kwargs) -> None:
             """Enable/disable grid."""
             self.grid_enabled = visible
 
-        def clear(self):
+        def clear(self) -> None:
             """Clear the axes."""
             self.lines.clear()
             self.bars.clear()
@@ -611,7 +611,7 @@ except ImportError as e:
             self.legend_items.clear()
             self.grid_enabled = False
 
-        def _update_limits(self, x_data, y_data):
+        def _update_limits(self, x_data, y_data) -> None:
             """Update axis limits based on data."""
             if hasattr(x_data, "__iter__"):
                 x_min, x_max = min(x_data), max(x_data)
@@ -723,7 +723,7 @@ except ImportError as e:
             svg += "</g>\n"
             return svg
 
-        def _draw_on_image(self, draw, fig_width, fig_height):
+        def _draw_on_image(self, draw, fig_width, fig_height) -> None:
             """Draw axes content on PIL image."""
             # Calculate axes position
             if self.rect:
@@ -770,24 +770,24 @@ except ImportError as e:
     class FallbackCanvas:
         """Functional canvas implementation for figure rendering."""
 
-        def __init__(self, figure):
+        def __init__(self, figure) -> None:
             """Initialize canvas."""
             self.figure = figure
 
-        def draw(self):
+        def draw(self) -> None:
             """Draw the canvas."""
             # Trigger figure rendering if available
             if hasattr(self.figure, "_render_components"):
                 self.figure._render_components()
             logger.debug("Canvas draw() called - processing figure data")
 
-        def draw_idle(self):
+        def draw_idle(self) -> None:
             """Schedule a draw."""
             # In fallback mode, execute draw immediately
             self.draw()
             logger.debug("Canvas draw_idle() called - executed immediately")
 
-        def flush_events(self):
+        def flush_events(self) -> None:
             """Flush GUI events."""
             # Process any pending draw operations
             logger.debug("Canvas flush_events() called - fallback mode")
@@ -795,11 +795,11 @@ except ImportError as e:
     class FallbackFigureCanvasQTAgg:
         """Functional Qt canvas implementation."""
 
-        def __init__(self, figure):
+        def __init__(self, figure) -> None:
             """Initialize Qt canvas."""
             self.figure = figure
 
-        def draw(self):
+        def draw(self) -> None:
             """Draw the canvas."""
             # Render the figure using Qt canvas approach
             if hasattr(self.figure, "savefig"):
@@ -807,7 +807,7 @@ except ImportError as e:
                 logger.debug("Qt canvas rendering figure")
             logger.debug("FallbackFigureCanvasQTAgg draw() called")
 
-        def setSizePolicy(self, *args):
+        def setSizePolicy(self, *args) -> None:
             """Set size policy."""
             # Store size policy for Qt widget compatibility
             self._size_policy = args
@@ -816,12 +816,12 @@ except ImportError as e:
     class FallbackFigureCanvasTkAgg:
         """Functional Tk figure canvas."""
 
-        def __init__(self, figure, master=None):
+        def __init__(self, figure, master=None) -> None:
             """Initialize canvas with figure and master widget."""
             self.figure = figure
             self.master = master
 
-        def draw(self):
+        def draw(self) -> None:
             """Draw the figure."""
             # Render figure for Tkinter display
             if hasattr(self.figure, "_render_components"):
@@ -832,13 +832,13 @@ except ImportError as e:
             """Get the Tk widget for embedding."""
             return self  # Return self as the widget
 
-        def pack(self, **kwargs):
+        def pack(self, **kwargs) -> None:
             """Pack the widget."""
             # Store pack parameters for Tkinter layout
             self._pack_params = kwargs
             logger.debug("Tk canvas pack() called with: %s", kwargs)
 
-        def grid(self, **kwargs):
+        def grid(self, **kwargs) -> None:
             """Grid the widget."""
             # Store grid parameters for Tkinter layout
             self._grid_params = kwargs
@@ -847,7 +847,7 @@ except ImportError as e:
     class FallbackRectangle:
         """Rectangle patch implementation."""
 
-        def __init__(self, xy, width, height, angle=0.0, **kwargs):
+        def __init__(self, xy, width, height, angle=0.0, **kwargs) -> None:
             """Initialize rectangle."""
             self.xy = xy
             self.width = width
@@ -861,7 +861,7 @@ except ImportError as e:
     class FallbackCircle:
         """Circle patch implementation."""
 
-        def __init__(self, xy, radius, **kwargs):
+        def __init__(self, xy, radius, **kwargs) -> None:
             """Initialize circle."""
             self.xy = xy
             self.radius = radius
@@ -873,7 +873,7 @@ except ImportError as e:
     class FallbackPolygon:
         """Polygon patch implementation."""
 
-        def __init__(self, xy, closed=True, **kwargs):
+        def __init__(self, xy, closed=True, **kwargs) -> None:
             """Initialize polygon."""
             self.xy = xy
             self.closed = closed
@@ -885,7 +885,7 @@ except ImportError as e:
     class FallbackFuncFormatter:
         """Function formatter for axis ticks."""
 
-        def __init__(self, func):
+        def __init__(self, func) -> None:
             """Initialize formatter with function."""
             self.func = func
 
@@ -896,7 +896,7 @@ except ImportError as e:
     class FallbackMaxNLocator:
         """Maximum number of ticks locator."""
 
-        def __init__(self, nbins=None, steps=None, min_n_ticks=2, prune=None, **kwargs):
+        def __init__(self, nbins=None, steps=None, min_n_ticks=2, prune=None, **kwargs) -> None:
             """Initialize locator."""
             self.nbins = nbins or "auto"
             self.steps = steps
@@ -907,7 +907,7 @@ except ImportError as e:
     class FallbackPdfPages:
         """Functional multi-page PDF writer for matplotlib figures."""
 
-        def __init__(self, filename, keep_empty=True, metadata=None):
+        def __init__(self, filename, keep_empty=True, metadata=None) -> None:
             """Initialize PDF writer."""
             self.filename = filename
             self.keep_empty = keep_empty
@@ -923,7 +923,7 @@ except ImportError as e:
             """Context manager exit."""
             self.close()
 
-        def savefig(self, figure=None, **kwargs):
+        def savefig(self, figure=None, **kwargs) -> None:
             """Save current figure to PDF page."""
             if self.closed:
                 raise ValueError("PdfPages is closed")
@@ -942,7 +942,7 @@ except ImportError as e:
             page_data = {"figure": figure, "timestamp": self._get_timestamp(), "kwargs": kwargs, "pdf_stream": pdf_stream}
             self.pages.append(page_data)
 
-        def close(self):
+        def close(self) -> None:
             """Close and finalize PDF file."""
             if not self.closed:
                 self._write_pdf_file()
@@ -954,7 +954,7 @@ except ImportError as e:
 
             return datetime.datetime.now().isoformat()
 
-        def _write_pdf_file(self):
+        def _write_pdf_file(self) -> None:
             """Write actual PDF file with collected pages."""
             # Create a basic PDF structure
             pdf_content = f"""%PDF-1.4
@@ -991,7 +991,7 @@ startxref
                 with open(self.filename, "w") as f:
                     f.write(pdf_content)
                 logger.info(f"Created PDF file with {len(self.pages)} pages: {self.filename}")
-            except IOError as e:
+            except OSError as e:
                 logger.error(f"Failed to write PDF file {self.filename}: {e}")
 
         def _figure_to_pdf_stream(self, figure):
@@ -1073,7 +1073,7 @@ startxref
     class FallbackPyplot:
         """Functional pyplot interface."""
 
-        def __init__(self):
+        def __init__(self) -> None:
             """Initialize pyplot interface."""
             self._figures = {}
             self._current_figure = None
@@ -1157,17 +1157,17 @@ startxref
             ax = self.gca()
             return ax.contour(*args, **kwargs)
 
-        def title(self, label, **kwargs):
+        def title(self, label, **kwargs) -> None:
             """Set title of current axes."""
             ax = self.gca()
             ax.set_title(label, **kwargs)
 
-        def xlabel(self, label, **kwargs):
+        def xlabel(self, label, **kwargs) -> None:
             """Set xlabel of current axes."""
             ax = self.gca()
             ax.set_xlabel(label, **kwargs)
 
-        def ylabel(self, label, **kwargs):
+        def ylabel(self, label, **kwargs) -> None:
             """Set ylabel of current axes."""
             ax = self.gca()
             ax.set_ylabel(label, **kwargs)
@@ -1186,31 +1186,31 @@ startxref
                 ax.set_ylim(*args, **kwargs)
             return ax.ylim
 
-        def legend(self, *args, **kwargs):
+        def legend(self, *args, **kwargs) -> None:
             """Add legend to current axes."""
             ax = self.gca()
             ax.legend(*args, **kwargs)
 
-        def grid(self, visible=True, **kwargs):
+        def grid(self, visible=True, **kwargs) -> None:
             """Enable grid on current axes."""
             ax = self.gca()
             ax.grid(visible, **kwargs)
 
-        def tight_layout(self):
+        def tight_layout(self) -> None:
             """Adjust layout of current figure."""
             fig = self.gcf()
             fig.tight_layout()
 
-        def savefig(self, fname, **kwargs):
+        def savefig(self, fname, **kwargs) -> None:
             """Save current figure."""
             fig = self.gcf()
             fig.savefig(fname, **kwargs)
 
-        def show(self):
+        def show(self) -> None:
             """Show all figures."""
             logger.info("Matplotlib show() called in fallback mode - figures saved but not displayed")
 
-        def close(self, fig=None):
+        def close(self, fig=None) -> None:
             """Close figure."""
             if fig == "all":
                 self._figures.clear()
@@ -1232,12 +1232,12 @@ startxref
                             del self._figures[num]
                             break
 
-        def clf(self):
+        def clf(self) -> None:
             """Clear current figure."""
             fig = self.gcf()
             fig.clear()
 
-        def cla(self):
+        def cla(self) -> None:
             """Clear current axes."""
             ax = self.gca()
             ax.clear()
@@ -1294,7 +1294,7 @@ startxref
         # Compatibility alias
         pyplot = Pyplot
 
-    matplotlib = FallbackMatplotlib()
+    mpl = FallbackMatplotlib()
 
 
 # Create compatibility alias
@@ -1307,7 +1307,7 @@ __all__ = [
     "MATPLOTLIB_VERSION",
     "MATPLOTLIB_AVAILABLE",
     # Main modules
-    "matplotlib",
+    "mpl",
     "plt",
     # Core classes
     "Figure",

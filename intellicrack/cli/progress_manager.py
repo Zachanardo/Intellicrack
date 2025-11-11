@@ -96,7 +96,7 @@ class SpeedColumn(ProgressColumn):
 class ProgressManager:
     """Manages progress display for CLI operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize progress manager with console, task tracking, and threading support."""
         self.console = Console()
         self.tasks: dict[str, AnalysisTask] = {}
@@ -266,7 +266,7 @@ class ProgressManager:
 class MultiStageProgress:
     """Progress tracker for multi-stage operations."""
 
-    def __init__(self, console: Union[Console, None] = None):
+    def __init__(self, console: Union[Console, None] = None) -> None:
         """Initialize multi-stage progress tracker with console and stage tracking."""
         self.console = console or Console()
         self.stages: list[dict[str, Any]] = []
@@ -280,7 +280,7 @@ class MultiStageProgress:
                 "steps": steps,
                 "current_step": 0,
                 "completed": False,
-            }
+            },
         )
 
     def start(self) -> None:
@@ -359,8 +359,8 @@ def _demo_static_analysis(pm: ProgressManager, binary_path: str) -> None:
         elif step_name == "Extracting strings":
             cmd = ["strings", binary_path] if sys.platform != "win32" else ["findstr", "/r", "[a-zA-Z]", binary_path]
             try:
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                    cmd, check=False, capture_output=True, timeout=5, shell=False
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                    cmd, check=False, capture_output=True, timeout=5, shell=False,
                 )
                 len(result.stdout.decode("utf-8", errors="ignore").split("\n"))
             except (subprocess.TimeoutExpired, OSError, FileNotFoundError) as e:
@@ -552,7 +552,7 @@ def _setup_multi_stage_demo(console: Console) -> MultiStageProgress:
     return multi_progress
 
 
-def demo_progress():
+def demo_progress() -> None:
     """Demonstrate progress visualization capabilities with real progress tracking."""
     console = Console()
 

@@ -154,7 +154,7 @@ class LLMResponse:
 class LLMBackend:
     """Base class for LLM backends."""
 
-    def __init__(self, config: LLMConfig):
+    def __init__(self, config: LLMConfig) -> None:
         """Initialize the LLM backend with configuration.
 
         Args:
@@ -184,11 +184,11 @@ class LLMBackend:
             model="base_backend_fallback",
         )
 
-    def register_tools(self, tools: list[dict]):
+    def register_tools(self, tools: list[dict]) -> None:
         """Register tools for function calling."""
         self.tools = tools
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown the backend and clean up resources."""
         self.is_initialized = False
         self.tools.clear()
@@ -198,7 +198,7 @@ class LLMBackend:
 class OpenAIBackend(LLMBackend):
     """OpenAI API backend."""
 
-    def __init__(self, config: LLMConfig):
+    def __init__(self, config: LLMConfig) -> None:
         """Initialize OpenAI backend with configuration.
 
         Args:
@@ -284,7 +284,7 @@ class OpenAIBackend(LLMBackend):
             logger.error("OpenAI API error: %s", e)
             raise
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown OpenAI backend."""
         super().shutdown()
         self.client = None
@@ -293,7 +293,7 @@ class OpenAIBackend(LLMBackend):
 class AnthropicBackend(LLMBackend):
     """Anthropic Claude API backend."""
 
-    def __init__(self, config: LLMConfig):
+    def __init__(self, config: LLMConfig) -> None:
         """Initialize Anthropic backend with configuration.
 
         Args:
@@ -371,7 +371,7 @@ class AnthropicBackend(LLMBackend):
             logger.error("Anthropic API error: %s", e)
             raise
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown Anthropic backend."""
         super().shutdown()
         self.client = None
@@ -380,7 +380,7 @@ class AnthropicBackend(LLMBackend):
 class LlamaCppBackend(LLMBackend):
     """llama.cpp backend for GGUF models."""
 
-    def __init__(self, config: LLMConfig):
+    def __init__(self, config: LLMConfig) -> None:
         """Initialize llama.cpp backend with configuration.
 
         Args:
@@ -495,7 +495,7 @@ class LlamaCppBackend(LLMBackend):
                                 "name": tool_name,
                                 "arguments": json.dumps(args),
                             },
-                        }
+                        },
                     )
                 except (json.JSONDecodeError, KeyError, ValueError) as e:
                     logger.error("Error in llm_backends: %s", e)
@@ -503,7 +503,7 @@ class LlamaCppBackend(LLMBackend):
 
         return tool_calls if tool_calls else None
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown llama.cpp backend."""
         super().shutdown()
         if self.llama is not None:
@@ -515,7 +515,7 @@ class LlamaCppBackend(LLMBackend):
 class OllamaBackend(LLMBackend):
     """Ollama backend for local model serving."""
 
-    def __init__(self, config: LLMConfig):
+    def __init__(self, config: LLMConfig) -> None:
         """Initialize Ollama backend with configuration.
 
         Args:
@@ -531,7 +531,7 @@ class OllamaBackend(LLMBackend):
         except Exception as e:
             self.logger.error(f"Failed to get Ollama API URL: {e}")
             raise ConfigurationError(
-                "Ollama API URL not configured. Please set 'service_urls.ollama_api' in configuration or OLLAMA_API_BASE environment variable."
+                "Ollama API URL not configured. Please set 'service_urls.ollama_api' in configuration or OLLAMA_API_BASE environment variable.",
             ) from e
 
     def initialize(self) -> bool:
@@ -649,7 +649,7 @@ class OllamaBackend(LLMBackend):
                 model=self.config.model_name,
             )
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown Ollama backend."""
         super().shutdown()
         # No specific cleanup needed for HTTP client
@@ -658,7 +658,7 @@ class OllamaBackend(LLMBackend):
 class LocalGGUFBackend(LLMBackend):
     """Local GGUF model backend using our local server."""
 
-    def __init__(self, config: LLMConfig):
+    def __init__(self, config: LLMConfig) -> None:
         """Initialize Local GGUF backend with configuration.
 
         Args:
@@ -674,7 +674,7 @@ class LocalGGUFBackend(LLMBackend):
         except Exception as e:
             self.logger.error(f"Failed to get Local LLM server URL: {e}")
             raise ConfigurationError(
-                "Local LLM server URL not configured. Please set 'service_urls.local_llm_server' in configuration."
+                "Local LLM server URL not configured. Please set 'service_urls.local_llm_server' in configuration.",
             ) from e
         self.gguf_manager = None
 
@@ -763,7 +763,7 @@ class LocalGGUFBackend(LLMBackend):
                 {
                     "role": msg.role,
                     "content": msg.content,
-                }
+                },
             )
 
         request_data = {
@@ -809,7 +809,7 @@ class LocalGGUFBackend(LLMBackend):
             logger.error(f"GGUF API error: {e}")
             raise
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown GGUF backend."""
         super().shutdown()
         # Could stop the server here, but leave it running for other instances
@@ -819,7 +819,7 @@ class LocalGGUFBackend(LLMBackend):
 class PyTorchLLMBackend(LLMBackend):
     """PyTorch model backend for loading .pth/.pt files."""
 
-    def __init__(self, config: LLMConfig):
+    def __init__(self, config: LLMConfig) -> None:
         """Initialize PyTorch backend with configuration.
 
         Args:
@@ -978,7 +978,7 @@ class PyTorchLLMBackend(LLMBackend):
                     **inputs,
                     max_new_tokens=self.config.max_tokens,
                     temperature=self.config.temperature,
-                    do_sample=True if self.config.temperature > 0 else False,
+                    do_sample=self.config.temperature > 0,
                     pad_token_id=self.tokenizer.eos_token_id,
                 )
 
@@ -995,7 +995,7 @@ class PyTorchLLMBackend(LLMBackend):
             logger.error("PyTorch generation error: %s", e)
             raise
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown PyTorch backend."""
         super().shutdown()
         if self.model is not None:
@@ -1020,7 +1020,7 @@ class PyTorchLLMBackend(LLMBackend):
 class TensorFlowLLMBackend(LLMBackend):
     """TensorFlow model backend for loading .h5 and SavedModel formats."""
 
-    def __init__(self, config: LLMConfig):
+    def __init__(self, config: LLMConfig) -> None:
         """Initialize TensorFlow backend with configuration.
 
         Args:
@@ -1116,7 +1116,7 @@ class TensorFlowLLMBackend(LLMBackend):
                 inputs.input_ids,
                 max_new_tokens=self.config.max_tokens,
                 temperature=self.config.temperature,
-                do_sample=True if self.config.temperature > 0 else False,
+                do_sample=self.config.temperature > 0,
                 pad_token_id=self.tokenizer.eos_token_id,
             )
 
@@ -1133,7 +1133,7 @@ class TensorFlowLLMBackend(LLMBackend):
             logger.error("TensorFlow generation error: %s", e)
             raise
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown TensorFlow backend."""
         super().shutdown()
         if self.model is not None:
@@ -1157,7 +1157,7 @@ class TensorFlowLLMBackend(LLMBackend):
 class ONNXLLMBackend(LLMBackend):
     """ONNX model backend for loading .onnx files."""
 
-    def __init__(self, config: LLMConfig):
+    def __init__(self, config: LLMConfig) -> None:
         """Initialize ONNX backend with configuration.
 
         Args:
@@ -1323,7 +1323,7 @@ class ONNXLLMBackend(LLMBackend):
             logger.error("ONNX generation error: %s", e)
             raise
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown ONNX backend."""
         super().shutdown()
         if self.session is not None:
@@ -1337,7 +1337,7 @@ class ONNXLLMBackend(LLMBackend):
 class SafetensorsBackend(LLMBackend):
     """Safetensors model backend for loading .safetensors files."""
 
-    def __init__(self, config: LLMConfig):
+    def __init__(self, config: LLMConfig) -> None:
         """Initialize Safetensors backend with configuration.
 
         Args:
@@ -1476,7 +1476,7 @@ class SafetensorsBackend(LLMBackend):
                     **inputs,
                     max_new_tokens=self.config.max_tokens,
                     temperature=self.config.temperature,
-                    do_sample=True if self.config.temperature > 0 else False,
+                    do_sample=self.config.temperature > 0,
                     pad_token_id=self.tokenizer.eos_token_id,
                 )
 
@@ -1493,7 +1493,7 @@ class SafetensorsBackend(LLMBackend):
             logger.error("Safetensors generation error: %s", e)
             raise
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown Safetensors backend."""
         super().shutdown()
         if self.model is not None:
@@ -1518,7 +1518,7 @@ class SafetensorsBackend(LLMBackend):
 class GPTQBackend(LLMBackend):
     """GPTQ quantized model backend."""
 
-    def __init__(self, config: LLMConfig):
+    def __init__(self, config: LLMConfig) -> None:
         """Initialize GPTQ backend with configuration.
 
         Args:
@@ -1617,7 +1617,7 @@ class GPTQBackend(LLMBackend):
                 **inputs,
                 max_new_tokens=self.config.max_tokens,
                 temperature=self.config.temperature,
-                do_sample=True if self.config.temperature > 0 else False,
+                do_sample=self.config.temperature > 0,
             )
 
             # Decode response
@@ -1633,7 +1633,7 @@ class GPTQBackend(LLMBackend):
             logger.error("GPTQ generation error: %s", e)
             raise
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown GPTQ backend."""
         super().shutdown()
         if self.model is not None:
@@ -1658,7 +1658,7 @@ class GPTQBackend(LLMBackend):
 class HuggingFaceLocalBackend(LLMBackend):
     """Hugging Face local model backend for loading from directories."""
 
-    def __init__(self, config: LLMConfig):
+    def __init__(self, config: LLMConfig) -> None:
         """Initialize Hugging Face Local backend with configuration.
 
         Args:
@@ -1836,7 +1836,7 @@ class HuggingFaceLocalBackend(LLMBackend):
                     **inputs,
                     max_new_tokens=self.config.max_tokens,
                     temperature=self.config.temperature,
-                    do_sample=True if self.config.temperature > 0 else False,
+                    do_sample=self.config.temperature > 0,
                     pad_token_id=self.tokenizer.pad_token_id,
                     eos_token_id=self.tokenizer.eos_token_id,
                 )
@@ -1854,7 +1854,7 @@ class HuggingFaceLocalBackend(LLMBackend):
             logger.error("Hugging Face generation error: %s", e)
             raise
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown Hugging Face backend."""
         super().shutdown()
         if self.model is not None:
@@ -1890,7 +1890,7 @@ class LLMManager:
                 cls._instance._initialized = False
             return cls._instance
 
-    def __init__(self, enable_lazy_loading: bool = True, enable_background_loading: bool = True):
+    def __init__(self, enable_lazy_loading: bool = True, enable_background_loading: bool = True) -> None:
         """Initialize LLM Manager with lazy and background loading options.
 
         Args:
@@ -2095,7 +2095,7 @@ class LLMManager:
             "lazy_loaded": False,
         }
 
-    def register_tools_for_llm(self, llm_id: str, tools: list[dict]):
+    def register_tools_for_llm(self, llm_id: str, tools: list[dict]) -> None:
         """Register tools for a specific LLM."""
         if llm_id in self.backends:
             self.backends[llm_id].register_tools(tools)
@@ -2343,7 +2343,7 @@ Please analyze this script and return validation results in JSON format."""
                 logger.error("Script validation failed: %s", e)
                 return {"valid": False, "errors": [str(e)]}
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown all LLM backends."""
         with self.lock:
             # Shutdown background loader if enabled
@@ -2363,13 +2363,13 @@ Please analyze this script and return validation results in JSON format."""
             logger.info("LLM Manager shutdown complete")
 
     # Background loading methods
-    def add_progress_callback(self, callback: ProgressCallback):
+    def add_progress_callback(self, callback: ProgressCallback) -> None:
         """Add a progress callback for model loading."""
         if self.background_loader:
             self.background_loader.add_progress_callback(callback)
             self.progress_callbacks.append(callback)
 
-    def add_queued_progress_callback(self, callback: ProgressCallback | QueuedProgressCallback):
+    def add_queued_progress_callback(self, callback: ProgressCallback | QueuedProgressCallback) -> None:
         """Add a queued progress callback that buffers progress updates."""
         if self.background_loader:
             # If it's a regular callback, wrap it in a QueuedProgressCallback
@@ -2378,7 +2378,7 @@ Please analyze this script and return validation results in JSON format."""
             self.background_loader.add_progress_callback(callback)
             self.progress_callbacks.append(callback)
 
-    def remove_progress_callback(self, callback: ProgressCallback):
+    def remove_progress_callback(self, callback: ProgressCallback) -> None:
         """Remove a progress callback."""
         if self.background_loader:
             self.background_loader.remove_progress_callback(callback)
@@ -2491,7 +2491,7 @@ Please analyze this script and return validation results in JSON format."""
                 return True
             return False
 
-    def unload_all_llms(self):
+    def unload_all_llms(self) -> None:
         """Unload all LLMs to free memory."""
         with self.lock:
             # Unload lazy models
@@ -2530,7 +2530,7 @@ Please analyze this script and return validation results in JSON format."""
 
         return memory_info
 
-    def configure_lazy_loading(self, max_loaded_models: int = 3, idle_unload_time: int = 1800):
+    def configure_lazy_loading(self, max_loaded_models: int = 3, idle_unload_time: int = 1800) -> None:
         """Configure lazy loading parameters."""
         if self.lazy_manager:
             self.lazy_manager.max_loaded_models = max_loaded_models
@@ -2862,7 +2862,7 @@ def get_llm_backend() -> LLMManager:
     return get_llm_manager()
 
 
-def shutdown_llm_manager():
+def shutdown_llm_manager() -> None:
     """Shutdown the global LLM manager."""
     global _LLM_MANAGER  # pylint: disable=global-statement
     if _LLM_MANAGER:

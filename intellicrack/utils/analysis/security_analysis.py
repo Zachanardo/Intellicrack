@@ -231,7 +231,7 @@ def _analyze_stack_patterns(binary_path: str, data: bytes) -> Dict[str, Any]:
                         "pattern": description,
                         "count": occurrences,
                         "risk": "medium" if "canary" in description else "low",
-                    }
+                    },
                 )
                 if "canary" in description:
                     results["stack_canaries"] = True
@@ -244,7 +244,7 @@ def _analyze_stack_patterns(binary_path: str, data: bytes) -> Dict[str, Any]:
                 for section in pe.sections:
                     if section.Characteristics & 0x20000000:  # IMAGE_SCN_MEM_EXECUTE
                         code_sections.append((section.VirtualAddress, section.get_data()))
-            except (pefile.PEFormatError, IOError, Exception) as e:
+            except (OSError, pefile.PEFormatError, Exception) as e:
                 logger.error("Error in security_analysis: %s", e)
                 code_sections = [(0, data)]
         else:
@@ -254,7 +254,7 @@ def _analyze_stack_patterns(binary_path: str, data: bytes) -> Dict[str, Any]:
         dangerous_stack_ops = 0
         for base_addr, code_data in code_sections[:1]:  # Limit analysis to first code section
             for i in md.disasm(code_data[:10000], base_addr):  # Analyze first 10KB
-                if i.mnemonic in ["sub", "add"] and i.op_str.startswith("esp,") or i.op_str.startswith("rsp,"):
+                if (i.mnemonic in ["sub", "add"] and i.op_str.startswith("esp,")) or i.op_str.startswith("rsp,"):
                     try:
                         # Check for large stack allocations
                         size = int(i.op_str.split(",")[1].strip(), 16)
@@ -265,7 +265,7 @@ def _analyze_stack_patterns(binary_path: str, data: bytes) -> Dict[str, Any]:
                                     "operation": f"{i.mnemonic} {i.op_str}",
                                     "size": size,
                                     "risk": "high" if size > 0x10000 else "medium",
-                                }
+                                },
                             )
                             dangerous_stack_ops += 1
                     except (ValueError, AttributeError, Exception) as e:
@@ -312,7 +312,7 @@ def _analyze_patterns_without_disassembly(data: bytes) -> Dict[str, Any]:
                         "pattern": f"Stack protection: {pattern.decode('utf-8', errors='ignore')}",
                         "count": 1,
                         "risk": "low",
-                    }
+                    },
                 )
                 break
 
@@ -335,7 +335,7 @@ def _analyze_patterns_without_disassembly(data: bytes) -> Dict[str, Any]:
                         "pattern": desc,
                         "count": count,
                         "risk": "high" if func in [b"gets", b"strcpy"] else "medium",
-                    }
+                    },
                 )
 
     except Exception as e:
@@ -395,7 +395,7 @@ def _detect_vulnerability_patterns(data: bytes) -> List[Dict[str, Any]]:
                     "pattern": "Integer multiplication operations",
                     "count": overflow_count,
                     "risk": "medium",
-                }
+                },
             )
 
     except Exception as e:
@@ -668,7 +668,7 @@ def check_for_memory_leaks(binary_path: str, process_pid: Optional[int] = None) 
                             {
                                 "issue": f"Rapid memory growth: {growth_rate:.2f} MB",
                                 "severity": "high",
-                            }
+                            },
                         )
 
             except (OSError, ValueError, RuntimeError) as e:
@@ -806,7 +806,7 @@ def bypass_tpm_checks(binary_path: str) -> Dict[str, Any]:
                                             "function": func_name,
                                             "dll": dll_name,
                                             "address": hex(imp.address),
-                                        }
+                                        },
                                     )
 
             # Generate bypass patches
@@ -822,7 +822,7 @@ def bypass_tpm_checks(binary_path: str) -> Dict[str, Any]:
                             "original_address": tpm_func["address"],
                             "patch": "return_success",
                             "description": f"Hook {tpm_func['function']} to always return success",
-                        }
+                        },
                     )
 
         # Additional bypass methods
@@ -923,7 +923,7 @@ def scan_protectors(binary_path: str) -> Dict[str, Any]:
                                 "section": section_name,
                                 "entropy": entropy,
                                 "indication": "Possible packing/encryption",
-                            }
+                            },
                         )
                         results["protections_found"].append(f"High entropy section: {section_name}")
 
@@ -999,7 +999,7 @@ def run_vm_bypass(binary_path: str, output_path: Optional[str] = None) -> Dict[s
                         "pattern": check["pattern"],
                         "replacement": "00" * (len(check["pattern"]) // 2),
                         "description": f"Neutralize {check['technique']}",
-                    }
+                    },
                 )
 
         if output_path and results["patches"]:

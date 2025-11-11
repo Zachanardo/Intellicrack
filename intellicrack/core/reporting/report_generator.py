@@ -54,7 +54,7 @@ except ImportError:
 class ReportGenerator:
     """Comprehensive report generator for Intellicrack analysis results."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the report generator."""
         self.logger = logging.getLogger(__name__)
         self.reports_dir = self._get_reports_directory()
@@ -462,9 +462,9 @@ class ReportGenerator:
 
         # Add PDF if available
         try:
-            from .pdf_generator import PDFGenerator  # noqa: F401
+            from .pdf_generator import PDFGenerator
 
-            return basic_formats + ["pdf"]
+            return [*basic_formats, "pdf"]
         except ImportError:
             return basic_formats
 

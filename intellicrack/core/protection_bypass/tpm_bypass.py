@@ -278,7 +278,7 @@ class AttestationData:
 class TPMBypassEngine:
     """Advanced TPM 2.0 bypass implementation."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the TPM2Bypass with logging and TPM-related data structures."""
         self.logger = logging.getLogger(__name__)
         self.tpm_handle = None
@@ -301,11 +301,11 @@ class TPMBypassEngine:
         self.frida_message_callback = None
         self.init_bypass_components()
 
-    def init_bypass_components(self):
+    def init_bypass_components(self) -> None:
         """Initialize TPM bypass components."""
         self.pcr_banks = {
             TPM2Algorithm.SHA256: PCRBank(
-                algorithm=TPM2Algorithm.SHA256, pcr_values=[bytes(32) for _ in range(24)], selection_mask=0xFFFFFF
+                algorithm=TPM2Algorithm.SHA256, pcr_values=[bytes(32) for _ in range(24)], selection_mask=0xFFFFFF,
             ),
             TPM2Algorithm.SHA1: PCRBank(algorithm=TPM2Algorithm.SHA1, pcr_values=[bytes(20) for _ in range(24)], selection_mask=0xFFFFFF),
         }
@@ -314,7 +314,7 @@ class TPMBypassEngine:
         self.init_bus_sniffer()
         self.init_virtualized_tpm()
 
-    def init_memory_attack_vectors(self):
+    def init_memory_attack_vectors(self) -> None:
         """Initialize memory attack vectors for TPM bypass."""
         self.mem_handle = None
         self.memory_map = {}
@@ -333,7 +333,7 @@ class TPMBypassEngine:
                 system_info = ntdll.NtQuerySystemInformation(2, None, 0, None) if hasattr(ntdll, "NtQuerySystemInformation") else None
                 if system_info is None:
                     self.logger.debug("Memory access initialized successfully, system information available") if hasattr(
-                        self, "logger"
+                        self, "logger",
                     ) else None
             except (AttributeError, KeyError):
                 self.mem_handle = None
@@ -356,7 +356,7 @@ class TPMBypassEngine:
                 "tpm_rid": 0xFED40F04,
             }
 
-    def init_bus_sniffer(self):
+    def init_bus_sniffer(self) -> None:
         """Initialize LPC/SPI bus sniffer for TPM communication."""
         self.bus_captures = []
         self.spi_decoder = {
@@ -369,7 +369,7 @@ class TPMBypassEngine:
             0x86: "read_cancel",
         }
 
-    def init_virtualized_tpm(self):
+    def init_virtualized_tpm(self) -> None:
         """Initialize virtualized TPM for interception."""
         self.virtualized_tpm = {
             "state": "ready",
@@ -511,7 +511,7 @@ class TPMBypassEngine:
         response = self.send_tpm_command(command)
 
         if response and len(response) > 10:
-            tag, size, code = struct.unpack(">HII", response[:10])
+            _tag, _size, code = struct.unpack(">HII", response[:10])
             if code == 0:
                 data_offset = 10 + 4
                 if len(response) > data_offset:
@@ -545,7 +545,7 @@ class TPMBypassEngine:
         response = self.send_tpm_command(command)
 
         if response and len(response) > 10:
-            tag, size, code = struct.unpack(">HII", response[:10])
+            _tag, _size, code = struct.unpack(">HII", response[:10])
             if code == 0:
                 return response[10:]
 
@@ -655,7 +655,7 @@ class TPMBypassEngine:
         sig_algo = bytes.fromhex("300d06092a864886f70d01010b0500")
 
         issuer = bytes.fromhex(  # pragma: allowlist secret
-            "3081883110300e060355040a0c07545041204d46473113301106035504030c0a54504d2045434120303031133011060355040b0c0a54504d2045434120303031143012060355040513074545453132333435310b3009060355040613025553310e300c06035504080c0554657861733111300f06035504070c0844616c6c6173"
+            "3081883110300e060355040a0c07545041204d46473113301106035504030c0a54504d2045434120303031133011060355040b0c0a54504d2045434120303031143012060355040513074545453132333435310b3009060355040613025553310e300c06035504080c0554657861733111300f06035504070c0844616c6c6173",
         )
 
         not_before = b"\x17\x0d" + time.strftime("%y%m%d%H%M%SZ").encode("ascii")
@@ -664,7 +664,7 @@ class TPMBypassEngine:
 
         subject = bytes.fromhex("30818a3112301006035504030c0941494b5f") + f"{aik_handle:08x}".encode("ascii")
         subject += bytes.fromhex(  # pragma: allowlist secret
-            "3113301106035504030c0a41494b2043455254313113301106035504040c0a41494b20434552543131143012060355040513074545453132333435310b3009060355040613025553310e300c06035504080c0554657861733111300f06035504070c0844616c6c6173"
+            "3113301106035504030c0a41494b2043455254313113301106035504040c0a41494b20434552543131143012060355040513074545453132333435310b3009060355040613025553310e300c06035504080c0554657861733111300f06035504070c0844616c6c6173",
         )
 
         modulus = os.urandom(256)
@@ -685,12 +685,12 @@ class TPMBypassEngine:
         extended_key_usage = bytes.fromhex("301d0603551d250416301406082b0601050507030206082b06010505070304")
 
         crl_distribution = bytes.fromhex(
-            "30420603551d1f043b3039303730358033a031a02f862d687474703a2f2f63726c2e7470616d66672e636f6d2f74706d2d6563612d30312e63726c"
+            "30420603551d1f043b3039303730358033a031a02f862d687474703a2f2f63726c2e7470616d66672e636f6d2f74706d2d6563612d30312e63726c",
         )
 
         authority_info_access = bytes.fromhex(
             "3056" + "06082b060105050701010" + "44a3048304606082b06010505073002" +
-            "863a687474703a2f2f6365727473" + "2e7470616d66672e636f6d2f74706d2d6563612d30312e636572"
+            "863a687474703a2f2f6365727473" + "2e7470616d66672e636f6d2f74706d2d6563612d30312e636572",
         )
 
         extensions = b"\xa3\x81\xf0\x30\x81\xed"
@@ -721,7 +721,7 @@ class TPMBypassEngine:
         if len(command) < 10:
             return None
 
-        tag, size, code = struct.unpack(">HII", command[:10])
+        _tag, _size, code = struct.unpack(">HII", command[:10])
 
         with self.command_lock:
             if code in self.command_hooks:
@@ -731,14 +731,14 @@ class TPMBypassEngine:
                         'timestamp': time.time(),
                         'command': command,
                         'response': hooked_response,
-                        'code': code
+                        'code': code,
                     })
                     return hooked_response
 
         if HAS_WIN32:
             try:
                 tpm_device = win32file.CreateFile(
-                    r"\\.\TPM", win32con.GENERIC_READ | win32con.GENERIC_WRITE, 0, None, win32con.OPEN_EXISTING, 0, None
+                    r"\\.\TPM", win32con.GENERIC_READ | win32con.GENERIC_WRITE, 0, None, win32con.OPEN_EXISTING, 0, None,
                 )
 
                 win32file.WriteFile(tpm_device, command)
@@ -751,7 +751,7 @@ class TPMBypassEngine:
                         'timestamp': time.time(),
                         'command': command,
                         'response': response,
-                        'code': code
+                        'code': code,
                     })
 
                 return response
@@ -765,7 +765,7 @@ class TPMBypassEngine:
         if len(command) < 10:
             return struct.pack(">HII", 0x8001, 10, 0x100)
 
-        tag, size, code = struct.unpack(">HII", command[:10])
+        _tag, _size, code = struct.unpack(">HII", command[:10])
 
         if code == TPM2CommandCode.GetRandom:
             param_size = struct.unpack(">H", command[10:12])[0] if len(command) > 11 else 32
@@ -937,7 +937,7 @@ class TPMBypassEngine:
         if HAS_WIN32:
             try:
                 tpm_device = win32file.CreateFile(
-                    r"\\.\TPM", win32con.GENERIC_READ | win32con.GENERIC_WRITE, 0, None, win32con.OPEN_EXISTING, 0, None
+                    r"\\.\TPM", win32con.GENERIC_READ | win32con.GENERIC_WRITE, 0, None, win32con.OPEN_EXISTING, 0, None,
                 )
 
                 get_cap_cmd = struct.pack(">HIII", 0x8001, 14, TPM2CommandCode.GetCapability, 0x00000006)
@@ -948,7 +948,7 @@ class TPMBypassEngine:
 
                 if len(response) >= 10:
                     tag = struct.unpack(">H", response[:2])[0]
-                    if tag == 0x8001 or tag == 0x8002:
+                    if tag in {32769, 32770}:
                         self.tpm_version = "2.0"
                         return "2.0"
                     elif tag == 0xC400:
@@ -961,14 +961,14 @@ class TPMBypassEngine:
             tpm_id_mem = self.read_physical_memory(self.memory_map.get("tpm_did_vid", 0xFED40F00), 8)
             if tpm_id_mem:
                 did_vid = struct.unpack("<I", tpm_id_mem[:4])[0]
-                if did_vid != 0xFFFFFFFF and did_vid != 0:
+                if did_vid not in {4294967295, 0}:
                     self.tpm_version = "2.0"
                     return "2.0"
 
         self.tpm_version = "2.0"
         return self.tpm_version
 
-    def manipulate_pcr_values(self, pcr_values: Dict[int, bytes]):
+    def manipulate_pcr_values(self, pcr_values: Dict[int, bytes]) -> None:
         """Directly manipulate PCR values for bypass."""
         for pcr_num, value in pcr_values.items():
             if pcr_num < 24:
@@ -1100,7 +1100,7 @@ class TPMBypassEngine:
             try:
                 # Get current process token to adjust privileges for low-level memory access
                 token = win32security.OpenProcessToken(
-                    win32api.GetCurrentProcess(), win32security.TOKEN_ADJUST_PRIVILEGES | win32security.TOKEN_QUERY
+                    win32api.GetCurrentProcess(), win32security.TOKEN_ADJUST_PRIVILEGES | win32security.TOKEN_QUERY,
                 )
 
                 # Enable debug privilege for low-level memory access
@@ -1143,7 +1143,7 @@ class TPMBypassEngine:
         response = self.send_tpm_command(command)
 
         if response and len(response) >= 10:
-            tag, size, code = struct.unpack(">HII", response[:10])
+            _tag, _size, code = struct.unpack(">HII", response[:10])
             if code == 0:
                 self.virtualized_tpm["lockout_count"] = 0
                 return True
@@ -1165,7 +1165,7 @@ class TPMBypassEngine:
         response = self.send_tpm_command(command)
 
         if response:
-            tag, size, code = struct.unpack(">HII", response[:10])
+            _tag, _size, code = struct.unpack(">HII", response[:10])
             if code == 0:
                 self.virtualized_tpm["hierarchy_auth"] = {0x40000001: b"", 0x40000009: b"", 0x4000000C: b"", 0x4000000B: b""}
                 return True
@@ -1217,10 +1217,10 @@ class TPMBypassEngine:
                             'timestamp': time.time(),
                             'command': command_data,
                             'locality': locality,
-                            'priority': priority
+                            'priority': priority,
                         })
 
-                    tag, size, code = struct.unpack(">HII", command_data[:10])
+                    _tag, _size, code = struct.unpack(">HII", command_data[:10])
 
                     if code in self.command_hooks:
                         modified_command = self.command_hooks[code](command_data)
@@ -1489,10 +1489,7 @@ class TPMBypassEngine:
             return True
 
         entropy = len(set(data)) / len(data) if len(data) > 0 else 0
-        if entropy > 0.5:
-            return True
-
-        return False
+        return entropy > 0.5
 
     def manipulate_pcr_extend(self, pcr_num: int, extend_value: bytes, block: bool = True) -> bool:
         """Intercept and block or modify PCR extend operations.
@@ -1971,12 +1968,12 @@ class TPMBypassEngine:
                 self.logger.error(f"TPM command interceptor script not found: {script_path}")
                 return False
 
-            with open(script_path, 'r', encoding='utf-8') as f:
+            with open(script_path, encoding='utf-8') as f:
                 script_source = f.read()
 
             self.frida_script = self.frida_session.create_script(script_source)
 
-            def on_message(message, data):
+            def on_message(message, data) -> None:
                 if message['type'] == 'send':
                     payload = message.get('payload', '')
                     self.logger.info(f"[Frida] {payload}")
@@ -2020,12 +2017,12 @@ class TPMBypassEngine:
                 self.logger.error(f"PCR manipulator script not found: {script_path}")
                 return False
 
-            with open(script_path, 'r', encoding='utf-8') as f:
+            with open(script_path, encoding='utf-8') as f:
                 script_source = f.read()
 
             self.frida_script = self.frida_session.create_script(script_source)
 
-            def on_message(message, data):
+            def on_message(message, data) -> None:
                 if message['type'] == 'send':
                     payload = message.get('payload', '')
                     self.logger.info(f"[Frida PCR] {payload}")
@@ -2212,7 +2209,7 @@ class TPMBypassEngine:
             self.logger.error(f"Failed to get PCR operations: {e}")
             return []
 
-    def detach_frida(self):
+    def detach_frida(self) -> None:
         """Detach Frida session and cleanup."""
         try:
             if self.frida_script:

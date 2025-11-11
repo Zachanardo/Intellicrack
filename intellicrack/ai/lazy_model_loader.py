@@ -52,13 +52,7 @@ class DefaultLoadingStrategy(ModelLoadingStrategy):
     def should_preload(self, config: LLMConfig) -> bool:
         """Don't preload by default, but allow API models for quick initialization."""
         # API models are quick to initialize and don't consume much local resources
-        if hasattr(config, "provider") and config.provider.value in [
-            "openai",
-            "anthropic",
-            "ollama",
-        ]:
-            return True
-        return False
+        return bool(hasattr(config, "provider") and config.provider.value in ["openai", "anthropic", "ollama"])
 
     def get_load_priority(self, config: LLMConfig) -> int:
         """Get load priority based on provider type."""
@@ -79,7 +73,7 @@ class SmartLoadingStrategy(ModelLoadingStrategy):
         preload_small_models: bool = True,
         small_model_threshold_mb: int = 100,
         preload_api_models: bool = True,
-    ):
+    ) -> None:
         """Initialize the smart loading strategy with configurable preloading options.
 
         Args:
@@ -139,7 +133,7 @@ class LazyModelWrapper:
         config: LLMConfig,
         preload: bool = False,
         load_callback: Callable[[str, bool], None] | None = None,
-    ):
+    ) -> None:
         """Initialize a lazy-loading wrapper for an LLM backend.
 
         Args:
@@ -251,7 +245,7 @@ class LazyModelWrapper:
 
         return self._backend
 
-    def unload(self):
+    def unload(self) -> None:
         """Unload the backend to free memory."""
         with self._initialization_lock:
             if self._backend:
@@ -309,7 +303,7 @@ class LazyModelManager:
     Handles loading strategies, memory management, and model lifecycle.
     """
 
-    def __init__(self, loading_strategy: ModelLoadingStrategy | None = None):
+    def __init__(self, loading_strategy: ModelLoadingStrategy | None = None) -> None:
         """Initialize the lazy model manager with optional loading strategy.
 
         Args:
@@ -336,11 +330,11 @@ class LazyModelManager:
             logger.info("Skipping background cleanup thread (testing mode)")
             self._cleanup_thread = None
 
-    def add_load_callback(self, callback: Callable[[str, bool], None]):
+    def add_load_callback(self, callback: Callable[[str, bool], None]) -> None:
         """Add a callback for loading progress updates."""
         self.load_callbacks.append(callback)
 
-    def _notify_load_callback(self, message: str, finished: bool):
+    def _notify_load_callback(self, message: str, finished: bool) -> None:
         """Notify all load callbacks."""
         for callback in self.load_callbacks:
             try:
@@ -390,7 +384,7 @@ class LazyModelManager:
             logger.info(f"Manually unloaded model: {model_id}")
             return True
 
-    def unload_all(self):
+    def unload_all(self) -> None:
         """Unload all models."""
         with self._access_lock:
             for _, wrapper in self.models.items():
@@ -411,14 +405,14 @@ class LazyModelManager:
         with self._access_lock:
             return [model_id for model_id, wrapper in self.models.items() if wrapper.is_loaded]
 
-    def _maybe_cleanup_memory(self):
+    def _maybe_cleanup_memory(self) -> None:
         """Check if memory cleanup is needed and perform it."""
         loaded_count = len(self.get_loaded_models())
 
         if loaded_count > self.max_loaded_models:
             self._cleanup_least_used_models(loaded_count - self.max_loaded_models)
 
-    def _cleanup_least_used_models(self, count_to_unload: int):
+    def _cleanup_least_used_models(self, count_to_unload: int) -> None:
         """Unload the least recently used models."""
         # Get loaded models sorted by last access time
         loaded_models = []
@@ -435,7 +429,7 @@ class LazyModelManager:
             wrapper.unload()
             logger.info(f"Auto-unloaded least used model: {model_id}")
 
-    def _background_cleanup(self):
+    def _background_cleanup(self) -> None:
         """Background thread for periodic cleanup."""
         while True:
             try:
@@ -444,7 +438,7 @@ class LazyModelManager:
             except Exception as e:
                 logger.error(f"Error in background cleanup: {e}")
 
-    def _cleanup_idle_models(self):
+    def _cleanup_idle_models(self) -> None:
         """Unload models that have been idle for too long."""
         current_time = time.time()
 
@@ -473,7 +467,7 @@ def configure_lazy_loading(
     max_loaded_models: int = 3,
     idle_unload_time: int = 1800,
     loading_strategy: ModelLoadingStrategy | None = None,
-):
+) -> None:
     """Configure global lazy loading settings."""
     manager = get_lazy_manager()
     manager.max_loaded_models = max_loaded_models

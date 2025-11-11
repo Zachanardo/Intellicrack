@@ -41,7 +41,7 @@ class ESILAnalysisEngine:
     - Register state tracking
     """
 
-    def __init__(self, binary_path: str, radare2_path: str | None = None):
+    def __init__(self, binary_path: str, radare2_path: str | None = None) -> None:
         """Initialize ESIL analysis engine.
 
         Args:
@@ -133,7 +133,7 @@ class ESILAnalysisEngine:
                         "step": 0,
                         "address": hex(address),
                         "registers": initial_registers,
-                    }
+                    },
                 )
 
                 # Perform step-by-step emulation
@@ -170,7 +170,7 @@ class ESILAnalysisEngine:
                                         "step": step + 1,
                                         "address": current_pc,
                                         "registers": registers,
-                                    }
+                                    },
                                 )
 
                             # Check for function exit conditions
@@ -207,7 +207,7 @@ class ESILAnalysisEngine:
 
         return result
 
-    def _analyze_instruction_patterns(self, trace_entry: dict[str, Any], result: dict[str, Any]):
+    def _analyze_instruction_patterns(self, trace_entry: dict[str, Any], result: dict[str, Any]) -> None:
         """Analyze individual instruction for interesting patterns."""
         instruction = trace_entry.get("instruction", "").lower()
         address = trace_entry.get("address", "")
@@ -223,7 +223,7 @@ class ESILAnalysisEngine:
                         "caller_address": address,
                         "target_address": f"0x{target}",
                         "instruction": instruction,
-                    }
+                    },
                 )
 
         # Detect conditional branches
@@ -234,7 +234,7 @@ class ESILAnalysisEngine:
                     "address": address,
                     "instruction": instruction,
                     "branch_type": self._extract_branch_type(instruction),
-                }
+                },
             )
 
         # Detect memory access patterns
@@ -246,7 +246,7 @@ class ESILAnalysisEngine:
                         "address": address,
                         "instruction": instruction,
                         "access_type": self._extract_memory_access_type(instruction),
-                    }
+                    },
                 )
 
         # Detect license check patterns
@@ -260,7 +260,7 @@ class ESILAnalysisEngine:
                         "address": address,
                         "instruction": instruction,
                         "pattern_type": "license_comparison",
-                    }
+                    },
                 )
 
         # Detect vulnerability patterns
@@ -272,7 +272,7 @@ class ESILAnalysisEngine:
                     "address": address,
                     "instruction": instruction,
                     "vulnerability_type": "buffer_overflow_risk",
-                }
+                },
             )
 
     def _extract_branch_type(self, instruction: str) -> str:
@@ -311,7 +311,7 @@ class ESILAnalysisEngine:
         instruction_lower = instruction.lower()
         return any(exit_pattern in instruction_lower for exit_pattern in ["ret", "retn", "iret"])
 
-    def _perform_post_execution_analysis(self, result: dict[str, Any]):
+    def _perform_post_execution_analysis(self, result: dict[str, Any]) -> None:
         """Perform analysis on the complete execution trace."""
         trace = result.get("execution_trace", [])
 
@@ -327,14 +327,14 @@ class ESILAnalysisEngine:
         # Detect anti-analysis techniques
         self._detect_anti_analysis_techniques(result, trace)
 
-    def _analyze_execution_patterns(self, result: dict[str, Any], trace: list[dict[str, Any]]):
+    def _analyze_execution_patterns(self, result: dict[str, Any], trace: list[dict[str, Any]]) -> None:
         """Analyze overall execution patterns."""
         if not trace:
             return
 
         # Calculate basic metrics
         total_instructions = len(trace)
-        unique_addresses = len(set(entry.get("address", "") for entry in trace))
+        unique_addresses = len({entry.get("address", "") for entry in trace})
 
         # Detect loops
         address_counts = {}
@@ -352,7 +352,7 @@ class ESILAnalysisEngine:
             "code_coverage_ratio": unique_addresses / total_instructions if total_instructions > 0 else 0,
         }
 
-    def _detect_license_validation_patterns(self, result: dict[str, Any], trace: list[dict[str, Any]]):
+    def _detect_license_validation_patterns(self, result: dict[str, Any], trace: list[dict[str, Any]]) -> None:
         """Detect license validation patterns in execution trace."""
         validation_patterns = []
 
@@ -370,7 +370,7 @@ class ESILAnalysisEngine:
                             "start_step": entry["step"],
                             "end_step": trace[i + 1]["step"],
                             "instructions": [entry["instruction"], trace[i + 1]["instruction"]],
-                        }
+                        },
                     )
 
             # Pattern 2: Multiple comparisons (complex validation)
@@ -388,12 +388,12 @@ class ESILAnalysisEngine:
                             "start_step": entry["step"],
                             "comparison_count": comparison_count,
                             "pattern_strength": "high",
-                        }
+                        },
                     )
 
         result["license_validation_patterns"] = validation_patterns
 
-    def _analyze_api_call_sequences(self, result: dict[str, Any]):
+    def _analyze_api_call_sequences(self, result: dict[str, Any]) -> None:
         """Analyze sequences of API calls for patterns."""
         api_calls = result.get("api_calls_detected", [])
 
@@ -417,7 +417,7 @@ class ESILAnalysisEngine:
 
         result["api_call_sequences"] = call_sequences
 
-    def _detect_anti_analysis_techniques(self, result: dict[str, Any], trace: list[dict[str, Any]]):
+    def _detect_anti_analysis_techniques(self, result: dict[str, Any], trace: list[dict[str, Any]]) -> None:
         """Detect anti-analysis and anti-debugging techniques."""
         anti_analysis_detected = []
 
@@ -432,7 +432,7 @@ class ESILAnalysisEngine:
                         "step": entry["step"],
                         "instruction": instruction,
                         "severity": "high",
-                    }
+                    },
                 )
 
             # Detect timing checks
@@ -443,7 +443,7 @@ class ESILAnalysisEngine:
                         "step": entry["step"],
                         "instruction": instruction,
                         "severity": "medium",
-                    }
+                    },
                 )
 
             # Detect VM detection
@@ -454,7 +454,7 @@ class ESILAnalysisEngine:
                         "step": entry["step"],
                         "instruction": instruction,
                         "severity": "medium",
-                    }
+                    },
                 )
 
         result["anti_analysis_techniques"] = anti_analysis_detected
@@ -543,7 +543,7 @@ class ESILAnalysisEngine:
                         "license_checks": license_checks,
                         "anti_analysis_techniques": len(result.get("anti_analysis_techniques", [])),
                         "suspicion_score": license_checks * 2 + len(result.get("anti_analysis_techniques", [])),
-                    }
+                    },
                 )
 
         return analysis

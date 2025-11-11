@@ -107,7 +107,7 @@ class CertificateValidationDetector:
     and provides recommendations for bypass strategies.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the certificate validation detector."""
         self.min_confidence = 0.3
 
@@ -143,7 +143,7 @@ class CertificateValidationDetector:
                 logger.info(f"Detected TLS libraries: {tls_libraries}")
 
                 validation_functions = self._find_validation_functions(
-                    scanner, tls_libraries
+                    scanner, tls_libraries,
                 )
                 logger.info(f"Found {len(validation_functions)} validation functions")
 
@@ -151,7 +151,7 @@ class CertificateValidationDetector:
                 logger.info(f"After filtering: {len(filtered_functions)} functions")
 
                 recommended_method = self._recommend_bypass_method(
-                    filtered_functions, tls_libraries
+                    filtered_functions, tls_libraries,
                 )
                 logger.debug(f"Recommended bypass method: {recommended_method.value}")
 
@@ -176,7 +176,7 @@ class CertificateValidationDetector:
     def _find_validation_functions(
         self,
         scanner: BinaryScanner,
-        tls_libraries: List[str]
+        tls_libraries: List[str],
     ) -> List[ValidationFunction]:
         """Find all certificate validation functions in the binary.
 
@@ -221,7 +221,7 @@ class CertificateValidationDetector:
 
     def _filter_low_confidence(
         self,
-        validation_functions: List[ValidationFunction]
+        validation_functions: List[ValidationFunction],
     ) -> List[ValidationFunction]:
         """Filter out low-confidence detections.
 
@@ -249,7 +249,7 @@ class CertificateValidationDetector:
         """
         licensing_keywords = [
             "license", "licensing", "activation", "activate", "register",
-            "registration", "serial", "key", "trial", "validate", "verification"
+            "registration", "serial", "key", "trial", "validate", "verification",
         ]
 
         if context.function_name:
@@ -301,7 +301,7 @@ class CertificateValidationDetector:
     def _recommend_bypass_method(
         self,
         validation_functions: List[ValidationFunction],
-        tls_libraries: List[str]
+        tls_libraries: List[str],
     ) -> BypassMethod:
         """Recommend the best bypass method based on detection results.
 
@@ -320,10 +320,10 @@ class CertificateValidationDetector:
             1 for func in validation_functions if func.confidence >= 0.7
         )
 
-        library_types = set(
+        library_types = {
             get_library_type(lib) for lib in tls_libraries
             if get_library_type(lib)
-        )
+        }
 
         if len(library_types) >= 3:
             return BypassMethod.HYBRID
@@ -381,7 +381,7 @@ class CertificateValidationDetector:
     def detect_with_custom_signatures(
         self,
         binary_path: str,
-        custom_signatures: List[APISignature]
+        custom_signatures: List[APISignature],
     ) -> DetectionReport:
         """Detect validation functions using custom API signatures.
 

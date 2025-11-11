@@ -123,7 +123,7 @@ class CryptographicRoutineDetector:
         0xBA, 0x78, 0x25, 0x2E, 0x1C, 0xA6, 0xB4, 0xC6, 0xE8, 0xDD, 0x74, 0x1F, 0x4B, 0xBD, 0x8B, 0x8A,
         0x70, 0x3E, 0xB5, 0x66, 0x48, 0x03, 0xF6, 0x0E, 0x61, 0x35, 0x57, 0xB9, 0x86, 0xC1, 0x1D, 0x9E,
         0xE1, 0xF8, 0x98, 0x11, 0x69, 0xD9, 0x8E, 0x94, 0x9B, 0x1E, 0x87, 0xE9, 0xCE, 0x55, 0x28, 0xDF,
-        0x8C, 0xA1, 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68, 0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16
+        0x8C, 0xA1, 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68, 0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16,
     ])
 
     AES_INV_SBOX = bytes([
@@ -142,11 +142,11 @@ class CryptographicRoutineDetector:
         0x1F, 0xDD, 0xA8, 0x33, 0x88, 0x07, 0xC7, 0x31, 0xB1, 0x12, 0x10, 0x59, 0x27, 0x80, 0xEC, 0x5F,
         0x60, 0x51, 0x7F, 0xA9, 0x19, 0xB5, 0x4A, 0x0D, 0x2D, 0xE5, 0x7A, 0x9F, 0x93, 0xC9, 0x9C, 0xEF,
         0xA0, 0xE0, 0x3B, 0x4D, 0xAE, 0x2A, 0xF5, 0xB0, 0xC8, 0xEB, 0xBB, 0x3C, 0x83, 0x53, 0x99, 0x61,
-        0x17, 0x2B, 0x04, 0x7E, 0xBA, 0x77, 0xD6, 0x26, 0xE1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0C, 0x7D
+        0x17, 0x2B, 0x04, 0x7E, 0xBA, 0x77, 0xD6, 0x26, 0xE1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0C, 0x7D,
     ])
 
     AES_RCON = bytes([
-        0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36
+        0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36,
     ])
 
     DES_SBOXES = [
@@ -181,32 +181,32 @@ class CryptographicRoutineDetector:
         [[13, 2, 8, 4, 6, 15, 11, 1, 10, 9, 3, 14, 5, 0, 12, 7],
          [1, 15, 13, 8, 10, 3, 7, 4, 12, 5, 6, 11, 0, 14, 9, 2],
          [7, 11, 4, 1, 9, 12, 14, 2, 0, 6, 10, 13, 15, 3, 5, 8],
-         [2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6, 11]]
+         [2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6, 11]],
     ]
 
     BLOWFISH_PI_SUBKEYS = bytes([
         0x24, 0x3F, 0x6A, 0x88, 0x85, 0xA3, 0x08, 0xD3,
         0x13, 0x19, 0x8A, 0x2E, 0x03, 0x70, 0x73, 0x44,
         0xA4, 0x09, 0x38, 0x22, 0x29, 0x9F, 0x31, 0xD0,
-        0x08, 0x2E, 0xFA, 0x98, 0xEC, 0x4E, 0x6C, 0x89
+        0x08, 0x2E, 0xFA, 0x98, 0xEC, 0x4E, 0x6C, 0x89,
     ])
 
     TWOFISH_Q_TABLES = [
         [0xA9, 0x67, 0xB3, 0xE8, 0x04, 0xFD, 0xA3, 0x76],
-        [0x75, 0xF3, 0xC6, 0xF4, 0xDB, 0x7B, 0xFB, 0xC8]
+        [0x75, 0xF3, 0xC6, 0xF4, 0xDB, 0x7B, 0xFB, 0xC8],
     ]
 
     SHA256_K = [
         0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
-        0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5
+        0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
     ]
 
     SHA1_H = [
-        0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0
+        0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0,
     ]
 
     MD5_T = [
-        0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee
+        0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
     ]
 
     RC4_INIT_PATTERN = list(range(256))
@@ -225,7 +225,7 @@ class CryptographicRoutineDetector:
 
     CHACHA20_CONSTANT = b"expand 32-byte k"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the CryptographicRoutineDetector with disassemblers."""
         self.detections: List[CryptoDetection] = []
         self.md_32 = Cs(CS_ARCH_X86, CS_MODE_32)
@@ -312,14 +312,14 @@ class CryptographicRoutineDetector:
                     constant_type=const_name,
                     algorithm=algorithm,
                     confidence=1.0,
-                    context={"pattern_match": "exact"}
+                    context={"pattern_match": "exact"},
                 )
                 self.constant_cache[const_bytes] = crypto_const
 
                 logger.debug(f"Found {const_name} constant at 0x{base_addr + idx:08x}")
                 idx += len(const_bytes)
 
-        for i in range(0, len(self.SHA256_K)):
+        for i in range(len(self.SHA256_K)):
             k_bytes = struct.pack(">I", self.SHA256_K[i])
             idx = data.find(k_bytes)
             if idx != -1:
@@ -329,11 +329,11 @@ class CryptographicRoutineDetector:
                     constant_type=f"SHA256_K[{i}]",
                     algorithm=CryptoAlgorithm.SHA256,
                     confidence=0.9,
-                    context={"round_constant": i}
+                    context={"round_constant": i},
                 )
                 self.constant_cache[k_bytes] = crypto_const
 
-        for i in range(0, len(self.SHA1_H)):
+        for i in range(len(self.SHA1_H)):
             h_bytes = struct.pack(">I", self.SHA1_H[i])
             idx = data.find(h_bytes)
             if idx != -1:
@@ -343,11 +343,11 @@ class CryptographicRoutineDetector:
                     constant_type=f"SHA1_H[{i}]",
                     algorithm=CryptoAlgorithm.SHA1,
                     confidence=0.9,
-                    context={"init_vector": i}
+                    context={"init_vector": i},
                 )
                 self.constant_cache[h_bytes] = crypto_const
 
-        for i in range(0, len(self.MD5_T)):
+        for i in range(len(self.MD5_T)):
             t_bytes = struct.pack("<I", self.MD5_T[i])
             idx = data.find(t_bytes)
             if idx != -1:
@@ -357,7 +357,7 @@ class CryptographicRoutineDetector:
                     constant_type=f"MD5_T[{i}]",
                     algorithm=CryptoAlgorithm.MD5,
                     confidence=0.9,
-                    context={"sine_table": i}
+                    context={"sine_table": i},
                 )
                 self.constant_cache[t_bytes] = crypto_const
 
@@ -376,9 +376,9 @@ class CryptographicRoutineDetector:
                     details={
                         "sbox_type": "forward",
                         "completeness": fwd_confidence,
-                        "obfuscated": fwd_confidence < 0.995
+                        "obfuscated": fwd_confidence < 0.995,
                     },
-                    constants=[constant] if constant else []
+                    constants=[constant] if constant else [],
                 )
                 self._find_crypto_references(data, i, detection)
                 self.detections.append(detection)
@@ -396,9 +396,9 @@ class CryptographicRoutineDetector:
                     details={
                         "sbox_type": "inverse",
                         "completeness": inv_confidence,
-                        "obfuscated": inv_confidence < 0.995
+                        "obfuscated": inv_confidence < 0.995,
                     },
-                    constants=[constant] if constant else []
+                    constants=[constant] if constant else [],
                 )
                 self._find_crypto_references(data, i, detection)
                 self.detections.append(detection)
@@ -430,8 +430,8 @@ class CryptographicRoutineDetector:
                     details={
                         "sbox_count": sbox_matches,
                         "sbox_positions": sbox_positions,
-                        "complete": sbox_matches == 8
-                    }
+                        "complete": sbox_matches == 8,
+                    },
                 )
                 self.detections.append(detection)
                 logger.debug(f"DES S-boxes detected at 0x{base_addr + i:08x} ({sbox_matches}/8 S-boxes)")
@@ -446,7 +446,7 @@ class CryptographicRoutineDetector:
                 size=len(self.BLOWFISH_PI_SUBKEYS),
                 confidence=0.95,
                 variant="Blowfish Pi Subkeys",
-                details={"constant_type": "pi_subkeys"}
+                details={"constant_type": "pi_subkeys"},
             )
             self.detections.append(detection)
             logger.debug(f"Blowfish Pi subkeys detected at 0x{base_addr + idx:08x}")
@@ -459,7 +459,7 @@ class CryptographicRoutineDetector:
                     size=1024,
                     confidence=0.85,
                     variant="Blowfish S-boxes",
-                    details={"sbox_structure": "4x256"}
+                    details={"sbox_structure": "4x256"},
                 )
                 self.detections.append(detection)
                 logger.debug(f"Blowfish S-boxes detected at 0x{base_addr + i:08x}")
@@ -477,7 +477,7 @@ class CryptographicRoutineDetector:
                     size=len(q_bytes),
                     confidence=0.9,
                     variant=f"Twofish Q{table_idx} Table",
-                    details={"table_index": table_idx}
+                    details={"table_index": table_idx},
                 )
                 self.detections.append(detection)
                 logger.debug(f"Twofish Q{table_idx} table detected at 0x{base_addr + idx:08x}")
@@ -506,7 +506,7 @@ class CryptographicRoutineDetector:
                 size=256,
                 confidence=0.9,
                 variant="SHA-256 Round Constants",
-                details={"constants_found": sha256_k_count, "total_constants": len(self.SHA256_K), "endianness": endianness}
+                details={"constants_found": sha256_k_count, "total_constants": len(self.SHA256_K), "endianness": endianness},
             )
             self.detections.append(detection)
             logger.debug(f"SHA-256 constants detected ({sha256_k_count}/{len(self.SHA256_K)} found, {endianness} endian)")
@@ -533,7 +533,7 @@ class CryptographicRoutineDetector:
                 size=20,
                 confidence=0.9,
                 variant="SHA-1 Initialization Vector",
-                details={"constants_found": sha1_h_count, "total_constants": len(self.SHA1_H), "endianness": endianness}
+                details={"constants_found": sha1_h_count, "total_constants": len(self.SHA1_H), "endianness": endianness},
             )
             self.detections.append(detection)
             logger.debug(f"SHA-1 constants detected ({sha1_h_count}/{len(self.SHA1_H)} found, {endianness} endian)")
@@ -552,7 +552,7 @@ class CryptographicRoutineDetector:
                 size=16,
                 confidence=0.85,
                 variant="MD5 Sine Table",
-                details={"constants_found": md5_t_count}
+                details={"constants_found": md5_t_count},
             )
             self.detections.append(detection)
             logger.debug(f"MD5 constants detected ({md5_t_count} found)")
@@ -569,7 +569,7 @@ class CryptographicRoutineDetector:
                         size=256,
                         confidence=0.95,
                         variant="RC4 State Array",
-                        details={"ksa_detected": True, "prga_nearby": self._check_rc4_prga_pattern(data, i)}
+                        details={"ksa_detected": True, "prga_nearby": self._check_rc4_prga_pattern(data, i)},
                     )
                     self.detections.append(detection)
                     logger.debug(f"RC4 state array detected at 0x{base_addr + i:08x}")
@@ -597,7 +597,7 @@ class CryptographicRoutineDetector:
                         confidence=confidence,
                         variant="RSA Public Exponent",
                         key_size=self._estimate_rsa_key_size(data, i),
-                        details={"exponent": exponent}
+                        details={"exponent": exponent},
                     )
                     self.detections.append(detection)
                     logger.debug(f"RSA exponent {exponent} detected at 0x{base_addr + i:08x}")
@@ -610,7 +610,7 @@ class CryptographicRoutineDetector:
                     size=512,
                     confidence=0.8,
                     variant="RSA Montgomery Multiplication",
-                    details={"operation": "montgomery_mul"}
+                    details={"operation": "montgomery_mul"},
                 )
                 self.detections.append(detection)
 
@@ -625,7 +625,7 @@ class CryptographicRoutineDetector:
                     size=len(prime),
                     confidence=0.95,
                     variant=f"ECC {curve_name} Field Prime",
-                    details={"curve": curve_name, "field_size": len(prime) * 8}
+                    details={"curve": curve_name, "field_size": len(prime) * 8},
                 )
                 self.detections.append(detection)
                 logger.debug(f"ECC {curve_name} field prime detected at 0x{base_addr + idx:08x}")
@@ -642,7 +642,7 @@ class CryptographicRoutineDetector:
                 size=len(self.CHACHA20_CONSTANT),
                 confidence=0.95,
                 variant="ChaCha20 Constant",
-                details={"constant": self.CHACHA20_CONSTANT.decode('ascii')}
+                details={"constant": self.CHACHA20_CONSTANT.decode('ascii')},
             )
             self.detections.append(detection)
             logger.debug(f"ChaCha20 constant detected at 0x{base_addr + idx:08x}")
@@ -676,7 +676,7 @@ class CryptographicRoutineDetector:
                     confidence=1.0,
                     variant=f"AES-NI {instruction}",
                     mode="Hardware-accelerated",
-                    details={"instruction": instruction, "hardware": True}
+                    details={"instruction": instruction, "hardware": True},
                 )
                 self.detections.append(detection)
                 logger.debug(f"AES-NI {instruction} detected at 0x{base_addr + idx:08x}")
@@ -706,7 +706,7 @@ class CryptographicRoutineDetector:
                     size=len(opcode),
                     confidence=1.0,
                     variant=f"SHA {instruction}",
-                    details={"instruction": instruction, "hardware": True}
+                    details={"instruction": instruction, "hardware": True},
                 )
                 self.detections.append(detection)
                 logger.debug(f"SHA {instruction} detected at 0x{base_addr + idx:08x}")
@@ -731,8 +731,8 @@ class CryptographicRoutineDetector:
                             details={
                                 "entropy": entropy,
                                 "structure": "lookup_table",
-                                "uniqueness": len(set(window)) / len(window)
-                            }
+                                "uniqueness": len(set(window)) / len(window),
+                            },
                         )
                         self.detections.append(detection)
                         logger.debug(f"Custom crypto table detected at 0x{base_addr + i:08x} (entropy: {entropy:.2f})")
@@ -771,8 +771,8 @@ class CryptographicRoutineDetector:
                         details={
                             "rounds": swap_count,
                             "xor_operations": xor_count,
-                            "round_positions": round_indicators
-                        }
+                            "round_positions": round_indicators,
+                        },
                     )
                     self.detections.append(detection)
                     logger.debug(f"Feistel network detected at 0x{base_addr + i:08x}")
@@ -789,7 +789,7 @@ class CryptographicRoutineDetector:
                     size=2048,
                     confidence=0.7,
                     variant="SP-Network Cipher",
-                    details={"structure": "substitution_permutation"}
+                    details={"structure": "substitution_permutation"},
                 )
                 self.detections.append(detection)
                 logger.debug(f"SP-network detected at 0x{base_addr + i:08x}")
@@ -828,8 +828,8 @@ class CryptographicRoutineDetector:
                                 "multiplications": mul_count,
                                 "additions": add_count,
                                 "subtractions": sub_count,
-                                "ratio": ratio
-                            }
+                                "ratio": ratio,
+                            },
                         )
                         self.detections.append(detection)
                         logger.debug(f"ECC point operations detected at 0x{base_addr + i:08x}")
@@ -863,8 +863,8 @@ class CryptographicRoutineDetector:
                         variant="XOR Cipher",
                         details={
                             "xor_operations": xor_chain_length,
-                            "registers_used": len(xor_registers)
-                        }
+                            "registers_used": len(xor_registers),
+                        },
                     )
                     self.detections.append(detection)
                     logger.debug(f"XOR cipher detected at 0x{base_addr + i:08x}")
@@ -901,8 +901,8 @@ class CryptographicRoutineDetector:
                             details={
                                 "shift_operations": shift_count,
                                 "xor_operations": xor_count,
-                                "ratio": ratio
-                            }
+                                "ratio": ratio,
+                            },
                         )
                         self.detections.append(detection)
                         logger.debug(f"LFSR cipher detected at 0x{base_addr + i:08x}")
@@ -919,7 +919,7 @@ class CryptographicRoutineDetector:
 
                 flow_nodes = self._analyze_data_flow_region(
                     data[max(0, offset - 512):min(len(data), offset + detection.size + 512)],
-                    base_addr + max(0, offset - 512)
+                    base_addr + max(0, offset - 512),
                 )
 
                 detection.data_flows = flow_nodes
@@ -946,7 +946,7 @@ class CryptographicRoutineDetector:
                     address=insn.address,
                     instruction=insn.bytes.hex(),
                     mnemonic=insn.mnemonic,
-                    operands=[str(op) for op in insn.operands] if hasattr(insn, 'operands') else []
+                    operands=[str(op) for op in insn.operands] if hasattr(insn, 'operands') else [],
                 )
 
                 if hasattr(insn, 'regs_read'):
@@ -1265,7 +1265,7 @@ class CryptographicRoutineDetector:
         analysis = {
             "algorithms": {},
             "total_detections": len(detections),
-            "unique_algorithms": len(set(d.algorithm for d in detections)),
+            "unique_algorithms": len({d.algorithm for d in detections}),
             "hardware_accelerated": False,
             "custom_crypto": False,
             "obfuscated_crypto": False,
@@ -1281,7 +1281,7 @@ class CryptographicRoutineDetector:
                     "count": 0,
                     "variants": [],
                     "confidence": 0.0,
-                    "locations": []
+                    "locations": [],
                 }
 
             analysis["algorithms"][algo_name]["count"] += 1
@@ -1289,7 +1289,7 @@ class CryptographicRoutineDetector:
                 analysis["algorithms"][algo_name]["variants"].append(detection.variant)
             analysis["algorithms"][algo_name]["confidence"] = max(
                 analysis["algorithms"][algo_name]["confidence"],
-                detection.confidence
+                detection.confidence,
             )
             analysis["algorithms"][algo_name]["locations"].append(detection.offset)
 
@@ -1373,7 +1373,7 @@ class CryptographicRoutineDetector:
         return "\n\n".join(rules)
 
 
-def main():
+def main() -> None:
     """Demonstrate crypto detection capabilities with example usage."""
     import sys
 

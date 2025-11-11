@@ -24,25 +24,52 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Import audit logger with error handling
-try:
-    from .audit_logger import (
-        AuditEvent,
-        AuditEventType,
-        AuditLogger,
-        AuditSeverity,
-        get_audit_logger,
-        log_binary_analysis,
-        log_credential_access,
-        log_exploit_attempt,
-        log_tool_execution,
-        log_vm_operation,
-    )
-except ImportError as e:
-    logger.warning("Failed to import audit_logger: %s", e)
-    # Set all imports to None
-    AuditEvent = AuditEventType = AuditLogger = AuditSeverity = get_audit_logger = None
-    log_binary_analysis = log_credential_access = log_exploit_attempt = log_tool_execution = log_vm_operation = None
+# Lazy-load audit logger to prevent circular imports
+_audit_logger_loaded = False
+_audit_exports = {}
+
+
+def _load_audit_logger() -> None:
+    """Lazy load audit logger exports to prevent circular imports."""
+    global _audit_logger_loaded, _audit_exports
+    if not _audit_logger_loaded:
+        try:
+            from .audit_logger import (
+                AuditEvent,
+                AuditEventType,
+                AuditLogger,
+                AuditSeverity,
+                get_audit_logger,
+                log_binary_analysis,
+                log_credential_access,
+                log_exploit_attempt,
+                log_tool_execution,
+                log_vm_operation,
+            )
+            _audit_exports = {
+                'AuditEvent': AuditEvent,
+                'AuditEventType': AuditEventType,
+                'AuditLogger': AuditLogger,
+                'AuditSeverity': AuditSeverity,
+                'get_audit_logger': get_audit_logger,
+                'log_binary_analysis': log_binary_analysis,
+                'log_credential_access': log_credential_access,
+                'log_exploit_attempt': log_exploit_attempt,
+                'log_tool_execution': log_tool_execution,
+                'log_vm_operation': log_vm_operation,
+            }
+        except ImportError as e:
+            logger.warning("Failed to import audit_logger: %s", e)
+        _audit_logger_loaded = True
+
+
+def __getattr__(name):
+    """Lazy load audit logger attributes."""
+    _load_audit_logger()
+    if name in _audit_exports:
+        return _audit_exports[name]
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
 
 __all__ = [
     "AuditEvent",
@@ -56,6 +83,3 @@ __all__ = [
     "log_tool_execution",
     "log_vm_operation",
 ]
-
-# Filter out None values from __all__
-__all__ = [item for item in __all__ if locals().get(item) is not None]

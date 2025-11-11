@@ -100,7 +100,7 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
         #: model_name (type: str)
         model_unloaded = pyqtSignal(str)
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the application context.
 
         Sets up the application context with state management for binaries,
@@ -160,7 +160,7 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
             logger.error(f"Failed to load binary: {e}")
             return False
 
-    def unload_binary(self):
+    def unload_binary(self) -> None:
         """Unload the current binary."""
         if self._state["current_binary"]:
             logger.info(f"Unloading binary: {self._state['current_binary']['name']}")
@@ -173,7 +173,7 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
         return self._state["current_binary"]
 
     # Analysis Results Management
-    def set_analysis_results(self, analysis_type: str, results: dict):
+    def set_analysis_results(self, analysis_type: str, results: dict) -> None:
         """Store analysis results and emit completion signal."""
         self._state["analysis_results"][analysis_type] = {
             "results": results,
@@ -188,12 +188,12 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
             return self._state["analysis_results"].get(analysis_type, {})
         return self._state["analysis_results"]
 
-    def start_analysis(self, analysis_type: str, options: dict | None = None):
+    def start_analysis(self, analysis_type: str, options: dict | None = None) -> None:
         """Signal that an analysis has started."""
         logger.info(f"Analysis started: {analysis_type}")
         self.analysis_started.emit(analysis_type, options or {})
 
-    def fail_analysis(self, analysis_type: str, error_message: str):
+    def fail_analysis(self, analysis_type: str, error_message: str) -> None:
         """Signal that an analysis has failed."""
         logger.error(f"Analysis failed: {analysis_type} - {error_message}")
         self.analysis_failed.emit(analysis_type, error_message)
@@ -213,7 +213,7 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
             except json.JSONDecodeError as e:
                 logger.error(f"Invalid project JSON in {project_path}: {e}")
                 return False
-            except IOError as e:
+            except OSError as e:
                 logger.error(f"Failed to read project file {project_path}: {e}")
                 return False
 
@@ -264,7 +264,7 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
             try:
                 with open(path, "w") as f:
                     json.dump(project_data, f, indent=2)
-            except (IOError, OSError) as e:
+            except OSError as e:
                 logger.error(f"Failed to save project to {path}: {e}")
                 return False
 
@@ -282,7 +282,7 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
             logger.error(f"Failed to save project: {e}")
             return False
 
-    def close_project(self):
+    def close_project(self) -> None:
         """Close the current project."""
         if self._state["current_project"]:
             logger.info(f"Closing project: {self._state['current_project']['name']}")
@@ -290,7 +290,7 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
             self.project_closed.emit()
 
     # Plugin Management
-    def register_plugin(self, plugin_name: str, plugin_info: dict):
+    def register_plugin(self, plugin_name: str, plugin_info: dict) -> None:
         """Register a loaded plugin."""
         self._state["loaded_plugins"][plugin_name] = {
             "info": plugin_info,
@@ -299,7 +299,7 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
         logger.info(f"Plugin registered: {plugin_name}")
         self.plugin_loaded.emit(plugin_name, plugin_info)
 
-    def unregister_plugin(self, plugin_name: str):
+    def unregister_plugin(self, plugin_name: str) -> None:
         """Unregister a plugin."""
         if plugin_name in self._state["loaded_plugins"]:
             del self._state["loaded_plugins"][plugin_name]
@@ -311,7 +311,7 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
         return self._state["loaded_plugins"]
 
     # Model Management
-    def register_model(self, model_name: str, model_info: dict):
+    def register_model(self, model_name: str, model_info: dict) -> None:
         """Register a loaded AI model."""
         self._state["loaded_models"][model_name] = {
             "info": model_info,
@@ -320,7 +320,7 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
         logger.info(f"Model registered: {model_name}")
         self.model_loaded.emit(model_name, model_info)
 
-    def unregister_model(self, model_name: str):
+    def unregister_model(self, model_name: str) -> None:
         """Unregister an AI model."""
         if model_name in self._state["loaded_models"]:
             del self._state["loaded_models"][model_name]
@@ -332,7 +332,7 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
         return self._state["loaded_models"]
 
     # Task Management
-    def register_task(self, task_id: str, description: str):
+    def register_task(self, task_id: str, description: str) -> None:
         """Register a new task."""
         self._state["active_tasks"][task_id] = {
             "description": description,
@@ -342,20 +342,20 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
         logger.info(f"Task registered: {task_id} - {description}")
         self.task_started.emit(task_id, description)
 
-    def update_task_progress(self, task_id: str, progress: int):
+    def update_task_progress(self, task_id: str, progress: int) -> None:
         """Update task progress."""
         if task_id in self._state["active_tasks"]:
             self._state["active_tasks"][task_id]["progress"] = progress
             self.task_progress.emit(task_id, progress)
 
-    def complete_task(self, task_id: str, result: Any = None):
+    def complete_task(self, task_id: str, result: Any = None) -> None:
         """Mark a task as completed."""
         if task_id in self._state["active_tasks"]:
             task_info = self._state["active_tasks"].pop(task_id)
             logger.info(f"Task completed: {task_id} - {task_info['description']}")
             self.task_completed.emit(task_id, result)
 
-    def fail_task(self, task_id: str, error_message: str):
+    def fail_task(self, task_id: str, error_message: str) -> None:
         """Mark a task as failed."""
         if task_id in self._state["active_tasks"]:
             task_info = self._state["active_tasks"].pop(task_id)
@@ -380,7 +380,7 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
         return self._state["active_tasks"]
 
     # Settings Management
-    def set_setting(self, key: str, value: Any):
+    def set_setting(self, key: str, value: Any) -> None:
         """Update a setting value."""
         old_value = self._state["settings"].get(key)
         self._state["settings"][key] = value
@@ -401,7 +401,7 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
         return self._state["settings"]
 
     # History Management
-    def add_to_session_history(self, action: str, details: dict):
+    def add_to_session_history(self, action: str, details: dict) -> None:
         """Add an action to the session history."""
         entry = {
             "action": action,
@@ -427,14 +427,14 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
         return self._state["recent_projects"]
 
     # Private helper methods
-    def _add_to_recent_files(self, file_path: str):
+    def _add_to_recent_files(self, file_path: str) -> None:
         """Add a file to the recent files list."""
         if file_path in self._state["recent_files"]:
             self._state["recent_files"].remove(file_path)
         self._state["recent_files"].insert(0, file_path)
         self._state["recent_files"] = self._state["recent_files"][:10]  # Keep last 10
 
-    def _add_to_recent_projects(self, project_path: str):
+    def _add_to_recent_projects(self, project_path: str) -> None:
         """Add a project to the recent projects list."""
         if project_path in self._state["recent_projects"]:
             self._state["recent_projects"].remove(project_path)
@@ -446,7 +446,7 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
         """Get the complete application state (for debugging)."""
         return self._state.copy()
 
-    def reset_state(self):
+    def reset_state(self) -> None:
         """Reset the application state to defaults."""
         logger.warning("Resetting application state")
         self.unload_binary()

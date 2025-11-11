@@ -757,14 +757,14 @@ def run_advanced_ghidra_analysis(app_instance=None, binary_path: str | None = No
                     for location in common_locations:
                         if os.path.exists(location):
                             app_instance.update_output.emit(
-                                log_message(f"[Ghidra Analysis] Found potential Ghidra installation at: {location}")
+                                log_message(f"[Ghidra Analysis] Found potential Ghidra installation at: {location}"),
                             )
                             run_file = os.path.join(location, "ghidraRun.bat")
                             if os.path.exists(run_file):
                                 app_instance.update_output.emit(
                                     log_message(
-                                        f"[Ghidra Analysis] To fix this error, go to Settings tab and set Ghidra path to: {run_file}"
-                                    )
+                                        f"[Ghidra Analysis] To fix this error, go to Settings tab and set Ghidra path to: {run_file}",
+                                    ),
                                 )
 
             return {"status": "error", "message": error_msg}
@@ -869,7 +869,7 @@ def run_advanced_ghidra_analysis(app_instance=None, binary_path: str | None = No
         return {"status": "error", "message": str(e)}
 
 
-def process_ghidra_analysis_results(app, json_path):
+def process_ghidra_analysis_results(app, json_path) -> None:
     """Process Ghidra analysis results with enhanced error handling and validation.
 
     Args:
@@ -978,7 +978,7 @@ def process_ghidra_analysis_results(app, json_path):
                             "address": addr_value,
                             "new_bytes": new_bytes_value,
                             "description": description,
-                        }
+                        },
                     )
                 except (ValueError, TypeError) as e:
                     logger.error("Error in runner_functions: %s", e)
@@ -1581,7 +1581,7 @@ def run_memory_analysis(app_instance=None, binary_path: str | None = None, **kwa
                             "type": "RWX_SECTIONS",
                             "message": f"Found {len(suspicious_sections)} sections with RWX permissions",
                             "sections": suspicious_sections,
-                        }
+                        },
                     )
 
                 # Check security features
@@ -1598,7 +1598,7 @@ def run_memory_analysis(app_instance=None, binary_path: str | None = None, **kwa
                             {
                                 "type": "NO_DEP",
                                 "message": "Binary does not have DEP/NX protection enabled",
-                            }
+                            },
                         )
 
                 # Estimate memory footprint
@@ -1650,7 +1650,7 @@ def run_memory_analysis(app_instance=None, binary_path: str | None = None, **kwa
                                     "type": "RWX_MEMORY",
                                     "message": f"Found {rwx_regions} memory regions with RWX permissions",
                                     "severity": "high",
-                                }
+                                },
                             )
 
                     except (OSError, ValueError, RuntimeError) as e:
@@ -1737,7 +1737,7 @@ def run_network_analysis(app_instance=None, binary_path: str | None = None, **kw
                             "type": "NO_SSL",
                             "message": "Application uses network APIs without SSL/TLS",
                             "severity": "medium",
-                        }
+                        },
                     )
 
                 # Search for URLs and IPs
@@ -1749,7 +1749,7 @@ def run_network_analysis(app_instance=None, binary_path: str | None = None, **kw
                     urls = url_pattern.findall(binary_data)
 
                     if urls:
-                        unique_urls = list(set(url.decode("utf-8", errors="ignore") for url in urls))[:10]
+                        unique_urls = list({url.decode("utf-8", errors="ignore") for url in urls})[:10]
                         results["static_analysis"]["embedded_urls"] = unique_urls
 
                         # Check for credentials in URLs
@@ -1760,7 +1760,7 @@ def run_network_analysis(app_instance=None, binary_path: str | None = None, **kw
                                     "type": "EMBEDDED_CREDS",
                                     "message": "Found URLs with embedded credentials",
                                     "severity": "high",
-                                }
+                                },
                             )
 
                     # IP pattern
@@ -1768,7 +1768,7 @@ def run_network_analysis(app_instance=None, binary_path: str | None = None, **kw
                     ips = ip_pattern.findall(binary_data)
 
                     if ips:
-                        unique_ips = list(set(ip.decode("utf-8", errors="ignore") for ip in ips))[:10]
+                        unique_ips = list({ip.decode("utf-8", errors="ignore") for ip in ips})[:10]
                         results["static_analysis"]["embedded_ips"] = unique_ips
 
             except (OSError, ValueError, RuntimeError) as e:
@@ -1830,7 +1830,7 @@ def run_network_analysis(app_instance=None, binary_path: str | None = None, **kw
                                     "type": "INSECURE_HTTP",
                                     "message": "Application uses HTTP without HTTPS",
                                     "severity": "high",
-                                }
+                                },
                             )
 
                 except (OSError, ValueError, RuntimeError) as e:
@@ -1929,7 +1929,7 @@ def run_ghidra_plugin_from_file(app, plugin_path):
                 app.update_output.emit(log_message(f"[Plugin] Cleanup error: {e}"))
 
 
-def _run_ghidra_thread(app, cmd, temp_dir):
+def _run_ghidra_thread(app, cmd, temp_dir) -> None:
     """Background thread for Ghidra execution with improved error handling."""
     try:
         # Run Ghidra
@@ -2158,8 +2158,8 @@ def run_frida_analysis(app_instance=None, binary_path: str | None = None, **kwar
             if app_instance:
                 app_instance.update_output.emit(log_message(f"[Frida Analysis] Launching target: {binary_path}"))
 
-            process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                [binary_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                [binary_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             )
             target_pid = process.pid
 
@@ -2216,7 +2216,7 @@ def run_frida_analysis(app_instance=None, binary_path: str | None = None, **kwar
         # Set up message handler
         api_calls = []
 
-        def on_message(message, data):
+        def on_message(message, data) -> None:
             """Handle messages from Frida script."""
             logger.debug(f"Frida message received with data length: {len(data) if data else 0}")
             if message.get("type") == "send" and message.get("payload", {}).get("type") == "api_calls":
@@ -2425,8 +2425,8 @@ def run_radare2_analysis(app_instance=None, binary_path: str | None = None, **kw
             # Fallback to command-line
             try:
                 # Get basic info
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                    ["r2", "-q", "-c", "ij", binary_path],  # noqa: S607
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                    ["r2", "-q", "-c", "ij", binary_path],
                     capture_output=True,
                     text=True,
                     timeout=30,
@@ -2519,7 +2519,7 @@ def run_frida_script(app_instance=None, binary_path: str | None = None, script_p
             # Set up message handler
             messages = []
 
-            def on_message(message, data):
+            def on_message(message, data) -> None:
                 """Handle messages from Frida script."""
                 messages.append({"message": message, "data": data})
                 if message["type"] == "send":
@@ -2844,7 +2844,7 @@ def _generate_vulnerability_patch(vulnerability: dict[str, Any], strategy: str) 
                 "address": vulnerability.get("address", 0),
                 "size": 4,
                 "description": "NOP out vulnerable buffer operation",
-            }
+            },
         )
     elif "license" in vuln_type.lower():
         # License check patch
@@ -2854,7 +2854,7 @@ def _generate_vulnerability_patch(vulnerability: dict[str, Any], strategy: str) 
                 "address": vulnerability.get("address", 0),
                 "value": 1,
                 "description": "Force license check to return success",
-            }
+            },
         )
 
     return patch if patch["operations"] else None
@@ -2872,7 +2872,7 @@ def _generate_license_patch(license_check: str, strategy: str) -> dict[str, Any]
                 "original": license_check,
                 "replacement": "bypassed",
                 "description": f"Bypass license check: {license_check}",
-            }
+            },
         ],
     }
 

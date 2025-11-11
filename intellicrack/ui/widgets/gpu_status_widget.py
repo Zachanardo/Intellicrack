@@ -19,6 +19,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+import contextlib
 import platform
 import subprocess
 from typing import Any
@@ -49,23 +50,23 @@ class GPUMonitorWorker(QObject):
     gpu_data_ready = pyqtSignal(dict)
     error_occurred = pyqtSignal(str)
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize GPU monitor worker with performance tracking capabilities."""
         super().__init__()
         self.running = True
         self.update_interval = 1000  # Default 1 second
         self.platform = platform.system()  # Initialize platform
 
-    def start_monitoring(self):
+    def start_monitoring(self) -> None:
         """Start the monitoring process."""
         self.running = True
         self._monitor_loop()
 
-    def stop_monitoring(self):
+    def stop_monitoring(self) -> None:
         """Stop the monitoring process."""
         self.running = False
 
-    def _monitor_loop(self):
+    def _monitor_loop(self) -> None:
         """Run monitoring loop using thread sleep."""
         while self.running:
             try:
@@ -168,7 +169,7 @@ class GPUMonitorWorker(QObject):
                                         "memory_used": round(memory_used, 2),
                                         "memory_total": round(memory_total, 2),
                                         "power": round(power, 1),
-                                    }
+                                    },
                                 )
                             except (ValueError, IndexError) as e:
                                 logger.debug(f"Failed to parse NVIDIA GPU data: {e}")
@@ -223,10 +224,8 @@ class GPUMonitorWorker(QObject):
                             total_dedicated = 0
                             for mem in gpu_memory:
                                 if hasattr(mem, "DedicatedUsage"):
-                                    try:
+                                    with contextlib.suppress(ValueError, TypeError):
                                         total_dedicated += int(mem.DedicatedUsage)
-                                    except (ValueError, TypeError):
-                                        pass
                             if total_dedicated > 0:
                                 memory_used_mb = min(total_dedicated / (1024**2), memory_total_mb)
                     except Exception as e:
@@ -274,7 +273,7 @@ class GPUMonitorWorker(QObject):
                             "memory_used": round(memory_used_mb, 2),
                             "memory_total": round(memory_total_mb, 2),
                             "power": round(power, 1),
-                        }
+                        },
                     )
         except (ImportError, AttributeError, Exception) as e:
             logger.debug(f"Failed to get Intel GPU info: {e}")
@@ -325,10 +324,8 @@ class GPUMonitorWorker(QObject):
                             total_dedicated = 0
                             for mem in gpu_memory:
                                 if hasattr(mem, "DedicatedUsage"):
-                                    try:
+                                    with contextlib.suppress(ValueError, TypeError):
                                         total_dedicated += int(mem.DedicatedUsage)
-                                    except (ValueError, TypeError):
-                                        pass
                             if total_dedicated > 0:
                                 memory_used_mb = min(total_dedicated / (1024**2), memory_total_mb)
                     except Exception as e:
@@ -371,7 +368,7 @@ class GPUMonitorWorker(QObject):
                             "memory_used": round(memory_used_mb, 2),
                             "memory_total": round(memory_total_mb, 2),
                             "power": round(power, 1),
-                        }
+                        },
                     )
         except (ImportError, AttributeError, Exception) as e:
             logger.debug(f"Failed to get AMD GPU info: {e}")
@@ -382,7 +379,7 @@ class GPUMonitorWorker(QObject):
 class GPUStatusWidget(QWidget):
     """GPU status monitoring widget."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize GPU status widget with performance monitoring and GPU detection."""
         super().__init__(parent)
         self.setMinimumWidth(300)
@@ -393,7 +390,7 @@ class GPUStatusWidget(QWidget):
         self.setup_monitoring()
         self.start_monitoring()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the user interface."""
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -508,7 +505,7 @@ class GPUStatusWidget(QWidget):
         scroll_area.setWidget(container)
         main_layout.addWidget(scroll_area)
 
-    def setup_monitoring(self):
+    def setup_monitoring(self) -> None:
         """Set up GPU monitoring thread."""
         self.monitor_thread = QThread()
         self.monitor_worker = GPUMonitorWorker()
@@ -519,24 +516,24 @@ class GPUStatusWidget(QWidget):
         self.monitor_worker.gpu_data_ready.connect(self.update_gpu_data)
         self.monitor_worker.error_occurred.connect(self.handle_error)
 
-    def start_monitoring(self):
+    def start_monitoring(self) -> None:
         """Start GPU monitoring."""
         if not self.monitor_thread.isRunning():
             self.monitor_thread.start()
 
-    def stop_monitoring(self):
+    def stop_monitoring(self) -> None:
         """Stop GPU monitoring."""
         if self.monitor_thread.isRunning():
             self.monitor_worker.stop_monitoring()
             self.monitor_thread.quit()
             self.monitor_thread.wait()
 
-    def set_refresh_interval(self, interval_ms: int):
+    def set_refresh_interval(self, interval_ms: int) -> None:
         """Set the refresh interval for GPU monitoring."""
         if hasattr(self, "monitor_worker"):
             self.monitor_worker.update_interval = interval_ms
 
-    def update_gpu_data(self, data: dict[str, Any]):
+    def update_gpu_data(self, data: dict[str, Any]) -> None:
         """Update GPU data from monitor."""
         self.gpu_data = data
 
@@ -578,12 +575,12 @@ class GPUStatusWidget(QWidget):
                 self.gpu_combo.addItem("No GPU detected")
                 self.clear_display()
 
-    def on_gpu_selected(self, index):
+    def on_gpu_selected(self, index) -> None:
         """Handle GPU selection change."""
         self.selected_gpu_index = index
         self.update_display()
 
-    def update_display(self):
+    def update_display(self) -> None:
         """Update the display with current GPU data."""
         if not self.gpu_data.get("gpus") or self.selected_gpu_index >= len(self.gpu_data["gpus"]):
             return
@@ -623,7 +620,7 @@ class GPUStatusWidget(QWidget):
         # Update capabilities
         self.update_capabilities(gpu)
 
-    def update_capabilities(self, gpu: dict[str, Any]):
+    def update_capabilities(self, gpu: dict[str, Any]) -> None:
         """Update GPU capabilities display."""
         caps_text = []
 
@@ -647,7 +644,7 @@ class GPUStatusWidget(QWidget):
 
         self.caps_text.setPlainText("\n".join(caps_text))
 
-    def clear_display(self):
+    def clear_display(self) -> None:
         """Clear all display fields."""
         self.vendor_label.setText("Vendor: N/A")
         self.name_label.setText("Name: N/A")
@@ -667,7 +664,7 @@ class GPUStatusWidget(QWidget):
 
         self.caps_text.setPlainText("No GPU detected")
 
-    def _set_bar_color(self, bar: QProgressBar, value: float, warning: float, critical: float):
+    def _set_bar_color(self, bar: QProgressBar, value: float, warning: float, critical: float) -> None:
         """Set progress bar color based on value thresholds."""
         if value >= critical:
             bar.setStyleSheet("QProgressBar::chunk { background-color: #dc3545; }")
@@ -676,11 +673,11 @@ class GPUStatusWidget(QWidget):
         else:
             bar.setStyleSheet("QProgressBar::chunk { background-color: #28a745; }")
 
-    def handle_error(self, error_msg: str):
+    def handle_error(self, error_msg: str) -> None:
         """Handle monitoring errors."""
         self.caps_text.append(f"\nError: {error_msg}")
 
-    def refresh_gpus(self):
+    def refresh_gpus(self) -> None:
         """Manually refresh GPU list."""
         # Trigger a manual refresh by restarting monitoring
         try:

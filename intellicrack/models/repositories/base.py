@@ -50,7 +50,7 @@ class CacheManager:
         cache_dir: str = os.path.join(os.path.dirname(__file__), "..", "cache"),
         ttl_seconds: int = 3600,
         max_size_mb: int = 100,
-    ):
+    ) -> None:
         """Initialize the cache manager.
 
         Args:
@@ -84,7 +84,7 @@ class CacheManager:
 
         return {}
 
-    def _save_index(self):
+    def _save_index(self) -> None:
         """Save the cache index to disk."""
         try:
             with open(self.index_file, "w") as f:
@@ -171,14 +171,14 @@ class CacheManager:
             logger.warning(f"Failed to cache item {key}: {e}")
             return False
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear all cache entries."""
         for key in list(self.cache_index.keys()):
             self._remove_entry(key)
 
         self._save_index()
 
-    def _remove_entry(self, key: str):
+    def _remove_entry(self, key: str) -> None:
         """Remove a cache entry."""
         if key in self.cache_index:
             cache_file = self._get_cache_file_path(key)
@@ -190,7 +190,7 @@ class CacheManager:
 
             del self.cache_index[key]
 
-    def _cleanup_expired(self):
+    def _cleanup_expired(self) -> None:
         """Remove expired cache entries."""
         current_time = time.time()
         expired_keys = [key for key, entry in self.cache_index.items() if entry.get("expiry_time", 0) < current_time]
@@ -211,7 +211,7 @@ class CacheManager:
         total_size = sum(entry.get("size", 0) for entry in self.cache_index.values())
         return total_size / (1024 * 1024)  # Convert bytes to MB
 
-    def _manage_cache_size(self):
+    def _manage_cache_size(self) -> None:
         """Remove oldest entries until cache is under the maximum size."""
         if self._check_cache_size() <= self.max_size_mb:
             return
@@ -242,7 +242,7 @@ class RateLimitConfig:
 class RateLimiter:
     """Manages API rate limiting."""
 
-    def __init__(self, config: RateLimitConfig | None = None):
+    def __init__(self, config: RateLimitConfig | None = None) -> None:
         """Initialize the rate limiter.
 
         Args:
@@ -305,7 +305,7 @@ class RateLimiter:
 
         return True, ""
 
-    def record_request(self, resource: str):
+    def record_request(self, resource: str) -> None:
         """Record a request to the given resource.
 
         Args:
@@ -357,7 +357,7 @@ class APIRepositoryBase(ModelRepositoryInterface):
         rate_limit_config: RateLimitConfig | None = None,
         cache_config: dict[str, Any] | None = None,
         download_dir: str = os.path.join(os.path.dirname(__file__), "..", "downloads"),
-    ):
+    ) -> None:
         """Initialize the API repository.
 
         Args:

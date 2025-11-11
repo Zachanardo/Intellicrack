@@ -27,7 +27,7 @@ public class SimpleStringExtractor extends GhidraScript {
   private static final int DEFAULT_MIN_LENGTH = 4;
   private static final int DEFAULT_MAX_LENGTH = 1000;
   private static final String DEFAULT_OUTPUT_FORMAT = "txt";
-  
+
   // Additional constants to fix magic numbers
   private static final double TIME_DIVISOR = 1000.0;
   private static final int STRING_DISPLAY_LIMIT = 50;
@@ -1848,29 +1848,29 @@ public class SimpleStringExtractor extends GhidraScript {
 
   private void performDataTypeAnalysis(ExtractionConfig config) throws Exception {
     long startTime = System.currentTimeMillis();
-    
+
     // Initialize data type manager and structures
     dataTypeManager = currentProgram.getDataTypeManager();
-    
+
     println("  Analyzing data types for string associations...");
-    
+
     // Analyze all data types for string relationships
     Iterator<DataType> dataTypeIter = dataTypeManager.getAllDataTypes();
     int analyzedTypes = 0;
     int stringAssociations = 0;
-    
+
     while (dataTypeIter.hasNext() && !monitor.isCancelled()) {
       try {
         DataType dataType = dataTypeIter.next();
         analyzedTypes++;
-        
+
         // Find strings associated with this data type
         Set<ExtractedString> associatedStrings = findStringsForDataType(dataType);
         if (!associatedStrings.isEmpty()) {
           dataTypeStringMap.put(dataType, associatedStrings);
           stringAssociations += associatedStrings.size();
         }
-        
+
         // Analyze structures specifically
         if (dataType instanceof Structure) {
           Structure structure = (Structure) dataType;
@@ -1879,7 +1879,7 @@ public class SimpleStringExtractor extends GhidraScript {
             structureStrings.put(structure, structStrings);
           }
         }
-        
+
         // Analyze enums specifically
         if (dataType instanceof ghidra.program.model.data.Enum) {
           ghidra.program.model.data.Enum enumType = (ghidra.program.model.data.Enum) dataType;
@@ -1888,45 +1888,50 @@ public class SimpleStringExtractor extends GhidraScript {
             this.enumStrings.put(enumType, analyzedEnumStrings);
           }
         }
-        
+
         if (analyzedTypes % 100 == 0) {
-          printf("    Analyzed %d data types, found %d string associations...\r", analyzedTypes, stringAssociations);
+          printf(
+              "    Analyzed %d data types, found %d string associations...\r",
+              analyzedTypes, stringAssociations);
         }
-        
+
       } catch (Exception e) {
         // Continue analysis on error
         handleAnalysisException(e, "Data type analysis");
       }
     }
-    
+
     long analysisTime = System.currentTimeMillis() - startTime;
-    printf("  Completed data type analysis: %d types analyzed, %d string associations found (%.2f seconds)\n", 
-           analyzedTypes, stringAssociations, analysisTime / 1000.0);
+    printf(
+        "  Completed data type analysis: %d types analyzed, %d string associations found (%.2f"
+            + " seconds)\n",
+        analyzedTypes, stringAssociations, analysisTime / 1000.0);
   }
-  
+
   private Set<ExtractedString> findStringsForDataType(DataType dataType) {
     Set<ExtractedString> associatedStrings = new HashSet<>();
     String typeName = dataType.getName().toLowerCase();
-    
+
     // Find strings that may be associated with this data type
     for (ExtractedString str : allStrings) {
       if (isStringAssociatedWithDataType(str, dataType, typeName)) {
         associatedStrings.add(str);
       }
     }
-    
+
     return associatedStrings;
   }
-  
-  private boolean isStringAssociatedWithDataType(ExtractedString str, DataType dataType, String typeName) {
+
+  private boolean isStringAssociatedWithDataType(
+      ExtractedString str, DataType dataType, String typeName) {
     // Check if string content suggests association with this data type
     String strValue = str.value.toLowerCase();
-    
+
     // Direct name matching
     if (strValue.contains(typeName)) {
       return true;
     }
-    
+
     // Check for specific data type patterns
     if (dataType.getLength() > 0) {
       // String length matches data type size
@@ -1934,7 +1939,7 @@ public class SimpleStringExtractor extends GhidraScript {
         return true;
       }
     }
-    
+
     // Check for format string patterns that match data type
     if (typeName.contains("int") && str.value.matches(".*%[dioxX].*")) {
       return true;
@@ -1945,24 +1950,24 @@ public class SimpleStringExtractor extends GhidraScript {
     if (typeName.contains("char") && str.value.matches(".*%[sc].*")) {
       return true;
     }
-    
+
     return false;
   }
-  
+
   private List<ExtractedString> analyzeStructureStrings(Structure structure) {
     List<ExtractedString> structStrings = new ArrayList<>();
     String structName = structure.getName().toLowerCase();
-    
+
     for (ExtractedString str : allStrings) {
       String strValue = str.value.toLowerCase();
-      
+
       // Check if string references this structure
-      if (strValue.contains(structName) 
-          || strValue.contains("struct " + structName) 
+      if (strValue.contains(structName)
+          || strValue.contains("struct " + structName)
           || strValue.contains(structName + "_")) {
         structStrings.add(str);
       }
-      
+
       // Check if string contains field names from the structure
       for (int i = 0; i < structure.getNumComponents(); i++) {
         DataTypeComponent component = structure.getComponent(i);
@@ -1975,26 +1980,26 @@ public class SimpleStringExtractor extends GhidraScript {
         }
       }
     }
-    
+
     return structStrings;
   }
-  
+
   private List<ExtractedString> analyzeEnumStrings(ghidra.program.model.data.Enum enumType) {
     List<ExtractedString> foundEnumStrings = new ArrayList<>();
     String enumName = enumType.getName().toLowerCase();
-    
+
     // Get enum value names
     String[] enumValues = enumType.getNames();
-    
+
     for (ExtractedString str : allStrings) {
       String strValue = str.value.toLowerCase();
-      
+
       // Check if string references this enum
       if (strValue.contains(enumName) || strValue.contains("enum " + enumName)) {
         foundEnumStrings.add(str);
         continue;
       }
-      
+
       // Check if string contains enum value names
       for (String enumValue : enumValues) {
         if (strValue.contains(enumValue.toLowerCase())) {
@@ -2003,60 +2008,62 @@ public class SimpleStringExtractor extends GhidraScript {
         }
       }
     }
-    
+
     return foundEnumStrings;
   }
 
   private void performAddressSpaceAnalysis(ExtractionConfig config) throws Exception {
     long startTime = System.currentTimeMillis();
-    
+
     println("  Analyzing address spaces and ranges for string distribution...");
-    
+
     // Get all address spaces
     AddressSpace[] addressSpaces = currentProgram.getAddressFactory().getAddressSpaces();
     int totalRanges = 0;
-    
+
     for (AddressSpace space : addressSpaces) {
       if (space.isMemorySpace()) {
         AddressSet spaceAddresses = new AddressSet();
-        
+
         // Collect all string addresses in this space
         for (ExtractedString str : allStrings) {
           if (str.address.getAddressSpace().equals(space)) {
             spaceAddresses.add(str.address);
           }
         }
-        
+
         if (!spaceAddresses.isEmpty()) {
           stringsBySpace.put(space, spaceAddresses);
-          
+
           // Create ranges for density analysis
           createAddressRanges(space, spaceAddresses);
         }
       }
     }
-    
+
     // Create comprehensive address set view
     AddressSet allStringAddresses = new AddressSet();
     for (ExtractedString str : allStrings) {
       allStringAddresses.add(str.address);
     }
     comprehensiveStringAddresses = allStringAddresses;
-    
+
     // Calculate address set metrics for different views
     calculateAddressSetMetrics();
-    
+
     long analysisTime = System.currentTimeMillis() - startTime;
-    printf("  Completed address space analysis: %d spaces analyzed, %d ranges created (%.2f seconds)\n", 
-           stringsBySpace.size(), totalRanges, analysisTime / 1000.0);
+    printf(
+        "  Completed address space analysis: %d spaces analyzed, %d ranges created (%.2f"
+            + " seconds)\n",
+        stringsBySpace.size(), totalRanges, analysisTime / 1000.0);
   }
-  
+
   private void createAddressRanges(AddressSpace space, AddressSet spaceAddresses) {
     // Create logical ranges within the address space
     Address currentStart = null;
     Address currentEnd = null;
     long maxGap = 0x1000; // 4KB max gap between addresses in same range
-    
+
     for (Address addr : spaceAddresses.getAddresses(true)) {
       if (currentStart == null) {
         currentStart = addr;
@@ -2070,34 +2077,34 @@ public class SimpleStringExtractor extends GhidraScript {
         currentEnd = addr;
       }
     }
-    
+
     // Create final range
     if (currentStart != null) {
       createStringRange(currentStart, currentEnd);
     }
   }
-  
+
   private void createStringRange(Address start, Address end) {
     try {
       AddressRange range = new AddressRangeImpl(start, end);
       List<ExtractedString> rangeStrings = new ArrayList<>();
-      
+
       // Find all strings in this range
       for (ExtractedString str : allStrings) {
         if (range.contains(str.address)) {
           rangeStrings.add(str);
         }
       }
-      
+
       if (!rangeStrings.isEmpty()) {
         stringsByRange.put(range, rangeStrings);
       }
-      
+
     } catch (Exception e) {
       handleAnalysisException(e, "Address range creation");
     }
   }
-  
+
   private void calculateAddressSetMetrics() {
     // Calculate metrics for comprehensive address set
     if (comprehensiveStringAddresses != null) {
@@ -2108,16 +2115,17 @@ public class SimpleStringExtractor extends GhidraScript {
       metrics.totalBytes = comprehensiveStringAddresses.getNumAddresses();
       metrics.density = (double) metrics.totalStrings / metrics.totalBytes;
       metrics.averageLength = allStrings.stream().mapToInt(s -> s.length).average().orElse(0.0);
-      metrics.averageEntropy = allStrings.stream().mapToDouble(s -> s.entropy).average().orElse(0.0);
-      
+      metrics.averageEntropy =
+          allStrings.stream().mapToDouble(s -> s.entropy).average().orElse(0.0);
+
       // Calculate category distribution
       for (Map.Entry<String, List<ExtractedString>> entry : categorizedStrings.entrySet()) {
         metrics.categoryDistribution.put(entry.getKey(), entry.getValue().size());
       }
-      
+
       addressSetMetrics.put(comprehensiveStringAddresses, metrics);
     }
-    
+
     // Calculate metrics for each address space
     for (Map.Entry<AddressSpace, AddressSet> entry : stringsBySpace.entrySet()) {
       AddressSet spaceSet = entry.getValue();
@@ -2125,12 +2133,12 @@ public class SimpleStringExtractor extends GhidraScript {
       addressSetMetrics.put(spaceSet, spaceMetrics);
     }
   }
-  
+
   private StringDensityMetrics calculateMetricsForAddressSet(AddressSet addressSet) {
     StringDensityMetrics metrics = new StringDensityMetrics();
     metrics.addressSet = addressSet;
     metrics.totalBytes = addressSet.getNumAddresses();
-    
+
     // Find strings in this address set
     List<ExtractedString> setStrings = new ArrayList<>();
     for (ExtractedString str : allStrings) {
@@ -2138,79 +2146,84 @@ public class SimpleStringExtractor extends GhidraScript {
         setStrings.add(str);
       }
     }
-    
+
     metrics.totalStrings = setStrings.size();
     metrics.uniqueStrings = (int) setStrings.stream().map(s -> s.value).distinct().count();
-    metrics.density = metrics.totalBytes > 0 ? (double) metrics.totalStrings / metrics.totalBytes : 0.0;
+    metrics.density =
+        metrics.totalBytes > 0 ? (double) metrics.totalStrings / metrics.totalBytes : 0.0;
     metrics.averageLength = setStrings.stream().mapToInt(s -> s.length).average().orElse(0.0);
     metrics.averageEntropy = setStrings.stream().mapToDouble(s -> s.entropy).average().orElse(0.0);
-    
+
     // Calculate category distribution for this set
     Map<String, Integer> distribution = new HashMap<>();
     for (ExtractedString str : setStrings) {
       distribution.merge(str.category, 1, Integer::sum);
     }
     metrics.categoryDistribution = distribution;
-    
+
     return metrics;
   }
 
   private void performSymbolAnalysis(ExtractionConfig config) throws Exception {
     long startTime = System.currentTimeMillis();
-    
+
     // Initialize symbol analysis components
     symbolTable = currentProgram.getSymbolTable();
     referenceManager = currentProgram.getReferenceManager();
-    
+
     println("  Performing comprehensive symbol analysis...");
-    
+
     SymbolIterator symbolIter = symbolTable.getAllSymbols(true);
     int symbolsAnalyzed = 0;
     int stringRelations = 0;
-    
+
     while (symbolIter.hasNext() && !monitor.isCancelled()) {
       try {
         Symbol symbol = symbolIter.next();
         symbolsAnalyzed++;
-        
+
         // Analyze symbol for string associations
         SymbolStringAnalysis analysis = analyzeSymbolForStrings(symbol);
         if (analysis.associatedStrings.size() > 0) {
           symbolAnalysisResults.add(analysis);
           symbolStringMap.put(symbol, analysis.associatedStrings);
           stringRelations += analysis.associatedStrings.size();
-          
+
           // Track string-related symbols
           stringRelatedSymbols.add(symbol);
-          
+
           // Group symbols by name
           String symbolName = symbol.getName();
           symbolsByName.computeIfAbsent(symbolName, k -> new HashSet<>()).add(symbol);
         }
-        
+
         if (symbolsAnalyzed % 500 == 0) {
-          printf("    Analyzed %d symbols, found %d string relations...\r", symbolsAnalyzed, stringRelations);
+          printf(
+              "    Analyzed %d symbols, found %d string relations...\r",
+              symbolsAnalyzed, stringRelations);
         }
-        
+
       } catch (Exception e) {
         handleAnalysisException(e, "Symbol analysis");
       }
     }
-    
+
     long analysisTime = System.currentTimeMillis() - startTime;
-    printf("  Completed symbol analysis: %d symbols analyzed, %d string relations found (%.2f seconds)\n", 
-           symbolsAnalyzed, stringRelations, analysisTime / 1000.0);
+    printf(
+        "  Completed symbol analysis: %d symbols analyzed, %d string relations found (%.2f"
+            + " seconds)\n",
+        symbolsAnalyzed, stringRelations, analysisTime / 1000.0);
   }
-  
+
   private SymbolStringAnalysis analyzeSymbolForStrings(Symbol symbol) {
     SymbolStringAnalysis analysis = new SymbolStringAnalysis();
     analysis.symbol = symbol;
     analysis.symbolName = symbol.getName();
     analysis.symbolType = symbol.getSymbolType().toString();
     analysis.symbolAddress = symbol.getAddress();
-    
+
     String symbolName = symbol.getName().toLowerCase();
-    
+
     // Find strings that reference or relate to this symbol
     for (ExtractedString str : allStrings) {
       if (isStringRelatedToSymbol(str, symbol, symbolName)) {
@@ -2218,31 +2231,33 @@ public class SimpleStringExtractor extends GhidraScript {
         analysis.relevanceScore += str.relevanceScore * 0.5;
       }
     }
-    
+
     // Analyze references to/from this symbol
     Reference[] refsTo = referenceManager.getReferencesTo(symbol.getAddress());
     Reference[] refsFrom = referenceManager.getReferencesFrom(symbol.getAddress());
     analysis.referenceCount = refsTo.length + refsFrom.length;
-    
+
     // Generate analysis notes
     if (analysis.associatedStrings.size() > 0) {
-      analysis.analysisNotes = String.format(
-          "Symbol '%s' has %d associated strings with average relevance %.2f", 
-          symbolName, analysis.associatedStrings.size(), 
-          analysis.relevanceScore / Math.max(1, analysis.associatedStrings.size()));
+      analysis.analysisNotes =
+          String.format(
+              "Symbol '%s' has %d associated strings with average relevance %.2f",
+              symbolName,
+              analysis.associatedStrings.size(),
+              analysis.relevanceScore / Math.max(1, analysis.associatedStrings.size()));
     }
-    
+
     return analysis;
   }
-  
+
   private boolean isStringRelatedToSymbol(ExtractedString str, Symbol symbol, String symbolName) {
     String strValue = str.value.toLowerCase();
-    
+
     // Direct symbol name reference
     if (strValue.contains(symbolName)) {
       return true;
     }
-    
+
     // Check if string is near the symbol's address
     if (str.address != null && symbol.getAddress() != null) {
       long distance = Math.abs(str.address.getOffset() - symbol.getAddress().getOffset());
@@ -2250,20 +2265,21 @@ public class SimpleStringExtractor extends GhidraScript {
         return true;
       }
     }
-    
+
     // Check symbol type specific patterns
     switch (symbol.getSymbolType()) {
       case FUNCTION:
-        return strValue.matches(".*call.*|.*function.*|.*proc.*") 
-               || symbolName.length() > 3 && strValue.contains(symbolName.substring(0, Math.min(symbolName.length(), 6)));
-      
+        return strValue.matches(".*call.*|.*function.*|.*proc.*")
+            || symbolName.length() > 3
+                && strValue.contains(symbolName.substring(0, Math.min(symbolName.length(), 6)));
+
       case GLOBAL_VAR:
-        return strValue.matches(".*var.*|.*global.*|.*data.*") 
-               || (symbolName.startsWith("g") && strValue.contains(symbolName.substring(1)));
-      
+        return strValue.matches(".*var.*|.*global.*|.*data.*")
+            || (symbolName.startsWith("g") && strValue.contains(symbolName.substring(1)));
+
       case LABEL:
         return strValue.matches(".*label.*|.*loc.*|.*jump.*");
-        
+
       default:
         return false;
     }
@@ -2271,58 +2287,61 @@ public class SimpleStringExtractor extends GhidraScript {
 
   private void performCodeUnitAnalysis(ExtractionConfig config) throws Exception {
     long startTime = System.currentTimeMillis();
-    
+
     println("  Analyzing code units and instructions for string associations...");
-    
+
     functionManager = currentProgram.getFunctionManager();
-    
+
     // Analyze code units that contain or reference strings
     CodeUnitIterator codeUnitIter = currentProgram.getListing().getCodeUnits(true);
     int codeUnitsAnalyzed = 0;
     int stringCodeUnitsFound = 0;
     int stringInstructionsFound = 0;
-    
+
     while (codeUnitIter.hasNext() && !monitor.isCancelled()) {
       try {
         CodeUnit codeUnit = codeUnitIter.next();
         codeUnitsAnalyzed++;
-        
+
         // Check if this code unit is associated with strings
         if (isCodeUnitAssociatedWithStrings(codeUnit)) {
           stringCodeUnits.add(codeUnit);
           stringCodeUnitsFound++;
         }
-        
+
         // If it's an instruction, perform instruction-specific analysis
         if (codeUnit instanceof Instruction) {
           Instruction instruction = (Instruction) codeUnit;
           if (isInstructionAssociatedWithStrings(instruction)) {
             stringInstructions.add(instruction);
             stringInstructionsFound++;
-            
+
             // Analyze the function containing this instruction
             analyzeFunctionForStrings(instruction);
           }
         }
-        
+
         if (codeUnitsAnalyzed % 1000 == 0) {
-          printf("    Analyzed %d code units, found %d string-related units...\r", 
-                 codeUnitsAnalyzed, stringCodeUnitsFound);
+          printf(
+              "    Analyzed %d code units, found %d string-related units...\r",
+              codeUnitsAnalyzed, stringCodeUnitsFound);
         }
-        
+
       } catch (Exception e) {
         handleAnalysisException(e, "Code unit analysis");
       }
     }
-    
+
     long analysisTime = System.currentTimeMillis() - startTime;
-    printf("  Completed code unit analysis: %d units analyzed, %d string code units, %d string instructions (%.2f seconds)\n", 
-           codeUnitsAnalyzed, stringCodeUnitsFound, stringInstructionsFound, analysisTime / 1000.0);
+    printf(
+        "  Completed code unit analysis: %d units analyzed, %d string code units, %d string"
+            + " instructions (%.2f seconds)\n",
+        codeUnitsAnalyzed, stringCodeUnitsFound, stringInstructionsFound, analysisTime / 1000.0);
   }
-  
+
   private boolean isCodeUnitAssociatedWithStrings(CodeUnit codeUnit) {
     Address codeAddr = codeUnit.getAddress();
-    
+
     // Check if any strings are near this code unit
     for (ExtractedString str : allStrings) {
       if (str.address != null) {
@@ -2332,7 +2351,7 @@ public class SimpleStringExtractor extends GhidraScript {
         }
       }
     }
-    
+
     // Check if code unit has string references
     Reference[] refs = referenceManager.getReferencesFrom(codeAddr);
     for (Reference ref : refs) {
@@ -2343,10 +2362,10 @@ public class SimpleStringExtractor extends GhidraScript {
         }
       }
     }
-    
+
     return false;
   }
-  
+
   private boolean isInstructionAssociatedWithStrings(Instruction instruction) {
     // Check if instruction references string data
     for (int i = 0; i < instruction.getNumOperands(); i++) {
@@ -2361,19 +2380,22 @@ public class SimpleStringExtractor extends GhidraScript {
         }
       }
     }
-    
+
     // Check for string-related mnemonics
     String mnemonic = instruction.getMnemonicString();
-    return mnemonic.equals("LEA") || mnemonic.equals("MOV") 
-           || mnemonic.equals("PUSH") || mnemonic.equals("CALL");
+    return mnemonic.equals("LEA")
+        || mnemonic.equals("MOV")
+        || mnemonic.equals("PUSH")
+        || mnemonic.equals("CALL");
   }
-  
+
   private void analyzeFunctionForStrings(Instruction instruction) {
     Function function = functionManager.getFunctionContaining(instruction.getAddress());
     if (function != null) {
       // Find strings associated with this function
-      Set<ExtractedString> funcStrings = functionStringMap.computeIfAbsent(function, k -> new HashSet<>());
-      
+      Set<ExtractedString> funcStrings =
+          functionStringMap.computeIfAbsent(function, k -> new HashSet<>());
+
       // Add strings that are referenced by this function
       for (ExtractedString str : allStrings) {
         if (function.getBody().contains(str.address)) {
@@ -2385,12 +2407,12 @@ public class SimpleStringExtractor extends GhidraScript {
 
   private void performExceptionTrackingAnalysis(ExtractionConfig config) throws Exception {
     long startTime = System.currentTimeMillis();
-    
+
     println("  Processing exception tracking and memory analysis...");
-    
+
     int memoryExceptions = 0;
     int problematicAddressCount = 0;
-    
+
     // Analyze memory access patterns for all string addresses
     for (ExtractedString str : allStrings) {
       try {
@@ -2399,38 +2421,40 @@ public class SimpleStringExtractor extends GhidraScript {
         if (addr != null) {
           verifyMemoryAccess(addr);
         }
-        
+
       } catch (MemoryAccessException e) {
         // Track memory access exceptions
         memoryAccessExceptions.add(e);
         addressExceptionMap.put(str.address, e);
         problematicAddresses.add(str.address);
         memoryExceptions++;
-        
+
         // Update string with exception information
         str.contextAnalysis += "MemoryAccessException: " + e.getMessage() + "; ";
       }
     }
-    
+
     // Analyze problematic addresses for patterns
     analyzeProblematicAddressPatterns();
-    
+
     // Generate memory access report
     generateMemoryAccessReport(config);
-    
+
     long analysisTime = System.currentTimeMillis() - startTime;
-    printf("  Completed exception tracking: %d memory exceptions, %d problematic addresses (%.2f seconds)\n", 
-           memoryExceptions, problematicAddressCount, analysisTime / 1000.0);
+    printf(
+        "  Completed exception tracking: %d memory exceptions, %d problematic addresses (%.2f"
+            + " seconds)\n",
+        memoryExceptions, problematicAddressCount, analysisTime / 1000.0);
   }
-  
+
   private void verifyMemoryAccess(Address addr) throws MemoryAccessException {
     Memory memory = currentProgram.getMemory();
-    
+
     // Check if address is in a valid memory block
     if (!memory.contains(addr)) {
       throw new MemoryAccessException("Address " + addr + " is not in valid memory");
     }
-    
+
     try {
       // Attempt to read a single byte to verify access
       memory.getByte(addr);
@@ -2438,15 +2462,15 @@ public class SimpleStringExtractor extends GhidraScript {
       throw new MemoryAccessException("Cannot read memory at " + addr + ": " + e.getMessage());
     }
   }
-  
+
   private void analyzeProblematicAddressPatterns() {
     if (problematicAddresses.isEmpty()) {
       return;
     }
-    
+
     // Group problematic addresses by memory blocks
     Map<String, Integer> blockProblems = new HashMap<>();
-    
+
     for (Address addr : problematicAddresses) {
       String blockName = "Unknown";
       try {
@@ -2457,74 +2481,78 @@ public class SimpleStringExtractor extends GhidraScript {
       } catch (Exception e) {
         // Continue with unknown block
       }
-      
+
       blockProblems.merge(blockName, 1, Integer::sum);
     }
-    
+
     // Log problematic patterns
     printf("    Memory access issue patterns:\n");
     for (Map.Entry<String, Integer> entry : blockProblems.entrySet()) {
       printf("      Block '%s': %d problematic addresses\n", entry.getKey(), entry.getValue());
     }
   }
-  
+
   private void generateMemoryAccessReport(ExtractionConfig config) {
     if (memoryAccessExceptions.isEmpty()) {
       return;
     }
-    
+
     try {
       File reportFile = new File(config.outputFile.getParent(), "memory_access_analysis.txt");
-      
+
       try (FileWriter writer = new FileWriter(reportFile)) {
         writer.write("Memory Access Analysis Report\n");
         writer.write("============================\n\n");
         writer.write("Total Memory Access Exceptions: " + memoryAccessExceptions.size() + "\n");
         writer.write("Problematic Addresses: " + problematicAddresses.size() + "\n\n");
-        
+
         writer.write("Exception Details:\n");
         writer.write("-----------------\n");
-        
+
         for (int i = 0; i < Math.min(memoryAccessExceptions.size(), 50); i++) {
           MemoryAccessException e = memoryAccessExceptions.get(i);
           writer.write("Exception #" + (i + 1) + ": " + e.getMessage() + "\n");
         }
-        
+
         if (memoryAccessExceptions.size() > 50) {
           writer.write("... and " + (memoryAccessExceptions.size() - 50) + " more exceptions\n");
         }
-        
+
         writer.write("\nProblematic Address Summary:\n");
         writer.write("---------------------------\n");
-        
+
         int count = 0;
         for (Address addr : problematicAddresses) {
           if (count >= 20) {
             break;
           }
           MemoryAccessException exception = addressExceptionMap.get(addr);
-          writer.write("Address " + addr + ": " 
-                      + (exception != null ? exception.getMessage() : "Unknown error") + "\n");
+          writer.write(
+              "Address "
+                  + addr
+                  + ": "
+                  + (exception != null ? exception.getMessage() : "Unknown error")
+                  + "\n");
           count++;
         }
-        
+
         if (problematicAddresses.size() > 20) {
           writer.write("... and " + (problematicAddresses.size() - 20) + " more addresses\n");
         }
       }
-      
+
       println("  Generated memory access report: " + reportFile.getName());
-      
+
     } catch (IOException e) {
       printerr("Failed to generate memory access report: " + e.getMessage());
     }
   }
-  
+
   private void handleAnalysisException(Exception e, String analysisType) {
     if (e instanceof MemoryAccessException) {
       memoryAccessExceptions.add((MemoryAccessException) e);
     }
-    
+
     // Log the exception but continue analysis
     printf("    Warning: %s error: %s\n", analysisType, e.getMessage());
   }

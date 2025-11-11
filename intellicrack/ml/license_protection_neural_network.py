@@ -129,7 +129,7 @@ class LicenseFeatures:
 class LicenseProtectionCNN(nn.Module if TORCH_AVAILABLE else object):
     """Convolutional Neural Network for license protection detection."""
 
-    def __init__(self, input_size: int = 4096, num_classes: int = 20):
+    def __init__(self, input_size: int = 4096, num_classes: int = 20) -> None:
         """Initialize CNN architecture for license protection analysis."""
         if not TORCH_AVAILABLE:
             raise ImportError("PyTorch not available for CNN model")
@@ -170,7 +170,7 @@ class LicenseProtectionCNN(nn.Module if TORCH_AVAILABLE else object):
         # Load pre-trained weights if available
         self._load_pretrained_weights()
 
-    def _initialize_weights(self):
+    def _initialize_weights(self) -> None:
         """Initialize weights using He initialization for ReLU networks."""
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -188,7 +188,7 @@ class LicenseProtectionCNN(nn.Module if TORCH_AVAILABLE else object):
                 if m.bias is not None:
                     nn.init.constant_(m.bias, 0)
 
-    def _load_pretrained_weights(self):
+    def _load_pretrained_weights(self) -> None:
         """Load pre-trained weights from saved model if available."""
         pretrained_path = Path(__file__).parent / "pretrained" / "license_cnn_weights.pth"
         if pretrained_path.exists():
@@ -199,7 +199,7 @@ class LicenseProtectionCNN(nn.Module if TORCH_AVAILABLE else object):
             except Exception as e:
                 logging.getLogger(__name__).warning(f"Could not load pre-trained weights: {e}")
 
-    def save_weights(self, path: Optional[str] = None):
+    def save_weights(self, path: Optional[str] = None) -> None:
         """Save model weights for future use."""
         if path is None:
             save_dir = Path(__file__).parent / "pretrained"
@@ -250,7 +250,7 @@ class LicenseProtectionCNN(nn.Module if TORCH_AVAILABLE else object):
 class LicenseProtectionTransformer(nn.Module if TORCH_AVAILABLE else object):
     """Transformer-based model for sequence analysis of license checks."""
 
-    def __init__(self, input_dim: int = 256, num_heads: int = 8, num_layers: int = 6):
+    def __init__(self, input_dim: int = 256, num_heads: int = 8, num_layers: int = 6) -> None:
         """Initialize Transformer for API sequence and opcode analysis."""
         if not TORCH_AVAILABLE:
             raise ImportError("PyTorch not available for Transformer model")
@@ -266,14 +266,14 @@ class LicenseProtectionTransformer(nn.Module if TORCH_AVAILABLE else object):
 
         # Transformer encoder layers
         encoder_layer = nn.TransformerEncoderLayer(
-            d_model=self.model_dim, nhead=num_heads, dim_feedforward=2048, dropout=0.1, activation="gelu", batch_first=True
+            d_model=self.model_dim, nhead=num_heads, dim_feedforward=2048, dropout=0.1, activation="gelu", batch_first=True,
         )
         self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
 
         # Output layers for classification
         self.global_pool = nn.AdaptiveAvgPool1d(1)
         self.classifier = nn.Sequential(
-            nn.Linear(self.model_dim, 256), nn.ReLU(), nn.Dropout(0.3), nn.Linear(256, len(LicenseProtectionType))
+            nn.Linear(self.model_dim, 256), nn.ReLU(), nn.Dropout(0.3), nn.Linear(256, len(LicenseProtectionType)),
         )
 
         # Initialize weights properly
@@ -282,7 +282,7 @@ class LicenseProtectionTransformer(nn.Module if TORCH_AVAILABLE else object):
         # Load pre-trained weights if available
         self._load_pretrained_weights()
 
-    def _initialize_weights(self):
+    def _initialize_weights(self) -> None:
         """Initialize weights using Xavier initialization for Transformer."""
         for p in self.parameters():
             if p.dim() > 1:
@@ -299,7 +299,7 @@ class LicenseProtectionTransformer(nn.Module if TORCH_AVAILABLE else object):
                 if m.bias is not None:
                     nn.init.constant_(m.bias, 0)
 
-    def _load_pretrained_weights(self):
+    def _load_pretrained_weights(self) -> None:
         """Load pre-trained weights from saved model if available."""
         pretrained_path = Path(__file__).parent / "pretrained" / "license_transformer_weights.pth"
         if pretrained_path.exists():
@@ -310,7 +310,7 @@ class LicenseProtectionTransformer(nn.Module if TORCH_AVAILABLE else object):
             except Exception as e:
                 logging.getLogger(__name__).warning(f"Could not load pre-trained Transformer weights: {e}")
 
-    def save_weights(self, path: Optional[str] = None):
+    def save_weights(self, path: Optional[str] = None) -> None:
         """Save model weights for future use."""
         if path is None:
             save_dir = Path(__file__).parent / "pretrained"
@@ -332,7 +332,7 @@ class LicenseProtectionTransformer(nn.Module if TORCH_AVAILABLE else object):
 
     def forward(self, x):
         """Forward pass through transformer."""
-        batch_size, seq_len, _ = x.size()
+        _batch_size, seq_len, _ = x.size()
 
         # Project input and add positional encoding
         x = self.input_projection(x)
@@ -352,7 +352,7 @@ class LicenseProtectionTransformer(nn.Module if TORCH_AVAILABLE else object):
 class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):
     """Hybrid model combining CNN, Transformer, and Graph Neural Networks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize hybrid architecture for comprehensive license analysis."""
         if not TORCH_AVAILABLE:
             raise ImportError("PyTorch not available for Hybrid model")
@@ -391,7 +391,7 @@ class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):
         # Load pre-trained weights if available
         self._load_pretrained_weights()
 
-    def _initialize_weights(self):
+    def _initialize_weights(self) -> None:
         """Initialize weights for fusion and output layers."""
         # Initialize fusion layers
         for m in self.fusion_layer:
@@ -426,7 +426,7 @@ class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
 
-    def _load_pretrained_weights(self):
+    def _load_pretrained_weights(self) -> None:
         """Load pre-trained weights from saved model if available."""
         pretrained_path = Path(__file__).parent / "pretrained" / "hybrid_analyzer_weights.pth"
         if pretrained_path.exists():
@@ -437,7 +437,7 @@ class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):
             except Exception as e:
                 logging.getLogger(__name__).warning(f"Could not load pre-trained Hybrid weights: {e}")
 
-    def save_weights(self, path: Optional[str] = None):
+    def save_weights(self, path: Optional[str] = None) -> None:
         """Save model weights for future use."""
         if path is None:
             save_dir = Path(__file__).parent / "pretrained"
@@ -474,7 +474,7 @@ class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):
 class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
     """Dataset for license protection training data."""
 
-    def __init__(self, data_path: str, transform=None, cache_features: bool = True):
+    def __init__(self, data_path: str, transform=None, cache_features: bool = True) -> None:
         """Initialize dataset with protection samples."""
         self.data_path = Path(data_path)
         self.transform = transform
@@ -488,7 +488,7 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
         self._load_data()
         self._build_label_mapping()
 
-    def _load_data(self):
+    def _load_data(self) -> None:
         """Load binary samples and labels from directory structure or metadata."""
         if not self.data_path.exists():
             self.logger = logging.getLogger(__name__)
@@ -503,9 +503,9 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
             # Load from directory structure (protection_type/sample.exe)
             self._load_from_directory_structure()
 
-    def _load_from_metadata(self, metadata_file: Path):
+    def _load_from_metadata(self, metadata_file: Path) -> None:
         """Load samples from metadata JSON file."""
-        with open(metadata_file, "r") as f:
+        with open(metadata_file) as f:
             metadata = json.load(f)
 
         for sample in metadata.get("samples", []):
@@ -515,7 +515,7 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
                 protection_type = sample.get("protection_type", "unknown")
                 self.labels.append(protection_type)
 
-    def _load_from_directory_structure(self):
+    def _load_from_directory_structure(self) -> None:
         """Load samples from directory structure where each subdirectory is a protection type."""
         for protection_dir in self.data_path.iterdir():
             if protection_dir.is_dir():
@@ -529,14 +529,14 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
                             self.samples.append(file_path)
                             self.labels.append(protection_type)
 
-    def _build_label_mapping(self):
+    def _build_label_mapping(self) -> None:
         """Build mapping between labels and indices."""
         unique_labels = sorted(set(self.labels))
         for idx, label in enumerate(unique_labels):
             self.label_to_idx[label] = idx
             self.idx_to_label[idx] = label
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Return dataset size."""
         return len(self.samples)
 
@@ -960,7 +960,7 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
 class ProtectionLoss(nn.Module if TORCH_AVAILABLE else object):
     """Customize loss function for license protection detection."""
 
-    def __init__(self, num_classes: int = 20, class_weights: Optional[torch.Tensor] = None):
+    def __init__(self, num_classes: int = 20, class_weights: Optional[torch.Tensor] = None) -> None:
         """Initialize multi-objective loss function."""
         if not TORCH_AVAILABLE:
             raise ImportError("PyTorch not available for loss function")
@@ -1042,8 +1042,8 @@ class LicenseProtectionTrainer:
     """Trainer for license protection neural networks."""
 
     def __init__(
-        self, model, device="cuda" if torch and torch.cuda.is_available() else "cpu", class_weights: Optional[torch.Tensor] = None
-    ):
+        self, model, device="cuda" if torch and torch.cuda.is_available() else "cpu", class_weights: Optional[torch.Tensor] = None,
+    ) -> None:
         """Initialize trainer with model and training configuration."""
         self.model = model
         self.device = device
@@ -1155,7 +1155,7 @@ class LicenseProtectionTrainer:
 
         return avg_loss, accuracy
 
-    def train(self, train_loader, val_loader=None):
+    def train(self, train_loader, val_loader=None) -> None:
         """Full training loop."""
         if not TORCH_AVAILABLE:
             self.logger.warning("PyTorch not available for training")
@@ -1184,7 +1184,7 @@ class LicenseProtectionTrainer:
                 self.logger.info(
                     f"Epoch {epoch + 1}/{self.num_epochs} - "
                     f"Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}% - "
-                    f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.2f}%"
+                    f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.2f}%",
                 )
             else:
                 self.logger.info(f"Epoch {epoch + 1}/{self.num_epochs} - Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%")
@@ -1192,7 +1192,7 @@ class LicenseProtectionTrainer:
             # Learning rate scheduling
             self.scheduler.step()
 
-    def save_checkpoint(self, filepath):
+    def save_checkpoint(self, filepath) -> None:
         """Save model checkpoint with enhanced metadata."""
         if not TORCH_AVAILABLE:
             return
@@ -1226,10 +1226,10 @@ class LicenseProtectionTrainer:
         if hasattr(self.model, "save_weights"):
             self.model.save_weights()
 
-    def load_checkpoint(self, filepath):
+    def load_checkpoint(self, filepath) -> bool | None:
         """Load model checkpoint with validation."""
         if not TORCH_AVAILABLE:
-            return
+            return None
 
         if not Path(filepath).exists():
             self.logger.error(f"Checkpoint file not found: {filepath}")
@@ -1273,7 +1273,7 @@ class LicenseProtectionTrainer:
 class LicenseProtectionPredictor:
     """High-level interface for license protection prediction."""
 
-    def __init__(self, model_path: Optional[str] = None):
+    def __init__(self, model_path: Optional[str] = None) -> None:
         """Initialize predictor with pre-trained model."""
         self.logger = logging.getLogger(__name__)
 
@@ -1290,7 +1290,7 @@ class LicenseProtectionPredictor:
             self.model = None
             self.logger.warning("PyTorch not available for predictions")
 
-    def load_model(self, model_path):
+    def load_model(self, model_path) -> None:
         """Load pre-trained model."""
         if not TORCH_AVAILABLE:
             return
@@ -1492,12 +1492,12 @@ def create_dataloaders(
 
     # Split dataset
     train_dataset, val_dataset, test_dataset = random_split(
-        dataset, [train_size, val_size, test_size], generator=torch.Generator().manual_seed(42)
+        dataset, [train_size, val_size, test_size], generator=torch.Generator().manual_seed(42),
     )
 
     # Create dataloaders
     train_loader = DataLoader(
-        train_dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, pin_memory=pin_memory, drop_last=True
+        train_dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, pin_memory=pin_memory, drop_last=True,
     )
 
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=pin_memory)
@@ -1623,8 +1623,8 @@ def evaluate_model(model_path: str, test_data_path: str, batch_size: int = 32, d
     # Evaluation metrics
     correct = 0
     total = 0
-    class_correct = {cls: 0 for cls in LicenseProtectionType}
-    class_total = {cls: 0 for cls in LicenseProtectionType}
+    class_correct = dict.fromkeys(LicenseProtectionType, 0)
+    class_total = dict.fromkeys(LicenseProtectionType, 0)
 
     # Confusion matrix data
     predictions = []

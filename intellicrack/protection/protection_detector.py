@@ -79,7 +79,7 @@ class ProtectionDetector:
     making it appear as if all detection capabilities are native to Intellicrack.
     """
 
-    def __init__(self, enable_protection: bool = True, enable_heuristics: bool = True):
+    def __init__(self, enable_protection: bool = True, enable_heuristics: bool = True) -> None:
         """Initialize the protection detector.
 
         Args:
@@ -567,7 +567,7 @@ class ProtectionDetector:
                             "machine_id": ticket.payload.machine_id.combined_hash.hex()[:32],
                             "license_type": ticket.payload.license_data.get("type"),
                             "expiration": ticket.payload.license_data.get("expiration"),
-                        }
+                        },
                     )
 
                 return result
@@ -799,7 +799,7 @@ class ProtectionDetector:
                                         "protection": protection_name,
                                         "signature": signature.hex(),
                                         "offset": f.tell() - len(chunk) + chunk.index(signature),
-                                    }
+                                    },
                                 )
 
         except Exception as e:
@@ -1174,7 +1174,7 @@ class ProtectionDetector:
                     results["obfuscation"]["is_obfuscated"],
                     results["anti_debug"]["has_anti_debug"],
                     results["tpm"]["has_tpm_protection"],
-                ]
+                ],
             ),
             "protection_count": sum(
                 [
@@ -1185,7 +1185,7 @@ class ProtectionDetector:
                     results["obfuscation"]["is_obfuscated"],
                     results["anti_debug"]["has_anti_debug"],
                     results["tpm"]["has_tpm_protection"],
-                ]
+                ],
             ),
         }
         logger.info(f"Completed comprehensive protection detection: {results['summary']['protection_count']} protections found")

@@ -85,7 +85,7 @@ class GuidedWorkflowWizard(QWizard):
     binary analysis and patching operations.
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the guided workflow wizard.
 
         Args:

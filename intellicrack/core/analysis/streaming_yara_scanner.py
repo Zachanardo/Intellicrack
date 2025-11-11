@@ -64,7 +64,7 @@ class StreamingYaraScanner(StreamingAnalyzer):
         rules_path: Optional[Path] = None,
         rules_source: Optional[str] = None,
         max_matches_per_rule: int = 1000,
-    ):
+    ) -> None:
         """Initialize streaming YARA scanner.
 
         Args:
@@ -156,18 +156,18 @@ class StreamingYaraScanner(StreamingAnalyzer):
                                 "string_identifier": string_match.identifier,
                                 "tags": match.tags,
                                 "meta": match.meta,
-                            }
+                            },
                         )
 
             logger.debug(
-                f"Chunk {context.chunk_number}/{context.total_chunks}: " f"Found {len(chunk_matches)} YARA matches"
+                f"Chunk {context.chunk_number}/{context.total_chunks}: Found {len(chunk_matches)} YARA matches",
             )
 
             return {
                 "chunk_offset": context.offset,
                 "chunk_size": context.size,
                 "matches": chunk_matches,
-                "rules_matched": len(set(m["rule"] for m in chunk_matches)),
+                "rules_matched": len({m["rule"] for m in chunk_matches}),
             }
 
         except Exception as e:
@@ -198,7 +198,7 @@ class StreamingYaraScanner(StreamingAnalyzer):
             for chunk_result in results:
                 if "error" in chunk_result:
                     errors.append(
-                        f"Chunk at 0x{chunk_result.get('chunk_offset', 0):08x}: " f"{chunk_result['error']}"
+                        f"Chunk at 0x{chunk_result.get('chunk_offset', 0):08x}: {chunk_result['error']}",
                     )
                     continue
 
@@ -231,7 +231,7 @@ class StreamingYaraScanner(StreamingAnalyzer):
 
             logger.info(
                 f"Merged {len(results)} chunk results: "
-                f"{len(all_matches)} total matches for {len(rules_matched)} unique rules"
+                f"{len(all_matches)} total matches for {len(rules_matched)} unique rules",
             )
 
             return merged
@@ -285,13 +285,13 @@ class StreamingYaraScanner(StreamingAnalyzer):
                     },
                     "licensing_protection_detected": len(license_matches) > 0,
                     "summary": self._generate_summary(merged_results, license_matches),
-                }
+                },
             )
 
             logger.info(
                 f"Finalized YARA analysis: "
                 f"{len(license_matches)} licensing matches, "
-                f"{len(protection_matches)} protection matches"
+                f"{len(protection_matches)} protection matches",
             )
 
             return merged_results

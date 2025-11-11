@@ -102,7 +102,7 @@ class FlexLMProtocolParser:
         0x0C: "ENCRYPTION_FAILED",
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the FlexLM protocol parser with license tracking and server features."""
         self.logger = get_logger(__name__)
         self.active_checkouts = {}  # Track active license checkouts
@@ -110,7 +110,7 @@ class FlexLMProtocolParser:
         self.encryption_seed = self._generate_encryption_seed()
         self._load_default_features()
 
-    def _load_default_features(self):
+    def _load_default_features(self) -> None:
         """Load default feature set for common applications."""
         self.server_features = {
             # Autodesk Products
@@ -362,7 +362,7 @@ class FlexLMProtocolParser:
         # Check if feature exists
         if feature not in self.server_features:
             # Try to find partial match
-            matches = [f for f in self.server_features.keys() if feature in f or f in feature]
+            matches = [f for f in self.server_features if feature in f or f in feature]
             if matches:
                 feature = matches[0]
             else:
@@ -746,7 +746,7 @@ class FlexLMProtocolParser:
 class FlexLMTrafficCapture:
     """FlexLM traffic capture and analysis engine."""
 
-    def __init__(self, parser: FlexLMProtocolParser):
+    def __init__(self, parser: FlexLMProtocolParser) -> None:
         """Initialize traffic capture engine.
 
         Args:
@@ -912,7 +912,7 @@ class FlexLMTrafficCapture:
 class FlexLMLicenseGenerator:
     """FlexLM license file generator."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize license generator."""
         self.logger = get_logger(__name__)
 
@@ -1017,7 +1017,7 @@ class FlexLMLicenseGenerator:
                             vendor_info["port"] = int(value)
                 license_data["vendors"].append(vendor_info)
 
-            elif keyword == "FEATURE" or keyword == "INCREMENT":
+            elif keyword in {"FEATURE", "INCREMENT"}:
                 if len(parts) >= 5:
                     feature_info = {
                         "name": parts[1],

@@ -21,6 +21,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import os
 from datetime import datetime
+from pathlib import Path
 
 from intellicrack.handlers.pyqt6_handler import (
     QAction,
@@ -57,7 +58,7 @@ class WorkspaceTab(QWidget):
     binary_loaded = pyqtSignal(str)
     analysis_saved = pyqtSignal(str)
 
-    def __init__(self, shared_context=None, parent=None):
+    def __init__(self, shared_context=None, parent=None) -> None:
         """Initialize workspace tab with project management and activity logging."""
         super().__init__(parent)
         self.shared_context = shared_context
@@ -71,7 +72,7 @@ class WorkspaceTab(QWidget):
         self.config_manager.register_callback("theme", self.apply_theme)
         self.config_manager.register_callback("font", self.update_fonts)
 
-    def setup_content(self):
+    def setup_content(self) -> None:
         """Set up the workspace tab content with three-panel splitter layout."""
         main_layout = QHBoxLayout(self)
 
@@ -140,7 +141,7 @@ class WorkspaceTab(QWidget):
 
         self.new_project_btn = QPushButton("New Project")
         self.new_project_btn.setToolTip(
-            "Create a new analysis project with organized directory structure for binaries, scripts, and reports"
+            "Create a new analysis project with organized directory structure for binaries, scripts, and reports",
         )
         self.new_project_btn.clicked.connect(self.create_new_project)
         actions_layout.addWidget(self.new_project_btn)
@@ -212,7 +213,7 @@ class WorkspaceTab(QWidget):
 
         self.analyze_binary_btn = QPushButton("Quick Analysis")
         self.analyze_binary_btn.setToolTip(
-            "Perform AI-powered rapid analysis to identify architecture, protections, and comprehensive binary characteristics with pattern recognition"
+            "Perform AI-powered rapid analysis to identify architecture, protections, and comprehensive binary characteristics with pattern recognition",
         )
         self.analyze_binary_btn.clicked.connect(self.quick_analyze_binary)
         self.analyze_binary_btn.setEnabled(False)
@@ -237,7 +238,7 @@ class WorkspaceTab(QWidget):
         self.file_tree = QTreeWidget()
         self.file_tree.setHeaderLabels(["Name", "Type", "Size", "Modified"])
         self.file_tree.setToolTip(
-            "Project file browser showing all files in the current project. Right-click files for context menu options"
+            "Project file browser showing all files in the current project. Right-click files for context menu options",
         )
         self.file_tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.file_tree.customContextMenuRequested.connect(self.show_file_context_menu)
@@ -303,7 +304,7 @@ class WorkspaceTab(QWidget):
 
         return group
 
-    def log_activity(self, message: str, level: str = "INFO"):
+    def log_activity(self, message: str, level: str = "INFO") -> None:
         """Log an activity message with timestamp."""
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -324,7 +325,7 @@ class WorkspaceTab(QWidget):
         scrollbar = self.activity_log_text.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
 
-    def filter_activity_log(self, filter_text: str):
+    def filter_activity_log(self, filter_text: str) -> None:
         """Filter activity log entries based on search text."""
         # This is a simple implementation - in production, you'd want to
         # maintain a list of all log entries and filter them
@@ -343,7 +344,7 @@ class WorkspaceTab(QWidget):
             format.setBackground(Qt.GlobalColor.yellow)
             cursor.setCharFormat(format)
 
-    def clear_activity_log(self):
+    def clear_activity_log(self) -> None:
         """Clear the activity log."""
         reply = QMessageBox.question(
             self,
@@ -356,7 +357,7 @@ class WorkspaceTab(QWidget):
             self.activity_log_text.clear()
             self.log_activity("Activity log cleared")
 
-    def create_new_project(self):
+    def create_new_project(self) -> None:
         """Create a new project."""
         project_dir = QFileDialog.getExistingDirectory(self, "Select Project Directory", "", QFileDialog.Option.ShowDirsOnly)
 
@@ -386,7 +387,7 @@ class WorkspaceTab(QWidget):
             # Refresh file tree
             self.refresh_project_files()
 
-    def open_project(self):
+    def open_project(self) -> None:
         """Open an existing project."""
         project_file, _ = QFileDialog.getOpenFileName(self, "Open Project", "", "Intellicrack Projects (*.icp);;All Files (*)")
 
@@ -412,7 +413,7 @@ class WorkspaceTab(QWidget):
             # Refresh file tree
             self.refresh_project_files()
 
-    def save_project(self):
+    def save_project(self) -> None:
         """Save the current project."""
         if not self.current_project_path:
             return
@@ -436,7 +437,7 @@ class WorkspaceTab(QWidget):
         self.log_activity("Project saved", "SUCCESS")
         self.analysis_saved.emit(project_file)
 
-    def close_project(self):
+    def close_project(self) -> None:
         """Close the current project."""
         if self.current_project_path:
             reply = QMessageBox.question(
@@ -465,10 +466,10 @@ class WorkspaceTab(QWidget):
 
             self.log_activity("Project closed")
 
-    def load_binary(self):
+    def load_binary(self) -> None:
         """Load a binary file for analysis."""
         binary_file, _ = QFileDialog.getOpenFileName(
-            self, "Load Binary", "", "Executable Files (*.exe *.dll *.so *.dylib *.elf *.bin);;All Files (*)"
+            self, "Load Binary", "", "Executable Files (*.exe *.dll *.so *.dylib *.elf *.bin);;All Files (*)",
         )
 
         if binary_file:
@@ -553,7 +554,7 @@ class WorkspaceTab(QWidget):
                 shutil.copy2(binary_file, dest)
                 self.refresh_project_files()
 
-    def quick_analyze_binary(self):
+    def quick_analyze_binary(self) -> None:
         """Perform quick analysis on loaded binary."""
         if not self.loaded_binary_path:
             return
@@ -636,25 +637,25 @@ class WorkspaceTab(QWidget):
                 self.log_activity("Quick analysis complete", "SUCCESS")
 
             except Exception as e:
-                self.log_activity(f"Analysis error: {str(e)}", "ERROR")
+                self.log_activity(f"Analysis error: {e!s}", "ERROR")
 
         except Exception as e:
-            self.log_activity(f"Analysis failed: {str(e)}", "ERROR")
+            self.log_activity(f"Analysis failed: {e!s}", "ERROR")
 
-    def export_analysis(self):
+    def export_analysis(self) -> None:
         """Export analysis results."""
         if not self.loaded_binary_path:
             return
 
         export_file, _ = QFileDialog.getSaveFileName(
-            self, "Export Analysis", "", "JSON Files (*.json);;CSV Files (*.csv);;Text Files (*.txt)"
+            self, "Export Analysis", "", "JSON Files (*.json);;CSV Files (*.csv);;Text Files (*.txt)",
         )
 
         if export_file:
             # Export analysis (simplified)
             self.log_activity(f"Analysis exported to: {export_file}", "SUCCESS")
 
-    def refresh_project_files(self):
+    def refresh_project_files(self) -> None:
         """Refresh the project files tree."""
         if not self.current_project_path:
             return
@@ -683,7 +684,7 @@ class WorkspaceTab(QWidget):
                         os.path.splitext(file)[1],
                         f"{file_stat.st_size / 1024:.1f} KB",
                         datetime.fromtimestamp(file_stat.st_mtime).strftime("%Y-%m-%d %H:%M"),
-                    ]
+                    ],
                 )
 
                 # Add to appropriate parent
@@ -699,7 +700,7 @@ class WorkspaceTab(QWidget):
 
     def find_or_create_folder(self, folder_path: str):
         """Find or create a folder item in the tree."""
-        parts = folder_path.split(os.sep)
+        parts = Path(folder_path).parts
         parent = None
 
         for part in parts:
@@ -731,7 +732,7 @@ class WorkspaceTab(QWidget):
 
         return parent
 
-    def add_file_to_project(self):
+    def add_file_to_project(self) -> None:
         """Add a file to the current project."""
         if not self.current_project_path:
             return
@@ -748,7 +749,7 @@ class WorkspaceTab(QWidget):
 
             self.refresh_project_files()
 
-    def remove_file_from_project(self):
+    def remove_file_from_project(self) -> None:
         """Remove selected file from project."""
         current_item = self.file_tree.currentItem()
         if not current_item or not self.current_project_path:
@@ -770,7 +771,7 @@ class WorkspaceTab(QWidget):
             self.log_activity(f"Removed file: {current_item.text(0)}", "WARNING")
             self.refresh_project_files()
 
-    def show_file_context_menu(self, position):
+    def show_file_context_menu(self, position) -> None:
         """Show context menu for file tree."""
         item = self.file_tree.itemAt(position)
         if not item:
@@ -794,7 +795,7 @@ class WorkspaceTab(QWidget):
 
         menu.exec(self.file_tree.mapToGlobal(position))
 
-    def apply_theme(self):
+    def apply_theme(self) -> None:
         """Apply theme configuration to workspace widgets."""
         self.config_manager.get_theme_config()
 
@@ -802,7 +803,7 @@ class WorkspaceTab(QWidget):
         # Widget-specific styles use StyleManager with object names
         pass
 
-    def update_fonts(self):
+    def update_fonts(self) -> None:
         """Update font configuration."""
         font_config = self.config_manager.get_font_config()
 
@@ -815,11 +816,11 @@ class WorkspaceTab(QWidget):
         for widget in self.findChildren(QWidget):
             widget.setFont(font)
 
-    def on_ai_message_sent(self, message: str):
+    def on_ai_message_sent(self, message: str) -> None:
         """Handle AI message sent signal."""
         self.log_activity(f"AI Query: {message[:50]}...", "INFO")
 
-    def on_code_generated(self, code: str):
+    def on_code_generated(self, code: str) -> None:
         """Handle code generation from AI."""
         self.log_activity("AI generated code snippet", "SUCCESS")
 
@@ -828,7 +829,7 @@ class WorkspaceTab(QWidget):
             # Could prompt to save generated code
             pass
 
-    def on_script_generated(self, script_type: str, content: str):
+    def on_script_generated(self, script_type: str, content: str) -> None:
         """Handle script generation from AI."""
         self.log_activity(f"AI generated {script_type}", "SUCCESS")
 
@@ -838,7 +839,7 @@ class WorkspaceTab(QWidget):
             os.makedirs(scripts_dir, exist_ok=True)
             # Could prompt to save script
 
-    def update_ai_context(self):
+    def update_ai_context(self) -> None:
         """Update AI Assistant context with current binary/project info."""
         if self.loaded_binary_path:
             # Read some binary info to provide context
@@ -859,7 +860,7 @@ class WorkspaceTab(QWidget):
             except Exception as e:
                 self.log_activity(f"Failed to update AI context: {e}", "ERROR")
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Cleanup resources when tab is closed."""
         # Unregister callbacks
         self.config_manager.unregister_callback("theme", self.apply_theme)
@@ -868,7 +869,7 @@ class WorkspaceTab(QWidget):
         # Save any unsaved project data
         if self.current_project_path:
             reply = QMessageBox.question(
-                self, "Closing Workspace", "Save project before closing?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                self, "Closing Workspace", "Save project before closing?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             )
 
             if reply == QMessageBox.StandardButton.Yes:

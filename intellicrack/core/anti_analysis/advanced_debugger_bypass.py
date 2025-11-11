@@ -63,7 +63,7 @@ class UserModeNTAPIHooker:
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize user-mode NT API hooker."""
         self.logger = logging.getLogger("IntellicrackLogger.UserModeNTAPIHooker")
         self.hooks: dict[str, HookInfo] = {}
@@ -75,7 +75,7 @@ class UserModeNTAPIHooker:
         else:
             self._init_linux_usermode_hooks()
 
-    def _init_windows_ntapi_hooks(self):
+    def _init_windows_ntapi_hooks(self) -> None:
         """Initialize Windows user-mode NT API hook infrastructure."""
         try:
             self.ntdll = ctypes.windll.ntdll
@@ -89,7 +89,7 @@ class UserModeNTAPIHooker:
         except Exception as e:
             self.logger.error(f"Failed to initialize Windows user-mode NT API hooks: {e}")
 
-    def _init_linux_usermode_hooks(self):
+    def _init_linux_usermode_hooks(self) -> None:
         """Initialize Linux user-mode hook infrastructure."""
         try:
             libc_path = ctypes.util.find_library("c")
@@ -161,7 +161,7 @@ class UserModeNTAPIHooker:
                     0x0C,
                     0x48,
                     0xB8,
-                ]
+                ],
             )
             shellcode.extend(struct.pack("<Q", original_addr + 16))
             shellcode.extend([0xFF, 0xE0])
@@ -382,7 +382,7 @@ class UserModeNTAPIHooker:
 class HypervisorDebugger:
     """Hypervisor-based debugging for stealth analysis."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize hypervisor debugger."""
         self.logger = logging.getLogger("IntellicrackLogger.HypervisorDebugger")
         self.vmx_enabled = False
@@ -534,7 +534,7 @@ class HypervisorDebugger:
 class TimingNeutralizer:
     """Advanced timing attack neutralization system."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize timing neutralizer."""
         self.logger = logging.getLogger("IntellicrackLogger.TimingNeutralizer")
         self.base_timestamp = None
@@ -669,7 +669,7 @@ class AdvancedDebuggerBypass:
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize advanced debugger bypass system."""
         self.logger = logging.getLogger("IntellicrackLogger.AdvancedDebuggerBypass")
         self.kernel_hooks = UserModeNTAPIHooker()

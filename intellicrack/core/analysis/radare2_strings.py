@@ -43,7 +43,7 @@ class R2StringAnalyzer:
     - File paths and registry keys
     """
 
-    def __init__(self, binary_path: str, radare2_path: str | None = None):
+    def __init__(self, binary_path: str, radare2_path: str | None = None) -> None:
         """Initialize string analyzer.
 
         Args:
@@ -148,7 +148,7 @@ class R2StringAnalyzer:
                 all_strings = filtered_strings
 
             # Apply encoding-specific string extraction
-            if encoding == "auto" or encoding == "utf16":
+            if encoding in {"auto", "utf16"}:
                 # Get wide character strings (UTF-16)
                 try:
                     wide_strings = r2._execute_command("izwj", expect_json=True)
@@ -495,7 +495,7 @@ class R2StringAnalyzer:
         # This would need context from surrounding strings/code
         # For now, check if the string itself has validation-like structure
         content_lower = content.lower()
-        return any(pattern in content_lower for pattern in ["key", "serial", "code"] if len(content) >= 10 and not not content.isascii())
+        return any(pattern in content_lower for pattern in ["key", "serial", "code"] if len(content) >= 10 and content.isascii())
 
     def _is_crypto_string(self, content: str) -> bool:
         """Enhanced cryptographic string identification with advanced algorithms."""
@@ -1164,7 +1164,7 @@ class R2StringAnalyzer:
                         "string": string_data,
                         "pattern_type": "base64_like",
                         "description": "Possible Base64 encoded data",
-                    }
+                    },
                 )
 
             # Hex-like patterns
@@ -1174,7 +1174,7 @@ class R2StringAnalyzer:
                         "string": string_data,
                         "pattern_type": "hex_data",
                         "description": "Long hexadecimal string (possible hash/key)",
-                    }
+                    },
                 )
 
             # High entropy short strings (possible keys)
@@ -1184,7 +1184,7 @@ class R2StringAnalyzer:
                         "string": string_data,
                         "pattern_type": "high_entropy",
                         "description": "High entropy string (possible encrypted data/key)",
-                    }
+                    },
                 )
 
             # Suspicious license keywords
@@ -1194,7 +1194,7 @@ class R2StringAnalyzer:
                         "string": string_data,
                         "pattern_type": "crack_related",
                         "description": "Contains crack/keygen related keywords",
-                    }
+                    },
                 )
 
         return suspicious
@@ -1292,7 +1292,7 @@ class R2StringAnalyzer:
                                                     "address": hex(addr),
                                                     "search_term": term,
                                                     "context": "license_validation",
-                                                }
+                                                },
                                             )
                                     except R2Exception as e:
                                         logger.error("R2Exception in radare2_strings: %s", e)

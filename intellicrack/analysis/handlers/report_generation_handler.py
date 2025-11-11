@@ -47,7 +47,7 @@ except ImportError:
     class QRunnable:
         """Fallback QRunnable class when PyQt6 is not available."""
 
-        def run(self):
+        def run(self) -> None:
             """Execute the runnable task."""
             pass
 
@@ -55,13 +55,13 @@ except ImportError:
         """Fallback QThreadPool class when PyQt6 is not available."""
 
         @staticmethod
-        def globalInstance():
+        def globalInstance() -> None:
             """Return the global thread pool instance."""
-            return None
+            return
 
-    def pyqtSignal(*args):
+    def pyqtSignal(*args) -> None:
         """Fallback pyqtSignal function when PyQt6 is not available."""
-        return None
+        return
 
     # Fallback widget classes
     class QCheckBox:
@@ -150,7 +150,7 @@ class ReportGeneratorWorkerSignals(QObject):
 class ReportGeneratorWorker(QRunnable):
     """Worker thread for report generation."""
 
-    def __init__(self, result: UnifiedProtectionResult, format_type: str, output_path: str, options: dict):
+    def __init__(self, result: UnifiedProtectionResult, format_type: str, output_path: str, options: dict) -> None:
         """Initialize the report generator worker.
 
         Args:
@@ -167,7 +167,7 @@ class ReportGeneratorWorker(QRunnable):
         self.options = options
         self.signals = ReportGeneratorWorkerSignals()
 
-    def run(self):
+    def run(self) -> None:
         """Generate the report."""
         try:
             self.signals.progress.emit(f"Generating {self.format_type.upper()} report...")
@@ -193,7 +193,7 @@ class ReportGeneratorWorker(QRunnable):
                     "success": True,
                     "path": report_path,
                     "format": self.format_type,
-                }
+                },
             )
 
         except Exception as e:
@@ -208,7 +208,7 @@ class ReportGeneratorWorker(QRunnable):
 class ReportOptionsDialog(QDialog):
     """Dialog for selecting report generation options."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the report options dialog.
 
         Args:
@@ -220,7 +220,7 @@ class ReportOptionsDialog(QDialog):
         self.setMinimumWidth(400)
         self.init_ui()
 
-    def init_ui(self):
+    def init_ui(self) -> None:
         """Initialize the user interface for the report options dialog."""
         layout = QVBoxLayout()
 
@@ -286,7 +286,7 @@ class ReportOptionsDialog(QDialog):
 
         self.setLayout(layout)
 
-    def _on_format_changed(self, format_text):
+    def _on_format_changed(self, format_text) -> None:
         """Handle format change."""
         # Disable entropy visualization for non-HTML formats
         if format_text != "HTML":
@@ -320,7 +320,7 @@ class ReportGenerationHandler(QObject):
     report_error = pyqtSignal(str)
     report_progress = pyqtSignal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the report generation handler.
 
         Args:
@@ -331,12 +331,12 @@ class ReportGenerationHandler(QObject):
         self.thread_pool = QThreadPool.globalInstance()
         self.current_result: UnifiedProtectionResult | None = None
 
-    def on_analysis_complete(self, result: UnifiedProtectionResult):
+    def on_analysis_complete(self, result: UnifiedProtectionResult) -> None:
         """Handle slot when protection analysis completes."""
         self.current_result = result
         logger.info(f"Report generation handler received analysis for: {result.file_path}")
 
-    def generate_report(self, parent_widget=None):
+    def generate_report(self, parent_widget=None) -> None:
         """Show options dialog and generate report based on user selection."""
         if not self.current_result:
             self.report_error.emit("No analysis result available")
@@ -387,7 +387,7 @@ class ReportGenerationHandler(QObject):
 
         self.thread_pool.start(worker)
 
-    def _on_report_ready(self, result: dict):
+    def _on_report_ready(self, result: dict) -> None:
         """Handle report generation completion."""
         if result["success"]:
             self.report_ready.emit(result)
@@ -396,9 +396,9 @@ class ReportGenerationHandler(QObject):
             msg = f"Report saved to:\n{result['path']}"
             logger.info(msg)
 
-    def _on_worker_error(self, error_tuple):
+    def _on_worker_error(self, error_tuple) -> None:
         """Handle worker thread errors."""
-        exc_type, exc_value, exc_traceback = error_tuple
+        _exc_type, exc_value, exc_traceback = error_tuple
         error_msg = f"Report generation failed: {exc_value}"
         logger.error(f"{error_msg}\n{exc_traceback}")
         self.report_error.emit(error_msg)

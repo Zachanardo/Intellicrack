@@ -45,11 +45,11 @@ class NodeJSInstallWorker(QThread):
     progress_value = pyqtSignal(int)  # Real progress tracking
     finished = pyqtSignal(bool, str)
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize Node.js installation worker."""
         super().__init__()
 
-    def run(self):
+    def run(self) -> None:
         """Install Node.js in background thread with real progress tracking."""
         try:
             # Phase 1: Detection (10%)
@@ -101,12 +101,12 @@ class NodeJSInstallWorker(QThread):
                 # Sanitize temp_installer to prevent command injection
                 temp_installer_clean = str(temp_installer).replace(";", "").replace("|", "").replace("&", "")
                 result = subprocess.run(
-                    ["msiexec", "/i", temp_installer_clean, "/quiet", "/norestart"], capture_output=True, timeout=300, shell=False
+                    ["msiexec", "/i", temp_installer_clean, "/quiet", "/norestart"], capture_output=True, timeout=300, shell=False,
                 )
                 success = result.returncode == 0
             except Exception as e:
                 success = False
-                self.progress.emit(f"Installation failed: {str(e)}")
+                self.progress.emit(f"Installation failed: {e!s}")
 
             if success:
                 # Phase 5: Installation (80%)
@@ -132,7 +132,7 @@ class NodeJSInstallWorker(QThread):
 class NodeJSSetupDialog(BaseDialog):
     """Dialog for Node.js installation setup."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize Node.js setup dialog."""
         super().__init__(parent=parent, title="Node.js Setup Required", width=600, height=500, resizable=False)
         self.install_worker = None
@@ -141,7 +141,7 @@ class NodeJSSetupDialog(BaseDialog):
         # Customize button text
         self.set_ok_text("Proceed")
 
-    def setup_content(self, layout):
+    def setup_content(self, layout) -> None:
         """Initialize the dialog UI content."""
         # Explanation header
         header_label = QLabel(
@@ -150,7 +150,7 @@ class NodeJSSetupDialog(BaseDialog):
             "<b>Why Node.js is needed:</b>\n"
             " Compiles JavaScript bypasses into Windows executables\n"
             " Enables automatic process monitoring and injection\n"
-            " Required for the pkg compilation toolchain"
+            " Required for the pkg compilation toolchain",
         )
         header_label.setWordWrap(True)
         layout.addWidget(header_label)
@@ -165,7 +165,7 @@ class NodeJSSetupDialog(BaseDialog):
         options_layout.addWidget(self.auto_install_radio)
 
         auto_install_desc = QLabel(
-            "   Downloads and installs Node.js v20.15.1 LTS\n   Uses winget, chocolatey, or direct download\n   Requires administrator privileges"
+            "   Downloads and installs Node.js v20.15.1 LTS\n   Uses winget, chocolatey, or direct download\n   Requires administrator privileges",
         )
         auto_install_desc.setObjectName("descriptionLabel")
         options_layout.addWidget(auto_install_desc)
@@ -230,13 +230,13 @@ class NodeJSSetupDialog(BaseDialog):
         # The base dialog provides OK/Cancel buttons automatically
         # We just need to override validate_input for the OK button behavior
 
-    def on_option_changed(self):
+    def on_option_changed(self) -> None:
         """Handle option radio button changes."""
         is_custom = self.custom_path_radio.isChecked()
         self.path_input.setEnabled(is_custom)
         self.browse_btn.setEnabled(is_custom)
 
-    def browse_nodejs_path(self):
+    def browse_nodejs_path(self) -> None:
         """Browse for Node.js installation directory."""
         directory = QFileDialog.getExistingDirectory(self, "Select Node.js Installation Directory", "C:\\Program Files")
 
@@ -281,7 +281,7 @@ class NodeJSSetupDialog(BaseDialog):
                 self.show_error("Node.js not found at the specified path.\nPlease check the path and try again.")
                 return False
 
-    def start_installation(self):
+    def start_installation(self) -> None:
         """Start the Node.js installation process."""
         # Show progress UI with real progress tracking
         self.progress_bar.setVisible(True)
@@ -304,11 +304,11 @@ class NodeJSSetupDialog(BaseDialog):
         self.install_worker.finished.connect(self.on_install_finished)
         self.install_worker.start()
 
-    def on_install_progress(self, message):
+    def on_install_progress(self, message) -> None:
         """Handle installation progress updates."""
         self.progress_text.append(message)
 
-    def on_install_finished(self, success, message):
+    def on_install_finished(self, success, message) -> None:
         """Handle installation completion."""
         self.progress_bar.setVisible(False)
         self.progress_text.append(f"\n{message}")

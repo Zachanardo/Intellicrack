@@ -86,7 +86,7 @@ class PerformanceConfig:
 class OptimizationManager:
     """Manages AI system optimization."""
 
-    def __init__(self, config: PerformanceConfig | None = None):
+    def __init__(self, config: PerformanceConfig | None = None) -> None:
         """Initialize the optimization manager.
 
         Args:
@@ -166,7 +166,7 @@ class OptimizationManager:
 
         return PerformanceConfig(optimization_rules=rules)
 
-    def _setup_optimization_rules(self):
+    def _setup_optimization_rules(self) -> None:
         """Set up optimization rules with performance monitor."""
         for rule in self.config.optimization_rules:
             if rule.enabled:
@@ -177,7 +177,7 @@ class OptimizationManager:
     def _create_rule_handler(self, rule: OptimizationRule) -> Callable:
         """Create handler for optimization rule."""
 
-        def handler(metric_name: str, level: str, value: float):
+        def handler(metric_name: str, level: str, value: float) -> None:
             # Check if rule applies
             if not self._rule_matches(rule, metric_name, level):
                 return
@@ -197,10 +197,7 @@ class OptimizationManager:
             return False
 
         # Support partial metric name matching
-        if rule.metric_name in metric_name or metric_name.startswith(rule.metric_name):
-            return True
-
-        return False
+        return bool(rule.metric_name in metric_name or metric_name.startswith(rule.metric_name))
 
     def _check_cooldown(self, rule: OptimizationRule) -> bool:
         """Check if rule is within cooldown period."""
@@ -210,7 +207,7 @@ class OptimizationManager:
         time_since_last = datetime.now() - rule.last_triggered
         return time_since_last.total_seconds() >= rule.cooldown_seconds
 
-    def _execute_optimization(self, rule: OptimizationRule, metric_name: str, level: str, value: float):
+    def _execute_optimization(self, rule: OptimizationRule, metric_name: str, level: str, value: float) -> None:
         """Execute optimization action."""
         with self.lock:
             try:
@@ -233,7 +230,7 @@ class OptimizationManager:
                 logger.error(f"Error executing optimization rule '{rule.name}': {e}")
                 self._update_optimization_stats(rule.name, "error")
 
-    def _execute_garbage_collection(self):
+    def _execute_garbage_collection(self) -> None:
         """Execute garbage collection optimization."""
         if not PSUTIL_AVAILABLE:
             logger.warning("psutil not available - skipping memory monitoring during GC")
@@ -267,7 +264,7 @@ class OptimizationManager:
             self.gc_stats["collections"] += 1
             self.gc_stats["objects_collected"] += collected
 
-    def _execute_cache_clear(self):
+    def _execute_cache_clear(self) -> None:
         """Execute cache clearing optimization."""
         # Clear performance monitor cache
         cleared_entries = len(performance_monitor.performance_cache)
@@ -279,7 +276,7 @@ class OptimizationManager:
 
         logger.info(f"Cleared {cleared_entries} cache entries")
 
-    def _execute_logging(self, rule: OptimizationRule, metric_name: str, level: str, value: float):
+    def _execute_logging(self, rule: OptimizationRule, metric_name: str, level: str, value: float) -> None:
         """Execute logging optimization action."""
         log_message = f"Performance alert - {rule.name}: {metric_name}={value} ({level})"
 
@@ -290,7 +287,7 @@ class OptimizationManager:
         else:
             logger.info(log_message)
 
-    def _update_optimization_stats(self, rule_name: str, action: str):
+    def _update_optimization_stats(self, rule_name: str, action: str) -> None:
         """Update optimization statistics."""
         if rule_name not in self.optimization_stats:
             self.optimization_stats[rule_name] = {
@@ -303,7 +300,7 @@ class OptimizationManager:
         if action == "executed":
             self.optimization_stats[rule_name]["last_execution"] = datetime.now().isoformat()
 
-    def add_custom_rule(self, rule: OptimizationRule):
+    def add_custom_rule(self, rule: OptimizationRule) -> None:
         """Add custom optimization rule."""
         self.config.optimization_rules.append(rule)
 
@@ -314,7 +311,7 @@ class OptimizationManager:
 
         logger.info(f"Added custom optimization rule: {rule.name}")
 
-    def enable_rule(self, rule_name: str):
+    def enable_rule(self, rule_name: str) -> None:
         """Enable optimization rule."""
         for rule in self.config.optimization_rules:
             if rule.name == rule_name:
@@ -324,7 +321,7 @@ class OptimizationManager:
 
         logger.warning(f"Optimization rule not found: {rule_name}")
 
-    def disable_rule(self, rule_name: str):
+    def disable_rule(self, rule_name: str) -> None:
         """Disable optimization rule."""
         for rule in self.config.optimization_rules:
             if rule.name == rule_name:
@@ -349,7 +346,7 @@ class OptimizationManager:
             "performance_summary": performance_monitor.get_metrics_summary(timedelta(hours=1)),
         }
 
-    def optimize_memory_usage(self):
+    def optimize_memory_usage(self) -> None:
         """Manual memory optimization."""
         logger.info("Running manual memory optimization")
 
@@ -365,7 +362,7 @@ class OptimizationManager:
 
         logger.info("Manual memory optimization completed")
 
-    def optimize_cache_performance(self):
+    def optimize_cache_performance(self) -> None:
         """Optimize cache performance."""
         if not self.config.enable_cache_optimization:
             return
@@ -441,7 +438,7 @@ class OptimizationManager:
                 "final_memory_mb": 0.0,
             }
 
-    def export_config(self, file_path: Path):
+    def export_config(self, file_path: Path) -> None:
         """Export optimization configuration."""
         config_data = {
             "enable_monitoring": self.config.enable_monitoring,
@@ -476,7 +473,7 @@ class OptimizationManager:
 
         logger.info(f"Optimization config exported to {file_path}")
 
-    def import_config(self, file_path: Path):
+    def import_config(self, file_path: Path) -> None:
         """Import optimization configuration."""
         try:
             with open(file_path) as f:
@@ -555,7 +552,7 @@ class OptimizationManager:
 optimization_manager = OptimizationManager()
 
 
-def optimize_ai_performance():
+def optimize_ai_performance() -> None:
     """Quick optimization of AI system performance."""
     optimization_manager.optimize_memory_usage()
     optimization_manager.optimize_cache_performance()

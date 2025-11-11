@@ -67,7 +67,12 @@ public class StringDecryptionAutomator extends GhidraScript {
           String algoName = routine.algorithmType.toString();
           decryptionAlgorithms.put(algoName, decryptionAlgorithms.getOrDefault(algoName, 0) + 1);
 
-          println("  Found decryption routine at " + function.getEntryPoint() + " (" + routine.algorithmType + ")");
+          println(
+              "  Found decryption routine at "
+                  + function.getEntryPoint()
+                  + " ("
+                  + routine.algorithmType
+                  + ")");
         }
       }
     }
@@ -77,7 +82,9 @@ public class StringDecryptionAutomator extends GhidraScript {
     if (function == null) return false;
 
     String funcName = function.getName().toLowerCase();
-    if (funcName.contains("decrypt") || funcName.contains("deobfuscate") || funcName.contains("decode")) {
+    if (funcName.contains("decrypt")
+        || funcName.contains("deobfuscate")
+        || funcName.contains("decode")) {
       return true;
     }
 
@@ -220,7 +227,8 @@ public class StringDecryptionAutomator extends GhidraScript {
     for (MemoryBlock block : blocks) {
       if (monitor.isCancelled()) break;
 
-      if (block.getName().toLowerCase().contains("data") || block.getName().toLowerCase().contains("rdata")) {
+      if (block.getName().toLowerCase().contains("data")
+          || block.getName().toLowerCase().contains("rdata")) {
         scanBlockForEncryptedStrings(block);
       }
     }
@@ -557,7 +565,10 @@ public class StringDecryptionAutomator extends GhidraScript {
       return true;
     }
 
-    String[] commonWords = {"the", "and", "for", "with", "from", "this", "that", "http", "www", "error", "warning", "file", "data"};
+    String[] commonWords = {
+      "the", "and", "for", "with", "from", "this", "that", "http", "www", "error", "warning",
+      "file", "data"
+    };
     String lowerStr = str.toLowerCase();
 
     for (String word : commonWords) {

@@ -280,7 +280,7 @@ def configure_logging(
     log_file: str = None,
     format_string: str = None,
     enable_comprehensive: bool = False,
-):
+) -> None:
     """Configure logging for the entire application.
 
     Args:
@@ -307,6 +307,7 @@ def setup_logging(
     enable_rotation: bool = True,
     max_bytes: int = 10485760,
     backup_count: int = 5,
+    enable_console: bool = True,
 ) -> None:
     """Set up logging for the application with optional log rotation.
 
@@ -316,6 +317,7 @@ def setup_logging(
         enable_rotation: Whether to enable log rotation
         max_bytes: Max size of each log file before rotation (default: 10MB)
         backup_count: Number of backup files to keep (default: 5)
+        enable_console: Whether to enable console logging (default: True)
 
     """
     # Convert string level to logging constant
@@ -341,14 +343,15 @@ def setup_logging(
             sys.stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, errors="replace")
 
     # Console handler
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(numeric_level)
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
-    console_handler.setFormatter(formatter)
-    handlers.append(console_handler)
+    if enable_console:
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setLevel(numeric_level)
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+        console_handler.setFormatter(formatter)
+        handlers.append(console_handler)
 
     # File handler with rotation if log_file is specified
     if log_file:

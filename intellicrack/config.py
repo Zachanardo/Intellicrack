@@ -198,7 +198,7 @@ class ConfigManager:
 
     """
 
-    def __init__(self, config_path: str = None):
+    def __init__(self, config_path: str = None) -> None:
         """Initialize legacy configuration manager wrapper.
 
         Args:
@@ -421,11 +421,11 @@ class ConfigManager:
         """Allow dictionary-style access."""
         return self.config[key]
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value) -> None:
         """Allow dictionary-style setting."""
         self.set(key, value)
 
-    def __contains__(self, key):
+    def __contains__(self, key) -> bool:
         """Check if key exists in configuration."""
         return key in self.config
 
@@ -500,11 +500,11 @@ _config_dict = {}
 class _LazyConfig(dict):
     """Lazy-loading configuration dictionary that initializes on first access."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._initialized = False
 
-    def _ensure_loaded(self):
+    def _ensure_loaded(self) -> None:
         """Load configuration if not already loaded."""
         if not self._initialized:
             try:
@@ -518,11 +518,11 @@ class _LazyConfig(dict):
         self._ensure_loaded()
         return super().__getitem__(key)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value) -> None:
         self._ensure_loaded()
         return super().__setitem__(key, value)
 
-    def __contains__(self, key):
+    def __contains__(self, key) -> bool:
         self._ensure_loaded()
         return super().__contains__(key)
 

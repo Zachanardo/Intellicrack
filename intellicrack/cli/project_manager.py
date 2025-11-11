@@ -37,7 +37,7 @@ logger.debug("Project manager module loaded")
 class ProjectManager:
     """Manage Intellicrack analysis projects."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize project manager."""
         self.projects_dir = Path.home() / ".intellicrack" / "projects"
         logger.debug(f"Projects directory: {self.projects_dir}")
@@ -85,7 +85,7 @@ class ProjectManager:
         if not project_dir.exists():
             raise ValueError(f"Project '{name}' not found")
 
-        with open(project_dir / "project.json", "r") as f:
+        with open(project_dir / "project.json") as f:
             metadata = json.load(f)
 
         self.current_project = {"name": name, "path": project_dir, "metadata": metadata}
@@ -99,7 +99,7 @@ class ProjectManager:
 
         for project_dir in self.projects_dir.iterdir():
             if project_dir.is_dir() and (project_dir / "project.json").exists():
-                with open(project_dir / "project.json", "r") as f:
+                with open(project_dir / "project.json") as f:
                     metadata = json.load(f)
                     projects.append(
                         {
@@ -108,12 +108,12 @@ class ProjectManager:
                             "created": metadata.get("created", ""),
                             "modified": metadata.get("modified", ""),
                             "path": str(project_dir),
-                        }
+                        },
                     )
 
         return projects
 
-    def delete_project(self, name):
+    def delete_project(self, name) -> None:
         """Delete a project and all its data."""
         project_dir = self.projects_dir / name
 
@@ -154,7 +154,7 @@ class ProjectManager:
         shutil.copy2(source_file, dest_file)
 
         # Update metadata
-        with open(project_dir / "project.json", "r") as f:
+        with open(project_dir / "project.json") as f:
             metadata = json.load(f)
 
         file_info = {
@@ -227,7 +227,7 @@ class ProjectManager:
                 raise ValueError("Invalid project archive: missing project.json")
 
             # Read metadata
-            with open(project_json, "r") as f:
+            with open(project_json) as f:
                 metadata = json.load(f)
 
             project_name = metadata["name"]
@@ -254,7 +254,7 @@ class ProjectManager:
         return project_name
 
 
-def main():
+def main() -> int:
     """Project management CLI."""
     import argparse
 

@@ -4,7 +4,7 @@ import os
 import sys
 
 
-def clean_nul_files():
+def clean_nul_files() -> None:
     """Recursively find and delete files named 'nul' in the current working directory.
 
     This is necessary because some Windows build tools can erroneously create these files,

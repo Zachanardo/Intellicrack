@@ -181,7 +181,7 @@ class PolymorphicAnalyzer:
         frozenset(["mov reg1, reg2", "xchg reg1, reg2", "xchg reg1, reg2"]): "swap_registers",
     }
 
-    def __init__(self, binary_path: Optional[str] = None, arch: str = "x86", bits: int = 64):
+    def __init__(self, binary_path: Optional[str] = None, arch: str = "x86", bits: int = 64) -> None:
         """Initialize the polymorphic analyzer.
 
         Args:
@@ -206,7 +206,7 @@ class PolymorphicAnalyzer:
         self.behavior_database: Dict[str, BehaviorPattern] = {}
 
     def analyze_polymorphic_code(
-        self, data: bytes, base_address: int = 0, max_instructions: int = 1000
+        self, data: bytes, base_address: int = 0, max_instructions: int = 1000,
     ) -> PolymorphicAnalysis:
         """Analyze polymorphic code and extract behavioral patterns.
 
@@ -301,7 +301,7 @@ class PolymorphicAnalyzer:
         for node in code_block.normalized_instructions:
             if node.semantic_class not in ["no_operation", "dead_code"]:
                 signature_components.append(
-                    f"{node.semantic_class}:{','.join(node.operand_types)}"
+                    f"{node.semantic_class}:{','.join(node.operand_types)}",
                 )
 
         data_flow = self._analyze_data_flow(code_block)
@@ -313,7 +313,7 @@ class PolymorphicAnalyzer:
         return hashlib.sha256("|".join(signature_components).encode()).hexdigest()
 
     def _disassemble_block(
-        self, data: bytes, base_address: int, max_instructions: int
+        self, data: bytes, base_address: int, max_instructions: int,
     ) -> CodeBlock:
         """Disassemble code block into instructions."""
         instructions = []
@@ -541,7 +541,7 @@ class PolymorphicAnalyzer:
 
         return independent_sequences >= 3
 
-    def _normalize_instructions(self, code_block: CodeBlock):
+    def _normalize_instructions(self, code_block: CodeBlock) -> None:
         """Normalize instructions to semantic representation."""
         code_block.normalized_instructions = []
 
@@ -551,7 +551,7 @@ class PolymorphicAnalyzer:
 
         semantic_hashes = [node.semantic_hash for node in code_block.normalized_instructions]
         code_block.semantic_signature = hashlib.sha256(
-            "".join(semantic_hashes).encode()
+            "".join(semantic_hashes).encode(),
         ).hexdigest()
 
     def _create_instruction_node(self, insn) -> InstructionNode:
@@ -734,7 +734,7 @@ class PolymorphicAnalyzer:
 
         control_flow = self._analyze_control_flow(code_block)
         invariants["control_flow_branches"] = len(
-            [k for k, v in control_flow.items() if len(v) > 1]
+            [k for k, v in control_flow.items() if len(v) > 1],
         )
 
         constants = self._extract_constants(code_block)
@@ -772,7 +772,7 @@ class PolymorphicAnalyzer:
         return None
 
     def _calculate_mutation_complexity(
-        self, code_block: CodeBlock, mutations: List[MutationType]
+        self, code_block: CodeBlock, mutations: List[MutationType],
     ) -> float:
         """Calculate mutation complexity score."""
         if not code_block.instructions or not mutations:
@@ -780,8 +780,8 @@ class PolymorphicAnalyzer:
 
         base_score = len(mutations) / len(MutationType)
 
-        instruction_diversity = len(set(insn.mnemonic for insn in code_block.instructions)) / len(
-            code_block.instructions
+        instruction_diversity = len({insn.mnemonic for insn in code_block.instructions}) / len(
+            code_block.instructions,
         )
 
         cfg = self._analyze_control_flow(code_block)
@@ -860,7 +860,7 @@ class PolymorphicAnalyzer:
         return operand.type == X86_OP_REG
 
     def compare_code_variants(
-        self, variant1: bytes, variant2: bytes, base_address: int = 0
+        self, variant1: bytes, variant2: bytes, base_address: int = 0,
     ) -> Tuple[float, Dict[str, Any]]:
         """Compare two code variants and determine semantic similarity.
 

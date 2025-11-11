@@ -118,7 +118,7 @@ except ImportError as e:
 class ModelFormatConverter:
     """Converts models between different formats."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the model format converter."""
         self.supported_conversions = self._get_supported_conversions()
         self.gpu_info = None
@@ -209,7 +209,7 @@ class ModelFormatConverter:
                 initial_allocated = memory_allocated()
                 initial_reserved = memory_reserved()
                 logger.info(
-                    f"GPU memory before conversion - Allocated: {initial_allocated / (1024**2):.1f}MB, Reserved: {initial_reserved / (1024**2):.1f}MB"
+                    f"GPU memory before conversion - Allocated: {initial_allocated / (1024**2):.1f}MB, Reserved: {initial_reserved / (1024**2):.1f}MB",
                 )
             except Exception as e:
                 logger.debug(f"Unable to get GPU memory stats: {e}")
@@ -234,7 +234,7 @@ class ModelFormatConverter:
                         final_allocated = memory_allocated()
                         final_reserved = memory_reserved()
                         logger.info(
-                            f"GPU memory after conversion - Allocated: {final_allocated / (1024**2):.1f}MB, Reserved: {final_reserved / (1024**2):.1f}MB"
+                            f"GPU memory after conversion - Allocated: {final_allocated / (1024**2):.1f}MB, Reserved: {final_reserved / (1024**2):.1f}MB",
                         )
                     except Exception as e:
                         logger.debug(f"Unable to get final GPU memory stats: {e}")
@@ -525,7 +525,7 @@ class ModelFormatConverter:
             # Load SafeTensors
             state_dict = {}
             with safe_open(str(source_path), framework="pt", device=device) as f:
-                for key in f.keys():
+                for key in f:
                     tensor = f.get_tensor(key)
                     # Apply dtype conversion if specified
                     if dtype and hasattr(torch, dtype):

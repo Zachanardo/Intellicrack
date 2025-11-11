@@ -70,7 +70,7 @@ class FailureAnalysis:
 class AILearningEngine:
     """Simplified AI learning engine."""
 
-    def __init__(self, db_path: str | None = None):
+    def __init__(self, db_path: str | None = None) -> None:
         """Initialize the simplified AI learning engine.
 
         Args:

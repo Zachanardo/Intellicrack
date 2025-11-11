@@ -193,7 +193,7 @@ class SecuROMAnalyzer:
         0x51: "READ_DISC_INFORMATION",
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize SecuROM analyzer."""
         self.logger = logging.getLogger(__name__)
         self._kernel32 = None
@@ -353,7 +353,7 @@ class SecuROMAnalyzer:
                     max_activations=max_activations,
                     hardware_binding=hardware_binding,
                     encryption_algorithm=encryption_algorithm,
-                )
+                ),
             )
 
         except Exception as e:
@@ -391,7 +391,7 @@ class SecuROMAnalyzer:
                             description=description,
                             function_name=function_name,
                             frequency=frequency,
-                        )
+                        ),
                     )
 
                     offset += len(keyword)
@@ -475,7 +475,7 @@ class SecuROMAnalyzer:
                             validation_algorithm=validation_algo,
                             example_pattern=pattern,
                             checksum_type=checksum_type,
-                        )
+                        ),
                     )
 
         except Exception as e:
@@ -547,7 +547,7 @@ class SecuROMAnalyzer:
                             signature_checks=signature_checks,
                             fingerprint_method=fingerprint_method,
                             bypass_difficulty=bypass_difficulty,
-                        )
+                        ),
                     )
 
         except Exception as e:
@@ -639,7 +639,7 @@ class SecuROMAnalyzer:
                             frequency=frequency,
                             data_transmitted=data_transmitted,
                             protocol=protocol,
-                        )
+                        ),
                     )
 
         except Exception as e:
@@ -734,7 +734,7 @@ class SecuROMAnalyzer:
                         crypto_operations=crypto_ops,
                         key_derivation_method=key_derivation,
                         difficulty=difficulty,
-                    )
+                    ),
                 )
 
         except Exception as e:
@@ -774,7 +774,7 @@ class SecuROMAnalyzer:
                             function_type=func_type,
                             checks_performed=checks,
                             return_values=return_vals,
-                        )
+                        ),
                     )
 
         except Exception as e:

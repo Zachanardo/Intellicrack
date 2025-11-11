@@ -28,7 +28,7 @@ from intellicrack.core.monitoring.base_monitor import (
 class LicenseFileHandler(FileSystemEventHandler):
     """File system event handler for license-related files."""
 
-    def __init__(self, callback, license_extensions: Set[str]):
+    def __init__(self, callback, license_extensions: Set[str]) -> None:
         """Initialize file handler.
 
         Args:
@@ -56,10 +56,7 @@ class LicenseFileHandler(FileSystemEventHandler):
         if any(ext in path_lower for ext in self.license_extensions):
             return True
 
-        if any(keyword in path_lower for keyword in self.license_keywords):
-            return True
-
-        return False
+        return bool(any(keyword in path_lower for keyword in self.license_keywords))
 
     def on_created(self, event: FileSystemEvent) -> None:
         """Handle file creation.
@@ -109,7 +106,7 @@ class FileMonitor(BaseMonitor):
     Complementary to API monitor's file API hooks.
     """
 
-    def __init__(self, process_info: Optional[ProcessInfo] = None, watch_paths: Optional[List[str]] = None):
+    def __init__(self, process_info: Optional[ProcessInfo] = None, watch_paths: Optional[List[str]] = None) -> None:
         """Initialize file monitor.
 
         Args:

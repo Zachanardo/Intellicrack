@@ -165,7 +165,7 @@ class AutodeskLicensingParser:
         },
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the Autodesk licensing parser with tracking and server key setup."""
         self.logger = get_logger(__name__)
         self.active_activations = {}  # Track active activations
@@ -174,7 +174,7 @@ class AutodeskLicensingParser:
         self.subscription_data = {}  # Store subscription information
         self._initialize_server_keys()
 
-    def _initialize_server_keys(self):
+    def _initialize_server_keys(self) -> None:
         """Initialize server cryptographic keys."""
         self.server_private_key = hashlib.sha256(b"autodesk_server_private_key_2024").hexdigest()
         self.server_public_key = hashlib.sha256(b"autodesk_server_public_key_2024").hexdigest()
@@ -381,7 +381,7 @@ class AutodeskLicensingParser:
                 "screen_resolution": data.get("screen_resolution", "1920x1080"),
                 "processor_count": data.get("processor_count", 4),
                 "memory_total": data.get("memory_total", 8192),
-            }
+            },
         )
 
         return platform_info

@@ -47,7 +47,7 @@ logger = get_logger(__name__)
 class VMTableModel(QAbstractTableModel):
     """Table model for displaying VM information."""
 
-    def __init__(self, vm_data: list[dict]):
+    def __init__(self, vm_data: list[dict]) -> None:
         """Initialize the VM table model with VM data for display in the table view."""
         super().__init__()
         self.vm_data = vm_data
@@ -111,7 +111,7 @@ class VMTableModel(QAbstractTableModel):
                 return self.headers[section]
         return QVariant()
 
-    def update_data(self, new_data: list[dict]):
+    def update_data(self, new_data: list[dict]) -> None:
         """Update the model with new VM data."""
         self.beginResetModel()
         self.vm_data = new_data
@@ -121,14 +121,14 @@ class VMTableModel(QAbstractTableModel):
 class VMManagerDialog(QDialog):
     """Dialog for managing QEMU virtual machines."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the VM Manager dialog for QEMU virtual machine management."""
         super().__init__(parent)
         self.qemu_manager = QEMUManager()
         self._init_ui()
         self._load_vm_data()
 
-    def _init_ui(self):
+    def _init_ui(self) -> None:
         """Initialize the user interface."""
         self.setWindowTitle("Intellicrack VM Manager")
         self.setModal(True)
@@ -183,7 +183,7 @@ class VMManagerDialog(QDialog):
 
         main_layout.addLayout(button_layout)
 
-    def _load_vm_data(self):
+    def _load_vm_data(self) -> None:
         """Load VM data and update the table."""
         try:
             vm_info_list = self.qemu_manager.get_all_vm_info()
@@ -217,7 +217,7 @@ class VMManagerDialog(QDialog):
 
         return self.vm_model.vm_data[row].get("snapshot_id")
 
-    def _start_selected_vm(self):
+    def _start_selected_vm(self) -> None:
         """Start the selected VM."""
         snapshot_id = self._get_selected_vm_id()
         if not snapshot_id:
@@ -235,7 +235,7 @@ class VMManagerDialog(QDialog):
             logger.error(f"Error starting VM {snapshot_id}: {e}")
             QMessageBox.critical(self, "Error", f"Error starting VM: {e}")
 
-    def _stop_selected_vm(self):
+    def _stop_selected_vm(self) -> None:
         """Stop the selected VM."""
         snapshot_id = self._get_selected_vm_id()
         if not snapshot_id:
@@ -253,7 +253,7 @@ class VMManagerDialog(QDialog):
             logger.error(f"Error stopping VM {snapshot_id}: {e}")
             QMessageBox.critical(self, "Error", f"Error stopping VM: {e}")
 
-    def _delete_selected_vm(self):
+    def _delete_selected_vm(self) -> None:
         """Delete the selected VM."""
         snapshot_id = self._get_selected_vm_id()
         if not snapshot_id:
@@ -283,7 +283,7 @@ class VMManagerDialog(QDialog):
             logger.error(f"Error deleting VM {snapshot_id}: {e}")
             QMessageBox.critical(self, "Error", f"Error deleting VM: {e}")
 
-    def _create_new_vm_dialog(self):
+    def _create_new_vm_dialog(self) -> None:
         """Open dialog to create a new VM."""
         QMessageBox.information(
             self,
@@ -291,7 +291,7 @@ class VMManagerDialog(QDialog):
             "VM creation will be implemented in the workflow manager.\nUse the main application's binary analysis features to create VMs.",
         )
 
-    def _configure_base_images(self):
+    def _configure_base_images(self) -> None:
         """Open dialog to configure base images."""
         try:
             current_config = self.qemu_manager.get_base_image_configuration()

@@ -30,8 +30,11 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+import logging
 import os
 import sys
+
+logger = logging.getLogger(__name__)
 
 # Disable pybind11 GIL assertions to prevent EnumType errors
 os.environ["PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF"] = "1"
@@ -49,9 +52,9 @@ try:
     security_enforcement.initialize_security()
     security_status = security_enforcement.get_security_status()
     if security_status.get("initialized"):
-        print(f"Security enforcement initialized: {security_status.get('patches_applied', {})}")
+        logger.info(f"Security enforcement initialized: {security_status.get('patches_applied', {})}")
 except ImportError:
-    print("Warning: Security enforcement module not available - running without enhanced protections")
+    logger.warning("Security enforcement module not available - running without enhanced protections")
 
 from .main import main
 

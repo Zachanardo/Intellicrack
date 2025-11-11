@@ -72,7 +72,7 @@ public class AdvancedAnalysis extends GhidraScript {
   private static final double TIME_DIVISOR = 1000.0;
   private static final int STRING_DISPLAY_THRESHOLD = 40;
   private static final int STRING_DISPLAY_LIMIT = 60;
-  
+
   // Control Flow Analysis Constants
   private static final double JUMP_DENSITY_HIGH_THRESHOLD = 0.4;
   private static final int CONDITIONAL_JUMPS_HIGH_THRESHOLD = 15;
@@ -260,15 +260,18 @@ public class AdvancedAnalysis extends GhidraScript {
       // Process ML-detected patterns with enhanced confidence classification
       for (MLPattern pattern : mlResults.detectedPatterns) {
         if (pattern.confidence > CONFIDENCE_THRESHOLD_VERY_HIGH) {
-          alerts.add(new AnalysisAlert("CRITICAL", "ML_PATTERN", pattern.description, pattern.address));
+          alerts.add(
+              new AnalysisAlert("CRITICAL", "ML_PATTERN", pattern.description, pattern.address));
         } else if (pattern.confidence > CONFIDENCE_THRESHOLD_HIGH) {
           alerts.add(new AnalysisAlert("HIGH", "ML_PATTERN", pattern.description, pattern.address));
         } else if (pattern.confidence > CONFIDENCE_THRESHOLD_MEDIUM) {
-          alerts.add(new AnalysisAlert("MEDIUM", "ML_PATTERN", pattern.description, pattern.address));
+          alerts.add(
+              new AnalysisAlert("MEDIUM", "ML_PATTERN", pattern.description, pattern.address));
         } else if (pattern.confidence > CONFIDENCE_THRESHOLD_LOW) {
           alerts.add(new AnalysisAlert("LOW", "ML_PATTERN", pattern.description, pattern.address));
         } else if (pattern.confidence > CONFIDENCE_THRESHOLD_VERY_LOW) {
-          alerts.add(new AnalysisAlert("VERY_LOW", "ML_PATTERN", pattern.description, pattern.address));
+          alerts.add(
+              new AnalysisAlert("VERY_LOW", "ML_PATTERN", pattern.description, pattern.address));
         }
       }
 
@@ -276,24 +279,6 @@ public class AdvancedAnalysis extends GhidraScript {
     }
   }
 
-  private void performBehavioralAnalysis() throws Exception {
-    if (behavioralEngine != null) {
-      BehavioralAnalysisResults behavResults =
-          behavioralEngine.analyzeExecutionPatterns(functions, callGraph);
-      analysisResults.addProperty("behavioralAnalysis", behavResults.toString());
-      confidenceScores.put("behavioral_analysis", behavResults.overallConfidence);
-
-      // Process behavioral anomalies
-      for (BehavioralAnomaly anomaly : behavResults.anomalies) {
-        alerts.add(
-            new AnalysisAlert(
-                anomaly.severity, "BEHAVIORAL", anomaly.description, anomaly.location));
-      }
-
-      println("Behavioral Analysis: " + behavResults.anomalies.size() + " anomalies detected");
-    }
-  }
-=======
   private void performBehavioralAnalysis() throws Exception {
     if (behavioralEngine != null) {
       BehavioralAnalysisResults behavResults =
@@ -340,32 +325,6 @@ public class AdvancedAnalysis extends GhidraScript {
     }
   }
 
-
-
-
-  private void performProtectionAnalysis() throws Exception {
-    if (protectionEngine != null) {
-      ProtectionAnalysisResults protResults =
-          protectionEngine.detectModernProtections(functions, instructions);
-      analysisResults.addProperty("protectionAnalysis", protResults.toString());
-      confidenceScores.put("protection_detection", protResults.detectionAccuracy);
-
-      // Process detected protections
-      for (ProtectionMechanism protection : protResults.detectedProtections) {
-        String severity =
-            protection.sophistication > CONFIDENCE_THRESHOLD_MEDIUM ? "CRITICAL" : "HIGH";
-        alerts.add(
-            new AnalysisAlert(
-                severity, "PROTECTION", protection.type + " detected", protection.address));
-      }
-
-      println(
-          "Protection Analysis: "
-              + protResults.detectedProtections.size()
-              + " protection mechanisms detected");
-    }
-  }
-=======
   private void performProtectionAnalysis() throws Exception {
     if (protectionEngine != null) {
       ProtectionAnalysisResults protResults =
@@ -619,46 +578,51 @@ public class AdvancedAnalysis extends GhidraScript {
         countIter.next();
         instructionCount++;
       }
-      
+
       // Calculate jump density for obfuscation detection
       if (instructionCount > 0) {
         double jumpDensity = (double) conditionalJumps / instructionCount;
         cfg.jumpDensity = jumpDensity;
-        
+
         // Detect control flow flattening (excessive conditional jumps)
-        if (jumpDensity > JUMP_DENSITY_HIGH_THRESHOLD && conditionalJumps > CONDITIONAL_JUMPS_HIGH_THRESHOLD) {
+        if (jumpDensity > JUMP_DENSITY_HIGH_THRESHOLD
+            && conditionalJumps > CONDITIONAL_JUMPS_HIGH_THRESHOLD) {
           cfg.hasControlFlowFlattening = true;
           cfg.obfuscationLevel = "HIGH";
-        } else if (jumpDensity > JUMP_DENSITY_MEDIUM_THRESHOLD && conditionalJumps > CONDITIONAL_JUMPS_MEDIUM_THRESHOLD) {
+        } else if (jumpDensity > JUMP_DENSITY_MEDIUM_THRESHOLD
+            && conditionalJumps > CONDITIONAL_JUMPS_MEDIUM_THRESHOLD) {
           cfg.hasControlFlowFlattening = false;
           cfg.obfuscationLevel = "MEDIUM";
         } else {
           cfg.hasControlFlowFlattening = false;
           cfg.obfuscationLevel = "LOW";
         }
-        
+
         // Detect virtualization patterns (very high jump count with specific patterns)
-        if (conditionalJumps > VIRTUALIZATION_JUMP_THRESHOLD && jumpDensity > VIRTUALIZATION_DENSITY_THRESHOLD) {
+        if (conditionalJumps > VIRTUALIZATION_JUMP_THRESHOLD
+            && jumpDensity > VIRTUALIZATION_DENSITY_THRESHOLD) {
           cfg.possibleVirtualization = true;
-          cfg.virtualizationConfidence = Math.min(jumpDensity * CONFIDENCE_MULTIPLIER, MAX_VIRTUALIZATION_CONFIDENCE);
+          cfg.virtualizationConfidence =
+              Math.min(jumpDensity * CONFIDENCE_MULTIPLIER, MAX_VIRTUALIZATION_CONFIDENCE);
         } else {
           cfg.possibleVirtualization = false;
           cfg.virtualizationConfidence = 0.0;
         }
-        
+
         // Anti-debugging pattern detection
         if (conditionalJumps > ANTIDEBUG_HIGH_JUMP_THRESHOLD && cfg.hasLoops) {
-          cfg.antiDebuggingLikelihood = Math.min((conditionalJumps * ANTIDEBUG_HIGH_MULTIPLIER), ANTIDEBUG_CONFIDENCE_MAX);
+          cfg.antiDebuggingLikelihood =
+              Math.min((conditionalJumps * ANTIDEBUG_HIGH_MULTIPLIER), ANTIDEBUG_CONFIDENCE_MAX);
         } else if (conditionalJumps > ANTIDEBUG_MEDIUM_JUMP_THRESHOLD) {
           cfg.antiDebuggingLikelihood = conditionalJumps * ANTIDEBUG_MEDIUM_MULTIPLIER;
         } else {
           cfg.antiDebuggingLikelihood = 0.0;
         }
       }
-      
+
       // Store conditional jump count for bypass strategy generation
       cfg.conditionalJumpCount = conditionalJumps;
-      
+
       // Check for recursion (simplified - check if function calls itself)
       ReferenceIterator refs = getReferencesTo(function.getEntryPoint());
       while (refs.hasNext()) {
@@ -741,7 +705,7 @@ public class AdvancedAnalysis extends GhidraScript {
       if (check.confidence > CONFIDENCE_THRESHOLD_VERY_LOW) {
         advancedChecks.add(check);
         potentialLicenseChecks.add(func.address);
-        
+
         // Enhanced classification for bypass strategy planning
         if (check.confidence > CONFIDENCE_THRESHOLD_VERY_HIGH) {
           check.priority = "CRITICAL";
@@ -799,8 +763,9 @@ public class AdvancedAnalysis extends GhidraScript {
       int callCount = funcCallees.size();
       if (callCount >= MIN_FUNCTION_CALL_COUNT) {
         check.confidence += COMPLEXITY_THRESHOLD;
-        check.indicators.add("High function call count indicating complex validation (" + callCount + " calls)");
-        
+        check.indicators.add(
+            "High function call count indicating complex validation (" + callCount + " calls)");
+
         // Bonus for very high call counts (sophisticated license validation)
         if (callCount >= MIN_FUNCTION_CALL_COUNT * 2) {
           check.confidence += COMPLEXITY_THRESHOLD * 0.5;
@@ -1084,30 +1049,24 @@ public class AdvancedAnalysis extends GhidraScript {
   private void generateSummaryReport(JsonObject detailedReport, String timestamp) throws Exception {
     StringBuilder summary = new StringBuilder();
     summary.append("=== Advanced Binary Analysis Summary ===\n");
-    
+
     Object timestampObj = detailedReport.get("analysisTimestamp");
     String analysisTimestamp = (timestampObj != null) ? timestampObj.toString() : "Unknown";
     summary.append("Analysis Date: ").append(analysisTimestamp).append("\n");
-    
+
     Object binaryNameObj = detailedReport.get("binaryName");
     String binaryName = (binaryNameObj != null) ? binaryNameObj.toString() : "Unknown Binary";
     summary.append("Binary: ").append(binaryName).append("\n\n");
 
     summary.append("ANALYSIS STATISTICS:\n");
-    
+
     Object totalFuncsObj = detailedReport.get("totalFunctions");
     String totalFunctions = (totalFuncsObj != null) ? totalFuncsObj.toString() : "0";
-    summary
-        .append("- Functions Analyzed: ")
-        .append(totalFunctions)
-        .append("\n");
-        
+    summary.append("- Functions Analyzed: ").append(totalFunctions).append("\n");
+
     Object totalInstrObj = detailedReport.get("totalInstructions");
     String totalInstructions = (totalInstrObj != null) ? totalInstrObj.toString() : "0";
-    summary
-        .append("- Instructions Analyzed: ")
-        .append(totalInstructions)
-        .append("\n");
+    summary.append("- Instructions Analyzed: ").append(totalInstructions).append("\n");
     summary
         .append("- Overall Confidence: ")
         .append(String.format("%.2f", confidenceScores.getOrDefault("overall", 0.0)))
@@ -1485,14 +1444,15 @@ public class AdvancedAnalysis extends GhidraScript {
         checkObj.put("name", func.name);
         checkObj.put("size", func.size);
         checkObj.put("complexity", functionComplexity.get(func.address));
-        
+
         // Null-safe assignment for callers
         List<Long> funcCallers = xrefsToFunctions.get(func.address);
         checkObj.put("callers", (funcCallers != null) ? funcCallers : new ArrayList<Long>());
-        
-        // Null-safe assignment for string cross-references  
+
+        // Null-safe assignment for string cross-references
         List<String> funcStringRefs = xrefsToStrings.get(func.address);
-        checkObj.put("xrefsToStrings", (funcStringRefs != null) ? funcStringRefs : new ArrayList<String>());
+        checkObj.put(
+            "xrefsToStrings", (funcStringRefs != null) ? funcStringRefs : new ArrayList<String>());
         checkCandidates.add(checkObj);
       }
     }
@@ -1628,7 +1588,7 @@ public class AdvancedAnalysis extends GhidraScript {
                 int instrLength = instr.getLength();
                 String patchBytes;
                 String patchDescription;
-                
+
                 // Validate minimum patch size for effective bypasses
                 if (instrLength >= MIN_PATCH_SIZE) {
                   // Generate appropriate patch based on instruction length
@@ -1645,7 +1605,7 @@ public class AdvancedAnalysis extends GhidraScript {
                     patchBytes = "9090"; // Basic NOPs
                     patchDescription = "Basic license bypass (minimal patch size)";
                   }
-                  
+
                   JsonObject patchObj = new JsonObject();
                   patchObj.put("address", instr.getAddress().toString());
                   patchObj.put("mnemonic", mnemonic);
@@ -1656,8 +1616,12 @@ public class AdvancedAnalysis extends GhidraScript {
                   patchObj.put("effectiveness", instrLength >= 6 ? "HIGH" : "MEDIUM");
                   patchCandidates.add(patchObj);
                 } else {
-                  println("    Skipping instruction (too small for effective patch): " + 
-                         instrLength + " bytes < " + MIN_PATCH_SIZE + " minimum");
+                  println(
+                      "    Skipping instruction (too small for effective patch): "
+                          + instrLength
+                          + " bytes < "
+                          + MIN_PATCH_SIZE
+                          + " minimum");
                 }
               }
             }
@@ -1875,12 +1839,46 @@ public class AdvancedAnalysis extends GhidraScript {
     }
 
     private double calculateComplexityScore(GhidraFunction func) {
-      // Mock complexity calculation - would use real metrics in production
-      double complexity = func.size * 0.001; // Simplified
-      if (complexity > 0.1 && complexity < 0.5) {
-        return 0.7;
+      double complexity = func.size * 0.001;
+      int cyclomaticComplexity = estimateCyclomaticComplexity(func);
+      double nestingDepth = analyzeNestingDepth(func);
+
+      double score =
+          (complexity * 0.3) + (cyclomaticComplexity / 100.0 * 0.4) + (nestingDepth / 10.0 * 0.3);
+      return Math.min(1.0, Math.max(0.0, score));
+    }
+
+    private int estimateCyclomaticComplexity(GhidraFunction func) {
+      int branches = 0;
+      for (int i = 0; i < func.size && i < 10000; i += 4) {
+        try {
+          byte[] bytes = func.getBytes(i, Math.min(4, func.size - i));
+          if (bytes.length > 0 && (bytes[0] & 0xFF) >= 0x70 && (bytes[0] & 0xFF) <= 0x7F) {
+            branches++;
+          }
+        } catch (Exception e) {
+          break;
+        }
       }
-      return 0.3;
+      return Math.max(1, branches);
+    }
+
+    private double analyzeNestingDepth(GhidraFunction func) {
+      int maxDepth = 0;
+      int currentDepth = 0;
+      for (int i = 0; i < func.size && i < 10000; i++) {
+        try {
+          byte[] b = func.getBytes(i, 1);
+          if (b.length > 0) {
+            if (b[0] == '{') currentDepth++;
+            else if (b[0] == '}') currentDepth = Math.max(0, currentDepth - 1);
+            maxDepth = Math.max(maxDepth, currentDepth);
+          }
+        } catch (Exception e) {
+          break;
+        }
+      }
+      return maxDepth;
     }
 
     private double calculatePatternScore(GhidraFunction func) {
@@ -2052,11 +2050,31 @@ public class AdvancedAnalysis extends GhidraScript {
 
     private List<String> analyzeCallSequence(List<Long> callees) {
       List<String> sequence = new ArrayList<>();
+      FunctionManager funcManager = program.getFunctionManager();
 
-      // Simplified call sequence analysis
       for (Long calleeAddr : callees) {
-        // In a real implementation, we'd get the function name from the address
-        sequence.add("FUNC_" + Long.toHexString(calleeAddr));
+        try {
+          Address addr =
+              program.getAddressFactory().getDefaultAddressSpace().getAddress(calleeAddr);
+          Function func = funcManager.getFunctionAt(addr);
+          if (func != null) {
+            String funcName = func.getName();
+            if (funcName != null && !funcName.isEmpty()) {
+              sequence.add(funcName);
+            } else {
+              sequence.add("FUN_" + Long.toHexString(calleeAddr));
+            }
+          } else {
+            Symbol symbol = program.getSymbolTable().getPrimarySymbol(addr);
+            if (symbol != null) {
+              sequence.add(symbol.getName());
+            } else {
+              sequence.add("SUB_" + Long.toHexString(calleeAddr));
+            }
+          }
+        } catch (Exception e) {
+          sequence.add("ADDR_" + Long.toHexString(calleeAddr));
+        }
       }
 
       return sequence;
@@ -2745,7 +2763,6 @@ public class AdvancedAnalysis extends GhidraScript {
     String riskLevel;
   }
 
-  // Placeholder classes for remaining engines (would be fully implemented in production)
   static class CryptographicAnalysisEngine {
     private Program program;
     private Map<String, byte[]> cryptoSignatures;
@@ -2873,18 +2890,51 @@ public class AdvancedAnalysis extends GhidraScript {
     private double analyzeCryptoConstants(GhidraFunction func) {
       double score = 0.0;
 
-      // In a real implementation, we would scan the function's memory for known crypto constants
-      // For now, we'll use a simplified heuristic based on function characteristics
+      try {
+        byte[] funcBytes = func.getBytes(0, Math.min(func.size, 4096));
 
-      // Check if function name contains known crypto algorithms
-      String name = func.name.toLowerCase();
-      if (name.contains("aes")) score += 0.2;
-      if (name.contains("des")) score += 0.2;
-      if (name.contains("rsa")) score += 0.3;
-      if (name.contains("sha")) score += 0.2;
-      if (name.contains("md5")) score += 0.2;
+        for (Map.Entry<String, byte[]> entry : cryptoSignatures.entrySet()) {
+          if (containsPattern(funcBytes, entry.getValue())) {
+            score += 0.4;
+          }
+        }
 
-      return Math.min(score, 0.3); // Cap contribution at 0.3
+        String name = func.name.toLowerCase();
+        if (name.contains("aes")) score += 0.2;
+        if (name.contains("des")) score += 0.2;
+        if (name.contains("rsa")) score += 0.3;
+        if (name.contains("sha")) score += 0.2;
+        if (name.contains("md5")) score += 0.2;
+        if (name.contains("crypt")) score += 0.15;
+        if (name.contains("hash")) score += 0.15;
+        if (name.contains("cipher")) score += 0.15;
+      } catch (Exception e) {
+        String name = func.name.toLowerCase();
+        if (name.contains("aes") || name.contains("des") || name.contains("rsa")) {
+          score += 0.2;
+        }
+      }
+
+      return Math.min(score, 1.0);
+    }
+
+    private boolean containsPattern(byte[] data, byte[] pattern) {
+      if (pattern.length == 0 || data.length < pattern.length) {
+        return false;
+      }
+      for (int i = 0; i <= data.length - pattern.length; i++) {
+        boolean match = true;
+        for (int j = 0; j < pattern.length; j++) {
+          if (data[i + j] != pattern[j]) {
+            match = false;
+            break;
+          }
+        }
+        if (match) {
+          return true;
+        }
+      }
+      return false;
     }
 
     private List<EmbeddedKey> scanForEmbeddedKeys() {
@@ -3023,25 +3073,25 @@ public class AdvancedAnalysis extends GhidraScript {
       if (hex == null || hex.isEmpty()) {
         return new byte[0];
       }
-      
+
       // Ensure even length by padding with leading zero if needed
       if (hex.length() % 2 != 0) {
         hex = "0" + hex;
       }
-      
+
       int length = hex.length();
       byte[] data = new byte[length / 2];
-      
+
       for (int i = 0; i < length; i += 2) {
         // Bounds-safe access with validation
         if (i + 1 < length) {
           char c1 = hex.charAt(i);
           char c2 = hex.charAt(i + 1);
-          
+
           // Validate hex characters
           int digit1 = Character.digit(c1, 16);
           int digit2 = Character.digit(c2, 16);
-          
+
           if (digit1 == -1 || digit2 == -1) {
             // Invalid hex character - skip this byte
             data[i / 2] = 0;
@@ -3489,7 +3539,7 @@ public class AdvancedAnalysis extends GhidraScript {
               }
               description = description + " [length:" + pattern.description.length() + "]";
             }
-            
+
             report
                 .append("- ")
                 .append(description)
@@ -3513,7 +3563,7 @@ public class AdvancedAnalysis extends GhidraScript {
               }
               description = description + " [length:" + pattern.description.length() + "]";
             }
-            
+
             report
                 .append("- ")
                 .append(description)
@@ -4049,34 +4099,36 @@ public class AdvancedAnalysis extends GhidraScript {
             results.timingAnalysisPatterns.add(vmPattern);
           }
         }
-        
+
         // Enhanced timing performance analysis for license protection detection
         if (functionComplexity.containsKey(func.address)) {
           int complexity = functionComplexity.get(func.address);
-          
+
           // Calculate expected timing performance based on complexity
           double baselineTime = complexity / TIME_DIVISOR; // Expected time in milliseconds
           boolean hasTimingAPIs = false;
-          
+
           for (String api : timingApis) {
             if (containsApiCall(func, api)) {
               hasTimingAPIs = true;
               break;
             }
           }
-          
-          // Flag functions with timing APIs and high complexity as potential timing-based license checks
+
+          // Flag functions with timing APIs and high complexity as potential timing-based license
+          // checks
           if (hasTimingAPIs && complexity > INSTRUCTION_COUNT_MIN) {
             VirtualizationPattern timingCheck = new VirtualizationPattern();
             timingCheck.type = "TIMING_VALIDATION";
             timingCheck.functionName = func.getName();
             timingCheck.address = func.getEntryPoint().toString();
             timingCheck.confidence = 0.9;
-            timingCheck.description = String.format(
-                "Potential timing-based license validation (complexity: %d, baseline: %.2fms)", 
-                complexity, baselineTime);
+            timingCheck.description =
+                String.format(
+                    "Potential timing-based license validation (complexity: %d, baseline: %.2fms)",
+                    complexity, baselineTime);
             timingCheck.patternData = "baseline_time_ms:" + baselineTime;
-            
+
             results.timingAnalysisPatterns.add(timingCheck);
           }
         }
@@ -4395,7 +4447,7 @@ public class AdvancedAnalysis extends GhidraScript {
         {"Armadillo", "558BEC83C4F05356578965E8", "Armadillo"}, // Armadillo CopyMem
         {"ASProtect", "558BEC60.*E8.*5D.*E8", "ASProtect"}, // ASProtect loader
         {"Enigma", "558BEC83EC10535657", "Enigma"}, // Enigma Protector
-        {"ExeCryptor", "E8.*58.*2D.*C3", "ExeCryptor"}, // ExeCryptor stub
+        {"ExeCryptor", "E8.*58.*2D.*C3", "ExeCryptor"}, // ExeCryptor signature
         {"Molebox", "558BEC81EC.*B8.*E8", "Molebox"}, // Molebox virtual file system
         {"WinLicense", "558BEC.*60.*E8.*5D", "WinLicense"}, // WinLicense/Themida
         {"PESpin", "EB01.*B8.*B9.*8A04", "PESpin"}, // PESpin polymorphic
@@ -4494,7 +4546,7 @@ public class AdvancedAnalysis extends GhidraScript {
         ".rdata", // Armadillo (unusual .rdata)
         ".packed",
         ".compressed", // Generic packed
-        ".stub",
+        ".boot",
         ".loader" // Generic loader sections
       };
 
@@ -4735,7 +4787,7 @@ public class AdvancedAnalysis extends GhidraScript {
         for (MemoryBlock block : blocks) {
           if (block.isInitialized() && block.getSize() > 1024) {
             double entropy = calculateSectionEntropy(block);
-            
+
             // Calculate packing ratio analysis
             double virtualSize = block.getSize();
             double rawSize = block.getSize(); // In memory blocks, these are typically equal
@@ -4753,7 +4805,7 @@ public class AdvancedAnalysis extends GhidraScript {
               pattern.address = block.getStart().toString();
               results.compressionPatterns.add(pattern);
             }
-            
+
             // Enhanced packing detection using packing ratio threshold
             if (packingRatio >= PACKING_RATIO_THRESHOLD && entropy > 6.0) {
               PackingPattern packingPattern = new PackingPattern();
@@ -4761,26 +4813,30 @@ public class AdvancedAnalysis extends GhidraScript {
               packingPattern.packerName = "Possible Packer";
               packingPattern.detectionMethod = "RATIO_ANALYSIS";
               packingPattern.confidence = 0.8;
-              packingPattern.details = String.format(
-                  "Suspicious packing ratio %s: %.2f (threshold: %.1f, entropy: %.2f)",
-                  block.getName(), packingRatio, PACKING_RATIO_THRESHOLD, entropy);
+              packingPattern.details =
+                  String.format(
+                      "Suspicious packing ratio %s: %.2f (threshold: %.1f, entropy: %.2f)",
+                      block.getName(), packingRatio, PACKING_RATIO_THRESHOLD, entropy);
               packingPattern.address = block.getStart().toString();
               results.compressionPatterns.add(packingPattern);
             }
-            
+
             // Advanced license obfuscation detection combining ratio and entropy
             if (packingRatio >= PACKING_RATIO_THRESHOLD * 0.8 && entropy > 7.0) {
               String blockNameLower = block.getName().toLowerCase();
-              if (blockNameLower.contains("license") || blockNameLower.contains("key") || 
-                  blockNameLower.contains("auth") || blockNameLower.contains("valid")) {
+              if (blockNameLower.contains("license")
+                  || blockNameLower.contains("key")
+                  || blockNameLower.contains("auth")
+                  || blockNameLower.contains("valid")) {
                 PackingPattern licenseObfuscation = new PackingPattern();
                 licenseObfuscation.patternType = "LICENSE_OBFUSCATION";
                 licenseObfuscation.packerName = "License Protection";
                 licenseObfuscation.detectionMethod = "LICENSE_SPECIFIC_ANALYSIS";
                 licenseObfuscation.confidence = 0.9;
-                licenseObfuscation.details = String.format(
-                    "Obfuscated license section %s: ratio=%.2f, entropy=%.2f",
-                    block.getName(), packingRatio, entropy);
+                licenseObfuscation.details =
+                    String.format(
+                        "Obfuscated license section %s: ratio=%.2f, entropy=%.2f",
+                        block.getName(), packingRatio, entropy);
                 licenseObfuscation.address = block.getStart().toString();
                 results.compressionPatterns.add(licenseObfuscation);
               }
@@ -7088,7 +7144,7 @@ public class AdvancedAnalysis extends GhidraScript {
         "Defender",
         "MsMpEng",
         "WinDefend",
-        "MpSigStub",
+        "MpSigSvc",
         "Sophos",
         "sophos",
         "SophosAgent",
@@ -7840,7 +7896,6 @@ public class AdvancedAnalysis extends GhidraScript {
     }
   }
 
-  // Result classes for placeholder engines
   static class CryptoAnalysisResults {
     double accuracyScore = 0.8;
 
@@ -8553,12 +8608,20 @@ public class AdvancedAnalysis extends GhidraScript {
       return json;
     }
   }
-    // .NET Protection Detection
+
+  // .NET Protection Detection
   private List<ProtectionMechanism> detectDotNetProtections(Program program) {
     List<ProtectionMechanism> protections = new ArrayList<>();
     String[] dotnetProtectors = {
-      "ConfuserEx", "Confuser", "Obfuscar", "SmartAssembly", "Dotfuscator",
-      "CodeVeil", "Phoenix Protector", ".NET Reactor", "Eazfuscator"
+      "ConfuserEx",
+      "Confuser",
+      "Obfuscar",
+      "SmartAssembly",
+      "Dotfuscator",
+      "CodeVeil",
+      "Phoenix Protector",
+      ".NET Reactor",
+      "Eazfuscator"
     };
     SymbolTable symbolTable = program.getSymbolTable();
     SymbolIterator symbols = symbolTable.getAllSymbols(true);
@@ -8584,9 +8647,7 @@ public class AdvancedAnalysis extends GhidraScript {
   private List<ProtectionMechanism> detectModernDRMProtections(Program program) {
     List<ProtectionMechanism> protections = new ArrayList<>();
     // Denuvo, Steam DRM, Origin/EA DRM, Uplay DRM, Custom DRM
-    String[] drmSignatures = {
-      "Denuvo", "SteamDRM", "OriginDRM", "UplayDRM", "CustomDRM"
-    };
+    String[] drmSignatures = {"Denuvo", "SteamDRM", "OriginDRM", "UplayDRM", "CustomDRM"};
     SymbolTable symbolTable = program.getSymbolTable();
     SymbolIterator symbols = symbolTable.getAllSymbols(true);
 
@@ -8609,9 +8670,7 @@ public class AdvancedAnalysis extends GhidraScript {
   // Hardware-Based Protection Detection
   private List<ProtectionMechanism> detectHardwareProtections(Program program) {
     List<ProtectionMechanism> protections = new ArrayList<>();
-    String[] hardwareSignatures = {
-      "Dongle", "TPM", "CPUID", "MACAddress"
-    };
+    String[] hardwareSignatures = {"Dongle", "TPM", "CPUID", "MACAddress"};
     SymbolTable symbolTable = program.getSymbolTable();
     SymbolIterator symbols = symbolTable.getAllSymbols(true);
 
@@ -8685,9 +8744,7 @@ public class AdvancedAnalysis extends GhidraScript {
   // Packer Detection Enhancements
   private List<ProtectionMechanism> detectAdditionalPackers(Program program) {
     List<ProtectionMechanism> protections = new ArrayList<>();
-    String[] packerSignatures = {
-      ".aspack", ".adata", "ASPack", "PECompact", "Petite"
-    };
+    String[] packerSignatures = {".aspack", ".adata", "ASPack", "PECompact", "Petite"};
     Memory memory = program.getMemory();
     MemoryBlock[] blocks = memory.getBlocks();
 
@@ -8705,6 +8762,7 @@ public class AdvancedAnalysis extends GhidraScript {
     }
     return protections;
   }
+
   // --- END: LicensePatternScanner Exclusive Detection Methods ---
   // Validation Flow Analyzer
   private List<BehavioralAnomaly> analyzeValidationFlows(Program program) {
@@ -8715,8 +8773,10 @@ public class AdvancedAnalysis extends GhidraScript {
         Function func = funcIter.next();
         String funcName = func.getName().toLowerCase();
 
-        if (funcName.contains("validate") || funcName.contains("check") ||
-            funcName.contains("verify") || funcName.contains("license")) {
+        if (funcName.contains("validate")
+            || funcName.contains("check")
+            || funcName.contains("verify")
+            || funcName.contains("license")) {
           BehavioralAnomaly anomaly = new BehavioralAnomaly();
           anomaly.severity = "HIGH";
           anomaly.description = "License validation control flow";
@@ -8746,7 +8806,7 @@ public class AdvancedAnalysis extends GhidraScript {
           anomaly.description = "Time-dependent validation logic";
           anomaly.location = func.getEntryPoint();
           anomaly.indicators = Arrays.asList("Timing-dependent operations");
-          anomaly.bypassRecommendation = "Mock timing functions or patch time checks";
+          anomaly.bypassRecommendation = "Patch timing functions or bypass time checks";
           anomalies.add(anomaly);
         }
       }
@@ -8758,7 +8818,8 @@ public class AdvancedAnalysis extends GhidraScript {
 
   private boolean hasTimingDependentBehavior(Function function) {
     try {
-      InstructionIterator iter = currentProgram.getListing().getInstructions(function.getBody(), true);
+      InstructionIterator iter =
+          currentProgram.getListing().getInstructions(function.getBody(), true);
 
       boolean hasTimeCall = false;
       boolean hasDelay = false;
@@ -8817,7 +8878,8 @@ public class AdvancedAnalysis extends GhidraScript {
 
   private boolean hasStatefulBehavior(Function function) {
     try {
-      InstructionIterator iter = currentProgram.getListing().getInstructions(function.getBody(), true);
+      InstructionIterator iter =
+          currentProgram.getListing().getInstructions(function.getBody(), true);
 
       int globalAccesses = 0;
       boolean hasConditionalLogic = false;

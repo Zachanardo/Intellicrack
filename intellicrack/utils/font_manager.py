@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 class FontManager:
     """Manages custom font loading and configuration for the application."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the font manager with configuration and setup font directories."""
         self.fonts_dir = get_resource_path("assets/fonts")
         self.loaded_fonts = []
@@ -75,7 +75,7 @@ class FontManager:
                 "available_fonts": [],
             }
 
-    def load_application_fonts(self):
+    def load_application_fonts(self) -> None:
         """Load custom fonts into Qt application."""
         if not os.path.exists(self.fonts_dir):
             return

@@ -675,7 +675,7 @@ What security aspect interests you?"""
 
             except Exception as e:
                 logger.error(f"Error applying patch: {e}")
-                return {"status": "error", "message": f"Failed to apply patch: {str(e)}"}
+                return {"status": "error", "message": f"Failed to apply patch: {e!s}"}
 
             finally:
                 # Ensure temporary file is cleaned up even if an exception occurs
@@ -925,7 +925,7 @@ What security aspect interests you?"""
                     "Binary structure analysis completed",
                     "Cross-referenced with ML predictions",
                     "Applied AI reasoning patterns",
-                ]
+                ],
             )
 
             analysis["recommendations"].extend(
@@ -933,7 +933,7 @@ What security aspect interests you?"""
                     "Further static analysis recommended",
                     "Consider dynamic analysis for runtime behavior",
                     "Verify findings with manual review",
-                ]
+                ],
             )
 
             self._log_tool_usage(f"Complex binary analysis completed for {binary_path}")
@@ -1200,10 +1200,10 @@ What security aspect interests you?"""
 
         except requests.RequestException as e:
             logger.error(f"Network error during external analysis: {e}")
-            return {"status": "error", "message": f"Network error: {str(e)}"}
+            return {"status": "error", "message": f"Network error: {e!s}"}
         except Exception as e:
             logger.error(f"External analysis error: {e}")
-            return {"status": "error", "message": f"Analysis failed: {str(e)}"}
+            return {"status": "error", "message": f"Analysis failed: {e!s}"}
 
     def generate_insights(self, ai_request: dict[str, Any]) -> dict[str, Any]:
         """Generate AI insights from binary analysis data."""
@@ -1234,7 +1234,7 @@ What security aspect interests you?"""
                 data_sections = [s for s in sections if not s.get("executable", False)]
 
                 analysis_parts.append(
-                    f"Binary contains {len(sections)} sections: {len(executable_sections)} executable, {len(data_sections)} data sections."
+                    f"Binary contains {len(sections)} sections: {len(executable_sections)} executable, {len(data_sections)} data sections.",
                 )
 
                 # Check for common section patterns
@@ -1256,7 +1256,7 @@ What security aspect interests you?"""
                             {
                                 "action": "analyze_packing",
                                 "rationale": f"High entropy in {section.get('name', 'section')} suggests compression or obfuscation",
-                            }
+                            },
                         )
                         confidence += 0.1
 
@@ -1279,7 +1279,7 @@ What security aspect interests you?"""
                         {
                             "action": "monitor_file_access",
                             "rationale": "Binary has file system access capabilities that should be monitored",
-                        }
+                        },
                     )
 
                 if found_crypto:
@@ -1288,7 +1288,7 @@ What security aspect interests you?"""
                         {
                             "action": "analyze_crypto_usage",
                             "rationale": "Cryptographic capabilities may be used for license verification or data protection",
-                        }
+                        },
                     )
                     confidence += 0.2
 
@@ -1298,7 +1298,7 @@ What security aspect interests you?"""
                         {
                             "action": "monitor_network_traffic",
                             "rationale": "Network capabilities suggest potential license server communication",
-                        }
+                        },
                     )
                     confidence += 0.1
 
@@ -1316,7 +1316,7 @@ What security aspect interests you?"""
                         {
                             "action": "analyze_license_strings",
                             "rationale": f"License-related strings may reveal protection mechanisms: {license_strings[:3]}",
-                        }
+                        },
                     )
                     confidence += 0.2
 
@@ -1343,7 +1343,7 @@ What security aspect interests you?"""
                     {
                         "action": "perform_dynamic_analysis",
                         "rationale": "Static analysis complete, consider dynamic analysis for runtime behavior",
-                    }
+                    },
                 )
 
             return {"analysis": " ".join(analysis_parts), "recommendations": recommendations, "confidence": confidence}
@@ -1351,12 +1351,12 @@ What security aspect interests you?"""
         except Exception as e:
             logger.error(f"Error generating AI insights: {e}")
             return {
-                "analysis": f"Analysis failed due to error: {str(e)}",
+                "analysis": f"Analysis failed due to error: {e!s}",
                 "recommendations": [{"action": "check_input_format", "rationale": "Verify that input data is in expected format"}],
                 "confidence": 0.0,
             }
 
-    def _log_tool_usage(self, message: str):
+    def _log_tool_usage(self, message: str) -> None:
         """Log tool usage for user visibility."""
         logger.info("[AI Tool] %s", message)
         if self.cli_interface and hasattr(self.cli_interface, "update_output"):

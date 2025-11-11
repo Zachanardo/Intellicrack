@@ -182,7 +182,7 @@ class ThemidaAnalyzer:
         0x0F: b"\xC3",
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize Themida analyzer."""
         self.binary = None
         self.binary_data = None
@@ -252,7 +252,7 @@ class ThemidaAnalyzer:
 
     def _detect_themida_presence(self) -> bool:
         """Detect if binary is protected by Themida/WinLicense."""
-        for signature in self.THEMIDA_SIGNATURES.keys():
+        for signature in self.THEMIDA_SIGNATURES:
             if signature in self.binary_data:
                 return True
 
@@ -565,7 +565,7 @@ class ThemidaAnalyzer:
 
         complexity = len(instructions)
 
-        unique_mnemonics = len(set(insn[1] for insn in instructions))
+        unique_mnemonics = len({insn[1] for insn in instructions})
         complexity += unique_mnemonics
 
         branch_count = sum(1 for insn in instructions if insn[1] in ["jmp", "je", "jne", "jg", "jl", "ja", "jb"])
@@ -814,7 +814,7 @@ class ThemidaAnalyzer:
             vm_bytecode = self.binary_data[vm_code_start:vm_code_end]
 
             native_code, assembly, handlers_used, confidence = self._translate_vm_to_native(
-                vm_bytecode, handlers, context
+                vm_bytecode, handlers, context,
             )
 
             devirtualized.append(DevirtualizedCode(
@@ -830,7 +830,7 @@ class ThemidaAnalyzer:
         return devirtualized
 
     def _translate_vm_to_native(
-        self, vm_bytecode: bytes, handlers: dict[int, VMHandler], context: VMContext
+        self, vm_bytecode: bytes, handlers: dict[int, VMHandler], context: VMContext,
     ) -> tuple[bytes, list[str], list[int], float]:
         """Translate VM bytecode to native x86/x64 code.
 

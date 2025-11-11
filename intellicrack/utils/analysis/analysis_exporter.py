@@ -144,7 +144,7 @@ class AnalysisExporter:
                     vuln.get("severity", ""),
                     vuln.get("confidence", ""),
                     vuln.get("description", ""),
-                ]
+                ],
             )
 
     @staticmethod
@@ -160,7 +160,7 @@ class AnalysisExporter:
                     diff.get("new_value", ""),
                     diff.get("severity", ""),
                     diff.get("description", ""),
-                ]
+                ],
             )
 
     @staticmethod
@@ -181,7 +181,7 @@ class AnalysisExporter:
                 for key, value in result.items():
                     if isinstance(value, dict):
                         row = [value.get(h, "") for h in headers]
-                        writer.writerow([key] + row)
+                        writer.writerow([key, *row])
 
     @staticmethod
     def _generate_vulnerability_html(result: dict[str, Any]) -> str:

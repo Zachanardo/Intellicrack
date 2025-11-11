@@ -62,7 +62,7 @@ if HAS_PYQT and QSyntaxHighlighter:
     class PythonSyntaxHighlighter(QSyntaxHighlighter):
         """Syntax highlighter for Python code."""
 
-        def __init__(self, document: QTextDocument):
+        def __init__(self, document: QTextDocument) -> None:
             """Initialize the Python syntax highlighter with formatting rules for keywords, strings, comments, and functions."""
             super().__init__(document)
 
@@ -138,7 +138,7 @@ if HAS_PYQT and QSyntaxHighlighter:
             function_format.setFontWeight(QFont.Weight.Bold)
             self.highlighting_rules.append((re.compile(r"\bdef\s+(\w+)"), function_format))
 
-        def highlightBlock(self, text: str):
+        def highlightBlock(self, text: str) -> None:
             """Apply syntax highlighting to a block of text."""
             for pattern, text_format in self.highlighting_rules:
                 for _match in pattern.finditer(text):
@@ -151,19 +151,19 @@ else:
     class PythonSyntaxHighlighter:
         """Fallback syntax highlighter when PyQt6 is not available."""
 
-        def __init__(self, document=None):
+        def __init__(self, document=None) -> None:
             """Initialize fallback highlighter."""
             self.document = document
 
-        def setDocument(self, document):
+        def setDocument(self, document) -> None:
             """Set document for highlighting."""
             self.document = document
 
-        def rehighlight(self):
+        def rehighlight(self) -> None:
             """Rehighlight document - no-op in fallback."""
             pass
 
-        def highlightBlock(self, text):
+        def highlightBlock(self, text) -> None:
             """No-op highlighting in fallback."""
             pass
 
@@ -173,7 +173,7 @@ if HAS_PYQT and QDialog:
     class FindReplaceDialog(QDialog):
         """Find and replace dialog."""
 
-        def __init__(self, parent=None):
+        def __init__(self, parent=None) -> None:
             """Initialize the find and replace dialog for text search and replacement functionality."""
             if not HAS_PYQT:
                 return
@@ -182,7 +182,7 @@ if HAS_PYQT and QDialog:
             self.text_editor = parent
             self.setup_ui()
 
-        def setup_ui(self):
+        def setup_ui(self) -> None:
             """Set up the find/replace UI."""
             self.setWindowTitle("Find and Replace")
             self.setModal(False)
@@ -245,22 +245,22 @@ if HAS_PYQT and QDialog:
             # Connect enter key to find next
             self.find_edit.returnPressed.connect(self.find_next)
 
-    def find_next(self):
+    def find_next(self) -> None:
         """Find next occurrence."""
         if self.text_editor and hasattr(self.text_editor, "find_text"):
             self.text_editor.find_text(self.find_edit.text(), forward=True)
 
-    def find_previous(self):
+    def find_previous(self) -> None:
         """Find previous occurrence."""
         if self.text_editor and hasattr(self.text_editor, "find_text"):
             self.text_editor.find_text(self.find_edit.text(), forward=False)
 
-    def replace_current(self):
+    def replace_current(self) -> None:
         """Replace current selection."""
         if self.text_editor and hasattr(self.text_editor, "replace_text"):
             self.text_editor.replace_text(self.find_edit.text(), self.replace_edit.text())
 
-    def replace_all(self):
+    def replace_all(self) -> None:
         """Replace all occurrences."""
         if self.text_editor and hasattr(self.text_editor, "replace_all_text"):
             count = self.text_editor.replace_all_text(self.find_edit.text(), self.replace_edit.text())
@@ -272,15 +272,15 @@ else:
     class FindReplaceDialog:
         """Fallback find and replace dialog when PyQt6 is not available."""
 
-        def __init__(self, parent=None):
+        def __init__(self, parent=None) -> None:
             """Initialize fallback find and replace dialog."""
             pass
 
-        def show(self):
+        def show(self) -> None:
             """Show dialog (no-op in fallback)."""
             pass
 
-        def hide(self):
+        def hide(self) -> None:
             """Hide dialog (no-op in fallback)."""
             pass
 
@@ -295,7 +295,7 @@ if HAS_PYQT and QDialog:
         #: Emitted when content changes (type: bool)
         content_changed = pyqtSignal(bool)
 
-        def __init__(self, title="Text Editor", content="", syntax="python", parent=None):
+        def __init__(self, title="Text Editor", content="", syntax="python", parent=None) -> None:
             """Initialize text editor dialog with syntax highlighting and advanced editing features."""
             super().__init__(parent)
             self.setWindowTitle(title)
@@ -331,7 +331,7 @@ if HAS_PYQT and QDialog:
 
             logger.info(f"Text Editor Dialog initialized with syntax: {syntax}")
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the user interface."""
         self.setWindowTitle("Text Editor")
         self.resize(800, 600)
@@ -380,7 +380,7 @@ if HAS_PYQT and QDialog:
         main_layout.addLayout(button_layout)
         self.setLayout(main_layout)
 
-    def setup_connections(self):
+    def setup_connections(self) -> None:
         """Set up signal connections."""
         # Connect text editor signals
         self.text_edit.textChanged.connect(self.on_content_changed)
@@ -389,7 +389,7 @@ if HAS_PYQT and QDialog:
         # Connect action signals (already connected in setup_actions)
         # File watcher is already connected in __init__
 
-    def setup_actions(self):
+    def setup_actions(self) -> None:
         """Set up keyboard shortcuts and actions."""
         # File actions
         self.new_action = QAction("New", self)
@@ -464,7 +464,7 @@ if HAS_PYQT and QDialog:
         self.addAction(self.find_next_action)
         self.addAction(self.find_prev_action)
 
-    def setup_toolbar(self):
+    def setup_toolbar(self) -> None:
         """Set up the toolbar."""
         self.toolbar = QToolBar()
 
@@ -502,7 +502,7 @@ if HAS_PYQT and QDialog:
         layout = self.layout()
         layout.insertWidget(0, self.toolbar)
 
-    def setup_status_bar(self):
+    def setup_status_bar(self) -> None:
         """Set up the status bar."""
         self.status_bar = QStatusBar()
 
@@ -521,20 +521,20 @@ if HAS_PYQT and QDialog:
         # Update line/column info when cursor moves
         self.text_edit.cursorPositionChanged.connect(self.update_cursor_position)
 
-    def update_cursor_position(self):
+    def update_cursor_position(self) -> None:
         """Update cursor position in status bar."""
         cursor = self.text_edit.textCursor()
         line = cursor.blockNumber() + 1
         col = cursor.columnNumber() + 1
         self.line_col_label.setText(f"Line: {line}, Col: {col}")
 
-    def change_font_size(self, size: int):
+    def change_font_size(self, size: int) -> None:
         """Change the font size of the text editor."""
         font = self.text_edit.font()
         font.setPointSize(size)
         self.text_edit.setFont(font)
 
-    def on_content_changed(self):
+    def on_content_changed(self) -> None:
         """Handle content changes."""
         current_content = self.text_edit.toPlainText()
         self.is_modified = current_content != self.original_content
@@ -550,7 +550,7 @@ if HAS_PYQT and QDialog:
         self.save_btn.setEnabled(self.is_modified)
         self.content_changed.emit(self.is_modified)
 
-    def new_file(self):
+    def new_file(self) -> None:
         """Create a new file."""
         if self.check_save_changes():
             self.text_edit.clear()
@@ -560,7 +560,7 @@ if HAS_PYQT and QDialog:
             self.setWindowTitle("Text Editor - New File")
             self.reload_btn.setEnabled(False)
 
-    def open_file(self):
+    def open_file(self) -> None:
         """Open a file."""
         if not self.check_save_changes():
             return
@@ -575,7 +575,7 @@ if HAS_PYQT and QDialog:
         if file_path:
             self.load_file(file_path)
 
-    def load_file(self, file_path: str):
+    def load_file(self, file_path: str) -> None:
         """Load a file into the editor."""
         try:
             with open(file_path, encoding="utf-8") as f:
@@ -604,7 +604,7 @@ if HAS_PYQT and QDialog:
             logger.error("Error in text_editor_dialog: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to load file: {e!s}")
 
-    def save_file(self):
+    def save_file(self) -> None:
         """Save the current file."""
         if not self.file_path:
             self.save_file_as()
@@ -629,7 +629,7 @@ if HAS_PYQT and QDialog:
             logger.error("Error in text_editor_dialog: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to save file: {e!s}")
 
-    def save_file_as(self):
+    def save_file_as(self) -> None:
         """Save the file with a new name."""
         file_path, _ = QFileDialog.getSaveFileName(
             self,
@@ -643,7 +643,7 @@ if HAS_PYQT and QDialog:
             self.save_file()
             self.reload_btn.setEnabled(True)
 
-    def export_file(self):
+    def export_file(self) -> None:
         """Export the file to various formats."""
         export_dialog = QDialog(self)
         export_dialog.setWindowTitle("Export File")
@@ -665,7 +665,7 @@ if HAS_PYQT and QDialog:
                 "Plain Text (.txt)",
                 "CSV (.csv)",
                 "JSON (.json)",
-            ]
+            ],
         )
         layout.addWidget(format_combo)
 
@@ -701,13 +701,13 @@ if HAS_PYQT and QDialog:
                 include_highlighting.isChecked(),
                 include_line_numbers.isChecked(),
                 export_dialog,
-            )
+            ),
         )
         cancel_btn.clicked.connect(export_dialog.reject)
 
         export_dialog.exec()
 
-    def _perform_export(self, format_type, include_highlighting, include_line_numbers, dialog):
+    def _perform_export(self, format_type, include_highlighting, include_line_numbers, dialog) -> None:
         """Perform the actual export operation."""
         # Determine file extension
         format_map = {
@@ -767,7 +767,7 @@ if HAS_PYQT and QDialog:
             logger.error(f"Export failed: {e}")
             QMessageBox.critical(self, "Export Failed", f"Failed to export file:\n{e!s}")
 
-    def _export_to_html(self, file_path, content, include_highlighting, include_line_numbers):
+    def _export_to_html(self, file_path, content, include_highlighting, include_line_numbers) -> None:
         """Export content to HTML format."""
         html_content = """<!DOCTYPE html>
 <html>
@@ -807,7 +807,7 @@ if HAS_PYQT and QDialog:
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(html_content.format(title=title, content=formatted_content))
 
-    def _export_to_pdf(self, file_path, content, include_highlighting, include_line_numbers):
+    def _export_to_pdf(self, file_path, content, include_highlighting, include_line_numbers) -> None:
         """Export content to PDF format."""
         try:
             from intellicrack.handlers.pyqt6_handler import QPrinter, QTextDocument
@@ -847,7 +847,7 @@ if HAS_PYQT and QDialog:
             with open(file_path.replace(".pdf", ".txt"), "w", encoding="utf-8") as f:
                 f.write(content)
 
-    def _export_to_rtf(self, file_path, content, include_line_numbers):
+    def _export_to_rtf(self, file_path, content, include_line_numbers) -> None:
         """Export content to RTF format."""
         rtf_header = r"{\rtf1\ansi\deff0 {\fonttbl{\f0 Courier New;}}\f0\fs20 "
         rtf_footer = "}"
@@ -863,7 +863,7 @@ if HAS_PYQT and QDialog:
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(rtf_header + rtf_content + rtf_footer)
 
-    def _export_to_markdown(self, file_path, content):
+    def _export_to_markdown(self, file_path, content) -> None:
         """Export content to Markdown format."""
         # Detect language for code block
         lang = ""
@@ -888,7 +888,7 @@ if HAS_PYQT and QDialog:
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(md_content)
 
-    def _export_to_csv(self, file_path, content):
+    def _export_to_csv(self, file_path, content) -> None:
         """Export content to CSV format (line by line)."""
         import csv
 
@@ -899,7 +899,7 @@ if HAS_PYQT and QDialog:
             for i, line in enumerate(lines, 1):
                 writer.writerow([i, line])
 
-    def _export_to_json(self, file_path, content):
+    def _export_to_json(self, file_path, content) -> None:
         """Export content to JSON format."""
         import json
 
@@ -968,7 +968,7 @@ if HAS_PYQT and QDialog:
 </html>"""
         return html
 
-    def reload_file(self):
+    def reload_file(self) -> None:
         """Reload the file from disk."""
         if not self.file_path:
             return
@@ -985,7 +985,7 @@ if HAS_PYQT and QDialog:
 
         self.load_file(self.file_path)
 
-    def on_file_changed_externally(self, file_path: str):
+    def on_file_changed_externally(self, file_path: str) -> None:
         """Handle external file changes."""
         if file_path == self.file_path:
             reply = QMessageBox.question(
@@ -997,7 +997,7 @@ if HAS_PYQT and QDialog:
             if reply == QMessageBox.Yes:
                 self.load_file(file_path)
 
-    def show_find_replace(self):
+    def show_find_replace(self) -> None:
         """Show the find/replace dialog."""
         if not self.find_replace_dialog:
             self.find_replace_dialog = FindReplaceDialog(self)
@@ -1006,7 +1006,7 @@ if HAS_PYQT and QDialog:
         self.find_replace_dialog.raise_()
         self.find_replace_dialog.activateWindow()
 
-    def find_text(self, text: str, forward: bool = True):
+    def find_text(self, text: str, forward: bool = True) -> None:
         """Find text in the editor."""
         if not text:
             return
@@ -1028,7 +1028,7 @@ if HAS_PYQT and QDialog:
             if not self.text_edit.find(text, flags):
                 QMessageBox.information(self, "Find", f"'{text}' not found")
 
-    def replace_text(self, find_text: str, replace_text: str):
+    def replace_text(self, find_text: str, replace_text: str) -> None:
         """Replace current selection."""
         cursor = self.text_edit.textCursor()
         if cursor.hasSelection() and cursor.selectedText() == find_text:
@@ -1065,12 +1065,12 @@ if HAS_PYQT and QDialog:
         # Cancel
         return False
 
-    def close_with_confirmation(self):
+    def close_with_confirmation(self) -> None:
         """Close the dialog with save confirmation."""
         if self.check_save_changes():
             self.accept()
 
-    def closeEvent(self, event):
+    def closeEvent(self, event) -> None:
         """Handle close event."""
         if self.check_save_changes():
             event.accept()
@@ -1082,17 +1082,17 @@ else:
     class TextEditorDialog:
         """Fallback text editor dialog when PyQt6 is not available."""
 
-        def __init__(self, parent=None, title="Text Editor", content=""):
+        def __init__(self, parent=None, title="Text Editor", content="") -> None:
             """Initialize fallback text editor dialog."""
             self.content = content
             self.title = title
             self.parent = parent
 
-        def show(self):
+        def show(self) -> None:
             """Show dialog (no-op in fallback)."""
             pass
 
-        def exec(self):
+        def exec(self) -> int:
             """Execute dialog (no-op in fallback)."""
             return 0
 
@@ -1100,7 +1100,7 @@ else:
             """Get editor content."""
             return self.content
 
-        def set_content(self, content):
+        def set_content(self, content) -> None:
             """Set editor content."""
             self.content = content
 

@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+import contextlib
 import json
 import os
 import subprocess
@@ -194,7 +195,7 @@ Process.enumerateModules().forEach(module => {{{{
                 "user,id=net0,hostfwd=tcp::2222-:22",
             ]
 
-            process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 qemu_cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -203,8 +204,8 @@ Process.enumerateModules().forEach(module => {{{{
             )
 
             # Also run the Frida script inside QEMU
-            frida_process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                ["python3", script_path],  # noqa: S607
+            frida_process = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                ["python3", script_path],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
@@ -214,7 +215,7 @@ Process.enumerateModules().forEach(module => {{{{
             # Stream output from both processes in real-time
             import threading
 
-            def stream_frida_output():
+            def stream_frida_output() -> None:
                 for line in iter(frida_process.stdout.readline, ""):
                     if line:
                         output_callback(f"[FRIDA] {line.strip()}")
@@ -256,10 +257,8 @@ Process.enumerateModules().forEach(module => {{{{
             }
         finally:
             # Clean up temporary script file
-            try:
+            with contextlib.suppress(OSError, FileNotFoundError):
                 os.unlink(script_path)
-            except (OSError, FileNotFoundError):
-                pass
 
     def analyze_binary_for_vm(self, binary_path: str) -> dict[str, Any]:
         """Analyze binary to determine VM requirements."""
@@ -298,7 +297,7 @@ Process.enumerateModules().forEach(module => {{{{
                         "name": section.Name.decode("utf-8").strip("\x00"),
                         "virtual_address": hex(section.VirtualAddress),
                         "size": section.SizeOfRawData,
-                    }
+                    },
                 )
 
         elif "ELF" in file_type:
@@ -341,8 +340,8 @@ echo "}}"
 """
 
         # Execute and return real metrics
-        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-            ["ssh", f"qemu@{self.vm_ip}", monitor_script],  # noqa: S607
+        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+            ["ssh", f"qemu@{self.vm_ip}", monitor_script],
             check=False,
             capture_output=True,
             text=True,

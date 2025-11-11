@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+import contextlib
 import logging
 import mmap
 import os
@@ -39,7 +40,7 @@ except ImportError as e:
 class LRUCache:
     """A simple Least Recently Used (LRU) cache implementation."""
 
-    def __init__(self, max_size: int = 10):
+    def __init__(self, max_size: int = 10) -> None:
         """Initialize an LRU cache.
 
         Args:
@@ -55,7 +56,7 @@ class LRUCache:
         self.cache[key] = value  # Move to the end (most recently used)
         return value
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value) -> None:
         """Add an item to the cache, evicting least recently used items if necessary."""
         if key in self.cache:
             self.cache.pop(key)
@@ -64,11 +65,11 @@ class LRUCache:
             self.cache.popitem(last=False)
         self.cache[key] = value
 
-    def __contains__(self, key):
+    def __contains__(self, key) -> bool:
         """Check if an item is in the cache."""
         return key in self.cache
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Get the number of items in the cache."""
         return len(self.cache)
 
@@ -80,7 +81,7 @@ class ChunkManager:
     the needed chunks into memory at any given time.
     """
 
-    def __init__(self, file_path: str, chunk_size: int = 1024 * 1024, cache_size: int = 10):
+    def __init__(self, file_path: str, chunk_size: int = 1024 * 1024, cache_size: int = 10) -> None:
         """Initialize a chunk manager for a file.
 
         Args:
@@ -98,7 +99,7 @@ class ChunkManager:
         self.active_chunks = LRUCache(max_size=cache_size)
         logger.debug("ChunkManager initialized for %s (size: %s bytes)", file_path, self.file_size)
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Clean up resources when the object is destroyed."""
         try:
             # Close all memory maps
@@ -249,7 +250,7 @@ class VirtualFileAccess:
         chunk_size: int = 1024 * 1024,
         cache_size: int = 10,
         use_large_file_optimization: bool = True,
-    ):
+    ) -> None:
         """Initialize virtual file access.
 
         Args:
@@ -395,7 +396,7 @@ class VirtualFileAccess:
 
         logger.info(f"VirtualFileAccess initialized for {file_path} (size: {self.file_size} bytes, read_only: {read_only})")
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Clean up resources when the object is destroyed."""
         try:
             # Close large file handler if open
@@ -528,7 +529,7 @@ class VirtualFileAccess:
         # Ensure we don't write beyond the file size
         if offset + len(data) > self.file_size:
             logger.error(
-                f"Write operation would extend beyond file size: offset {offset}, data size {len(data)}, file size {self.file_size}"
+                f"Write operation would extend beyond file size: offset {offset}, data size {len(data)}, file size {self.file_size}",
             )
             return False
 
@@ -607,7 +608,7 @@ class VirtualFileAccess:
             logger.error("Error undoing edit: %s", e)
             return False
 
-    def discard_edits(self):
+    def discard_edits(self) -> None:
         """Discard all pending edits without applying them."""
         self.pending_edits.clear()
         logger.info("Discarded all pending edits")
@@ -697,10 +698,8 @@ class VirtualFileAccess:
             logger.error("Error inserting data at offset %s: %s", offset, e)
             # Clean up temp file if it exists
             if "temp_path" in locals() and os.path.exists(temp_path):
-                try:
+                with contextlib.suppress(OSError):
                     os.remove(temp_path)
-                except OSError:
-                    pass
             return False
 
     def delete(self, offset: int, length: int) -> bool:
@@ -791,10 +790,8 @@ class VirtualFileAccess:
             logger.error("Error deleting data at offset %s: %s", offset, e)
             # Clean up temp file if it exists
             if "temp_path" in locals() and os.path.exists(temp_path):
-                try:
+                with contextlib.suppress(OSError):
                     os.remove(temp_path)
-                except OSError:
-                    pass
             return False
 
     def get_modification_time(self) -> float:
@@ -863,14 +860,14 @@ class VirtualFileAccess:
             return self.large_file_handler.get_stats()
         return None
 
-    def optimize_for_sequential_access(self):
+    def optimize_for_sequential_access(self) -> None:
         """Optimize for sequential file access patterns."""
         if self.large_file_handler:
             # Increase prefetch for sequential access
             self.large_file_handler.config.prefetch_chunks = 4
             logger.debug("Optimized for sequential access")
 
-    def optimize_for_random_access(self):
+    def optimize_for_random_access(self) -> None:
         """Optimize for random file access patterns."""
         if self.large_file_handler:
             # Reduce prefetch for random access

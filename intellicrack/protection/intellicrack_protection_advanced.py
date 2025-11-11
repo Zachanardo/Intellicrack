@@ -158,7 +158,7 @@ class AdvancedProtectionAnalysis(ProtectionAnalysis):
         heuristic_detections: list[DetectionResult] | None = None,
         similarity_hash: str | None = None,
         file_format_details: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         """Initialize advanced protection analysis with comprehensive binary analysis data."""
         super().__init__(
             file_path=file_path,
@@ -195,7 +195,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         engine_path: str | None = None,
         custom_db_path: str | None = None,
         enable_cache: bool = True,
-    ):
+    ) -> None:
         """Initialize advanced protection analyzer.
 
         Args:
@@ -291,8 +291,8 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         try:
             # Run protection engine with extended timeout for deep scans
             timeout = 60 if scan_mode in [ScanMode.DEEP, ScanMode.ALL] else 30
-            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                cmd, check=False, capture_output=True, text=True, timeout=timeout, shell=False
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                cmd, check=False, capture_output=True, text=True, timeout=timeout, shell=False,
             )
 
             if result.returncode != 0:
@@ -572,7 +572,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         try:
             # Use protection engine's string extraction
             cmd = [self.engine_path, "-s", file_path]
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=30, shell=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=30, shell=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
 
             if result.returncode == 0:
                 for line in result.stdout.split("\n"):
@@ -727,11 +727,11 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                             break
 
                         # Analyze import descriptor characteristics
-                        if time_date_stamp != 0 and time_date_stamp != 0xFFFFFFFF:
+                        if time_date_stamp not in {0, 4294967295}:
                             # Bound import - timestamp indicates pre-bound DLL
                             import_strings.append(f"[BOUND:{time_date_stamp:08X}]")
 
-                        if forwarder_chain != 0xFFFFFFFF and forwarder_chain != 0:
+                        if forwarder_chain not in {4294967295, 0}:
                             # Forwarded imports detected
                             import_strings.append(f"[FORWARD:{forwarder_chain:08X}]")
 
@@ -990,7 +990,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             return ""
 
     def batch_analyze(
-        self, file_paths: list[str], max_workers: int = 4, scan_mode: ScanMode = ScanMode.NORMAL
+        self, file_paths: list[str], max_workers: int = 4, scan_mode: ScanMode = ScanMode.NORMAL,
     ) -> dict[str, AdvancedProtectionAnalysis]:
         """Analyze multiple files in parallel.
 

@@ -62,7 +62,7 @@ logger = get_logger(__name__)
 class DiffSyntaxHighlighter(QSyntaxHighlighter):
     """Syntax highlighter for diff text."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the DiffSyntaxHighlighter with default values."""
         super().__init__(parent)
 
@@ -92,7 +92,7 @@ class DiffSyntaxHighlighter(QSyntaxHighlighter):
         header_format.setFontWeight(QFont.Bold)
         self.formats["header"] = header_format
 
-    def highlightBlock(self, text):
+    def highlightBlock(self, text) -> None:
         """Highlight a block of diff text."""
         if not text:
             return
@@ -117,13 +117,13 @@ class ModificationAnalysisThread(QThread):
     #: Signal emitted when error occurs (str: Error message)
     error_occurred = pyqtSignal(str)
 
-    def __init__(self, modifier: IntelligentCodeModifier, request: ModificationRequest):
+    def __init__(self, modifier: IntelligentCodeModifier, request: ModificationRequest) -> None:
         """Initialize the ModificationAnalysisThread with default values."""
         super().__init__()
         self.modifier = modifier
         self.request = request
 
-    def run(self):
+    def run(self) -> None:
         """Run the analysis in background."""
         try:
             self.progress_updated.emit("Analyzing modification request...")
@@ -137,7 +137,7 @@ class ModificationAnalysisThread(QThread):
 class CodeModificationDialog(QDialog):
     """Dialog for intelligent code modification with diff viewing."""
 
-    def __init__(self, project_root: str = None, parent=None):
+    def __init__(self, project_root: str = None, parent=None) -> None:
         """Initialize the CodeModificationDialog with default values."""
         super().__init__(parent)
         self.setWindowTitle("Intelligent Code Modification")
@@ -157,7 +157,7 @@ class CodeModificationDialog(QDialog):
         self.setup_ui()
         self.load_project_context()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the user interface."""
         layout = QVBoxLayout(self)
 
@@ -199,7 +199,7 @@ class CodeModificationDialog(QDialog):
 
         layout.addLayout(status_layout)
 
-    def setup_request_tab(self, tab_widget):
+    def setup_request_tab(self, tab_widget) -> None:
         """Set up the modification request tab."""
         layout = QVBoxLayout(tab_widget)
 
@@ -278,7 +278,7 @@ class CodeModificationDialog(QDialog):
 
         layout.addWidget(context_group)
 
-    def setup_changes_tab(self, tab_widget):
+    def setup_changes_tab(self, tab_widget) -> None:
         """Set up the code changes review tab."""
         layout = QVBoxLayout(tab_widget)
 
@@ -301,7 +301,7 @@ class CodeModificationDialog(QDialog):
                 "Type",
                 "Confidence",
                 "Status",
-            ]
+            ],
         )
         self.changes_tree.setAlternatingRowColors(True)
         self.changes_tree.itemSelectionChanged.connect(self.on_change_selected)
@@ -399,7 +399,7 @@ class CodeModificationDialog(QDialog):
 
         layout.addWidget(main_splitter)
 
-    def setup_history_tab(self, tab_widget):
+    def setup_history_tab(self, tab_widget) -> None:
         """Set up the modification history tab."""
         layout = QVBoxLayout(tab_widget)
 
@@ -431,7 +431,7 @@ class CodeModificationDialog(QDialog):
                 "Status",
                 "Confidence",
                 "Date",
-            ]
+            ],
         )
 
         header = self.history_tree.header()
@@ -441,7 +441,7 @@ class CodeModificationDialog(QDialog):
         self.history_tree.setAlternatingRowColors(True)
         layout.addWidget(self.history_tree)
 
-    def load_project_context(self):
+    def load_project_context(self) -> None:
         """Load project context information."""
         try:
             self.status_label.setText("Loading project context...")
@@ -481,7 +481,7 @@ class CodeModificationDialog(QDialog):
             self.status_label.setText("Failed to load project context")
             QMessageBox.warning(self, "Error", f"Failed to load project context:\n{e}")
 
-    def add_target_file(self):
+    def add_target_file(self) -> None:
         """Add a target file to the request."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
@@ -500,20 +500,20 @@ class CodeModificationDialog(QDialog):
                 # File is outside project root
                 self.target_files_list.addItem(file_path)
 
-    def remove_target_file(self):
+    def remove_target_file(self) -> None:
         """Remove selected target file."""
         current_row = self.target_files_list.currentRow()
         if current_row >= 0:
             self.target_files_list.takeItem(current_row)
 
-    def clear_request(self):
+    def clear_request(self) -> None:
         """Clear the modification request form."""
         self.description_edit.clear()
         self.target_files_list.clear()
         self.requirements_edit.clear()
         self.constraints_edit.clear()
 
-    def analyze_modifications(self):
+    def analyze_modifications(self) -> None:
         """Analyze the modification request."""
         # Validate input
         description = self.description_edit.toPlainText().strip()
@@ -554,7 +554,7 @@ class CodeModificationDialog(QDialog):
         self.analysis_thread.error_occurred.connect(self.on_analysis_error)
         self.analysis_thread.start()
 
-    def on_analysis_complete(self, changes: list[CodeChange]):
+    def on_analysis_complete(self, changes: list[CodeChange]) -> None:
         """Handle completion of analysis."""
         self.analyze_btn.setEnabled(True)
         self.progress_bar.setVisible(False)
@@ -570,7 +570,7 @@ class CodeModificationDialog(QDialog):
             if hasattr(parent_widget, "setCurrentIndex"):
                 parent_widget.setCurrentIndex(1)  # Changes tab
 
-    def on_analysis_error(self, error_message: str):
+    def on_analysis_error(self, error_message: str) -> None:
         """Handle analysis error."""
         self.analyze_btn.setEnabled(True)
         self.progress_bar.setVisible(False)
@@ -578,7 +578,7 @@ class CodeModificationDialog(QDialog):
         self.status_label.setText("Analysis failed")
         QMessageBox.critical(self, "Analysis Error", f"Failed to analyze modifications:\n{error_message}")
 
-    def populate_changes_tree(self):
+    def populate_changes_tree(self) -> None:
         """Populate the changes tree with current changes."""
         self.changes_tree.clear()
 
@@ -613,7 +613,7 @@ class CodeModificationDialog(QDialog):
         for i in range(self.changes_tree.columnCount()):
             self.changes_tree.resizeColumnToContents(i)
 
-    def on_change_selected(self):
+    def on_change_selected(self) -> None:
         """Handle change selection."""
         current_item = self.changes_tree.currentItem()
         if not current_item:
@@ -652,13 +652,13 @@ class CodeModificationDialog(QDialog):
         self.original_code.setPlainText(change.original_code)
         self.modified_code.setPlainText(change.modified_code)
 
-    def select_all_changes(self):
+    def select_all_changes(self) -> None:
         """Select all changes."""
         for i in range(self.changes_tree.topLevelItemCount()):
             item = self.changes_tree.topLevelItem(i)
             item.setCheckState(0, Qt.Checked)
 
-    def select_no_changes(self):
+    def select_no_changes(self) -> None:
         """Deselect all changes."""
         for i in range(self.changes_tree.topLevelItemCount()):
             item = self.changes_tree.topLevelItem(i)
@@ -675,7 +675,7 @@ class CodeModificationDialog(QDialog):
                     change_ids.append(change.change_id)
         return change_ids
 
-    def apply_selected_changes(self):
+    def apply_selected_changes(self) -> None:
         """Apply the selected changes."""
         change_ids = self.get_selected_change_ids()
         if not change_ids:
@@ -724,7 +724,7 @@ class CodeModificationDialog(QDialog):
             QMessageBox.critical(self, "Error", f"Error applying changes:\n{e}")
             self.status_label.setText("Error applying changes")
 
-    def reject_selected_changes(self):
+    def reject_selected_changes(self) -> None:
         """Reject the selected changes."""
         change_ids = self.get_selected_change_ids()
         if not change_ids:
@@ -745,7 +745,7 @@ class CodeModificationDialog(QDialog):
             logger.error(f"Error rejecting changes: {e}")
             QMessageBox.critical(self, "Error", f"Error rejecting changes:\n{e}")
 
-    def refresh_history(self):
+    def refresh_history(self) -> None:
         """Refresh the modification history."""
         try:
             limit = self.history_limit.value()
@@ -783,7 +783,7 @@ class CodeModificationDialog(QDialog):
             logger.error(f"Error refreshing history: {e}")
             QMessageBox.critical(self, "Error", f"Error refreshing history:\n{e}")
 
-    def closeEvent(self, event):
+    def closeEvent(self, event) -> None:
         """Handle dialog close."""
         # Cancel any running analysis
         if self.analysis_thread and self.analysis_thread.isRunning():

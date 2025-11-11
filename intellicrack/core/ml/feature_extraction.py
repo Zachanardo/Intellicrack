@@ -71,10 +71,10 @@ class BinaryFeatureExtractor:
         'VirtualProtect', 'VirtualAlloc', 'VirtualAllocEx',
         'WriteProcessMemory', 'CreateRemoteThread', 'LoadLibraryA',
         'GetProcAddress', 'IsDebuggerPresent', 'CheckRemoteDebuggerPresent',
-        'NtQueryInformationProcess', 'ZwQueryInformationProcess'
+        'NtQueryInformationProcess', 'ZwQueryInformationProcess',
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the feature extractor."""
         self.logger = logging.getLogger(__name__)
         self.feature_names = self._get_feature_names()
@@ -421,7 +421,7 @@ class BinaryFeatureExtractor:
                 if matches and score > 0.5:
                     self.logger.debug(
                         "Strong %s detection (score: %.2f): %s",
-                        protector, score, ', '.join(matches)
+                        protector, score, ', '.join(matches),
                     )
 
         except Exception as e:
@@ -470,7 +470,7 @@ class BinaryFeatureExtractor:
         branch_opcodes = {
             0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77,
             0x78, 0x79, 0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F,
-            0xE8, 0xE9, 0xEB, 0x0F
+            0xE8, 0xE9, 0xEB, 0x0F,
         }
 
         branch_count = sum(1 for b in code if b in branch_opcodes)

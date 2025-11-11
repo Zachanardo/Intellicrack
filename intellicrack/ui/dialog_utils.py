@@ -28,7 +28,7 @@ from .handlers.pyqt6_handler import (
 )
 
 
-def setup_footer(dialog, layout):
+def setup_footer(dialog, layout) -> None:
     """Set up standard dialog footer with status and close button."""
     footer_layout = QHBoxLayout()
 
@@ -45,7 +45,7 @@ def setup_footer(dialog, layout):
     layout.addLayout(footer_layout)
 
 
-def setup_binary_header(dialog, layout):
+def setup_binary_header(dialog, layout) -> None:
     """Set up header with binary selection."""
     header_group = QGroupBox("Target Binary")
     header_layout = QHBoxLayout(header_group)
@@ -57,7 +57,7 @@ def setup_binary_header(dialog, layout):
     # Set tooltip to guide users on expected file types
     dialog.binary_path_edit.setToolTip(
         "Enter or browse for executable binary path\n"
-        "Supported formats: PE (*.exe, *.dll), ELF (*.so), Mach-O (*.dylib)"
+        "Supported formats: PE (*.exe, *.dll), ELF (*.so), Mach-O (*.dylib)",
     )
 
     # Configure text field appearance and behavior
@@ -75,12 +75,12 @@ def setup_binary_header(dialog, layout):
     layout.addWidget(header_group)
 
 
-def connect_binary_signals(dialog):
+def connect_binary_signals(dialog) -> None:
     """Connect common binary-related signals."""
     dialog.binary_path_edit.textChanged.connect(dialog.on_binary_path_changed)
 
 
-def browse_binary_file(dialog):
+def browse_binary_file(dialog) -> None:
     """Browse for binary file using standard file dialog."""
     file_path, _ = QFileDialog.getOpenFileName(
         dialog,
@@ -93,6 +93,6 @@ def browse_binary_file(dialog):
         dialog.binary_path = file_path
 
 
-def on_binary_path_changed(dialog, text):
+def on_binary_path_changed(dialog, text) -> None:
     """Handle binary path change."""
     dialog.binary_path = text

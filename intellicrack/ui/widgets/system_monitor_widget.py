@@ -72,7 +72,7 @@ class SystemMonitorWorker(QObject):
     metrics_updated = pyqtSignal(SystemMetrics)
     error_occurred = pyqtSignal(str)
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize system monitor worker with performance tracking capabilities."""
         super().__init__()
         self.running = False
@@ -80,7 +80,7 @@ class SystemMonitorWorker(QObject):
         self.last_net_io = None
         self.last_disk_io = None
 
-    def run(self):
+    def run(self) -> None:
         """Run the monitoring loop."""
         self.running = True
 
@@ -93,7 +93,7 @@ class SystemMonitorWorker(QObject):
 
             time.sleep(self.update_interval / 1000.0)
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the monitoring loop."""
         self.running = False
 
@@ -175,7 +175,7 @@ class SystemMonitorWidget(QWidget):
     #: alert_type, message (type: str, str)
     alert_triggered = pyqtSignal(str, str)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize system monitor widget with performance tracking and alerts."""
         super().__init__(parent)
 
@@ -204,7 +204,7 @@ class SystemMonitorWidget(QWidget):
         self.setup_ui()
         self.start_monitoring()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the UI components."""
         layout = QVBoxLayout(self)
 
@@ -313,7 +313,7 @@ class SystemMonitorWidget(QWidget):
                 "CPU %",
                 "Memory %",
                 "Status",
-            ]
+            ],
         )
         self.process_table.horizontalHeader().setStretchLastSection(True)
         process_layout.addWidget(self.process_table)
@@ -321,11 +321,11 @@ class SystemMonitorWidget(QWidget):
         content_splitter.addWidget(process_group)
         layout.addWidget(content_splitter)
 
-    def start_monitoring(self):
+    def start_monitoring(self) -> None:
         """Start system monitoring."""
         self.monitor_thread.start()
 
-    def stop_monitoring(self):
+    def stop_monitoring(self) -> None:
         """Stop system monitoring."""
         if self.monitor_worker:
             self.monitor_worker.stop()
@@ -333,7 +333,7 @@ class SystemMonitorWidget(QWidget):
             self.monitor_thread.quit()
             self.monitor_thread.wait()
 
-    def _on_metrics_updated(self, metrics: SystemMetrics):
+    def _on_metrics_updated(self, metrics: SystemMetrics) -> None:
         """Handle new metrics data."""
         if self.pause_btn.isChecked():
             return
@@ -367,7 +367,7 @@ class SystemMonitorWidget(QWidget):
         # Check thresholds
         self._check_thresholds(metrics)
 
-    def _update_graphs(self):
+    def _update_graphs(self) -> None:
         """Update performance graphs."""
         if not self.metrics_history:
             return
@@ -396,7 +396,7 @@ class SystemMonitorWidget(QWidget):
             self.cpu_plot.setXRange(max(0, len(times) - self.history_size), len(times))
             self.memory_plot.setXRange(max(0, len(times) - self.history_size), len(times))
 
-    def _update_process_table(self):
+    def _update_process_table(self) -> None:
         """Update the process table with top processes."""
         try:
             # Get top processes by CPU usage
@@ -432,7 +432,7 @@ class SystemMonitorWidget(QWidget):
         except Exception as e:
             logger.debug("Error updating system monitor: %s", e)
 
-    def _check_thresholds(self, metrics: SystemMetrics):
+    def _check_thresholds(self, metrics: SystemMetrics) -> None:
         """Check if any metrics exceed thresholds."""
         if metrics.cpu_percent > self.cpu_threshold:
             self.alert_triggered.emit("cpu", f"High CPU usage: {metrics.cpu_percent:.1f}%")
@@ -454,20 +454,20 @@ class SystemMonitorWidget(QWidget):
             elif hasattr(self, "gpu_bar"):
                 self.gpu_bar.setStyleSheet("")
 
-    def _on_interval_changed(self, value: int):
+    def _on_interval_changed(self, value: int) -> None:
         """Handle update interval change."""
         self.update_interval = value
         if self.monitor_worker:
             self.monitor_worker.update_interval = value
 
-    def _on_pause_toggled(self, checked: bool):
+    def _on_pause_toggled(self, checked: bool) -> None:
         """Handle pause button toggle."""
         if checked:
             self.pause_btn.setText("Resume")
         else:
             self.pause_btn.setText("Pause")
 
-    def _on_error(self, error_msg: str):
+    def _on_error(self, error_msg: str) -> None:
         """Handle monitoring errors."""
         # Log error but don't show to user to avoid spam
 
@@ -502,12 +502,12 @@ class SystemMonitorWidget(QWidget):
                         "gpu_current": gpu_values[-1],
                         "gpu_average": sum(gpu_values) / len(gpu_values),
                         "gpu_max": max(gpu_values),
-                    }
+                    },
                 )
 
         return summary
 
-    def set_thresholds(self, cpu: float = None, memory: float = None, gpu: float = None):
+    def set_thresholds(self, cpu: float = None, memory: float = None, gpu: float = None) -> None:
         """Set alert thresholds."""
         if cpu is not None:
             self.cpu_threshold = cpu
@@ -516,7 +516,7 @@ class SystemMonitorWidget(QWidget):
         if gpu is not None:
             self.gpu_threshold = gpu
 
-    def set_refresh_interval(self, interval_ms: int):
+    def set_refresh_interval(self, interval_ms: int) -> None:
         """Set the refresh interval for monitoring."""
         self.update_interval = interval_ms
         if hasattr(self, "interval_spin"):
@@ -524,7 +524,7 @@ class SystemMonitorWidget(QWidget):
         if hasattr(self, "monitor_worker"):
             self.monitor_worker.update_interval = interval_ms
 
-    def export_metrics(self, filepath: str):
+    def export_metrics(self, filepath: str) -> None:
         """Export metrics history to file."""
         import json
 
@@ -539,13 +539,13 @@ class SystemMonitorWidget(QWidget):
                     "gpu_percent": metric.gpu_percent,
                     "network_sent_mb": metric.network_sent_mb,
                     "network_recv_mb": metric.network_recv_mb,
-                }
+                },
             )
 
         with open(filepath, "w") as f:
             json.dump(data, f, indent=2)
 
-    def closeEvent(self, event):
+    def closeEvent(self, event) -> None:
         """Handle widget close event."""
         self.stop_monitoring()
         event.accept()

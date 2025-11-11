@@ -34,7 +34,7 @@ class BaseNetworkAnalyzer:
     Provides common packet handling functionality.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the base network analyzer with logging."""
         self.logger = logging.getLogger(self.__class__.__name__)
 
@@ -56,7 +56,7 @@ class BaseNetworkAnalyzer:
 
         """
 
-        def packet_handler(packet):
+        def packet_handler(packet) -> None:
             """Process each captured packet."""
             if not is_running_check():
                 return

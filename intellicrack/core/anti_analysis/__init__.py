@@ -44,7 +44,7 @@ debugger detection, sandbox evasion, and behavior analysis bypass.
 class AntiAnalysisEngine:
     """Engine for anti-analysis and evasion techniques."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the anti-analysis engine with detection components."""
         self.debugger_detector = DebuggerDetector()
         self.vm_detector = VMDetector()

@@ -29,11 +29,13 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Set
+
+if TYPE_CHECKING:
+    from websockets.server import WebSocketServerProtocol
 
 try:
     import websockets
-    from websockets.server import WebSocketServerProtocol
 
     HAS_WEBSOCKETS = True
 except ImportError:
@@ -133,7 +135,7 @@ class AnalysisMetrics:
 class RealTimeDashboard:
     """Real-time dashboard for monitoring analysis."""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         """Initialize real-time dashboard.
 
         Args:
@@ -177,7 +179,7 @@ class RealTimeDashboard:
         # Initialize components
         self._initialize_dashboard()
 
-    def _initialize_dashboard(self):
+    def _initialize_dashboard(self) -> None:
         """Initialize dashboard components."""
         # Start WebSocket server if available
         if HAS_WEBSOCKETS and self.config.get("enable_websocket", True):
@@ -192,7 +194,7 @@ class RealTimeDashboard:
 
         self.logger.info("Real-time dashboard initialized")
 
-    def add_event(self, event: DashboardEvent):
+    def add_event(self, event: DashboardEvent) -> None:
         """Add event to dashboard.
 
         Args:
@@ -216,7 +218,7 @@ class RealTimeDashboard:
         if self.websocket_clients:
             asyncio.run_coroutine_threadsafe(self._broadcast_event(event), self.websocket_loop)
 
-    def register_callback(self, callback: Callable):
+    def register_callback(self, callback: Callable) -> None:
         """Register event callback.
 
         Args:
@@ -225,7 +227,7 @@ class RealTimeDashboard:
         """
         self.event_callbacks.append(callback)
 
-    def start_analysis(self, analysis_id: str, tool: str, target: str, options: Optional[Dict[str, Any]] = None):
+    def start_analysis(self, analysis_id: str, tool: str, target: str, options: Optional[Dict[str, Any]] = None) -> None:
         """Start tracking an analysis.
 
         Args:
@@ -259,7 +261,7 @@ class RealTimeDashboard:
         )
         self.add_event(event)
 
-    def complete_analysis(self, analysis_id: str, results: Dict[str, Any]):
+    def complete_analysis(self, analysis_id: str, results: Dict[str, Any]) -> None:
         """Mark analysis as complete.
 
         Args:
@@ -294,7 +296,7 @@ class RealTimeDashboard:
         )
         self.add_event(event)
 
-    def report_vulnerability(self, tool: str, vulnerability: Dict[str, Any]):
+    def report_vulnerability(self, tool: str, vulnerability: Dict[str, Any]) -> None:
         """Report a vulnerability finding.
 
         Args:
@@ -317,7 +319,7 @@ class RealTimeDashboard:
         )
         self.add_event(event)
 
-    def report_protection(self, tool: str, protection: Dict[str, Any]):
+    def report_protection(self, tool: str, protection: Dict[str, Any]) -> None:
         """Report a protection detection.
 
         Args:
@@ -340,7 +342,7 @@ class RealTimeDashboard:
         )
         self.add_event(event)
 
-    def report_bypass(self, tool: str, bypass: Dict[str, Any]):
+    def report_bypass(self, tool: str, bypass: Dict[str, Any]) -> None:
         """Report a bypass strategy.
 
         Args:
@@ -363,7 +365,7 @@ class RealTimeDashboard:
         )
         self.add_event(event)
 
-    def update_performance(self, tool: str, metrics: Dict[str, Any]):
+    def update_performance(self, tool: str, metrics: Dict[str, Any]) -> None:
         """Update performance metrics.
 
         Args:
@@ -427,9 +429,9 @@ class RealTimeDashboard:
 
         """
         with self.metrics_lock:
-            return [m for m in self.metrics_history]
+            return list(self.metrics_history)
 
-    def _update_metrics_from_event(self, event: DashboardEvent):
+    def _update_metrics_from_event(self, event: DashboardEvent) -> None:
         """Update metrics based on event.
 
         Args:
@@ -480,13 +482,13 @@ class RealTimeDashboard:
 
         return summary
 
-    def _start_websocket_server(self):
+    def _start_websocket_server(self) -> None:
         """Start WebSocket server for real-time updates."""
         if not HAS_WEBSOCKETS:
             self.logger.warning("WebSockets not available, skipping WebSocket server")
             return
 
-        async def handle_client(websocket, path):
+        async def handle_client(websocket, path) -> None:
             """Handle WebSocket client connection."""
             self.websocket_clients.add(websocket)
             self.logger.info(f"WebSocket client connected: {websocket.remote_address}")
@@ -510,14 +512,14 @@ class RealTimeDashboard:
             finally:
                 self.websocket_clients.discard(websocket)
 
-        async def start_server():
+        async def start_server() -> None:
             """Start the WebSocket server."""
             port = self.config.get("websocket_port", 8765)
             self.websocket_server = await websockets.serve(handle_client, "localhost", port)
             self.logger.info(f"WebSocket server started on port {port}")
             await asyncio.Future()  # Run forever
 
-        def run_server():
+        def run_server() -> None:
             """Run WebSocket server in thread."""
             self.websocket_loop = asyncio.new_event_loop()
             asyncio.set_event_loop(self.websocket_loop)
@@ -526,7 +528,7 @@ class RealTimeDashboard:
         self.websocket_thread = threading.Thread(target=run_server, daemon=True)
         self.websocket_thread.start()
 
-    async def _broadcast_event(self, event: DashboardEvent):
+    async def _broadcast_event(self, event: DashboardEvent) -> None:
         """Broadcast event to all WebSocket clients.
 
         Args:
@@ -552,7 +554,7 @@ class RealTimeDashboard:
         # Remove disconnected clients
         self.websocket_clients -= disconnected
 
-    def _start_flask_server(self):
+    def _start_flask_server(self) -> None:
         """Start Flask HTTP server."""
         if not HAS_FLASK:
             self.logger.warning("Flask not available, skipping HTTP server")
@@ -607,7 +609,7 @@ class RealTimeDashboard:
                 else:
                     return jsonify({"error": "Analysis not found"}), 404
 
-        def run_flask():
+        def run_flask() -> None:
             """Run Flask server."""
             port = self.config.get("http_port", 5000)
             self.flask_app.run(host="localhost", port=port, debug=False, use_reloader=False)
@@ -617,10 +619,10 @@ class RealTimeDashboard:
 
         self.logger.info(f"HTTP API server started on port {self.config.get('http_port', 5000)}")
 
-    def _start_metrics_updater(self):
+    def _start_metrics_updater(self) -> None:
         """Start metrics update thread."""
 
-        def update_loop():
+        def update_loop() -> None:
             """Metrics update loop."""
             while True:
                 try:
@@ -641,7 +643,7 @@ class RealTimeDashboard:
         thread = threading.Thread(target=update_loop, daemon=True)
         thread.start()
 
-    async def _broadcast_metrics(self, metrics: Dict[str, Any]):
+    async def _broadcast_metrics(self, metrics: Dict[str, Any]) -> None:
         """Broadcast metrics update to WebSocket clients.
 
         Args:
@@ -665,7 +667,7 @@ class RealTimeDashboard:
 
         self.websocket_clients -= disconnected
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown dashboard."""
         self.logger.info("Shutting down dashboard")
 

@@ -175,7 +175,7 @@ def analyze_entropy_sections(data: bytes, block_size: int = 256) -> dict:
                     "size": len(block),
                     "entropy": block_entropy,
                     "is_high_entropy": is_high_entropy(block),
-                }
+                },
             )
 
     # Calculate statistics

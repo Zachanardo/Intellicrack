@@ -32,7 +32,6 @@ implementations for essential operations used in Intellicrack.
 
 # NumPy availability detection and import handling
 try:
-    import numpy
     import numpy as np
 
     # NumPy submodules
@@ -93,7 +92,7 @@ try:
     )
 
     HAS_NUMPY = True
-    NUMPY_VERSION = numpy.__version__
+    NUMPY_VERSION = np.__version__
 
 except ImportError as e:
     logger.error("NumPy not available, using fallback implementations: %s", e)
@@ -105,7 +104,7 @@ except ImportError as e:
     class FallbackArray:
         """Functional array implementation for binary analysis operations."""
 
-        def __init__(self, data, dtype=None, shape=None):
+        def __init__(self, data, dtype=None, shape=None) -> None:
             """Initialize array with data, dtype, and shape."""
             if isinstance(data, (list, tuple)):
                 self.data = list(data)
@@ -199,7 +198,7 @@ except ImportError as e:
                 return FallbackArray([self.data[i] for i in key], self.dtype)
             return self.data[key]
 
-        def __setitem__(self, key, value):
+        def __setitem__(self, key, value) -> None:
             """Set item or slice."""
             if isinstance(key, int):
                 self.data[key] = value
@@ -209,11 +208,11 @@ except ImportError as e:
                 else:
                     self.data[key] = value
 
-        def __len__(self):
+        def __len__(self) -> int:
             """Get length of first dimension."""
             return self._shape[0] if self._shape else 0
 
-        def __repr__(self):
+        def __repr__(self) -> str:
             """Represent as string."""
             return f"FallbackArray({self.tolist()})"
 
@@ -486,7 +485,7 @@ except ImportError as e:
 
         return FallbackArray(result)
 
-    def allclose(a, b, rtol=1e-05, atol=1e-08):
+    def allclose(a, b, rtol=1e-05, atol=1e-08) -> bool:
         """Check if arrays are element-wise equal within tolerance."""
         a_data = a.data if isinstance(a, FallbackArray) else a
         b_data = b.data if isinstance(b, FallbackArray) else b
@@ -968,7 +967,7 @@ except ImportError as e:
                 return FallbackArray(result, None, shape)
 
             @staticmethod
-            def seed(s):
+            def seed(s) -> None:
                 """Set random seed."""
                 _random.seed(s)
 

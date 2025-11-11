@@ -199,7 +199,7 @@ class SGXReport:
 class TPMEmulator:
     """Software TPM emulator for bypassing TPM-based license protections."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize TPM emulator with default state."""
         self.tpm_state = {}
         self.pcr_banks = {TPM_ALG.SHA1: [b"\x00" * 20 for _ in range(24)], TPM_ALG.SHA256: [b"\x00" * 32 for _ in range(24)]}
@@ -215,7 +215,7 @@ class TPMEmulator:
         self.driver_handle = None
         self._init_emulation_driver()
 
-    def _init_emulation_driver(self):
+    def _init_emulation_driver(self) -> None:
         driver_path = Path(__file__).parent / "drivers" / "tpm_emulator.sys"
 
         if not driver_path.exists():
@@ -226,7 +226,7 @@ class TPMEmulator:
         except Exception as e:
             logger.warning(f"Failed to load kernel driver, using usermode emulation: {e}")
 
-    def _create_emulation_driver(self, driver_path: Path):
+    def _create_emulation_driver(self, driver_path: Path) -> None:
         os.makedirs(driver_path.parent, exist_ok=True)
 
         driver_code = self._generate_driver_code()
@@ -478,7 +478,7 @@ class TPMEmulator:
 
         return bytes(encoding)
 
-    def _load_driver(self, driver_path: Path):
+    def _load_driver(self, driver_path: Path) -> None:
         # Load driver into kernel
         SC_MANAGER_ALL_ACCESS = 0xF003F
         SERVICE_ALL_ACCESS = 0xF01FF
@@ -602,7 +602,7 @@ class TPMEmulator:
         from cryptography.hazmat.primitives import serialization
 
         return private_key.private_bytes(
-            encoding=serialization.Encoding.DER, format=serialization.PrivateFormat.PKCS8, encryption_algorithm=serialization.NoEncryption()
+            encoding=serialization.Encoding.DER, format=serialization.PrivateFormat.PKCS8, encryption_algorithm=serialization.NoEncryption(),
         )
 
     def sign(self, key_handle: int, data: bytes, auth: bytes) -> Tuple[TPM_RC, Optional[bytes]]:
@@ -626,7 +626,7 @@ class TPMEmulator:
 
         if key.algorithm == TPM_ALG.RSA:
             signature = private_key.sign(
-                data, padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), hashes.SHA256()
+                data, padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), hashes.SHA256(),
             )
         elif key.algorithm == TPM_ALG.ECC:
             from cryptography.hazmat.primitives.asymmetric import ec
@@ -708,8 +708,8 @@ class TPMEmulator:
                     "data": base64.b64encode(data).decode("ascii"),
                     "pcrs": {str(k): base64.b64encode(v).decode("ascii") for k, v in sealed_blob["pcr_values"].items()},
                     "auth": base64.b64encode(sealed_blob["auth"]).decode("ascii"),
-                }
-            ).encode()
+                },
+            ).encode(),
         )
 
         return TPM_RC.SUCCESS, sealed_data
@@ -755,7 +755,7 @@ class TPMEmulator:
 class SGXEmulator:
     """Intel SGX enclave emulator for bypassing SGX-based license protections."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize SGX emulator with enclave state tracking."""
         self.enclaves = {}
         self.measurements = {}
@@ -764,7 +764,7 @@ class SGXEmulator:
         self.next_enclave_id = 1
         self._init_sgx_driver()
 
-    def _init_sgx_driver(self):
+    def _init_sgx_driver(self) -> None:
         """Initialize SGX emulation driver."""
         logger.debug("SGX emulation driver initialized")
 
@@ -799,7 +799,7 @@ class SGXEmulator:
 
         return enclave_id, SGX_ERROR.SUCCESS
 
-    def _generate_sealing_key(self, enclave_id: int):
+    def _generate_sealing_key(self, enclave_id: int) -> None:
         """Generate sealing key for enclave."""
         enclave = self.enclaves[enclave_id]
 
@@ -810,7 +810,7 @@ class SGXEmulator:
         self.sealing_keys[enclave_id] = sealing_key
 
     def get_report(
-        self, enclave_id: int, target_info: Optional[bytes] = None, report_data: Optional[bytes] = None
+        self, enclave_id: int, target_info: Optional[bytes] = None, report_data: Optional[bytes] = None,
     ) -> Tuple[Optional[SGXReport], SGX_ERROR]:
         """Get enclave report."""
         if enclave_id not in self.enclaves:
@@ -918,7 +918,7 @@ class SGXEmulator:
 class SecureEnclaveBypass:
     """Unified bypass system for TPM and SGX-based license protections."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize bypass system with TPM and SGX emulators."""
         self.tpm_emulator = TPMEmulator()
         self.sgx_emulator = SGXEmulator()
@@ -940,7 +940,7 @@ class SecureEnclaveBypass:
             logger.error(f"Failed to activate bypass: {e}")
             return False
 
-    def _inject_hooks(self, pid: int):
+    def _inject_hooks(self, pid: int) -> None:
         """Inject hooks into target process."""
         import frida
 
@@ -1184,7 +1184,7 @@ class SecureEnclaveBypass:
         send({type: 'hooks_installed'});
         """
 
-    def _on_message(self, message, data):
+    def _on_message(self, message, data) -> None:
         """Handle messages from injected script."""
         if message["type"] == "send":
             payload = message["payload"]
@@ -1223,7 +1223,7 @@ class SecureEnclaveBypass:
         response = struct.pack(">HIH", 0x8001, 10, rc)
         return response
 
-    def _install_system_hooks(self):
+    def _install_system_hooks(self) -> None:
         """Install system-wide hooks."""
         # This would require kernel driver or system service
         # For now, we'll use API hooking via Detours
@@ -1372,7 +1372,7 @@ class SecureEnclaveBypass:
         cache_file = Path(__file__).parent / "attestation_cache" / "tpm_quotes.json"
 
         if cache_file.exists():
-            with open(cache_file, "r") as f:
+            with open(cache_file) as f:
                 cached_quotes = json.load(f)
 
             # Find suitable quote and update challenge
@@ -1406,7 +1406,7 @@ class SecureEnclaveBypass:
                 bytes_returned = ctypes.wintypes.DWORD()
 
                 result = ctypes.windll.kernel32.DeviceIoControl(
-                    handle, IOCTL_SGX_GET_ENCLAVE_INFO, None, 0, buffer, 512, ctypes.byref(bytes_returned), None
+                    handle, IOCTL_SGX_GET_ENCLAVE_INFO, None, 0, buffer, 512, ctypes.byref(bytes_returned), None,
                 )
 
                 ctypes.windll.kernel32.CloseHandle(handle)
@@ -1415,7 +1415,7 @@ class SecureEnclaveBypass:
                     # Parse enclave info
                     return self._parse_enclave_info(buffer.raw[: bytes_returned.value])
         except (OSError, AttributeError):
-            pass  # noqa: S110 - SGX device access failure is expected when not available
+            pass
 
         return None
 
@@ -1461,7 +1461,7 @@ class SecureEnclaveBypass:
         # Fall back to software signing with extracted key
         attestation_key = self._load_attestation_key()
         return attestation_key.sign(
-            quote_data, padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), hashes.SHA256()
+            quote_data, padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH), hashes.SHA256(),
         )
 
     def _sign_sgx_quote(self, report_data: bytes) -> bytes:
@@ -1499,7 +1499,7 @@ class SecureEnclaveBypass:
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PrivateFormat.PKCS8,
                 encryption_algorithm=serialization.NoEncryption(),
-            )
+            ),
         )
 
         return key
@@ -1528,7 +1528,7 @@ class SecureEnclaveBypass:
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PrivateFormat.PKCS8,
                 encryption_algorithm=serialization.NoEncryption(),
-            )
+            ),
         )
 
         return key
@@ -1635,7 +1635,7 @@ class SecureEnclaveBypass:
             cert_file = Path(__file__).parent / "certs" / "tpm_ek_cert.der"
             if cert_file.exists():
                 return cert_file.read_bytes()
-        except (OSError, IOError):
+        except OSError:
             pass
 
         return None
@@ -1647,7 +1647,7 @@ class SecureEnclaveBypass:
             cert_file = Path(__file__).parent / "certs" / "sgx_pck_cert.der"
             if cert_file.exists():
                 return cert_file.read_bytes()
-        except (OSError, IOError):
+        except OSError:
             pass
 
         return None
@@ -1725,7 +1725,7 @@ class SecureEnclaveBypass:
                 x509.NameAttribute(NameOID.ORGANIZATION_NAME, platform_info["manufacturer"]),
                 x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "TPM"),
                 x509.NameAttribute(NameOID.COMMON_NAME, f"TPM EK {platform_info['platform_id']}"),
-            ]
+            ],
         )
 
         issuer = x509.Name(
@@ -1733,7 +1733,7 @@ class SecureEnclaveBypass:
                 x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
                 x509.NameAttribute(NameOID.ORGANIZATION_NAME, f"{platform_info['manufacturer']} Root CA"),
                 x509.NameAttribute(NameOID.COMMON_NAME, "Platform CA"),
-            ]
+            ],
         )
 
         cert_builder = x509.CertificateBuilder()
@@ -1778,7 +1778,7 @@ class SecureEnclaveBypass:
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PrivateFormat.PKCS8,
                 encryption_algorithm=serialization.NoEncryption(),
-            )
+            ),
         )
 
         return cert.public_bytes(serialization.Encoding.DER)
@@ -1801,7 +1801,7 @@ class SecureEnclaveBypass:
                 x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intel Corporation"),
                 x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "Intel SGX"),
                 x509.NameAttribute(NameOID.COMMON_NAME, f"SGX PCK {platform_info['platform_id']}"),
-            ]
+            ],
         )
 
         issuer = x509.Name(
@@ -1810,7 +1810,7 @@ class SecureEnclaveBypass:
                 x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intel Corporation"),
                 x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "Intel PCS"),
                 x509.NameAttribute(NameOID.COMMON_NAME, "Intel SGX PCK Platform CA"),
-            ]
+            ],
         )
 
         cert_builder = x509.CertificateBuilder()
@@ -1843,7 +1843,7 @@ class SecureEnclaveBypass:
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PrivateFormat.PKCS8,
                 encryption_algorithm=serialization.NoEncryption(),
-            )
+            ),
         )
 
         return cert.public_bytes(serialization.Encoding.DER)
@@ -1970,7 +1970,7 @@ class SecureEnclaveBypass:
 
         return "none"
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up bypass resources."""
         self.bypass_active = False
         # Cleanup would restore original functions

@@ -29,15 +29,16 @@ from typing import Any, Dict, List, Optional
 from intellicrack.ai.llm_backends import LLMConfig, LLMManager, LLMProvider
 from intellicrack.ai.model_cache_manager import get_cache_manager
 from intellicrack.ai.model_performance_monitor import get_performance_monitor
-from intellicrack.utils.logger import get_logger
+from intellicrack.utils.logger import get_logger, log_all_methods
 
 logger = get_logger(__name__)
 
 
+@log_all_methods
 class AIModelManager:
     """Centralized AI model management for Intellicrack."""
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: Optional[str] = None) -> None:
         """Initialize the AI Model Manager.
 
         Args:
@@ -60,11 +61,11 @@ class AIModelManager:
         config_dir.mkdir(parents=True, exist_ok=True)
         return str(config_dir / "model_config.json")
 
-    def _load_configuration(self):
+    def _load_configuration(self) -> None:
         """Load model configuration from file."""
         if os.path.exists(self.config_path):
             try:
-                with open(self.config_path, "r") as f:
+                with open(self.config_path) as f:
                     self.config = json.load(f)
                 logger.info(f"Loaded model configuration from {self.config_path}")
             except Exception as e:
@@ -74,7 +75,7 @@ class AIModelManager:
             self.config = self._get_default_config()
             self._save_configuration()
 
-    def _save_configuration(self):
+    def _save_configuration(self) -> None:
         """Save model configuration to file."""
         try:
             with open(self.config_path, "w") as f:
@@ -99,7 +100,7 @@ class AIModelManager:
             "performance_monitoring": True,
         }
 
-    def _initialize_models(self):
+    def _initialize_models(self) -> None:
         """Initialize configured models."""
         for model_name, model_config in self.config["models"].items():
             if model_config.get("enabled", False):
@@ -115,7 +116,7 @@ class AIModelManager:
             self.active_model = default_model
             logger.info(f"Set active model: {default_model}")
 
-    def _setup_model(self, name: str, config: Dict[str, Any]):
+    def _setup_model(self, name: str, config: Dict[str, Any]) -> None:
         """Set up individual model.
 
         Args:
@@ -142,7 +143,7 @@ class AIModelManager:
             "instance": None,  # Lazy load actual model
         }
 
-    def _setup_openai_model(self, name: str, config: Dict[str, Any]):
+    def _setup_openai_model(self, name: str, config: Dict[str, Any]) -> None:
         """Set up OpenAI model."""
         api_key = config.get("api_key") or os.getenv("OPENAI_API_KEY")
         if not api_key:
@@ -158,7 +159,7 @@ class AIModelManager:
 
         self.llm_manager.add_provider(LLMProvider.OPENAI, llm_config)
 
-    def _setup_anthropic_model(self, name: str, config: Dict[str, Any]):
+    def _setup_anthropic_model(self, name: str, config: Dict[str, Any]) -> None:
         """Set up Anthropic model."""
         api_key = config.get("api_key") or os.getenv("ANTHROPIC_API_KEY")
         if not api_key:
@@ -174,7 +175,7 @@ class AIModelManager:
 
         self.llm_manager.add_provider(LLMProvider.ANTHROPIC, llm_config)
 
-    def _setup_google_model(self, name: str, config: Dict[str, Any]):
+    def _setup_google_model(self, name: str, config: Dict[str, Any]) -> None:
         """Set up Google model."""
         api_key = config.get("api_key") or os.getenv("GOOGLE_API_KEY")
         if not api_key:
@@ -190,7 +191,7 @@ class AIModelManager:
 
         self.llm_manager.add_provider(LLMProvider.GOOGLE, llm_config)
 
-    def _setup_local_model(self, name: str, config: Dict[str, Any]):
+    def _setup_local_model(self, name: str, config: Dict[str, Any]) -> None:
         """Set up local model."""
         model_path = config.get("model_path")
         if not model_path or not os.path.exists(model_path):
@@ -300,7 +301,7 @@ class AIModelManager:
                 logger.error("No local model backend available")
                 raise RuntimeError("No local model backend available (install transformers or llama-cpp-python)") from None
 
-    def set_active_model(self, name: str):
+    def set_active_model(self, name: str) -> None:
         """Set the active model.
 
         Args:
@@ -341,7 +342,7 @@ class AIModelManager:
 
         return self.models[model_name]
 
-    def configure_model(self, name: str, config: Dict[str, Any]):
+    def configure_model(self, name: str, config: Dict[str, Any]) -> None:
         """Configure a model.
 
         Args:
@@ -360,7 +361,7 @@ class AIModelManager:
             self._setup_model(name, self.config["models"][name])
             logger.info(f"Reconfigured model: {name}")
 
-    def enable_model(self, name: str):
+    def enable_model(self, name: str) -> None:
         """Enable a model.
 
         Args:
@@ -377,7 +378,7 @@ class AIModelManager:
         self._setup_model(name, self.config["models"][name])
         logger.info(f"Enabled model: {name}")
 
-    def disable_model(self, name: str):
+    def disable_model(self, name: str) -> None:
         """Disable a model.
 
         Args:
@@ -419,7 +420,7 @@ class AIModelManager:
         else:
             return {"message": "Performance monitoring disabled"}
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Cleanup resources."""
         # Clear cache
         if self.cache_manager:

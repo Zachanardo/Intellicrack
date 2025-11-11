@@ -28,7 +28,7 @@ class APIMonitor(BaseMonitor):
     Hooks licensing-critical APIs: registry, file I/O, network, crypto, time checks.
     """
 
-    def __init__(self, pid: int, process_info: Optional[ProcessInfo] = None):
+    def __init__(self, pid: int, process_info: Optional[ProcessInfo] = None) -> None:
         """Initialize API monitor.
 
         Args:

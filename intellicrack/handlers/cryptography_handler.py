@@ -322,7 +322,7 @@ except ImportError as e:
             0x16,
         ]
 
-        def __init__(self, key):
+        def __init__(self, key) -> None:
             """Initialize AES with key."""
             self.key = key
             self.key_size = len(key)
@@ -360,7 +360,7 @@ except ImportError as e:
     class FallbackCipher:
         """Cipher implementation for AES."""
 
-        def __init__(self, algorithm, mode):
+        def __init__(self, algorithm, mode) -> None:
             """Initialize cipher."""
             self.algorithm = algorithm
             self.mode = mode
@@ -380,7 +380,7 @@ except ImportError as e:
     class FallbackEncryptor:
         """Encryptor for cipher operations."""
 
-        def __init__(self, algorithm, mode):
+        def __init__(self, algorithm, mode) -> None:
             """Initialize encryptor."""
             self.algorithm = algorithm
             self.mode = mode
@@ -423,7 +423,7 @@ except ImportError as e:
     class FallbackDecryptor:
         """Decryptor for cipher operations."""
 
-        def __init__(self, algorithm, mode):
+        def __init__(self, algorithm, mode) -> None:
             """Initialize decryptor."""
             self.algorithm = algorithm
             self.mode = mode
@@ -467,7 +467,7 @@ except ImportError as e:
     class FallbackFernet:
         """Fernet symmetric encryption implementation."""
 
-        def __init__(self, key=None):
+        def __init__(self, key=None) -> None:
             """Initialize Fernet."""
             if key is None:
                 # Generate a new key
@@ -574,7 +574,7 @@ except ImportError as e:
             return FallbackRSAPrivateKey(p, q, n, e, d)
 
         @staticmethod
-        def _generate_prime(bits):
+        def _generate_prime(bits) -> int:
             """Generate a prime number (simplified)."""
             # Use a pre-selected prime for fallback
             if bits <= 512:
@@ -604,7 +604,7 @@ except ImportError as e:
     class FallbackRSAPrivateKey:
         """RSA private key implementation."""
 
-        def __init__(self, p, q, n, e, d):
+        def __init__(self, p, q, n, e, d) -> None:
             """Initialize RSA private key."""
             self.p = p
             self.q = q
@@ -644,7 +644,7 @@ MIIEowIBAAKCAQEA{base64.b64encode(str(self.n).encode()).decode()}
     class FallbackRSAPublicKey:
         """RSA public key implementation."""
 
-        def __init__(self, n, e):
+        def __init__(self, n, e) -> None:
             """Initialize RSA public key."""
             self.n = n
             self.e = e
@@ -676,7 +676,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
     class FallbackPBKDF2:
         """PBKDF2 key derivation."""
 
-        def __init__(self, algorithm, length, salt, iterations, backend=None):
+        def __init__(self, algorithm, length, salt, iterations, backend=None) -> None:
             """Initialize PBKDF2."""
             self.algorithm = algorithm
             self.length = length
@@ -688,7 +688,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             # Use Python's hashlib.pbkdf2_hmac
             return hashlib.pbkdf2_hmac("sha256", key_material, self.salt, self.iterations, dklen=self.length)
 
-        def verify(self, key_material, expected_key):
+        def verify(self, key_material, expected_key) -> None:
             """Verify key material produces expected key."""
             derived = self.derive(key_material)
             if not hmac.compare_digest(derived, expected_key):
@@ -714,7 +714,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
         """Cipher algorithms."""
 
         class AES:
-            def __init__(self, key):
+            def __init__(self, key) -> None:
                 self.key = key
                 self.key_size = len(key) * 8
 
@@ -722,21 +722,21 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
         """Cipher modes."""
 
         class CBC:
-            def __init__(self, initialization_vector):
+            def __init__(self, initialization_vector) -> None:
                 self.initialization_vector = initialization_vector
 
         class ECB:
             pass
 
         class CTR:
-            def __init__(self, nonce):
+            def __init__(self, nonce) -> None:
                 self.nonce = nonce
 
     class FallbackPadding:
         """Padding schemes."""
 
         class PKCS7:
-            def __init__(self, block_size):
+            def __init__(self, block_size) -> None:
                 self.block_size = block_size
 
             def padder(self):
@@ -748,7 +748,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
     class FallbackPadder:
         """PKCS7 padder."""
 
-        def __init__(self, block_size):
+        def __init__(self, block_size) -> None:
             """Initialize padder."""
             self.block_size = block_size // 8
             self._buffer = b""
@@ -774,7 +774,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
     class FallbackUnpadder:
         """PKCS7 unpadder."""
 
-        def __init__(self, block_size):
+        def __init__(self, block_size) -> None:
             """Initialize unpadder."""
             self.block_size = block_size // 8
             self._buffer = b""
@@ -858,7 +858,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             "PrivateKey",
             (),
             {
-                "private_bytes": lambda self, encoding, format, encryption: data,
+                "private_bytes": lambda self, encoding, key_format, encryption: data,
                 "public_key": lambda self: type("PublicKey", (), {})(),
                 "key_size": 2048,
             },
@@ -867,7 +867,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
     class FallbackX509Certificate:
         """X.509 certificate."""
 
-        def __init__(self, data):
+        def __init__(self, data) -> None:
             """Initialize certificate."""
             self.data = data
             self.subject = "CN=Fallback Certificate"
@@ -904,18 +904,18 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
 
                 class Padding:
                     class OAEP:
-                        def __init__(self, mgf, algorithm, label):
+                        def __init__(self, mgf, algorithm, label) -> None:
                             self.mgf = mgf
                             self.algorithm = algorithm
                             self.label = label
 
                     class PSS:
-                        def __init__(self, mgf, salt_length):
+                        def __init__(self, mgf, salt_length) -> None:
                             self.mgf = mgf
                             self.salt_length = salt_length
 
                     class MGF1:
-                        def __init__(self, algorithm):
+                        def __init__(self, algorithm) -> None:
                             self.algorithm = algorithm
 
                     class PKCS1v15:
@@ -943,7 +943,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
                     pass
 
                 class BestAvailableEncryption:
-                    def __init__(self, password):
+                    def __init__(self, password) -> None:
                         self.password = password
 
     class NameOID:

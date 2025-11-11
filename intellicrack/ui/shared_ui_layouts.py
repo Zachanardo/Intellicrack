@@ -40,7 +40,7 @@ class UILayoutHelpers:
 
     @staticmethod
     def create_tabbed_dialog_layout(
-        dialog, window_title: str, size: tuple[int, int] = (1000, 700), is_modal: bool = False
+        dialog, window_title: str, size: tuple[int, int] = (1000, 700), is_modal: bool = False,
     ) -> tuple[QVBoxLayout, QTabWidget]:
         """Create a standard tabbed dialog layout structure.
 

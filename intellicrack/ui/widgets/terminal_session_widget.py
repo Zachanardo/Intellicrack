@@ -53,7 +53,7 @@ class TerminalSessionWidget(QWidget):
     session_closed = pyqtSignal(str)
     active_session_changed = pyqtSignal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize terminal session widget."""
         super().__init__(parent)
 
@@ -64,7 +64,7 @@ class TerminalSessionWidget(QWidget):
 
         logger.info("TerminalSessionWidget initialized")
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         """Set up the UI with tab widget and controls."""
         from intellicrack.handlers.pyqt6_handler import QSizePolicy
 
@@ -137,7 +137,7 @@ class TerminalSessionWidget(QWidget):
 
         return session_id
 
-    def close_session(self, session_id):
+    def close_session(self, session_id) -> None:
         """Close specified session.
 
         Args:
@@ -171,12 +171,12 @@ class TerminalSessionWidget(QWidget):
         if len(self._sessions) == 0:
             self.create_new_session()
 
-    def close_current_session(self):
+    def close_current_session(self) -> None:
         """Close the currently active session."""
         if self._active_session_id:
             self.close_session(self._active_session_id)
 
-    def _close_tab_at_index(self, index):
+    def _close_tab_at_index(self, index) -> None:
         """Close tab at specified index."""
         widget = self.tab_widget.widget(index)
 
@@ -185,7 +185,7 @@ class TerminalSessionWidget(QWidget):
                 self.close_session(session_id)
                 break
 
-    def _on_tab_changed(self, index):
+    def _on_tab_changed(self, index) -> None:
         """Handle tab change event."""
         if index < 0:
             self._active_session_id = None
@@ -228,7 +228,7 @@ class TerminalSessionWidget(QWidget):
 
         return None
 
-    def switch_to_session(self, session_id):
+    def switch_to_session(self, session_id) -> None:
         """Switch to specified session tab.
 
         Args:
@@ -248,7 +248,7 @@ class TerminalSessionWidget(QWidget):
                 widget.terminal_display.setFocus()
                 break
 
-    def rename_session(self, session_id, new_name):
+    def rename_session(self, session_id, new_name) -> None:
         """Rename a session.
 
         Args:
@@ -281,7 +281,7 @@ class TerminalSessionWidget(QWidget):
         """
         return self._sessions.copy()
 
-    def _on_process_started(self, session_id, pid):
+    def _on_process_started(self, session_id, pid) -> None:
         """Handle process started in session."""
         if session_id in self._sessions:
             session = self._sessions[session_id]
@@ -293,7 +293,7 @@ class TerminalSessionWidget(QWidget):
                     self.tab_widget.setTabText(i, f"{name} [PID:{pid}]")
                     break
 
-    def _on_process_finished(self, session_id, pid, exit_code):
+    def _on_process_finished(self, session_id, pid, exit_code) -> None:
         """Handle process finished in session."""
         if session_id in self._sessions:
             session = self._sessions[session_id]

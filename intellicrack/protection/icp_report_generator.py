@@ -48,7 +48,7 @@ class ReportOptions:
 class ICPReportGenerator:
     """Generate comprehensive reports from ICP analysis results."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the ICP report generator with template and output directory paths."""
         self.report_template_path = Path(__file__).parent / "templates"
         self.report_output_path = Path.home() / "Intellicrack_Reports"
@@ -386,7 +386,7 @@ class ICPReportGenerator:
                     "title": "Unpacking Required",
                     "desc": "The file is packed. Use dynamic analysis tools to unpack before further analysis.",
                     "tools": ["x64dbg", "Process Dump", "Scylla"],
-                }
+                },
             )
 
         if result.has_anti_debug:
@@ -395,7 +395,7 @@ class ICPReportGenerator:
                     "title": "Anti-Debug Bypass Needed",
                     "desc": "Anti-debugging mechanisms detected. Use kernel-mode debuggers or anti-anti-debug plugins.",
                     "tools": ["ScyllaHide", "TitanHide", "VirtualKD"],
-                }
+                },
             )
 
         if result.has_licensing:
@@ -404,7 +404,7 @@ class ICPReportGenerator:
                     "title": "License Analysis",
                     "desc": "Licensing system detected. Analyze license validation routines and key algorithms.",
                     "tools": ["Ghidra", "API Monitor", "WinAPIOverride"],
-                }
+                },
             )
 
         if not recommendations:

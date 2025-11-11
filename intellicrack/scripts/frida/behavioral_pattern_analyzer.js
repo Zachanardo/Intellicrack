@@ -1738,24 +1738,24 @@ const BehavioralPatternAnalyzer = {
 
         // Customize based on protection type
         switch (item.type) {
-        case 'anti_debug_detection':
-            config.hookStrategy = 'immediate_response';
-            config.performance.maxLatency = 1;
-            break;
+            case 'anti_debug_detection':
+                config.hookStrategy = 'immediate_response';
+                config.performance.maxLatency = 1;
+                break;
 
-        case 'registry_license_check':
-            config.hookStrategy = 'value_replacement';
-            config.performance.batchable = true;
-            break;
+            case 'registry_license_check':
+                config.hookStrategy = 'value_replacement';
+                config.performance.batchable = true;
+                break;
 
-        case 'network_license_check':
-            config.hookStrategy = 'response_modification';
-            config.performance.maxLatency = 50;
-            break;
+            case 'network_license_check':
+                config.hookStrategy = 'response_modification';
+                config.performance.maxLatency = 50;
+                break;
 
-        default:
-            config.hookStrategy = 'default';
-            break;
+            default:
+                config.hookStrategy = 'default';
+                break;
         }
 
         return config;
@@ -3177,20 +3177,20 @@ const BehavioralPatternAnalyzer = {
 
     measureEnvironmentalFactor: function (factor) {
         switch (factor) {
-        case 'systemLoad':
-            return Math.random(); // Simulated system load
-        case 'networkLatency':
-            return 10 + Math.random() * 100; // 10-110ms latency
-        case 'userActivity':
-            return Math.random(); // Activity level 0-1
-        case 'timeOfDay':
-            return new Date().getHours() / 24; // Normalized time
-        case 'applicationContext':
-            return Math.random(); // Context complexity
-        case 'securityState':
-            return Math.random(); // Security alertness level
-        default:
-            return Math.random();
+            case 'systemLoad':
+                return Math.random(); // Simulated system load
+            case 'networkLatency':
+                return 10 + Math.random() * 100; // 10-110ms latency
+            case 'userActivity':
+                return Math.random(); // Activity level 0-1
+            case 'timeOfDay':
+                return new Date().getHours() / 24; // Normalized time
+            case 'applicationContext':
+                return Math.random(); // Context complexity
+            case 'securityState':
+                return Math.random(); // Security alertness level
+            default:
+                return Math.random();
         }
     },
 
@@ -3206,26 +3206,26 @@ const BehavioralPatternAnalyzer = {
 
         // Adjust behavior parameters based on environmental changes
         switch (factor) {
-        case 'systemLoad':
-            if (value > 0.8) {
-                // High system load - reduce activity intensity
-                this.adaptiveConfig.activityIntensity *= 0.7;
-            }
-            break;
-        case 'networkLatency':
-            if (value > 80) {
-                // High latency - adjust timing patterns
-                this.adaptiveConfig.networkTimingAdjustment = value / 50;
-            }
-            break;
-        case 'userActivity':
-            if (value < 0.2) {
-                // Low user activity - enter stealth mode
-                this.adaptiveConfig.stealthMode = true;
-            } else {
-                this.adaptiveConfig.stealthMode = false;
-            }
-            break;
+            case 'systemLoad':
+                if (value > 0.8) {
+                    // High system load - reduce activity intensity
+                    this.adaptiveConfig.activityIntensity *= 0.7;
+                }
+                break;
+            case 'networkLatency':
+                if (value > 80) {
+                    // High latency - adjust timing patterns
+                    this.adaptiveConfig.networkTimingAdjustment = value / 50;
+                }
+                break;
+            case 'userActivity':
+                if (value < 0.2) {
+                    // Low user activity - enter stealth mode
+                    this.adaptiveConfig.stealthMode = true;
+                } else {
+                    this.adaptiveConfig.stealthMode = false;
+                }
+                break;
         }
     },
 
@@ -3592,32 +3592,32 @@ const BehavioralPatternAnalyzer = {
     generateRandomizedPattern: function (patternType) {
         // Generate randomized version of existing patterns
         switch (patternType) {
-        case 'workingHours':
-            return this.generateWorkingHoursPattern();
-        case 'breakPatterns':
-            return this.generateBreakPatterns();
-        case 'focusLevels':
-            return this.generateFocusLevelPatterns();
-        case 'taskSwitching':
-            return this.generateTaskSwitchingPatterns();
-        default:
-            return null;
+            case 'workingHours':
+                return this.generateWorkingHoursPattern();
+            case 'breakPatterns':
+                return this.generateBreakPatterns();
+            case 'focusLevels':
+                return this.generateFocusLevelPatterns();
+            case 'taskSwitching':
+                return this.generateTaskSwitchingPatterns();
+            default:
+                return null;
         }
     },
 
     generateNaturalResponse: function (funcName) {
         // Generate natural responses for different API calls
         switch (funcName) {
-        case 'IsDebuggerPresent':
-            return ptr(0); // No debugger
-        case 'GetTickCount':
-            return ptr(Date.now() + Math.random() * 100); // Natural timing
-        case 'NtQueryInformationProcess':
-            return ptr(0); // Success
-        case 'GetForegroundWindow':
-            return ptr(0x12345678 + Math.random() * 1000); // Valid window handle
-        default:
-            return ptr(0);
+            case 'IsDebuggerPresent':
+                return ptr(0); // No debugger
+            case 'GetTickCount':
+                return ptr(Date.now() + Math.random() * 100); // Natural timing
+            case 'NtQueryInformationProcess':
+                return ptr(0); // Success
+            case 'GetForegroundWindow':
+                return ptr(0x12345678 + Math.random() * 1000); // Valid window handle
+            default:
+                return ptr(0);
         }
     },
 

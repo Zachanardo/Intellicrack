@@ -258,7 +258,7 @@ def get_tooltip_definitions() -> dict[str, str]:
     }
 
 
-def apply_tooltips_to_all_elements(parent_widget):  # noqa: C901
+def apply_tooltips_to_all_elements(parent_widget) -> None:  # noqa: C901
     """Apply tooltips to all UI elements in a widget hierarchy.
 
     Now supports: QPushButton, QLabel, QLineEdit, QComboBox, QCheckBox,
@@ -573,7 +573,7 @@ def _get_contextual_tooltip(text: str) -> str:
     return ""  # No contextual match found
 
 
-def apply_tooltips_to_buttons(parent_widget):
+def apply_tooltips_to_buttons(parent_widget) -> None:
     """Backward compatibility wrapper for apply_tooltips_to_all_elements.
 
     Args:

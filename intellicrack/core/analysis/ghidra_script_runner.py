@@ -54,7 +54,7 @@ class GhidraScript:
 class GhidraScriptRunner:
     """Manages Ghidra script execution with dynamic script discovery."""
 
-    def __init__(self, ghidra_path: Path):
+    def __init__(self, ghidra_path: Path) -> None:
         """Initialize the GhidraScriptRunner with the Ghidra path."""
         self.ghidra_path = ghidra_path
         self.headless_path = self._get_headless_path()
@@ -79,7 +79,7 @@ class GhidraScriptRunner:
             return
 
         for script_file in self.intellicrack_scripts_dir.glob("*.[pj][ya][vt][ah]*"):
-            if script_file.name == "__init__.py" or script_file.name == "README.md":
+            if script_file.name in {"__init__.py", "README.md"}:
                 continue
 
             language = "python" if script_file.suffix == ".py" else "java"
@@ -96,7 +96,7 @@ class GhidraScriptRunner:
                 output_format=metadata.get("output_format", "json"),
                 timeout=int(metadata.get("timeout", 300)),
                 requires_project=metadata.get("requires_project", "true").lower() == "true",
-                description=metadata.get("description", f"{script_file.stem} Ghidra script")
+                description=metadata.get("description", f"{script_file.stem} Ghidra script"),
             )
 
         logger.info(f"Discovered {len(self.discovered_scripts)} Ghidra scripts from {self.intellicrack_scripts_dir}")
@@ -110,7 +110,7 @@ class GhidraScriptRunner:
         metadata = {}
 
         try:
-            with open(script_path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(script_path, encoding="utf-8", errors="ignore") as f:
                 lines = f.readlines()
 
             for line in lines[:100]:
@@ -226,7 +226,7 @@ class GhidraScriptRunner:
                         "output_dir": str(output_dir),
                         "success": True,
                         "message": "Script running in terminal",
-                    }
+                    },
                 }
                 return results
             else:
@@ -281,7 +281,7 @@ class GhidraScriptRunner:
                 script_output_dir.mkdir(parents=True, exist_ok=True)
 
                 result = self.run_script(
-                    binary_path=binary_path, script_name=script_name, output_dir=script_output_dir, project_path=project_path
+                    binary_path=binary_path, script_name=script_name, output_dir=script_output_dir, project_path=project_path,
                 )
 
                 results[script_name] = result
@@ -299,7 +299,7 @@ class GhidraScriptRunner:
                 shutil.rmtree(project_path, ignore_errors=True)
 
     def create_custom_script(
-        self, name: str, code: str, language: str = "python", parameters: Optional[Dict[str, Any]] = None
+        self, name: str, code: str, language: str = "python", parameters: Optional[Dict[str, Any]] = None,
     ) -> GhidraScript:
         """Create a custom Ghidra script."""
         # Create custom scripts directory
@@ -364,7 +364,7 @@ class GhidraScriptRunner:
                 parameters=metadata.get("parameters", {}),
                 output_format=metadata.get("output_format", "json"),
                 timeout=int(metadata.get("timeout", 300)),
-                description=metadata.get("description", "")
+                description=metadata.get("description", ""),
             )
 
         logger.warning(f"Script not found: {name}")
@@ -384,7 +384,7 @@ class GhidraScriptRunner:
             # Look for JSON output file
             json_files = list(output_dir.glob("*.json"))
             if json_files:
-                with open(json_files[0], "r") as f:
+                with open(json_files[0]) as f:
                     results["data"] = json.load(f)
 
         elif format == "xml":
@@ -412,7 +412,7 @@ class GhidraScriptRunner:
                 "language": script.language,
                 "description": script.description,
                 "path": str(script.path.relative_to(self.intellicrack_scripts_dir)),
-                "timeout": script.timeout
+                "timeout": script.timeout,
             })
 
         return scripts
@@ -430,7 +430,7 @@ class GhidraScriptRunner:
 
             # Try to parse for basic syntax (Python only)
             if script_path.suffix == ".py":
-                with open(script_path, "r") as f:
+                with open(script_path) as f:
                     code = f.read()
                 compile(code, str(script_path), "exec")
 

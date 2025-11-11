@@ -49,7 +49,7 @@ def capture_with_scapy(interface: str = "any", filter_str: str = "", count: int 
 
     try:
 
-        def packet_handler(packet):
+        def packet_handler(packet) -> None:
             """Process captured packets in real-time."""
             packet_info = {
                 "timestamp": time.time(),
@@ -240,7 +240,7 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> dict[str, Any]:
                                 "dst": dst,
                                 "port": port,
                                 "timestamp": getattr(packet, "sniff_timestamp", "unknown"),
-                            }
+                            },
                         )
 
             # Extract DNS queries
@@ -264,7 +264,7 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> dict[str, Any]:
                             "type": "DNS",
                             "query": dns_name,
                             "timestamp": getattr(packet, "sniff_timestamp", "unknown"),
-                        }
+                        },
                     )
 
             # Extract HTTP requests
@@ -285,7 +285,7 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> dict[str, Any]:
                                 "type": "HTTP",
                                 "details": http_info,
                                 "timestamp": getattr(packet, "sniff_timestamp", "unknown"),
-                            }
+                            },
                         )
 
             # Extract TLS handshakes
@@ -304,7 +304,7 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> dict[str, Any]:
                             "src": getattr(packet.ip, "src", "unknown") if hasattr(packet, "ip") else "unknown",
                             "dst": getattr(packet.ip, "dst", "unknown") if hasattr(packet, "ip") else "unknown",
                             "flags": str(getattr(packet.tcp, "flags", "unknown")),
-                        }
+                        },
                     )
 
         cap.close()
@@ -409,7 +409,7 @@ def parse_pcap_with_dpkt(pcap_file: str) -> dict[str, Any]:
                                         "dst": dst_ip,
                                         "port": tcp.dport,
                                         "timestamp": timestamp,
-                                    }
+                                    },
                                 )
 
                         elif isinstance(ip.data, dpkt.udp.UDP):
@@ -457,7 +457,7 @@ def parse_pcap_with_dpkt(pcap_file: str) -> dict[str, Any]:
                         "bytes": data["bytes"],
                         "duration": duration,
                         "rate_mbps": (data["bytes"] * 8 / 1024 / 1024) / max(duration, 1),
-                    }
+                    },
                 )
 
         # Convert set to count for JSON serialization

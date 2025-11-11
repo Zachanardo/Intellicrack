@@ -106,7 +106,7 @@ class BypassStrategySelector:
     def select_optimal_strategy(
         self,
         detection_report: DetectionReport,
-        target_state: str = "static"
+        target_state: str = "static",
     ) -> BypassMethod:
         """Select optimal bypass strategy for target.
 
@@ -128,16 +128,16 @@ class BypassStrategySelector:
 
         logger.info(
             f"Selecting strategy: {num_functions} functions, "
-            f"{num_libraries} libraries, {risk_level} risk, {target_state} state"
+            f"{num_libraries} libraries, {risk_level} risk, {target_state} state",
         )
 
         if target_state == "static":
             return self._select_static_strategy(
-                detection_report, num_functions, num_libraries, risk_level
+                detection_report, num_functions, num_libraries, risk_level,
             )
         else:
             return self._select_running_strategy(
-                detection_report, num_functions, num_libraries
+                detection_report, num_functions, num_libraries,
             )
 
     def _select_static_strategy(
@@ -145,7 +145,7 @@ class BypassStrategySelector:
         detection_report: DetectionReport,
         num_functions: int,
         num_libraries: int,
-        risk_level: str
+        risk_level: str,
     ) -> BypassMethod:
         """Select strategy for static (non-running) target.
 
@@ -187,7 +187,7 @@ class BypassStrategySelector:
         self,
         detection_report: DetectionReport,
         num_functions: int,
-        num_libraries: int
+        num_libraries: int,
     ) -> BypassMethod:
         """Select strategy for running target.
 
@@ -229,10 +229,7 @@ class BypassStrategySelector:
             if func.confidence < 0.5
         )
 
-        if low_confidence_count > len(detection_report.validation_functions) * 0.5:
-            return True
-
-        return False
+        return low_confidence_count > len(detection_report.validation_functions) * 0.5
 
     def _is_network_based_licensing(self, detection_report: DetectionReport) -> bool:
         """Check if licensing appears to be network-based.
@@ -246,7 +243,7 @@ class BypassStrategySelector:
         """
         network_indicators = [
             "winhttp", "wininet", "curl", "https", "http",
-            "activation", "online", "server"
+            "activation", "online", "server",
         ]
 
         for func in detection_report.validation_functions:
@@ -304,7 +301,7 @@ class BypassStrategySelector:
 
     def get_fallback_strategy(
         self,
-        failed_method: BypassMethod
+        failed_method: BypassMethod,
     ) -> Optional[BypassMethod]:
         """Get fallback strategy if primary method fails.
 

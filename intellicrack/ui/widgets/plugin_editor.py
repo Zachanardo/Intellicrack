@@ -92,7 +92,7 @@ class PluginEditor(QWidget):
     #: Emits file path (type: str)
     save_requested = pyqtSignal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize plugin editor with validation and UI setup."""
         super().__init__(parent)
         self.current_file = None
@@ -102,7 +102,7 @@ class PluginEditor(QWidget):
         self.validation_timer.setSingleShot(True)
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the editor UI."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -210,7 +210,7 @@ class PluginEditor(QWidget):
         self.editor.setContextMenuPolicy(Qt.CustomContextMenu)
         self.editor.customContextMenuRequested.connect(self.show_context_menu)
 
-    def new_file(self):
+    def new_file(self) -> None:
         """Create a new file."""
         if self.editor.document().isModified():
             reply = QMessageBox.question(
@@ -229,7 +229,7 @@ class PluginEditor(QWidget):
         self.file_label.setText("Untitled")
         self.status_bar.showMessage("New file created")
 
-    def open_file(self):
+    def open_file(self) -> None:
         """Open a file."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
@@ -260,7 +260,7 @@ class PluginEditor(QWidget):
                 logger.error("Exception in plugin_editor: %s", e)
                 QMessageBox.critical(self, "Error", f"Failed to open file:\n{e!s}")
 
-    def save_file(self):
+    def save_file(self) -> None:
         """Save the current file."""
         if not self.current_file:
             file_path, _ = QFileDialog.getSaveFileName(
@@ -286,7 +286,7 @@ class PluginEditor(QWidget):
             logger.error("Exception in plugin_editor: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to save file:\n{e!s}")
 
-    def on_text_changed(self):
+    def on_text_changed(self) -> None:
         """Handle text changes."""
         self.text_changed.emit()
 
@@ -297,7 +297,7 @@ class PluginEditor(QWidget):
         # Update code outline
         self.update_code_outline()
 
-    def change_syntax(self, syntax):
+    def change_syntax(self, syntax) -> None:
         """Change syntax highlighting."""
         if syntax == "Python":
             self.highlighter = PythonHighlighter(self.editor.document())
@@ -306,7 +306,7 @@ class PluginEditor(QWidget):
         else:
             self.highlighter = None
 
-    def perform_validation(self):
+    def perform_validation(self) -> None:
         """Validate the current code."""
         self.validation_list.clear()
 
@@ -330,14 +330,14 @@ class PluginEditor(QWidget):
 
         # Structure validation
         if syntax_valid:
-            structure_valid, structure_errors = self.validator.validate_structure(code)
+            _structure_valid, structure_errors = self.validator.validate_structure(code)
             for error in structure_errors:
                 item = QListWidgetItem(f"WARNING️ Structure: {error}")
                 item.setForeground(QColor(255, 165, 0))
                 self.validation_list.addItem(item)
 
             # Import validation
-            imports_valid, import_warnings = self.validator.validate_imports(code)
+            _imports_valid, import_warnings = self.validator.validate_imports(code)
             for warning in import_warnings:
                 item = QListWidgetItem(f"WARNING️ Import: {warning}")
                 item.setForeground(QColor(255, 165, 0))
@@ -356,7 +356,7 @@ class PluginEditor(QWidget):
         }
         self.validation_complete.emit(results)
 
-    def update_code_outline(self):
+    def update_code_outline(self) -> None:
         """Update the code outline."""
         self.outline_list.clear()
 
@@ -385,7 +385,7 @@ class PluginEditor(QWidget):
         except Exception as e:
             logger.debug("Failed to parse code for outline: %s", e)
 
-    def show_context_menu(self, position):
+    def show_context_menu(self, position) -> None:
         """Show context menu."""
         menu = QMenu(self)
 
@@ -411,7 +411,7 @@ class PluginEditor(QWidget):
 
         menu.exec_(self.editor.mapToGlobal(position))
 
-    def show_find_dialog(self):
+    def show_find_dialog(self) -> None:
         """Show find/replace dialog."""
         # Simple find implementation
         from intellicrack.handlers.pyqt6_handler import QInputDialog
@@ -430,6 +430,6 @@ class PluginEditor(QWidget):
         """Get the current code."""
         return self.editor.toPlainText()
 
-    def set_code(self, code):
+    def set_code(self, code) -> None:
         """Set the editor code."""
         self.editor.setPlainText(code)

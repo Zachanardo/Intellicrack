@@ -63,16 +63,16 @@ def _safe_tensorflow_import(
     import_error = None
     tf_modules = {}
 
-    def _import_tensorflow():
+    def _import_tensorflow() -> None:
         nonlocal import_success, import_error, tf_modules
         try:
-            import tensorflow as tf_temp
+            import tensorflow as tf
 
-            tf_modules["tf"] = tf_temp
-            tf_modules["keras"] = tf_temp.keras
-            tf_modules["layers"] = tf_temp.keras.layers
-            tf_modules["models"] = tf_temp.keras.models
-            tf_modules["optimizers"] = tf_temp.keras.optimizers
+            tf_modules["tf"] = tf
+            tf_modules["keras"] = tf.keras
+            tf_modules["layers"] = tf.keras.layers
+            tf_modules["models"] = tf.keras.models
+            tf_modules["optimizers"] = tf.keras.optimizers
             import_success = True
         except Exception as e:
             import_error = e
@@ -96,7 +96,7 @@ def _safe_tensorflow_import(
     return import_success, tf_modules, import_error
 
 
-def ensure_tensorflow_loaded():
+def ensure_tensorflow_loaded() -> None:
     """Ensure TensorFlow is loaded (lazy loading)."""
     global _tf_initialized, HAS_TENSORFLOW, TENSORFLOW_VERSION, tf, keras, layers, models, optimizers, tensorflow
 
@@ -150,7 +150,7 @@ def ensure_tensorflow_loaded():
 class FallbackTensor:
     """Functional tensor implementation for ML operations."""
 
-    def __init__(self, data, shape=None, dtype="float32"):
+    def __init__(self, data, shape=None, dtype="float32") -> None:
         """Initialize tensor with data."""
         if hasattr(data, "__iter__"):
             self.data = list(self._flatten(data))
@@ -242,7 +242,7 @@ class FallbackTensor:
             result = [a * other for a in self.data]
         return FallbackTensor(result, self.shape, self.dtype)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return string representation."""
         return f"<Tensor shape={self.shape} dtype={self.dtype}>"
 
@@ -250,14 +250,14 @@ class FallbackTensor:
 class FallbackVariable:
     """Variable for trainable parameters."""
 
-    def __init__(self, initial_value, trainable=True, name=None):
+    def __init__(self, initial_value, trainable=True, name=None) -> None:
         """Initialize variable."""
         self.value = FallbackTensor(initial_value) if not isinstance(initial_value, FallbackTensor) else initial_value
         self.trainable = trainable
         self.name = name or "Variable"
         self.gradient = None
 
-    def assign(self, new_value):
+    def assign(self, new_value) -> None:
         """Assign new value to variable."""
         self.value = FallbackTensor(new_value) if not isinstance(new_value, FallbackTensor) else new_value
 
@@ -269,7 +269,7 @@ class FallbackVariable:
 class FallbackDenseLayer:
     """Dense (fully connected) layer implementation."""
 
-    def __init__(self, units, activation=None, use_bias=True, name=None):
+    def __init__(self, units, activation=None, use_bias=True, name=None) -> None:
         """Initialize dense layer."""
         self.units = units
         self.activation = activation
@@ -279,7 +279,7 @@ class FallbackDenseLayer:
         self.bias = None
         self.built = False
 
-    def build(self, input_shape):
+    def build(self, input_shape) -> None:
         """Build layer with input shape."""
         if self.built:
             return
@@ -332,7 +332,7 @@ class FallbackDenseLayer:
 class FallbackConv2DLayer:
     """2D Convolution layer implementation."""
 
-    def __init__(self, filters, kernel_size, strides=1, padding="valid", activation=None, name=None):
+    def __init__(self, filters, kernel_size, strides=1, padding="valid", activation=None, name=None) -> None:
         """Initialize conv layer."""
         self.filters = filters
         self.kernel_size = kernel_size if isinstance(kernel_size, tuple) else (kernel_size, kernel_size)
@@ -344,7 +344,7 @@ class FallbackConv2DLayer:
         self.bias = None
         self.built = False
 
-    def build(self, input_shape):
+    def build(self, input_shape) -> None:
         """Build layer."""
         if self.built:
             return
@@ -429,7 +429,7 @@ class FallbackConv2DLayer:
 class FallbackModel:
     """Sequential model implementation."""
 
-    def __init__(self, layers=None, name=None):
+    def __init__(self, layers=None, name=None) -> None:
         """Initialize model."""
         self.layers = layers or []
         self.name = name or "model"
@@ -438,11 +438,11 @@ class FallbackModel:
         self.loss = None
         self.metrics = []
 
-    def add(self, layer):
+    def add(self, layer) -> None:
         """Add layer to model."""
         self.layers.append(layer)
 
-    def compile(self, optimizer="adam", loss="categorical_crossentropy", metrics=None):
+    def compile(self, optimizer="adam", loss="categorical_crossentropy", metrics=None) -> None:
         """Compile model."""
         self.optimizer = optimizer
         self.loss = loss
@@ -502,7 +502,7 @@ class FallbackModel:
 
             # Validation step
             if validation_data:
-                val_x, val_y = validation_data[:2]
+                val_x, _val_y = validation_data[:2]
                 self.predict(val_x, batch_size=batch_size, verbose=0)
                 val_loss = final_loss * 1.1  # Basic validation approximation
                 history["val_loss"].append(val_loss)
@@ -601,17 +601,17 @@ class FallbackModel:
                     logger.info("%s: %.4f", metric_name, final_metrics[i])
 
         if len(final_metrics) > 0:
-            return [final_loss] + final_metrics
+            return [final_loss, *final_metrics]
         return final_loss
 
-    def save(self, filepath):
+    def save(self, filepath) -> None:
         """Save model."""
         logger.info("Saving model to %s (fallback mode - no actual save)", filepath)
         # Create empty file
         with open(filepath, "wb") as f:
             f.write(b"FALLBACK_MODEL")
 
-    def summary(self):
+    def summary(self) -> None:
         """Print model summary."""
         logger.info("Model: %s", self.name)
         logger.info("Layers: %d", len(self.layers))
@@ -626,7 +626,7 @@ class FallbackModel:
 class FallbackSequential(FallbackModel):
     """Sequential model."""
 
-    def __init__(self, layers=None, name=None):
+    def __init__(self, layers=None, name=None) -> None:
         """Initialize sequential model."""
         super().__init__(layers, name or "sequential")
 
@@ -641,7 +641,7 @@ class FallbackKerasLayers:
     class Flatten:
         """Flatten layer."""
 
-        def __init__(self, name=None):
+        def __init__(self, name=None) -> None:
             self.name = name or "flatten"
 
         def call(self, inputs):
@@ -654,7 +654,7 @@ class FallbackKerasLayers:
     class Dropout:
         """Dropout layer."""
 
-        def __init__(self, rate, name=None):
+        def __init__(self, rate, name=None) -> None:
             self.rate = rate
             self.name = name or "dropout"
 
@@ -679,7 +679,7 @@ class FallbackKerasLayers:
     class BatchNormalization:
         """Batch normalization layer."""
 
-        def __init__(self, name=None):
+        def __init__(self, name=None) -> None:
             self.name = name or "batch_norm"
 
         def call(self, inputs):
@@ -692,7 +692,7 @@ class FallbackKerasLayers:
     class MaxPooling2D:
         """Max pooling layer."""
 
-        def __init__(self, pool_size=2, strides=None, padding="valid", name=None):
+        def __init__(self, pool_size=2, strides=None, padding="valid", name=None) -> None:
             self.pool_size = pool_size if isinstance(pool_size, tuple) else (pool_size, pool_size)
             self.strides = strides or self.pool_size
             self.padding = padding
@@ -770,7 +770,7 @@ class FallbackKerasLayers:
     class Input:
         """Input layer."""
 
-        def __init__(self, shape=None, name=None):
+        def __init__(self, shape=None, name=None) -> None:
             self.shape = shape
             self.name = name or "input"
 
@@ -792,16 +792,16 @@ class FallbackKerasOptimizers:
     """Keras optimizers module."""
 
     class Adam:
-        def __init__(self, learning_rate=0.001):
+        def __init__(self, learning_rate=0.001) -> None:
             self.learning_rate = learning_rate
 
     class SGD:
-        def __init__(self, learning_rate=0.01, momentum=0.0):
+        def __init__(self, learning_rate=0.01, momentum=0.0) -> None:
             self.learning_rate = learning_rate
             self.momentum = momentum
 
     class RMSprop:
-        def __init__(self, learning_rate=0.001):
+        def __init__(self, learning_rate=0.001) -> None:
             self.learning_rate = learning_rate
 
 
@@ -819,7 +819,7 @@ class FallbackSavedModel:
     """Fallback for tf.saved_model."""
 
     @staticmethod
-    def contains_saved_model(path):
+    def contains_saved_model(path) -> bool:
         logger.info(f"Checking for saved model in {path} (fallback mode).")
         return False
 
@@ -874,7 +874,7 @@ class FallbackConfig:
     """TensorFlow config."""
 
     @staticmethod
-    def set_visible_devices(devices, device_type):
+    def set_visible_devices(devices, device_type) -> None:
         logger.info("Set visible devices for %s (fallback mode)", device_type)
 
     @staticmethod
@@ -884,7 +884,7 @@ class FallbackConfig:
 
     class Experimental:
         @staticmethod
-        def set_memory_growth(device, enable):
+        def set_memory_growth(device, enable) -> None:
             logger.info("Memory growth set to %s (fallback mode)", enable)
 
         @staticmethod
@@ -897,11 +897,11 @@ class FallbackConfig:
 
     class Threading:
         @staticmethod
-        def set_inter_op_parallelism_threads(num):
+        def set_inter_op_parallelism_threads(num) -> None:
             logger.info("Inter-op threads set to %d (fallback mode)", num)
 
         @staticmethod
-        def set_intra_op_parallelism_threads(num):
+        def set_intra_op_parallelism_threads(num) -> None:
             logger.info("Intra-op threads set to %d (fallback mode)", num)
 
     # Alias for compatibility

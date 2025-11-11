@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+import contextlib
 import ctypes
 import logging
 import os
@@ -44,7 +45,7 @@ Cuckoo, VMRay, Joe Sandbox, and others.
 class SandboxDetector(BaseDetector):
     """Comprehensive sandbox detection using behavioral and environmental checks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the sandbox detector with detection methods and signatures."""
         super().__init__()
         self.logger = logging.getLogger("IntellicrackLogger.SandboxDetector")
@@ -208,7 +209,7 @@ class SandboxDetector(BaseDetector):
                             f"{proc_pattern}64.exe",
                             f"{proc_pattern}_service.exe",
                             f"{proc_pattern}_agent.exe",
-                        ]
+                        ],
                     )
 
             # Add network patterns
@@ -223,7 +224,7 @@ class SandboxDetector(BaseDetector):
                             f"HKLM\\SOFTWARE\\{key}",
                             f"HKLM\\SYSTEM\\CurrentControlSet\\Services\\{key}",
                             f"HKCU\\SOFTWARE\\{key}",
-                        ]
+                        ],
                     )
 
             # Add service names
@@ -247,7 +248,7 @@ class SandboxDetector(BaseDetector):
 
         try:
             if os.path.exists(config_path):
-                with open(config_path, "r") as f:
+                with open(config_path) as f:
                     custom_sigs = json.load(f)
                     # Merge custom signatures
                     for sandbox_name, sig_data in custom_sigs.items():
@@ -257,7 +258,7 @@ class SandboxDetector(BaseDetector):
                             for sig_type, sig_values in sig_data.items():
                                 if sig_type in signatures[sandbox_name]:
                                     signatures[sandbox_name][sig_type].extend(sig_values)
-        except (IOError, json.JSONDecodeError):
+        except (OSError, json.JSONDecodeError):
             pass
 
         return signatures
@@ -386,7 +387,7 @@ class SandboxDetector(BaseDetector):
                     os.path.join(system_drive, "Windows", "System32"),
                     os.path.join(system_drive, "Windows", "SysWOW64"),
                     os.path.join(system_drive, "Users", "Public"),
-                ]
+                ],
             )
         else:
             # Linux/Unix paths
@@ -404,7 +405,7 @@ class SandboxDetector(BaseDetector):
                     os.path.expanduser("~"),
                     os.path.expanduser("~/.local"),
                     os.path.expanduser("~/.config"),
-                ]
+                ],
             )
 
         # Filter out non-existent or inaccessible directories
@@ -566,7 +567,7 @@ class SandboxDetector(BaseDetector):
                 "signal",
             ]
 
-    def _profile_system(self):
+    def _profile_system(self) -> None:
         """Profile the current system to establish baseline."""
         import hashlib
 
@@ -590,7 +591,7 @@ class SandboxDetector(BaseDetector):
         # Check if profile matches known sandbox profiles
         self._check_against_known_profiles()
 
-    def _check_against_known_profiles(self):
+    def _check_against_known_profiles(self) -> None:
         """Check system profile against known sandbox profiles."""
         known_sandbox_profiles = {
             "cuckoo_default": {
@@ -670,7 +671,7 @@ class SandboxDetector(BaseDetector):
                     self.logger.debug(f"Error checking CPU info for VM patterns: {e}")
             else:
                 try:
-                    with open("/proc/cpuinfo", "r") as f:
+                    with open("/proc/cpuinfo") as f:
                         cpu_info = f.read().lower()
 
                         if "hypervisor" in cpu_info or "qemu" in cpu_info:
@@ -684,7 +685,7 @@ class SandboxDetector(BaseDetector):
             import uuid
 
             mac = uuid.getnode()
-            mac_str = ":".join(["{:02x}".format((mac >> i) & 0xFF) for i in range(0, 48, 8)])
+            mac_str = ":".join([f"{(mac >> i) & 0xFF:02x}" for i in range(0, 48, 8)])
 
             # Known VM MAC prefixes
             vm_mac_prefixes = [
@@ -741,7 +742,7 @@ class SandboxDetector(BaseDetector):
                     indicators["detected"] = True
                     indicators["confidence"] += 50
                     indicators["details"].append(f"Registry key found: {path}")
-                except WindowsError:
+                except OSError:
                     pass
 
             # Check for sandbox-specific values
@@ -793,7 +794,7 @@ class SandboxDetector(BaseDetector):
         else:
             # Check loaded kernel modules on Linux
             try:
-                with open("/proc/modules", "r") as f:
+                with open("/proc/modules") as f:
                     modules = f.read().lower()
 
                     vm_modules = ["vboxguest", "vboxsf", "vmw_balloon", "vmxnet", "virtio", "xen", "kvm", "hyperv"]
@@ -968,10 +969,10 @@ class SandboxDetector(BaseDetector):
 
             # Check process count
             if platform.system() == "Windows":
-                result = subprocess.run(["tasklist"], check=False, capture_output=True, text=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
+                result = subprocess.run(["tasklist"], check=False, capture_output=True, text=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis
                 process_count = len(result.stdout.strip().split("\n")) - 3  # Header lines
             else:
-                result = subprocess.run(["ps", "aux"], check=False, capture_output=True, text=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
+                result = subprocess.run(["ps", "aux"], check=False, capture_output=True, text=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis
                 process_count = len(result.stdout.strip().split("\n")) - 1  # Header line
 
             if process_count < self.behavioral_patterns["limited_processes"]["min_processes"]:
@@ -1062,7 +1063,7 @@ class SandboxDetector(BaseDetector):
             if platform.system() == "Windows":
                 netstat_path = shutil.which("netstat")
                 if netstat_path:
-                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                         [netstat_path, "-an"],
                         check=False,
                         capture_output=True,
@@ -1074,7 +1075,7 @@ class SandboxDetector(BaseDetector):
             else:
                 ss_path = shutil.which("ss")
                 if ss_path:
-                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                         [ss_path, "-an"],
                         check=False,
                         capture_output=True,
@@ -1179,7 +1180,7 @@ class SandboxDetector(BaseDetector):
             ]
 
             if platform.system() == "Windows":
-                result = subprocess.run(["tasklist"], check=False, capture_output=True, text=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
+                result = subprocess.run(["tasklist"], check=False, capture_output=True, text=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis
                 processes = result.stdout.lower()
 
                 running_apps = [app for app in user_apps if app in processes]
@@ -1519,7 +1520,7 @@ class SandboxDetector(BaseDetector):
                             first_byte = ctypes.c_ubyte.from_address(api_addr).value
 
                             # Check for common hook patterns
-                            if first_byte == 0xE9 or first_byte == 0x68:  # JMP
+                            if first_byte in {233, 104}:  # JMP
                                 details["hooked_apis"].append(f"{dll_name}!{api_name}")
 
                     except Exception as e:
@@ -1551,7 +1552,7 @@ class SandboxDetector(BaseDetector):
 
                             _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
 
-                            def __repr__(self):
+                            def __repr__(self) -> str:
                                 return f"POINT(x={self.x}, y={self.y})"
 
                         wintypes.POINT = POINT
@@ -1568,12 +1569,12 @@ class SandboxDetector(BaseDetector):
 
                             _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
 
-                            def __init__(self, x=0, y=0):
+                            def __init__(self, x=0, y=0) -> None:
                                 super().__init__()
                                 self.x = x
                                 self.y = y
 
-                            def __repr__(self):
+                            def __repr__(self) -> str:
                                 return f"POINT(x={self.x}, y={self.y})"
 
                             def __eq__(self, other):
@@ -1596,7 +1597,7 @@ class SandboxDetector(BaseDetector):
                                 ("bottom", ctypes.c_long),
                             ]
 
-                            def __repr__(self):
+                            def __repr__(self) -> str:
                                 return f"RECT(left={self.left}, top={self.top}, right={self.right}, bottom={self.bottom})"
 
                             @property
@@ -1636,7 +1637,7 @@ class SandboxDetector(BaseDetector):
                                 ("ullAvailExtendedVirtual", ctypes.c_uint64),
                             ]
 
-                            def __init__(self):
+                            def __init__(self) -> None:
                                 super().__init__()
                                 self.dwLength = ctypes.sizeof(self)
 
@@ -1657,7 +1658,7 @@ class SandboxDetector(BaseDetector):
                                 ("wReserved", ctypes.c_uint8),
                             ]
 
-                            def __init__(self):
+                            def __init__(self) -> None:
                                 super().__init__()
                                 self.dwOSVersionInfoSize = ctypes.sizeof(self)
 
@@ -2191,7 +2192,7 @@ Sleep(30000);  // 30 seconds
 
         except Exception as e:
             self.logger.error(f"Error applying behavioral adaptation: {e}")
-            changes.append(f"Adaptation error: {str(e)}")
+            changes.append(f"Adaptation error: {e!s}")
 
         return changes
 
@@ -2681,7 +2682,7 @@ Sleep(30000);  // 30 seconds
             common_sandbox_vars = [
                 "SANDBOX", "ANALYSIS", "MONITOR", "TRACE",
                 "CUCKOO", "VMRAY", "JOEBOX", "TRIAGE",
-                "VBOX", "VMWARE", "WINE"
+                "VBOX", "VMWARE", "WINE",
             ]
 
             for key, value in os.environ.items():
@@ -2710,10 +2711,8 @@ Sleep(30000);  // 30 seconds
             if parent_proc:
                 details["parent_name"] = parent_proc.name()
 
-                try:
+                with contextlib.suppress(psutil.AccessDenied, psutil.NoSuchProcess):
                     details["parent_cmdline"] = " ".join(parent_proc.cmdline())
-                except (psutil.AccessDenied, psutil.NoSuchProcess):
-                    pass
 
                 suspicious_parents = [
                     "python", "python.exe", "pythonw.exe",
@@ -2722,7 +2721,7 @@ Sleep(30000);  // 30 seconds
                     "cmd.exe",
                     "analyzer", "agent",
                     "sample", "malware",
-                    "vboxservice", "vmtoolsd"
+                    "vboxservice", "vmtoolsd",
                 ]
 
                 parent_name_lower = parent_proc.name().lower()
@@ -2826,7 +2825,7 @@ Sleep(30000);  // 30 seconds
 
             elif platform.system() == "Linux":
                 try:
-                    with open("/proc/cpuinfo", "r") as f:
+                    with open("/proc/cpuinfo") as f:
                         cpuinfo = f.read()
 
                         if "hypervisor" in cpuinfo.lower():
@@ -2838,7 +2837,7 @@ Sleep(30000);  // 30 seconds
                                     break
 
                             return True, 0.7, details
-                except IOError:
+                except OSError:
                     pass
 
         except Exception as e:
@@ -2894,12 +2893,12 @@ Sleep(30000);  // 30 seconds
         details = {"automation_indicators": [], "detected_frameworks": []}
 
         try:
-            processes, process_list = self.get_running_processes()
+            _processes, process_list = self.get_running_processes()
 
             automation_processes = [
                 "chromedriver", "geckodriver", "msedgedriver",
                 "selenium", "puppeteer", "playwright",
-                "phantomjs", "casperjs"
+                "phantomjs", "casperjs",
             ]
 
             for proc in process_list:
@@ -2924,12 +2923,12 @@ Sleep(30000);  // 30 seconds
                     enum_windows_proc = ctypes.WINFUNCTYPE(
                         ctypes.c_bool,
                         ctypes.c_void_p,
-                        ctypes.c_void_p
+                        ctypes.c_void_p,
                     )
 
                     automation_titles = []
 
-                    def enum_callback(hwnd, lParam):
+                    def enum_callback(hwnd, lParam) -> bool:
                         length = user32.GetWindowTextLengthW(hwnd)
                         if length > 0:
                             buffer = ctypes.create_unicode_buffer(length + 1)

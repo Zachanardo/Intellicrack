@@ -157,7 +157,7 @@ class DevirtualizationResult:
 class GuidedVMExploration(ExplorationTechnique):
     """Guided exploration technique for VM devirtualization."""
 
-    def __init__(self, vm_dispatcher: int, handler_table: int, max_depth: int = 100):
+    def __init__(self, vm_dispatcher: int, handler_table: int, max_depth: int = 100) -> None:
         """Initialize guided VM exploration."""
         super().__init__()
         self.vm_dispatcher = vm_dispatcher
@@ -183,7 +183,7 @@ class GuidedVMExploration(ExplorationTechnique):
 class PathExplosionMitigation(ExplorationTechnique):
     """Mitigation technique for path explosion in symbolic execution."""
 
-    def __init__(self, max_active: int = 50, max_total: int = 500):
+    def __init__(self, max_active: int = 50, max_total: int = 500) -> None:
         """Initialize path explosion mitigation."""
         super().__init__()
         self.max_active = max_active
@@ -207,7 +207,7 @@ class PathExplosionMitigation(ExplorationTechnique):
 class SymbolicDevirtualizer:
     """Symbolic devirtualizer for VM-protected code."""
 
-    def __init__(self, binary_path: str):
+    def __init__(self, binary_path: str) -> None:
         """Initialize the symbolic devirtualizer."""
         if not ANGR_AVAILABLE:
             raise ImportError("angr framework required for symbolic devirtualization")
@@ -614,7 +614,7 @@ class SymbolicDevirtualizer:
         return HandlerSemantic.UNKNOWN
 
     def _translate_handler_to_native(
-        self, handler_addr: int, semantic: HandlerSemantic, effects: List[Tuple[str, Any]]
+        self, handler_addr: int, semantic: HandlerSemantic, effects: List[Tuple[str, Any]],
     ) -> Tuple[Optional[bytes], List[str]]:
         semantic_to_asm = {
             HandlerSemantic.STACK_PUSH: ("push eax", b"\x50"),
@@ -650,7 +650,7 @@ class SymbolicDevirtualizer:
             return None, [f"unknown_handler_0x{handler_addr:x}"]
 
     def _calculate_handler_confidence(
-        self, semantic: HandlerSemantic, effects: List[Tuple[str, Any]], constraints: List[Any], native_code: Optional[bytes]
+        self, semantic: HandlerSemantic, effects: List[Tuple[str, Any]], constraints: List[Any], native_code: Optional[bytes],
     ) -> float:
         confidence = 50.0
 
@@ -669,7 +669,7 @@ class SymbolicDevirtualizer:
         return min(confidence, 100.0)
 
     def _trace_vm_execution(
-        self, entry_point: int, strategy: ExplorationStrategy, max_paths: int, timeout: int
+        self, entry_point: int, strategy: ExplorationStrategy, max_paths: int, timeout: int,
     ) -> List[DevirtualizedBlock]:
         blocks = []
 
@@ -697,7 +697,7 @@ class SymbolicDevirtualizer:
             exploration_complete = threading.Event()
             exploration_error = None
 
-            def run_exploration():
+            def run_exploration() -> None:
                 nonlocal exploration_error
                 try:
                     exploration_manager.run()
@@ -729,7 +729,7 @@ class SymbolicDevirtualizer:
 
     def _reconstruct_block_from_state(self, state: SimState, entry: int) -> Optional[DevirtualizedBlock]:
         try:
-            path_addrs = [addr for addr in state.history.bbl_addrs]
+            path_addrs = list(state.history.bbl_addrs)
 
             handlers_exec = []
             for addr in path_addrs:

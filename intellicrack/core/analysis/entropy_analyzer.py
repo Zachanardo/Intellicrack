@@ -31,7 +31,7 @@ from typing import Any
 class EntropyAnalyzer:
     """Entropy analysis engine for binary data examination."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the entropy analyzer."""
         self.logger = logging.getLogger(__name__)
         self.high_entropy_threshold = 7.0

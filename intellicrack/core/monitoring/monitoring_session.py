@@ -22,7 +22,7 @@ from intellicrack.core.monitoring.registry_monitor import RegistryMonitor
 class MonitoringConfig:
     """Configuration for monitoring session."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize default configuration."""
         self.enable_api = True
         self.enable_registry = True
@@ -42,7 +42,7 @@ class MonitoringSession:
     Provides unified interface for event handling and session control.
     """
 
-    def __init__(self, pid: int, process_path: str, config: Optional[MonitoringConfig] = None):
+    def __init__(self, pid: int, process_path: str, config: Optional[MonitoringConfig] = None) -> None:
         """Initialize monitoring session.
 
         Args:

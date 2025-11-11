@@ -1031,18 +1031,18 @@ class HwidSpooferEnhanced {
                         // HORZRES, VERTRES, HORZSIZE, VERTSIZE
                         let spoofedValue = 0;
                         switch (index) {
-                        case 12:
-                            spoofedValue = 1920;
-                            break; // HORZRES
-                        case 14:
-                            spoofedValue = 1080;
-                            break; // VERTRES
-                        case 88:
-                            spoofedValue = 510;
-                            break; // HORZSIZE (mm)
-                        case 90:
-                            spoofedValue = 287;
-                            break; // VERTSIZE (mm)
+                            case 12:
+                                spoofedValue = 1920;
+                                break; // HORZRES
+                            case 14:
+                                spoofedValue = 1080;
+                                break; // VERTRES
+                            case 88:
+                                spoofedValue = 510;
+                                break; // HORZSIZE (mm)
+                            case 90:
+                                spoofedValue = 287;
+                                break; // VERTSIZE (mm)
                         }
 
                         if (spoofedValue > 0) {

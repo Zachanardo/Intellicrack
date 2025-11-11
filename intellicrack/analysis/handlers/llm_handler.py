@@ -39,7 +39,7 @@ except ImportError:
     class QRunnable:
         """Fallback QRunnable class when PyQt6 is not available."""
 
-        def run(self):
+        def run(self) -> None:
             """Execute the runnable task."""
             pass
 
@@ -47,13 +47,13 @@ except ImportError:
         """Fallback QThreadPool class when PyQt6 is not available."""
 
         @staticmethod
-        def globalInstance():
+        def globalInstance() -> None:
             """Return the global thread pool instance."""
-            return None
+            return
 
-    def pyqtSignal(*args):
+    def pyqtSignal(*args) -> None:
         """Fallback pyqtSignal function when PyQt6 is not available."""
-        return None
+        return
 
     PYQT6_AVAILABLE = False
 
@@ -103,7 +103,7 @@ class LLMWorkerSignals(QObject):
 class LLMAnalysisWorker(QRunnable):
     """Worker thread for LLM analysis operations."""
 
-    def __init__(self, operation: str, analysis_result: "UnifiedProtectionResult", **kwargs):
+    def __init__(self, operation: str, analysis_result: UnifiedProtectionResult, **kwargs) -> None:
         """Initialize the LLM analysis worker.
 
         Args:
@@ -118,7 +118,7 @@ class LLMAnalysisWorker(QRunnable):
         self.kwargs = kwargs
         self.signals = LLMWorkerSignals()
 
-    def run(self):
+    def run(self) -> None:
         """Execute the LLM operation."""
         try:
             self.signals.progress.emit(f"Processing {self.operation}...")
@@ -155,7 +155,7 @@ class LLMAnalysisWorker(QRunnable):
         finally:
             self.signals.finished.emit()
 
-    def _build_llm_context(self, result: "UnifiedProtectionResult") -> dict[str, Any]:
+    def _build_llm_context(self, result: UnifiedProtectionResult) -> dict[str, Any]:
         """Build context dictionary for LLM."""
         context = {
             "file_path": result.file_path,
@@ -190,7 +190,7 @@ class LLMAnalysisWorker(QRunnable):
 
         return context
 
-    def _build_summary_prompt(self, result: "UnifiedProtectionResult") -> str:
+    def _build_summary_prompt(self, result: UnifiedProtectionResult) -> str:
         """Build prompt for protection summary."""
         prompt = f"""Analyze the following protection analysis results and provide a concise summary:
 
@@ -218,7 +218,7 @@ Please provide:
 """
         return prompt
 
-    def _build_bypass_prompt(self, result: "UnifiedProtectionResult") -> str:
+    def _build_bypass_prompt(self, result: UnifiedProtectionResult) -> str:
         """Build prompt for bypass suggestions."""
         prompt = """Based on the following protection analysis, suggest bypass strategies:
 
@@ -252,7 +252,7 @@ class LLMHandler(QObject):
     #: Signal emitted to report LLM operation progress (type: str)
     llm_progress = pyqtSignal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the LLM handler.
 
         Args:
@@ -261,13 +261,13 @@ class LLMHandler(QObject):
         """
         super().__init__(parent)
         self.thread_pool = QThreadPool.globalInstance()
-        self.current_result: Optional["UnifiedProtectionResult"] = None
+        self.current_result: Optional[UnifiedProtectionResult] = None
         self.icp_tool = ICPAnalysisTool()
 
         # Register the tool with LLM manager
         self._register_llm_tool()
 
-    def _register_llm_tool(self):
+    def _register_llm_tool(self) -> None:
         """Register the ICP analysis tool with LLM manager."""
         try:
             llm_manager = LLMManager.get_instance()
@@ -278,7 +278,7 @@ class LLMHandler(QObject):
         except Exception as e:
             logger.error(f"Failed to register LLM tool: {e}")
 
-    def on_analysis_complete(self, result: "UnifiedProtectionResult"):
+    def on_analysis_complete(self, result: UnifiedProtectionResult) -> None:
         """Handle slot when protection analysis completes.
 
         This method runs in the main thread and kicks off background
@@ -295,7 +295,7 @@ class LLMHandler(QObject):
 
         self.thread_pool.start(worker)
 
-    def generate_summary(self):
+    def generate_summary(self) -> None:
         """Generate an AI summary of the current protection analysis."""
         if not self.current_result:
             self.llm_error.emit("No analysis result available")
@@ -308,7 +308,7 @@ class LLMHandler(QObject):
 
         self.thread_pool.start(worker)
 
-    def suggest_bypass_strategies(self):
+    def suggest_bypass_strategies(self) -> None:
         """Get AI suggestions for bypassing detected protections."""
         if not self.current_result:
             self.llm_error.emit("No analysis result available")
@@ -321,11 +321,11 @@ class LLMHandler(QObject):
 
         self.thread_pool.start(worker)
 
-    def get_cached_result(self) -> Optional["UnifiedProtectionResult"]:
+    def get_cached_result(self) -> Optional[UnifiedProtectionResult]:
         """Get the current cached analysis result."""
         return self.current_result
 
-    def _on_context_registered(self, result: dict):
+    def _on_context_registered(self, result: dict) -> None:
         """Handle context registration completion."""
         if result["success"]:
             logger.info("Protection analysis context registered with LLM")
@@ -333,38 +333,38 @@ class LLMHandler(QObject):
                 {
                     "type": "context_registered",
                     "context": result["context"],
-                }
+                },
             )
         else:
             self.llm_error.emit(result.get("error", "Unknown error"))
 
-    def _on_summary_ready(self, result: dict):
+    def _on_summary_ready(self, result: dict) -> None:
         """Handle summary generation completion."""
         if result["success"]:
             self.llm_result_ready.emit(
                 {
                     "type": "summary",
                     "content": result["summary"],
-                }
+                },
             )
         else:
             self.llm_error.emit(result.get("error", "Unknown error"))
 
-    def _on_bypass_suggestions_ready(self, result: dict):
+    def _on_bypass_suggestions_ready(self, result: dict) -> None:
         """Handle bypass suggestions completion."""
         if result["success"]:
             self.llm_result_ready.emit(
                 {
                     "type": "bypass_suggestions",
                     "content": result["suggestions"],
-                }
+                },
             )
         else:
             self.llm_error.emit(result.get("error", "Unknown error"))
 
-    def _on_worker_error(self, error_tuple):
+    def _on_worker_error(self, error_tuple) -> None:
         """Handle worker thread errors."""
-        exc_type, exc_value, exc_traceback = error_tuple
+        _exc_type, exc_value, exc_traceback = error_tuple
         error_msg = f"LLM operation failed: {exc_value}"
         logger.error(f"{error_msg}\n{exc_traceback}")
         self.llm_error.emit(error_msg)

@@ -3245,20 +3245,20 @@ const KeygenGenerator = {
                     const strategy = this.selectOptimalStrategy(keyIndex, options);
 
                     switch (strategy) {
-                    case 'fast_mathematical':
-                        key = this.generateFastMathematicalKey(keyIndex);
-                        break;
-                    case 'neural_optimized':
-                        key = this.generateNeuralOptimizedKey(keyIndex);
-                        break;
-                    case 'quantum_light':
-                        key = this.generateQuantumLightKey(keyIndex);
-                        break;
-                    case 'hybrid_cache':
-                        key = this.generateHybridCachedKey(keyIndex);
-                        break;
-                    default:
-                        key = this.generateOptimizedTraditionalKey(keyIndex);
+                        case 'fast_mathematical':
+                            key = this.generateFastMathematicalKey(keyIndex);
+                            break;
+                        case 'neural_optimized':
+                            key = this.generateNeuralOptimizedKey(keyIndex);
+                            break;
+                        case 'quantum_light':
+                            key = this.generateQuantumLightKey(keyIndex);
+                            break;
+                        case 'hybrid_cache':
+                            key = this.generateHybridCachedKey(keyIndex);
+                            break;
+                        default:
+                            key = this.generateOptimizedTraditionalKey(keyIndex);
                     }
 
                     if (key) {
@@ -4934,21 +4934,21 @@ const KeygenGenerator = {
             // Handle integrity violations
             handleIntegrityViolation: function (violation) {
                 switch (violation.severity) {
-                case 'critical':
-                    console.error(
-                        `[SecuritySystem] CRITICAL: Component ${violation.component} compromised`
-                    );
-                    // In production, this would trigger security lockdown
-                    break;
-                case 'high':
-                    console.warn(
-                        `[SecuritySystem] HIGH: Suspicious activity in ${violation.component}`
-                    );
-                    break;
-                default:
-                    console.log(
-                        `[SecuritySystem] Low-level integrity issue in ${violation.component}`
-                    );
+                    case 'critical':
+                        console.error(
+                            `[SecuritySystem] CRITICAL: Component ${violation.component} compromised`
+                        );
+                        // In production, this would trigger security lockdown
+                        break;
+                    case 'high':
+                        console.warn(
+                            `[SecuritySystem] HIGH: Suspicious activity in ${violation.component}`
+                        );
+                        break;
+                    default:
+                        console.log(
+                            `[SecuritySystem] Low-level integrity issue in ${violation.component}`
+                        );
                 }
             },
 
@@ -5161,42 +5161,42 @@ const KeygenGenerator = {
 
                 // Define workflow steps based on type
                 switch (workflowType) {
-                case 'key_generation':
-                    workflow.steps = [
-                        'initialize_secure_context',
-                        'generate_entropy',
-                        'apply_algorithms',
-                        'validate_output',
-                        'encrypt_result',
-                    ];
-                    break;
-                case 'validation':
-                    workflow.steps = [
-                        'decrypt_key',
-                        'verify_structure',
-                        'check_algorithms',
-                        'validate_strength',
-                        'confirm_integrity',
-                    ];
-                    break;
-                case 'distribution':
-                    workflow.steps = [
-                        'encrypt_for_transport',
-                        'sign_with_certificate',
-                        'prepare_metadata',
-                        'initiate_transfer',
-                        'confirm_delivery',
-                    ];
-                    break;
-                case 'storage':
-                    workflow.steps = [
-                        'encrypt_with_master_key',
-                        'split_into_fragments',
-                        'distribute_fragments',
-                        'create_recovery_info',
-                        'audit_storage',
-                    ];
-                    break;
+                    case 'key_generation':
+                        workflow.steps = [
+                            'initialize_secure_context',
+                            'generate_entropy',
+                            'apply_algorithms',
+                            'validate_output',
+                            'encrypt_result',
+                        ];
+                        break;
+                    case 'validation':
+                        workflow.steps = [
+                            'decrypt_key',
+                            'verify_structure',
+                            'check_algorithms',
+                            'validate_strength',
+                            'confirm_integrity',
+                        ];
+                        break;
+                    case 'distribution':
+                        workflow.steps = [
+                            'encrypt_for_transport',
+                            'sign_with_certificate',
+                            'prepare_metadata',
+                            'initiate_transfer',
+                            'confirm_delivery',
+                        ];
+                        break;
+                    case 'storage':
+                        workflow.steps = [
+                            'encrypt_with_master_key',
+                            'split_into_fragments',
+                            'distribute_fragments',
+                            'create_recovery_info',
+                            'audit_storage',
+                        ];
+                        break;
                 }
 
                 return workflow;

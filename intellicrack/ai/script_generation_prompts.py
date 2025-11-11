@@ -39,7 +39,7 @@ class ScriptGenerationPrompts:
     All prompts enforce zero placeholder policy.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the script generation prompts manager.
 
         Sets up prompts for various script generation tasks including
@@ -309,18 +309,18 @@ Return validation results in structured JSON format.""",
                     s
                     for s in binary_analysis.get("strings", [])
                     if any(keyword in s.lower() for keyword in ["license", "trial", "demo", "expire"])
-                ]
+                ],
             ),
             "analysis_summary": self._summarize_analysis(binary_analysis),
             "functionality_requirements": self._build_functionality_requirements(protection_types or []),
             # Example addresses
-            "key_addresses": ", ".join(["0x401000", "0x401200", "0x401400"]),
+            "key_addresses": "0x401000, 0x401200, 0x401400",
             "protection_functions": ", ".join(
                 [
                     f["name"]
                     for f in binary_analysis.get("functions", [])
                     if "license" in f.get("name", "").lower() or "check" in f.get("name", "").lower()
-                ]
+                ],
             ),
             "patching_objectives": self._build_patching_objectives(protection_types or []),
         }

@@ -24,9 +24,9 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 
 try:
-    import matplotlib
+    import matplotlib as mpl
 
-    matplotlib.use("Agg")  # Use non-interactive backend
+    mpl.use("Agg")  # Use non-interactive backend
     import matplotlib.pyplot as plt
     from matplotlib.patches import FancyBboxPatch, Rectangle
 
@@ -108,7 +108,7 @@ class GraphEdge:
 class VisualizationRenderer:
     """Renderer for various visualization types."""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         """Initialize visualization renderer.
 
         Args:
@@ -472,7 +472,7 @@ class VisualizationRenderer:
         return result
 
     def render_heatmap(
-        self, data: np.ndarray, labels_x: List[str], labels_y: List[str], title: str = "Heatmap", color_scheme: str = "heatmap"
+        self, data: np.ndarray, labels_x: List[str], labels_y: List[str], title: str = "Heatmap", color_scheme: str = "heatmap",
     ) -> Dict[str, Any]:
         """Render a heatmap visualization.
 
@@ -647,7 +647,7 @@ class VisualizationRenderer:
                     "borderColor": colors[i % len(colors)],
                     "backgroundColor": colors[i % len(colors)] + "33",  # Add transparency
                     "fill": chart_type == "area",
-                }
+                },
             )
 
         # Generate Chart.js code
@@ -698,14 +698,14 @@ class VisualizationRenderer:
                     size=math.log(func.get("complexity", 1) + 1),
                     color=self._get_function_color(func),
                     data=func,
-                )
+                ),
             )
 
         # Create edges from calls
         edges = []
         for call in calls:
             edges.append(
-                GraphEdge(source=call["caller"], target=call["callee"], weight=call.get("count", 1), color=self._get_call_color(call))
+                GraphEdge(source=call["caller"], target=call["callee"], weight=call.get("count", 1), color=self._get_call_color(call)),
             )
 
         # Generate Three.js code
@@ -815,7 +815,7 @@ class VisualizationRenderer:
 
         return {"type": "interactive_explorer", "js_code": js_code, "data": data}
 
-    def _apply_hierarchical_layout(self, nodes: List[GraphNode], edges: List[GraphEdge], dimensions: Tuple[int, int]):
+    def _apply_hierarchical_layout(self, nodes: List[GraphNode], edges: List[GraphEdge], dimensions: Tuple[int, int]) -> None:
         """Apply hierarchical layout to nodes.
 
         Args:
@@ -866,7 +866,7 @@ class VisualizationRenderer:
                     node.x = (i + 1) * x_spacing
                     node.y = y
 
-    def _apply_circular_layout(self, nodes: List[GraphNode], dimensions: Tuple[int, int]):
+    def _apply_circular_layout(self, nodes: List[GraphNode], dimensions: Tuple[int, int]) -> None:
         """Apply circular layout to nodes.
 
         Args:
@@ -886,7 +886,7 @@ class VisualizationRenderer:
             node.y = center_y + radius * math.sin(angle)
 
     def _generate_static_graph_js(
-        self, nodes: List[GraphNode], edges: List[GraphEdge], container_id: str, dimensions: Tuple[int, int]
+        self, nodes: List[GraphNode], edges: List[GraphEdge], container_id: str, dimensions: Tuple[int, int],
     ) -> str:
         """Generate JavaScript for static graph layout.
 
@@ -959,7 +959,7 @@ class VisualizationRenderer:
 
         """
         width, height = dimensions
-        fig, ax = plt.subplots(figsize=(width / 100, height / 100))
+        _fig, ax = plt.subplots(figsize=(width / 100, height / 100))
 
         # Create NetworkX graph
         G = nx.DiGraph()
@@ -1033,7 +1033,7 @@ class VisualizationRenderer:
         fig, ax = plt.subplots(figsize=(width / 100, height / 100))
 
         # Group events by source
-        sources = list(set(e.get("source", "unknown") for e in events))
+        sources = list({e.get("source", "unknown") for e in events})
         source_y = {source: i for i, source in enumerate(sources)}
 
         # Plot events

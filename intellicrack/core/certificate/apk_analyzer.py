@@ -169,7 +169,7 @@ class APKAnalyzer:
     - Custom pinning implementations
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize APK analyzer."""
         self.temp_dir: Optional[Path] = None
         self.apk_path: Optional[Path] = None
@@ -328,7 +328,7 @@ class APKAnalyzer:
         pinning_infos = []
 
         okhttp_pattern = re.compile(
-            r'CertificatePinner\.Builder\(\).*?\.add\s*\(\s*["\']([^"\']+)["\']\s*,\s*["\']sha256/([^"\']+)["\']', re.DOTALL
+            r'CertificatePinner\.Builder\(\).*?\.add\s*\(\s*["\']([^"\']+)["\']\s*,\s*["\']sha256/([^"\']+)["\']', re.DOTALL,
         )
 
         smali_files = list(self.decompiled_path.rglob("*.smali"))
@@ -351,7 +351,7 @@ class APKAnalyzer:
                             hashes=[f"sha256/{pin_hash}"],
                             confidence=0.95,
                             additional_info={"class": smali_file.stem},
-                        )
+                        ),
                     )
 
                 const_string_pattern = re.compile(r'const-string\s+v\d+,\s+"sha256/([A-Za-z0-9+/=]+)"')
@@ -371,7 +371,7 @@ class APKAnalyzer:
                                     hashes=[f"sha256/{pin_hash}"],
                                     confidence=0.80,
                                     additional_info={"detection": "const-string-pattern"},
-                                )
+                                ),
                             )
 
             except Exception as e:
@@ -477,7 +477,7 @@ class APKAnalyzer:
                     return None
 
             public_key_bytes = cert.public_key().public_bytes(
-                encoding=serialization.Encoding.DER, format=serialization.PublicFormat.SubjectPublicKeyInfo
+                encoding=serialization.Encoding.DER, format=serialization.PublicFormat.SubjectPublicKeyInfo,
             )
 
             sha256_hash = hashlib.sha256(public_key_bytes).digest()
@@ -537,7 +537,7 @@ class APKAnalyzer:
                         from cryptography.hazmat.primitives import serialization
 
                         public_key_bytes = cert.public_key().public_bytes(
-                            encoding=serialization.Encoding.DER, format=serialization.PublicFormat.SubjectPublicKeyInfo
+                            encoding=serialization.Encoding.DER, format=serialization.PublicFormat.SubjectPublicKeyInfo,
                         )
 
                         sha256_hash = hashlib.sha256(public_key_bytes).digest()
@@ -551,7 +551,7 @@ class APKAnalyzer:
                                 hashes=[f"sha256/{sha256_base64}"],
                                 confidence=0.90,
                                 additional_info={"format": "pem"},
-                            )
+                            ),
                         )
                     except Exception as e:
                         logger.debug(f"Failed to parse PEM certificate: {e}")
@@ -568,7 +568,7 @@ class APKAnalyzer:
                             from cryptography.hazmat.primitives import serialization
 
                             public_key_bytes = cert.public_key().public_bytes(
-                                encoding=serialization.Encoding.DER, format=serialization.PublicFormat.SubjectPublicKeyInfo
+                                encoding=serialization.Encoding.DER, format=serialization.PublicFormat.SubjectPublicKeyInfo,
                             )
 
                             sha256_hash = hashlib.sha256(public_key_bytes).digest()
@@ -582,7 +582,7 @@ class APKAnalyzer:
                                     hashes=[f"sha256/{sha256_base64}"],
                                     confidence=0.85,
                                     additional_info={"format": "der"},
-                                )
+                                ),
                             )
                     except Exception as e:
                         logger.debug(f"Failed to parse DER certificate: {e}")
@@ -594,7 +594,7 @@ class APKAnalyzer:
 
         return pinning_infos
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up temporary files."""
         if self.temp_dir and self.temp_dir.exists():
             try:

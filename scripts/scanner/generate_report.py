@@ -8,7 +8,7 @@ recommendations for improving scanner accuracy and reducing detection noise.
 import json
 
 # Load the verification results
-with open('verification_results.json', 'r') as f:
+with open('verification_results.json') as f:
     results = json.load(f)
 
 # Generate comprehensive report

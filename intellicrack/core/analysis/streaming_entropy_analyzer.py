@@ -66,7 +66,7 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
         "very_high": 7.5,
     }
 
-    def __init__(self, window_size: int = 1024 * 1024, stride: int = 512 * 1024):
+    def __init__(self, window_size: int = 1024 * 1024, stride: int = 512 * 1024) -> None:
         """Initialize streaming entropy analyzer.
 
         Args:
@@ -151,12 +151,12 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
                             "offset": chunk_offset + offset,
                             "size": len(window_data),
                             "entropy": round(window_entropy, 4),
-                        }
+                        },
                     )
 
             logger.debug(
                 f"Chunk {context.chunk_number}/{context.total_chunks}: "
-                f"Entropy={chunk_entropy:.4f}, {len(windows)} windows analyzed"
+                f"Entropy={chunk_entropy:.4f}, {len(windows)} windows analyzed",
             )
 
             return {
@@ -205,7 +205,7 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
             for chunk_result in results:
                 if "error" in chunk_result:
                     errors.append(
-                        f"Chunk at 0x{chunk_result.get('chunk_offset', 0):08x}: " f"{chunk_result['error']}"
+                        f"Chunk at 0x{chunk_result.get('chunk_offset', 0):08x}: {chunk_result['error']}",
                     )
                     continue
 
@@ -252,7 +252,7 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
             logger.info(
                 f"Merged {len(results)} chunk results: "
                 f"Global entropy={global_entropy:.4f}, "
-                f"{len(self.high_entropy_regions)} high-entropy regions"
+                f"{len(self.high_entropy_regions)} high-entropy regions",
             )
 
             return merged
@@ -298,13 +298,13 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
                     "randomness_score": round((global_entropy / 8.0) * 100, 2),
                     "summary": self._generate_summary(merged_results),
                     "recommendations": self._generate_recommendations(merged_results),
-                }
+                },
             )
 
             logger.info(
                 f"Finalized entropy analysis: "
                 f"Packed={is_packed}, Encrypted={is_encrypted}, "
-                f"Randomness={merged_results['randomness_score']}%"
+                f"Randomness={merged_results['randomness_score']}%",
             )
 
             return merged_results

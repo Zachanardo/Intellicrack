@@ -20,7 +20,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import os
 import struct
 
-from intellicrack.utils.logger import logger
+from intellicrack.utils.logger import log_all_methods, logger
 
 """
 LIEF Import Handler with Production-Ready Fallbacks
@@ -94,7 +94,7 @@ except ImportError as e:
     class FallbackSection:
         """Functional section implementation for binary sections."""
 
-        def __init__(self, name="", offset=0, size=0, virtual_address=0, virtual_size=0, characteristics=0):
+        def __init__(self, name="", offset=0, size=0, virtual_address=0, virtual_size=0, characteristics=0) -> None:
             """Initialize section."""
             self.name = name
             self.offset = offset
@@ -105,18 +105,18 @@ except ImportError as e:
             self.content = b""
             self.entropy = 0.0
 
-        def __str__(self):
+        def __str__(self) -> str:
             """Represent as string."""
             return f"Section({self.name}, VA=0x{self.virtual_address:08x}, Size={self.size})"
 
-        def __repr__(self):
+        def __repr__(self) -> str:
             """Representation."""
             return self.__str__()
 
     class FallbackSymbol:
         """Functional symbol implementation."""
 
-        def __init__(self, name="", value=0, size=0, type="", binding=""):
+        def __init__(self, name="", value=0, size=0, type="", binding="") -> None:
             """Initialize symbol."""
             self.name = name
             self.value = value
@@ -125,35 +125,36 @@ except ImportError as e:
             self.binding = binding
             self.section = None
 
-        def __str__(self):
+        def __str__(self) -> str:
             """Represent as string."""
             return f"Symbol({self.name}, 0x{self.value:08x})"
 
-        def __repr__(self):
+        def __repr__(self) -> str:
             """Representation."""
             return self.__str__()
 
     class FallbackFunction:
         """Functional function implementation."""
 
-        def __init__(self, name="", address=0, size=0):
+        def __init__(self, name="", address=0, size=0) -> None:
             """Initialize function."""
             self.name = name
             self.address = address
             self.size = size
 
-        def __str__(self):
+        def __str__(self) -> str:
             """Represent as string."""
             return f"Function({self.name}, 0x{self.address:08x})"
 
-        def __repr__(self):
+        def __repr__(self) -> str:
             """Representation."""
             return self.__str__()
 
+    @log_all_methods
     class FallbackBinary:
         """Base binary implementation with real parsing capabilities."""
 
-        def __init__(self, path=""):
+        def __init__(self, path="") -> None:
             """Initialize binary."""
             self.path = path
             self.name = os.path.basename(path) if path else ""
@@ -176,7 +177,7 @@ except ImportError as e:
                 self.size = os.path.getsize(path)
                 self._parse_file()
 
-        def _parse_file(self):
+        def _parse_file(self) -> None:
             """Parse the binary file to detect format and extract basic info."""
             try:
                 with open(self.path, "rb") as f:
@@ -196,7 +197,7 @@ except ImportError as e:
             except Exception as e:
                 logger.error("Failed to parse binary %s: %s", self.path, e)
 
-        def _parse_pe(self, f):
+        def _parse_pe(self, f) -> None:
             """Parse PE format binary."""
             self.format = "PE"
 
@@ -279,7 +280,7 @@ except ImportError as e:
             except Exception as e:
                 logger.error("Failed to parse PE binary: %s", e)
 
-        def _parse_elf(self, f):
+        def _parse_elf(self, f) -> None:
             """Parse ELF format binary."""
             self.format = "ELF"
 
@@ -407,7 +408,7 @@ except ImportError as e:
             except Exception as e:
                 logger.error("Failed to parse ELF binary: %s", e)
 
-        def _parse_macho(self, f):
+        def _parse_macho(self, f) -> None:
             """Parse Mach-O format binary."""
             self.format = "MACHO"
 
@@ -490,18 +491,19 @@ except ImportError as e:
             except Exception as e:
                 logger.error("Failed to parse Mach-O binary: %s", e)
 
-        def __str__(self):
+        def __str__(self) -> str:
             """Represent as string."""
             return f"{self.format}({self.name})"
 
-        def __repr__(self):
+        def __repr__(self) -> str:
             """Representation."""
             return self.__str__()
 
+    @log_all_methods
     class FallbackPE(FallbackBinary):
         """PE specific binary implementation."""
 
-        def __init__(self, path=""):
+        def __init__(self, path="") -> None:
             """Initialize PE binary."""
             super().__init__(path)
             self.dos_header = {}
@@ -515,10 +517,11 @@ except ImportError as e:
             self.relocations = []
             self.signature = None
 
+    @log_all_methods
     class FallbackELF(FallbackBinary):
         """ELF specific binary implementation."""
 
-        def __init__(self, path=""):
+        def __init__(self, path="") -> None:
             """Initialize ELF binary."""
             super().__init__(path)
             self.segments = []
@@ -528,10 +531,11 @@ except ImportError as e:
             self.gnu_hash = None
             self.sysv_hash = None
 
+    @log_all_methods
     class FallbackMachO(FallbackBinary):
         """Mach-O specific binary implementation."""
 
-        def __init__(self, path=""):
+        def __init__(self, path="") -> None:
             """Initialize Mach-O binary."""
             super().__init__(path)
             self.commands = []

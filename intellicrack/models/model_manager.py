@@ -48,7 +48,7 @@ except ImportError:
         """Fallback repository factory when repositories unavailable."""
 
         @staticmethod
-        def create_repository(*args, **kwargs):
+        def create_repository(*args, **kwargs) -> None:
             """Create repository instance."""
             logger.debug(f"Fallback repository creation called with {len(args)} args and {len(kwargs)} kwargs")
 
@@ -62,7 +62,7 @@ except ImportError:
     class ModelInfo:
         """Fallback model information container."""
 
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs) -> None:
             """Initialize fallback ModelInfo with default values and debug logging."""
             logger.debug(f"ModelInfo fallback initialized with {len(args)} args and {len(kwargs)} kwargs")
             self.name = "unknown"
@@ -71,13 +71,13 @@ except ImportError:
     class ModelRepositoryInterface:
         """Fallback model repository interface."""
 
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs) -> None:
             """Initialize the abstract model repository interface."""
 
     class LocalFileRepository:
         """Fallback local file repository."""
 
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs) -> None:
             """Initialize the local file repository for model storage."""
 
 
@@ -88,7 +88,7 @@ class ProgressHandler(DownloadProgressCallback):
         self,
         progress_callback: Callable[[int, int], None] | None = None,
         complete_callback: Callable[[bool, str], None] | None = None,
-    ):
+    ) -> None:
         """Initialize the progress handler.
 
         Args:
@@ -99,12 +99,12 @@ class ProgressHandler(DownloadProgressCallback):
         self.progress_callback = progress_callback
         self.complete_callback = complete_callback
 
-    def on_progress(self, bytes_downloaded: int, total_bytes: int):
+    def on_progress(self, bytes_downloaded: int, total_bytes: int) -> None:
         """Handle progress updates."""
         if self.progress_callback:
             self.progress_callback(bytes_downloaded, total_bytes)
 
-    def on_complete(self, success: bool, message: str):
+    def on_complete(self, success: bool, message: str) -> None:
         """Handle download completion."""
         if self.complete_callback:
             self.complete_callback(success, message)
@@ -118,7 +118,7 @@ class ModelManager:
     and interacting with the existing model loading process.
     """
 
-    def __init__(self, config: dict[str, Any]):
+    def __init__(self, config: dict[str, Any]) -> None:
         """Initialize the model manager.
 
         Args:
@@ -135,7 +135,7 @@ class ModelManager:
         # Initialize repositories from config
         self._init_repositories()
 
-    def _init_repositories(self):
+    def _init_repositories(self) -> None:
         """Initialize repositories from configuration."""
         # Check if we have a proper Config instance with is_repository_enabled method
         try:
@@ -305,7 +305,7 @@ class ModelManager:
         model_id: str,
         destination_path: str,
         progress_handler: ProgressHandler,
-    ):
+    ) -> None:
         """Thread function for downloading a model.
 
         Args:
@@ -421,7 +421,7 @@ class ModelManager:
             logger.error(f"Failed to remove model file: {e}")
             return False
 
-    def refresh_repositories(self):
+    def refresh_repositories(self) -> None:
         """Refresh all repositories."""
         for repository in self.repositories.values():
             # This will trigger a refresh by calling get_available_models
@@ -523,7 +523,7 @@ class ModelManager:
                     from torch import nn
 
                     class SimpleNN(nn.Module):
-                        def __init__(self, input_size, hidden_size, output_size):
+                        def __init__(self, input_size, hidden_size, output_size) -> None:
                             super().__init__()
                             self.fc1 = nn.Linear(input_size, hidden_size)
                             self.relu = nn.ReLU()
@@ -556,7 +556,7 @@ class ModelManager:
                                 keras.layers.Input(shape=(10,)),
                                 keras.layers.Dense(50, activation="relu"),
                                 keras.layers.Dense(2, activation="softmax"),
-                            ]
+                            ],
                         )
                         model.compile(optimizer="adam", loss="sparse_categorical_crossentropy")
                         self._last_trained_model = model

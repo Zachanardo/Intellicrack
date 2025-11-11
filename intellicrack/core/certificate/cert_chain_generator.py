@@ -158,7 +158,7 @@ class CertificateChainGenerator:
             .serial_number(x509.random_serial_number())
             .not_valid_before(datetime.datetime.now(datetime.UTC))
             .not_valid_after(
-                datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=3650)
+                datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=3650),
             )
             .add_extension(
                 x509.BasicConstraints(ca=True, path_length=2),
@@ -190,7 +190,7 @@ class CertificateChainGenerator:
     def generate_intermediate_ca(
         self,
         root_ca: x509.Certificate,
-        root_key: rsa.RSAPrivateKey
+        root_key: rsa.RSAPrivateKey,
     ) -> Tuple[x509.Certificate, rsa.RSAPrivateKey]:
         """Generate intermediate CA certificate signed by root CA.
 
@@ -220,7 +220,7 @@ class CertificateChainGenerator:
             .serial_number(x509.random_serial_number())
             .not_valid_before(datetime.datetime.now(datetime.UTC))
             .not_valid_after(
-                datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=1825)
+                datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=1825),
             )
             .add_extension(
                 x509.BasicConstraints(ca=True, path_length=0),
@@ -257,7 +257,7 @@ class CertificateChainGenerator:
         self,
         domain: str,
         intermediate_ca: x509.Certificate,
-        intermediate_key: rsa.RSAPrivateKey
+        intermediate_key: rsa.RSAPrivateKey,
     ) -> Tuple[x509.Certificate, rsa.RSAPrivateKey]:
         """Generate leaf certificate for specific domain.
 
@@ -294,7 +294,7 @@ class CertificateChainGenerator:
             .serial_number(x509.random_serial_number())
             .not_valid_before(datetime.datetime.now(datetime.UTC))
             .not_valid_after(
-                datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=365)
+                datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=365),
             )
             .add_extension(
                 x509.BasicConstraints(ca=False, path_length=None),
@@ -331,7 +331,7 @@ class CertificateChainGenerator:
             )
             .add_extension(
                 x509.AuthorityKeyIdentifier.from_issuer_public_key(
-                    intermediate_key.public_key()
+                    intermediate_key.public_key(),
                 ),
                 critical=False,
             )
@@ -356,11 +356,11 @@ class CertificateChainGenerator:
         root_cert, root_key = self.generate_root_ca()
 
         intermediate_cert, intermediate_key = self.generate_intermediate_ca(
-            root_cert, root_key
+            root_cert, root_key,
         )
 
         leaf_cert, leaf_key = self.generate_leaf_cert(
-            domain, intermediate_cert, intermediate_key
+            domain, intermediate_cert, intermediate_key,
         )
 
         return CertificateChain(
@@ -387,7 +387,7 @@ class CertificateChainGenerator:
         """
         leaf_pem = chain.leaf_cert.public_bytes(serialization.Encoding.PEM).decode()
         intermediate_pem = chain.intermediate_cert.public_bytes(
-            serialization.Encoding.PEM
+            serialization.Encoding.PEM,
         ).decode()
         root_pem = chain.root_cert.public_bytes(serialization.Encoding.PEM).decode()
 

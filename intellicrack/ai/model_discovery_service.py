@@ -30,7 +30,7 @@ logger = get_logger(__name__)
 class ModelDiscoveryService:
     """Service for discovering models from API providers with caching."""
 
-    def __init__(self, cache_ttl_seconds: int = 300):
+    def __init__(self, cache_ttl_seconds: int = 300) -> None:
         """Initialize the model discovery service.
 
         Args:
@@ -138,7 +138,7 @@ class ModelDiscoveryService:
 
         return result
 
-    def _initialize_providers(self):
+    def _initialize_providers(self) -> None:
         """Initialize provider clients with API keys from configuration."""
         configured_models = self._config_manager.list_model_configs()
 
@@ -206,7 +206,7 @@ class ModelDiscoveryService:
 
         return api_keys
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear the cached models, forcing fresh discovery on next request."""
         self._cached_models.clear()
         self._cache_timestamp = 0

@@ -19,7 +19,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 
-def get_base_html_template(title="Intellicrack Report", custom_css="", custom_js=""):
+def get_base_html_template(title="Intellicrack Report", custom_css="", custom_js="") -> str:
     """Get base HTML template with common structure."""
     return f"""<!DOCTYPE html>
 <html>
@@ -89,6 +89,6 @@ def get_report_html_template(binary_name):
     return get_base_html_template(f"Intellicrack Analysis Report - {binary_name}", custom_css)
 
 
-def close_html():
+def close_html() -> str:
     """Get HTML closing tags."""
     return "</body></html>"

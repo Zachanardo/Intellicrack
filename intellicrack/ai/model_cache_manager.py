@@ -45,7 +45,7 @@ memory_reserved = None
 PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
 
 
-def secure_pickle_dump(obj, file_path):
+def secure_pickle_dump(obj, file_path) -> None:
     """Securely dump object with integrity check."""
     # Serialize object
     data = pickle.dumps(obj)
@@ -175,7 +175,7 @@ class ModelCacheManager:
         max_memory_gb: float = 8.0,
         cache_dir: str | None = None,
         enable_disk_cache: bool = True,
-    ):
+    ) -> None:
         """Initialize the model cache manager.
 
         Args:
@@ -222,7 +222,7 @@ class ModelCacheManager:
             logger.error(f"Failed to load disk cache index: {e}")
             return {}
 
-    def _save_disk_index(self):
+    def _save_disk_index(self) -> None:
         """Save disk cache index."""
         if not self.enable_disk_cache:
             return
@@ -358,7 +358,7 @@ class ModelCacheManager:
         config: dict[str, Any] | None = None,
         load_time: float = 0.0,
         **kwargs,
-    ):
+    ) -> None:
         """Add a model to the cache.
 
         Args:
@@ -433,7 +433,7 @@ class ModelCacheManager:
             f"Cached model {model_id}: {memory_size / (1024**2):.1f}MB, total cache: {self.current_memory_usage / (1024**2):.1f}MB",
         )
 
-    def _evict_lru(self):
+    def _evict_lru(self) -> None:
         """Evict least recently used model."""
         if not self.cache:
             return
@@ -583,7 +583,7 @@ class ModelCacheManager:
             logger.error(f"Failed to load model from disk: {e}")
             return None
 
-    def clear(self, clear_disk: bool = False):
+    def clear(self, clear_disk: bool = False) -> None:
         """Clear the cache.
 
         Args:
@@ -681,7 +681,7 @@ class ModelCacheManager:
                     "access_count": entry.access_count,
                     "device": entry.device,
                     "quantization": entry.quantization,
-                }
+                },
             )
 
         # Disk cache
@@ -693,12 +693,12 @@ class ModelCacheManager:
                         "location": "disk",
                         "size_mb": info.get("size_mb", 0),
                         "saved_at": info.get("saved_at", ""),
-                    }
+                    },
                 )
 
         return models
 
-    def preload_models(self, model_ids: list[str], load_functions: dict[str, callable]):
+    def preload_models(self, model_ids: list[str], load_functions: dict[str, callable]) -> None:
         """Preload multiple models into cache.
 
         Args:
@@ -714,7 +714,7 @@ class ModelCacheManager:
                 logger.info(f"Preloading model: {model_id}")
                 self.get(model_id, load_functions[model_id])
 
-    def set_memory_limit(self, max_memory_gb: float):
+    def set_memory_limit(self, max_memory_gb: float) -> None:
         """Update memory limit.
 
         Args:

@@ -102,14 +102,14 @@ class ModelDownloadThread(QThread):
     download_finished = pyqtSignal(str, bool)
     log_message = pyqtSignal(str)
 
-    def __init__(self, model_url: str, model_name: str):
+    def __init__(self, model_url: str, model_name: str) -> None:
         """Initialize the ModelDownloadThread with default values."""
         super().__init__()
         self.model_url = model_url
         self.model_name = model_name
         self.is_cancelled = False
 
-    def run(self):
+    def run(self) -> None:
         """Download the model."""
         try:
             import requests
@@ -148,7 +148,7 @@ class ModelDownloadThread(QThread):
             self.log_message.emit(f"Download failed: {self.model_name} - {e}")
             self.download_finished.emit(self.model_name, False)
 
-    def cancel(self):
+    def cancel(self) -> None:
         """Cancel the download."""
         self.is_cancelled = True
 
@@ -156,7 +156,7 @@ class ModelDownloadThread(QThread):
 class ModelManagerDialog(BaseDialog):
     """Dialog for managing local GGUF models."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         """Initialize the ModelManagerDialog with default values."""
         super().__init__(parent, "Local GGUF Model Manager")
         self.setMinimumSize(900, 700)
@@ -174,7 +174,7 @@ class ModelManagerDialog(BaseDialog):
         self.status_timer.timeout.connect(self.update_server_status)
         self.status_timer.start(5000)  # Update every 5 seconds
 
-    def setup_content(self, layout):
+    def setup_content(self, layout) -> None:
         """Set up the user interface content."""
         if layout is None:
             layout = QVBoxLayout(self.content_widget)
@@ -213,7 +213,7 @@ class ModelManagerDialog(BaseDialog):
 
         layout.addLayout(status_layout)
 
-    def setup_local_models_tab(self, tab_widget):
+    def setup_local_models_tab(self, tab_widget) -> None:
         """Set up the local models management tab."""
         layout = QVBoxLayout(tab_widget)
 
@@ -255,7 +255,7 @@ class ModelManagerDialog(BaseDialog):
                 "Status",
                 "Path",
                 "Actions",
-            ]
+            ],
         )
 
         # Configure table
@@ -286,7 +286,7 @@ class ModelManagerDialog(BaseDialog):
 
         layout.addWidget(info_group)
 
-    def setup_download_tab(self, tab_widget):
+    def setup_download_tab(self, tab_widget) -> None:
         """Set up the model download tab."""
         layout = QVBoxLayout(tab_widget)
 
@@ -302,7 +302,7 @@ class ModelManagerDialog(BaseDialog):
                 "Description",
                 "Size",
                 "Actions",
-            ]
+            ],
         )
 
         # Configure table
@@ -356,7 +356,7 @@ class ModelManagerDialog(BaseDialog):
 
         layout.addWidget(progress_group)
 
-    def setup_server_tab(self, tab_widget):
+    def setup_server_tab(self, tab_widget) -> None:
         """Set up the server control tab."""
         layout = QVBoxLayout(tab_widget)
 
@@ -449,7 +449,7 @@ class ModelManagerDialog(BaseDialog):
 
         layout.addStretch()
 
-    def populate_recommended_models(self):
+    def populate_recommended_models(self) -> None:
         """Populate the recommended models table."""
         recommended = gguf_manager.get_recommended_models()
 
@@ -475,7 +475,7 @@ class ModelManagerDialog(BaseDialog):
             )
             self.recommended_table.setCellWidget(row, 3, download_btn)
 
-    def refresh_models(self):
+    def refresh_models(self) -> None:
         """Refresh the local models list."""
         gguf_manager.scan_models()
         models = gguf_manager.list_models()
@@ -511,7 +511,7 @@ class ModelManagerDialog(BaseDialog):
         # Update model info
         self.update_model_info()
 
-    def update_model_info(self):
+    def update_model_info(self) -> None:
         """Update the model information display."""
         if gguf_manager.current_model:
             models = gguf_manager.list_models()
@@ -528,7 +528,7 @@ Server URL: {gguf_manager.get_server_url()}"""
         else:
             self.model_info_text.setPlainText("No model currently loaded")
 
-    def load_model(self, model_name: str):
+    def load_model(self, model_name: str) -> None:
         """Load a specific model."""
         try:
             success = gguf_manager.load_model(
@@ -549,7 +549,7 @@ Server URL: {gguf_manager.get_server_url()}"""
             logger.error("Exception in model_manager_dialog: %s", e)
             QMessageBox.critical(self, "Error", f"Error loading model: {e}")
 
-    def load_selected_model(self):
+    def load_selected_model(self) -> None:
         """Load the selected model."""
         current_row = self.models_table.currentRow()
         if current_row >= 0:
@@ -558,7 +558,7 @@ Server URL: {gguf_manager.get_server_url()}"""
         else:
             QMessageBox.information(self, "Info", "Please select a model to load.")
 
-    def unload_current_model(self):
+    def unload_current_model(self) -> None:
         """Unload the current model."""
         if gguf_manager.current_model:
             gguf_manager.unload_model()
@@ -567,7 +567,7 @@ Server URL: {gguf_manager.get_server_url()}"""
         else:
             QMessageBox.information(self, "Info", "No model is currently loaded.")
 
-    def delete_selected_model(self):
+    def delete_selected_model(self) -> None:
         """Delete the selected model."""
         current_row = self.models_table.currentRow()
         if current_row >= 0:
@@ -604,7 +604,7 @@ Server URL: {gguf_manager.get_server_url()}"""
         else:
             QMessageBox.information(self, "Info", "Please select a model to delete.")
 
-    def add_local_model(self):
+    def add_local_model(self) -> None:
         """Add a local model file."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
@@ -630,7 +630,7 @@ Server URL: {gguf_manager.get_server_url()}"""
                 logger.error("Exception in model_manager_dialog: %s", e)
                 QMessageBox.critical(self, "Error", f"Error adding model: {e}")
 
-    def download_model(self, model_url: str, model_name: str):
+    def download_model(self, model_url: str, model_name: str) -> None:
         """Download a model."""
         if model_name in self.download_threads:
             QMessageBox.information(self, "Info", f"Model '{model_name}' is already being downloaded.")
@@ -667,7 +667,7 @@ Server URL: {gguf_manager.get_server_url()}"""
         self.download_threads[model_name] = download_thread
         download_thread.start()
 
-    def download_custom_model(self):
+    def download_custom_model(self) -> None:
         """Download a custom model from URL."""
         url = self.custom_url_input.text().strip()
         if not url:
@@ -721,7 +721,7 @@ Server URL: {gguf_manager.get_server_url()}"""
         self.download_model(url, model_name)
         self.custom_url_input.clear()
 
-    def on_download_finished(self, model_name: str, success: bool, progress_widget: QWidget):
+    def on_download_finished(self, model_name: str, success: bool, progress_widget: QWidget) -> None:
         """Handle download completion."""
         if model_name in self.download_threads:
             del self.download_threads[model_name]
@@ -736,11 +736,11 @@ Server URL: {gguf_manager.get_server_url()}"""
         else:
             self.add_download_log(f"FAIL {model_name} download failed!")
 
-    def add_download_log(self, message: str):
+    def add_download_log(self, message: str) -> None:
         """Add a message to the download log."""
         self.download_log.append(message)
 
-    def start_server(self):
+    def start_server(self) -> None:
         """Start the GGUF server."""
         try:
             if gguf_manager.start_server():
@@ -753,7 +753,7 @@ Server URL: {gguf_manager.get_server_url()}"""
 
         self.update_server_status()
 
-    def stop_server(self):
+    def stop_server(self) -> None:
         """Stop the GGUF server."""
         try:
             gguf_manager.stop_server()
@@ -764,7 +764,7 @@ Server URL: {gguf_manager.get_server_url()}"""
 
         self.update_server_status()
 
-    def update_server_status(self):
+    def update_server_status(self) -> None:
         """Update the server status display."""
         if gguf_manager.is_server_running():
             status_text = f"OK Server Running - {gguf_manager.get_server_url()}"
@@ -782,7 +782,7 @@ Server URL: {gguf_manager.get_server_url()}"""
             self.start_server_btn.setEnabled(True)
             self.stop_server_btn.setEnabled(False)
 
-    def check_dependencies(self):
+    def check_dependencies(self) -> None:
         """Check and display dependency status."""
         deps_status = []
 
@@ -815,7 +815,7 @@ Server URL: {gguf_manager.get_server_url()}"""
 
         self.deps_status_text.setPlainText("\n".join(deps_status))
 
-    def closeEvent(self, event):
+    def closeEvent(self, event) -> None:
         """Handle dialog close."""
         # Cancel any ongoing downloads
         for thread in self.download_threads.values():

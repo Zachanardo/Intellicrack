@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+import contextlib
 import logging
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
@@ -59,7 +60,7 @@ except ImportError:
 class BinaryFeatureExtractor:
     """Advanced feature extraction from binaries for ML training."""
 
-    def __init__(self, binary_path: str):
+    def __init__(self, binary_path: str) -> None:
         """Initialize feature extractor with binary file."""
         self.binary_path = Path(binary_path)
         self.logger = logging.getLogger(__name__)
@@ -75,7 +76,7 @@ class BinaryFeatureExtractor:
         # Initialize disassemblers
         self._init_disassembler()
 
-    def _load_binary(self):
+    def _load_binary(self) -> None:
         """Load binary file and parse headers."""
         with open(self.binary_path, "rb") as f:
             self.data = f.read()
@@ -119,7 +120,7 @@ class BinaryFeatureExtractor:
             self.arch = CS_ARCH_X86
             self.mode = CS_MODE_64
 
-    def _init_disassembler(self):
+    def _init_disassembler(self) -> None:
         """Initialize Capstone disassembler."""
         if CAPSTONE_AVAILABLE:
             self.disassembler = Cs(self.arch, self.mode)
@@ -502,18 +503,14 @@ class BinaryFeatureExtractor:
                     current_string += bytes([byte])
                 else:
                     if len(current_string) >= min_length:
-                        try:
+                        with contextlib.suppress(UnicodeDecodeError, ValueError):
                             strings.append(current_string.decode("ascii"))
-                        except (UnicodeDecodeError, ValueError):
-                            pass
                     current_string = b""
 
             # Check final string
             if len(current_string) >= min_length:
-                try:
+                with contextlib.suppress(UnicodeDecodeError, ValueError):
                     strings.append(current_string.decode("ascii"))
-                except (UnicodeDecodeError, ValueError):
-                    pass
 
         elif encoding == "utf-16le":
             # UTF-16LE string extraction (common in Windows)
@@ -529,10 +526,8 @@ class BinaryFeatureExtractor:
                         break
 
                 if len(current_string) >= min_length:
-                    try:
+                    with contextlib.suppress(UnicodeDecodeError, ValueError):
                         strings.append(current_string.decode("ascii"))
-                    except (UnicodeDecodeError, ValueError):
-                        pass
 
                 i += 1
 
@@ -578,7 +573,7 @@ def extract_features_for_ml(binary_path: str) -> np.ndarray:
             features["api_sequences"],
             features["section_entropy"],
             features["string_features"],
-        ]
+        ],
     )
 
     return feature_vector

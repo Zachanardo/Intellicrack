@@ -58,7 +58,7 @@ except ImportError:
 
 
 # Detect Intel Arc GPU and apply workaround
-def _detect_and_fix_intel_arc():
+def _detect_and_fix_intel_arc() -> bool:
     """Detect Intel Arc GPU and apply CPU-only workaround to prevent GIL crashes."""
     # Check if UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS is set (Intel Arc indicator)
     if os.environ.get("UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS") == "1":
@@ -146,12 +146,12 @@ if not HAS_TORCH:
     class FallbackTensor:
         """Fallback tensor implementation."""
 
-        def __init__(self, data=None, dtype=None, device=None):
+        def __init__(self, data=None, dtype=None, device=None) -> None:
             self.data = data or []
             self.dtype = dtype
             self.device = device
 
-        def __repr__(self):
+        def __repr__(self) -> str:
             return f"FallbackTensor({self.data})"
 
         def cuda(self):
@@ -170,21 +170,21 @@ if not HAS_TORCH:
         """Fallback CUDA interface."""
 
         @staticmethod
-        def is_available():
+        def is_available() -> bool:
             return False
 
         @staticmethod
-        def device_count():
+        def device_count() -> int:
             return 0
 
         @staticmethod
-        def get_device_name(device=None):
+        def get_device_name(device=None) -> str:
             return "CPU Fallback"
 
     class FallbackDevice:
         """Fallback device."""
 
-        def __init__(self, device_str):
+        def __init__(self, device_str) -> None:
             self.type = "cpu"
 
     class FallbackModule:
@@ -210,7 +210,7 @@ if not HAS_TORCH:
         """Create fallback tensor."""
         return FallbackTensor(data, **kwargs)
 
-    def save(obj, path):
+    def save(obj, path) -> None:
         """Fallback save function."""
         pass
 
