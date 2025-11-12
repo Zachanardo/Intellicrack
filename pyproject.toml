@@ -200,7 +200,7 @@ dependencies = [
 
   # Distributed Computing & Task Queue
   "celery==5.5.3",
-  "dask==2025.10.0",
+  "dask==2025.11.0",
   "distributed==2025.11.0",
 
   # Additional Core Dependencies
