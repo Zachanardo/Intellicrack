@@ -26,8 +26,8 @@ torchvision = ">=0.23.0,<1"
 torchaudio = ">=2.8.0,<3"
 
 [environments]
-default = { features = ["xpu"], solve-group = "default" }
-ci = { features = ["ci-cpu"], solve-group = "default" }
+default = { features = ["xpu"], solve-group = "xpu-group" }
+ci = { features = ["ci-cpu"], solve-group = "ci-group" }
 
 [dependencies]
 python = "3.12.*"
