@@ -40,6 +40,8 @@ git = "*"
 [pypi-dependencies]
 # Local editable install - pulls all Python dependencies from pyproject.toml
 intellicrack = { path = ".", editable = true }
+# Pin dpctl to prevent version resolution conflicts
+dpctl = "==0.20.2"
 
 [tasks]
 # Complete installation: installs dependencies + post-install setup (skips Intel XPU in CI)
