@@ -1,7 +1,7 @@
 INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: Sun, Nov 09, 2025 07:47:21 PM
+Generated: Tue, Nov 11, 2025 08:38:05 PM
 Directory: D:\Intellicrack\intellicrack
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -77,6 +77,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── api_provider_clients.py
 │   ├── background_loader.py
 │   ├── code_analysis_tools.py
+│   ├── common_types.py
 │   ├── coordination_layer.py
 │   ├── enhanced_training_interface.py
 │   ├── file_reading_helper.py
@@ -1104,6 +1105,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   │   ├── binary_patcher_plugin.cpython-314.pyc
 │   │   │   ├── cloud_license_interceptor.cpython-314.pyc
 │   │   │   ├── hardware_dongle_emulator.cpython-314.pyc
+│   │   │   ├── intellicrack_core_engine.cpython-312.pyc
 │   │   │   ├── intellicrack_core_engine.cpython-314.pyc
 │   │   │   ├── license_server_emulator.cpython-314.pyc
 │   │   │   ├── network_analysis_plugin.cpython-314.pyc

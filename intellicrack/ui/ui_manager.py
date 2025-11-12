@@ -44,10 +44,12 @@ from .tabs.terminal_tab import TerminalTab
 from .tabs.tools_tab import ToolsTab
 from .tabs.workspace_tab import WorkspaceTab
 from .theme_manager import get_theme_manager
+from ..utils.logger import log_all_methods
 
 logger = logging.getLogger(__name__)
 
 
+@log_all_methods
 class UIManager:
     """Manages the creation and layout of the main UI components."""
 
@@ -59,14 +61,11 @@ class UIManager:
 
         """
         self.logger = logger
-        self.logger.info("Initializing UIManager.")
         self.main_window = main_window
         self.theme_manager = get_theme_manager()
-        self.logger.info("UIManager initialized successfully.")
 
     def create_main_layout(self) -> None:
         """Create the main UI layout."""
-        self.logger.debug("Creating main UI layout.")
         self.main_window.central_widget = QWidget()
         self.main_window.setCentralWidget(self.main_window.central_widget)
         self.main_window.main_layout = QVBoxLayout(self.main_window.central_widget)
@@ -75,24 +74,19 @@ class UIManager:
 
         self.main_window.main_splitter = QSplitter(Qt.Orientation.Horizontal)
         self.main_window.main_layout.addWidget(self.main_window.main_splitter)
-        self.logger.debug("Main UI layout created.")
 
     def setup_tabs_and_themes(self) -> None:
         """Set up the tab widget and apply themes."""
-        self.logger.debug("Setting up tabs and themes.")
         self.main_window.tabs = QTabWidget()
         self.main_window.tabs.setTabPosition(QTabWidget.TabPosition.North)
         self.main_window.tabs.setTabsClosable(False)
 
         self.theme_manager.set_theme(self.theme_manager.get_current_theme())
-        self.logger.info(f"Theme set to '{self.theme_manager.get_current_theme()}'.")
 
         self.main_window.main_splitter.addWidget(self.main_window.tabs)
-        self.logger.debug("Tabs and themes setup complete.")
 
     def create_output_panel(self) -> None:
         """Create the output panel."""
-        self.logger.debug("Creating output panel.")
         self.main_window.output_panel = QWidget()
         self.main_window.output_layout = QVBoxLayout(self.main_window.output_panel)
 
@@ -114,11 +108,9 @@ class UIManager:
 
         self.main_window.main_splitter.addWidget(self.main_window.output_panel)
         self.main_window.main_splitter.setSizes([700, 500])
-        self.logger.debug("Output panel created.")
 
     def create_modular_tabs(self) -> None:
         """Create all modular tab instances."""
-        self.logger.debug("Creating modular tabs.")
         shared_context = {
             "main_window": self.main_window,
             "log_message": self.main_window.log_message,
@@ -143,4 +135,3 @@ class UIManager:
         self.main_window.tabs.addTab(self.main_window.tools_tab, "Tools")
         self.main_window.tabs.addTab(self.main_window.terminal_tab, "Terminal")
         self.main_window.tabs.addTab(self.main_window.settings_tab, "Settings")
-        self.logger.info("All modular tabs created and added to the UI.")

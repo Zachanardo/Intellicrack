@@ -56,7 +56,7 @@ from ..config import CONFIG
 from ..core.analysis.frida_gui_integration import integrate_frida_gui
 from ..core.analysis.multi_format_analyzer import MultiFormatBinaryAnalyzer
 from ..core.analysis.vulnerability_engine import AdvancedVulnerabilityEngine
-from ..utils.logger import get_logger
+from ..utils.logger import get_logger, log_all_methods
 from ..utils.resource_helper import get_resource_path
 from .dialogs.export_dialog import ExportDialog
 from .dialogs.program_selector_dialog import show_program_selector
@@ -68,6 +68,7 @@ from .widgets.unified_protection_widget import UnifiedProtectionWidget
 logger = get_logger(__name__)
 
 
+@log_all_methods
 class IntellicrackMainWindow(QMainWindow):
     """Run application window for Intellicrack.
 
@@ -90,7 +91,6 @@ class IntellicrackMainWindow(QMainWindow):
 
         # Initialize logger
         self.logger = logger
-        self.logger.info("Initializing main application window.")
 
         # Initialize core attributes
         self.binary_path: str | None = None
@@ -108,7 +108,6 @@ class IntellicrackMainWindow(QMainWindow):
             "report_handler": {"enabled": False, "error": None},
         }
 
-        self.logger.debug("Initializing analysis engines and handlers.")
         # Initialize analyzers with error handling
         try:
             self.vulnerability_engine = AdvancedVulnerabilityEngine()
@@ -169,7 +168,6 @@ class IntellicrackMainWindow(QMainWindow):
 
         # Register handlers with orchestrator if available
         if self.analysis_orchestrator:
-            self.logger.debug("Registering handlers with analysis orchestrator.")
             if self.llm_handler:
                 self.analysis_orchestrator.register_handler(self.llm_handler)
             if self.script_handler:
@@ -178,7 +176,6 @@ class IntellicrackMainWindow(QMainWindow):
                 self.analysis_orchestrator.register_handler(self.report_handler)
 
         # Setup UI
-        self.logger.debug("Setting up main UI.")
         self._setup_ui()
         self._setup_signals()
         self._setup_status_bar()
@@ -186,7 +183,6 @@ class IntellicrackMainWindow(QMainWindow):
 
         # Integrate Frida GUI components
         try:
-            self.logger.debug("Integrating Frida GUI components.")
             integrate_frida_gui(self)
             self.logger.info("Frida GUI integration completed successfully.")
         except Exception:
@@ -205,13 +201,11 @@ class IntellicrackMainWindow(QMainWindow):
     # ... The other methods would be updated similarly.
     def _setup_ui(self) -> None:
         """Set up the main user interface."""
-        self.logger.debug("Setting up main UI layout.")
         # ...
-        self.logger.debug("Main UI layout setup complete.")
+        pass
 
     def _browse_for_file(self) -> None:
         """Browse for a binary file to analyze."""
-        self.logger.debug("Opening file dialog to select a binary.")
         dialog_options = QFileDialog.Options()
         dialog_options |= QFileDialog.ReadOnly
         file_path, _ = QFileDialog.getOpenFileName(
@@ -225,10 +219,9 @@ class IntellicrackMainWindow(QMainWindow):
         if file_path:
             normalized_path = os.path.normpath(file_path)
             self.binary_path = normalized_path
-            self.logger.info("User selected binary file: %s", normalized_path)
             self.update_status.emit(f"Ready to analyze: {os.path.basename(normalized_path)}")
         else:
-            self.logger.debug("File selection cancelled by user.")
+            pass
 
     def _run_analysis(self) -> None:
         """Run binary analysis."""
@@ -237,6 +230,5 @@ class IntellicrackMainWindow(QMainWindow):
             QMessageBox.warning(self, "Warning", "Please select a binary file first.")
             return
 
-        self.logger.info(f"Starting analysis for: {self.binary_path}")
         # ...
-        self.logger.info("Analysis finished.")
+        pass

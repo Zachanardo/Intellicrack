@@ -1433,7 +1433,7 @@ class StaticAnalysisAgent(BaseAgent):
             with open(file_path, "rb") as f, mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mmapped_file:
                 # Check for PE signature
                 if mmapped_file[:2] == b"MZ":
-                analysis_result["file_type"] = "PE"
+                    analysis_result["file_type"] = "PE"
 
                 # Get PE header offset
                 pe_offset = struct.unpack("<I", mmapped_file[0x3C:0x40])[0]
@@ -1490,8 +1490,8 @@ class StaticAnalysisAgent(BaseAgent):
 
                     analysis_result["entry_point"] = hex(entry_point)
 
-                    # Check for Mach-O signature
-                    elif mmapped_file[:4] in [b"\xfe\xed\xfa\xce", b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xcf", b"\xcf\xfa\xed\xfe"]:
+                # Check for Mach-O signature
+                elif mmapped_file[:4] in [b"\xfe\xed\xfa\xce", b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xcf", b"\xcf\xfa\xed\xfe"]:
                     analysis_result["file_type"] = "Mach-O"
 
                     # Get CPU type
@@ -1504,38 +1504,38 @@ class StaticAnalysisAgent(BaseAgent):
                     }
                     analysis_result["architecture"] = cpu_map.get(cpu_type, f"Unknown ({hex(cpu_type)})")
 
-                    else:
+                else:
                     analysis_result["file_type"] = "Unknown"
                     analysis_result["architecture"] = "Unknown"
 
-                    analysis_result["file_size"] = len(mmapped_file)
+                analysis_result["file_size"] = len(mmapped_file)
                 analysis_result["confidence"] = 0.7
 
                 # Basic section detection for PE files
-                    if analysis_result.get("file_type") == "PE":
-                        sections = []
-                        try:
-                            pe_offset = struct.unpack("<I", mmapped_file[0x3C:0x40])[0]
-                            num_sections = struct.unpack("<H", mmapped_file[pe_offset + 6 : pe_offset + 8])[0]
-                            optional_header_size = struct.unpack("<H", mmapped_file[pe_offset + 20 : pe_offset + 22])[0]
-                            section_table_offset = pe_offset + 24 + optional_header_size
+                if analysis_result.get("file_type") == "PE":
+                    sections = []
+                    try:
+                        pe_offset = struct.unpack("<I", mmapped_file[0x3C:0x40])[0]
+                        num_sections = struct.unpack("<H", mmapped_file[pe_offset + 6 : pe_offset + 8])[0]
+                        optional_header_size = struct.unpack("<H", mmapped_file[pe_offset + 20 : pe_offset + 22])[0]
+                        section_table_offset = pe_offset + 24 + optional_header_size
 
-                            for i in range(min(num_sections, 20)):  # Limit to 20 sections for safety
-                                section_offset = section_table_offset + (i * 40)
-                                section_name = (
-                                    mmapped_file[section_offset : section_offset + 8].rstrip(b"\x00").decode("ascii", errors="ignore")
-                                )
-                                if section_name:
-                                    sections.append(section_name)
+                        for i in range(min(num_sections, 20)):  # Limit to 20 sections for safety
+                            section_offset = section_table_offset + (i * 40)
+                            section_name = (
+                                mmapped_file[section_offset : section_offset + 8].rstrip(b"\x00").decode("ascii", errors="ignore")
+                            )
+                            if section_name:
+                                sections.append(section_name)
 
-                            analysis_result["sections"] = sections
-                        except (struct.error, IndexError, ValueError, UnicodeDecodeError):
-                            analysis_result["sections"] = []
+                        analysis_result["sections"] = sections
+                    except (struct.error, IndexError, ValueError, UnicodeDecodeError):
+                        analysis_result["sections"] = []
 
-                    # Set defaults for missing fields
-                    analysis_result.setdefault("imports", [])
-                    analysis_result.setdefault("exports", [])
-                    analysis_result.setdefault("compiler", "Unknown")
+                # Set defaults for missing fields
+                analysis_result.setdefault("imports", [])
+                analysis_result.setdefault("exports", [])
+                analysis_result.setdefault("compiler", "Unknown")
 
         except (OSError, struct.error) as e:
             analysis_result = {
@@ -1683,8 +1683,7 @@ class StaticAnalysisAgent(BaseAgent):
 
     def _calculate_python_quality_score(self, code: str, functions: list, vulnerabilities: list) -> float:
         """Calculate code quality score for Python code."""
-        lines = code.split("
-")
+        lines = code.split("\n")
         non_empty_lines = [line for line in lines if line.strip()]
         comment_lines = [line for line in lines if line.strip().startswith("#")]
 
@@ -1704,8 +1703,7 @@ class StaticAnalysisAgent(BaseAgent):
 
     def _analyze_c_cpp_code(self, code: str) -> dict[str, Any]:
         """Analyze C/C++ code for vulnerabilities and metrics."""
-        lines = code.split("
-")
+        lines = code.split("\n")
         vulnerabilities = []
 
         dangerous_functions = {
@@ -1742,8 +1740,7 @@ class StaticAnalysisAgent(BaseAgent):
 
     def _analyze_javascript_code(self, code: str) -> dict[str, Any]:
         """Analyze JavaScript/TypeScript code for vulnerabilities and metrics."""
-        lines = code.split("
-")
+        lines = code.split("\n")
         vulnerabilities = []
 
         dangerous_patterns = [
@@ -1777,8 +1774,7 @@ class StaticAnalysisAgent(BaseAgent):
 
     def _analyze_generic_code(self, code: str) -> dict[str, Any]:
         """Analyze code for unknown languages."""
-        lines = code.split("
-")
+        lines = code.split("\n")
         return {
             "functions_detected": len([line for line in lines if "(" in line and ")" in line and "{" in line]),
             "classes_detected": len([line for line in lines if "class " in line]),
@@ -1794,8 +1790,7 @@ class StaticAnalysisAgent(BaseAgent):
 
         analysis_result = {
             "language": language,
-            "lines_of_code": len(code.split("
-")),
+            "lines_of_code": len(code.split("\n")),
             "functions_detected": 0,
             "classes_detected": 0,
             "potential_vulnerabilities": [],
@@ -2938,11 +2933,8 @@ class ReverseEngineeringAgent(BaseAgent):
             # Try r2dec decompilation
             dec_output = r2.cmd(f"pdd @ {func_addr}")
             if dec_output and dec_output.strip():
-                pseudo_code += f"
-// Function: {func_name}
-"
-                pseudo_code += dec_output + "
-"
+                pseudo_code += f"\n// Function: {func_name}\n"
+                pseudo_code += dec_output + "\n"
 
             # Get function signature
             sig = r2.cmd(f"afcf @ {func_addr}")
@@ -3003,70 +2995,54 @@ class ReverseEngineeringAgent(BaseAgent):
 
         for i, block in enumerate(code_blocks):
             func_name = f"function_{i}"
-            pseudo_code += f"
-int {func_name}() {{
-"
+            pseudo_code += f"\nint {func_name}() {{\n"
 
             indent = "    "
             in_condition = False
 
             for op in block:
                 if op["type"] == "function_start":
-                    pseudo_code += f"{indent}// Function prologue
-"
+                    pseudo_code += f"{indent}// Function prologue\n"
                 elif op["type"] == "comparison":
                     parts = op["inst"].split(",")
                     if len(parts) >= 2:
-                        pseudo_code += f"{indent}if ({parts[0].replace('cmp', '').strip()} == {parts[1].strip()}) {{
-"
+                        pseudo_code += f"{indent}if ({parts[0].replace('cmp', '').strip()} == {parts[1].strip()}) {{\n"
                         in_condition = True
                         indent = "        "
                 elif op["type"] == "conditional_jump":
                     if in_condition:
-                        pseudo_code += f"{indent}// Conditional branch: {op['inst']}
-"
+                        pseudo_code += f"{indent}// Conditional branch: {op['inst']}\n"
                 elif op["type"] == "function_call":
                     target = op["target"]
                     if "strlen" in target.lower():
-                        pseudo_code += f"{indent}len = strlen(str);
-"
+                        pseudo_code += f"{indent}len = strlen(str);\n"
                     elif "strcmp" in target.lower():
-                        pseudo_code += f"{indent}result = strcmp(str1, str2);
-"
+                        pseudo_code += f"{indent}result = strcmp(str1, str2);\n"
                     elif "malloc" in target.lower():
-                        pseudo_code += f"{indent}ptr = malloc(size);
-"
+                        pseudo_code += f"{indent}ptr = malloc(size);\n"
                     elif "free" in target.lower():
-                        pseudo_code += f"{indent}free(ptr);
-"
+                        pseudo_code += f"{indent}free(ptr);\n"
                     else:
-                        pseudo_code += f"{indent}{target}();
-"
+                        pseudo_code += f"{indent}{target}();\n"
                 elif op["type"] == "assignment":
                     parts = op["inst"].split(",")
                     if len(parts) >= 2:
                         dest = parts[0].replace("mov", "").strip()
                         src = parts[1].strip()
-                        pseudo_code += f"{indent}{dest} = {src};
-"
+                        pseudo_code += f"{indent}{dest} = {src};\n"
                 elif op["type"] == "string_op":
-                    pseudo_code += f"{indent}// String operation: {op['inst']}
-"
+                    pseudo_code += f"{indent}// String operation: {op['inst']}\n"
                 elif op["type"] == "return":
                     if in_condition:
                         indent = "    "
-                        pseudo_code += "    }
-"
+                        pseudo_code += "    }\n"
                         in_condition = False
-                    pseudo_code += f"{indent}return result;
-"
+                    pseudo_code += f"{indent}return result;\n"
 
             if in_condition:
-                pseudo_code += "    }
-"
+                pseudo_code += "    }\n"
 
-            pseudo_code += "}
-"
+            pseudo_code += "}\n"
             function_signatures.append({"name": func_name, "parameters": ["void*"], "return_type": "int"})
 
         return pseudo_code, function_signatures
@@ -3296,8 +3272,7 @@ int process_data(void* input, int size) {
 
         loop_depth = 0
         max_loop_depth = 0
-        for line in code.split("
-"):
+        for line in code.split("\n"):
             if any(keyword in line for keyword in ["for", "while", "do"]):
                 loop_depth += 1
                 max_loop_depth = max(max_loop_depth, loop_depth)

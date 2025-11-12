@@ -25,8 +25,10 @@ import os
 from typing import Any
 
 from ..utils.core.string_utils import format_bytes
+from ..utils.logger import log_all_methods
 
 
+@log_all_methods
 class DashboardManager:
     """Comprehensive dashboard manager with project statistics and activity tracking.
 
@@ -48,13 +50,9 @@ class DashboardManager:
         self.recent_activities: list[dict[str, str]] = []
         self.max_recent_activities = 20
 
-        self.logger.info("Dashboard manager initialized.")
-
     def update_stats(self) -> None:
         """Update all dashboard statistics."""
-        self.logger.debug("Updating all dashboard statistics.")
         if not hasattr(self, "stats"):
-            self.logger.debug("Initializing stats dictionary.")
             self.stats = {}
 
         self._update_binary_stats()
@@ -62,8 +60,6 @@ class DashboardManager:
         self._update_analysis_stats()
         self._update_license_stats()
         self._update_advanced_analysis_stats()
-
-        self.logger.debug(f"Dashboard statistics updated with keys: {list(self.stats.keys())}")
 
     def _update_binary_stats(self) -> None:
         """Update binary file statistics."""
@@ -80,7 +76,6 @@ class DashboardManager:
                     "size_formatted": self._format_size(binary_size),
                     "last_modified": datetime.datetime.fromtimestamp(last_modified).strftime("%Y-%m-%d %H:%M:%S"),
                 }
-                self.logger.debug(f"Updated binary stats for {binary_name}.")
             except (OSError, ValueError):
                 self.logger.exception("Failed to update binary stats.")
                 self.stats["binary"] = None
@@ -93,7 +88,6 @@ class DashboardManager:
     # ... The other methods would be updated similarly.
     def add_activity(self, activity_type: str, description: str) -> None:
         """Add an activity to the recent activities list."""
-        self.logger.info(f"Adding new activity: [{activity_type}] {description}")
         activity = {
             "type": activity_type,
             "description": description,
@@ -102,11 +96,9 @@ class DashboardManager:
         self.recent_activities.insert(0, activity)
         if len(self.recent_activities) > self.max_recent_activities:
             self.recent_activities = self.recent_activities[: self.max_recent_activities]
-        self.logger.debug("Recent activities list updated.")
 
     def export_stats(self, filepath: str) -> bool:
         """Export current statistics to a file."""
-        self.logger.info(f"Exporting dashboard stats to {filepath}")
         try:
             import json
 
@@ -119,7 +111,6 @@ class DashboardManager:
             with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(export_data, f, indent=2, default=str)
 
-            self.logger.info("Statistics exported successfully.")
             return True
 
         except Exception:

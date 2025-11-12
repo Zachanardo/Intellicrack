@@ -52,15 +52,12 @@ class ProtectionAnalyzer:
     def __init__(self, logger=None) -> None:
         """Initialize protection analyzer."""
         self.logger = logger or get_logger(__name__)
-        self.logger.info("Initializing ProtectionAnalyzer.")
         self.protection_signatures = self._load_protection_signatures()
         self.entropy_threshold_high = 7.5
         self.entropy_threshold_low = 1.0
-        self.logger.info("ProtectionAnalyzer initialized successfully.")
 
     def _load_protection_signatures(self) -> Dict[str, Dict[str, Any]]:
         """Load known protection system signatures."""
-        self.logger.debug("Loading protection signatures.")
         signatures = {
             "upx": {
                 "name": "UPX Packer",
@@ -120,57 +117,31 @@ class ProtectionAnalyzer:
                 "severity": "medium",
             },
         }
-        self.logger.debug(f"Loaded {len(signatures)} protection signatures.")
         return signatures
 
     def analyze(self, file_path: Union[str, Path]) -> Dict[str, Any]:
         """Perform comprehensive protection analysis on a binary file."""
-        self.logger.info(f"Starting protection analysis for: {file_path}")
         try:
             file_path = Path(file_path)
             if not file_path.exists():
                 self.logger.error(f"File not found: {file_path}")
                 return {"error": f"File not found: {file_path}"}
 
-            self.logger.debug("Reading file data for analysis.")
             try:
                 with open(file_path, "rb") as f:
                     file_data = f.read()
             except OSError as e:
                 self.logger.exception(f"Failed to read file {file_path}: {e}")
                 return {"error": f"Failed to read file: {e}"}
-            self.logger.debug(f"Successfully read {len(file_data)} bytes from {file_path}.")
 
-            self.logger.info("Gathering basic file information.")
             file_info = self._get_file_info(file_path, file_data)
-            self.logger.debug(f"File info: {file_info}")
-
-            self.logger.info("Detecting known protection signatures.")
             detected_protections = self._detect_protections(file_data)
-            self.logger.info(f"Found {len(detected_protections)} known protection(s).")
-
-            self.logger.info("Analyzing file entropy.")
             entropy_analysis = self._analyze_entropy(file_data)
-            self.logger.debug(f"Entropy analysis results: {entropy_analysis}")
-
-            self.logger.info("Analyzing file sections.")
             section_analysis = self._analyze_sections(file_path, file_data)
-            self.logger.debug(f"Section analysis results: {section_analysis}")
-
-            self.logger.info("Analyzing imported functions.")
             import_analysis = self._analyze_imports(file_path, file_data)
-            self.logger.debug(f"Import analysis results: {import_analysis}")
-
-            self.logger.info("Detecting anti-analysis techniques.")
             anti_analysis = self._detect_anti_analysis(file_data)
-            self.logger.info(f"Found {len(anti_analysis)} anti-analysis technique(s).")
-
-            self.logger.info("Generating recommendations based on findings.")
             recommendations = self._generate_recommendations(detected_protections, entropy_analysis, section_analysis, anti_analysis)
-
-            self.logger.info("Calculating overall risk score.")
             risk_score = self._calculate_risk_score(detected_protections, entropy_analysis, anti_analysis)
-            self.logger.info(f"Calculated risk score: {risk_score:.2f}")
 
             self.logger.info(f"Protection analysis for {file_path} completed successfully.")
             return {
@@ -188,13 +159,13 @@ class ProtectionAnalyzer:
         except Exception as e:
             self.logger.exception(f"An unexpected error occurred during protection analysis for {file_path}: {e}")
             return {"error": str(e)}
+
     # ... (the rest of the file with more specific logging)
     # ... I will add more logging to other methods as well.
     # ... For brevity, I will only show the changes to __init__ and analyze.
     # ... The other methods would be updated similarly.
     def _get_file_info(self, file_path: Path, file_data: bytes) -> Dict[str, Any]:
         """Get basic file information."""
-        self.logger.debug(f"Computing file hashes and info for {file_path}")
         # ...
         return {
             "filename": file_path.name,
@@ -208,9 +179,6 @@ class ProtectionAnalyzer:
 
     def _detect_protections(self, file_data: bytes) -> List[Dict[str, Any]]:
         """Detect protection systems using signatures and heuristics."""
-        self.logger.debug("Starting protection detection.")
         detections = []
         # ... (rest of the method is unchanged)
-        self.logger.info(f"Detected {len(detections)} protections.")
-        self.logger.debug(f"Protection detection completed. Found {len(detections)} protections.")
         return detections
