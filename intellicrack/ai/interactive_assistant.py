@@ -1157,10 +1157,9 @@ What security aspect interests you?"""
                             "check_status_in": "60 seconds",
                         },
                     }
-                else:
-                    return {"status": "error", "message": f"Upload failed: {upload_response.status_code} - {upload_response.text}"}
+                return {"status": "error", "message": f"Upload failed: {upload_response.status_code} - {upload_response.text}"}
 
-            elif service.lower() == "hybrid-analysis":
+            if service.lower() == "hybrid-analysis":
                 # Real Hybrid Analysis API integration
                 if not api_key:
                     return {"status": "error", "message": "Hybrid Analysis requires an API key"}
@@ -1192,11 +1191,9 @@ What security aspect interests you?"""
                             "analysis_url": f"https://www.hybrid-analysis.com/sample/{result_data.get('sha256')}",
                         },
                     }
-                else:
-                    return {"status": "error", "message": f"Submission failed: {response.status_code}"}
+                return {"status": "error", "message": f"Submission failed: {response.status_code}"}
 
-            else:
-                return {"status": "error", "message": f"Unsupported service: {service}. Supported: virustotal, hybrid-analysis"}
+            return {"status": "error", "message": f"Unsupported service: {service}. Supported: virustotal, hybrid-analysis"}
 
         except requests.RequestException as e:
             logger.error(f"Network error during external analysis: {e}")

@@ -113,11 +113,11 @@ class DebuggerDetector(BaseDetector):
                 with open(config_path) as f:
                     base_sigs = json.load(f)
                     # Merge base signatures
-                    for platform_key in signatures:
+                    for platform_key, platform_signatures in signatures.items():
                         if platform_key in base_sigs:
-                            for sig_type in signatures[platform_key]:
+                            for sig_type in platform_signatures:
                                 if sig_type in base_sigs[platform_key]:
-                                    signatures[platform_key][sig_type].extend(base_sigs[platform_key][sig_type])
+                                    platform_signatures[sig_type].extend(base_sigs[platform_key][sig_type])
         except (OSError, json.JSONDecodeError):
             pass  # Use dynamic detection only
 
@@ -375,15 +375,15 @@ class DebuggerDetector(BaseDetector):
             signatures["linux"]["symbols"].extend(symbol_patterns)
 
         # Remove duplicates while preserving order
-        for platform_key in signatures:
-            for sig_type in signatures[platform_key]:
+        for _platform_key, platform_signatures in signatures.items():
+            for sig_type in platform_signatures:
                 seen = set()
                 unique_list = []
-                for item in signatures[platform_key][sig_type]:
+                for item in platform_signatures[sig_type]:
                     if item.lower() not in seen:
                         seen.add(item.lower())
                         unique_list.append(item)
-                signatures[platform_key][sig_type] = unique_list
+                platform_signatures[sig_type] = unique_list
 
         return signatures
 
@@ -920,8 +920,7 @@ class DebuggerDetector(BaseDetector):
         try:
             if platform.system() == "Windows":
                 return self._check_hardware_breakpoints_windows(details)
-            else:
-                return self._check_hardware_breakpoints_linux(details)
+            return self._check_hardware_breakpoints_linux(details)
 
         except Exception as e:
             self.logger.debug(f"Hardware breakpoint check failed: {e}")
@@ -1138,8 +1137,7 @@ class DebuggerDetector(BaseDetector):
             # Real INT3 breakpoint scanning implementation
             if platform.system() == "Windows":
                 return self._scan_int3_windows(details)
-            else:
-                return self._scan_int3_linux(details)
+            return self._scan_int3_linux(details)
 
         except Exception as e:
             self.logger.debug(f"INT3 scan failed: {e}")
@@ -1178,7 +1176,7 @@ class DebuggerDetector(BaseDetector):
             int3_count = 0
             locations = []
             address = 0
-            max_address = 0x7FFFFFFF if platform.machine().endswith("64") else 0x7FFFFFFF
+            max_address = 0x7FFFFFFF  # Same value in both cases
 
             # Scan memory regions
             while address < max_address:

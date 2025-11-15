@@ -23,14 +23,14 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import math
 from collections import Counter
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
 
 
-def calculate_byte_distribution(data: bytes) -> Dict[int, int]:
+def calculate_byte_distribution(data: bytes) -> dict[int, int]:
     """Calculate the distribution of byte values in the data.
 
     Args:
@@ -77,7 +77,7 @@ def calculate_entropy(data: bytes) -> float:
     return entropy
 
 
-def calculate_statistics(data: bytes) -> Dict[str, Any]:
+def calculate_statistics(data: bytes) -> dict[str, Any]:
     """Calculate comprehensive statistics for binary data.
 
     Args:
@@ -138,7 +138,7 @@ def calculate_statistics(data: bytes) -> Dict[str, Any]:
     }
 
 
-def detect_file_type_hints(data: bytes, distribution: Dict[int, int]) -> List[str]:
+def detect_file_type_hints(data: bytes, distribution: dict[int, int]) -> list[str]:
     """Detect hints about the file type based on byte patterns.
 
     Args:
@@ -216,7 +216,7 @@ def detect_file_type_hints(data: bytes, distribution: Dict[int, int]) -> List[st
     return hints
 
 
-def calculate_histogram(data: bytes, bins: int = 16) -> List[Tuple[str, int]]:
+def calculate_histogram(data: bytes, bins: int = 16) -> list[tuple[str, int]]:
     """Calculate a histogram of byte values.
 
     Args:
@@ -253,7 +253,7 @@ def calculate_histogram(data: bytes, bins: int = 16) -> List[Tuple[str, int]]:
     return histogram
 
 
-def find_patterns(data: bytes, min_length: int = 4, max_patterns: int = 10) -> List[Tuple[bytes, int]]:
+def find_patterns(data: bytes, min_length: int = 4, max_patterns: int = 10) -> list[tuple[bytes, int]]:
     """Find repeating patterns in the data.
 
     Args:
@@ -349,7 +349,7 @@ class StatisticsCalculator:
         """
         self.progress_callback = callback
 
-    def calculate_all(self, data: bytes) -> Dict[str, Any]:
+    def calculate_all(self, data: bytes) -> dict[str, Any]:
         """Calculate all statistics with progress tracking.
 
         Args:

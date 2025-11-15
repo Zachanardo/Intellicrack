@@ -34,7 +34,6 @@ from intellicrack.utils.logger import logger
 
 from ...ai.model_discovery_service import get_model_discovery_service
 from ...utils.env_file_manager import EnvFileManager
-from ...utils.secrets_manager import get_secret
 from .base_dialog import BaseDialog
 
 """
@@ -540,6 +539,8 @@ class LLMConfigDialog(BaseDialog):
 
     def setup_ollama_tab(self) -> None:
         """Set up Ollama configuration tab."""
+        from ...utils.secrets_manager import get_secret
+
         tab = QWidget()
         layout = QFormLayout(tab)
 
@@ -1698,15 +1699,14 @@ class LLMConfigDialog(BaseDialog):
                     f"- {len(api_keys)} API keys saved to .env\n"
                     f"- {len(self.current_configs)} models configured",
                 )
+            elif api_keys:
+                QMessageBox.information(
+                    self,
+                    "Success",
+                    f"API keys saved successfully!\n{len(api_keys)} keys saved to .env file",
+                )
             else:
-                if api_keys:
-                    QMessageBox.information(
-                        self,
-                        "Success",
-                        f"API keys saved successfully!\n{len(api_keys)} keys saved to .env file",
-                    )
-                else:
-                    QMessageBox.warning(self, "No Configuration", "No API keys or models to save")
+                QMessageBox.warning(self, "No Configuration", "No API keys or models to save")
 
         except Exception as e:
             logger.error(f"Error saving configuration: {e}")

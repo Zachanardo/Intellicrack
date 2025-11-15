@@ -94,7 +94,9 @@ class BinaryFileModel(ABC):
         """Initialize binary file model with file path validation and basic file information."""
         self.file_path = Path(file_path)
         if not self.file_path.exists():
-            raise FileNotFoundError(f"File not found: {file_path}")
+            error_msg = f"File not found: {file_path}"
+            logger.error(error_msg)
+            raise FileNotFoundError(error_msg)
 
         self.file_size = self.file_path.stat().st_size
         self._parsed = False
@@ -128,7 +130,9 @@ class PEFileModel(BinaryFileModel):
         super().__init__(file_path)
 
         if not PEFILE_AVAILABLE:
-            raise ImportError("pefile library is required for PE analysis")
+            error_msg = "pefile library is required for PE analysis"
+            logger.error(error_msg)
+            raise ImportError(error_msg)
 
         self.pe: pefile.PE | None = None
         self.sections: list[SectionInfo] = []

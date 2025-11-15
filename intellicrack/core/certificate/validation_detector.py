@@ -83,7 +83,6 @@ CONFIDENCE SCORING:
 
 import logging
 from pathlib import Path
-from typing import List
 
 from intellicrack.core.certificate.api_signatures import (
     APISignature,
@@ -176,8 +175,8 @@ class CertificateValidationDetector:
     def _find_validation_functions(
         self,
         scanner: BinaryScanner,
-        tls_libraries: List[str],
-    ) -> List[ValidationFunction]:
+        tls_libraries: list[str],
+    ) -> list[ValidationFunction]:
         """Find all certificate validation functions in the binary.
 
         Args:
@@ -221,8 +220,8 @@ class CertificateValidationDetector:
 
     def _filter_low_confidence(
         self,
-        validation_functions: List[ValidationFunction],
-    ) -> List[ValidationFunction]:
+        validation_functions: list[ValidationFunction],
+    ) -> list[ValidationFunction]:
         """Filter out low-confidence detections.
 
         Args:
@@ -300,8 +299,8 @@ class CertificateValidationDetector:
 
     def _recommend_bypass_method(
         self,
-        validation_functions: List[ValidationFunction],
-        tls_libraries: List[str],
+        validation_functions: list[ValidationFunction],
+        tls_libraries: list[str],
     ) -> BypassMethod:
         """Recommend the best bypass method based on detection results.
 
@@ -338,12 +337,11 @@ class CertificateValidationDetector:
         if "winhttp" in library_types or "schannel" in library_types:
             if high_confidence_count <= 2:
                 return BypassMethod.BINARY_PATCH
-            else:
-                return BypassMethod.FRIDA_HOOK
+            return BypassMethod.FRIDA_HOOK
 
         return BypassMethod.HYBRID
 
-    def _assess_risk_level(self, validation_functions: List[ValidationFunction]) -> str:
+    def _assess_risk_level(self, validation_functions: list[ValidationFunction]) -> str:
         """Assess overall risk level of bypassing certificate validation.
 
         Args:
@@ -361,12 +359,12 @@ class CertificateValidationDetector:
 
         if avg_refs > 10:
             return "high"
-        elif avg_refs > 5:
+        if avg_refs > 5:
             return "medium"
 
         if len(validation_functions) > 10:
             return "high"
-        elif len(validation_functions) > 5:
+        if len(validation_functions) > 5:
             return "medium"
 
         high_confidence_count = sum(
@@ -381,7 +379,7 @@ class CertificateValidationDetector:
     def detect_with_custom_signatures(
         self,
         binary_path: str,
-        custom_signatures: List[APISignature],
+        custom_signatures: list[APISignature],
     ) -> DetectionReport:
         """Detect validation functions using custom API signatures.
 

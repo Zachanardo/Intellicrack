@@ -323,7 +323,7 @@ class R2ScriptingEngine:
 
             # Make script executable on Unix systems
             if os.name != "nt":
-                os.chmod(script_path, 0o700)  # Owner-only executable script
+                Path(script_path).chmod(0o700)  # Owner-only executable script
 
             self.logger.info(f"Created r2 script: {script_path}")
             return script_path

@@ -19,7 +19,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import contextlib
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -220,7 +220,7 @@ class BinaryFeatureExtractor:
 
         return histogram
 
-    def _get_executable_sections(self) -> List[Tuple[bytes, int]]:
+    def _get_executable_sections(self) -> list[tuple[bytes, int]]:
         """Get executable sections from binary."""
         sections = []
 
@@ -243,7 +243,7 @@ class BinaryFeatureExtractor:
 
         return sections
 
-    def build_control_flow_graph(self) -> Dict[str, Any]:
+    def build_control_flow_graph(self) -> dict[str, Any]:
         """Build control flow graph and extract graph features."""
         if not NETWORKX_AVAILABLE:
             return {
@@ -289,7 +289,7 @@ class BinaryFeatureExtractor:
 
         return features
 
-    def _extract_basic_blocks(self) -> List[Dict[str, Any]]:
+    def _extract_basic_blocks(self) -> list[dict[str, Any]]:
         """Extract basic blocks from binary."""
         blocks = []
 
@@ -369,7 +369,7 @@ class BinaryFeatureExtractor:
 
         return api_features
 
-    def _extract_imports(self) -> List[str]:
+    def _extract_imports(self) -> list[str]:
         """Extract import table entries."""
         imports = []
 
@@ -490,7 +490,7 @@ class BinaryFeatureExtractor:
 
         return features
 
-    def _extract_strings(self, data: bytes, min_length: int = 4, encoding: str = "ascii") -> List[str]:
+    def _extract_strings(self, data: bytes, min_length: int = 4, encoding: str = "ascii") -> list[str]:
         """Extract strings from binary data."""
         strings = []
 
@@ -533,7 +533,7 @@ class BinaryFeatureExtractor:
 
         return strings
 
-    def extract_all_features(self) -> Dict[str, np.ndarray]:
+    def extract_all_features(self) -> dict[str, np.ndarray]:
         """Extract all features from binary."""
         features = {
             "opcode_histogram": self.extract_opcode_histogram(),
@@ -545,7 +545,7 @@ class BinaryFeatureExtractor:
 
         return features
 
-    def _cfg_to_vector(self, cfg_dict: Dict[str, Any]) -> np.ndarray:
+    def _cfg_to_vector(self, cfg_dict: dict[str, Any]) -> np.ndarray:
         """Convert CFG dictionary to feature vector."""
         vector = np.zeros(16, dtype=np.float32)
 

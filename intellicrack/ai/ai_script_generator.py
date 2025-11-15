@@ -777,10 +777,9 @@ Interceptor.attach = ErrorHandler.wrapInterceptor(originalAttach);
         if not has_existing_error_handling:
             # Script doesn't have error handling, our wrapper will handle it
             return error_handler + "\n\n" + script
-        else:
-            # Script already has some error handling, just add our framework
-            # without modifying existing code
-            return error_handler + "\n\n" + script
+        # Script already has some error handling, just add our framework
+        # without modifying existing code
+        return error_handler + "\n\n" + script
 
     def _add_dynamic_adaptation(self, script: str) -> str:
         """Add dynamic adaptation based on runtime conditions."""
@@ -1619,77 +1618,76 @@ DateSpoofer.spoofAllDateSources();
         # Find appropriate insertion point
         if "// Main bypass logic" in script:
             return script.replace("// Main bypass logic", f"{enhancement}\n\n// Main bypass logic")
-        elif "function bypass()" in script:
+        if "function bypass()" in script:
             return enhancement + "\n\n" + script
-        else:
-            # More robust insertion logic that handles edge cases
-            lines = script.split("\n")
-            insert_index = 0
-            in_multiline_comment = False
+        # More robust insertion logic that handles edge cases
+        lines = script.split("\n")
+        insert_index = 0
+        in_multiline_comment = False
 
-            for i, line in enumerate(lines):
-                stripped = line.strip()
+        for i, line in enumerate(lines):
+            stripped = line.strip()
 
-                # Handle empty lines - skip them
-                if not stripped:
-                    continue
+            # Handle empty lines - skip them
+            if not stripped:
+                continue
 
-                # Check for multiline comment start
-                if "/*" in line:
-                    in_multiline_comment = True
+            # Check for multiline comment start
+            if "/*" in line:
+                in_multiline_comment = True
 
-                # Check for multiline comment end
-                if "*/" in line:
-                    in_multiline_comment = False
-                    continue
+            # Check for multiline comment end
+            if "*/" in line:
+                in_multiline_comment = False
+                continue
 
-                # Skip if we're inside a multiline comment
-                if in_multiline_comment:
-                    continue
+            # Skip if we're inside a multiline comment
+            if in_multiline_comment:
+                continue
 
-                # Check various comment and directive patterns
-                is_comment_or_directive = (
-                    stripped.startswith("//")  # Single line comment
-                    or stripped.startswith("/*")  # Start of multiline comment
-                    or stripped.startswith("#!")  # Shebang
-                    or stripped.startswith("#")  # Preprocessor directive
-                    or stripped.startswith("*")  # Continuation of multiline comment
-                    or stripped.startswith("import ")  # ES6 import
-                    or stripped.startswith("from ")  # Python-style import
-                    or stripped.startswith("require(")  # CommonJS require
-                    or stripped.startswith("const require")  # CommonJS require assignment
-                    or stripped.startswith('"use strict"')  # Strict mode directive
-                    or stripped.startswith("'use strict'")  # Strict mode directive
-                    or (stripped.startswith("const ") and "require" in stripped)  # const x = require()
-                    or (stripped.startswith("var ") and "require" in stripped)  # var x = require()
-                    or (stripped.startswith("let ") and "require" in stripped)  # let x = require()
-                )
+            # Check various comment and directive patterns
+            is_comment_or_directive = (
+                stripped.startswith("//")  # Single line comment
+                or stripped.startswith("/*")  # Start of multiline comment
+                or stripped.startswith("#!")  # Shebang
+                or stripped.startswith("#")  # Preprocessor directive
+                or stripped.startswith("*")  # Continuation of multiline comment
+                or stripped.startswith("import ")  # ES6 import
+                or stripped.startswith("from ")  # Python-style import
+                or stripped.startswith("require(")  # CommonJS require
+                or stripped.startswith("const require")  # CommonJS require assignment
+                or stripped.startswith('"use strict"')  # Strict mode directive
+                or stripped.startswith("'use strict'")  # Strict mode directive
+                or (stripped.startswith("const ") and "require" in stripped)  # const x = require()
+                or (stripped.startswith("var ") and "require" in stripped)  # var x = require()
+                or (stripped.startswith("let ") and "require" in stripped)  # let x = require()
+            )
 
-                # If we find a non-comment, non-directive line, this is where we insert
-                if not is_comment_or_directive:
-                    insert_index = i
-                    break
+            # If we find a non-comment, non-directive line, this is where we insert
+            if not is_comment_or_directive:
+                insert_index = i
+                break
 
-                # Update insert_index to be after the last comment/directive
-                insert_index = i + 1
+            # Update insert_index to be after the last comment/directive
+            insert_index = i + 1
 
-            # Handle case where entire script is comments/directives
-            insert_index = min(len(lines), insert_index)
+        # Handle case where entire script is comments/directives
+        insert_index = min(len(lines), insert_index)
 
-            # Check if we should add spacing
-            add_spacing_before = insert_index > 0 and lines[insert_index - 1].strip() != ""
-            add_spacing_after = insert_index < len(lines) and lines[insert_index].strip() != ""
+        # Check if we should add spacing
+        add_spacing_before = insert_index > 0 and lines[insert_index - 1].strip() != ""
+        add_spacing_after = insert_index < len(lines) and lines[insert_index].strip() != ""
 
-            # Build the insertion with appropriate spacing
-            insertion = ""
-            if add_spacing_before:
-                insertion = "\n"
-            insertion += enhancement
-            if add_spacing_after:
-                insertion += "\n"
+        # Build the insertion with appropriate spacing
+        insertion = ""
+        if add_spacing_before:
+            insertion = "\n"
+        insertion += enhancement
+        if add_spacing_after:
+            insertion += "\n"
 
-            lines.insert(insert_index, insertion)
-            return "\n".join(lines)
+        lines.insert(insert_index, insertion)
+        return "\n".join(lines)
 
 
 # Export the class

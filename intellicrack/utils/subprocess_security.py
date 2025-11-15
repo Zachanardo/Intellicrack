@@ -15,7 +15,7 @@ import logging
 import os
 import shlex
 import subprocess
-from typing import Dict, List, Optional, Union
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +85,7 @@ class SecureSubprocess:
                 # For security research, we still allow but log it
 
         # Resolve to absolute path
-        if os.path.isabs(executable):
+        if Path(executable).is_absolute():
             abs_path = executable
         else:
             # Try to find in PATH
@@ -108,7 +108,9 @@ class SecureSubprocess:
                             break
 
         if not abs_path or not os.path.exists(abs_path):
-            raise ValueError(f"Executable not found: {executable}")
+            error_msg = f"Executable not found: {executable}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
 
         return os.path.abspath(abs_path)
 
@@ -139,17 +141,17 @@ class SecureSubprocess:
         # Check for command injection attempts
         if any(char in arg for char in dangerous_chars):
             # Allow certain safe patterns
-            if arg.startswith("-") or arg.startswith("/"):  # Command flags
-                pass
-            elif "=" in arg and not any(char in arg for char in ["`", "$", ";", "|", "&"]):  # Key=value pairs
+            if arg.startswith("-") or arg.startswith("/") or ("=" in arg and not any(char in arg for char in ["`", "$", ";", "|", "&"])):  # Command flags
                 pass
             else:
-                raise ValueError(f"Potentially dangerous argument: {arg}")
+                error_msg = f"Potentially dangerous argument: {arg}"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
 
         return arg
 
     @staticmethod
-    def validate_command(command: List[str], allow_wildcards: bool = False) -> List[str]:
+    def validate_command(command: list[str], allow_wildcards: bool = False) -> list[str]:
         """Validate entire command list.
 
         Args:
@@ -164,7 +166,9 @@ class SecureSubprocess:
 
         """
         if not command:
-            raise ValueError("Empty command")
+            error_msg = "Empty command"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
 
         validated = []
 
@@ -183,14 +187,14 @@ class SecureSubprocess:
 
     @staticmethod
     def run(
-        command: Union[List[str], str],
+        command: list[str] | str,
         shell: bool = False,
         capture_output: bool = True,
         text: bool = True,
-        timeout: Optional[int] = None,
+        timeout: int | None = None,
         check: bool = False,
-        cwd: Optional[str] = None,
-        env: Optional[Dict[str, str]] = None,
+        cwd: str | None = None,
+        env: dict[str, str] | None = None,
         **kwargs,
     ) -> subprocess.CompletedProcess:
         """Secure subprocess.run wrapper with validation.
@@ -227,7 +231,9 @@ class SecureSubprocess:
         if cwd:
             cwd = os.path.abspath(cwd)
             if not os.path.isdir(cwd):
-                raise ValueError(f"Invalid working directory: {cwd}")
+                error_msg = f"Invalid working directory: {cwd}"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
 
         # Execute with security flags
         return subprocess.run(
@@ -236,13 +242,13 @@ class SecureSubprocess:
 
     @staticmethod
     def popen(
-        command: Union[List[str], str],
+        command: list[str] | str,
         shell: bool = False,
         stdout=None,
         stderr=None,
         stdin=None,
-        cwd: Optional[str] = None,
-        env: Optional[Dict[str, str]] = None,
+        cwd: str | None = None,
+        env: dict[str, str] | None = None,
         **kwargs,
     ) -> subprocess.Popen:
         """Secure subprocess.Popen wrapper with validation.
@@ -278,7 +284,9 @@ class SecureSubprocess:
         if cwd:
             cwd = os.path.abspath(cwd)
             if not os.path.isdir(cwd):
-                raise ValueError(f"Invalid working directory: {cwd}")
+                error_msg = f"Invalid working directory: {cwd}"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
 
         # Execute with security flags
         return subprocess.Popen(

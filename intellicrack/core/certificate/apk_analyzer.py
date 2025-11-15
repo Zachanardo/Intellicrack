@@ -91,7 +91,6 @@ import xml.etree.ElementTree as ET
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -117,10 +116,10 @@ class PinConfig:
 class DomainConfig:
     """Domain-specific pinning configuration."""
 
-    domains: List[str]
-    pins: List[PinConfig]
+    domains: list[str]
+    pins: list[PinConfig]
     include_subdomains: bool = False
-    expiration: Optional[str] = None
+    expiration: str | None = None
 
     def __hash__(self) -> int:
         """Hash for set/dict storage."""
@@ -131,9 +130,9 @@ class DomainConfig:
 class NetworkSecurityConfig:
     """Android Network Security Configuration representation."""
 
-    domain_configs: List[DomainConfig] = field(default_factory=list)
-    base_config: Optional[DomainConfig] = None
-    debug_overrides: Optional[DomainConfig] = None
+    domain_configs: list[DomainConfig] = field(default_factory=list)
+    base_config: DomainConfig | None = None
+    debug_overrides: DomainConfig | None = None
 
     @property
     def has_pinning(self) -> bool:
@@ -149,10 +148,10 @@ class PinningInfo:
 
     location: str
     pin_type: str
-    domains: List[str]
-    hashes: List[str]
+    domains: list[str]
+    hashes: list[str]
     confidence: float
-    additional_info: Dict[str, str] = field(default_factory=dict)
+    additional_info: dict[str, str] = field(default_factory=dict)
 
     def __hash__(self) -> int:
         """Hash for set/dict storage."""
@@ -171,10 +170,10 @@ class APKAnalyzer:
 
     def __init__(self) -> None:
         """Initialize APK analyzer."""
-        self.temp_dir: Optional[Path] = None
-        self.apk_path: Optional[Path] = None
-        self.extracted_path: Optional[Path] = None
-        self.decompiled_path: Optional[Path] = None
+        self.temp_dir: Path | None = None
+        self.apk_path: Path | None = None
+        self.extracted_path: Path | None = None
+        self.decompiled_path: Path | None = None
 
     def extract_apk(self, apk_path: str) -> str:
         """Extract APK file to temporary directory.
@@ -213,7 +212,7 @@ class APKAnalyzer:
 
         return str(self.extracted_path)
 
-    def parse_network_security_config(self, apk_path: Optional[str] = None) -> NetworkSecurityConfig:
+    def parse_network_security_config(self, apk_path: str | None = None) -> NetworkSecurityConfig:
         """Parse Android Network Security Configuration.
 
         Args:
@@ -264,7 +263,7 @@ class APKAnalyzer:
             logger.error(f"Failed to parse network_security_config.xml: {e}")
             return NetworkSecurityConfig()
 
-    def _parse_domain_config(self, elem: ET.Element) -> Optional[DomainConfig]:
+    def _parse_domain_config(self, elem: ET.Element) -> DomainConfig | None:
         """Parse domain-config XML element."""
         domains = []
         for domain_elem in elem.findall("domain"):
@@ -287,10 +286,9 @@ class APKAnalyzer:
                     pins.append(PinConfig(digest_algorithm=digest, hash_value=pin_hash, source="network_security_config"))
 
             return DomainConfig(domains=domains, pins=pins, include_subdomains=include_subdomains, expiration=expiration)
-        else:
-            return DomainConfig(domains=domains, pins=[], include_subdomains=include_subdomains)
+        return DomainConfig(domains=domains, pins=[], include_subdomains=include_subdomains)
 
-    def _parse_base_config(self, elem: ET.Element) -> Optional[DomainConfig]:
+    def _parse_base_config(self, elem: ET.Element) -> DomainConfig | None:
         """Parse base-config or debug-overrides element."""
         pins = []
         pin_set = elem.find("pin-set")
@@ -305,7 +303,7 @@ class APKAnalyzer:
             return DomainConfig(domains=["*"], pins=pins, include_subdomains=True)
         return None
 
-    def detect_okhttp_pinning(self, apk_path: Optional[str] = None) -> List[PinningInfo]:
+    def detect_okhttp_pinning(self, apk_path: str | None = None) -> list[PinningInfo]:
         """Detect OkHttp CertificatePinner usage.
 
         Args:
@@ -381,7 +379,7 @@ class APKAnalyzer:
         logger.info(f"Detected {len(pinning_infos)} OkHttp pinning instances")
         return pinning_infos
 
-    def find_hardcoded_certs(self, apk_path: Optional[str] = None) -> List[PinningInfo]:
+    def find_hardcoded_certs(self, apk_path: str | None = None) -> list[PinningInfo]:
         """Find hardcoded certificates in APK.
 
         Args:
@@ -444,9 +442,8 @@ class APKAnalyzer:
             if result.returncode == 0:
                 logger.info(f"Successfully decompiled APK to {self.decompiled_path}")
                 return True
-            else:
-                logger.error(f"apktool failed: {result.stderr}")
-                return False
+            logger.error(f"apktool failed: {result.stderr}")
+            return False
 
         except subprocess.TimeoutExpired:
             logger.error("apktool decompilation timeout (300s)")
@@ -455,7 +452,7 @@ class APKAnalyzer:
             logger.error(f"Decompilation error: {e}")
             return False
 
-    def _extract_certificate_info(self, cert_file: Path) -> Optional[PinningInfo]:
+    def _extract_certificate_info(self, cert_file: Path) -> PinningInfo | None:
         """Extract information from certificate file.
 
         Args:
@@ -505,7 +502,7 @@ class APKAnalyzer:
             logger.debug(f"Failed to parse certificate {cert_file}: {e}")
             return None
 
-    def _find_base64_certs(self) -> List[PinningInfo]:
+    def _find_base64_certs(self) -> list[PinningInfo]:
         """Find Base64-encoded certificates in decompiled code.
 
         Returns:

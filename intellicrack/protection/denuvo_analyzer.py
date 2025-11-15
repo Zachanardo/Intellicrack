@@ -709,12 +709,11 @@ class DenuvoAnalyzer:
         """
         if b"\x03\xC8\xC1\xC1" in code:
             return ("hash_check", "CRC32")
-        elif b"\x33\xC0\x85\xD2" in code:
+        if b"\x33\xC0\x85\xD2" in code:
             return ("hash_check", "custom_hash")
-        elif b"\xF7\xD0\x23\xC1" in code:
+        if b"\xF7\xD0\x23\xC1" in code:
             return ("hash_check", "checksum")
-        else:
-            return ("integrity_check", "unknown")
+        return ("integrity_check", "unknown")
 
     def _identify_timing_method(self, code: bytes) -> str:
         """Identify timing check method from code.
@@ -728,12 +727,11 @@ class DenuvoAnalyzer:
         """
         if b"\x0F\x31" in code:
             return "RDTSC"
-        elif b"\xF3\x0F\x16" in code:
+        if b"\xF3\x0F\x16" in code:
             return "QueryPerformanceCounter"
-        elif b"\x65\x48\x8B\x04\x25\x30" in code:
+        if b"\x65\x48\x8B\x04\x25\x30" in code:
             return "PEB_timing"
-        else:
-            return "unknown_timing"
+        return "unknown_timing"
 
     def _identify_trigger_type(self, code: bytes) -> tuple[str, str]:
         """Identify trigger type from code.
@@ -747,12 +745,11 @@ class DenuvoAnalyzer:
         """
         if b"\xE8\x00\x00\x00\x00\x84\xC0\x0F\x84" in code:
             return ("validation_trigger", "License validation check")
-        elif b"\xE8\x00\x00\x00\x00\x85\xC0\x0F\x85" in code:
+        if b"\xE8\x00\x00\x00\x00\x85\xC0\x0F\x85" in code:
             return ("activation_trigger", "Activation verification")
-        elif b"\xFF\x15\x00\x00\x00\x00\x84\xC0\x74" in code:
+        if b"\xFF\x15\x00\x00\x00\x00\x84\xC0\x74" in code:
             return ("api_trigger", "API validation call")
-        else:
-            return ("generic_trigger", "Generic protection trigger")
+        return ("generic_trigger", "Generic protection trigger")
 
     def _detect_high_entropy_sections_raw(self, data: bytes) -> int:
         """Detect high entropy sections in raw binary data.

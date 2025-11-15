@@ -32,28 +32,28 @@ quick_analyze = None
 
 _lazy_imports = {}
 
-def __getattr__(name):
+def __getattr__(name: str):
     """Lazy load protection module components to prevent circular imports."""
     if name in ('DetectionResult', 'IntellicrackProtectionCore', 'ProtectionAnalysis', 'ProtectionType'):
         if 'core_module' not in _lazy_imports:
             try:
                 from .intellicrack_protection_core import (
-                    DetectionResult as DR,
+                    DetectionResult as DetectionResultAlias,
                 )
                 from .intellicrack_protection_core import (
-                    IntellicrackProtectionCore as IPC,
+                    IntellicrackProtectionCore as IntellicrackProtectionCoreAlias,
                 )
                 from .intellicrack_protection_core import (
-                    ProtectionAnalysis as PA,
+                    ProtectionAnalysis as ProtectionAnalysisAlias,
                 )
                 from .intellicrack_protection_core import (
-                    ProtectionType as PT,
+                    ProtectionType as ProtectionTypeAlias,
                 )
                 _lazy_imports['core_module'] = {
-                    'DetectionResult': DR,
-                    'IntellicrackProtectionCore': IPC,
-                    'ProtectionAnalysis': PA,
-                    'ProtectionType': PT,
+                    'DetectionResult': DetectionResultAlias,
+                    'IntellicrackProtectionCore': IntellicrackProtectionCoreAlias,
+                    'ProtectionAnalysis': ProtectionAnalysisAlias,
+                    'ProtectionType': ProtectionTypeAlias,
                 }
             except ImportError as e:
                 logger.warning(f"Failed to import intellicrack_protection_core: {e}")
@@ -69,7 +69,7 @@ def __getattr__(name):
         if 'detector_module' not in _lazy_imports:
             try:
                 from .protection_detector import (
-                    ProtectionDetector as PD,
+                    ProtectionDetector as ProtectionDetectorAlias,
                 )
                 from .protection_detector import (
                     deep_analyze as da,
@@ -81,7 +81,7 @@ def __getattr__(name):
                     quick_analyze as qa,
                 )
                 _lazy_imports['detector_module'] = {
-                    'ProtectionDetector': PD,
+                    'ProtectionDetector': ProtectionDetectorAlias,
                     'deep_analyze': da,
                     'get_protection_detector': gpd,
                     'quick_analyze': qa,
@@ -96,7 +96,9 @@ def __getattr__(name):
                 }
         return _lazy_imports['detector_module'].get(name)
 
-    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+    error_msg = f"module '{__name__}' has no attribute '{name}'"
+    logger.error(error_msg)
+    raise AttributeError(error_msg)
 
 try:
     from .unified_protection_engine import (

@@ -374,19 +374,18 @@ class ScriptExecutionManager(QObject):
                     "script_path": script_path,  # Caller should clean up after terminal session ends
                     "message": "Frida script running in terminal",
                 }
-            else:
-                # Standard execution
-                result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+            # Standard execution
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
 
-                # Clean up
-                os.unlink(script_path)
+            # Clean up
+            os.unlink(script_path)
 
-                return {
-                    "success": result.returncode == 0,
-                    "stdout": result.stdout,
-                    "stderr": result.stderr,
-                    "returncode": result.returncode,
-                }
+            return {
+                "success": result.returncode == 0,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "returncode": result.returncode,
+            }
 
         except Exception as e:
             return {"success": False, "error": str(e)}
@@ -464,24 +463,23 @@ class ScriptExecutionManager(QObject):
                     "project_path": str(project_path),
                     "message": "Ghidra script running in terminal",
                 }
-            else:
-                # Standard execution
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
-                    cmd, check=False, capture_output=True, text=True, timeout=timeout,
-                )
+            # Standard execution
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+                cmd, check=False, capture_output=True, text=True, timeout=timeout,
+            )
 
-                # Clean up
-                os.unlink(script_path)
-                import shutil
+            # Clean up
+            os.unlink(script_path)
+            import shutil
 
-                shutil.rmtree(project_path, ignore_errors=True)
+            shutil.rmtree(project_path, ignore_errors=True)
 
-                return {
-                    "success": result.returncode == 0,
-                    "stdout": result.stdout,
-                    "stderr": result.stderr,
-                    "returncode": result.returncode,
-                }
+            return {
+                "success": result.returncode == 0,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "returncode": result.returncode,
+            }
 
         except Exception as e:
             return {"success": False, "error": str(e)}

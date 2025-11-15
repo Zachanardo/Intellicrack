@@ -27,7 +27,7 @@ import traceback
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -46,20 +46,18 @@ class MigrationStatus(Enum):
 class MigrationError(Exception):
     """Base exception for migration errors."""
 
-    pass
 
 
 class MigrationRollbackError(MigrationError):
     """Exception raised when rollback fails."""
 
-    pass
 
 
 class MigrationValidator:
     """Validates migrated configuration data."""
 
     @staticmethod
-    def validate_structure(config: Dict[str, Any]) -> Tuple[bool, List[str]]:
+    def validate_structure(config: dict[str, Any]) -> tuple[bool, list[str]]:
         """Validate the structure of migrated configuration.
 
         Args:
@@ -99,7 +97,7 @@ class MigrationValidator:
         return len(errors) == 0, errors
 
     @staticmethod
-    def validate_data_types(config: Dict[str, Any]) -> Tuple[bool, List[str]]:
+    def validate_data_types(config: dict[str, Any]) -> tuple[bool, list[str]]:
         """Validate data types in configuration.
 
         Args:
@@ -151,7 +149,7 @@ class MigrationBackup:
         self.backup_dir = config_path.parent / "migration_backups"
         self.backup_dir.mkdir(exist_ok=True)
 
-    def create_backup(self, config_data: Dict[str, Any]) -> Path:
+    def create_backup(self, config_data: dict[str, Any]) -> Path:
         """Create a backup of configuration data.
 
         Args:
@@ -170,10 +168,12 @@ class MigrationBackup:
             logger.info(f"Created backup at: {backup_file}")
             return backup_file
         except Exception as e:
+            error_msg = f"Backup creation failed: {e}"
+            logger.critical(error_msg)
             logger.error(f"Failed to create backup: {e}")
-            raise MigrationError(f"Backup creation failed: {e}") from e
+            raise MigrationError(error_msg) from e
 
-    def restore_backup(self, backup_file: Path) -> Dict[str, Any]:
+    def restore_backup(self, backup_file: Path) -> dict[str, Any]:
         """Restore configuration from backup.
 
         Args:
@@ -189,10 +189,12 @@ class MigrationBackup:
             logger.info(f"Restored configuration from: {backup_file}")
             return config_data
         except Exception as e:
+            error_msg = f"Backup restoration failed: {e}"
+            logger.critical(error_msg)
             logger.error(f"Failed to restore backup: {e}")
-            raise MigrationRollbackError(f"Backup restoration failed: {e}") from e
+            raise MigrationRollbackError(error_msg) from e
 
-    def get_latest_backup(self) -> Optional[Path]:
+    def get_latest_backup(self) -> Path | None:
         """Get the most recent backup file.
 
         Returns:
@@ -222,8 +224,8 @@ class ConfigMigrationHandler:
         self.migration_status = MigrationStatus.NOT_STARTED
 
     def migrate_with_recovery(
-        self, config_data: Dict[str, Any], migration_func: callable, migration_name: str,
-    ) -> Tuple[bool, Dict[str, Any]]:
+        self, config_data: dict[str, Any], migration_func: callable, migration_name: str,
+    ) -> tuple[bool, dict[str, Any]]:
         """Execute migration with error handling and recovery.
 
         Args:
@@ -253,11 +255,15 @@ class ConfigMigrationHandler:
             # Validate migrated data
             structure_valid, structure_errors = self.validator.validate_structure(migrated_data)
             if not structure_valid:
-                raise MigrationError(f"Structure validation failed: {structure_errors}")
+                error_msg = f"Structure validation failed: {structure_errors}"
+                logger.error(error_msg)
+                raise MigrationError(error_msg)
 
             type_valid, type_errors = self.validator.validate_data_types(migrated_data)
             if not type_valid:
-                raise MigrationError(f"Type validation failed: {type_errors}")
+                error_msg = f"Type validation failed: {type_errors}"
+                logger.error(error_msg)
+                raise MigrationError(error_msg)
 
             self.migration_status = MigrationStatus.COMPLETED
             self.log_migration(f"Successfully completed migration: {migration_name}")
@@ -279,7 +285,7 @@ class ConfigMigrationHandler:
                 # Return original data as last resort
                 return False, config_data
 
-    def handle_partial_migration(self, config_data: Dict[str, Any], migrations: Dict[str, callable]) -> Dict[str, Any]:
+    def handle_partial_migration(self, config_data: dict[str, Any], migrations: dict[str, callable]) -> dict[str, Any]:
         """Handle multiple migrations with partial success support.
 
         Args:
@@ -344,7 +350,7 @@ class ConfigMigrationHandler:
         except Exception as e:
             logger.error(f"Failed to save migration log: {e}")
 
-    def get_migration_report(self) -> Dict[str, Any]:
+    def get_migration_report(self) -> dict[str, Any]:
         """Get a summary report of the migration.
 
         Returns:
@@ -369,7 +375,7 @@ class SafeMigrationWrapper:
     """Wrap to safely execute migration functions with timeout and resource limits."""
 
     @staticmethod
-    def migrate_with_timeout(migration_func: callable, config_data: Dict[str, Any], timeout: int = 30) -> Dict[str, Any]:
+    def migrate_with_timeout(migration_func: callable, config_data: dict[str, Any], timeout: int = 30) -> dict[str, Any]:
         """Execute migration with timeout protection.
 
         Args:
@@ -398,7 +404,9 @@ class SafeMigrationWrapper:
 
         if thread.is_alive():
             # Migration took too long
-            raise MigrationError(f"Migration timed out after {timeout} seconds")
+            error_msg = f"Migration timed out after {timeout} seconds"
+            logger.error(error_msg)
+            raise MigrationError(error_msg)
 
         if exception[0]:
             raise exception[0]
@@ -406,7 +414,7 @@ class SafeMigrationWrapper:
         return result[0]
 
     @staticmethod
-    def validate_migration_result(original: Dict[str, Any], migrated: Dict[str, Any]) -> bool:
+    def validate_migration_result(original: dict[str, Any], migrated: dict[str, Any]) -> bool:
         """Validate that migration preserved essential data.
 
         Args:

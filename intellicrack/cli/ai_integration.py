@@ -298,40 +298,39 @@ class OpenAIAdapter(AIModelAdapter):
                 analyses = parameters.get("analyses", ["comprehensive"])
                 return self.interface.analyze_binary(parameters["binary_path"], analyses)
 
-            elif tool_name == "suggest_patches":
+            if tool_name == "suggest_patches":
                 return self.interface.suggest_patches(parameters["binary_path"])
 
-            elif tool_name == "apply_patch":
+            if tool_name == "apply_patch":
                 return self.interface.apply_patch(parameters["binary_path"], parameters["patch_file"])
 
-            elif tool_name == "execute_cli_command":
+            if tool_name == "execute_cli_command":
                 return self.interface.execute_command(parameters["args"], parameters["description"], parameters.get("reasoning", ""))
 
-            elif tool_name == "generate_frida_script":
+            if tool_name == "generate_frida_script":
                 return self.interface.generate_frida_script(
                     parameters.get("binary_path"),
                     parameters.get("target_function"),
                     parameters.get("script_type", "hook"),
                 )
 
-            elif tool_name == "generate_ghidra_script":
+            if tool_name == "generate_ghidra_script":
                 return self.interface.generate_ghidra_script(
                     parameters.get("binary_path"), parameters.get("analysis_type", "comprehensive"),
                 )
 
-            else:
-                return {
-                    "status": "error",
-                    "message": f"Unknown tool: {tool_name}",
-                    "available_tools": [
-                        "analyze_binary",
-                        "suggest_patches",
-                        "apply_patch",
-                        "execute_cli_command",
-                        "generate_frida_script",
-                        "generate_ghidra_script",
-                    ],
-                }
+            return {
+                "status": "error",
+                "message": f"Unknown tool: {tool_name}",
+                "available_tools": [
+                    "analyze_binary",
+                    "suggest_patches",
+                    "apply_patch",
+                    "execute_cli_command",
+                    "generate_frida_script",
+                    "generate_ghidra_script",
+                ],
+            }
 
         except KeyError as e:
             return {

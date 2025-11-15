@@ -230,7 +230,9 @@ def setup_required_environment() -> dict[str, Any]:
             env_status["ml_available"] = True
             logger.info(f"OK Machine learning features available (numpy {numpy_version}, sklearn {sklearn_version})")
         else:
-            raise ImportError("NumPy not available")
+            error_msg = "NumPy not available"
+            logger.error(error_msg)
+            raise ImportError(error_msg)
     except ImportError:
         logger.warning("FAIL ML features not available")
         env_status["missing_dependencies"].extend(["numpy", "scikit-learn"])
@@ -245,7 +247,9 @@ def setup_required_environment() -> dict[str, Any]:
             env_status["dynamic_analysis_available"] = True
             logger.info(f"OK Dynamic analysis (Frida {frida_version}) available")
         else:
-            raise ImportError("Frida not available")
+            error_msg = "Frida not available"
+            logger.error(error_msg)
+            raise ImportError(error_msg)
     except ImportError:
         logger.warning("FAIL Dynamic analysis not available")
         env_status["missing_dependencies"].append("frida")

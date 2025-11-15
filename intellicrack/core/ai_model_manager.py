@@ -24,7 +24,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from intellicrack.ai.llm_backends import LLMConfig, LLMManager, LLMProvider
 from intellicrack.ai.model_cache_manager import get_cache_manager
@@ -38,7 +38,7 @@ logger = get_logger(__name__)
 class AIModelManager:
     """Centralized AI model management for Intellicrack."""
 
-    def __init__(self, config_path: Optional[str] = None) -> None:
+    def __init__(self, config_path: str | None = None) -> None:
         """Initialize the AI Model Manager.
 
         Args:
@@ -84,7 +84,7 @@ class AIModelManager:
         except Exception as e:
             logger.error(f"Failed to save model config: {e}")
 
-    def _get_default_config(self) -> Dict[str, Any]:
+    def _get_default_config(self) -> dict[str, Any]:
         """Get default model configuration."""
         return {
             "models": {
@@ -116,7 +116,7 @@ class AIModelManager:
             self.active_model = default_model
             logger.info(f"Set active model: {default_model}")
 
-    def _setup_model(self, name: str, config: Dict[str, Any]) -> None:
+    def _setup_model(self, name: str, config: dict[str, Any]) -> None:
         """Set up individual model.
 
         Args:
@@ -143,7 +143,7 @@ class AIModelManager:
             "instance": None,  # Lazy load actual model
         }
 
-    def _setup_openai_model(self, name: str, config: Dict[str, Any]) -> None:
+    def _setup_openai_model(self, name: str, config: dict[str, Any]) -> None:
         """Set up OpenAI model."""
         api_key = config.get("api_key") or os.getenv("OPENAI_API_KEY")
         if not api_key:
@@ -159,7 +159,7 @@ class AIModelManager:
 
         self.llm_manager.add_provider(LLMProvider.OPENAI, llm_config)
 
-    def _setup_anthropic_model(self, name: str, config: Dict[str, Any]) -> None:
+    def _setup_anthropic_model(self, name: str, config: dict[str, Any]) -> None:
         """Set up Anthropic model."""
         api_key = config.get("api_key") or os.getenv("ANTHROPIC_API_KEY")
         if not api_key:
@@ -175,7 +175,7 @@ class AIModelManager:
 
         self.llm_manager.add_provider(LLMProvider.ANTHROPIC, llm_config)
 
-    def _setup_google_model(self, name: str, config: Dict[str, Any]) -> None:
+    def _setup_google_model(self, name: str, config: dict[str, Any]) -> None:
         """Set up Google model."""
         api_key = config.get("api_key") or os.getenv("GOOGLE_API_KEY")
         if not api_key:
@@ -191,7 +191,7 @@ class AIModelManager:
 
         self.llm_manager.add_provider(LLMProvider.GOOGLE, llm_config)
 
-    def _setup_local_model(self, name: str, config: Dict[str, Any]) -> None:
+    def _setup_local_model(self, name: str, config: dict[str, Any]) -> None:
         """Set up local model."""
         model_path = config.get("model_path")
         if not model_path or not os.path.exists(model_path):
@@ -202,7 +202,7 @@ class AIModelManager:
         # This is framework-specific (transformers, llama.cpp, etc.)
         logger.info(f"Local model {name} configured at {model_path}")
 
-    def get_model(self, name: Optional[str] = None):
+    def get_model(self, name: str | None = None):
         """Get a model instance.
 
         Args:
@@ -227,7 +227,7 @@ class AIModelManager:
 
         return model_info["instance"]
 
-    def _load_model(self, name: str, model_info: Dict[str, Any]):
+    def _load_model(self, name: str, model_info: dict[str, Any]):
         """Load actual model instance.
 
         Args:
@@ -252,13 +252,12 @@ class AIModelManager:
         if provider in ["openai", "anthropic", "google"]:
             # Use LLM manager for API-based models
             return self.llm_manager.get_provider(provider)
-        elif provider == "local":
+        if provider == "local":
             # Load local model
             return self._load_local_model(name, config)
-        else:
-            raise ValueError(f"Unknown provider: {provider}")
+        raise ValueError(f"Unknown provider: {provider}")
 
-    def _load_local_model(self, name: str, config: Dict[str, Any]):
+    def _load_local_model(self, name: str, config: dict[str, Any]):
         """Load local model from disk.
 
         Args:
@@ -314,7 +313,7 @@ class AIModelManager:
         self.active_model = name
         logger.info(f"Set active model: {name}")
 
-    def list_models(self) -> List[str]:
+    def list_models(self) -> list[str]:
         """List available models.
 
         Returns:
@@ -323,7 +322,7 @@ class AIModelManager:
         """
         return list(self.models.keys())
 
-    def get_model_info(self, name: Optional[str] = None) -> Dict[str, Any]:
+    def get_model_info(self, name: str | None = None) -> dict[str, Any]:
         """Get model information.
 
         Args:
@@ -342,7 +341,7 @@ class AIModelManager:
 
         return self.models[model_name]
 
-    def configure_model(self, name: str, config: Dict[str, Any]) -> None:
+    def configure_model(self, name: str, config: dict[str, Any]) -> None:
         """Configure a model.
 
         Args:
@@ -401,7 +400,7 @@ class AIModelManager:
 
         logger.info(f"Disabled model: {name}")
 
-    def get_performance_stats(self, name: Optional[str] = None) -> Dict[str, Any]:
+    def get_performance_stats(self, name: str | None = None) -> dict[str, Any]:
         """Get performance statistics for a model.
 
         Args:
@@ -417,8 +416,7 @@ class AIModelManager:
 
         if self.config.get("performance_monitoring", True):
             return self.performance_monitor.get_stats(model_name)
-        else:
-            return {"message": "Performance monitoring disabled"}
+        return {"message": "Performance monitoring disabled"}
 
     def cleanup(self) -> None:
         """Cleanup resources."""
@@ -437,7 +435,7 @@ class AIModelManager:
 _model_manager = None
 
 
-def get_model_manager(config_path: Optional[str] = None) -> AIModelManager:
+def get_model_manager(config_path: str | None = None) -> AIModelManager:
     """Get the global AI Model Manager instance.
 
     Args:

@@ -90,7 +90,6 @@ RISK ASSESSMENT:
 """
 
 import logging
-from typing import Optional
 
 from intellicrack.core.certificate.detection_report import (
     BypassMethod,
@@ -135,10 +134,9 @@ class BypassStrategySelector:
             return self._select_static_strategy(
                 detection_report, num_functions, num_libraries, risk_level,
             )
-        else:
-            return self._select_running_strategy(
-                detection_report, num_functions, num_libraries,
-            )
+        return self._select_running_strategy(
+            detection_report, num_functions, num_libraries,
+        )
 
     def _select_static_strategy(
         self,
@@ -277,7 +275,7 @@ class BypassStrategySelector:
         if avg_refs > 15:
             logger.debug("High risk: Many cross-references detected")
             return "high"
-        elif avg_refs > 8:
+        if avg_refs > 8:
             logger.debug("Medium risk: Moderate cross-references")
             return "medium"
 
@@ -292,7 +290,7 @@ class BypassStrategySelector:
         if len(detection_report.validation_functions) > 10:
             logger.debug("High risk: Many validation functions")
             return "high"
-        elif len(detection_report.validation_functions) > 5:
+        if len(detection_report.validation_functions) > 5:
             logger.debug("Medium risk: Several validation functions")
             return "medium"
 
@@ -302,7 +300,7 @@ class BypassStrategySelector:
     def get_fallback_strategy(
         self,
         failed_method: BypassMethod,
-    ) -> Optional[BypassMethod]:
+    ) -> BypassMethod | None:
         """Get fallback strategy if primary method fails.
 
         Args:

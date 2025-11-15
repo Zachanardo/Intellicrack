@@ -197,7 +197,7 @@ class NegativeControlValidator:
                     # Find the most recent ETL file
                     etl_files = list(self.evidence_dir.glob("network_capture_*.etl"))
                     if etl_files:
-                        latest_etl = max(etl_files, key=os.path.getmtime)
+                        latest_etl = max(etl_files, key=lambda x: x.stat().st_mtime)
 
                         # Convert ETL to readable format using netsh
                         report_file = latest_etl.with_suffix('.txt')

@@ -210,7 +210,9 @@ class ArxanDetector:
         binary_path = Path(binary_path)
 
         if not binary_path.exists():
-            raise FileNotFoundError(f"Binary not found: {binary_path}")
+            error_msg = f"Binary not found: {binary_path}"
+            logger.error(error_msg)
+            raise FileNotFoundError(error_msg)
 
         self.logger.info(f"Analyzing binary for Arxan protection: {binary_path}")
 

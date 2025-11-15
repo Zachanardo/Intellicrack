@@ -66,7 +66,6 @@ import logging
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Set
 
 import lief
 
@@ -90,8 +89,8 @@ class LayerInfo:
 
     layer_type: ValidationLayer
     confidence: float
-    evidence: List[str] = field(default_factory=list)
-    dependencies: List[ValidationLayer] = field(default_factory=list)
+    evidence: list[str] = field(default_factory=list)
+    dependencies: list[ValidationLayer] = field(default_factory=list)
 
     def add_evidence(self, evidence: str) -> None:
         """Add evidence for this layer detection."""
@@ -109,8 +108,8 @@ class DependencyGraph:
 
     def __init__(self) -> None:
         """Initialize empty dependency graph."""
-        self._graph: Dict[ValidationLayer, Set[ValidationLayer]] = {}
-        self._layers: Set[ValidationLayer] = set()
+        self._graph: dict[ValidationLayer, set[ValidationLayer]] = {}
+        self._layers: set[ValidationLayer] = set()
 
     def add_layer(self, layer: ValidationLayer) -> None:
         """Add a layer to the graph."""
@@ -124,11 +123,11 @@ class DependencyGraph:
         self.add_layer(dependency)
         self._graph[dependent].add(dependency)
 
-    def get_dependencies(self, layer: ValidationLayer) -> Set[ValidationLayer]:
+    def get_dependencies(self, layer: ValidationLayer) -> set[ValidationLayer]:
         """Get all dependencies for a layer."""
         return self._graph.get(layer, set())
 
-    def topological_sort(self) -> List[ValidationLayer]:
+    def topological_sort(self) -> list[ValidationLayer]:
         """Return layers in topologically sorted order (dependencies first)."""
         visited = set()
         temp_mark = set()
@@ -183,7 +182,7 @@ class ValidationLayerDetector:
         """Initialize the layer detector."""
         self._api_signatures = get_all_signatures()
 
-    def detect_validation_layers(self, target: str) -> List[LayerInfo]:
+    def detect_validation_layers(self, target: str) -> list[LayerInfo]:
         """Detect all validation layers in the target binary.
 
         Args:
@@ -201,7 +200,7 @@ class ValidationLayerDetector:
         if not target_path.exists():
             raise FileNotFoundError(f"Target not found: {target}")
 
-        detected_layers: Dict[ValidationLayer, LayerInfo] = {}
+        detected_layers: dict[ValidationLayer, LayerInfo] = {}
 
         try:
             binary = lief.parse(str(target_path))
@@ -232,7 +231,7 @@ class ValidationLayerDetector:
 
         return list(detected_layers.values())
 
-    def _detect_os_level(self, binary: lief.Binary) -> Optional[LayerInfo]:
+    def _detect_os_level(self, binary: lief.Binary) -> LayerInfo | None:
         """Detect OS-level validation (CryptoAPI, Schannel, system trust store)."""
         layer_info = LayerInfo(
             layer_type=ValidationLayer.OS_LEVEL,
@@ -265,7 +264,7 @@ class ValidationLayerDetector:
 
         return layer_info if layer_info.confidence > 0.0 else None
 
-    def _detect_library_level(self, binary: lief.Binary) -> Optional[LayerInfo]:
+    def _detect_library_level(self, binary: lief.Binary) -> LayerInfo | None:
         """Detect library-level validation (OpenSSL, NSS, BoringSSL)."""
         layer_info = LayerInfo(
             layer_type=ValidationLayer.LIBRARY_LEVEL,
@@ -303,7 +302,7 @@ class ValidationLayerDetector:
         self,
         binary: lief.Binary,
         target_path: Path,
-    ) -> Optional[LayerInfo]:
+    ) -> LayerInfo | None:
         """Detect application-level pinning (hardcoded certs, custom logic)."""
         layer_info = LayerInfo(
             layer_type=ValidationLayer.APPLICATION_LEVEL,
@@ -347,7 +346,7 @@ class ValidationLayerDetector:
         self,
         binary: lief.Binary,
         target_path: Path,
-    ) -> Optional[LayerInfo]:
+    ) -> LayerInfo | None:
         """Detect server-level validation (network-based license checking)."""
         layer_info = LayerInfo(
             layer_type=ValidationLayer.SERVER_LEVEL,
@@ -381,7 +380,7 @@ class ValidationLayerDetector:
 
         return layer_info if layer_info.confidence > 0.0 else None
 
-    def _contains_certificate_hashes(self, strings: Set[str]) -> bool:
+    def _contains_certificate_hashes(self, strings: set[str]) -> bool:
         """Check if strings contain certificate hashes (SHA-256 or SHA-1)."""
         for string in strings:
             clean_string = ''.join(c for c in string if c.isalnum())
@@ -417,7 +416,7 @@ class ValidationLayerDetector:
             logger.warning(f"Error checking for embedded certificates: {e}")
             return False
 
-    def _contains_http_endpoints(self, strings: Set[str]) -> bool:
+    def _contains_http_endpoints(self, strings: set[str]) -> bool:
         """Check if strings contain HTTP/HTTPS endpoints."""
         http_indicators = ['http://', 'https://', 'api.', '/api/', '/v1/', '/v2/']
 
@@ -427,7 +426,7 @@ class ValidationLayerDetector:
 
         return False
 
-    def _establish_dependencies(self, layers: Dict[ValidationLayer, LayerInfo]) -> None:
+    def _establish_dependencies(self, layers: dict[ValidationLayer, LayerInfo]) -> None:
         """Establish dependency relationships between detected layers."""
         if ValidationLayer.APPLICATION_LEVEL in layers and ValidationLayer.LIBRARY_LEVEL in layers:
             layers[ValidationLayer.APPLICATION_LEVEL].add_dependency(
@@ -457,7 +456,7 @@ class ValidationLayerDetector:
 
     def build_layer_dependency_graph(
         self,
-        layers: List[LayerInfo],
+        layers: list[LayerInfo],
     ) -> DependencyGraph:
         """Build a dependency graph from detected layers.
 

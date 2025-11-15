@@ -22,7 +22,7 @@ import struct
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import r2pipe
 
@@ -53,7 +53,7 @@ class PatchInstruction:
     patch_bytes: bytes
     patch_type: PatchType
     description: str
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -61,11 +61,11 @@ class PatchSet:
     """Collection of related patches."""
 
     name: str
-    patches: List[PatchInstruction]
+    patches: list[PatchInstruction]
     target_binary: Path
     architecture: str
     checksum_original: str
-    checksum_patched: Optional[str] = None
+    checksum_patched: str | None = None
     applied: bool = False
 
 
@@ -127,7 +127,7 @@ class Radare2PatchEngine:
         self.architecture = None
         self.bits = None
         self.endian = None
-        self.patch_sets: Dict[str, PatchSet] = {}
+        self.patch_sets: dict[str, PatchSet] = {}
         self._init_r2()
 
     def _init_r2(self) -> None:
@@ -283,33 +283,32 @@ class Radare2PatchEngine:
                         description=f"Long {jump_type} at 0x{address:x} to 0x{target:x}",
                         metadata={"target": target, "jump_type": jump_type},
                     )
+            # B instruction
+            elif -0x2000000 <= offset <= 0x1FFFFFF:
+                instruction = 0x14000000 | (offset & 0x03FFFFFF)
             else:
-                # B instruction
-                if -0x2000000 <= offset <= 0x1FFFFFF:
-                    instruction = 0x14000000 | (offset & 0x03FFFFFF)
-                else:
-                    # Use ADRP + ADD + BR for long jumps
-                    page_offset = ((target & ~0xFFF) - (address & ~0xFFF)) >> 12
-                    page_remainder = target & 0xFFF
+                # Use ADRP + ADD + BR for long jumps
+                page_offset = ((target & ~0xFFF) - (address & ~0xFFF)) >> 12
+                page_remainder = target & 0xFFF
 
-                    # ADRP X16, target_page
-                    adrp = 0x90000010 | ((page_offset & 0x3) << 29) | ((page_offset >> 2) & 0x7FFFF) << 5
-                    # ADD X16, X16, page_remainder
-                    add = 0x91000210 | ((page_remainder & 0xFFF) << 10)
-                    # BR X16
-                    br = 0xD61F0200
+                # ADRP X16, target_page
+                adrp = 0x90000010 | ((page_offset & 0x3) << 29) | ((page_offset >> 2) & 0x7FFFF) << 5
+                # ADD X16, X16, page_remainder
+                add = 0x91000210 | ((page_remainder & 0xFFF) << 10)
+                # BR X16
+                br = 0xD61F0200
 
-                    patch_bytes = struct.pack("<III", adrp, add, br)
-                    original_bytes = self._read_bytes(address, 12)
+                patch_bytes = struct.pack("<III", adrp, add, br)
+                original_bytes = self._read_bytes(address, 12)
 
-                    return PatchInstruction(
-                        address=address,
-                        original_bytes=original_bytes,
-                        patch_bytes=patch_bytes,
-                        patch_type=PatchType.JUMP_MODIFICATION,
-                        description=f"Long {jump_type} at 0x{address:x} to 0x{target:x}",
-                        metadata={"target": target, "jump_type": jump_type},
-                    )
+                return PatchInstruction(
+                    address=address,
+                    original_bytes=original_bytes,
+                    patch_bytes=patch_bytes,
+                    patch_type=PatchType.JUMP_MODIFICATION,
+                    description=f"Long {jump_type} at 0x{address:x} to 0x{target:x}",
+                    metadata={"target": target, "jump_type": jump_type},
+                )
 
             patch_bytes = struct.pack("<I", instruction)
 
@@ -375,9 +374,8 @@ class Radare2PatchEngine:
         if self.bits == 64:
             # 64-bit generic jump
             return struct.pack("<BQ", 0xFF, target)  # Simplified - would need arch-specific encoding
-        else:
-            # 32-bit generic jump
-            return struct.pack("<BI", 0xFF, target)  # Simplified - would need arch-specific encoding
+        # 32-bit generic jump
+        return struct.pack("<BI", 0xFF, target)  # Simplified - would need arch-specific encoding
 
     def redirect_call(self, address: int, new_function: int) -> PatchInstruction:
         """Redirect a function call to a different function.
@@ -392,7 +390,7 @@ class Radare2PatchEngine:
         """
         return self.modify_jump(address, new_function, "call")
 
-    def patch_return_value(self, function_address: int, return_value: int, value_size: int = 4) -> List[PatchInstruction]:
+    def patch_return_value(self, function_address: int, return_value: int, value_size: int = 4) -> list[PatchInstruction]:
         """Patch a function to return a specific value.
 
         Args:
@@ -707,7 +705,7 @@ class Radare2PatchEngine:
             description=f"Replace function epilogue at 0x{epilogue_address:x}",
         )
 
-    def create_jump_table_patch(self, table_address: int, entries: List[int]) -> List[PatchInstruction]:
+    def create_jump_table_patch(self, table_address: int, entries: list[int]) -> list[PatchInstruction]:
         """Modify a jump table with new entries.
 
         Args:
@@ -858,7 +856,7 @@ class Radare2PatchEngine:
             logger.error(f"Failed to revert patch: {e}")
             return False
 
-    def create_patch_set(self, name: str, patches: List[PatchInstruction]) -> PatchSet:
+    def create_patch_set(self, name: str, patches: list[PatchInstruction]) -> PatchSet:
         """Create a named patch set.
 
         Args:

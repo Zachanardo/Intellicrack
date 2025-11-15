@@ -96,7 +96,7 @@ class AsyncPerformanceMonitor:
         self.completed_operations = deque(maxlen=10000)
         self.lock = threading.Lock()
 
-    async def monitor_operation(self, operation_name: str, coroutine):
+    async def monitor_operation(self, operation_name: str, coroutine: Any):
         """Monitor an async operation."""
         start_time = time.time()
         operation_id = f"{operation_name}_{start_time}_{id(coroutine)}"

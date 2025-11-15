@@ -250,7 +250,7 @@ def _handle_check_license(request_data: dict[str, Any]) -> dict[str, Any]:
             "Trial license expires soon",
             "Upgrade to full license for continued access",
         ]
-    elif (datetime.strptime(expiry_date, "%Y-%m-%d") - datetime.now()).days < 30:
+    elif (datetime.strptime(expiry_date, "%Y-%m-%d").replace(tzinfo=timezone.utc) - datetime.now(timezone.utc)).days < 30:
         response["notices"] = ["License expires within 30 days", "Please renew your license"]
 
     return response
@@ -900,7 +900,7 @@ def _handle_license_release(license_id: str) -> dict[str, Any]:
         return {"error": "License ID required for release"}
 
     release_timestamp = time.time()
-    release_datetime = datetime.fromtimestamp(release_timestamp)
+    release_datetime = datetime.fromtimestamp(release_timestamp, tz=timezone.utc)
 
     # Generate release tracking information
     license_hash = hashlib.sha256(f"{license_id}:release:{release_timestamp}".encode()).hexdigest()
@@ -913,7 +913,7 @@ def _handle_license_release(license_id: str) -> dict[str, Any]:
     if current_license.get("status") == "active":
         last_checkin_str = current_license.get("last_checkin", "")
         try:
-            last_checkin = datetime.strptime(last_checkin_str, "%Y-%m-%d %H:%M:%S")
+            last_checkin = datetime.strptime(last_checkin_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
             session_duration = release_datetime - last_checkin
             session_hours = session_duration.total_seconds() / 3600
         except (ValueError, TypeError) as e:
@@ -951,7 +951,7 @@ def _handle_license_release(license_id: str) -> dict[str, Any]:
         "license_valid": current_license.get("status") == "active",
         "within_user_limit": current_license.get("current_users", 0) <= current_license.get("max_users", 1),
         "features_authorized": all(feature in current_license.get("features", []) for feature in features_used),
-        "maintenance_current": datetime.strptime(current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d") > release_datetime,
+        "maintenance_current": datetime.strptime(current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d").replace(tzinfo=timezone.utc) > release_datetime,
     }
 
     compliance_status = "compliant" if all(compliance_check.values()) else "violation_detected"
@@ -999,8 +999,8 @@ def _handle_license_release(license_id: str) -> dict[str, Any]:
         "next_actions": {
             "license_available_for_reuse": True,
             "requires_compliance_review": compliance_status != "compliant",
-            "maintenance_due": datetime.strptime(current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d") < release_datetime,
-            "renewal_recommended": datetime.fromtimestamp(current_license.get("expires", 0)) < release_datetime + timedelta(days=30),
+            "maintenance_due": datetime.strptime(current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d").replace(tzinfo=timezone.utc) < release_datetime,
+            "renewal_recommended": datetime.fromtimestamp(current_license.get("expires", 0), tz=timezone.utc) < release_datetime + timedelta(days=30),
         },
         "confirmation": {
             "message": f"License {license_id} has been successfully released",
@@ -1102,51 +1102,49 @@ def _handle_read_memory(address: int, size: int) -> bytes:
 
         if result:
             return bytes(buffer[: bytes_read.value])
-        else:
-            # Memory not accessible, return zeros
-            return b"\x00" * size
-    else:
-        # Unix-like systems - read from /proc/self/mem
+        # Memory not accessible, return zeros
+        return b"\x00" * size
+    # Unix-like systems - read from /proc/self/mem
+    try:
+        with open("/proc/self/mem", "rb") as mem:
+            mem.seek(address)
+            data = mem.read(size)
+            return data if data else b"\x00" * size
+    except OSError:
+        # Fallback - try ptrace or process_vm_readv
+        import os
+
+        # Try using process_vm_readv syscall
         try:
-            with open("/proc/self/mem", "rb") as mem:
-                mem.seek(address)
-                data = mem.read(size)
-                return data if data else b"\x00" * size
-        except OSError:
-            # Fallback - try ptrace or process_vm_readv
-            import os
+            from ctypes import CDLL, POINTER, Structure, c_size_t, c_ssize_t, c_void_p
 
-            # Try using process_vm_readv syscall
-            try:
-                from ctypes import CDLL, POINTER, Structure, c_size_t, c_ssize_t, c_void_p
+            class iovec(Structure):  # noqa: N801
+                _fields_ = [("iov_base", c_void_p), ("iov_len", c_size_t)]
 
-                class iovec(Structure):  # noqa: N801
-                    _fields_ = [("iov_base", c_void_p), ("iov_len", c_size_t)]
+            libc = CDLL("libc.so.6")
+            process_vm_readv = libc.process_vm_readv
+            process_vm_readv.argtypes = [c_int, POINTER(iovec), c_ulong, POINTER(iovec), c_ulong, c_ulong]
+            process_vm_readv.restype = c_ssize_t
 
-                libc = CDLL("libc.so.6")
-                process_vm_readv = libc.process_vm_readv
-                process_vm_readv.argtypes = [c_int, POINTER(iovec), c_ulong, POINTER(iovec), c_ulong, c_ulong]
-                process_vm_readv.restype = c_ssize_t
+            pid = os.getpid()
+            local_buf = (ctypes.c_char * size)()
+            local_iov = iovec()
+            local_iov.iov_base = ctypes.cast(local_buf, c_void_p)
+            local_iov.iov_len = size
 
-                pid = os.getpid()
-                local_buf = (ctypes.c_char * size)()
-                local_iov = iovec()
-                local_iov.iov_base = ctypes.cast(local_buf, c_void_p)
-                local_iov.iov_len = size
+            remote_iov = iovec()
+            remote_iov.iov_base = address
+            remote_iov.iov_len = size
 
-                remote_iov = iovec()
-                remote_iov.iov_base = address
-                remote_iov.iov_len = size
+            result = process_vm_readv(pid, ctypes.byref(local_iov), 1, ctypes.byref(remote_iov), 1, 0)
 
-                result = process_vm_readv(pid, ctypes.byref(local_iov), 1, ctypes.byref(remote_iov), 1, 0)
+            if result > 0:
+                return bytes(local_buf[:result])
+        except (ValueError, TypeError, AttributeError):
+            pass
 
-                if result > 0:
-                    return bytes(local_buf[:result])
-            except (ValueError, TypeError, AttributeError):
-                pass
-
-            # If all methods fail, return zeros
-            return b"\x00" * size
+        # If all methods fail, return zeros
+        return b"\x00" * size
 
 
 def _handle_request(request_type: str, data: dict[str, Any]) -> dict[str, Any]:
@@ -1225,49 +1223,48 @@ def _handle_write_memory(address: int, data: bytes) -> bool:
         result = kernel32.WriteProcessMemory(current_process, ctypes.c_void_p(address), buffer, len(data), ctypes.byref(bytes_written))
 
         return bool(result) and bytes_written.value == len(data)
-    else:
-        # Unix-like systems - use ptrace or process_vm_writev
+    # Unix-like systems - use ptrace or process_vm_writev
+    try:
+        # Try /proc/self/mem
+        with open("/proc/self/mem", "r+b") as mem:
+            mem.seek(address)
+            mem.write(data)
+            return True
+    except OSError:
+        # Try process_vm_writev syscall
         try:
-            # Try /proc/self/mem
-            with open("/proc/self/mem", "r+b") as mem:
-                mem.seek(address)
-                mem.write(data)
-                return True
-        except OSError:
-            # Try process_vm_writev syscall
-            try:
-                import ctypes
-                import os
-                from ctypes import CDLL, POINTER, Structure, c_int, c_size_t, c_ssize_t, c_ulong, c_void_p
+            import ctypes
+            import os
+            from ctypes import CDLL, POINTER, Structure, c_int, c_size_t, c_ssize_t, c_ulong, c_void_p
 
-                class iovec(Structure):  # noqa: N801
-                    _fields_ = [("iov_base", c_void_p), ("iov_len", c_size_t)]
+            class iovec(Structure):  # noqa: N801
+                _fields_ = [("iov_base", c_void_p), ("iov_len", c_size_t)]
 
-                libc = CDLL("libc.so.6")
-                process_vm_writev = libc.process_vm_writev
-                process_vm_writev.argtypes = [c_int, POINTER(iovec), c_ulong, POINTER(iovec), c_ulong, c_ulong]
-                process_vm_writev.restype = c_ssize_t
+            libc = CDLL("libc.so.6")
+            process_vm_writev = libc.process_vm_writev
+            process_vm_writev.argtypes = [c_int, POINTER(iovec), c_ulong, POINTER(iovec), c_ulong, c_ulong]
+            process_vm_writev.restype = c_ssize_t
 
-                pid = os.getpid()
+            pid = os.getpid()
 
-                # Create buffer with data
-                data_buffer = (ctypes.c_char * len(data))()
-                for i, byte in enumerate(data):
-                    data_buffer[i] = bytes([byte])
+            # Create buffer with data
+            data_buffer = (ctypes.c_char * len(data))()
+            for i, byte in enumerate(data):
+                data_buffer[i] = bytes([byte])
 
-                local_iov = iovec()
-                local_iov.iov_base = ctypes.cast(data_buffer, c_void_p)
-                local_iov.iov_len = len(data)
+            local_iov = iovec()
+            local_iov.iov_base = ctypes.cast(data_buffer, c_void_p)
+            local_iov.iov_len = len(data)
 
-                remote_iov = iovec()
-                remote_iov.iov_base = address
-                remote_iov.iov_len = len(data)
+            remote_iov = iovec()
+            remote_iov.iov_base = address
+            remote_iov.iov_len = len(data)
 
-                result = process_vm_writev(pid, ctypes.byref(local_iov), 1, ctypes.byref(remote_iov), 1, 0)
+            result = process_vm_writev(pid, ctypes.byref(local_iov), 1, ctypes.byref(remote_iov), 1, 0)
 
-                return result == len(data)
-            except (ValueError, TypeError, AttributeError):
-                return False
+            return result == len(data)
+        except (ValueError, TypeError, AttributeError):
+            return False
 
     return False
 
@@ -2067,9 +2064,8 @@ def _cuda_hash_calculation(data: bytes, algorithm: str = "sha256") -> str | None
                 result += val.to_bytes(4, "big")
 
             return result.hex()
-        else:
-            # For other algorithms, use CPU fallback
-            return _cpu_hash_calculation(data, algorithm)
+        # For other algorithms, use CPU fallback
+        return _cpu_hash_calculation(data, algorithm)
 
     except (ImportError, cuda.Error):
         # PyCUDA not available or CUDA error, use CPU fallback
@@ -2640,8 +2636,8 @@ def _convert_to_gguf(model_path: str, output_path: str) -> bool:
 
                 # Dimensions
                 if hasattr(tensor_data, "shape"):
-                    for dim in tensor_data.shape:
-                        f.write(struct.pack("<Q", dim))
+                    packed_dims = b''.join(struct.pack("<Q", dim) for dim in tensor_data.shape)
+                    f.write(packed_dims)
                 else:
                     f.write(struct.pack("<Q", len(tensor_data)))
 

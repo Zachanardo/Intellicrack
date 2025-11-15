@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-from typing import Dict
 
 from intellicrack.handlers.pyqt6_handler import (
     QFrame,
@@ -306,7 +305,7 @@ class StyleManager:
         widget.setStyleSheet("")
 
     @classmethod
-    def batch_apply_styles(cls, widgets: Dict[QWidget, str]) -> None:
+    def batch_apply_styles(cls, widgets: dict[QWidget, str]) -> None:
         """Apply styles to multiple widgets at once.
 
         Args:

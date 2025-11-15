@@ -38,7 +38,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import psutil
 
@@ -153,7 +153,7 @@ class SharedMemoryIPC:
                 logger.error(f"Failed to send message: {e}")
                 return False
 
-    def receive_message(self) -> Optional[Tuple[MessageType, Any]]:
+    def receive_message(self) -> tuple[MessageType, Any] | None:
         """Receive message from shared memory.
 
         Returns:
@@ -213,7 +213,7 @@ class ResultSerializer:
     PROTOCOL_VERSION = "1.0"
 
     @staticmethod
-    def serialize_result(tool_name: str, result: Any, metadata: Optional[Dict] = None) -> bytes:
+    def serialize_result(tool_name: str, result: Any, metadata: dict | None = None) -> bytes:
         """Serialize analysis result with metadata.
 
         Args:
@@ -241,18 +241,17 @@ class ResultSerializer:
         def make_serializable(obj):
             if isinstance(obj, (datetime,)):
                 return obj.isoformat()
-            elif isinstance(obj, dict):
+            if isinstance(obj, dict):
                 return {key: make_serializable(value) for key, value in obj.items()}
-            elif isinstance(obj, list):
+            if isinstance(obj, list):
                 return [make_serializable(item) for item in obj]
-            else:
-                return obj
+            return obj
 
         package = make_serializable(package)
         return json.dumps(package, ensure_ascii=False).encode("utf-8")
 
     @staticmethod
-    def deserialize_result(data: bytes) -> Dict[str, Any]:
+    def deserialize_result(data: bytes) -> dict[str, Any]:
         """Deserialize analysis result.
 
         Args:
@@ -281,9 +280,9 @@ class ToolMonitor:
 
     def __init__(self) -> None:
         """Initialize tool monitor."""
-        self.processes: Dict[str, psutil.Process] = {}
-        self.status: Dict[str, ToolStatus] = {}
-        self.metrics: Dict[str, Dict] = {}
+        self.processes: dict[str, psutil.Process] = {}
+        self.status: dict[str, ToolStatus] = {}
+        self.metrics: dict[str, dict] = {}
         self.monitoring_thread = None
         self.stop_monitoring = threading.Event()
 
@@ -366,7 +365,7 @@ class ToolMonitor:
         """
         return self.status.get(tool_name, ToolStatus.IDLE)
 
-    def get_metrics(self, tool_name: str) -> Dict[str, Any]:
+    def get_metrics(self, tool_name: str) -> dict[str, Any]:
         """Get tool metrics.
 
         Args:
@@ -394,9 +393,9 @@ class FailureRecovery:
 
         """
         self.max_retries = max_retries
-        self.retry_counts: Dict[str, int] = {}
-        self.failure_history: Dict[str, List[Dict]] = defaultdict(list)
-        self.recovery_strategies: Dict[str, callable] = {}
+        self.retry_counts: dict[str, int] = {}
+        self.failure_history: dict[str, list[dict]] = defaultdict(list)
+        self.recovery_strategies: dict[str, callable] = {}
 
     def register_recovery_strategy(self, tool_name: str, strategy: callable) -> None:
         """Register recovery strategy for a tool.
@@ -409,7 +408,7 @@ class FailureRecovery:
         self.recovery_strategies[tool_name] = strategy
         logger.info(f"Registered recovery strategy for {tool_name}")
 
-    def handle_failure(self, tool_name: str, error: Exception, context: Dict[str, Any] = None) -> bool:
+    def handle_failure(self, tool_name: str, error: Exception, context: dict[str, Any] = None) -> bool:
         """Handle tool failure with recovery.
 
         Args:
@@ -455,7 +454,7 @@ class FailureRecovery:
         """
         self.retry_counts[tool_name] = 0
 
-    def get_failure_history(self, tool_name: str) -> List[Dict]:
+    def get_failure_history(self, tool_name: str) -> list[dict]:
         """Get failure history for a tool.
 
         Args:
@@ -487,7 +486,7 @@ class ResultConflictResolver:
         self.resolution_rules.append((priority, rule))
         self.resolution_rules.sort(key=lambda x: x[0], reverse=True)
 
-    def resolve_function_conflicts(self, functions: List[dict]) -> List[dict]:
+    def resolve_function_conflicts(self, functions: list[dict]) -> list[dict]:
         """Resolve conflicts in function data.
 
         Args:
@@ -574,7 +573,7 @@ class ResultConflictResolver:
         common = sum(1 for c1, c2 in zip(s1, s2, strict=False) if c1 == c2)
         return common / max(len(s1), len(s2))
 
-    def _apply_resolution_rules(self, group: List[dict]) -> Optional[dict]:
+    def _apply_resolution_rules(self, group: list[dict]) -> dict | None:
         """Apply resolution rules to conflicting functions.
 
         Args:
@@ -593,7 +592,7 @@ class ResultConflictResolver:
                 logger.error(f"Resolution rule failed: {e}")
         return None
 
-    def _merge_functions(self, group: List[dict]) -> dict:
+    def _merge_functions(self, group: list[dict]) -> dict:
         """Merge multiple functions into one.
 
         Args:
@@ -648,7 +647,7 @@ class LoadBalancer:
         self.resource_monitor = None
         self.balancing_enabled = True
 
-    def get_system_load(self) -> Dict[str, float]:
+    def get_system_load(self) -> dict[str, float]:
         """Get current system load metrics.
 
         Returns:
@@ -661,7 +660,7 @@ class LoadBalancer:
             "disk_io": psutil.disk_io_counters(),
         }
 
-    def can_start_tool(self, tool_name: str, estimated_resources: Dict[str, float]) -> bool:
+    def can_start_tool(self, tool_name: str, estimated_resources: dict[str, float]) -> bool:
         """Check if system can handle starting a new tool.
 
         Args:
@@ -689,7 +688,7 @@ class LoadBalancer:
 
         return True
 
-    def schedule_tool(self, tool_name: str, priority: int = 5, estimated_resources: Dict[str, float] = None) -> None:
+    def schedule_tool(self, tool_name: str, priority: int = 5, estimated_resources: dict[str, float] = None) -> None:
         """Schedule tool for execution.
 
         Args:
@@ -700,7 +699,7 @@ class LoadBalancer:
         """
         self.tool_queue.put((priority, tool_name, estimated_resources or {}))
 
-    def get_next_tool(self) -> Optional[Tuple[str, Dict[str, float]]]:
+    def get_next_tool(self) -> tuple[str, dict[str, float]] | None:
         """Get next tool to execute based on load.
 
         Returns:
@@ -712,14 +711,13 @@ class LoadBalancer:
 
             if self.can_start_tool(tool_name, resources):
                 return (tool_name, resources)
-            else:
-                # Re-queue with lower priority
-                self.tool_queue.put((priority + 1, tool_name, resources))
-                time.sleep(1)  # Wait before checking next
+            # Re-queue with lower priority
+            self.tool_queue.put((priority + 1, tool_name, resources))
+            time.sleep(1)  # Wait before checking next
 
         return None
 
-    def optimize_parallel_execution(self, tools: List[str]) -> List[List[str]]:
+    def optimize_parallel_execution(self, tools: list[str]) -> list[list[str]]:
         """Optimize tool execution order for parallel processing.
 
         Args:
@@ -767,13 +765,13 @@ class CorrelatedFunction:
     """Function data correlated across multiple tools."""
 
     name: str
-    ghidra_data: Optional[Dict[str, Any]] = None
-    r2_data: Optional[Dict[str, Any]] = None
-    frida_data: Optional[Dict[str, Any]] = None
-    addresses: Dict[str, int] = field(default_factory=dict)
-    sizes: Dict[str, int] = field(default_factory=dict)
+    ghidra_data: dict[str, Any] | None = None
+    r2_data: dict[str, Any] | None = None
+    frida_data: dict[str, Any] | None = None
+    addresses: dict[str, int] = field(default_factory=dict)
+    sizes: dict[str, int] = field(default_factory=dict)
     confidence_score: float = 0.0
-    notes: List[str] = field(default_factory=list)
+    notes: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -781,9 +779,9 @@ class CorrelatedString:
     """String data correlated across tools."""
 
     value: str
-    ghidra_refs: List[int] = field(default_factory=list)
-    r2_refs: List[int] = field(default_factory=list)
-    frida_refs: List[int] = field(default_factory=list)
+    ghidra_refs: list[int] = field(default_factory=list)
+    r2_refs: list[int] = field(default_factory=list)
+    frida_refs: list[int] = field(default_factory=list)
     is_license_related: bool = False
     is_crypto_related: bool = False
     importance_score: float = 0.0
@@ -795,14 +793,14 @@ class UnifiedAnalysisResult:
 
     binary_path: str
     timestamp: datetime
-    functions: List[CorrelatedFunction] = field(default_factory=list)
-    strings: List[CorrelatedString] = field(default_factory=list)
-    vulnerabilities: List[Dict[str, Any]] = field(default_factory=list)
-    protection_mechanisms: List[Dict[str, Any]] = field(default_factory=list)
-    bypass_strategies: List[Dict[str, Any]] = field(default_factory=list)
-    memory_maps: Dict[str, Any] = field(default_factory=dict)
-    call_graph: Dict[str, Any] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    functions: list[CorrelatedFunction] = field(default_factory=list)
+    strings: list[CorrelatedString] = field(default_factory=list)
+    vulnerabilities: list[dict[str, Any]] = field(default_factory=list)
+    protection_mechanisms: list[dict[str, Any]] = field(default_factory=list)
+    bypass_strategies: list[dict[str, Any]] = field(default_factory=list)
+    memory_maps: dict[str, Any] = field(default_factory=dict)
+    call_graph: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class CrossToolOrchestrator:
@@ -821,9 +819,9 @@ class CrossToolOrchestrator:
         self.logger = logger
 
         # Tool instances
-        self.ghidra_results: Optional[GhidraAnalysisResult] = None
-        self.r2_integration: Optional[EnhancedR2Integration] = None
-        self.frida_manager: Optional[FridaManager] = None
+        self.ghidra_results: GhidraAnalysisResult | None = None
+        self.r2_integration: EnhancedR2Integration | None = None
+        self.frida_manager: FridaManager | None = None
 
         # Analysis state
         self.analysis_complete = {"ghidra": False, "radare2": False, "frida": False}
@@ -831,7 +829,7 @@ class CrossToolOrchestrator:
 
         # Threading
         self.analysis_lock = threading.Lock()
-        self.analysis_threads: List[threading.Thread] = []
+        self.analysis_threads: list[threading.Thread] = []
 
         # IPC and communication
         self.ipc_channel = SharedMemoryIPC(f"intellicrack_{os.getpid()}")
@@ -859,7 +857,7 @@ class CrossToolOrchestrator:
         """Set up conflict resolution rules for tool results."""
 
         # Rule 1: Prefer results with debug symbols
-        def prefer_debug_symbols(functions: List[CorrelatedFunction]) -> Optional[CorrelatedFunction]:
+        def prefer_debug_symbols(functions: list[CorrelatedFunction]) -> CorrelatedFunction | None:
             for func in functions:
                 if func.ghidra_data and func.ghidra_data.get("has_debug_info"):
                     return func
@@ -868,7 +866,7 @@ class CrossToolOrchestrator:
             return None
 
         # Rule 2: Prefer results with more cross-references
-        def prefer_more_xrefs(functions: List[CorrelatedFunction]) -> Optional[CorrelatedFunction]:
+        def prefer_more_xrefs(functions: list[CorrelatedFunction]) -> CorrelatedFunction | None:
             max_xrefs = 0
             best_func = None
             for func in functions:
@@ -889,7 +887,7 @@ class CrossToolOrchestrator:
         """Set up recovery strategies for tool failures."""
 
         # Ghidra recovery strategy
-        def ghidra_recovery(error: Exception, context: Dict) -> None:
+        def ghidra_recovery(error: Exception, context: dict) -> None:
             self.logger.info("Attempting Ghidra recovery")
             # Kill any hanging Ghidra process
             for proc in psutil.process_iter(["name"]):
@@ -911,7 +909,7 @@ class CrossToolOrchestrator:
             time.sleep(2)
 
         # Radare2 recovery strategy
-        def r2_recovery(error: Exception, context: Dict) -> None:
+        def r2_recovery(error: Exception, context: dict) -> None:
             self.logger.info("Attempting Radare2 recovery")
             # Re-initialize r2 integration
             if self.r2_integration:
@@ -920,7 +918,7 @@ class CrossToolOrchestrator:
             self.r2_integration = EnhancedR2Integration(self.binary_path)
 
         # Frida recovery strategy
-        def frida_recovery(error: Exception, context: Dict) -> None:
+        def frida_recovery(error: Exception, context: dict) -> None:
             self.logger.info("Attempting Frida recovery")
             if self.frida_manager:
                 self.frida_manager.detach()
@@ -954,7 +952,7 @@ class CrossToolOrchestrator:
         except Exception as e:
             self.logger.error(f"Failed to initialize tools: {e}")
 
-    def run_parallel_analysis(self, tools: Optional[List[str]] = None) -> UnifiedAnalysisResult:
+    def run_parallel_analysis(self, tools: list[str] | None = None) -> UnifiedAnalysisResult:
         """Run analysis in parallel across specified tools.
 
         Args:
@@ -1024,7 +1022,7 @@ class CrossToolOrchestrator:
         # Correlate results with conflict resolution
         return self._correlate_results_with_resolution()
 
-    def run_sequential_analysis(self, workflow: List[Dict[str, Any]]) -> UnifiedAnalysisResult:
+    def run_sequential_analysis(self, workflow: list[dict[str, Any]]) -> UnifiedAnalysisResult:
         """Run analysis sequentially with data flow between tools.
 
         Args:
@@ -1058,7 +1056,7 @@ class CrossToolOrchestrator:
 
         return self._correlate_results()
 
-    def _run_ghidra_analysis_with_ipc(self, config: Optional[Dict[str, Any]] = None) -> None:
+    def _run_ghidra_analysis_with_ipc(self, config: dict[str, Any] | None = None) -> None:
         """Run Ghidra analysis with IPC communication."""
         try:
             self.tool_monitor.status["ghidra"] = ToolStatus.RUNNING
@@ -1175,11 +1173,11 @@ class CrossToolOrchestrator:
                 with self.analysis_lock:
                     self.analysis_complete["ghidra"] = True
 
-    def _run_ghidra_analysis(self, config: Optional[Dict[str, Any]] = None) -> None:
+    def _run_ghidra_analysis(self, config: dict[str, Any] | None = None) -> None:
         """Run Ghidra analysis (legacy method for compatibility)."""
         self._run_ghidra_analysis_with_ipc(config)
 
-    def _run_radare2_analysis_with_ipc(self, config: Optional[Dict[str, Any]] = None) -> None:
+    def _run_radare2_analysis_with_ipc(self, config: dict[str, Any] | None = None) -> None:
         """Run Radare2 analysis with IPC communication."""
         try:
             self.tool_monitor.status["radare2"] = ToolStatus.RUNNING
@@ -1221,11 +1219,11 @@ class CrossToolOrchestrator:
                 with self.analysis_lock:
                     self.analysis_complete["radare2"] = True
 
-    def _run_radare2_analysis(self, config: Optional[Dict[str, Any]] = None) -> None:
+    def _run_radare2_analysis(self, config: dict[str, Any] | None = None) -> None:
         """Run Radare2 analysis (legacy method for compatibility)."""
         self._run_radare2_analysis_with_ipc(config)
 
-    def _run_frida_analysis_with_ipc(self, config: Optional[Dict[str, Any]] = None) -> None:
+    def _run_frida_analysis_with_ipc(self, config: dict[str, Any] | None = None) -> None:
         """Run Frida analysis with IPC communication."""
         try:
             if not self.frida_manager:
@@ -1295,11 +1293,11 @@ class CrossToolOrchestrator:
                 with self.analysis_lock:
                     self.analysis_complete["frida"] = True
 
-    def _run_frida_analysis(self, config: Optional[Dict[str, Any]] = None) -> None:
+    def _run_frida_analysis(self, config: dict[str, Any] | None = None) -> None:
         """Run Frida analysis (legacy method for compatibility)."""
         self._run_frida_analysis_with_ipc(config)
 
-    def _frida_memory_scan(self) -> Dict[str, Any]:
+    def _frida_memory_scan(self) -> dict[str, Any]:
         """Perform memory scanning with Frida."""
         results = {"strings": [], "patterns": [], "suspicious_regions": []}
 
@@ -1351,7 +1349,7 @@ class CrossToolOrchestrator:
 
         return results
 
-    def _frida_api_monitor(self) -> List[Dict[str, Any]]:
+    def _frida_api_monitor(self) -> list[dict[str, Any]]:
         """Monitor API calls with Frida."""
         api_calls = []
 
@@ -1397,7 +1395,7 @@ class CrossToolOrchestrator:
 
         return api_calls
 
-    def _frida_hook_detection(self) -> Dict[str, Any]:
+    def _frida_hook_detection(self) -> dict[str, Any]:
         """Detect hooks and patches with Frida."""
         hooks = {"inline_hooks": [], "iat_hooks": [], "patches": []}
 
@@ -1522,7 +1520,7 @@ class CrossToolOrchestrator:
 
         return result
 
-    def _correlate_functions(self) -> List[dict]:
+    def _correlate_functions(self) -> list[dict]:
         """Correlate function data across tools."""
         correlated = []
         function_map = defaultdict(CorrelatedFunction)
@@ -1568,7 +1566,7 @@ class CrossToolOrchestrator:
 
         return correlated
 
-    def _correlate_strings(self) -> List[CorrelatedString]:
+    def _correlate_strings(self) -> list[CorrelatedString]:
         """Correlate string data across tools."""
         correlated = []
         string_map = defaultdict(CorrelatedString)
@@ -1623,7 +1621,7 @@ class CrossToolOrchestrator:
 
         return correlated
 
-    def _combine_vulnerabilities(self) -> List[Dict[str, Any]]:
+    def _combine_vulnerabilities(self) -> list[dict[str, Any]]:
         """Combine vulnerability findings from all tools."""
         vulnerabilities = []
 
@@ -1653,7 +1651,7 @@ class CrossToolOrchestrator:
 
         return vulnerabilities
 
-    def _identify_protections(self) -> List[Dict[str, Any]]:
+    def _identify_protections(self) -> list[dict[str, Any]]:
         """Identify protection mechanisms from analysis."""
         protections = []
 
@@ -1680,7 +1678,7 @@ class CrossToolOrchestrator:
 
         return protections
 
-    def _generate_bypass_strategies(self) -> List[Dict[str, Any]]:
+    def _generate_bypass_strategies(self) -> list[dict[str, Any]]:
         """Generate bypass strategies based on findings."""
         strategies = []
 
@@ -1718,7 +1716,7 @@ class CrossToolOrchestrator:
 
         return strategies
 
-    def _build_unified_call_graph(self) -> Dict[str, Any]:
+    def _build_unified_call_graph(self) -> dict[str, Any]:
         """Build unified call graph from all tools."""
         graph = {"nodes": [], "edges": [], "metadata": {}}
 

@@ -837,7 +837,7 @@ class LiveDebuggingSystem:
                     }
 
                     result = False
-                    for op in safe_operators:
+                    for op, operator_func in safe_operators.items():
                         if condition.startswith(op):
                             try:
                                 threshold_str = condition[len(op) :].strip()
@@ -845,7 +845,7 @@ class LiveDebuggingSystem:
                                 import ast
 
                                 threshold = ast.literal_eval(threshold_str)
-                                result = safe_operators[op](value, threshold)
+                                result = operator_func(value, threshold)
                                 break
                             except (ValueError, SyntaxError):
                                 continue

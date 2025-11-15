@@ -12,7 +12,7 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
 
 class EventSource(Enum):
@@ -65,11 +65,11 @@ class MonitorEvent:
     source: EventSource
     event_type: EventType
     severity: EventSeverity
-    details: Dict[str, Any]
-    process_info: Optional[ProcessInfo] = None
-    call_stack: List[str] = field(default_factory=list)
+    details: dict[str, Any]
+    process_info: ProcessInfo | None = None
+    call_stack: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert event to dictionary."""
         return {
             "timestamp": self.timestamp,
@@ -90,7 +90,7 @@ class MonitorStats:
     def __init__(self) -> None:
         """Initialize statistics."""
         self.total_events = 0
-        self.events_by_type: Dict[str, int] = {}
+        self.events_by_type: dict[str, int] = {}
         self.events_per_second = 0.0
         self.start_time = time.time()
         self.last_event_time = 0.0
@@ -113,7 +113,7 @@ class MonitorStats:
             if elapsed > 0:
                 self.events_per_second = self.total_events / elapsed
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get current statistics.
 
         Returns:
@@ -149,7 +149,7 @@ class BaseMonitor(ABC):
     Implements Dependency Inversion: Depends on abstractions, not implementations.
     """
 
-    def __init__(self, name: str, process_info: Optional[ProcessInfo] = None) -> None:
+    def __init__(self, name: str, process_info: ProcessInfo | None = None) -> None:
         """Initialize base monitor.
 
         Args:
@@ -160,8 +160,8 @@ class BaseMonitor(ABC):
         self.name = name
         self.process_info = process_info
         self._running = False
-        self._thread: Optional[threading.Thread] = None
-        self._callbacks: List[Callable[[MonitorEvent], None]] = []
+        self._thread: threading.Thread | None = None
+        self._callbacks: list[Callable[[MonitorEvent], None]] = []
         self._stats = MonitorStats()
         self._error_count = 0
         self._max_errors = 10
@@ -175,12 +175,10 @@ class BaseMonitor(ABC):
             True if monitoring started successfully, False otherwise.
 
         """
-        pass
 
     @abstractmethod
     def _stop_monitoring(self) -> None:
         """Stop the monitoring implementation."""
-        pass
 
     def start(self) -> bool:
         """Start monitoring.
@@ -225,7 +223,7 @@ class BaseMonitor(ABC):
         """
         return self._running
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get monitoring statistics.
 
         Returns:

@@ -25,7 +25,7 @@ import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from intellicrack.core.analysis.cryptographic_routine_detector import (
     CryptoDetection,
@@ -65,7 +65,7 @@ class StreamingCryptoDetector(StreamingAnalyzer):
         self.quick_mode = quick_mode
         self.use_radare2 = use_radare2
         self.detector = CryptographicRoutineDetector()
-        self.binary_path: Optional[Path] = None
+        self.binary_path: Path | None = None
         self.global_detections: list[CryptoDetection] = []
         self.detection_offsets: set[int] = set()
 
@@ -356,7 +356,7 @@ def analyze_crypto_streaming(
     binary_path: Path,
     quick_mode: bool = False,
     use_radare2: bool = False,
-    progress_callback: Optional[Any] = None,
+    progress_callback: Any | None = None,
 ) -> dict[str, Any]:
     """Perform streaming cryptographic analysis on large binary.
 

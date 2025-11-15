@@ -25,7 +25,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 try:
     from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -73,8 +73,8 @@ class WidgetConfig:
     width: int = 400
     height: int = 300
     refresh_interval: float = 5.0
-    data_source: Optional[str] = None
-    options: Dict[str, Any] = field(default_factory=dict)
+    data_source: str | None = None
+    options: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -82,10 +82,10 @@ class WidgetData:
     """Data for widget rendering."""
 
     timestamp: datetime
-    values: Dict[str, Any]
-    labels: Optional[List[str]] = None
-    categories: Optional[List[str]] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    values: dict[str, Any]
+    labels: list[str] | None = None
+    categories: list[str] | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class DashboardWidget:
@@ -148,7 +148,7 @@ class DashboardWidget:
             "last_update": self.last_update.isoformat(),
         }
 
-    def get_current_data(self) -> Optional[WidgetData]:
+    def get_current_data(self) -> WidgetData | None:
         """Get current widget data.
 
         Returns:
@@ -176,14 +176,13 @@ class LineChartWidget(DashboardWidget):
 
         if format == "json":
             return self._render_json()
-        elif format == "plotly" and HAS_PLOTLY:
+        if format == "plotly" and HAS_PLOTLY:
             return self._render_plotly()
-        elif format == "matplotlib" and HAS_MATPLOTLIB:
+        if format == "matplotlib" and HAS_MATPLOTLIB:
             return self._render_matplotlib()
-        else:
-            return self._render_json()
+        return self._render_json()
 
-    def _render_json(self) -> Dict[str, Any]:
+    def _render_json(self) -> dict[str, Any]:
         """Render as JSON data."""
         x_data = []
         y_data = {}
@@ -279,7 +278,7 @@ class GaugeWidget(DashboardWidget):
                 "units": self.config.options.get("units", ""),
                 "thresholds": self.config.options.get("thresholds", []),
             }
-        elif format == "plotly" and HAS_PLOTLY:
+        if format == "plotly" and HAS_PLOTLY:
             fig = go.Figure(
                 go.Indicator(
                     mode="gauge+number",
@@ -300,10 +299,9 @@ class GaugeWidget(DashboardWidget):
             )
             fig.update_layout(width=self.config.width, height=self.config.height)
             return fig
-        else:
-            return self.render("json")
+        return self.render("json")
 
-    def _get_gauge_steps(self) -> List[Dict[str, Any]]:
+    def _get_gauge_steps(self) -> list[dict[str, Any]]:
         """Get gauge color steps."""
         thresholds = self.config.options.get("thresholds", [])
         if not thresholds:
@@ -345,10 +343,9 @@ class TableWidget(DashboardWidget):
                 "sortable": self.config.options.get("sortable", True),
                 "filterable": self.config.options.get("filterable", True),
             }
-        elif format == "html":
+        if format == "html":
             return self._render_html_table(current)
-        else:
-            return self.render("json")
+        return self.render("json")
 
     def _render_html_table(self, data: WidgetData) -> str:
         """Render as HTML table."""
@@ -408,12 +405,11 @@ class HeatmapWidget(DashboardWidget):
                 "y_labels": y_labels,
                 "colorscale": self.config.options.get("colorscale", "viridis"),
             }
-        elif format == "plotly" and HAS_PLOTLY:
+        if format == "plotly" and HAS_PLOTLY:
             fig = go.Figure(data=go.Heatmap(z=matrix, x=x_labels, y=y_labels, colorscale=self.config.options.get("colorscale", "viridis")))
             fig.update_layout(title=self.config.title, width=self.config.width, height=self.config.height)
             return fig
-        else:
-            return self.render("json")
+        return self.render("json")
 
 
 class NetworkGraphWidget(DashboardWidget):
@@ -445,12 +441,11 @@ class NetworkGraphWidget(DashboardWidget):
                 "layout": self.config.options.get("layout", "force"),
                 "directed": self.config.options.get("directed", True),
             }
-        elif format == "plotly" and HAS_PLOTLY:
+        if format == "plotly" and HAS_PLOTLY:
             return self._render_plotly_network(nodes, edges)
-        else:
-            return self.render("json")
+        return self.render("json")
 
-    def _render_plotly_network(self, nodes: List[Dict], edges: List[Dict]):
+    def _render_plotly_network(self, nodes: list[dict], edges: list[dict]):
         """Render network using Plotly."""
         # Calculate node positions (simple circular layout)
         n = len(nodes)
@@ -552,8 +547,7 @@ class TimelineWidget(DashboardWidget):
 
         if format == "json":
             return {"type": "timeline", "title": self.config.title, "events": events, "groupBy": self.config.options.get("groupBy", "tool")}
-        else:
-            return self.render("json")
+        return self.render("json")
 
 
 class ProgressWidget(DashboardWidget):
@@ -587,19 +581,17 @@ class ProgressWidget(DashboardWidget):
                 "label": current.values.get("label", ""),
                 "color": self._get_progress_color(percentage),
             }
-        else:
-            return self.render("json")
+        return self.render("json")
 
     def _get_progress_color(self, percentage: float) -> str:
         """Get progress bar color based on percentage."""
         if percentage < 25:
             return "red"
-        elif percentage < 50:
+        if percentage < 50:
             return "orange"
-        elif percentage < 75:
+        if percentage < 75:
             return "yellow"
-        else:
-            return "green"
+        return "green"
 
 
 class WidgetFactory:

@@ -79,7 +79,9 @@ class TerminalManager:
         from intellicrack.ui.widgets import TerminalSessionWidget
 
         if not isinstance(widget, TerminalSessionWidget):
-            raise TypeError(f"Expected TerminalSessionWidget, got {type(widget).__name__}")
+            error_msg = f"Expected TerminalSessionWidget, got {type(widget).__name__}"
+            logger.error(error_msg)
+            raise TypeError(error_msg)
 
         self._terminal_widget = widget
         logger.info("Terminal widget registered with TerminalManager")
@@ -95,7 +97,9 @@ class TerminalManager:
 
         """
         if not hasattr(app, "tabs"):
-            raise ValueError("Main app must have 'tabs' attribute for tab switching")
+            error_msg = "Main app must have 'tabs' attribute for tab switching"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
 
         self._main_app = app
         logger.info("Main app registered with TerminalManager")
@@ -144,7 +148,9 @@ class TerminalManager:
 
         if path.is_absolute():
             if not path.exists():
-                raise FileNotFoundError(f"Script not found: {path}")
+                error_msg = f"Script not found: {path}"
+                logger.error(error_msg)
+                raise FileNotFoundError(error_msg)
             return path
 
         base_scripts_dir = Path(__file__).parent.parent / "scripts"
@@ -152,7 +158,9 @@ class TerminalManager:
         resolved = base_scripts_dir / path
 
         if not resolved.exists():
-            raise FileNotFoundError(f"Script not found: {resolved}\nLooked in: {base_scripts_dir}")
+            error_msg = f"Script not found: {resolved}\nLooked in: {base_scripts_dir}"
+            logger.error(error_msg)
+            raise FileNotFoundError(error_msg)
 
         return resolved
 
@@ -174,7 +182,9 @@ class TerminalManager:
 
         """
         if not self._terminal_widget:
-            raise RuntimeError("Terminal widget not registered. Cannot execute script in terminal.")
+            error_msg = "Terminal widget not registered. Cannot execute script in terminal."
+            logger.error(error_msg)
+            raise RuntimeError(error_msg)
 
         resolved_path = self._resolve_script_path(script_path)
 
@@ -250,7 +260,9 @@ class TerminalManager:
             try:
                 # Validate that command and cwd contain only safe values to prevent command injection
                 if not isinstance(command, list) or not all(isinstance(arg, str) for arg in command):
-                    raise ValueError(f"Unsafe command: {command}")
+                    error_msg = f"Unsafe command: {command}"
+                    logger.error(error_msg)
+                    raise ValueError(error_msg)
                 cwd_clean = str(cwd).replace(";", "").replace("|", "").replace("&", "")
                 result = subprocess.run(command, capture_output=True, text=True, cwd=cwd_clean, timeout=300, shell=False)
 
@@ -266,7 +278,9 @@ class TerminalManager:
 
         else:
             if not self._terminal_widget:
-                raise RuntimeError("Terminal widget not registered. Cannot execute command in terminal.")
+                error_msg = "Terminal widget not registered. Cannot execute command in terminal."
+                logger.error(error_msg)
+                raise RuntimeError(error_msg)
 
             logger.info(f"Executing command in terminal: {' '.join(command)}")
 

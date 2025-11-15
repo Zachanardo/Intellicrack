@@ -17,7 +17,6 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import datetime
-import glob
 import logging
 import os
 import select
@@ -1431,9 +1430,10 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             """
 
             # Find visualization files
-            visualization_files = glob.glob(f"{self.config['visualization_dir']}/*.png")
+            from pathlib import Path
+            visualization_files = [str(p) for p in Path(self.config['visualization_dir']).glob("*.png")]
             if visualization_files:
-                visualization_files.sort(key=os.path.getmtime, reverse=True)
+                visualization_files.sort(key=lambda x: Path(x).stat().st_mtime, reverse=True)
 
                 for vis_file in visualization_files[:3]:  # Show latest 3 visualizations
                     vis_name = os.path.basename(vis_file).replace(".png", "").replace("_", " ").title()

@@ -20,6 +20,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import json
 import os
 import re
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from intellicrack.utils.logger import logger
 
@@ -87,16 +88,38 @@ except ImportError as e:
         pass
 
     class FallbackTable:
-        """In-memory table implementation."""
+        """In-memory table implementation.
 
-        def __init__(self, name, columns) -> None:
-            """Initialize table."""
-            self.name = name
-            self.columns = columns  # List of (name, type, constraints) tuples
-            self.rows = []
-            self.primary_key = None
-            self.indexes = {}
-            self.constraints = []
+        This class provides a simple in-memory database table that supports
+        basic SQL operations including INSERT, SELECT, UPDATE, and DELETE.
+
+        Attributes:
+            name: The name of the table.
+            columns: List of (column_name, column_type, constraints) tuples.
+            rows: List of dictionaries representing table rows.
+            primary_key: Name of the primary key column.
+            indexes: Dictionary of table indexes.
+            constraints: List of constraint tuples.
+
+        """
+
+        def __init__(self, name: str, columns: List[Tuple[str, str, str]]) -> None:
+            """Initialize table.
+
+            Args:
+                name: The name of the table.
+                columns: List of (column_name, column_type, constraints) tuples.
+
+            Returns:
+                None
+
+            """
+            self.name: str = name
+            self.columns: List[Tuple[str, str, str]] = columns
+            self.rows: List[Dict[str, Any]] = []
+            self.primary_key: Optional[str] = None
+            self.indexes: Dict[str, Any] = {}
+            self.constraints: List[Tuple[str, str]] = []
 
             # Parse columns for constraints
             for col_name, _col_type, constraints in columns:
@@ -107,8 +130,19 @@ except ImportError as e:
                 if "NOT NULL" in constraints:
                     self.constraints.append(("NOT NULL", col_name))
 
-        def insert(self, values):
-            """Insert row into table."""
+        def insert(self, values: List[Any]) -> int:
+            """Insert row into table.
+
+            Args:
+                values: List of values to insert into the row.
+
+            Returns:
+                The number of rows in the table after insertion.
+
+            Raises:
+                IntegrityError: If constraints are violated.
+
+            """
             # Validate constraints
             row = {}
             for i, (col_name, col_type, _constraints) in enumerate(self.columns):
@@ -119,7 +153,9 @@ except ImportError as e:
 
                 # Check NOT NULL
                 if value is None and ("NOT NULL", col_name) in self.constraints:
-                    raise IntegrityError(f"NOT NULL constraint failed: {col_name}")
+                    error_msg = f"NOT NULL constraint failed: {col_name}"
+                    logger.error(error_msg)
+                    raise IntegrityError(error_msg)
 
                 # Type conversion
                 if value is not None:
@@ -139,19 +175,39 @@ except ImportError as e:
                 if constraint_type == "UNIQUE" and row[col_name] is not None:
                     for existing_row in self.rows:
                         if existing_row[col_name] == row[col_name]:
-                            raise IntegrityError(f"UNIQUE constraint failed: {col_name}")
-
+                            error_msg = f"UNIQUE constraint failed: {col_name}"
+                            logger.error(error_msg)
+                            raise IntegrityError(error_msg)
             # Check PRIMARY KEY
             if self.primary_key and row[self.primary_key] is not None:
                 for existing_row in self.rows:
                     if existing_row[self.primary_key] == row[self.primary_key]:
-                        raise IntegrityError(f"PRIMARY KEY constraint failed: {self.primary_key}")
+                        error_msg = f"PRIMARY KEY constraint failed: {self.primary_key}"
+                        logger.error(error_msg)
+                        raise IntegrityError(error_msg)
 
             self.rows.append(row)
             return len(self.rows)
 
-        def select(self, columns=None, where=None, order_by=None, limit=None):
-            """Select rows from table."""
+        def select(
+            self,
+            columns: Optional[List[str]] = None,
+            where: Optional[Tuple[str, str, Any]] = None,
+            order_by: Optional[Tuple[str, str]] = None,
+            limit: Optional[int] = None,
+        ) -> List[Tuple[Any, ...]]:
+            """Select rows from table.
+
+            Args:
+                columns: List of column names to select, or None for all columns.
+                where: WHERE clause as (column, operator, value) tuple.
+                order_by: ORDER BY clause as (column, direction) tuple.
+                limit: Maximum number of rows to return.
+
+            Returns:
+                List of tuples representing selected rows.
+
+            """
             result_rows = []
 
             for row in self.rows:
@@ -181,8 +237,21 @@ except ImportError as e:
 
             return result_rows
 
-        def update(self, set_values, where=None):
-            """Update rows in table."""
+        def update(
+            self,
+            set_values: Dict[str, Any],
+            where: Optional[Tuple[str, str, Any]] = None,
+        ) -> int:
+            """Update rows in table.
+
+            Args:
+                set_values: Dictionary of column names to new values.
+                where: WHERE clause as (column, operator, value) tuple.
+
+            Returns:
+                The number of rows updated.
+
+            """
             updated_count = 0
 
             for row in self.rows:
@@ -195,8 +264,16 @@ except ImportError as e:
 
             return updated_count
 
-        def delete(self, where=None):
-            """Delete rows from table."""
+        def delete(self, where: Optional[Tuple[str, str, Any]] = None) -> int:
+            """Delete rows from table.
+
+            Args:
+                where: WHERE clause as (column, operator, value) tuple.
+
+            Returns:
+                The number of rows deleted.
+
+            """
             if where is None:
                 deleted = len(self.rows)
                 self.rows.clear()
@@ -214,8 +291,21 @@ except ImportError as e:
             self.rows = new_rows
             return deleted
 
-        def _evaluate_where(self, row, where):
-            """Evaluate WHERE clause for a row."""
+        def _evaluate_where(
+            self,
+            row: Dict[str, Any],
+            where: Tuple[str, str, Any],
+        ) -> bool:
+            """Evaluate WHERE clause for a row.
+
+            Args:
+                row: Dictionary representing a table row.
+                where: WHERE clause as (column, operator, value) tuple.
+
+            Returns:
+                True if the row matches the WHERE clause, False otherwise.
+
+            """
             col_name, operator, value = where
             row_value = row.get(col_name)
 
@@ -245,44 +335,112 @@ except ImportError as e:
 
             return False
 
-        def _get_column_index(self, col_name):
-            """Get column index by name."""
+        def _get_column_index(self, col_name: str) -> int:
+            """Get column index by name.
+
+            Args:
+                col_name: The name of the column.
+
+            Returns:
+                The zero-based index of the column, or 0 if not found.
+
+            """
             for i, (name, _, _) in enumerate(self.columns):
                 if name == col_name:
                     return i
             return 0
 
     class FallbackDatabase:
-        """In-memory database implementation."""
+        """In-memory database implementation.
 
-        def __init__(self, path=":memory:") -> None:
-            """Initialize database."""
-            self.path = path
-            self.tables = {}
-            self.views = {}
-            self.transactions = []
-            self.in_transaction = False
+        This class provides a complete in-memory database that supports
+        CREATE TABLE, DROP TABLE, INSERT, SELECT, UPDATE, DELETE, and
+        basic transaction management.
+
+        Attributes:
+            path: Path to the database file (":memory:" for in-memory).
+            tables: Dictionary of table name to FallbackTable mappings.
+            views: Dictionary of view name to view definition mappings.
+            transactions: List of pending transactions.
+            in_transaction: Whether a transaction is currently active.
+
+        """
+
+        def __init__(self, path: str = ":memory:") -> None:
+            """Initialize database.
+
+            Args:
+                path: Path to database file or ":memory:" for in-memory.
+
+            Returns:
+                None
+
+            """
+            self.path: str = path
+            self.tables: Dict[str, FallbackTable] = {}
+            self.views: Dict[str, Any] = {}
+            self.transactions: List[Any] = []
+            self.in_transaction: bool = False
 
             # Load from file if not in-memory
             if path != ":memory:" and os.path.exists(path):
                 self._load_from_file()
 
-        def create_table(self, name, columns) -> None:
-            """Create a new table."""
+        def create_table(self, name: str, columns: List[Tuple[str, str, str]]) -> None:
+            """Create a new table.
+
+            Args:
+                name: The name of the table to create.
+                columns: List of (column_name, column_type, constraints) tuples.
+
+            Returns:
+                None
+
+            Raises:
+                OperationalError: If the table already exists.
+
+            """
             if name in self.tables:
-                raise OperationalError(f"table {name} already exists")
+                error_msg = f"table {name} already exists"
+                logger.error(error_msg)
+                raise OperationalError(error_msg)
 
             self.tables[name] = FallbackTable(name, columns)
 
-        def drop_table(self, name) -> None:
-            """Drop a table."""
+        def drop_table(self, name: str) -> None:
+            """Drop a table.
+
+            Args:
+                name: The name of the table to drop.
+
+            Returns:
+                None
+
+            Raises:
+                OperationalError: If the table does not exist.
+
+            """
             if name not in self.tables:
-                raise OperationalError(f"no such table: {name}")
+                error_msg = f"no such table: {name}"
+                logger.error(error_msg)
+                raise OperationalError(error_msg)
 
             del self.tables[name]
 
-        def execute_sql(self, sql, params=None):
-            """Execute SQL statement."""
+        def execute_sql(self, sql: str, params: Optional[List[Any]] = None) -> Any:
+            """Execute SQL statement.
+
+            Args:
+                sql: SQL statement string to execute.
+                params: Optional list of parameters for parameterized queries.
+
+            Returns:
+                Query results for SELECT statements, or None for other operations.
+
+            Raises:
+                ProgrammingError: If SQL syntax is invalid or unsupported.
+
+            """
             # Parse SQL (simplified)
             sql = sql.strip()
             sql_upper = sql.upper()
@@ -312,14 +470,29 @@ except ImportError as e:
                 self.transactions.clear()
                 return None
             else:
-                raise ProgrammingError(f"Unsupported SQL: {sql}")
+                error_msg = f"Unsupported SQL: {sql}"
+                logger.error(error_msg)
+                raise ProgrammingError(error_msg)
 
-        def _execute_create_table(self, sql) -> None:
-            """Execute CREATE TABLE statement."""
+        def _execute_create_table(self, sql: str) -> None:
+            """Execute CREATE TABLE statement.
+
+            Args:
+                sql: CREATE TABLE SQL statement.
+
+            Returns:
+                None
+
+            Raises:
+                ProgrammingError: If SQL syntax is invalid.
+
+            """
             # Parse table name and columns
             match = re.match(r"CREATE TABLE\s+(\w+)\s*\((.*)\)", sql, re.IGNORECASE | re.DOTALL)
             if not match:
-                raise ProgrammingError(f"Invalid CREATE TABLE syntax: {sql}")
+                error_msg = f"Invalid CREATE TABLE syntax: {sql}"
+                logger.error(error_msg)
+                raise ProgrammingError(error_msg)
 
             table_name = match.group(1)
             columns_str = match.group(2)
@@ -337,27 +510,57 @@ except ImportError as e:
 
             self.create_table(table_name, columns)
 
-        def _execute_drop_table(self, sql) -> None:
-            """Execute DROP TABLE statement."""
+        def _execute_drop_table(self, sql: str) -> None:
+            """Execute DROP TABLE statement.
+
+            Args:
+                sql: DROP TABLE SQL statement.
+
+            Returns:
+                None
+
+            Raises:
+                ProgrammingError: If SQL syntax is invalid.
+
+            """
             match = re.match(r"DROP TABLE\s+(\w+)", sql, re.IGNORECASE)
             if not match:
-                raise ProgrammingError(f"Invalid DROP TABLE syntax: {sql}")
+                error_msg = f"Invalid DROP TABLE syntax: {sql}"
+                logger.error(error_msg)
+                raise ProgrammingError(error_msg)
 
             table_name = match.group(1)
             self.drop_table(table_name)
 
-        def _execute_insert(self, sql, params) -> None:
-            """Execute INSERT statement."""
+        def _execute_insert(self, sql: str, params: Optional[List[Any]]) -> None:
+            """Execute INSERT statement.
+
+            Args:
+                sql: INSERT SQL statement.
+                params: Optional list of parameters for the INSERT.
+
+            Returns:
+                None
+
+            Raises:
+                ProgrammingError: If SQL syntax is invalid.
+                OperationalError: If table does not exist.
+
+            """
             match = re.match(r"INSERT INTO\s+(\w+)\s*(?:\((.*?)\))?\s*VALUES\s*\((.*?)\)", sql, re.IGNORECASE | re.DOTALL)
             if not match:
-                raise ProgrammingError(f"Invalid INSERT syntax: {sql}")
+                error_msg = f"Invalid INSERT syntax: {sql}"
+                logger.error(error_msg)
+                raise ProgrammingError(error_msg)
 
             table_name = match.group(1)
             match.group(2)
             values_str = match.group(3)
 
             if table_name not in self.tables:
-                raise OperationalError(f"no such table: {table_name}")
+                error_msg = f"no such table: {table_name}"
+                logger.error(error_msg)
+                raise OperationalError(error_msg)
 
             # Parse values
             values = []
@@ -381,8 +584,21 @@ except ImportError as e:
 
             self.tables[table_name].insert(values)
 
-        def _execute_select(self, sql, params):
-            """Execute SELECT statement."""
+        def _execute_select(self, sql: str, params: Optional[List[Any]]) -> List[Tuple[Any, ...]]:
+            """Execute SELECT statement.
+
+            Args:
+                sql: SELECT SQL statement.
+                params: Optional list of parameters for the SELECT.
+
+            Returns:
+                List of tuples representing query results.
+
+            Raises:
+                ProgrammingError: If SQL syntax is invalid.
+                OperationalError: If table does not exist.
+
+            """
             # Simplified SELECT parsing
             match = re.match(
                 r"SELECT\s+(.*?)\s+FROM\s+(\w+)(?:\s+WHERE\s+(.*?))?(?:\s+ORDER BY\s+(.*?))?(?:\s+LIMIT\s+(\d+))?",
@@ -391,7 +607,9 @@ except ImportError as e:
             )
 
             if not match:
-                raise ProgrammingError(f"Invalid SELECT syntax: {sql}")
+                error_msg = f"Invalid SELECT syntax: {sql}"
+                logger.error(error_msg)
+                raise ProgrammingError(error_msg)
 
             columns_str = match.group(1)
             table_name = match.group(2)
@@ -400,7 +618,9 @@ except ImportError as e:
             limit_str = match.group(5)
 
             if table_name not in self.tables:
-                raise OperationalError(f"no such table: {table_name}")
+                error_msg = f"no such table: {table_name}"
+                logger.error(error_msg)
+                raise OperationalError(error_msg)
 
             # Parse columns
             if columns_str.strip() == "*":
@@ -449,19 +669,36 @@ except ImportError as e:
 
             return self.tables[table_name].select(columns, where, order_by, limit)
 
-        def _execute_update(self, sql, params):
-            """Execute UPDATE statement."""
+        def _execute_update(self, sql: str, params: Optional[List[Any]]) -> int:
+            """Execute UPDATE statement.
+
+            Args:
+                sql: UPDATE SQL statement.
+                params: Optional list of parameters for the UPDATE.
+
+            Returns:
+                The number of rows updated.
+
+            Raises:
+                ProgrammingError: If SQL syntax is invalid.
+                OperationalError: If table does not exist.
+
+            """
             match = re.match(r"UPDATE\s+(\w+)\s+SET\s+(.*?)(?:\s+WHERE\s+(.*?))?", sql, re.IGNORECASE | re.DOTALL)
 
             if not match:
-                raise ProgrammingError(f"Invalid UPDATE syntax: {sql}")
+                error_msg = f"Invalid UPDATE syntax: {sql}"
+                logger.error(error_msg)
+                raise ProgrammingError(error_msg)
 
             table_name = match.group(1)
             set_str = match.group(2)
             where_str = match.group(3)
 
             if table_name not in self.tables:
-                raise OperationalError(f"no such table: {table_name}")
+                error_msg = f"no such table: {table_name}"
+                logger.error(error_msg)
+                raise OperationalError(error_msg)
 
             # Parse SET clause
             set_values = {}
@@ -490,18 +727,35 @@ except ImportError as e:
 
             return self.tables[table_name].update(set_values, where)
 
-        def _execute_delete(self, sql, params):
-            """Execute DELETE statement."""
+        def _execute_delete(self, sql: str, params: Optional[List[Any]]) -> int:
+            """Execute DELETE statement.
+
+            Args:
+                sql: DELETE SQL statement.
+                params: Optional list of parameters for the DELETE.
+
+            Returns:
+                The number of rows deleted.
+
+            Raises:
+                ProgrammingError: If SQL syntax is invalid.
+                OperationalError: If table does not exist.
+
+            """
             match = re.match(r"DELETE\s+FROM\s+(\w+)(?:\s+WHERE\s+(.*?))?", sql, re.IGNORECASE | re.DOTALL)
 
             if not match:
-                raise ProgrammingError(f"Invalid DELETE syntax: {sql}")
+                error_msg = f"Invalid DELETE syntax: {sql}"
+                logger.error(error_msg)
+                raise ProgrammingError(error_msg)
 
             table_name = match.group(1)
             where_str = match.group(2)
 
             if table_name not in self.tables:
-                raise OperationalError(f"no such table: {table_name}")
+                error_msg = f"no such table: {table_name}"
+                logger.error(error_msg)
+                raise OperationalError(error_msg)
 
             # Parse WHERE clause (simplified)
             where = None
@@ -512,11 +766,18 @@ except ImportError as e:
             return self.tables[table_name].delete(where)
 
         def _save_to_file(self) -> None:
-            """Save database to file."""
+            """Save database to file.
+
+            Serializes all tables and views to a JSON file for persistence.
+            Only saves if the database path is not ":memory:".
+
+            Returns:
+                None
+
+            """
             if self.path != ":memory:":
                 try:
-                    # Serialize tables and views to JSON-safe format
-                    tables_data = {}
+                    tables_data: Dict[str, Dict[str, Any]] = {}
                     for name, table in self.tables.items():
                         tables_data[name] = {
                             "name": table.name,
@@ -527,7 +788,7 @@ except ImportError as e:
                             "constraints": table.constraints,
                         }
 
-                    serialized_data = {"tables": tables_data, "views": self.views}
+                    serialized_data: Dict[str, Any] = {"tables": tables_data, "views": self.views}
 
                     with open(self.path, "w", encoding="utf-8") as f:
                         json.dump(serialized_data, f, indent=2)
@@ -535,12 +796,19 @@ except ImportError as e:
                     logger.error("Failed to save database: %s", e)
 
         def _load_from_file(self) -> None:
-            """Load database from file."""
+            """Load database from file.
+
+            Reconstructs tables and views from a JSON file if the database
+            path is not ":memory:".
+
+            Returns:
+                None
+
+            """
             try:
                 with open(self.path, encoding="utf-8") as f:
                     data = json.load(f)
 
-                    # Reconstruct tables
                     self.tables = {}
                     for name, table_data in data.get("tables", {}).items():
                         table = FallbackTable(name, table_data["columns"])
@@ -555,19 +823,53 @@ except ImportError as e:
                 logger.error("Failed to load database: %s", e)
 
     class Cursor:
-        """Database cursor implementation."""
+        """Database cursor implementation.
 
-        def __init__(self, connection) -> None:
-            """Initialize cursor."""
-            self.connection = connection
-            self.description = None
-            self.rowcount = -1
-            self.lastrowid = None
-            self._results = []
-            self._result_index = 0
+        Provides an interface for executing SQL statements and fetching results.
 
-        def execute(self, sql, params=None):
-            """Execute SQL statement."""
+        Attributes:
+            connection: The connection object this cursor belongs to.
+            description: Sequence of column descriptions for the last query.
+            rowcount: Number of rows affected by the last operation.
+            lastrowid: Row ID of the last inserted row.
+            _results: Internal list of query results.
+            _result_index: Current position in the results list.
+
+        """
+
+        def __init__(self, connection: Connection) -> None:
+            """Initialize cursor.
+
+            Args:
+                connection: The database connection object.
+
+            Returns:
+                None
+
+            """
+            self.connection: Connection = connection
+            self.description: Optional[List[Tuple[str, ...]]] = None
+            self.rowcount: int = -1
+            self.lastrowid: Optional[int] = None
+            self._results: List[Tuple[Any, ...]] = []
+            self._result_index: int = 0
+
+        def execute(
+            self, sql: str, params: Optional[List[Any]] = None,
+        ) -> "Cursor":
+            """Execute SQL statement.
+
+            Args:
+                sql: SQL statement string to execute.
+                params: Optional list of parameters for parameterized queries.
+
+            Returns:
+                This Cursor instance for method chaining.
+
+            Raises:
+                DatabaseError: If execution fails.
+
+            """
             try:
                 result = self.connection._db.execute_sql(sql, params)
 
@@ -579,42 +881,75 @@ except ImportError as e:
                     self._results = []
                     self.rowcount = -1
 
-                # Set description for SELECT
                 if sql.strip().upper().startswith("SELECT"):
-                    # Simple description
                     self.description = [("column",) for _ in range(len(self._results[0]) if self._results else 0)]
 
                 return self
 
             except Exception as e:
-                raise DatabaseError(str(e)) from e
+                error_msg = str(e)
+                logger.error(error_msg)
+                raise DatabaseError(error_msg) from e
 
-        def executemany(self, sql, params_list):
-            """Execute SQL with multiple parameter sets."""
+        def executemany(self, sql: str, params_list: List[List[Any]]) -> "Cursor":
+            """Execute SQL with multiple parameter sets.
+
+            Args:
+                sql: SQL statement string to execute.
+                params_list: List of parameter lists, one for each execution.
+
+            Returns:
+                This Cursor instance for method chaining.
+
+            """
             for params in params_list:
                 self.execute(sql, params)
             return self
 
-        def fetchone(self):
-            """Fetch one row."""
+        def fetchone(self) -> Optional[Tuple[Any, ...]]:
+            """Fetch one row.
+
+            Args:
+                None
+
+            Returns:
+                A tuple representing a row, or None if no more rows.
+
+            """
             if self._result_index < len(self._results):
                 row = self._results[self._result_index]
                 self._result_index += 1
                 return row
             return None
 
-        def fetchall(self):
-            """Fetch all remaining rows."""
+        def fetchall(self) -> List[Tuple[Any, ...]]:
+            """Fetch all remaining rows.
+
+            Args:
+                None
+
+            Returns:
+                List of tuples representing all remaining rows.
+
+            """
             rows = self._results[self._result_index :]
             self._result_index = len(self._results)
             return rows
 
-        def fetchmany(self, size=None):
-            """Fetch multiple rows."""
+        def fetchmany(self, size: Optional[int] = None) -> List[Tuple[Any, ...]]:
+            """Fetch multiple rows.
+
+            Args:
+                size: Number of rows to fetch, defaults to 1.
+
+            Returns:
+                List of tuples representing up to size rows.
+
+            """
             if size is None:
                 size = 1
 
-            rows = []
+            rows: List[Tuple[Any, ...]] = []
             for _ in range(size):
                 row = self.fetchone()
                 if row is None:
@@ -623,60 +958,176 @@ except ImportError as e:
             return rows
 
         def close(self) -> None:
-            """Close cursor."""
+            """Close cursor.
+
+            Args:
+                None
+
+            Returns:
+                None
+
+            """
             self._results = []
 
-        def __enter__(self):
-            """Context manager entry."""
+        def __enter__(self) -> "Cursor":
+            """Context manager entry.
+
+            Args:
+                None
+
+            Returns:
+                This Cursor instance.
+
+            """
             return self
 
-        def __exit__(self, *args):
-            """Context manager exit."""
+        def __exit__(self, *args: object) -> None:
+            """Context manager exit.
+
+            Args:
+                *args: Exception information (exc_type, exc_val, exc_tb).
+
+            Returns:
+                None
+
+            """
             self.close()
 
     class Connection:
-        """Database connection implementation."""
+        """Database connection implementation.
 
-        def __init__(self, database=":memory:") -> None:
-            """Initialize connection."""
-            self.database = database
-            self._db = FallbackDatabase(database)
-            self.isolation_level = None
-            self.row_factory = None
+        Manages the connection to a database and provides methods for
+        executing SQL statements.
 
-        def cursor(self):
-            """Create a cursor."""
+        Attributes:
+            database: The database path or ":memory:" for in-memory.
+            _db: The internal FallbackDatabase instance.
+            isolation_level: Transaction isolation level (not used in fallback).
+            row_factory: Optional factory function for row objects.
+
+        """
+
+        def __init__(self, database: str = ":memory:") -> None:
+            """Initialize connection.
+
+            Args:
+                database: Path to database file or ":memory:" for in-memory.
+
+            Returns:
+                None
+
+            """
+            self.database: str = database
+            self._db: FallbackDatabase = FallbackDatabase(database)
+            self.isolation_level: Optional[str] = None
+            self.row_factory: Optional[Callable[[Any], Any]] = None
+
+        def cursor(self) -> Cursor:
+            """Create a cursor.
+
+            Args:
+                None
+
+            Returns:
+                A new Cursor instance bound to this connection.
+
+            """
             return Cursor(self)
 
-        def execute(self, sql, params=None):
-            """Execute SQL directly."""
+        def execute(self, sql: str, params: Optional[List[Any]] = None) -> Cursor:
+            """Execute SQL directly.
+
+            Args:
+                sql: SQL statement string to execute.
+                params: Optional list of parameters.
+
+            Returns:
+                A Cursor instance with the results.
+
+            """
             cursor = self.cursor()
             return cursor.execute(sql, params)
 
-        def executemany(self, sql, params_list):
-            """Execute SQL with multiple parameter sets."""
+        def executemany(self, sql: str, params_list: List[List[Any]]) -> Cursor:
+            """Execute SQL with multiple parameter sets.
+
+            Args:
+                sql: SQL statement string to execute.
+                params_list: List of parameter lists.
+
+            Returns:
+                A Cursor instance.
+
+            """
             cursor = self.cursor()
             return cursor.executemany(sql, params_list)
 
         def commit(self) -> None:
-            """Commit transaction."""
+            """Commit transaction.
+
+            Args:
+                None
+
+            Returns:
+                None
+
+            """
             self._db.execute_sql("COMMIT")
 
         def rollback(self) -> None:
-            """Rollback transaction."""
+            """Rollback transaction.
+
+            Args:
+                None
+
+            Returns:
+                None
+
+            """
             self._db.execute_sql("ROLLBACK")
 
         def close(self) -> None:
-            """Close connection."""
+            """Close connection.
+
+            Args:
+                None
+
+            Returns:
+                None
+
+            """
             if self._db.path != ":memory:":
                 self._db._save_to_file()
 
-        def __enter__(self):
-            """Context manager entry."""
+        def __enter__(self) -> "Connection":
+            """Context manager entry.
+
+            Args:
+                None
+
+            Returns:
+                This Connection instance.
+
+            """
             return self
 
-        def __exit__(self, exc_type, exc_val, exc_tb):
-            """Context manager exit."""
+        def __exit__(
+            self,
+            exc_type: Optional[type],
+            exc_val: Optional[Exception],
+            exc_tb: Optional[Any],
+        ) -> None:
+            """Context manager exit.
+
+            Args:
+                exc_type: The exception type if an exception occurred.
+                exc_val: The exception instance if an exception occurred.
+                exc_tb: The exception traceback if an exception occurred.
+
+            Returns:
+                None
+
+            """
             if exc_type is None:
                 self.commit()
             else:
@@ -684,47 +1135,133 @@ except ImportError as e:
             self.close()
 
     class Row:
-        """Row object that supports both index and column name access."""
+        """Row object that supports both index and column name access.
 
-        def __init__(self, cursor, row) -> None:
-            """Initialize row."""
-            self.cursor = cursor
-            self.row = row
+        Provides a dict-like interface for accessing row data by column name
+        or index.
 
-        def __getitem__(self, key):
-            """Get item by index or column name."""
+        Attributes:
+            cursor: The Cursor object that produced this row.
+            row: The underlying tuple or list of row values.
+
+        """
+
+        def __init__(self, cursor: Cursor, row: Tuple[Any, ...]) -> None:
+            """Initialize row.
+
+            Args:
+                cursor: The Cursor object that produced this row.
+                row: The row data as a tuple.
+
+            Returns:
+                None
+
+            """
+            self.cursor: Cursor = cursor
+            self.row: Tuple[Any, ...] = row
+
+        def __getitem__(self, key: Union[int, str]) -> Any:
+            """Get item by index or column name.
+
+            Args:
+                key: Column index (int) or column name (str).
+
+            Returns:
+                The value at the specified column.
+
+            Raises:
+                KeyError: If the column name is not found.
+
+            """
             if isinstance(key, int):
                 return self.row[key]
             else:
-                # Find column index by name
                 for i, desc in enumerate(self.cursor.description or []):
                     if desc[0] == key:
                         return self.row[i]
-                raise KeyError(key)
+                error_msg = str(key)
+                logger.error(error_msg)
+                raise KeyError(error_msg)
 
-        def keys(self):
-            """Get column names."""
+        def keys(self) -> List[str]:
+            """Get column names.
+
+            Args:
+                None
+
+            Returns:
+                List of column names for this row.
+
+            """
             return [desc[0] for desc in self.cursor.description or []]
 
-    def connect(database=":memory:", **kwargs):
-        """Connect to database."""
+    def connect(database: str = ":memory:", **kwargs: Any) -> Connection:
+        """Connect to database.
+
+        Args:
+            database: Path to database file or ":memory:" for in-memory.
+            **kwargs: Additional connection options (ignored in fallback).
+
+        Returns:
+            A Connection instance.
+
+        """
         return Connection(database)
 
-    def register_adapter(type, adapter) -> None:
-        """Register type adapter."""
+    def register_adapter(type: type, adapter: Callable[[Any], Any]) -> None:
+        """Register type adapter.
+
+        Args:
+            type: The Python type to adapt.
+            adapter: A callable that adapts instances of the type.
+
+        Returns:
+            None
+
+        """
         logger.info("Adapter registration not supported in fallback mode")
 
-    def register_converter(name, converter) -> None:
-        """Register type converter."""
+    def register_converter(name: str, converter: Callable[[Any], Any]) -> None:
+        """Register type converter.
+
+        Args:
+            name: The name of the SQLite type to convert.
+            converter: A callable that converts the type.
+
+        Returns:
+            None
+
+        """
         logger.info("Converter registration not supported in fallback mode")
 
     # Module-level attributes
-    PARSE_DECLTYPES = 1
-    PARSE_COLNAMES = 2
+    PARSE_DECLTYPES: int = 1
+    PARSE_COLNAMES: int = 2
 
     # Create module-like object
     class FallbackSQLite3:
-        """Fallback sqlite3 module."""
+        """Fallback sqlite3 module.
+
+        Provides a module-like interface compatible with the sqlite3 standard
+        library when sqlite3 is not available.
+
+        Attributes:
+            connect: Function to create database connections.
+            register_adapter: Function to register type adapters.
+            register_converter: Function to register type converters.
+            Connection: Database connection class.
+            Cursor: Database cursor class.
+            Row: Row object class.
+            Error: Base exception class.
+            DatabaseError: Database error exception.
+            IntegrityError: Integrity constraint violation exception.
+            OperationalError: Operational error exception.
+            ProgrammingError: Programming error exception.
+            PARSE_DECLTYPES: Constant for parsing declarations.
+            PARSE_COLNAMES: Constant for parsing column names.
+            version: Version string of the fallback implementation.
+
+        """
 
         # Functions
         connect = staticmethod(connect)
@@ -748,7 +1285,7 @@ except ImportError as e:
         PARSE_COLNAMES = PARSE_COLNAMES
 
         # Version
-        version = "0.0.0-fallback"
+        version: str = "0.0.0-fallback"
 
     sqlite3 = FallbackSQLite3()
 

@@ -496,34 +496,32 @@ class AnalysisOrchestrator(QObject):
         line_lower = line.lower()
         if "aes" in line_lower:
             return "AES"
-        elif "rsa" in line_lower:
+        if "rsa" in line_lower:
             return "RSA"
-        elif "md5" in line_lower:
+        if "md5" in line_lower:
             return "MD5"
-        elif "sha256" in line_lower:
+        if "sha256" in line_lower:
             return "SHA256"
-        elif "sha1" in line_lower:
+        if "sha1" in line_lower:
             return "SHA1"
-        elif "hash" in line_lower:
+        if "hash" in line_lower:
             return "Generic Hash"
-        else:
-            return "Unknown Crypto"
+        return "Unknown Crypto"
 
     def _identify_protection_type(self, line: str) -> str:
         """Identify the type of protection mechanism from output."""
         line_lower = line.lower()
         if "anti-debug" in line_lower:
             return "Anti-Debugging"
-        elif "obfuscat" in line_lower:
+        if "obfuscat" in line_lower:
             return "Obfuscation"
-        elif "pack" in line_lower:
+        if "pack" in line_lower:
             return "Packing"
-        elif "encrypt" in line_lower:
+        if "encrypt" in line_lower:
             return "Encryption"
-        elif "virtualiz" in line_lower:
+        if "virtualiz" in line_lower:
             return "Virtualization"
-        else:
-            return "Generic Protection"
+        return "Generic Protection"
 
     def _is_interesting_string(self, string_val: str) -> bool:
         """Determine if a string is interesting for license analysis."""

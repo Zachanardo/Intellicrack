@@ -138,7 +138,7 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
                 stat_info = path.stat()
                 file_size = stat_info.st_size
             except OSError as e:
-                self.logger.error(f"Failed to get file stats for {file_path}: {e}")
+                logger.error(f"Failed to get file stats for {file_path}: {e}")
                 return False
 
             binary_info = {
@@ -152,7 +152,7 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
             self._state["current_binary"] = binary_info
             self._add_to_recent_files(str(path.absolute()))
 
-            logger.info(f"Binary loaded: {path.name}")
+            logger.info(f"Binary loaded: {path.name} ({file_size} bytes)")
             self.binary_loaded.emit(binary_info)
             return True
 
@@ -179,7 +179,7 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
             "results": results,
             "timestamp": datetime.now().isoformat(),
         }
-        logger.info(f"Analysis completed: {analysis_type}")
+        logger.info(f"Analysis completed: {analysis_type}. Results keys: {list(results.keys())}")
         self.analysis_completed.emit(analysis_type, results)
 
     def get_analysis_results(self, analysis_type: str | None = None) -> dict:
@@ -235,7 +235,7 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
             if "analysis_results" in project_data:
                 self._state["analysis_results"] = project_data["analysis_results"]
 
-            logger.info(f"Project loaded: {project_info['name']}")
+            logger.info(f"Project loaded: {project_info['name']} from {project_path}")
             self.project_loaded.emit(project_info)
             return True
 
@@ -425,6 +425,10 @@ class AppContext(QObject if PYQT6_AVAILABLE else object):
     def get_recent_projects(self) -> list[str]:
         """Get list of recently opened projects."""
         return self._state["recent_projects"]
+
+    def _get_timestamp(self) -> str:
+        """Return a formatted timestamp string."""
+        return datetime.now().isoformat()
 
     # Private helper methods
     def _add_to_recent_files(self, file_path: str) -> None:

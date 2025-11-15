@@ -32,7 +32,7 @@ Legacy JSON files are migrated on first run, then only central config is used.
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 # Add parent directories to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -111,14 +111,13 @@ class ConfigManager:
         """Load configuration - now a no-op since we use central config directly."""
         # This method kept for backward compatibility
         # Central config is already loaded in __init__
-        pass
 
     def save_config(self) -> None:
         """Save configuration to central config immediately."""
         self.central_config.save()
         logger.debug("CLI configuration saved to central config")
 
-    def get(self, key: str, default: Optional[Any] = None) -> Any:
+    def get(self, key: str, default: Any | None = None) -> Any:
         """Get configuration value from cli_configuration section.
 
         Args:
@@ -151,7 +150,7 @@ class ConfigManager:
         # Auto-save for production readiness
         self.central_config.save()
 
-    def list_settings(self) -> Dict[str, Any]:
+    def list_settings(self) -> dict[str, Any]:
         """List all CLI configuration settings.
 
         Returns:

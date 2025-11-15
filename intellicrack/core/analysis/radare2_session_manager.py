@@ -27,7 +27,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from queue import Empty, Queue
-from typing import Any, Optional
+from typing import Any
 
 try:
     import r2pipe
@@ -68,7 +68,7 @@ class R2SessionWrapper:
         self,
         binary_path: str,
         session_id: str,
-        flags: Optional[list[str]] = None,
+        flags: list[str] | None = None,
         timeout: float = 30.0,
         auto_analyze: bool = True,
         analysis_level: str = "aaa",
@@ -94,7 +94,7 @@ class R2SessionWrapper:
         self.auto_analyze = auto_analyze
         self.analysis_level = analysis_level
 
-        self.r2: Optional[r2pipe.open] = None
+        self.r2: r2pipe.open | None = None
         self.state = SessionState.IDLE
         self.metrics = SessionMetrics()
         self._lock = threading.RLock()
@@ -305,7 +305,7 @@ class R2SessionPool:
         self._sessions: dict[str, R2SessionWrapper] = {}
         self._available_sessions: dict[str, Queue] = {}
         self._lock = threading.RLock()
-        self._cleanup_thread: Optional[threading.Thread] = None
+        self._cleanup_thread: threading.Thread | None = None
         self._stop_cleanup = threading.Event()
 
         self._total_sessions_created = 0
@@ -316,7 +316,7 @@ class R2SessionPool:
 
         self._start_cleanup_thread()
 
-    def _generate_session_id(self, binary_path: str, flags: Optional[list[str]] = None) -> str:
+    def _generate_session_id(self, binary_path: str, flags: list[str] | None = None) -> str:
         """Generate unique session ID.
 
         Args:
@@ -330,7 +330,7 @@ class R2SessionPool:
         key = f"{binary_path}:{','.join(flags or [])}"
         return hashlib.sha256(key.encode()).hexdigest()[:16]
 
-    def _get_pool_key(self, binary_path: str, flags: Optional[list[str]] = None) -> str:
+    def _get_pool_key(self, binary_path: str, flags: list[str] | None = None) -> str:
         """Get pool key for binary.
 
         Args:
@@ -346,8 +346,8 @@ class R2SessionPool:
     def get_session(
         self,
         binary_path: str,
-        flags: Optional[list[str]] = None,
-        timeout: Optional[float] = None,
+        flags: list[str] | None = None,
+        timeout: float | None = None,
     ) -> R2SessionWrapper:
         """Get or create a session from the pool.
 
@@ -377,12 +377,10 @@ class R2SessionPool:
                 if session.is_alive():
                     logger.debug(f"Reusing session {session.session_id} from pool")
                     return session
-                else:
-                    logger.info(f"Session {session.session_id} not alive, reconnecting")
-                    if session.reconnect():
-                        return session
-                    else:
-                        session.disconnect()
+                logger.info(f"Session {session.session_id} not alive, reconnecting")
+                if session.reconnect():
+                    return session
+                session.disconnect()
             except Empty:
                 pass
 
@@ -568,8 +566,8 @@ class R2SessionPool:
     def session(
         self,
         binary_path: str,
-        flags: Optional[list[str]] = None,
-        timeout: Optional[float] = None,
+        flags: list[str] | None = None,
+        timeout: float | None = None,
     ):
         """Context manager for session pooling.
 
@@ -591,7 +589,7 @@ class R2SessionPool:
                 self.return_session(session)
 
 
-_global_pool: Optional[R2SessionPool] = None
+_global_pool: R2SessionPool | None = None
 _pool_lock = threading.Lock()
 
 
@@ -630,9 +628,9 @@ def get_global_pool(
 @contextmanager
 def r2_session_pooled(
     binary_path: str,
-    flags: Optional[list[str]] = None,
-    timeout: Optional[float] = None,
-    pool: Optional[R2SessionPool] = None,
+    flags: list[str] | None = None,
+    timeout: float | None = None,
+    pool: R2SessionPool | None = None,
 ):
     """Context manager for pooled r2pipe sessions.
 

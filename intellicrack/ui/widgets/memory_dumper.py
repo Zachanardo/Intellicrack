@@ -575,7 +575,9 @@ class MemoryDumpThread(QThread):
 
         h_process = kernel32.OpenProcess(PROCESS_VM_READ, False, self.pid)
         if not h_process:
-            raise Exception("Failed to open process")
+            error_msg = "Failed to open process"
+            logger.error(error_msg)
+            raise Exception(error_msg)
 
         try:
             # Read memory

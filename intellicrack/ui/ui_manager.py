@@ -35,6 +35,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
 )
 
+from ..utils.logger import log_all_methods
 from .tabs.ai_assistant_tab import AIAssistantTab
 from .tabs.analysis_tab import AnalysisTab
 from .tabs.dashboard_tab import DashboardTab
@@ -44,7 +45,6 @@ from .tabs.terminal_tab import TerminalTab
 from .tabs.tools_tab import ToolsTab
 from .tabs.workspace_tab import WorkspaceTab
 from .theme_manager import get_theme_manager
-from ..utils.logger import log_all_methods
 
 logger = logging.getLogger(__name__)
 

@@ -547,9 +547,8 @@ class EnhancedR2Integration:
                 self.components["diff"].set_secondary_binary(secondary_path)
                 self.logger.info(f"Set secondary binary for diff: {secondary_path}")
                 return True
-            else:
-                self.logger.error("Binary diff component not initialized")
-                return False
+            self.logger.error("Binary diff component not initialized")
+            return False
         except Exception as e:
             self.logger.error(f"Failed to set secondary binary: {e}")
             return False
@@ -581,9 +580,8 @@ class EnhancedR2Integration:
                     }
                     for d in diffs
                 ]
-            else:
-                self.logger.error("Binary diff component not initialized")
-                return []
+            self.logger.error("Binary diff component not initialized")
+            return []
         except Exception as e:
             self.logger.error(f"Failed to get function diffs: {e}")
             return []
@@ -615,9 +613,8 @@ class EnhancedR2Integration:
                     }
                     for d in bb_diffs
                 ]
-            else:
-                self.logger.error("Binary diff component not initialized")
-                return []
+            self.logger.error("Binary diff component not initialized")
+            return []
         except Exception as e:
             self.logger.error(f"Failed to get basic block diffs: {e}")
             return []
@@ -683,9 +680,8 @@ class EnhancedR2Integration:
                     ],
                     "metadata": graph_data.metadata,
                 }
-            else:
-                self.logger.error("Graph component not initialized")
-                return {}
+            self.logger.error("Graph component not initialized")
+            return {}
         except Exception as e:
             self.logger.error(f"Failed to generate CFG: {e}")
             return {}
@@ -722,9 +718,8 @@ class EnhancedR2Integration:
                     ],
                     "metadata": graph_data.metadata,
                 }
-            else:
-                self.logger.error("Graph component not initialized")
-                return {}
+            self.logger.error("Graph component not initialized")
+            return {}
         except Exception as e:
             self.logger.error(f"Failed to generate call graph: {e}")
             return {}
@@ -752,9 +747,8 @@ class EnhancedR2Integration:
                     ],
                     "metadata": graph_data.metadata,
                 }
-            else:
-                self.logger.error("Graph component not initialized")
-                return {}
+            self.logger.error("Graph component not initialized")
+            return {}
         except Exception as e:
             self.logger.error(f"Failed to generate xref graph: {e}")
             return {}

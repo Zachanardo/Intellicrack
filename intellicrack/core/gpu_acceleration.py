@@ -140,11 +140,11 @@ class GPUAccelerator:
         """Get GPU device information."""
         if self.framework == "ipex" and IPEX_AVAILABLE:
             return self._get_ipex_device_info()
-        elif self.framework == "cupy" and CUPY_AVAILABLE:
+        if self.framework == "cupy" and CUPY_AVAILABLE:
             return self._get_cupy_device_info()
-        elif self.framework == "pycuda" and PYCUDA_AVAILABLE:
+        if self.framework == "pycuda" and PYCUDA_AVAILABLE:
             return self._get_pycuda_device_info()
-        elif self.framework == "numba" and NUMBA_CUDA_AVAILABLE:
+        if self.framework == "numba" and NUMBA_CUDA_AVAILABLE:
             return self._get_numba_device_info()
         return {}
 
@@ -576,14 +576,13 @@ class GPUAccelerator:
                     "min_entropy": float(np.min(entropies)),
                     "method": "ipex_xpu",
                 }
-            else:
-                return {
-                    "block_entropies": [],
-                    "average_entropy": 0.0,
-                    "max_entropy": 0.0,
-                    "min_entropy": 0.0,
-                    "method": "ipex_xpu",
-                }
+            return {
+                "block_entropies": [],
+                "average_entropy": 0.0,
+                "max_entropy": 0.0,
+                "min_entropy": 0.0,
+                "method": "ipex_xpu",
+            }
 
         except Exception as e:
             logger.error(f"Intel XPU entropy calculation failed: {e}")

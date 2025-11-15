@@ -24,7 +24,6 @@ import logging
 import os
 from typing import Any
 
-from ..utils.core.string_utils import format_bytes
 from ..utils.logger import log_all_methods
 
 
@@ -67,7 +66,7 @@ class DashboardManager:
             try:
                 binary_size = os.path.getsize(self.app.binary_path)
                 binary_name = os.path.basename(self.app.binary_path)
-                last_modified = os.path.getmtime(self.app.binary_path)
+                last_modified = Path(self.app.binary_path).stat().st_mtime
 
                 self.stats["binary"] = {
                     "name": binary_name,

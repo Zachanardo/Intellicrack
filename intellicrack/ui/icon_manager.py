@@ -9,7 +9,6 @@ Licensed under GNU General Public License v3.0
 
 import os
 from pathlib import Path
-from typing import Optional
 
 from intellicrack.handlers.pyqt6_handler import QIcon
 
@@ -104,7 +103,7 @@ class IconManager:
         "help_support": "🆘",
     }
 
-    def __init__(self, icon_path: Optional[Path] = None) -> None:
+    def __init__(self, icon_path: Path | None = None) -> None:
         """Initialize the icon manager.
 
         Args:

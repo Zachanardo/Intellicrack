@@ -1112,7 +1112,7 @@ KEY FINDINGS
 
         return rules
 
-    def _create_summary_sheet(self, workbook, header_format=None, cell_format=None, worksheet_name: str = "Summary"):
+    def _create_summary_sheet(self, workbook: Any, header_format: Any | None = None, cell_format: Any | None = None, worksheet_name: str = "Summary"):
         """Create summary sheet for Excel export."""
         try:
             worksheet = workbook.add_worksheet(worksheet_name)
@@ -1164,9 +1164,9 @@ KEY FINDINGS
 
     def _create_vulnerabilities_sheet(
         self,
-        workbook,
-        header_format=None,
-        cell_format=None,
+        workbook: Any,
+        header_format: Any | None = None,
+        cell_format: Any | None = None,
         worksheet_name: str = "Vulnerabilities",
     ):
         """Create vulnerabilities sheet for Excel export."""
@@ -1205,7 +1205,7 @@ KEY FINDINGS
             print(f"Failed to create vulnerabilities sheet: {e}")
             return None
 
-    def _create_strings_sheet(self, workbook, header_format=None, cell_format=None, worksheet_name: str = "Strings"):
+    def _create_strings_sheet(self, workbook: Any, header_format: Any | None = None, cell_format: Any | None = None, worksheet_name: str = "Strings"):
         """Create strings sheet for Excel export."""
         try:
             worksheet = workbook.add_worksheet(worksheet_name)
@@ -1245,7 +1245,7 @@ KEY FINDINGS
             print(f"Failed to create strings sheet: {e}")
             return None
 
-    def _create_imports_sheet(self, workbook, header_format=None, cell_format=None, worksheet_name: str = "Imports"):
+    def _create_imports_sheet(self, workbook: Any, header_format: Any | None = None, cell_format: Any | None = None, worksheet_name: str = "Imports"):
         """Create imports sheet for Excel export."""
         try:
             worksheet = workbook.add_worksheet(worksheet_name)
@@ -1290,7 +1290,7 @@ KEY FINDINGS
             print(f"Failed to create imports sheet: {e}")
             return None
 
-    def _create_statistics_sheet(self, workbook, header_format=None, cell_format=None, worksheet_name: str = "Statistics"):
+    def _create_statistics_sheet(self, workbook: Any, header_format: Any | None = None, cell_format: Any | None = None, worksheet_name: str = "Statistics"):
         """Create statistics sheet for Excel export."""
         try:
             worksheet = workbook.add_worksheet(worksheet_name)

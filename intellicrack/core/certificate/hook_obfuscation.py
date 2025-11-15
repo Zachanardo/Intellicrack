@@ -120,7 +120,7 @@ import random
 import threading
 import time
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional
+from typing import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -153,11 +153,11 @@ class HookObfuscator:
 
     def __init__(self) -> None:
         """Initialize hook obfuscator."""
-        self.installed_hooks: Dict[int, HookInfo] = {}
-        self.code_caves: Dict[str, List[int]] = {}
+        self.installed_hooks: dict[int, HookInfo] = {}
+        self.code_caves: dict[str, list[int]] = {}
         self.integrity_monitor_active = False
         self._lock = threading.Lock()
-        self._integrity_thread: Optional[threading.Thread] = None
+        self._integrity_thread: threading.Thread | None = None
         self._stop_monitoring = threading.Event()
 
     def generate_random_callback_name(self) -> str:
@@ -272,7 +272,7 @@ class HookObfuscator:
             logger.error(f"Failed to create indirect hook: {e}", exc_info=True)
             return False
 
-    def _find_code_cave(self, min_size: int) -> Optional[int]:
+    def _find_code_cave(self, min_size: int) -> int | None:
         """Find code cave in loaded modules.
 
         Code caves are unused sections of memory in executable modules,
@@ -355,7 +355,7 @@ class HookObfuscator:
         start_address: int,
         final_handler: int,
         chain_length: int,
-    ) -> List[int]:
+    ) -> list[int]:
         """Build chain of trampolines."""
         chain_addresses = []
         current_addr = start_address
@@ -395,11 +395,10 @@ class HookObfuscator:
                 *target.to_bytes(8, 'little'),
                 0xFF, 0xE0,
             ])
-        else:
-            return bytes([
-                0xE9,
-                *((target - 5) & 0xFFFFFFFF).to_bytes(4, 'little'),
-            ])
+        return bytes([
+            0xE9,
+            *((target - 5) & 0xFFFFFFFF).to_bytes(4, 'little'),
+        ])
 
     def _install_jump_to_chain(self, target: int, chain_start: int) -> bool:
         """Install initial jump from target to trampoline chain."""
@@ -416,7 +415,7 @@ class HookObfuscator:
             logger.error(f"Failed to install jump: {e}")
             return False
 
-    def _read_memory(self, address: int, size: int) -> Optional[bytes]:
+    def _read_memory(self, address: int, size: int) -> bytes | None:
         """Read memory at address."""
         try:
             if hasattr(ctypes, 'windll'):
@@ -680,7 +679,7 @@ class HookObfuscator:
             logger.error(f"Hardware breakpoint hook failed: {e}", exc_info=True)
             return False
 
-    def find_code_caves(self, module: str) -> List[int]:
+    def find_code_caves(self, module: str) -> list[int]:
         """Find code caves in specified module.
 
         Scans for sequences of null bytes or INT3 instructions (0xCC)
@@ -752,7 +751,7 @@ class HookObfuscator:
             logger.error(f"Code cave search failed: {e}", exc_info=True)
             return caves
 
-    def _find_cave_in_data(self, base_addr: int, data: bytes) -> Optional[int]:
+    def _find_cave_in_data(self, base_addr: int, data: bytes) -> int | None:
         """Find code cave in memory data."""
         min_cave_size = 32
         current_cave_start = None
@@ -822,7 +821,7 @@ class HookObfuscator:
             logger.debug(f"Single hook rotation failed: {e}")
             return False
 
-    def get_hook_status(self) -> Dict:
+    def get_hook_status(self) -> dict:
         """Get status of all installed hooks.
 
         Returns:

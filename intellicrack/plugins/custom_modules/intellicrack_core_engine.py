@@ -750,7 +750,13 @@ class AbstractPlugin(ABC):
                 target=target,
                 data=data or {},
             )
-            asyncio.create_task(self.event_bus.emit(event))
+            task = asyncio.create_task(self.event_bus.emit(event))
+            # Store task reference to prevent garbage collection
+            if not hasattr(self, '_event_tasks'):
+                self._event_tasks = set()
+            self._event_tasks.add(task)
+            # Remove task from set when it's done
+            task.add_done_callback(self._event_tasks.discard)
 
     def log_performance_metric(self, metric_name: str, value: Any) -> None:
         """Log performance metric."""
@@ -1500,7 +1506,7 @@ class PythonPlugin(AbstractPlugin):
             # Get operation method
             method = getattr(self.plugin_instance, operation)
             if not callable(method):
-                raise ValueError(f"Operation {operation} is not callable")
+                raise TypeError(f"Operation {operation} is not callable")
 
             # Execute operation
             if asyncio.iscoroutinefunction(method):
@@ -2446,7 +2452,13 @@ class WorkflowEngine:
         self.running_workflows[execution_id] = execution_context
 
         # Start execution
-        asyncio.create_task(self._execute_workflow_async(execution_context))
+        task = asyncio.create_task(self._execute_workflow_async(execution_context))
+        # Store task reference to prevent garbage collection
+        if not hasattr(self, '_execution_tasks'):
+            self._execution_tasks = set()
+        self._execution_tasks.add(task)
+        # Remove task from set when it's done
+        task.add_done_callback(self._execution_tasks.discard)
 
         self.logger.info(f"Started workflow execution: {workflow.name} (ID: {execution_id})")
 
@@ -3688,15 +3700,19 @@ def main() -> None:
 
             if args.daemon:
                 # Run indefinitely
-                while engine.running:
-                    await asyncio.sleep(1)
+                # Create a simple async loop that can be more responsive to stop signals
+                try:
+                    while engine.running:
+                        await asyncio.wait([asyncio.sleep(0.1)], return_when=asyncio.FIRST_COMPLETED)
+                except asyncio.CancelledError:
+                    pass  # Allow clean cancellation
             else:
                 # Interactive mode
                 print("Intellicrack Core Engine running. Press Ctrl+C to stop.")
                 try:
                     while engine.running:
-                        await asyncio.sleep(1)
-                except KeyboardInterrupt:
+                        await asyncio.wait([asyncio.sleep(0.1)], return_when=asyncio.FIRST_COMPLETED)
+                except (KeyboardInterrupt, asyncio.CancelledError):
                     print("\nShutting down...")
 
         finally:

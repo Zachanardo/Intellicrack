@@ -23,7 +23,7 @@ import struct
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import numpy as np
 
@@ -199,7 +199,7 @@ class LicenseProtectionCNN(nn.Module if TORCH_AVAILABLE else object):
             except Exception as e:
                 logging.getLogger(__name__).warning(f"Could not load pre-trained weights: {e}")
 
-    def save_weights(self, path: Optional[str] = None) -> None:
+    def save_weights(self, path: str | None = None) -> None:
         """Save model weights for future use."""
         if path is None:
             save_dir = Path(__file__).parent / "pretrained"
@@ -310,7 +310,7 @@ class LicenseProtectionTransformer(nn.Module if TORCH_AVAILABLE else object):
             except Exception as e:
                 logging.getLogger(__name__).warning(f"Could not load pre-trained Transformer weights: {e}")
 
-    def save_weights(self, path: Optional[str] = None) -> None:
+    def save_weights(self, path: str | None = None) -> None:
         """Save model weights for future use."""
         if path is None:
             save_dir = Path(__file__).parent / "pretrained"
@@ -437,7 +437,7 @@ class HybridLicenseAnalyzer(nn.Module if TORCH_AVAILABLE else object):
             except Exception as e:
                 logging.getLogger(__name__).warning(f"Could not load pre-trained Hybrid weights: {e}")
 
-    def save_weights(self, path: Optional[str] = None) -> None:
+    def save_weights(self, path: str | None = None) -> None:
         """Save model weights for future use."""
         if path is None:
             save_dir = Path(__file__).parent / "pretrained"
@@ -567,8 +567,7 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
             feature_tensor = torch.tensor(features.to_tensor(), dtype=torch.float32)
             label_tensor = torch.tensor(label_idx, dtype=torch.long)
             return feature_tensor, label_tensor
-        else:
-            return features.to_tensor(), label_idx
+        return features.to_tensor(), label_idx
 
     def _extract_features(self, binary_path: Path) -> LicenseFeatures:
         """Extract comprehensive features from binary using advanced feature extractor."""
@@ -960,7 +959,7 @@ class LicenseDataset(Dataset if TORCH_AVAILABLE else object):
 class ProtectionLoss(nn.Module if TORCH_AVAILABLE else object):
     """Customize loss function for license protection detection."""
 
-    def __init__(self, num_classes: int = 20, class_weights: Optional[torch.Tensor] = None) -> None:
+    def __init__(self, num_classes: int = 20, class_weights: torch.Tensor | None = None) -> None:
         """Initialize multi-objective loss function."""
         if not TORCH_AVAILABLE:
             raise ImportError("PyTorch not available for loss function")
@@ -1013,9 +1012,8 @@ class ProtectionLoss(nn.Module if TORCH_AVAILABLE else object):
                 total_loss += self.center_loss_weight * center_loss
 
             return total_loss
-        else:
-            # Single task - use focal loss
-            return self.focal_loss(outputs, targets)
+        # Single task - use focal loss
+        return self.focal_loss(outputs, targets)
 
     def focal_loss(self, logits, targets):
         """Compute focal loss for addressing class imbalance."""
@@ -1042,9 +1040,13 @@ class LicenseProtectionTrainer:
     """Trainer for license protection neural networks."""
 
     def __init__(
-        self, model, device="cuda" if torch and torch.cuda.is_available() else "cpu", class_weights: Optional[torch.Tensor] = None,
+        self, model, device=None, class_weights: torch.Tensor | None = None,
     ) -> None:
         """Initialize trainer with model and training configuration."""
+        # Set default device if not provided
+        if device is None:
+            device = "cuda" if torch and torch.cuda.is_available() else "cpu"
+
         self.model = model
         self.device = device
         if TORCH_AVAILABLE:
@@ -1273,7 +1275,7 @@ class LicenseProtectionTrainer:
 class LicenseProtectionPredictor:
     """High-level interface for license protection prediction."""
 
-    def __init__(self, model_path: Optional[str] = None) -> None:
+    def __init__(self, model_path: str | None = None) -> None:
         """Initialize predictor with pre-trained model."""
         self.logger = logging.getLogger(__name__)
 
@@ -1301,7 +1303,7 @@ class LicenseProtectionPredictor:
         self.model.eval()
         self.logger.info(f"Model loaded from {model_path}")
 
-    def predict(self, binary_path: str) -> Dict[str, Any]:
+    def predict(self, binary_path: str) -> dict[str, Any]:
         """Predict license protection type and characteristics."""
         if not TORCH_AVAILABLE or not self.model:
             return self._fallback_prediction(binary_path)
@@ -1339,7 +1341,7 @@ class LicenseProtectionPredictor:
 
         return result
 
-    def _extract_features(self, binary_path: str) -> Dict[str, np.ndarray]:
+    def _extract_features(self, binary_path: str) -> dict[str, np.ndarray]:
         """Extract multi-modal features from binary."""
         with open(binary_path, "rb") as f:
             data = f.read()
@@ -1416,7 +1418,7 @@ class LicenseProtectionPredictor:
 
         return np.array(features[:512], dtype=np.float32)
 
-    def _fallback_prediction(self, binary_path: str) -> Dict[str, Any]:
+    def _fallback_prediction(self, binary_path: str) -> dict[str, Any]:
         """Fallback prediction using heuristics when ML models unavailable."""
         with open(binary_path, "rb") as f:
             data = f.read()
@@ -1456,7 +1458,7 @@ class LicenseProtectionPredictor:
 _global_predictor = None
 
 
-def get_license_predictor(model_path: Optional[str] = None) -> LicenseProtectionPredictor:
+def get_license_predictor(model_path: str | None = None) -> LicenseProtectionPredictor:
     """Get or create global license protection predictor."""
     global _global_predictor
 
@@ -1513,9 +1515,9 @@ def train_license_model(
     epochs: int = 100,
     batch_size: int = 32,
     learning_rate: float = 0.001,
-    save_path: Optional[str] = None,
-    device: Optional[str] = None,
-) -> Dict[str, Any]:
+    save_path: str | None = None,
+    device: str | None = None,
+) -> dict[str, Any]:
     """Complete training pipeline for license protection models."""
     if not TORCH_AVAILABLE:
         raise ImportError("PyTorch not available for training")
@@ -1603,7 +1605,7 @@ def train_license_model(
     return results
 
 
-def evaluate_model(model_path: str, test_data_path: str, batch_size: int = 32, device: Optional[str] = None) -> Dict[str, Any]:
+def evaluate_model(model_path: str, test_data_path: str, batch_size: int = 32, device: str | None = None) -> dict[str, Any]:
     """Evaluate a trained model on test data."""
     if not TORCH_AVAILABLE:
         raise ImportError("PyTorch not available for evaluation")

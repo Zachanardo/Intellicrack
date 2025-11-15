@@ -1803,7 +1803,7 @@ def _verify_execution_testing(binary_path: str) -> dict[str, Any]:
         # Make sure file is executable
         if platform.system() != "Windows":
             try:
-                os.chmod(binary_path, 0o700)  # Owner-only executable permissions
+                Path(binary_path).chmod(0o700)  # Owner-only executable permissions
             except (OSError, ValueError, RuntimeError) as e:
                 logger.debug("Could not set executable permissions: %s", e)
 

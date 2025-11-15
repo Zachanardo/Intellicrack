@@ -21,7 +21,7 @@ import logging
 import threading
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable
 
 from intellicrack.utils.logger import logger as main_logger
 
@@ -52,7 +52,7 @@ class MessageCategory(Enum):
 # Thread-safe message queue for UI updates
 _message_queue = []
 _queue_lock = threading.Lock()
-_message_callbacks: List[Callable[[str, str, str], None]] = []
+_message_callbacks: list[Callable[[str, str, str], None]] = []
 
 
 def register_message_callback(callback: Callable[[str, str, str], None]) -> None:
@@ -62,7 +62,6 @@ def register_message_callback(callback: Callable[[str, str, str], None]) -> None
         callback: Function that receives (level, category, message) parameters
 
     """
-    global _message_callbacks
     with _queue_lock:
         if callback not in _message_callbacks:
             _message_callbacks.append(callback)
@@ -75,13 +74,12 @@ def unregister_message_callback(callback: Callable[[str, str, str], None]) -> No
         callback: Callback function to remove
 
     """
-    global _message_callbacks
     with _queue_lock:
         if callback in _message_callbacks:
             _message_callbacks.remove(callback)
 
 
-def get_message_queue() -> List[Dict[str, Any]]:
+def get_message_queue() -> list[dict[str, Any]]:
     """Get a copy of the current message queue.
 
     Returns:
@@ -94,20 +92,19 @@ def get_message_queue() -> List[Dict[str, Any]]:
 
 def clear_message_queue() -> None:
     """Clear the message queue."""
-    global _message_queue
     with _queue_lock:
         _message_queue.clear()
 
 
 def log_message(
     message: str,
-    level: Union[str, MessageLevel] = MessageLevel.INFO,
-    category: Union[str, MessageCategory] = MessageCategory.GENERAL,
+    level: str | MessageLevel = MessageLevel.INFO,
+    category: str | MessageCategory = MessageCategory.GENERAL,
     *,
-    context: Optional[Dict[str, Any]] = None,
-    exception: Optional[Exception] = None,
-    source: Optional[str] = None,
-    timestamp: Optional[datetime] = None,
+    context: dict[str, Any] | None = None,
+    exception: Exception | None = None,
+    source: str | None = None,
+    timestamp: datetime | None = None,
     persist: bool = True,
     notify_ui: bool = True,
 ) -> None:
@@ -253,27 +250,27 @@ def log_critical(message: str, **kwargs) -> None:
     log_message(message, level=MessageLevel.CRITICAL, **kwargs)
 
 
-def log_analysis(message: str, level: Union[str, MessageLevel] = MessageLevel.INFO, **kwargs) -> None:
+def log_analysis(message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs) -> None:
     """Log for analysis-related purposes."""
     log_message(message, level=level, category=MessageCategory.ANALYSIS, **kwargs)
 
 
-def log_ui(message: str, level: Union[str, MessageLevel] = MessageLevel.INFO, **kwargs) -> None:
+def log_ui(message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs) -> None:
     """Log for UI-related purposes."""
     log_message(message, level=level, category=MessageCategory.UI, **kwargs)
 
 
-def log_security(message: str, level: Union[str, MessageLevel] = MessageLevel.WARNING, **kwargs) -> None:
+def log_security(message: str, level: str | MessageLevel = MessageLevel.WARNING, **kwargs) -> None:
     """Log for security-related purposes."""
     log_message(message, level=level, category=MessageCategory.SECURITY, **kwargs)
 
 
-def log_performance(message: str, level: Union[str, MessageLevel] = MessageLevel.INFO, **kwargs) -> None:
+def log_performance(message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs) -> None:
     """Log for performance-related purposes."""
     log_message(message, level=level, category=MessageCategory.PERFORMANCE, **kwargs)
 
 
-def log_binary_processing(message: str, level: Union[str, MessageLevel] = MessageLevel.INFO, **kwargs) -> None:
+def log_binary_processing(message: str, level: str | MessageLevel = MessageLevel.INFO, **kwargs) -> None:
     """Log for binary processing purposes."""
     log_message(message, level=level, category=MessageCategory.BINARY_PROCESSING, **kwargs)
 

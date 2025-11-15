@@ -273,11 +273,10 @@ class VMWorkflowManager:
                 # Ensure remote directory exists
                 remote_dir = str(Path(remote_path).parent)
                 if remote_dir:
-                    try:
+                    import contextlib
+
+                    with contextlib.suppress(OSError):
                         sftp.mkdir(remote_dir)
-                    except OSError:
-                        # Directory might already exist
-                        pass
 
                 # Upload the file
                 sftp.put(local_path, remote_path)

@@ -75,7 +75,9 @@ class TrafficAnalyzer:
             import importlib.util
 
             if importlib.util.find_spec("intellicrack.core.network.traffic_analyzer") is None:
-                raise ImportError("NetworkTrafficAnalyzer module not found")
+                error_msg = "NetworkTrafficAnalyzer module not found"
+                log_error(error_msg)
+                raise ImportError(error_msg)
 
             # Create and show the traffic analysis dialog
             dialog = NetworkTrafficAnalysisDialog(main_window)

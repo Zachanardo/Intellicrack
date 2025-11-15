@@ -18,7 +18,6 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import os
-from typing import Optional
 
 from intellicrack.utils.logger import logger
 
@@ -78,7 +77,7 @@ def _detect_and_fix_intel_arc() -> bool:
 _is_intel_arc = _detect_and_fix_intel_arc()
 
 
-def _safe_torch_import(timeout: float = 10.0) -> tuple[bool, Optional[object], Optional[Exception]]:
+def _safe_torch_import(timeout: float = 10.0) -> tuple[bool, object | None, Exception | None]:
     """Safely import PyTorch with Intel Arc workaround applied."""
     try:
         # Direct import - Intel Arc workaround already applied
@@ -127,10 +126,12 @@ else:
 
             HAS_TORCH = True
             TORCH_AVAILABLE = True
-            TORCH_VERSION = torch.__version__
+            TORCH_VERSION = torch_temp.__version__
             logger.info(f"PyTorch {TORCH_VERSION} imported successfully with universal GPU compatibility")
         else:
-            raise error or ImportError("PyTorch import failed")
+            error_msg = "PyTorch import failed"
+            logger.error(error_msg)
+            raise error or ImportError(error_msg)
 
     except Exception as e:
         logger.info(f"Using PyTorch fallbacks due to import issue: {e}")
@@ -190,12 +191,10 @@ if not HAS_TORCH:
     class FallbackModule:
         """Fallback neural network module."""
 
-        pass
 
     class FallbackOptimizer:
         """Fallback optimizer."""
 
-        pass
 
     # Assign fallback objects
     torch = None
@@ -212,7 +211,6 @@ if not HAS_TORCH:
 
     def save(obj, path) -> None:
         """Fallback save function."""
-        pass
 
     def load(path, **kwargs):
         """Fallback load function."""

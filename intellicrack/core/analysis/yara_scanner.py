@@ -24,7 +24,7 @@ import os
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import yara
 
@@ -53,9 +53,9 @@ class YaraMatch:
     rule_name: str
     category: RuleCategory
     offset: int
-    matched_strings: List[Tuple[int, str, bytes]]
-    tags: List[str]
-    meta: Dict[str, Any]
+    matched_strings: list[tuple[int, str, bytes]]
+    tags: list[str]
+    meta: dict[str, Any]
     confidence: float
 
 
@@ -64,12 +64,12 @@ class ProtectionSignature:
     """Signature for a protection scheme."""
 
     name: str
-    version: Optional[str]
+    version: str | None
     category: str
-    signatures: List[bytes]
-    entry_point_pattern: Optional[bytes]
-    section_characteristics: Optional[Dict[str, Any]]
-    imports: Optional[List[str]]
+    signatures: list[bytes]
+    entry_point_pattern: bytes | None
+    section_characteristics: dict[str, Any] | None
+    imports: list[str] | None
 
 
 class YaraScanner:
@@ -146,7 +146,7 @@ class YaraScanner:
         ),
     }
 
-    def __init__(self, rules_dir: Optional[Path] = None) -> None:
+    def __init__(self, rules_dir: Path | None = None) -> None:
         """Initialize YARA scanner.
 
         Args:
@@ -156,20 +156,20 @@ class YaraScanner:
         import threading
 
         self.rules_dir = rules_dir or Path(__file__).parent / "yara_rules"
-        self.compiled_rules: Dict[RuleCategory, yara.Rules] = {}
-        self.custom_rules: Dict[str, yara.Rules] = {}
+        self.compiled_rules: dict[RuleCategory, yara.Rules] = {}
+        self.custom_rules: dict[str, yara.Rules] = {}
 
         # Initialize thread-safe components
-        self._matches: List[YaraMatch] = []
+        self._matches: list[YaraMatch] = []
         self._match_lock = threading.Lock()
         self._scan_progress_lock = threading.Lock()
-        self._scan_progress: Dict[str, Any] = {"status": "idle", "scanned": 0, "total": 0, "matches": 0, "current_region": None}
+        self._scan_progress: dict[str, Any] = {"status": "idle", "scanned": 0, "total": 0, "matches": 0, "current_region": None}
 
         # Initialize rule categories
-        self._rule_categories: Dict[str, RuleCategory] = {}
+        self._rule_categories: dict[str, RuleCategory] = {}
 
         # Initialize execution log with max size limit
-        self._execution_log: List[Dict[str, Any]] = []
+        self._execution_log: list[dict[str, Any]] = []
         self._execution_log_max_size = 10000  # Max entries before rotation
         self._execution_log_lock = threading.Lock()
 
@@ -862,7 +862,7 @@ rule Delphi_Compiler {
             except Exception as e:
                 logger.error(f"Failed to load rule {rule_file}: {e}")
 
-    def scan_file(self, file_path: Path, categories: Optional[List[RuleCategory]] = None) -> List[YaraMatch]:
+    def scan_file(self, file_path: Path, categories: list[RuleCategory] | None = None) -> list[YaraMatch]:
         """Scan a file with YARA rules.
 
         Args:
@@ -923,7 +923,7 @@ rule Delphi_Compiler {
 
         return matches
 
-    def scan_memory(self, pid: int, categories: Optional[List[RuleCategory]] = None) -> List[YaraMatch]:
+    def scan_memory(self, pid: int, categories: list[RuleCategory] | None = None) -> list[YaraMatch]:
         """Scan process memory with YARA rules.
 
         Args:
@@ -964,7 +964,7 @@ rule Delphi_Compiler {
 
         return matches
 
-    def detect_protections(self, file_path: Path) -> Dict[str, Any]:
+    def detect_protections(self, file_path: Path) -> dict[str, Any]:
         """Detect protection schemes in a binary.
 
         Args:
@@ -1011,7 +1011,7 @@ rule Delphi_Compiler {
 
         return protections
 
-    def _detect_by_signatures(self, file_path: Path) -> List[Dict[str, Any]]:
+    def _detect_by_signatures(self, file_path: Path) -> list[dict[str, Any]]:
         """Detect protections using byte signatures.
 
         Args:
@@ -1230,8 +1230,8 @@ rule Delphi_Compiler {
             return False
 
     def scan_process(
-        self, pid: int, categories: Optional[List[RuleCategory]] = None, scan_dlls: bool = True, scan_heap: bool = True,
-    ) -> List[YaraMatch]:
+        self, pid: int, categories: list[RuleCategory] | None = None, scan_dlls: bool = True, scan_heap: bool = True,
+    ) -> list[YaraMatch]:
         """Scan a running process memory with advanced options."""
         import ctypes
         from ctypes import wintypes
@@ -1348,7 +1348,7 @@ rule Delphi_Compiler {
             return matches
 
     def generate_rule(
-        self, name: str, strings: List[str], condition: str = "any of them", add_wildcards: bool = True, add_case_variations: bool = True,
+        self, name: str, strings: list[str], condition: str = "any of them", add_wildcards: bool = True, add_case_variations: bool = True,
     ) -> str:
         """Generate sophisticated YARA rules for licensing protection detection."""
         import re
@@ -1454,7 +1454,7 @@ rule Delphi_Compiler {
 
         return rule_content
 
-    def get_matches(self) -> List[YaraMatch]:
+    def get_matches(self) -> list[YaraMatch]:
         """Get all stored matches (thread-safe)."""
         with self._match_lock:
             return list(self._matches)  # Return copy to prevent external modification
@@ -1465,7 +1465,7 @@ rule Delphi_Compiler {
             self._matches = []
             logger.debug("Cleared all stored matches")
 
-    def _scan_memory_region(self, data: bytes, base_address: int, categories: Optional[List[RuleCategory]]) -> List[YaraMatch]:
+    def _scan_memory_region(self, data: bytes, base_address: int, categories: list[RuleCategory] | None) -> list[YaraMatch]:
         """Scan a memory region with filtered rules."""
         matches = []
 
@@ -1501,7 +1501,7 @@ rule Delphi_Compiler {
 
         return matches
 
-    def _filter_rules_by_category(self, categories: List[RuleCategory]) -> str:
+    def _filter_rules_by_category(self, categories: list[RuleCategory]) -> str:
         """Filter rules by category."""
         filtered = []
         for name, content in self.builtin_rules.items():
@@ -1517,7 +1517,7 @@ rule Delphi_Compiler {
             return self._rule_categories[rule_name]
         return RuleCategory.CUSTOM
 
-    def export_detections(self, detections: Dict[str, Any], output_path: Path) -> None:
+    def export_detections(self, detections: dict[str, Any], output_path: Path) -> None:
         """Export detection results to file.
 
         Args:
@@ -1547,12 +1547,12 @@ rule Delphi_Compiler {
     def scan_process_with_analyzer(
         self,
         license_analyzer,
-        categories: Optional[List[RuleCategory]] = None,
+        categories: list[RuleCategory] | None = None,
         scan_dlls: bool = True,
         scan_heap: bool = True,
         use_cache: bool = True,
         progress_callback=None,
-    ) -> List[YaraMatch]:
+    ) -> list[YaraMatch]:
         """Scan process memory using LicenseAnalyzer for enhanced memory access.
 
         Args:
@@ -1701,7 +1701,7 @@ rule Delphi_Compiler {
             logger.error(f"Process scanning error: {e}")
             return matches
 
-    def _is_dll_region(self, license_analyzer, region: Dict[str, Any]) -> bool:
+    def _is_dll_region(self, license_analyzer, region: dict[str, Any]) -> bool:
         """Check if memory region belongs to a DLL."""
         try:
             # Check if region has IMAGE characteristics
@@ -1720,7 +1720,7 @@ rule Delphi_Compiler {
 
         return False
 
-    def _is_heap_region(self, license_analyzer, region: Dict[str, Any]) -> bool:
+    def _is_heap_region(self, license_analyzer, region: dict[str, Any]) -> bool:
         """Check if memory region belongs to heap."""
         try:
             # Check for typical heap characteristics
@@ -1733,7 +1733,7 @@ rule Delphi_Compiler {
 
         return False
 
-    def _generate_cache_key(self, data: bytes, categories: Optional[List[RuleCategory]]) -> str:
+    def _generate_cache_key(self, data: bytes, categories: list[RuleCategory] | None) -> str:
         """Generate cache key for match results."""
         import hashlib
 
@@ -1743,8 +1743,8 @@ rule Delphi_Compiler {
         return f"{data_hash}_{cat_str}"
 
     def scan_memory_concurrent(
-        self, pid: int, categories: Optional[List[RuleCategory]] = None, max_workers: int = 4, chunk_size: int = 1024 * 1024,
-    ) -> List[YaraMatch]:
+        self, pid: int, categories: list[RuleCategory] | None = None, max_workers: int = 4, chunk_size: int = 1024 * 1024,
+    ) -> list[YaraMatch]:
         """Perform concurrent YARA scanning of process memory.
 
         Args:
@@ -1865,7 +1865,7 @@ rule Delphi_Compiler {
                 self.min_size = min_size
                 self.max_size = max_size
 
-            def apply(self, regions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+            def apply(self, regions: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 """Apply filter to memory regions."""
                 filtered = []
                 for region in regions:
@@ -1902,7 +1902,7 @@ rule Delphi_Compiler {
         self._memory_filters.append(filter_instance)
         return filter_instance
 
-    def get_scan_progress(self) -> Dict[str, Any]:
+    def get_scan_progress(self) -> dict[str, Any]:
         """Get current scanning progress information.
 
         Returns:
@@ -1979,7 +1979,7 @@ rule Delphi_Compiler {
             logger.error(f"Failed to optimize rules: {e}")
             return False
 
-    def _get_rule_source(self, category: RuleCategory) -> Optional[str]:
+    def _get_rule_source(self, category: RuleCategory) -> str | None:
         """Get source code for rule category."""
         source_methods = {
             RuleCategory.PACKER: self._create_packer_rules,
@@ -2062,7 +2062,7 @@ rule Delphi_Compiler {
         filter_common: bool = True,
         extract_urls: bool = True,
         extract_paths: bool = True,
-    ) -> List[str]:
+    ) -> list[str]:
         """Automatically extract interesting strings from binary data.
 
         Args:
@@ -2175,7 +2175,7 @@ rule Delphi_Compiler {
 
         return sorted(extracted)
 
-    def generate_hex_patterns(self, data: bytes, pattern_size: int = 16, step: int = 1, unique_only: bool = True) -> List[str]:
+    def generate_hex_patterns(self, data: bytes, pattern_size: int = 16, step: int = 1, unique_only: bool = True) -> list[str]:
         """Generate hex patterns from binary data.
 
         Args:
@@ -2269,15 +2269,14 @@ rule Delphi_Compiler {
         # Combine conditions
         if len(conditions) == 1:
             return conditions[0]
-        elif len(conditions) == 2:
+        if len(conditions) == 2:
             return f"{conditions[0]} and {conditions[1]}"
-        else:
-            # Group PE and size checks
-            base_checks = " and ".join(conditions[:2]) if len(conditions) > 2 else conditions[0]
-            string_checks = " or ".join(conditions[2:]) if len(conditions) > 2 else conditions[1]
-            return f"{base_checks} and ({string_checks})"
+        # Group PE and size checks
+        base_checks = " and ".join(conditions[:2]) if len(conditions) > 2 else conditions[0]
+        string_checks = " or ".join(conditions[2:]) if len(conditions) > 2 else conditions[1]
+        return f"{base_checks} and ({string_checks})"
 
-    def extract_metadata(self, file_path: Path) -> Dict[str, Any]:
+    def extract_metadata(self, file_path: Path) -> dict[str, Any]:
         """Extract metadata from binary for rule generation.
 
         Args:
@@ -2425,7 +2424,7 @@ rule Delphi_Compiler {
 
         return optimized
 
-    def validate_rule_syntax(self, rule_content: str) -> Tuple[bool, Optional[str]]:
+    def validate_rule_syntax(self, rule_content: str) -> tuple[bool, str | None]:
         """Validate YARA rule syntax.
 
         Args:
@@ -2701,7 +2700,7 @@ rule Delphi_Compiler {
 
         logger.info("Patch database initialized with %d rule patterns", len(self.patch_database))
 
-    def get_patch_suggestions(self, matches: List[YaraMatch], min_confidence: float = 0.70) -> List[Dict[str, Any]]:
+    def get_patch_suggestions(self, matches: list[YaraMatch], min_confidence: float = 0.70) -> list[dict[str, Any]]:
         """Get patch suggestions based on YARA matches.
 
         Args:
@@ -2755,7 +2754,7 @@ rule Delphi_Compiler {
 
         return suggestions
 
-    def _generate_patch_data(self, patch: Dict[str, Any], match: YaraMatch) -> Dict[str, Any]:
+    def _generate_patch_data(self, patch: dict[str, Any], match: YaraMatch) -> dict[str, Any]:
         """Generate actual patch data based on patch type.
 
         Args:
@@ -2816,9 +2815,8 @@ rule Delphi_Compiler {
         # RET
         if return_value == 0:
             return b"\x31\xc0\xc3"  # XOR EAX,EAX; RET
-        else:
-            # MOV EAX, imm32; RET
-            return b"\xb8" + return_value.to_bytes(4, "little") + b"\xc3"
+        # MOV EAX, imm32; RET
+        return b"\xb8" + return_value.to_bytes(4, "little") + b"\xc3"
 
     def _generate_proxy_dll_code(self, dll_name: str) -> str:
         """Generate proxy DLL code template.
@@ -2846,7 +2844,7 @@ extern "C" {{
     }}
 }}"""
 
-    def _assess_patch_risk(self, patch: Dict[str, Any]) -> str:
+    def _assess_patch_risk(self, patch: dict[str, Any]) -> str:
         """Assess risk level of a patch.
 
         Args:
@@ -2862,14 +2860,13 @@ extern "C" {{
 
         if patch["patch_type"] in high_risk_types:
             return "high"
-        elif patch["patch_type"] in medium_risk_types:
+        if patch["patch_type"] in medium_risk_types:
             return "medium"
-        elif patch["patch_type"] in low_risk_types:
+        if patch["patch_type"] in low_risk_types:
             return "low"
-        else:
-            return "unknown"
+        return "unknown"
 
-    def _assess_patch_complexity(self, patch: Dict[str, Any]) -> str:
+    def _assess_patch_complexity(self, patch: dict[str, Any]) -> str:
         """Assess complexity of applying a patch.
 
         Args:
@@ -2885,14 +2882,13 @@ extern "C" {{
 
         if patch["patch_type"] in simple_types:
             return "simple"
-        elif patch["patch_type"] in moderate_types:
+        if patch["patch_type"] in moderate_types:
             return "moderate"
-        elif patch["patch_type"] in complex_types:
+        if patch["patch_type"] in complex_types:
             return "complex"
-        else:
-            return "unknown"
+        return "unknown"
 
-    def recommend_patch_sequence(self, suggestions: List[Dict[str, Any]], target_success_rate: float = 0.80) -> List[Dict[str, Any]]:
+    def recommend_patch_sequence(self, suggestions: list[dict[str, Any]], target_success_rate: float = 0.80) -> list[dict[str, Any]]:
         """Recommend optimal patch sequence based on confidence and dependencies.
 
         Args:
@@ -2955,7 +2951,7 @@ extern "C" {{
 
         return ordered
 
-    def validate_patch(self, patch_data: Dict[str, Any], target_file: Path) -> Tuple[bool, str]:
+    def validate_patch(self, patch_data: dict[str, Any], target_file: Path) -> tuple[bool, str]:
         """Validate if a patch can be safely applied.
 
         Args:
@@ -2986,7 +2982,7 @@ extern "C" {{
         except Exception as e:
             return False, str(e)
 
-    def apply_patch(self, patch_data: Dict[str, Any], target_file: Path, backup: bool = True) -> bool:
+    def apply_patch(self, patch_data: dict[str, Any], target_file: Path, backup: bool = True) -> bool:
         """Apply a patch to target file.
 
         Args:
@@ -3079,7 +3075,7 @@ extern "C" {{
         else:
             self.patch_statistics["failed_patches"] += 1
 
-    def get_patch_metrics(self) -> Dict[str, Any]:
+    def get_patch_metrics(self) -> dict[str, Any]:
         """Get patch effectiveness metrics.
 
         Returns:
@@ -3112,8 +3108,8 @@ extern "C" {{
         logger.info("Connected to debugger for breakpoint integration")
 
     def set_breakpoints_from_matches(
-        self, matches: List[YaraMatch], auto_enable: bool = True, conditional: bool = False,
-    ) -> List[Dict[str, Any]]:
+        self, matches: list[YaraMatch], auto_enable: bool = True, conditional: bool = False,
+    ) -> list[dict[str, Any]]:
         """Set breakpoints at YARA match locations.
 
         Args:
@@ -3251,7 +3247,7 @@ extern "C" {{
 
         return " && ".join(conditions) if conditions else ""
 
-    def _generate_breakpoint_actions(self, match: YaraMatch) -> List[Dict[str, str]]:
+    def _generate_breakpoint_actions(self, match: YaraMatch) -> list[dict[str, str]]:
         """Generate actions to perform when breakpoint is hit.
 
         Args:
@@ -3289,7 +3285,7 @@ extern "C" {{
 
         return actions
 
-    def enable_match_tracing(self, matches: List[YaraMatch], trace_depth: int = 10) -> None:
+    def enable_match_tracing(self, matches: list[YaraMatch], trace_depth: int = 10) -> None:
         """Enable instruction tracing at match locations.
 
         Args:
@@ -3313,7 +3309,7 @@ extern "C" {{
             except Exception as e:
                 logger.error(f"Failed to enable tracing for {match.rule_name}: {e}")
 
-    def log_match_execution(self, match: YaraMatch, context: Dict[str, Any]) -> None:
+    def log_match_execution(self, match: YaraMatch, context: dict[str, Any]) -> None:
         """Log execution context when YARA match location is reached.
 
         Args:
@@ -3363,7 +3359,7 @@ extern "C" {{
         self._match_actions[rule_name] = action_callback
         logger.info(f"Registered action for rule: {rule_name}")
 
-    def trigger_match_action(self, match: YaraMatch, context: Dict[str, Any]) -> Any:
+    def trigger_match_action(self, match: YaraMatch, context: dict[str, Any]) -> Any:
         """Trigger registered action for a match.
 
         Args:
@@ -3389,7 +3385,7 @@ extern "C" {{
 
         return None
 
-    def correlate_matches(self, matches: List[YaraMatch], time_window: float = 1.0) -> List[Dict[str, Any]]:
+    def correlate_matches(self, matches: list[YaraMatch], time_window: float = 1.0) -> list[dict[str, Any]]:
         """Correlate YARA matches to identify related detections.
 
         Args:
@@ -3430,7 +3426,7 @@ extern "C" {{
 
         return {"correlations": correlations, "patterns": patterns}
 
-    def _check_match_correlation(self, match1: YaraMatch, match2: YaraMatch) -> Optional[str]:
+    def _check_match_correlation(self, match1: YaraMatch, match2: YaraMatch) -> str | None:
         """Check if two matches are correlated.
 
         Args:
@@ -3466,7 +3462,7 @@ extern "C" {{
 
         return None
 
-    def _analyze_correlation_patterns(self, correlations: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _analyze_correlation_patterns(self, correlations: list[dict[str, Any]]) -> dict[str, Any]:
         """Analyze patterns in correlated matches.
 
         Args:
@@ -3505,7 +3501,7 @@ extern "C" {{
 
         return patterns
 
-    def generate_breakpoint_script(self, matches: List[YaraMatch], script_type: str = "gdb") -> str:
+    def generate_breakpoint_script(self, matches: list[YaraMatch], script_type: str = "gdb") -> str:
         """Generate debugger script for setting breakpoints.
 
         Args:
@@ -3572,7 +3568,7 @@ extern "C" {{
 
         return "\n".join(script)
 
-    def export_breakpoint_config(self, breakpoints: List[Dict[str, Any]], output_path: Path) -> None:
+    def export_breakpoint_config(self, breakpoints: list[dict[str, Any]], output_path: Path) -> None:
         """Export breakpoint configuration to file.
 
         Args:
@@ -3584,7 +3580,7 @@ extern "C" {{
 
         config = {
             "version": "1.0",
-            "timestamp": os.path.getmtime(output_path.parent) if output_path.parent.exists() else 0,
+            "timestamp": output_path.parent.stat().st_mtime if output_path.parent.exists() else 0,
             "breakpoints": breakpoints,
             "statistics": {"total": len(breakpoints), "hardware": sum(1 for bp in breakpoints if bp["type"] == "hardware")},
         }

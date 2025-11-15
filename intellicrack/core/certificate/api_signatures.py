@@ -66,7 +66,6 @@ DATABASE COVERAGE:
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional
 
 
 class CallingConvention(Enum):
@@ -96,7 +95,7 @@ class APISignature:
 
     name: str
     library: str
-    platforms: List[Platform]
+    platforms: list[Platform]
     calling_convention: CallingConvention
     return_type: str
     description: str
@@ -426,7 +425,7 @@ ALL_SIGNATURES = (
 )
 
 
-def get_signatures_by_library(library_name: str) -> List[APISignature]:
+def get_signatures_by_library(library_name: str) -> list[APISignature]:
     """Get all API signatures for a specific library.
 
     Args:
@@ -443,7 +442,7 @@ def get_signatures_by_library(library_name: str) -> List[APISignature]:
     ]
 
 
-def get_all_signatures() -> List[APISignature]:
+def get_all_signatures() -> list[APISignature]:
     """Get all API signatures.
 
     Returns:
@@ -453,7 +452,7 @@ def get_all_signatures() -> List[APISignature]:
     return ALL_SIGNATURES.copy()
 
 
-def get_signature_by_name(name: str) -> Optional[APISignature]:
+def get_signature_by_name(name: str) -> APISignature | None:
     """Get API signature by function name.
 
     Args:
@@ -469,7 +468,7 @@ def get_signature_by_name(name: str) -> Optional[APISignature]:
     return None
 
 
-def get_signatures_by_platform(platform: Platform) -> List[APISignature]:
+def get_signatures_by_platform(platform: Platform) -> list[APISignature]:
     """Get all API signatures for a specific platform.
 
     Args:
@@ -485,7 +484,7 @@ def get_signatures_by_platform(platform: Platform) -> List[APISignature]:
     ]
 
 
-def get_library_type(library_name: str) -> Optional[str]:
+def get_library_type(library_name: str) -> str | None:
     """Determine the type of TLS library from its name.
 
     Args:
@@ -500,15 +499,15 @@ def get_library_type(library_name: str) -> Optional[str]:
 
     if "winhttp" in library_name_lower:
         return "winhttp"
-    elif "sspicli" in library_name_lower or "secur32" in library_name_lower:
+    if "sspicli" in library_name_lower or "secur32" in library_name_lower:
         return "schannel"
-    elif "crypt32" in library_name_lower:
+    if "crypt32" in library_name_lower:
         return "cryptoapi"
-    elif "libssl" in library_name_lower or "libcrypto" in library_name_lower:
+    if "libssl" in library_name_lower or "libcrypto" in library_name_lower:
         return "openssl"
-    elif "nss3" in library_name_lower or "ssl3" in library_name_lower:
+    if "nss3" in library_name_lower or "ssl3" in library_name_lower:
         return "nss"
-    elif "security" in library_name_lower or "cfnetwork" in library_name_lower:
+    if "security" in library_name_lower or "cfnetwork" in library_name_lower:
         return "ios_security"
 
     return None

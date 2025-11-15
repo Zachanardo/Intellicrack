@@ -562,19 +562,17 @@ class CommercialLicenseAnalyzer:
         if "11" in version:
             # FlexLM 11.x - return LM_OK (0)
             return b"\x31\xc0\xc3"  # xor eax,eax; ret
-        elif "10" in version:
+        if "10" in version:
             # FlexLM 10.x - return 1 (success)
             return b"\xb8\x01\x00\x00\x00\xc3"  # mov eax,1; ret
-        else:
-            # Generic success
-            return b"\x31\xc0\xc3"
+        # Generic success
+        return b"\x31\xc0\xc3"
 
     def _generate_init_hook(self, version: str) -> bytes:
         """Generate init hook based on version."""
         if self._detect_architecture() == "x64":
             return b"\x48\x31\xc0\x48\xff\xc0\xc3"  # xor rax,rax; inc rax; ret
-        else:
-            return b"\x31\xc0\x40\xc3"  # xor eax,eax; inc eax; ret
+        return b"\x31\xc0\x40\xc3"  # xor eax,eax; inc eax; ret
 
     def _detect_crypto_type(self, binary_data: bytes, offset: int) -> str:
         """Detect encryption type used."""
@@ -583,19 +581,17 @@ class CommercialLicenseAnalyzer:
 
         if b"\x67\x45\x23\x01" in search_range:  # TEA magic
             return "TEA"
-        elif b"\x52\x09\x6a\xd5" in search_range:  # MD5 constant
+        if b"\x52\x09\x6a\xd5" in search_range:  # MD5 constant
             return "MD5"
-        else:
-            return "XOR"
+        return "XOR"
 
     def _generate_crypto_hook(self, crypto_type: str) -> bytes:
         """Generate crypto bypass based on type."""
         if self._detect_architecture() == "x64":
             # mov rax,rsi; ret (return input as-is)
             return b"\x48\x89\xf0\xc3"
-        else:
-            # mov eax,[esp+4]; ret (return input)
-            return b"\x8b\x44\x24\x04\xc3"
+        # mov eax,[esp+4]; ret (return input)
+        return b"\x8b\x44\x24\x04\xc3"
 
     def _detect_architecture(self) -> str:
         """Detect binary architecture."""
@@ -865,11 +861,11 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
         """Detect HASP dongle type."""
         if b"HASP HL Pro" in binary_data:
             return "HASP HL Pro"
-        elif b"HASP HL Max" in binary_data:
+        if b"HASP HL Max" in binary_data:
             return "HASP HL Max"
-        elif b"HASP SL" in binary_data:
+        if b"HASP SL" in binary_data:
             return "HASP SL"
-        elif b"HASP HL" in binary_data:
+        if b"HASP HL" in binary_data:
             return "HASP HL"
         return "HASP HL"
 
@@ -910,8 +906,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
         # Return HASP_STATUS_OK (0)
         if self._detect_architecture() == "x64":
             return b"\x48\x31\xc0\xc3"  # xor rax,rax; ret
-        else:
-            return b"\x31\xc0\xc3"  # xor eax,eax; ret
+        return b"\x31\xc0\xc3"  # xor eax,eax; ret
 
     def _generate_hasp_encrypt_patch(self) -> bytes:
         """Generate dynamic encryption patch."""
@@ -945,36 +940,35 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
                     0xC3,  # ret
                 ],
             )
-        else:
-            # 32-bit XOR encryption
-            return bytes(
-                [
-                    0x8B,
-                    0x4C,
-                    0x24,
-                    0x08,  # mov ecx,[esp+8] (length)
-                    0x8B,
-                    0x44,
-                    0x24,
-                    0x04,  # mov eax,[esp+4] (buffer)
-                    0x85,
-                    0xC9,  # test ecx,ecx
-                    0x74,
-                    0x08,  # jz done
-                    # loop:
-                    0x80,
-                    0x30,
-                    0x5A,  # xor byte [eax],0x5a
-                    0x40,  # inc eax
-                    0x49,  # dec ecx
-                    0x75,
-                    0xF9,  # jnz loop
-                    # done:
-                    0x31,
-                    0xC0,  # xor eax,eax
-                    0xC3,  # ret
-                ],
-            )
+        # 32-bit XOR encryption
+        return bytes(
+            [
+                0x8B,
+                0x4C,
+                0x24,
+                0x08,  # mov ecx,[esp+8] (length)
+                0x8B,
+                0x44,
+                0x24,
+                0x04,  # mov eax,[esp+4] (buffer)
+                0x85,
+                0xC9,  # test ecx,ecx
+                0x74,
+                0x08,  # jz done
+                # loop:
+                0x80,
+                0x30,
+                0x5A,  # xor byte [eax],0x5a
+                0x40,  # inc eax
+                0x49,  # dec ecx
+                0x75,
+                0xF9,  # jnz loop
+                # done:
+                0x31,
+                0xC0,  # xor eax,eax
+                0xC3,  # ret
+            ],
+        )
 
     def _generate_hasp_decrypt_patch(self) -> bytes:
         """Generate dynamic decryption patch."""
@@ -1021,36 +1015,35 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
                     0xC3,  # ret
                 ],
             )
-        else:
-            return bytes(
-                [
-                    0x8B,
-                    0x44,
-                    0x24,
-                    0x08,  # mov eax,[esp+8] (info buffer)
-                    0x85,
-                    0xC0,  # test eax,eax
-                    0x74,
-                    0x0C,  # jz skip
-                    0xC7,
-                    0x00,
-                    0x01,
-                    0x00,
-                    0x00,
-                    0x00,  # mov dword [eax],1
-                    0xC7,
-                    0x40,
-                    0x04,
-                    0xFF,
-                    0xFF,
-                    0xFF,
-                    0xFF,  # mov dword [eax+4],-1
-                    # skip:
-                    0x31,
-                    0xC0,  # xor eax,eax
-                    0xC3,  # ret
-                ],
-            )
+        return bytes(
+            [
+                0x8B,
+                0x44,
+                0x24,
+                0x08,  # mov eax,[esp+8] (info buffer)
+                0x85,
+                0xC0,  # test eax,eax
+                0x74,
+                0x0C,  # jz skip
+                0xC7,
+                0x00,
+                0x01,
+                0x00,
+                0x00,
+                0x00,  # mov dword [eax],1
+                0xC7,
+                0x40,
+                0x04,
+                0xFF,
+                0xFF,
+                0xFF,
+                0xFF,  # mov dword [eax+4],-1
+                # skip:
+                0x31,
+                0xC0,  # xor eax,eax
+                0xC3,  # ret
+            ],
+        )
 
     def _is_hasp_check_context(self, binary_data: bytes, offset: int) -> bool:
         """Verify if pattern is in HASP check context."""
@@ -1381,13 +1374,13 @@ console.log('[HASP] Patched at {patch["offset"]}');
         """Detect CodeMeter container type."""
         if b"CmDongle" in binary_data:
             return "CmDongle"
-        elif b"CmActLicense" in binary_data:
+        if b"CmActLicense" in binary_data:
             return "CmActLicense"
-        elif b"CmCloud" in binary_data:
+        if b"CmCloud" in binary_data:
             return "CmCloud"
-        elif b"CmStick/M" in binary_data:
+        if b"CmStick/M" in binary_data:
             return "CmStick/M"
-        elif b"CmStick" in binary_data:
+        if b"CmStick" in binary_data:
             return "CmStick"
         return "CmStick"  # Default
 
@@ -1472,29 +1465,28 @@ console.log('[HASP] Patched at {patch["offset"]}');
                     0xC3,  # ret
                 ],
             )
-        else:
-            return bytes(
-                [
-                    0x8B,
-                    0x44,
-                    0x24,
-                    0x0C,  # mov eax,[esp+0ch] (handle ptr)
-                    0x85,
-                    0xC0,  # test eax,eax
-                    0x74,
-                    0x06,  # jz skip
-                    0xC7,
-                    0x00,
-                    0x01,
-                    0x00,
-                    0x00,
-                    0x00,  # mov dword [eax],1
-                    # skip:
-                    0x31,
-                    0xC0,  # xor eax,eax (CM_OK)
-                    0xC3,  # ret
-                ],
-            )
+        return bytes(
+            [
+                0x8B,
+                0x44,
+                0x24,
+                0x0C,  # mov eax,[esp+0ch] (handle ptr)
+                0x85,
+                0xC0,  # test eax,eax
+                0x74,
+                0x06,  # jz skip
+                0xC7,
+                0x00,
+                0x01,
+                0x00,
+                0x00,
+                0x00,  # mov dword [eax],1
+                # skip:
+                0x31,
+                0xC0,  # xor eax,eax (CM_OK)
+                0xC3,  # ret
+            ],
+        )
 
     def _generate_codemeter_license_info(self) -> bytes:
         """Generate dynamic CodeMeter license info response."""
@@ -1551,50 +1543,49 @@ console.log('[HASP] Patched at {patch["offset"]}');
                     0xC3,  # ret
                 ],
             )
-        else:
-            return bytes(
-                [
-                    0x8B,
-                    0x44,
-                    0x24,
-                    0x08,  # mov eax,[esp+8] (info buffer)
-                    0x85,
-                    0xC0,  # test eax,eax
-                    0x74,
-                    0x18,  # jz done
-                    0xC7,
-                    0x00,
-                    0x01,
-                    0x00,
-                    0x00,
-                    0x00,  # mov dword [eax],1
-                    0xC7,
-                    0x40,
-                    0x04,
-                    0xA0,
-                    0x86,
-                    0x01,
-                    0x00,  # mov dword [eax+4],186a0h
-                    0xC7,
-                    0x40,
-                    0x08,
-                    0x01,
-                    0x00,
-                    0x00,
-                    0x00,  # mov dword [eax+8],1
-                    0xC7,
-                    0x40,
-                    0x0C,
-                    0xFF,
-                    0xFF,
-                    0xFF,
-                    0x7F,  # mov dword [eax+0ch],7fffffffh
-                    # done:
-                    0x31,
-                    0xC0,  # xor eax,eax
-                    0xC3,  # ret
-                ],
-            )
+        return bytes(
+            [
+                0x8B,
+                0x44,
+                0x24,
+                0x08,  # mov eax,[esp+8] (info buffer)
+                0x85,
+                0xC0,  # test eax,eax
+                0x74,
+                0x18,  # jz done
+                0xC7,
+                0x00,
+                0x01,
+                0x00,
+                0x00,
+                0x00,  # mov dword [eax],1
+                0xC7,
+                0x40,
+                0x04,
+                0xA0,
+                0x86,
+                0x01,
+                0x00,  # mov dword [eax+4],186a0h
+                0xC7,
+                0x40,
+                0x08,
+                0x01,
+                0x00,
+                0x00,
+                0x00,  # mov dword [eax+8],1
+                0xC7,
+                0x40,
+                0x0C,
+                0xFF,
+                0xFF,
+                0xFF,
+                0x7F,  # mov dword [eax+0ch],7fffffffh
+                # done:
+                0x31,
+                0xC0,  # xor eax,eax
+                0xC3,  # ret
+            ],
+        )
 
     def _generate_cm_info_response(self, version: str) -> bytes:
         """Generate CodeMeter info response based on version."""
@@ -1607,21 +1598,16 @@ console.log('[HASP] Patched at {patch["offset"]}');
             info_value = 0x07000000  # Default
 
         if self._detect_architecture() == "x64":
-            return bytes(
-                [0x48, 0xB8]
-                + list(struct.pack("<Q", info_value))
-                + [  # mov rax,info_value
-                    0xC3,  # ret
-                ],
-            )
-        else:
-            return bytes(
-                [0xB8]
-                + list(struct.pack("<I", info_value))
-                + [  # mov eax,info_value
-                    0xC3,  # ret
-                ],
-            )
+            return bytes([
+                0x48, 0xB8,
+                *list(struct.pack("<Q", info_value)),
+                0xC3,  # ret - mov rax,info_value
+            ])
+        return bytes([
+            0xB8,
+            *list(struct.pack("<I", info_value)),
+            0xC3,  # ret - mov eax,info_value
+        ])
 
     def _detect_cm_crypto_mode(self, binary_data: bytes, offset: int) -> str:
         """Detect CodeMeter crypto mode."""
@@ -1629,12 +1615,11 @@ console.log('[HASP] Patched at {patch["offset"]}');
 
         if b"CmCryptAes" in context or b"AES" in context:
             return "AES"
-        elif b"CmCrypt3Des" in context or b"3DES" in context:
+        if b"CmCrypt3Des" in context or b"3DES" in context:
             return "3DES"
-        elif b"CmCryptDes" in context or b"DES" in context:
+        if b"CmCryptDes" in context or b"DES" in context:
             return "DES"
-        else:
-            return "AES"  # Default
+        return "AES"  # Default
 
     def _generate_cm_crypto_hook(self, mode: str) -> bytes:
         """Generate crypto hook based on mode."""
@@ -1676,35 +1661,34 @@ console.log('[HASP] Patched at {patch["offset"]}');
                     0xC3,  # ret
                 ],
             )
-        else:
-            return bytes(
-                [
-                    0x8B,
-                    0x44,
-                    0x24,
-                    0x04,  # mov eax,[esp+4] (buffer)
-                    0x8B,
-                    0x4C,
-                    0x24,
-                    0x08,  # mov ecx,[esp+8] (length)
-                    0x85,
-                    0xC9,  # test ecx,ecx
-                    0x74,
-                    0x08,  # jz done
-                    # loop:
-                    0x80,
-                    0x30,
-                    0xAA,  # xor byte [eax],0aah
-                    0x40,  # inc eax
-                    0x49,  # dec ecx
-                    0x75,
-                    0xF9,  # jnz loop
-                    # done:
-                    0x31,
-                    0xC0,  # xor eax,eax
-                    0xC3,  # ret
-                ],
-            )
+        return bytes(
+            [
+                0x8B,
+                0x44,
+                0x24,
+                0x04,  # mov eax,[esp+4] (buffer)
+                0x8B,
+                0x4C,
+                0x24,
+                0x08,  # mov ecx,[esp+8] (length)
+                0x85,
+                0xC9,  # test ecx,ecx
+                0x74,
+                0x08,  # jz done
+                # loop:
+                0x80,
+                0x30,
+                0xAA,  # xor byte [eax],0aah
+                0x40,  # inc eax
+                0x49,  # dec ecx
+                0x75,
+                0xF9,  # jnz loop
+                # done:
+                0x31,
+                0xC0,  # xor eax,eax
+                0xC3,  # ret
+            ],
+        )
 
     def _generate_cm_secure_data_hook(self) -> bytes:
         """Generate secure data response hook."""
@@ -1745,36 +1729,35 @@ console.log('[HASP] Patched at {patch["offset"]}');
                     0xC3,  # ret
                 ],
             )
-        else:
-            return bytes(
-                [
-                    0x8B,
-                    0x44,
-                    0x24,
-                    0x04,  # mov eax,[esp+4] (data buffer)
-                    0x85,
-                    0xC0,  # test eax,eax
-                    0x74,
-                    0x0C,  # jz done
-                    0xC7,
-                    0x00,
-                    0xEF,
-                    0xBE,
-                    0xAD,
-                    0xDE,  # mov dword [eax],0deadbeefh
-                    0xC7,
-                    0x40,
-                    0x04,
-                    0xBE,
-                    0xBA,
-                    0xFE,
-                    0xCA,  # mov dword [eax+4],0cafebabeh
-                    # done:
-                    0x31,
-                    0xC0,  # xor eax,eax
-                    0xC3,  # ret
-                ],
-            )
+        return bytes(
+            [
+                0x8B,
+                0x44,
+                0x24,
+                0x04,  # mov eax,[esp+4] (data buffer)
+                0x85,
+                0xC0,  # test eax,eax
+                0x74,
+                0x0C,  # jz done
+                0xC7,
+                0x00,
+                0xEF,
+                0xBE,
+                0xAD,
+                0xDE,  # mov dword [eax],0deadbeefh
+                0xC7,
+                0x40,
+                0x04,
+                0xBE,
+                0xBA,
+                0xFE,
+                0xCA,  # mov dword [eax+4],0cafebabeh
+                # done:
+                0x31,
+                0xC0,  # xor eax,eax
+                0xC3,  # ret
+            ],
+        )
 
     def _is_cm_check_context(self, binary_data: bytes, offset: int) -> bool:
         """Verify if pattern is in CodeMeter check context."""

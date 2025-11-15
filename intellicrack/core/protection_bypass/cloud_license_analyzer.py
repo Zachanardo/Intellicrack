@@ -13,7 +13,7 @@ import threading
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 import frida
@@ -50,11 +50,11 @@ class CloudEndpoint:
 
     url: str
     method: str
-    headers: Dict[str, str]
-    parameters: Dict[str, Any]
-    response_schema: Dict[str, Any]
+    headers: dict[str, str]
+    parameters: dict[str, Any]
+    response_schema: dict[str, Any]
     authentication_type: str
-    rate_limit: Optional[int] = None
+    rate_limit: int | None = None
     last_seen: datetime = field(default_factory=datetime.now)
 
 
@@ -64,10 +64,10 @@ class LicenseToken:
 
     token_type: str
     value: str
-    expires_at: Optional[datetime]
-    refresh_token: Optional[str]
-    scope: Optional[List[str]]
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    expires_at: datetime | None
+    refresh_token: str | None
+    scope: list[str] | None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class CloudLicenseAnalyzer:
@@ -163,7 +163,7 @@ class CloudLicenseAnalyzer:
 
         self.proxy_master.addons.add(CloudInterceptor(self))
 
-    def generate_host_certificate(self, hostname: str) -> Tuple[bytes, bytes]:
+    def generate_host_certificate(self, hostname: str) -> tuple[bytes, bytes]:
         """Generate SSL certificate for intercepting HTTPS traffic to specific host."""
         ca_key_obj = serialization.load_pem_private_key(self.ca_key, password=None, backend=default_backend())
 
@@ -210,7 +210,7 @@ class CloudLicenseAnalyzer:
 
         return cert_pem, key_pem
 
-    def start_interception(self, target_process: Optional[int] = None) -> None:
+    def start_interception(self, target_process: int | None = None) -> None:
         """Start MITM proxy to intercept cloud license traffic from target process."""
         self.target_process = target_process
 
@@ -423,7 +423,7 @@ class CloudLicenseAnalyzer:
 
         return endpoint
 
-    def _analyze_response_schema(self, response: mitmproxy.http.Response) -> Dict[str, Any]:
+    def _analyze_response_schema(self, response: mitmproxy.http.Response) -> dict[str, Any]:
         schema = {
             "status_code": response.status_code,
             "headers": dict(response.headers),
@@ -450,7 +450,7 @@ class CloudLicenseAnalyzer:
 
         return schema
 
-    def _extract_json_schema(self, data: Any, depth: int = 0) -> Dict[str, Any]:
+    def _extract_json_schema(self, data: Any, depth: int = 0) -> dict[str, Any]:
         if depth > 5:
             return {"type": "any"}
 
@@ -459,19 +459,17 @@ class CloudLicenseAnalyzer:
             for key, value in data.items():
                 properties[key] = self._extract_json_schema(value, depth + 1)
             return {"type": "object", "properties": properties}
-        elif isinstance(data, list):
+        if isinstance(data, list):
             if data:
                 return {"type": "array", "items": self._extract_json_schema(data[0], depth + 1)}
-            else:
-                return {"type": "array", "items": {"type": "any"}}
-        elif isinstance(data, str):
+            return {"type": "array", "items": {"type": "any"}}
+        if isinstance(data, str):
             return {"type": "string", "example": data[:100] if len(data) > 100 else data}
-        elif isinstance(data, (int, float)):
+        if isinstance(data, (int, float)):
             return {"type": "number", "example": data}
-        elif isinstance(data, bool):
+        if isinstance(data, bool):
             return {"type": "boolean", "example": data}
-        else:
-            return {"type": "any"}
+        return {"type": "any"}
 
     def _detect_authentication_type(self, request: mitmproxy.http.Request) -> str:
         auth_header = request.headers.get("authorization", "").lower()
@@ -480,17 +478,16 @@ class CloudLicenseAnalyzer:
             token = auth_header[7:]
             if self._is_jwt_token(token):
                 return "jwt"
-            else:
-                return "bearer_token"
-        elif auth_header.startswith("basic "):
+            return "bearer_token"
+        if auth_header.startswith("basic "):
             return "basic"
-        elif auth_header.startswith("digest "):
+        if auth_header.startswith("digest "):
             return "digest"
-        elif "api-key" in request.headers or "x-api-key" in request.headers:
+        if "api-key" in request.headers or "x-api-key" in request.headers:
             return "api_key"
-        elif "oauth" in auth_header:
+        if "oauth" in auth_header:
             return "oauth"
-        elif request.cookies:
+        if request.cookies:
             for cookie_name in request.cookies:
                 if "session" in cookie_name.lower() or "token" in cookie_name.lower():
                     return "cookie_based"
@@ -510,7 +507,7 @@ class CloudLicenseAnalyzer:
         except (OSError, PermissionError):
             return False
 
-    def extract_license_tokens(self, request: mitmproxy.http.Request, response: mitmproxy.http.Response) -> List[LicenseToken]:
+    def extract_license_tokens(self, request: mitmproxy.http.Request, response: mitmproxy.http.Response) -> list[LicenseToken]:
         """Extract license tokens from intercepted HTTP traffic."""
         tokens = []
 
@@ -545,7 +542,7 @@ class CloudLicenseAnalyzer:
 
         return tokens
 
-    def _analyze_bearer_token(self, token_value: str) -> Optional[LicenseToken]:
+    def _analyze_bearer_token(self, token_value: str) -> LicenseToken | None:
         if self._is_jwt_token(token_value):
             try:
                 header = jwt.get_unverified_header(token_value)
@@ -570,7 +567,7 @@ class CloudLicenseAnalyzer:
 
         return LicenseToken(token_type=TOKEN_TYPE_BEARER, value=token_value, expires_at=None, refresh_token=None, scope=None)
 
-    def _extract_tokens_from_json(self, data: Any, tokens: List[LicenseToken] = None) -> List[LicenseToken]:
+    def _extract_tokens_from_json(self, data: Any, tokens: list[LicenseToken] = None) -> list[LicenseToken]:
         if tokens is None:
             tokens = []
 
@@ -628,12 +625,11 @@ class CloudLicenseAnalyzer:
         """Generate valid license token of specified type for bypassing cloud checks."""
         if token_type == TOKEN_TYPE_JWT:
             return self._generate_jwt_token(**kwargs)
-        elif token_type == TOKEN_TYPE_API_KEY:
+        if token_type == TOKEN_TYPE_API_KEY:
             return self._generate_api_key(**kwargs)
-        elif token_type == TOKEN_TYPE_LICENSE_KEY:
+        if token_type == TOKEN_TYPE_LICENSE_KEY:
             return self._generate_license_key(**kwargs)
-        else:
-            return self._generate_generic_token(**kwargs)
+        return self._generate_generic_token(**kwargs)
 
     def _generate_jwt_token(
         self,
@@ -641,7 +637,7 @@ class CloudLicenseAnalyzer:
         subject: str = "user",
         audience: str = None,
         expires_in: int = 3600,
-        claims: Dict[str, Any] = None,
+        claims: dict[str, Any] = None,
         **kwargs,
     ) -> str:
         now = datetime.utcnow()
@@ -702,7 +698,7 @@ class CloudLicenseAnalyzer:
     def _generate_generic_token(self, length: int = 64, **kwargs) -> str:
         return hashlib.sha256(os.urandom(32)).hexdigest()[:length]
 
-    def refresh_token(self, token: LicenseToken) -> Optional[LicenseToken]:
+    def refresh_token(self, token: LicenseToken) -> LicenseToken | None:
         """Attempt to refresh expired license token using refresh_token grant."""
         if not token.refresh_token:
             return None
@@ -732,11 +728,9 @@ class CloudLicenseAnalyzer:
 
             if "application/json" in headers.get("content-type", ""):
                 return requests.post(url, json=data, headers=headers, timeout=30)
-            else:
-                return requests.post(url, data=data, headers=headers, timeout=30)
-        else:
-            params = {"refresh_token": refresh_token}
-            return requests.get(url, params=params, headers=headers, timeout=30)
+            return requests.post(url, data=data, headers=headers, timeout=30)
+        params = {"refresh_token": refresh_token}
+        return requests.get(url, params=params, headers=headers, timeout=30)
 
     def emulate_license_server(self, port: int = 9090) -> None:
         """Start local emulated license server to respond to intercepted requests."""
@@ -785,7 +779,7 @@ class CloudLicenseAnalyzer:
 
             return jsonify(response)
 
-        app.run(host="0.0.0.0", port=port, ssl_context="adhoc")
+        app.run(host="127.0.0.1", port=port, ssl_context="adhoc")
 
     def export_analysis(self, filepath: Path) -> bool:
         """Export intercepted cloud license analysis data to file."""
@@ -816,7 +810,7 @@ class CloudLicenseAnalyzer:
             logger.error(f"Failed to export analysis: {e}")
             return False
 
-    def _serialize_endpoint(self, endpoint: CloudEndpoint) -> Dict[str, Any]:
+    def _serialize_endpoint(self, endpoint: CloudEndpoint) -> dict[str, Any]:
         return {
             "url": endpoint.url,
             "method": endpoint.method,
@@ -828,7 +822,7 @@ class CloudLicenseAnalyzer:
             "last_seen": endpoint.last_seen.isoformat(),
         }
 
-    def _serialize_token(self, token: LicenseToken) -> Dict[str, Any]:
+    def _serialize_token(self, token: LicenseToken) -> dict[str, Any]:
         return {
             "token_type": token.token_type,
             "value": token.value[:20] + "..." if len(token.value) > 20 else token.value,
@@ -946,11 +940,11 @@ class CloudLicenseBypasser:
 
         return False
 
-    def _get_valid_token(self, endpoint: CloudEndpoint) -> Optional[LicenseToken]:
+    def _get_valid_token(self, endpoint: CloudEndpoint) -> LicenseToken | None:
         for _token_key, token in self.analyzer.license_tokens.items():
             if token.expires_at and token.expires_at > datetime.now():
                 return token
-            elif token.refresh_token:
+            if token.refresh_token:
                 new_token = self.analyzer.refresh_token(token)
                 if new_token:
                     return new_token

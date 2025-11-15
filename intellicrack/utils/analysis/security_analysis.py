@@ -20,7 +20,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # Import availability checks from correct handlers
 from intellicrack.handlers.capstone_handler import CAPSTONE_AVAILABLE
@@ -50,7 +50,7 @@ except ImportError as e:
     pefile = None
 
 
-def check_buffer_overflow(binary_path: str, functions: Optional[List[str]] = None) -> Dict[str, Any]:
+def check_buffer_overflow(binary_path: str, functions: list[str] | None = None) -> dict[str, Any]:
     """Check for potential buffer overflow vulnerabilities.
 
     Args:
@@ -181,7 +181,7 @@ def check_buffer_overflow(binary_path: str, functions: Optional[List[str]] = Non
     return results
 
 
-def _analyze_stack_patterns(binary_path: str, data: bytes) -> Dict[str, Any]:
+def _analyze_stack_patterns(binary_path: str, data: bytes) -> dict[str, Any]:
     """Analyze stack-based patterns using Capstone disassembly.
 
     Args:
@@ -270,7 +270,6 @@ def _analyze_stack_patterns(binary_path: str, data: bytes) -> Dict[str, Any]:
                             dangerous_stack_ops += 1
                     except (ValueError, AttributeError, Exception) as e:
                         logger.error("Error in security_analysis: %s", e)
-                        pass
 
         if dangerous_stack_ops > 0:
             results["patterns"].append({"pattern": "Large stack allocations", "count": dangerous_stack_ops, "risk": "high"})
@@ -281,7 +280,7 @@ def _analyze_stack_patterns(binary_path: str, data: bytes) -> Dict[str, Any]:
     return results
 
 
-def _analyze_patterns_without_disassembly(data: bytes) -> Dict[str, Any]:
+def _analyze_patterns_without_disassembly(data: bytes) -> dict[str, Any]:
     """Fallback analysis without disassembly when Capstone is not available.
 
     Args:
@@ -344,7 +343,7 @@ def _analyze_patterns_without_disassembly(data: bytes) -> Dict[str, Any]:
     return results
 
 
-def _detect_vulnerability_patterns(data: bytes) -> List[Dict[str, Any]]:
+def _detect_vulnerability_patterns(data: bytes) -> list[dict[str, Any]]:
     """Detect specific vulnerability patterns in binary data.
 
     Args:
@@ -404,7 +403,7 @@ def _detect_vulnerability_patterns(data: bytes) -> List[Dict[str, Any]]:
     return patterns
 
 
-def _analyze_rop_gadgets(data: bytes) -> Dict[str, Any]:
+def _analyze_rop_gadgets(data: bytes) -> dict[str, Any]:
     """Analyze ROP (Return Oriented Programming) gadgets.
 
     Args:
@@ -476,7 +475,7 @@ def _analyze_rop_gadgets(data: bytes) -> Dict[str, Any]:
     return results
 
 
-def _analyze_string_operations(data: bytes) -> List[Dict[str, Any]]:
+def _analyze_string_operations(data: bytes) -> list[dict[str, Any]]:
     """Analyze string operations for potential buffer overflows.
 
     Args:
@@ -562,7 +561,7 @@ def _analyze_string_operations(data: bytes) -> List[Dict[str, Any]]:
     return patterns
 
 
-def check_for_memory_leaks(binary_path: str, process_pid: Optional[int] = None) -> Dict[str, Any]:
+def check_for_memory_leaks(binary_path: str, process_pid: int | None = None) -> dict[str, Any]:
     """Check for potential memory leaks.
 
     Args:
@@ -692,7 +691,7 @@ def check_for_memory_leaks(binary_path: str, process_pid: Optional[int] = None) 
     return results
 
 
-def check_memory_usage(process_pid: int) -> Dict[str, Any]:
+def check_memory_usage(process_pid: int) -> dict[str, Any]:
     """Check current memory usage of a process.
 
     Args:
@@ -762,7 +761,7 @@ def check_memory_usage(process_pid: int) -> Dict[str, Any]:
         return {"error": str(e)}
 
 
-def bypass_tpm_checks(binary_path: str) -> Dict[str, Any]:
+def bypass_tpm_checks(binary_path: str) -> dict[str, Any]:
     """Generate patches to bypass TPM (Trusted Platform Module) checks.
 
     Args:
@@ -839,7 +838,7 @@ def bypass_tpm_checks(binary_path: str) -> Dict[str, Any]:
     return results
 
 
-def scan_protectors(binary_path: str) -> Dict[str, Any]:
+def scan_protectors(binary_path: str) -> dict[str, Any]:
     """Scan for various protection mechanisms.
 
     Args:
@@ -946,7 +945,7 @@ def scan_protectors(binary_path: str) -> Dict[str, Any]:
     return results
 
 
-def run_tpm_bypass(binary_path: str, output_path: Optional[str] = None) -> Dict[str, Any]:
+def run_tpm_bypass(binary_path: str, output_path: str | None = None) -> dict[str, Any]:
     """Run TPM bypass on a binary.
 
     Args:
@@ -970,7 +969,7 @@ def run_tpm_bypass(binary_path: str, output_path: Optional[str] = None) -> Dict[
     return results
 
 
-def run_vm_bypass(binary_path: str, output_path: Optional[str] = None) -> Dict[str, Any]:
+def run_vm_bypass(binary_path: str, output_path: str | None = None) -> dict[str, Any]:
     """Run VM detection bypass on a binary.
 
     Args:

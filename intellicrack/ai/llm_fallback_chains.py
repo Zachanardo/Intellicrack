@@ -221,7 +221,7 @@ class FallbackChain:
             return self.model_configs
 
         # Sort by success rate and response time
-        def model_score(item):
+        def model_score(item: tuple[str, Any]):
             model_id, _ = item
             health = self.health_stats[model_id]
 

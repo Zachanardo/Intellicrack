@@ -24,6 +24,7 @@ import ssl
 import urllib.error
 import urllib.parse
 import urllib.request
+from typing import Any, Dict, Generator, Optional, Union
 
 from intellicrack.utils.logger import logger
 
@@ -39,7 +40,9 @@ implementations for HTTP operations used in Intellicrack.
 try:
     import requests
     from requests import (
-        ConnectionError,
+        ConnectionError as _RequestsConnectionError,
+    )
+    from requests import (
         HTTPError,
         Response,
         Session,
@@ -65,7 +68,7 @@ try:
         SSLError,
         TooManyRedirects,
     )
-    from requests.exceptions import Timeout as TimeoutError
+    from requests.exceptions import Timeout as _RequestsTimeout
 
     # Create aliases for backward compatibility
     ConnectTimeoutError = ConnectTimeout
@@ -92,52 +95,42 @@ except ImportError as e:
     class RequestError(Exception):
         """Base exception for requests."""
 
-        pass
 
     class ConnectionError(RequestError):
         """Connection error."""
 
-        pass
 
     class HTTPError(RequestError):
         """HTTP error."""
 
-        pass
 
     class TimeoutError(RequestError):
         """Timeout error."""
 
-        pass
 
     class TooManyRedirectsError(RequestError):
         """Too many redirects."""
 
-        pass
 
     class InvalidURLError(RequestError):
         """Invalid URL."""
 
-        pass
 
     class ConnectTimeoutError(TimeoutError):
         """Connection timeout."""
 
-        pass
 
     class ReadTimeoutError(TimeoutError):
         """Read timeout."""
 
-        pass
 
     class SSLError(ConnectionError):
         """SSL error."""
 
-        pass
 
     class ProxyError(ConnectionError):
         """Proxy error."""
 
-        pass
 
     # Response class
     class Response:
@@ -158,53 +151,123 @@ except ImportError as e:
             self.raw = None
             self.history = []
 
-        def json(self):
-            """Parse JSON response."""
+        def json(self) -> Any:
+            """Parse JSON response.
+
+            Returns:
+                Any: Parsed JSON object from response content.
+
+            Raises:
+                json.JSONDecodeError: If response content is not valid JSON.
+
+            """
             if not self.text:
                 self.text = self.content.decode(self.encoding)
             return json_module.loads(self.text)
 
         def raise_for_status(self) -> None:
-            """Raise exception for bad status."""
+            """Raise exception for bad status codes.
+
+            Raises:
+                HTTPError: If response status code indicates an error (4xx or 5xx).
+
+            """
             if 400 <= self.status_code < 600:
                 raise HTTPError(f"{self.status_code} Error: {self.reason}")
 
         @property
-        def ok(self):
-            """Check if response is successful."""
+        def ok(self) -> bool:
+            """Check if response is successful.
+
+            Returns:
+                bool: True if status code is less than 400, False otherwise.
+
+            """
             return self.status_code < 400
 
-        def iter_content(self, chunk_size=1024):
-            """Iterate over response content."""
+        def iter_content(self, chunk_size: int = 1024) -> Generator[bytes, None, None]:
+            """Iterate over response content in chunks.
+
+            Args:
+                chunk_size: Size of each chunk in bytes. Defaults to 1024.
+
+            Yields:
+                bytes: Chunks of response content.
+
+            """
             for i in range(0, len(self.content), chunk_size):
                 yield self.content[i : i + chunk_size]
 
-        def iter_lines(self, chunk_size=512, decode_unicode=True):
-            """Iterate over response lines."""
+        def iter_lines(self, chunk_size: int = 512, decode_unicode: bool = True) -> Generator[str, None, None]:
+            """Iterate over response lines.
+
+            Args:
+                chunk_size: Size of each chunk in bytes. Defaults to 512.
+                decode_unicode: Whether to decode response as text. Defaults to True.
+
+            Yields:
+                str: Individual lines from response content.
+
+            """
             text = self.text if decode_unicode else self.content.decode(self.encoding)
             yield from text.splitlines()
 
     # Case-insensitive dictionary
     class CaseInsensitiveDict(dict):
-        """Case-insensitive dictionary for headers."""
+        """Case-insensitive dictionary for headers.
 
-        def __init__(self, data=None) -> None:
-            """Initialize dict."""
+        Provides dict-like access with case-insensitive string keys, useful
+        for HTTP headers which are case-insensitive.
+        """
+
+        def __init__(self, data: Optional[Dict[Any, Any]] = None) -> None:
+            """Initialize case-insensitive dictionary.
+
+            Args:
+                data: Optional dictionary to initialize with.
+
+            """
             super().__init__()
             if data:
                 for key, value in data.items():
                     self[key] = value
 
-        def __setitem__(self, key, value) -> None:
-            """Set item with case-insensitive key."""
+        def __setitem__(self, key: Any, value: Any) -> None:
+            """Set item with case-insensitive key.
+
+            Args:
+                key: Dictionary key (lowercased if string).
+                value: Dictionary value.
+
+            """
             super().__setitem__(key.lower() if isinstance(key, str) else key, value)
 
-        def __getitem__(self, key):
-            """Get item with case-insensitive key."""
+        def __getitem__(self, key: Any) -> Any:
+            """Get item with case-insensitive key.
+
+            Args:
+                key: Dictionary key (lowercased if string).
+
+            Returns:
+                Any: Value associated with the key.
+
+            Raises:
+                KeyError: If key not found in dictionary.
+
+            """
             return super().__getitem__(key.lower() if isinstance(key, str) else key)
 
-        def get(self, key, default=None):
-            """Get with case-insensitive key."""
+        def get(self, key: Any, default: Any = None) -> Any:
+            """Get value with case-insensitive key.
+
+            Args:
+                key: Dictionary key (lowercased if string).
+                default: Default value if key not found.
+
+            Returns:
+                Any: Value associated with key, or default if not found.
+
+            """
             try:
                 return self[key]
             except KeyError:
@@ -212,32 +275,80 @@ except ImportError as e:
 
     # Cookie jar
     class RequestsCookieJar(dict):
-        """Cookie jar for storing cookies."""
+        """Cookie jar for storing cookies.
 
-        def set(self, name, value, domain=None, path=None) -> None:
-            """Set cookie."""
+        Provides a dict-like interface for managing HTTP cookies.
+        """
+
+        def set(self, name: str, value: str, domain: Optional[str] = None, path: Optional[str] = None) -> None:
+            """Set cookie in jar.
+
+            Args:
+                name: Cookie name.
+                value: Cookie value.
+                domain: Optional cookie domain.
+                path: Optional cookie path.
+
+            """
             self[name] = value
 
-        def get(self, name, default=None):
-            """Get cookie."""
+        def get(self, name: str, default: Any = None) -> Any:
+            """Get cookie from jar.
+
+            Args:
+                name: Cookie name.
+                default: Default value if cookie not found.
+
+            Returns:
+                Any: Cookie value or default if not found.
+
+            """
             return super().get(name, default)
 
     # Prepared request
     class PreparedRequest:
-        """Prepared HTTP request."""
+        """Prepared HTTP request.
+
+        Represents a prepared HTTP request with all components assembled
+        and ready for transmission.
+        """
 
         def __init__(self) -> None:
             """Initialize prepared request."""
             self.method = "GET"
             self.url = ""
             self.headers = CaseInsensitiveDict()
-            self.body = None
-            self.hooks = {}
+            self.body: Optional[bytes] = None
+            self.hooks: Dict[str, Any] = {}
 
         def prepare(
-            self, method=None, url=None, headers=None, files=None, data=None, params=None, auth=None, cookies=None, hooks=None, json=None,
+            self,
+            method: Optional[str] = None,
+            url: Optional[str] = None,
+            headers: Optional[Dict[str, Any]] = None,
+            files: Optional[Any] = None,
+            data: Optional[Union[Dict[str, Any], bytes, str]] = None,
+            params: Optional[Dict[str, Any]] = None,
+            auth: Optional[Any] = None,
+            cookies: Optional[Dict[str, Any]] = None,
+            hooks: Optional[Dict[str, Any]] = None,
+            json: Optional[Any] = None,
         ) -> None:
-            """Prepare the request."""
+            """Prepare the HTTP request.
+
+            Args:
+                method: HTTP method (GET, POST, etc.).
+                url: Request URL.
+                headers: Dictionary of HTTP headers.
+                files: Files to upload (currently unused).
+                data: Request body data (form or raw).
+                params: URL query parameters.
+                auth: Authentication handler.
+                cookies: Cookies to include.
+                hooks: Event hooks (currently unused).
+                json: JSON data for request body.
+
+            """
             self.method = method or self.method
             self.url = url or self.url
 
@@ -245,7 +356,6 @@ except ImportError as e:
                 self.headers.update(headers)
 
             if params:
-                # Add params to URL
                 parsed = urllib.parse.urlparse(self.url)
                 query = urllib.parse.parse_qs(parsed.query)
                 query.update(params)
@@ -264,105 +374,249 @@ except ImportError as e:
 
     # Session class
     class Session:
-        """HTTP session with connection pooling and cookie persistence."""
+        """HTTP session with connection pooling and cookie persistence.
+
+        Maintains state across multiple HTTP requests including headers,
+        cookies, and configuration options.
+        """
 
         def __init__(self) -> None:
-            """Initialize session."""
-            self.headers = CaseInsensitiveDict()
-            self.cookies = RequestsCookieJar()
-            self.auth = None
-            self.proxies = {}
-            self.verify = True
-            self.cert = None
-            self.max_redirects = 30
-            self.trust_env = True
-            self.adapters = {}
+            """Initialize HTTP session."""
+            self.headers: CaseInsensitiveDict = CaseInsensitiveDict()
+            self.cookies: RequestsCookieJar = RequestsCookieJar()
+            self.auth: Optional[Any] = None
+            self.proxies: Dict[str, str] = {}
+            self.verify: Union[bool, str] = True
+            self.cert: Optional[str] = None
+            self.max_redirects: int = 30
+            self.trust_env: bool = True
+            self.adapters: Dict[str, Any] = {}
 
-        def request(self, method, url, **kwargs):
-            """Send HTTP request."""
+        def request(self, method: str, url: str, **kwargs: Any) -> Response:
+            """Send HTTP request.
+
+            Args:
+                method: HTTP method (GET, POST, etc.).
+                url: Request URL.
+                **kwargs: Additional request parameters.
+
+            Returns:
+                Response: HTTP response object.
+
+            """
             return request(method, url, session=self, **kwargs)
 
-        def get(self, url, **kwargs):
-            """Send GET request."""
+        def get(self, url: str, **kwargs: Any) -> Response:
+            """Send GET request.
+
+            Args:
+                url: Request URL.
+                **kwargs: Additional request parameters.
+
+            Returns:
+                Response: HTTP response object.
+
+            """
             return self.request("GET", url, **kwargs)
 
-        def post(self, url, data=None, json=None, **kwargs):
-            """Send POST request."""
+        def post(self, url: str, data: Optional[Any] = None, json: Optional[Any] = None, **kwargs: Any) -> Response:
+            """Send POST request.
+
+            Args:
+                url: Request URL.
+                data: Request body data.
+                json: JSON request body.
+                **kwargs: Additional request parameters.
+
+            Returns:
+                Response: HTTP response object.
+
+            """
             return self.request("POST", url, data=data, json=json, **kwargs)
 
-        def put(self, url, data=None, **kwargs):
-            """Send PUT request."""
+        def put(self, url: str, data: Optional[Any] = None, **kwargs: Any) -> Response:
+            """Send PUT request.
+
+            Args:
+                url: Request URL.
+                data: Request body data.
+                **kwargs: Additional request parameters.
+
+            Returns:
+                Response: HTTP response object.
+
+            """
             return self.request("PUT", url, data=data, **kwargs)
 
-        def patch(self, url, data=None, **kwargs):
-            """Send PATCH request."""
+        def patch(self, url: str, data: Optional[Any] = None, **kwargs: Any) -> Response:
+            """Send PATCH request.
+
+            Args:
+                url: Request URL.
+                data: Request body data.
+                **kwargs: Additional request parameters.
+
+            Returns:
+                Response: HTTP response object.
+
+            """
             return self.request("PATCH", url, data=data, **kwargs)
 
-        def delete(self, url, **kwargs):
-            """Send DELETE request."""
+        def delete(self, url: str, **kwargs: Any) -> Response:
+            """Send DELETE request.
+
+            Args:
+                url: Request URL.
+                **kwargs: Additional request parameters.
+
+            Returns:
+                Response: HTTP response object.
+
+            """
             return self.request("DELETE", url, **kwargs)
 
-        def head(self, url, **kwargs):
-            """Send HEAD request."""
+        def head(self, url: str, **kwargs: Any) -> Response:
+            """Send HEAD request.
+
+            Args:
+                url: Request URL.
+                **kwargs: Additional request parameters.
+
+            Returns:
+                Response: HTTP response object.
+
+            """
             return self.request("HEAD", url, **kwargs)
 
-        def options(self, url, **kwargs):
-            """Send OPTIONS request."""
+        def options(self, url: str, **kwargs: Any) -> Response:
+            """Send OPTIONS request.
+
+            Args:
+                url: Request URL.
+                **kwargs: Additional request parameters.
+
+            Returns:
+                Response: HTTP response object.
+
+            """
             return self.request("OPTIONS", url, **kwargs)
 
         def close(self) -> None:
-            """Close session."""
-            pass
+            """Close session and clean up resources."""
 
-        def __enter__(self):
-            """Context manager entry."""
+        def __enter__(self) -> "Session":
+            """Context manager entry.
+
+            Returns:
+                Session: Session instance for use in with statement.
+
+            """
             return self
 
-        def __exit__(self, *args):
-            """Context manager exit."""
+        def __exit__(self, *args: object) -> None:
+            """Context manager exit.
+
+            Args:
+                *args: Exception information (exc_type, exc_val, exc_tb).
+
+            """
             self.close()
 
     # Auth classes
     class HTTPBasicAuth:
-        """HTTP Basic Authentication."""
+        """HTTP Basic Authentication.
 
-        def __init__(self, username, password) -> None:
-            """Initialize auth."""
+        Provides Basic authentication credentials for HTTP requests.
+        """
+
+        def __init__(self, username: str, password: str) -> None:
+            """Initialize HTTP Basic authentication.
+
+            Args:
+                username: Username credential.
+                password: Password credential.
+
+            """
             self.username = username
             self.password = password
 
     class HTTPDigestAuth:
-        """HTTP Digest Authentication."""
+        """HTTP Digest Authentication.
 
-        def __init__(self, username, password) -> None:
-            """Initialize auth."""
+        Provides Digest authentication credentials for HTTP requests.
+        """
+
+        def __init__(self, username: str, password: str) -> None:
+            """Initialize HTTP Digest authentication.
+
+            Args:
+                username: Username credential.
+                password: Password credential.
+
+            """
             self.username = username
             self.password = password
 
     # Adapter and retry classes
     class HTTPAdapter:
-        """HTTP adapter for connection pooling."""
+        """HTTP adapter for connection pooling.
 
-        def __init__(self, pool_connections=10, pool_maxsize=10, max_retries=0) -> None:
-            """Initialize adapter."""
+        Configures connection pool parameters for HTTP sessions.
+        """
+
+        def __init__(self, pool_connections: int = 10, pool_maxsize: int = 10, max_retries: int = 0) -> None:
+            """Initialize HTTP adapter.
+
+            Args:
+                pool_connections: Number of connection pools to cache. Defaults to 10.
+                pool_maxsize: Maximum connections per pool. Defaults to 10.
+                max_retries: Maximum retry attempts. Defaults to 0.
+
+            """
             self.pool_connections = pool_connections
             self.pool_maxsize = pool_maxsize
             self.max_retries = max_retries
 
     class Retry:
-        """Retry configuration."""
+        """Retry configuration.
 
-        def __init__(self, total=10, read=None, connect=None, backoff_factor=0) -> None:
-            """Initialize retry."""
+        Defines retry behavior for failed requests.
+        """
+
+        def __init__(self, total: int = 10, read: Optional[int] = None, connect: Optional[int] = None, backoff_factor: float = 0) -> None:
+            """Initialize retry configuration.
+
+            Args:
+                total: Total number of retries. Defaults to 10.
+                read: Number of read retries. Defaults to None.
+                connect: Number of connection retries. Defaults to None.
+                backoff_factor: Backoff factor for retries. Defaults to 0.
+
+            """
             self.total = total
             self.read = read
             self.connect = connect
             self.backoff_factor = backoff_factor
 
     # Main request function
-    def request(method, url, **kwargs):
-        """Send HTTP request using urllib."""
-        # Extract parameters
+    def request(method: str, url: str, **kwargs: Any) -> Response:
+        """Send HTTP request using urllib.
+
+        Args:
+            method: HTTP method (GET, POST, etc.).
+            url: Request URL.
+            **kwargs: Additional request parameters including params, data, json,
+                headers, cookies, auth, timeout, verify, etc.
+
+        Returns:
+            Response: HTTP response object.
+
+        Raises:
+            TimeoutError: If request times out.
+            ConnectionError: If connection fails.
+            RequestError: For other request errors.
+
+        """
         params = kwargs.get("params")
         data = kwargs.get("data")
         json_data = kwargs.get("json")
@@ -483,48 +737,126 @@ except ImportError as e:
 
         except urllib.error.URLError as e:
             if isinstance(e.reason, socket.timeout):
-                raise TimeoutError(f"Request timed out: {url}") from e
-            else:
-                raise ConnectionError(f"Connection error: {e.reason}") from e
+                error_msg = f"Request timed out: {url}"
+                logger.error(error_msg)
+                raise TimeoutError(error_msg) from e
+            error_msg = f"Connection error: {e.reason}"
+            logger.error(error_msg)
+            raise ConnectionError(error_msg) from e
 
         except builtins.TimeoutError as e:
-            raise TimeoutError(f"Request timed out: {url}") from e
+            error_msg = f"Request timed out: {url}"
+            logger.error(error_msg)
+            raise TimeoutError(error_msg) from e
 
         except Exception as e:
-            raise RequestError(f"Request failed: {e}") from e
+            error_msg = f"Request failed: {e}"
+            logger.error(error_msg)
+            raise RequestError(error_msg) from e
 
     # Convenience functions
-    def get(url, **kwargs):
-        """Send GET request."""
+    def get(url: str, **kwargs: Any) -> Response:
+        """Send GET request.
+
+        Args:
+            url: Request URL.
+            **kwargs: Additional request parameters.
+
+        Returns:
+            Response: HTTP response object.
+
+        """
         return request("GET", url, **kwargs)
 
-    def post(url, data=None, json=None, **kwargs):
-        """Send POST request."""
+    def post(url: str, data: Optional[Any] = None, json: Optional[Any] = None, **kwargs: Any) -> Response:
+        """Send POST request.
+
+        Args:
+            url: Request URL.
+            data: Request body data.
+            json: JSON request body.
+            **kwargs: Additional request parameters.
+
+        Returns:
+            Response: HTTP response object.
+
+        """
         return request("POST", url, data=data, json=json, **kwargs)
 
-    def put(url, data=None, **kwargs):
-        """Send PUT request."""
+    def put(url: str, data: Optional[Any] = None, **kwargs: Any) -> Response:
+        """Send PUT request.
+
+        Args:
+            url: Request URL.
+            data: Request body data.
+            **kwargs: Additional request parameters.
+
+        Returns:
+            Response: HTTP response object.
+
+        """
         return request("PUT", url, data=data, **kwargs)
 
-    def patch(url, data=None, **kwargs):
-        """Send PATCH request."""
+    def patch(url: str, data: Optional[Any] = None, **kwargs: Any) -> Response:
+        """Send PATCH request.
+
+        Args:
+            url: Request URL.
+            data: Request body data.
+            **kwargs: Additional request parameters.
+
+        Returns:
+            Response: HTTP response object.
+
+        """
         return request("PATCH", url, data=data, **kwargs)
 
-    def delete(url, **kwargs):
-        """Send DELETE request."""
+    def delete(url: str, **kwargs: Any) -> Response:
+        """Send DELETE request.
+
+        Args:
+            url: Request URL.
+            **kwargs: Additional request parameters.
+
+        Returns:
+            Response: HTTP response object.
+
+        """
         return request("DELETE", url, **kwargs)
 
-    def head(url, **kwargs):
-        """Send HEAD request."""
+    def head(url: str, **kwargs: Any) -> Response:
+        """Send HEAD request.
+
+        Args:
+            url: Request URL.
+            **kwargs: Additional request parameters.
+
+        Returns:
+            Response: HTTP response object.
+
+        """
         return request("HEAD", url, **kwargs)
 
-    def options(url, **kwargs):
-        """Send OPTIONS request."""
+    def options(url: str, **kwargs: Any) -> Response:
+        """Send OPTIONS request.
+
+        Args:
+            url: Request URL.
+            **kwargs: Additional request parameters.
+
+        Returns:
+            Response: HTTP response object.
+
+        """
         return request("OPTIONS", url, **kwargs)
 
     # Create module-like object
     class FallbackRequests:
-        """Fallback requests module."""
+        """Fallback requests module.
+
+        Provides a drop-in replacement for the requests library using only
+        Python standard library components (urllib).
+        """
 
         # Functions
         request = staticmethod(request)

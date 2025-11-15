@@ -927,7 +927,7 @@ class GuidedWorkflowWizard(QWizard):
         """Update the file information label."""
         try:
             file_size = os.path.getsize(file_path)
-            file_mod_time = datetime.datetime.fromtimestamp(os.path.getmtime(file_path))
+            file_mod_time = datetime.datetime.fromtimestamp(Path(file_path).stat().st_mtime)
 
             info_text = f"<b>File:</b> {os.path.basename(file_path)}<br>"
             info_text += f"<b>Size:</b> {self.format_size(file_size)}<br>"

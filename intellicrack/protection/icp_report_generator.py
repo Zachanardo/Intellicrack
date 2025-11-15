@@ -84,7 +84,9 @@ class ICPReportGenerator:
             return self._generate_text_report(result, options, report_name)
         if options.output_format == "json":
             return self._generate_json_report(result, options, report_name)
-        raise ValueError(f"Unsupported output format: {options.output_format}")
+        error_msg = f"Unsupported output format: {options.output_format}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
     def _generate_html_report(
         self,

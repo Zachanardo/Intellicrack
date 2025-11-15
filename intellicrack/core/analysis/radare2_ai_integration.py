@@ -466,7 +466,7 @@ class R2AIEngine:
                 if i < len(probabilities):
                     results[vuln_type] = {
                         "probability": float(probabilities[i]),
-                        "predicted": bool(predictions == i if hasattr(predictions, "__iter__") else predictions == i),
+                        "predicted": bool(predictions == i),
                     }
 
             return {

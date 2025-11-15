@@ -16,7 +16,7 @@ import logging
 import struct
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import r2pipe
 
@@ -58,7 +58,7 @@ class PatchInfo:
     original_bytes: bytes
     patched_bytes: bytes
     description: str
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
 
 class Radare2AdvancedPatcher:
@@ -72,9 +72,9 @@ class Radare2AdvancedPatcher:
 
         """
         self.binary_path = binary_path
-        self.r2: Optional[r2pipe.open] = None
-        self.patches: List[PatchInfo] = []
-        self.architecture: Optional[Architecture] = None
+        self.r2: r2pipe.open | None = None
+        self.patches: list[PatchInfo] = []
+        self.architecture: Architecture | None = None
         self.bits: int = 0
         self.endianness: str = "little"
 
@@ -146,7 +146,7 @@ class Radare2AdvancedPatcher:
         }
         return nop_map.get(self.architecture, b"\x90")
 
-    def modify_jump_table(self, table_address: int, entries: List[int]) -> PatchInfo:
+    def modify_jump_table(self, table_address: int, entries: list[int]) -> PatchInfo:
         """Modify jump table entries."""
         entry_size = 8 if self.bits == 64 else 4
         table_size = len(entries) * entry_size
@@ -179,7 +179,7 @@ class Radare2AdvancedPatcher:
         logger.info(f"Modified jump table at {hex(table_address)}")
         return patch
 
-    def patch_function_prologue(self, func_address: int, skip_bytes: int = 0, custom_prologue: Optional[bytes] = None) -> PatchInfo:
+    def patch_function_prologue(self, func_address: int, skip_bytes: int = 0, custom_prologue: bytes | None = None) -> PatchInfo:
         """Patch function prologue."""
         if custom_prologue:
             prologue_bytes = custom_prologue
@@ -244,7 +244,7 @@ class Radare2AdvancedPatcher:
 
         return prologue
 
-    def patch_function_epilogue(self, func_address: int, func_size: int, custom_epilogue: Optional[bytes] = None) -> PatchInfo:
+    def patch_function_epilogue(self, func_address: int, func_size: int, custom_epilogue: bytes | None = None) -> PatchInfo:
         """Patch function epilogue."""
         # Find epilogue location
         epilogue_address = self._find_epilogue(func_address, func_size)
@@ -384,8 +384,7 @@ class Radare2AdvancedPatcher:
             logger.info(f"Inverted conditional jump at {hex(address)}: {mnemonic} -> {inverted_mnemonic}")
             return patch
 
-        else:
-            raise ValueError(f"Cannot invert non-conditional jump: {mnemonic}")
+        raise ValueError(f"Cannot invert non-conditional jump: {mnemonic}")
 
     def _get_inverted_jump_bytes(self, original: bytes, original_mnemonic: str, inverted_mnemonic: str) -> bytes:
         """Get inverted jump instruction bytes."""
@@ -514,29 +513,27 @@ class Radare2AdvancedPatcher:
         if value == 0:
             # mov xN, xzr
             return struct.pack("<I", 0xAA1F03E0 | reg)
-        elif value <= 0xFFFF:
+        if value <= 0xFFFF:
             # movz xN, #value
             return struct.pack("<I", 0xD2800000 | (value << 5) | reg)
-        else:
-            # Multiple instructions needed for large values
-            instructions = []
-            # movz xN, #(value & 0xFFFF)
-            instructions.append(struct.pack("<I", 0xD2800000 | ((value & 0xFFFF) << 5) | reg))
-            # movk xN, #(value >> 16), lsl #16
-            if value > 0xFFFF:
-                instructions.append(struct.pack("<I", 0xF2A00000 | (((value >> 16) & 0xFFFF) << 5) | reg))
-            return b"".join(instructions)
+        # Multiple instructions needed for large values
+        instructions = []
+        # movz xN, #(value & 0xFFFF)
+        instructions.append(struct.pack("<I", 0xD2800000 | ((value & 0xFFFF) << 5) | reg))
+        # movk xN, #(value >> 16), lsl #16
+        if value > 0xFFFF:
+            instructions.append(struct.pack("<I", 0xF2A00000 | (((value >> 16) & 0xFFFF) << 5) | reg))
+        return b"".join(instructions)
 
     def _encode_arm_mov_immediate(self, reg: int, value: int) -> bytes:
         """Encode ARM mov immediate instruction."""
         if value <= 0xFF:
             # mov rN, #value
             return struct.pack("<I", 0xE3A00000 | (reg << 12) | value)
-        else:
-            # movw rN, #(value & 0xFFFF)
-            low = value & 0xFFFF
-            inst = 0xE3000000 | (reg << 12) | ((low & 0xF000) << 4) | (low & 0xFFF)
-            return struct.pack("<I", inst)
+        # movw rN, #(value & 0xFFFF)
+        low = value & 0xFFFF
+        inst = 0xE3000000 | (reg << 12) | ((low & 0xF000) << 4) | (low & 0xFFF)
+        return struct.pack("<I", inst)
 
     def redirect_call_target(self, call_address: int, new_target: int) -> PatchInfo:
         """Redirect function call to new target."""
@@ -740,16 +737,15 @@ class Radare2AdvancedPatcher:
                     # Absolute indirect jump through memory
                     # Load address and jump pattern (x86-like)
                     new_bytes = b"\xff\x25\x00\x00\x00\x00" + struct.pack("<Q", cave)
+            # 32-bit absolute jump
+            elif abs(new_target - call_address) < 0x7FFFFFFF:
+                # Relative jump
+                offset = new_target - (call_address + 5)
+                new_bytes = b"\xe9" + struct.pack("<i", offset)
             else:
-                # 32-bit absolute jump
-                if abs(new_target - call_address) < 0x7FFFFFFF:
-                    # Relative jump
-                    offset = new_target - (call_address + 5)
-                    new_bytes = b"\xe9" + struct.pack("<i", offset)
-                else:
-                    # Absolute jump via register
-                    new_bytes = b"\xb8" + struct.pack("<I", new_target)  # mov eax, target
-                    new_bytes += b"\xff\xe0"  # jmp eax
+                # Absolute jump via register
+                new_bytes = b"\xb8" + struct.pack("<I", new_target)  # mov eax, target
+                new_bytes += b"\xff\xe0"  # jmp eax
 
             # Ensure we don't exceed original instruction size
             if len(new_bytes) > len(original_bytes):
@@ -1031,7 +1027,7 @@ class Radare2AdvancedPatcher:
 
         raise ValueError(f"No suitable code cave found for {size} bytes")
 
-    def defeat_anti_debugging(self) -> List[PatchInfo]:
+    def defeat_anti_debugging(self) -> list[PatchInfo]:
         """Apply anti-debugging defeat patches."""
         patches_applied = []
 

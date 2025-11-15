@@ -98,7 +98,6 @@ import logging
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Set
 
 import lief
 
@@ -115,7 +114,7 @@ class PinningLocation:
     function_name: str
     pinning_type: str
     confidence: float
-    evidence: List[str] = field(default_factory=list)
+    evidence: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -123,10 +122,10 @@ class PinningReport:
     """Comprehensive pinning detection report."""
 
     binary_path: str
-    detected_pins: List[PinningInfo]
-    pinning_locations: List[PinningLocation]
-    pinning_methods: List[str]
-    bypass_recommendations: List[str]
+    detected_pins: list[PinningInfo]
+    pinning_locations: list[PinningLocation]
+    pinning_methods: list[str]
+    bypass_recommendations: list[str]
     confidence: float
     platform: str
 
@@ -145,11 +144,11 @@ class PinningDetector:
 
     def __init__(self) -> None:
         """Initialize pinning detector."""
-        self.binary: Optional[lief.Binary] = None
-        self.binary_path: Optional[Path] = None
-        self.platform: Optional[str] = None
+        self.binary: lief.Binary | None = None
+        self.binary_path: Path | None = None
+        self.platform: str | None = None
 
-    def scan_for_certificate_hashes(self, binary_path: str) -> List[str]:
+    def scan_for_certificate_hashes(self, binary_path: str) -> list[str]:
         """Scan binary for certificate hash strings.
 
         Detects SHA-256 and SHA-1 hashes that may be pinned certificates.
@@ -190,7 +189,7 @@ class PinningDetector:
         logger.info(f"Found {len(hashes)} potential certificate hashes")
         return hashes
 
-    def detect_pinning_logic(self, binary_path: str) -> List[PinningLocation]:
+    def detect_pinning_logic(self, binary_path: str) -> list[PinningLocation]:
         """Detect certificate pinning logic in binary.
 
         Args:
@@ -245,7 +244,7 @@ class PinningDetector:
 
         logger.debug(f"Detected platform: {self.platform}")
 
-    def _detect_android_pinning_logic(self) -> List[PinningLocation]:
+    def _detect_android_pinning_logic(self) -> list[PinningLocation]:
         """Detect Android-specific pinning logic."""
         locations = []
 
@@ -270,7 +269,7 @@ class PinningDetector:
 
         return locations
 
-    def _detect_ios_pinning_logic(self) -> List[PinningLocation]:
+    def _detect_ios_pinning_logic(self) -> list[PinningLocation]:
         """Detect iOS-specific pinning logic."""
         locations = []
 
@@ -315,7 +314,7 @@ class PinningDetector:
 
         return locations
 
-    def _detect_windows_pinning_logic(self) -> List[PinningLocation]:
+    def _detect_windows_pinning_logic(self) -> list[PinningLocation]:
         """Detect Windows-specific pinning logic."""
         locations = []
 
@@ -344,7 +343,7 @@ class PinningDetector:
 
         return locations
 
-    def _detect_linux_pinning_logic(self) -> List[PinningLocation]:
+    def _detect_linux_pinning_logic(self) -> list[PinningLocation]:
         """Detect Linux-specific pinning logic."""
         locations = []
 
@@ -373,7 +372,7 @@ class PinningDetector:
 
         return locations
 
-    def detect_okhttp_pinning(self, binary_path: str) -> List[PinningInfo]:
+    def detect_okhttp_pinning(self, binary_path: str) -> list[PinningInfo]:
         """Detect OkHttp pinning (Android-specific).
 
         Args:
@@ -396,7 +395,7 @@ class PinningDetector:
             logger.error(f"OkHttp detection failed: {e}")
             return []
 
-    def detect_afnetworking_pinning(self, binary_path: str) -> List[PinningInfo]:
+    def detect_afnetworking_pinning(self, binary_path: str) -> list[PinningInfo]:
         """Detect AFNetworking pinning (iOS-specific).
 
         Args:
@@ -436,7 +435,7 @@ class PinningDetector:
 
         return pins
 
-    def detect_alamofire_pinning(self, binary_path: str) -> List[PinningInfo]:
+    def detect_alamofire_pinning(self, binary_path: str) -> list[PinningInfo]:
         """Detect Alamofire pinning (iOS-specific).
 
         Args:
@@ -476,7 +475,7 @@ class PinningDetector:
 
         return pins
 
-    def find_pinning_cross_refs(self, binary_path: str) -> Dict[str, List[int]]:
+    def find_pinning_cross_refs(self, binary_path: str) -> dict[str, list[int]]:
         """Find cross-references to certificate hashes.
 
         Args:
@@ -613,7 +612,7 @@ class PinningDetector:
 
         return report
 
-    def _generate_bypass_recommendations(self, pinning_methods: List[str], detected_pins: List[PinningInfo]) -> List[str]:
+    def _generate_bypass_recommendations(self, pinning_methods: list[str], detected_pins: list[PinningInfo]) -> list[str]:
         """Generate bypass recommendations based on detected pinning."""
         recommendations = []
 
@@ -645,7 +644,7 @@ class PinningDetector:
 
         return recommendations
 
-    def _extract_strings(self) -> Set[str]:
+    def _extract_strings(self) -> set[str]:
         """Extract strings from binary."""
         if not self.binary_path:
             return set()
@@ -661,7 +660,7 @@ class PinningDetector:
             logger.debug(f"String extraction failed: {e}")
             return set()
 
-    def _get_imported_functions(self) -> Set[str]:
+    def _get_imported_functions(self) -> set[str]:
         """Get list of imported function names."""
         if not self.binary:
             return set()
@@ -675,12 +674,7 @@ class PinningDetector:
                         if func.name:
                             imports.add(func.name)
 
-            elif isinstance(self.binary, lief.ELF.Binary):
-                for symbol in self.binary.imported_symbols:
-                    if symbol.name:
-                        imports.add(symbol.name)
-
-            elif isinstance(self.binary, lief.MachO.Binary):
+            elif isinstance(self.binary, (lief.ELF.Binary, lief.MachO.Binary)):
                 for symbol in self.binary.imported_symbols:
                     if symbol.name:
                         imports.add(symbol.name)

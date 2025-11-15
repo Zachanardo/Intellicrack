@@ -10,7 +10,6 @@ import winreg
 from ctypes import wintypes
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional
 
 try:
     import pefile
@@ -46,13 +45,13 @@ class StarForceDetection:
     """Results from StarForce detection analysis."""
 
     detected: bool
-    version: Optional[StarForceVersion]
-    drivers: List[str]
-    services: List[str]
-    registry_keys: List[str]
-    protected_sections: List[str]
+    version: StarForceVersion | None
+    drivers: list[str]
+    services: list[str]
+    registry_keys: list[str]
+    protected_sections: list[str]
     confidence: float
-    details: Dict[str, any]
+    details: dict[str, any]
 
 
 class StarForceDetector:
@@ -132,9 +131,8 @@ class StarForceDetector:
 
         except Exception as e:
             self.logger.debug(f"Failed to setup Windows API functions: {e}")
-            pass
 
-    def _compile_yara_rules(self) -> Optional[any]:
+    def _compile_yara_rules(self) -> any | None:
         """Compile YARA rules for StarForce signature detection."""
         if not YARA_AVAILABLE:
             return None
@@ -259,7 +257,7 @@ class StarForceDetector:
             details=details,
         )
 
-    def _detect_drivers(self) -> List[str]:
+    def _detect_drivers(self) -> list[str]:
         """Detect StarForce kernel drivers."""
         detected = []
 
@@ -272,7 +270,7 @@ class StarForceDetector:
 
         return detected
 
-    def _detect_services(self) -> List[str]:
+    def _detect_services(self) -> list[str]:
         """Detect StarForce Windows services."""
         if not self._advapi32:
             return []
@@ -297,11 +295,10 @@ class StarForceDetector:
 
         except Exception as e:
             self.logger.debug(f"Error detecting StarForce services: {e}")
-            pass
 
         return detected
 
-    def _detect_registry_keys(self) -> List[str]:
+    def _detect_registry_keys(self) -> list[str]:
         """Detect StarForce registry keys."""
         detected = []
 
@@ -315,7 +312,7 @@ class StarForceDetector:
 
         return detected
 
-    def _detect_protected_sections(self, target_path: Path) -> List[str]:
+    def _detect_protected_sections(self, target_path: Path) -> list[str]:
         """Detect StarForce protected PE sections."""
         if not PEFILE_AVAILABLE:
             return []
@@ -339,11 +336,10 @@ class StarForceDetector:
 
         except Exception as e:
             self.logger.debug(f"Error analyzing PE sections: {e}")
-            pass
 
         return detected
 
-    def _detect_version(self, target_path: Path) -> Optional[StarForceVersion]:
+    def _detect_version(self, target_path: Path) -> StarForceVersion | None:
         """Detect StarForce version from executable."""
         if not PEFILE_AVAILABLE:
             return None
@@ -363,20 +359,19 @@ class StarForceDetector:
 
             if b"sfdrv01" in data or b"sfvfs02" in data:
                 return StarForceVersion(3, 0, 0, "Standard")
-            elif b"sfvfs03" in data:
+            if b"sfvfs03" in data:
                 return StarForceVersion(4, 0, 0, "Standard")
-            elif b"sfvfs04" in data:
+            if b"sfvfs04" in data:
                 return StarForceVersion(5, 0, 0, "Standard")
 
             pe.close()
 
         except Exception as e:
             self.logger.debug(f"Error detecting StarForce version: {e}")
-            pass
 
         return None
 
-    def _parse_version_string(self, version_str: str) -> Optional[StarForceVersion]:
+    def _parse_version_string(self, version_str: str) -> StarForceVersion | None:
         """Parse version string to extract StarForce version."""
         import re
 
@@ -394,7 +389,7 @@ class StarForceDetector:
 
         return None
 
-    def _yara_scan(self, target_path: Path) -> List[Dict[str, str]]:
+    def _yara_scan(self, target_path: Path) -> list[dict[str, str]]:
         """Scan executable with YARA rules."""
         if not self._yara_rules:
             return []
@@ -411,12 +406,11 @@ class StarForceDetector:
 
         except Exception as e:
             self.logger.debug(f"Error in YARA signature detection: {e}")
-            pass
 
         return matches
 
     def _calculate_confidence(
-        self, drivers: List[str], services: List[str], registry_keys: List[str], sections: List[str], yara_matches: List[Dict[str, str]],
+        self, drivers: list[str], services: list[str], registry_keys: list[str], sections: list[str], yara_matches: list[dict[str, str]],
     ) -> float:
         """Calculate detection confidence score."""
         score = 0.0
@@ -438,7 +432,7 @@ class StarForceDetector:
 
         return min(score, 1.0)
 
-    def _get_driver_paths(self, drivers: List[str]) -> Dict[str, str]:
+    def _get_driver_paths(self, drivers: list[str]) -> dict[str, str]:
         """Get full paths for detected drivers."""
         paths = {}
         system_root = Path(r"C:\Windows\System32\drivers")
@@ -450,7 +444,7 @@ class StarForceDetector:
 
         return paths
 
-    def _get_service_status(self, services: List[str]) -> Dict[str, str]:
+    def _get_service_status(self, services: list[str]) -> dict[str, str]:
         """Get status information for detected services."""
         if not self._advapi32:
             return {}
@@ -493,7 +487,6 @@ class StarForceDetector:
 
         except Exception as e:
             self.logger.debug(f"Error querying service status: {e}")
-            pass
 
         return status_info
 

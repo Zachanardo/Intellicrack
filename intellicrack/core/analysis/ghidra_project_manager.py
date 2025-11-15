@@ -16,7 +16,7 @@ import zipfile
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import lz4.frame
 import msgpack
@@ -32,11 +32,11 @@ class ProjectVersion:
     timestamp: datetime
     binary_hash: str
     analysis_data: bytes  # Compressed analysis result
-    metadata: Dict[str, Any]
-    parent_version: Optional[str] = None
+    metadata: dict[str, Any]
+    parent_version: str | None = None
     author: str = "intellicrack"
     description: str = ""
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -48,10 +48,10 @@ class GhidraProject:
     binary_path: str
     created_at: datetime
     modified_at: datetime
-    versions: List[ProjectVersion]
+    versions: list[ProjectVersion]
     current_version: str
-    collaborators: List[str]
-    settings: Dict[str, Any]
+    collaborators: list[str]
+    settings: dict[str, Any]
     is_locked: bool = False
 
 
@@ -194,7 +194,7 @@ class GhidraProjectManager:
 
         return project
 
-    def load_project(self, project_id: str) -> Optional[GhidraProject]:
+    def load_project(self, project_id: str) -> GhidraProject | None:
         """Load a project from persistent storage."""
         # Check cache first
         if project_id in self.cache["projects"]:
@@ -274,7 +274,7 @@ class GhidraProjectManager:
         return project
 
     def save_version(
-        self, project_id: str, analysis_result: GhidraAnalysisResult, description: str = "", tags: List[str] = None,
+        self, project_id: str, analysis_result: GhidraAnalysisResult, description: str = "", tags: list[str] = None,
     ) -> ProjectVersion:
         """Save a new version of the project."""
         project = self.load_project(project_id)
@@ -318,7 +318,7 @@ class GhidraProjectManager:
 
         return version
 
-    def load_version(self, project_id: str, version_id: str) -> Optional[GhidraAnalysisResult]:
+    def load_version(self, project_id: str, version_id: str) -> GhidraAnalysisResult | None:
         """Load a specific version of the analysis."""
         # Check cache
         cache_key = f"{project_id}_{version_id}"
@@ -341,7 +341,7 @@ class GhidraProjectManager:
 
         return analysis_result
 
-    def diff_versions(self, project_id: str, version1_id: str, version2_id: str) -> Dict[str, Any]:
+    def diff_versions(self, project_id: str, version1_id: str, version2_id: str) -> dict[str, Any]:
         """Perform binary diffing between two versions."""
         analysis1 = self.load_version(project_id, version1_id)
         analysis2 = self.load_version(project_id, version2_id)
@@ -428,7 +428,7 @@ class GhidraProjectManager:
         # Check parameters
         return func1.parameters != func2.parameters
 
-    def _analyze_function_changes(self, func1: GhidraFunction, func2: GhidraFunction) -> Dict[str, Any]:
+    def _analyze_function_changes(self, func1: GhidraFunction, func2: GhidraFunction) -> dict[str, Any]:
         """Analyze specific changes in a function."""
         changes = {}
 

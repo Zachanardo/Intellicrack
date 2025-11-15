@@ -29,7 +29,7 @@ import zlib
 from collections import Counter
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any
 
 import numpy as np
 
@@ -41,14 +41,12 @@ except ImportError:
     HAS_LZMA = False
     lzma = None
 
+
 from ..utils.logger import get_logger
 from .analysis_cache import AnalysisCache, get_analysis_cache
-from .icp_backend import ICPScanResult, get_icp_backend
-from .icp_backend import ScanMode as ICPScanMode
+from .icp_backend import ICPScanResult
 from .intellicrack_protection_advanced import (
     AdvancedProtectionAnalysis,
-    IntellicrackAdvancedProtection,
-    ScanMode,
 )
 
 logger = get_logger(__name__)
@@ -56,7 +54,25 @@ logger = get_logger(__name__)
 if not HAS_LZMA:
     logger.warning("LZMA module not available - using zlib compression fallback")
 
-logger = get_logger(__name__)
+
+def _get_advanced_protection():
+    from .intellicrack_protection_advanced import IntellicrackAdvancedProtection
+    return IntellicrackAdvancedProtection
+
+
+def _get_scan_mode():
+    from .intellicrack_protection_advanced import ScanMode
+    return ScanMode
+
+
+def _get_icp_scan_mode():
+    from .icp_backend import ScanMode as ICPScanMode
+    return ICPScanMode
+
+
+def _get_icp_backend_func():
+    from .icp_backend import get_icp_backend
+    return get_icp_backend
 
 
 class AnalysisSource(Enum):
@@ -124,7 +140,7 @@ class UnifiedProtectionEngine:
         self.enable_heuristics = enable_heuristics
 
         # Initialize engines
-        self.protection_detector = IntellicrackAdvancedProtection() if enable_protection else None
+        self.protection_detector = _get_advanced_protection()() if enable_protection else None
 
         # Initialize advanced cache
         if cache_config:
@@ -236,6 +252,7 @@ class UnifiedProtectionEngine:
     def _run_protection_analysis(self, file_path: str, deep_scan: bool) -> AdvancedProtectionAnalysis | None:
         """Run protection analysis."""
         try:
+            ScanMode = _get_scan_mode()
             scan_mode = ScanMode.DEEP if deep_scan else ScanMode.NORMAL
             return self.protection_detector.detect_protections_advanced(
                 file_path,
@@ -395,10 +412,10 @@ class UnifiedProtectionEngine:
     def _run_icp_analysis(self, file_path: str, deep_scan: bool) -> ICPScanResult | None:
         """Run ICP engine analysis."""
         try:
-            # Convert scan mode
+            ICPScanMode = _get_icp_scan_mode()
             icp_mode = ICPScanMode.DEEP if deep_scan else ICPScanMode.NORMAL
 
-            # Run async analysis in sync context
+            get_icp_backend = _get_icp_backend_func()
             icp_backend = get_icp_backend()
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
@@ -633,6 +650,7 @@ class UnifiedProtectionEngine:
         # Quick protection scan
         if self.protection_detector:
             try:
+                ScanMode = _get_scan_mode()
                 analysis = self.protection_detector.detect_protections_advanced(
                     file_path,
                     scan_mode=ScanMode.NORMAL,
@@ -730,7 +748,7 @@ class UnifiedProtectionEngine:
         stats = self.cache.get_stats()
         return stats.total_entries, stats.total_size_bytes / (1024 * 1024)
 
-    def _perform_advanced_entropy_analysis(self, data: bytes) -> Dict[str, Any]:
+    def _perform_advanced_entropy_analysis(self, data: bytes) -> dict[str, Any]:
         """Perform comprehensive entropy analysis using multiple techniques.
 
         Args:
@@ -804,7 +822,7 @@ class UnifiedProtectionEngine:
 
         return entropy
 
-    def _sliding_window_entropy(self, data: bytes, window_size: int = 256, step_size: int = 128) -> List[float]:
+    def _sliding_window_entropy(self, data: bytes, window_size: int = 256, step_size: int = 128) -> list[float]:
         """Calculate entropy using sliding window technique.
 
         Args:
@@ -845,10 +863,9 @@ class UnifiedProtectionEngine:
                 compressed = lzma.compress(data, preset=9)
                 complexity = len(compressed) / len(data)
                 return min(1.0, complexity)
-            else:
-                compressed = zlib.compress(data, level=9)
-                complexity = len(compressed) / len(data)
-                return min(1.0, complexity)
+            compressed = zlib.compress(data, level=9)
+            complexity = len(compressed) / len(data)
+            return min(1.0, complexity)
         except Exception:
             try:
                 compressed = zlib.compress(data, level=9)
@@ -857,7 +874,7 @@ class UnifiedProtectionEngine:
             except Exception:
                 return 1.0
 
-    def _analyze_compression_ratios(self, data: bytes) -> Dict[str, float]:
+    def _analyze_compression_ratios(self, data: bytes) -> dict[str, float]:
         """Analyze compression ratios using multiple algorithms.
 
         Args:
@@ -892,7 +909,7 @@ class UnifiedProtectionEngine:
 
         return ratios
 
-    def _chi_square_test(self, data: bytes, significance_level: float = 0.05) -> Dict[str, Any]:
+    def _chi_square_test(self, data: bytes, significance_level: float = 0.05) -> dict[str, Any]:
         """Perform chi-square test for randomness.
 
         Args:
@@ -952,7 +969,7 @@ class UnifiedProtectionEngine:
             "degrees_of_freedom": degrees_of_freedom,
         }
 
-    def _analyze_byte_distribution(self, data: bytes) -> Dict[str, Any]:
+    def _analyze_byte_distribution(self, data: bytes) -> dict[str, Any]:
         """Analyze byte value distribution characteristics.
 
         Args:

@@ -1,8 +1,10 @@
 """Virtual machine detection bypass techniques for evading VM detection."""
 
 import logging
+import os
 import platform
 import shutil
+from pathlib import Path
 from typing import Any
 
 from intellicrack.utils.logger import logger
@@ -120,8 +122,6 @@ class VirtualizationDetectionBypass:
 
     def _get_driver_path(self, driver_name: str) -> str:
         """Get Windows driver path dynamically."""
-        import os
-
         # Common driver paths on Windows
         driver_paths = [
             os.path.join(os.environ.get("SystemRoot", "C:\\Windows"), "System32", "drivers", driver_name),
@@ -432,7 +432,7 @@ class VirtualizationDetectionBypass:
                 if os.path.exists(vm_file):
                     try:
                         new_name = vm_file.replace(".sys", "_hidden.sys")
-                        os.rename(vm_file, new_name)
+                        Path(vm_file).rename(new_name)
                         renamed_files += 1
                         self.logger.info(f"Renamed {vm_file} to {new_name}")
                     except (OSError, PermissionError) as e:
@@ -728,8 +728,6 @@ class VMDetector:
 
     def _get_vm_driver_path(self, driver_name: str) -> str:
         """Get Windows VM driver path dynamically for detection."""
-        import os
-
         # Common driver paths on Windows
         driver_paths = [
             os.path.join(os.environ.get("SystemRoot", "C:\\Windows"), "System32", "drivers", driver_name),

@@ -20,8 +20,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 
-from intellicrack.utils.logger import logger
-
+logger = logging.getLogger(__name__)
 logger.debug("Core module loaded")
 
 # Import security enforcement early to apply patches
@@ -147,7 +146,7 @@ def get_frida_bypass_wizard():
 _lazy_modules = {}
 
 
-def __getattr__(name):
+def __getattr__(name: str):
     """Lazy load module attributes to prevent circular imports."""
     module_names = [
         'analysis', 'binary_analyzer', 'config_migration_handler', 'debugging_engine',
@@ -164,8 +163,8 @@ def __getattr__(name):
     if name == 'ProtectionAnalyzer':
         if name not in _lazy_modules:
             try:
-                from .protection_analyzer import ProtectionAnalyzer as PA
-                _lazy_modules[name] = PA
+                from .protection_analyzer import ProtectionAnalyzer as ProtectionAnalyzerAlias
+                _lazy_modules[name] = ProtectionAnalyzerAlias
                 global PROTECTION_ANALYZER_AVAILABLE
                 PROTECTION_ANALYZER_AVAILABLE = True
             except ImportError as e:

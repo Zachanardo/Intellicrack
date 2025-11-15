@@ -365,7 +365,9 @@ class EmbeddedTerminalWidget(QWidget):
 
             # Validate that command and cwd contain only safe values to prevent command injection
             if not isinstance(command, list) or not all(isinstance(arg, str) for arg in command):
-                raise ValueError(f"Unsafe command: {command}")
+                error_msg = f"Unsafe command: {command}"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
             cwd_clean = str(cwd).replace(";", "").replace("|", "").replace("&", "")
             self._process = subprocess.Popen(
                 command,
@@ -500,7 +502,7 @@ class EmbeddedTerminalWidget(QWidget):
                 elif self._process and self._running:
                     self.send_input("\x03")
                 return
-            elif key == Qt.Key.Key_V:
+            if key == Qt.Key.Key_V:
                 if self._process and self._running:
                     self._paste_from_clipboard()
                 else:
@@ -508,11 +510,11 @@ class EmbeddedTerminalWidget(QWidget):
                     if text:
                         self._append_to_command_buffer(text)
                 return
-            elif key == Qt.Key.Key_D:
+            if key == Qt.Key.Key_D:
                 if self._process and self._running:
                     self.send_input("\x04")
                 return
-            elif key == Qt.Key.Key_Z:
+            if key == Qt.Key.Key_Z:
                 if self._process and self._running:
                     self.send_input("\x1a")
                 return
@@ -536,15 +538,14 @@ class EmbeddedTerminalWidget(QWidget):
                 self.send_input("\x1b[D")
             elif text:
                 self.send_input(text)
-        else:
-            if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
-                self._execute_command()
-            elif key == Qt.Key.Key_Backspace:
-                self._handle_backspace()
-            elif key == Qt.Key.Key_Delete:
-                self._handle_delete()
-            elif text and text.isprintable():
-                self._append_to_command_buffer(text)
+        elif key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            self._execute_command()
+        elif key == Qt.Key.Key_Backspace:
+            self._handle_backspace()
+        elif key == Qt.Key.Key_Delete:
+            self._handle_delete()
+        elif text and text.isprintable():
+            self._append_to_command_buffer(text)
 
     def _append_to_command_buffer(self, text) -> None:
         """Append text to command buffer and display it."""
@@ -611,11 +612,10 @@ class EmbeddedTerminalWidget(QWidget):
 
         if command.lower() in shell_commands:
             self.start_process([command], cwd=os.getcwd())
+        elif sys.platform == "win32":
+            self.start_process(["cmd", "/c", command], cwd=os.getcwd())
         else:
-            if sys.platform == "win32":
-                self.start_process(["cmd", "/c", command], cwd=os.getcwd())
-            else:
-                self.start_process(["sh", "-c", command], cwd=os.getcwd())
+            self.start_process(["sh", "-c", command], cwd=os.getcwd())
 
     def send_input(self, text) -> None:
         """Send text input to the running process.

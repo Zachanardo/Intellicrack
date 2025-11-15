@@ -65,32 +65,26 @@ except ImportError as e:
     class FallbackContext:
         """Fallback OpenCL context."""
 
-        pass
 
     class FallbackDevice:
         """Fallback OpenCL device."""
 
-        pass
 
     class FallbackBuffer:
         """Fallback OpenCL buffer."""
 
-        pass
 
     class FallbackProgram:
         """Fallback OpenCL program."""
 
-        pass
 
     class FallbackQueue:
         """Fallback OpenCL command queue."""
 
-        pass
 
     class FallbackPlatform:
         """Fallback OpenCL platform."""
 
-        pass
 
     # Assign fallback objects
     cl = None

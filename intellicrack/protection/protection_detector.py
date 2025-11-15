@@ -108,7 +108,9 @@ class ProtectionDetector:
         """
         if not os.path.exists(file_path):
             logger.warning(f"File not found: {file_path}")
-            raise FileNotFoundError(f"File not found: {file_path}")
+            error_msg = f"File not found: {file_path}"
+            logger.error(error_msg)
+            raise FileNotFoundError(error_msg)
 
         # Use unified engine
         unified_result = self.engine.analyze(file_path, deep_scan=deep_scan)
@@ -340,7 +342,9 @@ class ProtectionDetector:
                 )
             return "\n".join(lines)
 
-        raise ValueError(f"Unknown output format: {output_format}")
+        error_msg = f"Unknown output format: {output_format}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
     def detect_virtualization_protection(self, binary_path: str | None = None) -> dict[str, Any]:
         """Detect virtualization-based protections.
@@ -470,8 +474,7 @@ class ProtectionDetector:
                     "anti_debug_checks": len(result.anti_debug_locations),
                     "detailed_report": report,
                 }
-            else:
-                return {"detected": False, "confidence": 0.0}
+            return {"detected": False, "confidence": 0.0}
 
         except ImportError:
             logger.warning("Themida analyzer not available, falling back to signature detection")
@@ -510,8 +513,7 @@ class ProtectionDetector:
                     "bypass_recommendations": result.bypass_recommendations,
                     "analysis_details": result.analysis_details,
                 }
-            else:
-                return {"detected": False, "confidence": 0.0}
+            return {"detected": False, "confidence": 0.0}
 
         except ImportError:
             logger.warning("Denuvo analyzer not available, falling back to signature detection")
@@ -571,20 +573,18 @@ class ProtectionDetector:
                     )
 
                 return result
-            else:
-                token = analyzer.parse_token(data)
-                if token:
-                    return {
-                        "type": "token",
-                        "game_id": token.game_id.hex(),
-                        "machine_id": token.machine_id.hex()[:32],
-                        "license_type": token.license_type,
-                        "activation_time": token.activation_time,
-                        "expiration_time": token.expiration_time,
-                        "features_enabled": hex(token.features_enabled),
-                    }
-                else:
-                    return {"error": "Unable to parse as ticket or token"}
+            token = analyzer.parse_token(data)
+            if token:
+                return {
+                    "type": "token",
+                    "game_id": token.game_id.hex(),
+                    "machine_id": token.machine_id.hex()[:32],
+                    "license_type": token.license_type,
+                    "activation_time": token.activation_time,
+                    "expiration_time": token.expiration_time,
+                    "features_enabled": hex(token.features_enabled),
+                }
+            return {"error": "Unable to parse as ticket or token"}
 
         except ImportError:
             logger.warning("Denuvo ticket analyzer not available")
@@ -642,8 +642,7 @@ class ProtectionDetector:
                     "ticket": response.ticket.hex(),
                     "token": response.token.hex(),
                 }
-            else:
-                return {"success": False, "error": "Failed to generate response"}
+            return {"success": False, "error": "Failed to generate response"}
 
         except ImportError:
             logger.warning("Denuvo ticket analyzer not available")
@@ -703,8 +702,7 @@ class ProtectionDetector:
                     "license_type": license_type,
                     "duration_days": duration_days,
                 }
-            else:
-                return {"success": False, "error": "Token forging failed"}
+            return {"success": False, "error": "Token forging failed"}
 
         except ImportError:
             logger.warning("Denuvo ticket analyzer not available")

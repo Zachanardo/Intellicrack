@@ -14,7 +14,6 @@ import socket
 import subprocess
 import time
 from pathlib import Path
-from typing import Optional
 
 import frida
 import requests
@@ -27,7 +26,7 @@ class FridaServerManager:
     and performs health checks before allowing monitoring to proceed.
     """
 
-    def __init__(self, server_dir: Optional[Path] = None) -> None:
+    def __init__(self, server_dir: Path | None = None) -> None:
         """Initialize frida server manager.
 
         Args:
@@ -38,7 +37,7 @@ class FridaServerManager:
         self.server_dir.mkdir(parents=True, exist_ok=True)
 
         self.frida_version = frida.__version__
-        self.server_process: Optional[subprocess.Popen] = None
+        self.server_process: subprocess.Popen | None = None
         self.server_port = 27042
 
         self._platform = platform.system().lower()
@@ -125,8 +124,7 @@ class FridaServerManager:
         try:
             if self._platform == "windows":
                 return ctypes.windll.shell32.IsUserAnAdmin() != 0
-            else:
-                return os.geteuid() == 0
+            return os.geteuid() == 0
         except Exception:
             return False
 
@@ -148,8 +146,8 @@ class FridaServerManager:
             compressed_path = self.server_dir / "frida-server.xz"
 
             with open(compressed_path, "wb") as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    f.write(chunk)
+                import shutil
+                shutil.copyfileobj(response.raw, f)
 
             print("[FridaServerManager] Decompressing frida-server...")
             self._decompress_xz(compressed_path, self._get_server_path())
@@ -157,7 +155,7 @@ class FridaServerManager:
             compressed_path.unlink()
 
             if self._platform != "windows":
-                os.chmod(self._get_server_path(), 0o700)
+                Path(self._get_server_path()).chmod(0o700)
 
             print("[FridaServerManager] Download complete!")
             return True

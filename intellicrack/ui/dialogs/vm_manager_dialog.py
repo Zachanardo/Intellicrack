@@ -62,12 +62,16 @@ class VMTableModel(QAbstractTableModel):
             "Version",
         ]
 
-    def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:
+    def rowCount(self, parent: QModelIndex = None) -> int:
         """Return number of rows."""
+        if parent is None:
+            parent = QModelIndex()
         return len(self.vm_data)
 
-    def columnCount(self, parent: QModelIndex = QModelIndex()) -> int:
+    def columnCount(self, parent: QModelIndex = None) -> int:
         """Return number of columns."""
+        if parent is None:
+            parent = QModelIndex()
         return len(self.headers)
 
     def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
@@ -81,25 +85,25 @@ class VMTableModel(QAbstractTableModel):
 
             if column == 0:
                 return vm_info.get("snapshot_id", "N/A")
-            elif column == 1:
+            if column == 1:
                 return vm_info.get("vm_name", "N/A")
-            elif column == 2:
+            if column == 2:
                 binary_path = vm_info.get("binary_path", "N/A")
                 if binary_path != "N/A" and len(binary_path) > 50:
                     return "..." + binary_path[-47:]  # Show last 47 chars with ...
                 return binary_path
-            elif column == 3:
+            if column == 3:
                 created_at = vm_info.get("created_at", "N/A")
                 if created_at != "N/A":
                     return created_at.split("T")[0]  # Show just date part
                 return created_at
-            elif column == 4:
+            if column == 4:
                 return str(vm_info.get("ssh_port", "N/A"))
-            elif column == 5:
+            if column == 5:
                 return str(vm_info.get("vnc_port", "N/A"))
-            elif column == 6:
+            if column == 6:
                 return "Running" if vm_info.get("vm_running", False) else "Stopped"
-            elif column == 7:
+            if column == 7:
                 return vm_info.get("version", "N/A")
 
         return QVariant()

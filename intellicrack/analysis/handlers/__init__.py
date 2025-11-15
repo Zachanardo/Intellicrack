@@ -52,7 +52,7 @@ def get_available_handlers():
     return list(_available_handlers.keys())
 
 
-def get_handler(handler_name):
+def get_handler(handler_name: str):
     """Get a specific handler module if available.
 
     Args:
@@ -65,7 +65,7 @@ def get_handler(handler_name):
     return _available_handlers.get(handler_name)
 
 
-def is_handler_available(handler_name):
+def is_handler_available(handler_name: str):
     """Check if a specific handler is available.
 
     Args:
@@ -78,4 +78,6 @@ def is_handler_available(handler_name):
     return handler_name in _available_handlers
 
 
-__all__ = ["get_available_handlers", "get_handler", "is_handler_available", *list(_available_handlers.keys())]
+# Get all handler names and convert to list of strings
+_handler_names = [str(name) for name in _available_handlers]
+__all__ = ["get_available_handlers", "get_handler", "is_handler_available", *_handler_names]

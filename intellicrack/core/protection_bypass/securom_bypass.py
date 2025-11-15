@@ -12,7 +12,6 @@ import winreg
 from ctypes import wintypes
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional
 
 try:
     import pefile
@@ -29,21 +28,21 @@ class BypassResult:
     success: bool
     technique: str
     details: str
-    errors: List[str]
+    errors: list[str]
 
 
 @dataclass
 class SecuROMRemovalResult:
     """Results from complete SecuROM removal."""
 
-    drivers_removed: List[str]
-    services_stopped: List[str]
-    registry_cleaned: List[str]
-    files_deleted: List[str]
+    drivers_removed: list[str]
+    services_stopped: list[str]
+    registry_cleaned: list[str]
+    files_deleted: list[str]
     activation_bypassed: bool
     triggers_removed: int
     success: bool
-    errors: List[str]
+    errors: list[str]
 
 
 class SecuROMBypass:
@@ -175,7 +174,7 @@ class SecuROMBypass:
             errors=errors,
         )
 
-    def _stop_all_services(self) -> List[str]:
+    def _stop_all_services(self) -> list[str]:
         """Stop all SecuROM services."""
         if not self._advapi32:
             return []
@@ -221,7 +220,7 @@ class SecuROMBypass:
 
         return stopped
 
-    def _delete_all_services(self) -> List[str]:
+    def _delete_all_services(self) -> list[str]:
         """Delete all SecuROM services."""
         if not self._advapi32:
             return []
@@ -254,7 +253,7 @@ class SecuROMBypass:
 
         return deleted
 
-    def _clean_registry(self) -> List[str]:
+    def _clean_registry(self) -> list[str]:
         """Clean SecuROM registry keys."""
         cleaned = []
 
@@ -309,7 +308,7 @@ class SecuROMBypass:
 
         return bypassed
 
-    def _remove_driver_files(self) -> List[str]:
+    def _remove_driver_files(self) -> list[str]:
         """Remove SecuROM driver files."""
         removed = []
 
@@ -324,7 +323,7 @@ class SecuROMBypass:
 
         return removed
 
-    def _remove_application_files(self) -> List[str]:
+    def _remove_application_files(self) -> list[str]:
         """Remove SecuROM application files."""
         deleted = []
 
@@ -347,7 +346,7 @@ class SecuROMBypass:
 
         return deleted
 
-    def bypass_activation(self, target_exe: Path, product_id: Optional[str] = None) -> BypassResult:
+    def bypass_activation(self, target_exe: Path, product_id: str | None = None) -> BypassResult:
         """Bypass SecuROM product activation system.
 
         Args:
@@ -445,7 +444,7 @@ class SecuROMBypass:
         except Exception:
             return False
 
-    def _inject_activation_data(self, target_exe: Path, product_id: Optional[str]) -> bool:
+    def _inject_activation_data(self, target_exe: Path, product_id: str | None) -> bool:
         """Inject bypassed activation data into executable resource section."""
         try:
             pe = pefile.PE(str(target_exe))
@@ -824,7 +823,7 @@ class SecuROMBypass:
         except OSError:
             return False
 
-    def block_phone_home(self, target_exe: Path, server_urls: Optional[List[str]] = None) -> BypassResult:
+    def block_phone_home(self, target_exe: Path, server_urls: list[str] | None = None) -> BypassResult:
         """Block phone-home mechanisms.
 
         Args:
@@ -886,7 +885,7 @@ class SecuROMBypass:
         except Exception:
             return False
 
-    def _add_hosts_entries(self, server_urls: List[str]) -> bool:
+    def _add_hosts_entries(self, server_urls: list[str]) -> bool:
         """Add activation server URLs to hosts file."""
         try:
             hosts_path = Path(r"C:\Windows\System32\drivers\etc\hosts")
@@ -906,7 +905,7 @@ class SecuROMBypass:
         except Exception:
             return False
 
-    def _block_firewall(self, server_urls: List[str]) -> bool:
+    def _block_firewall(self, server_urls: list[str]) -> bool:
         """Create firewall rules to block activation servers."""
         try:
             for server in server_urls:

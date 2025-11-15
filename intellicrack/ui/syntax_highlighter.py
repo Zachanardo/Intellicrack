@@ -20,7 +20,6 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 import re
-from typing import List, Tuple
 
 from intellicrack.handlers.pyqt6_handler import (
     QColor,
@@ -46,7 +45,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         """
         super().__init__(document)
         self.language = language.lower()
-        self.rules: List[Tuple[re.Pattern, QTextCharFormat]] = []
+        self.rules: list[tuple[re.Pattern, QTextCharFormat]] = []
         self._setup_rules()
 
     def _setup_rules(self) -> None:
@@ -723,7 +722,7 @@ def create_highlighter(document: QTextDocument, language: str = "python") -> Syn
     return SyntaxHighlighter(document, language)
 
 
-def get_supported_languages() -> List[str]:
+def get_supported_languages() -> list[str]:
     """Get list of supported programming languages.
 
     Returns:

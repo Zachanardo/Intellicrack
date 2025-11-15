@@ -862,7 +862,6 @@ class BinaryAnalyzer:
                                         )
                                     except Exception as e:
                                         self.logger.debug(f"Error decoding license string at offset {chunk_offset + string_start}: {e}")
-                                        pass
                                     break
 
             return results[:500]

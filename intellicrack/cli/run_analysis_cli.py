@@ -22,7 +22,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from intellicrack.utils.logger import logger
 
@@ -66,7 +66,7 @@ def validate_binary_path(path: str) -> Path:
     return binary_path
 
 
-def run_basic_analysis(binary_path: Path, options: Dict[str, Any]) -> Dict[str, Any]:
+def run_basic_analysis(binary_path: Path, options: dict[str, Any]) -> dict[str, Any]:
     """Perform basic binary analysis via CLI.
 
     Args:
@@ -125,7 +125,7 @@ def run_basic_analysis(binary_path: Path, options: Dict[str, Any]) -> Dict[str, 
         return {"error": f"Analysis error: {e}"}
 
 
-def format_analysis_output(results: Dict[str, Any], output_format: str) -> str:
+def format_analysis_output(results: dict[str, Any], output_format: str) -> str:
     """Format analysis results for output.
 
     Args:
@@ -141,7 +141,7 @@ def format_analysis_output(results: Dict[str, Any], output_format: str) -> str:
 
         return json.dumps(results, indent=2, default=str)
 
-    elif output_format.lower() == "summary":
+    if output_format.lower() == "summary":
         lines = [
             "=== INTELLICRACK ANALYSIS SUMMARY ===",
             f"Binary: {results.get('binary_path', 'Unknown')}",
@@ -176,15 +176,15 @@ def format_analysis_output(results: Dict[str, Any], output_format: str) -> str:
 
         return "\n".join(lines)
 
-    else:  # text format
-        lines = ["=== INTELLICRACK DETAILED ANALYSIS ==="]
-        for key, value in results.items():
-            if isinstance(value, (dict, list)):
-                lines.append(f"{key.upper()}:")
-                lines.append(f"  {value!s}")
-            else:
-                lines.append(f"{key.upper()}: {value}")
-        return "\n".join(lines)
+    # text format
+    lines = ["=== INTELLICRACK DETAILED ANALYSIS ==="]
+    for key, value in results.items():
+        if isinstance(value, (dict, list)):
+            lines.append(f"{key.upper()}:")
+            lines.append(f"  {value!s}")
+        else:
+            lines.append(f"{key.upper()}: {value}")
+    return "\n".join(lines)
 
 
 def create_cli_parser() -> argparse.ArgumentParser:

@@ -11,7 +11,7 @@ import queue
 import threading
 import time
 from collections import defaultdict, deque
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
 from intellicrack.core.monitoring.base_monitor import MonitorEvent
 
@@ -32,14 +32,14 @@ class EventAggregator:
         """
         self._event_queue: queue.Queue = queue.Queue(maxsize=max_queue_size)
         self._running = False
-        self._thread: Optional[threading.Thread] = None
-        self._callbacks: List[Callable[[MonitorEvent], None]] = []
-        self._stats_callbacks: List[Callable[[Dict[str, Any]], None]] = []
-        self._error_callbacks: List[Callable[[str], None]] = []
+        self._thread: threading.Thread | None = None
+        self._callbacks: list[Callable[[MonitorEvent], None]] = []
+        self._stats_callbacks: list[Callable[[dict[str, Any]], None]] = []
+        self._error_callbacks: list[Callable[[str], None]] = []
 
         self._total_events = 0
-        self._events_by_source: Dict[str, int] = defaultdict(int)
-        self._events_by_severity: Dict[str, int] = defaultdict(int)
+        self._events_by_source: dict[str, int] = defaultdict(int)
+        self._events_by_severity: dict[str, int] = defaultdict(int)
         self._dropped_events = 0
 
         self._rate_limiter = RateLimiter(max_events_per_second=100)
@@ -88,7 +88,7 @@ class EventAggregator:
         """
         self._callbacks.append(callback)
 
-    def on_stats_update(self, callback: Callable[[Dict[str, Any]], None]) -> None:
+    def on_stats_update(self, callback: Callable[[dict[str, Any]], None]) -> None:
         """Register callback for statistics updates.
 
         Args:
@@ -106,7 +106,7 @@ class EventAggregator:
         """
         self._error_callbacks.append(callback)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get aggregator statistics.
 
         Returns:
@@ -128,7 +128,7 @@ class EventAggregator:
         with self._lock:
             self._event_history.clear()
 
-    def get_history(self, limit: int = 100) -> List[MonitorEvent]:
+    def get_history(self, limit: int = 100) -> list[MonitorEvent]:
         """Get recent event history.
 
         Args:

@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import cmd
 import sys
 from pathlib import Path
+from typing import Any
 
 # Add parent directories to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -51,7 +52,7 @@ class IntellicrackShell(cmd.Cmd):
         self.current_file = None
         self.analysis_results = None
 
-    def do_load(self, arg) -> None:
+    def do_load(self, arg: str) -> None:
         """Load a binary file for analysis: load <filepath>."""
         if not arg:
             print("Usage: load <filepath>")
@@ -65,7 +66,7 @@ class IntellicrackShell(cmd.Cmd):
         self.current_file = filepath
         print(f"Loaded: {filepath}")
 
-    def do_analyze(self, arg) -> None:
+    def do_analyze(self, arg: str) -> None:
         """Analyze the currently loaded file."""
         if not self.current_file:
             print("Error: No file loaded. Use 'load' command first.")
@@ -78,27 +79,27 @@ class IntellicrackShell(cmd.Cmd):
         except Exception as e:
             print(f"Analysis failed: {e}")
 
-    def do_status(self, arg) -> None:
+    def do_status(self, arg: str) -> None:
         """Show current status."""
         print(f"Current file: {self.current_file or 'None'}")
         print(f"Analysis results: {'Available' if self.analysis_results else 'None'}")
 
-    def do_clear(self, arg) -> None:
+    def do_clear(self, arg: str) -> None:
         """Clear current session."""
         self.current_file = None
         self.analysis_results = None
         print("Session cleared")
 
-    def do_exit(self, arg) -> bool:
+    def do_exit(self, arg: str) -> bool:
         """Exit the interactive shell."""
         print("Goodbye!")
         return True
 
-    def do_quit(self, arg):
+    def do_quit(self, arg: str) -> bool:
         """Exit the interactive shell."""
         return self.do_exit(arg)
 
-    def do_scan(self, arg) -> None:
+    def do_scan(self, arg: str) -> None:
         """Scan for vulnerabilities: scan [--vulns]."""
         if not self.current_file:
             print("Error: No file loaded. Use 'load' command first.")
@@ -121,7 +122,7 @@ class IntellicrackShell(cmd.Cmd):
         except Exception as e:
             print(f"Scan failed: {e}")
 
-    def do_strings(self, arg) -> None:
+    def do_strings(self, arg: str) -> None:
         """Extract strings from the loaded file: strings [min_length]."""
         if not self.current_file:
             print("Error: No file loaded. Use 'load' command first.")
@@ -147,7 +148,7 @@ class IntellicrackShell(cmd.Cmd):
         except Exception as e:
             print(f"String extraction failed: {e}")
 
-    def do_export(self, arg) -> None:
+    def do_export(self, arg: str) -> None:
         """Export analysis results: export <format> <output_file>."""
         if not self.analysis_results:
             print("Error: No analysis results. Run 'analyze' first.")
@@ -204,7 +205,7 @@ class IntellicrackShell(cmd.Cmd):
         except Exception as e:
             print(f"Export failed: {e}")
 
-    def do_hexview(self, arg) -> None:
+    def do_hexview(self, arg: str) -> None:
         """Open hex viewer for the loaded file."""
         if not self.current_file:
             print("Error: No file loaded. Use 'load' command first.")
@@ -221,7 +222,7 @@ class IntellicrackShell(cmd.Cmd):
         except Exception as e:
             print(f"Hex viewer failed: {e}")
 
-    def do_protection(self, arg) -> None:
+    def do_protection(self, arg: str) -> None:
         """Analyze protection mechanisms."""
         if not self.current_file:
             print("Error: No file loaded. Use 'load' command first.")
@@ -246,7 +247,7 @@ class IntellicrackShell(cmd.Cmd):
         except Exception as e:
             print(f"Protection analysis failed: {e}")
 
-    def do_patch(self, arg) -> None:
+    def do_patch(self, arg: str) -> None:
         """Generate patches for the loaded file: patch <output_file>."""
         if not self.current_file:
             print("Error: No file loaded. Use 'load' command first.")
@@ -277,7 +278,7 @@ class IntellicrackShell(cmd.Cmd):
         except Exception as e:
             print(f"Patch generation failed: {e}")
 
-    def do_ai(self, arg) -> None:
+    def do_ai(self, arg: str) -> None:
         """Interact with AI assistant: ai <question>."""
         if not arg:
             print("Usage: ai <question>")
@@ -297,7 +298,7 @@ class IntellicrackShell(cmd.Cmd):
         except Exception as e:
             print(f"AI assistant error: {e}")
 
-    def do_help(self, arg) -> None:
+    def do_help(self, arg: str) -> None:
         """Show help for commands."""
         if arg:
             # Show help for specific command

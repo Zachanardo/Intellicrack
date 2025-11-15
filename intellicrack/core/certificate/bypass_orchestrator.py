@@ -135,7 +135,6 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
 
 import psutil
 
@@ -155,14 +154,14 @@ class BypassResult:
     success: bool
     method_used: BypassMethod
     detection_report: DetectionReport
-    patch_result: Optional[PatchResult] = None
-    frida_status: Optional[Dict] = None
+    patch_result: PatchResult | None = None
+    frida_status: dict | None = None
     verification_passed: bool = False
-    errors: List[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
     rollback_data: bytes = b""
     timestamp: datetime = field(default_factory=datetime.now)
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convert result to dictionary.
 
         Returns:
@@ -190,12 +189,12 @@ class CertificateBypassOrchestrator:
         """Initialize bypass orchestrator."""
         self.detector = CertificateValidationDetector()
         self.strategy_selector = BypassStrategySelector()
-        self.frida_hooks: Optional[FridaCertificateHooks] = None
+        self.frida_hooks: FridaCertificateHooks | None = None
 
     def bypass(
         self,
         target: str,
-        method: Optional[BypassMethod] = None,
+        method: BypassMethod | None = None,
     ) -> BypassResult:
         """Execute certificate validation bypass on target.
 
@@ -382,7 +381,7 @@ class CertificateBypassOrchestrator:
             logger.error(f"Binary patch failed: {e}")
             raise
 
-    def _execute_frida_hook(self, target: str) -> Dict:
+    def _execute_frida_hook(self, target: str) -> dict:
         """Execute Frida hooking bypass.
 
         Args:
@@ -498,7 +497,7 @@ class CertificateBypassOrchestrator:
             logger.error(f"MITM proxy setup failed: {e}", exc_info=True)
             return False
 
-    def _extract_licensing_domains(self, target: str) -> List[str]:
+    def _extract_licensing_domains(self, target: str) -> list[str]:
         """Extract licensing server domains from binary analysis.
 
         Analyzes binary strings for HTTPS URLs related to licensing,
@@ -600,9 +599,8 @@ class CertificateBypassOrchestrator:
             if confidence >= 0.33:
                 logger.info("Bypass verification PASSED")
                 return True
-            else:
-                logger.warning("Bypass verification FAILED - low confidence")
-                return False
+            logger.warning("Bypass verification FAILED - low confidence")
+            return False
 
         except Exception as e:
             logger.error(f"Bypass verification failed: {e}", exc_info=True)

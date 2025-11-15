@@ -376,9 +376,8 @@ class ProtocolFingerprinter:
         if pattern.get("mask") is None:
             if packet_data[offset : offset + len(pattern["bytes"])] == pattern["bytes"]:
                 return pattern.get("weight", 0.2)
-        else:
-            if self._match_masked_pattern(packet_data, pattern, offset):
-                return pattern.get("weight", 0.2)
+        elif self._match_masked_pattern(packet_data, pattern, offset):
+            return pattern.get("weight", 0.2)
 
         return 0.0
 
@@ -409,8 +408,7 @@ class ProtocolFingerprinter:
         match_ratio = pattern_matches / len(regex_patterns)
         if match_ratio >= 0.7:
             return 0.5
-        else:
-            return 0.3 * match_ratio
+        return 0.3 * match_ratio
 
     def _process_analysis_results(
         self, results: list[dict[str, Any]], packet_data: bytes | bytearray, port: int | None,

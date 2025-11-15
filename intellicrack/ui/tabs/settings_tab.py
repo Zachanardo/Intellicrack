@@ -23,6 +23,7 @@ import json
 import logging
 import os
 import re
+from typing import Dict, Optional
 
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
@@ -60,8 +61,14 @@ class SettingsTab(BaseTab):
     settings_changed = pyqtSignal(str, object)
     theme_changed = pyqtSignal(str)
 
-    def __init__(self, shared_context=None, parent=None) -> None:
-        """Initialize settings tab with application configuration and preferences."""
+    def __init__(self, shared_context: Optional[Dict] = None, parent: Optional[QWidget] = None) -> None:
+        """Initialize settings tab with application configuration and preferences.
+
+        Args:
+            shared_context: Optional shared context dictionary containing application state and utilities.
+            parent: Optional parent widget for this settings tab.
+
+        """
         from intellicrack.core.config_manager import IntellicrackConfig
 
         self.logger = logging.getLogger(__name__ + ".SettingsTab")
@@ -105,8 +112,13 @@ class SettingsTab(BaseTab):
         layout.addWidget(h_container)
         self.is_loaded = True
 
-    def create_settings_panel(self):
-        """Create the settings control panel."""
+    def create_settings_panel(self) -> QWidget:
+        """Create the settings control panel.
+
+        Returns:
+            QWidget: The settings panel widget containing tabs and control buttons.
+
+        """
         panel = QWidget()
         layout = QVBoxLayout(panel)
 
@@ -153,8 +165,13 @@ class SettingsTab(BaseTab):
         layout.addLayout(controls_layout)
         return panel
 
-    def create_appearance_tab(self):
-        """Create appearance settings tab."""
+    def create_appearance_tab(self) -> QWidget:
+        """Create appearance settings tab.
+
+        Returns:
+            QWidget: The appearance settings tab widget.
+
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -276,8 +293,13 @@ class SettingsTab(BaseTab):
 
         return tab
 
-    def create_analysis_tab(self):
-        """Create analysis settings tab."""
+    def create_analysis_tab(self) -> QWidget:
+        """Create analysis settings tab.
+
+        Returns:
+            QWidget: The analysis settings tab widget.
+
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -380,8 +402,13 @@ class SettingsTab(BaseTab):
 
         return tab
 
-    def create_performance_tab(self):
-        """Create performance settings tab."""
+    def create_performance_tab(self) -> QWidget:
+        """Create performance settings tab.
+
+        Returns:
+            QWidget: The performance settings tab widget.
+
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -467,8 +494,13 @@ class SettingsTab(BaseTab):
 
         return tab
 
-    def create_paths_tab(self):
-        """Create paths settings tab with auto-discovery and visual feedback."""
+    def create_paths_tab(self) -> QWidget:
+        """Create paths settings tab with auto-discovery and visual feedback.
+
+        Returns:
+            QWidget: The paths settings tab widget with tool discovery capabilities.
+
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -541,8 +573,18 @@ class SettingsTab(BaseTab):
 
         return tab
 
-    def create_enhanced_tool_entry(self, tool_key, tool_label, browse_title):
-        """Create an enhanced tool path entry with auto-discovery and status indicators."""
+    def create_enhanced_tool_entry(self, tool_key: str, tool_label: str, browse_title: str) -> QWidget:
+        """Create an enhanced tool path entry with auto-discovery and status indicators.
+
+        Args:
+            tool_key: The unique identifier for the tool (e.g., 'ghidra', 'radare2').
+            tool_label: The display label for the tool (e.g., 'Ghidra', 'Radare2').
+            browse_title: The title shown in the file browser dialog when user browses for the tool.
+
+        Returns:
+            QWidget: A container widget with tool path entry, status indicator, and control buttons.
+
+        """
         container = QWidget()
         layout = QVBoxLayout(container)
         layout.setContentsMargins(0, 5, 0, 5)
@@ -602,8 +644,18 @@ class SettingsTab(BaseTab):
 
         return container
 
-    def create_directory_entry(self, dir_key, dir_label, browse_title):
-        """Create a directory path entry."""
+    def create_directory_entry(self, dir_key: str, dir_label: str, browse_title: str) -> QWidget:
+        """Create a directory path entry.
+
+        Args:
+            dir_key: The configuration key for the directory setting.
+            dir_label: The display label for the directory field.
+            browse_title: The title shown in the directory browser dialog.
+
+        Returns:
+            QWidget: A container widget with directory path entry and browse button.
+
+        """
         container = QWidget()
         layout = QHBoxLayout(container)
         layout.setContentsMargins(0, 5, 0, 5)
@@ -668,8 +720,14 @@ class SettingsTab(BaseTab):
             self.tool_discovery.refresh_discovery()
             self.discover_tools()
 
-    def update_tool_status(self, tool_key, tool_info) -> None:
-        """Update the visual status indicator for a tool."""
+    def update_tool_status(self, tool_key: str, tool_info: Dict[str, object]) -> None:
+        """Update the visual status indicator for a tool.
+
+        Args:
+            tool_key: The unique identifier for the tool being updated.
+            tool_info: Dictionary containing tool information with keys like 'available', 'path', 'error'.
+
+        """
         if tool_key not in self.tool_widgets:
             return
 
@@ -717,8 +775,14 @@ class SettingsTab(BaseTab):
         # Show status details
         status_details.show()
 
-    def on_tool_path_changed(self, tool_key, path) -> None:
-        """Handle manual tool path changes."""
+    def on_tool_path_changed(self, tool_key: str, path: str) -> None:
+        """Handle manual tool path changes.
+
+        Args:
+            tool_key: The unique identifier for the tool.
+            path: The new tool path entered by the user.
+
+        """
         if not path.strip():
             return
 
@@ -737,8 +801,13 @@ class SettingsTab(BaseTab):
             except Exception as e:
                 self.log_message(f"Failed to validate path for {tool_key}: {e}", "warning")
 
-    def reset_tool_path(self, tool_key) -> None:
-        """Reset tool path to auto-discovered value."""
+    def reset_tool_path(self, tool_key: str) -> None:
+        """Reset tool path to auto-discovered value.
+
+        Args:
+            tool_key: The unique identifier for the tool to reset.
+
+        """
         if tool_key not in self.tool_widgets:
             return
 
@@ -764,8 +833,16 @@ class SettingsTab(BaseTab):
         except Exception as e:
             self.log_message(f"Failed to reset path for {tool_key}: {e}", "error")
 
-    def get_tool_executables(self, tool_key):
-        """Get the list of possible executables for a tool."""
+    def get_tool_executables(self, tool_key: str) -> list[str]:
+        """Get the list of possible executables for a tool.
+
+        Args:
+            tool_key: The unique identifier for the tool.
+
+        Returns:
+            list[str]: List of possible executable names for the given tool.
+
+        """
         executables_map = {
             "ghidra": ["ghidra", "ghidraRun", "ghidraRun.bat"],
             "radare2": ["r2", "radare2"],
@@ -776,14 +853,25 @@ class SettingsTab(BaseTab):
         }
         return executables_map.get(tool_key, [tool_key])
 
-    def browse_tool_path(self, line_edit, title) -> None:
-        """Browse for a tool executable path."""
+    def browse_tool_path(self, line_edit: QLineEdit, title: str) -> None:
+        """Browse for a tool executable path.
+
+        Args:
+            line_edit: The QLineEdit widget to update with the selected path.
+            title: The title to show in the file browser dialog.
+
+        """
         file_path, _ = QFileDialog.getOpenFileName(self, title, "", "All Files (*)")
         if file_path:
             line_edit.setText(file_path)
 
-    def create_advanced_tab(self):
-        """Create advanced settings tab."""
+    def create_advanced_tab(self) -> QWidget:
+        """Create advanced settings tab.
+
+        Returns:
+            QWidget: The advanced settings tab widget with logging, security, and network options.
+
+        """
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -880,8 +968,13 @@ class SettingsTab(BaseTab):
 
         return tab
 
-    def create_preview_panel(self):
-        """Create the preview panel."""
+    def create_preview_panel(self) -> QWidget:
+        """Create the preview panel.
+
+        Returns:
+            QWidget: The preview panel widget displaying current settings.
+
+        """
         panel = QWidget()
         layout = QVBoxLayout(panel)
 
@@ -961,8 +1054,13 @@ class SettingsTab(BaseTab):
 
         self.logger.info("Loaded settings from centralized configuration")
 
-    def get_default_settings(self):
-        """Get default settings."""
+    def get_default_settings(self) -> Dict[str, object]:
+        """Get default settings.
+
+        Returns:
+            Dict[str, object]: Dictionary of default settings with all configuration keys and values.
+
+        """
         return {
             # Appearance
             "theme": "Light",
@@ -1038,7 +1136,12 @@ class SettingsTab(BaseTab):
             QMessageBox.critical(self, "Error", f"Failed to save settings: {e!s}")
 
     def collect_settings_from_ui(self) -> None:
-        """Collect settings from UI elements."""
+        """Collect settings from UI elements.
+
+        Iterates through all UI controls and updates the internal settings dictionary
+        with current values from appearance, analysis, performance, and tool path widgets.
+
+        """
         # Appearance settings
         if hasattr(self, "theme_combo"):
             self.settings["theme"] = self.theme_combo.currentText()
@@ -1127,7 +1230,12 @@ class SettingsTab(BaseTab):
                 QMessageBox.critical(self, "Error", f"Failed to reset settings: {e!s}")
 
     def update_ui_from_settings(self) -> None:
-        """Update UI elements from current settings."""
+        """Update UI elements from current settings.
+
+        Synchronizes all UI controls with the current settings values to reflect
+        any changes made programmatically or through settings import/reset.
+
+        """
         # Update all UI elements to reflect current settings
         if hasattr(self, "theme_combo"):
             self.theme_combo.setCurrentText(self.settings.get("theme", "Dark"))
@@ -1195,26 +1303,49 @@ class SettingsTab(BaseTab):
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to import settings: {e!s}")
 
-    def browse_path(self, line_edit, title) -> None:
-        """Browse for file path."""
+    def browse_path(self, line_edit: QLineEdit, title: str) -> None:
+        """Browse for file path.
+
+        Args:
+            line_edit: The QLineEdit widget to update with the selected path.
+            title: The title to show in the file browser dialog.
+
+        """
         file_path, _ = QFileDialog.getOpenFileName(self, title, "", "All Files (*)")
         if file_path:
             line_edit.setText(file_path)
 
-    def browse_directory(self, line_edit, title) -> None:
-        """Browse for directory."""
+    def browse_directory(self, line_edit: QLineEdit, title: str) -> None:
+        """Browse for directory.
+
+        Args:
+            line_edit: The QLineEdit widget to update with the selected directory path.
+            title: The title to show in the directory browser dialog.
+
+        """
         dir_path = QFileDialog.getExistingDirectory(self, title)
         if dir_path:
             line_edit.setText(dir_path)
 
-    def browse_file(self, line_edit, title) -> None:
-        """Browse for file."""
+    def browse_file(self, line_edit: QLineEdit, title: str) -> None:
+        """Browse for file.
+
+        Args:
+            line_edit: The QLineEdit widget to update with the selected file path.
+            title: The title to show in the file browser dialog.
+
+        """
         file_path, _ = QFileDialog.getSaveFileName(self, title, "", "All Files (*)")
         if file_path:
             line_edit.setText(file_path)
 
-    def on_theme_changed(self, theme) -> None:
-        """Handle theme change."""
+    def on_theme_changed(self, theme: str) -> None:
+        """Handle theme change.
+
+        Args:
+            theme: The selected theme name (e.g., 'Dark', 'Light', 'Auto').
+
+        """
         self.settings["theme"] = theme
 
         from intellicrack.ui.theme_manager import get_theme_manager
@@ -1225,8 +1356,13 @@ class SettingsTab(BaseTab):
         self.theme_changed.emit(theme)
         self.update_preview()
 
-    def on_opacity_changed(self, value) -> None:
-        """Handle opacity change."""
+    def on_opacity_changed(self, value: int) -> None:
+        """Handle opacity change.
+
+        Args:
+            value: The opacity value as an integer from 0 to 100.
+
+        """
         self.opacity_label.setText(f"{value}%")
         self.settings["window_opacity"] = value
         if hasattr(self.shared_context, "main_window"):
@@ -1242,8 +1378,13 @@ class SettingsTab(BaseTab):
             self.apply_accent_color(color_hex)
             self.update_preview()
 
-    def apply_accent_color(self, color_hex) -> None:
-        """Apply accent color by re-applying the theme and replacing default accent colors."""
+    def apply_accent_color(self, color_hex: str) -> None:
+        """Apply accent color by re-applying the theme and replacing default accent colors.
+
+        Args:
+            color_hex: The new accent color in hexadecimal format (e.g., '#0078d4').
+
+        """
         from intellicrack.handlers.pyqt6_handler import QApplication
 
         app = QApplication.instance()
@@ -1273,14 +1414,24 @@ class SettingsTab(BaseTab):
 
         self.logger.info(f"Applied accent color: {color_hex}")
 
-    def on_ui_font_changed(self, font) -> None:
-        """Handle UI font change."""
+    def on_ui_font_changed(self, font: QFont) -> None:
+        """Handle UI font change.
+
+        Args:
+            font: The selected QFont object for the UI.
+
+        """
         self.settings["ui_font"] = font.family()
         self.apply_ui_font()
         self.update_preview()
 
-    def on_ui_font_size_changed(self, size) -> None:
-        """Handle UI font size change."""
+    def on_ui_font_size_changed(self, size: int) -> None:
+        """Handle UI font size change.
+
+        Args:
+            size: The selected font size in points.
+
+        """
         self.settings["ui_font_size"] = size
         self.apply_ui_font()
         self.update_preview()
@@ -1296,14 +1447,24 @@ class SettingsTab(BaseTab):
         font = QFont(self.settings.get("ui_font", "Segoe UI"), self.settings.get("ui_font_size", 10))
         app.setFont(font)
 
-    def on_console_font_changed(self, font) -> None:
-        """Handle console font change."""
+    def on_console_font_changed(self, font: QFont) -> None:
+        """Handle console font change.
+
+        Args:
+            font: The selected QFont object for the console.
+
+        """
         self.settings["console_font"] = font.family()
         self.apply_console_font()
         self.update_preview()
 
-    def on_console_font_size_changed(self, size) -> None:
-        """Handle console font size change."""
+    def on_console_font_size_changed(self, size: int) -> None:
+        """Handle console font size change.
+
+        Args:
+            size: The selected font size in points.
+
+        """
         self.settings["console_font_size"] = size
         self.apply_console_font()
         self.update_preview()
@@ -1337,14 +1498,19 @@ class SettingsTab(BaseTab):
         if widgets_updated > 0:
             self.logger.info(f"Applied console font to {widgets_updated} widgets")
 
-    def on_tooltips_toggled(self, state) -> None:
-        """Handle tooltips toggle."""
+    def on_tooltips_toggled(self, state: int) -> None:
+        """Handle tooltips toggle.
+
+        Args:
+            state: The checkbox state (0=unchecked, 1=partially checked, 2=checked).
+
+        """
         enabled = state == 2
         self.settings["show_tooltips"] = enabled
         self.apply_tooltip_settings(enabled)
         self.update_preview()
 
-    def apply_tooltip_settings(self, enabled) -> None:
+    def apply_tooltip_settings(self, enabled: bool) -> None:
         """Apply tooltip settings to all widgets in the application.
 
         Args:
@@ -1388,14 +1554,19 @@ class SettingsTab(BaseTab):
                     pass
             self.logger.info(f"Tooltips enabled. Restored {restored_count} tooltips.")
 
-    def on_animations_toggled(self, state) -> None:
-        """Handle animations toggle."""
+    def on_animations_toggled(self, state: int) -> None:
+        """Handle animations toggle.
+
+        Args:
+            state: The checkbox state (0=unchecked, 1=partially checked, 2=checked).
+
+        """
         enabled = state == 2
         self.settings["enable_animations"] = enabled
         self.apply_animation_settings(enabled)
         self.update_preview()
 
-    def apply_animation_settings(self, enabled) -> None:
+    def apply_animation_settings(self, enabled: bool) -> None:
         """Apply smooth animation settings to UI elements.
 
         Args:
@@ -1499,8 +1670,14 @@ QPushButton:hover, QComboBox:hover, QTabBar::tab:hover {
         elif available_providers:
             self.ai_provider_combo.setCurrentIndex(0)
 
-    def log_message(self, message, level="info") -> None:
-        """Log message to console or status."""
+    def log_message(self, message: str, level: str = "info") -> None:
+        """Log message to console or status.
+
+        Args:
+            message: The message text to log.
+            level: The logging level ('info', 'warning', 'error', 'debug').
+
+        """
         if hasattr(self.shared_context, "log_message"):
             self.shared_context.log_message(message, level)
         else:

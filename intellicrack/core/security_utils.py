@@ -32,6 +32,7 @@ class SecurityError(Exception):
 
 
 import logging
+
 from intellicrack.utils.logger import log_function_call
 
 logger = logging.getLogger(__name__)
@@ -90,10 +91,9 @@ def secure_subprocess(command: str | list[str], shell: bool = False, timeout: in
     """
     logger.debug(f"Executing secure_subprocess command: {command}, shell: {shell}, timeout: {timeout}")
     if shell:
-        logger.error("Attempted to execute subprocess with shell=True, which is not allowed for security reasons.")
-        raise SecurityError(
-            "shell=True is not allowed for security reasons. Use a list of arguments instead.",
-        )
+        error_msg = "shell=True is not allowed for security reasons. Use a list of arguments instead."
+        logger.error(error_msg)
+        raise SecurityError(error_msg)
 
     if isinstance(command, str):
         # Parse command string into list safely
@@ -171,16 +171,18 @@ def validate_file_path(path: str, allowed_extensions: list[str] | None = None) -
     logger.debug(f"Validating file path: '{path}' with allowed extensions: {allowed_extensions}")
     # Prevent path traversal
     if ".." in path or path.startswith("/"):
-        logger.error(f"SecurityError: Potentially malicious path detected: {path}")
-        raise SecurityError(f"Potentially malicious path: {path}")
+        error_msg = f"Potentially malicious path: {path}"
+        logger.error(error_msg)
+        raise SecurityError(error_msg)
     logger.debug("Path traversal check passed.")
 
     # Check file extension
     if allowed_extensions:
         ext = os.path.splitext(path)[1].lower()
         if ext not in allowed_extensions:
-            logger.error(f"SecurityError: File extension '{ext}' not allowed. Allowed: {allowed_extensions}")
-            raise SecurityError(f"File extension not allowed: {ext}")
+            error_msg = f"File extension not allowed: {ext}"
+            logger.error(error_msg)
+            raise SecurityError(error_msg)
         logger.debug(f"File extension '{ext}' is allowed.")
     logger.debug(f"File path '{path}' validated successfully.")
     return True

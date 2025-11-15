@@ -20,7 +20,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 from contextlib import contextmanager
-from typing import Any, Optional
+from typing import Any
 
 try:
     from .radare2_session_manager import (
@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 class DirectR2Session:
     """Direct r2pipe session without pooling for legacy compatibility."""
 
-    def __init__(self, binary_path: str, flags: Optional[list[str]] = None) -> None:
+    def __init__(self, binary_path: str, flags: list[str] | None = None) -> None:
         """Initialize direct session.
 
         Args:
@@ -55,7 +55,7 @@ class DirectR2Session:
         """
         self.binary_path = binary_path
         self.flags = flags or ["-2"]
-        self.r2: Optional[r2pipe.open] = None
+        self.r2: r2pipe.open | None = None
 
         if not R2PIPE_AVAILABLE:
             raise RuntimeError("r2pipe not available")
@@ -100,14 +100,13 @@ class DirectR2Session:
 
         if expect_json:
             return self.r2.cmdj(command)
-        else:
-            return self.r2.cmd(command)
+        return self.r2.cmd(command)
 
 
 @contextmanager
 def get_r2_session(
     binary_path: str,
-    flags: Optional[list[str]] = None,
+    flags: list[str] | None = None,
     use_pooling: bool = True,
     auto_analyze: bool = True,
 ):
@@ -143,7 +142,7 @@ def execute_r2_command(
     binary_path: str,
     command: str,
     expect_json: bool = False,
-    flags: Optional[list[str]] = None,
+    flags: list[str] | None = None,
     use_pooling: bool = True,
 ) -> Any:
     """Execute a single r2 command on a binary.
@@ -173,12 +172,11 @@ def get_pool_statistics() -> dict[str, Any]:
     if SESSION_MANAGER_AVAILABLE:
         pool = get_global_pool()
         return pool.get_pool_stats()
-    else:
-        return {
-            "error": "Session manager not available",
-            "total_sessions": 0,
-            "active_sessions": 0,
-        }
+    return {
+        "error": "Session manager not available",
+        "total_sessions": 0,
+        "active_sessions": 0,
+    }
 
 
 def get_all_session_metrics() -> list[dict[str, Any]]:
@@ -191,8 +189,7 @@ def get_all_session_metrics() -> list[dict[str, Any]]:
     if SESSION_MANAGER_AVAILABLE:
         pool = get_global_pool()
         return pool.get_session_metrics()
-    else:
-        return []
+    return []
 
 
 def cleanup_idle_sessions() -> None:
@@ -280,7 +277,7 @@ class R2CommandBatch:
 def migrate_r2pipe_to_pooled(
     original_r2: r2pipe.open,
     binary_path: str,
-    flags: Optional[list[str]] = None,
+    flags: list[str] | None = None,
 ) -> R2SessionWrapper:
     """Migrate from direct r2pipe usage to pooled sessions.
 

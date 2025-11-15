@@ -597,7 +597,7 @@ class ModelFormatConverter:
                         return None
 
                     @tf.function
-                    def inference_func(x):
+                    def inference_func(x: Any):
                         return model(x)
 
                     concrete_func = inference_func.get_concrete_function(input_spec)

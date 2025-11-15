@@ -163,7 +163,9 @@ class ArxanBypass:
         binary_path = Path(binary_path)
 
         if not binary_path.exists():
-            raise FileNotFoundError(f"Binary not found: {binary_path}")
+            error_msg = f"Binary not found: {binary_path}"
+            logger.error(error_msg)
+            raise FileNotFoundError(error_msg)
 
         if output_path is None:
             output_path = binary_path.with_suffix(".arxan_bypassed" + binary_path.suffix)
@@ -277,9 +279,7 @@ class ArxanBypass:
     ) -> None:
         """Bypass anti-tampering checks."""
         for check in tamper_checks:
-            if check.algorithm == "crc32":
-                patch_bytes = self.MOV_EAX_1 + self.RET_OPCODE
-            elif check.algorithm in ["md5", "sha256"]:
+            if check.algorithm == "crc32" or check.algorithm in ["md5", "sha256"]:
                 patch_bytes = self.MOV_EAX_1 + self.RET_OPCODE
             else:
                 patch_bytes = self.NOP_OPCODE * min(check.size, 20)
@@ -335,9 +335,7 @@ class ArxanBypass:
     ) -> None:
         """Bypass license validation routines."""
         for routine in license_routines:
-            if routine.validation_type == "rsa_validation":
-                patch_bytes = b"\xb8\x01\x00\x00\x00\xc3"
-            elif routine.validation_type == "aes_license":
+            if routine.validation_type in {"rsa_validation", "aes_license"}:
                 patch_bytes = b"\xb8\x01\x00\x00\x00\xc3"
             elif routine.validation_type == "serial_check":
                 patch_bytes = b"\x33\xc0\x40\xc3"
@@ -649,6 +647,7 @@ def main() -> None:
 
     except Exception as e:
         logger.error(f"Bypass failed: {e}")
+        logger.error(e)
         raise
 
 

@@ -2,7 +2,7 @@
 
 import json
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtGui import QFont
@@ -42,7 +42,7 @@ class TrialResetWorker(QThread):
     error = pyqtSignal(str)
     update = pyqtSignal(int)  # For progress bar
 
-    def __init__(self, engine: TrialResetEngine, operation: str, params: Dict[str, Any]) -> None:
+    def __init__(self, engine: TrialResetEngine, operation: str, params: dict[str, Any]) -> None:
         """Initialize the TrialResetWorker with an engine, operation, and parameters."""
         super().__init__()
         self.engine = engine
@@ -865,11 +865,9 @@ class TrialResetDialog(QDialog):
                         f.write(f"Usage Count: {self.current_trial_info.usage_count}\n")
                         f.write(f"Expired: {self.current_trial_info.trial_expired}\n")
                         f.write(f"\nRegistry Keys ({len(self.current_trial_info.registry_keys)}):\n")
-                        for key in self.current_trial_info.registry_keys:
-                            f.write(f"  {key}\n")
+                        f.writelines(f"  {key}\n" for key in self.current_trial_info.registry_keys)
                         f.write(f"\nFiles ({len(self.current_trial_info.files)}):\n")
-                        for file in self.current_trial_info.files:
-                            f.write(f"  {file}\n")
+                        f.writelines(f"  {file}\n" for file in self.current_trial_info.files)
 
                 self.log(f"Scan results exported to {file_path}")
             except Exception as e:

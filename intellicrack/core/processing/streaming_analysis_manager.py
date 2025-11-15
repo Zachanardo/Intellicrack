@@ -29,7 +29,7 @@ import mmap
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Iterator, Optional
+from typing import Any, Callable, Iterator
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +91,6 @@ class StreamingAnalyzer(ABC):
             Partial analysis results for this chunk
 
         """
-        pass
 
     @abstractmethod
     def merge_results(self, results: list[dict[str, Any]]) -> dict[str, Any]:
@@ -104,7 +103,6 @@ class StreamingAnalyzer(ABC):
             Merged final analysis results
 
         """
-        pass
 
     def initialize_analysis(self, file_path: Path) -> None:  # noqa: B027
         """Initialize analyzer before processing begins.
@@ -113,7 +111,6 @@ class StreamingAnalyzer(ABC):
             file_path: Path to file being analyzed
 
         """
-        pass
 
     def finalize_analysis(self, merged_results: dict[str, Any]) -> dict[str, Any]:
         """Finalize analysis after all chunks processed.
@@ -131,7 +128,7 @@ class StreamingAnalyzer(ABC):
 class StreamingAnalysisManager:
     """Production-ready manager for streaming analysis of large binaries."""
 
-    def __init__(self, config: Optional[StreamingConfig] = None) -> None:
+    def __init__(self, config: StreamingConfig | None = None) -> None:
         """Initialize the streaming analysis manager.
 
         Args:
@@ -167,8 +164,8 @@ class StreamingAnalysisManager:
     def read_chunks(
         self,
         file_path: Path,
-        chunk_size: Optional[int] = None,
-        overlap_size: Optional[int] = None,
+        chunk_size: int | None = None,
+        overlap_size: int | None = None,
     ) -> Iterator[ChunkContext]:
         """Generate chunks of file data with overlap for pattern matching.
 
@@ -252,7 +249,7 @@ class StreamingAnalysisManager:
         self,
         file_path: Path,
         analyzer: StreamingAnalyzer,
-        checkpoint_path: Optional[Path] = None,
+        checkpoint_path: Path | None = None,
     ) -> dict[str, Any]:
         """Perform streaming analysis using provided analyzer.
 
@@ -378,7 +375,7 @@ class StreamingAnalysisManager:
         except Exception as e:
             self.logger.error(f"Failed to save checkpoint: {e}")
 
-    def load_checkpoint(self, checkpoint_path: Path) -> Optional[dict[str, Any]]:
+    def load_checkpoint(self, checkpoint_path: Path) -> dict[str, Any] | None:
         """Load analysis checkpoint to resume.
 
         Args:
@@ -402,7 +399,7 @@ class StreamingAnalysisManager:
     def calculate_hashes_streaming(
         self,
         file_path: Path,
-        algorithms: Optional[list[str]] = None,
+        algorithms: list[str] | None = None,
     ) -> dict[str, str]:
         """Calculate file hashes using streaming to avoid memory loading.
 

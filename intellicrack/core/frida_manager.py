@@ -26,7 +26,7 @@ from collections import defaultdict, deque
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from ..utils.core.import_checks import FRIDA_AVAILABLE, frida, psutil
 from ..utils.logger import log_all_methods
@@ -4339,7 +4339,7 @@ class FridaManager:
         with open(output_file, "w") as f:
             json.dump(output_with_metadata, f, indent=2)
 
-    def load_previous_results(self, script_name: str) -> List[Dict]:
+    def load_previous_results(self, script_name: str) -> list[dict]:
         """Load previous results for a given script.
 
         Args:

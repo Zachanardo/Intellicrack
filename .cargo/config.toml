@@ -1,0 +1,11 @@
+[env]
+RUSTC = { value = "D:\\Intellicrack\\.pixi\\envs\\default\\Library\\bin\\rustc.exe", force = true, relative = false }
+CARGO = { value = "D:\\Intellicrack\\.pixi\\envs\\default\\Library\\bin\\cargo.exe", force = true, relative = false }
+
+[build]
+rustc = "D:\\Intellicrack\\.pixi\\envs\\default\\Library\\bin\\rustc.exe"
+target-dir = "target"
+
+[term]
+verbose = false
+color = "auto"

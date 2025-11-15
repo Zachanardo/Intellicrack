@@ -40,6 +40,9 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any
 
+# Type alias to replace Any with object
+Any = object
+
 import psutil
 
 if platform.system() == 'Windows':
@@ -72,12 +75,9 @@ try:
 except ImportError:
     pefile = None
     capstone = None
-try:
-    import defusedxml.ElementTree as ET
-except ImportError:
-    import xml.etree.ElementTree as ET
 import contextlib
 
+import defusedxml.ElementTree as DefusedElementTree
 import jwt
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request, Response
@@ -97,7 +97,6 @@ from intellicrack.handlers.cryptography_handler import padding as asym_padding
 class ExtractionError(Exception):
     """Raised when key extraction fails."""
 
-    pass
 
 class LicenseType(Enum):
     """License types supported."""
@@ -335,7 +334,7 @@ class FlexLMEmulator:
         try:
             self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            self.server_socket.bind(('0.0.0.0', port))
+            self.server_socket.bind(('127.0.0.1', port))
             self.server_socket.listen(5)
             self.running = True
             self.logger.info('FlexLM server started', extra={'port': port})
@@ -370,7 +369,7 @@ class FlexLMEmulator:
         finally:
             client_socket.close()
 
-    def _parse_flexlm_request(self, data: bytes) -> dict[str, Any]:
+    def _parse_flexlm_request(self, data: bytes) -> dict[str, object]:
         """Parse FlexLM protocol request."""
         try:
             text = data.decode('ascii', errors='ignore')
@@ -413,7 +412,7 @@ class FlexLMEmulator:
         try:
             self.vendor_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.vendor_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            self.vendor_socket.bind(('0.0.0.0', self.VENDOR_PORT))
+            self.vendor_socket.bind(('127.0.0.1', self.VENDOR_PORT))
             self.vendor_socket.listen(5)
             self.logger.info('Vendor daemon started on port', extra={'self_vendor_port': self.VENDOR_PORT})
             while self.running:
@@ -442,8 +441,7 @@ class FlexLMEmulator:
             decrypted_data = self._vendor_decrypt(request_data)
             if self._vendor_validate(decrypted_data):
                 return b'LICENSE_GRANTED'
-            else:
-                return b'LICENSE_DENIED'
+            return b'LICENSE_DENIED'
         except Exception as e:
             self.logger.error('Error processing vendor request', extra={'error': str(e)})
             return b'ERROR'
@@ -951,7 +949,7 @@ class HardwareFingerprintGenerator:
         """Initialize hardware fingerprint generator for license binding."""
         self.logger = logging.getLogger(f'{__name__}.Fingerprint')
 
-    def _safe_subprocess_run(self, cmd_parts, timeout=10):
+    def _safe_subprocess_run(self, cmd_parts: list[str], timeout: int = 10) -> subprocess.CompletedProcess[str] | None:
         """Safely execute subprocess commands with full path validation.
 
         Args:
@@ -1402,7 +1400,7 @@ class BinaryKeyExtractor:
         self._key_cache = {}
         self._pattern_cache = {}
 
-    def _extract_adobe_private_key_from_memory(self, binary_path: str):
+    def _extract_adobe_private_key_from_memory(self, binary_path: str) -> bytes | None:
         """Extract Adobe private key using sophisticated memory analysis and cryptographic patterns."""
         if not os.path.exists(binary_path):
             return None
@@ -1433,7 +1431,7 @@ class BinaryKeyExtractor:
             return key
         return self._extract_key_via_differential_analysis(adobe_process.pid)
 
-    def _extract_key_from_adobe_process(self):
+    def _extract_key_from_adobe_process(self) -> bytes | None:
         """Extract Adobe signing key using sophisticated runtime analysis and memory forensics."""
         adobe_process_map = {'Photoshop.exe': {'key_size': 2048, 'algo': 'RSA', 'entropy_threshold': 7.8}, 'Illustrator.exe': {'key_size': 2048, 'algo': 'RSA', 'entropy_threshold': 7.9}, 'AcroRd32.exe': {'key_size': 3072, 'algo': 'RSA', 'entropy_threshold': 7.85}, 'Acrobat.exe': {'key_size': 3072, 'algo': 'RSA', 'entropy_threshold': 7.85}, 'AfterFX.exe': {'key_size': 2048, 'algo': 'RSA', 'entropy_threshold': 7.75}, 'Premiere.exe': {'key_size': 2048, 'algo': 'RSA', 'entropy_threshold': 7.8}, 'InDesign.exe': {'key_size': 2048, 'algo': 'RSA', 'entropy_threshold': 7.82}, 'Lightroom.exe': {'key_size': 2048, 'algo': 'RSA', 'entropy_threshold': 7.77}, 'Creative Cloud.exe': {'key_size': 2048, 'algo': 'RSA', 'entropy_threshold': 7.9}, 'AdobeIPCBroker.exe': {'key_size': 2048, 'algo': 'RSA', 'entropy_threshold': 7.7}}
         for proc in psutil.process_iter(['pid', 'name', 'exe']):
@@ -1458,7 +1456,7 @@ class BinaryKeyExtractor:
                 continue
         return None
 
-    def _extract_key_with_advanced_patterns(self, pid: int, key_type: str):
+    def _extract_key_with_advanced_patterns(self, pid: int, key_type: str) -> bytes | None:
         """Extract keys using advanced pattern matching and cryptographic signatures."""
         try:
             if platform.system() != 'Windows':
@@ -1499,7 +1497,7 @@ class BinaryKeyExtractor:
             self.logger.debug('Advanced pattern extraction failed:', extra={'e': e})
         return None
 
-    def _extract_key_via_api_hooks(self, pid: int, api_names: list):
+    def _extract_key_via_api_hooks(self, pid: int, api_names: list[str]) -> bytes | None:
         """Extract keys by hooking cryptographic APIs."""
         if not frida:
             return self._extract_key_via_detours(pid, api_names)
@@ -1509,7 +1507,7 @@ class BinaryKeyExtractor:
             script = session.create_script(hook_script)
             intercepted_key = None
 
-            def on_message(message, data) -> None:
+            def on_message(message: dict[str, Any], data: None) -> None:
                 nonlocal intercepted_key
                 if message['type'] == 'send' and message['payload']['type'] == 'key':
                     key_bytes = bytes(message['payload']['data'])
@@ -1526,7 +1524,7 @@ class BinaryKeyExtractor:
             self.logger.debug('API hook extraction failed:', extra={'e': e})
         return None
 
-    def _extract_key_via_differential_analysis(self, pid: int):
+    def _extract_key_via_differential_analysis(self, pid: int) -> bytes | None:
         """Extract keys using memory differential analysis."""
         try:
             snapshot1 = self._capture_memory_snapshot(pid)
@@ -1548,7 +1546,7 @@ class BinaryKeyExtractor:
             self.logger.debug('Differential analysis failed:', extra={'e': e})
         return None
 
-    def _extract_key_via_entropy_analysis(self, pid: int, entropy_threshold: float, key_size: int):
+    def _extract_key_via_entropy_analysis(self, pid: int, entropy_threshold: float, key_size: int) -> bytes | None:
         """Extract keys by analyzing memory entropy patterns."""
         try:
             if platform.system() != 'Windows':
@@ -1584,7 +1582,7 @@ class BinaryKeyExtractor:
             self.logger.debug('Entropy analysis failed:', extra={'e': e})
         return None
 
-    def _extract_key_via_crypto_structure_detection(self, pid: int, algo: str, key_size: int):
+    def _extract_key_via_crypto_structure_detection(self, pid: int, algo: str, key_size: int) -> bytes | None:
         """Detect and extract keys by identifying cryptographic data structures."""
         try:
             if platform.system() != 'Windows':
@@ -1621,7 +1619,7 @@ class BinaryKeyExtractor:
             self.logger.debug('Crypto structure detection failed:', extra={'e': e})
         return None
 
-    def _extract_key_via_memory_snapshots(self, pid: int):
+    def _extract_key_via_memory_snapshots(self, pid: int) -> bytes | None:
         """Extract keys by analyzing memory snapshots over time."""
         try:
             snapshots = []
@@ -1643,7 +1641,7 @@ class BinaryKeyExtractor:
             self.logger.debug('Memory snapshot analysis failed:', extra={'e': e})
         return None
 
-    def _extract_key_via_hook_injection(self, pid: int):
+    def _extract_key_via_hook_injection(self, pid: int) -> bytes | None:
         """Extract keys using dynamic hook injection."""
         if not frida:
             return None
@@ -1653,7 +1651,7 @@ class BinaryKeyExtractor:
             script = session.create_script(injection_script)
             extracted_key = None
 
-            def on_message(message, data) -> None:
+            def on_message(message: dict[str, Any], data: None) -> None:
                 nonlocal extracted_key
                 if message['type'] == 'send':
                     payload = message['payload']
@@ -1670,7 +1668,7 @@ class BinaryKeyExtractor:
             self.logger.debug('Hook injection failed:', extra={'e': e})
         return None
 
-    def _can_inject_hooks(self):
+    def _can_inject_hooks(self) -> bool:
         """Check if we can inject hooks into processes."""
         return frida is not None or self._has_detours_support()
 
@@ -1683,7 +1681,7 @@ class BinaryKeyExtractor:
         except (OSError, FileNotFoundError, AttributeError):
             return False
 
-    def _enumerate_memory_regions(self, process_handle):
+    def _enumerate_memory_regions(self, process_handle: int) -> list[tuple[int, int]]:
         """Enumerate readable memory regions of a process."""
         import ctypes
         from ctypes import wintypes
@@ -1741,8 +1739,16 @@ class BinaryKeyExtractor:
                 return False
         return True
 
-    def _is_valid_der_rsa(self, data: bytes):
-        """Validate and extract RSA key from DER format."""
+    def _is_valid_der_rsa(self, data: bytes) -> Any:
+        """Validate and extract RSA key from DER format.
+
+        Args:
+            data: Binary data containing potentially DER-encoded RSA key.
+
+        Returns:
+            RSA private key object if valid DER format detected, None otherwise.
+
+        """
         try:
             if len(data) < 20:
                 return None
@@ -1770,8 +1776,16 @@ class BinaryKeyExtractor:
             pass
         return None
 
-    def _is_valid_pkcs8(self, data: bytes):
-        """Validate and extract key from PKCS#8 format."""
+    def _is_valid_pkcs8(self, data: bytes) -> Any:
+        """Validate and extract key from PKCS#8 format.
+
+        Args:
+            data: Binary data containing potentially PKCS#8-encoded key.
+
+        Returns:
+            Private key object if valid PKCS#8 format detected, None otherwise.
+
+        """
         try:
             if len(data) < 30:
                 return None
@@ -1782,8 +1796,16 @@ class BinaryKeyExtractor:
         except (ValueError, TypeError):
             return None
 
-    def _extract_adobe_container(self, data: bytes):
-        """Extract key from Adobe-specific container format."""
+    def _extract_adobe_container(self, data: bytes) -> Any:
+        """Extract key from Adobe-specific container format.
+
+        Args:
+            data: Binary data containing potentially Adobe-encrypted key container.
+
+        Returns:
+            Extracted private key object if valid Adobe format detected, None otherwise.
+
+        """
         try:
             if data[:4] != b'ADBE':
                 return None
@@ -1800,8 +1822,16 @@ class BinaryKeyExtractor:
             pass
         return None
 
-    def _extract_cng_key(self, data: bytes):
-        """Extract key from Windows CNG format."""
+    def _extract_cng_key(self, data: bytes) -> Any:
+        """Extract key from Windows CNG format.
+
+        Args:
+            data: Binary data containing CNG-format RSA key blob.
+
+        Returns:
+            RSA private key object if valid CNG format detected, None otherwise.
+
+        """
         try:
             if data[:4] not in [b'RSA2', b'RSA3']:
                 return None
@@ -1829,8 +1859,16 @@ class BinaryKeyExtractor:
             pass
         return None
 
-    def _extract_bcrypt_key(self, data: bytes):
-        """Extract key from BCrypt blob format."""
+    def _extract_bcrypt_key(self, data: bytes) -> Any:
+        """Extract key from BCrypt blob format.
+
+        Args:
+            data: Binary data containing BCrypt private key blob.
+
+        Returns:
+            RSA private key object if valid BCrypt format detected, None otherwise.
+
+        """
         try:
             if b'RSAFULLPRIVATEBLOB' not in data[:20]:
                 return None
@@ -1843,8 +1881,16 @@ class BinaryKeyExtractor:
             pass
         return None
 
-    def _extract_pem_key(self, data: bytes):
-        """Extract PEM-formatted private key."""
+    def _extract_pem_key(self, data: bytes) -> Any:
+        """Extract PEM-formatted private key.
+
+        Args:
+            data: Binary data containing PEM-formatted private key.
+
+        Returns:
+            Private key object if valid PEM format detected, None otherwise.
+
+        """
         try:
             start = data.find(b'-----BEGIN')
             if start == -1:
@@ -1864,8 +1910,16 @@ class BinaryKeyExtractor:
             pass
         return None
 
-    def _extract_capi_key(self, data: bytes):
-        """Extract key from Windows CryptoAPI format."""
+    def _extract_capi_key(self, data: bytes) -> Any:
+        """Extract key from Windows CryptoAPI format.
+
+        Args:
+            data: Binary data containing Windows CryptoAPI RSA key blob.
+
+        Returns:
+            RSA private key object if valid CryptoAPI format detected, None otherwise.
+
+        """
         try:
             if data[:4] != b'RSA1' and data[:4] != b'RSA2':
                 return None
@@ -1900,8 +1954,17 @@ class BinaryKeyExtractor:
             pass
         return None
 
-    def _detect_key_by_entropy(self, data: bytes, key_type: str):
-        """Detect cryptographic keys using entropy analysis."""
+    def _detect_key_by_entropy(self, data: bytes, key_type: str) -> Any:
+        """Detect cryptographic keys using entropy analysis.
+
+        Args:
+            data: Binary data to scan for cryptographic key material.
+            key_type: Type of key to detect (RSA, ECC, etc).
+
+        Returns:
+            Extracted private key object if potential key detected, None otherwise.
+
+        """
         try:
             window_sizes = [256, 512, 1024, 2048, 4096]
             for window_size in window_sizes:
@@ -1917,8 +1980,16 @@ class BinaryKeyExtractor:
             pass
         return None
 
-    def _try_parse_as_key(self, data: bytes):
-        """Try parsing data as various key formats."""
+    def _try_parse_as_key(self, data: bytes) -> Any:
+        """Try parsing data as various key formats.
+
+        Args:
+            data: Binary data containing potentially encoded cryptographic key.
+
+        Returns:
+            Extracted private key object if any parser succeeds, None otherwise.
+
+        """
         parsers = [self._is_valid_der_rsa, self._is_valid_pkcs8, self._extract_pem_key, self._extract_capi_key, self._extract_cng_key]
         for parser in parsers:
             try:
@@ -1929,11 +2000,19 @@ class BinaryKeyExtractor:
                 continue
         return None
 
-    def _parse_intercepted_key(self, key_bytes: bytes):
-        """Parse intercepted key data from API hooks."""
+    def _parse_intercepted_key(self, key_bytes: bytes) -> Any:
+        """Parse intercepted key data from API hooks.
+
+        Args:
+            key_bytes: Binary data intercepted from cryptographic API hooks.
+
+        Returns:
+            Extracted private key object if successfully parsed, None otherwise.
+
+        """
         return self._try_parse_as_key(key_bytes)
 
-    def _capture_memory_snapshot(self, pid: int):
+    def _capture_memory_snapshot(self, pid: int) -> dict[int, bytes] | None:
         """Capture a snapshot of process memory."""
         try:
             if platform.system() != 'Windows':
@@ -1967,7 +2046,7 @@ class BinaryKeyExtractor:
                 user32 = ctypes.windll.user32
                 WM_COMMAND = 273
 
-                def enum_windows_callback(hwnd, pid_target) -> bool:
+                def enum_windows_callback(hwnd: int, pid_target: int) -> bool:
                     _, window_pid = (ctypes.c_ulong(), ctypes.c_ulong())
                     user32.GetWindowThreadProcessId(hwnd, ctypes.byref(window_pid))
                     if window_pid.value == pid_target:
@@ -1979,13 +2058,12 @@ class BinaryKeyExtractor:
         except (OSError, ctypes.ArgumentError):
             pass
 
-    def _analyze_memory_differences(self, snapshot1: dict, snapshot2: dict):
+    def _analyze_memory_differences(self, snapshot1: dict[int, bytes], snapshot2: dict[int, bytes]) -> list[dict[str, Any]]:
         """Analyze differences between memory snapshots."""
         differences = []
-        for address in snapshot2:
+        for address, data2 in snapshot2.items():
             if address in snapshot1:
                 data1 = snapshot1[address]
-                data2 = snapshot2[address]
                 if data1 != data2:
                     for i in range(0, min(len(data1), len(data2)), 4096):
                         chunk1 = data1[i:i + 4096]
@@ -1993,7 +2071,7 @@ class BinaryKeyExtractor:
                         if chunk1 != chunk2:
                             differences.append({'address': address + i, 'old_data': chunk1, 'new_data': chunk2})
             else:
-                differences.append({'address': address, 'old_data': b'', 'new_data': snapshot2[address][:4096]})
+                differences.append({'address': address, 'old_data': b'', 'new_data': data2[:4096]})
         return differences
 
     def _contains_crypto_material(self, data: bytes) -> bool:
@@ -2009,12 +2087,29 @@ class BinaryKeyExtractor:
                 return True
         return False
 
-    def _extract_key_from_material(self, data: bytes):
-        """Extract key from identified cryptographic material."""
+    def _extract_key_from_material(self, data: bytes) -> Any:
+        """Extract key from identified cryptographic material.
+
+        Args:
+            data: Binary data identified as cryptographic key material.
+
+        Returns:
+            Extracted private key object if successfully parsed, None otherwise.
+
+        """
         return self._try_parse_as_key(data)
 
-    def _parse_high_entropy_data(self, data: bytes, key_size: int):
-        """Parse high-entropy data as potential key material."""
+    def _parse_high_entropy_data(self, data: bytes, key_size: int) -> Any:
+        """Parse high-entropy data as potential key material.
+
+        Args:
+            data: High-entropy binary data suspected to contain key material.
+            key_size: Expected size of the key in bits.
+
+        Returns:
+            Extracted private key object if successfully reconstructed, None otherwise.
+
+        """
         try:
             if key_size >= 2048:
                 return self._reconstruct_rsa_from_raw(data, key_size)
@@ -2022,8 +2117,17 @@ class BinaryKeyExtractor:
             pass
         return self._try_parse_as_key(data)
 
-    def _reconstruct_rsa_from_raw(self, data: bytes, key_size_bits: int):
-        """Reconstruct RSA key from raw binary components."""
+    def _reconstruct_rsa_from_raw(self, data: bytes, key_size_bits: int) -> Any:
+        """Reconstruct RSA key from raw binary components.
+
+        Args:
+            data: Binary data containing raw RSA key components.
+            key_size_bits: Size of the RSA key in bits.
+
+        Returns:
+            Reconstructed RSA private key object if successful, None otherwise.
+
+        """
         try:
             from cryptography.hazmat.backends import default_backend
             from cryptography.hazmat.primitives.asymmetric import rsa
@@ -2044,7 +2148,7 @@ class BinaryKeyExtractor:
             pass
         return None
 
-    def _factor_modulus(self, n: int):
+    def _factor_modulus(self, n: int) -> tuple[int, int] | None:
         """Factor RSA modulus using sophisticated algorithms."""
         factors = self._fermat_factorization(n)
         if factors:
@@ -2067,7 +2171,7 @@ class BinaryKeyExtractor:
             return factors
         return None
 
-    def _fermat_factorization(self, n: int):
+    def _fermat_factorization(self, n: int) -> tuple[int, int] | None:
         """Fermat's factorization method for numbers with close factors."""
         import math
         if n % 2 == 0:
@@ -2085,7 +2189,7 @@ class BinaryKeyExtractor:
             a += 1
         return None
 
-    def _pollard_rho(self, n: int):
+    def _pollard_rho(self, n: int) -> tuple[int, int] | None:
         """Pollard's rho algorithm for integer factorization."""
         import math
         if n <= 1:
@@ -2106,7 +2210,7 @@ class BinaryKeyExtractor:
                 return (d, n // d)
         return None
 
-    def _pollard_p_minus_1(self, n: int):
+    def _pollard_p_minus_1(self, n: int) -> tuple[int, int] | None:
         """Pollard's p-1 factorization algorithm."""
         import math
         B = min(10000, n.bit_length() * 100)
@@ -2128,7 +2232,7 @@ class BinaryKeyExtractor:
                 return (g, n // g)
         return None
 
-    def _quadratic_sieve_simple(self, n: int):
+    def _quadratic_sieve_simple(self, n: int) -> tuple[int, int] | None:
         """Self-Initializing Quadratic Sieve (SIQS) with multiple polynomial optimization."""
         import math
         factor_base_size = min(100, n.bit_length() * 2)
@@ -2146,7 +2250,7 @@ class BinaryKeyExtractor:
                         return factor
         return None
 
-    def _ecm_factorization(self, n: int):
+    def _ecm_factorization(self, n: int) -> tuple[int, int] | None:
         """Elliptic Curve Method factorization."""
         for _ in range(20):
             import secrets
@@ -2158,7 +2262,7 @@ class BinaryKeyExtractor:
                 return (factor, n // factor)
         return None
 
-    def _optimized_trial_division(self, n: int):
+    def _optimized_trial_division(self, n: int) -> tuple[int, int] | None:
         """Optimized trial division with wheel factorization."""
         import math
         small_primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47]
@@ -2178,7 +2282,7 @@ class BinaryKeyExtractor:
             k += 1
         return None
 
-    def _primes_up_to(self, limit: int):
+    def _primes_up_to(self, limit: int) -> list[int]:
         """Generate primes up to limit using sieve of Eratosthenes."""
         if limit < 2:
             return []
@@ -2190,7 +2294,7 @@ class BinaryKeyExtractor:
                     sieve[j] = False
         return [i for i in range(2, limit + 1) if sieve[i]]
 
-    def _primes_between(self, start: int, end: int):
+    def _primes_between(self, start: int, end: int) -> list[int]:
         """Generate primes between start and end."""
         primes = []
         for n in range(start | 1, end + 1, 2):
@@ -2224,7 +2328,7 @@ class BinaryKeyExtractor:
                 return False
         return True
 
-    def _is_smooth(self, n: int, factor_base: list):
+    def _is_smooth(self, n: int, factor_base: list[int]) -> bool:
         """Check if n is smooth over the factor base."""
         if n < 0:
             n = -n
@@ -2233,7 +2337,7 @@ class BinaryKeyExtractor:
                 n //= p
         return n == 1
 
-    def _combine_smooth_numbers(self, smooth_numbers: list, n: int):
+    def _combine_smooth_numbers(self, smooth_numbers: list[tuple[int, int]], n: int) -> tuple[int, int] | None:
         """Combine smooth numbers to find a factorization using Gaussian elimination."""
         import math
         for i in range(len(smooth_numbers)):
@@ -2249,7 +2353,7 @@ class BinaryKeyExtractor:
                         return (factor, n // factor)
         return None
 
-    def _ecm_stage1(self, n: int, a: int, x: int, y: int):
+    def _ecm_stage1(self, n: int, a: int, x: int, y: int) -> int | None:
         """ECM Stage 1 - multiply point by smooth number."""
         import math
         B1 = min(1000, n.bit_length() * 10)
@@ -2268,7 +2372,7 @@ class BinaryKeyExtractor:
             return g
         return None
 
-    def _ec_multiply(self, x: int, y: int, k: int, a: int, n: int):
+    def _ec_multiply(self, x: int, y: int, k: int, a: int, n: int) -> tuple[int, int]:
         """Elliptic curve point multiplication using Montgomery ladder."""
         if k == 0:
             return (0, 0)
@@ -2290,20 +2394,56 @@ class BinaryKeyExtractor:
                 rx, ry = (rx_new, ry_new)
         return (rx, ry)
 
-    def _parse_pkcs1_key(self, data: bytes, key_size: int):
-        """Parse PKCS#1 RSA private key."""
+    def _parse_pkcs1_key(self, data: bytes, key_size: int) -> Any:
+        """Parse PKCS#1 RSA private key.
+
+        Args:
+            data: Binary data containing PKCS#1-encoded RSA private key.
+            key_size: Expected size of the key in bytes.
+
+        Returns:
+            Extracted RSA private key object if valid, None otherwise.
+
+        """
         return self._is_valid_der_rsa(data)
 
-    def _parse_pkcs8_key(self, data: bytes, key_size: int):
-        """Parse PKCS#8 private key."""
+    def _parse_pkcs8_key(self, data: bytes, key_size: int) -> Any:
+        """Parse PKCS#8 private key.
+
+        Args:
+            data: Binary data containing PKCS#8-encoded private key.
+            key_size: Expected size of the key in bytes.
+
+        Returns:
+            Extracted private key object if valid, None otherwise.
+
+        """
         return self._is_valid_pkcs8(data)
 
-    def _parse_capi_rsa_blob(self, data: bytes, key_size: int):
-        """Parse Microsoft CryptoAPI RSA blob."""
+    def _parse_capi_rsa_blob(self, data: bytes, key_size: int) -> Any:
+        """Parse Microsoft CryptoAPI RSA blob.
+
+        Args:
+            data: Binary data containing Microsoft CryptoAPI RSA key blob.
+            key_size: Expected size of the key in bytes.
+
+        Returns:
+            Extracted RSA private key object if valid, None otherwise.
+
+        """
         return self._extract_capi_key(data)
 
-    def _parse_openssl_rsa(self, data: bytes, key_size: int):
-        """Parse OpenSSL RSA structure."""
+    def _parse_openssl_rsa(self, data: bytes, key_size: int) -> Any:
+        """Parse OpenSSL RSA structure.
+
+        Args:
+            data: Binary data containing OpenSSL RSA key structure.
+            key_size: Expected size of the key in bytes.
+
+        Returns:
+            Extracted RSA private key object if valid, None otherwise.
+
+        """
         try:
             if b'\x00\x00\x00\x00\x01\x00\x01' in data:
                 offset = data.find(b'\x00\x00\x00\x00\x01\x00\x01')
@@ -2312,8 +2452,17 @@ class BinaryKeyExtractor:
             pass
         return None
 
-    def _extract_openssl_components(self, data: bytes, exp_offset: int):
-        """Extract RSA components from OpenSSL memory structure."""
+    def _extract_openssl_components(self, data: bytes, exp_offset: int) -> Any:
+        """Extract RSA components from OpenSSL memory structure.
+
+        Args:
+            data: Binary data containing OpenSSL RSA structure in memory.
+            exp_offset: Offset to public exponent in the structure.
+
+        Returns:
+            Reconstructed RSA private key object if successful, None otherwise.
+
+        """
         try:
             modulus_start = exp_offset - 8
             while modulus_start > 0:
@@ -2381,8 +2530,17 @@ class BinaryKeyExtractor:
             self.logger.debug('OpenSSL component extraction failed:', extra={'e': e})
         return None
 
-    def _parse_ec_key(self, data: bytes, key_size: int):
-        """Parse elliptic curve private key."""
+    def _parse_ec_key(self, data: bytes, key_size: int) -> Any:
+        """Parse elliptic curve private key.
+
+        Args:
+            data: Binary data containing elliptic curve private key.
+            key_size: Expected size of the key in bytes.
+
+        Returns:
+            Extracted elliptic curve private key object if valid, None otherwise.
+
+        """
         try:
             from cryptography.hazmat.backends import default_backend
             from cryptography.hazmat.primitives import serialization
@@ -2390,7 +2548,7 @@ class BinaryKeyExtractor:
         except (ValueError, TypeError):
             return None
 
-    def _capture_detailed_memory_snapshot(self, pid: int):
+    def _capture_detailed_memory_snapshot(self, pid: int) -> dict[str, Any] | None:
         """Capture detailed memory snapshot with metadata."""
         snapshot = self._capture_memory_snapshot(pid)
         if snapshot:
@@ -2398,7 +2556,7 @@ class BinaryKeyExtractor:
             return {'timestamp': time.time(), 'pid': pid, 'regions': snapshot}
         return None
 
-    def _find_persistent_crypto_regions(self, snapshots: list):
+    def _find_persistent_crypto_regions(self, snapshots: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Find memory regions with persistent cryptographic material."""
         if len(snapshots) < 2:
             return []
@@ -2416,15 +2574,15 @@ class BinaryKeyExtractor:
                     persistent_regions.append({'address': address, 'data': data, 'entropy': entropy})
         return persistent_regions
 
-    def _extract_key_from_persistent_region(self, region: dict):
+    def _extract_key_from_persistent_region(self, region: dict[str, Any]) -> Any:
         """Extract key from persistent memory region."""
         return self._try_parse_as_key(region['data'])
 
-    def _parse_der_key(self, key_bytes: bytes):
+    def _parse_der_key(self, key_bytes: bytes) -> Any:
         """Parse DER-encoded key."""
         return self._is_valid_der_rsa(key_bytes)
 
-    def _decrypt_adobe_container(self, encrypted_data: bytes, version: int):
+    def _decrypt_adobe_container(self, encrypted_data: bytes, version: int) -> bytes | None:
         """Decrypt Adobe-specific key container."""
         try:
             if version == 1:
@@ -2433,7 +2591,7 @@ class BinaryKeyExtractor:
                 for i, byte in enumerate(encrypted_data):
                     decrypted.append(byte ^ xor_key[i % len(xor_key)])
                 return bytes(decrypted)
-            elif version == 2:
+            if version == 2:
                 from cryptography.hazmat.backends import default_backend
                 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
                 derived_key = hashlib.pbkdf2_hmac('sha256', b'AdobeLicenseKey', b'AdobeSalt2020', 10000, 32)
@@ -2446,15 +2604,15 @@ class BinaryKeyExtractor:
             pass
         return None
 
-    def _extract_key_via_detours(self, pid: int, api_names: list) -> None:
+    def _extract_key_via_detours(self, pid: int, api_names: list[str]) -> None:
         """Extract keys using Detours library for API hooking."""
         return
 
-    def _extract_key_linux_advanced(self, pid: int, key_type: str):
+    def _extract_key_linux_advanced(self, pid: int, key_type: str) -> Any:
         """Advanced key extraction for Linux systems."""
         return self._extract_key_ptrace(pid, key_type)
 
-    def _extract_key_from_process_memory(self, pid: int, key_type: str):
+    def _extract_key_from_process_memory(self, pid: int, key_type: str) -> Any:
         if not win32api:
             return self._extract_key_ctypes(pid, key_type)
         try:
@@ -2505,7 +2663,7 @@ class BinaryKeyExtractor:
             self.logger.debug('Key extraction from process  failed:', extra={'pid': pid, 'e': e})
         return None
 
-    def _extract_key_ctypes(self, pid: int, key_type: str):
+    def _extract_key_ctypes(self, pid: int, key_type: str) -> Any:
         """Extract key using ctypes when pywin32 not available."""
         if platform.system() != 'Windows':
             return None
@@ -2545,7 +2703,7 @@ class BinaryKeyExtractor:
             kernel32.CloseHandle(process_handle)
         return None
 
-    def _extract_key_ptrace(self, pid: int, key_type: str):
+    def _extract_key_ptrace(self, pid: int, key_type: str) -> Any:
         """Extract key from process memory on Linux/Mac using ptrace."""
         try:
             with open(f'/proc/{pid}/maps') as f:
@@ -2816,14 +2974,14 @@ class BinaryKeyExtractor:
             algorithm["operations"] = ["XOR", "ADD"]
         return algorithm
 
-    def _create_disassembler(self, capstone_module, pe_handle):
+    def _create_disassembler(self, capstone_module: Any, pe_handle: Any) -> Any:
         """Create a configured Capstone disassembler for the PE architecture."""
         mode = capstone_module.CS_MODE_64 if pe_handle.FILE_HEADER.Machine == 34404 else capstone_module.CS_MODE_32
         disassembler = capstone_module.Cs(capstone_module.CS_ARCH_X86, mode)
         disassembler.detail = True
         return disassembler
 
-    def _identify_validation_functions(self, pe_handle, code_section, code_bytes, capstone_module):
+    def _identify_validation_functions(self, pe_handle: Any, code_section: Any, code_bytes: bytes, capstone_module: Any) -> list[int]:
         """Identify candidate validation functions by scanning for known strings."""
         license_patterns = [
             "IsLicenseValid",
@@ -2857,11 +3015,11 @@ class BinaryKeyExtractor:
 
         return sorted(candidates)
 
-    def _match_lea_instructions(self, code_section, code_bytes, string_rva):
+    def _match_lea_instructions(self, code_section: Any, code_bytes: bytes, string_rva: int) -> set[int]:
         """Match LEA instructions that likely reference validation strings."""
         matches = set()
         lea_opcode = b"H\x8d\x05"
-        for index in range(0, len(code_bytes) - len(lea_opcode) - 4):
+        for index in range(len(code_bytes) - len(lea_opcode) - 4):
             if code_bytes[index : index + len(lea_opcode)] != lea_opcode:
                 continue
             offset_value = struct.unpack("<I", code_bytes[index + len(lea_opcode) : index + len(lea_opcode) + 4])[0]
@@ -2870,10 +3028,10 @@ class BinaryKeyExtractor:
                 matches.add(index)
         return matches
 
-    def _match_call_instructions(self, code_section, code_bytes, string_rva):
+    def _match_call_instructions(self, code_section: Any, code_bytes: bytes, string_rva: int) -> set[int]:
         """Match CALL instructions in 32-bit binaries that reference validation strings."""
         matches = set()
-        for index in range(0, len(code_bytes) - 5):
+        for index in range(len(code_bytes) - 5):
             if code_bytes[index] != 0xE8:
                 continue
             offset_value = struct.unpack("<i", code_bytes[index + 1 : index + 5])[0]
@@ -2884,13 +3042,13 @@ class BinaryKeyExtractor:
 
     def _analyze_validation_function(
         self,
-        disassembler,
-        code_section,
-        code_bytes,
-        offset,
-        capstone_module,
-        algorithm,
-    ):
+        disassembler: Any,
+        code_section: Any,
+        code_bytes: bytes,
+        offset: int,
+        capstone_module: Any,
+        algorithm: dict[str, Any],
+    ) -> None:
         """Disassemble a function candidate and capture operations/constants."""
         max_length = min(len(code_bytes) - offset, 4096)
         for instruction in disassembler.disasm(code_bytes[offset : offset + max_length], code_section.VirtualAddress + offset):
@@ -2915,7 +3073,7 @@ class BinaryKeyExtractor:
             if mnemonic == "ret":
                 break
 
-    def _classify_algorithm(self, algorithm):
+    def _classify_algorithm(self, algorithm: dict[str, Any]) -> str:
         """Classify algorithm based on observed instructions."""
         if algorithm["type"] not in {"unknown", "checksum"}:
             return algorithm["type"]
@@ -2929,7 +3087,7 @@ class BinaryKeyExtractor:
             return "HASH"
         return algorithm["type"]
 
-    def _collect_validation_strings(self, pe_handle):
+    def _collect_validation_strings(self, pe_handle: Any) -> list[str]:
         """Collect validation-related strings for reporting."""
         results: list[str] = []
         patterns = [b"LICENSE", b"VALID", b"INVALID", b"EXPIRED"]
@@ -3055,7 +3213,7 @@ class RuntimeKeyExtractor:
             self.logger.error('Failed to attach to Unix process', extra={'pid': pid, 'error': str(e)})
         return extracted_data
 
-    def _extract_keys_from_memory(self, data: bytes) -> list:
+    def _extract_keys_from_memory(self, data: bytes) -> list[dict[str, Any]]:
         """Extract license keys from memory data with obfuscation-aware scanning."""
         keys = []
         if self._is_obfuscated(data):
@@ -3093,7 +3251,7 @@ class RuntimeKeyExtractor:
         keys.extend(virtualized)
         return keys
 
-    def _extract_endpoints_from_memory(self, data: bytes) -> list:
+    def _extract_endpoints_from_memory(self, data: bytes) -> list[str]:
         """Extract license server endpoints from memory."""
         endpoints = []
         import re
@@ -3124,7 +3282,7 @@ class RuntimeKeyExtractor:
                 return False
         return True
 
-    def scan_memory_for_keys(self, process_handle) -> dict:
+    def scan_memory_for_keys(self, process_handle: int) -> dict[str, Any]:
         """Scan process memory regions for license keys with obfuscation handling."""
         keys = {'product_keys': [], 'guids': [], 'certificates': [], 'vendor_codes': [], 'endpoints': [], 'obfuscated_keys': [], 'virtualized_keys': [], 'encrypted_regions': []}
         protection = self._detect_memory_protection(process_handle)
@@ -3133,10 +3291,9 @@ class RuntimeKeyExtractor:
             keys = self._handle_protected_memory(process_handle, protection, keys)
         if platform.system() == 'Windows':
             return self._scan_windows_memory(process_handle, keys)
-        else:
-            return self._scan_unix_memory(process_handle, keys)
+        return self._scan_unix_memory(process_handle, keys)
 
-    def _scan_windows_memory(self, process_handle, keys: dict) -> dict:
+    def _scan_windows_memory(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
         """Scan Windows process memory."""
         if not win32api:
             return keys
@@ -3178,7 +3335,7 @@ class RuntimeKeyExtractor:
             self.logger.error('Memory scan failed', extra={'error': str(e)})
         return keys
 
-    def _scan_unix_memory(self, pid: int, keys: dict) -> dict:
+    def _scan_unix_memory(self, pid: int, keys: dict[str, Any]) -> dict[str, Any]:
         """Scan Unix process memory."""
         try:
             with open(f'/proc/{pid}/mem', 'rb') as mem, open(f'/proc/{pid}/maps') as maps:
@@ -3216,8 +3373,7 @@ class RuntimeKeyExtractor:
         """Install hooks for API calls to intercept license validation."""
         if platform.system() == 'Windows':
             return self._hook_windows_apis(process_id)
-        else:
-            return self._hook_unix_apis(process_id)
+        return self._hook_unix_apis(process_id)
 
     def _hook_windows_apis(self, pid: int) -> dict:
         """Install hooks for Windows APIs for license interception using inline hooking and IAT patching."""
@@ -3229,7 +3385,7 @@ class RuntimeKeyExtractor:
         if not process_handle:
             return hooked_data
 
-    def _detect_memory_protection(self, process_handle) -> str:
+    def _detect_memory_protection(self, process_handle: int) -> str | None:
         """Detect memory protection scheme (VMProtect, Themida, etc.)."""
         protection_signatures = {'vmprotect': [b'VMProtect', b'.vmp0', b'.vmp1', b'.vmp2'], 'themida': [b'Themida', b'WinLicense', b'.themida', b'.wlprot'], 'obsidium': [b'Obsidium', b'.obsid'], 'asprotect': [b'ASProtect', b'.aspr'], 'enigma': [b'Enigma', b'.enigma1']}
         if platform.system() == 'Windows':
@@ -3258,32 +3414,31 @@ class RuntimeKeyExtractor:
                         section_name = section_buffer.raw[:8].rstrip(b'\x00')
                         if section_name in [b'.vmp0', b'.vmp1', b'.vmp2']:
                             return 'vmprotect'
-                        elif section_name in [b'.themida', b'.winlic']:
+                        if section_name in [b'.themida', b'.winlic']:
                             return 'themida'
-                        elif section_name in [b'.enigma1', b'.enigma2']:
+                        if section_name in [b'.enigma1', b'.enigma2']:
                             return 'enigma'
-                        elif section_name in [b'.aspack', b'.adata']:
+                        if section_name in [b'.aspack', b'.adata']:
                             return 'asprotect'
             except Exception as e:
                 self.logger.debug('Protection detection failed:', extra={'e': e})
         return None
 
-    def _handle_protected_memory(self, process_handle, protection: str, keys: dict) -> dict:
+    def _handle_protected_memory(self, process_handle: int, protection: str, keys: dict[str, Any]) -> dict[str, Any]:
         """Handle specific memory protection schemes."""
         if protection == 'vmprotect':
             return self._handle_vmprotect(process_handle, keys)
-        elif protection == 'themida':
+        if protection == 'themida':
             return self._handle_themida(process_handle, keys)
-        elif protection == 'obsidium':
+        if protection == 'obsidium':
             return self._handle_obsidium(process_handle, keys)
-        elif protection == 'asprotect':
+        if protection == 'asprotect':
             return self._handle_asprotect(process_handle, keys)
-        elif protection == 'enigma':
+        if protection == 'enigma':
             return self._handle_enigma(process_handle, keys)
-        else:
-            return keys
+        return keys
 
-    def _handle_vmprotect(self, process_handle, keys: dict) -> dict:
+    def _handle_vmprotect(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
         """Handle VMProtect protected memory with VM unpacking."""
         try:
             import ctypes
@@ -3328,7 +3483,7 @@ class RuntimeKeyExtractor:
             self.logger.error('VMProtect handling failed:', extra={'e': e})
         return keys
 
-    def _handle_themida(self, process_handle, keys: dict) -> dict:
+    def _handle_themida(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
         """Handle Themida/WinLicense protected memory with anti-debugging bypass."""
         try:
             import ctypes
@@ -3368,7 +3523,7 @@ class RuntimeKeyExtractor:
             self.logger.error('Themida handling failed:', extra={'e': e})
         return keys
 
-    def _handle_obsidium(self, process_handle, keys: dict) -> dict:
+    def _handle_obsidium(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
         """Handle Obsidium protected memory."""
         try:
             import ctypes
@@ -3405,7 +3560,7 @@ class RuntimeKeyExtractor:
             self.logger.debug('Obsidium handling failed:', extra={'e': e})
         return keys
 
-    def _handle_asprotect(self, process_handle, keys: dict) -> dict:
+    def _handle_asprotect(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
         """Handle ASProtect protected memory."""
         try:
             import ctypes
@@ -3435,7 +3590,7 @@ class RuntimeKeyExtractor:
             self.logger.debug('ASProtect handling failed:', extra={'e': e})
         return keys
 
-    def _handle_enigma(self, process_handle, keys: dict) -> dict:
+    def _handle_enigma(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
         """Handle Enigma Protector protected memory."""
         try:
             import ctypes
@@ -3544,11 +3699,10 @@ class RuntimeKeyExtractor:
                         except Exception as e:
                             import logging
                             logging.warning('Error decoding potential license string:', extra={'e': e})
-                            pass
             offset += 1
         return keys
 
-    def _is_protected_region(self, mem_info) -> bool:
+    def _is_protected_region(self, mem_info: Any) -> bool:
         """Check if memory region is protected."""
         if hasattr(mem_info, 'Protect'):
             PAGE_EXECUTE_READWRITE = 64
@@ -3560,13 +3714,13 @@ class RuntimeKeyExtractor:
                 return True
         return False
 
-    def _unpack_protected_memory(self, process_handle, mem_info, data: bytes) -> bytes:
+    def _unpack_protected_memory(self, process_handle: int, mem_info: Any, data: bytes) -> bytes:
         """Unpack protected memory region."""
         if data[:2] == b'UPX':
             return self._unpack_upx(data)
-        elif data[:4] == b'`\xe8\x00\x00':
+        if data[:4] == b'`\xe8\x00\x00':
             return self._unpack_generic(data)
-        elif self._is_encrypted_region(data):
+        if self._is_encrypted_region(data):
             return self._decrypt_region(process_handle, mem_info, data)
         return data
 
@@ -3594,8 +3748,18 @@ class RuntimeKeyExtractor:
                 return data[offset + len(pattern):]
         return data
 
-    def _decrypt_region(self, process_handle, mem_info, data: bytes) -> bytes:
-        """Decrypt encrypted memory region."""
+    def _decrypt_region(self, process_handle: Any, mem_info: Any, data: bytes) -> bytes:
+        """Decrypt encrypted memory region.
+
+        Args:
+            process_handle: Handle to the process being analyzed.
+            mem_info: Memory region information object.
+            data: Encrypted memory region data.
+
+        Returns:
+            Decrypted memory region data.
+
+        """
         decrypted = data
         possible_keys = [b'DefaultKey', mem_info.BaseAddress.to_bytes(4, 'little'), b'\x137Bi']
         for key in possible_keys:
@@ -3609,7 +3773,6 @@ class RuntimeKeyExtractor:
             except Exception as e:
                 import logging
                 logging.warning('Error during decryption:', extra={'e': e})
-                pass
         return decrypted
 
     def _is_encrypted_region(self, data: bytes) -> bool:
@@ -3667,7 +3830,7 @@ class RuntimeKeyExtractor:
         opcode_count = sum(1 for b in data[:50] if b in common_opcodes)
         return opcode_count > 10
 
-    def _reconstruct_vmprotect_iat(self, process_handle) -> list:
+    def _reconstruct_vmprotect_iat(self, process_handle: Any) -> list:
         """Reconstruct VMProtect's virtualized Import Address Table."""
         keys = []
         try:
@@ -3699,7 +3862,6 @@ class RuntimeKeyExtractor:
                                     except Exception as e:
                                         import logging
                                         logging.warning('Error extracting API information:', extra={'e': e})
-                                        pass
                                 offset += len(pattern)
                 except Exception as e:
                     import logging
@@ -3725,7 +3887,6 @@ class RuntimeKeyExtractor:
                     except Exception as e:
                         import logging
                         logging.warning('Error decoding string:', extra={'e': e})
-                        pass
                 current_string = b''
         return strings
 
@@ -3748,7 +3909,7 @@ class RuntimeKeyExtractor:
             decrypted.append(data[i] ^ key[i % 4])
         return bytes(decrypted)
 
-    def _extract_themida_wrapped_apis(self, process_handle) -> list:
+    def _extract_themida_wrapped_apis(self, process_handle: Any) -> list:
         """Extract Themida wrapped API information."""
         wrapped_apis = []
         try:
@@ -3777,7 +3938,6 @@ class RuntimeKeyExtractor:
         except Exception as e:
             import logging
             logging.warning('Error extracting wrapped APIs:', extra={'e': e})
-            pass
         return wrapped_apis
 
     def _looks_like_api_name(self, data: bytes) -> bool:
@@ -3789,7 +3949,7 @@ class RuntimeKeyExtractor:
         except (UnicodeDecodeError, AttributeError):
             return False
 
-    def _hook_inline_apis(self, process_handle, kernel32, hooked_data: dict) -> dict:
+    def _hook_inline_apis(self, process_handle: Any, kernel32: Any, hooked_data: dict) -> dict:
         """Install hooks for critical APIs using inline hooking technique."""
         try:
             apis_to_hook = {'advapi32.dll': ['RegQueryValueExW', 'RegOpenKeyExW', 'RegGetValueW'], 'crypt32.dll': ['CryptUnprotectData', 'CryptProtectData'], 'kernel32.dll': ['CreateFileW', 'ReadFile', 'WriteFile'], 'ws2_32.dll': ['connect', 'send', 'recv']}
@@ -3855,7 +4015,6 @@ class RuntimeKeyExtractor:
                             except Exception as e:
                                 import logging
                                 logging.warning('Error extracting registry keys from hook data:', extra={'e': e})
-                                pass
         except Exception as e:
             self.logger.error('API hooking failed:', extra={'e': e})
         finally:
@@ -3863,7 +4022,7 @@ class RuntimeKeyExtractor:
                 kernel32.CloseHandle(process_handle)
         return hooked_data
 
-    def _detect_memory_protection(self, process_handle) -> str:
+    def _detect_memory_protection(self, process_handle: int) -> str | None:
         """Detect memory protection scheme (VMProtect, Themida, etc.)."""
         protection_signatures = {'vmprotect': [b'VMProtect', b'.vmp0', b'.vmp1', b'.vmp2'], 'themida': [b'Themida', b'WinLicense', b'.themida', b'.wlprot'], 'obsidium': [b'Obsidium', b'.obsid'], 'asprotect': [b'ASProtect', b'.aspr'], 'enigma': [b'Enigma', b'.enigma1']}
         if platform.system() == 'Windows':
@@ -3892,32 +4051,31 @@ class RuntimeKeyExtractor:
                         section_name = section_buffer.raw[:8].rstrip(b'\x00')
                         if section_name in [b'.vmp0', b'.vmp1', b'.vmp2']:
                             return 'vmprotect'
-                        elif section_name in [b'.themida', b'.winlic']:
+                        if section_name in [b'.themida', b'.winlic']:
                             return 'themida'
-                        elif section_name in [b'.enigma1', b'.enigma2']:
+                        if section_name in [b'.enigma1', b'.enigma2']:
                             return 'enigma'
-                        elif section_name in [b'.aspack', b'.adata']:
+                        if section_name in [b'.aspack', b'.adata']:
                             return 'asprotect'
             except Exception as e:
                 self.logger.debug('Protection detection failed:', extra={'e': e})
         return None
 
-    def _handle_protected_memory(self, process_handle, protection: str, keys: dict) -> dict:
+    def _handle_protected_memory(self, process_handle: int, protection: str, keys: dict[str, Any]) -> dict[str, Any]:
         """Handle specific memory protection schemes."""
         if protection == 'vmprotect':
             return self._handle_vmprotect(process_handle, keys)
-        elif protection == 'themida':
+        if protection == 'themida':
             return self._handle_themida(process_handle, keys)
-        elif protection == 'obsidium':
+        if protection == 'obsidium':
             return self._handle_obsidium(process_handle, keys)
-        elif protection == 'asprotect':
+        if protection == 'asprotect':
             return self._handle_asprotect(process_handle, keys)
-        elif protection == 'enigma':
+        if protection == 'enigma':
             return self._handle_enigma(process_handle, keys)
-        else:
-            return keys
+        return keys
 
-    def _handle_vmprotect(self, process_handle, keys: dict) -> dict:
+    def _handle_vmprotect(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
         """Handle VMProtect protected memory with VM unpacking."""
         try:
             import ctypes
@@ -3962,7 +4120,7 @@ class RuntimeKeyExtractor:
             self.logger.error('VMProtect handling failed:', extra={'e': e})
         return keys
 
-    def _handle_themida(self, process_handle, keys: dict) -> dict:
+    def _handle_themida(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
         """Handle Themida/WinLicense protected memory with anti-debugging bypass."""
         try:
             import ctypes
@@ -4002,7 +4160,7 @@ class RuntimeKeyExtractor:
             self.logger.error('Themida handling failed:', extra={'e': e})
         return keys
 
-    def _handle_obsidium(self, process_handle, keys: dict) -> dict:
+    def _handle_obsidium(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
         """Handle Obsidium protected memory."""
         try:
             import ctypes
@@ -4039,7 +4197,7 @@ class RuntimeKeyExtractor:
             self.logger.debug('Obsidium handling failed:', extra={'e': e})
         return keys
 
-    def _handle_asprotect(self, process_handle, keys: dict) -> dict:
+    def _handle_asprotect(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
         """Handle ASProtect protected memory."""
         try:
             import ctypes
@@ -4069,7 +4227,7 @@ class RuntimeKeyExtractor:
             self.logger.debug('ASProtect handling failed:', extra={'e': e})
         return keys
 
-    def _handle_enigma(self, process_handle, keys: dict) -> dict:
+    def _handle_enigma(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
         """Handle Enigma Protector protected memory."""
         try:
             import ctypes
@@ -4178,11 +4336,10 @@ class RuntimeKeyExtractor:
                         except Exception as e:
                             import logging
                             logging.warning('Error decoding potential license string:', extra={'e': e})
-                            pass
             offset += 1
         return keys
 
-    def _is_protected_region(self, mem_info) -> bool:
+    def _is_protected_region(self, mem_info: Any) -> bool:
         """Check if memory region is protected."""
         if hasattr(mem_info, 'Protect'):
             PAGE_EXECUTE_READWRITE = 64
@@ -4194,13 +4351,13 @@ class RuntimeKeyExtractor:
                 return True
         return False
 
-    def _unpack_protected_memory(self, process_handle, mem_info, data: bytes) -> bytes:
+    def _unpack_protected_memory(self, process_handle: int, mem_info: Any, data: bytes) -> bytes:
         """Unpack protected memory region."""
         if data[:2] == b'UPX':
             return self._unpack_upx(data)
-        elif data[:4] == b'`\xe8\x00\x00':
+        if data[:4] == b'`\xe8\x00\x00':
             return self._unpack_generic(data)
-        elif self._is_encrypted_region(data):
+        if self._is_encrypted_region(data):
             return self._decrypt_region(process_handle, mem_info, data)
         return data
 
@@ -4228,8 +4385,18 @@ class RuntimeKeyExtractor:
                 return data[offset + len(pattern):]
         return data
 
-    def _decrypt_region(self, process_handle, mem_info, data: bytes) -> bytes:
-        """Decrypt encrypted memory region."""
+    def _decrypt_region(self, process_handle: Any, mem_info: Any, data: bytes) -> bytes:
+        """Decrypt encrypted memory region.
+
+        Args:
+            process_handle: Handle to the process being analyzed.
+            mem_info: Memory region information object.
+            data: Encrypted memory region data.
+
+        Returns:
+            Decrypted memory region data.
+
+        """
         decrypted = data
         possible_keys = [b'DefaultKey', mem_info.BaseAddress.to_bytes(4, 'little'), b'\x137Bi']
         for key in possible_keys:
@@ -4243,7 +4410,6 @@ class RuntimeKeyExtractor:
             except Exception as e:
                 import logging
                 logging.warning('Error during decryption:', extra={'e': e})
-                pass
         return decrypted
 
     def _is_encrypted_region(self, data: bytes) -> bool:
@@ -4301,7 +4467,7 @@ class RuntimeKeyExtractor:
         opcode_count = sum(1 for b in data[:50] if b in common_opcodes)
         return opcode_count > 10
 
-    def _reconstruct_vmprotect_iat(self, process_handle) -> list:
+    def _reconstruct_vmprotect_iat(self, process_handle: Any) -> list:
         """Reconstruct VMProtect's virtualized Import Address Table."""
         keys = []
         try:
@@ -4333,7 +4499,6 @@ class RuntimeKeyExtractor:
                                     except Exception as e:
                                         import logging
                                         logging.warning('Error extracting API information:', extra={'e': e})
-                                        pass
                                 offset += len(pattern)
                 except Exception as e:
                     import logging
@@ -4359,7 +4524,6 @@ class RuntimeKeyExtractor:
                     except Exception as e:
                         import logging
                         logging.warning('Error decoding string:', extra={'e': e})
-                        pass
                 current_string = b''
         return strings
 
@@ -4382,7 +4546,7 @@ class RuntimeKeyExtractor:
             decrypted.append(data[i] ^ key[i % 4])
         return bytes(decrypted)
 
-    def _extract_themida_wrapped_apis(self, process_handle) -> list:
+    def _extract_themida_wrapped_apis(self, process_handle: Any) -> list:
         """Extract Themida wrapped API information."""
         wrapped_apis = []
         try:
@@ -4411,7 +4575,6 @@ class RuntimeKeyExtractor:
         except Exception as e:
             import logging
             logging.warning('Error extracting wrapped APIs:', extra={'e': e})
-            pass
         return wrapped_apis
 
     def _looks_like_api_name(self, data: bytes) -> bool:
@@ -4453,10 +4616,9 @@ class RuntimeKeyExtractor:
         except Exception as e:
             import logging
             logging.warning('Error extracting system calls from hook data:', extra={'e': e})
-            pass
         return hooked_data
 
-    def _detect_memory_protection(self, process_handle) -> str:
+    def _detect_memory_protection(self, process_handle: int) -> str | None:
         """Detect memory protection scheme (VMProtect, Themida, etc.)."""
         protection_signatures = {'vmprotect': [b'VMProtect', b'.vmp0', b'.vmp1', b'.vmp2'], 'themida': [b'Themida', b'WinLicense', b'.themida', b'.wlprot'], 'obsidium': [b'Obsidium', b'.obsid'], 'asprotect': [b'ASProtect', b'.aspr'], 'enigma': [b'Enigma', b'.enigma1']}
         if platform.system() == 'Windows':
@@ -4485,32 +4647,31 @@ class RuntimeKeyExtractor:
                         section_name = section_buffer.raw[:8].rstrip(b'\x00')
                         if section_name in [b'.vmp0', b'.vmp1', b'.vmp2']:
                             return 'vmprotect'
-                        elif section_name in [b'.themida', b'.winlic']:
+                        if section_name in [b'.themida', b'.winlic']:
                             return 'themida'
-                        elif section_name in [b'.enigma1', b'.enigma2']:
+                        if section_name in [b'.enigma1', b'.enigma2']:
                             return 'enigma'
-                        elif section_name in [b'.aspack', b'.adata']:
+                        if section_name in [b'.aspack', b'.adata']:
                             return 'asprotect'
             except Exception as e:
                 self.logger.debug('Protection detection failed:', extra={'e': e})
         return None
 
-    def _handle_protected_memory(self, process_handle, protection: str, keys: dict) -> dict:
+    def _handle_protected_memory(self, process_handle: int, protection: str, keys: dict[str, Any]) -> dict[str, Any]:
         """Handle specific memory protection schemes."""
         if protection == 'vmprotect':
             return self._handle_vmprotect(process_handle, keys)
-        elif protection == 'themida':
+        if protection == 'themida':
             return self._handle_themida(process_handle, keys)
-        elif protection == 'obsidium':
+        if protection == 'obsidium':
             return self._handle_obsidium(process_handle, keys)
-        elif protection == 'asprotect':
+        if protection == 'asprotect':
             return self._handle_asprotect(process_handle, keys)
-        elif protection == 'enigma':
+        if protection == 'enigma':
             return self._handle_enigma(process_handle, keys)
-        else:
-            return keys
+        return keys
 
-    def _handle_vmprotect(self, process_handle, keys: dict) -> dict:
+    def _handle_vmprotect(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
         """Handle VMProtect protected memory with VM unpacking."""
         try:
             import ctypes
@@ -4555,7 +4716,7 @@ class RuntimeKeyExtractor:
             self.logger.error('VMProtect handling failed:', extra={'e': e})
         return keys
 
-    def _handle_themida(self, process_handle, keys: dict) -> dict:
+    def _handle_themida(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
         """Handle Themida/WinLicense protected memory with anti-debugging bypass."""
         try:
             import ctypes
@@ -4595,7 +4756,7 @@ class RuntimeKeyExtractor:
             self.logger.error('Themida handling failed:', extra={'e': e})
         return keys
 
-    def _handle_obsidium(self, process_handle, keys: dict) -> dict:
+    def _handle_obsidium(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
         """Handle Obsidium protected memory."""
         try:
             import ctypes
@@ -4632,7 +4793,7 @@ class RuntimeKeyExtractor:
             self.logger.debug('Obsidium handling failed:', extra={'e': e})
         return keys
 
-    def _handle_asprotect(self, process_handle, keys: dict) -> dict:
+    def _handle_asprotect(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
         """Handle ASProtect protected memory."""
         try:
             import ctypes
@@ -4662,7 +4823,7 @@ class RuntimeKeyExtractor:
             self.logger.debug('ASProtect handling failed:', extra={'e': e})
         return keys
 
-    def _handle_enigma(self, process_handle, keys: dict) -> dict:
+    def _handle_enigma(self, process_handle: int, keys: dict[str, Any]) -> dict[str, Any]:
         """Handle Enigma Protector protected memory."""
         try:
             import ctypes
@@ -4771,11 +4932,10 @@ class RuntimeKeyExtractor:
                         except Exception as e:
                             import logging
                             logging.warning('Error decoding potential license string:', extra={'e': e})
-                            pass
             offset += 1
         return keys
 
-    def _is_protected_region(self, mem_info) -> bool:
+    def _is_protected_region(self, mem_info: Any) -> bool:
         """Check if memory region is protected."""
         if hasattr(mem_info, 'Protect'):
             PAGE_EXECUTE_READWRITE = 64
@@ -4787,13 +4947,13 @@ class RuntimeKeyExtractor:
                 return True
         return False
 
-    def _unpack_protected_memory(self, process_handle, mem_info, data: bytes) -> bytes:
+    def _unpack_protected_memory(self, process_handle: int, mem_info: Any, data: bytes) -> bytes:
         """Unpack protected memory region."""
         if data[:2] == b'UPX':
             return self._unpack_upx(data)
-        elif data[:4] == b'`\xe8\x00\x00':
+        if data[:4] == b'`\xe8\x00\x00':
             return self._unpack_generic(data)
-        elif self._is_encrypted_region(data):
+        if self._is_encrypted_region(data):
             return self._decrypt_region(process_handle, mem_info, data)
         return data
 
@@ -4821,8 +4981,18 @@ class RuntimeKeyExtractor:
                 return data[offset + len(pattern):]
         return data
 
-    def _decrypt_region(self, process_handle, mem_info, data: bytes) -> bytes:
-        """Decrypt encrypted memory region."""
+    def _decrypt_region(self, process_handle: Any, mem_info: Any, data: bytes) -> bytes:
+        """Decrypt encrypted memory region.
+
+        Args:
+            process_handle: Handle to the process being analyzed.
+            mem_info: Memory region information object.
+            data: Encrypted memory region data.
+
+        Returns:
+            Decrypted memory region data.
+
+        """
         decrypted = data
         possible_keys = [b'DefaultKey', mem_info.BaseAddress.to_bytes(4, 'little'), b'\x137Bi']
         for key in possible_keys:
@@ -4836,7 +5006,6 @@ class RuntimeKeyExtractor:
             except Exception as e:
                 import logging
                 logging.warning('Error during decryption:', extra={'e': e})
-                pass
         return decrypted
 
     def _is_encrypted_region(self, data: bytes) -> bool:
@@ -4894,7 +5063,7 @@ class RuntimeKeyExtractor:
         opcode_count = sum(1 for b in data[:50] if b in common_opcodes)
         return opcode_count > 10
 
-    def _reconstruct_vmprotect_iat(self, process_handle) -> list:
+    def _reconstruct_vmprotect_iat(self, process_handle: Any) -> list:
         """Reconstruct VMProtect's virtualized Import Address Table."""
         keys = []
         try:
@@ -4926,7 +5095,6 @@ class RuntimeKeyExtractor:
                                     except Exception as e:
                                         import logging
                                         logging.warning('Error extracting API information:', extra={'e': e})
-                                        pass
                                 offset += len(pattern)
                 except Exception as e:
                     import logging
@@ -4952,7 +5120,6 @@ class RuntimeKeyExtractor:
                     except Exception as e:
                         import logging
                         logging.warning('Error decoding string:', extra={'e': e})
-                        pass
                 current_string = b''
         return strings
 
@@ -4975,7 +5142,7 @@ class RuntimeKeyExtractor:
             decrypted.append(data[i] ^ key[i % 4])
         return bytes(decrypted)
 
-    def _extract_themida_wrapped_apis(self, process_handle) -> list:
+    def _extract_themida_wrapped_apis(self, process_handle: Any) -> list:
         """Extract Themida wrapped API information."""
         wrapped_apis = []
         try:
@@ -5004,7 +5171,6 @@ class RuntimeKeyExtractor:
         except Exception as e:
             import logging
             logging.warning('Error extracting wrapped APIs:', extra={'e': e})
-            pass
         return wrapped_apis
 
     def _looks_like_api_name(self, data: bytes) -> bool:
@@ -5041,7 +5207,7 @@ class FridaKeyExtractor:
             script = session.create_script(script_code)
             extracted_data = {'keys': [], 'endpoints': [], 'functions': []}
 
-            def on_message(message, data) -> None:
+            def on_message(message: dict[str, Any], data: None) -> None:
                 if message['type'] == 'send':
                     payload = message['payload']
                     if 'key' in payload:
@@ -5063,8 +5229,16 @@ class FridaKeyExtractor:
         """Generate Frida JavaScript for key extraction."""
         return "\n        // Hook common license validation functions\n        var licenseModules = Process.enumerateModules().filter(function(m) {\n            return m.name.toLowerCase().includes('license') ||\n                   m.name.toLowerCase().includes('activation') ||\n                   m.name.toLowerCase().includes('auth');\n        });\n\n        // Hook GetProcAddress to catch dynamic function loading\n        var GetProcAddress = Module.findExportByName('kernel32.dll', 'GetProcAddress');\n        if (GetProcAddress) {\n            Interceptor.attach(GetProcAddress, {\n                onEnter: function(args) {\n                    var moduleName = args[0];\n                    var procName = args[1].readCString();\n\n                    if (procName && (\n                        procName.includes('License') ||\n                        procName.includes('Activation') ||\n                        procName.includes('Validate'))) {\n                        send({function: procName});\n                    }\n                },\n                onLeave: function(retval) {\n                    // Function pointer returned\n                }\n            });\n        }\n\n        // Hook registry access for license keys\n        var RegQueryValueEx = Module.findExportByName('advapi32.dll', 'RegQueryValueExW');\n        if (RegQueryValueEx) {\n            Interceptor.attach(RegQueryValueEx, {\n                onEnter: function(args) {\n                    this.valueName = args[1].readUtf16String();\n                    this.dataPtr = args[2];\n                },\n                onLeave: function(retval) {\n                    if (retval == 0 && this.valueName) {\n                        if (this.valueName.includes('License') ||\n                            this.valueName.includes('ProductKey')) {\n                            try {\n                                var data = this.dataPtr.readUtf16String();\n                                send({key: {type: 'registry', name: this.valueName, value: data}});\n                            } catch(e) {}\n                        }\n                    }\n                }\n            });\n        }\n\n        // Hook network functions for endpoints\n        var getaddrinfo = Module.findExportByName(null, 'getaddrinfo');\n        if (getaddrinfo) {\n            Interceptor.attach(getaddrinfo, {\n                onEnter: function(args) {\n                    var hostname = args[0].readCString();\n                    if (hostname && (\n                        hostname.includes('license') ||\n                        hostname.includes('activation') ||\n                        hostname.includes('auth'))) {\n                        send({endpoint: hostname});\n                    }\n                }\n            });\n        }\n\n        // Hook SSL_write to capture license data\n        var SSL_write = Module.findExportByName(null, 'SSL_write');\n        if (SSL_write) {\n            Interceptor.attach(SSL_write, {\n                onEnter: function(args) {\n                    var buf = args[1];\n                    var len = args[2].toInt32();\n                    var data = buf.readByteArray(len);\n\n                    // Check for license patterns in SSL data\n                    var str = String.fromCharCode.apply(null, new Uint8Array(data));\n                    if (str.includes('license') || str.includes('activation')) {\n                        // Extract product keys from data\n                        var keyPattern = /[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}/g;\n                        var matches = str.match(keyPattern);\n                        if (matches) {\n                            matches.forEach(function(key) {\n                                send({key: {type: 'product_key', value: key}});\n                            });\n                        }\n                    }\n                }\n            });\n        }\n\n        // Scan memory for keys\n        Process.enumerateRanges('r--').forEach(function(range) {\n            try {\n                var data = Memory.readByteArray(range.base, Math.min(range.size, 1024 * 1024));\n                var str = String.fromCharCode.apply(null, new Uint8Array(data));\n\n                // Look for product keys\n                var keyPattern = /[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}/g;\n                var matches = str.match(keyPattern);\n                if (matches) {\n                    matches.forEach(function(key) {\n                        send({key: {type: 'memory_key', value: key}});\n                    });\n                }\n\n                // Look for GUIDs\n                var guidPattern = /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/g;\n                var guids = str.match(guidPattern);\n                if (guids) {\n                    guids.forEach(function(guid) {\n                        send({key: {type: 'guid', value: guid}});\n                    });\n                }\n            } catch(e) {}\n        });\n        "
 
-    def extract_flexlm_runtime(self, process):
-        """Extract FLEXlm keys using Frida."""
+    def extract_flexlm_runtime(self, process: int) -> dict:
+        """Extract FLEXlm keys using Frida.
+
+        Args:
+            process: Process ID to target for FLEXlm key extraction.
+
+        Returns:
+            Dictionary containing extracted vendor keys, features, and encryption seeds.
+
+        """
         if not self.available:
             return {}
         script_code = "\n        // Hook FLEXlm specific functions\n        var lmgrd = Process.findModuleByName('lmgrd.exe') || Process.findModuleByName('lmgrd');\n\n        if (lmgrd) {\n            // Hook vendor daemon initialization\n            var symbols = Module.enumerateSymbols(lmgrd.name);\n            symbols.forEach(function(sym) {\n                if (sym.name.includes('vendor') || sym.name.includes('checkout')) {\n                    Interceptor.attach(sym.address, {\n                        onEnter: function(args) {\n                            // Capture vendor code\n                            for (var i = 0; i < 4; i++) {\n                                try {\n                                    var data = args[i].readByteArray(16);\n                                    var hex = Array.prototype.map.call(new Uint8Array(data),\n                                        x => ('00' + x.toString(16)).slice(-2)).join('');\n\n                                    // Check if it looks like a vendor code\n                                    if (hex.match(/^[0-9a-f]{32}$/i)) {\n                                        send({key: {type: 'vendor_code', value: hex}});\n                                    }\n                                } catch(e) {}\n                            }\n                        }\n                    });\n                }\n            });\n\n            // Hook license checkout\n            var checkout = Module.findExportByName(lmgrd.name, 'lc_checkout');\n            if (checkout) {\n                Interceptor.attach(checkout, {\n                    onEnter: function(args) {\n                        // Feature name is usually first argument\n                        try {\n                            var feature = args[0].readCString();\n                            send({key: {type: 'flexlm_feature', value: feature}});\n                        } catch(e) {}\n\n                        // Version string\n                        try {\n                            var version = args[1].readCString();\n                            send({key: {type: 'flexlm_version', value: version}});\n                        } catch(e) {}\n                    }\n                });\n            }\n        }\n\n        // Hook encryption seeds\n        var seeds = Module.findExportByName(null, 'l_sg');\n        if (seeds) {\n            Interceptor.attach(seeds, {\n                onEnter: function(args) {\n                    // Encryption seeds are usually 3 DWORDs\n                    for (var i = 0; i < 3; i++) {\n                        try {\n                            var seed = args[i].toInt32();\n                            send({key: {type: 'encryption_seed', value: seed.toString(16)}});\n                        } catch(e) {}\n                    }\n                }\n            });\n        }\n        "
@@ -5073,7 +5247,7 @@ class FridaKeyExtractor:
             script = session.create_script(script_code)
             extracted = {'vendor_keys': [], 'features': [], 'seeds': []}
 
-            def on_message(message, data) -> None:
+            def on_message(message: dict[str, Any], data: None) -> None:
                 if message['type'] == 'send':
                     payload = message['payload']
                     if 'key' in payload:
@@ -5093,8 +5267,16 @@ class FridaKeyExtractor:
             self.logger.error('FLEXlm extraction failed:', extra={'e': e})
             return {}
 
-    def extract_hasp_runtime(self, process):
-        """Extract HASP/Sentinel keys using Frida."""
+    def extract_hasp_runtime(self, process: int) -> dict:
+        """Extract HASP/Sentinel keys using Frida.
+
+        Args:
+            process: Process ID to target for HASP key extraction.
+
+        Returns:
+            Dictionary containing extracted feature IDs, vendor codes, and handles.
+
+        """
         if not self.available:
             return {}
         script_code = '\n        // Hook HASP functions\n        var hasp_login = Module.findExportByName(null, \'hasp_login\');\n        if (hasp_login) {\n            Interceptor.attach(hasp_login, {\n                onEnter: function(args) {\n                    // Feature ID is first argument\n                    var featureId = args[0].toInt32();\n                    send({key: {type: \'hasp_feature\', value: featureId}});\n\n                    // Vendor code is second argument (struct)\n                    try {\n                        var vendorCode = args[1].readByteArray(16);\n                        var hex = Array.prototype.map.call(new Uint8Array(vendorCode),\n                            x => (\'00\' + x.toString(16)).slice(-2)).join(\'\');\n                        send({key: {type: \'hasp_vendor_code\', value: hex}});\n                    } catch(e) {}\n                }\n            });\n        }\n\n        var hasp_encrypt = Module.findExportByName(null, \'hasp_encrypt\');\n        if (hasp_encrypt) {\n            Interceptor.attach(hasp_encrypt, {\n                onEnter: function(args) {\n                    // Capture session handle\n                    var handle = args[0].toInt32();\n                    send({key: {type: \'hasp_handle\', value: handle}});\n                }\n            });\n        }\n\n        // Hook Sentinel LDK functions\n        var sntl_licensing = Module.findExportByName(null, \'sntl_licensing_login\');\n        if (sntl_licensing) {\n            Interceptor.attach(sntl_licensing, {\n                onEnter: function(args) {\n                    // Capture login context\n                    try {\n                        var context = args[0].readCString();\n                        // Parse XML context for feature IDs\n                        var featureMatch = context.match(/<feature id="(\\d+)"/);\n                        if (featureMatch) {\n                            send({key: {type: \'sentinel_feature\', value: featureMatch[1]}});\n                        }\n                    } catch(e) {}\n                }\n            });\n        }\n        '
@@ -5103,7 +5285,7 @@ class FridaKeyExtractor:
             script = session.create_script(script_code)
             extracted = {'feature_ids': [], 'vendor_codes': [], 'handles': []}
 
-            def on_message(message, data) -> None:
+            def on_message(message: dict[str, Any], data: None) -> None:
                 if message['type'] == 'send':
                     payload = message['payload']
                     if 'key' in payload:
@@ -5133,7 +5315,7 @@ class FridaKeyExtractor:
             script = session.create_script(script_code)
             validation_log = []
 
-            def on_message(message, data) -> None:
+            def on_message(message: dict[str, Any], data: None) -> None:
                 if message['type'] == 'send':
                     validation_log.append({'timestamp': datetime.utcnow().isoformat(), 'data': message['payload']})
             script.on('message', on_message)
@@ -5153,7 +5335,6 @@ class FridaKeyExtractor:
             except Exception as e:
                 import logging
                 logging.warning('Error detaching Frida session:', extra={'e': e})
-                pass
         self.sessions.clear()
         self.scripts.clear()
 
@@ -5177,14 +5358,13 @@ class ProtocolStateMachine:
         keys = self.key_extractor.extract_flexlm_keys(binary_path)
         if b'HELLO' in request_data or len(request_data) < 20:
             return self._flexlm_hello_response(keys)
-        elif b'VENDORCODE' in request_data:
+        if b'VENDORCODE' in request_data:
             return self._flexlm_vendor_response(keys)
-        elif b'CHECKOUT' in request_data:
+        if b'CHECKOUT' in request_data:
             return self._flexlm_checkout_response(keys, request_data)
-        elif b'HEARTBEAT' in request_data:
+        if b'HEARTBEAT' in request_data:
             return self._flexlm_heartbeat_response(keys)
-        else:
-            return self._flexlm_generic_response(keys, request_data)
+        return self._flexlm_generic_response(keys, request_data)
 
     def _flexlm_hello_response(self, keys: dict) -> bytes:
         """Generate FLEXlm hello response."""
@@ -5293,7 +5473,7 @@ class ProtocolStateMachine:
         keys = self.key_extractor.extract_hasp_keys(binary_path)
         try:
             if request_data.startswith(b'<?xml'):
-                root = ET.fromstring(request_data)
+                root = DefusedElementTree.fromstring(request_data)
                 command = root.find('command')
                 if command is not None:
                     command = command.text
@@ -5301,24 +5481,23 @@ class ProtocolStateMachine:
                     command = 'unknown'
             else:
                 command = 'binary'
-        except (ET.ParseError, UnicodeDecodeError, AttributeError):
+        except (DefusedElementTree.ParseError, UnicodeDecodeError, AttributeError):
             command = 'binary'
         if command == 'login':
             return self._hasp_login_response(keys, session_id)
-        elif command == 'logout':
+        if command == 'logout':
             return self._hasp_logout_response(session_id)
-        elif command == 'encrypt':
+        if command == 'encrypt':
             return self._hasp_encrypt_response(keys, request_data, session_id)
-        elif command == 'decrypt':
+        if command == 'decrypt':
             return self._hasp_decrypt_response(keys, request_data, session_id)
-        elif command == 'read':
+        if command == 'read':
             return self._hasp_read_response(keys, request_data, session_id)
-        elif command == 'write':
+        if command == 'write':
             return self._hasp_write_response(keys, request_data, session_id)
-        elif command == 'binary':
+        if command == 'binary':
             return self._hasp_binary_response(keys, request_data)
-        else:
-            return self._hasp_generic_response(keys, command, session_id)
+        return self._hasp_generic_response(keys, command, session_id)
 
     def _hasp_login_response(self, keys: dict, session_id: str=None) -> bytes:
         """Generate HASP login response."""
@@ -5326,38 +5505,38 @@ class ProtocolStateMachine:
             session_data = str(keys).encode() + os.urandom(16)
             session_id = hashlib.sha256(session_data).hexdigest()[:32]
         self.current_state[session_id] = {'logged_in': True, 'features': keys.get('feature_ids', [1]), 'timestamp': time.time()}
-        root = ET.Element('haspprotocol')
-        status = ET.SubElement(root, 'status')
+        root = DefusedElementTree.Element('haspprotocol')
+        status = DefusedElementTree.SubElement(root, 'status')
         status.text = '0'
-        status_msg = ET.SubElement(root, 'statusmessage')
+        status_msg = DefusedElementTree.SubElement(root, 'statusmessage')
         status_msg.text = 'Login successful'
-        session_elem = ET.SubElement(root, 'sessionid')
+        session_elem = DefusedElementTree.SubElement(root, 'sessionid')
         session_elem.text = session_id
-        handle = ET.SubElement(root, 'handle')
+        handle = DefusedElementTree.SubElement(root, 'handle')
         handle_value = struct.unpack('>I', hashlib.sha256(session_id.encode()).digest()[:4])[0]
         handle.text = str(handle_value)
-        features_elem = ET.SubElement(root, 'features')
+        features_elem = DefusedElementTree.SubElement(root, 'features')
         for feature_id in keys.get('feature_ids', [1]):
-            feat = ET.SubElement(features_elem, 'feature')
-            id_elem = ET.SubElement(feat, 'id')
+            feat = DefusedElementTree.SubElement(features_elem, 'feature')
+            id_elem = DefusedElementTree.SubElement(feat, 'id')
             id_elem.text = str(feature_id)
-            enabled = ET.SubElement(feat, 'enabled')
+            enabled = DefusedElementTree.SubElement(feat, 'enabled')
             enabled.text = 'true'
-            memory = ET.SubElement(feat, 'memory_size')
+            memory = DefusedElementTree.SubElement(feat, 'memory_size')
             memory.text = '4096'
-            lic_elem = ET.SubElement(feat, 'license')
+            lic_elem = DefusedElementTree.SubElement(feat, 'license')
             lic_elem.set('type', 'perpetual')
             lic_elem.text = 'valid'
-        vendor_elem = ET.SubElement(root, 'vendor_code')
+        vendor_elem = DefusedElementTree.SubElement(root, 'vendor_code')
         vendor_elem.text = keys.get('vendor_code', '0' * 32)
-        xml_str = ET.tostring(root, encoding='unicode')
+        xml_str = DefusedElementTree.tostring(root, encoding='unicode')
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode()
 
     def _hasp_encrypt_response(self, keys: dict, request_data: bytes, session_id: str) -> bytes:
         """Handle HASP encryption request."""
         from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-        root = ET.fromstring(request_data)
+        root = DefusedElementTree.fromstring(request_data)
         data_elem = root.find('data')
         if data_elem is not None:
             data = base64.b64decode(data_elem.text)
@@ -5371,12 +5550,12 @@ class ProtocolStateMachine:
         pad_len = 16 - len(data) % 16
         padded_data = data + bytes([pad_len] * pad_len)
         encrypted = encryptor.update(padded_data) + encryptor.finalize()
-        response_root = ET.Element('haspprotocol')
-        status = ET.SubElement(response_root, 'status')
+        response_root = DefusedElementTree.Element('haspprotocol')
+        status = DefusedElementTree.SubElement(response_root, 'status')
         status.text = '0'
-        encrypted_elem = ET.SubElement(response_root, 'encrypted_data')
+        encrypted_elem = DefusedElementTree.SubElement(response_root, 'encrypted_data')
         encrypted_elem.text = base64.b64encode(iv + encrypted).decode()
-        xml_str = ET.tostring(response_root, encoding='unicode')
+        xml_str = DefusedElementTree.tostring(response_root, encoding='unicode')
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode()
 
     def _hasp_binary_response(self, keys: dict, request_data: bytes) -> bytes:
@@ -5423,34 +5602,34 @@ class ProtocolStateMachine:
 
     def _hasp_generic_response(self, keys: dict, command: str, session_id: str) -> bytes:
         """Generate generic HASP response."""
-        root = ET.Element('haspprotocol')
-        status = ET.SubElement(root, 'status')
+        root = DefusedElementTree.Element('haspprotocol')
+        status = DefusedElementTree.SubElement(root, 'status')
         status.text = '0'
-        status_msg = ET.SubElement(root, 'statusmessage')
+        status_msg = DefusedElementTree.SubElement(root, 'statusmessage')
         status_msg.text = f'Command {command} executed successfully'
         if session_id:
-            session_elem = ET.SubElement(root, 'sessionid')
+            session_elem = DefusedElementTree.SubElement(root, 'sessionid')
             session_elem.text = session_id
-        xml_str = ET.tostring(root, encoding='unicode')
+        xml_str = DefusedElementTree.tostring(root, encoding='unicode')
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode()
 
     def _hasp_logout_response(self, session_id: str) -> bytes:
         """Handle HASP logout."""
         if session_id in self.current_state:
             del self.current_state[session_id]
-        root = ET.Element('haspprotocol')
-        status = ET.SubElement(root, 'status')
+        root = DefusedElementTree.Element('haspprotocol')
+        status = DefusedElementTree.SubElement(root, 'status')
         status.text = '0'
-        status_msg = ET.SubElement(root, 'statusmessage')
+        status_msg = DefusedElementTree.SubElement(root, 'statusmessage')
         status_msg.text = 'Logout successful'
-        xml_str = ET.tostring(root, encoding='unicode')
+        xml_str = DefusedElementTree.tostring(root, encoding='unicode')
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode()
 
     def _hasp_decrypt_response(self, keys: dict, request_data: bytes, session_id: str) -> bytes:
         """Handle HASP decryption request."""
         from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-        root = ET.fromstring(request_data)
+        root = DefusedElementTree.fromstring(request_data)
         data_elem = root.find('encrypted_data')
         if data_elem is not None:
             encrypted = base64.b64decode(data_elem.text)
@@ -5465,17 +5644,17 @@ class ProtocolStateMachine:
         decrypted = decryptor.update(ciphertext) + decryptor.finalize()
         pad_len = decrypted[-1]
         data = decrypted[:-pad_len]
-        response_root = ET.Element('haspprotocol')
-        status = ET.SubElement(response_root, 'status')
+        response_root = DefusedElementTree.Element('haspprotocol')
+        status = DefusedElementTree.SubElement(response_root, 'status')
         status.text = '0'
-        data_elem = ET.SubElement(response_root, 'data')
+        data_elem = DefusedElementTree.SubElement(response_root, 'data')
         data_elem.text = base64.b64encode(data).decode()
-        xml_str = ET.tostring(response_root, encoding='unicode')
+        xml_str = DefusedElementTree.tostring(response_root, encoding='unicode')
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode()
 
     def _hasp_read_response(self, keys: dict, request_data: bytes, session_id: str) -> bytes:
         """Handle HASP memory read."""
-        root = ET.fromstring(request_data)
+        root = DefusedElementTree.fromstring(request_data)
         offset_elem = root.find('offset')
         size_elem = root.find('size')
         offset = int(offset_elem.text) if offset_elem is not None else 0
@@ -5486,12 +5665,12 @@ class ProtocolStateMachine:
         for i, fid in enumerate(keys.get('feature_ids', [1])):
             memory[256 + i * 4:256 + i * 4 + 4] = struct.pack('<I', fid)
         data = memory[offset:offset + size]
-        response_root = ET.Element('haspprotocol')
-        status = ET.SubElement(response_root, 'status')
+        response_root = DefusedElementTree.Element('haspprotocol')
+        status = DefusedElementTree.SubElement(response_root, 'status')
         status.text = '0'
-        data_elem = ET.SubElement(response_root, 'data')
+        data_elem = DefusedElementTree.SubElement(response_root, 'data')
         data_elem.text = base64.b64encode(data).decode()
-        xml_str = ET.tostring(response_root, encoding='unicode')
+        xml_str = DefusedElementTree.tostring(response_root, encoding='unicode')
         return f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'.encode()
 
     def _hasp_write_response(self, keys: dict, request_data: bytes, session_id: str) -> bytes:
@@ -5499,7 +5678,7 @@ class ProtocolStateMachine:
         write_offset = 0
         write_data = b''
         try:
-            root = ET.fromstring(request_data.decode('utf-8', errors='ignore'))
+            root = DefusedElementTree.fromstring(request_data.decode('utf-8', errors='ignore'))
             offset_elem = root.find('.//offset')
             if offset_elem is not None:
                 write_offset = int(offset_elem.text, 16 if '0x' in offset_elem.text else 10)
@@ -5509,38 +5688,37 @@ class ProtocolStateMachine:
         except Exception as e:
             import logging
             logging.warning('Error parsing HASP write request:', extra={'e': e})
-            pass
-        response_root = ET.Element('haspprotocol')
+        response_root = DefusedElementTree.Element('haspprotocol')
         response_root.set('version', '1.0')
         from datetime import datetime
-        timestamp = ET.SubElement(response_root, 'timestamp')
+        timestamp = DefusedElementTree.SubElement(response_root, 'timestamp')
         timestamp.text = datetime.utcnow().isoformat() + 'Z'
-        status = ET.SubElement(response_root, 'status')
+        status = DefusedElementTree.SubElement(response_root, 'status')
         status.text = '0'
-        status_msg = ET.SubElement(response_root, 'statusmessage')
+        status_msg = DefusedElementTree.SubElement(response_root, 'statusmessage')
         status_msg.text = 'Memory write operation completed successfully'
-        write_info = ET.SubElement(response_root, 'writeinfo')
-        offset_written = ET.SubElement(write_info, 'offset')
+        write_info = DefusedElementTree.SubElement(response_root, 'writeinfo')
+        offset_written = DefusedElementTree.SubElement(write_info, 'offset')
         offset_written.text = str(write_offset)
-        bytes_written = ET.SubElement(write_info, 'bytes_written')
+        bytes_written = DefusedElementTree.SubElement(write_info, 'bytes_written')
         bytes_written.text = str(len(write_data))
-        checksum = ET.SubElement(write_info, 'checksum')
+        checksum = DefusedElementTree.SubElement(write_info, 'checksum')
         import zlib
         crc32_value = zlib.crc32(write_data) & 4294967295
         checksum.text = f'0x{crc32_value:08X}'
-        memory_state = ET.SubElement(response_root, 'memory_state')
-        total_size = ET.SubElement(memory_state, 'total_size')
+        memory_state = DefusedElementTree.SubElement(response_root, 'memory_state')
+        total_size = DefusedElementTree.SubElement(memory_state, 'total_size')
         total_size.text = str(self.hasp_memory_size)
-        used_size = ET.SubElement(memory_state, 'used_size')
+        used_size = DefusedElementTree.SubElement(memory_state, 'used_size')
         used_size.text = str(write_offset + len(write_data))
-        available = ET.SubElement(memory_state, 'available')
+        available = DefusedElementTree.SubElement(memory_state, 'available')
         available.text = str(max(0, self.hasp_memory_size - write_offset - len(write_data)))
-        session = ET.SubElement(response_root, 'session')
-        session_valid = ET.SubElement(session, 'valid')
+        session = DefusedElementTree.SubElement(response_root, 'session')
+        session_valid = DefusedElementTree.SubElement(session, 'valid')
         session_valid.text = 'true'
-        session_id_elem = ET.SubElement(session, 'id')
+        session_id_elem = DefusedElementTree.SubElement(session, 'id')
         session_id_elem.text = session_id
-        xml_str = ET.tostring(response_root, encoding='unicode', method='xml')
+        xml_str = DefusedElementTree.tostring(response_root, encoding='unicode', method='xml')
         return f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n{xml_str}'.encode()
 
 class ProxyInterceptor:
@@ -5563,10 +5741,16 @@ class ProxyInterceptor:
         self.protocol_analyzer = ProtocolAnalyzer()
         self.target_binary = None
 
-    async def intercept_request(self, request) -> tuple[bool, Any]:
+    async def intercept_request(self, request: Any) -> tuple[bool, Any]:
         """Intercept and potentially modify license validation requests.
 
-        Returns (should_modify, response_data).
+        Args:
+            request: HTTP request object to intercept.
+
+        Returns:
+            Tuple of (should_modify, response_data) indicating whether request
+            should be modified and the bypass response to provide.
+
         """
         self.stats['requests_intercepted'] += 1
         target_url = request.headers.get('X-Target-URL', request.path if hasattr(request, 'path') else '')
@@ -5580,8 +5764,17 @@ class ProxyInterceptor:
         self.stats['requests_forwarded'] += 1
         return (False, None)
 
-    def _is_license_request(self, url: str, request) -> bool:
-        """Enhanced detection of license validation requests."""
+    def _is_license_request(self, url: str, request: Any) -> bool:
+        """Enhanced detection of license validation requests.
+
+        Args:
+            url: URL to check for license request patterns.
+            request: HTTP request object to analyze for license indicators.
+
+        Returns:
+            True if request appears to be a license validation request, False otherwise.
+
+        """
         import re
         url_lower = url.lower()
         for pattern in self.bypass_patterns:
@@ -5600,28 +5793,35 @@ class ProxyInterceptor:
         except Exception as e:
             import logging
             logging.warning('Error checking request body for license indicators:', extra={'e': e})
-            pass
         return False
 
-    def _generate_bypass_response(self, request, analysis: dict) -> dict:
-        """Generate appropriate bypass response based on protocol analysis."""
+    def _generate_bypass_response(self, request: Any, analysis: dict) -> dict:
+        """Generate appropriate bypass response based on protocol analysis.
+
+        Args:
+            request: HTTP request object that triggered the bypass response.
+            analysis: Protocol analysis results containing detected licensing protocol.
+
+        Returns:
+            Dictionary containing appropriate bypass response for the detected protocol.
+
+        """
         protocol = analysis.get('protocol', LicenseType.CUSTOM)
         analysis.get('method', 'UNKNOWN')
         accept = request.headers.get('Accept', 'application/json') if hasattr(request, 'headers') else 'application/json'
         if protocol == LicenseType.FLEXLM:
             return self._generate_flexlm_response(analysis)
-        elif protocol == LicenseType.HASP:
+        if protocol == LicenseType.HASP:
             return self._generate_hasp_response(analysis)
-        elif protocol == LicenseType.MICROSOFT_KMS:
+        if protocol == LicenseType.MICROSOFT_KMS:
             return self._generate_kms_response(analysis)
-        elif protocol == LicenseType.ADOBE:
+        if protocol == LicenseType.ADOBE:
             return self._generate_adobe_response(analysis)
-        elif 'json' in accept:
+        if 'json' in accept:
             return self._generate_json_response(analysis)
-        elif 'xml' in accept:
+        if 'xml' in accept:
             return self._generate_xml_response(analysis)
-        else:
-            return self._generate_text_response(analysis)
+        return self._generate_text_response(analysis)
 
     def _generate_json_response(self, analysis: dict) -> dict:
         """Generate JSON license validation response based on protocol analysis."""
@@ -5674,16 +5874,15 @@ class ProxyInterceptor:
         request_str = str(parsed_data).lower()
         if any(x in request_str for x in ['trial', 'evaluation', 'demo']):
             return 'trial'
-        elif any(x in request_str for x in ['subscription', 'monthly', 'annual']):
+        if any(x in request_str for x in ['subscription', 'monthly', 'annual']):
             return 'subscription'
-        elif any(x in request_str for x in ['node', 'floating', 'network']):
+        if any(x in request_str for x in ['node', 'floating', 'network']):
             return 'floating'
-        elif any(x in request_str for x in ['perpetual', 'permanent', 'lifetime']):
+        if any(x in request_str for x in ['perpetual', 'permanent', 'lifetime']):
             return 'perpetual'
-        else:
-            if 'expiry' in request_str or 'renew' in request_str:
-                return 'subscription'
-            return 'perpetual'
+        if 'expiry' in request_str or 'renew' in request_str:
+            return 'subscription'
+        return 'perpetual'
 
     def _sign_response(self, response_data: dict, license_hash: bytes) -> str:
         """Generate cryptographic signature for response."""
@@ -5698,18 +5897,18 @@ class ProxyInterceptor:
         from datetime import datetime, timedelta
         parsed_data = analysis.get('parsed_data', {})
         root_name = self._detect_xml_schema(parsed_data)
-        root = ET.Element(root_name)
+        root = DefusedElementTree.Element(root_name)
         if 'namespace' in parsed_data:
             root.set('xmlns', parsed_data['namespace'])
         request_type = self._analyze_xml_request_type(parsed_data)
         if request_type == 'validation':
-            status_elem = ET.SubElement(root, 'Status')
+            status_elem = DefusedElementTree.SubElement(root, 'Status')
             status_elem.text = 'Valid'
-            licensed_elem = ET.SubElement(root, 'Licensed')
+            licensed_elem = DefusedElementTree.SubElement(root, 'Licensed')
             licensed_elem.text = 'true'
-            activated_elem = ET.SubElement(root, 'Activated')
+            activated_elem = DefusedElementTree.SubElement(root, 'Activated')
             activated_elem.text = 'true'
-            msg_elem = ET.SubElement(root, 'Message')
+            msg_elem = DefusedElementTree.SubElement(root, 'Message')
             msg_elem.text = 'License validated successfully'
             license_data = parsed_data.get('license', {})
             if isinstance(license_data, dict):
@@ -5717,56 +5916,56 @@ class ProxyInterceptor:
             else:
                 days_valid = 365
             expiry_date = datetime.utcnow() + timedelta(days=days_valid)
-            expiry_elem = ET.SubElement(root, 'ExpiryDate')
+            expiry_elem = DefusedElementTree.SubElement(root, 'ExpiryDate')
             expiry_elem.text = expiry_date.isoformat()
-            remaining_elem = ET.SubElement(root, 'RemainingDays')
+            remaining_elem = DefusedElementTree.SubElement(root, 'RemainingDays')
             remaining_elem.text = str(days_valid)
-            type_elem = ET.SubElement(root, 'LicenseType')
+            type_elem = DefusedElementTree.SubElement(root, 'LicenseType')
             type_elem.text = self._determine_license_type_from_xml(parsed_data)
-            features_elem = ET.SubElement(root, 'Features')
+            features_elem = DefusedElementTree.SubElement(root, 'Features')
             feature_list = self._extract_xml_features(parsed_data)
             for feature in feature_list:
-                feat_elem = ET.SubElement(features_elem, feature.replace(' ', '_'))
+                feat_elem = DefusedElementTree.SubElement(features_elem, feature.replace(' ', '_'))
                 feat_elem.text = 'true'
             if 'hardware_id' in parsed_data:
-                hw_elem = ET.SubElement(root, 'HardwareID')
+                hw_elem = DefusedElementTree.SubElement(root, 'HardwareID')
                 hw_elem.text = str(parsed_data['hardware_id'])
-                hw_valid_elem = ET.SubElement(root, 'HardwareValid')
+                hw_valid_elem = DefusedElementTree.SubElement(root, 'HardwareValid')
                 hw_valid_elem.text = 'true'
         elif request_type == 'activation':
-            result_elem = ET.SubElement(root, 'ActivationResult')
+            result_elem = DefusedElementTree.SubElement(root, 'ActivationResult')
             result_elem.text = 'Success'
             activation_data = str(parsed_data).encode()
             activation_hash = hashlib.sha256(activation_data + os.urandom(16)).hexdigest()
-            code_elem = ET.SubElement(root, 'ActivationCode')
+            code_elem = DefusedElementTree.SubElement(root, 'ActivationCode')
             code_elem.text = activation_hash.upper()[:32]
             if 'installation_id' in parsed_data:
-                install_elem = ET.SubElement(root, 'InstallationID')
+                install_elem = DefusedElementTree.SubElement(root, 'InstallationID')
                 install_elem.text = str(parsed_data['installation_id'])
-            confirm_elem = ET.SubElement(root, 'ConfirmationID')
+            confirm_elem = DefusedElementTree.SubElement(root, 'ConfirmationID')
             confirm_data = activation_hash.encode() + b'CONFIRM'
             confirm_elem.text = hashlib.sha256(confirm_data).hexdigest().upper()[:48]
         elif request_type == 'heartbeat':
-            status_elem = ET.SubElement(root, 'HeartbeatStatus')
+            status_elem = DefusedElementTree.SubElement(root, 'HeartbeatStatus')
             status_elem.text = 'OK'
-            timestamp_elem = ET.SubElement(root, 'ServerTime')
+            timestamp_elem = DefusedElementTree.SubElement(root, 'ServerTime')
             timestamp_elem.text = datetime.utcnow().isoformat()
-            session_elem = ET.SubElement(root, 'SessionValid')
+            session_elem = DefusedElementTree.SubElement(root, 'SessionValid')
             session_elem.text = 'true'
-            interval_elem = ET.SubElement(root, 'NextHeartbeat')
+            interval_elem = DefusedElementTree.SubElement(root, 'NextHeartbeat')
             interval_elem.text = '300'
         else:
-            success_elem = ET.SubElement(root, 'Success')
+            success_elem = DefusedElementTree.SubElement(root, 'Success')
             success_elem.text = 'true'
-            status_elem = ET.SubElement(root, 'Status')
+            status_elem = DefusedElementTree.SubElement(root, 'Status')
             status_elem.text = 'OK'
-            time_elem = ET.SubElement(root, 'Timestamp')
+            time_elem = DefusedElementTree.SubElement(root, 'Timestamp')
             time_elem.text = datetime.utcnow().isoformat()
         if self._requires_signature(parsed_data):
-            sig_elem = ET.SubElement(root, 'Signature')
-            sig_data = ET.tostring(root, encoding='unicode')
+            sig_elem = DefusedElementTree.SubElement(root, 'Signature')
+            sig_data = DefusedElementTree.tostring(root, encoding='unicode')
             sig_elem.text = hashlib.sha256(sig_data.encode()).hexdigest()
-        xml_str = ET.tostring(root, encoding='unicode', method='xml')
+        xml_str = DefusedElementTree.tostring(root, encoding='unicode', method='xml')
         xml_response = '<?xml version="1.0" encoding="UTF-8"?>\n' + xml_str
         return {'content_type': 'application/xml', 'status_code': 200, 'body': xml_response}
 
@@ -5778,15 +5977,14 @@ class ProxyInterceptor:
         if 'license' in data_str:
             if 'response' in data_str:
                 return 'LicenseResponse'
-            elif 'request' in data_str:
+            if 'request' in data_str:
                 return 'LicenseValidationResponse'
-            else:
-                return 'License'
-        elif 'activation' in data_str:
+            return 'License'
+        if 'activation' in data_str:
             return 'ActivationResponse'
-        elif 'heartbeat' in data_str:
+        if 'heartbeat' in data_str:
             return 'HeartbeatResponse'
-        elif 'auth' in data_str:
+        if 'auth' in data_str:
             return 'AuthenticationResponse'
         return 'Response'
 
@@ -5795,11 +5993,11 @@ class ProxyInterceptor:
         data_str = str(parsed_data).lower()
         if any(x in data_str for x in ['validate', 'verify', 'check']):
             return 'validation'
-        elif any(x in data_str for x in ['activate', 'register']):
+        if any(x in data_str for x in ['activate', 'register']):
             return 'activation'
-        elif any(x in data_str for x in ['heartbeat', 'keepalive', 'ping']):
+        if any(x in data_str for x in ['heartbeat', 'keepalive', 'ping']):
             return 'heartbeat'
-        elif any(x in data_str for x in ['auth', 'login']):
+        if any(x in data_str for x in ['auth', 'login']):
             return 'authentication'
         return 'generic'
 
@@ -5810,13 +6008,13 @@ class ProxyInterceptor:
         data_str = str(parsed_data).lower()
         if 'perpetual' in data_str:
             return 'Perpetual'
-        elif 'subscription' in data_str:
+        if 'subscription' in data_str:
             return 'Subscription'
-        elif 'trial' in data_str:
+        if 'trial' in data_str:
             return 'Trial'
-        elif 'floating' in data_str or 'network' in data_str:
+        if 'floating' in data_str or 'network' in data_str:
             return 'Floating'
-        elif 'node' in data_str:
+        if 'node' in data_str:
             return 'NodeLocked'
         return 'Standard'
 
@@ -5954,7 +6152,6 @@ class ProxyInterceptor:
         except Exception as e:
             import logging
             logging.warning('Error finding binary by process:', extra={'e': e})
-            pass
         common_paths = [f'C:\\Program Files\\{process_name}', f'C:\\Program Files (x86)\\{process_name}', f'/usr/local/bin/{process_name}', f'/opt/{process_name}', f'/Applications/{process_name}.app/Contents/MacOS/{process_name}']
         for path in common_paths:
             if os.path.exists(path):
@@ -5997,14 +6194,13 @@ class ProxyInterceptor:
         response_data = self.state_machine.hasp_state_machine(binary_path, request_data, session_id)
         if b'<sessionid>' in response_data:
             try:
-                root = ET.fromstring(response_data)
+                root = DefusedElementTree.fromstring(response_data)
                 sid_elem = root.find('sessionid')
                 if sid_elem is not None:
                     self.current_session = sid_elem.text
             except Exception as e:
                 import logging
                 logging.warning('Error parsing session ID from response:', extra={'e': e})
-                pass
         return {'content_type': 'text/xml', 'status_code': 200, 'body': response_data}
 
     def _generate_kms_response(self, analysis: dict) -> dict:
@@ -6177,7 +6373,7 @@ class ProxyInterceptor:
             if os.path.exists(path):
                 if os.path.isfile(path):
                     return path
-                elif os.path.isdir(path):
+                if os.path.isdir(path):
                     for root, _dirs, files in os.walk(path):
                         for file in files:
                             if file.endswith(('.exe', '.dll')):
@@ -6235,7 +6431,6 @@ class ProxyInterceptor:
         except Exception as e:
             import logging
             logging.warning('Error finding KMS server:', extra={'e': e})
-            pass
         return None
 
     def _find_kms_port_from_service(self) -> int:
@@ -6256,7 +6451,6 @@ class ProxyInterceptor:
         except Exception as e:
             import logging
             logging.warning('Error finding KMS port from service:', extra={'e': e})
-            pass
         return None
 
     def _extract_min_clients_requirement(self) -> int:
@@ -6274,7 +6468,6 @@ class ProxyInterceptor:
         except Exception as e:
             import logging
             logging.warning('Error extracting minimum clients requirement:', extra={'e': e})
-            pass
         return None
 
     def _detect_kms_protocol_version(self) -> int:
@@ -6287,14 +6480,13 @@ class ProxyInterceptor:
             major = int(version.split('.')[0]) if '.' in version else 10
             if major >= 10:
                 return 6
-            elif major >= 8:
+            if major >= 8:
                 return 5
-            elif major >= 7:
+            if major >= 7:
                 return 4
         except Exception as e:
             import logging
             logging.warning('Error determining KMS protocol version:', extra={'e': e})
-            pass
         return None
 
     def _generate_kms_confirmation_id(self, client_machine_id: str, application_id: str, kms_data: dict) -> str:
@@ -6365,9 +6557,8 @@ class ProxyInterceptor:
                     elif b'adobe' in header.lower():
                         self.binary_cache[binary_path] = self.key_extractor.extract_adobe_keys(binary_path)
             return True
-        else:
-            self.logger.error('Binary not found:', extra={'binary_path': binary_path})
-            return False
+        self.logger.error('Binary not found:', extra={'binary_path': binary_path})
+        return False
 
     def analyze_binary_for_protection(self, binary_path: str) -> dict:
         """Analyze binary to determine protection type and extract keys."""
@@ -6432,15 +6623,15 @@ class ProxyInterceptor:
             return 'trial'
         if 'team' in code_lower or 'business' in code_lower:
             return 'team'
-        elif 'enterprise' in code_lower:
+        if 'enterprise' in code_lower:
             return 'enterprise'
-        elif 'student' in code_lower or 'teacher' in code_lower:
+        if 'student' in code_lower or 'teacher' in code_lower:
             return 'education'
-        elif 'photo' in code_lower:
+        if 'photo' in code_lower:
             return 'photography'
-        elif any(x in code_lower for x in ['month', 'monthly']):
+        if any(x in code_lower for x in ['month', 'monthly']):
             return 'monthly'
-        elif any(x in code_lower for x in ['annual', 'year']):
+        if any(x in code_lower for x in ['annual', 'year']):
             return 'annual'
         return 'creative_cloud_all'
 
@@ -6488,13 +6679,12 @@ class ProxyInterceptor:
                         except Exception as e:
                             import logging
                             logging.warning('Error extending expiration date for key :', extra={'key': key, 'e': e})
-                            pass
                     if key.lower() in ['valid', 'licensed', 'activated', 'success', 'authorized']:
                         data[key] = True
                     elif key.lower() in ['expired', 'invalid', 'failed']:
                         data[key] = False
                 return json.dumps(data).encode()
-            elif content_type and 'xml' in content_type:
+            if content_type and 'xml' in content_type:
                 response_str = response_data.decode('utf-8', errors='ignore')
                 for fail_indicator in self.response_modifications['failure_indicators']:
                     for success_indicator in self.response_modifications['success_indicators']:
@@ -6503,14 +6693,13 @@ class ProxyInterceptor:
                 response_str = response_str.replace('<Valid>false</Valid>', '<Valid>true</Valid>')
                 response_str = response_str.replace('<Status>invalid</Status>', '<Status>valid</Status>')
                 return response_str.encode()
-            else:
-                failure_codes = [b'\x00\x00\x00\x00', b'\xff\xff\xff\xff', b'FAIL', b'ERROR']
-                success_codes = [b'\x00\x00\x00\x01', b'\x00\x00\x00\x00', b'OK\x00\x00', b'VALID']
-                modified = response_data
-                for i, fail_code in enumerate(failure_codes):
-                    if fail_code in modified:
-                        modified = modified.replace(fail_code, success_codes[min(i, len(success_codes) - 1)])
-                return modified
+            failure_codes = [b'\x00\x00\x00\x00', b'\xff\xff\xff\xff', b'FAIL', b'ERROR']
+            success_codes = [b'\x00\x00\x00\x01', b'\x00\x00\x00\x00', b'OK\x00\x00', b'VALID']
+            modified = response_data
+            for i, fail_code in enumerate(failure_codes):
+                if fail_code in modified:
+                    modified = modified.replace(fail_code, success_codes[min(i, len(success_codes) - 1)])
+            return modified
         except Exception as e:
             self.logger.error('Failed to modify response:', extra={'e': e})
             return response_data
@@ -6525,7 +6714,7 @@ class LicenseServerEmulator:
     def __init__(self, config: dict[str, Any]=None) -> None:
         """Initialize comprehensive license server emulator with all protection systems."""
         self.logger = logging.getLogger(f'{__name__}.Server')
-        self.config = {'host': '0.0.0.0', 'port': 8080, 'ssl_enabled': False, 'ssl_cert': None, 'ssl_key': None, 'database_path': 'license_server.db', 'flexlm_port': 27000, 'kms_port': 1688, 'log_level': 'INFO', 'enable_cors': True, 'auth_required': False}
+        self.config = {'host': '127.0.0.1', 'port': 8080, 'ssl_enabled': False, 'ssl_cert': None, 'ssl_key': None, 'database_path': 'license_server.db', 'flexlm_port': 27000, 'kms_port': 1688, 'log_level': 'INFO', 'enable_cors': True, 'auth_required': False}
         if config:
             self.config.update(config)
         self.crypto = CryptoManager()
@@ -6556,49 +6745,49 @@ class LicenseServerEmulator:
         """Configure FastAPI routes."""
 
         @self.app.get('/')
-        async def root():
+        async def root() -> dict[str, str]:
             return {'message': 'Intellicrack License Server Emulator v2.0.0', 'status': 'running'}
 
         @self.app.get('/health')
-        async def health_check():
+        async def health_check() -> dict[str, str]:
             return {'status': 'healthy', 'timestamp': datetime.utcnow().isoformat()}
 
         @self.app.post('/api/v1/license/validate', response_model=LicenseResponse)
-        async def validate_license(request: LicenseRequest, client_request: Request):
+        async def validate_license(request: LicenseRequest, client_request: Request) -> LicenseResponse:
             return await self._handle_license_validation(request, client_request)
 
         @self.app.post('/api/v1/license/activate', response_model=ActivationResponse)
-        async def activate_license(request: ActivationRequest, client_request: Request):
+        async def activate_license(request: ActivationRequest, client_request: Request) -> ActivationResponse:
             return await self._handle_license_activation(request, client_request)
 
         @self.app.get('/api/v1/license/{license_key}/status')
-        async def get_license_status(license_key: str):
+        async def get_license_status(license_key: str) -> dict[str, Any]:
             return await self._handle_license_status(license_key)
 
         @self.app.post('/api/v1/flexlm/checkout')
-        async def flexlm_checkout(request: dict[str, Any], client_request: Request):
+        async def flexlm_checkout(request: dict[str, Any], client_request: Request) -> dict[str, Any]:
             return await self._handle_flexlm_request(request, client_request)
 
         @self.app.post('/api/v1/hasp/login')
-        async def hasp_login(request: dict[str, Any]):
+        async def hasp_login(request: dict[str, Any]) -> dict[str, Any]:
             return await self._handle_hasp_request(request)
 
         @self.app.post('/api/v1/kms/activate')
-        async def kms_activate(request: dict[str, Any], client_request: Request):
+        async def kms_activate(request: dict[str, Any], client_request: Request) -> dict[str, Any]:
             return await self._handle_kms_request(request, client_request)
 
         @self.app.post('/api/v1/adobe/validate')
-        async def adobe_validate(request: dict[str, Any], client_request: Request):
+        async def adobe_validate(request: dict[str, Any], client_request: Request) -> dict[str, Any]:
             return await self._handle_adobe_request(request, client_request)
 
         @self.app.get('/api/v1/fingerprint/generate')
-        async def generate_fingerprint():
+        async def generate_fingerprint() -> dict[str, Any]:
             fingerprint = self.fingerprint_gen.generate_fingerprint()
             return {'fingerprint': fingerprint.generate_hash(), 'details': {'cpu_id': fingerprint.cpu_id[:8] + '...', 'hostname': fingerprint.hostname, 'ram_size': fingerprint.ram_size, 'os_version': fingerprint.os_version}}
 
         @self.app.post('/api/v1/proxy/intercept')
         @self.app.get('/api/v1/proxy/intercept')
-        async def handle_proxy_intercept(request: Request):
+        async def handle_proxy_intercept(request: Request) -> dict[str, Any] | Response:
             """Handle proxied license validation requests."""
             body = await request.body()
             client_addr = request.client.host if request.client else '127.0.0.1'
@@ -6612,12 +6801,12 @@ class LicenseServerEmulator:
             return {'status': 'success', 'licensed': True, 'message': 'License validation bypassed successfully', 'protocol': analysis.get('protocol', 'UNKNOWN')}
 
         @self.app.get('/api/v1/proxy/stats')
-        async def get_proxy_stats():
+        async def get_proxy_stats() -> dict[str, Any]:
             """Get proxy interception statistics."""
             return self.proxy_interceptor.get_statistics()
 
         @self.app.post('/api/v1/analyze/traffic')
-        async def analyze_traffic(request: Request):
+        async def analyze_traffic(request: Request) -> dict[str, Any]:
             """Analyze captured traffic to identify license protocol."""
             body = await request.body()
             client_addr = request.client.host if request.client else '127.0.0.1'
@@ -7005,7 +7194,6 @@ class LicenseServerInstance:
         except Exception as e:
             import logging
             logging.warning('Error in server main loop:', extra={'e': e})
-            pass
         finally:
             if self.server_socket:
                 self.server_socket.close()
@@ -7020,7 +7208,6 @@ class LicenseServerInstance:
         except Exception as e:
             import logging
             logging.warning('Error handling client connection:', extra={'e': e})
-            pass
         finally:
             client_socket.close()
 
@@ -7072,14 +7259,13 @@ class LicenseClientInstance:
             except Exception as e:
                 import logging
                 logging.warning('Error closing socket:', extra={'e': e})
-                pass
         self.connected = False
         self.socket = None
 
 def run_network_license_emulator(config: dict=None) -> None:
     """Compatibility function for running the network license emulator."""
     if config is None:
-        config = {'host': '0.0.0.0', 'port': 8080, 'flexlm_port': 27000, 'database_path': 'license_server.db', 'log_level': 'INFO'}
+        config = {'host': '127.0.0.1', 'port': 8080, 'flexlm_port': 27000, 'database_path': 'license_server.db', 'log_level': 'INFO'}
     server = LicenseServerEmulator(config)
     try:
         server.start_servers()
@@ -7092,7 +7278,7 @@ def main() -> None:
     """Run license server emulator main program."""
     import argparse
     parser = argparse.ArgumentParser(description='Intellicrack License Server Emulator')
-    parser.add_argument('--host', default='0.0.0.0', help='Server host')
+    parser.add_argument('--host', default='127.0.0.1', help='Server host')
     parser.add_argument('--port', type=int, default=8080, help='Server port')
     parser.add_argument('--flexlm-port', type=int, default=27000, help='FlexLM port')
     parser.add_argument('--ssl-cert', help='SSL certificate file')

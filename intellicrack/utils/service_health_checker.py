@@ -207,14 +207,13 @@ class ServiceHealthChecker:
         elif parsed.scheme in ["ws", "wss"]:
             check_result = await self.check_websocket_endpoint(service_url)
             result.update(check_result)
+        # For non-HTTP services, just check if port is open
+        elif parsed.hostname and parsed.port:
+            is_open = self.check_port_open(parsed.hostname, parsed.port)
+            result["healthy"] = is_open
+            result["port_open"] = is_open
         else:
-            # For non-HTTP services, just check if port is open
-            if parsed.hostname and parsed.port:
-                is_open = self.check_port_open(parsed.hostname, parsed.port)
-                result["healthy"] = is_open
-                result["port_open"] = is_open
-            else:
-                result["error"] = f"Cannot parse service URL: {service_url}"
+            result["error"] = f"Cannot parse service URL: {service_url}"
 
         # Cache the result
         self.health_cache[cache_key] = result
@@ -336,17 +335,23 @@ class ServiceHealthChecker:
         """
         url = self.get_service_url(service_name)
         if not url:
+            error_msg = f"Service '{service_name}' URL not configured. Please set 'service_urls.{service_name}' in configuration."
+            logger.error(error_msg)
             raise ConfigurationError(
-                f"Service '{service_name}' URL not configured. Please set 'service_urls.{service_name}' in configuration.",
+                error_msg,
                 service_name=service_name,
                 config_key=f"service_urls.{service_name}",
             )
 
         # Validate URL format
         if not url.startswith(("http://", "https://", "ws://", "wss://", "tcp://", "udp://")):
-            raise ConfigurationError(
+            error_msg = (
                 f"Invalid URL format for service '{service_name}': {url}. "
-                f"URL must start with a valid protocol (http://, https://, ws://, wss://, tcp://, udp://)",
+                f"URL must start with a valid protocol (http://, https://, ws://, wss://, tcp://, udp://)"
+            )
+            logger.error(error_msg)
+            raise ConfigurationError(
+                error_msg,
                 service_name=service_name,
                 config_key=f"service_urls.{service_name}",
             )

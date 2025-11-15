@@ -35,9 +35,14 @@ def _ensure_config_manager_imported():
     """Lazy import of config_manager to avoid circular dependencies."""
     global _get_new_config
     if _get_new_config is None:
-        from .core.config_manager import get_config as imported_get_config
-
-        _get_new_config = imported_get_config
+        logger.debug("Lazily importing config_manager for the first time.")
+        try:
+            from .core.config_manager import get_config as imported_get_config
+            _get_new_config = imported_get_config
+            logger.debug("config_manager imported successfully.")
+        except ImportError as e:
+            logger.critical(f"Failed to import config_manager: {e}")
+            raise
     return _get_new_config
 
 
@@ -46,8 +51,11 @@ try:
     from dotenv import load_dotenv
 
     load_dotenv()
-except ImportError as e:
-    logger.error("Import error in config: %s", e)
+    logger.debug("Environment variables loaded from .env file.")
+except ImportError:
+    logger.debug("python-dotenv not installed, skipping .env file loading.")
+except Exception as e:
+    logger.warning(f"Error loading .env file: {e}")
 
 # Global configuration instance
 _modern_config = None
@@ -71,15 +79,17 @@ def _get_modern_config():
     """
     global _modern_config  # pylint: disable=global-statement
     if _modern_config is None:
+        logger.debug("Initializing modern configuration for the first time.")
         get_new_config = _ensure_config_manager_imported()
         _modern_config = get_new_config()
+        logger.info("Modern configuration initialized.")
     return _modern_config
 
 
 # Tool discovery functions using new system
 
 
-def find_tool(tool_name: str, required_executables=None) -> str | None:
+def find_tool(tool_name: str, required_executables: list[str] | None = None) -> str | None:
     """Find tool executable path using the modern discovery system.
 
     This function attempts to locate external tools (Ghidra, Radare2, Frida, etc.)
@@ -104,15 +114,27 @@ def find_tool(tool_name: str, required_executables=None) -> str | None:
     """
     if required_executables:
         logger.debug("Tool search for %s with required executables: %s", tool_name, required_executables)
+    else:
+        logger.debug("Tool search for %s.", tool_name)
     try:
         config = _get_modern_config()
-        return config.get_tool_path(tool_name)
+        tool_path = config.get_tool_path(tool_name)
+        if tool_path:
+            logger.debug(f"Modern tool discovery found '{tool_name}' at '{tool_path}'.")
+        else:
+            logger.debug(f"Modern tool discovery did not find '{tool_name}'.")
+        return tool_path
     except (AttributeError, KeyError, ValueError) as e:
-        logger.warning("Modern tool discovery failed for %s: %s", tool_name, e, exc_info=True)
+        logger.warning("Modern tool discovery failed for %s: %s. Falling back to PATH search.", tool_name, e, exc_info=True)
         # Fallback to basic PATH search
         import shutil
 
-        return shutil.which(tool_name)
+        path_tool = shutil.which(tool_name)
+        if path_tool:
+            logger.debug(f"PATH search found '{tool_name}' at '{path_tool}'.")
+        else:
+            logger.debug(f"PATH search did not find '{tool_name}'.")
+        return path_tool
 
 
 def get_system_path(path_type: str) -> str | None:
@@ -143,31 +165,45 @@ def get_system_path(path_type: str) -> str | None:
         '/home/user/.cache/intellicrack'
 
     """
+    logger.debug(f"Requesting system path for type: '{path_type}'.")
     try:
         config = _get_modern_config()
+        path = None
         if path_type == "output":
-            return str(config.get_output_dir())
-        if path_type == "cache":
-            return str(config.get_cache_dir())
-        if path_type == "logs":
-            return str(config.get_logs_dir())
-        if path_type == "temp":
-            return config.get("directories.temp")
-        return None
+            path = str(config.get_output_dir())
+        elif path_type == "cache":
+            path = str(config.get_cache_dir())
+        elif path_type == "logs":
+            path = str(config.get_logs_dir())
+        elif path_type == "temp":
+            path = config.get("directories.temp")
+
+        if path:
+            logger.debug(f"Modern config found path for '{path_type}': '{path}'.")
+            return path
+        else:
+            logger.debug(f"Modern config did not provide a specific path for '{path_type}'. Checking fallbacks.")
+            raise ValueError("Path not found in modern config, attempting fallback.")
     except (AttributeError, KeyError, ValueError, TypeError) as e:
-        logger.warning("System path lookup failed for %s: %s", path_type, e, exc_info=True)
+        logger.warning("Modern system path lookup failed for %s: %s. Attempting fallback.", path_type, e, exc_info=True)
         # Fallback to basic paths
+        fallback_path = None
         if path_type == "desktop":
-            return os.path.join(os.path.expanduser("~"), "Desktop")
-        if path_type == "documents":
-            return os.path.join(os.path.expanduser("~"), "Documents")
-        if path_type == "downloads":
-            return os.path.join(os.path.expanduser("~"), "Downloads")
-        if path_type == "temp":
+            fallback_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        elif path_type == "documents":
+            fallback_path = os.path.join(os.path.expanduser("~"), "Documents")
+        elif path_type == "downloads":
+            fallback_path = os.path.join(os.path.expanduser("~"), "Downloads")
+        elif path_type == "temp":
             import tempfile
 
-            return tempfile.gettempdir()
-        return None
+            fallback_path = tempfile.gettempdir()
+
+        if fallback_path:
+            logger.debug(f"Fallback mechanism found path for '{path_type}': '{fallback_path}'.")
+        else:
+            logger.warning(f"Fallback mechanism could not find path for '{path_type}'. Returning None.")
+        return fallback_path
 
 
 class ConfigManager:
@@ -207,8 +243,10 @@ class ConfigManager:
                         as the modern system uses platform-specific config locations.
 
         """
+        logger.debug(f"Initializing ConfigManager. Provided config_path: '{config_path}'.")
         self._modern_config = _get_modern_config()
         self.config_path = config_path or str(self._modern_config.config_file)
+        logger.info(f"ConfigManager initialized. Effective config_path: '{self.config_path}'.")
 
     @property
     def config(self) -> dict[str, Any]:
@@ -227,6 +265,7 @@ class ConfigManager:
             the current state of the modern configuration.
 
         """
+        logger.debug("Accessing ConfigManager.config property, building legacy config.")
         return self._build_legacy_config()
 
     def _build_legacy_config(self) -> dict[str, Any]:
@@ -246,6 +285,7 @@ class ConfigManager:
             used directly by external code.
 
         """
+        logger.debug("Building legacy configuration dictionary from modern config.")
         config = self._modern_config
 
         # Create legacy structure from modern config
@@ -320,113 +360,155 @@ class ConfigManager:
             "external_services": {},
             "api": {},
         }
-
+        logger.debug("Legacy configuration dictionary built.")
         return legacy_config
 
     def load_config(self) -> dict[str, Any]:
         """Load configuration - delegates to modern system."""
+        logger.debug("ConfigManager.load_config() called (delegating to modern system).")
         return self.config
 
     def save_config(self) -> bool:
         """Save configuration - delegates to modern system."""
         # Modern config auto-saves, so this is just compatibility
         # Always return True for backward compatibility
+        logger.debug("ConfigManager.save_config() called (modern config auto-saves).")
         return True
 
     def get(self, key: str, default: Any = None) -> Any:
         """Get configuration value with legacy key support."""
+        logger.debug(f"ConfigManager.get() called for key: '{key}'.")
         # Handle legacy key mappings
         if key == "ghidra_path":
-            return self._modern_config.get_tool_path("ghidra") or default
+            tool_path = self._modern_config.get_tool_path("ghidra")
+            logger.debug(f"Legacy key 'ghidra_path' mapped to modern tool path: '{tool_path}'.")
+            return tool_path or default
         if key == "radare2_path":
-            return self._modern_config.get_tool_path("radare2") or default
+            tool_path = self._modern_config.get_tool_path("radare2")
+            logger.debug(f"Legacy key 'radare2_path' mapped to modern tool path: '{tool_path}'.")
+            return tool_path or default
         if key == "frida_path":
-            return self._modern_config.get_tool_path("frida") or default
+            tool_path = self._modern_config.get_tool_path("frida")
+            logger.debug(f"Legacy key 'frida_path' mapped to modern tool path: '{tool_path}'.")
+            return tool_path or default
         if key == "log_dir":
-            return str(self._modern_config.get_logs_dir())
+            log_dir = str(self._modern_config.get_logs_dir())
+            logger.debug(f"Legacy key 'log_dir' mapped to modern logs directory: '{log_dir}'.")
+            return log_dir
         if key == "output_dir":
-            return str(self._modern_config.get_output_dir())
+            output_dir = str(self._modern_config.get_output_dir())
+            logger.debug(f"Legacy key 'output_dir' mapped to modern output directory: '{output_dir}'.")
+            return output_dir
         if key == "temp_dir":
-            return self._modern_config.get("directories.temp", str(self._modern_config.get_cache_dir()))
+            temp_dir = self._modern_config.get("directories.temp", str(self._modern_config.get_cache_dir()))
+            logger.debug(f"Legacy key 'temp_dir' mapped to modern temp directory: '{temp_dir}'.")
+            return temp_dir
 
         # Try modern config first, then legacy structure
         result = self._modern_config.get(key, None)
         if result is not None:
+            logger.debug(f"Key '{key}' found in modern config: '{result}'.")
             return result
-        return self.config.get(key, default)
+
+        result = self.config.get(key, default)
+        logger.debug(f"Key '{key}' not found in modern config, falling back to legacy structure. Result: '{result}'.")
+        return result
 
     def set(self, key: str, value: Any) -> None:
         """Set configuration value."""
+        logger.debug(f"ConfigManager.set() called for key: '{key}', value: '{value}'.")
         # Update modern config
         self._modern_config.set(key, value)
+        logger.debug(f"Key '{key}' set in modern config.")
 
     def update(self, updates: dict[str, Any]) -> None:
         """Update multiple configuration values."""
+        logger.debug(f"ConfigManager.update() called with updates: {updates}.")
         for key, value in updates.items():
             self.set(key, value)
+        logger.debug("ConfigManager updates applied.")
 
     def get_model_repositories(self) -> dict[str, Any]:
         """Get model repository configuration."""
+        logger.debug("ConfigManager.get_model_repositories() called.")
         return self.config.get("model_repositories", {})
 
     def is_repository_enabled(self, repo_name: str) -> bool:
         """Check if a model repository is enabled."""
+        logger.debug(f"ConfigManager.is_repository_enabled() called for repo: '{repo_name}'.")
         repos = self.get_model_repositories()
         repo = repos.get(repo_name, {})
-        return repo.get("enabled", False)
+        enabled = repo.get("enabled", False)
+        logger.debug(f"Repository '{repo_name}' enabled status: {enabled}.")
+        return enabled
 
     def get_ghidra_path(self) -> str | None:
         """Get the Ghidra installation path."""
+        logger.debug("ConfigManager.get_ghidra_path() called.")
         return self._modern_config.get_tool_path("ghidra")
 
     def get_tool_path(self, tool_name: str) -> str | None:
         """Get path for any tool."""
+        logger.debug(f"ConfigManager.get_tool_path() called for tool: '{tool_name}'.")
         return self._modern_config.get_tool_path(tool_name)
 
     def is_tool_available(self, tool_name: str) -> bool:
         """Check if a tool is available."""
-        return self._modern_config.is_tool_available(tool_name)
+        logger.debug(f"ConfigManager.is_tool_available() called for tool: '{tool_name}'.")
+        available = self._modern_config.is_tool_available(tool_name)
+        logger.debug(f"Tool '{tool_name}' availability: {available}.")
+        return available
 
     def get_logs_dir(self):
         """Get logs directory."""
+        logger.debug("ConfigManager.get_logs_dir() called.")
         return self._modern_config.get_logs_dir()
 
     def get_output_dir(self):
         """Get output directory."""
+        logger.debug("ConfigManager.get_output_dir() called.")
         return self._modern_config.get_output_dir()
 
     def get_cache_dir(self):
         """Get cache directory."""
+        logger.debug("ConfigManager.get_cache_dir() called.")
         return self._modern_config.get_cache_dir()
 
     def validate_config(self) -> bool:
         """Validate the current configuration."""
+        logger.debug("ConfigManager.validate_config() called (delegating to modern system).")
         # Basic validation - modern config handles the real validation
         # Always return True for backward compatibility
         return True
 
     def items(self):
         """Return items from the configuration dictionary."""
+        logger.debug("ConfigManager.items() called.")
         return self.config.items()
 
     def keys(self):
         """Return keys from the configuration dictionary."""
+        logger.debug("ConfigManager.keys() called.")
         return self.config.keys()
 
     def values(self):
         """Return values from the configuration dictionary."""
+        logger.debug("ConfigManager.values() called.")
         return self.config.values()
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str):
         """Allow dictionary-style access."""
-        return self.config[key]
+        logger.debug(f"ConfigManager.__getitem__() called for key: '{key}'.")
+        return self.get(key)
 
-    def __setitem__(self, key, value) -> None:
+    def __setitem__(self, key: str, value: Any) -> None:
         """Allow dictionary-style setting."""
+        logger.debug(f"ConfigManager.__setitem__() called for key: '{key}', value: '{value}'.")
         self.set(key, value)
 
-    def __contains__(self, key) -> bool:
+    def __contains__(self, key: str) -> bool:
         """Check if key exists in configuration."""
+        logger.debug(f"ConfigManager.__contains__() called for key: '{key}'.")
         return key in self.config
 
 
@@ -461,8 +543,10 @@ def load_config(config_path: str = None) -> dict[str, Any]:
 
     """
     global _config_manager  # pylint: disable=global-statement
+    logger.debug(f"Global load_config() called. Provided config_path: '{config_path}'.")
     if _config_manager is None:
         _config_manager = ConfigManager(config_path)
+        logger.info("Global ConfigManager initialized during load_config().")
     return _config_manager.config
 
 
@@ -474,8 +558,10 @@ def get_config() -> ConfigManager:
 
     """
     global _config_manager  # pylint: disable=global-statement
+    logger.debug("Global get_config() called.")
     if _config_manager is None:
         _config_manager = ConfigManager()
+        logger.info("Global ConfigManager initialized during get_config().")
     return _config_manager
 
 
@@ -486,8 +572,10 @@ def save_config() -> bool:
         True if saved successfully, False otherwise
 
     """
+    logger.debug("Global save_config() called.")
     if _config_manager is not None:
         return _config_manager.save_config()
+    logger.warning("Global ConfigManager not initialized, cannot save config.")
     return False
 
 
@@ -503,43 +591,57 @@ class _LazyConfig(dict):
     def __init__(self) -> None:
         super().__init__()
         self._initialized = False
+        logger.debug("_LazyConfig instance created.")
 
     def _ensure_loaded(self) -> None:
         """Load configuration if not already loaded."""
         if not self._initialized:
+            logger.debug("LazyConfig: Configuration not loaded, triggering load.")
             try:
                 config_data = load_config()
                 self.update(config_data)
+                logger.info("LazyConfig: Configuration loaded successfully.")
             except (FileNotFoundError, PermissionError, ValueError, KeyError, ImportError) as e:
-                logger.warning("Failed to load config, using empty dict: %s", e)
+                logger.warning("LazyConfig: Failed to load config, using empty dict: %s", e)
+            except Exception as e:
+                logger.exception("LazyConfig: An unexpected error occurred during config loading: %s", e)
             self._initialized = True
+        else:
+            logger.debug("LazyConfig: Configuration already loaded.")
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str):
         self._ensure_loaded()
+        logger.debug(f"LazyConfig: Accessing item with key '{key}'.")
         return super().__getitem__(key)
 
-    def __setitem__(self, key, value) -> None:
+    def __setitem__(self, key: str, value: Any) -> None:
         self._ensure_loaded()
+        logger.debug(f"LazyConfig: Setting item with key '{key}' to value '{value}'.")
         return super().__setitem__(key, value)
 
-    def __contains__(self, key) -> bool:
+    def __contains__(self, key: str) -> bool:
         self._ensure_loaded()
+        logger.debug(f"LazyConfig: Checking containment for key '{key}'.")
         return super().__contains__(key)
 
-    def get(self, key, default=None):
+    def get(self, key: str, default: Any | None = None):
         self._ensure_loaded()
+        logger.debug(f"LazyConfig: Getting item with key '{key}'.")
         return super().get(key, default)
 
     def keys(self):
         self._ensure_loaded()
+        logger.debug("LazyConfig: Getting keys.")
         return super().keys()
 
     def values(self):
         self._ensure_loaded()
+        logger.debug("LazyConfig: Getting values.")
         return super().values()
 
     def items(self):
         self._ensure_loaded()
+        logger.debug("LazyConfig: Getting items.")
         return super().items()
 
 

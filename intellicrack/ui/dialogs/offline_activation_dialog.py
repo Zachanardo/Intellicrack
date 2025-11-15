@@ -3,7 +3,7 @@
 import json
 import os
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtGui import QFont
@@ -45,7 +45,7 @@ class ActivationWorker(QThread):
     result = pyqtSignal(dict)
     error = pyqtSignal(str)
 
-    def __init__(self, emulator: OfflineActivationEmulator, operation: str, params: Dict[str, Any]) -> None:
+    def __init__(self, emulator: OfflineActivationEmulator, operation: str, params: dict[str, Any]) -> None:
         """Initialize the OfflineActivationWorker with emulator and operation parameters.
 
         Args:

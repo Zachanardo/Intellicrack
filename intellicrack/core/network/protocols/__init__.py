@@ -94,4 +94,5 @@ def get_supported_protocols():
     return protocols
 
 
-__all__ = ["get_available_parsers", "get_parser", "is_parser_available", "get_supported_protocols", *list(_parsers.keys())]
+_parsers_list = [str(name) for name in _parsers]
+__all__ = ["get_available_parsers", "get_parser", "is_parser_available", "get_supported_protocols", *_parsers_list]

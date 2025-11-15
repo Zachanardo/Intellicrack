@@ -12,7 +12,7 @@ from ctypes import wintypes
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import psutil
 
@@ -40,9 +40,9 @@ class TrialInfo:
     first_run_date: datetime.datetime
     last_run_date: datetime.datetime
     trial_expired: bool
-    registry_keys: List[str]
-    files: List[str]
-    processes: List[str]
+    registry_keys: list[str]
+    files: list[str]
+    processes: list[str]
 
 
 @log_all_methods
@@ -56,7 +56,7 @@ class TrialResetEngine:
         self.reset_strategies = self._initialize_reset_strategies()
         self.time_manipulation = TimeManipulator()
 
-    def _initialize_trial_locations(self) -> Dict[str, List[str]]:
+    def _initialize_trial_locations(self) -> dict[str, list[str]]:
         """Initialize common trial data storage locations."""
         username = os.environ.get("USERNAME", "User")
 
@@ -95,7 +95,7 @@ class TrialResetEngine:
         logger.debug(f"Initialized {len(locations['registry'])} registry, {len(locations['files'])} file, {len(locations['hidden'])} hidden, and {len(locations['alternate_streams'])} alternate stream trial locations.")
         return locations
 
-    def _initialize_detection_patterns(self) -> Dict[str, Any]:
+    def _initialize_detection_patterns(self) -> dict[str, Any]:
         """Initialize patterns for detecting trial data."""
         patterns = {
             "registry_values": [
@@ -137,7 +137,7 @@ class TrialResetEngine:
         logger.debug(f"Initialized {len(patterns['registry_values'])} registry value, {len(patterns['file_patterns'])} file, {len(patterns['timestamp_files'])} timestamp, and {len(patterns['encrypted_markers'])} encrypted detection patterns.")
         return patterns
 
-    def _initialize_reset_strategies(self) -> Dict[str, Any]:
+    def _initialize_reset_strategies(self) -> dict[str, Any]:
         """Initialize trial reset strategies."""
         strategies = {
             "clean_uninstall": self._clean_uninstall_reset,
@@ -154,7 +154,7 @@ class TrialResetEngine:
 
     def scan_for_trial(self, product_name: str) -> TrialInfo:
         """Scan system for trial information."""
-        logger.debug(f"Starting trial scan for product: {product_name}")
+        logger.info(f"Starting comprehensive trial scan for product: {product_name}")
         trial_info = TrialInfo(
             product_name=product_name,
             trial_type=TrialType.TIME_BASED,
@@ -169,34 +169,34 @@ class TrialResetEngine:
             processes=[],
         )
 
-        # Scan registry
+        logger.info("Step 1: Scanning registry for trial data.")
         trial_info.registry_keys = self._scan_registry_for_trial(product_name)
-        logger.debug(f"Found {len(trial_info.registry_keys)} registry keys for {product_name}.")
+        logger.info(f"Step 1: Found {len(trial_info.registry_keys)} registry keys for {product_name}.")
 
-        # Scan files
+        logger.info("Step 2: Scanning filesystem for trial data.")
         trial_info.files = self._scan_files_for_trial(product_name)
-        logger.debug(f"Found {len(trial_info.files)} files for {product_name}.")
+        logger.info(f"Step 2: Found {len(trial_info.files)} files for {product_name}.")
 
-        # Detect trial type
+        logger.info("Step 3: Detecting trial type.")
         trial_info.trial_type = self._detect_trial_type(trial_info)
-        logger.debug(f"Detected trial type: {trial_info.trial_type.value}")
+        logger.info(f"Step 3: Detected trial type: {trial_info.trial_type.value}")
 
-        # Get trial details
+        logger.info("Step 4: Extracting detailed trial information.")
         self._extract_trial_details(trial_info)
-        logger.debug(f"Extracted trial details: Install Date={trial_info.install_date}, Trial Days={trial_info.trial_days}, Usage Count={trial_info.usage_count}")
+        logger.info(f"Step 4: Extracted trial details: Install Date={trial_info.install_date}, Trial Days={trial_info.trial_days}, Usage Count={trial_info.usage_count}")
 
-        # Check if trial is expired
+        logger.info("Step 5: Checking if trial is expired.")
         trial_info.trial_expired = self._check_trial_expired(trial_info)
-        logger.debug(f"Trial expired status: {trial_info.trial_expired}")
+        logger.info(f"Step 5: Trial expired status: {trial_info.trial_expired}")
 
-        # Find related processes
+        logger.info("Step 6: Finding related processes.")
         trial_info.processes = self._find_related_processes(product_name)
-        logger.debug(f"Found {len(trial_info.processes)} related processes: {trial_info.processes}")
+        logger.info(f"Step 6: Found {len(trial_info.processes)} related processes: {trial_info.processes}")
 
-        logger.debug(f"Trial scan completed for {product_name}.")
+        logger.info(f"Comprehensive trial scan completed for {product_name}.")
         return trial_info
 
-    def _scan_registry_for_trial(self, product_name: str) -> List[str]:
+    def _scan_registry_for_trial(self, product_name: str) -> list[str]:
         """Scan registry for trial-related keys."""
         found_keys = []
 
@@ -249,7 +249,9 @@ class TrialResetEngine:
                         except OSError:
                             break
             except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
-                logger.debug(f"Failed to access registry for process scanning: {e}")
+                logger.warning(f"Failed to access registry for process scanning: {e}")
+            except OSError as e:
+                logger.warning(f"Failed to open registry key {key_path}: {e}")
 
         # Also scan for hidden/encoded keys
         hidden_found = self._scan_for_hidden_registry_keys(product_name)
@@ -257,7 +259,7 @@ class TrialResetEngine:
         logger.debug(f"Finished scanning registry. Total found keys: {len(found_keys)}")
         return found_keys
 
-    def _scan_for_hidden_registry_keys(self, product_name: str) -> List[str]:
+    def _scan_for_hidden_registry_keys(self, product_name: str) -> list[str]:
         """Scan for hidden or encoded registry keys."""
         hidden_keys = []
 
@@ -289,12 +291,12 @@ class TrialResetEngine:
                         i += 1
                     except OSError:
                         break
-        except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
-            logger.debug(f"Failed to scan for hidden registry keys: {e}")
+        except (psutil.NoSuchProcess, psutil.AccessDenied, OSError) as e:
+            logger.warning(f"Failed to scan for hidden registry keys: {e}")
         logger.debug(f"Finished scanning for hidden registry keys. Total found: {len(hidden_keys)}")
         return hidden_keys
 
-    def _scan_files_for_trial(self, product_name: str) -> List[str]:
+    def _scan_files_for_trial(self, product_name: str) -> list[str]:
         """Scan filesystem for trial-related files."""
         found_files = []
 
@@ -310,7 +312,7 @@ class TrialResetEngine:
                             found_files.append(str(file_path))
                             logger.debug(f"Found trial-related file: {file_path}")
                     except (OSError, PermissionError) as e:
-                        logger.debug(f"Failed to scan path {path} with pattern {pattern}: {e}")
+                        logger.warning(f"Failed to scan path {path} with pattern {pattern}: {e}")
 
         # Scan for hidden files
         for template in self.common_trial_locations["hidden"]:
@@ -332,7 +334,7 @@ class TrialResetEngine:
         logger.debug(f"Finished scanning files. Total found files: {len(found_files)}")
         return found_files
 
-    def _scan_alternate_data_streams(self, product_name: str) -> List[str]:
+    def _scan_alternate_data_streams(self, product_name: str) -> list[str]:
         """Scan for NTFS alternate data streams using Windows APIs."""
         ads_files = []
         kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
@@ -426,7 +428,7 @@ class TrialResetEngine:
                             logger.debug(f"Found common ADS: {ads_path}")
 
                 except Exception as e:
-                    logger.debug(f"ADS file identification failed: {e}")
+                    logger.warning(f"ADS file identification failed for base path {base_path}: {e}")
 
         # Scan for ADS in subdirectories if specified
         for location in self.common_trial_locations.get("files", []):
@@ -437,7 +439,7 @@ class TrialResetEngine:
         logger.debug(f"Finished scanning for alternate data streams. Total found: {len(ads_files)}")
         return ads_files
 
-    def _scan_directory_for_ads(self, directory: str) -> List[str]:
+    def _scan_directory_for_ads(self, directory: str) -> list[str]:
         """Recursively scan directory for files with alternate data streams."""
         ads_files = []
         kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
@@ -471,11 +473,11 @@ class TrialResetEngine:
                         finally:
                             kernel32.FindClose(handle)
         except (OSError, PermissionError) as e:
-            logger.debug(f"Failed to scan for alternate data streams: {e}")
+            logger.warning(f"Failed to scan for alternate data streams in directory {directory}: {e}")
 
         return ads_files
 
-    def _scan_for_encrypted_trial_files(self, product_name: str) -> List[str]:
+    def _scan_for_encrypted_trial_files(self, product_name: str) -> list[str]:
         """Scan for encrypted trial data files."""
         encrypted_files = []
 
@@ -501,9 +503,9 @@ class TrialResetEngine:
                                         logger.debug(f"Found encrypted trial file: {file_path}")
                                         break
                         except (OSError, PermissionError) as e:
-                            logger.debug(f"Failed to read file {file_path}: {e}")
+                            logger.warning(f"Failed to read file {file_path}: {e}")
             except (ValueError, TypeError) as e:
-                logger.debug(f"Failed to process directory {search_path}: {e}")
+                logger.warning(f"Failed to process directory {search_path}: {e}")
         logger.debug(f"Finished scanning for encrypted trial files. Total found: {len(encrypted_files)}")
         return encrypted_files
 
@@ -524,15 +526,14 @@ class TrialResetEngine:
         if has_time and has_usage:
             logger.debug("Detected Hybrid trial type.")
             return TrialType.HYBRID
-        elif has_usage:
+        if has_usage:
             logger.debug("Detected Usage-Based trial type.")
             return TrialType.USAGE_BASED
-        elif has_features and not has_time:
+        if has_features and not has_time:
             logger.debug("Detected Feature-Limited trial type.")
             return TrialType.FEATURE_LIMITED
-        else:
-            logger.debug("Detected Time-Based trial type.")
-            return TrialType.TIME_BASED
+        logger.debug("Detected Time-Based trial type.")
+        return TrialType.TIME_BASED
 
     def _extract_trial_details(self, trial_info: TrialInfo) -> None:
         """Extract detailed trial information."""
@@ -560,23 +561,23 @@ class TrialResetEngine:
                             trial_info.install_date = self._parse_date(install_date)
                             logger.debug(f"Extracted InstallDate: {trial_info.install_date} from {key_path}")
                         except (OSError, ValueError) as e:
-                            logger.debug(f"Failed to read InstallDate from {key_path}: {e}")
+                            logger.warning(f"Failed to read InstallDate from {key_path}: {e}")
 
                         try:
                             trial_days = winreg.QueryValueEx(key, "TrialDays")[0]
                             trial_info.trial_days = int(trial_days)
                             logger.debug(f"Extracted TrialDays: {trial_info.trial_days} from {key_path}")
                         except (OSError, ValueError) as e:
-                            logger.debug(f"Failed to read TrialDays from {key_path}: {e}")
+                            logger.warning(f"Failed to read TrialDays from {key_path}: {e}")
 
                         try:
                             usage_count = winreg.QueryValueEx(key, "UsageCount")[0]
                             trial_info.usage_count = int(usage_count)
                             logger.debug(f"Extracted UsageCount: {trial_info.usage_count} from {key_path}")
                         except (OSError, ValueError) as e:
-                            logger.debug(f"Failed to read UsageCount from {key_path}: {e}")
+                            logger.warning(f"Failed to read UsageCount from {key_path}: {e}")
             except (OSError, PermissionError) as e:
-                logger.debug(f"Failed to access registry key {key_path}: {e}")
+                logger.warning(f"Failed to access registry key {key_path}: {e}")
 
         # Extract from files
         for file_path in trial_info.files:
@@ -594,17 +595,17 @@ class TrialResetEngine:
         if isinstance(date_value, int):
             # Unix timestamp
             return datetime.datetime.fromtimestamp(date_value)
-        elif isinstance(date_value, str):
+        if isinstance(date_value, str):
             # Try various formats
             formats = ["%Y-%m-%d", "%Y/%m/%d", "%d/%m/%Y", "%Y-%m-%d %H:%M:%S", "%Y/%m/%d %H:%M:%S"]
 
             for fmt in formats:
                 try:
-                    return datetime.datetime.strptime(date_value, fmt)
+                    return datetime.datetime.strptime(date_value, fmt).replace(tzinfo=datetime.timezone.utc)
                 except (ValueError, TypeError):
                     continue
 
-        return datetime.datetime.now()
+        return datetime.datetime.now(datetime.timezone.utc)
 
     def _check_trial_expired(self, trial_info: TrialInfo) -> bool:
         """Check if trial has expired."""
@@ -623,7 +624,7 @@ class TrialResetEngine:
         logger.debug("Trial not expired based on current checks.")
         return False
 
-    def _find_related_processes(self, product_name: str) -> List[str]:
+    def _find_related_processes(self, product_name: str) -> list[str]:
         """Find processes related to the product."""
         processes = []
 
@@ -636,7 +637,7 @@ class TrialResetEngine:
                     processes.append(proc.info["name"])
                     logger.debug(f"Found related process by executable path: {proc.info['exe']} (PID: {proc.info['pid']})")
             except (KeyError, TypeError, AttributeError) as e:
-                logger.debug(f"Failed to process running process: {e}")
+                logger.warning(f"Failed to process running process information: {e}")
         unique_processes = list(set(processes))
         logger.debug(f"Finished finding related processes. Total unique processes found: {len(unique_processes)}")
         return unique_processes
@@ -658,7 +659,7 @@ class TrialResetEngine:
         logger.debug(f"Trial reset for '{trial_info.product_name}' completed with strategy '{strategy}'. Success: {success}")
         return success
 
-    def _kill_processes(self, process_names: List[str]) -> None:
+    def _kill_processes(self, process_names: list[str]) -> None:
         """Kill specified processes."""
         for proc in psutil.process_iter(["pid", "name"]):
             try:
@@ -729,7 +730,7 @@ class TrialResetEngine:
                 logger.debug(f"Successfully deleted registry key: {key_path}")
                 return True
         except (OSError, PermissionError) as e:
-            logger.debug(f"Failed to delete registry key {key_path}: {e}")
+            logger.warning(f"Failed to delete registry key {key_path}: {e}")
 
         return False
 
@@ -748,8 +749,8 @@ class TrialResetEngine:
                 os.remove(file_path)
                 logger.debug(f"Successfully deleted file: {file_path}")
                 return True
-        except (OSError, PermissionError):
-            logger.debug(f"Failed to securely delete file {file_path} using standard methods. Attempting alternate methods.")
+        except (OSError, PermissionError) as e:
+            logger.warning(f"Failed to securely delete file {file_path} using standard methods: {e}. Attempting alternate methods.")
             # Try alternate methods
             try:
                 import win32file
@@ -758,7 +759,7 @@ class TrialResetEngine:
                 logger.debug(f"Successfully deleted file {file_path} via win32file.")
                 return True
             except (OSError, PermissionError) as e:
-                logger.debug(f"Failed to delete file via win32file {file_path}: {e}")
+                logger.warning(f"Failed to delete file via win32file {file_path}: {e}")
 
         return False
 
@@ -843,7 +844,7 @@ class TrialResetEngine:
                                 logger.debug(f"Failed to delete or zero out ADS {stream_path}.")
 
             except Exception as e:
-                logger.debug(f"ADS file handle operation failed: {e}")
+                logger.warning(f"ADS file handle operation failed for {file_path}: {e}")
 
         for template in self.common_trial_locations["alternate_streams"]:
             path = template.replace("{product}", product_name)
@@ -888,7 +889,7 @@ class TrialResetEngine:
                         self._clear_directory_ads(base_path, remove_ads_from_file)
 
                 except Exception as e:
-                    logger.debug(f"Directory ADS clearing failed: {e}")
+                    logger.warning(f"Directory ADS clearing failed for {base_path}: {e}")
 
         # Also clear ADS from common file locations
         for location in self.common_trial_locations.get("files", []):
@@ -925,7 +926,7 @@ class TrialResetEngine:
                     remove_func(dirpath)
 
         except Exception as e:
-            logger.debug(f"Directory removal operation failed: {e}")
+            logger.warning(f"Directory ADS recursive clearing failed for {directory}: {e}")
 
     def _clear_prefetch_data(self, product_name: str) -> None:
         """Clear Windows prefetch data."""
@@ -938,7 +939,7 @@ class TrialResetEngine:
                     self._delete_file_securely(file_path)
                     logger.debug(f"Deleted prefetch file: {file_path}")
         except (OSError, PermissionError) as e:
-            logger.debug(f"Failed to clear prefetch files: {e}")
+            logger.warning(f"Failed to clear prefetch files from {prefetch_path}: {e}")
         logger.debug("Finished clearing prefetch data.")
 
     def _clear_event_logs(self, product_name: str) -> None:
@@ -953,7 +954,7 @@ class TrialResetEngine:
             win32evtlog.CloseEventLog(handle)
             logger.debug("Successfully cleared application event logs.")
         except (OSError, PermissionError) as e:
-            logger.debug(f"Failed to clear event logs: {e}")
+            logger.warning(f"Failed to clear event logs for product {product_name}: {e}")
 
     def _time_manipulation_reset(self, trial_info: TrialInfo) -> bool:
         """Reset trial by manipulating system time."""
@@ -998,7 +999,7 @@ class TrialResetEngine:
 
                     return True
         except (OSError, PermissionError) as e:
-            logger.debug(f"Failed to delete registry keys: {e}")
+            logger.warning(f"Failed to reset registry values for key {key_path}: {e}")
 
         return False
 
@@ -1044,7 +1045,7 @@ class TrialResetEngine:
 
             return True
         except (OSError, PermissionError) as e:
-            logger.debug(f"Failed file wipe reset for {file_path}: {e}")
+            logger.warning(f"Failed file wipe reset for {file_path}: {e}")
 
         return False
 
@@ -1070,7 +1071,7 @@ class TrialResetEngine:
             logger.debug("GUID regeneration reset strategy completed. Success: True")
             return True
         except (OSError, PermissionError) as e:
-            logger.debug(f"Failed GUID regeneration reset: {e}")
+            logger.warning(f"Failed GUID regeneration reset: {e}")
             return False
 
     def _update_guid_in_key(self, key_path: str) -> None:
@@ -1104,7 +1105,7 @@ class TrialResetEngine:
                         except OSError:
                             break
         except (OSError, PermissionError) as e:
-            logger.debug(f"Failed to update GUID in registry key {key_path}: {e}")
+            logger.warning(f"Failed to update GUID in registry key {key_path}: {e}")
 
     def _sandbox_reset(self, trial_info: TrialInfo) -> bool:
         """Reset trial using sandbox isolation."""
@@ -1144,7 +1145,7 @@ class TrialResetEngine:
                 logger.debug(f"System restore reset completed. Success: {success}")
                 return success
         except (OSError, PermissionError) as e:
-            logger.debug(f"Failed system restore reset: {e}")
+            logger.warning(f"Failed system restore reset: {e}")
 
         return False
 
@@ -1181,7 +1182,7 @@ class TimeManipulator:
                 logger.debug(f"System time restored to original: {self.original_time}")
                 return True
         except (OSError, PermissionError) as e:
-            logger.debug(f"Failed to reset trial time: {e}")
+            logger.warning(f"Failed to reset trial time for product {trial_info.product_name}: {e}")
 
         return False
 
@@ -1204,7 +1205,7 @@ class TimeManipulator:
             logger.debug(f"System time successfully set to: {new_time}")
             return True
         except (OSError, PermissionError) as e:
-            logger.debug(f"Failed to set system time to {new_time}: {e}")
+            logger.warning(f"Failed to set system time to {new_time}: {e}")
 
         return False
 
@@ -1228,7 +1229,7 @@ class TimeManipulator:
             # Create snapshot
             hSnapshot = kernel32.CreateToolhelp32Snapshot(0x00000002, 0)  # TH32CS_SNAPPROCESS
             if hSnapshot == -1:
-                logger.debug("Failed to create process snapshot.")
+                logger.warning("Failed to create process snapshot. Cannot find process by name.")
                 return processes
 
             class PROCESSENTRY32(ctypes.Structure):
@@ -1267,7 +1268,7 @@ class TimeManipulator:
             # Open process
             hProcess = kernel32.OpenProcess(PROCESS_ALL_ACCESS, False, pid)
             if not hProcess:
-                logger.debug(f"Failed to open process {pid}.")
+                logger.warning(f"Failed to open process {pid}. Cannot inject time hooks.")
                 return False
 
             try:
@@ -1282,9 +1283,8 @@ class TimeManipulator:
                 )
 
                 if not code_addr:
-                    logger.debug(f"Failed to allocate memory in process {pid}.")
+                    logger.warning(f"Failed to allocate memory in process {pid}. Cannot inject time hooks.")
                     return False
-
                 # Convert datetime to SYSTEMTIME structure
                 class SYSTEMTIME(ctypes.Structure):
                     _fields_ = [
@@ -1310,7 +1310,8 @@ class TimeManipulator:
                 logger.debug(f"Frozen SYSTEMTIME structure created: {sys_time.wYear}-{sys_time.wMonth}-{sys_time.wDay} {sys_time.wHour}:{sys_time.wMinute}:{sys_time.wSecond}")
 
                 # Calculate frozen tick count (milliseconds since system start)
-                tick_count = int((frozen_time - datetime.datetime(2025, 1, 1)).total_seconds() * 1000)
+                from datetime import timezone
+                tick_count = int((frozen_time - datetime.datetime(2025, 1, 1, tzinfo=timezone.utc)).total_seconds() * 1000)
                 logger.debug(f"Frozen tick count: {tick_count}")
 
                 # Calculate performance counter

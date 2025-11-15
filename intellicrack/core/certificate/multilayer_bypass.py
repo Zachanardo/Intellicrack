@@ -103,7 +103,6 @@ VERIFICATION:
 
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
 
 from intellicrack.core.certificate.cert_patcher import CertificatePatcher
 from intellicrack.core.certificate.frida_cert_hooks import FridaCertificateHooks
@@ -121,9 +120,9 @@ class StageResult:
     stage_number: int
     layer: ValidationLayer
     success: bool
-    error_message: Optional[str] = None
-    bypassed_functions: List[str] = field(default_factory=list)
-    rollback_data: Optional[bytes] = None
+    error_message: str | None = None
+    bypassed_functions: list[str] = field(default_factory=list)
+    rollback_data: bytes | None = None
 
 
 @dataclass
@@ -131,11 +130,11 @@ class MultiLayerResult:
     """Result from multi-layer bypass operation."""
 
     overall_success: bool
-    bypassed_layers: List[ValidationLayer] = field(default_factory=list)
-    failed_layers: List[Tuple[ValidationLayer, str]] = field(default_factory=list)
-    stage_results: Dict[int, StageResult] = field(default_factory=dict)
-    verification_results: Dict[ValidationLayer, bool] = field(default_factory=dict)
-    rollback_data: Dict[ValidationLayer, bytes] = field(default_factory=dict)
+    bypassed_layers: list[ValidationLayer] = field(default_factory=list)
+    failed_layers: list[tuple[ValidationLayer, str]] = field(default_factory=list)
+    stage_results: dict[int, StageResult] = field(default_factory=dict)
+    verification_results: dict[ValidationLayer, bool] = field(default_factory=dict)
+    rollback_data: dict[ValidationLayer, bytes] = field(default_factory=dict)
 
     def add_stage_result(self, result: StageResult) -> None:
         """Add a stage result to the overall result."""
@@ -160,7 +159,7 @@ class MultiLayerBypass:
     def bypass_all_layers(
         self,
         target: str,
-        layers: List[LayerInfo],
+        layers: list[LayerInfo],
         dependency_graph: DependencyGraph,
     ) -> MultiLayerResult:
         """Execute multi-layer bypass with dependency handling.
@@ -231,19 +230,18 @@ class MultiLayerBypass:
         """Execute bypass for a specific layer."""
         if layer == ValidationLayer.OS_LEVEL:
             return self._bypass_os_level(stage_number, layer, target)
-        elif layer == ValidationLayer.LIBRARY_LEVEL:
+        if layer == ValidationLayer.LIBRARY_LEVEL:
             return self._bypass_library_level(stage_number, layer, target)
-        elif layer == ValidationLayer.APPLICATION_LEVEL:
+        if layer == ValidationLayer.APPLICATION_LEVEL:
             return self._bypass_application_level(stage_number, layer, target)
-        elif layer == ValidationLayer.SERVER_LEVEL:
+        if layer == ValidationLayer.SERVER_LEVEL:
             return self._bypass_server_level(stage_number, layer, target)
-        else:
-            return StageResult(
-                stage_number=stage_number,
-                layer=layer,
-                success=False,
-                error_message=f"Unknown layer type: {layer}",
-            )
+        return StageResult(
+            stage_number=stage_number,
+            layer=layer,
+            success=False,
+            error_message=f"Unknown layer type: {layer}",
+        )
 
     def _bypass_os_level(
         self,
@@ -515,14 +513,13 @@ class MultiLayerBypass:
         try:
             if layer == ValidationLayer.OS_LEVEL:
                 return self._verify_os_level_bypass(target)
-            elif layer == ValidationLayer.LIBRARY_LEVEL:
+            if layer == ValidationLayer.LIBRARY_LEVEL:
                 return self._verify_library_level_bypass(target)
-            elif layer == ValidationLayer.APPLICATION_LEVEL:
+            if layer == ValidationLayer.APPLICATION_LEVEL:
                 return self._verify_application_level_bypass(target)
-            elif layer == ValidationLayer.SERVER_LEVEL:
+            if layer == ValidationLayer.SERVER_LEVEL:
                 return self._verify_server_level_bypass(target)
-            else:
-                return False
+            return False
 
         except Exception as e:
             logger.error(f"Verification failed for {layer.value}: {e}")

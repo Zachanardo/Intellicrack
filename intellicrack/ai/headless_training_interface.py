@@ -27,7 +27,7 @@ import os
 import threading
 import time
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
+from typing import TYPE_CHECKING, Any, Callable
 
 if TYPE_CHECKING:
     import numpy as np
@@ -56,7 +56,7 @@ class HeadlessTrainingInterface:
 
         logger.info("Headless Training Interface initialized")
 
-    def load_configuration(self, config_path: str) -> Dict[str, Any]:
+    def load_configuration(self, config_path: str) -> dict[str, Any]:
         """Load training configuration from file.
 
         Args:
@@ -83,7 +83,7 @@ class HeadlessTrainingInterface:
             logger.error("Invalid JSON in configuration file %s: %s", config_path, e)
             raise
 
-    def save_configuration(self, config: Dict[str, Any], config_path: str) -> None:
+    def save_configuration(self, config: dict[str, Any], config_path: str) -> None:
         """Save training configuration to file.
 
         Args:
@@ -101,7 +101,7 @@ class HeadlessTrainingInterface:
             raise
 
     def start_training(
-        self, config: Dict[str, Any], progress_callback: Optional[Callable] = None, status_callback: Optional[Callable] = None,
+        self, config: dict[str, Any], progress_callback: Callable | None = None, status_callback: Callable | None = None,
     ) -> None:
         """Start AI model training with given configuration.
 
@@ -168,7 +168,7 @@ class HeadlessTrainingInterface:
         if self.callbacks.get("status"):
             self.callbacks["status"](f"Training stopped at epoch {self.current_epoch}")
 
-    def get_training_status(self) -> Dict[str, Any]:
+    def get_training_status(self) -> dict[str, Any]:
         """Get current training status.
 
         Returns:
@@ -184,7 +184,7 @@ class HeadlessTrainingInterface:
             "metrics": self.metrics.copy(),
         }
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """Get current training metrics.
 
         Returns:
@@ -205,7 +205,7 @@ class HeadlessTrainingInterface:
                 self.total_epochs = value
             logger.debug("Set training parameter %s = %s", key, value)
 
-    def _training_worker(self, config: Dict[str, Any]) -> None:
+    def _training_worker(self, config: dict[str, Any]) -> None:
         """Execute training in a worker thread."""
         try:
             start_time = time.time()
@@ -233,7 +233,7 @@ class HeadlessTrainingInterface:
             self.is_training = False
             self.is_paused = False
 
-    def _extract_training_parameters(self, config: Dict[str, Any]):
+    def _extract_training_parameters(self, config: dict[str, Any]):
         learning_rate = config.get("learning_rate", 0.001)
         batch_size = config.get("batch_size", 32)
         model_type = config.get("model_type", "vulnerability_classifier")
@@ -262,7 +262,7 @@ class HeadlessTrainingInterface:
         train_acc: float,
         val_loss: float,
         val_acc: float,
-        model_config: Dict[str, Any],
+        model_config: dict[str, Any],
         learning_rate: float,
         batch_size: int,
         start_time: float,
@@ -302,7 +302,7 @@ class HeadlessTrainingInterface:
             )
             self.callbacks["status"](status)
 
-    def _finalize_training(self, start_time: float, config: Dict[str, Any]) -> None:
+    def _finalize_training(self, start_time: float, config: dict[str, Any]) -> None:
         total_time = time.time() - start_time
         if self.is_training:
             logger.info("Training completed in %.2f seconds", total_time)
@@ -317,7 +317,7 @@ class HeadlessTrainingInterface:
             self.callbacks["status"](f"Training error: {error!s}")
 
     def _execute_training_epoch(
-        self, epoch: int, dataset_path: str, model_config: Dict[str, Any], training_config: Dict[str, Any],
+        self, epoch: int, dataset_path: str, model_config: dict[str, Any], training_config: dict[str, Any],
     ) -> tuple[float, float, float, float]:
         """Execute a real training epoch with actual data processing.
 
@@ -485,7 +485,7 @@ class HeadlessTrainingInterface:
             return []
 
     def _process_training_batch(
-        self, batch_data: list, model_config: Dict[str, Any], learning_rate: float, epoch: int,
+        self, batch_data: list, model_config: dict[str, Any], learning_rate: float, epoch: int,
     ) -> tuple[float, int, int]:
         """Process a training batch with forward and backward passes.
 
@@ -535,7 +535,7 @@ class HeadlessTrainingInterface:
             logger.error(f"Training batch processing failed: {e}")
             return 1.0, 0, len(batch_data)
 
-    def _process_validation_batch(self, batch_data: list, model_config: Dict[str, Any], epoch: int) -> tuple[float, int, int]:
+    def _process_validation_batch(self, batch_data: list, model_config: dict[str, Any], epoch: int) -> tuple[float, int, int]:
         """Process a validation batch (inference only, no gradient updates).
 
         Args:
@@ -581,7 +581,7 @@ class HeadlessTrainingInterface:
             logger.error(f"Validation batch processing failed: {e}")
             return 1.0, 0, len(batch_data)
 
-    def _generate_recovery_metrics(self, epoch: int, model_config: Dict[str, Any]) -> tuple[float, float, float, float]:
+    def _generate_recovery_metrics(self, epoch: int, model_config: dict[str, Any]) -> tuple[float, float, float, float]:
         """Generate recovery metrics using historical data and adaptive algorithms.
 
         Args:
@@ -687,7 +687,7 @@ class HeadlessTrainingInterface:
             val_acc = train_acc * 0.95
             return train_loss, train_acc, val_loss, val_acc
 
-    def _forward_pass(self, features: list, model_config: Dict[str, Any], epoch: int, validation: bool = False) -> float:
+    def _forward_pass(self, features: list, model_config: dict[str, Any], epoch: int, validation: bool = False) -> float:
         """Perform forward pass through the neural network model.
 
         Args:
@@ -762,7 +762,7 @@ class HeadlessTrainingInterface:
             logger.error(f"Forward pass failed: {e}")
             return 0.5  # Default prediction on error  # Default prediction on error
 
-    def _initialize_model_weights(self, input_size: int, model_config: Dict[str, Any]) -> None:
+    def _initialize_model_weights(self, input_size: int, model_config: dict[str, Any]) -> None:
         """Initialize neural network weights using He initialization.
 
         Args:
@@ -828,7 +828,7 @@ class HeadlessTrainingInterface:
         x_clipped = np.clip(x, -500, 500)
         return 1.0 / (1.0 + np.exp(-x_clipped))
 
-    def _save_trained_model(self, config: Dict[str, Any]) -> str:
+    def _save_trained_model(self, config: dict[str, Any]) -> str:
         """Save trained model to disk.
 
         Args:

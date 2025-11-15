@@ -8,7 +8,6 @@ Licensed under GNU General Public License v3.0
 """
 
 import os
-from typing import Optional
 
 from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtWidgets import (
@@ -73,7 +72,7 @@ class ComparisonWorker(QThread):
 class CompareDialog(QDialog):
     """Dialog for selecting and comparing two binary files."""
 
-    def __init__(self, parent=None, initial_file: Optional[str] = None) -> None:
+    def __init__(self, parent=None, initial_file: str | None = None) -> None:
         """Initialize the compare dialog.
 
         Args:

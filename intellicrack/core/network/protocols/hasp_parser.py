@@ -1396,10 +1396,10 @@ class HASPSentinelParser:
             return False
 
         try:
-            from datetime import datetime
+            from datetime import datetime, timezone
 
-            expiry_date = datetime.strptime(feature.expiry, "%d-%b-%Y")
-            return datetime.now() > expiry_date
+            expiry_date = datetime.strptime(feature.expiry, "%d-%b-%Y").replace(tzinfo=timezone.utc)
+            return datetime.now(timezone.utc) > expiry_date
         except Exception:
             return False
 
@@ -1413,10 +1413,10 @@ class HASPSentinelParser:
             }
 
         try:
-            from datetime import datetime
+            from datetime import datetime, timezone
 
-            expiry_date = datetime.strptime(feature.expiry, "%d-%b-%Y")
-            now = datetime.now()
+            expiry_date = datetime.strptime(feature.expiry, "%d-%b-%Y").replace(tzinfo=timezone.utc)
+            now = datetime.now(timezone.utc)
             days_remaining = (expiry_date - now).days
 
             return {
@@ -1883,24 +1883,23 @@ class HASPUSBEmulator:
         if request == HASPUSBProtocol.CMD_READ_MEMORY:
             return self._handle_usb_read_memory(value, index)
 
-        elif request == HASPUSBProtocol.CMD_WRITE_MEMORY:
+        if request == HASPUSBProtocol.CMD_WRITE_MEMORY:
             return self._handle_usb_write_memory(value, index, data)
 
-        elif request == HASPUSBProtocol.CMD_ENCRYPT:
+        if request == HASPUSBProtocol.CMD_ENCRYPT:
             return self._handle_usb_encrypt(data)
 
-        elif request == HASPUSBProtocol.CMD_DECRYPT:
+        if request == HASPUSBProtocol.CMD_DECRYPT:
             return self._handle_usb_decrypt(data)
 
-        elif request == HASPUSBProtocol.CMD_GET_INFO:
+        if request == HASPUSBProtocol.CMD_GET_INFO:
             return self._handle_usb_get_info()
 
-        elif request == HASPUSBProtocol.CMD_GET_RTC:
+        if request == HASPUSBProtocol.CMD_GET_RTC:
             return self._handle_usb_get_rtc()
 
-        else:
-            self.logger.warning(f"Unknown USB request: 0x{request:02X}")
-            return b"\x00" * 64
+        self.logger.warning(f"Unknown USB request: 0x{request:02X}")
+        return b"\x00" * 64
 
     def _handle_usb_read_memory(self, address: int, length: int) -> bytes:
         """Handle USB memory read."""
@@ -1996,7 +1995,7 @@ class HASPUSBEmulator:
 class HASPServerEmulator:
     """Production-ready HASP license server emulator."""
 
-    def __init__(self, bind_address: str = "0.0.0.0", port: int = 1947) -> None:
+    def __init__(self, bind_address: str = "127.0.0.1", port: int = 1947) -> None:
         """Initialize HASP server emulator.
 
         Args:

@@ -65,7 +65,7 @@ class AnalysisResultOrchestrator(QObject):
     #: Signal for handler status updates (type: handler_name: str, status_message: str)
     handler_status = pyqtSignal(str, str)
 
-    def __init__(self, parent: Optional[QObject] = None) -> None:
+    def __init__(self, parent: QObject | None = None) -> None:
         """Initialize the analysis result orchestrator.
 
         Args:
@@ -74,7 +74,7 @@ class AnalysisResultOrchestrator(QObject):
         """
         super().__init__(parent)
         self.handlers = []
-        self._current_result: Optional[UnifiedProtectionResult] = None
+        self._current_result: UnifiedProtectionResult | None = None
 
     def register_handler(self, handler: QObject) -> None:
         """Register a handler to receive analysis results.

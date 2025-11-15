@@ -413,7 +413,7 @@ class AIAssistantTab(BaseTab):
         if "Upload Local Model" in model or "Local:" in model:
             self.upload_local_model()
             return
-        elif "Model Manager" in model:
+        if "Model Manager" in model:
             self.open_model_manager()
             return
 
@@ -472,7 +472,9 @@ class AIAssistantTab(BaseTab):
                         f"Model '{config['model']}' from {config['provider']} has been configured successfully!",
                     )
                 else:
-                    raise Exception("Failed to register model with LLM manager")
+                    error_msg = "Failed to register model with LLM manager"
+                    logger.error(error_msg)
+                    raise Exception(error_msg)
 
             except Exception as e:
                 logger.error(f"Failed to configure model: {e}")

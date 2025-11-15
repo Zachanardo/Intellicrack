@@ -987,12 +987,11 @@ class ReportGenerator:
                     if time_buckets[bucket][comp]:
                         avg_rate = np.mean(time_buckets[bucket][comp])
                         aligned_data[comp].append(avg_rate)
+                    # Use previous value or component average if no data
+                    elif aligned_data[comp]:
+                        aligned_data[comp].append(aligned_data[comp][-1])
                     else:
-                        # Use previous value or component average if no data
-                        if aligned_data[comp]:
-                            aligned_data[comp].append(aligned_data[comp][-1])
-                        else:
-                            aligned_data[comp].append(component_stats[comp]["success_rate"])
+                        aligned_data[comp].append(component_stats[comp]["success_rate"])
 
             # Calculate correlation matrix
             if aligned_data[components[0]]:  # Ensure we have data
@@ -1008,9 +1007,8 @@ class ReportGenerator:
                 np.fill_diagonal(correlation_matrix, 1.0)
 
                 return correlation_matrix
-            else:
-                # No time series data available, return identity matrix
-                return np.eye(n)
+            # No time series data available, return identity matrix
+            return np.eye(n)
 
         except Exception as e:
             logger.warning(f"Failed to calculate correlations: {e}")

@@ -10,10 +10,7 @@ Licensed under GNU General Public License v3.0
 import json
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    from intellicrack.core.config_manager import IntellicrackConfig
+from typing import Any
 
 from .logger import get_logger
 
@@ -529,7 +526,7 @@ class SecretsManager:
             metadata = {
                 "total_keys": len(self._cache),
                 "encrypted_keys": [],
-                "last_sync": os.path.getmtime(self.secrets_file) if self.secrets_file.exists() else None,
+                "last_sync": self.secrets_file.stat().st_mtime if self.secrets_file.exists() else None,
             }
 
             # Add key names (but not values) to metadata

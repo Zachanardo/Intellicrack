@@ -101,7 +101,6 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
 
 try:
     import lief
@@ -149,8 +148,8 @@ class PatchResult:
     """Result of patching operation."""
 
     success: bool
-    patched_functions: List[PatchedFunction]
-    failed_patches: List[FailedPatch]
+    patched_functions: list[PatchedFunction]
+    failed_patches: list[FailedPatch]
     backup_data: bytes
     timestamp: datetime = field(default_factory=datetime.now)
 
@@ -174,8 +173,8 @@ class CertificatePatcher:
             raise FileNotFoundError(f"Binary not found: {binary_path}")
 
         self.binary_path = binary_path_obj
-        self.binary: Optional[lief.Binary] = None
-        self.architecture: Optional[Architecture] = None
+        self.binary: lief.Binary | None = None
+        self.architecture: Architecture | None = None
 
         if LIEF_AVAILABLE:
             try:
@@ -336,7 +335,7 @@ class CertificatePatcher:
         self,
         func: ValidationFunction,
         patch_type: PatchType,
-    ) -> Optional[bytes]:
+    ) -> bytes | None:
         """Generate patch bytes for function.
 
         Args:
@@ -358,15 +357,14 @@ class CertificatePatcher:
         if patch_type == PatchType.ALWAYS_SUCCEED:
             if self.architecture == Architecture.X86:
                 return generate_always_succeed_x86()
-            elif self.architecture == Architecture.X64:
+            if self.architecture == Architecture.X64:
                 return generate_always_succeed_x64()
-            else:
-                return get_patch_for_architecture(
-                    self.architecture,
-                    PatchType.ALWAYS_SUCCEED,
-                )
+            return get_patch_for_architecture(
+                self.architecture,
+                PatchType.ALWAYS_SUCCEED,
+            )
 
-        elif patch_type == PatchType.NOP_SLED:
+        if patch_type == PatchType.NOP_SLED:
             return generate_nop_sled(16, self.architecture)
 
         return None

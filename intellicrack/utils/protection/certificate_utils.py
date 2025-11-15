@@ -20,7 +20,6 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import datetime
 import logging
-from typing import Union
 
 from intellicrack.utils.logger import logger
 
@@ -48,7 +47,7 @@ def generate_self_signed_cert(
     state: str = "State",
     locality: str = "City",
     valid_days: int = 365,
-) -> Union[tuple[bytes, bytes], None]:
+) -> tuple[bytes, bytes] | None:
     """Generate a self-signed certificate for SSL/TLS operations.
 
     Args:

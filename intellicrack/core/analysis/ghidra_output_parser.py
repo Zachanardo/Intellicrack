@@ -26,7 +26,7 @@ except ImportError:
     import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -38,13 +38,13 @@ class FunctionSignature:
     name: str
     address: int
     return_type: str
-    parameters: List[Tuple[str, str]]  # (type, name) pairs
+    parameters: list[tuple[str, str]]  # (type, name) pairs
     calling_convention: str
     is_thunk: bool = False
     is_exported: bool = False
     is_imported: bool = False
     stack_frame_size: int = 0
-    local_variables: List[Tuple[str, str, int]] = field(default_factory=list)  # (type, name, offset)
+    local_variables: list[tuple[str, str, int]] = field(default_factory=list)  # (type, name, offset)
 
 
 @dataclass
@@ -53,7 +53,7 @@ class DataStructure:
 
     name: str
     size: int
-    fields: List[Tuple[str, str, int, int]]  # (type, name, offset, size)
+    fields: list[tuple[str, str, int, int]]  # (type, name, offset, size)
     is_union: bool = False
     alignment: int = 1
     packed: bool = False
@@ -66,9 +66,9 @@ class CrossReference:
     from_address: int
     to_address: int
     ref_type: str  # CALL, JUMP, DATA_READ, DATA_WRITE
-    from_function: Optional[str] = None
-    to_function: Optional[str] = None
-    instruction: Optional[str] = None
+    from_function: str | None = None
+    to_function: str | None = None
+    instruction: str | None = None
 
 
 @dataclass
@@ -78,7 +78,7 @@ class DecompiledFunction:
     name: str
     address: int
     pseudocode: str
-    high_pcode: Optional[str] = None  # High-level P-code representation
+    high_pcode: str | None = None  # High-level P-code representation
     complexity: int = 0
     basic_blocks: int = 0
     edges: int = 0
@@ -89,16 +89,16 @@ class GhidraOutputParser:
 
     def __init__(self) -> None:
         """Initialize the GhidraOutputParser with empty data structures."""
-        self.functions: Dict[int, FunctionSignature] = {}
-        self.structures: Dict[str, DataStructure] = {}
-        self.xrefs: List[CrossReference] = []
-        self.decompiled: Dict[int, DecompiledFunction] = {}
-        self.imports: Dict[str, int] = {}
-        self.exports: Dict[str, int] = {}
-        self.strings: Dict[int, str] = {}
-        self.vtables: Dict[int, List[int]] = {}
+        self.functions: dict[int, FunctionSignature] = {}
+        self.structures: dict[str, DataStructure] = {}
+        self.xrefs: list[CrossReference] = []
+        self.decompiled: dict[int, DecompiledFunction] = {}
+        self.imports: dict[str, int] = {}
+        self.exports: dict[str, int] = {}
+        self.strings: dict[int, str] = {}
+        self.vtables: dict[int, list[int]] = {}
 
-    def parse_xml_output(self, xml_path: Path) -> Dict[str, Any]:
+    def parse_xml_output(self, xml_path: Path) -> dict[str, Any]:
         """Parse Ghidra XML export format."""
         try:
             tree = ET.parse(xml_path)  # noqa: S314
@@ -140,7 +140,7 @@ class GhidraOutputParser:
             logger.error(f"Failed to parse XML output: {e}")
             raise
 
-    def parse_json_output(self, json_path: Path) -> Dict[str, Any]:
+    def parse_json_output(self, json_path: Path) -> dict[str, Any]:
         """Parse Ghidra JSON export format."""
         try:
             with open(json_path, encoding="utf-8") as f:
@@ -205,7 +205,7 @@ class GhidraOutputParser:
             logger.error(f"Failed to parse JSON output: {e}")
             raise
 
-    def parse_decompilation_output(self, decomp_path: Path) -> List[DecompiledFunction]:
+    def parse_decompilation_output(self, decomp_path: Path) -> list[DecompiledFunction]:
         """Parse Ghidra decompiler output."""
         decompiled_functions = []
 
@@ -243,7 +243,7 @@ class GhidraOutputParser:
             logger.error(f"Failed to parse decompilation output: {e}")
             raise
 
-    def parse_call_graph(self, graph_path: Path) -> Dict[str, List[str]]:
+    def parse_call_graph(self, graph_path: Path) -> dict[str, list[str]]:
         """Parse Ghidra call graph export."""
         call_graph = {}
 
@@ -266,7 +266,7 @@ class GhidraOutputParser:
             logger.error(f"Failed to parse call graph: {e}")
             raise
 
-    def parse_data_types(self, types_path: Path) -> Dict[str, DataStructure]:
+    def parse_data_types(self, types_path: Path) -> dict[str, DataStructure]:
         """Parse Ghidra data type definitions."""
         structures = {}
 
@@ -309,7 +309,7 @@ class GhidraOutputParser:
             logger.error(f"Failed to parse data types: {e}")
             raise
 
-    def _parse_program_info(self, root: ET.Element) -> Dict[str, Any]:
+    def _parse_program_info(self, root: ET.Element) -> dict[str, Any]:
         """Parse program information from XML."""
         info = {}
 
@@ -442,26 +442,26 @@ class GhidraOutputParser:
         base_type = type_name.split()[0] if " " in type_name else type_name
         return type_sizes.get(base_type, 4)  # Default to 4 bytes
 
-    def get_function_by_name(self, name: str) -> Optional[FunctionSignature]:
+    def get_function_by_name(self, name: str) -> FunctionSignature | None:
         """Get function by name."""
         for func in self.functions.values():
             if func.name == name:
                 return func
         return None
 
-    def get_function_by_address(self, address: int) -> Optional[FunctionSignature]:
+    def get_function_by_address(self, address: int) -> FunctionSignature | None:
         """Get function by address."""
         return self.functions.get(address)
 
-    def get_xrefs_to(self, address: int) -> List[CrossReference]:
+    def get_xrefs_to(self, address: int) -> list[CrossReference]:
         """Get all cross-references to an address."""
         return [xref for xref in self.xrefs if xref.to_address == address]
 
-    def get_xrefs_from(self, address: int) -> List[CrossReference]:
+    def get_xrefs_from(self, address: int) -> list[CrossReference]:
         """Get all cross-references from an address."""
         return [xref for xref in self.xrefs if xref.from_address == address]
 
-    def get_call_targets(self, function_name: str) -> List[str]:
+    def get_call_targets(self, function_name: str) -> list[str]:
         """Get all functions called by a function."""
         targets = []
         func = self.get_function_by_name(function_name)

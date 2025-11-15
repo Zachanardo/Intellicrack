@@ -47,12 +47,10 @@ class BaseProviderClient(ABC):
     @abstractmethod
     def _configure_auth(self):
         """Configure authentication headers."""
-        pass
 
     @abstractmethod
     def fetch_models(self) -> list[ModelInfo]:
         """Fetch available models from the provider."""
-        pass
 
     def _make_request(self, method: str, url: str, **kwargs) -> dict | None:
         """Make HTTP request with error handling."""
@@ -299,7 +297,6 @@ class OllamaProviderClient(BaseProviderClient):
 
     def _configure_auth(self) -> None:
         """Ollama typically doesn't require authentication."""
-        pass
 
     def fetch_models(self) -> list[ModelInfo]:
         """Fetch available models from Ollama."""
@@ -341,7 +338,6 @@ class LMStudioProviderClient(BaseProviderClient):
 
     def _configure_auth(self) -> None:
         """LM Studio typically doesn't require authentication."""
-        pass
 
     def fetch_models(self) -> list[ModelInfo]:
         """Fetch available models from LM Studio."""
@@ -379,7 +375,6 @@ class LocalProviderClient(BaseProviderClient):
 
     def _configure_auth(self) -> None:
         """Local models don't require authentication."""
-        pass
 
     def fetch_models(self) -> list[ModelInfo]:
         """Fetch available local models."""

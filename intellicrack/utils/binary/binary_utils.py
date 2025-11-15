@@ -127,7 +127,9 @@ def read_binary(file_path: str | Path, chunk_size: int = 8192) -> bytes:
     try:
         file_path = Path(file_path)
         if not file_path.exists():
-            raise FileNotFoundError(f"File not found: {file_path}")
+            error_msg = f"File not found: {file_path}"
+            logger.error(error_msg)
+            raise FileNotFoundError(error_msg)
 
         with open(file_path, "rb") as f:
             chunks = []
@@ -139,6 +141,7 @@ def read_binary(file_path: str | Path, chunk_size: int = 8192) -> bytes:
             return b"".join(chunks)
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error reading binary file %s: %s", file_path, e)
+        logger.error(e)
         raise
 
 

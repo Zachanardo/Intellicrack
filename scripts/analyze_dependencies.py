@@ -10,7 +10,6 @@ import sys
 from collections import defaultdict
 from importlib.metadata import distributions
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
 
 
 class DependencyAnalyzer:
@@ -24,7 +23,7 @@ class DependencyAnalyzer:
         self.package_to_imports = self._build_package_import_map()
         self.stdlib_modules = self._get_stdlib_modules()
 
-    def _discover_local_modules(self) -> Set[str]:
+    def _discover_local_modules(self) -> set[str]:
         """Discover all local module names in the project."""
         local_modules = set()
         exclude_dirs = {".pixi", ".venv", "build", "dist", "__pycache__", ".git", "tools", "target", ".pytest_cache", "htmlcov"}
@@ -59,14 +58,14 @@ class DependencyAnalyzer:
 
         return local_modules
 
-    def _get_installed_packages(self) -> Dict[str, str]:
+    def _get_installed_packages(self) -> dict[str, str]:
         """Get all installed packages and their versions."""
         packages = {}
         for dist in distributions():
             packages[dist.metadata["Name"].lower()] = dist.version
         return packages
 
-    def _build_package_import_map(self) -> Dict[str, str]:
+    def _build_package_import_map(self) -> dict[str, str]:
         """Build mapping from import names to package names."""
         import_map = {}
 
@@ -88,7 +87,7 @@ class DependencyAnalyzer:
 
         return import_map
 
-    def _get_stdlib_modules(self) -> Set[str]:
+    def _get_stdlib_modules(self) -> set[str]:
         """Get standard library module names."""
         stdlib = {
             # Common stdlib modules
@@ -300,7 +299,7 @@ class DependencyAnalyzer:
         }
         return stdlib
 
-    def extract_imports(self, file_path: Path) -> Set[str]:
+    def extract_imports(self, file_path: Path) -> set[str]:
         """Extract all import statements from a Python file."""
         imports = set()
 
@@ -324,7 +323,7 @@ class DependencyAnalyzer:
 
         return imports
 
-    def classify_import(self, import_name: str) -> Tuple[str, str]:
+    def classify_import(self, import_name: str) -> tuple[str, str]:
         """Classify an import as 'local', 'stdlib', 'installed', or 'missing'.
 
         Returns (classification, package_name).
@@ -359,7 +358,7 @@ class DependencyAnalyzer:
         # Not found
         return ("missing", import_name)
 
-    def analyze_project(self) -> Dict[str, List[Tuple[str, Path]]]:
+    def analyze_project(self) -> dict[str, list[tuple[str, Path]]]:
         """Analyze all Python files in the project."""
         results = defaultdict(list)
         all_imports = defaultdict(set)
@@ -393,7 +392,7 @@ class DependencyAnalyzer:
 
         return dict(results)
 
-    def _print_summary(self, all_imports: Dict[str, Set[str]], results: Dict[str, List]) -> None:
+    def _print_summary(self, all_imports: dict[str, set[str]], results: dict[str, list]) -> None:
         """Print analysis summary with colors."""
         print("\033[1;94m" + "=" * 80 + "\033[0m")
         print("\033[1;94m" + "INTELLICRACK DEPENDENCY ANALYSIS REPORT".center(80) + "\033[0m")

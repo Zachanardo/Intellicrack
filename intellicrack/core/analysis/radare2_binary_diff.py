@@ -22,7 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import json
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 try:
     import r2pipe
@@ -38,17 +38,17 @@ class FunctionDiff:
 
     name: str
     status: str  # 'added', 'removed', 'modified', 'unchanged'
-    primary_address: Optional[int] = None
-    secondary_address: Optional[int] = None
-    primary_size: Optional[int] = None
-    secondary_size: Optional[int] = None
-    size_diff: Optional[int] = None
-    basic_block_diff: Optional[Dict[str, Any]] = None
-    instruction_diff: Optional[Dict[str, Any]] = None
+    primary_address: int | None = None
+    secondary_address: int | None = None
+    primary_size: int | None = None
+    secondary_size: int | None = None
+    size_diff: int | None = None
+    basic_block_diff: dict[str, Any] | None = None
+    instruction_diff: dict[str, Any] | None = None
     similarity_score: float = 0.0
     opcodes_changed: int = 0
     constants_changed: int = 0
-    calls_changed: List[str] = field(default_factory=list)
+    calls_changed: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -57,12 +57,12 @@ class BasicBlockDiff:
 
     address: int
     status: str  # 'added', 'removed', 'modified', 'unchanged'
-    primary_size: Optional[int] = None
-    secondary_size: Optional[int] = None
+    primary_size: int | None = None
+    secondary_size: int | None = None
     instruction_count_diff: int = 0
-    edges_added: List[int] = field(default_factory=list)
-    edges_removed: List[int] = field(default_factory=list)
-    jump_targets_changed: List[int] = field(default_factory=list)
+    edges_added: list[int] = field(default_factory=list)
+    edges_removed: list[int] = field(default_factory=list)
+    jump_targets_changed: list[int] = field(default_factory=list)
 
 
 @dataclass
@@ -71,16 +71,16 @@ class StringDiff:
 
     value: str
     status: str  # 'added', 'removed', 'modified'
-    primary_address: Optional[int] = None
-    secondary_address: Optional[int] = None
-    xrefs_primary: List[int] = field(default_factory=list)
-    xrefs_secondary: List[int] = field(default_factory=list)
+    primary_address: int | None = None
+    secondary_address: int | None = None
+    xrefs_primary: list[int] = field(default_factory=list)
+    xrefs_secondary: list[int] = field(default_factory=list)
 
 
 class R2BinaryDiff:
     """Production-ready binary diff engine using radare2."""
 
-    def __init__(self, primary_path: str, secondary_path: Optional[str] = None) -> None:
+    def __init__(self, primary_path: str, secondary_path: str | None = None) -> None:
         """Initialize binary diff engine.
 
         Args:
@@ -146,7 +146,7 @@ class R2BinaryDiff:
                 self.logger.error(f"Failed to set secondary binary: {e}")
                 self.r2_secondary = None
 
-    def get_function_diffs(self) -> List[FunctionDiff]:
+    def get_function_diffs(self) -> list[FunctionDiff]:
         """Compare functions between binaries.
 
         Returns:
@@ -233,7 +233,7 @@ class R2BinaryDiff:
 
         return diffs
 
-    def get_basic_block_diffs(self, function_name: str) -> List[BasicBlockDiff]:
+    def get_basic_block_diffs(self, function_name: str) -> list[BasicBlockDiff]:
         """Compare basic blocks within a function.
 
         Args:
@@ -310,7 +310,7 @@ class R2BinaryDiff:
 
         return diffs
 
-    def get_string_diffs(self) -> List[StringDiff]:
+    def get_string_diffs(self) -> list[StringDiff]:
         """Compare strings between binaries.
 
         Returns:
@@ -384,7 +384,7 @@ class R2BinaryDiff:
 
         return diffs
 
-    def get_import_diffs(self) -> List[Dict[str, Any]]:
+    def get_import_diffs(self) -> list[dict[str, Any]]:
         """Compare imports between binaries.
 
         Returns:
@@ -421,7 +421,7 @@ class R2BinaryDiff:
 
         return diffs
 
-    def get_comprehensive_diff(self) -> Dict[str, Any]:
+    def get_comprehensive_diff(self) -> dict[str, Any]:
         """Get comprehensive diff analysis between binaries.
 
         Returns:
@@ -442,7 +442,7 @@ class R2BinaryDiff:
             },
         }
 
-    def _calculate_function_similarity(self, func_name: str, primary_func: Dict, secondary_func: Dict) -> float:
+    def _calculate_function_similarity(self, func_name: str, primary_func: dict, secondary_func: dict) -> float:
         """Calculate similarity score between two functions.
 
         Args:
@@ -485,7 +485,7 @@ class R2BinaryDiff:
             self.logger.error(f"Failed to calculate similarity: {e}")
             return 0.0
 
-    def _levenshtein_distance(self, s1: List[str], s2: List[str]) -> int:
+    def _levenshtein_distance(self, s1: list[str], s2: list[str]) -> int:
         """Calculate Levenshtein distance between two sequences."""
         if len(s1) < len(s2):
             return self._levenshtein_distance(s2, s1)
@@ -505,7 +505,7 @@ class R2BinaryDiff:
 
         return previous_row[-1]
 
-    def _get_function_bb_diff(self, func_name: str) -> Dict[str, Any]:
+    def _get_function_bb_diff(self, func_name: str) -> dict[str, Any]:
         """Get basic block diff summary for a function."""
         bb_diffs = self.get_basic_block_diffs(func_name)
         return {
@@ -544,7 +544,7 @@ class R2BinaryDiff:
             self.logger.error(f"Failed to count opcode changes: {e}")
             return 0
 
-    def _get_call_changes(self, func_name: str) -> List[str]:
+    def _get_call_changes(self, func_name: str) -> list[str]:
         """Get list of changed function calls."""
         try:
             # Get calls from both versions
@@ -576,7 +576,7 @@ class R2BinaryDiff:
             self.logger.error(f"Failed to get call changes: {e}")
             return []
 
-    def _match_basic_blocks(self, primary_blocks: List[Dict], secondary_blocks: List[Dict]) -> Dict[int, int]:
+    def _match_basic_blocks(self, primary_blocks: list[dict], secondary_blocks: list[dict]) -> dict[int, int]:
         """Match basic blocks between two versions of a function."""
         matches = {}
 
@@ -587,7 +587,7 @@ class R2BinaryDiff:
 
         return matches
 
-    def _blocks_differ(self, bb1: Dict, bb2: Dict) -> bool:
+    def _blocks_differ(self, bb1: dict, bb2: dict) -> bool:
         """Check if two basic blocks differ significantly."""
         # Compare sizes
         if bb1.get("size", 0) != bb2.get("size", 0):
@@ -602,7 +602,7 @@ class R2BinaryDiff:
             return True
         return bb1.get("fail", 0) != bb2.get("fail", 0)
 
-    def _get_string_xrefs(self, r2_session, address: int) -> List[int]:
+    def _get_string_xrefs(self, r2_session, address: int) -> list[int]:
         """Get cross-references to a string."""
         try:
             r2_session.cmd(f"s {address}")

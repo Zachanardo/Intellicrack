@@ -46,8 +46,10 @@ def get_service_url(service_name: str, fallback: str = None) -> str:
         config = get_config()
     except ImportError as e:
         logger.warning(f"Could not import config manager: {e}")
+        error_msg = f"Cannot access configuration for service '{service_name}'"
+        logger.error(error_msg)
         raise ConfigurationError(
-            f"Cannot access configuration for service '{service_name}'",
+            error_msg,
             service_name=service_name,
         ) from e
 
@@ -57,17 +59,23 @@ def get_service_url(service_name: str, fallback: str = None) -> str:
             url = fallback
             logger.debug(f"Using fallback URL for service '{service_name}': {fallback}")
         else:
+            error_msg = f"Service '{service_name}' URL not configured. Please set 'service_urls.{service_name}' in configuration."
+            logger.error(error_msg)
             raise ConfigurationError(
-                f"Service '{service_name}' URL not configured. Please set 'service_urls.{service_name}' in configuration.",
+                error_msg,
                 service_name=service_name,
                 config_key=f"service_urls.{service_name}",
             )
 
     # Validate URL format
     if not url.startswith(("http://", "https://", "ws://", "wss://", "tcp://", "udp://")):
-        raise ConfigurationError(
+        error_msg = (
             f"Invalid URL format for service '{service_name}': {url}. "
-            f"URL must start with a valid protocol (http://, https://, ws://, wss://, tcp://, udp://)",
+            f"URL must start with a valid protocol (http://, https://, ws://, wss://, tcp://, udp://)"
+        )
+        logger.error(error_msg)
+        raise ConfigurationError(
+            error_msg,
             service_name=service_name,
             config_key=f"service_urls.{service_name}",
         )

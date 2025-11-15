@@ -17,7 +17,7 @@ import winreg
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 try:
     import defusedxml.ElementTree as ET  # noqa: N817
@@ -69,7 +69,7 @@ class HardwareProfile:
     cpu_id: str
     motherboard_serial: str
     disk_serial: str
-    mac_addresses: List[str]
+    mac_addresses: list[str]
     bios_serial: str
     system_uuid: str
     volume_serial: str
@@ -86,7 +86,7 @@ class ActivationRequest:
     installation_id: str
     request_code: str
     timestamp: datetime
-    additional_data: Dict[str, Any]
+    additional_data: dict[str, Any]
 
 
 @dataclass
@@ -95,16 +95,16 @@ class ActivationResponse:
 
     activation_code: str
     license_key: str
-    expiry_date: Optional[datetime]
-    features: List[str]
+    expiry_date: datetime | None
+    features: list[str]
     hardware_locked: bool
-    signature: Optional[bytes]
+    signature: bytes | None
     # Additional fields for exploitation version compatibility
-    response_id: Optional[str] = None
-    request_id: Optional[str] = None
-    expiration: Optional[int] = None
-    restrictions: Optional[Dict[str, Any]] = None
-    format: Optional[RequestFormat] = None
+    response_id: str | None = None
+    request_id: str | None = None
+    expiration: int | None = None
+    restrictions: dict[str, Any] | None = None
+    format: RequestFormat | None = None
 
 
 @dataclass
@@ -134,7 +134,7 @@ class ExtendedActivationRequest:
     machine_profile: MachineProfile
     serial_number: str
     timestamp: int
-    signature: Optional[bytes] = None
+    signature: bytes | None = None
     encrypted: bool = False
     format: RequestFormat = RequestFormat.XML
 
@@ -150,7 +150,7 @@ class OfflineActivationEmulator:
         self.activation_algorithms = self._initialize_algorithms()
         self.known_schemes = self._load_known_schemes()
 
-    def _initialize_algorithms(self) -> Dict[str, Any]:
+    def _initialize_algorithms(self) -> dict[str, Any]:
         """Initialize known activation algorithms."""
         algorithms = {
             "microsoft": self._microsoft_activation,
@@ -166,7 +166,7 @@ class OfflineActivationEmulator:
         logger.debug(f"Initialized {len(algorithms)} activation algorithms.")
         return algorithms
 
-    def _load_known_schemes(self) -> Dict[str, Dict]:
+    def _load_known_schemes(self) -> dict[str, dict]:
         """Load database of known activation schemes."""
         schemes = {
             "microsoft_office": {
@@ -286,7 +286,7 @@ class OfflineActivationEmulator:
         serial_part = "".join(random.choices(string.ascii_uppercase + string.digits, k=serial_length))  # noqa: S311
         return f"SER{serial_part}"
 
-    def _get_mac_addresses(self) -> List[str]:
+    def _get_mac_addresses(self) -> list[str]:
         """Get all MAC addresses."""
         macs = []
         system = platform.system()
@@ -300,14 +300,14 @@ class OfflineActivationEmulator:
 
         return macs[:4]  # Return up to 4 MACs
 
-    def _get_windows_macs(self) -> List[str]:
+    def _get_windows_macs(self) -> list[str]:
         macs = []
         for nic in self.wmi_client.Win32_NetworkAdapterConfiguration(IPEnabled=True):
             if nic.MACAddress:
                 macs.append(nic.MACAddress.replace(":", ""))
         return macs
 
-    def _get_non_windows_macs(self) -> List[str]:
+    def _get_non_windows_macs(self) -> list[str]:
         macs = []
         import netifaces
 
@@ -319,7 +319,7 @@ class OfflineActivationEmulator:
                         macs.append(addr["addr"].replace(":", "").upper())
         return macs
 
-    def _get_fallback_mac(self) -> List[str]:
+    def _get_fallback_mac(self) -> list[str]:
         # Fallback to uuid-based MAC
         node = uuid.getnode()
         mac = ":".join((f"{node:012X}")[i : i + 2] for i in range(0, 12, 2))
@@ -386,7 +386,7 @@ class OfflineActivationEmulator:
 
         return str(uuid.uuid4()).upper()
 
-    def generate_hardware_id(self, profile: Optional[HardwareProfile] = None, algorithm: str = "standard") -> str:
+    def generate_hardware_id(self, profile: HardwareProfile | None = None, algorithm: str = "standard") -> str:
         """Generate hardware ID from profile."""
         logger.debug(f"Generating hardware ID using algorithm: {algorithm}")
         if not profile:
@@ -418,7 +418,7 @@ class OfflineActivationEmulator:
             logger.debug(f"Generated standard hardware ID: {formatted}")
             return formatted
 
-        elif algorithm == "microsoft":
+        if algorithm == "microsoft":
             logger.debug("Using Microsoft-style hardware ID generation.")
             # Microsoft-style hardware hash
             components = [
@@ -440,7 +440,7 @@ class OfflineActivationEmulator:
             logger.debug(f"Generated Microsoft-style hardware ID: {formatted}")
             return formatted
 
-        elif algorithm == "adobe":
+        if algorithm == "adobe":
             logger.debug("Using Adobe-style hardware ID generation.")
             # Adobe-style LEID (License Encryption ID) - using SHA256 instead of SHA1 for security
             h = hashlib.sha256()
@@ -453,12 +453,11 @@ class OfflineActivationEmulator:
             logger.debug(f"Generated Adobe-style hardware ID: {formatted}")
             return formatted
 
-        else:
-            logger.debug("Using custom hardware ID generation.")
-            # Custom algorithm
-            formatted = self._custom_hardware_id(profile)
-            logger.debug(f"Generated custom hardware ID: {formatted}")
-            return formatted
+        logger.debug("Using custom hardware ID generation.")
+        # Custom algorithm
+        formatted = self._custom_hardware_id(profile)
+        logger.debug(f"Generated custom hardware ID: {formatted}")
+        return formatted
 
     def _custom_hardware_id(self, profile: HardwareProfile) -> str:
         """Generate custom hardware ID."""
@@ -521,11 +520,10 @@ class OfflineActivationEmulator:
             response = self.activation_algorithms[algorithm](request, product_key)
             logger.debug(f"Generated activation response using {algorithm} algorithm.")
             return response
-        else:
-            # Default activation
-            response = self._default_activation(request, product_key)
-            logger.debug("Generated activation response using default algorithm.")
-            return response
+        # Default activation
+        response = self._default_activation(request, product_key)
+        logger.debug("Generated activation response using default algorithm.")
+        return response
 
     def _detect_activation_algorithm(self, product_id: str) -> str:
         """Detect which activation algorithm to use."""
@@ -898,7 +896,7 @@ class OfflineActivationEmulator:
                 key_parts.append(part)
             return "-".join(key_parts)
 
-        elif product_type == "adobe":
+        if product_type == "adobe":
             # Adobe format: 1234-5678-9012-3456-7890-1234
             key_parts = []
             for _ in range(6):
@@ -906,19 +904,18 @@ class OfflineActivationEmulator:
                 key_parts.append(part)
             return "-".join(key_parts)
 
-        elif product_type == "autodesk":
+        if product_type == "autodesk":
             # Autodesk format: 123-45678901
             part1 = str(random.randint(100, 999))  # noqa: S311
             part2 = str(random.randint(10000000, 99999999))  # noqa: S311
             return f"{part1}-{part2}"
 
-        else:
-            # Generic format
-            chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"  # pragma: allowlist secret
-            key = "".join(random.choices(chars, k=25))  # noqa: S311
-            formatted_key = "-".join([key[i : i + 5] for i in range(0, 25, 5)])
-            logger.debug(f"Generated generic product key: {formatted_key}")
-            return formatted_key
+        # Generic format
+        chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"  # pragma: allowlist secret
+        key = "".join(random.choices(chars, k=25))  # noqa: S311
+        formatted_key = "-".join([key[i : i + 5] for i in range(0, 25, 5)])
+        logger.debug(f"Generated generic product key: {formatted_key}")
+        return formatted_key
 
     def _sign_license_data(self, data: bytes) -> bytes:
         """Sign license data with private key."""
@@ -937,12 +934,11 @@ class OfflineActivationEmulator:
         logger.debug(f"Creating license file in format: {format}")
         if format == "xml":
             return self._create_xml_license(response)
-        elif format == "json":
+        if format == "json":
             return self._create_json_license(response)
-        elif format == "binary":
+        if format == "binary":
             return self._create_binary_license(response)
-        else:
-            return self._create_text_license(response)
+        return self._create_text_license(response)
 
     def _create_xml_license(self, response: ActivationResponse) -> bytes:
         """Create XML license file."""
@@ -1080,7 +1076,7 @@ class OfflineActivationEmulator:
 
         return "-".join(confirmation_groups[:9])
 
-    def bypass_trial_restrictions(self, product_id: str) -> Dict[str, Any]:
+    def bypass_trial_restrictions(self, product_id: str) -> dict[str, Any]:
         """Generate data to bypass trial restrictions."""
         logger.debug(f"Generating trial restriction bypass data for product: {product_id}")
         bypass_data = {
@@ -1093,7 +1089,7 @@ class OfflineActivationEmulator:
         logger.debug(f"Generated trial bypass data: {bypass_data}")
         return bypass_data
 
-    def _generate_trial_reset_data(self, product_id: str) -> Dict[str, Any]:
+    def _generate_trial_reset_data(self, product_id: str) -> dict[str, Any]:
         """Generate trial reset data."""
         return {
             "delete_files": [
@@ -1108,7 +1104,7 @@ class OfflineActivationEmulator:
             "machine_id_spoof": hashlib.sha256(os.urandom(16)).hexdigest(),
         }
 
-    def _generate_registry_keys(self, product_id: str) -> Dict[str, str]:
+    def _generate_registry_keys(self, product_id: str) -> dict[str, str]:
         """Generate registry keys for activation."""
         return {
             f"HKEY_LOCAL_MACHINE\\SOFTWARE\\{product_id}\\License": "Activated",
@@ -1118,7 +1114,7 @@ class OfflineActivationEmulator:
             f"HKEY_LOCAL_MACHINE\\SOFTWARE\\{product_id}\\Features": "Premium;Enterprise;Unlimited",
         }
 
-    def _generate_license_files(self, product_id: str) -> Dict[str, bytes]:
+    def _generate_license_files(self, product_id: str) -> dict[str, bytes]:
         """Generate license files for product."""
         # Generate proper activation response
         hardware_id = self.generate_hardware_id()
@@ -1146,17 +1142,19 @@ class OfflineActivationEmulator:
             "license.txt": self._create_text_license(response),
         }
 
-    def _generate_date_bypass_data(self) -> Dict[str, Any]:
+    def _generate_date_bypass_data(self) -> dict[str, Any]:
         """Generate date manipulation bypass data."""
+        from datetime import timezone
+        utc_tz = timezone.utc
         return {
-            "system_time_freeze": datetime(2020, 1, 1),
-            "trial_start_date": datetime(2020, 1, 1),
-            "last_check_date": datetime(2020, 1, 1),
+            "system_time_freeze": datetime(2020, 1, 1, tzinfo=utc_tz),
+            "trial_start_date": datetime(2020, 1, 1, tzinfo=utc_tz),
+            "last_check_date": datetime(2020, 1, 1, tzinfo=utc_tz),
             "time_zone": "UTC",
             "ntp_server_override": "127.0.0.1",
         }
 
-    def _generate_network_bypass_data(self) -> Dict[str, Any]:
+    def _generate_network_bypass_data(self) -> dict[str, Any]:
         """Generate network validation bypass data."""
         return {
             "hosts_file_entries": [
@@ -1238,7 +1236,7 @@ class OfflineActivationEmulator:
         suffix = ":".join([f"{random.randint(0, 255):02X}" for _ in range(3)])  # noqa: S311
         return f"{prefix}:{suffix}"
 
-    def _load_product_database(self) -> Dict[str, Dict[str, Any]]:
+    def _load_product_database(self) -> dict[str, dict[str, Any]]:
         """Load known product activation patterns."""
         return {
             "adobe_cc": {
@@ -1295,12 +1293,11 @@ class OfflineActivationEmulator:
         # Format based on type
         if format == RequestFormat.XML:
             return self._format_xml_request(request)
-        elif format == RequestFormat.JSON:
+        if format == RequestFormat.JSON:
             return self._format_json_request(request)
-        elif format == RequestFormat.BASE64:
+        if format == RequestFormat.BASE64:
             return self._format_base64_request(request)
-        else:
-            return self._format_binary_request(request)
+        return self._format_binary_request(request)
 
     def _format_xml_request(self, request: ExtendedActivationRequest) -> str:
         """Format activation request as XML."""

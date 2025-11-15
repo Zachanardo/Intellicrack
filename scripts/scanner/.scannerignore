@@ -1,5 +1,77 @@
 # .scannerignore - Paths to exclude from Intellicrack production scanner
 # Lines starting with # are comments, one path per line
+#
+# =============================================================================
+# PATTERN RECOGNITION - What's Now Auto-Detected
+# =============================================================================
+#
+# The scanner automatically recognizes these patterns (NO MANUAL IGNORES NEEDED):
+#
+# 1. Abstract Methods (completely excluded):
+#    - Functions with @abstractmethod or @abc.abstractmethod decorators
+#    - Methods in ABC subclasses that raise NotImplementedError
+#    - Pass-only methods in abstract base classes
+#
+# 2. CLI Framework Commands (completely excluded):
+#    - Click: @click.group(), @click.command(), @cli.command()
+#    - Typer: @app.command()
+#    - Argparse: Command group patterns
+#
+# 3. Orchestration Patterns (50% confidence reduction):
+#    - Functions with ≥3 function calls coordinating workflow
+#    - Functions with progress reporting and result aggregation
+#    - High-level controllers that delegate to other functions
+#
+# 4. Delegation Patterns (50% confidence reduction):
+#    - Wrapper functions (≤3 lines) that add error handling, logging, or validation
+#    - Functions that delegate to others with added value
+#
+# 5. Validation Functions (deduction points applied):
+#    - Functions using isinstance(), hasattr(), type() checks
+#    - Functions checking Path.exists(), is_file(), os.access()
+#
+# =============================================================================
+# When Manual Ignores Are Still Needed
+# =============================================================================
+#
+# Use .scannerignore for entire directories/files, or scanner-ignore comments
+# for individual functions when:
+#
+# 1. LLM Delegation Patterns (not yet auto-detected):
+#    - Functions that call llm.chat(), llm.generate(), etc.
+#    - Use: # scanner-ignore: LLM delegation
+#
+# 2. External Tool Integration:
+#    - Functions that delegate to subprocess/external tools
+#    - Use: # scanner-ignore: Delegates to radare2
+#
+# 3. Test Files/Helpers:
+#    - Test fixtures, mock data generators
+#    - Add test directories below or use scanner-ignore comments
+#
+# 4. Generated Code:
+#    - Auto-generated bindings, protobuf files, etc.
+#    - Add directories below
+#
+# 5. Third-Party Code:
+#    - Vendored dependencies, external libraries
+#    - Add directories below
+#
+# =============================================================================
+# Scanner-Ignore Comment Syntax
+# =============================================================================
+#
+# For individual functions, use this syntax on the line BEFORE the function:
+#
+#     # scanner-ignore: Reason for ignoring
+#     def my_function():
+#         return llm.chat("prompt")
+#
+# NOTE: Only use scanner-ignore for legitimate patterns, NOT to hide real stubs!
+#
+# =============================================================================
+# Path Exclusions Below
+# =============================================================================
 
 # IDE configs
 D:\Intellicrack\.idea
@@ -26,7 +98,6 @@ D:\Intellicrack\tools
 
 # Test and script directories
 D:\Intellicrack\scripts
-D:\Intellicrack\tests
 
 # Frida and Ghidra scripts (instrumentation/analysis scripts with legitimate console.log/debug output)
 D:\Intellicrack\intellicrack\scripts\frida

@@ -23,7 +23,7 @@ import json
 import logging
 import os
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 try:
     import r2pipe
@@ -58,11 +58,11 @@ class GraphNode:
     id: str
     label: str
     type: str  # 'function', 'basic_block', 'import', 'string'
-    address: Optional[int] = None
-    size: Optional[int] = None
-    attributes: Dict[str, Any] = field(default_factory=dict)
-    x: Optional[float] = None
-    y: Optional[float] = None
+    address: int | None = None
+    size: int | None = None
+    attributes: dict[str, Any] = field(default_factory=dict)
+    x: float | None = None
+    y: float | None = None
     color: str = "#4A90E2"
 
 
@@ -73,7 +73,7 @@ class GraphEdge:
     source: str
     target: str
     type: str  # 'call', 'jump', 'conditional', 'reference'
-    label: Optional[str] = None
+    label: str | None = None
     weight: float = 1.0
     color: str = "#666666"
     style: str = "solid"  # 'solid', 'dashed', 'dotted'
@@ -83,9 +83,9 @@ class GraphEdge:
 class GraphData:
     """Container for graph data."""
 
-    nodes: List[GraphNode] = field(default_factory=list)
-    edges: List[GraphEdge] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    nodes: list[GraphNode] = field(default_factory=list)
+    edges: list[GraphEdge] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class R2GraphGenerator:
@@ -367,7 +367,7 @@ class R2GraphGenerator:
             imports = json.loads(self.r2.cmd("iij") or "[]")
 
             # Group imports by library
-            libs: Dict[str, List[Dict]] = {}
+            libs: dict[str, list[dict]] = {}
             for imp in imports:
                 lib = imp.get("libname", "unknown")
                 if lib not in libs:
@@ -453,7 +453,7 @@ class R2GraphGenerator:
         except Exception as e:
             self.logger.error(f"Failed to export to DOT: {e}")
 
-    def visualize_graph(self, graph_data: GraphData, output_path: Optional[str] = None, layout: str = "spring") -> bool:
+    def visualize_graph(self, graph_data: GraphData, output_path: str | None = None, layout: str = "spring") -> bool:
         """Visualize graph using matplotlib/networkx.
 
         Args:

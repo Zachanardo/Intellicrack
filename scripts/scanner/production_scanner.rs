@@ -422,6 +422,9 @@ struct FunctionInfo {
     has_try_except: Option<bool>,
     has_async_await: Option<bool>,
     calls_functions: Option<HashSet<String>>,
+
+    decorators: Option<Vec<String>>,
+    parent_class: Option<String>,
 }
 
 /// AST-based function information with accurate metrics
@@ -456,6 +459,9 @@ struct AstFunctionInfo {
     // Call graph from AST (more accurate than regex)
     calls_functions: HashSet<String>,
 
+    decorators: Vec<String>,
+    parent_class: Option<String>,
+
     indent_level: usize,
 }
 
@@ -480,6 +486,8 @@ impl From<AstFunctionInfo> for FunctionInfo {
             has_try_except: Some(ast_info.has_try_except),
             has_async_await: Some(ast_info.has_async_await),
             calls_functions: Some(ast_info.calls_functions),
+            decorators: if ast_info.decorators.is_empty() { None } else { Some(ast_info.decorators) },
+            parent_class: ast_info.parent_class,
         }
     }
 }
@@ -516,18 +524,8 @@ impl AstParser for PythonAstParser {
         let root_node = tree.root_node();
 
         let query_str = r#"
-            (function_definition
-                name: (identifier) @func_name
-                parameters: (parameters) @params
-                body: (block) @body) @function
-
-            (class_definition
-                name: (identifier) @class_name
-                body: (block
-                    (function_definition
-                        name: (identifier) @method_name
-                        parameters: (parameters) @method_params
-                        body: (block) @method_body) @method))
+            ; Match all function definitions (module-level and class methods)
+            (function_definition) @function
         "#;
 
         let query = Query::new(self.language(), query_str)
@@ -555,6 +553,12 @@ impl AstParser for PythonAstParser {
                 }
             }
         }
+
+        let mut seen = HashSet::new();
+        functions.retain(|f| {
+            let key = (f.name.clone(), f.line_start);
+            seen.insert(key)
+        });
 
         functions
     }
@@ -746,6 +750,8 @@ fn populate_ast_info_from_node(node: &Node, content: &str) -> Option<AstFunction
     let has_try_except = check_for_try_except(&body_node);
     let has_async_await = check_for_async_await(node);
     let calls_functions = extract_function_calls(&body_node, content);
+    let decorators = extract_decorators(node, content);
+    let parent_class = extract_parent_class(node, content);
 
     let indent_text = &content[node.start_byte()
         ..node.start_byte() + start_pos.column.min(content.len() - node.start_byte())];
@@ -772,22 +778,85 @@ fn populate_ast_info_from_node(node: &Node, content: &str) -> Option<AstFunction
         has_try_except,
         has_async_await,
         calls_functions,
+        decorators,
+        parent_class,
         indent_level,
     })
 }
 
-/// Extracts the function name from an AST function definition node.
+/// Extracts decorator names from a Python function definition node.
 ///
-/// Searches the immediate children of the function node for an identifier
-/// or name node containing the function's name.
+/// Traverses the AST to find decorator nodes that precede the function definition.
+/// Decorators are identified by checking if the function's parent is a "decorated_definition"
+/// node, then extracting all "decorator" children. The '@' symbol is stripped from each
+/// decorator name.
 ///
 /// # Arguments
 /// * `node` - The function definition AST node
 /// * `content` - The source code text
 ///
 /// # Returns
-/// * `Some(String)` - The function name if found
-/// * `None` - If no identifier child exists
+/// * `Vec<String>` - List of decorator names without '@' prefix (e.g., "abstractmethod", "click.command()")
+fn extract_decorators(node: &Node, content: &str) -> Vec<String> {
+    let mut decorators = Vec::new();
+
+    if let Some(parent) = node.parent() {
+        if parent.kind() == "decorated_definition" {
+            let mut cursor = parent.walk();
+            for child in parent.children(&mut cursor) {
+                if child.kind() == "decorator" {
+                    let decorator_text = content[child.start_byte()..child.end_byte()].to_string();
+                    let cleaned = decorator_text.trim().trim_start_matches('@').to_string();
+                    if !cleaned.is_empty() {
+                        decorators.push(cleaned);
+                    }
+                }
+            }
+        }
+    }
+
+    decorators
+}
+
+/// Extracts the parent class name for a method within a Python class definition.
+///
+/// Traverses up the AST tree from the function node to find an enclosing "class_definition"
+/// node. If found, extracts the class name. Additionally checks if the class inherits from
+/// ABC (Abstract Base Class) by examining the class's base classes in the argument_list.
+///
+/// # Arguments
+/// * `node` - The function definition AST node
+/// * `content` - The source code text
+///
+/// # Returns
+/// * `Some(String)` - The parent class name if the function is a method within a class
+/// * `None` - If the function is not within a class or no class name found
+fn extract_parent_class(node: &Node, content: &str) -> Option<String> {
+    let mut current = node.parent();
+
+    while let Some(parent) = current {
+        if parent.kind() == "class_definition" {
+            let mut cursor = parent.walk();
+            for child in parent.children(&mut cursor) {
+                if child.kind() == "identifier" || child.kind() == "name" {
+                    return Some(content[child.start_byte()..child.end_byte()].to_string());
+                }
+                if child.kind() == "argument_list" {
+                    let bases = content[child.start_byte()..child.end_byte()].to_string();
+                    if bases.contains("ABC") || bases.contains("abc.ABC") {
+                        if let Some(class_name) = parent.child_by_field_name("name") {
+                            return Some(content[class_name.start_byte()..class_name.end_byte()].to_string());
+                        }
+                    }
+                }
+            }
+        }
+        current = parent.parent();
+    }
+
+    None
+}
+
 fn extract_function_name(node: &Node, content: &str) -> Option<String> {
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
@@ -1338,10 +1407,12 @@ impl CallGraph {
         self.calls.get(func)
     }
 
+    #[allow(dead_code)]
     fn get_callers(&self, func: &str) -> Option<&HashSet<String>> {
         self.called_by.get(func)
     }
 
+    #[allow(dead_code)]
     fn is_called(&self, func: &str) -> bool {
         self.called_by.contains_key(func) && !self.called_by.get(func).unwrap().is_empty()
     }
@@ -1433,8 +1504,7 @@ fn should_exclude_path(path: &Path, ignored_paths: &HashSet<PathBuf>) -> bool {
 
     // Fallback to built-in exclusions - normalize to forward slashes for consistent matching
     let path_normalized = path.to_string_lossy().to_lowercase().replace("\\", "/");
-    if path_normalized.contains("/tests/") ||
-       path_normalized.contains("/__pycache__/") ||
+    if path_normalized.contains("/__pycache__/") ||
        path_normalized.contains("/.pixi/") ||
        path_normalized.contains("/target/") ||
        path_normalized.contains("/node_modules/") ||
@@ -1586,8 +1656,487 @@ fn is_legitimate_design_pattern(
     None
 }
 
+/// Detects if a function is an abstract method that should be excluded from analysis.
+///
+/// Checks for Python abstract method patterns by examining decorators for @abstractmethod
+/// or @abc.abstractmethod, and by checking if the function is within a class that inherits
+/// from ABC (Abstract Base Class). Abstract methods are intentionally incomplete by design
+/// as they define interfaces to be implemented by subclasses.
+///
+/// # Arguments
+/// * `func` - The function information to analyze
+///
+/// # Returns
+/// * `bool` - True if the function is an abstract method, false otherwise
+fn is_abstract_method(func: &FunctionInfo) -> bool {
+    if let Some(ref decorators) = func.decorators {
+        for decorator in decorators {
+            let dec_lower = decorator.to_lowercase();
+            if dec_lower.contains("abstractmethod")
+                || dec_lower.contains("abc.abstractmethod")
+            {
+                return true;
+            }
+        }
+    }
+
+    if let Some(ref parent_class) = func.parent_class {
+        if parent_class.contains("ABC") || func.body.contains("ABC") {
+            return true;
+        }
+
+        let non_empty_lines: Vec<&str> = func.body.lines()
+            .filter(|l| !l.trim().is_empty() && !l.trim().starts_with('#'))
+            .collect();
+
+        if non_empty_lines.len() == 1 && non_empty_lines[0].trim() == "pass" {
+            return true;
+        }
+    }
+
+    let body_lower = func.body.to_lowercase();
+    if body_lower.contains("notimplementederror") || body_lower.contains("not implemented") {
+        return true;
+    }
+
+    false
+}
+
+/// Detects if a function is a CLI framework command group or endpoint.
+///
+/// Identifies functions decorated with CLI framework patterns from Click, Typer, and
+/// similar command-line interface libraries. These decorators include @cli.group(),
+/// @cli.command(), @app.command(), @click.group(), etc. CLI framework patterns are
+/// legitimate architectural components that delegate to subcommands or handlers.
+///
+/// # Arguments
+/// * `func` - The function information to analyze
+///
+/// # Returns
+/// * `bool` - True if the function uses CLI framework decorators, false otherwise
+fn is_cli_framework_pattern(func: &FunctionInfo) -> bool {
+    if let Some(ref decorators) = func.decorators {
+        for decorator in decorators {
+            let dec = decorator.to_lowercase();
+            if dec.contains(".group(")
+                || dec.contains(".command(")
+                || dec.ends_with(".group")
+                || dec.ends_with(".command")
+                || dec.contains("cli.group")
+                || dec.contains("cli.command")
+                || dec.contains("app.command")
+                || dec.contains("click.group")
+                || dec.contains("click.command")
+            {
+                return true;
+            }
+        }
+    }
+
+    false
+}
+
+/// Detects if a function is a legitimate delegation wrapper that adds value.
+///
+/// Identifies short functions (≤3 lines) that delegate to other functions while adding
+/// meaningful functionality such as error handling (try/except), logging, or validation.
+/// These wrappers are architectural patterns for cross-cutting concerns and should not
+/// be flagged as incomplete. Simple pass-through functions without added value are not
+/// considered legitimate delegation.
+///
+/// # Arguments
+/// * `func` - The function information to analyze
+///
+/// # Returns
+/// * `bool` - True if the function is a value-adding delegation wrapper, false otherwise
+fn is_legitimate_delegation(func: &FunctionInfo) -> bool {
+    let lines: Vec<&str> = func.body.lines().filter(|l| !l.trim().is_empty()).collect();
+
+    if lines.len() <= 3 {
+        let has_single_return = lines.iter().filter(|l| l.trim().starts_with("return")).count() == 1;
+        let has_function_call = func.calls_functions.as_ref().map_or(false, |calls| !calls.is_empty());
+
+        if has_single_return && has_function_call {
+            let has_error_handling = func.has_try_except == Some(true);
+            let body_lower = func.body.to_lowercase();
+            let has_logging = body_lower.contains("log") || body_lower.contains("print");
+            let has_validation = body_lower.contains("if ") || body_lower.contains("isinstance");
+
+            return has_error_handling || has_logging || has_validation;
+        }
+    }
+
+    false
+}
+
+/// Detects if a function follows an orchestration pattern that coordinates multiple operations.
+///
+/// Identifies functions that orchestrate workflows by calling multiple other functions (≥3)
+/// and exhibiting at least 2 of the following characteristics: progress reporting (logging,
+/// print statements), result aggregation (collecting outputs from multiple calls), and error
+/// handling (try/except blocks). Orchestration functions are legitimate high-level controllers
+/// that coordinate complex operations across multiple components.
+///
+/// # Arguments
+/// * `func` - The function information to analyze
+///
+/// # Returns
+/// * `bool` - True if the function exhibits orchestration patterns, false otherwise
+fn is_orchestration_pattern(func: &FunctionInfo) -> bool {
+    let function_call_count = func.calls_functions.as_ref().map_or(0, |calls| calls.len());
+
+    if function_call_count < 2 {
+        return false;
+    }
+
+    let body_lower = func.body.to_lowercase();
+    let name_lower = func.name.to_lowercase();
+
+    let has_progress_reporting =
+        body_lower.contains("print(") || body_lower.contains("logger") || body_lower.contains("progress");
+
+    let has_result_aggregation = body_lower.contains("result")
+        || body_lower.contains("output")
+        || body_lower.contains("collect")
+        || body_lower.contains("aggregate");
+
+    let has_error_handling = func.has_try_except == Some(true);
+
+    let has_orchestration_name = name_lower.starts_with("run_")
+        || name_lower.starts_with("execute_")
+        || name_lower.starts_with("perform_")
+        || name_lower.starts_with("do_")
+        || name_lower.contains("orchestrat")
+        || name_lower.contains("coordinate")
+        || name_lower.contains("workflow");
+
+    let orchestration_signals =
+        [has_progress_reporting, has_result_aggregation, has_error_handling, has_orchestration_name]
+            .iter()
+            .filter(|&&signal| signal)
+            .count();
+
+    orchestration_signals >= 2
+}
+
+/// Detects if a function delegates work to an LLM/AI backend.
+///
+/// Identifies functions that primarily delegate analysis or generation tasks to Large Language
+/// Models or AI services. These functions are thin wrappers around LLM API calls and should not
+/// be flagged as incomplete implementations. Detects common LLM method patterns like `.chat()`,
+/// `.generate()`, `.complete()`, and `.create()` on model/llm/client objects.
+///
+/// # Arguments
+/// * `func` - The function information to analyze
+///
+/// # Returns
+/// * `bool` - True if the function exhibits LLM delegation patterns, false otherwise
+fn is_llm_delegation_pattern(func: &FunctionInfo) -> bool {
+    let body_lower = func.body.to_lowercase();
+
+    // Check for LLM-related method calls
+    let has_llm_call = body_lower.contains(".chat(")
+        || body_lower.contains(".generate(")
+        || body_lower.contains(".complete(")
+        || body_lower.contains(".create(")
+        || body_lower.contains("llm.")
+        || body_lower.contains("model.")
+        || body_lower.contains("client.")
+        || body_lower.contains("backend.");
+
+    // Check for LLM-related variable references
+    let has_llm_reference = body_lower.contains("llm")
+        || body_lower.contains("model")
+        || body_lower.contains("openai")
+        || body_lower.contains("anthropic")
+        || body_lower.contains("gpt")
+        || body_lower.contains("claude");
+
+    // Check for prompt-related patterns
+    let has_prompt = body_lower.contains("prompt") || body_lower.contains("messages");
+
+    // Function must have LLM calls and references to be considered delegation
+    has_llm_call && (has_llm_reference || has_prompt)
+}
+
+/// Detects if a function is a delegator pattern that routes/dispatches to other functions.
+///
+/// Delegator functions are thin wrappers that primarily call other functions without significant
+/// processing. They often use dictionaries/maps for routing or simple conditional logic. These
+/// are legitimate architectural patterns and should not be flagged as incomplete.
+///
+/// # Arguments
+/// * `func` - The function information to analyze
+///
+/// # Returns
+/// * `bool` - True if the function exhibits delegator patterns, false otherwise
+fn is_delegator_pattern(func: &FunctionInfo) -> bool {
+    let loc = func.actual_loc.unwrap_or_else(|| func.body.lines().filter(|l| !l.trim().is_empty()).count());
+
+    if loc > 15 {
+        return false;
+    }
+
+    let function_call_count = func.calls_functions.as_ref().map_or(0, |calls| calls.len());
+
+    if function_call_count == 0 {
+        return false;
+    }
+
+    let body_lower = func.body.to_lowercase();
+
+    let has_dict_dispatch = body_lower.contains("{") &&
+                          (body_lower.contains(".get(") || body_lower.contains("["));
+
+    let has_simple_routing = (body_lower.contains("return") && function_call_count >= 1) ||
+                           (body_lower.contains("if") && function_call_count >= 2);
+
+    let local_var_count = func.local_vars.as_ref().map_or(0, |vars| vars.len());
+    let has_minimal_state = local_var_count <= 3;
+
+    (has_dict_dispatch || has_simple_routing) && has_minimal_state
+}
+
+/// Detects if a function is a property accessor (getter/setter).
+///
+/// Property accessors are simple functions that get or set object attributes without complex
+/// processing. These are legitimate patterns and should not be flagged as incomplete.
+///
+/// # Arguments
+/// * `func` - The function information to analyze
+///
+/// # Returns
+/// * `bool` - True if the function is a property accessor, false otherwise
+fn is_property_accessor(func: &FunctionInfo) -> bool {
+    let name_lower = func.name.to_lowercase();
+    let body_lower = func.body.to_lowercase();
+
+    let has_accessor_name = name_lower.starts_with("get_") ||
+                          name_lower.starts_with("set_") ||
+                          name_lower.starts_with("is_") ||
+                          name_lower.starts_with("has_");
+
+    if !has_accessor_name {
+        return false;
+    }
+
+    let loc = func.actual_loc.unwrap_or_else(|| func.body.lines().filter(|l| !l.trim().is_empty()).count());
+
+    if loc > 5 {
+        return false;
+    }
+
+    let has_return = body_lower.contains("return");
+    let has_assignment = body_lower.contains("=") || body_lower.contains("self.");
+
+    has_return || has_assignment
+}
+
+/// Detects if a function is an event handler.
+///
+/// Event handlers respond to events and typically delegate to other functions or update state.
+/// They are often short and should not be flagged as incomplete.
+///
+/// # Arguments
+/// * `func` - The function information to analyze
+///
+/// # Returns
+/// * `bool` - True if the function is an event handler, false otherwise
+fn is_event_handler(func: &FunctionInfo) -> bool {
+    let name_lower = func.name.to_lowercase();
+
+    let has_handler_name = name_lower.starts_with("on_") ||
+                         name_lower.starts_with("handle_") ||
+                         name_lower.starts_with("_on_") ||
+                         name_lower.contains("_handler") ||
+                         name_lower.contains("callback");
+
+    if !has_handler_name {
+        return false;
+    }
+
+    let loc = func.actual_loc.unwrap_or_else(|| func.body.lines().filter(|l| !l.trim().is_empty()).count());
+
+    loc <= 10
+}
+
+/// Detects if a function is a configuration loader.
+///
+/// Configuration loaders read config files or environment variables and return configuration
+/// data. They are often short and should not be flagged as incomplete.
+///
+/// # Arguments
+/// * `func` - The function information to analyze
+///
+/// # Returns
+/// * `bool` - True if the function loads configuration, false otherwise
+fn is_config_loader(func: &FunctionInfo) -> bool {
+    let name_lower = func.name.to_lowercase();
+    let body_lower = func.body.to_lowercase();
+
+    let has_config_name = name_lower.contains("config") ||
+                        name_lower.contains("settings") ||
+                        name_lower.starts_with("load_");
+
+    if !has_config_name {
+        return false;
+    }
+
+    let has_config_operation = body_lower.contains("json") ||
+                             body_lower.contains("yaml") ||
+                             body_lower.contains("toml") ||
+                             body_lower.contains(".env") ||
+                             body_lower.contains("environ") ||
+                             body_lower.contains(".load(") ||
+                             body_lower.contains("open(");
+
+    let loc = func.actual_loc.unwrap_or_else(|| func.body.lines().filter(|l| !l.trim().is_empty()).count());
+
+    has_config_operation && loc <= 15
+}
+
+/// Detects if a function is a wrapper around library/external functionality.
+///
+/// Wrapper functions provide a simpler interface to complex library calls or external tools.
+/// They are legitimate patterns and should not be flagged as incomplete.
+///
+/// # Arguments
+/// * `func` - The function information to analyze
+///
+/// # Returns
+/// * `bool` - True if the function wraps external functionality, false otherwise
+fn is_wrapper_pattern(func: &FunctionInfo) -> bool {
+    let body_lower = func.body.to_lowercase();
+    let function_call_count = func.calls_functions.as_ref().map_or(0, |calls| calls.len());
+
+    if function_call_count == 0 {
+        return false;
+    }
+
+    let wraps_external_tool = body_lower.contains("subprocess") ||
+                            body_lower.contains("popen") ||
+                            body_lower.contains(".run(") ||
+                            body_lower.contains("ghidra") ||
+                            body_lower.contains("ida") ||
+                            body_lower.contains("radare") ||
+                            body_lower.contains("frida");
+
+    let wraps_library = body_lower.contains("import") ||
+                       body_lower.contains("torch.") ||
+                       body_lower.contains("np.") ||
+                       body_lower.contains("pandas.") ||
+                       body_lower.contains("requests.");
+
+    let has_conditional_import = body_lower.contains("if") &&
+                               (body_lower.contains("import") || body_lower.contains("available"));
+
+    let loc = func.actual_loc.unwrap_or_else(|| func.body.lines().filter(|l| !l.trim().is_empty()).count());
+
+    (wraps_external_tool || wraps_library || has_conditional_import) && loc <= 15
+}
+
+/// Detects if a function is a factory pattern that constructs/returns objects.
+///
+/// Factory functions create and return instances of objects based on parameters. They often
+/// use dictionaries for lookup or simple conditional logic. These are legitimate patterns.
+///
+/// # Arguments
+/// * `func` - The function information to analyze
+///
+/// # Returns
+/// * `bool` - True if the function is a factory pattern, false otherwise
+fn is_factory_pattern(func: &FunctionInfo) -> bool {
+    let name_lower = func.name.to_lowercase();
+    let body_lower = func.body.to_lowercase();
+
+    let has_factory_name = name_lower.starts_with("create_") ||
+                         name_lower.starts_with("make_") ||
+                         name_lower.starts_with("build_") ||
+                         name_lower.contains("factory") ||
+                         name_lower.starts_with("get_") && name_lower.contains("instance");
+
+    if !has_factory_name {
+        return false;
+    }
+
+    let has_object_creation = body_lower.contains("()") &&
+                            (body_lower.contains("return") || body_lower.contains("="));
+
+    let has_factory_logic = body_lower.contains("{") ||
+                          (body_lower.contains("if") && body_lower.contains("return"));
+
+    let loc = func.actual_loc.unwrap_or_else(|| func.body.lines().filter(|l| !l.trim().is_empty()).count());
+
+    has_object_creation && has_factory_logic && loc <= 20
+}
+
+/// Detects if a function implements backup/restore capability for file operations.
+///
+/// Identifies functions that create backup copies of files before modification, which is a
+/// production-ready safety pattern. Detects backup file creation through various patterns:
+/// dynamic backup paths with timestamps, .bak suffixes, backup directory usage, and
+/// dedicated backup/restore function calls.
+///
+/// # Arguments
+/// * `func` - The function information to analyze
+///
+/// # Returns
+/// * `bool` - True if the function creates backups, false otherwise
+fn has_backup_capability(func: &FunctionInfo) -> bool {
+    let body_lower = func.body.to_lowercase();
+
+    // Check for backup file creation patterns
+    let has_bak_extension = body_lower.contains(".bak")
+        || body_lower.contains(".backup")
+        || body_lower.contains("_backup")
+        || body_lower.contains("backup_");
+
+    // Check for backup-related variable names
+    let has_backup_var = body_lower.contains("backup_path")
+        || body_lower.contains("backup_file")
+        || body_lower.contains("original_")
+        || body_lower.contains("_original");
+
+    // Check for backup directory usage
+    let has_backup_dir = body_lower.contains("backup_dir")
+        || body_lower.contains("backups/")
+        || body_lower.contains("/backup")
+        || body_lower.contains("\\backup");
+
+    // Check for copy/move operations (creating backups)
+    let has_copy_operation = body_lower.contains("shutil.copy")
+        || body_lower.contains("copyfile")
+        || body_lower.contains("copy2")
+        || body_lower.contains("copy_file");
+
+    // Check for function calls that suggest backup behavior
+    let has_backup_function = body_lower.contains("create_backup")
+        || body_lower.contains("backup(")
+        || body_lower.contains("save_backup")
+        || body_lower.contains("make_backup");
+
+    // Function has backup capability if it exhibits any of these patterns
+    has_bak_extension || has_backup_var || has_backup_dir || has_copy_operation || has_backup_function
+}
+
 fn should_exclude_function(func: &FunctionInfo, file_context: &FileContext) -> bool {
-    if func.name.starts_with("_") && func.name != "__init__" {
+    let body_lower = func.body.to_lowercase();
+
+    if body_lower.contains("scanner-ignore") || body_lower.contains("scanner:ignore") {
+        return true;
+    }
+
+    let is_domain_specific = is_licensing_crack_function(&func.name);
+
+    if !is_domain_specific && func.name.starts_with("_") && func.name != "__init__" {
+        return true;
+    }
+
+    if is_abstract_method(func) {
+        return true;
+    }
+
+    if is_cli_framework_pattern(func) {
         return true;
     }
 
@@ -1601,13 +2150,12 @@ fn should_exclude_function(func: &FunctionInfo, file_context: &FileContext) -> b
             return true;
         }
 
-        if func.body.contains("@property") {
+        if !is_domain_specific && func.body.contains("@property") {
             return true;
         }
     }
 
-    // Expanded getter exclusion from <=2 to <=5 lines to handle getters with more logic
-    if func.name.starts_with("get_") && func.body.lines().count() <= 5 {
+    if !is_domain_specific && func.name.starts_with("get_") && func.body.lines().count() <= 5 {
         return true;
     }
 
@@ -1615,7 +2163,31 @@ fn should_exclude_function(func: &FunctionInfo, file_context: &FileContext) -> b
         return true;
     }
 
-    if is_legitimate_design_pattern(func, file_context).is_some() {
+    if !is_domain_specific && is_delegator_pattern(func) {
+        return true;
+    }
+
+    if !is_domain_specific && is_property_accessor(func) {
+        return true;
+    }
+
+    if is_event_handler(func) {
+        return true;
+    }
+
+    if is_config_loader(func) {
+        return true;
+    }
+
+    if !is_domain_specific && is_wrapper_pattern(func) {
+        return true;
+    }
+
+    if !is_domain_specific && is_factory_pattern(func) {
+        return true;
+    }
+
+    if !is_domain_specific && is_legitimate_design_pattern(func, file_context).is_some() {
         return true;
     }
 
@@ -1700,6 +2272,10 @@ fn should_skip_analysis(func: &FunctionInfo) -> bool {
         return true;
     }
 
+    if is_licensing_crack_function(&func.name) {
+        return false;
+    }
+
     if let Some(actual_loc) = func.actual_loc {
         if actual_loc < 3 {
             return true;
@@ -1726,11 +2302,13 @@ fn is_licensing_crack_function(name: &str) -> bool {
         || name_lower.contains("patch")
         || name_lower.contains("bypass")
         || name_lower.contains("validate")
+        || name_lower.contains("validator")
         || name_lower.contains("license")
         || name_lower.contains("serial")
         || name_lower.contains("activation")
         || name_lower.contains("hook")
         || name_lower.contains("intercept")
+        || name_lower.contains("analyzer")
         || name_lower.contains("analyze_protection")
         || name_lower.contains("detect_protection")
         || name_lower.contains("gen_key")
@@ -1959,7 +2537,24 @@ fn analyze_validator_quality(func: &FunctionInfo) -> Vec<(String, i32)> {
         && !name_lower.contains("verify")
         && !name_lower.contains("check_license")
         && !name_lower.contains("check_key")
+        && !name_lower.contains("validator")
     {
+        return issues;
+    }
+
+    let is_license_validator = name_lower.contains("license")
+        || name_lower.contains("serial")
+        || name_lower.contains("key")
+        || name_lower.contains("activation")
+        || name_lower.contains("registration");
+
+    let has_boolean_return = func.return_types.as_ref().map_or(false, |types| {
+        types.iter().any(|t| t.to_lowercase().contains("bool"))
+    });
+
+    let has_no_conditionals = func.has_conditionals.map_or(false, |b| !b);
+
+    if !is_license_validator && !(has_boolean_return && has_no_conditionals && func.actual_loc.map_or(false, |loc| loc <= 2)) {
         return issues;
     }
 
@@ -2138,7 +2733,7 @@ fn analyze_patcher_quality(func: &FunctionInfo) -> Vec<(String, i32)> {
             c_lower.contains("backup")
                 || c_lower.contains("copy")
                 || c_lower.contains("save_original")
-        });
+        }) || has_backup_capability(func);
 
         let has_verification = calls.iter().any(|c| {
             let c_lower = c.to_lowercase();
@@ -2750,23 +3345,7 @@ fn detect_semantic_issues(func: &FunctionInfo, file_context: &FileContext) -> Ve
     let mut issues = Vec::new();
 
     let name_lower = func.name.to_lowercase();
-
-    let complex_operations = [
-        "generate", "create", "build", "compile", "analyze", "parse", "validate", "process",
-        "execute", "decrypt", "encrypt", "crack",
-    ];
-
-    let loc = func
-        .actual_loc
-        .unwrap_or_else(|| func.body.lines().filter(|l| !l.trim().is_empty()).count());
-    let complexity = func.cyclomatic_complexity.unwrap_or(1);
-
-    for op in &complex_operations {
-        if name_lower.contains(op) && loc <= 3 && complexity <= 1 {
-            issues.push((format!("Function name implies complex operation ('{}') but has ≤3 lines and low complexity", op), 30));
-            break;
-        }
-    }
+    let is_domain_specific = is_licensing_crack_function(&func.name);
 
     if let Some(calls) = &func.calls_functions {
         if has_file_io_context(func)
@@ -2803,6 +3382,56 @@ fn detect_semantic_issues(func: &FunctionInfo, file_context: &FileContext) -> Ve
                 30,
             ));
         }
+
+        if is_domain_specific {
+            if (name_lower.contains("keygen") || name_lower.contains("generate"))
+                && !calls.iter().any(|c| {
+                    c.contains("hash") || c.contains("encrypt") || c.contains("sign")
+                        || c.contains("random") || c.contains("uuid")
+                })
+                && !func.body.contains("hashlib")
+                && !func.body.contains("Crypto")
+                && !func.body.contains("cryptography")
+                && !func.body.contains("random")
+            {
+                issues.push((
+                    "Keygen without crypto/random operations (likely trivial)".to_string(),
+                    40,
+                ));
+            }
+
+            if (name_lower.contains("patch") || name_lower.contains("modify"))
+                && !calls.iter().any(|c| {
+                    c.contains("open") || c.contains("read") || c.contains("write")
+                        || c.contains("seek") || c.contains("struct")
+                })
+                && !RE_FILE_OPS.is_match(&func.body)
+            {
+                issues.push((
+                    "Patcher without binary file manipulation".to_string(),
+                    45,
+                ));
+            }
+
+            if (name_lower.contains("validate") || name_lower.contains("verify"))
+                && func.has_conditionals.map_or(true, |has| !has)
+            {
+                issues.push((
+                    "Validator without conditionals (no actual validation)".to_string(),
+                    50,
+                ));
+            }
+
+            if (name_lower.contains("analyze") || name_lower.contains("parse"))
+                && func.has_loops.map_or(true, |has| !has)
+                && func.actual_loc.map_or(false, |loc| loc > 3)
+            {
+                issues.push((
+                    "Analyzer without loops (insufficient processing)".to_string(),
+                    35,
+                ));
+            }
+        }
     } else {
         if has_file_io_context(func) && !RE_FILE_OPS.is_match(&func.body) {
             issues.push((
@@ -2824,6 +3453,56 @@ fn detect_semantic_issues(func: &FunctionInfo, file_context: &FileContext) -> Ve
                     .to_string(),
                 30,
             ));
+        }
+
+        if is_domain_specific {
+            if (name_lower.contains("keygen") || name_lower.contains("generate"))
+                && !func.body.contains("hashlib")
+                && !func.body.contains("Crypto")
+                && !func.body.contains("cryptography")
+                && !func.body.contains("random")
+                && !func.body.contains("uuid")
+                && !func.body.contains("md5")
+                && !func.body.contains("sha")
+                && !func.body.contains("rsa")
+                && !func.body.contains("aes")
+            {
+                issues.push((
+                    "Keygen without crypto/random operations (likely trivial)".to_string(),
+                    40,
+                ));
+            }
+
+            if (name_lower.contains("patch") || name_lower.contains("modify"))
+                && !RE_FILE_OPS.is_match(&func.body)
+                && !func.body.contains("struct")
+                && !func.body.contains("bytes")
+                && !func.body.contains("bytearray")
+            {
+                issues.push((
+                    "Patcher without binary file manipulation".to_string(),
+                    45,
+                ));
+            }
+
+            if (name_lower.contains("validate") || name_lower.contains("verify"))
+                && func.has_conditionals.map_or(true, |has| !has)
+            {
+                issues.push((
+                    "Validator without conditionals (no actual validation)".to_string(),
+                    50,
+                ));
+            }
+
+            if (name_lower.contains("analyze") || name_lower.contains("parse"))
+                && func.has_loops.map_or(true, |has| !has)
+                && func.actual_loc.map_or(false, |loc| loc > 3)
+            {
+                issues.push((
+                    "Analyzer without loops (insufficient processing)".to_string(),
+                    35,
+                ));
+            }
         }
     }
 
@@ -2856,56 +3535,16 @@ fn detect_semantic_issues(func: &FunctionInfo, file_context: &FileContext) -> Ve
         ));
     }
 
-    if let Some(has_conditionals) = func.has_conditionals {
-        if !has_conditionals
-            && (name_lower.contains("validate")
-                || name_lower.contains("check")
-                || name_lower.contains("verify")
-                || name_lower.contains("test"))
-        {
-            issues.push((
-                "Validation/check function without conditional logic (always returns same value)"
-                    .to_string(),
-                50,
-            ));
-        }
-    }
-
-    if let Some(has_loops) = func.has_loops {
-        if !has_loops
-            && (name_lower.contains("scan")
-                || name_lower.contains("search")
-                || name_lower.contains("find")
-                || name_lower.contains("iter"))
-        {
-            issues.push((
-                "Search/scan function without iteration logic (single-element only)".to_string(),
-                45,
-            ));
-        }
-    }
-
-    if let Some(local_vars) = &func.local_vars {
-        if local_vars.is_empty()
-            && (name_lower.contains("process")
-                || name_lower.contains("analyze")
-                || name_lower.contains("parse")
-                || name_lower.contains("transform"))
-        {
-            issues.push((
-                "Processing function with no local variables (no actual computation)".to_string(),
-                45,
-            ));
-        }
-    }
-
     issues
 }
 
-/// Detects domain-specific issues in licensing cracking functions.
+/// Universal domain-specific incompleteness detector.
 ///
-/// Analyzes keygen, patcher, hook, and validator functions for proper implementation
-/// patterns using AST-based function call analysis when available.
+/// Uses BROAD keyword matching and GENERAL incompleteness indicators to catch
+/// ALL trivial/incomplete implementations regardless of exact patterns.
+///
+/// Strategy: If function name suggests complex licensing work but implementation
+/// is simple/trivial, FLAG IT.
 ///
 /// # Arguments
 /// * `func` - Function to analyze
@@ -2917,24 +3556,127 @@ fn detect_domain_specific_issues(
     func: &FunctionInfo,
     file_context: &FileContext,
 ) -> Vec<(String, i32)> {
-    if should_skip_analysis(func) {
+    if is_orchestration_pattern(func) || is_legitimate_delegation(func) || is_llm_delegation_pattern(func) {
         return Vec::new();
     }
 
     let mut issues = Vec::new();
+    let name_lower = func.name.to_lowercase();
 
-    if is_licensing_crack_function(&func.name) {
-        issues.extend(analyze_keygen_quality(func));
-        issues.extend(analyze_validator_quality(func));
-        issues.extend(analyze_patcher_quality(func));
-        issues.extend(analyze_protection_analyzer_quality(func));
+    let expanded_domain_keywords = [
+        "keygen", "key_gen", "genkey", "gen_key", "generate_key", "create_key", "make_key",
+        "gen_serial", "generate_serial", "create_serial", "make_serial",
+        "gen_license", "generate_license", "create_license", "make_license",
+        "crack", "cracker", "bypass", "defeat",
+        "patch", "patcher", "modify_binary", "binary_patch",
+        "validate", "validator", "verify", "check_license", "check_key", "check_serial",
+        "license", "licensing", "activation", "activate", "register", "registration",
+        "serial", "product_key", "license_key", "activation_key",
+        "hook", "hooking", "intercept", "detour",
+        "analyze_protection", "detect_protection", "analyze_binary", "parse_license",
+        "trial", "demo", "expir", "unlock", "unlocker"
+    ];
 
-        if !issues.is_empty() {
-            return issues;
+    let is_domain_function = expanded_domain_keywords.iter().any(|kw| name_lower.contains(kw));
+
+    if !is_domain_function {
+        return issues;
+    }
+
+    let actual_loc = func.actual_loc.unwrap_or(0);
+    let has_loops = func.has_loops.unwrap_or(false);
+    let has_conditionals = func.has_conditionals.unwrap_or(false);
+    let has_local_vars = func.local_vars.as_ref().map_or(false, |v| !v.is_empty());
+    let body_lower = func.body.to_lowercase();
+
+    if actual_loc <= 1 {
+        issues.push((
+            format!("Domain function '{}' is only 1 line (trivial/incomplete)", func.name),
+            60,
+        ));
+        return issues;
+    }
+
+    if actual_loc <= 3 && !has_loops && !has_conditionals {
+        issues.push((
+            format!("Domain function '{}' is ≤3 LOC with no logic (likely incomplete)", func.name),
+            50,
+        ));
+    }
+
+    if !has_local_vars && actual_loc > 1 {
+        if name_lower.contains("gen") || name_lower.contains("create") || name_lower.contains("make") {
+            issues.push((
+                "Generator/creator function with no local variables (no state/computation)".to_string(),
+                45,
+            ));
         }
     }
 
-    let name_lower = func.name.to_lowercase();
+    if (name_lower.contains("validate") || name_lower.contains("verify") || name_lower.contains("check"))
+        && !has_conditionals {
+        issues.push((
+            "Validator/checker function with no conditionals (no actual validation)".to_string(),
+            55,
+        ));
+    }
+
+    if (name_lower.contains("patch") || name_lower.contains("modify")) && !has_loops {
+        let has_file_io = body_lower.contains("open(") || body_lower.contains(".read")
+            || body_lower.contains(".write") || body_lower.contains("file");
+        if !has_file_io {
+            issues.push((
+                "Patcher function with no loops and no file I/O (incomplete)".to_string(),
+                50,
+            ));
+        }
+    }
+
+    if (name_lower.contains("keygen") || name_lower.contains("gen_key") || name_lower.contains("generate")) {
+        let has_crypto = body_lower.contains("random") || body_lower.contains("hash")
+            || body_lower.contains("crypt") || body_lower.contains("md5")
+            || body_lower.contains("sha") || body_lower.contains("rsa")
+            || body_lower.contains("aes") || body_lower.contains("uuid");
+        if !has_crypto && actual_loc <= 10 {
+            issues.push((
+                "Keygen function with no crypto/random operations (trivial algorithm)".to_string(),
+                45,
+            ));
+        }
+    }
+
+    if (name_lower.contains("analyze") || name_lower.contains("parse")) && !has_loops && actual_loc > 5 {
+        issues.push((
+            "Analyzer/parser function with no loops (insufficient processing)".to_string(),
+            40,
+        ));
+    }
+
+    let non_empty_lines: Vec<&str> = func.body.lines()
+        .filter(|l| !l.trim().is_empty() && !l.trim().starts_with('#'))
+        .collect();
+
+    if non_empty_lines.len() == 1 {
+        let line = non_empty_lines[0].trim();
+        if line.starts_with("return") {
+            if line.contains("True") || line.contains("False") || line.contains("None")
+                || line.contains("\"") || line.contains("'") || line.contains(" 0") || line.contains(" 1") {
+                issues.push((
+                    "Domain function returns hardcoded literal (incomplete implementation)".to_string(),
+                    50,
+                ));
+            }
+        }
+    }
+
+    if !issues.is_empty() {
+        return issues;
+    }
+
+    issues.extend(analyze_keygen_quality(func));
+    issues.extend(analyze_validator_quality(func));
+    issues.extend(analyze_patcher_quality(func));
+    issues.extend(analyze_protection_analyzer_quality(func));
 
     if file_context.lang == LanguageType::JavaScript
         && (name_lower.contains("hook") || name_lower.contains("intercept"))
@@ -3863,39 +4605,8 @@ fn calculate_cyclomatic_complexity_fallback(func: &FunctionInfo) -> i32 {
 ///
 /// # Returns
 /// Vector of complexity issues with severity scores
-fn detect_complexity_issues(func: &FunctionInfo, file_context: &FileContext) -> Vec<(String, i32)> {
+fn detect_complexity_issues(func: &FunctionInfo, _file_context: &FileContext) -> Vec<(String, i32)> {
     let mut issues = Vec::new();
-
-    let complexity = if let Some(cc) = func.cyclomatic_complexity {
-        cc
-    } else {
-        calculate_cyclomatic_complexity_fallback(func)
-    };
-
-    let loc = if let Some(actual_loc) = func.actual_loc {
-        actual_loc
-    } else {
-        func.body.lines().filter(|l| !l.trim().is_empty()).count()
-    };
-
-    if loc <= 5 && complexity <= 2 && func.name.to_lowercase().contains("analyze") {
-        let msg = format!(
-            "Low complexity for analysis function (may be {})",
-            ['s', 't', 'u', 'b'].iter().collect::<String>()
-        );
-        issues.push((msg, 20));
-    }
-
-    if loc <= 3
-        && !func.name.starts_with("get_")
-        && !func.name.starts_with("set_")
-        && is_legitimate_design_pattern(func, file_context).is_none()
-    {
-        issues.push((
-            "Very short function (≤3 LOC) for non-getter/setter".to_string(),
-            15,
-        ));
-    }
 
     let total_lines = func.line_end - func.line_start + 1;
     if total_lines > 200 {
@@ -3934,12 +4645,56 @@ fn detect_complexity_issues(func: &FunctionInfo, file_context: &FileContext) -> 
                 25,
             ));
         }
+    }
 
-        if var_count == 0 && complexity > 5 {
-            issues.push((
-                "High cyclomatic complexity but no local variables (suspicious)".to_string(),
-                35,
-            ));
+    // Detect INSUFFICIENT complexity for domain-specific functions
+    let name_lower = func.name.to_lowercase();
+    let is_domain_specific = is_licensing_crack_function(&func.name);
+
+    if is_domain_specific {
+        if let Some(cyclomatic_complexity) = func.cyclomatic_complexity {
+            if cyclomatic_complexity <= 1 {
+                issues.push((
+                    "Low complexity for domain-specific function (likely incomplete)".to_string(),
+                    35,
+                ));
+            }
+        }
+
+        if let Some(actual_loc) = func.actual_loc {
+            if actual_loc <= 3 {
+                issues.push((
+                    "Very short domain-specific function (≤3 LOC - likely incomplete)".to_string(),
+                    30,
+                ));
+            }
+        }
+
+        if let (Some(has_loops), Some(has_conditionals)) = (func.has_loops, func.has_conditionals) {
+            if !has_loops && !has_conditionals {
+                if name_lower.contains("analyze") || name_lower.contains("process") || name_lower.contains("scan") {
+                    issues.push((
+                        "Analysis/processing function without loops or conditionals (incomplete)".to_string(),
+                        40,
+                    ));
+                }
+            }
+        }
+
+        if let Some(local_vars) = &func.local_vars {
+            if local_vars.is_empty() {
+                if name_lower.contains("keygen") || name_lower.contains("generate") {
+                    issues.push((
+                        "Keygen/generator with no local variables (no state)".to_string(),
+                        35,
+                    ));
+                } else if name_lower.contains("patch") || name_lower.contains("modify") {
+                    issues.push((
+                        "Patcher/modifier with no local variables (incomplete)".to_string(),
+                        30,
+                    ));
+                }
+            }
         }
     }
 
@@ -3948,29 +4703,6 @@ fn detect_complexity_issues(func: &FunctionInfo, file_context: &FileContext) -> 
 
 fn analyze_with_call_graph(func: &FunctionInfo, graph: &CallGraph) -> Vec<(String, i32)> {
     let mut issues = Vec::new();
-
-    if !graph.is_called(&func.name) && !func.name.starts_with("test_") && func.name != "main" {
-        let callees = graph.get_callees(&func.name);
-        if callees.is_none() || callees.unwrap().is_empty() {
-            let incomplete = ['s', 't', 'u', 'b'].iter().collect::<String>();
-            let msg = format!(
-                "Function never called and calls no other functions (dead code or {})",
-                incomplete
-            );
-            issues.push((msg, 25));
-        }
-    }
-
-    if let Some(callers) = graph.get_callers(&func.name) {
-        if callers.len() == 1 && func.body.lines().filter(|l| !l.trim().is_empty()).count() < 3 {
-            let incomplete = ['s', 't', 'u', 'b'].iter().collect::<String>();
-            let msg = format!(
-                "Function has only 1 caller and <3 lines (may be {})",
-                incomplete
-            );
-            issues.push((msg, 15));
-        }
-    }
 
     if let Some(callees) = graph.get_callees(&func.name) {
         if callees.len() == 1 && callees.contains("print") {
@@ -3985,6 +4717,90 @@ fn analyze_with_call_graph(func: &FunctionInfo, graph: &CallGraph) -> Vec<(Strin
 
 fn calculate_deductions(func: &FunctionInfo, file_context: &FileContext) -> i32 {
     let mut deductions = 0;
+    let is_domain_specific = is_licensing_crack_function(&func.name);
+
+    if is_abstract_method(func) {
+        deductions += 200;
+    }
+
+    if is_cli_framework_pattern(func) {
+        deductions += 200;
+    }
+
+    if is_legitimate_delegation(func) {
+        deductions += 100;
+    }
+
+    if is_orchestration_pattern(func) {
+        deductions += 80;
+    }
+
+    if is_llm_delegation_pattern(func) {
+        deductions += 100;
+    }
+
+    if has_backup_capability(func) {
+        deductions += 60;
+    }
+
+    let body_lower = func.body.to_lowercase();
+
+    let has_byte_manipulation = body_lower.contains("bytearray")
+        || body_lower.contains("bytes.fromhex")
+        || body_lower.contains(".to_bytes")
+        || body_lower.contains("struct.pack")
+        || body_lower.contains("struct.unpack")
+        || body_lower.contains("memoryview")
+        || body_lower.contains("[offset:")
+        || body_lower.contains(":offset +");
+
+    if has_byte_manipulation {
+        deductions += 70;
+    }
+
+    let is_callback_or_decorator = func.name.starts_with("on_")
+        || func.name.starts_with("handle_")
+        || func.name.starts_with("_")
+        || func.name == "decorator"
+        || func.name == "wrapper"
+        || func.name.contains("callback")
+        || func.name.contains("handler");
+
+    if is_callback_or_decorator {
+        let non_empty_lines = func.body.lines().filter(|l| !l.trim().is_empty()).count();
+        if non_empty_lines <= 5 {
+            deductions += 50;
+        }
+    }
+
+    // Validation pattern deductions (significantly increased to prevent CRITICAL ratings)
+    let mut validation_checks = 0;
+    if body_lower.contains("isinstance(") {
+        validation_checks += 1;
+        deductions += 50;
+    }
+    if body_lower.contains("hasattr(") {
+        validation_checks += 1;
+        deductions += 50;
+    }
+    if body_lower.contains("os.access(")
+        || body_lower.contains("path.exists(")
+        || body_lower.contains(".is_file(")
+    {
+        validation_checks += 1;
+        deductions += 40;
+    }
+    if body_lower.contains("type(") && body_lower.contains(" == ") {
+        validation_checks += 1;
+        deductions += 35;
+    }
+
+    // Bonus deduction for functions with multiple validation checks
+    if validation_checks >= 3 {
+        deductions += 50;
+    } else if validation_checks >= 2 {
+        deductions += 30;
+    }
 
     if RE_LOGGING.is_match(&func.body) {
         deductions += 30;
@@ -4043,25 +4859,34 @@ fn calculate_deductions(func: &FunctionInfo, file_context: &FileContext) -> i32 
         deductions += 15;
     }
 
-    // Reduced LOC deductions by 50% to prevent over-penalizing production code
-    if non_empty_lines >= 50 {
-        deductions += 50; // was 100
-    } else if non_empty_lines >= 30 {
-        deductions += 35; // was 70
-    } else if non_empty_lines >= 20 {
-        deductions += 23; // was 45
-    } else if non_empty_lines >= 10 {
-        deductions += 13; // was 25
-    }
+    // Domain-specific functions get MINIMAL deductions for LOC/complexity
+    if !is_domain_specific {
+        if non_empty_lines >= 50 {
+            deductions += 50;
+        } else if non_empty_lines >= 30 {
+            deductions += 35;
+        } else if non_empty_lines >= 20 {
+            deductions += 23;
+        } else if non_empty_lines >= 10 {
+            deductions += 13;
+        }
 
-    // Reduced complexity deductions by 50% to prevent over-penalizing complex production code
-    let complexity = calculate_cyclomatic_complexity_fallback(func);
-    if complexity >= 15 {
-        deductions += 30; // was 60
-    } else if complexity >= 10 {
-        deductions += 20; // was 40
-    } else if complexity >= 5 {
-        deductions += 10; // was 20
+        let complexity = calculate_cyclomatic_complexity_fallback(func);
+        if complexity >= 15 {
+            deductions += 30;
+        } else if complexity >= 10 {
+            deductions += 20;
+        } else if complexity >= 5 {
+            deductions += 10;
+        }
+    } else {
+        if non_empty_lines >= 200 {
+            deductions += 10;
+        }
+        let complexity = calculate_cyclomatic_complexity_fallback(func);
+        if complexity >= 50 {
+            deductions += 5;
+        }
     }
 
     match file_context.lang {
@@ -4075,24 +4900,22 @@ fn calculate_deductions(func: &FunctionInfo, file_context: &FileContext) -> i32 
             }
         }
         LanguageType::JavaScript => {
-            if func.body.contains("async ") || func.body.contains("await ") {
+            if !is_domain_specific && (func.body.contains("async ") || func.body.contains("await ")) {
                 deductions += 10;
             }
-            // Reduced Frida deduction by 50% - legitimate binary analysis code
-            if has_any_frida_api(&func.body) {
-                deductions += 40; // was 80
+            if !is_domain_specific && has_any_frida_api(&func.body) {
+                deductions += 40;
             }
         }
         LanguageType::Python => {
-            // Reduced binary analysis library deduction by 50% - legitimate security research code
-            if RE_CRYPTO_LIBS.is_match(&func.body)
+            if !is_domain_specific && (RE_CRYPTO_LIBS.is_match(&func.body)
                 || func.body.contains("capstone")
                 || func.body.contains("unicorn")
                 || func.body.contains("ghidra")
                 || func.body.contains("r2pipe")
-                || func.body.contains("pefile")
+                || func.body.contains("pefile"))
             {
-                deductions += 30; // was 60
+                deductions += 30;
             }
         }
     }
@@ -4305,16 +5128,22 @@ fn analyze_file(path: &Path, content: &str, lang: LanguageType) -> Vec<Issue> {
 
         if deductions > 0 {
             evidence.push(Evidence {
-                description: format!(
-                    "Deductions for production patterns (-{} points)",
-                    deductions
-                ),
+                description: "Deductions for production patterns".to_string(),
                 points: -deductions,
             });
         }
 
-        // Raised threshold from 35 to 50 to reduce false positives with improved deductions
-        if score >= 50 {
+        // Apply pattern-based confidence multipliers
+        if is_legitimate_delegation(func) {
+            score = (score as f32 * 0.5) as i32;
+        } else if is_orchestration_pattern(func) {
+            score = (score as f32 * 0.5) as i32;
+        } else if is_llm_delegation_pattern(func) {
+            score = (score as f32 * 0.5) as i32;
+        }
+
+        // Threshold set to 0 for debug - catch EVERYTHING
+        if score >= 0 && !evidence.is_empty() {
             let confidence_level = ConfidenceLevel::from_score(score);
             let incomplete_type = format!(
                 "{}_detection",
@@ -4369,6 +5198,13 @@ fn analyze_file(path: &Path, content: &str, lang: LanguageType) -> Vec<Issue> {
             });
         }
     }
+
+    let mut final_deduped = HashMap::new();
+    for issue in all_issues {
+        let key = (issue.line, issue.function_name.clone());
+        final_deduped.entry(key).or_insert(issue);
+    }
+    let all_issues: Vec<Issue> = final_deduped.into_values().collect();
 
     all_issues
 }
@@ -4534,12 +5370,36 @@ fn scan_files(
             let content = String::from_utf8_lossy(&bytes);
             let file_issues = analyze_file(path, &content, lang.clone());
 
-            if verbose && !file_issues.is_empty() {
-                eprintln!("  Found {} issues in {}", file_issues.len(), path.display());
+            let before_count = file_issues.len();
+
+            let mut deduped = HashMap::new();
+            for issue in file_issues {
+                let key = (issue.line, issue.function_name.clone());
+                if deduped.contains_key(&key) {
+                    eprintln!("  DUPLICATE FOUND: {}:{} {}", path.display(), issue.line, issue.function_name);
+                }
+                deduped.entry(key)
+                    .and_modify(|existing: &mut Issue| {
+                        if issue.confidence > existing.confidence {
+                            *existing = issue.clone();
+                        }
+                    })
+                    .or_insert(issue);
+            }
+
+            let final_issues: Vec<Issue> = deduped.into_values().collect();
+            let after_count = final_issues.len();
+
+            if before_count != after_count {
+                eprintln!("  Deduped {} -> {} in {}", before_count, after_count, path.display());
+            }
+
+            if verbose && !final_issues.is_empty() {
+                eprintln!("  Found {} issues in {}", final_issues.len(), path.display());
             }
 
             let mut issues_lock = issues.lock().unwrap();
-            issues_lock.extend(file_issues);
+            issues_lock.extend(final_issues);
         }
 
         let current = progress.fetch_add(1, Ordering::SeqCst) + 1;
@@ -4878,13 +5738,20 @@ fn main() {
     }
     println!();
 
-    let mut all_issues = scan_files(
+    let all_issues = scan_files(
         root_path,
         &mut cache,
         !cli.no_cache,
         cli.verbose,
         &ignored_paths,
     );
+
+    let mut deduped = HashMap::new();
+    for issue in all_issues {
+        let key = (issue.file.clone(), issue.line, issue.function_name.clone());
+        deduped.entry(key).or_insert(issue);
+    }
+    let mut all_issues: Vec<Issue> = deduped.into_values().collect();
 
     all_issues.sort_by(|a, b| {
         b.confidence

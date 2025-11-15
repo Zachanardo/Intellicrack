@@ -15,20 +15,19 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
-"""
 
-import struct
-import warnings
-
-from intellicrack.utils.logger import logger
-
-"""
 Capstone Import Handler with Production-Ready Fallbacks
 
 This module provides a centralized abstraction layer for Capstone imports.
 When Capstone is not available, it provides REAL, functional disassembly
 implementations for essential architectures used in Intellicrack.
 """
+
+import struct
+import warnings
+from typing import Any, Callable, List, Optional, Union
+
+from intellicrack.utils.logger import logger
 
 # Suppress pkg_resources deprecation warning from capstone
 warnings.filterwarnings("ignore", message="pkg_resources is deprecated as an API.*", category=UserWarning, module="capstone.*")
@@ -135,31 +134,46 @@ except ImportError as e:
     class CsError(Exception):
         """Capstone error exception."""
 
-        pass
 
     class CsInsn:
-        """Functional instruction representation."""
+        """Functional instruction representation for capstone fallback."""
 
-        def __init__(self, address, size, mnemonic, op_str, bytes_data) -> None:
-            """Initialize instruction."""
-            self.address = address
-            self.size = size
-            self.mnemonic = mnemonic
-            self.op_str = op_str
-            self.bytes = bytes_data
-            self.id = 0
-            self.groups = []
-            self.reg_name = self._reg_name
-            self.insn_name = self._insn_name
-            self.group = self._group
-            self.regs_read = []
-            self.regs_write = []
-            self.operands = []
+        def __init__(self, address: int, size: int, mnemonic: str, op_str: str, bytes_data: bytes) -> None:
+            """Initialize instruction.
 
-        def _reg_name(self, reg_id):
-            """Get register name."""
-            # X86 register names
-            x86_regs = {
+            Args:
+                address: Instruction address in memory.
+                size: Size of instruction in bytes.
+                mnemonic: Instruction mnemonic (e.g., 'mov', 'jmp').
+                op_str: Operand string.
+                bytes_data: Raw instruction bytes.
+
+            """
+            self.address: int = address
+            self.size: int = size
+            self.mnemonic: str = mnemonic
+            self.op_str: str = op_str
+            self.bytes: bytes = bytes_data
+            self.id: int = 0
+            self.groups: List[int] = []
+            self.reg_name: Callable[[int], str] = self._reg_name
+            self.insn_name: Callable[[], str] = self._insn_name
+            self.group: Callable[[int], bool] = self._group
+            self.regs_read: List[int] = []
+            self.regs_write: List[int] = []
+            self.operands: List[Any] = []
+
+        def _reg_name(self, reg_id: int) -> str:
+            """Get register name.
+
+            Args:
+                reg_id: Register identifier.
+
+            Returns:
+                Register name string (e.g., 'eax', 'rax').
+
+            """
+            x86_regs: dict[int, str] = {
                 1: "eax",
                 2: "ecx",
                 3: "edx",
@@ -187,116 +201,229 @@ except ImportError as e:
             }
             return x86_regs.get(reg_id, f"reg{reg_id}")
 
-        def _insn_name(self):
-            """Get instruction name."""
+        def _insn_name(self) -> str:
+            """Get instruction name.
+
+            Returns:
+                Instruction mnemonic.
+
+            """
             return self.mnemonic
 
-        def _group(self, group_id):
-            """Check if instruction belongs to group."""
+        def _group(self, group_id: int) -> bool:
+            """Check if instruction belongs to group.
+
+            Args:
+                group_id: Group identifier to check.
+
+            Returns:
+                True if instruction belongs to group, False otherwise.
+
+            """
             return group_id in self.groups
 
         def __repr__(self) -> str:
-            """Represent as string."""
+            """Represent as string.
+
+            Returns:
+                String representation of instruction.
+
+            """
             return f"0x{self.address:x}:\t{self.mnemonic}\t{self.op_str}"
 
     class X86Disassembler:
         """Real x86/x64 disassembler implementation."""
 
-        def __init__(self, mode) -> None:
-            """Initialize x86 disassembler."""
-            self.mode = mode
-            self.is_64bit = (mode & CS_MODE_64) != 0
-            self.is_32bit = (mode & CS_MODE_32) != 0
-            self.is_16bit = (mode & CS_MODE_16) != 0
+        def __init__(self, mode: int) -> None:
+            """Initialize x86 disassembler.
 
-        def disasm(self, code, offset):
-            """Disassemble x86 code."""
-            instructions = []
-            idx = 0
+            Args:
+                mode: Capstone mode flags (CS_MODE_32, CS_MODE_64, etc.).
+
+            """
+            self.mode: int = mode
+            self.is_64bit: bool = (mode & CS_MODE_64) != 0
+            self.is_32bit: bool = (mode & CS_MODE_32) != 0
+            self.is_16bit: bool = (mode & CS_MODE_16) != 0
+
+        def disasm(self, code: bytes, offset: int) -> List[CsInsn]:
+            """Disassemble x86 code.
+
+            Args:
+                code: Raw binary code to disassemble.
+                offset: Base address for disassembly.
+
+            Returns:
+                List of decoded instructions.
+
+            """
+            instructions: List[CsInsn] = []
+            idx: int = 0
 
             while idx < len(code):
                 try:
-                    insn = self._decode_instruction(code[idx:], offset + idx)
+                    insn: Optional[CsInsn] = self._decode_instruction(code[idx:], offset + idx)
                     if insn:
                         instructions.append(insn)
                         idx += insn.size
                     else:
-                        # Invalid instruction, skip byte
                         idx += 1
                 except Exception:
                     idx += 1
 
             return instructions
 
-        def _handle_nop(self, code, offset):
-            """Handle NOP instruction (0x90)."""
+        def _handle_nop(self, code: bytes, offset: int) -> CsInsn:
+            """Handle NOP instruction (0x90).
+
+            Args:
+                code: Instruction bytes.
+                offset: Current offset.
+
+            Returns:
+                Decoded NOP instruction.
+
+            """
             return CsInsn(offset, 1, "nop", "", code[:1])
 
-        def _handle_ret(self, code, offset):
-            """Handle RET instruction (0xC3)."""
-            insn = CsInsn(offset, 1, "ret", "", code[:1])
+        def _handle_ret(self, code: bytes, offset: int) -> CsInsn:
+            """Handle RET instruction (0xC3).
+
+            Args:
+                code: Instruction bytes.
+                offset: Current offset.
+
+            Returns:
+                Decoded RET instruction.
+
+            """
+            insn: CsInsn = CsInsn(offset, 1, "ret", "", code[:1])
             insn.groups = [CS_GRP_RET]
             return insn
 
-        def _handle_ret_imm16(self, code, offset):
-            """Handle RET imm16 instruction (0xC2)."""
+        def _handle_ret_imm16(self, code: bytes, offset: int) -> Optional[CsInsn]:
+            """Handle RET imm16 instruction (0xC2).
+
+            Args:
+                code: Instruction bytes.
+                offset: Current offset.
+
+            Returns:
+                Decoded RET instruction or None if insufficient bytes.
+
+            """
             if len(code) < 3:
                 return None
-            imm = struct.unpack("<H", code[1:3])[0]
-            insn = CsInsn(offset, 3, "ret", hex(imm), code[:3])
+            imm: int = struct.unpack("<H", code[1:3])[0]
+            insn: CsInsn = CsInsn(offset, 3, "ret", hex(imm), code[:3])
             insn.groups = [CS_GRP_RET]
             return insn
 
-        def _handle_int3(self, code, offset):
-            """Handle INT3 instruction (0xCC)."""
-            insn = CsInsn(offset, 1, "int3", "", code[:1])
+        def _handle_int3(self, code: bytes, offset: int) -> CsInsn:
+            """Handle INT3 instruction (0xCC).
+
+            Args:
+                code: Instruction bytes.
+                offset: Current offset.
+
+            Returns:
+                Decoded INT3 instruction.
+
+            """
+            insn: CsInsn = CsInsn(offset, 1, "int3", "", code[:1])
             insn.groups = [CS_GRP_INT]
             return insn
 
-        def _handle_int_imm8(self, code, offset):
-            """Handle INT imm8 instruction (0xCD)."""
+        def _handle_int_imm8(self, code: bytes, offset: int) -> Optional[CsInsn]:
+            """Handle INT imm8 instruction (0xCD).
+
+            Args:
+                code: Instruction bytes.
+                offset: Current offset.
+
+            Returns:
+                Decoded INT instruction or None if insufficient bytes.
+
+            """
             if len(code) < 2:
                 return None
-            imm = code[1]
-            insn = CsInsn(offset, 2, "int", hex(imm), code[:2])
+            imm: int = code[1]
+            insn: CsInsn = CsInsn(offset, 2, "int", hex(imm), code[:2])
             insn.groups = [CS_GRP_INT]
             return insn
 
-        def _handle_call_rel32(self, code, offset):
-            """Handle CALL rel32 instruction (0xE8)."""
+        def _handle_call_rel32(self, code: bytes, offset: int) -> Optional[CsInsn]:
+            """Handle CALL rel32 instruction (0xE8).
+
+            Args:
+                code: Instruction bytes.
+                offset: Current offset.
+
+            Returns:
+                Decoded CALL instruction or None if insufficient bytes.
+
+            """
             if len(code) < 5:
                 return None
-            rel = struct.unpack("<i", code[1:5])[0]
-            target = offset + 5 + rel
-            insn = CsInsn(offset, 5, "call", hex(target), code[:5])
+            rel: int = struct.unpack("<i", code[1:5])[0]
+            target: int = offset + 5 + rel
+            insn: CsInsn = CsInsn(offset, 5, "call", hex(target), code[:5])
             insn.groups = [CS_GRP_CALL, CS_GRP_BRANCH_RELATIVE]
             return insn
 
-        def _handle_jmp_rel32(self, code, offset):
-            """Handle JMP rel32 instruction (0xE9)."""
+        def _handle_jmp_rel32(self, code: bytes, offset: int) -> Optional[CsInsn]:
+            """Handle JMP rel32 instruction (0xE9).
+
+            Args:
+                code: Instruction bytes.
+                offset: Current offset.
+
+            Returns:
+                Decoded JMP instruction or None if insufficient bytes.
+
+            """
             if len(code) < 5:
                 return None
-            rel = struct.unpack("<i", code[1:5])[0]
-            target = offset + 5 + rel
-            insn = CsInsn(offset, 5, "jmp", hex(target), code[:5])
+            rel: int = struct.unpack("<i", code[1:5])[0]
+            target: int = offset + 5 + rel
+            insn: CsInsn = CsInsn(offset, 5, "jmp", hex(target), code[:5])
             insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
             return insn
 
-        def _handle_jmp_rel8(self, code, offset):
-            """Handle JMP rel8 instruction (0xEB)."""
+        def _handle_jmp_rel8(self, code: bytes, offset: int) -> Optional[CsInsn]:
+            """Handle JMP rel8 instruction (0xEB).
+
+            Args:
+                code: Instruction bytes.
+                offset: Current offset.
+
+            Returns:
+                Decoded JMP instruction or None if insufficient bytes.
+
+            """
             if len(code) < 2:
                 return None
-            rel = struct.unpack("b", code[1:2])[0]
-            target = offset + 2 + rel
-            insn = CsInsn(offset, 2, "jmp", hex(target), code[:2])
+            rel: int = struct.unpack("b", code[1:2])[0]
+            target: int = offset + 2 + rel
+            insn: CsInsn = CsInsn(offset, 2, "jmp", hex(target), code[:2])
             insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
             return insn
 
-        def _handle_jcc_rel8(self, code, offset, opcode):
-            """Handle Jcc rel8 instructions (0x70-0x7F)."""
+        def _handle_jcc_rel8(self, code: bytes, offset: int, opcode: int) -> Optional[CsInsn]:
+            """Handle Jcc rel8 instructions (0x70-0x7F).
+
+            Args:
+                code: Instruction bytes.
+                offset: Current offset.
+                opcode: The opcode byte.
+
+            Returns:
+                Decoded conditional jump instruction or None if insufficient bytes.
+
+            """
             if len(code) < 2:
                 return None
-            jcc_mnemonics = {
+            jcc_mnemonics: dict[int, str] = {
                 0x70: "jo",
                 0x71: "jno",
                 0x72: "jb",
@@ -314,24 +441,32 @@ except ImportError as e:
                 0x7E: "jle",
                 0x7F: "jg",
             }
-            rel = struct.unpack("b", code[1:2])[0]
-            target = offset + 2 + rel
-            mnemonic = jcc_mnemonics.get(opcode, f"j{opcode:02x}")
-            insn = CsInsn(offset, 2, mnemonic, hex(target), code[:2])
+            rel: int = struct.unpack("b", code[1:2])[0]
+            target: int = offset + 2 + rel
+            mnemonic: str = jcc_mnemonics.get(opcode, f"j{opcode:02x}")
+            insn: CsInsn = CsInsn(offset, 2, mnemonic, hex(target), code[:2])
             insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
             return insn
 
-        def _handle_two_byte_opcodes(self, code, offset):
-            """Handle two-byte opcodes starting with 0x0F."""
+        def _handle_two_byte_opcodes(self, code: bytes, offset: int) -> Optional[CsInsn]:
+            """Handle two-byte opcodes starting with 0x0F.
+
+            Args:
+                code: Instruction bytes.
+                offset: Current offset.
+
+            Returns:
+                Decoded instruction or None if unrecognized or insufficient bytes.
+
+            """
             if len(code) < 2:
                 return None
-            opcode2 = code[1]
+            opcode2: int = code[1]
 
-            # Jcc rel32 (0x0F 0x80-0x8F)
             if 0x80 <= opcode2 <= 0x8F:
                 if len(code) < 6:
                     return None
-                jcc_mnemonics = {
+                jcc_mnemonics: dict[int, str] = {
                     0x80: "jo",
                     0x81: "jno",
                     0x82: "jb",
@@ -349,89 +484,139 @@ except ImportError as e:
                     0x8E: "jle",
                     0x8F: "jg",
                 }
-                rel = struct.unpack("<i", code[2:6])[0]
-                target = offset + 6 + rel
-                mnemonic = jcc_mnemonics.get(opcode2, f"j{opcode2:02x}")
-                insn = CsInsn(offset, 6, mnemonic, hex(target), code[:6])
+                rel: int = struct.unpack("<i", code[2:6])[0]
+                target: int = offset + 6 + rel
+                mnemonic: str = jcc_mnemonics.get(opcode2, f"j{opcode2:02x}")
+                insn: CsInsn = CsInsn(offset, 6, mnemonic, hex(target), code[:6])
                 insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
                 return insn
 
             return None
 
-        def _handle_push_reg(self, code, offset, opcode, rex):
-            """Handle PUSH register instructions (0x50-0x57)."""
-            reg_names = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
+        def _handle_push_reg(self, code: bytes, offset: int, opcode: int, rex: Optional[int]) -> CsInsn:
+            """Handle PUSH register instructions (0x50-0x57).
+
+            Args:
+                code: Instruction bytes.
+                offset: Current offset.
+                opcode: The primary opcode byte.
+                rex: REX prefix if present in 64-bit mode.
+
+            Returns:
+                Decoded PUSH instruction.
+
+            """
+            reg_names: List[str] = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
             if self.is_64bit:
                 reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
-                if rex and (rex & 0x01):  # REX.B
+                if rex and (rex & 0x01):
                     reg_names = [f"r{8 + i}" for i in range(8)]
-            reg = reg_names[opcode - 0x50]
+            reg: str = reg_names[opcode - 0x50]
             return CsInsn(offset, 1, "push", reg, code[:1])
 
-        def _handle_pop_reg(self, code, offset, opcode, rex):
-            """Handle POP register instructions (0x58-0x5F)."""
-            reg_names = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
+        def _handle_pop_reg(self, code: bytes, offset: int, opcode: int, rex: Optional[int]) -> CsInsn:
+            """Handle POP register instructions (0x58-0x5F).
+
+            Args:
+                code: Instruction bytes.
+                offset: Current offset.
+                opcode: The primary opcode byte.
+                rex: REX prefix if present in 64-bit mode.
+
+            Returns:
+                Decoded POP instruction.
+
+            """
+            reg_names: List[str] = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
             if self.is_64bit:
                 reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
-                if rex and (rex & 0x01):  # REX.B
+                if rex and (rex & 0x01):
                     reg_names = [f"r{8 + i}" for i in range(8)]
-            reg = reg_names[opcode - 0x58]
+            reg: str = reg_names[opcode - 0x58]
             return CsInsn(offset, 1, "pop", reg, code[:1])
 
-        def _handle_mov_rm_r(self, code, offset):
-            """Handle MOV r/m, r instruction (0x89)."""
+        def _handle_mov_rm_r(self, code: bytes, offset: int) -> Optional[CsInsn]:
+            """Handle MOV r/m, r instruction (0x89).
+
+            Args:
+                code: Instruction bytes.
+                offset: Current offset.
+
+            Returns:
+                Decoded MOV instruction or None if insufficient bytes.
+
+            """
             if len(code) < 2:
                 return None
-            modrm = code[1]
-            mod = (modrm >> 6) & 0x03
-            reg = (modrm >> 3) & 0x07
-            rm = modrm & 0x07
+            modrm: int = code[1]
+            mod: int = (modrm >> 6) & 0x03
+            reg: int = (modrm >> 3) & 0x07
+            rm: int = modrm & 0x07
 
-            reg_names = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
+            reg_names: List[str] = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
             if self.is_64bit:
                 reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
 
-            if mod == 0x03:  # Register to register
-                src = reg_names[reg]
-                dst = reg_names[rm]
+            if mod == 0x03:
+                src: str = reg_names[reg]
+                dst: str = reg_names[rm]
                 return CsInsn(offset, 2, "mov", f"{dst}, {src}", code[:2])
             return None
 
-        def _handle_mov_r_rm(self, code, offset):
-            """Handle MOV r, r/m instruction (0x8B)."""
+        def _handle_mov_r_rm(self, code: bytes, offset: int) -> Optional[CsInsn]:
+            """Handle MOV r, r/m instruction (0x8B).
+
+            Args:
+                code: Instruction bytes.
+                offset: Current offset.
+
+            Returns:
+                Decoded MOV instruction or None if insufficient bytes.
+
+            """
             if len(code) < 2:
                 return None
-            modrm = code[1]
-            mod = (modrm >> 6) & 0x03
-            reg = (modrm >> 3) & 0x07
-            rm = modrm & 0x07
+            modrm: int = code[1]
+            mod: int = (modrm >> 6) & 0x03
+            reg: int = (modrm >> 3) & 0x07
+            rm: int = modrm & 0x07
 
-            reg_names = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
+            reg_names: List[str] = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
             if self.is_64bit:
                 reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
 
-            if mod == 0x03:  # Register to register
-                src = reg_names[rm]
-                dst = reg_names[reg]
+            if mod == 0x03:
+                src: str = reg_names[rm]
+                dst: str = reg_names[reg]
                 return CsInsn(offset, 2, "mov", f"{dst}, {src}", code[:2])
             return None
 
-        def _handle_mov_reg_imm(self, code, offset, opcode, rex):
-            """Handle MOV reg, imm instructions (0xB8-0xBF)."""
-            reg_idx = opcode - 0xB8
-            reg_names = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
+        def _handle_mov_reg_imm(self, code: bytes, offset: int, opcode: int, rex: Optional[int]) -> Optional[CsInsn]:
+            """Handle MOV reg, imm instructions (0xB8-0xBF).
+
+            Args:
+                code: Instruction bytes.
+                offset: Current offset.
+                opcode: The primary opcode byte.
+                rex: REX prefix if present in 64-bit mode.
+
+            Returns:
+                Decoded MOV instruction or None if insufficient bytes.
+
+            """
+            reg_idx: int = opcode - 0xB8
+            reg_names: List[str] = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
 
             if self.is_64bit:
-                if rex and (rex & 0x08):  # REX.W
+                if rex and (rex & 0x08):
                     if len(code) < 9:
                         return None
-                    imm = struct.unpack("<Q", code[1:9])[0]
+                    imm: int = struct.unpack("<Q", code[1:9])[0]
                     reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
-                    if rex and (rex & 0x01):  # REX.B
+                    if rex and (rex & 0x01):
                         reg_names = [f"r{8 + i}" for i in range(8)]
                     return CsInsn(offset, 9, "mov", f"{reg_names[reg_idx]}, {hex(imm)}", code[:9])
-                else:
-                    reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
+                reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
 
             if self.is_32bit or (self.is_64bit and not (rex and (rex & 0x08))):
                 if len(code) < 5:
@@ -448,273 +633,51 @@ except ImportError as e:
 
             return None
 
-        def _handle_xor_rm_r(self, code, offset):
-            """Handle XOR r/m, r instruction (0x31)."""
+        def _handle_xor_rm_r(self, code: bytes, offset: int) -> Optional[CsInsn]:
+            """Handle XOR r/m, r instruction (0x31).
+
+            Args:
+                code: Instruction bytes.
+                offset: Current offset.
+
+            Returns:
+                Decoded XOR instruction or None if insufficient bytes.
+
+            """
             if len(code) < 2:
                 return None
-            modrm = code[1]
-            mod = (modrm >> 6) & 0x03
-            reg = (modrm >> 3) & 0x07
-            rm = modrm & 0x07
+            modrm: int = code[1]
+            mod: int = (modrm >> 6) & 0x03
+            reg: int = (modrm >> 3) & 0x07
+            rm: int = modrm & 0x07
 
-            reg_names = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
+            reg_names: List[str] = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
             if self.is_64bit:
                 reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
 
-            if mod == 0x03:  # Register to register
-                src = reg_names[reg]
-                dst = reg_names[rm]
+            if mod == 0x03:
+                src: str = reg_names[reg]
+                dst: str = reg_names[rm]
                 return CsInsn(offset, 2, "xor", f"{dst}, {src}", code[:2])
             return None
 
-        def _handle_nop(self, code, offset):
-            """Handle NOP instruction (0x90)."""
-            return CsInsn(offset, 1, "nop", "", code[:1])
+        def _decode_instruction(self, code: bytes, offset: int) -> Optional[CsInsn]:
+            """Decode a single x86 instruction.
 
-        def _handle_ret(self, code, offset):
-            """Handle RET instruction (0xC3)."""
-            insn = CsInsn(offset, 1, "ret", "", code[:1])
-            insn.groups = [CS_GRP_RET]
-            return insn
+            Args:
+                code: Instruction bytes to decode.
+                offset: Current offset in binary.
 
-        def _handle_ret_imm16(self, code, offset):
-            """Handle RET imm16 instruction (0xC2)."""
-            if len(code) < 3:
-                return None
-            imm = struct.unpack("<H", code[1:3])[0]
-            insn = CsInsn(offset, 3, "ret", hex(imm), code[:3])
-            insn.groups = [CS_GRP_RET]
-            return insn
+            Returns:
+                Decoded instruction or None if decoding fails.
 
-        def _handle_int3(self, code, offset):
-            """Handle INT3 instruction (0xCC)."""
-            insn = CsInsn(offset, 1, "int3", "", code[:1])
-            insn.groups = [CS_GRP_INT]
-            return insn
-
-        def _handle_int_imm8(self, code, offset):
-            """Handle INT imm8 instruction (0xCD)."""
-            if len(code) < 2:
-                return None
-            imm = code[1]
-            insn = CsInsn(offset, 2, "int", hex(imm), code[:2])
-            insn.groups = [CS_GRP_INT]
-            return insn
-
-        def _handle_call_rel32(self, code, offset):
-            """Handle CALL rel32 instruction (0xE8)."""
-            if len(code) < 5:
-                return None
-            rel = struct.unpack("<i", code[1:5])[0]
-            target = offset + 5 + rel
-            insn = CsInsn(offset, 5, "call", hex(target), code[:5])
-            insn.groups = [CS_GRP_CALL, CS_GRP_BRANCH_RELATIVE]
-            return insn
-
-        def _handle_jmp_rel32(self, code, offset):
-            """Handle JMP rel32 instruction (0xE9)."""
-            if len(code) < 5:
-                return None
-            rel = struct.unpack("<i", code[1:5])[0]
-            target = offset + 5 + rel
-            insn = CsInsn(offset, 5, "jmp", hex(target), code[:5])
-            insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
-            return insn
-
-        def _handle_jmp_rel8(self, code, offset):
-            """Handle JMP rel8 instruction (0xEB)."""
-            if len(code) < 2:
-                return None
-            rel = struct.unpack("b", code[1:2])[0]
-            target = offset + 2 + rel
-            insn = CsInsn(offset, 2, "jmp", hex(target), code[:2])
-            insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
-            return insn
-
-        def _handle_jcc_rel8(self, code, offset, opcode):
-            """Handle Jcc rel8 instructions (0x70-0x7F)."""
-            if len(code) < 2:
-                return None
-            jcc_mnemonics = {
-                0x70: "jo",
-                0x71: "jno",
-                0x72: "jb",
-                0x73: "jnb",
-                0x74: "je",
-                0x75: "jne",
-                0x76: "jbe",
-                0x77: "ja",
-                0x78: "js",
-                0x79: "jns",
-                0x7A: "jp",
-                0x7B: "jnp",
-                0x7C: "jl",
-                0x7D: "jge",
-                0x7E: "jle",
-                0x7F: "jg",
-            }
-            rel = struct.unpack("b", code[1:2])[0]
-            target = offset + 2 + rel
-            mnemonic = jcc_mnemonics.get(opcode, f"j{opcode:02x}")
-            insn = CsInsn(offset, 2, mnemonic, hex(target), code[:2])
-            insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
-            return insn
-
-        def _handle_two_byte_opcodes(self, code, offset):
-            """Handle two-byte opcodes starting with 0x0F."""
-            if len(code) < 2:
-                return None
-            opcode2 = code[1]
-
-            # Jcc rel32 (0x0F 0x80-0x8F)
-            if 0x80 <= opcode2 <= 0x8F:
-                if len(code) < 6:
-                    return None
-                jcc_mnemonics = {
-                    0x80: "jo",
-                    0x81: "jno",
-                    0x82: "jb",
-                    0x83: "jnb",
-                    0x84: "je",
-                    0x85: "jne",
-                    0x86: "jbe",
-                    0x87: "ja",
-                    0x88: "js",
-                    0x89: "jns",
-                    0x8A: "jp",
-                    0x8B: "jnp",
-                    0x8C: "jl",
-                    0x8D: "jge",
-                    0x8E: "jle",
-                    0x8F: "jg",
-                }
-                rel = struct.unpack("<i", code[2:6])[0]
-                target = offset + 6 + rel
-                mnemonic = jcc_mnemonics.get(opcode2, f"j{opcode2:02x}")
-                insn = CsInsn(offset, 6, mnemonic, hex(target), code[:6])
-                insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
-                return insn
-
-            return None
-
-        def _handle_push_reg(self, code, offset, opcode, rex):
-            """Handle PUSH register instructions (0x50-0x57)."""
-            reg_names = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
-            if self.is_64bit:
-                reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
-                if rex and (rex & 0x01):  # REX.B
-                    reg_names = [f"r{8 + i}" for i in range(8)]
-            reg = reg_names[opcode - 0x50]
-            return CsInsn(offset, 1, "push", reg, code[:1])
-
-        def _handle_pop_reg(self, code, offset, opcode, rex):
-            """Handle POP register instructions (0x58-0x5F)."""
-            reg_names = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
-            if self.is_64bit:
-                reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
-                if rex and (rex & 0x01):  # REX.B
-                    reg_names = [f"r{8 + i}" for i in range(8)]
-            reg = reg_names[opcode - 0x58]
-            return CsInsn(offset, 1, "pop", reg, code[:1])
-
-        def _handle_mov_rm_r(self, code, offset):
-            """Handle MOV r/m, r instruction (0x89)."""
-            if len(code) < 2:
-                return None
-            modrm = code[1]
-            mod = (modrm >> 6) & 0x03
-            reg = (modrm >> 3) & 0x07
-            rm = modrm & 0x07
-
-            reg_names = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
-            if self.is_64bit:
-                reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
-
-            if mod == 0x03:  # Register to register
-                src = reg_names[reg]
-                dst = reg_names[rm]
-                return CsInsn(offset, 2, "mov", f"{dst}, {src}", code[:2])
-            return None
-
-        def _handle_mov_r_rm(self, code, offset):
-            """Handle MOV r, r/m instruction (0x8B)."""
-            if len(code) < 2:
-                return None
-            modrm = code[1]
-            mod = (modrm >> 6) & 0x03
-            reg = (modrm >> 3) & 0x07
-            rm = modrm & 0x07
-
-            reg_names = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
-            if self.is_64bit:
-                reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
-
-            if mod == 0x03:  # Register to register
-                src = reg_names[rm]
-                dst = reg_names[reg]
-                return CsInsn(offset, 2, "mov", f"{dst}, {src}", code[:2])
-            return None
-
-        def _handle_mov_reg_imm(self, code, offset, opcode, rex):
-            """Handle MOV reg, imm instructions (0xB8-0xBF)."""
-            reg_idx = opcode - 0xB8
-            reg_names = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
-
-            if self.is_64bit:
-                if rex and (rex & 0x08):  # REX.W
-                    if len(code) < 9:
-                        return None
-                    imm = struct.unpack("<Q", code[1:9])[0]
-                    reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
-                    if rex and (rex & 0x01):  # REX.B
-                        reg_names = [f"r{8 + i}" for i in range(8)]
-                    return CsInsn(offset, 9, "mov", f"{reg_names[reg_idx]}, {hex(imm)}", code[:9])
-                else:
-                    reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
-
-            if self.is_32bit or (self.is_64bit and not (rex and (rex & 0x08))):
-                if len(code) < 5:
-                    return None
-                imm = struct.unpack("<I", code[1:5])[0]
-                return CsInsn(offset, 5, "mov", f"{reg_names[reg_idx]}, {hex(imm)}", code[:5])
-
-            if self.is_16bit:
-                if len(code) < 3:
-                    return None
-                imm = struct.unpack("<H", code[1:3])[0]
-                reg_names = ["ax", "cx", "dx", "bx", "sp", "bp", "si", "di"]
-                return CsInsn(offset, 3, "mov", f"{reg_names[reg_idx]}, {hex(imm)}", code[:3])
-
-            return None
-
-        def _handle_xor_rm_r(self, code, offset):
-            """Handle XOR r/m, r instruction (0x31)."""
-            if len(code) < 2:
-                return None
-            modrm = code[1]
-            mod = (modrm >> 6) & 0x03
-            reg = (modrm >> 3) & 0x07
-            rm = modrm & 0x07
-
-            reg_names = ["eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"]
-            if self.is_64bit:
-                reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
-
-            if mod == 0x03:  # Register to register
-                src = reg_names[reg]
-                dst = reg_names[rm]
-                return CsInsn(offset, 2, "xor", f"{dst}, {src}", code[:2])
-            return None
-
-        def _decode_instruction(self, code, offset):
-            """Decode a single x86 instruction."""
+            """
             if len(code) == 0:
                 return None
 
-            opcode = code[0]
+            opcode: int = code[0]
 
-            # REX prefix (64-bit mode)
-            rex = None
+            rex: Optional[int] = None
             if self.is_64bit and 0x40 <= opcode <= 0x4F:
                 rex = opcode
                 code = code[1:]
@@ -722,8 +685,7 @@ except ImportError as e:
                     return None
                 opcode = code[0]
 
-            # Single-byte opcode handlers
-            handlers = {
+            handlers: dict[int, Callable[[], Optional[CsInsn]]] = {
                 0x90: lambda: self._handle_nop(code, offset),
                 0xC3: lambda: self._handle_ret(code, offset),
                 0xC2: lambda: self._handle_ret_imm16(code, offset),
@@ -738,48 +700,57 @@ except ImportError as e:
                 0x31: lambda: self._handle_xor_rm_r(code, offset),
             }
 
-            # Check for direct handler
             if opcode in handlers:
                 return handlers[opcode]()
 
-            # Check for ranged handlers
-            if 0x70 <= opcode <= 0x7F:  # Jcc rel8
+            if 0x70 <= opcode <= 0x7F:
                 return self._handle_jcc_rel8(code, offset, opcode)
-            elif 0x50 <= opcode <= 0x57:  # PUSH reg
+            if 0x50 <= opcode <= 0x57:
                 return self._handle_push_reg(code, offset, opcode, rex)
-            elif 0x58 <= opcode <= 0x5F:  # POP reg
+            if 0x58 <= opcode <= 0x5F:
                 return self._handle_pop_reg(code, offset, opcode, rex)
-            elif 0xB8 <= opcode <= 0xBF:  # MOV reg, imm
+            if 0xB8 <= opcode <= 0xBF:
                 return self._handle_mov_reg_imm(code, offset, opcode, rex)
 
-            # Default: Unknown instruction
             return CsInsn(offset, 1, "db", hex(opcode), code[:1])
 
     class ARMDisassembler:
         """Real ARM disassembler implementation."""
 
-        def __init__(self, mode) -> None:
-            """Initialize ARM disassembler."""
-            self.mode = mode
-            self.is_thumb = (mode & CS_MODE_THUMB) != 0
-            self.is_big_endian = (mode & CS_MODE_BIG_ENDIAN) != 0
+        def __init__(self, mode: int) -> None:
+            """Initialize ARM disassembler.
 
-        def disasm(self, code, offset):
-            """Disassemble ARM code."""
-            instructions = []
-            idx = 0
+            Args:
+                mode: Capstone mode flags (CS_MODE_THUMB, etc.).
+
+            """
+            self.mode: int = mode
+            self.is_thumb: bool = (mode & CS_MODE_THUMB) != 0
+            self.is_big_endian: bool = (mode & CS_MODE_BIG_ENDIAN) != 0
+
+        def disasm(self, code: bytes, offset: int) -> List[CsInsn]:
+            """Disassemble ARM code.
+
+            Args:
+                code: Raw binary code to disassemble.
+                offset: Base address for disassembly.
+
+            Returns:
+                List of decoded instructions.
+
+            """
+            instructions: List[CsInsn] = []
+            idx: int = 0
 
             if self.is_thumb:
-                # Thumb mode: 2 or 4 byte instructions
                 while idx < len(code) - 1:
-                    insn = self._decode_thumb_instruction(code[idx:], offset + idx)
+                    insn: Optional[CsInsn] = self._decode_thumb_instruction(code[idx:], offset + idx)
                     if insn:
                         instructions.append(insn)
                         idx += insn.size
                     else:
                         idx += 2
             else:
-                # ARM mode: 4 byte instructions
                 while idx < len(code) - 3:
                     insn = self._decode_arm_instruction(code[idx:], offset + idx)
                     if insn:
@@ -790,101 +761,104 @@ except ImportError as e:
 
             return instructions
 
-        def _decode_arm_instruction(self, code, offset):
-            """Decode a single ARM instruction."""
+        def _decode_arm_instruction(self, code: bytes, offset: int) -> Optional[CsInsn]:
+            """Decode a single ARM instruction.
+
+            Args:
+                code: Instruction bytes.
+                offset: Current offset.
+
+            Returns:
+                Decoded ARM instruction or None if insufficient bytes.
+
+            """
             if len(code) < 4:
                 return None
 
-            # Read 32-bit instruction
             if self.is_big_endian:
-                insn_word = struct.unpack(">I", code[:4])[0]
+                insn_word: int = struct.unpack(">I", code[:4])[0]
             else:
                 insn_word = struct.unpack("<I", code[:4])[0]
 
-            # Decode common ARM instructions
-            (insn_word >> 28) & 0x0F
-
-            # Branch instructions
-            if (insn_word & 0x0E000000) == 0x0A000000:  # B/BL
-                is_link = (insn_word & 0x01000000) != 0
-                offset_val = insn_word & 0x00FFFFFF
-                if offset_val & 0x00800000:  # Sign extend
+            if (insn_word & 0x0E000000) == 0x0A000000:
+                is_link: bool = (insn_word & 0x01000000) != 0
+                offset_val: int = insn_word & 0x00FFFFFF
+                if offset_val & 0x00800000:
                     offset_val |= 0xFF000000
-                offset_val = (offset_val << 2) + 8  # PC offset
-                target = offset + offset_val
+                offset_val = (offset_val << 2) + 8
+                target: int = offset + offset_val
 
-                mnemonic = "bl" if is_link else "b"
-                insn = CsInsn(offset, 4, mnemonic, hex(target), code[:4])
+                mnemonic: str = "bl" if is_link else "b"
+                insn: CsInsn = CsInsn(offset, 4, mnemonic, hex(target), code[:4])
                 insn.groups = [CS_GRP_CALL if is_link else CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
                 return insn
 
-            # MOV instruction
-            elif (insn_word & 0x0FFF0000) == 0x03A00000:  # MOV Rd, #imm
-                rd = (insn_word >> 12) & 0x0F
-                imm = insn_word & 0xFF
-                rotate = ((insn_word >> 8) & 0x0F) * 2
+            if (insn_word & 0x0FFF0000) == 0x03A00000:
+                rd: int = (insn_word >> 12) & 0x0F
+                imm: int = insn_word & 0xFF
+                rotate: int = ((insn_word >> 8) & 0x0F) * 2
                 if rotate:
                     imm = (imm >> rotate) | (imm << (32 - rotate))
                 imm &= 0xFFFFFFFF
 
                 return CsInsn(offset, 4, "mov", f"r{rd}, #{hex(imm)}", code[:4])
 
-            # NOP (MOV R0, R0)
-            elif insn_word == 0xE1A00000:
+            if insn_word == 0xE1A00000:
                 return CsInsn(offset, 4, "nop", "", code[:4])
 
-            # Default: Unknown instruction
             return CsInsn(offset, 4, "dcd", hex(insn_word), code[:4])
 
-        def _decode_thumb_instruction(self, code, offset):
-            """Decode a single Thumb instruction."""
+        def _decode_thumb_instruction(self, code: bytes, offset: int) -> Optional[CsInsn]:
+            """Decode a single Thumb instruction.
+
+            Args:
+                code: Instruction bytes.
+                offset: Current offset.
+
+            Returns:
+                Decoded Thumb instruction or None if insufficient bytes.
+
+            """
             if len(code) < 2:
                 return None
 
-            # Read 16-bit instruction
             if self.is_big_endian:
-                insn_hw = struct.unpack(">H", code[:2])[0]
+                insn_hw: int = struct.unpack(">H", code[:2])[0]
             else:
                 insn_hw = struct.unpack("<H", code[:2])[0]
 
-            # Check for 32-bit Thumb-2 instruction
             if (insn_hw & 0xF800) >= 0xE800:
                 if len(code) < 4:
                     return None
                 if self.is_big_endian:
-                    insn_hw2 = struct.unpack(">H", code[2:4])[0]
+                    insn_hw2: int = struct.unpack(">H", code[2:4])[0]
                 else:
                     insn_hw2 = struct.unpack("<H", code[2:4])[0]
 
-                # BL/BLX
                 if (insn_hw & 0xF800) == 0xF000 and (insn_hw2 & 0xD000) == 0xD000:
-                    s = (insn_hw >> 10) & 1
-                    imm10 = insn_hw & 0x3FF
-                    j1 = (insn_hw2 >> 13) & 1
-                    j2 = (insn_hw2 >> 11) & 1
-                    imm11 = insn_hw2 & 0x7FF
+                    s: int = (insn_hw >> 10) & 1
+                    imm10: int = insn_hw & 0x3FF
+                    j1: int = (insn_hw2 >> 13) & 1
+                    j2: int = (insn_hw2 >> 11) & 1
+                    imm11: int = insn_hw2 & 0x7FF
 
-                    i1 = ~(j1 ^ s) & 1
-                    i2 = ~(j2 ^ s) & 1
+                    i1: int = ~(j1 ^ s) & 1
+                    i2: int = ~(j2 ^ s) & 1
 
-                    offset_val = (s << 24) | (i1 << 23) | (i2 << 22) | (imm10 << 12) | (imm11 << 1)
+                    offset_val: int = (s << 24) | (i1 << 23) | (i2 << 22) | (imm10 << 12) | (imm11 << 1)
                     if s:
                         offset_val |= 0xFE000000
 
-                    target = offset + 4 + offset_val
+                    target: int = offset + 4 + offset_val
 
-                    is_blx = (insn_hw2 & 0x1000) == 0
-                    mnemonic = "blx" if is_blx else "bl"
-                    insn = CsInsn(offset, 4, mnemonic, hex(target), code[:4])
+                    is_blx: bool = (insn_hw2 & 0x1000) == 0
+                    mnemonic: str = "blx" if is_blx else "bl"
+                    insn: CsInsn = CsInsn(offset, 4, mnemonic, hex(target), code[:4])
                     insn.groups = [CS_GRP_CALL, CS_GRP_BRANCH_RELATIVE]
                     return insn
 
-                # Default 32-bit
                 return CsInsn(offset, 4, "dcd", f"{hex(insn_hw)}, {hex(insn_hw2)}", code[:4])
 
-            # 16-bit Thumb instructions
-
-            # B (unconditional)
             if (insn_hw & 0xF800) == 0xE000:
                 offset_val = (insn_hw & 0x7FF) << 1
                 if offset_val & 0x800:
@@ -894,33 +868,35 @@ except ImportError as e:
                 insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
                 return insn
 
-            # NOP
             if insn_hw == 0xBF00:
                 return CsInsn(offset, 2, "nop", "", code[:2])
 
-            # MOV immediate
             if (insn_hw & 0xF800) == 0x2000:
                 rd = (insn_hw >> 8) & 0x07
                 imm = insn_hw & 0xFF
                 return CsInsn(offset, 2, "mov", f"r{rd}, #{hex(imm)}", code[:2])
 
-            # Default: Unknown instruction
             return CsInsn(offset, 2, "dcw", hex(insn_hw), code[:2])
 
     class FallbackCs:
         """Functional Capstone disassembler implementation."""
 
-        def __init__(self, arch, mode) -> None:
-            """Initialize disassembler."""
-            self.arch = arch
-            self.mode = mode
-            self.syntax = CS_OPT_SYNTAX_INTEL
-            self.detail = False
-            self.skipdata = False
+        def __init__(self, arch: int, mode: int) -> None:
+            """Initialize disassembler.
 
-            # Create architecture-specific disassembler
+            Args:
+                arch: Architecture constant (CS_ARCH_X86, CS_ARCH_ARM, etc.).
+                mode: Mode flags for the architecture.
+
+            """
+            self.arch: int = arch
+            self.mode: int = mode
+            self.syntax: int = CS_OPT_SYNTAX_INTEL
+            self.detail: bool = False
+            self.skipdata: bool = False
+
             if arch == CS_ARCH_X86:
-                self._disasm_impl = X86Disassembler(mode)
+                self._disasm_impl: Optional[object] = X86Disassembler(mode)
             elif arch == CS_ARCH_ARM:
                 self._disasm_impl = ARMDisassembler(mode)
             elif arch == CS_ARCH_ARM64:
@@ -928,74 +904,109 @@ except ImportError as e:
             else:
                 self._disasm_impl = None
 
-        def disasm(self, code, offset, count=0):
-            """Disassemble code."""
+        def disasm(self, code: Union[bytes, str], offset: int, count: int = 0) -> List[CsInsn]:
+            """Disassemble code.
+
+            Args:
+                code: Binary code to disassemble.
+                offset: Base address for disassembly.
+                count: Maximum number of instructions to decode (0 = all).
+
+            Returns:
+                List of decoded instructions.
+
+            """
             if not self._disasm_impl:
                 logger.warning("No disassembler for architecture %d", self.arch)
                 return []
 
-            # Convert code to bytes if needed
             if isinstance(code, str):
                 code = bytes(code, "latin-1")
             elif not isinstance(code, bytes):
                 code = bytes(code)
 
-            instructions = self._disasm_impl.disasm(code, offset)
+            instructions: List[CsInsn] = self._disasm_impl.disasm(code, offset)
 
-            # Limit to count if specified
             if count > 0:
                 instructions = instructions[:count]
 
             return instructions
 
-        def set_option(self, option, value) -> None:
-            """Set disassembler option."""
-            if option == CS_OPT_SYNTAX:
-                self.syntax = value
-            elif option == CS_OPT_DETAIL:
-                self.detail = value
-            elif option == CS_OPT_SKIPDATA:
-                self.skipdata = value
+        def set_option(self, option: int, value: Union[int, bool]) -> None:
+            """Set disassembler option.
 
-        def _create_arm64_disassembler(self, mode):
-            """Create ARM64 disassembler."""
+            Args:
+                option: Option constant (CS_OPT_SYNTAX, CS_OPT_DETAIL, CS_OPT_SKIPDATA).
+                value: Option value to set.
+
+            """
+            if option == CS_OPT_SYNTAX:
+                self.syntax = value  # type: ignore[assignment]
+            elif option == CS_OPT_DETAIL:
+                self.detail = value  # type: ignore[assignment]
+            elif option == CS_OPT_SKIPDATA:
+                self.skipdata = value  # type: ignore[assignment]
+
+        def _create_arm64_disassembler(self, mode: int) -> object:
+            """Create ARM64 disassembler.
+
+            Args:
+                mode: Mode flags for ARM64.
+
+            Returns:
+                ARM64Disassembler instance.
+
+            """
 
             class ARM64Disassembler:
                 """Basic ARM64 disassembler."""
 
-                def __init__(self, mode) -> None:
-                    self.mode = mode
-                    self.is_big_endian = (mode & CS_MODE_BIG_ENDIAN) != 0
+                def __init__(self, arm64_mode: int) -> None:
+                    """Initialize ARM64 disassembler.
 
-                def disasm(self, code, offset):
-                    """Disassemble ARM64 code."""
-                    instructions = []
-                    idx = 0
+                    Args:
+                        arm64_mode: Mode flags.
+
+                    """
+                    self.mode: int = arm64_mode
+                    self.is_big_endian: bool = (arm64_mode & CS_MODE_BIG_ENDIAN) != 0
+
+                def disasm(self, code: bytes, offset: int) -> List[CsInsn]:
+                    """Disassemble ARM64 code.
+
+                    Args:
+                        code: Binary code to disassemble.
+                        offset: Base address.
+
+                    Returns:
+                        List of decoded instructions.
+
+                    """
+                    instructions: List[CsInsn] = []
+                    idx: int = 0
 
                     while idx < len(code) - 3:
                         if len(code[idx:]) < 4:
                             break
 
-                        # Read instruction
                         if self.is_big_endian:
-                            insn_word = struct.unpack(">I", code[idx : idx + 4])[0]
+                            insn_word: int = struct.unpack(">I", code[idx : idx + 4])[0]
                         else:
                             insn_word = struct.unpack("<I", code[idx : idx + 4])[0]
 
-                        # Decode basic ARM64 instructions
-                        if insn_word == 0xD503201F:  # NOP
-                            insn = CsInsn(offset + idx, 4, "nop", "", code[idx : idx + 4])
-                        elif insn_word == 0xD65F03C0:  # RET
+                        if insn_word == 0xD503201F:
+                            insn: CsInsn = CsInsn(offset + idx, 4, "nop", "", code[idx : idx + 4])
+                        elif insn_word == 0xD65F03C0:
                             insn = CsInsn(offset + idx, 4, "ret", "", code[idx : idx + 4])
                             insn.groups = [CS_GRP_RET]
-                        elif (insn_word & 0xFC000000) == 0x94000000:  # BL
-                            imm26 = insn_word & 0x03FFFFFF
+                        elif (insn_word & 0xFC000000) == 0x94000000:
+                            imm26: int = insn_word & 0x03FFFFFF
                             if imm26 & 0x02000000:
                                 imm26 |= 0xFC000000
-                            target = offset + idx + (imm26 << 2)
+                            target: int = offset + idx + (imm26 << 2)
                             insn = CsInsn(offset + idx, 4, "bl", hex(target), code[idx : idx + 4])
                             insn.groups = [CS_GRP_CALL, CS_GRP_BRANCH_RELATIVE]
-                        elif (insn_word & 0xFC000000) == 0x14000000:  # B
+                        elif (insn_word & 0xFC000000) == 0x14000000:
                             imm26 = insn_word & 0x03FFFFFF
                             if imm26 & 0x02000000:
                                 imm26 |= 0xFC000000
@@ -1003,7 +1014,6 @@ except ImportError as e:
                             insn = CsInsn(offset + idx, 4, "b", hex(target), code[idx : idx + 4])
                             insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
                         else:
-                            # Unknown instruction
                             insn = CsInsn(offset + idx, 4, "dcd", hex(insn_word), code[idx : idx + 4])
 
                         instructions.append(insn)
@@ -1013,17 +1023,39 @@ except ImportError as e:
 
             return ARM64Disassembler(mode)
 
-    def cs_disasm_quick(arch, mode, code, offset, count=0):
-        """Quick disassembly function."""
-        cs = FallbackCs(arch, mode)
+    def cs_disasm_quick(arch: int, mode: int, code: Union[bytes, str], offset: int, count: int = 0) -> List[CsInsn]:
+        """Quick disassembly function.
+
+        Args:
+            arch: Architecture constant.
+            mode: Mode flags.
+            code: Binary code to disassemble.
+            offset: Base address.
+            count: Maximum instructions to decode.
+
+        Returns:
+            List of decoded instructions.
+
+        """
+        cs: FallbackCs = FallbackCs(arch, mode)
         return cs.disasm(code, offset, count)
 
-    def cs_version():
-        """Get Capstone version."""
-        return (5, 0, 0)  # Fallback version
+    def cs_version() -> tuple[int, int, int]:
+        """Get Capstone version.
 
-    def version_bind():
-        """Get binding version."""
+        Returns:
+            Version tuple (major, minor, patch).
+
+        """
+        return (5, 0, 0)
+
+    def version_bind() -> tuple[int, int, int]:
+        """Get binding version.
+
+        Returns:
+            Version tuple (major, minor, patch).
+
+        """
         return (5, 0, 0)
 
     def debug() -> None:
@@ -1033,64 +1065,61 @@ except ImportError as e:
     # Assign Cs class
     Cs = FallbackCs
 
-    # Create module-like object
     class FallbackCapstone:
-        """Fallback capstone module."""
+        """Fallback capstone module providing compatibility interface.
 
-        # Architecture constants
-        CS_ARCH_ARM = CS_ARCH_ARM
-        CS_ARCH_ARM64 = CS_ARCH_ARM64
-        CS_ARCH_MIPS = CS_ARCH_MIPS
-        CS_ARCH_X86 = CS_ARCH_X86
-        CS_ARCH_PPC = CS_ARCH_PPC
-        CS_ARCH_SPARC = CS_ARCH_SPARC
-        CS_ARCH_SYSZ = CS_ARCH_SYSZ
-        CS_ARCH_XCORE = CS_ARCH_XCORE
+        This class provides a module-like interface for Capstone when the
+        actual library is not available, exposing all necessary constants
+        and functions for disassembly operations.
+        """
 
-        # Mode constants
-        CS_MODE_LITTLE_ENDIAN = CS_MODE_LITTLE_ENDIAN
-        CS_MODE_ARM = CS_MODE_ARM
-        CS_MODE_16 = CS_MODE_16
-        CS_MODE_32 = CS_MODE_32
-        CS_MODE_64 = CS_MODE_64
-        CS_MODE_THUMB = CS_MODE_THUMB
-        CS_MODE_MIPS32 = CS_MODE_MIPS32
-        CS_MODE_MIPS64 = CS_MODE_MIPS64
-        CS_MODE_BIG_ENDIAN = CS_MODE_BIG_ENDIAN
+        CS_ARCH_ARM: int = CS_ARCH_ARM
+        CS_ARCH_ARM64: int = CS_ARCH_ARM64
+        CS_ARCH_MIPS: int = CS_ARCH_MIPS
+        CS_ARCH_X86: int = CS_ARCH_X86
+        CS_ARCH_PPC: int = CS_ARCH_PPC
+        CS_ARCH_SPARC: int = CS_ARCH_SPARC
+        CS_ARCH_SYSZ: int = CS_ARCH_SYSZ
+        CS_ARCH_XCORE: int = CS_ARCH_XCORE
 
-        # Option constants
-        CS_OPT_SYNTAX = CS_OPT_SYNTAX
-        CS_OPT_DETAIL = CS_OPT_DETAIL
-        CS_OPT_SKIPDATA = CS_OPT_SKIPDATA
+        CS_MODE_LITTLE_ENDIAN: int = CS_MODE_LITTLE_ENDIAN
+        CS_MODE_ARM: int = CS_MODE_ARM
+        CS_MODE_16: int = CS_MODE_16
+        CS_MODE_32: int = CS_MODE_32
+        CS_MODE_64: int = CS_MODE_64
+        CS_MODE_THUMB: int = CS_MODE_THUMB
+        CS_MODE_MIPS32: int = CS_MODE_MIPS32
+        CS_MODE_MIPS64: int = CS_MODE_MIPS64
+        CS_MODE_BIG_ENDIAN: int = CS_MODE_BIG_ENDIAN
 
-        # Syntax options
-        CS_OPT_SYNTAX_DEFAULT = CS_OPT_SYNTAX_DEFAULT
-        CS_OPT_SYNTAX_INTEL = CS_OPT_SYNTAX_INTEL
-        CS_OPT_SYNTAX_ATT = CS_OPT_SYNTAX_ATT
-        CS_OPT_SYNTAX_NOREGNAME = CS_OPT_SYNTAX_NOREGNAME
-        CS_OPT_SYNTAX_MASM = CS_OPT_SYNTAX_MASM
+        CS_OPT_SYNTAX: int = CS_OPT_SYNTAX
+        CS_OPT_DETAIL: int = CS_OPT_DETAIL
+        CS_OPT_SKIPDATA: int = CS_OPT_SKIPDATA
 
-        # Group constants
-        CS_GRP_JUMP = CS_GRP_JUMP
-        CS_GRP_CALL = CS_GRP_CALL
-        CS_GRP_RET = CS_GRP_RET
-        CS_GRP_INT = CS_GRP_INT
-        CS_GRP_IRET = CS_GRP_IRET
-        CS_GRP_PRIVILEGE = CS_GRP_PRIVILEGE
-        CS_GRP_BRANCH_RELATIVE = CS_GRP_BRANCH_RELATIVE
+        CS_OPT_SYNTAX_DEFAULT: int = CS_OPT_SYNTAX_DEFAULT
+        CS_OPT_SYNTAX_INTEL: int = CS_OPT_SYNTAX_INTEL
+        CS_OPT_SYNTAX_ATT: int = CS_OPT_SYNTAX_ATT
+        CS_OPT_SYNTAX_NOREGNAME: int = CS_OPT_SYNTAX_NOREGNAME
+        CS_OPT_SYNTAX_MASM: int = CS_OPT_SYNTAX_MASM
 
-        # Classes
-        Cs = Cs
-        CsInsn = CsInsn
-        CsError = CsError
+        CS_GRP_JUMP: int = CS_GRP_JUMP
+        CS_GRP_CALL: int = CS_GRP_CALL
+        CS_GRP_RET: int = CS_GRP_RET
+        CS_GRP_INT: int = CS_GRP_INT
+        CS_GRP_IRET: int = CS_GRP_IRET
+        CS_GRP_PRIVILEGE: int = CS_GRP_PRIVILEGE
+        CS_GRP_BRANCH_RELATIVE: int = CS_GRP_BRANCH_RELATIVE
 
-        # Functions
-        cs_disasm_quick = staticmethod(cs_disasm_quick)
-        cs_version = staticmethod(cs_version)
-        version_bind = staticmethod(version_bind)
-        debug = staticmethod(debug)
+        Cs: type = Cs
+        CsInsn: type = CsInsn
+        CsError: type = CsError
 
-    capstone = FallbackCapstone()
+        cs_disasm_quick: Callable[[int, int, Union[bytes, str], int, int], List[CsInsn]] = staticmethod(cs_disasm_quick)
+        cs_version: Callable[[], tuple[int, int, int]] = staticmethod(cs_version)
+        version_bind: Callable[[], tuple[int, int, int]] = staticmethod(version_bind)
+        debug: Callable[[], None] = staticmethod(debug)
+
+    capstone: FallbackCapstone = FallbackCapstone()
 
 
 # Export all Capstone objects and availability flag

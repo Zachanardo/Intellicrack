@@ -519,17 +519,19 @@ class ModelManager:
                     # Try PyTorch first with thread safety
                     torch = safe_torch_import()
                     if torch is None:
-                        raise ImportError("PyTorch not available")
+                        error_msg = "PyTorch not available"
+                        logger.error(error_msg)
+                        raise ImportError(error_msg)
                     from torch import nn
 
                     class SimpleNN(nn.Module):
-                        def __init__(self, input_size, hidden_size, output_size) -> None:
+                        def __init__(self, input_size: int, hidden_size: int, output_size: int) -> None:
                             super().__init__()
                             self.fc1 = nn.Linear(input_size, hidden_size)
                             self.relu = nn.ReLU()
                             self.fc2 = nn.Linear(hidden_size, output_size)
 
-                        def forward(self, x):
+                        def forward(self, x: Any):
                             x = self.fc1(x)
                             x = self.relu(x)
                             x = self.fc2(x)
@@ -629,7 +631,9 @@ class ModelManager:
                 try:
                     torch = safe_torch_import()
                     if torch is None:
-                        raise ImportError("PyTorch not available")
+                        error_msg = "PyTorch not available"
+                        logger.error(error_msg)
+                        raise ImportError(error_msg)
 
                     if hasattr(model, "state_dict"):
                         with _torch_lock:

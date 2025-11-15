@@ -31,8 +31,6 @@ from typing import Any
 from intellicrack.utils.logger import log_all_methods, logger
 from intellicrack.utils.service_utils import get_service_url
 
-from ..utils.secrets_manager import get_secret
-
 """
 Remote Plugin Executor
 
@@ -88,6 +86,8 @@ class RemotePluginExecutor:
         self.logger = logging.getLogger(__name__)
 
         # Security: Shared secret for HMAC validation (should be configured securely)
+        from ..utils.secrets_manager import get_secret
+
         secret = get_secret("INTELLICRACK_REMOTE_SECRET", None)
         if not secret:
             # Generate a random secret if not configured
@@ -145,7 +145,9 @@ class RemotePluginExecutor:
 
         """
         if expected_type != "json":
-            raise ValueError(f"Unsupported serialization type: {expected_type}. Only JSON is allowed for security.")
+            error_msg = f"Unsupported serialization type: {expected_type}. Only JSON is allowed for security."
+            logger.error(error_msg)
+            raise ValueError(error_msg)
 
         decoded = base64.b64decode(encoded_data)
 
@@ -287,6 +289,8 @@ class RemotePluginExecutor:
                 signature = request.pop("signature", None)
                 if signature:
                     # Get shared secret
+                    from ..utils.secrets_manager import get_secret
+
                     secret = get_secret("INTELLICRACK_REMOTE_SECRET", None)
                     if not secret:
                         logger.exception("No remote execution secret configured - rejecting request")
@@ -344,7 +348,9 @@ class RemotePluginExecutor:
                                 plugin_instance = plugin_class()
                                 break
                         else:
-                            raise AttributeError("No suitable plugin class found")
+                            error_msg = "No suitable plugin class found"
+                            logger.error(error_msg)
+                            raise AttributeError(error_msg)
 
                     # Execute plugin method with sandbox protection
                     results = _run_plugin_in_sandbox(plugin_instance, method_name, *args, **kwargs)

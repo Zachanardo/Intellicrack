@@ -10,7 +10,7 @@ Licensed under GNU General Public License v3.0
 import logging
 import struct
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ class ELFAnalyzer:
     EM_ARM = 40
     EM_AARCH64 = 183
 
-    def __init__(self, file_path: Union[str, Path]) -> None:
+    def __init__(self, file_path: str | Path) -> None:
         """Initialize ELF analyzer with binary file.
 
         Args:
@@ -57,11 +57,11 @@ class ELFAnalyzer:
 
         """
         self.file_path = Path(file_path)
-        self.data: Optional[bytes] = None
-        self.header: Optional[Dict[str, Any]] = None
-        self.sections: List[Dict[str, Any]] = []
-        self.segments: List[Dict[str, Any]] = []
-        self.symbols: List[Dict[str, Any]] = []
+        self.data: bytes | None = None
+        self.header: dict[str, Any] | None = None
+        self.sections: list[dict[str, Any]] = []
+        self.segments: list[dict[str, Any]] = []
+        self.symbols: list[dict[str, Any]] = []
         self.is_64bit: bool = False
         self.endian: str = "little"
 
@@ -151,7 +151,7 @@ class ELFAnalyzer:
             "e_shstrndx": header_data[12],
         }
 
-    def analyze_sections(self) -> List[Dict[str, Any]]:
+    def analyze_sections(self) -> list[dict[str, Any]]:
         """Analyze ELF sections.
 
         Returns:
@@ -207,7 +207,7 @@ class ELFAnalyzer:
         self.sections = sections
         return sections
 
-    def analyze_segments(self) -> List[Dict[str, Any]]:
+    def analyze_segments(self) -> list[dict[str, Any]]:
         """Analyze ELF program segments.
 
         Returns:
@@ -249,7 +249,7 @@ class ELFAnalyzer:
                     "p_paddr": segment_data[4] if self.is_64bit else segment_data[3],
                     "p_filesz": segment_data[5] if self.is_64bit else segment_data[4],
                     "p_memsz": segment_data[6] if self.is_64bit else segment_data[5],
-                    "p_align": segment_data[7] if self.is_64bit else segment_data[7],
+                    "p_align": segment_data[7] if self.is_64bit else segment_data[6],
                 }
 
                 segments.append(segment)
@@ -261,7 +261,7 @@ class ELFAnalyzer:
         self.segments = segments
         return segments
 
-    def find_symbols(self) -> List[Dict[str, Any]]:
+    def find_symbols(self) -> list[dict[str, Any]]:
         """Extract symbol table information.
 
         Returns:
@@ -287,7 +287,7 @@ class ELFAnalyzer:
         self.symbols = symbols
         return symbols
 
-    def _parse_symbol_table(self, section: Dict[str, Any], symbols: List[Dict[str, Any]]) -> None:
+    def _parse_symbol_table(self, section: dict[str, Any], symbols: list[dict[str, Any]]) -> None:
         """Parse a symbol table section.
 
         Args:
@@ -346,7 +346,7 @@ class ELFAnalyzer:
                 logger.debug(f"Error parsing symbol {i}: {e}")
                 continue
 
-    def get_security_features(self) -> Dict[str, Any]:
+    def get_security_features(self) -> dict[str, Any]:
         """Analyze security features and protections.
 
         Returns:
@@ -384,7 +384,7 @@ class ELFAnalyzer:
 
         return features
 
-    def _get_symbol_names(self) -> List[str]:
+    def _get_symbol_names(self) -> list[str]:
         """Extract symbol names from string table.
 
         Returns:
@@ -416,7 +416,7 @@ class ELFAnalyzer:
 
         return names
 
-    def analyze(self) -> Dict[str, Any]:
+    def analyze(self) -> dict[str, Any]:
         """Perform comprehensive ELF analysis.
 
         Returns:
@@ -459,7 +459,7 @@ class ELFAnalyzer:
         return f"{arch}_{bits}_{endian}"
 
 
-def analyze_elf_file(file_path: Union[str, Path]) -> Dict[str, Any]:
+def analyze_elf_file(file_path: str | Path) -> dict[str, Any]:
     """Analyze an ELF file.
 
     Args:
@@ -473,7 +473,7 @@ def analyze_elf_file(file_path: Union[str, Path]) -> Dict[str, Any]:
     return analyzer.analyze()
 
 
-def is_elf_file(file_path: Union[str, Path]) -> bool:
+def is_elf_file(file_path: str | Path) -> bool:
     """Check if a file is an ELF binary.
 
     Args:
@@ -491,7 +491,7 @@ def is_elf_file(file_path: Union[str, Path]) -> bool:
         return False
 
 
-def extract_elf_strings(file_path: Union[str, Path], min_length: int = 4) -> List[str]:
+def extract_elf_strings(file_path: str | Path, min_length: int = 4) -> list[str]:
     """Extract printable strings from ELF binary.
 
     Args:

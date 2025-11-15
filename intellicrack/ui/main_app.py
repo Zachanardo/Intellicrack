@@ -380,8 +380,8 @@ class IntellicrackApp(QMainWindow):
                             app.setWindowIcon(icon)
                         icon_loaded = True
                         break
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Failed to load icon from {icon_path}: {e}")
 
         if not icon_loaded:
             logger.debug("Failed to load application icon from any path")
@@ -601,9 +601,9 @@ class IntellicrackApp(QMainWindow):
 
             # Initialize icon manager for consistent iconography
             self.icon_manager = IconManager()
-        except Exception:
+        except Exception as e:
             # Continue initialization even if theme application fails
-            pass
+            logger.debug(f"Theme application failed: {e}")
 
         self.tabs.setTabPosition(QTabWidget.TabPosition.North)
         self.tabs.setTabsClosable(False)
@@ -866,21 +866,15 @@ class IntellicrackApp(QMainWindow):
     def set_assistant_status(self, status: str) -> None:
         """Set AI assistant status."""
         if hasattr(self, "assistant_status") and self.assistant_status:
-            try:
+            with contextlib.suppress(AttributeError):
                 self.assistant_status.setText(status)
-            except AttributeError:
-                # UI element may not be initialized yet, continue gracefully
-                pass
         self.logger.info(f"Assistant status: {status}")
 
     def append_chat_display(self, message: str) -> None:
         """Append message to chat display."""
         if hasattr(self, "chat_display") and self.chat_display:
-            try:
+            with contextlib.suppress(AttributeError):
                 self.chat_display.append(message)
-            except AttributeError:
-                # UI element may not be initialized yet, continue gracefully
-                pass
         self.logger.info(f"Chat: {message}")
 
     def replace_last_chat_message(self, message: str) -> None:

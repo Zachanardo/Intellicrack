@@ -45,7 +45,7 @@ memory_reserved = None
 PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
 
 
-def secure_pickle_dump(obj, file_path) -> None:
+def secure_pickle_dump(obj: Any, file_path: str) -> None:
     """Securely dump object with integrity check."""
     # Serialize object
     data = pickle.dumps(obj)
@@ -62,7 +62,7 @@ def secure_pickle_dump(obj, file_path) -> None:
 class RestrictedUnpickler(pickle.Unpickler):
     """Restricted unpickler that only allows safe classes."""
 
-    def find_class(self, module, name):
+    def find_class(self, module: str, name: str):
         """Override ``find_class`` to restrict allowed classes."""
         # Allow only safe modules and classes
         ALLOWED_MODULES = {
@@ -93,7 +93,7 @@ class RestrictedUnpickler(pickle.Unpickler):
         raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
 
 
-def secure_pickle_load(file_path):
+def secure_pickle_load(file_path: str):
     """Securely load object with integrity verification and restricted unpickling."""
     with open(file_path, "rb") as f:
         # Read MAC

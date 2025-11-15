@@ -115,9 +115,8 @@ def _setup_ipex_dll_paths() -> bool | None:
         if esimd_kernels.exists():
             logger.debug("Found esimd_kernels.dll at: %s", esimd_kernels)
             return True
-        else:
-            logger.warning("esimd_kernels.dll not found in: %s", ipex_bin_dir)
-            return False
+        logger.warning("esimd_kernels.dll not found in: %s", ipex_bin_dir)
+        return False
 
     except Exception as e:
         logger.debug("Could not set up IPEX DLL paths (non-critical): %s", e)

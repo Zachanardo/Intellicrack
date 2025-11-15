@@ -23,7 +23,6 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 
 import ast
 from pathlib import Path
-from typing import List, Set, Tuple
 
 
 class UnusedConfigCodeDetector(ast.NodeVisitor):
@@ -93,7 +92,7 @@ class UnusedConfigCodeDetector(ast.NodeVisitor):
         return False
 
 
-def analyze_file(file_path: Path) -> Tuple[Set, Set, List, List]:
+def analyze_file(file_path: Path) -> tuple[set, set, list, list]:
     """Analyze a Python file for unused configuration code.
 
     Args:
@@ -204,7 +203,7 @@ def generate_cleanup_report(results: dict) -> str:
     return "\n".join(report)
 
 
-def remove_unused_imports(file_path: Path, unused_imports: Set[Tuple[str, int]]) -> bool:
+def remove_unused_imports(file_path: Path, unused_imports: set[tuple[str, int]]) -> bool:
     """Remove unused imports from a file.
 
     Args:

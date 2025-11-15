@@ -22,30 +22,13 @@ import os
 from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
-    QAction,
-    QApplication,
-    QCheckBox,
     QFileDialog,
-    QFont,
-    QGroupBox,
-    QHBoxLayout,
-    QIcon,
-    QLabel,
     QMainWindow,
     QMessageBox,
-    QProgressBar,
-    QPushButton,
-    QSplitter,
-    QStatusBar,
-    Qt,
-    QTabWidget,
-    QTextEdit,
-    QVBoxLayout,
-    QWidget,
     pyqtSignal,
 )
 
-from ..ai.interactive_assistant import IntellicrackAIAssistant, create_ai_assistant_widget
+from ..ai.interactive_assistant import IntellicrackAIAssistant
 from ..analysis.analysis_result_orchestrator import AnalysisResultOrchestrator
 from ..analysis.handlers.llm_handler import LLMHandler
 from ..analysis.handlers.report_generation_handler import ReportGenerationHandler
@@ -57,12 +40,6 @@ from ..core.analysis.frida_gui_integration import integrate_frida_gui
 from ..core.analysis.multi_format_analyzer import MultiFormatBinaryAnalyzer
 from ..core.analysis.vulnerability_engine import AdvancedVulnerabilityEngine
 from ..utils.logger import get_logger, log_all_methods
-from ..utils.resource_helper import get_resource_path
-from .dialogs.export_dialog import ExportDialog
-from .dialogs.program_selector_dialog import show_program_selector
-from .dialogs.signature_editor_dialog import SignatureEditorDialog
-from .widgets.icp_analysis_widget import ICPAnalysisWidget
-from .widgets.unified_protection_widget import UnifiedProtectionWidget
 
 # Configure module logger
 logger = get_logger(__name__)
@@ -202,7 +179,6 @@ class IntellicrackMainWindow(QMainWindow):
     def _setup_ui(self) -> None:
         """Set up the main user interface."""
         # ...
-        pass
 
     def _browse_for_file(self) -> None:
         """Browse for a binary file to analyze."""
@@ -231,4 +207,3 @@ class IntellicrackMainWindow(QMainWindow):
             return
 
         # ...
-        pass

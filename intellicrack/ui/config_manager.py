@@ -24,7 +24,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import contextlib
 import logging
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -200,7 +200,7 @@ class UIConfigManager:
         self._load_from_main_config()
 
         # Change callbacks
-        self.change_callbacks: Dict[str, List] = {"theme": [], "font": [], "layout": [], "editor": [], "animation": [], "accessibility": []}
+        self.change_callbacks: dict[str, list] = {"theme": [], "font": [], "layout": [], "editor": [], "animation": [], "accessibility": []}
 
         logger.info("UIConfigManager initialized with unified config system")
 
@@ -438,7 +438,7 @@ class UIConfigManager:
                     logger.error(f"Error in change callback: {e}")
 
     # Utility Methods
-    def get_available_themes(self) -> List[str]:
+    def get_available_themes(self) -> list[str]:
         """Get list of available theme names."""
         themes = list(self.DEFAULT_THEMES.keys())
         themes.extend(self.custom_themes.keys())
@@ -464,7 +464,7 @@ class UIConfigManager:
 
 
 # Singleton instance
-_ui_config_manager: Optional[UIConfigManager] = None
+_ui_config_manager: UIConfigManager | None = None
 
 
 def get_ui_config_manager() -> UIConfigManager:

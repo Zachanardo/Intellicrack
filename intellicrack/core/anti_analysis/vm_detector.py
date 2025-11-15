@@ -338,7 +338,7 @@ class VMDetector(BaseDetector):
                 self._cpuid_cache[cache_key] = registers
                 return registers
 
-            elif platform.system() == "Linux":
+            if platform.system() == "Linux":
                 import mmap
 
                 if platform.machine() in ("x86_64", "AMD64"):

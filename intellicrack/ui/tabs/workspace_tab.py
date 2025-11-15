@@ -449,7 +449,7 @@ class WorkspaceTab(QWidget):
 
             if reply == QMessageBox.StandardButton.Cancel:
                 return
-            elif reply == QMessageBox.StandardButton.Yes:
+            if reply == QMessageBox.StandardButton.Yes:
                 self.save_project()
 
             # Reset UI
@@ -801,7 +801,6 @@ class WorkspaceTab(QWidget):
 
         # Theme styling is now handled centrally by theme manager
         # Widget-specific styles use StyleManager with object names
-        pass
 
     def update_fonts(self) -> None:
         """Update font configuration."""

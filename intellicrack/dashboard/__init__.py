@@ -72,7 +72,7 @@ real_time_dashboard = property(lambda self: _lazy_import_real_time_dashboard())
 
 
 # For backwards compatibility, expose the classes and functions
-def __getattr__(name):
+def __getattr__(name: str):
     """Lazy attribute access for dashboard components."""
     if name in ("DashboardLayout", "DashboardManager", "DataSource", "DataSourceType", "create_dashboard_manager"):
         dm = _lazy_import_dashboard_manager()

@@ -27,9 +27,10 @@ import threading
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from .llm_backends import LLMBackend, LLMConfig
+if TYPE_CHECKING:
+    from .llm_backends import LLMBackend, LLMConfig
 
 logger = logging.getLogger(__name__)
 
@@ -38,23 +39,23 @@ class ModelLoadingStrategy(ABC):
     """Abstract base class for different model loading strategies."""
 
     @abstractmethod
-    def should_preload(self, config: LLMConfig) -> bool:
+    def should_preload(self, config: "LLMConfig") -> bool:
         """Determine if a model should be preloaded."""
 
     @abstractmethod
-    def get_load_priority(self, config: LLMConfig) -> int:
+    def get_load_priority(self, config: "LLMConfig") -> int:
         """Get the loading priority (higher number = higher priority)."""
 
 
 class DefaultLoadingStrategy(ModelLoadingStrategy):
     """Default loading strategy - load on first use."""
 
-    def should_preload(self, config: LLMConfig) -> bool:
+    def should_preload(self, config: "LLMConfig") -> bool:
         """Don't preload by default, but allow API models for quick initialization."""
         # API models are quick to initialize and don't consume much local resources
         return bool(hasattr(config, "provider") and config.provider.value in ["openai", "anthropic", "ollama"])
 
-    def get_load_priority(self, config: LLMConfig) -> int:
+    def get_load_priority(self, config: "LLMConfig") -> int:
         """Get load priority based on provider type."""
         # Give API models higher priority since they're faster to initialize
         if hasattr(config, "provider"):
@@ -87,7 +88,7 @@ class SmartLoadingStrategy(ModelLoadingStrategy):
         self.small_model_threshold_mb = small_model_threshold_mb
         self.preload_api_models = preload_api_models
 
-    def should_preload(self, config: LLMConfig) -> bool:
+    def should_preload(self, config: "LLMConfig") -> bool:
         """Preload small models and API-based models."""
         # API models are always quick to initialize
         if config.provider.value in ["openai", "anthropic", "ollama", "local_api"]:
@@ -104,7 +105,7 @@ class SmartLoadingStrategy(ModelLoadingStrategy):
 
         return False
 
-    def get_load_priority(self, config: LLMConfig) -> int:
+    def get_load_priority(self, config: "LLMConfig") -> int:
         """Higher priority for API models and smaller local models."""
         if config.provider.value in ["openai", "anthropic"]:
             return 100
@@ -129,8 +130,8 @@ class LazyModelWrapper:
 
     def __init__(
         self,
-        backend_class: type[LLMBackend],
-        config: LLMConfig,
+        backend_class: type["LLMBackend"],
+        config: "LLMConfig",
         preload: bool = False,
         load_callback: Callable[[str, bool], None] | None = None,
     ) -> None:
@@ -233,7 +234,7 @@ class LazyModelWrapper:
                 self._initialized = True
                 self._loading = False
 
-    def get_backend(self) -> LLMBackend | None:
+    def get_backend(self) -> "LLMBackend | None":
         """Get the backend, initializing if necessary."""
         self.last_access_time = time.time()
         self.access_count += 1
@@ -342,7 +343,7 @@ class LazyModelManager:
             except Exception as e:
                 logger.warning(f"Error in load callback: {e}")
 
-    def register_model(self, model_id: str, backend_class: type[LLMBackend], config: LLMConfig) -> LazyModelWrapper:
+    def register_model(self, model_id: str, backend_class: type["LLMBackend"], config: "LLMConfig") -> LazyModelWrapper:
         """Register a model for lazy loading."""
         with self._access_lock:
             preload = self.loading_strategy.should_preload(config)
@@ -359,7 +360,7 @@ class LazyModelManager:
 
             return wrapper
 
-    def get_model(self, model_id: str) -> LLMBackend | None:
+    def get_model(self, model_id: str) -> "LLMBackend | None":
         """Get a model backend, loading if necessary."""
         with self._access_lock:
             if model_id not in self.models:
@@ -477,38 +478,13 @@ def configure_lazy_loading(
         manager.loading_strategy = loading_strategy
 
 
-def register_lazy_model(model_id: str, backend_class: type[LLMBackend], config: LLMConfig) -> LazyModelWrapper:
+def register_lazy_model(model_id: str, backend_class: type["LLMBackend"], config: "LLMConfig") -> LazyModelWrapper:
     """Register a model for lazy loading."""
     return get_lazy_manager().register_model(model_id, backend_class, config)
 
 
-def get_lazy_model(model_id: str) -> LLMBackend | None:
+def get_lazy_model(model_id: str) -> "LLMBackend | None":
     """Get a lazy-loaded model."""
     return get_lazy_manager().get_model(model_id)
 
 
-# Example usage and testing
-if __name__ == "__main__":
-    # Example of using lazy loading
-    from .llm_backends import LLMConfig, LLMProvider, OpenAIBackend
-
-    # Configure lazy loading
-    configure_lazy_loading(max_loaded_models=2, idle_unload_time=60)
-
-    # Register a model
-    config = LLMConfig(
-        provider=LLMProvider.OPENAI,
-        model_name="gpt-3.5-turbo",
-        api_key="test-key",
-    )
-
-    wrapper = register_lazy_model("test-model", OpenAIBackend, config)
-
-    # Get model info
-    print(f"Model info: {wrapper.get_info()}")
-
-    # The model won't be loaded until first use
-    print(f"Is loaded: {wrapper.is_loaded}")
-
-    # This would trigger loading
-    # backend = get_lazy_model("test-model")

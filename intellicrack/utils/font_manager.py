@@ -24,7 +24,6 @@ import os
 
 from PyQt6.QtGui import QFont, QFontDatabase
 
-from intellicrack.core.config_manager import get_config
 from intellicrack.utils.resource_helper import get_resource_path
 
 logger = logging.getLogger(__name__)
@@ -35,6 +34,8 @@ class FontManager:
 
     def __init__(self) -> None:
         """Initialize the font manager with configuration and setup font directories."""
+        from intellicrack.core.config_manager import get_config
+
         self.fonts_dir = get_resource_path("assets/fonts")
         self.loaded_fonts = []
         # Load configuration from central config system

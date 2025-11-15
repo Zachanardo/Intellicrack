@@ -114,8 +114,13 @@ except ImportError as e:
         class DiGraph:
             """Directed graph implementation with NetworkX-compatible interface."""
 
-            def __init__(self, data=None) -> None:
-                """Initialize directed graph."""
+            def __init__(self, data: dict[str, Any] | None = None) -> None:
+                """Initialize directed graph.
+
+                Args:
+                    data: Optional dictionary containing graph data for initialization
+
+                """
                 self._nodes = {}
                 self._edges = {}
                 self._node_attrs = {}
@@ -123,14 +128,27 @@ except ImportError as e:
                 if data:
                     self.update(data)
 
-            def add_node(self, node, **attrs) -> None:
-                """Add node to graph with optional attributes."""
+            def add_node(self, node: Any, **attrs: Any) -> None:  # noqa: ANN401
+                """Add node to graph with optional attributes.
+
+                Args:
+                    node: Node identifier to add
+                    **attrs: Optional attributes to attach to the node
+
+                """
                 self._nodes[node] = True
                 if attrs:
                     self._node_attrs[node] = attrs
 
-            def add_edge(self, u, v, **attrs) -> None:
-                """Add edge to graph with optional attributes."""
+            def add_edge(self, u: Any, v: Any, **attrs: Any) -> None:  # noqa: ANN401
+                """Add edge to graph with optional attributes.
+
+                Args:
+                    u: Source node identifier
+                    v: Target node identifier
+                    **attrs: Optional attributes to attach to the edge
+
+                """
                 if u not in self._nodes:
                     self.add_node(u)
                 if v not in self._nodes:
@@ -143,14 +161,30 @@ except ImportError as e:
                 if attrs:
                     self._edge_attrs[(u, v)] = attrs
 
-            def nodes(self, data=False):
-                """Return nodes with optional data."""
+            def nodes(self, data: bool = False) -> list[Any] | list[tuple[Any, dict[str, Any]]]:
+                """Return nodes with optional data.
+
+                Args:
+                    data: If True, return nodes with their attributes
+
+                Returns:
+                    List of nodes, or list of (node, attributes) tuples if data=True
+
+                """
                 if data:
                     return [(n, self._node_attrs.get(n, {})) for n in self._nodes]
                 return list(self._nodes.keys())
 
-            def edges(self, data=False):
-                """Return edges with optional data."""
+            def edges(self, data: bool = False) -> list[tuple[Any, Any]] | list[tuple[Any, Any, dict[str, Any]]]:
+                """Return edges with optional data.
+
+                Args:
+                    data: If True, return edges with their attributes
+
+                Returns:
+                    List of (source, target) tuples, or (source, target, attributes) if data=True
+
+                """
                 edges = []
                 for u, neighbors in self._edges.items():
                     for v in neighbors:
@@ -160,40 +194,88 @@ except ImportError as e:
                             edges.append((u, v))
                 return edges
 
-            def number_of_nodes(self):
-                """Return number of nodes."""
+            def number_of_nodes(self) -> int:
+                """Return number of nodes.
+
+                Returns:
+                    Total count of nodes in the graph
+
+                """
                 return len(self._nodes)
 
-            def number_of_edges(self):
-                """Return number of edges."""
+            def number_of_edges(self) -> int:
+                """Return number of edges.
+
+                Returns:
+                    Total count of edges in the graph
+
+                """
                 return sum(len(neighbors) for neighbors in self._edges.values())
 
-            def in_degree(self, node):
-                """Return in-degree of node."""
+            def in_degree(self, node: Any) -> int:  # noqa: ANN401
+                """Return in-degree of node.
+
+                Args:
+                    node: Node identifier
+
+                Returns:
+                    Number of edges pointing to this node
+
+                """
                 count = 0
                 for neighbors in self._edges.values():
                     if node in neighbors:
                         count += 1
                 return count
 
-            def successors(self, node):
-                """Return successors of node."""
+            def successors(self, node: Any) -> list[Any]:  # noqa: ANN401
+                """Return successors of node.
+
+                Args:
+                    node: Node identifier
+
+                Returns:
+                    List of nodes that this node points to
+
+                """
                 return list(self._edges.get(node, set()))
 
-            def predecessors(self, node):
-                """Return predecessors of node."""
+            def predecessors(self, node: Any) -> list[Any]:  # noqa: ANN401
+                """Return predecessors of node.
+
+                Args:
+                    node: Node identifier
+
+                Returns:
+                    List of nodes that point to this node
+
+                """
                 preds = []
                 for u, neighbors in self._edges.items():
                     if node in neighbors:
                         preds.append(u)
                 return preds
 
-            def has_edge(self, u, v):
-                """Check if edge exists."""
+            def has_edge(self, u: Any, v: Any) -> bool:  # noqa: ANN401
+                """Check if edge exists.
+
+                Args:
+                    u: Source node identifier
+                    v: Target node identifier
+
+                Returns:
+                    True if edge exists, False otherwise
+
+                """
                 return u in self._edges and v in self._edges[u]
 
-            def copy(self):
-                """Return copy of graph."""
+            def copy(self) -> "_IntellicrackNetworkX.DiGraph":
+                """Return copy of graph.
+
+                Returns:
+                    Deep copy of this graph with all nodes and edges
+
+                """
                 new_graph = self.__class__()
                 new_graph._nodes = self._nodes.copy()
                 new_graph._edges = {u: neighbors.copy() for u, neighbors in self._edges.items()}
@@ -204,15 +286,33 @@ except ImportError as e:
         class NetworkXError(Exception):
             """NetworkX-compatible exception."""
 
-            pass
 
         @staticmethod
-        def simple_cycles(graph):
-            """Find simple cycles using DFS."""
+        def simple_cycles(graph: "_IntellicrackNetworkX.DiGraph") -> list[list[Any]]:  # noqa: ANN401
+            """Find simple cycles using DFS.
 
-            def _dfs_cycles(node, path, visited, stack):
+            Args:
+                graph: The directed graph to analyze for cycles
+
+            Returns:
+                List of cycles, where each cycle is a list of node identifiers
+
+            """
+
+            def _dfs_cycles(node: Any, path: list[Any], visited: set[Any], stack: list[Any]) -> list[list[Any]]:  # noqa: ANN401
+                """Perform depth-first search to find cycles.
+
+                Args:
+                    node: Current node being visited
+                    path: Current path being traversed
+                    visited: Set of already visited nodes
+                    stack: Current stack of nodes in the path
+
+                Returns:
+                    List of cycles found from this node
+
+                """
                 if node in stack:
-                    # Found cycle
                     cycle_start = stack.index(node)
                     return [stack[cycle_start:]]
 
@@ -240,16 +340,30 @@ except ImportError as e:
             return all_cycles
 
         @staticmethod
-        def strongly_connected_components(graph):
-            """Find strongly connected components using Tarjan's algorithm."""
-            index_counter = [0]
-            stack = []
-            lowlinks = {}
-            index = {}
-            on_stack = {}
-            components = []
+        def strongly_connected_components(graph: "_IntellicrackNetworkX.DiGraph") -> list[list[Any]]:  # noqa: ANN401
+            """Find strongly connected components using Tarjan's algorithm.
 
-            def _strongconnect(node) -> None:
+            Args:
+                graph: The directed graph to analyze
+
+            Returns:
+                List of strongly connected components, each as a list of node identifiers
+
+            """
+            index_counter = [0]
+            stack: list[Any] = []
+            lowlinks: dict[Any, int] = {}
+            index: dict[Any, int] = {}
+            on_stack: dict[Any, bool] = {}
+            components: list[list[Any]] = []
+
+            def _strongconnect(node: Any) -> None:  # noqa: ANN401
+                """Recursively find strongly connected components.
+
+                Args:
+                    node: The current node to process
+
+                """
                 index[node] = index_counter[0]
                 lowlinks[node] = index_counter[0]
                 index_counter[0] += 1
@@ -264,7 +378,7 @@ except ImportError as e:
                         lowlinks[node] = min(lowlinks[node], index[neighbor])
 
                 if lowlinks[node] == index[node]:
-                    component = []
+                    component: list[Any] = []
                     while True:
                         w = stack.pop()
                         on_stack[w] = False
@@ -280,8 +394,24 @@ except ImportError as e:
             return components
 
         @staticmethod
-        def pagerank(graph, alpha=0.85, max_iter=100, tol=1e-6):
-            """Calculate PageRank using power iteration."""
+        def pagerank(
+            graph: "_IntellicrackNetworkX.DiGraph",
+            alpha: float = 0.85,
+            max_iter: int = 100,
+            tol: float = 1e-6,
+        ) -> dict[Any, float]:  # noqa: ANN401
+            """Calculate PageRank using power iteration.
+
+            Args:
+                graph: The directed graph to analyze
+                alpha: Damping factor (0 to 1), default 0.85
+                max_iter: Maximum number of iterations, default 100
+                tol: Convergence tolerance, default 1e-6
+
+            Returns:
+                Dictionary mapping nodes to their PageRank scores
+
+            """
             nodes = list(graph.nodes())
             if not nodes:
                 return {}
@@ -289,15 +419,14 @@ except ImportError as e:
             n = len(nodes)
             {node: i for i, node in enumerate(nodes)}
 
-            # Initialize PageRank values
             pr = dict.fromkeys(nodes, 1.0 / n)
 
             for _ in range(max_iter):
-                new_pr = {}
-                max_diff = 0
+                new_pr: dict[Any, float] = {}
+                max_diff = 0.0
 
                 for node in nodes:
-                    rank_sum = 0
+                    rank_sum = 0.0
                     predecessors = graph.predecessors(node)
                     for pred in predecessors:
                         out_degree = len(graph.successors(pred))
@@ -315,22 +444,29 @@ except ImportError as e:
             return pr
 
         @staticmethod
-        def betweenness_centrality(graph):
-            """Calculate betweenness centrality."""
+        def betweenness_centrality(graph: "_IntellicrackNetworkX.DiGraph") -> dict[Any, float]:  # noqa: ANN401
+            """Calculate betweenness centrality.
+
+            Args:
+                graph: The directed graph to analyze
+
+            Returns:
+                Dictionary mapping nodes to their betweenness centrality scores
+
+            """
             nodes = list(graph.nodes())
-            centrality = dict.fromkeys(nodes, 0.0)
+            centrality: dict[Any, float] = dict.fromkeys(nodes, 0.0)
 
             for source in nodes:
-                # Single source shortest paths using BFS
-                stack = []
-                paths = {node: [] for node in nodes}
+                stack: list[Any] = []
+                paths: dict[Any, list[Any]] = {node: [] for node in nodes}
                 paths[source] = [source]
-                sigma = dict.fromkeys(nodes, 0)
+                sigma: dict[Any, int] = dict.fromkeys(nodes, 0)
                 sigma[source] = 1
-                distances = dict.fromkeys(nodes, -1)
+                distances: dict[Any, int] = dict.fromkeys(nodes, -1)
                 distances[source] = 0
 
-                queue = [source]
+                queue: list[Any] = [source]
                 while queue:
                     node = queue.pop(0)
                     stack.append(node)
@@ -344,8 +480,7 @@ except ImportError as e:
                             sigma[neighbor] += sigma[node]
                             paths[neighbor].extend(paths[node])
 
-                # Accumulation
-                delta = dict.fromkeys(nodes, 0)
+                delta: dict[Any, float] = dict.fromkeys(nodes, 0)
                 while stack:
                     node = stack.pop()
                     for pred in graph.predecessors(node):
@@ -355,7 +490,6 @@ except ImportError as e:
                     if node != source:
                         centrality[node] += delta[node]
 
-            # Normalize
             n = len(nodes)
             if n > 2:
                 for node in nodes:
@@ -364,16 +498,23 @@ except ImportError as e:
             return centrality
 
         @staticmethod
-        def closeness_centrality(graph):
-            """Calculate closeness centrality."""
+        def closeness_centrality(graph: "_IntellicrackNetworkX.DiGraph") -> dict[Any, float]:  # noqa: ANN401
+            """Calculate closeness centrality.
+
+            Args:
+                graph: The directed graph to analyze
+
+            Returns:
+                Dictionary mapping nodes to their closeness centrality scores
+
+            """
             nodes = list(graph.nodes())
-            centrality = {}
+            centrality: dict[Any, float] = {}
 
             for node in nodes:
-                # BFS to calculate shortest paths
-                distances = {n: float("inf") for n in nodes}
+                distances: dict[Any, float | int] = {n: float("inf") for n in nodes}
                 distances[node] = 0
-                queue = [node]
+                queue: list[Any] = [node]
 
                 while queue:
                     current = queue.pop(0)
@@ -382,7 +523,6 @@ except ImportError as e:
                             distances[neighbor] = distances[current] + 1
                             queue.append(neighbor)
 
-                # Calculate closeness
                 reachable = [d for d in distances.values() if d != float("inf") and d > 0]
                 if reachable:
                     centrality[node] = len(reachable) / sum(reachable)
@@ -392,8 +532,24 @@ except ImportError as e:
             return centrality
 
         @staticmethod
-        def spring_layout(graph, k=None, pos=None, iterations=50):
-            """Spring layout algorithm for graph visualization."""
+        def spring_layout(
+            graph: "_IntellicrackNetworkX.DiGraph",
+            k: float | None = None,
+            pos: dict[Any, tuple[float, float]] | None = None,  # noqa: ANN401
+            iterations: int = 50,
+        ) -> dict[Any, tuple[float, float]]:  # noqa: ANN401
+            """Spring layout algorithm for graph visualization.
+
+            Args:
+                graph: The directed graph to layout
+                k: Optimal distance between nodes, default calculated from graph size
+                pos: Initial positions dictionary, default creates circular layout
+                iterations: Number of force-directed iterations, default 50
+
+            Returns:
+                Dictionary mapping nodes to (x, y) coordinate tuples
+
+            """
             import math
 
             nodes = list(graph.nodes())
@@ -404,9 +560,7 @@ except ImportError as e:
             if k is None:
                 k = 1 / math.sqrt(n)
 
-            # Initialize positions
             if pos is None:
-                # Use deterministic circular layout for initial positions
                 pos = {}
                 angle_step = 2 * math.pi / n
                 radius = 0.5
@@ -418,11 +572,9 @@ except ImportError as e:
             else:
                 pos = pos.copy()
 
-            # Iterate
             for _ in range(iterations):
-                forces = {node: [0, 0] for node in nodes}
+                forces: dict[Any, list[float]] = {node: [0, 0] for node in nodes}
 
-                # Repulsive forces
                 for i, node1 in enumerate(nodes):
                     for j, node2 in enumerate(nodes):
                         if i != j:
@@ -434,7 +586,6 @@ except ImportError as e:
                             forces[node1][0] += force * dx / dist
                             forces[node1][1] += force * dy / dist
 
-                # Attractive forces
                 for edge in graph.edges():
                     u, v = edge[0], edge[1]
                     x1, y1 = pos[u]
@@ -447,7 +598,6 @@ except ImportError as e:
                     forces[v][0] -= force * dx / dist
                     forces[v][1] -= force * dy / dist
 
-                # Update positions
                 for node in nodes:
                     fx, fy = forces[node]
                     x, y = pos[node]
@@ -456,8 +606,16 @@ except ImportError as e:
             return pos
 
         @staticmethod
-        def circular_layout(graph):
-            """Circular layout for graph visualization."""
+        def circular_layout(graph: "_IntellicrackNetworkX.DiGraph") -> dict[Any, tuple[float, float]]:  # noqa: ANN401
+            """Circular layout for graph visualization.
+
+            Args:
+                graph: The directed graph to layout
+
+            Returns:
+                Dictionary mapping nodes to (x, y) coordinate tuples arranged in a circle
+
+            """
             import math
 
             nodes = list(graph.nodes())
@@ -465,7 +623,7 @@ except ImportError as e:
                 return {}
 
             n = len(nodes)
-            positions = {}
+            positions: dict[Any, tuple[float, float]] = {}
 
             for i, node in enumerate(nodes):
                 angle = 2 * math.pi * i / n
@@ -476,10 +634,21 @@ except ImportError as e:
             return positions
 
         @staticmethod
-        def draw_networkx(graph, pos=None, ax=None, **kwargs) -> None:
-            """Draw graph with basic functionality."""
-            # This would require matplotlib integration
-            # For now, just log the drawing request
+        def draw_networkx(
+            graph: "_IntellicrackNetworkX.DiGraph",
+            pos: dict[Any, tuple[float, float]] | None = None,  # noqa: ANN401
+            ax: Any = None,  # noqa: ANN401
+            **kwargs: Any,  # noqa: ANN401
+        ) -> None:
+            """Draw graph with basic functionality.
+
+            Args:
+                graph: The directed graph to draw
+                pos: Optional positions dictionary for nodes
+                ax: Optional matplotlib axes object
+                **kwargs: Additional keyword arguments for drawing
+
+            """
             logger.info(f"Drawing graph with {graph.number_of_nodes()} nodes and {graph.number_of_edges()} edges")
 
         class Drawing:
@@ -489,25 +658,36 @@ except ImportError as e:
                 """PyDot interface for NetworkX compatibility."""
 
                 @staticmethod
-                def write_dot(graph, path) -> None:
-                    """Write graph in DOT format."""
+                def write_dot(graph: "_IntellicrackNetworkX.DiGraph", path: str) -> None:  # noqa: ANN401
+                    """Write graph in DOT format.
+
+                    Args:
+                        graph: The directed graph to export
+                        path: File path where to write the DOT file
+
+                    """
                     with open(path, "w", encoding="utf-8") as f:
                         f.write("digraph G {\n")
                         f.write("    node [shape=box];\n")
 
-                        # Write nodes
-                        for node in graph.nodes():
-                            f.write(f'    "{node}";\n')
+                        f.writelines(f'    "{node}";\n' for node in graph.nodes())
 
-                        # Write edges
-                        for u, v in graph.edges():
-                            f.write(f'    "{u}" -> "{v}";\n')
+                        f.writelines(f'    "{u}" -> "{v}";\n' for u, v in graph.edges())
 
                         f.write("}\n")
 
                 @staticmethod
-                def graphviz_layout(graph, prog="dot"):
-                    """Graphviz layout (fallback to spring layout)."""
+                def graphviz_layout(graph: "_IntellicrackNetworkX.DiGraph", prog: str = "dot") -> dict[Any, tuple[float, float]]:  # noqa: ANN401
+                    """Graphviz layout (fallback to spring layout).
+
+                    Args:
+                        graph: The directed graph to layout
+                        prog: Graphviz program to use (default 'dot')
+
+                    Returns:
+                        Dictionary mapping nodes to (x, y) coordinate tuples
+
+                    """
                     logger.warning("Graphviz not available, using spring layout")
                     return _IntellicrackNetworkX.spring_layout(graph)
 
@@ -721,7 +901,7 @@ class CFGExplorer:
             self.logger.error(f"Error loading binary with advanced analysis: {e}")
             return False
 
-    def _create_enhanced_function_graph(self, graph_data: dict[str, Any], r2, function_addr: int) -> nx.DiGraph:
+    def _create_enhanced_function_graph(self, graph_data: dict[str, Any], r2: Any, function_addr: int) -> nx.DiGraph:  # noqa: ANN401
         """Create enhanced function graph with comprehensive node data."""
         function_graph = nx.DiGraph()
 
@@ -841,7 +1021,7 @@ class CFGExplorer:
 
         return complexity
 
-    def _build_call_graph(self, r2) -> None:
+    def _build_call_graph(self, r2: Any) -> None:  # noqa: ANN401
         """Build inter-function call graph."""
         try:
             # Get all cross-references
@@ -2137,26 +2317,28 @@ class CFGExplorer:
             except Exception as e:
                 self.logger.warning(f"Failed to export some metrics: {e}")
 
-            # Handle special types in the export data
-            def json_serializable(obj):
-                """Convert non-serializable objects to JSON-friendly format."""
+            def json_serializable(obj: Any) -> Any:  # noqa: ANN401
+                """Convert non-serializable objects to JSON-friendly format.
+
+                Args:
+                    obj: Object to convert to JSON-serializable format
+
+                Returns:
+                    JSON-serializable representation of the object
+
+                """
                 if isinstance(obj, (nx.Graph, nx.DiGraph)):
-                    # Convert NetworkX graphs to dict representation
                     return {
                         "nodes": list(obj.nodes()),
                         "edges": list(obj.edges()),
                         "graph_type": "networkx_graph",
                     }
                 if hasattr(obj, "__dict__"):
-                    # Convert objects with __dict__ to dict
                     return obj.__dict__
                 if isinstance(obj, bytes):
-                    # Convert bytes to hex string
                     return obj.hex()
                 if hasattr(obj, "tolist"):
-                    # Convert numpy arrays to lists
                     return obj.tolist()
-                # Default to string representation
                 return str(obj)
 
             # Write JSON file with proper formatting
@@ -2183,8 +2365,13 @@ class CFGExplorer:
             return False
 
 
-def run_deep_cfg_analysis(app) -> None:
-    """Run deep CFG analysis."""
+def run_deep_cfg_analysis(app: Any) -> None:  # noqa: ANN401
+    """Run deep CFG analysis.
+
+    Args:
+        app: Application instance with binary path and output methods
+
+    """
     if not app.binary_path:
         app.update_output.emit(log_message("[CFG Analysis] No binary selected."))
         return
@@ -2341,8 +2528,13 @@ def run_deep_cfg_analysis(app) -> None:
         app.analyze_status.setText(f"CFG analysis error: {e!s}")
 
 
-def run_cfg_explorer(app) -> None:
-    """Initialize and run the CFG explorer with GUI integration."""
+def run_cfg_explorer(app: Any) -> None:  # noqa: ANN401
+    """Initialize and run the CFG explorer with GUI integration.
+
+    Args:
+        app: Application instance with binary path and output methods
+
+    """
     if not PYQT_AVAILABLE:
         print("PyQt6 not available - cannot run GUI version")
         return

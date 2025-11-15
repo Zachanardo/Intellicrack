@@ -19,6 +19,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import hashlib
 import struct
+from typing import Optional, Tuple, Union, Any
 
 from intellicrack.utils.logger import log_all_methods, logger
 
@@ -235,20 +236,33 @@ except ImportError as e:
     class PEFormatError(Exception):
         """PE format error exception."""
 
-        pass
 
     class Structure:
         """Base structure for PE components."""
 
-        def __init__(self, format_str=None, name=None) -> None:
-            """Initialize structure."""
+        def __init__(self, format_str: Optional[str] = None, name: Optional[str] = None) -> None:
+            """Initialize structure.
+
+            Args:
+                format_str: Struct format string for binary unpacking, defaults to None.
+                name: Human-readable name for the structure, defaults to "Structure".
+
+            """
             self.format_str = format_str
             self.name = name or "Structure"
             self.sizeof = struct.calcsize(format_str) if format_str else 0
             self.fields = []
 
-        def unpack(self, data):
-            """Unpack binary data."""
+        def unpack(self, data: bytes) -> Tuple[Any, ...]:
+            """Unpack binary data.
+
+            Args:
+                data: Raw binary data to unpack according to the format string.
+
+            Returns:
+                Tuple of unpacked values, or empty tuple if no format string defined.
+
+            """
             if self.format_str:
                 return struct.unpack(self.format_str, data[: self.sizeof])
             return ()
@@ -257,8 +271,15 @@ except ImportError as e:
     class FallbackPE:
         """Functional PE file parser implementation."""
 
-        def __init__(self, name=None, data=None, fast_load=None) -> None:
-            """Initialize PE parser."""
+        def __init__(self, name: Optional[str] = None, data: Optional[bytes] = None, fast_load: Optional[bool] = None) -> None:
+            """Initialize PE parser.
+
+            Args:
+                name: Path to PE file to load, defaults to None.
+                data: Raw binary data of PE file, defaults to None.
+                fast_load: Skip parsing imports, exports, and resources if True, defaults to None.
+
+            """
             self.name = name
             self.fast_load = fast_load
             self.__data__ = data
@@ -334,8 +355,16 @@ except ImportError as e:
                 self._parse_debug()
                 self._parse_relocations()
 
-        def _parse_file_header(self, offset):
-            """Parse COFF file header."""
+        def _parse_file_header(self, offset: int) -> Any:  # noqa: ANN401
+            """Parse COFF file header.
+
+            Args:
+                offset: File offset where COFF header begins.
+
+            Returns:
+                FileHeader object with parsed Machine, NumberOfSections, and other fields.
+
+            """
 
             class FileHeader:
                 pass
@@ -353,8 +382,16 @@ except ImportError as e:
 
             return header
 
-        def _parse_optional_header32(self, offset):
-            """Parse 32-bit optional header."""
+        def _parse_optional_header32(self, offset: int) -> Any:  # noqa: ANN401
+            """Parse 32-bit optional header.
+
+            Args:
+                offset: File offset where optional header begins.
+
+            Returns:
+                OptionalHeader object with parsed 32-bit optional header fields.
+
+            """
 
             class OptionalHeader:
                 pass
@@ -410,8 +447,16 @@ except ImportError as e:
 
             return header
 
-        def _parse_optional_header64(self, offset):
-            """Parse 64-bit optional header."""
+        def _parse_optional_header64(self, offset: int) -> Any:  # noqa: ANN401
+            """Parse 64-bit optional header.
+
+            Args:
+                offset: File offset where optional header begins.
+
+            Returns:
+                OptionalHeader object with parsed 64-bit optional header fields.
+
+            """
 
             class OptionalHeader:
                 pass
@@ -466,8 +511,14 @@ except ImportError as e:
 
             return header
 
-        def _parse_sections(self, offset, count) -> None:
-            """Parse section headers."""
+        def _parse_sections(self, offset: int, count: int) -> None:
+            """Parse section headers.
+
+            Args:
+                offset: File offset where first section header begins.
+                count: Number of section headers to parse.
+
+            """
             for i in range(count):
                 section_offset = offset + i * 40
                 if section_offset + 40 > len(self.__data__):
@@ -555,8 +606,14 @@ except ImportError as e:
 
                 offset += 20
 
-        def _parse_import_thunks(self, import_desc, offset) -> None:
-            """Parse import thunks."""
+        def _parse_import_thunks(self, import_desc: Any, offset: int) -> None:  # noqa: ANN401
+            """Parse import thunks.
+
+            Args:
+                import_desc: ImportDescriptor object to populate with import thunk data.
+                offset: File offset where import thunks begin.
+
+            """
             is_64bit = self.OPTIONAL_HEADER.Magic == 0x20B
             thunk_size = 8 if is_64bit else 4
 
@@ -695,48 +752,83 @@ except ImportError as e:
         def _parse_resources(self) -> None:
             """Parse resource directory."""
             # Basic resource parsing - implement if needed
-            pass
 
         def _parse_debug(self) -> None:
             """Parse debug directory."""
             # Basic debug info parsing - implement if needed
-            pass
 
         def _parse_relocations(self) -> None:
             """Parse base relocations."""
             # Basic relocation parsing - implement if needed
-            pass
 
-        def _get_string(self, offset):
-            """Get null-terminated string from offset."""
+        def _get_string(self, offset: int) -> str:
+            """Get null-terminated string from offset.
+
+            Args:
+                offset: File offset where string begins.
+
+            Returns:
+                Null-terminated ASCII string decoded from binary data.
+
+            """
             end = self.__data__.find(b"\x00", offset)
             if end == -1:
                 end = len(self.__data__)
             return self.__data__[offset:end].decode("ascii", errors="ignore")
 
-        def get_offset_from_rva(self, rva):
-            """Convert RVA to file offset."""
+        def get_offset_from_rva(self, rva: int) -> Optional[int]:
+            """Convert RVA to file offset.
+
+            Args:
+                rva: Relative Virtual Address to convert.
+
+            Returns:
+                File offset corresponding to RVA, or None if RVA is not in any section.
+
+            """
             for section in self.sections:
                 if section.VirtualAddress <= rva < section.VirtualAddress + section.VirtualSize:
                     return rva - section.VirtualAddress + section.PointerToRawData
             return None
 
-        def get_rva_from_offset(self, offset):
-            """Convert file offset to RVA."""
+        def get_rva_from_offset(self, offset: int) -> Optional[int]:
+            """Convert file offset to RVA.
+
+            Args:
+                offset: File offset to convert.
+
+            Returns:
+                Relative Virtual Address corresponding to file offset, or None if not in any section.
+
+            """
             for section in self.sections:
                 if section.PointerToRawData <= offset < section.PointerToRawData + section.SizeOfRawData:
                     return offset - section.PointerToRawData + section.VirtualAddress
             return None
 
-        def get_data(self, rva, length):
-            """Get data at RVA."""
+        def get_data(self, rva: int, length: int) -> Optional[bytes]:
+            """Get data at RVA.
+
+            Args:
+                rva: Relative Virtual Address to read from.
+                length: Number of bytes to read.
+
+            Returns:
+                Binary data from RVA, or None if RVA is invalid or insufficient data available.
+
+            """
             offset = self.get_offset_from_rva(rva)
             if offset and offset + length <= len(self.__data__):
                 return self.__data__[offset : offset + length]
             return None
 
-        def get_memory_mapped_image(self):
-            """Get memory-mapped image."""
+        def get_memory_mapped_image(self) -> Optional[bytes]:
+            """Get memory-mapped image.
+
+            Returns:
+                Binary representation of PE as loaded in memory with sections mapped to virtual addresses, or None if unable to create.
+
+            """
             if not self.OPTIONAL_HEADER:
                 return None
 
@@ -761,8 +853,13 @@ except ImportError as e:
 
             return bytes(image)
 
-        def get_imphash(self):
-            """Calculate import hash."""
+        def get_imphash(self) -> str:
+            """Calculate import hash.
+
+            Returns:
+                SHA256 hash of import function names and ordinals for static binary signature.
+
+            """
             if not self.DIRECTORY_ENTRY_IMPORT:
                 return ""
 
@@ -780,8 +877,13 @@ except ImportError as e:
             imp_str = imp_str.rstrip(",")
             return hashlib.sha256(imp_str.encode()).hexdigest() if imp_str else ""
 
-        def get_rich_header_hash(self):
-            """Calculate Rich header hash."""
+        def get_rich_header_hash(self) -> Optional[str]:
+            """Calculate Rich header hash.
+
+            Returns:
+                SHA256 hash of Rich header data between DanS marker and Rich signature, or None if not found.
+
+            """
             # Find Rich header
             rich_index = self.__data__.find(b"Rich")
             if rich_index == -1:
@@ -796,8 +898,13 @@ except ImportError as e:
             rich_data = self.__data__[dans_index : rich_index + 8]
             return hashlib.sha256(rich_data).hexdigest()
 
-        def generate_checksum(self):
-            """Generate PE checksum."""
+        def generate_checksum(self) -> int:
+            """Generate PE checksum.
+
+            Returns:
+                Calculated PE checksum value used for integrity verification.
+
+            """
             checksum = 0
             top = 2**32
 
@@ -818,26 +925,49 @@ except ImportError as e:
 
             return checksum + len(self.__data__)
 
-        def is_exe(self):
-            """Check if file is EXE."""
+        def is_exe(self) -> bool:
+            """Check if file is EXE.
+
+            Returns:
+                True if PE file is executable, False otherwise.
+
+            """
             if self.FILE_HEADER and self.FILE_HEADER.Characteristics:
                 return bool(self.FILE_HEADER.Characteristics & IMAGE_CHARACTERISTICS.IMAGE_FILE_EXECUTABLE_IMAGE)
             return False
 
-        def is_dll(self):
-            """Check if file is DLL."""
+        def is_dll(self) -> bool:
+            """Check if file is DLL.
+
+            Returns:
+                True if PE file is a dynamic library, False otherwise.
+
+            """
             if self.FILE_HEADER and self.FILE_HEADER.Characteristics:
                 return bool(self.FILE_HEADER.Characteristics & IMAGE_CHARACTERISTICS.IMAGE_FILE_DLL)
             return False
 
-        def is_driver(self):
-            """Check if file is driver."""
+        def is_driver(self) -> bool:
+            """Check if file is driver.
+
+            Returns:
+                True if PE file is a system driver, False otherwise.
+
+            """
             if self.OPTIONAL_HEADER:
                 return self.OPTIONAL_HEADER.Subsystem == SUBSYSTEM_TYPE.IMAGE_SUBSYSTEM_NATIVE
             return False
 
-        def write(self, filename=None):
-            """Write PE to file."""
+        def write(self, filename: Optional[str] = None) -> bytes:
+            """Write PE to file.
+
+            Args:
+                filename: Output file path to write PE binary to, defaults to None.
+
+            Returns:
+                Binary PE data that was written.
+
+            """
             if filename:
                 with open(filename, "wb") as f:
                     f.write(self.__data__)

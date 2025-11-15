@@ -29,7 +29,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from intellicrack.utils.project_paths import get_project_root
 
@@ -87,7 +87,7 @@ class AIAgent:
     Similar to Claude Code - takes a request and autonomously completes it.
     """
 
-    def __init__(self, orchestrator: Optional[Any] = None, cli_interface: Optional[Any] = None) -> None:
+    def __init__(self, orchestrator: Any | None = None, cli_interface: Any | None = None) -> None:
         """Initialize the AI agent with orchestrator and CLI interface.
 
         Args:
@@ -362,7 +362,7 @@ class AIAgent:
         """Normalize strings data from various formats to a list of strings."""
         if isinstance(strings_data, dict):
             return strings_data.get('strings', [])
-        elif isinstance(strings_data, list):
+        if isinstance(strings_data, list):
             return strings_data
         return []
 
@@ -385,7 +385,7 @@ class AIAgent:
         """Extract string value from entry (dict or str)."""
         if isinstance(string_entry, dict):
             return string_entry.get('value', '')
-        elif isinstance(string_entry, str):
+        if isinstance(string_entry, str):
             return string_entry
         return ''
 
@@ -396,7 +396,7 @@ class AIAgent:
 
     def _validate_binary_path(self, binary_path: str) -> bool:
         """Validate binary path for security."""
-        if not binary_path or not os.path.isabs(binary_path):
+        if not binary_path or not Path(binary_path).is_absolute():
             logger.warning("Invalid binary path provided: %s", binary_path)
             return False
 
@@ -433,7 +433,7 @@ class AIAgent:
             try:
                 # Validate that strings_cmd is a safe absolute path
                 strings_cmd_path = shutil.which("strings") or strings_cmd
-                if not strings_cmd_path or not os.path.isabs(strings_cmd_path):
+                if not strings_cmd_path or not Path(strings_cmd_path).is_absolute():
                     strings_cmd_path = strings_cmd_path or "strings"
                 # Validate inputs to prevent command injection
                 if not isinstance(binary_path, str) or ".." in binary_path or binary_path.startswith(";"):
@@ -618,7 +618,7 @@ class AIAgent:
 
     def _validate_import_binary_path(self, binary_path: str) -> bool:
         """Validate binary path for import analysis."""
-        if not os.path.isabs(binary_path):
+        if not Path(binary_path).is_absolute():
             logger.warning(f"Binary path is not absolute: {binary_path}")
             return False
         if not os.path.exists(binary_path):
@@ -821,7 +821,7 @@ class AIAgent:
             logger.debug(f"Not a PE file or PE analysis failed: {e}")
         return []
 
-    def _extract_dll_imports(self, pe, network_api_patterns: list[str]) -> list[str]:
+    def _extract_dll_imports(self, pe: Any, network_api_patterns: list[str]) -> list[str]:
         """Extract DLL imports matching network API patterns."""
         dll_imports = []
         for entry in pe.DIRECTORY_ENTRY_IMPORT:
@@ -830,7 +830,7 @@ class AIAgent:
                 dll_imports.append(f"imports:{dll_name}")
         return dll_imports
 
-    def _extract_function_imports(self, pe, network_api_patterns: list[str]) -> list[str]:
+    def _extract_function_imports(self, pe: Any, network_api_patterns: list[str]) -> list[str]:
         """Extract function imports matching network API patterns."""
         function_imports = []
         for entry in pe.DIRECTORY_ENTRY_IMPORT:
@@ -1134,12 +1134,12 @@ class AIAgent:
         except Exception as e:
             logger.debug(f"ELF analysis failed: {e}")
 
-    def _elf_section_indicates_network(self, section) -> bool:
+    def _elf_section_indicates_network(self, section: Any) -> bool:
         """Return True if a section name likely indicates networking functionality."""
         name = getattr(section, "name", "") or ""
         return "net" in name.lower() or "socket" in name.lower()
 
-    def _elf_lib_protocol(self, lib_name: str) -> Optional[str]:
+    def _elf_lib_protocol(self, lib_name: str) -> str | None:
         """Map a library name to a protocol indicator when relevant."""
         lib_l = (lib_name or "").lower()
         if "ssl" in lib_l:
@@ -1309,8 +1309,7 @@ class AIAgent:
         try:
             if platform.system() == "Windows":
                 return self._test_in_windows_sandbox(script, binary_path, has_network)
-            else:
-                return self._test_in_linux_firejail(script, binary_path, has_network)
+            return self._test_in_linux_firejail(script, binary_path, has_network)
         except Exception as e:
             logger.error(f"Sandbox execution failed: {e}")
             return self._fallback_execution(script, binary_path)
@@ -2104,7 +2103,7 @@ class AIAgent:
         self,
         script_name: str,
         target_binary: str,
-        parameters: Optional[dict] = None,
+        parameters: dict | None = None,
         mode: str = "spawn",
     ) -> tuple[bool, list[str]]:
         """Execute a Frida script from the library by name.

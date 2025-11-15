@@ -368,12 +368,11 @@ class ThemidaAnalyzer:
         max_score = max(cisc_score, risc_score, fish_score)
         if max_score == 0:
             return VMArchitecture.UNKNOWN
-        elif max_score == cisc_score:
+        if max_score == cisc_score:
             return VMArchitecture.CISC
-        elif max_score == risc_score:
+        if max_score == risc_score:
             return VMArchitecture.RISC
-        else:
-            return VMArchitecture.FISH
+        return VMArchitecture.FISH
 
     def _find_handler_table(self) -> int:
         """Find virtual machine handler dispatch table."""
@@ -545,18 +544,17 @@ class ThemidaAnalyzer:
 
         if any(m in ["add", "sub", "mul", "imul", "div", "idiv"] for m in mnemonics):
             return "arithmetic"
-        elif any(m in ["and", "or", "xor", "not", "shl", "shr", "rol", "ror"] for m in mnemonics):
+        if any(m in ["and", "or", "xor", "not", "shl", "shr", "rol", "ror"] for m in mnemonics):
             return "logical"
-        elif any(m in ["mov", "movzx", "movsx", "lea"] for m in mnemonics):
+        if any(m in ["mov", "movzx", "movsx", "lea"] for m in mnemonics):
             return "data_transfer"
-        elif any(m in ["cmp", "test"] for m in mnemonics):
+        if any(m in ["cmp", "test"] for m in mnemonics):
             return "comparison"
-        elif any(m in ["jmp", "je", "jne", "jg", "jl", "ja", "jb", "call"] for m in mnemonics):
+        if any(m in ["jmp", "je", "jne", "jg", "jl", "ja", "jb", "call"] for m in mnemonics):
             return "control_flow"
-        elif any(m in ["push", "pop"] for m in mnemonics):
+        if any(m in ["push", "pop"] for m in mnemonics):
             return "stack_operation"
-        else:
-            return "complex"
+        return "complex"
 
     def _calculate_handler_complexity(self, instructions: list[tuple[int, str, str]]) -> int:
         """Calculate handler complexity score (1-10)."""

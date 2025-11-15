@@ -207,7 +207,7 @@ class ProtectionAwareScriptGenerator:
             "icp_analysis": result.icp_analysis,
         }
 
-    def _generate_ai_prompt(self, result, protection_type: str, confidence: float, protection_info: Any) -> str:
+    def _generate_ai_prompt(self, result: Any, protection_type: str, confidence: float, protection_info: Any) -> str:
         """Generate AI prompt for script enhancement."""
         prompt = f"""Generate a bypass script for {protection_type} protection.
 
@@ -254,7 +254,7 @@ Focus on the most effective approach for this specific protection type.
 
         return prompt
 
-    def _format_detections(self, result) -> str:
+    def _format_detections(self, result: Any) -> str:
         """Format detections for display."""
         lines = []
 
@@ -5193,7 +5193,7 @@ print("[+] Generic {script_type} analysis started")
 
 
 # Integration function
-def enhance_ai_script_generation(ai_generator, binary_path: str) -> dict[str, Any]:
+def enhance_ai_script_generation(ai_generator: Any, binary_path: str) -> dict[str, Any]:
     """Enhance existing AI script generation with protection awareness.
 
     This function integrates AI-powered enhancements into protection-specific

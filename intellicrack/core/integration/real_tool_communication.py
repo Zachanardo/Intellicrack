@@ -22,7 +22,7 @@ import threading
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
 import lz4.frame
 import msgpack
@@ -76,7 +76,7 @@ class ToolMessage:
     correlation_id: str
     timestamp: float
     data: Any
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
 
 @dataclass
@@ -107,7 +107,7 @@ class SharedMemoryManager:
         """
         self.name = name
         self.size = size
-        self.memory: Optional[mmap.mmap] = None
+        self.memory: mmap.mmap | None = None
         self.lock = threading.Lock()
         self._init_shared_memory()
 
@@ -194,7 +194,7 @@ class SharedMemoryManager:
                 logger.error(f"Failed to write message: {e}")
                 return False
 
-    def read_message(self) -> Optional[bytes]:
+    def read_message(self) -> bytes | None:
         """Read message from shared memory."""
         with self.lock:
             try:
@@ -270,16 +270,15 @@ class SerializationProtocol:
 
         if format == SerializationFormat.JSON:
             return json.dumps(data).encode("utf-8")
-        elif format == SerializationFormat.MSGPACK:
+        if format == SerializationFormat.MSGPACK:
             packed = msgpack.packb(data)
             # Compress with LZ4 for efficiency
             return lz4.frame.compress(packed)
-        else:
-            # Default to msgpack
-            return msgpack.packb(data)
+        # Default to msgpack
+        return msgpack.packb(data)
 
     @staticmethod
-    def deserialize(data: bytes, format: SerializationFormat = SerializationFormat.MSGPACK) -> Optional[ToolMessage]:
+    def deserialize(data: bytes, format: SerializationFormat = SerializationFormat.MSGPACK) -> ToolMessage | None:
         """Deserialize bytes to message."""
         try:
             if format == SerializationFormat.JSON:
@@ -314,10 +313,10 @@ class ToolMonitor:
 
     def __init__(self) -> None:
         """Initialize the ToolMonitor with empty tools dictionary and lock."""
-        self.tools: Dict[ToolType, ToolStatus] = {}
+        self.tools: dict[ToolType, ToolStatus] = {}
         self.lock = threading.Lock()
         self.monitoring = False
-        self.monitor_thread: Optional[threading.Thread] = None
+        self.monitor_thread: threading.Thread | None = None
 
     def register_tool(self, tool: ToolType, pid: int) -> None:
         """Register a tool for monitoring."""
@@ -383,12 +382,12 @@ class ToolMonitor:
         if self.monitor_thread:
             self.monitor_thread.join(timeout=5)
 
-    def get_status(self, tool: ToolType) -> Optional[ToolStatus]:
+    def get_status(self, tool: ToolType) -> ToolStatus | None:
         """Get tool status."""
         with self.lock:
             return self.tools.get(tool)
 
-    def get_all_status(self) -> Dict[ToolType, ToolStatus]:
+    def get_all_status(self) -> dict[ToolType, ToolStatus]:
         """Get all tool statuses."""
         with self.lock:
             return self.tools.copy()
@@ -400,8 +399,8 @@ class FailureRecovery:
     def __init__(self) -> None:
         """Initialize the FailureRecovery with retry configuration."""
         self.retry_config = {"max_retries": 3, "base_delay": 1.0, "max_delay": 30.0, "exponential_base": 2}
-        self.failed_messages: Dict[str, List[ToolMessage]] = {}
-        self.recovery_handlers: Dict[ToolType, Callable] = {}
+        self.failed_messages: dict[str, list[ToolMessage]] = {}
+        self.recovery_handlers: dict[ToolType, Callable] = {}
 
     def add_recovery_handler(self, tool: ToolType, handler: Callable) -> None:
         """Add recovery handler for a tool."""
@@ -471,7 +470,7 @@ class ConflictResolver:
         }
         self.tool_weights = {ToolType.GHIDRA: 1.0, ToolType.IDA: 1.2, ToolType.RADARE2: 0.9, ToolType.FRIDA: 0.8}
 
-    def resolve(self, conflicts: List[ToolMessage], strategy: str = "confidence_based") -> Optional[Any]:
+    def resolve(self, conflicts: list[ToolMessage], strategy: str = "confidence_based") -> Any | None:
         """Resolve conflicts between tool results."""
         if strategy not in self.resolution_strategies:
             strategy = "confidence_based"
@@ -479,7 +478,7 @@ class ConflictResolver:
         resolver = self.resolution_strategies[strategy]
         return resolver(conflicts)
 
-    def _majority_vote(self, messages: List[ToolMessage]) -> Optional[Any]:
+    def _majority_vote(self, messages: list[ToolMessage]) -> Any | None:
         """Resolve by majority vote."""
         if not messages:
             return None
@@ -500,7 +499,7 @@ class ConflictResolver:
 
         return None
 
-    def _weighted_average(self, messages: List[ToolMessage]) -> Optional[Any]:
+    def _weighted_average(self, messages: list[ToolMessage]) -> Any | None:
         """Resolve by weighted average."""
         if not messages:
             return None
@@ -530,7 +529,7 @@ class ConflictResolver:
         # For non-numeric, fall back to majority vote
         return self._majority_vote(messages)
 
-    def _confidence_based(self, messages: List[ToolMessage]) -> Optional[Any]:
+    def _confidence_based(self, messages: list[ToolMessage]) -> Any | None:
         """Resolve based on confidence scores."""
         if not messages:
             return None
@@ -547,7 +546,7 @@ class ConflictResolver:
         # Return highest confidence result
         return scored_messages[0][1].data if scored_messages else None
 
-    def _timestamp_based(self, messages: List[ToolMessage]) -> Optional[Any]:
+    def _timestamp_based(self, messages: list[ToolMessage]) -> Any | None:
         """Resolve based on most recent timestamp."""
         if not messages:
             return None
@@ -558,7 +557,7 @@ class ConflictResolver:
         # Return most recent
         return messages[0].data
 
-    def _authority_based(self, messages: List[ToolMessage]) -> Optional[Any]:
+    def _authority_based(self, messages: list[ToolMessage]) -> Any | None:
         """Resolve based on tool authority."""
         if not messages:
             return None
@@ -575,9 +574,9 @@ class LoadBalancer:
 
     def __init__(self) -> None:
         """Initialize the LoadBalancer with empty tool instances and task queues."""
-        self.tool_instances: Dict[ToolType, List[int]] = {}  # Tool -> PIDs
-        self.task_queues: Dict[ToolType, queue.Queue] = {}
-        self.load_metrics: Dict[int, Dict[str, float]] = {}  # PID -> metrics
+        self.tool_instances: dict[ToolType, list[int]] = {}  # Tool -> PIDs
+        self.task_queues: dict[ToolType, queue.Queue] = {}
+        self.load_metrics: dict[int, dict[str, float]] = {}  # PID -> metrics
         self.lock = threading.Lock()
 
     def register_instance(self, tool: ToolType, pid: int) -> None:
@@ -590,7 +589,7 @@ class LoadBalancer:
             self.tool_instances[tool].append(pid)
             self.load_metrics[pid] = {"cpu": 0.0, "memory": 0.0, "queue_size": 0, "response_time": 0.0}
 
-    def get_best_instance(self, tool: ToolType) -> Optional[int]:
+    def get_best_instance(self, tool: ToolType) -> int | None:
         """Get best instance for load balancing."""
         with self.lock:
             if tool not in self.tool_instances:
@@ -663,10 +662,10 @@ class RealToolCommunicator:
         self.resolver = ConflictResolver()
         self.balancer = LoadBalancer()
         self.running = False
-        self.message_handlers: Dict[ToolType, Callable] = {}
-        self.worker_thread: Optional[threading.Thread] = None
+        self.message_handlers: dict[ToolType, Callable] = {}
+        self.worker_thread: threading.Thread | None = None
 
-    def register_tool(self, tool: ToolType, pid: int, handler: Optional[Callable] = None) -> None:
+    def register_tool(self, tool: ToolType, pid: int, handler: Callable | None = None) -> None:
         """Register a tool with the communicator."""
         self.monitor.register_tool(tool, pid)
         self.balancer.register_instance(tool, pid)
@@ -766,15 +765,15 @@ class RealToolCommunicator:
                 )
                 self.send_message(message)
 
-    def resolve_conflicts(self, messages: List[ToolMessage], strategy: str = "confidence_based") -> Optional[Any]:
+    def resolve_conflicts(self, messages: list[ToolMessage], strategy: str = "confidence_based") -> Any | None:
         """Resolve conflicts between tool results."""
         return self.resolver.resolve(messages, strategy)
 
-    def get_tool_status(self, tool: ToolType) -> Optional[ToolStatus]:
+    def get_tool_status(self, tool: ToolType) -> ToolStatus | None:
         """Get status of a specific tool."""
         return self.monitor.get_status(tool)
 
-    def get_all_status(self) -> Dict[ToolType, ToolStatus]:
+    def get_all_status(self) -> dict[ToolType, ToolStatus]:
         """Get status of all tools."""
         return self.monitor.get_all_status()
 

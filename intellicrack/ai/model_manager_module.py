@@ -28,7 +28,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 from intellicrack.handlers.numpy_handler import numpy as np
 from intellicrack.handlers.tensorflow_handler import HAS_TENSORFLOW
@@ -102,25 +102,22 @@ class ModelBackend(ABC):
     """Abstract base class for AI model backends."""
 
     @abstractmethod
-    def load_model(self, model_path: str) -> Any:
+    def load_model(self, model_path: str) -> object:
         """Load a model from the given path."""
-        pass
 
     @abstractmethod
-    def predict(self, model: Any, input_data: Any) -> Any:
+    def predict(self, model: object, input_data: object) -> object:
         """Make predictions using the model."""
-        pass
 
     @abstractmethod
-    def get_model_info(self, model: Any) -> dict[str, Any]:
+    def get_model_info(self, model: object) -> dict[str, object]:
         """Get information about the model."""
-        pass
 
 
 class PyTorchBackend(ModelBackend):
     """PyTorch model backend."""
 
-    def load_model(self, model_path: str) -> Any:
+    def load_model(self, model_path: str) -> object:
         """Load a PyTorch model."""
         if not HAS_TORCH or torch is None:
             raise ImportError("PyTorch not available")
@@ -134,7 +131,7 @@ class PyTorchBackend(ModelBackend):
             logger.error("Failed to load PyTorch model: %s", e)
             raise
 
-    def predict(self, model: Any, input_data: Any) -> Any:
+    def predict(self, model: object, input_data: object) -> object:
         """Make predictions using PyTorch model."""
         if not HAS_TORCH or torch is None:
             raise ImportError("PyTorch not available")
@@ -155,7 +152,7 @@ class PyTorchBackend(ModelBackend):
             logger.error("PyTorch prediction failed: %s", e)
             raise
 
-    def get_model_info(self, model: Any) -> dict[str, Any]:
+    def get_model_info(self, model: object) -> dict[str, object]:
         """Get PyTorch model information."""
         info = {
             "backend": "pytorch",
@@ -175,7 +172,7 @@ class PyTorchBackend(ModelBackend):
 class TensorFlowBackend(ModelBackend):
     """TensorFlow model backend."""
 
-    def load_model(self, model_path: str) -> Any:
+    def load_model(self, model_path: str) -> object:
         """Load a TensorFlow model."""
         if not HAS_TENSORFLOW or tf is None:
             raise ImportError("TensorFlow not available")
@@ -187,7 +184,7 @@ class TensorFlowBackend(ModelBackend):
             logger.error("Failed to load TensorFlow model: %s", e)
             raise
 
-    def predict(self, model: Any, input_data: Any) -> Any:
+    def predict(self, model: object, input_data: object) -> object:
         """Make predictions using TensorFlow model."""
         if not HAS_TENSORFLOW:
             raise ImportError("TensorFlow not available")
@@ -203,7 +200,7 @@ class TensorFlowBackend(ModelBackend):
             logger.error("TensorFlow prediction failed: %s", e)
             raise
 
-    def get_model_info(self, model: Any) -> dict[str, Any]:
+    def get_model_info(self, model: object) -> dict[str, object]:
         """Get TensorFlow model information."""
         info = {
             "backend": "tensorflow",
@@ -223,7 +220,7 @@ class TensorFlowBackend(ModelBackend):
 class ONNXBackend(ModelBackend):
     """ONNX model backend."""
 
-    def load_model(self, model_path: str) -> Any:
+    def load_model(self, model_path: str) -> object:
         """Load an ONNX model."""
         if not HAS_ONNX:
             raise ImportError("ONNX Runtime not available")
@@ -241,7 +238,7 @@ class ONNXBackend(ModelBackend):
             logger.error("Failed to load ONNX model: %s", e)
             raise
 
-    def predict(self, model: Any, input_data: Any) -> Any:
+    def predict(self, model: object, input_data: object) -> object:
         """Make predictions using ONNX model."""
         if not HAS_ONNX:
             raise ImportError("ONNX Runtime not available")
@@ -259,7 +256,7 @@ class ONNXBackend(ModelBackend):
             logger.error("ONNX prediction failed: %s", e)
             raise
 
-    def get_model_info(self, model: Any) -> dict[str, Any]:
+    def get_model_info(self, model: object) -> dict[str, object]:
         """Get ONNX model information."""
         info = {
             "backend": "onnx",
@@ -295,7 +292,7 @@ class ONNXBackend(ModelBackend):
 class SklearnBackend(ModelBackend):
     """Scikit-learn model backend."""
 
-    def load_model(self, model_path: str) -> Any:
+    def load_model(self, model_path: str) -> object:
         """Load a scikit-learn model."""
         if not HAS_JOBLIB:
             raise ImportError("Joblib not available")
@@ -307,7 +304,7 @@ class SklearnBackend(ModelBackend):
             logger.error("Failed to load sklearn model: %s", e)
             raise
 
-    def predict(self, model: Any, input_data: Any) -> Any:
+    def predict(self, model: object, input_data: object) -> object:
         """Make predictions using scikit-learn model."""
         try:
             if np is not None:
@@ -321,7 +318,7 @@ class SklearnBackend(ModelBackend):
             logger.error("Sklearn prediction failed: %s", e)
             raise
 
-    def get_model_info(self, model: Any) -> dict[str, Any]:
+    def get_model_info(self, model: object) -> dict[str, object]:
         """Get scikit-learn model information."""
         info = {
             "backend": "sklearn",
@@ -362,14 +359,14 @@ class ModelCache:
         """Generate a cache key for the model."""
         # Use file path and modification time for cache key
         try:
-            mtime = os.path.getmtime(model_path)
+            mtime = Path(model_path).stat().st_mtime
             key_string = f"{model_path}_{mtime}"
             return hashlib.sha256(key_string.encode()).hexdigest()
         except (OSError, ValueError) as e:
             self.logger.error("Error in model_manager_module: %s", e)
             return hashlib.sha256(model_path.encode()).hexdigest()
 
-    def get(self, model_path: str) -> Union[Any, None]:
+    def get(self, model_path: str) -> object | None:
         """Get model from cache."""
         with self.lock:
             cache_key = self._get_cache_key(model_path)
@@ -381,7 +378,7 @@ class ModelCache:
 
             return None
 
-    def put(self, model_path: str, model: Any) -> None:
+    def put(self, model_path: str, model: object) -> None:
         """Put model in cache."""
         with self.lock:
             cache_key = self._get_cache_key(model_path)
@@ -547,7 +544,7 @@ class ModelManager:
             self._save_model_metadata()
             logger.info("Registered model: %s (%s)", model_id, model_type)
 
-    def load_model(self, model_id: str) -> Any:
+    def load_model(self, model_id: str) -> object:
         """Load a model by ID with enhanced support for pre-trained models.
 
         Supports automatic downloading of pre-trained models for:
@@ -596,7 +593,7 @@ class ModelManager:
             logger.info("Loaded model: %s", model_id)
             return model
 
-    def _load_pretrained_model(self, model_id: str) -> Any:
+    def _load_pretrained_model(self, model_id: str) -> object:
         """Load a pre-trained model for specific Intellicrack tasks.
 
         Available pre-trained models:
@@ -621,7 +618,7 @@ class ModelManager:
 
         raise ValueError(f"Unknown pre-trained model: {model_id}")
 
-    def _create_vulnerability_detector(self) -> Any:
+    def _create_vulnerability_detector(self) -> object:
         """Create a vulnerability detection model using neural networks."""
         if HAS_TORCH:
             import torch
@@ -630,7 +627,7 @@ class ModelManager:
             class VulnerabilityDetector(nn.Module):
                 """Neural network for detecting vulnerabilities in binary code patterns."""
 
-                def __init__(self, input_size=1024, hidden_size=512, num_classes=10) -> None:
+                def __init__(self, input_size: int = 1024, hidden_size: int = 512, num_classes: int = 10) -> None:
                     super().__init__()
                     self.fc1 = nn.Linear(input_size, hidden_size)
                     self.relu1 = nn.ReLU()
@@ -657,14 +654,14 @@ class ModelManager:
                         "hardcoded_keys",
                     ]
 
-                def forward(self, x):
+                def forward(self, x: object) -> object:
                     x = self.dropout1(self.relu1(self.fc1(x)))
                     x = self.dropout2(self.relu2(self.fc2(x)))
                     x = self.relu3(self.fc3(x))
                     x = self.softmax(self.fc4(x))
                     return x
 
-                def detect_vulnerabilities(self, binary_features):
+                def detect_vulnerabilities(self, binary_features: object) -> list[dict[str, object]]:
                     """Detect vulnerabilities from binary feature vectors."""
                     with torch.no_grad():
                         predictions = self.forward(binary_features)
@@ -709,7 +706,7 @@ class ModelManager:
 
         raise RuntimeError("No ML backend available for vulnerability detector")
 
-    def _create_protection_classifier(self) -> Any:
+    def _create_protection_classifier(self) -> object:
         """Create a protection mechanism classifier model."""
         if HAS_TORCH:
             import torch
@@ -718,7 +715,7 @@ class ModelManager:
             class ProtectionClassifier(nn.Module):
                 """Classifies protection mechanisms in binaries."""
 
-                def __init__(self, input_size=512, num_classes=15) -> None:
+                def __init__(self, input_size: int = 512, num_classes: int = 15) -> None:
                     super().__init__()
                     self.conv1 = nn.Conv1d(1, 32, kernel_size=3, padding=1)
                     self.conv2 = nn.Conv1d(32, 64, kernel_size=3, padding=1)
@@ -747,7 +744,7 @@ class ModelManager:
                         "self_modification",
                     ]
 
-                def forward(self, x):
+                def forward(self, x: object) -> object:
                     x = x.unsqueeze(1)  # Add channel dimension
                     x = self.pool(self.relu(self.conv1(x)))
                     x = self.pool(self.relu(self.conv2(x)))
@@ -757,7 +754,7 @@ class ModelManager:
                     x = torch.sigmoid(self.fc3(x))  # Multi-label classification
                     return x
 
-                def classify_protections(self, binary_features):
+                def classify_protections(self, binary_features: object) -> list[dict[str, object]]:
                     """Classify protection mechanisms from binary features."""
                     with torch.no_grad():
                         predictions = self.forward(binary_features)
@@ -783,7 +780,7 @@ class ModelManager:
                     "license_check": [b"license", b"serial", b"activation"],
                 }
 
-            def classify_protections(self, binary_data):
+            def classify_protections(self, binary_data: bytes) -> list[dict[str, object]]:
                 detected = []
                 for protection, patterns in self.protection_patterns.items():
                     for pattern in patterns:
@@ -794,16 +791,15 @@ class ModelManager:
 
         return SimpleProtectionClassifier()
 
-    def _create_script_generator_model(self) -> Any:
+    def _create_script_generator_model(self) -> object:
         """Create a model to assist in script generation."""
         if HAS_TORCH:
-            import torch
             import torch.nn as nn
 
             class ScriptGeneratorModel(nn.Module):
                 """LSTM-based model for generating exploitation scripts."""
 
-                def __init__(self, vocab_size=10000, embedding_dim=256, hidden_dim=512) -> None:
+                def __init__(self, vocab_size: int = 10000, embedding_dim: int = 256, hidden_dim: int = 512) -> None:
                     super().__init__()
                     self.embedding = nn.Embedding(vocab_size, embedding_dim)
                     self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers=2, batch_first=True, dropout=0.2)
@@ -829,13 +825,13 @@ Memory.protect(patch_addr, {size}, 'rwx');
 Memory.writeByteArray(patch_addr, {bytes});""",
                     }
 
-                def forward(self, x, hidden=None):
+                def forward(self, x: object, hidden: object | None = None) -> tuple[object, object | None]:
                     embed = self.embedding(x)
                     output, hidden = self.lstm(embed, hidden)
                     output = self.fc(output)
                     return output, hidden
 
-                def generate_script_snippet(self, protection_type, target_info):
+                def generate_script_snippet(self, protection_type: str, target_info: dict[str, object]) -> str:
                     """Generate script snippet for specific protection type."""
                     if protection_type == "license_check":
                         return self.script_templates["frida_hook"].format(
@@ -843,7 +839,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
                             modifications="args[0] = ptr(1); // Force valid license",
                             retval_mod="retval.replace(1); // Always return success",
                         )
-                    elif protection_type == "anti_debug":
+                    if protection_type == "anti_debug":
                         return self.script_templates["frida_hook"].format(
                             function="IsDebuggerPresent",
                             modifications="// Log detection attempt",
@@ -864,12 +860,12 @@ Memory.writeByteArray(patch_addr, {bytes});""",
                     "trial": "Memory.writeU32(ptr({addr}), 0xFFFFFFFF); // Extend trial",
                 }
 
-            def generate_script_snippet(self, protection_type, target_info):
+            def generate_script_snippet(self, protection_type: str, target_info: dict[str, object]) -> str:
                 return self.templates.get(protection_type, "// Manual analysis required")
 
         return TemplateScriptGenerator()
 
-    def _create_binary_analyzer_model(self) -> Any:
+    def _create_binary_analyzer_model(self) -> object:
         """Create a comprehensive binary analysis model."""
         if HAS_TORCH:
             import torch
@@ -878,7 +874,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
             class BinaryAnalyzerModel(nn.Module):
                 """Comprehensive binary analysis using CNN + attention."""
 
-                def __init__(self, input_channels=1, num_features=128) -> None:
+                def __init__(self, input_channels: int = 1, num_features: int = 128) -> None:
                     super().__init__()
                     # Convolutional layers for pattern extraction
                     self.conv1 = nn.Conv2d(input_channels, 32, kernel_size=3, padding=1)
@@ -898,7 +894,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
                     self.compilers = ["GCC", "MSVC", "Clang", "ICC", "Borland", "Unknown"]
                     self.packers = ["UPX", "ASPack", "PECompact", "Themida", "VMProtect", "Enigma", "MPRESS", "FSG", "NSPack", "None"]
 
-                def forward(self, x):
+                def forward(self, x: object) -> tuple[object, object, object]:
                     # Extract features
                     x = torch.relu(self.conv1(x))
                     x = self.pool(x)
@@ -920,7 +916,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
 
                     return arch, compiler, packer
 
-                def analyze_binary(self, binary_tensor):
+                def analyze_binary(self, binary_tensor: object) -> dict[str, object]:
                     """Comprehensive binary analysis."""
                     with torch.no_grad():
                         arch, compiler, packer = self.forward(binary_tensor)
@@ -941,7 +937,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
 
         # Simple heuristic analyzer
         class HeuristicBinaryAnalyzer:
-            def analyze_binary(self, binary_data):
+            def analyze_binary(self, binary_data: bytes) -> dict[str, object]:
                 results = {
                     "architecture": "x86" if b"MZ" in binary_data[:2] else "Unknown",
                     "arch_confidence": 0.7,
@@ -997,7 +993,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
             logger.error(f"Failed to download model {model_id}: {e}")
             return False
 
-    def _load_model_with_fallback(self, model_path: str, model_type: str, model_id: str) -> Any:
+    def _load_model_with_fallback(self, model_path: str, model_type: str, model_id: str) -> object:
         """Load model with fallback mechanisms for missing files."""
         if not os.path.exists(model_path):
             logger.warning(f"Model file not found: {model_path}")
@@ -1024,7 +1020,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
         backend = self.backends[model_type]
         return backend.load_model(model_path)
 
-    def _optimize_loaded_model(self, model: Any, model_id: str, model_type: str) -> Any:
+    def _optimize_loaded_model(self, model: object, model_id: str, model_type: str) -> object:
         """Apply optimizations to loaded model."""
         # Move to GPU if available and optimize
         if GPU_AUTOLOADER_AVAILABLE:
@@ -1063,7 +1059,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
 
         return model
 
-    def predict(self, model_id: str, input_data: Any) -> Any:
+    def predict(self, model_id: str, input_data: object) -> object:
         """Make predictions using a model with enhanced vulnerability scoring.
 
         Supports:
@@ -1104,22 +1100,21 @@ Memory.writeByteArray(patch_addr, {bytes});""",
 
         raise ValueError(f"Cannot predict with model {model_id}")
 
-    def _predict_with_pretrained(self, model_id: str, input_data: Any) -> dict:
+    def _predict_with_pretrained(self, model_id: str, input_data: object) -> dict[str, object]:
         """Make predictions using pretrained models with structured output."""
         model = self.load_model(model_id)
 
         if model_id == "pretrained/vulnerability_detector":
             return self._predict_vulnerabilities(model, input_data)
-        elif model_id == "pretrained/protection_classifier":
+        if model_id == "pretrained/protection_classifier":
             return self._predict_protections(model, input_data)
-        elif model_id == "pretrained/script_generator":
+        if model_id == "pretrained/script_generator":
             return self._predict_script_generation(model, input_data)
-        elif model_id == "pretrained/binary_analyzer":
+        if model_id == "pretrained/binary_analyzer":
             return self._predict_binary_analysis(model, input_data)
-        else:
-            raise ValueError(f"Unknown pretrained model: {model_id}")
+        raise ValueError(f"Unknown pretrained model: {model_id}")
 
-    def _predict_vulnerabilities(self, model: Any, input_data: Any) -> dict:
+    def _predict_vulnerabilities(self, model: object, input_data: object) -> dict[str, object]:
         """Predict vulnerabilities with scoring and recommendations."""
         # Prepare input data
         if isinstance(input_data, bytes):
@@ -1261,7 +1256,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
             "timestamp": __import__("datetime").datetime.now().isoformat(),
         }
 
-    def _predict_protections(self, model: Any, input_data: Any) -> dict:
+    def _predict_protections(self, model: object, input_data: object) -> dict[str, object]:
         """Predict protection mechanisms in binary."""
         if hasattr(model, "classify_protections"):
             protections = model.classify_protections(input_data)
@@ -1295,7 +1290,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
             "bypass_strategies": self._generate_bypass_strategies(protections),
         }
 
-    def _predict_script_generation(self, model: Any, input_data: dict) -> dict:
+    def _predict_script_generation(self, model: object, input_data: dict[str, object]) -> dict[str, object]:
         """Generate script predictions and templates."""
         protection_type = input_data.get("protection_type", "unknown")
         target_info = input_data.get("target_info", {})
@@ -1334,7 +1329,7 @@ Interceptor.attach(IsDebuggerPresent, {
             "testing_steps": self._generate_testing_steps(protection_type),
         }
 
-    def _predict_binary_analysis(self, model: Any, input_data: Any) -> dict:
+    def _predict_binary_analysis(self, model: object, input_data: object) -> dict[str, object]:
         """Comprehensive binary analysis prediction."""
         if hasattr(model, "analyze_binary"):
             analysis = model.analyze_binary(input_data)
@@ -1430,12 +1425,11 @@ Interceptor.attach(IsDebuggerPresent, {
 
         if vuln_type in high_severity_vulns and confidence > 0.7:
             return "CRITICAL"
-        elif vuln_type in high_severity_vulns and confidence > 0.5:
+        if vuln_type in high_severity_vulns and confidence > 0.5:
             return "HIGH"
-        elif vuln_type in medium_severity_vulns and confidence > 0.6:
+        if vuln_type in medium_severity_vulns and confidence > 0.6:
             return "MEDIUM"
-        else:
-            return "LOW"
+        return "LOW"
 
     def _find_similar_cves(self, vuln_type: str) -> list[str]:
         """Find similar CVEs for vulnerability type."""
@@ -1452,12 +1446,11 @@ Interceptor.attach(IsDebuggerPresent, {
         """Determine risk level from security score."""
         if security_score >= 90:
             return "LOW"
-        elif security_score >= 70:
+        if security_score >= 70:
             return "MEDIUM"
-        elif security_score >= 50:
+        if security_score >= 50:
             return "HIGH"
-        else:
-            return "CRITICAL"
+        return "CRITICAL"
 
     def _generate_vuln_recommendations(self, vulnerabilities: list) -> list[str]:
         """Generate recommendations for found vulnerabilities."""
@@ -1486,10 +1479,9 @@ Interceptor.attach(IsDebuggerPresent, {
 
         if has_difficult:
             return "EXPERT"
-        elif has_medium:
+        if has_medium:
             return "INTERMEDIATE"
-        else:
-            return "BEGINNER"
+        return "BEGINNER"
 
     def _generate_bypass_strategies(self, protections: list) -> dict:
         """Generate bypass strategies for detected protections."""
@@ -1595,10 +1587,9 @@ Interceptor.attach(IsDebuggerPresent, {
         """Classify binary type based on analysis."""
         if analysis.get("likely_packed"):
             return "Packed Executable"
-        elif analysis.get("suspicious_imports"):
+        if analysis.get("suspicious_imports"):
             return "Potentially Malicious"
-        else:
-            return "Standard Executable"
+        return "Standard Executable"
 
     def _recommend_analysis_tools(self, analysis: dict) -> list[str]:
         """Recommend tools based on binary analysis."""
@@ -1846,7 +1837,7 @@ Interceptor.attach(IsDebuggerPresent, {
             logger.error("Failed to import API model: %s", e)
             return None
 
-    def train_model(self, training_data: Any, model_type: str) -> bool:
+    def train_model(self, training_data: object, model_type: str) -> bool:
         """Train a machine learning model with provided data.
 
         Args:
@@ -1976,7 +1967,7 @@ Interceptor.attach(IsDebuggerPresent, {
                     class SimpleNN(nn.Module):
                         """Perform neural network for basic classification tasks."""
 
-                        def __init__(self, input_size, num_classes) -> None:
+                        def __init__(self, input_size: int, num_classes: int) -> None:
                             """Initialize simple neural network with specified input size and number of classes.
 
                             Args:
@@ -1990,7 +1981,7 @@ Interceptor.attach(IsDebuggerPresent, {
                             self.fc3 = nn.Linear(64, num_classes)
                             self.dropout = nn.Dropout(0.2)
 
-                        def forward(self, x):
+                        def forward(self, x: object) -> object:
                             x = torch.relu(self.fc1(x))
                             x = self.dropout(x)
                             x = torch.relu(self.fc2(x))
@@ -2215,7 +2206,7 @@ Interceptor.attach(IsDebuggerPresent, {
             logger.error("Model training failed: %s", e)
             return False
 
-    def save_model(self, model: Any, path: str) -> bool:
+    def save_model(self, model: object, path: str) -> bool:
         """Save a trained model to disk.
 
         Args:
@@ -2291,8 +2282,8 @@ Interceptor.attach(IsDebuggerPresent, {
         return self.get_available_repositories()
 
     def evaluate_model_with_split(
-        self, model_id: str, data: Any, labels: Any, test_size: float = 0.2, random_state: int = 42,
-    ) -> dict[str, Any]:
+        self, model_id: str, data: object, labels: object, test_size: float = 0.2, random_state: int = 42,
+    ) -> dict[str, object]:
         """Evaluate a model using train_test_split for proper validation.
 
         Args:
@@ -2437,7 +2428,7 @@ class AsyncModelManager:
         self.model_manager = model_manager
         self.thread_pool = {}
 
-    def load_model_async(self, model_id: str, callback: Callable = None):
+    def load_model_async(self, model_id: str, callback: Callable[..., None] | None = None) -> threading.Thread | None:
         """Load a model asynchronously."""
         # Skip thread creation during testing
         if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
@@ -2467,7 +2458,7 @@ class AsyncModelManager:
         thread.start()
         return thread
 
-    def predict_async(self, model_id: str, input_data: Any, callback: Callable = None):
+    def predict_async(self, model_id: str, input_data: object, callback: Callable[..., None] | None = None) -> threading.Thread | None:
         """Make predictions asynchronously."""
         # Skip thread creation during testing
         if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
@@ -2534,13 +2525,13 @@ class ModelFineTuner:
     def fine_tune_model(
         self,
         model_id: str,
-        training_data: Any,
-        validation_data: Any = None,
+        training_data: object,
+        validation_data: object | None = None,
         epochs: int = 10,
         learning_rate: float = 0.001,
         batch_size: int = 32,
-        callback: Callable = None,
-    ) -> dict[str, Any]:
+        callback: Callable[..., None] | None = None,
+    ) -> dict[str, object]:
         """Fine-tune a pre-trained model on custom data.
 
         Args:
@@ -2654,14 +2645,14 @@ class ModelFineTuner:
 
     def _fine_tune_pytorch(
         self,
-        model: Any,
-        training_data: Any,
-        validation_data: Any,
+        model: object,
+        training_data: object,
+        validation_data: object,
         epochs: int,
         learning_rate: float,
         batch_size: int,
-        callback: Callable,
-    ) -> dict[str, Any]:
+        callback: Callable[..., None],
+    ) -> dict[str, object]:
         """Fine-tune a PyTorch model."""
         if not HAS_TORCH or torch is None or nn is None:
             return {"error": "PyTorch not available"}
@@ -2736,14 +2727,14 @@ class ModelFineTuner:
 
     def _fine_tune_tensorflow(
         self,
-        model: Any,
-        training_data: Any,
-        validation_data: Any,
+        model: object,
+        training_data: object,
+        validation_data: object,
         epochs: int,
         learning_rate: float,
         batch_size: int,
-        callback: Callable,
-    ) -> dict[str, Any]:
+        callback: Callable[..., None],
+    ) -> dict[str, object]:
         """Fine-tune a TensorFlow model."""
         # Compile model with new learning rate
         model.compile(
@@ -2763,7 +2754,7 @@ class ModelFineTuner:
                 and forward progress information to the user-provided callback function.
                 """
 
-                def on_epoch_end(self, epoch, logs=None) -> None:
+                def on_epoch_end(self, epoch: int, logs: dict[str, Any] | None = None) -> None:
                     """Call at the end of each training epoch.
 
                     Args:
@@ -2792,7 +2783,7 @@ class ModelFineTuner:
             "metrics": history.history,
         }
 
-    def _fine_tune_sklearn(self, model: Any, training_data: Any, validation_data: Any, callback: Callable) -> dict[str, Any]:
+    def _fine_tune_sklearn(self, model: object, training_data: object, validation_data: object, callback: Callable[..., None]) -> dict[str, object]:
         """Fine-tune a scikit-learn model."""
         # For sklearn, we typically retrain on new data
         X_train, y_train = training_data
@@ -2816,7 +2807,7 @@ class ModelFineTuner:
 
         return results
 
-    def get_training_history(self, model_id: str) -> Union[dict[str, Any], None]:
+    def get_training_history(self, model_id: str) -> dict[str, Any] | None:
         """Get training history for a fine-tuned model."""
         return self.training_history.get(model_id)
 
@@ -2871,7 +2862,7 @@ def import_custom_model(model_path: str, model_type: str = None, model_id: str =
 # Standalone convenience functions for backward compatibility
 
 
-def load_model(model_id: str, model_path: Union[str, None] = None):
+def load_model(model_id: str, model_path: str | None = None) -> object:
     """Load a model using the global model manager.
 
     Args:
@@ -2909,7 +2900,7 @@ def load_model(model_id: str, model_path: Union[str, None] = None):
         raise
 
 
-def save_model(model_id: str, save_path: str, model_format: str = "auto"):
+def save_model(model_id: str, save_path: str, model_format: str = "auto") -> dict[str, object]:
     """Save a loaded model to disk.
 
     Args:

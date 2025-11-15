@@ -90,7 +90,6 @@ import json
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import List
 
 
 class BypassMethod(Enum):
@@ -112,7 +111,7 @@ class ValidationFunction:
     library: str
     confidence: float
     context: str = ""
-    references: List[int] = field(default_factory=list)
+    references: list[int] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         """Convert to dictionary."""
@@ -133,8 +132,8 @@ class DetectionReport:
     """Complete report of certificate validation detection."""
 
     binary_path: str
-    detected_libraries: List[str]
-    validation_functions: List[ValidationFunction]
+    detected_libraries: list[str]
+    validation_functions: list[ValidationFunction]
     recommended_method: BypassMethod
     risk_level: str
     timestamp: datetime = field(default_factory=datetime.now)
@@ -273,7 +272,7 @@ class DetectionReport:
         data = json.loads(json_str)
         return cls.from_dict(data)
 
-    def get_high_confidence_functions(self, threshold: float = 0.7) -> List[ValidationFunction]:
+    def get_high_confidence_functions(self, threshold: float = 0.7) -> list[ValidationFunction]:
         """Get validation functions with confidence above threshold.
 
         Args:
@@ -297,7 +296,7 @@ class DetectionReport:
         """
         return len(self.validation_functions) > 0
 
-    def get_unique_apis(self) -> List[str]:
+    def get_unique_apis(self) -> list[str]:
         """Get list of unique API names detected.
 
         Returns:
@@ -306,7 +305,7 @@ class DetectionReport:
         """
         return list({func.api_name for func in self.validation_functions})
 
-    def get_unique_libraries(self) -> List[str]:
+    def get_unique_libraries(self) -> list[str]:
         """Get list of unique libraries containing validation functions.
 
         Returns:

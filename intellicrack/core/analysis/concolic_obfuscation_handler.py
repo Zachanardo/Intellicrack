@@ -91,7 +91,7 @@ class OpaquePredicateDetector:
                     "skip_false_path": True,
                 }
 
-            elif taken_ratio <= (1 - self.confidence_threshold):
+            if taken_ratio <= (1 - self.confidence_threshold):
                 self.detected_predicates[branch_key] = {
                     "address": address,
                     "condition": condition,
@@ -213,9 +213,7 @@ class ControlFlowFlatteningHandler:
                 switch_pattern_score += 1
             elif insn.mnemonic in ["je", "jne", "jg", "jl", "jge", "jle", "ja", "jb"]:
                 switch_pattern_score += 2
-            elif insn.mnemonic == "jmp" and "[" in insn.op_str:
-                switch_pattern_score += 10
-            elif insn.mnemonic == "switch":
+            elif (insn.mnemonic == "jmp" and "[" in insn.op_str) or insn.mnemonic == "switch":
                 switch_pattern_score += 10
 
         if switch_pattern_score >= 8:
@@ -332,15 +330,11 @@ class VirtualizationDetector:
                 vm_indicators["decode"] += 1
 
             if insn.mnemonic == "call":
-                if "[" in insn.op_str:
-                    vm_indicators["dispatch"] += 2
-                elif any(reg in insn.op_str for reg in ["rax", "eax", "rbx", "ebx"]):
+                if "[" in insn.op_str or any(reg in insn.op_str for reg in ["rax", "eax", "rbx", "ebx"]):
                     vm_indicators["dispatch"] += 2
 
             if insn.mnemonic == "jmp":
-                if "[" in insn.op_str:
-                    vm_indicators["dispatch"] += 3
-                elif any(reg in insn.op_str for reg in ["rax", "eax", "rbx", "ebx"]):
+                if "[" in insn.op_str or any(reg in insn.op_str for reg in ["rax", "eax", "rbx", "ebx"]):
                     vm_indicators["dispatch"] += 3
 
             if insn.mnemonic in ["push", "pop", "mov"] and any(
@@ -617,7 +611,7 @@ class ObfuscationAwareConcolicEngine:
         if opaque_info and opaque_info.get("type") == "always_true":
             self.logger.debug(f"Skipping false path at 0x{address:x} (opaque predicate: always true)")
             return False
-        elif opaque_info and opaque_info.get("type") == "always_false":
+        if opaque_info and opaque_info.get("type") == "always_false":
             self.logger.debug(f"Skipping true path at 0x{address:x} (opaque predicate: always false)")
             return False
 
@@ -637,12 +631,7 @@ class ObfuscationAwareConcolicEngine:
         """
         opaque_info = self.opaque_detector.is_opaque_predicate(address, condition)
 
-        if opaque_info and opaque_info.get("type") == "always_true" and not taken:
-            return True
-        elif opaque_info and opaque_info.get("type") == "always_false" and taken:
-            return True
-
-        return False
+        return bool((opaque_info and opaque_info.get("type") == "always_true" and not taken) or (opaque_info and opaque_info.get("type") == "always_false" and taken))
 
     def analyze_basic_block_obfuscation(self, address: int, instructions: list) -> dict:
         """Comprehensive obfuscation analysis for a basic block.

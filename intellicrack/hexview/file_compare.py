@@ -24,7 +24,6 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import os
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional, Tuple
 
 from ..utils.logger import get_logger
 
@@ -83,7 +82,7 @@ class BinaryComparer:
         """
         self.progress_callback = callback
 
-    def compare_files(self, file1_path: str, file2_path: str) -> List[DifferenceBlock]:
+    def compare_files(self, file1_path: str, file2_path: str) -> list[DifferenceBlock]:
         """Compare two files and return list of differences.
 
         Args:
@@ -109,7 +108,7 @@ class BinaryComparer:
 
         return self.differences
 
-    def compare_data(self, data1: bytes, data2: bytes) -> List[DifferenceBlock]:
+    def compare_data(self, data1: bytes, data2: bytes) -> list[DifferenceBlock]:
         """Compare two byte arrays and return list of differences.
 
         Args:
@@ -155,20 +154,19 @@ class BinaryComparer:
                 if current_diff:
                     self.differences.append(current_diff)
                     current_diff = None
+            # Blocks differ
+            elif current_diff:
+                # Extend existing difference
+                if block1:
+                    current_diff.length1 += len(block1)
+                if block2:
+                    current_diff.length2 += len(block2)
             else:
-                # Blocks differ
-                if current_diff:
-                    # Extend existing difference
-                    if block1:
-                        current_diff.length1 += len(block1)
-                    if block2:
-                        current_diff.length2 += len(block2)
-                else:
-                    # Start new difference
-                    diff_type = self._determine_diff_type(block1, block2)
-                    current_diff = DifferenceBlock(
-                        offset1=offset, offset2=offset, length1=len(block1), length2=len(block2), diff_type=diff_type,
-                    )
+                # Start new difference
+                diff_type = self._determine_diff_type(block1, block2)
+                current_diff = DifferenceBlock(
+                    offset1=offset, offset2=offset, length1=len(block1), length2=len(block2), diff_type=diff_type,
+                )
 
             offset += self.block_size
             current_block += 1
@@ -194,10 +192,9 @@ class BinaryComparer:
         """
         if not block1:
             return DifferenceType.INSERTED
-        elif not block2:
+        if not block2:
             return DifferenceType.DELETED
-        else:
-            return DifferenceType.MODIFIED
+        return DifferenceType.MODIFIED
 
     def _find_differences_lcs(self, data1: bytes, data2: bytes) -> None:
         """Find differences using LCS algorithm for smaller data.
@@ -251,7 +248,7 @@ class BinaryComparer:
                     )
                 break
 
-            elif j >= len(data2):
+            if j >= len(data2):
                 # Rest of data1 is deleted
                 if current_diff and current_diff.diff_type == DifferenceType.DELETED:
                     current_diff.length1 += len(data1) - i
@@ -263,7 +260,7 @@ class BinaryComparer:
                     )
                 break
 
-            elif data1[i] == data2[j]:
+            if data1[i] == data2[j]:
                 # Bytes match
                 if current_diff:
                     self.differences.append(current_diff)
@@ -303,12 +300,12 @@ class BinaryComparer:
                 self.differences.insert(0, DifferenceBlock(offset1=0, offset2=0, length1=0, length2=j, diff_type=DifferenceType.INSERTED))
                 break
 
-            elif j == 0:
+            if j == 0:
                 # Deletion from data1
                 self.differences.insert(0, DifferenceBlock(offset1=0, offset2=0, length1=i, length2=0, diff_type=DifferenceType.DELETED))
                 break
 
-            elif data1[i - 1] == data2[j - 1]:
+            if data1[i - 1] == data2[j - 1]:
                 # Match, move diagonally
                 i -= 1
                 j -= 1
@@ -394,7 +391,7 @@ class BinaryComparer:
 class ComparisonNavigator:
     """Helps navigate through differences in compared files."""
 
-    def __init__(self, differences: List[DifferenceBlock]) -> None:
+    def __init__(self, differences: list[DifferenceBlock]) -> None:
         """Initialize the navigator.
 
         Args:
@@ -413,7 +410,7 @@ class ComparisonNavigator:
         """
         return len(self.differences) > 0
 
-    def go_to_first(self) -> Optional[DifferenceBlock]:
+    def go_to_first(self) -> DifferenceBlock | None:
         """Go to the first difference.
 
         Returns:
@@ -425,7 +422,7 @@ class ComparisonNavigator:
             return self.differences[0]
         return None
 
-    def go_to_last(self) -> Optional[DifferenceBlock]:
+    def go_to_last(self) -> DifferenceBlock | None:
         """Go to the last difference.
 
         Returns:
@@ -437,7 +434,7 @@ class ComparisonNavigator:
             return self.differences[self.current_index]
         return None
 
-    def go_to_next(self) -> Optional[DifferenceBlock]:
+    def go_to_next(self) -> DifferenceBlock | None:
         """Go to the next difference.
 
         Returns:
@@ -449,7 +446,7 @@ class ComparisonNavigator:
             return self.differences[self.current_index]
         return None
 
-    def go_to_previous(self) -> Optional[DifferenceBlock]:
+    def go_to_previous(self) -> DifferenceBlock | None:
         """Go to the previous difference.
 
         Returns:
@@ -461,7 +458,7 @@ class ComparisonNavigator:
             return self.differences[self.current_index]
         return None
 
-    def go_to_offset(self, offset: int, file_num: int = 1) -> Optional[DifferenceBlock]:
+    def go_to_offset(self, offset: int, file_num: int = 1) -> DifferenceBlock | None:
         """Go to the difference containing the specified offset.
 
         Args:
@@ -477,13 +474,12 @@ class ComparisonNavigator:
                 if diff.offset1 <= offset < diff.end1:
                     self.current_index = i
                     return diff
-            else:
-                if diff.offset2 <= offset < diff.end2:
-                    self.current_index = i
-                    return diff
+            elif diff.offset2 <= offset < diff.end2:
+                self.current_index = i
+                return diff
         return None
 
-    def get_current(self) -> Optional[DifferenceBlock]:
+    def get_current(self) -> DifferenceBlock | None:
         """Get the current difference.
 
         Returns:
@@ -494,7 +490,7 @@ class ComparisonNavigator:
             return self.differences[self.current_index]
         return None
 
-    def get_position(self) -> Tuple[int, int]:
+    def get_position(self) -> tuple[int, int]:
         """Get current position in difference list.
 
         Returns:

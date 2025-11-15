@@ -569,11 +569,10 @@ class GPUStatusWidget(QWidget):
                 self.gpu_combo.blockSignals(False)
 
             self.update_display()
-        else:
-            if self.gpu_combo.count() == 0 or self.gpu_combo.itemText(0) != "No GPU detected":
-                self.gpu_combo.clear()
-                self.gpu_combo.addItem("No GPU detected")
-                self.clear_display()
+        elif self.gpu_combo.count() == 0 or self.gpu_combo.itemText(0) != "No GPU detected":
+            self.gpu_combo.clear()
+            self.gpu_combo.addItem("No GPU detected")
+            self.clear_display()
 
     def on_gpu_selected(self, index) -> None:
         """Handle GPU selection change."""

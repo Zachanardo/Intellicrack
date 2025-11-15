@@ -16,7 +16,7 @@ import re
 import struct
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import r2pipe
 import unicorn
@@ -99,11 +99,11 @@ class EmulationResult:
 
     type: EmulationType
     success: bool
-    registers: Dict[str, int]
-    memory_changes: List[Tuple[int, bytes]]
-    execution_path: List[int]
-    constraints: List[Any]
-    metadata: Dict[str, Any]
+    registers: dict[str, int]
+    memory_changes: list[tuple[int, bytes]]
+    execution_path: list[int]
+    constraints: list[Any]
+    metadata: dict[str, Any]
 
 
 @dataclass
@@ -113,9 +113,9 @@ class TaintInfo:
     address: int
     size: int
     taint_label: str
-    propagation_path: List[int]
-    influenced_registers: List[str]
-    influenced_memory: List[Tuple[int, int]]
+    propagation_path: list[int]
+    influenced_registers: list[str]
+    influenced_memory: list[tuple[int, int]]
 
 
 @dataclass
@@ -126,9 +126,9 @@ class ExploitPrimitive:
     vulnerability_address: int
     trigger_input: bytes
     payload: bytes
-    constraints: List[Any]
+    constraints: list[Any]
     reliability: float
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
 
 class Radare2Emulator:
@@ -142,13 +142,13 @@ class Radare2Emulator:
 
         """
         self.binary_path = binary_path
-        self.r2: Optional[r2pipe.open] = None
-        self.uc: Optional[unicorn.Uc] = None
+        self.r2: r2pipe.open | None = None
+        self.uc: unicorn.Uc | None = None
         self.solver = z3.Solver()
-        self.symbolic_vars: Dict[str, z3.BitVecRef] = {}
-        self.taint_tracker: Dict[int, TaintInfo] = {}
-        self.execution_trace: List[int] = []
-        self.memory_map: Dict[int, bytes] = {}
+        self.symbolic_vars: dict[str, z3.BitVecRef] = {}
+        self.taint_tracker: dict[int, TaintInfo] = {}
+        self.execution_trace: list[int] = []
+        self.memory_map: dict[int, bytes] = {}
 
     def open(self) -> bool:
         """Open binary in Radare2."""
@@ -170,7 +170,7 @@ class Radare2Emulator:
             logger.error(f"Failed to open binary: {e}")
             return False
 
-    def emulate_esil(self, start_addr: int, num_instructions: int = 100, initial_state: Optional[Dict] = None) -> EmulationResult:
+    def emulate_esil(self, start_addr: int, num_instructions: int = 100, initial_state: dict | None = None) -> EmulationResult:
         """Emulate using Radare2 ESIL."""
         try:
             # Initialize ESIL VM
@@ -237,7 +237,7 @@ class Radare2Emulator:
                 metadata={"error": str(e)},
             )
 
-    def _detect_memory_changes(self, before_state: Dict[int, bytes]) -> List[Tuple[int, bytes]]:
+    def _detect_memory_changes(self, before_state: dict[int, bytes]) -> list[tuple[int, bytes]]:
         """Detect memory changes during emulation."""
         changes = []
 
@@ -263,7 +263,7 @@ class Radare2Emulator:
 
         return changes
 
-    def _extract_esil_constraints(self, execution_path: List[int]) -> List[Any]:
+    def _extract_esil_constraints(self, execution_path: list[int]) -> list[Any]:
         """Extract constraints from ESIL execution."""
         constraints = []
 
@@ -366,7 +366,7 @@ class Radare2Emulator:
         if address in self.taint_tracker:
             self.taint_tracker[address].propagation_path.append(uc.reg_read(UC_X86_REG_EIP))
 
-    def emulate_unicorn(self, start_addr: int, end_addr: Optional[int] = None, timeout: int = 0, count: int = 0) -> EmulationResult:
+    def emulate_unicorn(self, start_addr: int, end_addr: int | None = None, timeout: int = 0, count: int = 0) -> EmulationResult:
         """Emulate using Unicorn engine."""
         if not self.uc:
             if not self.setup_unicorn_engine():
@@ -417,7 +417,7 @@ class Radare2Emulator:
                 metadata={"error": str(e)},
             )
 
-    def _get_unicorn_registers(self) -> Dict[str, int]:
+    def _get_unicorn_registers(self) -> dict[str, int]:
         """Get register values from Unicorn."""
         registers = {}
 
@@ -474,7 +474,7 @@ class Radare2Emulator:
 
         return registers
 
-    def symbolic_execution(self, start_addr: int, target_addr: int, max_paths: int = 100) -> List[EmulationResult]:
+    def symbolic_execution(self, start_addr: int, target_addr: int, max_paths: int = 100) -> list[EmulationResult]:
         """Perform symbolic execution to find paths."""
         results = []
         explored_paths = []
@@ -522,7 +522,7 @@ class Radare2Emulator:
 
         return results
 
-    def _symbolic_execute_bb(self, addr: int, solver: z3.Solver) -> Dict[str, Any]:
+    def _symbolic_execute_bb(self, addr: int, solver: z3.Solver) -> dict[str, Any]:
         """Symbolically execute a basic block."""
         result = {"reached_target": False, "successors": [], "constraints": [], "path_condition": []}
 
@@ -596,7 +596,7 @@ class Radare2Emulator:
 
         return result
 
-    def taint_analysis(self, taint_sources: List[Tuple[int, int, str]], start_addr: int, num_instructions: int = 1000) -> List[TaintInfo]:
+    def taint_analysis(self, taint_sources: list[tuple[int, int, str]], start_addr: int, num_instructions: int = 1000) -> list[TaintInfo]:
         """Perform taint analysis."""
         # Initialize taint sources
         for addr, size, label in taint_sources:
@@ -658,7 +658,7 @@ class Radare2Emulator:
 
         return list(self.taint_tracker.values())
 
-    def _extract_memory_address(self, operand: str) -> Optional[int]:
+    def _extract_memory_address(self, operand: str) -> int | None:
         """Extract memory address from operand like [rax+0x10]."""
         try:
             # Simple extraction - in production would be more sophisticated
@@ -685,7 +685,7 @@ class Radare2Emulator:
                 influenced_memory=taint.influenced_memory.copy(),
             )
 
-    def constraint_solving(self, constraints: List[Any], variables: Dict[str, z3.BitVecRef]) -> Optional[Dict[str, int]]:
+    def constraint_solving(self, constraints: list[Any], variables: dict[str, z3.BitVecRef]) -> dict[str, int] | None:
         """Solve constraints to find concrete values."""
         solver = z3.Solver()
 
@@ -712,21 +712,19 @@ class Radare2Emulator:
                     solution[var_name] = 0
 
             return solution
-        else:
-            return None
+        return None
 
-    def generate_exploit(self, vuln_type: ExploitType, vuln_addr: int) -> Optional[ExploitPrimitive]:
+    def generate_exploit(self, vuln_type: ExploitType, vuln_addr: int) -> ExploitPrimitive | None:
         """Generate exploit for identified vulnerability."""
         if vuln_type == ExploitType.BUFFER_OVERFLOW:
             return self._generate_buffer_overflow_exploit(vuln_addr)
-        elif vuln_type == ExploitType.FORMAT_STRING:
+        if vuln_type == ExploitType.FORMAT_STRING:
             return self._generate_format_string_exploit(vuln_addr)
-        elif vuln_type == ExploitType.INTEGER_OVERFLOW:
+        if vuln_type == ExploitType.INTEGER_OVERFLOW:
             return self._generate_integer_overflow_exploit(vuln_addr)
-        elif vuln_type == ExploitType.USE_AFTER_FREE:
+        if vuln_type == ExploitType.USE_AFTER_FREE:
             return self._generate_uaf_exploit(vuln_addr)
-        else:
-            return self._generate_generic_exploit(vuln_type, vuln_addr)
+        return self._generate_generic_exploit(vuln_type, vuln_addr)
 
     def _generate_buffer_overflow_exploit(self, vuln_addr: int) -> ExploitPrimitive:
         """Generate buffer overflow exploit."""
@@ -987,22 +985,21 @@ class Radare2Emulator:
                 malicious_object += b"\x00" * 4
                 malicious_object += struct.pack("<I", 0x1337)
                 malicious_object += b"\x00" * (aligned_size - len(malicious_object))
+        # No vtable - create object with function pointers directly
+        elif self.bits == 64:
+            heap_base = 0x555555560000
+            shellcode_addr = heap_base + 0x1000
+
+            malicious_object = struct.pack("<Q", shellcode_addr)  # Function pointer
+            malicious_object += struct.pack("<Q", 0xDEADBEEF)  # Data member
+            malicious_object += b"\x00" * (aligned_size - len(malicious_object))
         else:
-            # No vtable - create object with function pointers directly
-            if self.bits == 64:
-                heap_base = 0x555555560000
-                shellcode_addr = heap_base + 0x1000
+            heap_base = 0x08050000
+            shellcode_addr = heap_base + 0x1000
 
-                malicious_object = struct.pack("<Q", shellcode_addr)  # Function pointer
-                malicious_object += struct.pack("<Q", 0xDEADBEEF)  # Data member
-                malicious_object += b"\x00" * (aligned_size - len(malicious_object))
-            else:
-                heap_base = 0x08050000
-                shellcode_addr = heap_base + 0x1000
-
-                malicious_object = struct.pack("<I", shellcode_addr)
-                malicious_object += struct.pack("<I", 0xDEADBEEF)
-                malicious_object += b"\x00" * (aligned_size - len(malicious_object))
+            malicious_object = struct.pack("<I", shellcode_addr)
+            malicious_object += struct.pack("<I", 0xDEADBEEF)
+            malicious_object += b"\x00" * (aligned_size - len(malicious_object))
 
         # Ensure malicious object is properly sized
         if len(malicious_object) > aligned_size:
@@ -1071,20 +1068,19 @@ class Radare2Emulator:
 
                 if "jemalloc" in string_val:
                     return "jemalloc"
-                elif "tcmalloc" in string_val:
+                if "tcmalloc" in string_val:
                     return "tcmalloc"
-                elif "ptmalloc" in string_val or "glibc" in string_val:
+                if "ptmalloc" in string_val or "glibc" in string_val:
                     return "glibc"
-                elif "mimalloc" in string_val:
+                if "mimalloc" in string_val:
                     return "mimalloc"
 
             # Platform-specific defaults
             if self.info.get("bin", {}).get("os", "") == "windows":
                 return "windows_heap"
-            elif self.info.get("bin", {}).get("os", "") == "darwin":
+            if self.info.get("bin", {}).get("os", "") == "darwin":
                 return "libmalloc"  # macOS default
-            else:
-                return "glibc"  # Linux default
+            return "glibc"  # Linux default
 
         except Exception as e:
             logger.debug(f"Heap implementation detection failed: {e}")
@@ -1115,7 +1111,7 @@ class Radare2Emulator:
             metadata={"pattern_count": len(patterns), "total_size": len(trigger_input)},
         )
 
-    def find_vulnerabilities(self) -> List[Tuple[ExploitType, int]]:
+    def find_vulnerabilities(self) -> list[tuple[ExploitType, int]]:
         """Automatically find potential vulnerabilities."""
         vulnerabilities = []
 
@@ -1154,7 +1150,7 @@ class Radare2Emulator:
 
         return vulnerabilities
 
-    def generate_exploit_report(self, exploits: List[ExploitPrimitive]) -> str:
+    def generate_exploit_report(self, exploits: list[ExploitPrimitive]) -> str:
         """Generate report of generated exploits."""
         report = []
         report.append("=" * 60)

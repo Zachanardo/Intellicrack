@@ -3166,12 +3166,10 @@ if __name__ == "__main__":
                             disasm_text.insert(tk.END, f"Section: {section.Name.decode('utf-8', errors='ignore').strip()}\n")
                             disasm_text.insert(tk.END, f"Address: 0x{base_addr:08X}\n\n")
 
-                            count = 0
-                            for insn in md.disasm(section_data[:min(len(section_data), 4096)], base_addr):
+                            for count, insn in enumerate(md.disasm(section_data[:min(len(section_data), 4096)], base_addr)):
                                 line = f"0x{insn.address:08X}:  {insn.mnemonic:8s} {insn.op_str}\n"
                                 disasm_text.insert(tk.END, line)
-                                count += 1
-                                if count >= 500:
+                                if count >= 499:  # 500 instructions (0-indexed)
                                     disasm_text.insert(tk.END, "\n... (truncated, showing first 500 instructions)\n")
                                     break
 

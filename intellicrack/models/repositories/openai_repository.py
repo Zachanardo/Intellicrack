@@ -21,8 +21,6 @@ import logging
 import os
 from typing import Any
 
-from intellicrack.core.config_manager import get_config
-
 from .base import APIRepositoryBase, RateLimitConfig
 from .interface import ModelInfo
 
@@ -66,6 +64,8 @@ class OpenAIRepository(APIRepositoryBase):
         """
         # Get API endpoint from config if not provided
         if api_endpoint is None:
+            from intellicrack.core.config_manager import get_config
+
             config = get_config()
             api_endpoint = config.get_api_endpoint("openai") or "https://api.openai.com/v1"
 

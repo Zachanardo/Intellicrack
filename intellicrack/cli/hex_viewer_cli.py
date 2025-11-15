@@ -23,6 +23,7 @@ import contextlib
 import curses
 import os
 import sys
+from typing import Any
 
 try:
     import mmap
@@ -126,7 +127,7 @@ class TerminalHexViewer:
         curses.init_pair(self.colors["status"], curses.COLOR_WHITE, curses.COLOR_BLUE)
         curses.init_pair(self.colors["help"], curses.COLOR_YELLOW, curses.COLOR_BLACK)
 
-    def run(self, stdscr) -> None:
+    def run(self, stdscr: Any) -> None:
         """Run main application loop."""
         self.stdscr = stdscr
         self._setup_colors()

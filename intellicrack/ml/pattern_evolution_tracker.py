@@ -79,7 +79,7 @@ if not SKLEARN_AVAILABLE:
     class DBSCAN:
         """Fallback DBSCAN clustering implementation."""
 
-        def __init__(self, eps=0.5, min_samples=5) -> None:
+        def __init__(self, eps: float = 0.5, min_samples: int = 5) -> None:
             """Initialize the FallbackDBSCAN clustering algorithm.
 
             Args:
@@ -91,8 +91,16 @@ if not SKLEARN_AVAILABLE:
             self.min_samples = min_samples
             self.labels_ = None
 
-        def fit(self, X):
-            """Fit DBSCAN clustering model."""
+        def fit(self, X: np.ndarray) -> "DBSCAN":
+            """Fit DBSCAN clustering model.
+
+            Args:
+                X: Input data array for clustering.
+
+            Returns:
+                Self instance with fitted labels.
+
+            """
             n = len(X)
             self.labels_ = np.zeros(n, dtype=int) - 1
             cluster_id = 0
@@ -117,15 +125,23 @@ if not SKLEARN_AVAILABLE:
 
             return self
 
-        def fit_predict(self, X):
-            """Fit model and return cluster labels."""
+        def fit_predict(self, X: np.ndarray) -> np.ndarray:
+            """Fit model and return cluster labels.
+
+            Args:
+                X: Input data array for clustering.
+
+            Returns:
+                Cluster labels for each sample.
+
+            """
             self.fit(X)
             return self.labels_
 
     class KMeans:
         """Fallback K-Means clustering implementation."""
 
-        def __init__(self, n_clusters=8, random_state=None, n_init=10) -> None:
+        def __init__(self, n_clusters: int = 8, random_state: int | None = None, n_init: int = 10) -> None:
             """Initialize the KMeans clustering algorithm.
 
             Args:
@@ -139,8 +155,16 @@ if not SKLEARN_AVAILABLE:
             self.n_init = n_init
             self.labels_ = None
 
-        def fit(self, X):
-            """Fit K-Means clustering model."""
+        def fit(self, X: np.ndarray) -> "KMeans":
+            """Fit K-Means clustering model.
+
+            Args:
+                X: Input data array for clustering.
+
+            Returns:
+                Self instance with fitted labels.
+
+            """
             n = len(X)
             self.labels_ = np.random.randint(0, self.n_clusters, n)
             return self
@@ -148,7 +172,7 @@ if not SKLEARN_AVAILABLE:
     class AgglomerativeClustering:
         """Fallback agglomerative clustering implementation."""
 
-        def __init__(self, n_clusters=None, distance_threshold=None, affinity="euclidean", linkage="average") -> None:
+        def __init__(self, n_clusters: int | None = None, distance_threshold: float | None = None, affinity: str = "euclidean", linkage: str = "average") -> None:
             """Initialize the AgglomerativeClustering algorithm.
 
             Args:
@@ -164,8 +188,16 @@ if not SKLEARN_AVAILABLE:
             self.linkage = linkage
             self.labels_ = None
 
-        def fit_predict(self, X):
-            """Fit model and return cluster labels."""
+        def fit_predict(self, X: np.ndarray) -> np.ndarray:
+            """Fit model and return cluster labels.
+
+            Args:
+                X: Input data array for clustering.
+
+            Returns:
+                Cluster labels for each sample.
+
+            """
             n = len(X)
             if self.n_clusters:
                 self.labels_ = np.arange(n) % self.n_clusters
@@ -181,31 +213,75 @@ if not SKLEARN_AVAILABLE:
             self.mean_ = None
             self.std_ = None
 
-        def fit_transform(self, X):
-            """Fit scaler and transform data."""
+        def fit_transform(self, X: np.ndarray) -> np.ndarray:
+            """Fit scaler and transform data.
+
+            Args:
+                X: Input data array to scale.
+
+            Returns:
+                Scaled data normalized to zero mean and unit variance.
+
+            """
             self.mean_ = np.mean(X, axis=0)
             self.std_ = np.std(X, axis=0) + 1e-10
             return (X - self.mean_) / self.std_
 
-    def silhouette_score(X, labels) -> float:
-        """Fallback silhouette score calculation."""
+    def silhouette_score(X: np.ndarray, labels: np.ndarray) -> float:
+        """Fallback silhouette score calculation.
+
+        Args:
+            X: Input data array.
+            labels: Cluster labels for each sample.
+
+        Returns:
+            Silhouette score (fallback returns 0.5).
+
+        """
         return 0.5
 
 
 if not SCIPY_AVAILABLE:
 
-    def hamming(u, v):
-        """Hamming distance fallback."""
+    def hamming(u: list[float] | np.ndarray, v: list[float] | np.ndarray) -> float:
+        """Hamming distance fallback.
+
+        Args:
+            u: First input sequence.
+            v: Second input sequence.
+
+        Returns:
+            Hamming distance between u and v.
+
+        """
         return sum(1 for x, y in zip(u, v, strict=False) if x != y) / len(u)
 
-    def jaccard(u, v):
-        """Jaccard distance fallback."""
+    def jaccard(u: list[float] | set[Any] | np.ndarray, v: list[float] | set[Any] | np.ndarray) -> float:
+        """Jaccard distance fallback.
+
+        Args:
+            u: First input set or sequence.
+            v: Second input set or sequence.
+
+        Returns:
+            Jaccard distance between u and v.
+
+        """
         set_u = set(u) if not isinstance(u, set) else u
         set_v = set(v) if not isinstance(v, set) else v
         return 1.0 - len(set_u & set_v) / len(set_u | set_v) if (set_u | set_v) else 0.0
 
-    def cosine(u, v):
-        """Cosine distance fallback."""
+    def cosine(u: np.ndarray | list[float], v: np.ndarray | list[float]) -> float:
+        """Cosine distance fallback.
+
+        Args:
+            u: First input vector.
+            v: Second input vector.
+
+        Returns:
+            Cosine distance between u and v.
+
+        """
         dot_product = np.dot(u, v)
         norm_u = np.linalg.norm(u)
         norm_v = np.linalg.norm(v)
@@ -213,8 +289,17 @@ if not SCIPY_AVAILABLE:
             return 1.0
         return 1.0 - dot_product / (norm_u * norm_v)
 
-    def entropy(pk, base=2):
-        """Entropy calculation fallback."""
+    def entropy(pk: np.ndarray | list[float], base: int = 2) -> float:
+        """Entropy calculation fallback.
+
+        Args:
+            pk: Probability distribution array.
+            base: Logarithm base for entropy calculation.
+
+        Returns:
+            Entropy of the probability distribution.
+
+        """
         pk = np.asarray(pk)
         pk = pk[pk > 0]
         if len(pk) == 0:
@@ -225,8 +310,20 @@ if not SCIPY_AVAILABLE:
 class RestrictedUnpickler(pickle.Unpickler):
     """Restricted unpickler that only allows safe classes."""
 
-    def find_class(self, module, name):
-        """Override ``find_class`` to restrict allowed classes."""
+    def find_class(self, module: str, name: str) -> type[Any]:
+        """Override ``find_class`` to restrict allowed classes.
+
+        Args:
+            module: Module name of the class to unpickle.
+            name: Class name to unpickle.
+
+        Returns:
+            The class object if allowed.
+
+        Raises:
+            pickle.UnpicklingError: If the class is not in the allowed list.
+
+        """
         # Allow only safe modules and classes
         ALLOWED_MODULES = {
             "numpy",
@@ -256,8 +353,16 @@ class RestrictedUnpickler(pickle.Unpickler):
         raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
 
 
-def secure_pickle_dumps(obj):
-    """Securely serialize object with integrity check."""
+def secure_pickle_dumps(obj: Any) -> bytes:  # noqa: ANN401 - arbitrary object serialization
+    """Securely serialize object with integrity check.
+
+    Args:
+        obj: Python object to serialize.
+
+    Returns:
+        Bytes containing HMAC signature and pickled data.
+
+    """
     # Serialize object
     data = pickle.dumps(obj)
 
@@ -268,8 +373,19 @@ def secure_pickle_dumps(obj):
     return mac + data
 
 
-def secure_pickle_loads(data):
-    """Securely deserialize object with integrity verification."""
+def secure_pickle_loads(data: bytes) -> Any:  # noqa: ANN401 - arbitrary object deserialization
+    """Securely deserialize object with integrity verification.
+
+    Args:
+        data: Bytes containing HMAC signature and pickled data.
+
+    Returns:
+        Deserialized Python object.
+
+    Raises:
+        ValueError: If integrity verification fails.
+
+    """
     # Split MAC and data
     stored_mac = data[:32]  # SHA256 produces 32 bytes
     obj_data = data[32:]
@@ -324,7 +440,7 @@ class PatternGene:
     mutation_history: list[MutationType] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize pattern gene with generated ID if not provided."""
         if not self.id:
             self.id = self.generate_id()
@@ -348,8 +464,18 @@ class PatternGene:
             metadata=self.metadata.copy(),
         )
 
-    def _apply_mutation(self, data: Any, mutation_type: MutationType, rate: float) -> Any:
-        """Apply specific mutation to pattern data."""
+    def _apply_mutation(self, data: bytes | list[str] | str, mutation_type: MutationType, rate: float) -> bytes | list[str] | str:
+        """Apply specific mutation to pattern data.
+
+        Args:
+            data: Pattern data to mutate (bytes, list of strings, or string).
+            mutation_type: Type of mutation to apply.
+            rate: Mutation rate controlling probability of changes.
+
+        Returns:
+            Mutated pattern data of the same type as input.
+
+        """
         if self.type == PatternType.BYTE_SEQUENCE:
             return self._mutate_byte_sequence(data, mutation_type, rate)
         if self.type == PatternType.API_SEQUENCE:
@@ -1496,8 +1622,13 @@ class PatternEvolutionTracker:
                         self.populations[ptype][i] = updated_pattern
                         break
 
-    def add_observer(self, observer) -> None:
-        """Add observer for pattern updates."""
+    def add_observer(self, observer: "PatternUpdateObserver") -> None:
+        """Add observer for pattern updates.
+
+        Args:
+            observer: Observer instance to register for updates.
+
+        """
         self.observers.append(observer)
 
     def _notify_observers(self) -> None:

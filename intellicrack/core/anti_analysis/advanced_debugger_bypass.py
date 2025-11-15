@@ -458,8 +458,7 @@ class HypervisorDebugger:
                 info = (ctypes.c_int * 4)()
                 cpuid_func(info, eax)
                 return tuple(info)
-            else:
-                return (0, 0, 0, 0)
+            return (0, 0, 0, 0)
 
         except Exception:
             return (0, 0, 0, 0)
@@ -469,13 +468,12 @@ class HypervisorDebugger:
         try:
             if platform.system() == "Windows":
                 return 0
-            else:
-                msr_path = "/dev/cpu/0/msr"
-                if Path(msr_path).exists():
-                    with Path(msr_path).open("rb") as f:
-                        f.seek(msr_index)
-                        return struct.unpack("<Q", f.read(8))[0]
-                return 0
+            msr_path = "/dev/cpu/0/msr"
+            if Path(msr_path).exists():
+                with Path(msr_path).open("rb") as f:
+                    f.seek(msr_index)
+                    return struct.unpack("<Q", f.read(8))[0]
+            return 0
 
         except Exception:
             return 0
@@ -574,8 +572,7 @@ class TimingNeutralizer:
         try:
             if platform.system() == "Windows":
                 return int(time.perf_counter() * 1000000000)
-            else:
-                return time.time_ns()
+            return time.time_ns()
 
         except Exception:
             return 0
@@ -880,6 +877,5 @@ def install_advanced_bypass(scyllahide_resistant: bool = True) -> dict[str, Any]
     if scyllahide_resistant:
         results = bypass.install_scyllahide_resistant_bypass()
         return {"scyllahide_resistant": results, "status": bypass.get_bypass_status()}
-    else:
-        results = bypass.install_full_bypass()
-        return {"full_bypass": results, "status": bypass.get_bypass_status()}
+    results = bypass.install_full_bypass()
+    return {"full_bypass": results, "status": bypass.get_bypass_status()}

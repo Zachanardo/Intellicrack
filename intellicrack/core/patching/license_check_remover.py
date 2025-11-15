@@ -19,7 +19,7 @@ import struct
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
 try:
     import capstone
@@ -77,29 +77,29 @@ class BasicBlock:
 
     start_addr: int
     end_addr: int
-    instructions: List[Tuple[int, str, str]]
-    successors: List[int] = field(default_factory=list)
-    predecessors: List[int] = field(default_factory=list)
-    dominators: Set[int] = field(default_factory=set)
-    post_dominators: Set[int] = field(default_factory=set)
+    instructions: list[tuple[int, str, str]]
+    successors: list[int] = field(default_factory=list)
+    predecessors: list[int] = field(default_factory=list)
+    dominators: set[int] = field(default_factory=set)
+    post_dominators: set[int] = field(default_factory=set)
     block_type: str = "normal"
-    data_dependencies: Dict[str, Set[int]] = field(default_factory=lambda: defaultdict(set))
-    def_use_chain: Dict[str, List[int]] = field(default_factory=lambda: defaultdict(list))
-    live_in: Set[str] = field(default_factory=set)
-    live_out: Set[str] = field(default_factory=set)
+    data_dependencies: dict[str, set[int]] = field(default_factory=lambda: defaultdict(set))
+    def_use_chain: dict[str, list[int]] = field(default_factory=lambda: defaultdict(list))
+    live_in: set[str] = field(default_factory=set)
+    live_out: set[str] = field(default_factory=set)
 
 
 @dataclass
 class DataFlowInfo:
     """Data flow analysis information."""
 
-    definitions: Dict[str, Set[int]]
-    uses: Dict[str, Set[int]]
-    reaching_definitions: Dict[int, Set[Tuple[str, int]]]
-    live_variables: Dict[int, Set[str]]
-    tainted_registers: Dict[int, Set[str]]
-    constant_propagation: Dict[str, Any]
-    alias_analysis: Dict[str, Set[str]]
+    definitions: dict[str, set[int]]
+    uses: dict[str, set[int]]
+    reaching_definitions: dict[int, set[tuple[str, int]]]
+    live_variables: dict[int, set[str]]
+    tainted_registers: dict[int, set[str]]
+    constant_propagation: dict[str, Any]
+    alias_analysis: dict[str, set[str]]
 
 
 @dataclass
@@ -110,15 +110,15 @@ class PatchPoint:
     block: BasicBlock
     patch_type: str
     safety_score: float
-    side_effects: List[str]
-    registers_modified: Set[str]
+    side_effects: list[str]
+    registers_modified: set[str]
     flags_modified: bool
     can_use_nop: bool
     can_use_jump: bool
     can_modify_return: bool
-    alternative_points: List[int] = field(default_factory=list)
-    data_dependencies: Set[str] = field(default_factory=set)
-    control_dependencies: List[int] = field(default_factory=list)
+    alternative_points: list[int] = field(default_factory=list)
+    data_dependencies: set[str] = field(default_factory=set)
+    control_dependencies: list[int] = field(default_factory=list)
     risk_assessment: str = "low"
     rollback_strategy: str = "restore_original"
 
@@ -130,14 +130,14 @@ class LicenseCheck:
     check_type: CheckType
     address: int
     size: int
-    instructions: List[Tuple[int, str, str]]
+    instructions: list[tuple[int, str, str]]
     confidence: float
     patch_strategy: str
     original_bytes: bytes
     patched_bytes: bytes
-    patch_points: List[PatchPoint] = field(default_factory=list)
-    control_flow_context: Optional[Dict] = None
-    data_flow_context: Optional[DataFlowInfo] = None
+    patch_points: list[PatchPoint] = field(default_factory=list)
+    control_flow_context: dict | None = None
+    data_flow_context: DataFlowInfo | None = None
     critical_path: bool = False
     validated_safe: bool = False
 
@@ -151,7 +151,7 @@ class PatternMatcher:
         self.obfuscation_patterns = self._initialize_obfuscation_patterns()
         self.vm_patterns = self._initialize_vm_patterns()
 
-    def _initialize_patterns(self) -> Dict[str, Dict]:
+    def _initialize_patterns(self) -> dict[str, dict]:
         """Initialize comprehensive license check patterns for modern software."""
         return {
             "serial_cmp": {
@@ -217,7 +217,7 @@ class PatternMatcher:
             },
         }
 
-    def _initialize_obfuscation_patterns(self) -> Dict[str, Dict]:
+    def _initialize_obfuscation_patterns(self) -> dict[str, dict]:
         """Initialize patterns for obfuscated license checks."""
         return {
             "cff_license": {
@@ -243,7 +243,7 @@ class PatternMatcher:
             },
         }
 
-    def _initialize_vm_patterns(self) -> Dict[str, Dict]:
+    def _initialize_vm_patterns(self) -> dict[str, dict]:
         """Initialize patterns for virtualized license checks."""
         return {
             "vmprotect_check": {
@@ -270,7 +270,7 @@ class PatternMatcher:
             },
         }
 
-    def find_patterns(self, instructions: List[Tuple[int, str, str]]) -> List[Dict]:
+    def find_patterns(self, instructions: list[tuple[int, str, str]]) -> list[dict]:
         """Find all types of license check patterns including obfuscated ones."""
         matches = []
 
@@ -321,7 +321,7 @@ class PatternMatcher:
 
         return matches
 
-    def _match_pattern(self, instructions: List[Tuple[int, str, str]], pattern: List[Tuple[str, str]]) -> bool:
+    def _match_pattern(self, instructions: list[tuple[int, str, str]], pattern: list[tuple[str, str]]) -> bool:
         """Check if instructions match pattern."""
         for i, (p_mnem, p_ops) in enumerate(pattern):
             if i >= len(instructions):
@@ -364,7 +364,7 @@ class DataFlowAnalyzer:
         self.taint_sources = set()
         self.tainted_data = defaultdict(set)
 
-    def analyze_data_flow(self, instructions: List[Tuple[int, str, str]]) -> DataFlowInfo:
+    def analyze_data_flow(self, instructions: list[tuple[int, str, str]]) -> DataFlowInfo:
         """Perform comprehensive data flow analysis."""
         if not self.cfg_analyzer.basic_blocks:
             return self._create_empty_dataflow_info()
@@ -411,7 +411,7 @@ class DataFlowAnalyzer:
             alias_analysis=defaultdict(set),
         )
 
-    def _get_defined_registers(self, mnemonic: str, operands: str) -> Set[str]:
+    def _get_defined_registers(self, mnemonic: str, operands: str) -> set[str]:
         """Extract registers that are defined (written) by instruction."""
         defined = set()
 
@@ -435,7 +435,7 @@ class DataFlowAnalyzer:
 
         return defined
 
-    def _get_used_registers(self, mnemonic: str, operands: str) -> Set[str]:
+    def _get_used_registers(self, mnemonic: str, operands: str) -> set[str]:
         """Extract registers that are used (read) by instruction."""
         used = set()
         operands_lower = operands.lower()
@@ -454,7 +454,7 @@ class DataFlowAnalyzer:
 
         return used
 
-    def _get_all_registers(self) -> List[str]:
+    def _get_all_registers(self) -> list[str]:
         """Get list of all x86/x64 registers to track."""
         return [
             "eax", "ebx", "ecx", "edx", "esi", "edi", "esp", "ebp",
@@ -463,7 +463,7 @@ class DataFlowAnalyzer:
             "al", "ah", "bl", "bh", "cl", "ch", "dl", "dh",
         ]
 
-    def _compute_reaching_definitions(self, definitions: Dict[str, Set[int]]) -> Dict[int, Set[Tuple[str, int]]]:
+    def _compute_reaching_definitions(self, definitions: dict[str, set[int]]) -> dict[int, set[tuple[str, int]]]:
         """Compute reaching definitions for each instruction."""
         reaching = defaultdict(set)
 
@@ -513,7 +513,7 @@ class DataFlowAnalyzer:
 
         return reaching
 
-    def _compute_live_variables(self, uses: Dict[str, Set[int]], definitions: Dict[str, Set[int]]) -> Dict[int, Set[str]]:
+    def _compute_live_variables(self, uses: dict[str, set[int]], definitions: dict[str, set[int]]) -> dict[int, set[str]]:
         """Compute live variables at each program point."""
         live = defaultdict(set)
 
@@ -559,7 +559,7 @@ class DataFlowAnalyzer:
 
         return live
 
-    def _perform_taint_analysis(self, instructions: List[Tuple[int, str, str]]) -> Dict[int, Set[str]]:
+    def _perform_taint_analysis(self, instructions: list[tuple[int, str, str]]) -> dict[int, set[str]]:
         """Track tainted data from license-related sources."""
         tainted = defaultdict(set)
 
@@ -596,7 +596,7 @@ class DataFlowAnalyzer:
 
         return tainted
 
-    def _propagate_constants(self, instructions: List[Tuple[int, str, str]]) -> Dict[str, Any]:
+    def _propagate_constants(self, instructions: list[tuple[int, str, str]]) -> dict[str, Any]:
         """Propagate constant values through the program."""
         constants = {}
 
@@ -624,7 +624,7 @@ class DataFlowAnalyzer:
 
         return constants
 
-    def _analyze_aliases(self, instructions: List[Tuple[int, str, str]]) -> Dict[str, Set[str]]:
+    def _analyze_aliases(self, instructions: list[tuple[int, str, str]]) -> dict[str, set[str]]:
         """Analyze register aliasing."""
         aliases = defaultdict(set)
 
@@ -653,7 +653,7 @@ class ControlFlowAnalyzer:
         self.dominator_tree = {}
         self.post_dominator_tree = {}
 
-    def build_cfg(self, instructions: List[Tuple[int, str, str]]) -> Dict[int, BasicBlock]:
+    def build_cfg(self, instructions: list[tuple[int, str, str]]) -> dict[int, BasicBlock]:
         """Build comprehensive control flow graph from instructions."""
         if not instructions:
             return {}
@@ -670,7 +670,7 @@ class ControlFlowAnalyzer:
 
         return self.basic_blocks
 
-    def _identify_leaders(self, instructions: List[Tuple[int, str, str]]) -> Set[int]:
+    def _identify_leaders(self, instructions: list[tuple[int, str, str]]) -> set[int]:
         """Identify instruction addresses that start basic blocks."""
         leaders = {instructions[0][0]}
 
@@ -690,7 +690,7 @@ class ControlFlowAnalyzer:
 
         return leaders
 
-    def _parse_jump_target(self, operands: str, current_addr: int) -> Optional[int]:
+    def _parse_jump_target(self, operands: str, current_addr: int) -> int | None:
         """Parse jump target from operands."""
         try:
             if "0x" in operands:
@@ -700,7 +700,7 @@ class ControlFlowAnalyzer:
             pass
         return None
 
-    def _construct_basic_blocks(self, instructions: List[Tuple[int, str, str]], leaders: Set[int]) -> Dict[int, BasicBlock]:
+    def _construct_basic_blocks(self, instructions: list[tuple[int, str, str]], leaders: set[int]) -> dict[int, BasicBlock]:
         """Construct basic blocks from instructions and leaders."""
         blocks = {}
         current_block_insns = []
@@ -751,7 +751,7 @@ class ControlFlowAnalyzer:
 
             if mnem in ["ret", "retn"]:
                 continue
-            elif mnem == "jmp":
+            if mnem == "jmp":
                 target = self._parse_jump_target(ops, addr)
                 if target and target in self.basic_blocks:
                     block.successors.append(target)
@@ -772,7 +772,7 @@ class ControlFlowAnalyzer:
                     block.successors.append(next_addr)
                     self.basic_blocks[next_addr].predecessors.append(start_addr)
 
-    def _find_next_block(self, current_addr: int) -> Optional[int]:
+    def _find_next_block(self, current_addr: int) -> int | None:
         """Find the next basic block after the current one."""
         sorted_addrs = sorted(self.basic_blocks.keys())
         try:
@@ -898,7 +898,7 @@ class ControlFlowAnalyzer:
             for succ in block.successors:
                 self.cfg_graph.add_edge(addr, succ)
 
-    def find_common_post_dominator(self, block_addrs: List[int]) -> Optional[int]:
+    def find_common_post_dominator(self, block_addrs: list[int]) -> int | None:
         """Find common post-dominator for multiple blocks."""
         if not block_addrs or not self.basic_blocks:
             return None
@@ -913,7 +913,7 @@ class ControlFlowAnalyzer:
             return min(common_post_doms)
         return None
 
-    def find_error_handlers(self) -> List[int]:
+    def find_error_handlers(self) -> list[int]:
         """Identify error handler blocks in the control flow."""
         error_blocks = []
 
@@ -928,7 +928,7 @@ class ControlFlowAnalyzer:
 
         return error_blocks
 
-    def find_validation_branches(self) -> List[Tuple[int, int, int]]:
+    def find_validation_branches(self) -> list[tuple[int, int, int]]:
         """Find validation branch patterns (test/cmp followed by conditional jump)."""
         validation_branches = []
 
@@ -957,7 +957,7 @@ class SideEffectAnalyzer:
         self.cfg_analyzer = cfg_analyzer
         self.data_flow_analyzer = data_flow_analyzer
 
-    def analyze_side_effects(self, patch_point: PatchPoint, context_instructions: List[Tuple[int, str, str]]) -> Dict:
+    def analyze_side_effects(self, patch_point: PatchPoint, context_instructions: list[tuple[int, str, str]]) -> dict:
         """Analyze comprehensive side effects of patching at this point."""
         side_effects = {
             "breaks_functionality": False,
@@ -1051,12 +1051,11 @@ class RiskAssessmentEngine:
 
         if risk_score < 0.3:
             return "low"
-        elif risk_score < 0.6:
+        if risk_score < 0.6:
             return "medium"
-        elif risk_score < 0.8:
+        if risk_score < 0.8:
             return "high"
-        else:
-            return "critical"
+        return "critical"
 
     def _assess_control_flow_risk(self, patch_point: PatchPoint) -> float:
         """Assess control flow related risks."""
@@ -1130,7 +1129,7 @@ class PatchPointSelector:
         self.side_effect_analyzer = None
         self.risk_assessor = None
 
-    def select_optimal_patch_points(self, license_check: LicenseCheck, instructions: List[Tuple[int, str, str]]) -> List[PatchPoint]:
+    def select_optimal_patch_points(self, license_check: LicenseCheck, instructions: list[tuple[int, str, str]]) -> list[PatchPoint]:
         """Select optimal patch points for a license check with safety analysis."""
         patch_points = []
 
@@ -1173,14 +1172,14 @@ class PatchPointSelector:
 
         return patch_points
 
-    def _find_containing_block(self, address: int) -> Optional[BasicBlock]:
+    def _find_containing_block(self, address: int) -> BasicBlock | None:
         """Find the basic block containing the given address."""
         for block in self.cfg_analyzer.basic_blocks.values():
             if block.start_addr <= address <= block.end_addr:
                 return block
         return None
 
-    def _analyze_nop_points(self, block: BasicBlock, check_addr: int, data_flow: DataFlowInfo) -> List[PatchPoint]:
+    def _analyze_nop_points(self, block: BasicBlock, check_addr: int, data_flow: DataFlowInfo) -> list[PatchPoint]:
         """Analyze NOP-safe patch points."""
         nop_points = []
 
@@ -1223,7 +1222,7 @@ class PatchPointSelector:
 
         return nop_points
 
-    def _analyze_jump_redirection_points(self, block: BasicBlock, check_addr: int, data_flow: DataFlowInfo) -> List[PatchPoint]:
+    def _analyze_jump_redirection_points(self, block: BasicBlock, check_addr: int, data_flow: DataFlowInfo) -> list[PatchPoint]:
         """Analyze jump redirection patch points."""
         jump_points = []
 
@@ -1260,7 +1259,7 @@ class PatchPointSelector:
 
         return jump_points
 
-    def _analyze_return_modification_points(self, block: BasicBlock, check_addr: int, data_flow: DataFlowInfo) -> List[PatchPoint]:
+    def _analyze_return_modification_points(self, block: BasicBlock, check_addr: int, data_flow: DataFlowInfo) -> list[PatchPoint]:
         """Analyze return value modification patch points."""
         return_points = []
 
@@ -1302,7 +1301,7 @@ class PatchPointSelector:
 
         return return_points
 
-    def _analyze_convergence_points(self, post_dom_addr: int, data_flow: DataFlowInfo) -> List[PatchPoint]:
+    def _analyze_convergence_points(self, post_dom_addr: int, data_flow: DataFlowInfo) -> list[PatchPoint]:
         """Analyze convergence points (post-dominators)."""
         convergence_points = []
 
@@ -1336,7 +1335,7 @@ class PatchPointSelector:
 
         return convergence_points
 
-    def _analyze_side_effects(self, mnemonic: str, operands: str) -> List[str]:
+    def _analyze_side_effects(self, mnemonic: str, operands: str) -> list[str]:
         """Analyze potential side effects of an instruction."""
         side_effects = []
 
@@ -1353,7 +1352,7 @@ class PatchPointSelector:
 
         return side_effects
 
-    def _get_modified_registers(self, mnemonic: str, operands: str) -> Set[str]:
+    def _get_modified_registers(self, mnemonic: str, operands: str) -> set[str]:
         """Get set of registers modified by instruction."""
         modified = set()
 
@@ -1478,7 +1477,7 @@ class LicenseCheckRemover:
                     logger.info("Code virtualization detected")
                     break
 
-    def _build_control_flow_graph(self, instructions: List[Tuple[int, str, str]]) -> None:
+    def _build_control_flow_graph(self, instructions: list[tuple[int, str, str]]) -> None:
         """Build control flow graph for advanced analysis."""
         cfg = {}
         current_block = []
@@ -1538,7 +1537,7 @@ class LicenseCheckRemover:
                 for successor in block.get("successors", []):
                     worklist.append((successor, current_taint.copy()))
 
-    def analyze(self) -> List[LicenseCheck]:
+    def analyze(self) -> list[LicenseCheck]:
         """Analyze binary for license checks."""
         logger.info(f"Analyzing {self.binary_path} for license checks...")
 
@@ -1763,68 +1762,59 @@ class LicenseCheckRemover:
                     self.detected_checks.append(check)
                     pos = offset + 1
 
-    def _generate_patch(self, check_type: CheckType, instructions: List[Tuple[int, str, str]], size: int) -> bytes:
+    def _generate_patch(self, check_type: CheckType, instructions: list[tuple[int, str, str]], size: int) -> bytes:
         """Generate sophisticated patch bytes for modern license checks."""
         is_x64 = self.pe.FILE_HEADER.Machine == 0x8664
 
         if check_type == CheckType.SERIAL_VALIDATION:
             return self._generate_serial_validation_patch(is_x64, instructions, size)
-        elif check_type == CheckType.TRIAL_CHECK:
+        if check_type == CheckType.TRIAL_CHECK:
             return self._generate_trial_patch(is_x64, size)
-        elif check_type == CheckType.REGISTRATION_CHECK:
+        if check_type == CheckType.REGISTRATION_CHECK:
             return self._generate_registration_patch(is_x64, size)
-        elif check_type == CheckType.HARDWARE_CHECK:
+        if check_type == CheckType.HARDWARE_CHECK:
             return self._generate_hardware_check_patch(is_x64, size)
-        elif check_type == CheckType.ONLINE_VALIDATION:
+        if check_type == CheckType.ONLINE_VALIDATION:
             return self._generate_online_validation_patch(is_x64, instructions, size)
-        elif check_type == CheckType.SIGNATURE_CHECK:
+        if check_type == CheckType.SIGNATURE_CHECK:
             return self._generate_signature_check_patch(is_x64, instructions, size)
-        elif check_type == CheckType.INTEGRITY_CHECK:
+        if check_type == CheckType.INTEGRITY_CHECK:
             return self._generate_integrity_check_patch(is_x64, size)
-        else:
-            return self._generate_default_patch(is_x64, size)
+        return self._generate_default_patch(is_x64, size)
 
-    def _generate_serial_validation_patch(self, is_x64: bool, instructions: List[Tuple[int, str, str]], size: int) -> bytes:
+    def _generate_serial_validation_patch(self, is_x64: bool, instructions: list[tuple[int, str, str]], size: int) -> bytes:
         """Generate patch for serial validation checks."""
         if self.is_dotnet:
             return b"\x17\x2a" + b"\x00" * (size - 2)
-        elif any("cmov" in insn[1] for insn in instructions):
+        if any("cmov" in insn[1] for insn in instructions):
             if is_x64:
                 return b"\x48\x89\xf0" + b"\x90" * (size - 3)
-            else:
-                return b"\x89\xf0" + b"\x90" * (size - 2)
-        elif any("jz" in insn[1] or "je" in insn[1] for insn in instructions):
+            return b"\x89\xf0" + b"\x90" * (size - 2)
+        if any("jz" in insn[1] or "je" in insn[1] for insn in instructions):
             if size <= 127:
                 return b"\xeb" + bytes([size - 2]) + b"\x90" * (size - 2)
-            else:
-                return b"\xe9" + struct.pack("<I", size - 5) + b"\x90" * (size - 5)
-        elif any("jnz" in insn[1] or "jne" in insn[1] for insn in instructions):
+            return b"\xe9" + struct.pack("<I", size - 5) + b"\x90" * (size - 5)
+        if any("jnz" in insn[1] or "jne" in insn[1] for insn in instructions):
             return b"\x90" * size
-        else:
-            if is_x64:
-                return b"\x9f\x48\xc7\xc0\x01\x00\x00\x00\x9e" + b"\x90" * (size - 9)
-            else:
-                return b"\x9c\xb8\x01\x00\x00\x00\x9d" + b"\x90" * (size - 7)
+        if is_x64:
+            return b"\x9f\x48\xc7\xc0\x01\x00\x00\x00\x9e" + b"\x90" * (size - 9)
+        return b"\x9c\xb8\x01\x00\x00\x00\x9d" + b"\x90" * (size - 7)
 
     def _generate_trial_patch(self, is_x64: bool, size: int) -> bytes:
         """Generate patch for trial checks."""
         if self.is_dotnet:
             return b"\x20\xff\xff\xff\x7f" + b"\x00" * (size - 5)
-        else:
-            if is_x64:
-                return b"\x48\x8d\x05\xff\xff\xff\x7f" + b"\x90" * (size - 7)
-            else:
-                return b"\xb8\xff\xff\xff\x7f" + b"\x90" * (size - 5)
+        if is_x64:
+            return b"\x48\x8d\x05\xff\xff\xff\x7f" + b"\x90" * (size - 7)
+        return b"\xb8\xff\xff\xff\x7f" + b"\x90" * (size - 5)
 
     def _generate_registration_patch(self, is_x64: bool, size: int) -> bytes:
         """Generate patch for registration checks."""
         if self.virtualization_detected:
             return self._generate_virt_registration_patch(is_x64, size)
-        else:
-            if is_x64:
-                return b"\x48\x31\xc0\x48\xff\xc0" + b"\x90" * (size - 6)
-            else:
-                return b"\x31\xc0\x40" + b"\x90" * (size - 3)
+        if is_x64:
+            return b"\x48\x31\xc0\x48\xff\xc0" + b"\x90" * (size - 6)
+        return b"\x31\xc0\x40" + b"\x90" * (size - 3)
 
     def _generate_virt_registration_patch(self, is_x64: bool, size: int) -> bytes:
         """Generate patch for virtualized registration checks."""
@@ -1835,37 +1825,30 @@ class LicenseCheckRemover:
             deobfuscation_code += b"\x5a\x59\x5b\x58"
             if len(deobfuscation_code) <= size:
                 return deobfuscation_code + b"\x90" * (size - len(deobfuscation_code))
-            else:
-                return b"\x48\xc7\xc0\x01\x00\x00\x00" + b"\x90" * (size - 7)
-        else:
-            deobfuscation_code = b"\x50\x53\x51\x52"
-            deobfuscation_code += b"\x31\xdb"
-            deobfuscation_code += b"\xb8\x01\x00\x00\x00"
-            deobfuscation_code += b"\x5a\x59\x5b\x58"
-            if len(deobfuscation_code) <= size:
-                return deobfuscation_code + b"\x90" * (size - len(deobfuscation_code))
-            else:
-                return b"\xb8\x01\x00\x00\x00" + b"\x90" * (size - 5)
+            return b"\x48\xc7\xc0\x01\x00\x00\x00" + b"\x90" * (size - 7)
+        deobfuscation_code = b"\x50\x53\x51\x52"
+        deobfuscation_code += b"\x31\xdb"
+        deobfuscation_code += b"\xb8\x01\x00\x00\x00"
+        deobfuscation_code += b"\x5a\x59\x5b\x58"
+        if len(deobfuscation_code) <= size:
+            return deobfuscation_code + b"\x90" * (size - len(deobfuscation_code))
+        return b"\xb8\x01\x00\x00\x00" + b"\x90" * (size - 5)
 
     def _generate_hardware_check_patch(self, is_x64: bool, size: int) -> bytes:
         """Generate patch for hardware checks."""
         if self.has_antidebug:
             if is_x64:
                 return b"\x48\x8d\x05\x00\x10\x00\x00" + b"\x90" * (size - 7)
-            else:
-                return b"\x8d\x05\x00\x10\x00\x00" + b"\x90" * (size - 6)
-        else:
-            return b"\x90" * size
+            return b"\x8d\x05\x00\x10\x00\x00" + b"\x90" * (size - 6)
+        return b"\x90" * size
 
-    def _generate_online_validation_patch(self, is_x64: bool, instructions: List[Tuple[int, str, str]], size: int) -> bytes:
+    def _generate_online_validation_patch(self, is_x64: bool, instructions: list[tuple[int, str, str]], size: int) -> bytes:
         """Generate patch for online validation checks."""
         if any("async" in str(insn[2]).lower() for insn in instructions):
             return self._generate_async_online_patch(is_x64, size)
-        else:
-            if is_x64:
-                return b"\x48\x31\xc0\x48\xff\xc0\xc3" + b"\x90" * (size - 6)
-            else:
-                return b"\xb8\x01\x00\x00\x00\xc3" + b"\x90" * (size - 6)
+        if is_x64:
+            return b"\x48\x31\xc0\x48\xff\xc0\xc3" + b"\x90" * (size - 6)
+        return b"\xb8\x01\x00\x00\x00\xc3" + b"\x90" * (size - 6)
 
     def _generate_async_online_patch(self, is_x64: bool, size: int) -> bytes:
         """Generate patch for async online validation."""
@@ -1877,51 +1860,41 @@ class LicenseCheckRemover:
             response_code += b"\x5a\x59\x58"
             if len(response_code) <= size:
                 return response_code + b"\x90" * (size - len(response_code))
-            else:
-                return b"\x48\xc7\xc0\xc8\x00\x00\x00" + b"\x90" * (size - 7)
-        else:
-            response_code = b"\x50\x51\x52"
-            response_code += b"\xb8\xc8\x00\x00\x00"
-            response_code += b"\xb9\x01\x00\x00\x00"
-            response_code += b"\x89\x0d\x00\x00\x00\x00"
-            response_code += b"\x5a\x59\x58"
-            if len(response_code) <= size:
-                return response_code + b"\x90" * (size - len(response_code))
-            else:
-                return b"\xb8\xc8\x00\x00\x00" + b"\x90" * (size - 5)
+            return b"\x48\xc7\xc0\xc8\x00\x00\x00" + b"\x90" * (size - 7)
+        response_code = b"\x50\x51\x52"
+        response_code += b"\xb8\xc8\x00\x00\x00"
+        response_code += b"\xb9\x01\x00\x00\x00"
+        response_code += b"\x89\x0d\x00\x00\x00\x00"
+        response_code += b"\x5a\x59\x58"
+        if len(response_code) <= size:
+            return response_code + b"\x90" * (size - len(response_code))
+        return b"\xb8\xc8\x00\x00\x00" + b"\x90" * (size - 5)
 
-    def _generate_signature_check_patch(self, is_x64: bool, instructions: List[Tuple[int, str, str]], size: int) -> bytes:
+    def _generate_signature_check_patch(self, is_x64: bool, instructions: list[tuple[int, str, str]], size: int) -> bytes:
         """Generate patch for signature checks."""
         if any("ecdsa" in str(insn[2]).lower() for insn in instructions):
             if is_x64:
                 return b"\x48\x31\xc0\x48\xff\xc0\x48\x31\xdb" + b"\x90" * (size - 8)
-            else:
-                return b"\x31\xc0\x40\x31\xdb" + b"\x90" * (size - 5)
-        else:
-            if is_x64:
-                return b"\x48\xc7\xc0\x01\x00\x00\x00" + b"\x90" * (size - 7)
-            else:
-                return b"\xb8\x01\x00\x00\x00" + b"\x90" * (size - 5)
+            return b"\x31\xc0\x40\x31\xdb" + b"\x90" * (size - 5)
+        if is_x64:
+            return b"\x48\xc7\xc0\x01\x00\x00\x00" + b"\x90" * (size - 7)
+        return b"\xb8\x01\x00\x00\x00" + b"\x90" * (size - 5)
 
     def _generate_integrity_check_patch(self, is_x64: bool, size: int) -> bytes:
         """Generate patch for integrity checks."""
         if self.is_packed:
             if size >= 2:
                 return b"\x74\x00" + b"\x90" * (size - 2)
-            else:
-                return b"\x90" * size
-        else:
             return b"\x90" * size
+        return b"\x90" * size
 
     def _generate_default_patch(self, is_x64: bool, size: int) -> bytes:
         """Generate default patch based on context."""
         if self.virtualization_detected:
             if is_x64:
                 return b"\x48\x31\xc0\x48\xff\xc0" + b"\x90" * (size - 6)
-            else:
-                return b"\x31\xc0\x40" + b"\x90" * (size - 3)
-        else:
-            return b"\x90" * size
+            return b"\x31\xc0\x40" + b"\x90" * (size - 3)
+        return b"\x90" * size
 
     def _get_patch_strategy(self, check_type: CheckType) -> str:
         """Get patching strategy for check type."""
@@ -1943,7 +1916,7 @@ class LicenseCheckRemover:
         """Get address of success string for redirection."""
         return b"\x00\x00\x00\x00"
 
-    def patch(self, checks: Optional[List[LicenseCheck]] = None, create_backup: bool = True) -> bool:
+    def patch(self, checks: list[LicenseCheck] | None = None, create_backup: bool = True) -> bool:
         """Apply patches to remove license checks."""
         if not checks:
             checks = self.detected_checks
@@ -1993,7 +1966,7 @@ class LicenseCheckRemover:
 
             return False
 
-    def _rva_to_offset(self, rva: int) -> Optional[int]:
+    def _rva_to_offset(self, rva: int) -> int | None:
         """Convert RVA to file offset."""
         for section in self.pe.sections:
             if section.VirtualAddress <= rva < section.VirtualAddress + section.Misc_VirtualSize:
@@ -2040,7 +2013,7 @@ class LicenseCheckRemover:
             logger.error(f"Patch verification failed: {e}")
             return False
 
-    def apply_intelligent_patches(self, checks: Optional[List[LicenseCheck]] = None, use_best_point: bool = True) -> bool:
+    def apply_intelligent_patches(self, checks: list[LicenseCheck] | None = None, use_best_point: bool = True) -> bool:
         """Apply intelligent patches using optimal patch points."""
         if not checks:
             checks = self.detected_checks
@@ -2115,7 +2088,7 @@ class LicenseCheckRemover:
             insn_size = 6 if is_x64 else 5
             return b"\x90" * insn_size
 
-        elif patch_point.patch_type == "jump_redirect":
+        if patch_point.patch_type == "jump_redirect":
             if patch_point.alternative_points:
                 success_target = patch_point.alternative_points[0]
                 current_addr = patch_point.address
@@ -2124,25 +2097,20 @@ class LicenseCheckRemover:
 
                 if -128 <= offset <= 127:
                     return b"\xeb" + struct.pack("<b", offset)
-                else:
-                    return b"\xe9" + struct.pack("<i", offset)
-            else:
-                return b"\x90\x90"
+                return b"\xe9" + struct.pack("<i", offset)
+            return b"\x90\x90"
 
-        elif patch_point.patch_type == "return_modify":
+        if patch_point.patch_type == "return_modify":
             if is_x64:
                 return b"\x48\x31\xc0\x48\xff\xc0"
-            else:
-                return b"\x31\xc0\x40"
+            return b"\x31\xc0\x40"
 
-        elif patch_point.patch_type == "convergence":
+        if patch_point.patch_type == "convergence":
             if is_x64:
                 return b"\x48\xc7\xc0\x01\x00\x00\x00"
-            else:
-                return b"\xb8\x01\x00\x00\x00"
+            return b"\xb8\x01\x00\x00\x00"
 
-        else:
-            return check.patched_bytes
+        return check.patched_bytes
 
     def generate_report(self) -> str:
         """Generate detailed report of detected checks and patches."""

@@ -74,7 +74,7 @@ class Tutorial:
 class TutorialSystem:
     """Interactive tutorial system for Intellicrack CLI."""
 
-    def __init__(self, cli_instance=None) -> None:
+    def __init__(self, cli_instance: Any | None = None) -> None:
         """Initialize tutorial system.
 
         Args:
@@ -568,10 +568,10 @@ class TutorialSystem:
                 if user_input.lower() in ["next", "tutorial next"]:
                     self.next_step()
                     break
-                elif user_input.lower() in ["prev", "tutorial prev"]:
+                if user_input.lower() in ["prev", "tutorial prev"]:
                     self.prev_step()
                     break
-                elif user_input.lower() in ["skip", "tutorial skip"]:
+                if user_input.lower() in ["skip", "tutorial skip"]:
                     if self.skip_step():
                         break
                 elif user_input.lower() in ["quit", "tutorial quit", "exit"]:
@@ -601,8 +601,7 @@ class TutorialSystem:
                             # Auto-advance to next step on success
                             self.next_step()
                             break
-                        else:
-                            self.console.print(f"[yellow]{message}[/yellow]")
+                        self.console.print(f"[yellow]{message}[/yellow]")
                     else:
                         print(message)
                         if success:
@@ -635,11 +634,15 @@ class TutorialSystem:
         # Check if command matches expected commands
         command_matched = False
         for expected_cmd in step.commands:
-            # Handle placeholder commands (e.g., <binary_path>)
+            # Handle parameterized commands with user-specific values (e.g., <binary_path>)
+            # Use regex pattern matching to validate commands with dynamic parameters
             if "<" in expected_cmd and ">" in expected_cmd:
-                # Extract the base command
-                base_cmd = expected_cmd.split("<")[0].strip()
-                if user_command.startswith(base_cmd):
+                import re
+                # Convert command template to regex pattern by replacing <param> with .*
+                pattern = re.escape(expected_cmd)
+                pattern = re.sub(r'\\<[^>]+\\>', r'.*?', pattern)
+                pattern = f"^{pattern}$"
+                if re.match(pattern, user_command.strip()):
                     command_matched = True
                     break
             elif user_command.strip() == expected_cmd.strip():
@@ -1221,12 +1224,12 @@ class TutorialSystem:
         self.console.print(tree)
 
 
-def create_tutorial_system(cli_instance=None) -> TutorialSystem:
+def create_tutorial_system(cli_instance: Any | None = None) -> TutorialSystem:
     """Create tutorial system instance."""
     return TutorialSystem(cli_instance)
 
 
-def run_interactive_tutorial(cli_instance=None) -> int:
+def run_interactive_tutorial(cli_instance: Any | None = None) -> int:
     """Run the interactive tutorial system."""
     tutorial_system = TutorialSystem(cli_instance)
 
@@ -1270,7 +1273,7 @@ Start with 'getting_started' if you're new to Intellicrack.""",
             if parts[0] in ["exit", "quit"]:
                 print("Goodbye!")
                 break
-            elif parts[0] == "list":
+            if parts[0] == "list":
                 tutorial_system.list_tutorials()
             elif parts[0] == "start" and len(parts) > 1:
                 tutorial_name = parts[1]

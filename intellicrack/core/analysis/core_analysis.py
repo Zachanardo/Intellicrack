@@ -20,7 +20,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ...utils.protection_utils import calculate_entropy
 
@@ -96,7 +96,7 @@ def get_pe_timestamp(timestamp: int) -> str:
         return "Invalid timestamp"
 
 
-def analyze_binary_internal(binary_path: str, flags: Optional[List[str]] = None) -> List[str]:
+def analyze_binary_internal(binary_path: str, flags: list[str] | None = None) -> list[str]:
     """Analyzes the binary file structure in detail.
 
     Performs comprehensive static analysis of a binary executable file,
@@ -148,7 +148,7 @@ def analyze_binary_internal(binary_path: str, flags: Optional[List[str]] = None)
     return results
 
 
-def _analyze_pe_header(pe) -> List[str]:
+def _analyze_pe_header(pe) -> list[str]:
     """Analyze PE file header and return results."""
     results = ["\nPE Header:"]
 
@@ -171,7 +171,7 @@ def _analyze_pe_header(pe) -> List[str]:
     return results
 
 
-def _analyze_optional_header(pe) -> List[str]:
+def _analyze_optional_header(pe) -> list[str]:
     """Analyze PE optional header and return results."""
     results = ["\nOptional Header:"]
 
@@ -200,7 +200,7 @@ def _analyze_optional_header(pe) -> List[str]:
     return results
 
 
-def _analyze_sections(pe, results: List[str]) -> List[str]:
+def _analyze_sections(pe, results: list[str]) -> list[str]:
     """Analyze PE sections and return list of suspicious sections."""
     results.append("\nSections:")
     suspicious_sections = []
@@ -234,7 +234,7 @@ def _analyze_sections(pe, results: List[str]) -> List[str]:
     return suspicious_sections
 
 
-def _analyze_imports(pe, results: List[str]) -> List[str]:
+def _analyze_imports(pe, results: list[str]) -> list[str]:
     """Analyze PE imports and return list of license-related imports."""
     results.append("\nImports:")
     license_related_imports = []
@@ -268,7 +268,7 @@ def _analyze_imports(pe, results: List[str]) -> List[str]:
     return license_related_imports
 
 
-def _analyze_exports(pe, results: List[str]) -> None:
+def _analyze_exports(pe, results: list[str]) -> None:
     """Analyze PE exports and add results to results list."""
     if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
         results.append("\nExports:")
@@ -277,14 +277,14 @@ def _analyze_exports(pe, results: List[str]) -> None:
                 results.append(f"  {exp.name.decode('utf-8', errors='ignore')}")
 
 
-def _generate_analysis_summary(results: List[str], suspicious_sections: List[str], license_related_imports: List[str]) -> None:
+def _generate_analysis_summary(results: list[str], suspicious_sections: list[str], license_related_imports: list[str]) -> None:
     """Generate analysis summary and add to results list."""
     results.append("\nAnalysis Summary:")
     results.append(f"  Suspicious sections: {len(suspicious_sections)}")
     results.append(f"  License-related imports: {len(license_related_imports)}")
 
 
-def enhanced_deep_license_analysis(binary_path: str) -> Dict[str, Any]:
+def enhanced_deep_license_analysis(binary_path: str) -> dict[str, Any]:
     """Perform deep license analysis on a binary file.
 
     This function analyzes the binary for license-related patterns, validation routines,
@@ -392,7 +392,6 @@ def enhanced_deep_license_analysis(binary_path: str) -> Dict[str, Any]:
                         protection_indicators.append(f"High entropy section: {section_name} ({entropy:.2f})")
                 except (UnicodeDecodeError, AttributeError, ValueError) as e:
                     logger.error("Error in core_analysis: %s", e)
-                    pass
 
         results["protection_mechanisms"] = protection_indicators
 
@@ -405,7 +404,7 @@ def enhanced_deep_license_analysis(binary_path: str) -> Dict[str, Any]:
     return results
 
 
-def detect_packing(binary_path: str) -> Dict[str, Any]:
+def detect_packing(binary_path: str) -> dict[str, Any]:
     """Detect if a binary is packed or obfuscated.
 
     Analyzes various indicators that suggest the binary has been packed,

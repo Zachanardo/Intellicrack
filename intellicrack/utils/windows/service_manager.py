@@ -9,7 +9,6 @@ import logging
 from ctypes import wintypes
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import List, Optional
 
 
 class ServiceState(IntEnum):
@@ -56,7 +55,7 @@ class ServiceInfo:
     service_type: ServiceType
     start_type: ServiceStartType
     binary_path: str
-    dependencies: List[str]
+    dependencies: list[str]
 
 
 class ServiceStatus(ctypes.Structure):
@@ -158,9 +157,8 @@ class WindowsServiceManager:
 
         except Exception as e:
             self.logger.debug(f"Failed to setup Windows API functions: {e}")
-            pass
 
-    def get_service_info(self, service_name: str) -> Optional[ServiceInfo]:
+    def get_service_info(self, service_name: str) -> ServiceInfo | None:
         """Get detailed information about a service.
 
         Args:
@@ -218,11 +216,10 @@ class WindowsServiceManager:
 
         except Exception as e:
             self.logger.debug(f"Error enumerating services: {e}")
-            pass
 
         return None
 
-    def _parse_dependencies(self, deps_ptr: wintypes.LPWSTR) -> List[str]:
+    def _parse_dependencies(self, deps_ptr: wintypes.LPWSTR) -> list[str]:
         """Parse double-null terminated dependency string."""
         if not deps_ptr:
             return []
@@ -238,11 +235,10 @@ class WindowsServiceManager:
                 offset += len(dep) + 1
         except Exception as e:
             self.logger.debug(f"Error parsing dependencies: {e}")
-            pass
 
         return dependencies
 
-    def start_service(self, service_name: str, args: Optional[List[str]] = None) -> bool:
+    def start_service(self, service_name: str, args: list[str] | None = None) -> bool:
         """Start a Windows service.
 
         Args:
@@ -288,7 +284,6 @@ class WindowsServiceManager:
 
         except Exception as e:
             self.logger.debug(f"Error starting service {service_name}: {e}")
-            pass
 
         return False
 
@@ -329,7 +324,6 @@ class WindowsServiceManager:
 
         except Exception as e:
             self.logger.debug(f"Error stopping service {service_name}: {e}")
-            pass
 
         return False
 
@@ -370,7 +364,6 @@ class WindowsServiceManager:
 
         except Exception as e:
             self.logger.debug(f"Error pausing service {service_name}: {e}")
-            pass
 
         return False
 
@@ -411,7 +404,6 @@ class WindowsServiceManager:
 
         except Exception as e:
             self.logger.debug(f"Error continuing service {service_name}: {e}")
-            pass
 
         return False
 
@@ -452,11 +444,10 @@ class WindowsServiceManager:
 
         except Exception as e:
             self.logger.debug(f"Error deleting service {service_name}: {e}")
-            pass
 
         return False
 
-    def get_service_state(self, service_name: str) -> Optional[ServiceState]:
+    def get_service_state(self, service_name: str) -> ServiceState | None:
         """Get current state of a service.
 
         Args:
@@ -493,7 +484,6 @@ class WindowsServiceManager:
 
         except Exception as e:
             self.logger.debug(f"Error querying service status {service_name}: {e}")
-            pass
 
         return None
 

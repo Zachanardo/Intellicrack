@@ -310,52 +310,44 @@ class DebuggerBypass:
         """Generate hook code for NtQueryInformationProcess."""
         try:
             if platform.machine().endswith("64"):
-                hook_code = bytes(
-                    [
-                        0x48,
-                        0x83,
-                        0xFA,
-                        0x07,  # cmp rdx, 7 (ProcessDebugPort)
-                        0x74,
-                        0x0C,  # je skip_to_zero
-                        0x48,
-                        0xB8,  # mov rax, original_addr
-                    ]
-                    + list(struct.pack("<Q", self.original_functions.get("NtQueryInformationProcess", 0)))
-                    + [
-                        0xFF,
-                        0xE0,  # jmp rax
-                        0x33,
-                        0xC0,  # xor eax, eax (STATUS_SUCCESS)
-                        0x48,
-                        0x89,
-                        0x01,  # mov [rcx], rax (write 0 to output)
-                        0xC3,  # ret
-                    ],
-                )
+                hook_code = bytes([
+                    0x48,
+                    0x83,
+                    0xFA,
+                    0x07,  # cmp rdx, 7 (ProcessDebugPort)
+                    0x74,
+                    0x0C,  # je skip_to_zero
+                    0x48,
+                    0xB8,  # mov rax, original_addr
+                    *list(struct.pack("<Q", self.original_functions.get("NtQueryInformationProcess", 0))),
+                    0xFF,
+                    0xE0,  # jmp rax
+                    0x33,
+                    0xC0,  # xor eax, eax (STATUS_SUCCESS)
+                    0x48,
+                    0x89,
+                    0x01,  # mov [rcx], rax (write 0 to output)
+                    0xC3,  # ret
+                ])
             else:
-                hook_code = bytes(
-                    [
-                        0x83,
-                        0xFA,
-                        0x07,  # cmp edx, 7
-                        0x74,
-                        0x08,  # je skip_to_zero
-                        0xB8,  # mov eax, original_addr
-                    ]
-                    + list(struct.pack("<I", self.original_functions.get("NtQueryInformationProcess", 0)))
-                    + [
-                        0xFF,
-                        0xE0,  # jmp eax
-                        0x33,
-                        0xC0,  # xor eax, eax
-                        0x89,
-                        0x01,  # mov [ecx], eax
-                        0xC2,
-                        0x14,
-                        0x00,  # ret 0x14
-                    ],
-                )
+                hook_code = bytes([
+                    0x83,
+                    0xFA,
+                    0x07,  # cmp edx, 7
+                    0x74,
+                    0x08,  # je skip_to_zero
+                    0xB8,  # mov eax, original_addr
+                    *list(struct.pack("<I", self.original_functions.get("NtQueryInformationProcess", 0))),
+                    0xFF,
+                    0xE0,  # jmp eax
+                    0x33,
+                    0xC0,  # xor eax, eax
+                    0x89,
+                    0x01,  # mov [ecx], eax
+                    0xC2,
+                    0x14,
+                    0x00,  # ret 0x14
+                ])
 
             return hook_code
 
@@ -438,8 +430,7 @@ class DebuggerBypass:
         try:
             if platform.system() == "Windows":
                 return self._bypass_timing_windows()
-            else:
-                return self._bypass_timing_linux()
+            return self._bypass_timing_linux()
 
         except Exception as e:
             self.logger.debug(f"Timing bypass failed: {e}")
@@ -586,7 +577,6 @@ class DebuggerBypass:
 
             except Exception as e:
                 self.logger.debug(f"Ptrace detach failed: {e}")
-                pass
 
             return True
 
@@ -656,13 +646,12 @@ class DebuggerBypass:
                     shell=False,
                 )
                 return "Hyper-V" in result.stdout or "Hypervisor" in result.stdout
-            else:
-                try:
-                    with open("/proc/cpuinfo") as f:
-                        cpuinfo = f.read()
-                    return "vmx" in cpuinfo or "svm" in cpuinfo
-                except Exception:
-                    return False
+            try:
+                with open("/proc/cpuinfo") as f:
+                    cpuinfo = f.read()
+                return "vmx" in cpuinfo or "svm" in cpuinfo
+            except Exception:
+                return False
 
         except Exception as e:
             self.logger.debug(f"Hypervisor check failed: {e}")

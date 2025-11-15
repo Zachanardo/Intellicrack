@@ -20,7 +20,7 @@ from collections.abc import Callable
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Generator
 
 from intellicrack.handlers.psutil_handler import psutil
 
@@ -28,10 +28,6 @@ from ...utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-def _get_audit_logger():
-    """Lazy import of audit logger to avoid circular imports."""
-    from ..logging.audit_logger import get_audit_logger
-    return get_audit_logger()
 
 try:
     from ..terminal_manager import get_terminal_manager
@@ -80,7 +76,12 @@ class ResourceUsage:
         self.last_update = datetime.now()
 
     def update(self, process: psutil.Process) -> None:
-        """Update usage statistics from a process."""
+        """Update usage statistics from a process.
+
+        Args:
+            process: psutil Process instance to update from
+
+        """
         try:
             self.cpu_percent = process.cpu_percent(interval=0.1)
             self.memory_mb = process.memory_info().rss / (1024 * 1024)
@@ -93,7 +94,12 @@ class ResourceUsage:
             pass
 
     def get_duration(self) -> timedelta:
-        """Get resource usage duration."""
+        """Get resource usage duration.
+
+        Returns:
+            Timedelta between start time and now
+
+        """
         return datetime.now() - self.start_time
 
 
@@ -126,7 +132,12 @@ class ManagedResource:
         self.cleaned_at: datetime | None = None
 
     def cleanup(self) -> None:
-        """Clean up the resource."""
+        """Clean up the resource.
+
+        Raises:
+            Exception: If cleanup function fails
+
+        """
         if self.state == ResourceState.CLEANED:
             return
 
@@ -144,7 +155,12 @@ class ManagedResource:
             raise
 
     def __del__(self) -> None:
-        """Ensure cleanup on deletion."""
+        """Ensure cleanup on deletion.
+
+        This destructor ensures resources are cleaned up even if cleanup()
+        was not explicitly called.
+
+        """
         if self.state not in (ResourceState.CLEANED, ResourceState.CLEANING):
             try:
                 self.cleanup()
@@ -178,7 +194,11 @@ class ProcessResource(ManagedResource):
         )
 
     def _cleanup_process(self) -> None:
-        """Clean up the process."""
+        """Clean up the process.
+
+        Attempts graceful termination first, then forceful termination if needed.
+
+        """
         if self.process.poll() is None:
             # Try graceful termination first
             try:
@@ -193,7 +213,7 @@ class ProcessResource(ManagedResource):
                 logger.error(f"Error terminating process {self.resource_id}: {e}")
 
     def update_usage(self) -> None:
-        """Update resource usage statistics."""
+        """Update resource usage statistics from process metrics."""
         if self.psutil_process:
             self.usage.update(self.psutil_process)
 
@@ -220,7 +240,11 @@ class VMResource(ManagedResource):
         )
 
     def _cleanup_vm(self) -> None:
-        """Clean up the virtual machine."""
+        """Clean up the virtual machine.
+
+        Attempts graceful QEMU shutdown via monitor socket, then forceful kill if needed.
+
+        """
         # Use QEMU monitor command to shutdown gracefully
         try:
             subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
@@ -242,8 +266,11 @@ class VMResource(ManagedResource):
         if self.vm_process and self.vm_process.poll() is None:
             self.vm_process.kill()
 
-        # Log VM shutdown
-        _get_audit_logger().log_vm_operation("stop", self.vm_name, success=True)
+        try:
+            from ..logging.audit_logger import get_audit_logger
+            get_audit_logger().log_vm_operation("stop", self.vm_name, success=True)
+        except ImportError:
+            pass
 
 
 class ResourceManager:
@@ -293,7 +320,11 @@ class ResourceManager:
         logger.info("Resource manager initialized")
 
     def _cleanup_loop(self) -> None:
-        """Background cleanup thread."""
+        """Background cleanup thread.
+
+        Periodically checks resource limits and removes stale resources.
+
+        """
         while True:
             try:
                 time.sleep(self.cleanup_interval)
@@ -303,7 +334,11 @@ class ResourceManager:
                 logger.error(f"Error in cleanup loop: {e}")
 
     def _check_resource_limits(self) -> None:
-        """Check and enforce resource limits."""
+        """Check and enforce resource limits.
+
+        Logs warnings when limits are exceeded.
+
+        """
         with self._lock:
             # Check process limit
             process_ids = self._resources_by_type.get(ResourceType.PROCESS, set())
@@ -322,7 +357,11 @@ class ResourceManager:
                 logger.warning(f"Memory limit exceeded: {total_memory:.1f}/{self.max_memory_mb} MB")
 
     def _cleanup_stale_resources(self) -> None:
-        """Clean up stale or dead resources."""
+        """Clean up stale or dead resources.
+
+        Removes process resources that are no longer running.
+
+        """
         with self._lock:
             stale_resources = []
 
@@ -346,15 +385,20 @@ class ResourceManager:
 
         """
         with self._lock:
-            # Check limits
+            # Check process limit
             resource_count = len(self._resources_by_type.get(resource.resource_type, set()))
-
             if resource.resource_type == ResourceType.PROCESS and resource_count >= self.max_processes:
-                raise RuntimeError(f"Process limit reached: {self.max_processes}")
+                error_msg = f"Process limit reached: {self.max_processes}"
+                logger.error(error_msg)
+                raise RuntimeError(error_msg)
             if resource.resource_type == ResourceType.VM and resource_count >= self.max_vms:
-                raise RuntimeError(f"VM limit reached: {self.max_vms}")
+                error_msg = f"VM limit reached: {self.max_vms}"
+                logger.error(error_msg)
+                raise RuntimeError(error_msg)
             if resource.resource_type == ResourceType.CONTAINER and resource_count >= self.max_containers:
-                raise RuntimeError(f"Container limit reached: {self.max_containers}")
+                error_msg = f"Container limit reached: {self.max_containers}"
+                logger.error(error_msg)
+                raise RuntimeError(error_msg)
 
             # Register resource
             self._resources[resource.resource_id] = resource
@@ -370,6 +414,9 @@ class ResourceManager:
 
         Args:
             resource_id: ID of the resource to release
+
+        Raises:
+            Exception: If resource cleanup fails (still raised after logging)
 
         """
         with self._lock:
@@ -391,16 +438,16 @@ class ResourceManager:
         """Get a managed resource by ID.
 
         Args:
-            resource_id: Resource ID
+            resource_id: Resource ID to retrieve
 
         Returns:
-            ManagedResource or None
+            ManagedResource instance if found, None otherwise
 
         """
         return self._resources.get(resource_id)
 
     @contextlib.contextmanager
-    def managed_process(self, command: str | list[str], **kwargs):
+    def managed_process(self, command: str | list[str], **kwargs: Any) -> Generator[ProcessResource, None, None]:  # noqa: ANN401
         """Context manager for managed processes.
 
         Args:
@@ -425,7 +472,7 @@ class ResourceManager:
             self.release_resource(resource.resource_id)
 
     @contextlib.contextmanager
-    def managed_vm(self, vm_name: str, vm_process: subprocess.Popen | None = None):
+    def managed_vm(self, vm_name: str, vm_process: subprocess.Popen | None = None) -> Generator[VMResource, None, None]:
         """Context manager for managed VMs.
 
         Args:
@@ -440,13 +487,17 @@ class ResourceManager:
 
         try:
             self.register_resource(resource)
-            _get_audit_logger().log_vm_operation("start", vm_name, success=True)
+            try:
+                from ..logging.audit_logger import get_audit_logger
+                get_audit_logger().log_vm_operation("start", vm_name, success=True)
+            except ImportError:
+                pass
             yield resource
         finally:
             self.release_resource(resource.resource_id)
 
     @contextlib.contextmanager
-    def temp_directory(self, prefix: str = "intellicrack_"):
+    def temp_directory(self, prefix: str = "intellicrack_") -> Generator[Path, None, None]:
         """Context manager for temporary directories.
 
         Args:
@@ -476,7 +527,11 @@ class ResourceManager:
             self.release_resource(resource.resource_id)
 
     def cleanup_all(self) -> None:
-        """Clean up all managed resources."""
+        """Clean up all managed resources.
+
+        Iterates through all resources and calls release_resource on each one.
+
+        """
         with self._lock:
             logger.info(f"Cleaning up {len(self._resources)} resources")
 
@@ -489,11 +544,11 @@ class ResourceManager:
                 except Exception as e:
                     logger.error(f"Error cleaning up resource {resource_id}: {e}")
 
-    def __enter__(self):
+    def __enter__(self) -> "ResourceManager":
         """Context manager entry."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: Any) -> bool:  # noqa: ANN401
         """Context manager exit with cleanup."""
         self.cleanup_all()
         if exc_type:
@@ -501,7 +556,13 @@ class ResourceManager:
         return False
 
     def get_resource_usage_stats(self) -> dict[str, Any]:
-        """Get comprehensive resource usage statistics."""
+        """Get comprehensive resource usage statistics.
+
+        Returns:
+            Dictionary with total resources count, breakdown by type and status,
+            memory usage, limits, and cleanup interval
+
+        """
         with self._lock:
             stats = {
                 "total_resources": len(self._resources),
@@ -530,8 +591,13 @@ class ResourceManager:
 
             return stats
 
-    def _get_memory_usage(self) -> dict[str, int]:
-        """Get current memory usage."""
+    def _get_memory_usage(self) -> dict[str, int | float]:
+        """Get current memory usage.
+
+        Returns:
+            Dictionary with RSS memory in MB, virtual memory in MB, and percentage
+
+        """
         try:
             from intellicrack.handlers.psutil_handler import psutil
 
@@ -540,7 +606,7 @@ class ResourceManager:
             return {
                 "rss_mb": int(mem_info.rss) // 1024 // 1024,
                 "vms_mb": int(mem_info.vms) // 1024 // 1024,
-                "percent": process.memory_percent(),
+                "percent": float(process.memory_percent()),
             }
         except ImportError:
             return {"rss_mb": 0, "vms_mb": 0, "percent": 0.0}
@@ -548,8 +614,33 @@ class ResourceManager:
             logger.warning(f"Failed to get memory usage: {e}")
             return {"rss_mb": 0, "vms_mb": 0, "percent": 0.0}
 
+    def _cleanup_resource(self, resource_id: str) -> bool:
+        """Cleanup a single resource.
+
+        Args:
+            resource_id: ID of the resource to cleanup
+
+        Returns:
+            True if cleanup was successful, False otherwise
+
+        """
+        try:
+            self.release_resource(resource_id)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to cleanup resource {resource_id}: {e}")
+            return False
+
     def force_cleanup_by_type(self, resource_type: ResourceType) -> int:
-        """Force cleanup of all resources of a specific type."""
+        """Force cleanup of all resources of a specific type.
+
+        Args:
+            resource_type: Type of resources to cleanup
+
+        Returns:
+            Number of resources cleaned
+
+        """
         cleaned_count = 0
         with self._lock:
             resource_ids = list(self._resources_by_type.get(resource_type, set()))
@@ -561,7 +652,15 @@ class ResourceManager:
         return cleaned_count
 
     def force_cleanup_expired(self, max_age_seconds: int = 3600) -> int:
-        """Force cleanup of resources older than specified age."""
+        """Force cleanup of resources older than specified age.
+
+        Args:
+            max_age_seconds: Maximum age in seconds before cleanup
+
+        Returns:
+            Number of resources cleaned
+
+        """
         cleaned_count = 0
         current_time = time.time()
 
@@ -576,7 +675,7 @@ class ResourceManager:
         logger.info(f"Force cleaned {cleaned_count} expired resources (older than {max_age_seconds}s)")
         return cleaned_count
 
-    def set_resource_limits(self, **limits) -> None:
+    def set_resource_limits(self, **limits: Any) -> None:  # noqa: ANN401
         """Update resource limits dynamically."""
         with self._lock:
             if "max_processes" in limits:
@@ -601,12 +700,28 @@ class ResourceManager:
         logger.info(f"Updated resource limits: {limits}")
 
     def get_resources_by_owner(self, owner: str) -> list[ManagedResource]:
-        """Get all resources owned by a specific entity."""
+        """Get all resources owned by a specific entity.
+
+        Args:
+            owner: Owner identifier
+
+        Returns:
+            List of ManagedResource instances owned by the entity
+
+        """
         with self._lock:
             return [r for r in self._resources.values() if r.metadata.get("owner") == owner]
 
     def cleanup_by_owner(self, owner: str) -> int:
-        """Cleanup all resources owned by a specific entity."""
+        """Cleanup all resources owned by a specific entity.
+
+        Args:
+            owner: Owner identifier
+
+        Returns:
+            Number of resources cleaned
+
+        """
         cleaned_count = 0
         owned_resources = self.get_resources_by_owner(owner)
 
@@ -618,7 +733,12 @@ class ResourceManager:
         return cleaned_count
 
     def emergency_cleanup(self) -> dict[str, int]:
-        """Emergency cleanup of all resources."""
+        """Emergency cleanup of all resources.
+
+        Returns:
+            Dictionary mapping resource type values to count of resources cleaned
+
+        """
         logger.warning("Performing emergency cleanup of all resources")
 
         results = {}
@@ -633,7 +753,12 @@ class ResourceManager:
         return results
 
     def health_check(self) -> dict[str, Any]:
-        """Perform health check on resource manager."""
+        """Perform health check on resource manager.
+
+        Returns:
+            Dictionary with health status, issues, warnings, and statistics
+
+        """
         health = {
             "status": "healthy",
             "issues": [],
@@ -704,7 +829,7 @@ class ResourceManager:
 class ResourceContext:
     """Context manager for managing multiple resources together."""
 
-    def __init__(self, resource_manager: ResourceManager, owner: str = None) -> None:
+    def __init__(self, resource_manager: ResourceManager, owner: str | None = None) -> None:
         """Initialize resource context.
 
         Args:
@@ -717,12 +842,12 @@ class ResourceContext:
         self.managed_resources: list[str] = []
         self._entered = False
 
-    def __enter__(self):
+    def __enter__(self) -> "ResourceContext":
         """Enter resource context."""
         self._entered = True
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: Any) -> bool:  # noqa: ANN401
         """Exit resource context with cleanup."""
         if self._entered:
             self.cleanup_all()
@@ -731,13 +856,26 @@ class ResourceContext:
     def register_resource(
         self,
         resource_type: ResourceType,
-        resource_handle: Any,
-        cleanup_func: Callable = None,
-        metadata: dict = None,
+        resource_handle: Any,  # noqa: ANN401
+        cleanup_func: Callable[[], None] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> str:
-        """Register a resource in this context."""
+        """Register a resource in this context.
+
+        Args:
+            resource_type: Type of the resource to register
+            resource_handle: Handle or object representing the resource
+            cleanup_func: Optional cleanup function to call when resource is released
+            metadata: Optional metadata dictionary for the resource
+
+        Returns:
+            Resource ID string
+
+        """
         if not self._entered:
-            raise RuntimeError("ResourceContext must be used as a context manager")
+            error_msg = "ResourceContext must be used as a context manager"
+            logger.error(error_msg)
+            raise RuntimeError(error_msg)
 
         if metadata is None:
             metadata = {}
@@ -748,8 +886,13 @@ class ResourceContext:
         self.managed_resources.append(resource_id)
         return resource_id
 
-    def cleanup_all(self):
-        """Cleanup all resources in this context."""
+    def cleanup_all(self) -> int:
+        """Cleanup all resources in this context.
+
+        Returns:
+            Number of resources cleaned up
+
+        """
         cleaned_count = 0
         for resource_id in self.managed_resources[:]:  # Copy list to avoid modification during iteration
             if self.resource_manager._cleanup_resource(resource_id):
@@ -778,10 +921,18 @@ class AutoCleanupResource:
         self.resource_manager = resource_manager
         self.resource_type = resource_type
 
-    def __call__(self, func):
-        """Manage resource cleanup."""
+    def __call__(self, func: Callable[..., Any]) -> Callable[..., Any]:
+        """Manage resource cleanup.
 
-        def wrapper(*args, **kwargs):
+        Args:
+            func: Function to decorate with auto-cleanup
+
+        Returns:
+            Wrapped function with automatic resource cleanup
+
+        """
+
+        def wrapper(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
             with ResourceContext(self.resource_manager, f"auto_{func.__name__}") as ctx:
                 # Execute function
                 result = func(*args, **kwargs)
@@ -803,80 +954,30 @@ class AutoCleanupResource:
 resource_manager = ResourceManager()
 
 
-def create_resource_context(owner: str = None) -> ResourceContext:
-    """Create a new resource context."""
+def create_resource_context(owner: str | None = None) -> ResourceContext:
+    """Create a new resource context.
+
+    Args:
+        owner: Optional owner identifier for the resource context
+
+    Returns:
+        New ResourceContext instance
+
+    """
     return ResourceContext(resource_manager, owner)
 
 
-def auto_cleanup(resource_type: ResourceType):
-    """Clean up resources."""
+def auto_cleanup(resource_type: ResourceType) -> AutoCleanupResource:
+    """Create an auto-cleanup decorator for a specific resource type.
+
+    Args:
+        resource_type: Type of resource to manage
+
+    Returns:
+        AutoCleanupResource decorator instance
+
+    """
     return AutoCleanupResource(resource_manager, resource_type)
-
-    def get_usage_stats(self) -> dict[str, Any]:
-        """Get resource usage statistics.
-
-        Returns:
-            Dictionary with usage statistics
-
-        """
-        with self._lock:
-            stats = {
-                "total_resources": len(self._resources),
-                "by_type": {},
-                "total_memory_mb": 0,
-                "total_cpu_percent": 0,
-            }
-
-            for resource_category in ResourceType:
-                count = len(self._resources_by_type.get(resource_category, set()))
-                if count > 0:
-                    stats["by_type"][resource_category.value] = count
-
-            # Calculate totals
-            for resource in self._resources.values():
-                if isinstance(resource, ProcessResource):
-                    resource.update_usage()
-                    stats["total_memory_mb"] += resource.usage.memory_mb
-                    stats["total_cpu_percent"] += resource.usage.cpu_percent
-
-            return stats
-
-    def list_resources(self, resource_type: ResourceType | None = None) -> list[dict[str, Any]]:  # noqa: D417
-        """List managed resources.
-
-        Args:
-            resource_type: Optional filter by resource type
-
-        Returns:
-            List of resource information dictionaries
-
-        """
-        with self._lock:
-            resources = []
-
-            for resource_id, resource in self._resources.items():
-                if resource_type and resource.resource_type != resource_type:
-                    continue
-
-                info = {
-                    "resource_id": resource_id,
-                    "type": resource.resource_type.value,
-                    "state": resource.state.value,
-                    "created_at": resource.created_at.isoformat(),
-                    "metadata": resource.metadata,
-                }
-
-                if isinstance(resource, ProcessResource):
-                    resource.update_usage()
-                    info["usage"] = {
-                        "cpu_percent": resource.usage.cpu_percent,
-                        "memory_mb": resource.usage.memory_mb,
-                        "duration": str(resource.usage.get_duration()),
-                    }
-
-                resources.append(info)
-
-            return resources
 
 
 class FallbackHandler:
@@ -889,7 +990,12 @@ class FallbackHandler:
         self._setup_builtin_fallbacks()
 
     def _setup_builtin_fallbacks(self) -> None:
-        """Set up built-in fallback mechanisms."""
+        """Set up built-in fallback mechanisms.
+
+        Initializes fallback implementations for common binary analysis and
+        system administration tools.
+
+        """
         # Binary analysis fallbacks
         self.fallback_registry["strings"] = self._strings_fallback
         self.fallback_registry["file"] = self._file_type_fallback
@@ -923,8 +1029,18 @@ class FallbackHandler:
             },
         )
 
-    def get_fallback(self, tool_name: str, *args, **kwargs):
-        """Get fallback implementation for a tool."""
+    def get_fallback(self, tool_name: str, *args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
+        """Get fallback implementation for a tool.
+
+        Args:
+            tool_name: Name of the tool to get fallback for
+            *args: Positional arguments to pass to fallback function
+            **kwargs: Keyword arguments to pass to fallback function
+
+        Returns:
+            Result from fallback implementation or None if unavailable
+
+        """
         if tool_name in self.fallback_registry:
             try:
                 return self.fallback_registry[tool_name](*args, **kwargs)
@@ -936,7 +1052,16 @@ class FallbackHandler:
         return None
 
     def _strings_fallback(self, binary_path: str, min_length: int = 4) -> list[str]:
-        """Python-based strings extraction fallback."""
+        """Python-based strings extraction fallback.
+
+        Args:
+            binary_path: Path to binary file to extract strings from
+            min_length: Minimum length of strings to extract
+
+        Returns:
+            List of extracted strings from binary
+
+        """
         try:
             strings = []
             with open(binary_path, "rb") as f:
@@ -961,7 +1086,15 @@ class FallbackHandler:
             return []
 
     def _file_type_fallback(self, file_path: str) -> str:
-        """Python-based file type detection fallback."""
+        """Python-based file type detection fallback.
+
+        Args:
+            file_path: Path to file to detect type for
+
+        Returns:
+            File type description string
+
+        """
         try:
             # Try python-magic first
             try:
@@ -1004,8 +1137,17 @@ class FallbackHandler:
             logger.error(f"File type fallback failed: {e}")
             return "Unknown file type"
 
-    def _objdump_fallback(self, binary_path: str, options: list[str] = None) -> str:
-        """Python-based objdump fallback using pefile/pyelftools."""
+    def _objdump_fallback(self, binary_path: str, options: list[str] | None = None) -> str:
+        """Python-based objdump fallback using pefile/pyelftools.
+
+        Args:
+            binary_path: Path to binary file to analyze
+            options: Optional list of objdump-style options
+
+        Returns:
+            Analysis output string
+
+        """
         try:
             result = []
 
@@ -1069,8 +1211,17 @@ class FallbackHandler:
             logger.error(f"objdump fallback failed: {e}")
             return f"objdump fallback error: {e}"
 
-    def _readelf_fallback(self, binary_path: str, options: list[str] = None) -> str:
-        """Python-based readelf fallback using pyelftools."""
+    def _readelf_fallback(self, binary_path: str, options: list[str] | None = None) -> str:
+        """Python-based readelf fallback using pyelftools.
+
+        Args:
+            binary_path: Path to ELF binary file to analyze
+            options: Optional list of readelf-style options
+
+        Returns:
+            ELF analysis output string
+
+        """
         try:
             from intellicrack.handlers.pyelftools_handler import HAS_PYELFTOOLS, ELFFile
 
@@ -1107,13 +1258,22 @@ class FallbackHandler:
             logger.error(f"readelf fallback failed: {e}")
             return f"readelf fallback error: {e}"
 
-    def _nmap_fallback(self, target: str, ports: str = None) -> dict[str, Any]:
-        """Python-based network scanning fallback."""
+    def _nmap_fallback(self, target: str, ports: str | None = None) -> dict[str, Any]:
+        """Python-based network scanning fallback.
+
+        Args:
+            target: Target host or IP address to scan
+            ports: Optional port specification (comma-separated, supports ranges)
+
+        Returns:
+            Dictionary with scan results including host, open_ports, and method
+
+        """
         try:
             import socket
             from concurrent.futures import ThreadPoolExecutor, as_completed
 
-            def scan_port(host, port):
+            def scan_port(host: str, port: int) -> tuple[int, bool]:
                 try:
                     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                         sock.settimeout(1)
@@ -1158,7 +1318,12 @@ class FallbackHandler:
             return {"error": str(e)}
 
     def _netstat_fallback(self) -> list[dict[str, Any]]:
-        """Python-based netstat fallback using psutil."""
+        """Python-based netstat fallback using psutil.
+
+        Returns:
+            List of dictionaries with connection information
+
+        """
         try:
             from intellicrack.handlers.psutil_handler import psutil
 
@@ -1182,8 +1347,17 @@ class FallbackHandler:
             logger.error(f"netstat fallback failed: {e}")
             return [{"error": str(e)}]
 
-    def _qemu_fallback(self, *args, **kwargs) -> dict[str, Any]:
-        """QEMU fallback using alternative emulation."""
+    def _qemu_fallback(self, *args: Any, **kwargs: Any) -> dict[str, Any]:  # noqa: ANN401
+        """QEMU fallback using alternative emulation.
+
+        Args:
+            *args: Variable positional arguments (unused)
+            **kwargs: Variable keyword arguments (unused)
+
+        Returns:
+            Dictionary with fallback status and alternative recommendations
+
+        """
         return {
             "status": "fallback",
             "message": "QEMU not available. Consider using Docker for containerized analysis.",
@@ -1194,8 +1368,17 @@ class FallbackHandler:
             ],
         }
 
-    def _gdb_fallback(self, *args, **kwargs) -> dict[str, Any]:
-        """GDB fallback for debugging."""
+    def _gdb_fallback(self, *args: Any, **kwargs: Any) -> dict[str, Any]:  # noqa: ANN401
+        """GDB fallback for debugging.
+
+        Args:
+            *args: Variable positional arguments (unused)
+            **kwargs: Variable keyword arguments (unused)
+
+        Returns:
+            Dictionary with fallback status and alternative recommendations
+
+        """
         return {
             "status": "fallback",
             "message": "GDB not available. Using Python debugging alternatives.",
@@ -1206,8 +1389,17 @@ class FallbackHandler:
             ],
         }
 
-    def _afl_fallback(self, *args, **kwargs) -> dict[str, Any]:
-        """AFL++ fallback fuzzing implementation."""
+    def _afl_fallback(self, *args: Any, **kwargs: Any) -> dict[str, Any]:  # noqa: ANN401
+        """AFL++ fallback fuzzing implementation.
+
+        Args:
+            *args: Variable positional arguments (unused)
+            **kwargs: Variable keyword arguments (unused)
+
+        Returns:
+            Dictionary with fallback status and features
+
+        """
         return {
             "status": "fallback",
             "message": "AFL++ not available. Using custom Python fuzzing.",
@@ -1219,13 +1411,24 @@ class FallbackHandler:
             ],
         }
 
-    def register_fallback(self, tool_name: str, fallback_func: Callable) -> None:
-        """Register a custom fallback function."""
+    def register_fallback(self, tool_name: str, fallback_func: Callable[..., Any]) -> None:
+        """Register a custom fallback function.
+
+        Args:
+            tool_name: Name of the tool to register fallback for
+            fallback_func: Callable function to use as fallback
+
+        """
         self.fallback_registry[tool_name] = fallback_func
         logger.info(f"Registered fallback for {tool_name}")
 
-    def list_available_fallbacks(self) -> dict[str, list[str]]:
-        """List all available fallbacks."""
+    def list_available_fallbacks(self) -> dict[str, list[str] | dict[str, list[str]]]:
+        """List all available fallbacks.
+
+        Returns:
+            Dictionary with builtin fallbacks list and python alternatives mapping
+
+        """
         return {
             "builtin_fallbacks": list(self.fallback_registry.keys()),
             "python_alternatives": self.python_alternatives,
@@ -1237,17 +1440,33 @@ fallback_handler = FallbackHandler()
 
 
 def get_fallback_handler() -> FallbackHandler:
-    """Get the global fallback handler."""
+    """Get the global fallback handler.
+
+    Returns:
+        Global FallbackHandler instance
+
+    """
     return fallback_handler
 
 
 def execute_with_fallback(
     tool_name: str,
     primary_command: list[str],
-    fallback_args: tuple = None,
-    fallback_kwargs: dict = None,
-):
-    """Execute command with automatic fallback on failure."""
+    fallback_args: tuple[Any, ...] | None = None,
+    fallback_kwargs: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Execute command with automatic fallback on failure.
+
+    Args:
+        tool_name: Name of the tool being executed
+        primary_command: Primary command to execute
+        fallback_args: Optional positional arguments for fallback function
+        fallback_kwargs: Optional keyword arguments for fallback function
+
+    Returns:
+        Dictionary with status, output, and method information
+
+    """
     try:
         # Try primary command first
         result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
@@ -1269,7 +1488,12 @@ def execute_with_fallback(
 
 
 def validate_external_dependencies() -> dict[str, Any]:
-    """Validate external tool dependencies and suggest fallbacks."""
+    """Validate external tool dependencies and suggest fallbacks.
+
+    Returns:
+        Dictionary with validation status, missing tools, and recommendations
+
+    """
     try:
         from ..config.external_tools_config import external_tools_manager
 

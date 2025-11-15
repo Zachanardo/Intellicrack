@@ -543,7 +543,9 @@ class PDFReportGenerator:
                     # Close the PE file
                     pe.close()
                 else:
-                    raise ImportError("pefile not available")
+                    error_msg = "pefile not available"
+                    logger.error(error_msg)
+                    raise ImportError(error_msg)
 
             except (OSError, ValueError, RuntimeError) as e:
                 self.logger.warning("Detailed PE analysis failed: %s, using fallback", e)

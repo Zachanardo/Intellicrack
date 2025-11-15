@@ -166,7 +166,9 @@ def calculate_checksum(data: bytes, algorithm: str = "sum8") -> int:
         for byte in data:
             result ^= byte
         return result
-    raise ValueError(f"Unknown checksum algorithm: {algorithm}")
+    error_msg = f"Unknown checksum algorithm: {algorithm}"
+    logger.error(error_msg)
+    raise ValueError(error_msg)
 
 
 def patch_bytes(data: bytearray, offset: int, patch_data: bytes) -> bool:

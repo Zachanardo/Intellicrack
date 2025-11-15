@@ -11,7 +11,6 @@ import ctypes
 import ctypes.wintypes
 import threading
 import time
-from typing import List, Optional
 
 from intellicrack.core.monitoring.base_monitor import (
     BaseMonitor,
@@ -48,7 +47,7 @@ class RegistryMonitor(BaseMonitor):
     providing comprehensive coverage independent of API hooks.
     """
 
-    def __init__(self, process_info: Optional[ProcessInfo] = None) -> None:
+    def __init__(self, process_info: ProcessInfo | None = None) -> None:
         """Initialize registry monitor.
 
         Args:
@@ -56,9 +55,9 @@ class RegistryMonitor(BaseMonitor):
 
         """
         super().__init__("RegistryMonitor", process_info)
-        self._monitor_thread: Optional[threading.Thread] = None
-        self._stop_event: Optional[ctypes.wintypes.HANDLE] = None
-        self._watch_keys: List[str] = [
+        self._monitor_thread: threading.Thread | None = None
+        self._stop_event: ctypes.wintypes.HANDLE | None = None
+        self._watch_keys: list[str] = [
             r"Software",
             r"Software\Microsoft\Windows\CurrentVersion",
             r"Software\Classes\Licenses",
@@ -135,7 +134,7 @@ class RegistryMonitor(BaseMonitor):
             except Exception as e:
                 print(f"[RegistryMonitor] Error closing watcher: {e}")
 
-    def _create_watcher(self, hive_key: int, hive_name: str, subkey: str) -> Optional[dict]:
+    def _create_watcher(self, hive_key: int, hive_name: str, subkey: str) -> dict | None:
         """Create registry watcher for a key.
 
         Args:

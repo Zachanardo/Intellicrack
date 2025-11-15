@@ -75,7 +75,7 @@ _default_device = "cpu"  # Default fallback
 _gpu_initialized = False
 
 
-def _initialize_gpu():
+def _initialize_gpu() -> str:
     """Initialize GPU lazily on first use."""
     global _default_device, _gpu_initialized
     if not _gpu_initialized:
@@ -93,13 +93,13 @@ def _initialize_gpu():
             gpu_info = get_gpu_info()
             if gpu_info.get("available", False):
                 _default_device = get_device()
-        except Exception:
+        except (ImportError, OSError, RuntimeError):
             _default_device = "cpu"
         _gpu_initialized = True
     return _default_device
 
 
-def _initialize_gpu_with_timeout(timeout_seconds: int = 5):
+def _initialize_gpu_with_timeout(timeout_seconds: int = 5) -> str:
     """Initialize GPU with timeout protection to prevent hanging.
 
     Args:
@@ -137,7 +137,7 @@ def _initialize_gpu_with_timeout(timeout_seconds: int = 5):
                 result["device"] = get_device()
             else:
                 result["device"] = "cpu"
-        except Exception as e:
+        except (ImportError, OSError, RuntimeError) as e:
             result["error"] = str(e)
             result["device"] = "cpu"
 
@@ -147,11 +147,11 @@ def _initialize_gpu_with_timeout(timeout_seconds: int = 5):
     init_thread.join(timeout=timeout_seconds)
 
     if init_thread.is_alive():
-        logger.warning(f"GPU initialization timed out after {timeout_seconds}s - using CPU fallback")
+        logger.warning("GPU initialization timed out after %ds - using CPU fallback", timeout_seconds)
         _default_device = "cpu"
     else:
         if result["error"]:
-            logger.warning(f"GPU initialization failed: {result['error']} - using CPU fallback")
+            logger.warning("GPU initialization failed: %s - using CPU fallback", result["error"])
         _default_device = result["device"]
 
     _gpu_initialized = True
@@ -166,11 +166,11 @@ logger = logging.getLogger(__name__)
 _config = None
 
 
-def _initialize_config():
+def _initialize_config() -> object:
     """Initialize and validate configuration lazily."""
     global _config
     if _config is None:
-        _config = get_config()
+        _config = _lazy_import_get_config()()
         if _config:
             # Validate configuration on module load to ensure all required settings are present
             if not _config.validate_config():
@@ -183,7 +183,7 @@ def _initialize_config():
             # Get and validate Ghidra path for reverse engineering integration
             ghidra_path = _config.get_ghidra_path()
             if ghidra_path and ghidra_path != "ghidra":
-                logger.info(f"Ghidra path configured: {ghidra_path}")
+                logger.info("Ghidra path configured: %s", ghidra_path)
 
             # Update configuration with runtime defaults if needed
             runtime_config = {
@@ -208,7 +208,7 @@ _CONFIG = None
 _get_config_func = None
 
 
-def _lazy_import_config():
+def _lazy_import_config() -> object:
     """Lazy import of CONFIG."""
     global _CONFIG
     if _CONFIG is None:
@@ -218,7 +218,7 @@ def _lazy_import_config():
     return _CONFIG
 
 
-def _lazy_import_get_config():
+def _lazy_import_get_config() -> object:
     """Lazy import of get_config function."""
     global _get_config_func
     if _get_config_func is None:
@@ -229,11 +229,10 @@ def _lazy_import_get_config():
 
 
 # Export lazy references for backwards compatibility
-CONFIG = None  # Will be replaced by _lazy_import_config() when accessed
-get_config = None  # Will be replaced by _lazy_import_get_config() when accessed
+# These will be handled by the __getattr__ function
 
 
-def _lazy_import_main():
+def _lazy_import_main() -> object:
     """Lazy import of main function."""
     global _main
     if _main is None:
@@ -242,12 +241,12 @@ def _lazy_import_main():
 
             _main = _imported_main
         except ImportError as e:
-            logger.error("Failed to import main function: %s", e)
+            logger.exception("Failed to import main function: %s", e)
             _main = False  # Mark as attempted
     return _main if _main is not False else None
 
 
-def _lazy_import_app():
+def _lazy_import_app() -> object:
     """Lazy import of UI application."""
     global _IntellicrackApp
     if _IntellicrackApp is None:
@@ -266,7 +265,7 @@ _dashboard = None
 _ai = None
 
 
-def _lazy_import_dashboard():
+def _lazy_import_dashboard() -> object:
     """Lazy import of dashboard module."""
     global _dashboard
     if _dashboard is None:
@@ -280,7 +279,7 @@ def _lazy_import_dashboard():
     return _dashboard if _dashboard is not False else None
 
 
-def _lazy_import_ai():
+def _lazy_import_ai() -> object:
     """Lazy import of ai module."""
     global _ai
     if _ai is None:
@@ -294,7 +293,7 @@ def _lazy_import_ai():
     return _ai if _ai is not False else None
 
 
-def _lazy_import_core():
+def _lazy_import_core() -> object:
     """Lazy import of core module."""
     try:
         import intellicrack.core as _imported_core
@@ -305,7 +304,7 @@ def _lazy_import_core():
         return None
 
 
-def _lazy_import_ui():
+def _lazy_import_ui() -> object:
     """Lazy import of ui module."""
     try:
         import intellicrack.ui as _imported_ui
@@ -316,7 +315,7 @@ def _lazy_import_ui():
         return None
 
 
-def _lazy_import_utils():
+def _lazy_import_utils() -> object:
     """Lazy import of utils module."""
     try:
         import intellicrack.utils as _imported_utils
@@ -327,7 +326,7 @@ def _lazy_import_utils():
         return None
 
 
-def _lazy_import_plugins():
+def _lazy_import_plugins() -> object:
     """Lazy import of plugins module."""
     try:
         import intellicrack.plugins as _imported_plugins
@@ -338,7 +337,7 @@ def _lazy_import_plugins():
         return None
 
 
-def _lazy_import_hexview():
+def _lazy_import_hexview() -> object:
     """Lazy import of hexview module."""
     try:
         import intellicrack.hexview as _imported_hexview
@@ -354,7 +353,7 @@ def _lazy_import_hexview():
 # Version info
 
 
-def get_version():
+def get_version() -> str:
     """Return the current version of Intellicrack.
 
     This function provides a programmatic way to access the version string
@@ -379,7 +378,7 @@ def get_version():
 # Package-level convenience functions
 
 
-def create_app():
+def create_app() -> object:
     """Create and return a new Intellicrack application instance.
 
     This factory function creates a fresh instance of the IntellicrackApp,
@@ -405,15 +404,16 @@ def create_app():
         before attempting to create the application instance.
 
     """
-    global _IntellicrackApp
     if _IntellicrackApp is None:
         _lazy_import_app()
     if _IntellicrackApp is None:
-        raise ImportError("IntellicrackApp not available. Check dependencies.")
+        error_msg = "IntellicrackApp not available. Check dependencies."
+        logger.error(error_msg)
+        raise ImportError(error_msg)
     return _IntellicrackApp()
 
 
-def run_app():
+def run_app() -> int:
     """Run the Intellicrack application.
 
     This convenience function provides a simple way to launch the complete
@@ -442,11 +442,13 @@ def run_app():
     """
     main = _lazy_import_main()  # Ensure main is imported lazily
     if main is None:
-        raise ImportError("Main function not available. Check dependencies.")
+        error_msg = "Main function not available. Check dependencies."
+        logger.error(error_msg)
+        raise ImportError(error_msg)
     return main()
 
 
-def get_default_device():
+def get_default_device() -> str:
     """Get the default compute device detected at startup.
 
     This function returns the device that was detected during module
@@ -468,27 +470,29 @@ def get_default_device():
     return _initialize_gpu()
 
 
-def __getattr__(name):
+def __getattr__(name: str) -> object:
     """Lazy loading for module attributes."""
     if name == "ai":
         return _lazy_import_ai()
-    elif name == "core":
+    if name == "core":
         return _lazy_import_core()
-    elif name == "ui":
+    if name == "ui":
         return _lazy_import_ui()
-    elif name == "utils":
+    if name == "utils":
         return _lazy_import_utils()
-    elif name == "plugins":
+    if name == "plugins":
         return _lazy_import_plugins()
-    elif name == "hexview":
+    if name == "hexview":
         return _lazy_import_hexview()
-    elif name == "dashboard":
+    if name == "dashboard":
         return _lazy_import_dashboard()
-    elif name == "CONFIG":
+    if name == "CONFIG":
         return _lazy_import_config()
-    elif name == "get_config":
+    if name == "get_config":
         return _lazy_import_get_config()
-    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+    error_msg = f"module '{__name__}' has no attribute '{name}'"
+    logger.error(error_msg)
+    raise AttributeError(error_msg)
 
 
 __all__ = [

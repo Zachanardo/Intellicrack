@@ -193,7 +193,7 @@ impl PlatformInfo {
     #[cfg(target_os = "windows")]
     fn detect_other_gpu_vendors() -> Result<GpuVendor> {
         use windows::Win32::Graphics::Dxgi::{
-            CreateDXGIFactory1, DXGI_ADAPTER_DESC1, IDXGIFactory1,
+            CreateDXGIFactory1, IDXGIFactory1,
         };
 
         unsafe {

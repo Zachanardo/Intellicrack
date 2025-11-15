@@ -572,7 +572,8 @@ class APIRepositoryBase(ModelRepositoryInterface):
                 # Move the temporary file to the final destination
                 if os.path.exists(destination_path):
                     os.remove(destination_path)
-                os.rename(temp_path, destination_path)
+                from pathlib import Path
+                Path(temp_path).rename(destination_path)
 
                 # Update model details with local path
                 model_details.local_path = destination_path

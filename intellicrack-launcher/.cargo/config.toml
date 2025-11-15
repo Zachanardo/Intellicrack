@@ -2,7 +2,11 @@
 PYO3_PYTHON = "D:\\Intellicrack\\.pixi\\envs\\default\\python.exe"
 PYTHONHOME = "D:\\Intellicrack\\.pixi\\envs\\default"
 PYTHON_SYS_EXECUTABLE = "D:\\Intellicrack\\.pixi\\envs\\default\\python.exe"
-PATH = { value = "D:\\Intellicrack\\.pixi\\envs\\default\\bin;D:\\Intellicrack\\.pixi\\envs\\default\\Library\\mingw-w64\\bin", relative = true }
+PATH = { value = "D:\\Intellicrack\\.pixi\\envs\\default\\bin;D:\\Intellicrack\\.pixi\\envs\\default\\Library\\mingw-w64\\bin;D:\\Intellicrack\\.pixi\\envs\\default\\Library\\bin", relative = true }
+RUSTC = { value = "D:\\Intellicrack\\.pixi\\envs\\default\\Library\\bin\\rustc.exe", force = true, relative = false }
+CARGO = { value = "D:\\Intellicrack\\.pixi\\envs\\default\\Library\\bin\\cargo.exe", force = true, relative = false }
+RUSTUP_TOOLCHAIN = { value = "", force = true }
 
 [build]
 rustflags = ["-L", "D:\\Intellicrack\\.pixi\\envs\\default\\libs"]
+rustc = "D:\\Intellicrack\\.pixi\\envs\\default\\Library\\bin\\rustc.exe"

@@ -64,15 +64,21 @@ class HexHighlight:
 
         # Validate color format
         if not color.startswith("#"):
-            raise ValueError("Color must be in hex format (e.g., #FFFF00)")
+            error_msg = "Color must be in hex format (e.g., #FFFF00)"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
 
         # Validate alpha range
         if not (0 <= alpha <= 255):
-            raise ValueError("Alpha must be between 0 and 255")
+            error_msg = "Alpha must be between 0 and 255"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
 
         # Validate range
         if start < 0 or end < 0 or start >= end:
-            raise ValueError("Invalid range: start must be >= 0 and end must be > start")
+            error_msg = "Invalid range: start must be >= 0 and end must be > start"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
 
         logger.debug(f"Created highlight: 0x{start:X}-0x{end:X} type={highlight_type} color={color}")
 

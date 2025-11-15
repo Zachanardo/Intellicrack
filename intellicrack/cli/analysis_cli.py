@@ -24,7 +24,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -74,7 +74,7 @@ class AnalysisCLI:
 
         return logger
 
-    def analyze_binary(self, file_path: str, options: Dict[str, Any]) -> Dict[str, Any]:
+    def analyze_binary(self, file_path: str, options: dict[str, Any]) -> dict[str, Any]:
         """Perform comprehensive binary analysis."""
         self.logger.info(f"Starting analysis of: {file_path}")
 
@@ -222,7 +222,7 @@ class AnalysisCLI:
                 sha256_hash.update(byte_block)
         return sha256_hash.hexdigest()
 
-    def _format_findings(self, data: Dict[str, Any], source: str) -> List[Dict[str, Any]]:
+    def _format_findings(self, data: dict[str, Any], source: str) -> list[dict[str, Any]]:
         """Format findings from analysis data."""
         findings = []
 
@@ -239,7 +239,7 @@ class AnalysisCLI:
 
         return findings
 
-    def _check_suspicious_apis(self, imports: Dict[str, List[str]]) -> List[str]:
+    def _check_suspicious_apis(self, imports: dict[str, list[str]]) -> list[str]:
         """Check for suspicious API calls."""
         suspicious_apis = [
             "VirtualProtect",
@@ -270,7 +270,7 @@ class AnalysisCLI:
 
         return found
 
-    def _extract_strings(self, file_path: str, min_length: int = 4) -> List[str]:
+    def _extract_strings(self, file_path: str, min_length: int = 4) -> list[str]:
         """Extract printable strings from binary."""
         strings = []
 
@@ -305,7 +305,7 @@ class AnalysisCLI:
 
         return strings
 
-    def _find_interesting_strings(self, strings: List[str]) -> List[str]:
+    def _find_interesting_strings(self, strings: list[str]) -> list[str]:
         """Find potentially interesting strings."""
         interesting_patterns = [
             "password",
@@ -344,7 +344,7 @@ class AnalysisCLI:
 
         return interesting
 
-    def generate_report(self, results: Dict[str, Any], format: str, output_file: str = None) -> str:
+    def generate_report(self, results: dict[str, Any], format: str, output_file: str = None) -> str:
         """Generate analysis report."""
         self.logger.info(f"Generating {format} report...")
 
@@ -353,7 +353,7 @@ class AnalysisCLI:
         self.logger.info(f"Report saved to: {report_path}")
         return report_path
 
-    def run_batch_analysis(self, file_list: List[str], options: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def run_batch_analysis(self, file_list: list[str], options: dict[str, Any]) -> list[dict[str, Any]]:
         """Run analysis on multiple files."""
         results = []
 

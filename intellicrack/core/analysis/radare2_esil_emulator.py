@@ -26,7 +26,7 @@ import threading
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable
 
 try:
     import r2pipe
@@ -63,7 +63,7 @@ class ESILRegister:
     size: int
     symbolic: bool = False
     tainted: bool = False
-    constraints: List[str] = field(default_factory=list)
+    constraints: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -75,7 +75,7 @@ class ESILMemoryAccess:
     value: bytes
     operation: str
     instruction_address: int
-    register_state: Dict[str, int]
+    register_state: dict[str, int]
 
 
 @dataclass
@@ -83,10 +83,10 @@ class ESILBreakpoint:
     """ESIL breakpoint configuration."""
 
     address: int
-    condition: Optional[str] = None
+    condition: str | None = None
     hit_count: int = 0
     enabled: bool = True
-    callback: Optional[Callable] = None
+    callback: Callable | None = None
 
 
 class RadareESILEmulator:
@@ -113,7 +113,7 @@ class RadareESILEmulator:
         self,
         binary_path: str,
         base_address: int = 0x400000,
-        session_pool: Optional[R2SessionPool] = None,
+        session_pool: R2SessionPool | None = None,
         auto_analyze: bool = True,
         analysis_level: str = "aaa",
     ) -> None:
@@ -143,17 +143,17 @@ class RadareESILEmulator:
         self.auto_analyze = auto_analyze
         self.analysis_level = analysis_level
 
-        self.session: Optional[R2SessionWrapper] = None
+        self.session: R2SessionWrapper | None = None
         self.state = ESILState.READY
-        self.registers: Dict[str, ESILRegister] = {}
-        self.memory_map: Dict[int, bytes] = {}
-        self.stack: List[int] = []
-        self.breakpoints: Dict[int, ESILBreakpoint] = {}
-        self.memory_accesses: List[ESILMemoryAccess] = []
-        self.call_stack: List[Dict[str, Any]] = []
-        self.taint_sources: List[int] = []
-        self.symbolic_memory: Dict[int, str] = {}
-        self.path_constraints: List[str] = []
+        self.registers: dict[str, ESILRegister] = {}
+        self.memory_map: dict[int, bytes] = {}
+        self.stack: list[int] = []
+        self.breakpoints: dict[int, ESILBreakpoint] = {}
+        self.memory_accesses: list[ESILMemoryAccess] = []
+        self.call_stack: list[dict[str, Any]] = []
+        self.taint_sources: list[int] = []
+        self.symbolic_memory: dict[int, str] = {}
+        self.path_constraints: list[str] = []
         self.instruction_count = 0
         self.cycle_count = 0
         self.arch = ""
@@ -161,7 +161,7 @@ class RadareESILEmulator:
         self.entry_point = 0
 
         self._lock = threading.RLock()
-        self._esil_hooks: Dict[str, List[Callable]] = {}
+        self._esil_hooks: dict[str, list[Callable]] = {}
 
         self._initialize_session()
         self._setup_esil_vm()
@@ -329,7 +329,7 @@ class RadareESILEmulator:
                 logger.error(f"Failed to read register {register}: {e}")
                 raise RuntimeError(f"Register read failed: {e}") from e
 
-    def set_register(self, register: str, value: Union[int, str], symbolic: bool = False) -> None:
+    def set_register(self, register: str, value: int | str, symbolic: bool = False) -> None:
         """Set register value with optional symbolic marking.
 
         Args:
@@ -420,8 +420,8 @@ class RadareESILEmulator:
     def add_breakpoint(
         self,
         address: int,
-        condition: Optional[str] = None,
-        callback: Optional[Callable] = None,
+        condition: str | None = None,
+        callback: Callable | None = None,
     ) -> ESILBreakpoint:
         """Add conditional breakpoint with optional callback.
 
@@ -495,7 +495,7 @@ class RadareESILEmulator:
             except Exception as e:
                 logger.warning(f"Failed to set taint source: {e}")
 
-    def step_instruction(self) -> Dict[str, Any]:
+    def step_instruction(self) -> dict[str, Any]:
         """Execute single instruction and track state changes.
 
         Returns:
@@ -600,14 +600,13 @@ class RadareESILEmulator:
         opcode_lower = opcode.lower()
         if "call" in opcode_lower:
             return "call"
-        elif "ret" in opcode_lower:
+        if "ret" in opcode_lower:
             return "ret"
-        elif any(j in opcode_lower for j in ["jmp", "je", "jne", "jz", "jnz", "jg", "jl", "ja", "jb"]):
+        if any(j in opcode_lower for j in ["jmp", "je", "jne", "jz", "jnz", "jg", "jl", "ja", "jb"]):
             return "jump"
-        else:
-            return "other"
+        return "other"
 
-    def _get_register_state(self) -> Dict[str, int]:
+    def _get_register_state(self) -> dict[str, int]:
         """Get current register values.
 
         Returns:
@@ -646,8 +645,8 @@ class RadareESILEmulator:
         self,
         esil: str,
         inst_addr: int,
-        registers: Dict[str, int],
-    ) -> List[ESILMemoryAccess]:
+        registers: dict[str, int],
+    ) -> list[ESILMemoryAccess]:
         """Extract memory accesses from ESIL expression.
 
         Args:
@@ -707,7 +706,7 @@ class RadareESILEmulator:
 
         return accesses
 
-    def _evaluate_esil_expr(self, expr: str, registers: Dict[str, int]) -> Optional[int]:
+    def _evaluate_esil_expr(self, expr: str, registers: dict[str, int]) -> int | None:
         """Evaluate ESIL expression to concrete value.
 
         Args:
@@ -801,21 +800,21 @@ class RadareESILEmulator:
 
         if isinstance(node, ast.Expression):
             return self._eval_node(node.body)
-        elif isinstance(node, ast.Constant):
+        if isinstance(node, ast.Constant):
             return node.value
-        elif isinstance(node, ast.Num):
+        if isinstance(node, ast.Num):
             return node.n
-        elif isinstance(node, ast.Str):
+        if isinstance(node, ast.Str):
             return node.s
-        elif isinstance(node, ast.NameConstant):
+        if isinstance(node, ast.NameConstant):
             return node.value
-        elif isinstance(node, ast.Name):
-            raise ValueError(f"Unexpected variable name: {node.id}")
-        elif isinstance(node, ast.BinOp):
+        if isinstance(node, ast.Name):
+            raise TypeError(f"Unexpected variable name: {node.id}")
+        if isinstance(node, ast.BinOp):
             return self._eval_binop(node)
-        elif isinstance(node, ast.UnaryOp):
+        if isinstance(node, ast.UnaryOp):
             return self._eval_unaryop(node)
-        elif isinstance(node, ast.Compare):
+        if isinstance(node, ast.Compare):
             return self._eval_compare(node)
         raise ValueError(f"Unsupported AST node type: {type(node)}")
 
@@ -835,25 +834,25 @@ class RadareESILEmulator:
         right = self._eval_node(node.right)
         if isinstance(node.op, ast.Add):
             return left + right
-        elif isinstance(node.op, ast.Sub):
+        if isinstance(node.op, ast.Sub):
             return left - right
-        elif isinstance(node.op, ast.Mult):
+        if isinstance(node.op, ast.Mult):
             return left * right
-        elif isinstance(node.op, ast.Div):
+        if isinstance(node.op, ast.Div):
             return left / right if right != 0 else 0
-        elif isinstance(node.op, ast.Mod):
+        if isinstance(node.op, ast.Mod):
             return left % right if right != 0 else 0
-        elif isinstance(node.op, ast.Pow):
+        if isinstance(node.op, ast.Pow):
             return left ** right
-        elif isinstance(node.op, ast.BitAnd):
+        if isinstance(node.op, ast.BitAnd):
             return left & right
-        elif isinstance(node.op, ast.BitOr):
+        if isinstance(node.op, ast.BitOr):
             return left | right
-        elif isinstance(node.op, ast.BitXor):
+        if isinstance(node.op, ast.BitXor):
             return left ^ right
-        elif isinstance(node.op, ast.LShift):
+        if isinstance(node.op, ast.LShift):
             return left << right
-        elif isinstance(node.op, ast.RShift):
+        if isinstance(node.op, ast.RShift):
             return left >> right
         return 0
 
@@ -872,9 +871,9 @@ class RadareESILEmulator:
         operand = self._eval_node(node.operand)
         if isinstance(node.op, ast.UAdd):
             return +operand
-        elif isinstance(node.op, ast.USub):
+        if isinstance(node.op, ast.USub):
             return -operand
-        elif isinstance(node.op, ast.Invert):
+        if isinstance(node.op, ast.Invert):
             return ~operand
         return 0
 
@@ -911,9 +910,9 @@ class RadareESILEmulator:
 
     def run_until(
         self,
-        target: Union[int, str],
+        target: int | str,
         max_steps: int = 10000,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Run emulation until target address or condition.
 
         Args:
@@ -959,7 +958,7 @@ class RadareESILEmulator:
             self.state = ESILState.ERROR
             raise RuntimeError(f"Emulation failed: {e}") from e
 
-    def _check_trap_conditions(self, step: Dict[str, Any]) -> bool:
+    def _check_trap_conditions(self, step: dict[str, Any]) -> bool:
         """Check for trap conditions like invalid memory access.
 
         Args:
@@ -992,7 +991,7 @@ class RadareESILEmulator:
 
         return False
 
-    def extract_api_calls(self) -> List[Dict[str, Any]]:
+    def extract_api_calls(self) -> list[dict[str, Any]]:
         """Extract API calls made during emulation.
 
         Returns:
@@ -1019,7 +1018,7 @@ class RadareESILEmulator:
 
         return api_calls
 
-    def _extract_call_arguments(self, call_addr: int) -> List[int]:
+    def _extract_call_arguments(self, call_addr: int) -> list[int]:
         """Extract function call arguments based on calling convention.
 
         Args:
@@ -1061,7 +1060,7 @@ class RadareESILEmulator:
 
         return args
 
-    def find_license_checks(self) -> List[Dict[str, Any]]:
+    def find_license_checks(self) -> list[dict[str, Any]]:
         """Find potential license validation code through symbolic execution.
 
         Returns:
@@ -1110,7 +1109,7 @@ class RadareESILEmulator:
 
         return license_patterns
 
-    def generate_path_constraints(self, target: int) -> List[str]:
+    def generate_path_constraints(self, target: int) -> list[str]:
         """Generate path constraints to reach target address.
 
         Args:

@@ -21,7 +21,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 from threading import Thread
-from typing import Optional
 
 import frida
 
@@ -162,7 +161,7 @@ def stop_frida_analysis(main_app) -> None:
         main_app.update_output.emit("[Frida Runner] No active analysis found for this binary.")
 
 
-def start_stalker_session(main_app, output_dir: Optional[str] = None) -> bool:
+def start_stalker_session(main_app, output_dir: str | None = None) -> bool:
     """Start a Stalker tracing session for comprehensive dynamic analysis.
 
     Args:
@@ -198,9 +197,8 @@ def start_stalker_session(main_app, output_dir: Optional[str] = None) -> bool:
             active_stalker_sessions[binary_path] = session
             main_app.update_output.emit("[Stalker] Session started successfully.")
             return True
-        else:
-            main_app.update_output.emit("[Stalker] Failed to start session.")
-            return False
+        main_app.update_output.emit("[Stalker] Failed to start session.")
+        return False
 
     except Exception as e:
         main_app.update_output.emit(f"[Stalker] Error starting session: {e}")
@@ -330,7 +328,7 @@ def collect_module_coverage_stalker(main_app, module_name: str) -> bool:
         return False
 
 
-def get_stalker_stats(main_app) -> Optional[dict]:
+def get_stalker_stats(main_app) -> dict | None:
     """Get current Stalker statistics.
 
     Args:
@@ -366,7 +364,7 @@ def get_stalker_stats(main_app) -> Optional[dict]:
         return None
 
 
-def get_licensing_routines_stalker(main_app) -> Optional[list]:
+def get_licensing_routines_stalker(main_app) -> list | None:
     """Get list of identified licensing routines from Stalker.
 
     Args:

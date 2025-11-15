@@ -54,7 +54,7 @@ def run_incremental_analysis(main_app) -> None:
     try:
         # Use file modification time and size as the cache validation strategy.
         # For full integrity, a file hash would be better but slower.
-        current_mtime = os.path.getmtime(binary_path)
+        current_mtime = Path(binary_path).stat().st_mtime
         current_size = os.path.getsize(binary_path)
 
         if cache_file.exists():

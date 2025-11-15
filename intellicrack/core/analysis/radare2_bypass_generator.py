@@ -642,13 +642,13 @@ class R2BypassGenerator:
 
                 # Check for MD5 constants
                 for const in md5_constants:
-                    if hex(const)[2:] in func_bytes.lower():
-                        analysis["constants"].append({"type": "MD5", "value": hex(const)})
+                    if f"{const:x}" in func_bytes.lower():
+                        analysis["constants"].append({"type": "MD5", "value": f"{const:x}"})
 
                 # Check for SHA constants
                 for const in sha1_constants:
-                    if hex(const)[2:] in func_bytes.lower():
-                        analysis["constants"].append({"type": "SHA1", "value": hex(const)})
+                    if f"{const:x}" in func_bytes.lower():
+                        analysis["constants"].append({"type": "SHA1", "value": f"{const:x}"})
 
                 # Look for S-boxes (sequences of bytes used for substitution)
                 # This identifies AES, DES, or custom S-boxes
@@ -1979,7 +1979,7 @@ void apply_patch() {{
             }
             return json.dumps(license_data, indent=2)
 
-        elif license_format == "xml":
+        if license_format == "xml":
             # XML format license
             signature = hashlib.sha512(f"{license_id}{serial}{machine_id}".encode()).hexdigest()
             return f"""<?xml version="1.0" encoding="UTF-8"?>
@@ -2008,7 +2008,7 @@ void apply_patch() {{
     <signature algorithm="sha512">{signature}</signature>
 </license>"""
 
-        elif license_format == "binary":
+        if license_format == "binary":
             # Binary format license (base64 encoded)
             binary_data = bytearray()
 
@@ -2055,7 +2055,7 @@ void apply_patch() {{
             # Return base64 encoded
             return f"# Binary License File\n{base64.b64encode(binary_data).decode('ascii')}"
 
-        elif license_format == "encrypted":
+        if license_format == "encrypted":
             # Encrypted license format
             plain_data = f"{license_id}|{serial}|{machine_id}|{now.isoformat()}|{expiry.isoformat()}"
 
@@ -2074,12 +2074,11 @@ void apply_patch() {{
             result += f"Checksum={hashlib.sha256(encrypted).hexdigest()}"
             return result
 
-        else:
-            # Default INI format with comprehensive data
-            signature = hashlib.sha512(f"{license_id}{serial}{machine_id}".encode()).hexdigest()
-            checksum = hashlib.crc32(f"{serial}{machine_id}".encode()) & 0xFFFFFFFF
+        # Default INI format with comprehensive data
+        signature = hashlib.sha512(f"{license_id}{serial}{machine_id}".encode()).hexdigest()
+        checksum = hashlib.crc32(f"{serial}{machine_id}".encode()) & 0xFFFFFFFF
 
-            return f"""# License File
+        return f"""# License File
 [License]
 ID={license_id}
 Serial={serial}
@@ -2092,7 +2091,7 @@ MachineID={machine_id}
 CPU={cpu_info}
 System={system_info}
 Binding={hashlib.sha256(machine_id.encode()).hexdigest()}
-VolumeSerial={hex(hash(machine_id) & 0xFFFFFFFF)[2:].upper()}
+VolumeSerial={f"{hash(machine_id) & 0xFFFFFFFF:x}".upper()}
 
 [Dates]
 Issued={now.strftime("%Y-%m-%d %H:%M:%S")}
@@ -2134,14 +2133,13 @@ Compatible=1.0,1.5,2.0"""
         # Check for format indicators
         if '"license"' in binary_str and '"serial"' in binary_str:
             return "json"
-        elif "<license>" in binary_str or "xml" in binary_str:
+        if "<license>" in binary_str or "xml" in binary_str:
             return "xml"
-        elif any(magic in self._binary_data[:1000] for magic in [b"LICC", b"LIC\x00", b"\x4c\x49\x43"]):
+        if any(magic in self._binary_data[:1000] for magic in [b"LICC", b"LIC\x00", b"\x4c\x49\x43"]):
             return "binary"
-        elif "encrypt" in binary_str or "decrypt" in binary_str:
+        if "encrypt" in binary_str or "decrypt" in binary_str:
             return "encrypted"
-        else:
-            return "ini"
+        return "ini"
 
     def _get_original_bytes(self, r2, func_addr: int) -> str:
         """Get original bytes at function address."""
@@ -3491,7 +3489,7 @@ def generate_key():
                         if part.startswith("0x"):
                             condition["expected_value"] = int(part, 16)
                             break
-                        elif part.isdigit():
+                        if part.isdigit():
                             condition["expected_value"] = int(part)
                             break
 
@@ -3516,14 +3514,13 @@ def generate_key():
         """Determine the best bypass method based on condition analysis."""
         if condition_analysis["type"] == "register_comparison":
             return "set_register_value"
-        elif condition_analysis["type"] == "memory_comparison":
+        if condition_analysis["type"] == "memory_comparison":
             return "patch_memory_value"
-        elif condition_analysis["type"] == "function_return_check":
+        if condition_analysis["type"] == "function_return_check":
             return "return_value_injection"
-        elif condition_analysis["type"] == "bitwise_test":
+        if condition_analysis["type"] == "bitwise_test":
             return "clear_test_bits"
-        else:
-            return "nop_instruction"
+        return "nop_instruction"
 
     def _assess_decision_importance(self, condition_analysis: dict[str, Any], cfg: dict[str, Any]) -> float:
         """Assess the importance of a decision point for bypass."""
@@ -3697,15 +3694,14 @@ def generate_key():
             if register_lower in ["al", "bl", "cl", "dl"]:
                 # 8-bit immediate
                 return f"{opcode}{value & 0xFF:02X}"
-            elif register_lower in ["ax", "bx", "cx", "dx"]:
+            if register_lower in ["ax", "bx", "cx", "dx"]:
                 # 16-bit immediate
                 return f"{opcode}{value & 0xFFFF:04X}"
-            elif register_lower.startswith("r") and len(register_lower) <= 3:
+            if register_lower.startswith("r") and len(register_lower) <= 3:
                 # 64-bit registers get 64-bit immediate
                 return f"{opcode}{value:016X}"
-            else:
-                # 32-bit immediate (default)
-                return f"{opcode}{value:08X}"
+            # 32-bit immediate (default)
+            return f"{opcode}{value:08X}"
 
         # Fallback for unknown registers - generate NOP sequence
         return "90" * 5

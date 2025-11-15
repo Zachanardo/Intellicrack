@@ -23,10 +23,7 @@ import logging
 import re
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    from intellicrack.core.config_manager import IntellicrackConfig
+from typing import Any
 
 from ..handlers.pyqt6_handler import (
     PYQT6_AVAILABLE,
@@ -305,7 +302,9 @@ class SearchEngine:
 
         """
         if self.file_handler.read_only:
-            raise ValueError("Cannot replace in read-only file")
+            error_msg = "Cannot replace in read-only file"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
 
         # Find all occurrences
         results = self.search_all(find_pattern, search_type, case_sensitive, whole_words)
@@ -336,7 +335,9 @@ class SearchEngine:
                         original_data = self.file_handler.read(result.offset, result.length)
                         if original_data:
                             self.file_handler.insert(result.offset, original_data)
-                        raise RuntimeError(f"Failed to insert replacement at offset {result.offset:#x}")
+                        error_msg = f"Failed to insert replacement at offset {result.offset:#x}"
+                        logger.error(error_msg)
+                        raise RuntimeError(error_msg)
             except Exception as e:
                 logger.error(f"Error during replace operation at offset {result.offset:#x}: {e}")
                 # Continue with other replacements even if one fails

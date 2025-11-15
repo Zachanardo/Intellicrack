@@ -575,10 +575,8 @@ class USBDongleDriver:
                     self.logger.info(f"Found real USB device for {device_id}")
 
                     # Set configuration if needed
-                    try:
+                    with contextlib.suppress(self.usb.core.USBError):
                         device.set_configuration()
-                    except self.usb.core.USBError:
-                        pass  # Already configured
 
             except Exception as e:
                 self.logger.debug(f"Real USB device not found: {e}")

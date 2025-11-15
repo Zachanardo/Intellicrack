@@ -319,13 +319,17 @@ class VirtualFileAccess:
 
                 # Verify the temp file was created and has the correct size
                 if not os.path.exists(self.temp_file_path):
-                    raise FileNotFoundError(f"Temp file not created: {self.temp_file_path}")
+                    error_msg = f"Temp file not created: {self.temp_file_path}"
+                    logger.error(error_msg)
+                    raise FileNotFoundError(error_msg)
 
                 self.file_size = os.path.getsize(self.temp_file_path)
                 logger.debug("Temporary file size: %s bytes", self.file_size)
 
                 if self.file_size != len(file_data):
-                    raise ValueError(f"Temp file size mismatch: {self.file_size} vs {len(file_data)}")
+                    error_msg = f"Temp file size mismatch: {self.file_size} vs {len(file_data)}"
+                    logger.error(error_msg)
+                    raise ValueError(error_msg)
 
                 # Initialize chunk manager with the temp file path
                 logger.debug("Initializing ChunkManager with temp file: %s", self.temp_file_path)
@@ -338,7 +342,9 @@ class VirtualFileAccess:
                     test_data = self.chunk_manager.read_data(0, test_size)
                     logger.debug(f"Test read from chunk manager: {len(test_data)} bytes")
                     if not test_data:
-                        raise ValueError("Chunk manager returned empty data in test read")
+                        error_msg = "Chunk manager returned empty data in test read"
+                        logger.error(error_msg)
+                        raise ValueError(error_msg)
 
                 # Mark as read-only since we're using a temp copy
                 self.read_only = True
@@ -355,7 +361,9 @@ class VirtualFileAccess:
                     except Exception as cleanup_error:
                         logger.warning("Could not clean up temp file: %s", cleanup_error)
 
-                raise ValueError(f"Could not create temporary copy of {file_path}: {copy_error}") from copy_error
+                error_msg = f"Could not create temporary copy of {file_path}: {copy_error}"
+                logger.error(error_msg)
+                raise ValueError(error_msg) from copy_error
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error loading file: %s", e)
             raise
@@ -803,8 +811,8 @@ class VirtualFileAccess:
         """
         try:
             if self.using_temp_file and self.temp_file_path:
-                return os.path.getmtime(self.temp_file_path)
-            return os.path.getmtime(self.file_path)
+                return Path(self.temp_file_path).stat().st_mtime
+            return Path(self.file_path).stat().st_mtime
         except (OSError, ValueError, RuntimeError) as e:
             logger.warning("Could not get modification time: %s", e)
             return 0.0

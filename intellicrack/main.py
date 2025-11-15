@@ -35,38 +35,65 @@ os.environ["MKL_THREADING_LAYER"] = "GNU"  # Fix PyTorch + TensorFlow import con
 
 # Set Qt to offscreen mode for WSL/headless environments if no display
 if "DISPLAY" not in os.environ and "QT_QPA_PLATFORM" not in os.environ:
+    logger.debug("No DISPLAY environment variable found and QT_QPA_PLATFORM not set.")
     # Check if we're in WSL by examining /proc/version for Microsoft string
     if os.path.exists("/proc/version"):
         try:
             with open("/proc/version", encoding="utf-8") as f:
                 if "microsoft" in f.read().lower():
                     os.environ["QT_QPA_PLATFORM"] = "offscreen"
+                    logger.info("WSL detected, setting QT_QPA_PLATFORM to 'offscreen'.")
+                else:
+                    logger.debug("Not running in WSL.")
         except OSError as e:
-            print(f"Warning: Could not read /proc/version to detect WSL: {e}")
+            logger.warning(f"Could not read /proc/version to detect WSL: {e}")
     # Don't set offscreen mode on Windows - use native rendering
     elif os.name != "nt":
         os.environ["QT_QPA_PLATFORM"] = "offscreen"
+        logger.info("Non-Windows OS detected without display, setting QT_QPA_PLATFORM to 'offscreen'.")
+    else:
+        logger.debug("Running on Windows, not setting QT_QPA_PLATFORM to 'offscreen'.")
+else:
+    logger.debug(f"DISPLAY is '{os.environ.get('DISPLAY')}' or QT_QPA_PLATFORM is '{os.environ.get('QT_QPA_PLATFORM')}', skipping offscreen mode configuration.")
 
 # Configure Qt font handling for Windows
 if os.name == "nt":
+    logger.debug("Running on Windows, configuring Qt font handling and OpenGL settings.")
     # Set Windows font directory for Qt to find system fonts
     if "QT_QPA_FONTDIR" not in os.environ:
         windir = os.environ.get("WINDIR", "C:\\Windows")
         os.environ["QT_QPA_FONTDIR"] = os.path.join(windir, "Fonts")
+        logger.debug(f"QT_QPA_FONTDIR not set, setting to '{os.environ['QT_QPA_FONTDIR']}'.")
+    else:
+        logger.debug(f"QT_QPA_FONTDIR already set to '{os.environ['QT_QPA_FONTDIR']}'.")
 
     # Suppress Qt font warnings to reduce console noise
-    os.environ["QT_LOGGING_RULES"] = "*.debug=false;qt.qpa.fonts=false"
+    if "QT_LOGGING_RULES" not in os.environ:
+        os.environ["QT_LOGGING_RULES"] = "*.debug=false;qt.qpa.fonts=false"
+        logger.debug("QT_LOGGING_RULES not set, setting to suppress Qt font warnings.")
+    else:
+        logger.debug(f"QT_LOGGING_RULES already set to '{os.environ['QT_LOGGING_RULES']}'.")
 
     # Force software rendering for Windows (especially Intel Arc compatibility)
     if "QT_OPENGL" not in os.environ:
         os.environ["QT_OPENGL"] = "software"
+        logger.debug("QT_OPENGL not set, forcing 'software' rendering for Windows.")
+    else:
+        logger.debug(f"QT_OPENGL already set to '{os.environ['QT_OPENGL']}'.")
 
     # Additional Intel Arc compatibility settings
     gpu_vendor = os.environ.get("INTELLICRACK_GPU_VENDOR", "Unknown")
+    logger.debug(f"Detected INTELLICRACK_GPU_VENDOR: '{gpu_vendor}'.")
     if gpu_vendor == "Intel":
         os.environ["QT_OPENGL"] = "software"  # Always force software for Intel
         os.environ["QT_QUICK_BACKEND"] = "software"
         os.environ["QT_ANGLE_PLATFORM"] = "warp"
+        logger.info("Intel GPU detected, forcing software rendering and specific Qt backend/platform for compatibility.")
+        logger.debug(f"QT_OPENGL set to '{os.environ['QT_OPENGL']}', QT_QUICK_BACKEND set to '{os.environ['QT_QUICK_BACKEND']}', QT_ANGLE_PLATFORM set to '{os.environ['QT_ANGLE_PLATFORM']}'.")
+    else:
+        logger.debug("Intel GPU not detected or not specified as vendor.")
+else:
+    logger.debug("Not running on Windows, skipping Qt font handling and OpenGL settings.")
 
 # Comprehensive logging disabled for Qt compatibility
 # The comprehensive logging system interferes with Qt's window display mechanisms
@@ -134,74 +161,69 @@ def main() -> int:
         logger.info("=== Intellicrack Application Starting ===")
         if log_file:
             logger.info(f"Log file: {log_file}")
+        else:
+            logger.info("File logging is disabled.")
 
         # Initialize GIL safety measures
-        logger.debug("Initializing GIL safety...")
+        logger.debug("Attempting to initialize GIL safety...")
         try:
             from intellicrack.utils.torch_gil_safety import initialize_gil_safety
             initialize_gil_safety()
-            logger.info("GIL safety initialized")
-            logger.debug("GIL safety initialized")
+            logger.info("GIL safety initialized successfully.")
         except ImportError as e:
-            logger.warning(f"GIL safety not available: {e}")
+            logger.warning(f"GIL safety not available: {e}. Setting PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF environment variable.")
             os.environ.setdefault("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1")
-            logger.debug(f"GIL safety not available: {e}")
+        except Exception as e:
+            logger.exception(f"An unexpected error occurred during GIL safety initialization: {e}")
 
         # Initialize security enforcement if available
-        logger.debug("Initializing security enforcement...")
+        logger.debug("Attempting to initialize security enforcement...")
         try:
             from intellicrack.core import security_enforcement
             security_enforcement.initialize_security()
             security_status = security_enforcement.get_security_status()
             if security_status.get("initialized"):
-                logger.info(f"Security enforcement initialized: {security_status}")
-                logger.info("Security enforcement enabled.")
-            logger.debug("Security enforcement initialized")
+                logger.info(f"Security enforcement initialized successfully with status: {security_status}.")
+            else:
+                logger.warning(f"Security enforcement initialized but reported not enabled. Status: {security_status}")
         except ImportError as e:
-            logger.warning(f"Security enforcement not available: {e}")
-            logger.debug(f"Security enforcement not available: {e}")
+            logger.warning(f"Security enforcement not available: {e}. Skipping security enforcement initialization.")
+        except Exception as e:
+            logger.exception(f"An unexpected error occurred during security enforcement initialization: {e}")
 
         # Apply security mitigations
-        logger.debug("Applying security mitigations...")
+        logger.debug("Attempting to apply security mitigations...")
         try:
             from intellicrack.utils.security_mitigations import apply_all_mitigations
             apply_all_mitigations()
-            logger.info("Security mitigations applied")
-            logger.debug("Security mitigations applied")
+            logger.info("Security mitigations applied successfully.")
         except ImportError as e:
-            logger.warning(f"Security mitigations not available: {e}")
-            logger.debug(f"Security mitigations not available: {e}")
+            logger.warning(f"Security mitigations not available: {e}. Skipping security mitigation application.")
+        except Exception as e:
+            logger.exception(f"An unexpected error occurred during security mitigation application: {e}")
 
         # Perform startup checks and auto-configuration
-        logger.debug("Importing startup_checks...")
+        logger.debug("Importing startup_checks module...")
         from intellicrack.core.startup_checks import perform_startup_checks
 
-        logger.info("Initializing Intellicrack...")
         logger.info("Performing startup checks...")
-        logger.debug("Calling perform_startup_checks()...")
-        perform_startup_checks()
-        logger.info("Startup checks completed.")
-        logger.info("Startup checks completed successfully")
-        logger.debug("Startup checks completed")
+        try:
+            perform_startup_checks()
+            logger.info("Startup checks completed successfully.")
+        except Exception as e:
+            logger.exception(f"An error occurred during startup checks: {e}")
+            # Depending on severity, you might want to exit here or continue with a warning
+            # For now, we'll just log and continue.
 
         # Import and launch the GUI
-        # Always use absolute import to avoid issues
-        logger.info("Importing launch function...")
-        logger.info("Importing GUI launch function...")
-        logger.debug("Importing main_app.launch...")
+        logger.debug("Importing GUI launch function from intellicrack.ui.main_app...")
         from intellicrack.ui.main_app import launch
 
-        logger.info("Launch function imported successfully.")
-        logger.info("GUI launch function imported successfully")
-        logger.debug("Launch function imported")
+        logger.info("GUI launch function imported successfully.")
 
-        logger.info("Calling launch()...")
         logger.info("Launching GUI application...")
-        logger.debug("Calling launch()...")
         result = launch()
-        logger.info(f"Launch() returned: {result}")
-        logger.info(f"GUI application exited with code: {result}")
-        logger.debug(f"Launch returned: {result}")
+        logger.info(f"GUI application exited with code: {result}.")
         return result
 
     except ImportError as e:

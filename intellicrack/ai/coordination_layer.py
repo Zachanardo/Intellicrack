@@ -25,6 +25,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:
@@ -296,7 +297,7 @@ class AICoordinationLayer:
 
         return result
 
-    def _llm_thread_worker(self, request: AnalysisRequest, llm_queue) -> None:
+    def _llm_thread_worker(self, request: AnalysisRequest, llm_queue: Any) -> None:
         """Worker function for LLM analysis thread."""
         if self.model_manager:
             try:
@@ -308,7 +309,7 @@ class AICoordinationLayer:
         else:
             llm_queue.put(("unavailable", None))
 
-    def _collect_parallel_results(self, request: AnalysisRequest, result: CoordinatedResult, ml_queue, llm_queue) -> None:
+    def _collect_parallel_results(self, request: AnalysisRequest, result: CoordinatedResult, ml_queue: Any, llm_queue: Any) -> None:
         """Collect results from parallel analysis threads."""
         import queue
 
@@ -340,7 +341,7 @@ class AICoordinationLayer:
         elif result.llm_results:
             result.combined_confidence = result.llm_results.get("confidence", 0.0)
 
-    def _cleanup_threads(self, threads) -> None:
+    def _cleanup_threads(self, threads: tuple[Any, Any]) -> None:
         """Ensure all threads complete gracefully."""
         ml_thread_obj, llm_thread_obj = threads
         ml_thread_obj.join(timeout=1)
@@ -479,7 +480,7 @@ class AICoordinationLayer:
                     import subprocess
 
                     # Validate binary path to prevent security issues
-                    if request.binary_path and os.path.isabs(request.binary_path):
+                    if request.binary_path and Path(request.binary_path).is_absolute():
                         real_path = os.path.realpath(request.binary_path)
 
                         # Check if file exists and is within allowed directories

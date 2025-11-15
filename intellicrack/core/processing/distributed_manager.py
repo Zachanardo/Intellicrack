@@ -322,7 +322,7 @@ class DistributedAnalysisManager:
         try:
             self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            self.server_socket.bind(("0.0.0.0", port))
+            self.server_socket.bind(("127.0.0.1", port))
             self.server_socket.listen(10)
             self.server_socket.settimeout(1.0)
 
@@ -668,11 +668,7 @@ class DistributedAnalysisManager:
             load_factor = 1.0 - (node.current_load / node.max_load)
             score += load_factor * 10.0
 
-            if task.task_type == "frida_analysis" and node.capabilities.get("supports_frida"):
-                score += 5.0
-            elif task.task_type == "radare2_analysis" and node.capabilities.get("supports_radare2"):
-                score += 5.0
-            elif task.task_type == "angr_analysis" and node.capabilities.get("supports_angr"):
+            if (task.task_type == "frida_analysis" and node.capabilities.get("supports_frida")) or (task.task_type == "radare2_analysis" and node.capabilities.get("supports_radare2")) or (task.task_type == "angr_analysis" and node.capabilities.get("supports_angr")):
                 score += 5.0
 
             if node.platform_info.get("system") == "Windows":
@@ -765,24 +761,23 @@ class DistributedAnalysisManager:
 
         if task_type == "pattern_search":
             return self._task_pattern_search(binary_path, params)
-        elif task_type == "entropy_analysis":
+        if task_type == "entropy_analysis":
             return self._task_entropy_analysis(binary_path, params)
-        elif task_type == "section_analysis":
+        if task_type == "section_analysis":
             return self._task_section_analysis(binary_path, params)
-        elif task_type == "string_extraction":
+        if task_type == "string_extraction":
             return self._task_string_extraction(binary_path, params)
-        elif task_type == "import_analysis":
+        if task_type == "import_analysis":
             return self._task_import_analysis(binary_path, params)
-        elif task_type == "crypto_detection":
+        if task_type == "crypto_detection":
             return self._task_crypto_detection(binary_path, params)
-        elif task_type == "frida_analysis":
+        if task_type == "frida_analysis":
             return self._task_frida_analysis(binary_path, params)
-        elif task_type == "radare2_analysis":
+        if task_type == "radare2_analysis":
             return self._task_radare2_analysis(binary_path, params)
-        elif task_type == "angr_analysis":
+        if task_type == "angr_analysis":
             return self._task_angr_analysis(binary_path, params)
-        else:
-            return self._task_generic_analysis(binary_path, params)
+        return self._task_generic_analysis(binary_path, params)
 
     def _task_pattern_search(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
         """Execute pattern search task."""
@@ -1263,7 +1258,7 @@ class DistributedAnalysisManager:
                     task = self.tasks[task_id]
                     if task.status == TaskStatus.COMPLETED:
                         return task.result
-                    elif task.status == TaskStatus.FAILED:
+                    if task.status == TaskStatus.FAILED:
                         return {"error": task.error, "status": "failed"}
 
             if timeout is None:

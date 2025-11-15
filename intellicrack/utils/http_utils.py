@@ -21,14 +21,12 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import os
 import warnings
 from pathlib import Path
-from typing import Optional
 
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.exceptions import InsecureRequestWarning
 from urllib3.util.retry import Retry
 
-from intellicrack.core.config_manager import ConfigManager
 from intellicrack.utils.logger import logger
 
 
@@ -37,6 +35,8 @@ class SecureHTTPClient:
 
     def __init__(self) -> None:
         """Initialize HTTP client with configuration from ConfigManager."""
+        from intellicrack.core.config_manager import ConfigManager
+
         self.config_manager = ConfigManager()
         self.session = requests.Session()
         self._setup_session()
@@ -75,7 +75,7 @@ class SecureHTTPClient:
 
                 self.session.proxies = {"http": proxy_url, "https": proxy_url}
 
-    def _get_ssl_verify(self, override_verify: Optional[bool] = None) -> bool | str:
+    def _get_ssl_verify(self, override_verify: bool | None = None) -> bool | str:
         """Get SSL verification setting with override capability.
 
         Args:
@@ -120,7 +120,7 @@ class SecureHTTPClient:
 
         return ssl_verify
 
-    def request(self, method: str, url: str, verify: Optional[bool | str] = None, **kwargs) -> requests.Response:
+    def request(self, method: str, url: str, verify: bool | str | None = None, **kwargs) -> requests.Response:
         """Make an HTTP request with configurable SSL verification.
 
         Args:
@@ -181,7 +181,7 @@ class SecureHTTPClient:
 
 
 # Global instance for convenient access
-_http_client: Optional[SecureHTTPClient] = None
+_http_client: SecureHTTPClient | None = None
 
 
 def get_http_client() -> SecureHTTPClient:
@@ -197,7 +197,7 @@ def get_http_client() -> SecureHTTPClient:
     return _http_client
 
 
-def secure_request(method: str, url: str, verify: Optional[bool | str] = None, **kwargs) -> requests.Response:
+def secure_request(method: str, url: str, verify: bool | str | None = None, **kwargs) -> requests.Response:
     """Make secure HTTP requests.
 
     This function uses the global HTTP client with proper SSL configuration.

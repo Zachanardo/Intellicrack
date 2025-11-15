@@ -20,7 +20,7 @@ Licensed under GNU General Public License v3.0
 import struct
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 try:
     import angr
@@ -99,10 +99,10 @@ class SymbolicVMContext:
     vm_ip_symbolic: Any
     vm_sp_symbolic: Any
     vm_stack_symbolic: Any
-    vm_registers: Dict[str, Any]
-    native_registers_mapping: Dict[str, int]
-    constraints: List[Any] = field(default_factory=list)
-    path_history: List[int] = field(default_factory=list)
+    vm_registers: dict[str, Any]
+    native_registers_mapping: dict[str, int]
+    constraints: list[Any] = field(default_factory=list)
+    path_history: list[int] = field(default_factory=list)
 
 
 @dataclass
@@ -111,13 +111,13 @@ class LiftedHandler:
 
     handler_address: int
     semantic: HandlerSemantic
-    symbolic_effects: List[Tuple[str, Any]]
-    constraints: List[Any]
-    native_translation: Optional[bytes]
-    assembly_code: List[str]
+    symbolic_effects: list[tuple[str, Any]]
+    constraints: list[Any]
+    native_translation: bytes | None
+    assembly_code: list[str]
     confidence: float
     operand_count: int = 0
-    operand_types: List[str] = field(default_factory=list)
+    operand_types: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -127,11 +127,11 @@ class DevirtualizedBlock:
     original_vm_entry: int
     original_vm_exit: int
     vm_bytecode: bytes
-    handlers_executed: List[int]
-    lifted_semantics: List[LiftedHandler]
+    handlers_executed: list[int]
+    lifted_semantics: list[LiftedHandler]
     native_code: bytes
-    assembly: List[str]
-    control_flow_edges: List[Tuple[int, int]]
+    assembly: list[str]
+    control_flow_edges: list[tuple[int, int]]
     confidence: float
     execution_paths: int
 
@@ -143,15 +143,15 @@ class DevirtualizationResult:
     vm_type: VMType
     architecture: str
     vm_entry_point: int
-    handler_table: Optional[int]
-    dispatcher_address: Optional[int]
-    lifted_handlers: Dict[int, LiftedHandler]
-    devirtualized_blocks: List[DevirtualizedBlock]
+    handler_table: int | None
+    dispatcher_address: int | None
+    lifted_handlers: dict[int, LiftedHandler]
+    devirtualized_blocks: list[DevirtualizedBlock]
     total_paths_explored: int
     total_constraints_solved: int
     overall_confidence: float
     analysis_time_seconds: float
-    technical_details: Dict[str, Any] = field(default_factory=dict)
+    technical_details: dict[str, Any] = field(default_factory=dict)
 
 
 class GuidedVMExploration(ExplorationTechnique):
@@ -213,15 +213,15 @@ class SymbolicDevirtualizer:
             raise ImportError("angr framework required for symbolic devirtualization")
 
         self.binary_path = binary_path
-        self.project: Optional[Project] = None
+        self.project: Project | None = None
         self.vm_type = VMType.UNKNOWN
         self.architecture = "unknown"
 
-        self.handler_semantics: Dict[int, HandlerSemantic] = {}
-        self.lifted_handlers: Dict[int, LiftedHandler] = {}
+        self.handler_semantics: dict[int, HandlerSemantic] = {}
+        self.lifted_handlers: dict[int, LiftedHandler] = {}
 
-        self.vm_dispatcher: Optional[int] = None
-        self.handler_table: Optional[int] = None
+        self.vm_dispatcher: int | None = None
+        self.handler_table: int | None = None
 
         if CAPSTONE_AVAILABLE:
             self.cs_x86 = Cs(CS_ARCH_X86, CS_MODE_32)
@@ -312,14 +312,14 @@ class SymbolicDevirtualizer:
 
         if b".vmp" in data or b"VMProtect" in data:
             return VMType.VMPROTECT
-        elif b".themida" in data or b"Themida" in data or b"WinLicense" in data:
+        if b".themida" in data or b"Themida" in data or b"WinLicense" in data:
             return VMType.THEMIDA
-        elif b"Code Virtualizer" in data or b".cvirt" in data:
+        if b"Code Virtualizer" in data or b".cvirt" in data:
             return VMType.CODE_VIRTUALIZER
 
         return VMType.GENERIC
 
-    def _find_dispatcher_symbolic(self, start_addr: int) -> Optional[int]:
+    def _find_dispatcher_symbolic(self, start_addr: int) -> int | None:
         initial_state = self.project.factory.blank_state(addr=start_addr)
 
         exploration_manager = self.project.factory.simgr(initial_state)
@@ -349,7 +349,7 @@ class SymbolicDevirtualizer:
 
         return indirect_jumps >= 1
 
-    def _find_dispatcher_pattern(self) -> Optional[int]:
+    def _find_dispatcher_pattern(self) -> int | None:
         with open(self.binary_path, "rb") as f:
             data = f.read()
 
@@ -366,7 +366,7 @@ class SymbolicDevirtualizer:
 
         return None
 
-    def _find_handler_table_symbolic(self, start_addr: int) -> Optional[int]:
+    def _find_handler_table_symbolic(self, start_addr: int) -> int | None:
         if not self.vm_dispatcher:
             return None
 
@@ -389,7 +389,7 @@ class SymbolicDevirtualizer:
 
         return self._scan_for_pointer_table()
 
-    def _scan_for_pointer_table(self) -> Optional[int]:
+    def _scan_for_pointer_table(self) -> int | None:
         with open(self.binary_path, "rb") as f:
             data = f.read()
 
@@ -422,7 +422,7 @@ class SymbolicDevirtualizer:
 
         return None
 
-    def _extract_handler_addresses(self) -> List[int]:
+    def _extract_handler_addresses(self) -> list[int]:
         handlers = []
 
         if self.handler_table:
@@ -433,7 +433,7 @@ class SymbolicDevirtualizer:
 
         return sorted(set(handlers))
 
-    def _read_handler_table(self) -> List[int]:
+    def _read_handler_table(self) -> list[int]:
         handlers = []
 
         with open(self.binary_path, "rb") as f:
@@ -461,7 +461,7 @@ class SymbolicDevirtualizer:
 
         return handlers
 
-    def _trace_dispatcher_targets(self) -> List[int]:
+    def _trace_dispatcher_targets(self) -> list[int]:
         handlers = []
 
         try:
@@ -495,7 +495,7 @@ class SymbolicDevirtualizer:
 
         return handlers
 
-    def _lift_handler_symbolic(self, handler_addr: int) -> Optional[LiftedHandler]:
+    def _lift_handler_symbolic(self, handler_addr: int) -> LiftedHandler | None:
         try:
             state = self.project.factory.call_state(
                 handler_addr,
@@ -565,7 +565,7 @@ class SymbolicDevirtualizer:
             logger.debug(f"Handler lifting failed at 0x{handler_addr:x}: {e}")
             return None
 
-    def _infer_handler_semantic(self, handler_addr: int, effects: List[Tuple[str, Any]], constraints: List[Any]) -> HandlerSemantic:
+    def _infer_handler_semantic(self, handler_addr: int, effects: list[tuple[str, Any]], constraints: list[Any]) -> HandlerSemantic:
         try:
             block = self.project.factory.block(handler_addr)
 
@@ -573,49 +573,48 @@ class SymbolicDevirtualizer:
 
             if "push" in mnemonics:
                 return HandlerSemantic.STACK_PUSH
-            elif "pop" in mnemonics:
+            if "pop" in mnemonics:
                 return HandlerSemantic.STACK_POP
-            elif "add" in mnemonics:
+            if "add" in mnemonics:
                 return HandlerSemantic.ARITHMETIC_ADD
-            elif "sub" in mnemonics:
+            if "sub" in mnemonics:
                 return HandlerSemantic.ARITHMETIC_SUB
-            elif any(m in mnemonics for m in ["mul", "imul"]):
+            if any(m in mnemonics for m in ["mul", "imul"]):
                 return HandlerSemantic.ARITHMETIC_MUL
-            elif any(m in mnemonics for m in ["div", "idiv"]):
+            if any(m in mnemonics for m in ["div", "idiv"]):
                 return HandlerSemantic.ARITHMETIC_DIV
-            elif "and" in mnemonics:
+            if "and" in mnemonics:
                 return HandlerSemantic.LOGICAL_AND
-            elif "or" in mnemonics:
+            if "or" in mnemonics:
                 return HandlerSemantic.LOGICAL_OR
-            elif "xor" in mnemonics:
+            if "xor" in mnemonics:
                 return HandlerSemantic.LOGICAL_XOR
-            elif "not" in mnemonics:
+            if "not" in mnemonics:
                 return HandlerSemantic.LOGICAL_NOT
-            elif "shl" in mnemonics or "sal" in mnemonics:
+            if "shl" in mnemonics or "sal" in mnemonics:
                 return HandlerSemantic.SHIFT_LEFT
-            elif "shr" in mnemonics or "sar" in mnemonics:
+            if "shr" in mnemonics or "sar" in mnemonics:
                 return HandlerSemantic.SHIFT_RIGHT
-            elif any(m.startswith("j") for m in mnemonics if m != "jmp"):
+            if any(m.startswith("j") for m in mnemonics if m != "jmp"):
                 return HandlerSemantic.BRANCH_CONDITIONAL
-            elif "jmp" in mnemonics:
+            if "jmp" in mnemonics:
                 return HandlerSemantic.BRANCH_UNCONDITIONAL
-            elif "call" in mnemonics:
+            if "call" in mnemonics:
                 return HandlerSemantic.CALL
-            elif "ret" in mnemonics:
+            if "ret" in mnemonics:
                 return HandlerSemantic.RETURN
-            elif any(m in mnemonics for m in ["mov", "movzx", "movsx"]) and "[" in str(block.capstone.insns):
+            if any(m in mnemonics for m in ["mov", "movzx", "movsx"]) and "[" in str(block.capstone.insns):
                 if any("esp" in str(insn) or "rsp" in str(insn) for insn in block.capstone.insns):
                     return HandlerSemantic.MEMORY_LOAD
-                else:
-                    return HandlerSemantic.MEMORY_STORE
+                return HandlerSemantic.MEMORY_STORE
         except Exception as e:
             logger.debug(f"Semantic inference failed: {e}")
 
         return HandlerSemantic.UNKNOWN
 
     def _translate_handler_to_native(
-        self, handler_addr: int, semantic: HandlerSemantic, effects: List[Tuple[str, Any]],
-    ) -> Tuple[Optional[bytes], List[str]]:
+        self, handler_addr: int, semantic: HandlerSemantic, effects: list[tuple[str, Any]],
+    ) -> tuple[bytes | None, list[str]]:
         semantic_to_asm = {
             HandlerSemantic.STACK_PUSH: ("push eax", b"\x50"),
             HandlerSemantic.STACK_POP: ("pop eax", b"\x58"),
@@ -650,7 +649,7 @@ class SymbolicDevirtualizer:
             return None, [f"unknown_handler_0x{handler_addr:x}"]
 
     def _calculate_handler_confidence(
-        self, semantic: HandlerSemantic, effects: List[Tuple[str, Any]], constraints: List[Any], native_code: Optional[bytes],
+        self, semantic: HandlerSemantic, effects: list[tuple[str, Any]], constraints: list[Any], native_code: bytes | None,
     ) -> float:
         confidence = 50.0
 
@@ -670,7 +669,7 @@ class SymbolicDevirtualizer:
 
     def _trace_vm_execution(
         self, entry_point: int, strategy: ExplorationStrategy, max_paths: int, timeout: int,
-    ) -> List[DevirtualizedBlock]:
+    ) -> list[DevirtualizedBlock]:
         blocks = []
 
         try:
@@ -727,7 +726,7 @@ class SymbolicDevirtualizer:
 
         return blocks
 
-    def _reconstruct_block_from_state(self, state: SimState, entry: int) -> Optional[DevirtualizedBlock]:
+    def _reconstruct_block_from_state(self, state: SimState, entry: int) -> DevirtualizedBlock | None:
         try:
             path_addrs = list(state.history.bbl_addrs)
 
@@ -772,7 +771,7 @@ class SymbolicDevirtualizer:
             logger.debug(f"Block reconstruction failed: {e}")
             return None
 
-    def _calculate_overall_confidence(self, blocks: List[DevirtualizedBlock]) -> float:
+    def _calculate_overall_confidence(self, blocks: list[DevirtualizedBlock]) -> float:
         if not blocks:
             return 0.0
 

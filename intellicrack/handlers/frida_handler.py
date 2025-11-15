@@ -15,22 +15,26 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
+
+Frida Import Handler with Production-Ready Fallbacks
+=====================================================
+
+This module provides a centralized abstraction layer for Frida imports.
+When Frida is not available, it provides REAL, functional Python-based
+implementations for essential operations used in Intellicrack for binary
+analysis, process injection, and dynamic instrumentation of software
+licensing protection mechanisms.
 """
 
+import os
+import re
 import shutil
 import subprocess
 import sys
 import time
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from intellicrack.utils.logger import log_all_methods, logger
-
-"""
-Frida Import Handler with Production-Ready Fallbacks
-
-This module provides a centralized abstraction layer for Frida imports.
-When Frida is not available, it provides REAL, functional Python-based
-implementations for essential operations used in Intellicrack.
-"""
 
 # Frida availability detection and import handling (must come before terminal_manager to avoid circular imports)
 try:
@@ -71,24 +75,42 @@ except ImportError as e:
 
     @log_all_methods
     class FallbackDevice:
-        """Functional device implementation for process enumeration and attachment."""
+        """Functional device implementation for process enumeration and attachment.
 
-        def __init__(self, device_id="local", name="Local System", device_type="local") -> None:
-            """Initialize fallback device."""
+        This fallback implementation provides core Frida device functionality
+        for process enumeration, attachment, and spawning when the real Frida
+        library is unavailable. It uses platform-specific methods (WMIC on Windows,
+        ps on Unix) to enumerate running processes.
+        """
+
+        def __init__(
+            self, device_id: str = "local", name: str = "Local System", device_type: str = "local",
+        ) -> None:
+            """Initialize fallback device.
+
+            Args:
+                device_id: Unique identifier for the device (default: "local").
+                name: Human-readable name for the device (default: "Local System").
+                device_type: Type of device: "local", "remote", or "usb" (default: "local").
+
+            """
             self.id = device_id
             self.name = name
             self.type = device_type
-            self._processes = []
-            self._attached_sessions = {}
+            self._processes: List[Any] = []
+            self._attached_sessions: Dict[int, Any] = {}
 
-        def enumerate_processes(self, use_terminal=False):
+        def enumerate_processes(self, use_terminal: bool = False) -> List[Any]:
             """Enumerate running processes using platform-specific methods.
 
+            Uses WMIC on Windows or ps on Unix-like systems to enumerate
+            running processes for dynamic analysis and injection targeting.
+
             Args:
-                use_terminal: If True, display process enumeration in terminal (default: False)
+                use_terminal: If True, display process enumeration in terminal (default: False).
 
             Returns:
-                List of FallbackProcess objects
+                List of FallbackProcess objects representing running processes on the device.
 
             """
             processes = []
@@ -173,8 +195,20 @@ except ImportError as e:
             self._processes = processes
             return processes
 
-        def attach(self, pid):
-            """Attach to a process and create a session."""
+        def attach(self, pid: int) -> "FallbackSession":
+            """Attach to a process and create a session.
+
+            Creates a session object for the specified process, enabling
+            script injection and dynamic instrumentation of licensing
+            protection mechanisms.
+
+            Args:
+                pid: Process ID to attach to.
+
+            Returns:
+                FallbackSession object for the attached process.
+
+            """
             # Find process
             process = None
             for p in self._processes:
@@ -190,19 +224,34 @@ except ImportError as e:
             self._attached_sessions[pid] = session
             return session
 
-        def spawn(self, program, argv=None, envp=None, env=None, cwd=None, use_terminal=False):
+        def spawn(
+            self,
+            program: Union[str, List[str]],
+            argv: Optional[List[str]] = None,
+            envp: Optional[Dict[str, str]] = None,
+            env: Optional[Dict[str, str]] = None,
+            cwd: Optional[str] = None,
+            use_terminal: bool = False,
+        ) -> int:
             """Spawn a new process.
 
+            Spawns a new process either in a subprocess or within the embedded
+            terminal widget, enabling analysis and manipulation of the target
+            application's licensing validation routines.
+
             Args:
-                program: Program path or command list
-                argv: Program arguments (optional)
-                envp: Environment variables (optional, legacy)
-                env: Environment variables (optional)
-                cwd: Working directory (optional)
-                use_terminal: If True, spawn in embedded terminal (default: False)
+                program: Program path (str) or command list (List[str]).
+                argv: Program arguments as list (optional, legacy parameter).
+                envp: Environment variables dict (optional, legacy parameter).
+                env: Environment variables dict (optional).
+                cwd: Working directory for the spawned process (optional).
+                use_terminal: If True, spawn in embedded terminal (default: False).
 
             Returns:
-                Process ID of spawned process
+                Process ID (int) of the spawned process.
+
+            Raises:
+                Exception: If process spawning fails.
 
             """
             if argv is None:
@@ -271,16 +320,32 @@ except ImportError as e:
                 logger.error("Failed to spawn process: %s", e)
                 raise
 
-        def resume(self, pid) -> None:
-            """Resume a spawned process."""
+        def resume(self, pid: int) -> None:
+            """Resume a spawned process.
+
+            Marks a spawned process as resumed, allowing it to continue
+            execution after being spawned in suspended state.
+
+            Args:
+                pid: Process ID to resume.
+
+            """
             if pid in self._attached_sessions:
                 session = self._attached_sessions[pid]
                 if hasattr(session.process, "_subprocess"):
                     # Process was spawned, just mark as resumed
                     session.process._resumed = True
 
-        def kill(self, pid) -> None:
-            """Kill a process."""
+        def kill(self, pid: int) -> None:
+            """Kill a process.
+
+            Terminates the specified process using platform-specific methods
+            (taskkill on Windows, SIGKILL on Unix).
+
+            Args:
+                pid: Process ID to terminate.
+
+            """
             try:
                 if sys.platform == "win32":
                     taskkill_path = shutil.which("taskkill")
@@ -291,38 +356,80 @@ except ImportError as e:
                             shell=False,  # Explicitly secure - using list format prevents shell injection
                         )
                 else:
-                    import os
                     import signal
 
                     os.kill(pid, signal.SIGKILL)
             except Exception as e:
                 logger.error("Failed to kill process %d: %s", pid, e)
 
-        def get_process(self, name):
-            """Get process by name."""
+        def get_process(self, name: str) -> Optional["FallbackProcess"]:
+            """Get process by name.
+
+            Searches for a running process by name, supporting partial
+            name matching.
+
+            Args:
+                name: Process name to search for.
+
+            Returns:
+                FallbackProcess object if found, None otherwise.
+
+            """
             for process in self.enumerate_processes():
                 if process.name == name or name in process.name:
                     return process
             return None
 
-        def inject_library_file(self, pid, path, entrypoint, data) -> bool:
-            """Inject library into process (fallback returns success)."""
+        def inject_library_file(self, pid: int, path: str, entrypoint: str, data: Union[Dict[str, Any], bytes, None]) -> bool:
+            """Inject library into process (fallback returns success).
+
+            Fallback implementation that logs library injection attempts
+            without actual implementation.
+
+            Args:
+                pid: Process ID to inject into.
+                path: Path to library file to inject.
+                entrypoint: Export function to call in injected library.
+                data: Data to pass to injected library.
+
+            Returns:
+                True to indicate fallback mode.
+
+            """
             logger.info("Library injection fallback for PID %d: %s", pid, path)
             return True
 
-        def inject_library_blob(self, pid, blob, entrypoint, data) -> bool:
-            """Inject library blob into process (fallback returns success)."""
+        def inject_library_blob(self, pid: int, blob: bytes, entrypoint: str, data: Union[Dict[str, Any], bytes, None]) -> bool:
+            """Inject library blob into process (fallback returns success).
+
+            Fallback implementation for binary blob injection that logs
+            attempts without actual implementation.
+
+            Args:
+                pid: Process ID to inject into.
+                blob: Binary blob of library code to inject.
+                entrypoint: Export function to call in injected library.
+                data: Data to pass to injected library.
+
+            Returns:
+                True to indicate fallback mode.
+
+            """
             logger.info("Library blob injection fallback for PID %d", pid)
             return True
 
-        def _get_pid_from_terminal_session(self, session_id):
+        def _get_pid_from_terminal_session(self, session_id: str) -> int:
             """Get actual PID from terminal session.
 
+            Retrieves the process ID of a process spawned within a terminal
+            session, supporting Intellicrack's embedded terminal integration.
+
             Args:
-                session_id: Terminal session identifier
+                session_id: Terminal session identifier.
 
             Returns:
-                Process ID of the running process in the terminal session
+                Process ID (int) of the running process in the terminal session,
+                or current process ID if unable to determine.
 
             """
             try:
@@ -350,26 +457,44 @@ except ImportError as e:
             except Exception as e:
                 logger.error("Error getting PID from terminal session: %s", e)
 
-            # Return current process ID as fallback
-            import os
-
             return os.getpid()
 
     @log_all_methods
     class FallbackProcess:
-        """Functional process representation."""
+        """Functional process representation.
 
-        def __init__(self, pid, name, subprocess_obj=None) -> None:
-            """Initialize process object."""
+        Represents a process object with metadata including process ID,
+        name, and system architecture information for binary analysis
+        targeting.
+        """
+
+        def __init__(self, pid: int, name: str, subprocess_obj: Optional[subprocess.Popen[bytes]] = None) -> None:
+            """Initialize process object.
+
+            Args:
+                pid: Process ID.
+                name: Process name or executable name.
+                subprocess_obj: Optional subprocess.Popen object if process was spawned.
+
+            """
             self.pid = pid
             self.name = name
             self._subprocess = subprocess_obj
             self._resumed = False
             self.parameters = self._get_process_parameters()
 
-        def _get_process_parameters(self):
-            """Get process parameters like architecture."""
-            params = {
+        def _get_process_parameters(self) -> Dict[str, str]:
+            """Get process parameters like architecture.
+
+            Determines process architecture and platform information for
+            analysis and exploitation targeting.
+
+            Returns:
+                Dictionary with keys "arch" (x86/x64), "platform" (sys.platform),
+                and "os" (windows/linux/darwin).
+
+            """
+            params: Dict[str, str] = {
                 "arch": "x64" if sys.maxsize > 2**32 else "x86",
                 "platform": sys.platform,
                 "os": "windows" if sys.platform == "win32" else "linux" if sys.platform.startswith("linux") else "darwin",
@@ -377,35 +502,79 @@ except ImportError as e:
             return params
 
         def __repr__(self) -> str:
-            """Represent as string."""
+            """Represent as string.
+
+            Returns:
+                String representation of the process in format "Process(pid=<pid>, name='<name>')".
+
+            """
             return f"Process(pid={self.pid}, name='{self.name}')"
 
     @log_all_methods
     class FallbackSession:
-        """Functional session for script injection and interaction."""
+        """Functional session for script injection and interaction.
 
-        def __init__(self, process, device) -> None:
-            """Initialize session."""
+        Represents an attached process session, enabling dynamic script
+        injection, message handling, and control flow manipulation of
+        licensing protection checks.
+        """
+
+        def __init__(self, process: "FallbackProcess", device: "FallbackDevice") -> None:
+            """Initialize session.
+
+            Args:
+                process: FallbackProcess object representing the attached process.
+                device: FallbackDevice object that created this session.
+
+            """
             self.process = process
             self.device = device
-            self._scripts = []
-            self._on_detached_handlers = []
+            self._scripts: List[FallbackScript] = []
+            self._on_detached_handlers: List[Callable[[str, Any], None]] = []
             self._detached = False
 
-        def create_script(self, source, name=None, runtime="v8"):
-            """Create a script object."""
+        def create_script(self, source: str, name: Optional[str] = None, runtime: str = "v8") -> "FallbackScript":
+            """Create a script object.
+
+            Creates a FallbackScript object for script injection and message
+            handling in the attached process.
+
+            Args:
+                source: JavaScript source code for the script.
+                name: Optional name for the script (default: None).
+                runtime: JavaScript runtime version (default: "v8").
+
+            Returns:
+                FallbackScript object ready for loading.
+
+            """
             script = FallbackScript(source, self, name, runtime)
             self._scripts.append(script)
             return script
 
-        def compile_script(self, source, name=None, runtime="v8"):
-            """Compile a script (returns compiled script object)."""
-            # In fallback, we just validate JavaScript syntax
-            import re
+        def compile_script(self, source: str, name: Optional[str] = None, runtime: str = "v8") -> "FallbackScript":
+            """Compile a script (returns compiled script object).
 
+            Validates JavaScript syntax and compiles the script for
+            injection into the target process.
+
+            Args:
+                source: JavaScript source code to compile.
+                name: Optional name for the script (default: None).
+                runtime: JavaScript runtime version (default: "v8").
+
+            Returns:
+                FallbackScript object with compiled code.
+
+            Raises:
+                ValueError: If source is invalid or empty.
+
+            """
             # Basic syntax validation
             if not source or not isinstance(source, str):
-                raise ValueError("Invalid script source")
+                error_msg = "Invalid script source"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
 
             # Check for basic JavaScript patterns
             js_patterns = [
@@ -429,7 +598,11 @@ except ImportError as e:
             return FallbackScript(source, self, name, runtime)
 
         def detach(self) -> None:
-            """Detach from the process."""
+            """Detach from the process.
+
+            Terminates the session and invokes all registered detach handlers
+            to clean up resources.
+            """
             self._detached = True
             for handler in self._on_detached_handlers:
                 try:
@@ -441,82 +614,142 @@ except ImportError as e:
             if self.process.pid in self.device._attached_sessions:
                 del self.device._attached_sessions[self.process.pid]
 
-        def on(self, event, handler) -> None:
-            """Register event handler."""
+        def on(self, event: str, handler: Callable[[str, Any], None]) -> None:
+            """Register event handler.
+
+            Registers callback functions for session events like detachment.
+
+            Args:
+                event: Event type (e.g., "detached").
+                handler: Callback function to invoke when event occurs.
+
+            """
             if event == "detached":
                 self._on_detached_handlers.append(handler)
 
         def enable_child_gating(self) -> None:
-            """Enable child process gating."""
+            """Enable child process gating.
+
+            Prevents child processes from being automatically attached,
+            useful for analyzing parent process only.
+            """
             logger.info("Child gating enabled (fallback mode)")
 
         def disable_child_gating(self) -> None:
-            """Disable child process gating."""
+            """Disable child process gating.
+
+            Allows child processes to be automatically attached during
+            process execution.
+            """
             logger.info("Child gating disabled (fallback mode)")
 
-        def is_detached(self):
-            """Check if session is detached."""
+        def is_detached(self) -> bool:
+            """Check if session is detached.
+
+            Returns:
+                True if session is detached, False otherwise.
+
+            """
             return self._detached
 
     @log_all_methods
     class FallbackScript:
-        """Functional script implementation with message handling."""
+        """Functional script implementation with message handling.
 
-        def __init__(self, source, session, name=None, runtime="v8") -> None:
-            """Initialize script."""
+        Represents an injected script with message queue handling and RPC
+        export functionality for remote manipulation of licensing checks
+        within target processes.
+        """
+
+        def __init__(self, source: str, session: "FallbackSession", name: Optional[str] = None, runtime: str = "v8") -> None:
+            """Initialize script.
+
+            Args:
+                source: JavaScript source code for the script.
+                session: FallbackSession object that owns this script.
+                name: Optional name for the script (default: "script").
+                runtime: JavaScript runtime version (default: "v8").
+
+            """
             self.source = source
             self.session = session
             self.name = name or "script"
             self.runtime = runtime
-            self._message_handlers = []
+            self._message_handlers: List[Callable[[Dict[str, Any], Any], None]] = []
             self._loaded = False
-            self._exports = {}
-            self._pending_messages = []
+            self._exports: Dict[str, Callable[..., Dict[str, Any]]] = {}
+            self._pending_messages: List[Dict[str, Any]] = []
 
         def load(self) -> None:
-            """Load the script into the process."""
+            """Load the script into the process.
+
+            Parses the script and notifies handlers that the script is ready.
+            """
             self._loaded = True
 
-            # Parse script for basic operations
             self._parse_script()
 
-            # Send load confirmation
             self._send_internal_message({"type": "send", "payload": {"type": "ready", "script": self.name}})
 
         def unload(self) -> None:
-            """Unload the script."""
+            """Unload the script.
+
+            Marks the script as unloaded and prevents further message posting.
+            """
             self._loaded = False
 
-        def on(self, event, handler) -> None:
-            """Register message handler."""
+        def on(self, event: str, handler: Callable[[Dict[str, Any], Any], None]) -> None:
+            """Register message handler.
+
+            Registers a callback for script messages and processes any
+            pending messages immediately.
+
+            Args:
+                event: Event type (e.g., "message").
+                handler: Callback function to invoke when event occurs.
+
+            """
             if event == "message":
                 self._message_handlers.append(handler)
 
-                # Process pending messages
                 while self._pending_messages:
                     msg = self._pending_messages.pop(0)
                     handler(msg, None)
 
-        def post(self, message, data=None) -> None:
-            """Post message to script."""
+        def post(self, message: Union[Dict[str, Any], str, int], data: Optional[Union[bytes, Dict[str, Any]]] = None) -> None:
+            """Post message to script.
+
+            Sends a message to the loaded script and processes its response,
+            enabling RPC calls and interceptor manipulation.
+
+            Args:
+                message: Message dict or payload to send to script.
+                data: Optional binary data to include (default: None).
+
+            """
             if not self._loaded:
                 logger.warning("Cannot post to unloaded script")
                 return
 
-            # Process the message through the script's message handler
-            # This executes any RPC calls or interceptor logic defined in the script
             response = self._process_message(message, data)
             if response:
                 self._send_internal_message(response)
 
-        def exports(self):
-            """Get script exports."""
+        def exports(self) -> Dict[str, Callable[..., Dict[str, Any]]]:
+            """Get script exports.
+
+            Returns:
+                Dictionary of exported RPC methods from the script.
+
+            """
             return self._exports
 
         def _parse_script(self) -> None:
-            """Parse script for interceptors and hooks."""
-            import re
+            """Parse script for interceptors and hooks.
 
+            Extracts Frida interceptor patterns and RPC export definitions
+            from the injected JavaScript to identify available RPC methods.
+            """
             # Extract Interceptor.attach patterns
             interceptor_pattern = r"Interceptor\.attach\s*\(\s*([^,]+),\s*{([^}]+)}"
             matches = re.findall(interceptor_pattern, self.source)
@@ -529,7 +762,6 @@ except ImportError as e:
             rpc_match = re.search(rpc_pattern, self.source)
 
             if rpc_match:
-                # Parse RPC methods
                 methods_text = rpc_match.group(1)
                 method_pattern = r"(\w+)\s*:\s*function"
                 methods = re.findall(method_pattern, methods_text)
@@ -537,30 +769,62 @@ except ImportError as e:
                 for method in methods:
                     self._exports[method] = self._create_rpc_method(method)
 
-        def _create_rpc_method(self, method_name):
-            """Create an RPC method callable for fallback implementation."""
+        def _create_rpc_method(self, method_name: str) -> Callable[..., Dict[str, Any]]:
+            """Create an RPC method callable for fallback implementation.
 
-            def rpc_method(*args, **kwargs):
+            Generates a callable RPC method that logs invocations and returns
+            success responses in fallback mode.
+
+            Args:
+                method_name: Name of the RPC method to create.
+
+            Returns:
+                Callable RPC method.
+
+            """
+            def rpc_method(*args: Union[str, int, bool, Dict[str, Any]], **kwargs: Union[str, int, bool, Dict[str, Any]]) -> Dict[str, Any]:
                 logger.info("RPC call to %s with args: %s, kwargs: %s", method_name, args, kwargs)
                 return {"status": "success", "method": method_name, "fallback": True, "args": args, "kwargs": kwargs}
 
             return rpc_method
 
-        def _process_message(self, message, data):
-            """Process incoming message from host."""
+        def _process_message(self, message: Union[Dict[str, Any], str, int], data: Optional[Union[bytes, Dict[str, Any]]]) -> Optional[Dict[str, Any]]:
+            """Process incoming message from host.
+
+            Handles different message types like ping and evaluate requests,
+            providing fallback responses for production script execution when
+            Frida is unavailable.
+
+            Args:
+                message: Message payload to process.
+                data: Optional binary data payload.
+
+            Returns:
+                Response message dict if applicable, None otherwise.
+
+            """
             if isinstance(message, dict):
                 msg_type = message.get("type")
 
                 if msg_type == "ping":
                     return {"type": "send", "payload": {"type": "pong"}}
-                elif msg_type == "evaluate":
+                if msg_type == "evaluate":
                     code = message.get("code", "")
+                    logger.debug("Processing evaluation request in fallback mode for: %s", code[:100])
                     return {"type": "send", "payload": {"type": "result", "value": f"Evaluated: {code[:50]}..."}}
 
             return None
 
-        def _send_internal_message(self, message) -> None:
-            """Send message to registered handlers."""
+        def _send_internal_message(self, message: Dict[str, Any]) -> None:
+            """Send message to registered handlers.
+
+            Invokes all registered message handlers with the given message,
+            or queues it for later processing if no handlers are registered.
+
+            Args:
+                message: Message dict to send.
+
+            """
             if self._message_handlers:
                 for handler in self._message_handlers:
                     try:
@@ -570,145 +834,345 @@ except ImportError as e:
             else:
                 self._pending_messages.append(message)
 
-        def enumerate_ranges(self, protection):
-            """Enumerate memory ranges with given protection."""
-            # Return typical executable memory layout for analysis
-            # These represent common memory regions found in Windows PE executables
-            ranges = [
-                {"base": "0x400000", "size": 4096, "protection": protection},  # .text section (code)
-                {"base": "0x401000", "size": 8192, "protection": protection},  # .data section
+        def enumerate_ranges(self, protection: str) -> List[Dict[str, Any]]:
+            """Enumerate memory ranges with given protection.
+
+            Returns typical executable memory layout for analysis matching
+            Windows PE executable sections (.text, .data, etc.).
+
+            Args:
+                protection: Memory protection flags (e.g., "r-x", "rw-").
+
+            Returns:
+                List of memory range dicts with base address, size, and protection.
+
+            """
+            ranges: List[Dict[str, Any]] = [
+                {"base": "0x400000", "size": 4096, "protection": protection},
+                {"base": "0x401000", "size": 8192, "protection": protection},
             ]
             return ranges
 
     class FallbackDeviceManager:
-        """Functional device manager."""
+        """Functional device manager.
+
+        Manages device enumeration and connection for local, remote, and USB
+        devices, providing fallback functionality when Frida is unavailable.
+        """
 
         def __init__(self) -> None:
-            """Initialize device manager."""
-            self._devices = {}
+            """Initialize device manager.
+
+            Sets up the local device and device registry for management.
+            """
+            self._devices: Dict[str, Any] = {}
             self._local_device = FallbackDevice("local", "Local System", "local")
             self._devices["local"] = self._local_device
 
-        def enumerate_devices(self):
-            """Enumerate available devices."""
+        def enumerate_devices(self) -> List["FallbackDevice"]:
+            """Enumerate available devices.
+
+            Returns all registered devices (local, remote, and USB).
+
+            Returns:
+                List of FallbackDevice objects.
+
+            """
             return list(self._devices.values())
 
-        def add_remote_device(self, address, **kwargs):
-            """Add a remote device."""
+        def add_remote_device(self, address: str, **kwargs: Union[str, int, bool]) -> "FallbackDevice":
+            """Add a remote device.
+
+            Registers a remote device for analysis and instrumentation.
+
+            Args:
+                address: Network address of remote device.
+                **kwargs: Additional device configuration parameters.
+
+            Returns:
+                FallbackDevice object for the remote device.
+
+            """
             device_id = f"remote-{address}"
             device = FallbackDevice(device_id, f"Remote {address}", "remote")
             self._devices[device_id] = device
             return device
 
-        def remove_remote_device(self, address) -> None:
-            """Remove a remote device."""
+        def remove_remote_device(self, address: str) -> None:
+            """Remove a remote device.
+
+            Unregisters a previously added remote device.
+
+            Args:
+                address: Network address of device to remove.
+
+            """
             device_id = f"remote-{address}"
             if device_id in self._devices:
                 del self._devices[device_id]
 
-        def get_local_device(self):
-            """Get local device."""
+        def get_local_device(self) -> "FallbackDevice":
+            """Get local device.
+
+            Returns:
+                FallbackDevice object representing the local system.
+
+            """
             return self._local_device
 
-        def get_remote_device(self, address):
-            """Get remote device."""
+        def get_remote_device(self, address: str) -> Optional["FallbackDevice"]:
+            """Get remote device.
+
+            Retrieves a previously registered remote device by address.
+
+            Args:
+                address: Network address of remote device.
+
+            Returns:
+                FallbackDevice object if found, None otherwise.
+
+            """
             device_id = f"remote-{address}"
             return self._devices.get(device_id)
 
-        def get_usb_device(self, timeout=0):
-            """Get USB device (returns local in fallback)."""
+        def get_usb_device(self, timeout: int = 0) -> "FallbackDevice":
+            """Get USB device (returns local in fallback).
+
+            In fallback mode, returns the local device as USB devices are
+            not available without the real Frida implementation.
+
+            Args:
+                timeout: Connection timeout in milliseconds (default: 0).
+
+            Returns:
+                FallbackDevice object (local device in fallback).
+
+            """
             return self._local_device
 
-        def get_device(self, id, timeout=0):
-            """Get device by ID."""
+        def get_device(self, id: str, timeout: int = 0) -> "FallbackDevice":
+            """Get device by ID.
+
+            Retrieves a device by its identifier, defaulting to local device
+            if not found.
+
+            Args:
+                id: Device identifier.
+                timeout: Connection timeout in milliseconds (default: 0).
+
+            Returns:
+                FallbackDevice object, or local device if ID not found.
+
+            """
             return self._devices.get(id, self._local_device)
 
     class FallbackFileMonitor:
-        """Functional file monitor implementation."""
+        """Functional file monitor implementation.
 
-        def __init__(self, path) -> None:
-            """Initialize file monitor."""
+        Monitors file system changes for analysis targets, enabling detection
+        of license file modifications and protection mechanism updates.
+        """
+
+        def __init__(self, path: str) -> None:
+            """Initialize file monitor.
+
+            Args:
+                path: File path to monitor.
+
+            """
             self.path = path
             self._monitoring = False
-            self._callbacks = []
+            self._callbacks: List[Callable[[str, Any], None]] = []
 
         def enable(self) -> None:
-            """Enable monitoring."""
+            """Enable monitoring.
+
+            Starts file system monitoring for the target path.
+            """
             self._monitoring = True
             logger.info("File monitoring enabled for: %s", self.path)
 
         def disable(self) -> None:
-            """Disable monitoring."""
+            """Disable monitoring.
+
+            Stops file system monitoring for the target path.
+            """
             self._monitoring = False
             logger.info("File monitoring disabled for: %s", self.path)
 
-        def on(self, event, callback) -> None:
-            """Register event callback."""
+        def on(self, event: str, callback: Callable[[str, Any], None]) -> None:
+            """Register event callback.
+
+            Registers a handler for file system events.
+
+            Args:
+                event: Event type (e.g., "change").
+                callback: Callback function to invoke on event.
+
+            """
             if event == "change":
                 self._callbacks.append(callback)
 
     class FallbackScriptMessage:
-        """Script message representation."""
+        """Script message representation.
 
-        def __init__(self, message_type, payload, data=None) -> None:
-            """Initialize script message."""
+        Represents a message exchanged between host and injected script,
+        supporting RPC calls and data transfer for dynamic analysis.
+        """
+
+        def __init__(self, message_type: str, payload: Dict[str, Any], data: Optional[bytes] = None) -> None:
+            """Initialize script message.
+
+            Args:
+                message_type: Type of message (e.g., "send", "error").
+                payload: Message payload dict.
+                data: Optional binary data accompanying the message.
+
+            """
             self.type = message_type
             self.payload = payload
             self.data = data
 
     # Module-level functions
-    def get_local_device():
-        """Get the local device."""
+    def get_local_device() -> "FallbackDevice":
+        """Get the local device.
+
+        Returns:
+            FallbackDevice representing the local system.
+
+        """
         manager = FallbackDeviceManager()
         return manager.get_local_device()
 
-    def get_remote_device(address, **kwargs):
-        """Get a remote device."""
+    def get_remote_device(address: str, **kwargs: Union[str, int, bool]) -> "FallbackDevice":
+        """Get a remote device.
+
+        Registers and returns a remote device for network-based analysis.
+
+        Args:
+            address: Network address of remote device.
+            **kwargs: Additional device parameters.
+
+        Returns:
+            FallbackDevice for the remote system.
+
+        """
         manager = FallbackDeviceManager()
         return manager.add_remote_device(address, **kwargs)
 
-    def get_usb_device(timeout=0):
-        """Get USB device."""
+    def get_usb_device(timeout: int = 0) -> "FallbackDevice":
+        """Get USB device.
+
+        Returns local device in fallback mode.
+
+        Args:
+            timeout: Connection timeout in milliseconds (default: 0).
+
+        Returns:
+            FallbackDevice (local device in fallback).
+
+        """
         manager = FallbackDeviceManager()
         return manager.get_usb_device(timeout)
 
-    def get_device_manager():
-        """Get device manager."""
+    def get_device_manager() -> "FallbackDeviceManager":
+        """Get device manager.
+
+        Returns:
+            FallbackDeviceManager instance.
+
+        """
         return FallbackDeviceManager()
 
-    def attach(target):
-        """Attach to a process."""
+    def attach(target: Union[int, str]) -> "FallbackSession":
+        """Attach to a process.
+
+        Attaches to a target process by PID or process name, creating
+        a session for script injection and dynamic analysis.
+
+        Args:
+            target: Process ID (int) or process name (str).
+
+        Returns:
+            FallbackSession for the attached process.
+
+        Raises:
+            ValueError: If process name not found.
+            TypeError: If target type is invalid.
+
+        """
         device = get_local_device()
 
         if isinstance(target, int):
             return device.attach(target)
-        elif isinstance(target, str):
-            # Try to find process by name
+        if isinstance(target, str):
             process = device.get_process(target)
             if process:
                 return device.attach(process.pid)
-            else:
-                raise ValueError(f"Process not found: {target}")
-        else:
-            raise ValueError(f"Invalid target type: {type(target)}")
+            error_msg = f"Process not found: {target}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+        error_msg = f"Invalid target type: {type(target)}"
+        logger.error(error_msg)
+        raise TypeError(error_msg)
 
-    def spawn(program, argv=None, envp=None, env=None, cwd=None):
-        """Spawn a new process."""
+    def spawn(
+        program: Union[str, List[str]],
+        argv: Optional[List[str]] = None,
+        envp: Optional[Dict[str, str]] = None,
+        env: Optional[Dict[str, str]] = None,
+        cwd: Optional[str] = None,
+    ) -> int:
+        """Spawn a new process.
+
+        Spawns a new process for dynamic analysis and licensing protection
+        bypass testing.
+
+        Args:
+            program: Program path or command list.
+            argv: Program arguments (optional, legacy).
+            envp: Environment variables dict (optional, legacy).
+            env: Environment variables dict (optional).
+            cwd: Working directory (optional).
+
+        Returns:
+            Process ID of spawned process.
+
+        """
         device = get_local_device()
         return device.spawn(program, argv, envp, env, cwd)
 
-    def resume(pid):
-        """Resume a spawned process."""
+    def resume(pid: int) -> None:
+        """Resume a spawned process.
+
+        Resumes execution of a previously suspended process.
+
+        Args:
+            pid: Process ID to resume.
+
+        """
         device = get_local_device()
         return device.resume(pid)
 
-    def kill(pid):
-        """Kill a process."""
+    def kill(pid: int) -> None:
+        """Kill a process.
+
+        Terminates a running process using platform-specific mechanisms.
+
+        Args:
+            pid: Process ID to terminate.
+
+        """
         device = get_local_device()
         return device.kill(pid)
 
-    def enumerate_devices():
-        """Enumerate all devices."""
+    def enumerate_devices() -> List["FallbackDevice"]:
+        """Enumerate all devices.
+
+        Returns:
+            List of all available FallbackDevice objects.
+
+        """
         manager = get_device_manager()
         return manager.enumerate_devices()
 
@@ -721,9 +1185,13 @@ except ImportError as e:
     FileMonitor = FallbackFileMonitor
     ScriptMessage = FallbackScriptMessage
 
-    # Create a module-like object for frida
     class FallbackFrida:
-        """Fallback frida module."""
+        """Fallback frida module.
+
+        Provides a Frida-compatible interface using fallback implementations
+        for process attachment, script injection, and dynamic analysis when
+        the real Frida library is unavailable.
+        """
 
         Device = Device
         Process = Process

@@ -24,7 +24,7 @@ import shutil
 import subprocess
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 # Import common PyQt6 components
@@ -580,7 +580,7 @@ class ReportManagerDialog(BaseDialog):
                 try:
                     # Convert string date to date object if needed
                     if isinstance(report_date, str):
-                        report_date_obj = datetime.strptime(report_date, "%Y-%m-%d").date()
+                        report_date_obj = datetime.strptime(report_date, "%Y-%m-%d").replace(tzinfo=timezone.utc).date()
                     else:
                         report_date_obj = report_date
 

@@ -8,17 +8,16 @@ legitimate defensive programming and actual non-production code patterns.
 import json
 import re
 from pathlib import Path
-from typing import Dict, Tuple
 
 
-def is_legitimate_error_handling(file_path: str, line_num: int, code_line: str) -> Tuple[bool, str]:
+def is_legitimate_error_handling(file_path: str, line_num: int, code_line: str) -> tuple[bool, str]:
     """Determine if an empty return is legitimate error handling.
 
     Returns: (is_legitimate, reason)
     """
     # Read surrounding context
     try:
-        with open(file_path, encoding='utf-8') as f:
+        with Path(file_path).open(encoding='utf-8') as f:
             lines = f.readlines()
     except (OSError, UnicodeDecodeError, PermissionError) as e:
         return False, f"Failed to read file: {e}"
@@ -78,9 +77,9 @@ def is_legitimate_error_handling(file_path: str, line_num: int, code_line: str) 
     return False, ""
 
 
-def analyze_findings(scan_results_path: str) -> Dict:
+def analyze_findings(scan_results_path: str) -> dict:
     """Analyze scan results and classify findings."""
-    with open(scan_results_path) as f:
+    with Path(scan_results_path).open() as f:
         data = json.load(f)
 
     true_positives = []
@@ -145,10 +144,10 @@ def main() -> None:
         '--directory', 'D:/Intellicrack/intellicrack',
         '--min-confidence', '50',
         '--output-format', 'json',
-    ], capture_output=True, text=True)
+    ], capture_output=True, text=True, check=False)
 
     # Save results
-    with open('enhanced_scan_results.json', 'w') as f:
+    with Path('enhanced_scan_results.json').open('w') as f:
         f.write(result.stdout)
 
     # Analyze
@@ -164,10 +163,11 @@ def main() -> None:
     if analysis['false_positive_rate'] < 5:
         print("\nOK FALSE POSITIVE RATE IS BELOW 5% TARGET!")
     else:
-        print(f"\nFAIL False positive rate {analysis['false_positive_rate']:.1f}% exceeds 5% target")
+        print("\nFAIL False positive rate {:.1f}% exceeds 5% target".format(analysis['false_positive_rate']))
         print("\nSample false positives that need filtering:")
         for fp in analysis['false_positive_examples']:
-            print(f"  - {fp['file_path']}:{fp['line']} - {fp.get('classification_reason', 'Unknown')}")
+            reason = fp.get('classification_reason', 'Unknown')
+            print("  - {}:{} - {}".format(fp['file_path'], fp['line'], reason))
 
 
 if __name__ == '__main__':

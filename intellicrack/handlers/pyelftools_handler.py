@@ -17,7 +17,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+import io
 import struct
+from typing import Any, BinaryIO, Iterator, Optional, Union
 
 from intellicrack.utils.logger import logger
 
@@ -38,11 +40,11 @@ try:
         from elftools.common.py3compat import bytes2str, str2bytes
     except ImportError:
         # Fallback for newer versions without py3compat
-        def bytes2str(b):
+        def bytes2str(b: Union[bytes, str]) -> str:
             """Convert bytes to string."""
             return b.decode("utf-8", errors="replace") if isinstance(b, bytes) else b
 
-        def str2bytes(s):
+        def str2bytes(s: Union[str, bytes]) -> bytes:
             """Convert string to bytes."""
             return s.encode("utf-8") if isinstance(s, str) else s
 
@@ -97,7 +99,6 @@ except ImportError as e:
     class E_FLAGS:  # noqa: N801
         """ELF header flags."""
 
-        pass
 
     class P_FLAGS:  # noqa: N801
         """Program header flags."""
@@ -185,26 +186,23 @@ except ImportError as e:
     class ELFError(Exception):
         """Base ELF error."""
 
-        pass
 
     class ELFParseError(ELFError):
         """ELF parsing error."""
 
-        pass
 
     class DWARFError(Exception):
         """DWARF error."""
 
-        pass
 
     # Utility functions
-    def bytes2str(data):
+    def bytes2str(data: Union[bytes, str]) -> str:
         """Convert bytes to string."""
         if isinstance(data, bytes):
             return data.decode("latin-1")
         return data
 
-    def str2bytes(data):
+    def str2bytes(data: Union[str, bytes]) -> bytes:
         """Convert string to bytes."""
         if isinstance(data, str):
             return data.encode("latin-1")
@@ -214,7 +212,7 @@ except ImportError as e:
     class Container(dict):
         """Container for parsed structures."""
 
-        def __init__(self, **kwargs) -> None:
+        def __init__(self, **kwargs: Any) -> None:
             """Initialize container with keyword arguments as both dict entries and attributes."""
             super().__init__(**kwargs)
             self.__dict__.update(kwargs)
@@ -222,7 +220,7 @@ except ImportError as e:
     class Struct:
         """Structure parser."""
 
-        def __init__(self, name, *fields) -> None:
+        def __init__(self, name: str, *fields: Any) -> None:
             """Initialize structure parser with name and field definitions."""
             self.name = name
             self.fields = fields
@@ -231,7 +229,17 @@ except ImportError as e:
     class FallbackELFFile:
         """Functional ELF file parser implementation."""
 
-        def __init__(self, stream) -> None:
+        stream: Any
+        little_endian: bool
+        elfclass: int
+        header: Optional[Any]
+        _section_headers: list[Any]
+        _program_headers: list[Any]
+        _sections: list[Any]
+        _segments: list[Any]
+        _string_table: Optional[bytes]
+
+        def __init__(self, stream: Any) -> None:
             """Initialize ELF file parser."""
             self.stream = stream
             self.little_endian = True
@@ -444,7 +452,7 @@ except ImportError as e:
 
                 self._sections.append(section)
 
-        def _get_string(self, offset):
+        def _get_string(self, offset: int) -> str:
             """Get string from string table."""
             if not self._string_table or offset >= len(self._string_table):
                 return ""
@@ -455,38 +463,38 @@ except ImportError as e:
 
             return self._string_table[offset:end].decode("latin-1", errors="ignore")
 
-        def num_sections(self):
+        def num_sections(self) -> int:
             """Get number of sections."""
             return len(self._sections)
 
-        def num_segments(self):
+        def num_segments(self) -> int:
             """Get number of segments."""
             return len(self._segments)
 
-        def get_section(self, n):
+        def get_section(self, n: int) -> Optional[Any]:
             """Get section by index."""
             if 0 <= n < len(self._sections):
                 return self._sections[n]
             return None
 
-        def get_section_by_name(self, name):
+        def get_section_by_name(self, name: str) -> Optional[Any]:
             """Get section by name."""
             for section in self._sections:
                 if section.name == name:
                     return section
             return None
 
-        def get_segment(self, n):
+        def get_segment(self, n: int) -> Optional[Any]:
             """Get segment by index."""
             if 0 <= n < len(self._segments):
                 return self._segments[n]
             return None
 
-        def iter_sections(self):
+        def iter_sections(self) -> Iterator[Any]:
             """Iterate over sections."""
             return iter(self._sections)
 
-        def iter_segments(self):
+        def iter_segments(self) -> Iterator[Any]:
             """Iterate over segments."""
             return iter(self._segments)
 
@@ -497,13 +505,13 @@ except ImportError as e:
                     return True
             return False
 
-        def get_dwarf_info(self):
+        def get_dwarf_info(self) -> Optional[Any]:
             """Get DWARF info (basic fallback)."""
             if not self.has_dwarf_info():
                 return None
             return FallbackDWARFInfo(self)
 
-        def get_machine_arch(self):
+        def get_machine_arch(self) -> str:
             """Get machine architecture."""
             if not self.header:
                 return "unknown"
@@ -514,38 +522,43 @@ except ImportError as e:
     class FallbackSection:
         """Functional ELF section implementation."""
 
-        def __init__(self, header, name, stream) -> None:
+        header: Any
+        name: str
+        stream: Any
+        _data: Optional[bytes]
+
+        def __init__(self, header: Any, name: str, stream: Any) -> None:
             """Initialize section."""
             self.header = header
             self.name = name
             self.stream = stream
             self._data = None
 
-        def data(self):
+        def data(self) -> bytes:
             """Get section data."""
             if self._data is None and self.header.sh_type != ENUM_SH_TYPE.SHT_NOBITS:
                 self.stream.seek(self.header.sh_offset)
                 self._data = self.stream.read(self.header.sh_size)
             return self._data or b""
 
-        def is_null(self):
+        def is_null(self) -> bool:
             """Check if section is null."""
             return self.header.sh_type == ENUM_SH_TYPE.SHT_NULL
 
         @property
-        def data_size(self):
+        def data_size(self) -> int:
             """Get data size."""
             return self.header.sh_size
 
         @property
-        def data_alignment(self):
+        def data_alignment(self) -> int:
             """Get data alignment."""
             return self.header.sh_addralign
 
     class FallbackStringTableSection(FallbackSection):
         """String table section."""
 
-        def get_string(self, offset):
+        def get_string(self, offset: int) -> str:
             """Get string at offset."""
             data = self.data()
             if offset >= len(data):
@@ -560,7 +573,17 @@ except ImportError as e:
     class FallbackSymbol:
         """Symbol representation."""
 
-        def __init__(self, st_name, st_value, st_size, st_info, st_other, st_shndx, name="") -> None:
+        st_name: int
+        st_value: int
+        st_size: int
+        st_info: int
+        st_other: int
+        st_shndx: int
+        name: str
+        st_bind: int
+        st_type: int
+
+        def __init__(self, st_name: int, st_value: int, st_size: int, st_info: int, st_other: int, st_shndx: int, name: str = "") -> None:
             """Initialize symbol."""
             self.st_name = st_name
             self.st_value = st_value
@@ -575,7 +598,7 @@ except ImportError as e:
             self.st_type = st_info & 0x0F
 
         @property
-        def entry(self):
+        def entry(self) -> Container:
             """Get symbol entry."""
             return Container(
                 st_name=self.st_name,
@@ -589,7 +612,10 @@ except ImportError as e:
     class FallbackSymbolTableSection(FallbackSection):
         """Symbol table section."""
 
-        def __init__(self, header, name, stream, elffile) -> None:
+        elffile: Any
+        _symbols: list[FallbackSymbol]
+
+        def __init__(self, header: Any, name: str, stream: Any, elffile: Any) -> None:
             """Initialize symbol table."""
             super().__init__(header, name, stream)
             self.elffile = elffile
@@ -638,24 +664,30 @@ except ImportError as e:
                 self._symbols.append(symbol)
                 offset += entry_size
 
-        def get_symbol(self, index):
+        def get_symbol(self, index: int) -> Optional[FallbackSymbol]:
             """Get symbol by index."""
             if 0 <= index < len(self._symbols):
                 return self._symbols[index]
             return None
 
-        def num_symbols(self):
+        def num_symbols(self) -> int:
             """Get number of symbols."""
             return len(self._symbols)
 
-        def iter_symbols(self):
+        def iter_symbols(self) -> Iterator[FallbackSymbol]:
             """Iterate over symbols."""
             return iter(self._symbols)
 
     class FallbackRelocation:
         """Relocation entry."""
 
-        def __init__(self, r_offset, r_info, r_addend=0) -> None:
+        r_offset: int
+        r_info: int
+        r_addend: int
+        r_sym: int
+        r_type: int
+
+        def __init__(self, r_offset: int, r_info: int, r_addend: int = 0) -> None:
             """Initialize relocation."""
             self.r_offset = r_offset
             self.r_info = r_info
@@ -670,14 +702,17 @@ except ImportError as e:
                 self.r_type = 0
 
         @property
-        def entry(self):
+        def entry(self) -> Container:
             """Get relocation entry."""
             return Container(r_offset=self.r_offset, r_info=self.r_info, r_addend=self.r_addend)
 
     class FallbackRelocationSection(FallbackSection):
         """Relocation section."""
 
-        def __init__(self, header, name, stream, elffile) -> None:
+        elffile: Any
+        _relocations: list[FallbackRelocation]
+
+        def __init__(self, header: Any, name: str, stream: Any, elffile: Any) -> None:
             """Initialize relocation section."""
             super().__init__(header, name, stream)
             self.elffile = elffile
@@ -714,37 +749,43 @@ except ImportError as e:
                 self._relocations.append(reloc)
                 offset += entry_size
 
-        def num_relocations(self):
+        def num_relocations(self) -> int:
             """Get number of relocations."""
             return len(self._relocations)
 
-        def get_relocation(self, index):
+        def get_relocation(self, index: int) -> Optional[FallbackRelocation]:
             """Get relocation by index."""
             if 0 <= index < len(self._relocations):
                 return self._relocations[index]
             return None
 
-        def iter_relocations(self):
+        def iter_relocations(self) -> Iterator[FallbackRelocation]:
             """Iterate over relocations."""
             return iter(self._relocations)
 
     class FallbackDynamic:
         """Dynamic entry."""
 
-        def __init__(self, d_tag, d_val) -> None:
+        d_tag: int
+        d_val: int
+
+        def __init__(self, d_tag: int, d_val: int) -> None:
             """Initialize dynamic entry."""
             self.d_tag = d_tag
             self.d_val = d_val
 
         @property
-        def entry(self):
+        def entry(self) -> Container:
             """Get dynamic entry."""
             return Container(d_tag=self.d_tag, d_val=self.d_val)
 
     class FallbackDynamicSection(FallbackSection):
         """Dynamic section."""
 
-        def __init__(self, header, name, stream, elffile) -> None:
+        elffile: Any
+        _dynamics: list[FallbackDynamic]
+
+        def __init__(self, header: Any, name: str, stream: Any, elffile: Any) -> None:
             """Initialize dynamic section."""
             super().__init__(header, name, stream)
             self.elffile = elffile
@@ -779,11 +820,11 @@ except ImportError as e:
                 self._dynamics.append(dyn)
                 offset += entry_size
 
-        def iter_tags(self):
+        def iter_tags(self) -> Iterator[FallbackDynamic]:
             """Iterate over dynamic tags."""
             return iter(self._dynamics)
 
-        def get_tag(self, tag):
+        def get_tag(self, tag: int) -> Optional[FallbackDynamic]:
             """Get dynamic entry by tag."""
             for dyn in self._dynamics:
                 if dyn.d_tag == tag:
@@ -793,7 +834,7 @@ except ImportError as e:
     class FallbackNoteSection(FallbackSection):
         """Note section."""
 
-        def iter_notes(self):
+        def iter_notes(self) -> Iterator[Container]:
             """Iterate over notes."""
             data = self.data()
             offset = 0
@@ -825,13 +866,17 @@ except ImportError as e:
     class FallbackSegment:
         """Functional ELF segment implementation."""
 
-        def __init__(self, header, stream) -> None:
+        header: Any
+        stream: Any
+        _data: Optional[bytes]
+
+        def __init__(self, header: Any, stream: Any) -> None:
             """Initialize segment."""
             self.header = header
             self.stream = stream
             self._data = None
 
-        def data(self):
+        def data(self) -> bytes:
             """Get segment data."""
             if self._data is None and self.header.p_filesz > 0:
                 self.stream.seek(self.header.p_offset)
@@ -839,49 +884,49 @@ except ImportError as e:
             return self._data or b""
 
         @property
-        def p_type(self):
+        def p_type(self) -> int:
             """Get segment type."""
             return self.header.p_type
 
         @property
-        def p_flags(self):
+        def p_flags(self) -> int:
             """Get segment flags."""
             return self.header.p_flags
 
         @property
-        def p_offset(self):
+        def p_offset(self) -> int:
             """Get file offset."""
             return self.header.p_offset
 
         @property
-        def p_vaddr(self):
+        def p_vaddr(self) -> int:
             """Get virtual address."""
             return self.header.p_vaddr
 
         @property
-        def p_paddr(self):
+        def p_paddr(self) -> int:
             """Get physical address."""
             return self.header.p_paddr
 
         @property
-        def p_filesz(self):
+        def p_filesz(self) -> int:
             """Get file size."""
             return self.header.p_filesz
 
         @property
-        def p_memsz(self):
+        def p_memsz(self) -> int:
             """Get memory size."""
             return self.header.p_memsz
 
         @property
-        def p_align(self):
+        def p_align(self) -> int:
             """Get alignment."""
             return self.header.p_align
 
     class FallbackInterpSegment(FallbackSegment):
         """Interpreter segment."""
 
-        def get_interp_name(self):
+        def get_interp_name(self) -> str:
             """Get interpreter name."""
             data = self.data()
             if data:
@@ -891,7 +936,7 @@ except ImportError as e:
     class FallbackNoteSegment(FallbackSegment):
         """Note segment."""
 
-        def iter_notes(self):
+        def iter_notes(self) -> Iterator[Container]:
             """Iterate over notes."""
             data = self.data()
             offset = 0
@@ -923,22 +968,27 @@ except ImportError as e:
     class FallbackDWARFInfo:
         """Basic DWARF info fallback."""
 
-        def __init__(self, elffile) -> None:
+        elffile: Any
+
+        def __init__(self, elffile: Any) -> None:
             """Initialize DWARF info."""
             self.elffile = elffile
 
-        def iter_CUs(self):
+        def iter_CUs(self) -> Iterator[Any]:
             """Iterate over compilation units (empty for fallback)."""
             return iter([])
 
-        def get_DIE_from_refaddr(self, refaddr) -> None:
+        def get_DIE_from_refaddr(self, refaddr: Any) -> None:
             """Get DIE from reference address."""
             return
 
     class FallbackDIE:
         """Debug Information Entry."""
 
-        def __init__(self, tag, attributes=None) -> None:
+        tag: Any
+        attributes: dict[str, Any]
+
+        def __init__(self, tag: Any, attributes: Optional[dict[str, Any]] = None) -> None:
             """Initialize DIE."""
             self.tag = tag
             self.attributes = attributes or {}
@@ -947,12 +997,12 @@ except ImportError as e:
             """Get parent DIE."""
             return
 
-        def iter_children(self):
+        def iter_children(self) -> Iterator[Any]:
             """Iterate over children."""
             return iter([])
 
     # Description functions
-    def describe_e_type(e_type):
+    def describe_e_type(e_type: int) -> str:
         """Describe ELF type."""
         types = {
             ENUM_E_TYPE.ET_NONE: "NONE (No file type)",
@@ -963,12 +1013,12 @@ except ImportError as e:
         }
         return types.get(e_type, f"Unknown type {e_type}")
 
-    def describe_p_type(p_type):
+    def describe_p_type(p_type: int) -> str:
         """Describe program header type."""
         types = {0: "PT_NULL", 1: "PT_LOAD", 2: "PT_DYNAMIC", 3: "PT_INTERP", 4: "PT_NOTE", 5: "PT_SHLIB", 6: "PT_PHDR", 7: "PT_TLS"}
         return types.get(p_type, f"Unknown type {p_type}")
 
-    def describe_sh_type(sh_type):
+    def describe_sh_type(sh_type: int) -> str:
         """Describe section type."""
         types = {
             ENUM_SH_TYPE.SHT_NULL: "NULL",
@@ -1011,7 +1061,6 @@ except ImportError as e:
     class FallbackElftools:
         """Fallback elftools module."""
 
-        pass
 
     elftools = FallbackElftools()
     elffile = ELFFile  # Alias for compatibility

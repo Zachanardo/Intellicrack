@@ -1722,10 +1722,9 @@ def _setup_rop_generator(app: Any) -> ROPChainGenerator:
         if hasattr(app, "update_output"):
             app.update_output.emit(f"log_message([ROP Chain Generator] Binary set: {app.binary_path})")
         return generator
-    else:
-        if hasattr(app, "update_output"):
-            app.update_output.emit("log_message([ROP Chain Generator] Failed to set binary)")
-        return None
+    if hasattr(app, "update_output"):
+        app.update_output.emit("log_message([ROP Chain Generator] Failed to set binary)")
+    return None
 
 
 def _configure_architecture_and_targets(app: Any, generator: ROPChainGenerator) -> bool:
@@ -1790,14 +1789,12 @@ def _execute_rop_generation_workflow(app: Any, generator: ROPChainGenerator) -> 
             if hasattr(app, "update_output"):
                 app.update_output.emit(f"log_message([ROP Chain Generator] Generated {len(generator.chains)} chains)")
             return True
-        else:
-            if hasattr(app, "update_output"):
-                app.update_output.emit("log_message([ROP Chain Generator] Failed to generate chains)")
-            return False
-    else:
         if hasattr(app, "update_output"):
-            app.update_output.emit("log_message([ROP Chain Generator] Failed to find gadgets)")
+            app.update_output.emit("log_message([ROP Chain Generator] Failed to generate chains)")
         return False
+    if hasattr(app, "update_output"):
+        app.update_output.emit("log_message([ROP Chain Generator] Failed to find gadgets)")
+    return False
 
 
 def _process_rop_results(app: Any, generator: ROPChainGenerator) -> None:

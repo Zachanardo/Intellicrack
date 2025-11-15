@@ -23,7 +23,7 @@ import os
 import zipfile
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 try:
     import defusedxml.ElementTree as ET  # noqa: N817
@@ -84,11 +84,11 @@ class AnalysisResult:
     file_hash: str
     file_size: int
     analysis_type: str
-    findings: List[Dict[str, Any]]
-    metadata: Dict[str, Any]
-    vulnerabilities: List[Dict[str, Any]]
-    protections: List[Dict[str, Any]]
-    recommendations: List[str]
+    findings: list[dict[str, Any]]
+    metadata: dict[str, Any]
+    vulnerabilities: list[dict[str, Any]]
+    protections: list[dict[str, Any]]
+    recommendations: list[str]
 
 
 class ReportGenerator:
@@ -107,7 +107,7 @@ class ReportGenerator:
         else:
             self.jinja_env = None
 
-    def generate_report(self, analysis_data: Dict[str, Any], format: str = "json", output_file: Optional[str] = None) -> str:
+    def generate_report(self, analysis_data: dict[str, Any], format: str = "json", output_file: str | None = None) -> str:
         """Generate report in specified format."""
         result = self._prepare_analysis_result(analysis_data)
 
@@ -119,22 +119,23 @@ class ReportGenerator:
 
         if format == "json":
             return self._generate_json_report(result, output_path)
-        elif format == "html":
+        if format == "html":
             return self._generate_html_report(result, output_path)
-        elif format == "pdf":
+        if format == "pdf":
             return self._generate_pdf_report(result, output_path)
-        elif format == "xml":
+        if format == "xml":
             return self._generate_xml_report(result, output_path)
-        elif format == "csv":
+        if format == "csv":
             return self._generate_csv_report(result, output_path)
-        elif format == "markdown":
+        if format == "markdown":
             return self._generate_markdown_report(result, output_path)
-        elif format == "txt":
+        if format == "txt":
             return self._generate_text_report(result, output_path)
-        else:
-            raise ValueError(f"Unsupported format: {format}")
+        error_msg = f"Unsupported format: {format}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
-    def _prepare_analysis_result(self, data: Dict[str, Any]) -> AnalysisResult:
+    def _prepare_analysis_result(self, data: dict[str, Any]) -> AnalysisResult:
         """Prepare analysis data for report generation."""
         return AnalysisResult(
             timestamp=data.get("timestamp", datetime.datetime.now().isoformat()),
@@ -531,7 +532,7 @@ RECOMMENDATIONS
 
         return str(output_path)
 
-    def generate_batch_report(self, analysis_results: List[Dict[str, Any]], format: str = "json") -> str:
+    def generate_batch_report(self, analysis_results: list[dict[str, Any]], format: str = "json") -> str:
         """Generate report for multiple analysis results."""
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         batch_dir = self.output_dir / f"batch_{timestamp}"
@@ -551,7 +552,7 @@ RECOMMENDATIONS
 
         return str(archive_path)
 
-    def export_to_archive(self, report_paths: List[str], archive_name: str = None) -> str:
+    def export_to_archive(self, report_paths: list[str], archive_name: str = None) -> str:
         """Export multiple reports to an archive."""
         if not archive_name:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -576,7 +577,7 @@ class ComparisonReportGenerator:
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.base_generator = ReportGenerator(output_dir)
 
-    def generate_comparison(self, results: List[Dict[str, Any]], format: str = "html") -> str:
+    def generate_comparison(self, results: list[dict[str, Any]], format: str = "html") -> str:
         """Generate comparison report."""
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         output_file = f"comparison_{timestamp}.{format}"
@@ -586,13 +587,12 @@ class ComparisonReportGenerator:
 
         if format == "html":
             return self._generate_html_comparison(comparison_data, output_path)
-        elif format == "json":
+        if format == "json":
             return self._generate_json_comparison(comparison_data, output_path)
-        else:
-            # Fallback to JSON
-            return self._generate_json_comparison(comparison_data, output_path)
+        # Fallback to JSON
+        return self._generate_json_comparison(comparison_data, output_path)
 
-    def _analyze_differences(self, results: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _analyze_differences(self, results: list[dict[str, Any]]) -> dict[str, Any]:
         """Analyze differences between results."""
         comparison = {
             "timestamp": datetime.datetime.now().isoformat(),
@@ -630,7 +630,7 @@ class ComparisonReportGenerator:
 
         return comparison
 
-    def _generate_html_comparison(self, data: Dict[str, Any], output_path: Path) -> str:
+    def _generate_html_comparison(self, data: dict[str, Any], output_path: Path) -> str:
         """Generate HTML comparison report."""
         html = f"""<!DOCTYPE html>
 <html>
@@ -676,7 +676,7 @@ class ComparisonReportGenerator:
 
         return str(output_path)
 
-    def _generate_json_comparison(self, data: Dict[str, Any], output_path: Path) -> str:
+    def _generate_json_comparison(self, data: dict[str, Any], output_path: Path) -> str:
         """Generate JSON comparison report."""
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
@@ -684,13 +684,13 @@ class ComparisonReportGenerator:
         return str(output_path)
 
 
-def generate_report(analysis_data: Dict[str, Any], format: str = "html", output_dir: str = "reports") -> str:
+def generate_report(analysis_data: dict[str, Any], format: str = "html", output_dir: str = "reports") -> str:
     """Generate a report."""
     generator = ReportGenerator(output_dir)
     return generator.generate_report(analysis_data, format)
 
 
-def export_report(analysis_data: Dict[str, Any], format: str = "html", output_path: Optional[str] = None) -> str:
+def export_report(analysis_data: dict[str, Any], format: str = "html", output_path: str | None = None) -> str:
     """Export analysis report to file."""
     output_dir = Path(output_path).parent if output_path else Path("reports")
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -700,7 +700,7 @@ def export_report(analysis_data: Dict[str, Any], format: str = "html", output_pa
     return generator.generate_report(analysis_data, format, output_file)
 
 
-def generate_comparison_report(results: List[Dict[str, Any]], format: str = "html", output_dir: str = "reports/comparisons") -> str:
+def generate_comparison_report(results: list[dict[str, Any]], format: str = "html", output_dir: str = "reports/comparisons") -> str:
     """Generate a comparison report."""
     generator = ComparisonReportGenerator(output_dir)
     return generator.generate_comparison(results, format)

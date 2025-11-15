@@ -30,7 +30,7 @@ import threading
 import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Union
+from typing import Any
 
 from rich import box
 from rich.console import Console
@@ -43,6 +43,7 @@ from rich.progress import (
     Progress,
     ProgressColumn,
     SpinnerColumn,
+    Task,
     TaskProgressColumn,
     TextColumn,
     TimeElapsedColumn,
@@ -85,7 +86,7 @@ class AnalysisTask:
 class SpeedColumn(ProgressColumn):
     """Customize column showing processing speed."""
 
-    def render(self, task):
+    def render(self, task: Task):
         """Render the speed column."""
         speed = task.fields.get("speed", 0)
         if speed > 0:
@@ -266,7 +267,7 @@ class ProgressManager:
 class MultiStageProgress:
     """Progress tracker for multi-stage operations."""
 
-    def __init__(self, console: Union[Console, None] = None) -> None:
+    def __init__(self, console: Console | None = None) -> None:
         """Initialize multi-stage progress tracker with console and stage tracking."""
         self.console = console or Console()
         self.stages: list[dict[str, Any]] = []

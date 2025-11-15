@@ -25,8 +25,6 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from intellicrack.core.config_manager import get_config
-
 logger = logging.getLogger(__name__)
 
 
@@ -40,6 +38,8 @@ class EnvFileManager:
             env_file_path: Path to the .env file. If None, uses default location from central config.
 
         """
+        from intellicrack.core.config_manager import get_config
+
         # Get central configuration
         self.central_config = get_config()
 
@@ -310,8 +310,7 @@ class EnvFileManager:
         if service_lower in validations:
             if validations[service_lower](api_key):
                 return True, f"API key format is valid for {service}"
-            else:
-                return False, f"API key format is invalid for {service}"
+            return False, f"API key format is invalid for {service}"
 
         # Unknown service - just check it's not empty
         return True, "API key accepted (format validation not available for this service)"

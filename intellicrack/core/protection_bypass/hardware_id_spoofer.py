@@ -16,7 +16,7 @@ import subprocess
 import uuid
 import winreg
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import psutil
 
@@ -339,6 +339,8 @@ class HardwareIDSpoofer:
         try:
             h_scm = self.advapi32.OpenSCManagerW(None, None, SC_MANAGER_ALL_ACCESS)
             if not h_scm:
+                error_msg = "Failed to open Service Control Manager"
+                logger.error(error_msg)
                 raise ctypes.WinError()
 
             service_name = "HWIDSpoof"
@@ -375,7 +377,7 @@ class HardwareIDSpoofer:
             logger.warning(f"Kernel driver loading failed, using usermode spoofing: {e}")
             self.driver_handle = None
 
-    def collect_hardware_info(self) -> Dict[str, Any]:
+    def collect_hardware_info(self) -> dict[str, Any]:
         """Collect all hardware identifiers that may be used for license checks."""
         info = {}
 
@@ -393,7 +395,7 @@ class HardwareIDSpoofer:
 
         return info
 
-    def _get_cpu_id(self) -> Dict[str, str]:
+    def _get_cpu_id(self) -> dict[str, str]:
         cpu_info = {}
 
         try:
@@ -422,7 +424,7 @@ class HardwareIDSpoofer:
 
         return cpu_info
 
-    def _get_cpuid_via_asm(self) -> Dict[str, str]:
+    def _get_cpuid_via_asm(self) -> dict[str, str]:
         cpu_info = {}
 
         try:
@@ -477,7 +479,7 @@ class HardwareIDSpoofer:
 
         return cpu_info
 
-    def _get_motherboard_info(self) -> Dict[str, str]:
+    def _get_motherboard_info(self) -> dict[str, str]:
         mb_info = {}
 
         try:
@@ -501,7 +503,7 @@ class HardwareIDSpoofer:
 
         return mb_info
 
-    def _get_disk_serials(self) -> List[Dict[str, str]]:
+    def _get_disk_serials(self) -> list[dict[str, str]]:
         disks = []
 
         try:
@@ -527,7 +529,7 @@ class HardwareIDSpoofer:
 
         return disks
 
-    def _get_volume_serial(self, drive: str) -> Optional[Dict[str, str]]:
+    def _get_volume_serial(self, drive: str) -> dict[str, str] | None:
         try:
             volume_name = ctypes.create_unicode_buffer(261)
             volume_serial = ctypes.wintypes.DWORD()
@@ -558,7 +560,7 @@ class HardwareIDSpoofer:
 
         return None
 
-    def _get_mac_addresses(self) -> List[Dict[str, str]]:
+    def _get_mac_addresses(self) -> list[dict[str, str]]:
         macs = []
 
         try:
@@ -584,7 +586,7 @@ class HardwareIDSpoofer:
 
         return macs
 
-    def _get_bios_info(self) -> Dict[str, str]:
+    def _get_bios_info(self) -> dict[str, str]:
         bios_info = {}
 
         try:
@@ -599,7 +601,7 @@ class HardwareIDSpoofer:
 
         return bios_info
 
-    def _get_system_info(self) -> Dict[str, str]:
+    def _get_system_info(self) -> dict[str, str]:
         sys_info = {}
 
         try:
@@ -625,7 +627,7 @@ class HardwareIDSpoofer:
         except OSError:
             return ""
 
-    def _get_gpu_info(self) -> List[Dict[str, str]]:
+    def _get_gpu_info(self) -> list[dict[str, str]]:
         gpus = []
 
         try:
@@ -642,7 +644,7 @@ class HardwareIDSpoofer:
 
         return gpus
 
-    def _get_usb_devices(self) -> List[Dict[str, str]]:
+    def _get_usb_devices(self) -> list[dict[str, str]]:
         usbs = []
 
         try:
@@ -999,7 +1001,7 @@ objInstance.Put_
             logger.error(f"System UUID spoofing failed: {e}")
             return False
 
-    def spoof_all(self, profile: Dict[str, Any] = None) -> Dict[str, bool]:
+    def spoof_all(self, profile: dict[str, Any] = None) -> dict[str, bool]:
         """Spoof all hardware identifiers according to provided or random profile."""
         results = {}
 
@@ -1026,7 +1028,7 @@ objInstance.Put_
 
         return results
 
-    def generate_random_profile(self) -> Dict[str, Any]:
+    def generate_random_profile(self) -> dict[str, Any]:
         """Generate random hardware profile for consistent spoofing across all identifiers."""
         profile = {
             "cpu_vendor": random.choice(["GenuineIntel", "AuthenticAMD"]),  # noqa: S311
@@ -1050,7 +1052,7 @@ objInstance.Put_
 
         return profile
 
-    def save_profile(self, profile: Dict[str, Any], filepath: Path) -> None:
+    def save_profile(self, profile: dict[str, Any], filepath: Path) -> None:
         """Save hardware spoofing profile to encrypted file."""
         filepath = Path(filepath)
         filepath.parent.mkdir(parents=True, exist_ok=True)
@@ -1058,13 +1060,13 @@ objInstance.Put_
         encrypted_profile = self._encrypt_profile(profile)
         filepath.write_bytes(encrypted_profile)
 
-    def load_profile(self, filepath: Path) -> Dict[str, Any]:
+    def load_profile(self, filepath: Path) -> dict[str, Any]:
         """Load hardware spoofing profile from encrypted file."""
         filepath = Path(filepath)
         encrypted_data = filepath.read_bytes()
         return self._decrypt_profile(encrypted_data)
 
-    def _encrypt_profile(self, profile: Dict[str, Any]) -> bytes:
+    def _encrypt_profile(self, profile: dict[str, Any]) -> bytes:
         import cryptography.fernet
 
         key = hashlib.sha256(b"IntellicracKHWIDSpoof").digest()[:32]
@@ -1074,7 +1076,7 @@ objInstance.Put_
         json_data = json.dumps(profile, indent=2)
         return fernet.encrypt(json_data.encode())
 
-    def _decrypt_profile(self, encrypted_data: bytes) -> Dict[str, Any]:
+    def _decrypt_profile(self, encrypted_data: bytes) -> dict[str, Any]:
         import cryptography.fernet
 
         key = hashlib.sha256(b"IntellicracKHWIDSpoof").digest()[:32]

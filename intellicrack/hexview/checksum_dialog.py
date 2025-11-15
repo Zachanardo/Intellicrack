@@ -86,7 +86,9 @@ class ChecksumWorker(QThread):
                         results[algorithm] = f"Error: {e}"
                         logger.error(f"Failed to calculate {algorithm}: {e}")
             else:
-                raise ValueError("No data or file path provided")
+                error_msg = "No data or file path provided"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
 
             self.result.emit(results)
 
@@ -277,21 +279,20 @@ class ChecksumDialog(QDialog):
             else:
                 self.results_text.setPlainText("Hex viewer not available.")
                 return
-        else:
-            # Use entire file
-            if self.hex_viewer and hasattr(self.hex_viewer, "file_handler"):
-                if hasattr(self.hex_viewer.file_handler, "file_path"):
-                    file_path = self.hex_viewer.file_handler.file_path
-                else:
-                    # Read entire file into memory
-                    file_size = self.hex_viewer.file_handler.file_size
-                    data = self.hex_viewer.file_handler.read_data(0, file_size)
-                    if data is None:
-                        self.results_text.setPlainText("Failed to read file data.")
-                        return
+        # Use entire file
+        elif self.hex_viewer and hasattr(self.hex_viewer, "file_handler"):
+            if hasattr(self.hex_viewer.file_handler, "file_path"):
+                file_path = self.hex_viewer.file_handler.file_path
             else:
-                self.results_text.setPlainText("No file loaded.")
-                return
+                # Read entire file into memory
+                file_size = self.hex_viewer.file_handler.file_size
+                data = self.hex_viewer.file_handler.read_data(0, file_size)
+                if data is None:
+                    self.results_text.setPlainText("Failed to read file data.")
+                    return
+        else:
+            self.results_text.setPlainText("No file loaded.")
+            return
 
         # Show progress bar
         self.progress_bar.setVisible(True)
@@ -334,10 +335,9 @@ class ChecksumDialog(QDialog):
                 end = self.hex_viewer.selection_end
                 text += f"Data: Selection (offset {start:#x} to {end:#x})\n"
                 text += f"Size: {end - start} bytes\n\n"
-        else:
-            if self.hex_viewer and hasattr(self.hex_viewer.file_handler, "file_path"):
-                text += f"File: {self.hex_viewer.file_handler.file_path}\n"
-                text += f"Size: {self.hex_viewer.file_handler.file_size} bytes\n\n"
+        elif self.hex_viewer and hasattr(self.hex_viewer.file_handler, "file_path"):
+            text += f"File: {self.hex_viewer.file_handler.file_path}\n"
+            text += f"Size: {self.hex_viewer.file_handler.file_size} bytes\n\n"
 
         # Add results
         for algo, result in results.items():

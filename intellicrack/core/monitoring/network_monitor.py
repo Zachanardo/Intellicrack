@@ -12,7 +12,6 @@ Licensed under GNU General Public License v3.0
 
 import threading
 import time
-from typing import Optional
 
 from intellicrack.core.monitoring.base_monitor import (
     BaseMonitor,
@@ -41,7 +40,7 @@ class NetworkMonitor(BaseMonitor):
     This monitor is OPTIONAL for advanced packet analysis.
     """
 
-    def __init__(self, process_info: Optional[ProcessInfo] = None, target_ports: Optional[list] = None) -> None:
+    def __init__(self, process_info: ProcessInfo | None = None, target_ports: list | None = None) -> None:
         """Initialize network monitor.
 
         Args:
@@ -51,7 +50,7 @@ class NetworkMonitor(BaseMonitor):
         """
         super().__init__("NetworkMonitor", process_info)
         self.target_ports = target_ports or [80, 443, 8080, 8443]
-        self._sniff_thread: Optional[threading.Thread] = None
+        self._sniff_thread: threading.Thread | None = None
         self._stop_sniffing = False
 
         if not SCAPY_AVAILABLE:

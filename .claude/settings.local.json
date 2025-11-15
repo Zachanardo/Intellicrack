@@ -4,7 +4,9 @@
     "allow": [
       "mcp__sequential-thinking__sequentialthinking",
       "mcp__brave-search__brave_web_search",
-      "Bash(cargo search:*)"
+      "Bash(cargo search:*)",
+      "Bash(pixi run ruff check --select ANN,D:*)",
+      "Bash(pixi run mypy --strict:*)"
     ],
     "deny": [],
     "ask": ["Git clean"]

@@ -29,4 +29,5 @@ try:
 except ImportError:
     _elf_imports = []
 
-__all__ = ["extract_pe_imports", "iterate_pe_imports_with_dll", *_elf_imports]
+_elf_imports_list = [str(item) for item in _elf_imports] if isinstance(_elf_imports, (list, tuple)) else []
+__all__ = ["extract_pe_imports", "iterate_pe_imports_with_dll", *_elf_imports_list]

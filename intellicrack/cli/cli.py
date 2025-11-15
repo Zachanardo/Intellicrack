@@ -23,6 +23,7 @@ import os
 import sys
 import threading
 import time
+import types
 from typing import NoReturn
 
 from intellicrack.utils.analysis.binary_analysis import analyze_binary
@@ -240,8 +241,7 @@ def strings(binary_path: str, min_length: int, encoding: str, output: str | None
 
             if output:
                 with open(output, "w", encoding="utf-8") as f:
-                    for string in extracted_strings:
-                        f.write(string + "\n")
+                    f.writelines(string + "\n" for string in extracted_strings)
                 click.echo(f"Strings saved to: {output}")
             else:
                 # Display first 20 strings to console
@@ -650,18 +650,17 @@ def _perform_analysis(mode: str, binary_path: str, output: str | None, verbose: 
         from intellicrack.utils.runtime.runner_functions import run_comprehensive_analysis
 
         return run_comprehensive_analysis(binary_path, output_dir=output, verbose=verbose, enable_ai=not no_ai)
-    elif mode == "vulnerability":
+    if mode == "vulnerability":
         from intellicrack.core.analysis.vulnerability_engine import AdvancedVulnerabilityEngine
 
         engine = AdvancedVulnerabilityEngine()
         return engine.run_vulnerability_scan(binary_path)
-    elif mode == "protection":
+    if mode == "protection":
         from intellicrack.core.protection_analyzer import ProtectionAnalyzer
 
         analyzer = ProtectionAnalyzer()
         return analyzer.analyze_protections(binary_path)
-    else:
-        return analyze_binary(binary_path, detailed=deep, enable_ai_integration=not no_ai)
+    return analyze_binary(binary_path, detailed=deep, enable_ai_integration=not no_ai)
 
 
 def _display_basic_results(result: dict) -> None:
@@ -1130,7 +1129,7 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
             try:
                 if platform.system() != "Windows" and hasattr(signal, "SIGALRM") and hasattr(signal, "alarm"):
 
-                    def timeout_handler(signum, frame) -> NoReturn:
+                    def timeout_handler(signum: int, frame: types.FrameType | None) -> NoReturn:
                         logger.warning("AI analysis timeout handler: signal %s, frame %s", signum, frame)
                         raise TimeoutError(f"Analysis timed out after {timeout} seconds")
 
@@ -1225,7 +1224,7 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
             try:
                 if platform.system() != "Windows" and hasattr(signal, "SIGALRM") and hasattr(signal, "alarm"):
 
-                    def timeout_handler(signum, frame) -> NoReturn:
+                    def timeout_handler(signum: int, frame: types.FrameType | None) -> NoReturn:
                         logger.warning(
                             "Binary analysis timeout handler: signal %s, frame %s",
                             signum,
@@ -1703,7 +1702,7 @@ def ai_analyze(binary_path: str, output: str | None, output_format: str, deep: b
                     if task_status.get("status") == "completed":
                         bar.update(100 - last_progress)
                         break
-                    elif task_status.get("status") == "failed":
+                    if task_status.get("status") == "failed":
                         click.echo("\nERROR Analysis failed: " + task_status.get("error", "Unknown error"))
                         return
 
@@ -2694,16 +2693,15 @@ def cert_rollback(target: str, force: bool) -> None:
             click.echo("    Backup file removed")
 
             rollback_success = True
-        else:
-            if not force:
-                click.echo("  WARNING  No backup file found")
-                click.echo()
-                click.echo(" Possible reasons:")
-                click.echo("   - Binary was not patched (Frida hooks only)")
-                click.echo("   - Backup was manually deleted")
-                click.echo("   - Bypass was not applied to this target")
-                click.echo()
-                click.echo("Use --force to attempt rollback anyway")
+        elif not force:
+            click.echo("  WARNING  No backup file found")
+            click.echo()
+            click.echo(" Possible reasons:")
+            click.echo("   - Binary was not patched (Frida hooks only)")
+            click.echo("   - Backup was manually deleted")
+            click.echo("   - Bypass was not applied to this target")
+            click.echo()
+            click.echo("Use --force to attempt rollback anyway")
 
         click.echo()
         click.echo("🪝 Checking for active Frida hooks...")

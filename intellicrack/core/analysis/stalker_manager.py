@@ -25,7 +25,7 @@ import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Callable
 
 try:
     import frida
@@ -39,12 +39,12 @@ class TraceEvent:
 
     event_type: str
     address: str
-    module: Optional[str] = None
-    offset: Optional[str] = None
-    timestamp: Optional[int] = None
-    thread_id: Optional[int] = None
-    depth: Optional[int] = None
-    backtrace: List[str] = field(default_factory=list)
+    module: str | None = None
+    offset: str | None = None
+    timestamp: int | None = None
+    thread_id: int | None = None
+    depth: int | None = None
+    backtrace: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -55,7 +55,7 @@ class APICallEvent:
     module: str
     timestamp: int
     thread_id: int
-    backtrace: List[str] = field(default_factory=list)
+    backtrace: list[str] = field(default_factory=list)
     is_licensing_related: bool = False
 
 
@@ -92,8 +92,8 @@ class StalkerSession:
     def __init__(
         self,
         binary_path: str,
-        output_dir: Optional[str] = None,
-        message_callback: Optional[Callable[[str], None]] = None,
+        output_dir: str | None = None,
+        message_callback: Callable[[str], None] | None = None,
     ) -> None:
         """Initialize Stalker session.
 
@@ -112,18 +112,18 @@ class StalkerSession:
 
         os.makedirs(self.output_dir, exist_ok=True)
 
-        self.device: Optional[Any] = None
-        self.session: Optional[Any] = None
-        self.script: Optional[Any] = None
-        self.pid: Optional[int] = None
+        self.device: Any | None = None
+        self.session: Any | None = None
+        self.script: Any | None = None
+        self.pid: int | None = None
 
-        self.trace_events: List[TraceEvent] = []
-        self.api_calls: List[APICallEvent] = []
-        self.coverage_data: Dict[str, CoverageEntry] = {}
-        self.licensing_routines: Set[str] = set()
+        self.trace_events: list[TraceEvent] = []
+        self.api_calls: list[APICallEvent] = []
+        self.coverage_data: dict[str, CoverageEntry] = {}
+        self.licensing_routines: set[str] = set()
 
         self.stats = StalkerStats()
-        self.start_time: Optional[float] = None
+        self.start_time: float | None = None
 
         self._is_active = False
 
@@ -132,7 +132,7 @@ class StalkerSession:
         if self.message_callback:
             self.message_callback(f"[StalkerSession] {message}")
 
-    def _on_message(self, message: Dict[str, Any], data: Optional[bytes]) -> None:
+    def _on_message(self, message: dict[str, Any], data: bytes | None) -> None:
         """Handle messages from Frida script."""
         try:
             if message.get("type") == "send":
@@ -175,7 +175,7 @@ class StalkerSession:
         except Exception as e:
             self._log(f"Message handler error: {e}")
 
-    def _handle_api_call(self, payload: Dict[str, Any]) -> None:
+    def _handle_api_call(self, payload: dict[str, Any]) -> None:
         """Process API call event."""
         data = payload.get("data", {})
         api_call = APICallEvent(
@@ -188,7 +188,7 @@ class StalkerSession:
         )
         self.api_calls.append(api_call)
 
-    def _handle_licensing_event(self, payload: Dict[str, Any]) -> None:
+    def _handle_licensing_event(self, payload: dict[str, Any]) -> None:
         """Process licensing-related event."""
         data = payload.get("data", {})
         caller = data.get("caller", {})
@@ -196,7 +196,7 @@ class StalkerSession:
         self.licensing_routines.add(key)
         self._log(f"Licensing event: {data.get('api', '')} from {key}")
 
-    def _handle_progress(self, payload: Dict[str, Any]) -> None:
+    def _handle_progress(self, payload: dict[str, Any]) -> None:
         """Process progress update."""
         instructions = payload.get("instructions", 0)
         blocks = payload.get("blocks", 0)
@@ -213,7 +213,7 @@ class StalkerSession:
             f"{coverage} coverage entries, {licensing} licensing routines",
         )
 
-    def _handle_trace_complete(self, payload: Dict[str, Any]) -> None:
+    def _handle_trace_complete(self, payload: dict[str, Any]) -> None:
         """Process complete trace data."""
         data = payload.get("data", {})
 
@@ -240,7 +240,7 @@ class StalkerSession:
         self._log(f"Trace complete: {self.stats.total_instructions} instructions traced")
         self._save_trace_results(data)
 
-    def _handle_function_trace(self, payload: Dict[str, Any]) -> None:
+    def _handle_function_trace(self, payload: dict[str, Any]) -> None:
         """Process function trace data."""
         function = payload.get("function", "unknown")
         trace_length = payload.get("trace_length", 0)
@@ -264,7 +264,7 @@ class StalkerSession:
         output_file = os.path.join(self.output_dir, f"function_trace_{function.replace('!', '_')}.json")
         self._save_json(output_file, {"function": function, "trace": trace_data})
 
-    def _handle_module_coverage(self, payload: Dict[str, Any]) -> None:
+    def _handle_module_coverage(self, payload: dict[str, Any]) -> None:
         """Process module coverage data."""
         module = payload.get("module", "unknown")
         blocks_covered = payload.get("blocks_covered", 0)
@@ -275,7 +275,7 @@ class StalkerSession:
         output_file = os.path.join(self.output_dir, f"coverage_{module}.json")
         self._save_json(output_file, payload)
 
-    def _save_trace_results(self, data: Dict[str, Any]) -> None:
+    def _save_trace_results(self, data: dict[str, Any]) -> None:
         """Save complete trace results to file."""
         output_file = os.path.join(self.output_dir, "trace_results.json")
         self._save_json(output_file, data)
@@ -437,7 +437,7 @@ class StalkerSession:
 
         return self.stats
 
-    def set_config(self, config: Dict[str, Any]) -> bool:
+    def set_config(self, config: dict[str, Any]) -> bool:
         """Update Stalker configuration.
 
         Args:
@@ -458,7 +458,7 @@ class StalkerSession:
             self._log(f"Failed to set config: {e}")
             return False
 
-    def get_licensing_routines(self) -> List[str]:
+    def get_licensing_routines(self) -> list[str]:
         """Get list of identified licensing-related routines.
 
         Returns:
@@ -467,7 +467,7 @@ class StalkerSession:
         """
         return list(self.licensing_routines)
 
-    def get_coverage_summary(self) -> Dict[str, Any]:
+    def get_coverage_summary(self) -> dict[str, Any]:
         """Get summary of code coverage data.
 
         Returns:
@@ -507,7 +507,7 @@ class StalkerSession:
             ],
         }
 
-    def get_api_summary(self) -> Dict[str, Any]:
+    def get_api_summary(self) -> dict[str, Any]:
         """Get summary of API calls.
 
         Returns:
@@ -517,7 +517,7 @@ class StalkerSession:
         if not self.api_calls:
             return {"total_calls": 0, "unique_apis": 0, "top_apis": []}
 
-        api_counts: Dict[str, int] = {}
+        api_counts: dict[str, int] = {}
         licensing_calls = 0
 
         for call in self.api_calls:
@@ -534,7 +534,7 @@ class StalkerSession:
             "top_apis": [{"api": api, "count": count} for api, count in sorted_apis[:20]],
         }
 
-    def export_results(self, output_path: Optional[str] = None) -> str:
+    def export_results(self, output_path: str | None = None) -> str:
         """Export all collected results to JSON file.
 
         Args:

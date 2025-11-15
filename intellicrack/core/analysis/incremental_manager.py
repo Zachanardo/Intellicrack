@@ -252,7 +252,8 @@ class IncrementalAnalysisManager:
             # Create a backup of the existing index
             backup_path = index_path + ".backup"
             if os.path.exists(index_path):
-                os.rename(index_path, backup_path)
+                from pathlib import Path
+                Path(index_path).rename(backup_path)
 
             with open(index_path, "w", encoding="utf-8") as f:
                 json.dump(self.cache, f, indent=2, default=str)
@@ -271,7 +272,7 @@ class IncrementalAnalysisManager:
             backup_path = index_path + ".backup"
             if os.path.exists(backup_path):
                 try:
-                    os.rename(backup_path, index_path)
+                    Path(backup_path).rename(index_path)
                     self.logger.info("Restored cache index from backup")
                 except OSError as e:
                     self.logger.error("Failed to restore backup")

@@ -19,7 +19,7 @@ import math
 import time
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -63,9 +63,9 @@ class GraphNode:
     size: float = 1.0
     color: str = "#3498db"
     shape: str = "circle"
-    data: Dict[str, Any] = None
+    data: dict[str, Any] = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "id": self.id,
@@ -90,9 +90,9 @@ class GraphEdge:
     color: str = "#95a5a6"
     style: str = "solid"
     label: str = ""
-    data: Dict[str, Any] = None
+    data: dict[str, Any] = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "source": self.source,
@@ -108,7 +108,7 @@ class GraphEdge:
 class VisualizationRenderer:
     """Renderer for various visualization types."""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
         """Initialize visualization renderer.
 
         Args:
@@ -136,7 +136,7 @@ class VisualizationRenderer:
         self.render_cache = {}
         self.cache_ttl = self.config.get("cache_ttl", 60)  # seconds
 
-    def _load_chart_templates(self) -> Dict[str, str]:
+    def _load_chart_templates(self) -> dict[str, str]:
         """Load chart templates for JavaScript rendering."""
         return {
             "d3_force_graph": """
@@ -401,12 +401,12 @@ class VisualizationRenderer:
 
     def render_graph(
         self,
-        nodes: List[GraphNode],
-        edges: List[GraphEdge],
+        nodes: list[GraphNode],
+        edges: list[GraphEdge],
         render_type: str = "force",
-        dimensions: Tuple[int, int] = (800, 600),
+        dimensions: tuple[int, int] = (800, 600),
         container_id: str = "graph-container",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Render a graph visualization.
 
         Args:
@@ -472,8 +472,8 @@ class VisualizationRenderer:
         return result
 
     def render_heatmap(
-        self, data: np.ndarray, labels_x: List[str], labels_y: List[str], title: str = "Heatmap", color_scheme: str = "heatmap",
-    ) -> Dict[str, Any]:
+        self, data: np.ndarray, labels_x: list[str], labels_y: list[str], title: str = "Heatmap", color_scheme: str = "heatmap",
+    ) -> dict[str, Any]:
         """Render a heatmap visualization.
 
         Args:
@@ -525,7 +525,7 @@ class VisualizationRenderer:
 
         return {"type": "heatmap", "image": f"data:image/png;base64,{image_base64}", "title": title, "shape": data.shape}
 
-    def render_timeline(self, events: List[Dict[str, Any]], width: int = 1000, height: int = 400) -> Dict[str, Any]:
+    def render_timeline(self, events: list[dict[str, Any]], width: int = 1000, height: int = 400) -> dict[str, Any]:
         """Render a timeline visualization.
 
         Args:
@@ -616,7 +616,7 @@ class VisualizationRenderer:
 
         return {"type": "timeline", "js_code": js_code, "static_image": static_image, "event_count": len(events), "time_range": time_range}
 
-    def render_metrics_chart(self, metrics: List[Dict[str, Any]], chart_type: str = "line", title: str = "Metrics") -> Dict[str, Any]:
+    def render_metrics_chart(self, metrics: list[dict[str, Any]], chart_type: str = "line", title: str = "Metrics") -> dict[str, Any]:
         """Render metrics chart.
 
         Args:
@@ -671,7 +671,7 @@ class VisualizationRenderer:
             "data_points": sum(len(points) for points in grouped.values()),
         }
 
-    def render_3d_call_graph(self, functions: List[Dict[str, Any]], calls: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def render_3d_call_graph(self, functions: list[dict[str, Any]], calls: list[dict[str, Any]]) -> dict[str, Any]:
         """Render 3D call graph visualization.
 
         Args:
@@ -726,7 +726,7 @@ class VisualizationRenderer:
             "config": self.three_d_config,
         }
 
-    def render_interactive_explorer(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def render_interactive_explorer(self, data: dict[str, Any]) -> dict[str, Any]:
         """Render interactive data explorer.
 
         Args:
@@ -815,7 +815,7 @@ class VisualizationRenderer:
 
         return {"type": "interactive_explorer", "js_code": js_code, "data": data}
 
-    def _apply_hierarchical_layout(self, nodes: List[GraphNode], edges: List[GraphEdge], dimensions: Tuple[int, int]) -> None:
+    def _apply_hierarchical_layout(self, nodes: list[GraphNode], edges: list[GraphEdge], dimensions: tuple[int, int]) -> None:
         """Apply hierarchical layout to nodes.
 
         Args:
@@ -866,7 +866,7 @@ class VisualizationRenderer:
                     node.x = (i + 1) * x_spacing
                     node.y = y
 
-    def _apply_circular_layout(self, nodes: List[GraphNode], dimensions: Tuple[int, int]) -> None:
+    def _apply_circular_layout(self, nodes: list[GraphNode], dimensions: tuple[int, int]) -> None:
         """Apply circular layout to nodes.
 
         Args:
@@ -886,7 +886,7 @@ class VisualizationRenderer:
             node.y = center_y + radius * math.sin(angle)
 
     def _generate_static_graph_js(
-        self, nodes: List[GraphNode], edges: List[GraphEdge], container_id: str, dimensions: Tuple[int, int],
+        self, nodes: list[GraphNode], edges: list[GraphEdge], container_id: str, dimensions: tuple[int, int],
     ) -> str:
         """Generate JavaScript for static graph layout.
 
@@ -946,7 +946,7 @@ class VisualizationRenderer:
 
         return js_code
 
-    def _render_static_graph(self, nodes: List[GraphNode], edges: List[GraphEdge], dimensions: Tuple[int, int]) -> str:
+    def _render_static_graph(self, nodes: list[GraphNode], edges: list[GraphEdge], dimensions: tuple[int, int]) -> str:
         """Render static graph image using matplotlib.
 
         Args:
@@ -1018,7 +1018,7 @@ class VisualizationRenderer:
 
         return f"data:image/png;base64,{image_base64}"
 
-    def _render_static_timeline(self, events: List[Dict[str, Any]], dimensions: Tuple[int, int]) -> str:
+    def _render_static_timeline(self, events: list[dict[str, Any]], dimensions: tuple[int, int]) -> str:
         """Render static timeline using matplotlib.
 
         Args:
@@ -1066,7 +1066,7 @@ class VisualizationRenderer:
 
         return f"data:image/png;base64,{image_base64}"
 
-    def _render_static_metrics(self, grouped: Dict[str, List[Dict[str, float]]], chart_type: str, title: str) -> str:
+    def _render_static_metrics(self, grouped: dict[str, list[dict[str, float]]], chart_type: str, title: str) -> str:
         """Render static metrics chart using matplotlib.
 
         Args:
@@ -1126,7 +1126,7 @@ class VisualizationRenderer:
         colormaps = {"heatmap": "RdYlGn_r", "diverging": "RdBu_r", "sequential": "Blues", "categorical": "tab10"}
         return colormaps.get(color_scheme, "viridis")
 
-    def _get_function_color(self, func: Dict[str, Any]) -> str:
+    def _get_function_color(self, func: dict[str, Any]) -> str:
         """Get color for function node.
 
         Args:
@@ -1139,12 +1139,11 @@ class VisualizationRenderer:
         complexity = func.get("complexity", 0)
         if complexity > 10:
             return "#e74c3c"  # Red for high complexity
-        elif complexity > 5:
+        if complexity > 5:
             return "#f39c12"  # Orange for medium
-        else:
-            return "#2ecc71"  # Green for low
+        return "#2ecc71"  # Green for low
 
-    def _get_call_color(self, call: Dict[str, Any]) -> str:
+    def _get_call_color(self, call: dict[str, Any]) -> str:
         """Get color for function call edge.
 
         Args:
@@ -1157,12 +1156,11 @@ class VisualizationRenderer:
         count = call.get("count", 1)
         if count > 100:
             return "#e74c3c"  # Red for hot path
-        elif count > 10:
+        if count > 10:
             return "#f39c12"  # Orange for warm
-        else:
-            return "#95a5a6"  # Gray for cold
+        return "#95a5a6"  # Gray for cold
 
-    def _create_thumbnail(self, image_data: bytes, size: Tuple[int, int] = (100, 100)) -> str:
+    def _create_thumbnail(self, image_data: bytes, size: tuple[int, int] = (100, 100)) -> str:
         """Create a thumbnail using PIL.
 
         Args:

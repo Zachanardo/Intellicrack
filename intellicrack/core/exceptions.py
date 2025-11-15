@@ -22,7 +22,6 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 class IntellicrackError(Exception):
     """Base exception for all Intellicrack-specific errors."""
 
-    pass
 
 
 class ConfigurationError(IntellicrackError):
@@ -96,7 +95,6 @@ class ValidationError(IntellicrackError):
 class SecurityError(IntellicrackError):
     """Raised when security validation fails."""
 
-    pass
 
 
 class AnalysisError(IntellicrackError):

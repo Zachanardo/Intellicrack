@@ -12,7 +12,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 from threading import Thread
-from typing import Any, Dict, List
+from typing import Any
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QColor, QFont, QTextCharFormat, QTextCursor
@@ -227,7 +227,7 @@ class FridaScriptParameterWidget(QDialog):
 
         return widget
 
-    def get_parameters(self) -> Dict[str, Any]:
+    def get_parameters(self) -> dict[str, Any]:
         """Get configured parameter values."""
         parameters = {}
 
@@ -235,10 +235,7 @@ class FridaScriptParameterWidget(QDialog):
             if isinstance(widget, QCheckBox):
                 parameters[param_name] = widget.isChecked()
 
-            elif isinstance(widget, QSpinBox):
-                parameters[param_name] = widget.value()
-
-            elif isinstance(widget, QDoubleSpinBox):
+            elif isinstance(widget, (QSpinBox, QDoubleSpinBox)):
                 parameters[param_name] = widget.value()
 
             elif isinstance(widget, QTextEdit):
@@ -466,8 +463,7 @@ class ScriptOutputTab(QWidget):
                 content = json.dumps(content, indent=2)
 
             return f"[{timestamp}] [{msg_type}] {content}"
-        else:
-            return f"[{timestamp}] {message}"
+        return f"[{timestamp}] {message}"
 
     def get_message_color(self, message: Any) -> str:
         """Get color for message based on type."""
@@ -476,16 +472,16 @@ class ScriptOutputTab(QWidget):
 
             if msg_type == "error" or "error" in str(message).lower():
                 return "#ff6b6b"  # Red
-            elif msg_type == "warning" or "warn" in str(message).lower():
+            if msg_type == "warning" or "warn" in str(message).lower():
                 return "#ffa726"  # Orange
-            elif msg_type == "success" or "hook_installed" in str(message):
+            if msg_type == "success" or "hook_installed" in str(message):
                 return "#66bb6a"  # Green
-            elif msg_type == "data":
+            if msg_type == "data":
                 return "#42a5f5"  # Blue
 
         return "#e0e0e0"  # Default gray
 
-    def update_data_tree(self, data: Dict[str, Any]) -> None:
+    def update_data_tree(self, data: dict[str, Any]) -> None:
         """Update data tree with collected data."""
         self.data.update(data)
 
@@ -524,7 +520,6 @@ class ScriptOutputTab(QWidget):
     def apply_filter(self, filter_type: str) -> None:
         """Apply message filter."""
         # This would filter displayed messages
-        pass
 
     def clear_output(self) -> None:
         """Clear output display."""
@@ -643,7 +638,7 @@ class FridaScriptDebuggerWidget(QWidget):
 
         self.breakpoints[line] = {"condition": condition, "hits": 0}
 
-    def update_callstack(self, stack: List[str]) -> None:
+    def update_callstack(self, stack: list[str]) -> None:
         """Update call stack display."""
         self.callstack_widget.clear()
         self.callstack_widget.addItems(stack)

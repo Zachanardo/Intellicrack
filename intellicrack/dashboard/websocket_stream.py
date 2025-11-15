@@ -27,7 +27,7 @@ import uuid
 from collections import deque
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Callable
 
 import websockets
 from websockets.server import WebSocketServerProtocol
@@ -79,10 +79,10 @@ class AnalysisEvent:
     type: EventType
     timestamp: float
     source: str
-    target: Optional[str]
-    data: Dict[str, Any]
+    target: str | None
+    data: dict[str, Any]
     priority: EventPriority
-    tags: List[str]
+    tags: list[str]
     session_id: str
 
 
@@ -93,11 +93,11 @@ class WebSocketEventStream:
         """Initialize WebSocket stream server."""
         self.host = host
         self.port = port
-        self.clients: Set[WebSocketServerProtocol] = set()
-        self.client_registry: Dict[WebSocketServerProtocol, Dict[str, Any]] = {}
+        self.clients: set[WebSocketServerProtocol] = set()
+        self.client_registry: dict[WebSocketServerProtocol, dict[str, Any]] = {}
         self.event_queue: deque = deque(maxlen=10000)
-        self.event_handlers: Dict[EventType, List[Callable]] = {}
-        self.sessions: Dict[str, Dict[str, Any]] = {}
+        self.event_handlers: dict[EventType, list[Callable]] = {}
+        self.sessions: dict[str, dict[str, Any]] = {}
         self.server = None
         self.running = False
 
@@ -105,10 +105,10 @@ class WebSocketEventStream:
         self.stats = {"events_sent": 0, "events_received": 0, "clients_connected": 0, "clients_total": 0, "uptime_start": time.time()}
 
         # Event filters
-        self.filters: Dict[str, Dict[str, Any]] = {}
+        self.filters: dict[str, dict[str, Any]] = {}
 
         # Rate limiting
-        self.rate_limits: Dict[str, Dict[str, Any]] = {}
+        self.rate_limits: dict[str, dict[str, Any]] = {}
 
     async def start(self) -> None:
         """Start WebSocket server."""
@@ -117,8 +117,10 @@ class WebSocketEventStream:
         logger.info(f"WebSocket stream server started on ws://{self.host}:{self.port}")
 
         # Start background tasks
-        asyncio.create_task(self._event_broadcaster())
-        asyncio.create_task(self._statistics_updater())
+        broadcaster_task = asyncio.create_task(self._event_broadcaster())
+        stats_task = asyncio.create_task(self._statistics_updater())
+        # Store task references to prevent garbage collection
+        self._background_tasks = [broadcaster_task, stats_task]
 
     async def stop(self) -> None:
         """Stop WebSocket server."""
@@ -221,7 +223,7 @@ class WebSocketEventStream:
         except Exception as e:
             await self._send_error(websocket, str(e))
 
-    async def _handle_subscribe(self, websocket: WebSocketServerProtocol, client_id: str, data: Dict[str, Any]) -> None:
+    async def _handle_subscribe(self, websocket: WebSocketServerProtocol, client_id: str, data: dict[str, Any]) -> None:
         """Handle event subscription request."""
         event_types = data.get("event_types", [])
 
@@ -238,7 +240,7 @@ class WebSocketEventStream:
         # Send confirmation
         await websocket.send(json.dumps({"type": "subscription_confirmed", "subscribed_to": event_types}))
 
-    async def _handle_unsubscribe(self, websocket: WebSocketServerProtocol, client_id: str, data: Dict[str, Any]) -> None:
+    async def _handle_unsubscribe(self, websocket: WebSocketServerProtocol, client_id: str, data: dict[str, Any]) -> None:
         """Handle unsubscribe request."""
         event_types = data.get("event_types", [])
 
@@ -253,7 +255,7 @@ class WebSocketEventStream:
         # Send confirmation
         await websocket.send(json.dumps({"type": "unsubscription_confirmed", "unsubscribed_from": event_types}))
 
-    async def _handle_filter(self, websocket: WebSocketServerProtocol, client_id: str, data: Dict[str, Any]) -> None:
+    async def _handle_filter(self, websocket: WebSocketServerProtocol, client_id: str, data: dict[str, Any]) -> None:
         """Handle filter configuration."""
         if client_id not in self.filters:
             self.filters[client_id] = {}
@@ -280,7 +282,7 @@ class WebSocketEventStream:
             ),
         )
 
-    async def _handle_control(self, websocket: WebSocketServerProtocol, client_id: str, data: Dict[str, Any]) -> None:
+    async def _handle_control(self, websocket: WebSocketServerProtocol, client_id: str, data: dict[str, Any]) -> None:
         """Handle control commands from client."""
         action = data.get("action")
         target = data.get("target")
@@ -296,7 +298,7 @@ class WebSocketEventStream:
             ),
         )
 
-    async def _execute_control_action(self, action: str, target: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def _execute_control_action(self, action: str, target: str, params: dict[str, Any]) -> dict[str, Any]:
         """Execute control action on analysis components."""
         result = {"success": False, "data": None}
 
@@ -567,7 +569,7 @@ class WebSocketEventStream:
             self.event_handlers[event_type] = []
         self.event_handlers[event_type].append(handler)
 
-    def create_session(self, session_id: str, metadata: Dict[str, Any]) -> None:
+    def create_session(self, session_id: str, metadata: dict[str, Any]) -> None:
         """Create new analysis session."""
         self.sessions[session_id] = {"id": session_id, "created_at": time.time(), "metadata": metadata, "events": []}
 
@@ -621,10 +623,10 @@ class EventPublisher:
     def publish(
         self,
         event_type: EventType,
-        data: Dict[str, Any],
-        target: Optional[str] = None,
+        data: dict[str, Any],
+        target: str | None = None,
         priority: EventPriority = EventPriority.MEDIUM,
-        tags: Optional[List[str]] = None,
+        tags: list[str] | None = None,
         session_id: str = "",
     ) -> None:
         """Publish event to stream."""

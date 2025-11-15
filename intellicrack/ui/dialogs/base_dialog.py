@@ -19,7 +19,6 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
-from typing import Optional
 
 from intellicrack.handlers.pyqt6_handler import (
     QApplication,
@@ -54,7 +53,7 @@ class BaseDialog(QDialog):
 
     def __init__(
         self,
-        parent: Optional[QWidget] = None,
+        parent: QWidget | None = None,
         title: str = "Dialog",
         width: int = 600,
         height: int = 400,
@@ -534,9 +533,8 @@ class BaseDialog(QDialog):
 
         if self.validate_input():
             self.accept()
-        else:
-            if not self._error_state:
-                self.show_error("Please correct the errors before continuing.")
+        elif not self._error_state:
+            self.show_error("Please correct the errors before continuing.")
 
     def _on_reject(self) -> None:
         """Handle dialog rejection."""

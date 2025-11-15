@@ -27,7 +27,7 @@ import math
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -451,7 +451,7 @@ def analyze_entropy_streaming(
     binary_path: Path,
     window_size: int = 1024 * 1024,
     stride: int = 512 * 1024,
-    progress_callback: Optional[Any] = None,
+    progress_callback: Any | None = None,
 ) -> dict[str, Any]:
     """Perform streaming entropy analysis on large binary.
 

@@ -26,7 +26,7 @@ import subprocess
 import tempfile
 import threading
 import traceback
-from typing import Any
+from typing import Callable
 
 from intellicrack.handlers.psutil_handler import PSUTIL_AVAILABLE
 
@@ -61,8 +61,17 @@ def get_resource_path(package: str, resource_path: str) -> str:
         return os.path.join(base_path, package.replace(".", os.sep), resource_path)
 
 
-def run_network_license_server(app_instance=None, **kwargs) -> dict[str, Any]:
-    """Run the network license server emulator."""
+def run_network_license_server(app_instance: object | None = None, **kwargs: object) -> dict[str, object]:
+    """Run the network license server emulator.
+
+    Args:
+        app_instance: Application instance for output updates (optional).
+        **kwargs: Configuration options including 'port', 'host', 'debug'.
+
+    Returns:
+        Dictionary containing status, message, and server_config.
+
+    """
     try:
         # Configure server based on kwargs
         port = kwargs.get("port", 27000)
@@ -124,15 +133,15 @@ def run_network_license_server(app_instance=None, **kwargs) -> dict[str, Any]:
         return {"status": "error", "message": str(e)}
 
 
-def run_ssl_tls_interceptor(app_instance=None, **kwargs) -> dict[str, Any]:
+def run_ssl_tls_interceptor(app_instance: object | None = None, **kwargs: object) -> dict[str, object]:
     """Run the SSL/TLS interceptor for network traffic analysis.
 
     Args:
-        app_instance: Application instance for output updates
-        **kwargs: Configuration options including 'target_host', 'target_port', 'certificate_path'
+        app_instance: Application instance for output updates (optional).
+        **kwargs: Configuration options including 'target_host', 'target_port', 'certificate_path'.
 
     Returns:
-        Dict containing status, message and interceptor configuration
+        Dictionary containing status, message, and interceptor configuration.
 
     """
     try:
@@ -192,15 +201,15 @@ def run_ssl_tls_interceptor(app_instance=None, **kwargs) -> dict[str, Any]:
         return {"status": "error", "message": str(e)}
 
 
-def run_protocol_fingerprinter(app_instance=None, **kwargs) -> dict[str, Any]:
+def run_protocol_fingerprinter(app_instance: object | None = None, **kwargs: object) -> dict[str, object]:
     """Run the protocol fingerprinter for network traffic analysis.
 
     Args:
-        app_instance: Application instance for output updates
-        **kwargs: Configuration options including 'traffic_data', 'interface', 'timeout'
+        app_instance: Application instance for output updates (optional).
+        **kwargs: Configuration options including 'traffic_data', 'interface', 'timeout'.
 
     Returns:
-        Dict containing status, message and fingerprinting results
+        Dictionary containing status, message, and fingerprinting results.
 
     """
     try:
@@ -278,8 +287,17 @@ def run_protocol_fingerprinter(app_instance=None, **kwargs) -> dict[str, Any]:
         return {"status": "error", "message": str(e)}
 
 
-def run_cloud_license_hooker(app_instance=None, **kwargs) -> dict[str, Any]:
-    """Run the cloud license response generator."""
+def run_cloud_license_hooker(app_instance: object | None = None, **kwargs: object) -> dict[str, object]:
+    """Run the cloud license response generator.
+
+    Args:
+        app_instance: Application instance for output updates (optional).
+        **kwargs: Configuration options including 'target_url', 'response_template', 'hook_mode'.
+
+    Returns:
+        Dictionary containing status, message, and hooker configuration.
+
+    """
     try:
         # Configure cloud license hooker based on kwargs
         target_url = kwargs.get("target_url")
@@ -344,16 +362,16 @@ def run_cloud_license_hooker(app_instance=None, **kwargs) -> dict[str, Any]:
         return {"status": "error", "message": str(e)}
 
 
-def run_cfg_explorer(app_instance=None, binary_path: str | None = None, **kwargs) -> dict[str, Any]:
+def run_cfg_explorer(app_instance: object | None = None, binary_path: str | None = None, **kwargs: object) -> dict[str, object]:
     """Run the control flow graph explorer for binary analysis.
 
     Args:
-        app_instance: Application instance for output updates
-        binary_path: Path to binary file to analyze
-        **kwargs: Additional configuration options
+        app_instance: Application instance for output updates (optional).
+        binary_path: Path to binary file to analyze (optional).
+        **kwargs: Additional configuration options.
 
     Returns:
-        Dict containing status, message and CFG analysis data
+        Dictionary containing status, message, and CFG analysis data.
 
     """
     logger.debug(f"CFG explorer called with {len(kwargs)} kwargs")
@@ -382,16 +400,16 @@ def run_cfg_explorer(app_instance=None, binary_path: str | None = None, **kwargs
         return {"status": "error", "message": str(e)}
 
 
-def run_concolic_execution(app_instance=None, binary_path: str | None = None, **kwargs) -> dict[str, Any]:
+def run_concolic_execution(app_instance: object | None = None, binary_path: str | None = None, **kwargs: object) -> dict[str, object]:
     """Run concolic execution analysis on binary.
 
     Args:
-        app_instance: Application instance for output updates
-        binary_path: Path to binary file to analyze
-        **kwargs: Additional configuration options
+        app_instance: Application instance for output updates (optional).
+        binary_path: Path to binary file to analyze (optional).
+        **kwargs: Additional configuration options.
 
     Returns:
-        Dict containing status, message and execution analysis results
+        Dictionary containing status, message, and execution analysis results.
 
     """
     logger.debug(f"Concolic execution called with {len(kwargs)} kwargs")
@@ -423,8 +441,18 @@ def run_concolic_execution(app_instance=None, binary_path: str | None = None, **
         return {"status": "error", "message": str(e)}
 
 
-def run_enhanced_protection_scan(app_instance=None, binary_path: str | None = None, **kwargs) -> dict[str, Any]:
-    """Run enhanced protection scanning."""
+def run_enhanced_protection_scan(app_instance: object | None = None, binary_path: str | None = None, **kwargs: object) -> dict[str, object]:
+    """Run enhanced protection scanning.
+
+    Args:
+        app_instance: Application instance for output updates (optional).
+        binary_path: Path to binary file to analyze (optional).
+        **kwargs: Additional configuration options.
+
+    Returns:
+        Dictionary containing status, message, and protection detection results.
+
+    """
     logger.debug(f"Enhanced protection scan called with {len(kwargs)} kwargs")
     try:
         logger.info("Starting enhanced protection scan")
@@ -464,8 +492,17 @@ def run_enhanced_protection_scan(app_instance=None, binary_path: str | None = No
         return {"status": "error", "message": str(e)}
 
 
-def run_visual_network_traffic_analyzer(app_instance=None, **kwargs) -> dict[str, Any]:
-    """Run visual network traffic analyzer."""
+def run_visual_network_traffic_analyzer(app_instance: object | None = None, **kwargs: object) -> dict[str, object]:
+    """Run visual network traffic analyzer.
+
+    Args:
+        app_instance: Application instance for output updates (optional).
+        **kwargs: Additional configuration options.
+
+    Returns:
+        Dictionary containing status and message.
+
+    """
     logger.debug(f"Visual network analyzer called with {len(kwargs)} kwargs")
     try:
         if app_instance:
@@ -487,8 +524,18 @@ def run_visual_network_traffic_analyzer(app_instance=None, **kwargs) -> dict[str
         return {"status": "error", "message": str(e)}
 
 
-def run_multi_format_analysis(app_instance=None, binary_path: str | None = None, **kwargs) -> dict[str, Any]:
-    """Run multi-format binary analysis."""
+def run_multi_format_analysis(app_instance: object | None = None, binary_path: str | None = None, **kwargs: object) -> dict[str, object]:
+    """Run multi-format binary analysis.
+
+    Args:
+        app_instance: Application instance for output updates (optional).
+        binary_path: Path to binary file to analyze (optional).
+        **kwargs: Additional configuration options.
+
+    Returns:
+        Dictionary containing status, message, and analysis results.
+
+    """
     logger.debug(f"Multi-format analysis called with {len(kwargs)} kwargs")
     try:
         logger.info("Starting multi-format analysis")
@@ -518,8 +565,17 @@ def run_multi_format_analysis(app_instance=None, binary_path: str | None = None,
         return {"status": "error", "message": str(e)}
 
 
-def run_distributed_processing(app_instance=None, **kwargs) -> dict[str, Any]:
-    """Run distributed processing analysis."""
+def run_distributed_processing(app_instance: object | None = None, **kwargs: object) -> dict[str, object]:
+    """Run distributed processing analysis.
+
+    Args:
+        app_instance: Application instance for output updates (optional).
+        **kwargs: Additional configuration options.
+
+    Returns:
+        Dictionary containing status and message.
+
+    """
     logger.debug(f"Distributed processing called with {len(kwargs)} kwargs")
     try:
         if app_instance:
@@ -543,8 +599,17 @@ def run_distributed_processing(app_instance=None, **kwargs) -> dict[str, Any]:
         return {"status": "error", "message": str(e)}
 
 
-def run_gpu_accelerated_analysis(app_instance=None, **kwargs) -> dict[str, Any]:
-    """Run comprehensive GPU-accelerated analysis demonstrating all features."""
+def run_gpu_accelerated_analysis(app_instance: object | None = None, **kwargs: object) -> dict[str, object]:
+    """Run comprehensive GPU-accelerated analysis demonstrating all features.
+
+    Args:
+        app_instance: Application instance for output updates (optional).
+        **kwargs: Additional configuration options.
+
+    Returns:
+        Dictionary containing status, message, and GPU analysis results.
+
+    """
     logger.debug(f"GPU accelerated analysis called with {len(kwargs)} kwargs: {list(kwargs.keys())}")
     try:
         logger.info("Starting GPU-accelerated analysis")
@@ -671,8 +736,18 @@ def run_gpu_accelerated_analysis(app_instance=None, **kwargs) -> dict[str, Any]:
         return {"status": "error", "message": str(e)}
 
 
-def run_ai_guided_patching(app_instance=None, binary_path: str | None = None, **kwargs) -> dict[str, Any]:
-    """Run AI-guided patching analysis."""
+def run_ai_guided_patching(app_instance: object | None = None, binary_path: str | None = None, **kwargs: object) -> dict[str, object]:
+    """Run AI-guided patching analysis.
+
+    Args:
+        app_instance: Application instance for output updates (optional).
+        binary_path: Path to binary file to analyze (optional).
+        **kwargs: Additional configuration options.
+
+    Returns:
+        Dictionary containing status, message, and patch results.
+
+    """
     logger.debug(f"AI guided patching called with binary_path: {binary_path}, {len(kwargs)} kwargs: {list(kwargs.keys())}")
     try:
         logger.info("Starting AI-guided patching analysis")
@@ -695,8 +770,18 @@ def run_ai_guided_patching(app_instance=None, binary_path: str | None = None, **
         return {"status": "error", "message": str(e)}
 
 
-def run_advanced_ghidra_analysis(app_instance=None, binary_path: str | None = None, **kwargs) -> dict[str, Any]:
-    """Run advanced Ghidra analysis with optional script selection."""
+def run_advanced_ghidra_analysis(app_instance: object | None = None, binary_path: str | None = None, **kwargs: object) -> dict[str, object]:
+    """Run advanced Ghidra analysis with optional script selection.
+
+    Args:
+        app_instance: Application instance for output updates (optional).
+        binary_path: Path to binary file to analyze (optional).
+        **kwargs: Additional configuration options.
+
+    Returns:
+        Dictionary containing status, message, and Ghidra analysis results.
+
+    """
     from ..config import CONFIG
     from ..tools.ghidra_script_manager import get_script_manager
 
@@ -869,19 +954,21 @@ def run_advanced_ghidra_analysis(app_instance=None, binary_path: str | None = No
         return {"status": "error", "message": str(e)}
 
 
-def process_ghidra_analysis_results(app, json_path) -> None:
+def process_ghidra_analysis_results(app: Any, json_path: str) -> None:
     """Process Ghidra analysis results with enhanced error handling and validation.
 
     Args:
-        app: Application instance
-        json_path: Path to the JSON results file
+        app: Application instance for output updates.
+        json_path: Path to the JSON results file.
 
     """
     try:
         # Validate file path
         if not os.path.exists(json_path):
             app.update_output.emit(log_message(f"[Ghidra Analysis] File not found: {json_path}"))
-            raise FileNotFoundError(f"Analysis results file not found: {json_path}")
+            error_msg = f"Analysis results file not found: {json_path}"
+            logger.error(error_msg)
+            raise FileNotFoundError(error_msg)
 
         # Read and parse JSON with error handling
         try:
@@ -891,7 +978,9 @@ def process_ghidra_analysis_results(app, json_path) -> None:
             logger.error("json.JSONDecodeError in runner_functions: %s", e)
             app.update_output.emit(log_message(f"[Ghidra Analysis] Invalid JSON: {e}"))
             app.update_output.emit(log_message(traceback.format_exc()))
-            raise ValueError(f"Invalid JSON file: {e}") from e
+            error_msg = f"Invalid JSON file: {e}"
+            logger.error(error_msg)
+            raise ValueError(error_msg) from e
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in runner_functions: %s", e)
             app.update_output.emit(log_message(f"[Ghidra Analysis] Error reading file: {e}"))
@@ -1025,16 +1114,16 @@ def process_ghidra_analysis_results(app, json_path) -> None:
         app.update_status.emit(f"Error processing results: {e!s}")
 
 
-def run_symbolic_execution(app_instance=None, binary_path: str | None = None, **kwargs) -> dict[str, Any]:
+def run_symbolic_execution(app_instance: object | None = None, binary_path: str | None = None, **kwargs: object) -> dict[str, object]:
     """Run symbolic execution analysis on a binary.
 
     Args:
-        app_instance: Optional application instance
-        binary_path: Path to binary file
-        **kwargs: Additional arguments for the analysis
+        app_instance: Application instance for output updates (optional).
+        binary_path: Path to binary file to analyze (optional).
+        **kwargs: Additional configuration options.
 
     Returns:
-        Dict with analysis results
+        Dictionary containing status, message, and analysis results.
 
     """
     logger.debug(f"Symbolic execution called with binary_path: {binary_path}, {len(kwargs)} kwargs: {list(kwargs.keys())}")
@@ -1090,16 +1179,16 @@ def run_symbolic_execution(app_instance=None, binary_path: str | None = None, **
         return {"status": "error", "message": str(e)}
 
 
-def run_incremental_analysis(app_instance=None, binary_path: str | None = None, **kwargs) -> dict[str, Any]:
+def run_incremental_analysis(app_instance: object | None = None, binary_path: str | None = None, **kwargs: object) -> dict[str, object]:
     """Run incremental analysis with caching support.
 
     Args:
-        app_instance: Optional application instance
-        binary_path: Path to binary file
-        **kwargs: Additional arguments for the analysis
+        app_instance: Application instance for output updates (optional).
+        binary_path: Path to binary file to analyze (optional).
+        **kwargs: Additional configuration options.
 
     Returns:
-        Dict with analysis results
+        Dictionary containing status, cached flag, analysis results, and cache hit count.
 
     """
     logger.debug(f"Incremental analysis called with binary_path: {binary_path}, {len(kwargs)} kwargs: {list(kwargs.keys())}")
@@ -1144,16 +1233,16 @@ def run_incremental_analysis(app_instance=None, binary_path: str | None = None, 
         return {"status": "error", "message": str(e)}
 
 
-def run_memory_optimized_analysis(app_instance=None, binary_path: str | None = None, **kwargs) -> dict[str, Any]:
+def run_memory_optimized_analysis(app_instance: object | None = None, binary_path: str | None = None, **kwargs: object) -> dict[str, object]:
     """Run memory-optimized analysis for large binaries.
 
     Args:
-        app_instance: Optional application instance
-        binary_path: Path to binary file
-        **kwargs: Additional arguments for the analysis
+        app_instance: Application instance for output updates (optional).
+        binary_path: Path to binary file to analyze (optional).
+        **kwargs: Additional configuration options.
 
     Returns:
-        Dict with analysis results
+        Dictionary containing status, message, and memory-optimized analysis results.
 
     """
     logger.debug(f"Memory optimized analysis called with binary_path: {binary_path}, {len(kwargs)} kwargs: {list(kwargs.keys())}")
@@ -1210,16 +1299,16 @@ def run_memory_optimized_analysis(app_instance=None, binary_path: str | None = N
         return {"status": "error", "message": str(e)}
 
 
-def run_taint_analysis(app_instance=None, binary_path: str | None = None, **kwargs) -> dict[str, Any]:
+def run_taint_analysis(app_instance: object | None = None, binary_path: str | None = None, **kwargs: object) -> dict[str, object]:
     """Run taint analysis for license check tracking.
 
     Args:
-        app_instance: Optional application instance
-        binary_path: Path to binary file
-        **kwargs: Additional arguments for the analysis
+        app_instance: Application instance for output updates (optional).
+        binary_path: Path to binary file to analyze (optional).
+        **kwargs: Additional configuration options.
 
     Returns:
-        Dict with analysis results
+        Dictionary containing status, message, and taint analysis results.
 
     """
     logger.debug(f"Taint analysis called with binary_path: {binary_path}, {len(kwargs)} kwargs: {list(kwargs.keys())}")
@@ -1255,16 +1344,16 @@ def run_taint_analysis(app_instance=None, binary_path: str | None = None, **kwar
         return {"status": "error", "message": str(e)}
 
 
-def run_rop_chain_generator(app_instance=None, binary_path: str | None = None, **kwargs) -> dict[str, Any]:
+def run_rop_chain_generator(app_instance: object | None = None, binary_path: str | None = None, **kwargs: object) -> dict[str, object]:
     """Run ROP chain generation for exploit development.
 
     Args:
-        app_instance: Optional application instance
-        binary_path: Path to binary file
-        **kwargs: Additional arguments for the analysis
+        app_instance: Application instance for output updates (optional).
+        binary_path: Path to binary file to analyze (optional).
+        **kwargs: Additional configuration options.
 
     Returns:
-        Dict with analysis results
+        Dictionary containing status and message.
 
     """
     logger.debug(f"ROP chain generator called with binary_path: {binary_path}, {len(kwargs)} kwargs: {list(kwargs.keys())}")
@@ -1282,16 +1371,16 @@ def run_rop_chain_generator(app_instance=None, binary_path: str | None = None, *
         return {"status": "error", "message": str(e)}
 
 
-def run_qemu_analysis(app_instance=None, binary_path: str | None = None, **kwargs) -> dict[str, Any]:
+def run_qemu_analysis(app_instance: object | None = None, binary_path: str | None = None, **kwargs: object) -> dict[str, object]:
     """Run QEMU-based dynamic analysis.
 
     Args:
-        app_instance: Optional application instance
-        binary_path: Path to binary file
-        **kwargs: Additional arguments for the analysis
+        app_instance: Application instance for output updates (optional).
+        binary_path: Path to binary file to analyze (optional).
+        **kwargs: Additional configuration options including 'architecture'.
 
     Returns:
-        Dict with analysis results
+        Dictionary containing status, message, and analysis results.
 
     """
     try:
@@ -1332,8 +1421,18 @@ def run_qemu_analysis(app_instance=None, binary_path: str | None = None, **kwarg
         return {"status": "error", "message": str(e)}
 
 
-def run_qiling_emulation(app_instance=None, binary_path: str | None = None, **kwargs) -> dict[str, Any]:
-    """Run Qiling binary emulation."""
+def run_qiling_emulation(app_instance: object | None = None, binary_path: str | None = None, **kwargs: object) -> dict[str, object]:
+    """Run Qiling binary emulation.
+
+    Args:
+        app_instance: Application instance for output updates (optional).
+        binary_path: Path to binary file to emulate (optional).
+        **kwargs: Configuration options including 'timeout', 'verbose', 'ostype', 'arch'.
+
+    Returns:
+        Dictionary containing status, message, and emulation results.
+
+    """
     try:
         logger.info("Starting Qiling emulation")
 
@@ -1374,16 +1473,16 @@ def run_qiling_emulation(app_instance=None, binary_path: str | None = None, **kw
         return {"status": "error", "message": str(e)}
 
 
-def run_selected_analysis(app_instance=None, analysis_type: str | None = None, **kwargs) -> dict[str, Any]:
+def run_selected_analysis(app_instance: object | None = None, analysis_type: str | None = None, **kwargs: object) -> dict[str, object]:
     """Run selected analysis type on the binary.
 
     Args:
-        app_instance: Optional application instance
-        analysis_type: Type of analysis to run
-        **kwargs: Additional arguments for the analysis
+        app_instance: Application instance for output updates (optional).
+        analysis_type: Type of analysis to run (optional).
+        **kwargs: Additional configuration options.
 
     Returns:
-        Dict with analysis results
+        Dictionary containing status, message, and analysis results.
 
     """
     try:
@@ -1423,16 +1522,16 @@ def run_selected_analysis(app_instance=None, analysis_type: str | None = None, *
         return {"status": "error", "message": str(e)}
 
 
-def run_selected_patching(app_instance=None, patch_type: str | None = None, **kwargs) -> dict[str, Any]:
+def run_selected_patching(app_instance: object | None = None, patch_type: str | None = None, **kwargs: object) -> dict[str, object]:
     """Run selected patching type on the binary.
 
     Args:
-        app_instance: Optional application instance
-        patch_type: Type of patching to run
-        **kwargs: Additional arguments for the patching
+        app_instance: Application instance for output updates (optional).
+        patch_type: Type of patching to run (optional).
+        **kwargs: Additional configuration options.
 
     Returns:
-        Dict with patching results
+        Dictionary containing status, message, and patching results.
 
     """
     try:
@@ -1442,8 +1541,17 @@ def run_selected_patching(app_instance=None, patch_type: str | None = None, **kw
         logger.info("Running selected patching: %s", patch_type)
 
         # Map patch types to functions/modules
-        def run_memory_patching(app, **kw):
-            """Run memory patching with provided options."""
+        def run_memory_patching(app: object, **kw: object) -> dict[str, object]:
+            """Run memory patching with provided options.
+
+            Args:
+                app: Application instance (optional).
+                **kw: Configuration options.
+
+            Returns:
+                Dictionary with patching status and details.
+
+            """
             patch_addr = kw.get("address", 0)
             patch_bytes = kw.get("bytes", b"")
             process_id = kw.get("pid")
@@ -1459,8 +1567,17 @@ def run_selected_patching(app_instance=None, patch_type: str | None = None, **kw
                 result["verification"] = "Patch verification enabled"
             return result
 
-        def run_import_patching(app, **kw):
-            """Run import table patching with provided options."""
+        def run_import_patching(app: object, **kw: object) -> dict[str, object]:
+            """Run import table patching with provided options.
+
+            Args:
+                app: Application instance (optional).
+                **kw: Configuration options.
+
+            Returns:
+                Dictionary with patching status and details.
+
+            """
             dll_name = kw.get("dll", "")
             func_name = kw.get("function", "")
             new_addr = kw.get("new_address", 0)
@@ -1476,8 +1593,17 @@ def run_selected_patching(app_instance=None, patch_type: str | None = None, **kw
                 result["iat_rebuild"] = "Import Address Table will be rebuilt"
             return result
 
-        def run_targeted_patching(app, **kw):
-            """Run targeted patching with provided options."""
+        def run_targeted_patching(app: object, **kw: object) -> dict[str, object]:
+            """Run targeted patching with provided options.
+
+            Args:
+                app: Application instance (optional).
+                **kw: Configuration options.
+
+            Returns:
+                Dictionary with patching status and details.
+
+            """
             target_pattern = kw.get("pattern", b"")
             replacement = kw.get("replacement", b"")
             max_patches = kw.get("max_patches", -1)
@@ -1493,8 +1619,17 @@ def run_selected_patching(app_instance=None, patch_type: str | None = None, **kw
                 result["backup"] = "Original bytes will be backed up"
             return result
 
-        def run_custom_patching(app, **kw):
-            """Run custom patching with provided options."""
+        def run_custom_patching(app: object, **kw: object) -> dict[str, object]:
+            """Run custom patching with provided options.
+
+            Args:
+                app: Application instance (optional).
+                **kw: Configuration options.
+
+            Returns:
+                Dictionary with patching status and details.
+
+            """
             script_path = kw.get("script", "")
             patch_config = kw.get("config", {})
             dry_run = kw.get("dry_run", False)
@@ -1529,19 +1664,19 @@ def run_selected_patching(app_instance=None, patch_type: str | None = None, **kw
         return {"status": "error", "message": str(e)}
 
 
-def run_memory_analysis(app_instance=None, binary_path: str | None = None, **kwargs) -> dict[str, Any]:
+def run_memory_analysis(app_instance: object | None = None, binary_path: str | None = None, **kwargs: object) -> dict[str, object]:
     """Run comprehensive memory analysis on the target application.
 
     Analyzes memory usage patterns, detects potential leaks, and identifies
     memory-related vulnerabilities in the target application.
 
     Args:
-        app_instance: Optional application instance
-        binary_path: Path to binary file
-        **kwargs: Additional arguments for the analysis
+        app_instance: Application instance for output updates (optional).
+        binary_path: Path to binary file to analyze (optional).
+        **kwargs: Additional configuration options.
 
     Returns:
-        Dict with memory analysis results
+        Dictionary containing status, message, and memory analysis results.
 
     """
     logger.debug(f"Memory analysis called with binary_path: {binary_path}, {len(kwargs)} kwargs: {list(kwargs.keys())}")
@@ -1667,19 +1802,19 @@ def run_memory_analysis(app_instance=None, binary_path: str | None = None, **kwa
         return {"status": "error", "message": str(e)}
 
 
-def run_network_analysis(app_instance=None, binary_path: str | None = None, **kwargs) -> dict[str, Any]:
+def run_network_analysis(app_instance: object | None = None, binary_path: str | None = None, **kwargs: object) -> dict[str, object]:
     """Run comprehensive network analysis on the target application.
 
     Monitors network traffic, identifies protocols in use, detects potential security
     issues, and analyzes network-related API calls made by the application.
 
     Args:
-        app_instance: Optional application instance
-        binary_path: Path to binary file
-        **kwargs: Additional arguments for the analysis
+        app_instance: Application instance for output updates (optional).
+        binary_path: Path to binary file to analyze (optional).
+        **kwargs: Additional configuration options.
 
     Returns:
-        Dict with network analysis results
+        Dictionary containing status, message, and network analysis results.
 
     """
     logger.debug(f"Network analysis called with binary_path: {binary_path}, {len(kwargs)} kwargs: {list(kwargs.keys())}")
@@ -1844,12 +1979,15 @@ def run_network_analysis(app_instance=None, binary_path: str | None = None, **kw
 
 
 # Export all runner functions
-def run_ghidra_plugin_from_file(app, plugin_path):
+def run_ghidra_plugin_from_file(app: object, plugin_path: str) -> dict[str, object]:
     """Run a Ghidra script on the current binary.
 
     Args:
-        app: Application instance
-        plugin_path: Path to the Ghidra script file
+        app: Application instance.
+        plugin_path: Path to the Ghidra script file.
+
+    Returns:
+        Dictionary containing status, message, and output_files list.
 
     """
     from ..config import CONFIG
@@ -1929,8 +2067,15 @@ def run_ghidra_plugin_from_file(app, plugin_path):
                 app.update_output.emit(log_message(f"[Plugin] Cleanup error: {e}"))
 
 
-def _run_ghidra_thread(app, cmd, temp_dir) -> None:
-    """Background thread for Ghidra execution with improved error handling."""
+def _run_ghidra_thread(app: object, cmd: list[str], temp_dir: str) -> None:
+    """Background thread for Ghidra execution with improved error handling.
+
+    Args:
+        app: Application instance for output updates.
+        cmd: Command list to execute Ghidra.
+        temp_dir: Temporary directory path for Ghidra project.
+
+    """
     try:
         # Run Ghidra
         from ..system.process_helpers import run_ghidra_process
@@ -1997,8 +2142,18 @@ def _run_ghidra_thread(app, cmd, temp_dir) -> None:
             logger.error("Exception in runner_functions: %s", e)
 
 
-def run_deep_license_analysis(app_instance=None, binary_path: str | None = None, **kwargs) -> dict[str, Any]:
-    """Run deep license analysis on a binary file."""
+def run_deep_license_analysis(app_instance: object | None = None, binary_path: str | None = None, **kwargs: object) -> dict[str, object]:
+    """Run deep license analysis on a binary file.
+
+    Args:
+        app_instance: Application instance for output updates (optional).
+        binary_path: Path to binary file to analyze (optional).
+        **kwargs: Additional configuration options.
+
+    Returns:
+        Dictionary containing status, message, and license analysis results.
+
+    """
     logger.debug(f"Deep license analysis called with binary_path: {binary_path}, {len(kwargs)} kwargs: {list(kwargs.keys())}")
     try:
         logger.info("Starting deep license analysis")
@@ -2069,16 +2224,16 @@ def run_deep_license_analysis(app_instance=None, binary_path: str | None = None,
         return {"status": "error", "message": str(e)}
 
 
-def run_frida_analysis(app_instance=None, binary_path: str | None = None, **kwargs) -> dict[str, Any]:
+def run_frida_analysis(app_instance: object | None = None, binary_path: str | None = None, **kwargs: object) -> dict[str, object]:
     """Run Frida-based dynamic analysis on the target binary.
 
     Args:
-        app_instance: Optional application instance for UI updates
-        binary_path: Path to binary file to analyze
-        **kwargs: Additional analysis options
+        app_instance: Application instance for output updates (optional).
+        binary_path: Path to binary file to analyze (optional).
+        **kwargs: Additional analysis options.
 
     Returns:
-        Dict with analysis results
+        Dictionary with analysis results
 
     """
     try:
@@ -2216,8 +2371,14 @@ def run_frida_analysis(app_instance=None, binary_path: str | None = None, **kwar
         # Set up message handler
         api_calls = []
 
-        def on_message(message, data) -> None:
-            """Handle messages from Frida script."""
+        def on_message(message: object, data: object) -> None:
+            """Handle messages from Frida script.
+
+            Args:
+                message: Message object from Frida script.
+                data: Associated data from Frida script.
+
+            """
             logger.debug(f"Frida message received with data length: {len(data) if data else 0}")
             if message.get("type") == "send" and message.get("payload", {}).get("type") == "api_calls":
                 api_calls.extend(message["payload"]["data"])
@@ -2261,16 +2422,16 @@ def run_frida_analysis(app_instance=None, binary_path: str | None = None, **kwar
         return {"status": "error", "message": error_msg}
 
 
-def run_dynamic_instrumentation(app_instance=None, binary_path: str | None = None, **kwargs) -> dict[str, Any]:
+def run_dynamic_instrumentation(app_instance: object | None = None, binary_path: str | None = None, **kwargs: object) -> dict[str, object]:
     """Run dynamic instrumentation using Frida with custom scripts.
 
     Args:
-        app_instance: Optional application instance for UI updates
-        binary_path: Path to binary file to instrument
-        **kwargs: Additional options including script_path, process_id
+        app_instance: Application instance for output updates (optional).
+        binary_path: Path to binary file to instrument (optional).
+        **kwargs: Additional options including script_path, process_id.
 
     Returns:
-        Dict with instrumentation results
+        Dictionary with instrumentation results
 
     """
     try:
@@ -2343,10 +2504,19 @@ def run_dynamic_instrumentation(app_instance=None, binary_path: str | None = Non
         return {"status": "error", "message": error_msg}
 
 
-def run_comprehensive_analysis(app_instance=None, binary_path: str | None = None, **kwargs) -> dict[str, Any]:
+def run_comprehensive_analysis(app_instance: object | None = None, binary_path: str | None = None, **kwargs: object) -> dict[str, object]:
     """Run comprehensive analysis on a binary.
 
     This is a wrapper that calls the comprehensive analysis from additional_runners.
+
+    Args:
+        app_instance: Application instance for output updates (optional).
+        binary_path: Path to binary file to analyze (optional).
+        **kwargs: Additional configuration options.
+
+    Returns:
+        Dictionary with comprehensive analysis results.
+
     """
     logger.debug(f"Comprehensive analysis called with binary_path: {binary_path}, {len(kwargs)} kwargs: {list(kwargs.keys())}")
     try:
@@ -2365,14 +2535,34 @@ def run_comprehensive_analysis(app_instance=None, binary_path: str | None = None
         return {"status": "error", "message": str(e)}
 
 
-def run_ghidra_analysis(app_instance=None, binary_path: str | None = None, **kwargs) -> dict[str, Any]:
-    """Run basic Ghidra analysis (delegates to advanced Ghidra analysis)."""
+def run_ghidra_analysis(app_instance: object | None = None, binary_path: str | None = None, **kwargs: object) -> dict[str, object]:
+    """Run basic Ghidra analysis (delegates to advanced Ghidra analysis).
+
+    Args:
+        app_instance: Application instance for output updates (optional).
+        binary_path: Path to binary file to analyze (optional).
+        **kwargs: Additional configuration options.
+
+    Returns:
+        Dictionary with Ghidra analysis results.
+
+    """
     logger.debug(f"Ghidra analysis called with binary_path: {binary_path}, {len(kwargs)} kwargs: {list(kwargs.keys())}")
     return run_advanced_ghidra_analysis(app_instance, binary_path, **kwargs)
 
 
-def run_radare2_analysis(app_instance=None, binary_path: str | None = None, **kwargs) -> dict[str, Any]:
-    """Run Radare2 analysis on a binary."""
+def run_radare2_analysis(app_instance: object | None = None, binary_path: str | None = None, **kwargs: object) -> dict[str, object]:
+    """Run Radare2 analysis on a binary.
+
+    Args:
+        app_instance: Application instance for output updates (optional).
+        binary_path: Path to binary file to analyze (optional).
+        **kwargs: Additional configuration options.
+
+    Returns:
+        Dictionary containing status, message, and Radare2 analysis results.
+
+    """
     logger.debug(f"Radare2 analysis called with binary_path: {binary_path}, {len(kwargs)} kwargs: {list(kwargs.keys())}")
     try:
         logger.info("Starting Radare2 analysis")
@@ -2463,17 +2653,17 @@ def run_radare2_analysis(app_instance=None, binary_path: str | None = None, **kw
         return {"status": "error", "message": str(e)}
 
 
-def run_frida_script(app_instance=None, binary_path: str | None = None, script_path: str | None = None, **kwargs) -> dict[str, Any]:
+def run_frida_script(app_instance: object | None = None, binary_path: str | None = None, script_path: str | None = None, **kwargs: object) -> dict[str, object]:
     """Run a Frida script on a binary or process.
 
     Args:
-        app_instance: Application instance for output updates
-        binary_path: Path to binary file to analyze
-        script_path: Path to Frida script file
-        **kwargs: Additional arguments including 'target', 'spawn', 'script'
+        app_instance: Application instance for output updates (optional).
+        binary_path: Path to binary file to analyze (optional).
+        script_path: Path to Frida script file (optional).
+        **kwargs: Additional arguments including 'target', 'spawn', 'script'.
 
     Returns:
-        Dict containing status, message and execution results
+        Dictionary containing status, message, and execution results.
 
     """
     try:
@@ -2496,7 +2686,9 @@ def run_frida_script(app_instance=None, binary_path: str | None = None, script_p
             from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
 
             if not HAS_FRIDA:
-                raise ImportError("Frida not available")
+                error_msg = "Frida not available"
+                logger.error(error_msg)
+                raise ImportError(error_msg)
 
             # Get target
             target = kwargs.get("target", binary_path)
@@ -2519,8 +2711,14 @@ def run_frida_script(app_instance=None, binary_path: str | None = None, script_p
             # Set up message handler
             messages = []
 
-            def on_message(message, data) -> None:
-                """Handle messages from Frida script."""
+            def on_message(message: object, data: object) -> None:
+                """Handle messages from Frida script.
+
+                Args:
+                    message: Message object from Frida script.
+                    data: Associated data from Frida script.
+
+                """
                 messages.append({"message": message, "data": data})
                 if message["type"] == "send":
                     logger.info(f"Frida: {message['payload']}")
@@ -2548,9 +2746,11 @@ def run_frida_script(app_instance=None, binary_path: str | None = None, script_p
 
         except ImportError as e:
             logger.error("Import error in runner_functions: %s", e)
+            error_msg = "Frida not available"
+            logger.error(error_msg)
             return {
                 "status": "error",
-                "message": "Frida not available",
+                "message": error_msg,
             }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -2597,7 +2797,7 @@ __all__ = [
 ]
 
 
-def run_autonomous_patching(app_instance=None, **kwargs) -> dict[str, Any]:
+def run_autonomous_patching(app_instance: object | None = None, **kwargs: object) -> dict[str, object]:
     """Run autonomous patching analysis with AI-assisted vulnerability detection and automatic patch generation.
 
     This function orchestrates a comprehensive autonomous patching workflow that:
@@ -2607,7 +2807,7 @@ def run_autonomous_patching(app_instance=None, **kwargs) -> dict[str, Any]:
     4. Verifies patch effectiveness through testing
 
     Args:
-        app_instance: Main application instance for UI integration
+        app_instance: Application instance for output updates (optional).
         **kwargs: Additional parameters including:
             - target_binary: Path to binary to patch
             - patch_strategy: Strategy for patching (aggressive, conservative, targeted)
@@ -2615,7 +2815,8 @@ def run_autonomous_patching(app_instance=None, **kwargs) -> dict[str, Any]:
             - verify_patches: Whether to verify patch effectiveness
 
     Returns:
-        Dict containing autonomous patching results
+        Dictionary containing autonomous patching results including patches_found,
+        patches_applied, analysis_phases, and verification_results.
 
     """
     logger.debug(f"Autonomous patching called with app_instance: {app_instance is not None}, {len(kwargs)} kwargs: {list(kwargs.keys())}")
@@ -3060,8 +3261,18 @@ def _generate_autonomous_recommendations(result: dict[str, Any]) -> list[str]:
     return recommendations
 
 
-def run_ghidra_analysis_gui(app_instance=None, **kwargs) -> dict[str, Any]:
-    """Run Ghidra analysis with GUI support."""
+def run_ghidra_analysis_gui(app_instance: object | None = None, **kwargs: object) -> dict[str, object]:
+    """Run Ghidra analysis with GUI support.
+
+    Args:
+        app_instance: Application instance for output updates (optional).
+        **kwargs: Configuration options including 'binary_path'.
+
+    Returns:
+        Dictionary containing status, message, and Ghidra analysis results with
+        license_analysis sub-section.
+
+    """
     try:
         logger.info("Starting Ghidra GUI analysis")
 

@@ -187,7 +187,9 @@ def create_standard_dialog_buttons(buttons: list[str], callbacks: list[Callable]
 
     """
     if len(buttons) != len(callbacks):
-        raise ValueError("Number of buttons must match number of callbacks")
+        error_msg = "Number of buttons must match number of callbacks"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
     layout = QHBoxLayout()
     layout.addStretch()

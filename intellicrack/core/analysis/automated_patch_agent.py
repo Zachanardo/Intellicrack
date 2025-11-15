@@ -22,7 +22,7 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 import time
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ class AutomatedPatchAgent:
         self.bypass_patterns = self._initialize_bypass_patterns()
         self.exploitation_techniques = self._load_exploitation_techniques()
 
-    def _initialize_bypass_patterns(self) -> Dict[str, bytes]:
+    def _initialize_bypass_patterns(self) -> dict[str, bytes]:
         """Initialize real bypass patterns for modern protections."""
         return {
             # License check bypasses
@@ -64,7 +64,7 @@ class AutomatedPatchAgent:
             "integrity_check_bypass": b"\xb0\x01\xc3",  # mov al, 1; ret
         }
 
-    def _load_exploitation_techniques(self) -> Dict[str, Any]:
+    def _load_exploitation_techniques(self) -> dict[str, Any]:
         """Load real exploitation techniques for modern software."""
         return {
             "rop_chains": self._generate_rop_chains(),
@@ -73,7 +73,7 @@ class AutomatedPatchAgent:
             "memory_patches": self._create_memory_patches(),
         }
 
-    def _generate_rop_chains(self) -> Dict[str, List[int]]:
+    def _generate_rop_chains(self) -> dict[str, list[int]]:
         """Generate ROP chains for exploitation."""
         return {
             "virtualprotect": [
@@ -95,7 +95,7 @@ class AutomatedPatchAgent:
             ],
         }
 
-    def _generate_shellcode_templates(self) -> Dict[str, bytes]:
+    def _generate_shellcode_templates(self) -> dict[str, bytes]:
         """Generate shellcode templates for patching."""
         return {
             # License validation bypass shellcode
@@ -121,7 +121,7 @@ class AutomatedPatchAgent:
             ),
         }
 
-    def _create_hook_detours(self) -> Dict[str, bytes]:
+    def _create_hook_detours(self) -> dict[str, bytes]:
         """Create hook detours for API interception."""
         return {
             # CreateFile hook for license file spoofing
@@ -141,7 +141,7 @@ class AutomatedPatchAgent:
             ),
         }
 
-    def _create_memory_patches(self) -> Dict[str, Tuple[int, bytes]]:
+    def _create_memory_patches(self) -> dict[str, tuple[int, bytes]]:
         """Create memory patches for runtime modification."""
         return {
             "remove_nag_screen": (0x00401234, b"\x90" * 20),  # NOP nag screen call
@@ -150,7 +150,7 @@ class AutomatedPatchAgent:
             "unlimited_usage": (0x00401ABC, b"\x90" * 6),  # NOP usage counter
         }
 
-    def analyze_binary(self, binary_path: str) -> Dict[str, Any]:
+    def analyze_binary(self, binary_path: str) -> dict[str, Any]:
         """Analyze binary for patch points."""
         analysis_results = {"protection_schemes": [], "patch_points": [], "vulnerability_score": 0, "recommended_patches": []}
 
@@ -197,7 +197,7 @@ class AutomatedPatchAgent:
 
         return analysis_results
 
-    def _find_patch_points(self, binary_data: bytes) -> List[Dict[str, Any]]:
+    def _find_patch_points(self, binary_data: bytes) -> list[dict[str, Any]]:
         """Find patchable points in binary."""
         patch_points = []
 
@@ -230,7 +230,7 @@ class AutomatedPatchAgent:
 
         return patch_points
 
-    def apply_patch(self, binary_path: str, patch: Dict[str, Any]) -> bool:
+    def apply_patch(self, binary_path: str, patch: dict[str, Any]) -> bool:
         """Apply a patch to the binary."""
         try:
             with open(binary_path, "rb") as f:
@@ -403,7 +403,7 @@ print(f"License Key: {key}")
 '''
 
 
-def run_automated_patch_agent(target_binary: str, patch_mode: str = "auto") -> Dict[str, Any]:
+def run_automated_patch_agent(target_binary: str, patch_mode: str = "auto") -> dict[str, Any]:
     """Run the automated patch agent on target binary."""
     agent = AutomatedPatchAgent()
 

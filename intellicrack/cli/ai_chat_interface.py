@@ -341,7 +341,7 @@ class AITerminalChat:
                 return str(response)
 
             # Try using analyze_with_llm method
-            elif hasattr(self.ai_backend, "analyze_with_llm"):
+            if hasattr(self.ai_backend, "analyze_with_llm"):
                 response = self.ai_backend.analyze_with_llm(
                     user_input,
                     context=enriched_context,
@@ -353,7 +353,7 @@ class AITerminalChat:
                 return str(response)
 
             # Try using ask_question method (AIAssistant fallback)
-            elif hasattr(self.ai_backend, "ask_question"):
+            if hasattr(self.ai_backend, "ask_question"):
                 # Build contextual question with binary and analysis info
                 contextual_question = user_input
                 if self.binary_path:
@@ -369,12 +369,12 @@ class AITerminalChat:
                 return str(response)
 
             # Try generic query method
-            elif hasattr(self.ai_backend, "query"):
+            if hasattr(self.ai_backend, "query"):
                 response = self.ai_backend.query(prompt=user_input, context=enriched_context)
                 return str(response)
 
             # Direct LLM manager usage as final attempt
-            elif self.llm_manager:
+            if self.llm_manager:
                 response = self.llm_manager.generate_response(
                     prompt=user_input, context=enriched_context.get("binary_analysis", {}), max_tokens=1500,
                 )
@@ -383,8 +383,7 @@ class AITerminalChat:
                     return response.get("content", response.get("text", str(response)))
                 return str(response)
 
-            else:
-                return "AI backend is available but doesn't support the required methods for chat functionality."
+            return "AI backend is available but doesn't support the required methods for chat functionality."
 
         except Exception as e:
             # Attempt direct LLM call as last resort
@@ -509,10 +508,9 @@ class AITerminalChat:
 
         if advanced_count > 2:
             return "advanced"
-        elif intermediate_count > 1 or advanced_count > 0:
+        if intermediate_count > 1 or advanced_count > 0:
             return "intermediate"
-        else:
-            return "beginner"
+        return "beginner"
 
     def _build_context(self) -> dict[str, Any]:
         """Build context for AI responses."""
@@ -604,7 +602,7 @@ class AITerminalChat:
         # Pattern to match code blocks with optional language specification
         pattern = r"```(\w+)?\n(.*?)\n```"
 
-        def replace_code_block(match):
+        def replace_code_block(match: re.Match[str]):
             language = match.group(1) or "python"  # Default to python if no language specified
             code = match.group(2)
 

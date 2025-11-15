@@ -186,7 +186,6 @@ class DeprecatedConfigAccess:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Exit context."""
-        pass
 
 
 # Specific deprecation messages for common patterns

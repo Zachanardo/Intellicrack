@@ -224,7 +224,7 @@ class R2PerformanceOptimizer:
         """
         try:
             # Check cache first
-            cache_key = f"{binary_path}_{os.path.getmtime(binary_path)}"
+            cache_key = f"{binary_path}_{Path(binary_path).stat().st_mtime}"
             if cache_key in self._config_cache:
                 self.logger.debug(f"Using cached optimization for {binary_path}")
                 return self._config_cache[cache_key]

@@ -438,9 +438,7 @@ class DashboardTab(BaseTab):
                     icon_prefix = "🗃️"  # Default file icon
                     if file_ext in [".exe", ".dll"]:
                         icon_prefix = "[CFG]️"
-                    elif file_ext in [".so", ".dylib"]:
-                        icon_prefix = ""
-                    elif file_ext == ".icp":
+                    elif file_ext in [".so", ".dylib"] or file_ext == ".icp":
                         icon_prefix = ""
                     item.setText(f"{icon_prefix} {os.path.basename(file_path)}")
 

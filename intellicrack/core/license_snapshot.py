@@ -7,7 +7,7 @@ import time
 import winreg
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import psutil
 import win32api
@@ -72,10 +72,10 @@ class LicenseSnapshot:
 
     def __init__(self) -> None:
         """Initialize the LicenseStateSnapshotter with empty snapshots dictionary."""
-        self.snapshots: Dict[str, Dict[str, Any]] = {}
-        self.current_snapshot: Optional[Dict[str, Any]] = None
+        self.snapshots: dict[str, dict[str, Any]] = {}
+        self.current_snapshot: dict[str, Any] | None = None
 
-    def capture_full_snapshot(self, name: str) -> Dict[str, Any]:
+    def capture_full_snapshot(self, name: str) -> dict[str, Any]:
         """Capture comprehensive system state for license analysis."""
         print(f"Capturing system snapshot: {name}")
 
@@ -101,7 +101,7 @@ class LicenseSnapshot:
         self.current_snapshot = snapshot
         return snapshot
 
-    def _capture_system_info(self) -> Dict[str, Any]:
+    def _capture_system_info(self) -> dict[str, Any]:
         """Capture system hardware and software information."""
         info = {}
 
@@ -145,7 +145,7 @@ class LicenseSnapshot:
 
         return info
 
-    def _capture_process_state(self) -> List[Dict[str, Any]]:
+    def _capture_process_state(self) -> list[dict[str, Any]]:
         """Capture running processes with license-relevant metadata."""
         processes = []
 
@@ -183,7 +183,7 @@ class LicenseSnapshot:
 
         return processes
 
-    def _capture_registry_state(self) -> Dict[str, Any]:
+    def _capture_registry_state(self) -> dict[str, Any]:
         """Capture registry keys related to licensing."""
         registry_data = {}
 
@@ -213,7 +213,7 @@ class LicenseSnapshot:
 
         return registry_data
 
-    def _read_registry_key_recursive(self, hive: int, path: str, max_depth: int = 2) -> Dict[str, Any]:
+    def _read_registry_key_recursive(self, hive: int, path: str, max_depth: int = 2) -> dict[str, Any]:
         """Recursively read registry key and its values."""
         if max_depth <= 0:
             return {}
@@ -255,7 +255,7 @@ class LicenseSnapshot:
 
         return result if (result["values"] or result["subkeys"]) else {}
 
-    def _find_license_registry_keys(self) -> Dict[str, Any]:
+    def _find_license_registry_keys(self) -> dict[str, Any]:
         """Search for license-specific registry keys."""
         license_keys = {}
         search_terms = ["license", "serial", "activation", "registration", "trial", "demo", "eval"]
@@ -296,7 +296,7 @@ class LicenseSnapshot:
 
         return license_keys
 
-    def _capture_file_state(self) -> Dict[str, Any]:
+    def _capture_file_state(self) -> dict[str, Any]:
         """Capture license-related files and their metadata."""
         file_data = {"license_files": [], "config_files": [], "database_files": []}
 
@@ -348,7 +348,7 @@ class LicenseSnapshot:
 
         return file_data
 
-    def _capture_service_state(self) -> List[Dict[str, Any]]:
+    def _capture_service_state(self) -> list[dict[str, Any]]:
         """Capture Windows services that might be license-related."""
         services = []
         license_keywords = ["license", "activation", "hasp", "sentinel", "flexlm", "dongle", "protection"]
@@ -389,7 +389,7 @@ class LicenseSnapshot:
 
         return services
 
-    def _capture_network_state(self) -> Dict[str, Any]:
+    def _capture_network_state(self) -> dict[str, Any]:
         """Capture network connections that might be license-related."""
         network_data = {"connections": [], "listening_ports": []}
 
@@ -416,7 +416,7 @@ class LicenseSnapshot:
 
         return network_data
 
-    def _capture_certificates(self) -> List[Dict[str, Any]]:
+    def _capture_certificates(self) -> list[dict[str, Any]]:
         """Capture installed certificates that might be used for licensing."""
         certificates = []
 
@@ -452,7 +452,7 @@ class LicenseSnapshot:
 
         return certificates
 
-    def _capture_environment(self) -> Dict[str, str]:
+    def _capture_environment(self) -> dict[str, str]:
         """Capture environment variables that might contain license info."""
         env_data = {}
         license_vars = ["LICENSE", "SERIAL", "KEY", "ACTIVATION", "FLEXLM", "HASP", "SENTINEL"]
@@ -463,7 +463,7 @@ class LicenseSnapshot:
 
         return env_data
 
-    def _capture_loaded_dlls(self) -> Dict[str, List[str]]:
+    def _capture_loaded_dlls(self) -> dict[str, list[str]]:
         """Capture loaded DLLs for each process."""
         dll_data = {}
 
@@ -489,7 +489,7 @@ class LicenseSnapshot:
 
         return dll_data
 
-    def _capture_system_mutexes(self) -> List[str]:
+    def _capture_system_mutexes(self) -> list[str]:
         """Capture system-wide mutexes that might be license-related."""
         mutexes = []
 
@@ -514,7 +514,7 @@ class LicenseSnapshot:
 
         return mutexes
 
-    def _capture_drivers(self) -> List[Dict[str, Any]]:
+    def _capture_drivers(self) -> list[dict[str, Any]]:
         """Capture loaded drivers that might be protection-related."""
         drivers = []
 
@@ -550,7 +550,7 @@ class LicenseSnapshot:
 
         return drivers
 
-    def _capture_scheduled_tasks(self) -> List[Dict[str, Any]]:
+    def _capture_scheduled_tasks(self) -> list[dict[str, Any]]:
         """Capture scheduled tasks that might be license-related."""
         tasks = []
 
@@ -594,7 +594,7 @@ class LicenseSnapshot:
         except OSError:
             return ""
 
-    def compare_snapshots(self, snapshot1_name: str, snapshot2_name: str) -> Dict[str, Any]:
+    def compare_snapshots(self, snapshot1_name: str, snapshot2_name: str) -> dict[str, Any]:
         """Compare two snapshots to identify changes."""
         if snapshot1_name not in self.snapshots or snapshot2_name not in self.snapshots:
             return {"error": "One or both snapshots not found"}
@@ -685,7 +685,7 @@ class LicenseSnapshot:
         except Exception:
             return False
 
-    def import_snapshot(self, filepath: str) -> Optional[str]:
+    def import_snapshot(self, filepath: str) -> str | None:
         """Import snapshot from JSON file."""
         try:
             with open(filepath) as f:

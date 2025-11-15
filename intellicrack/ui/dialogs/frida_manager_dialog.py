@@ -1645,11 +1645,9 @@ class FridaManagerDialog(QDialog):
                 logger_stats = stats["logger"]
                 self.stats_table.setRowCount(len(logger_stats))
 
-                row = 0
-                for key, value in logger_stats.items():
+                for row, (key, value) in enumerate(logger_stats.items()):
                     self.stats_table.setItem(row, 0, QTableWidgetItem(key))
                     self.stats_table.setItem(row, 1, QTableWidgetItem(str(value)))
-                    row += 1
 
             # Update hook statistics
             if "batcher" in stats:

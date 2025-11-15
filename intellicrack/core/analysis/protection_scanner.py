@@ -16,7 +16,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
 from threading import Lock, Thread
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -77,7 +77,7 @@ class DynamicSignature:
     frequency: int = 1
     false_positives: int = 0
     last_seen: float = field(default_factory=time.time)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     @property
     def effectiveness_score(self) -> float:
@@ -95,14 +95,14 @@ class ProtectionSignature:
 
     name: str
     category: ProtectionCategory
-    static_patterns: List[DynamicSignature]
-    behavioral_indicators: List[str]
-    entropy_ranges: Tuple[float, float]
-    section_characteristics: Dict[str, Any]
-    import_signatures: Set[str]
-    export_signatures: Set[str]
-    string_indicators: Set[str]
-    code_patterns: List[bytes]
+    static_patterns: list[DynamicSignature]
+    behavioral_indicators: list[str]
+    entropy_ranges: tuple[float, float]
+    section_characteristics: dict[str, Any]
+    import_signatures: set[str]
+    export_signatures: set[str]
+    string_indicators: set[str]
+    code_patterns: list[bytes]
     confidence_threshold: float = 0.7
 
 
@@ -112,7 +112,7 @@ class DynamicSignatureExtractor:
     def __init__(self, db_path: str = "protection_signatures.db") -> None:
         """Initialize the dynamic signature extractor."""
         self.db_path = db_path
-        self.signatures: Dict[str, List[DynamicSignature]] = defaultdict(list)
+        self.signatures: dict[str, list[DynamicSignature]] = defaultdict(list)
         self.pattern_tracker = PatternEvolutionTracker()
         self.binary_detector = BinaryPatternDetector()
         self.mutation_engine = MutationEngine()
@@ -178,7 +178,7 @@ class DynamicSignatureExtractor:
         conn.commit()
         conn.close()
 
-    def extract_signatures(self, binary_path: str, known_protection: Optional[str] = None) -> List[DynamicSignature]:
+    def extract_signatures(self, binary_path: str, known_protection: str | None = None) -> list[DynamicSignature]:
         """Extract protection signatures dynamically from a binary."""
         signatures = []
 
@@ -212,7 +212,7 @@ class DynamicSignatureExtractor:
 
         return signatures
 
-    def _extract_entropy_signatures(self, data: bytes) -> List[DynamicSignature]:
+    def _extract_entropy_signatures(self, data: bytes) -> list[DynamicSignature]:
         """Extract signatures based on entropy analysis."""
         signatures = []
         window_size = 4096
@@ -243,7 +243,7 @@ class DynamicSignatureExtractor:
 
         return signatures
 
-    def _extract_section_signatures(self, data: bytes) -> List[DynamicSignature]:
+    def _extract_section_signatures(self, data: bytes) -> list[DynamicSignature]:
         """Extract signatures from PE section characteristics."""
         signatures = []
 
@@ -293,7 +293,7 @@ class DynamicSignatureExtractor:
 
         return signatures
 
-    def _extract_import_signatures(self, data: bytes) -> List[DynamicSignature]:
+    def _extract_import_signatures(self, data: bytes) -> list[DynamicSignature]:
         """Extract signatures from import table patterns."""
         signatures = []
 
@@ -342,7 +342,7 @@ class DynamicSignatureExtractor:
 
         return signatures
 
-    def _extract_code_signatures(self, data: bytes) -> List[DynamicSignature]:
+    def _extract_code_signatures(self, data: bytes) -> list[DynamicSignature]:
         """Extract signatures from code pattern analysis."""
         signatures = []
 
@@ -370,7 +370,7 @@ class DynamicSignatureExtractor:
 
         return signatures
 
-    def _extract_string_signatures(self, data: bytes) -> List[DynamicSignature]:
+    def _extract_string_signatures(self, data: bytes) -> list[DynamicSignature]:
         """Extract signatures from string analysis."""
         signatures = []
 
@@ -411,7 +411,7 @@ class DynamicSignatureExtractor:
 
         return signatures
 
-    def _extract_behavioral_signatures(self, data: bytes) -> List[DynamicSignature]:
+    def _extract_behavioral_signatures(self, data: bytes) -> list[DynamicSignature]:
         """Extract behavioral signatures through advanced analysis."""
         signatures = []
 
@@ -440,7 +440,7 @@ class DynamicSignatureExtractor:
 
         return signatures
 
-    def _extract_mutation_signatures(self, data: bytes) -> List[DynamicSignature]:
+    def _extract_mutation_signatures(self, data: bytes) -> list[DynamicSignature]:
         """Extract signatures for polymorphic/metamorphic code."""
         signatures = []
 
@@ -468,7 +468,7 @@ class DynamicSignatureExtractor:
 
         return signatures
 
-    def _evolve_signatures(self, signatures: List[DynamicSignature], data: bytes) -> List[DynamicSignature]:
+    def _evolve_signatures(self, signatures: list[DynamicSignature], data: bytes) -> list[DynamicSignature]:
         """Use pattern evolution to generate improved signatures."""
         evolved = []
 
@@ -532,14 +532,13 @@ class DynamicSignatureExtractor:
 
         if "pack" in name_lower or entropy > 7.5:
             return ProtectionCategory.PACKER
-        elif "vmp" in name_lower or "themida" in name_lower:
+        if "vmp" in name_lower or "themida" in name_lower:
             return ProtectionCategory.PROTECTOR
-        elif "obf" in name_lower or "mut" in name_lower:
+        if "obf" in name_lower or "mut" in name_lower:
             return ProtectionCategory.OBFUSCATION
-        elif entropy > 7.0:
+        if entropy > 7.0:
             return ProtectionCategory.ENCRYPTION
-        else:
-            return ProtectionCategory.CUSTOM
+        return ProtectionCategory.CUSTOM
 
     def _calculate_section_confidence(self, entropy: float, section: Any) -> float:
         """Calculate confidence score for section-based signature."""
@@ -576,22 +575,21 @@ class DynamicSignatureExtractor:
         api_lower = api_name.lower()
         return any(pattern in api_lower for pattern in suspicious_patterns)
 
-    def _categorize_imports(self, apis: Set[str]) -> ProtectionCategory:
+    def _categorize_imports(self, apis: set[str]) -> ProtectionCategory:
         """Categorize protection based on imported APIs."""
         api_str = " ".join(apis).lower()
 
         if "debug" in api_str:
             return ProtectionCategory.ANTI_DEBUG
-        elif "virtual" in api_str or "vm" in api_str:
+        if "virtual" in api_str or "vm" in api_str:
             return ProtectionCategory.ANTI_VM
-        elif "crypt" in api_str:
+        if "crypt" in api_str:
             return ProtectionCategory.ENCRYPTION
-        elif "protect" in api_str:
+        if "protect" in api_str:
             return ProtectionCategory.PROTECTOR
-        else:
-            return ProtectionCategory.CUSTOM
+        return ProtectionCategory.CUSTOM
 
-    def _generate_import_pattern(self, pe: Any, apis: Set[str]) -> Optional[bytes]:
+    def _generate_import_pattern(self, pe: Any, apis: set[str]) -> bytes | None:
         """Generate pattern from import table structure."""
         try:
             # Extract import directory structure
@@ -627,7 +625,7 @@ class DynamicSignatureExtractor:
         }
         return mapping.get(category, ProtectionCategory.CUSTOM)
 
-    def _extract_strings(self, data: bytes, encoding: str = "ascii", min_length: int = 4) -> List[str]:
+    def _extract_strings(self, data: bytes, encoding: str = "ascii", min_length: int = 4) -> list[str]:
         """Extract readable strings from binary data."""
         strings = []
 
@@ -660,7 +658,7 @@ class DynamicSignatureExtractor:
 
         return strings
 
-    def _analyze_protection_strings(self, strings: List[str]) -> List[Tuple[str, ProtectionCategory, float]]:
+    def _analyze_protection_strings(self, strings: list[str]) -> list[tuple[str, ProtectionCategory, float]]:
         """Analyze strings for protection indicators."""
         indicators = []
 
@@ -685,7 +683,7 @@ class DynamicSignatureExtractor:
 
         return indicators
 
-    def _analyze_control_flow(self, data: bytes) -> List[Tuple[bytes, ProtectionCategory, float, str]]:
+    def _analyze_control_flow(self, data: bytes) -> list[tuple[bytes, ProtectionCategory, float, str]]:
         """Analyze control flow for protection patterns."""
         patterns = []
 
@@ -703,7 +701,7 @@ class DynamicSignatureExtractor:
 
         return patterns
 
-    def _find_jump_chains(self, data: bytes) -> List[List[int]]:
+    def _find_jump_chains(self, data: bytes) -> list[list[int]]:
         """Find chains of jumps in code."""
         chains = []
 
@@ -734,7 +732,7 @@ class DynamicSignatureExtractor:
 
         return chains
 
-    def _analyze_call_depth(self, data: bytes) -> List[int]:
+    def _analyze_call_depth(self, data: bytes) -> list[int]:
         """Analyze call instruction depth by tracking nested call chains."""
         depths = []
 
@@ -800,7 +798,7 @@ class DynamicSignatureExtractor:
         # Return unique depth levels found
         return sorted(set(depths)) if depths else []
 
-    def _analyze_call_target(self, data: bytes, target_addr: int, current_depth: int, visited: Set[int]) -> List[int]:
+    def _analyze_call_target(self, data: bytes, target_addr: int, current_depth: int, visited: set[int]) -> list[int]:
         """Recursively analyze call targets to find maximum call depth."""
         depths = []
 
@@ -846,7 +844,7 @@ class DynamicSignatureExtractor:
 
         return depths
 
-    def _extract_pattern_from_chain(self, data: bytes, chain: List[int]) -> bytes:
+    def _extract_pattern_from_chain(self, data: bytes, chain: list[int]) -> bytes:
         """Extract pattern from jump chain."""
         if not chain:
             return b""
@@ -856,12 +854,12 @@ class DynamicSignatureExtractor:
 
         return data[start:end]
 
-    def _analyze_api_sequences(self, data: bytes) -> List[Tuple[bytes, ProtectionCategory, float, str]]:
+    def _analyze_api_sequences(self, data: bytes) -> list[tuple[bytes, ProtectionCategory, float, str]]:
         """Analyze API call sequences."""
         # Simplified - would need full IAT analysis
         return []
 
-    def _analyze_timing_patterns(self, data: bytes) -> List[Tuple[bytes, ProtectionCategory, float, str]]:
+    def _analyze_timing_patterns(self, data: bytes) -> list[tuple[bytes, ProtectionCategory, float, str]]:
         """Analyze timing check patterns."""
         patterns = []
 
@@ -899,7 +897,7 @@ class DynamicSignatureExtractor:
 
         return bytes(mask)
 
-    def _detect_self_modifying_code(self, data: bytes) -> List[Tuple[bytes, float, str]]:
+    def _detect_self_modifying_code(self, data: bytes) -> list[tuple[bytes, float, str]]:
         """Detect self-modifying code patterns."""
         patterns = []
 
@@ -922,7 +920,7 @@ class DynamicSignatureExtractor:
 
         return patterns
 
-    def _detect_polymorphic_engines(self, data: bytes) -> List[Tuple[bytes, float, str]]:
+    def _detect_polymorphic_engines(self, data: bytes) -> list[tuple[bytes, float, str]]:
         """Detect polymorphic engine signatures using advanced analysis."""
         patterns = []
 
@@ -967,7 +965,7 @@ class DynamicSignatureExtractor:
 
         return patterns
 
-    def _detect_metamorphic_code(self, data: bytes) -> List[Tuple[bytes, float, str]]:
+    def _detect_metamorphic_code(self, data: bytes) -> list[tuple[bytes, float, str]]:
         """Detect metamorphic code transformations using semantic analysis."""
         patterns = []
 
@@ -1028,10 +1026,9 @@ class DynamicSignatureExtractor:
 
         if unique_bytes < len(pattern) * 0.3:
             return "low"
-        elif unique_bytes < len(pattern) * 0.6:
+        if unique_bytes < len(pattern) * 0.6:
             return "medium"
-        else:
-            return "high"
+        return "high"
 
     def _generate_mutation_mask(self, pattern: bytes) -> bytes:
         """Generate mask for mutation pattern."""
@@ -1061,15 +1058,14 @@ class DynamicSignatureExtractor:
                 # Adjust mask length
                 if len(mutation_bytes) > len(original_mask):
                     return original_mask + b"\x00" * (len(mutation_bytes) - len(original_mask))
-                else:
-                    return original_mask[: len(mutation_bytes)]
+                return original_mask[: len(mutation_bytes)]
 
             return original_mask
 
         except Exception:
             return original_mask
 
-    def _store_signatures(self, signatures: List[DynamicSignature], protection_name: str) -> None:
+    def _store_signatures(self, signatures: list[DynamicSignature], protection_name: str) -> None:
         """Store signatures in database."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -1149,7 +1145,7 @@ class MutationEngine:
             self._operand_modification,
         ]
 
-    def generate_mutations(self, pattern: bytes, count: int = 5) -> List[bytes]:
+    def generate_mutations(self, pattern: bytes, count: int = 5) -> list[bytes]:
         """Generate mutations of a pattern."""
         mutations = []
 
@@ -1233,7 +1229,7 @@ class EnhancedProtectionScanner:
         self.cache = {}
         self.cache_lock = Lock()
 
-    def scan(self, binary_path: str, deep_scan: bool = True) -> Dict[str, Any]:
+    def scan(self, binary_path: str, deep_scan: bool = True) -> dict[str, Any]:
         """Perform comprehensive protection scan with dynamic signatures."""
         # Check cache
         cache_key = f"{binary_path}:{deep_scan}"
@@ -1320,8 +1316,8 @@ class EnhancedProtectionScanner:
         return results
 
     def _generate_bypass_recommendations(
-        self, confidence_scores: Dict[str, float], technical_details: Dict[str, List],
-    ) -> List[Dict[str, Any]]:
+        self, confidence_scores: dict[str, float], technical_details: dict[str, list],
+    ) -> list[dict[str, Any]]:
         """Generate specific bypass recommendations based on detections."""
         recommendations = []
 

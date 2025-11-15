@@ -8,7 +8,7 @@ Licensed under GNU General Public License v3.0
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import frida
 
@@ -19,9 +19,9 @@ class StalkerTrace:
 
     thread_id: int
     timestamp: float
-    instructions: List[Dict[str, Any]]  # address, mnemonic, operands
-    basic_blocks: List[Tuple[int, int]]  # start, end addresses
-    call_graph: Dict[int, List[int]]  # caller -> [callees]
+    instructions: list[dict[str, Any]]  # address, mnemonic, operands
+    basic_blocks: list[tuple[int, int]]  # start, end addresses
+    call_graph: dict[int, list[int]]  # caller -> [callees]
     coverage: float  # percentage of code covered
 
 
@@ -33,9 +33,9 @@ class HeapAllocation:
     size: int
     timestamp: float
     thread_id: int
-    call_stack: List[int]
+    call_stack: list[int]
     freed: bool = False
-    freed_timestamp: Optional[float] = None
+    freed_timestamp: float | None = None
 
 
 @dataclass
@@ -47,9 +47,9 @@ class ThreadInfo:
     stack_base: int
     stack_size: int
     creation_time: float
-    termination_time: Optional[float] = None
-    parent_thread_id: Optional[int] = None
-    name: Optional[str] = None
+    termination_time: float | None = None
+    parent_thread_id: int | None = None
+    name: str | None = None
 
 
 @dataclass
@@ -62,7 +62,7 @@ class ExceptionInfo:
     thread_id: int
     timestamp: float
     handled: bool
-    exception_record: Dict[str, Any]
+    exception_record: dict[str, Any]
 
 
 class FridaStalkerEngine:
@@ -76,7 +76,7 @@ class FridaStalkerEngine:
 
         """
         self.session = session
-        self.traces: Dict[int, StalkerTrace] = {}
+        self.traces: dict[int, StalkerTrace] = {}
         self.script = None
         self._init_stalker()
 
@@ -280,7 +280,7 @@ startThreadTrace(Process.getCurrentThreadId());
                     coverage=payload["coverage"],
                 )
 
-    def start_trace(self, thread_id: Optional[int] = None) -> bool:
+    def start_trace(self, thread_id: int | None = None) -> bool:
         """Start tracing a thread."""
         try:
             result = self.script.exports.start_trace(thread_id)
@@ -298,7 +298,7 @@ startThreadTrace(Process.getCurrentThreadId());
             print(f"Failed to stop trace: {e}")
             return False
 
-    def get_trace(self, thread_id: int) -> Optional[StalkerTrace]:
+    def get_trace(self, thread_id: int) -> StalkerTrace | None:
         """Get trace for a thread."""
         return self.traces.get(thread_id)
 
@@ -314,7 +314,7 @@ class FridaHeapTracker:
 
         """
         self.session = session
-        self.allocations: Dict[int, HeapAllocation] = {}
+        self.allocations: dict[int, HeapAllocation] = {}
         self.script = None
         self._init_heap_tracker()
 
@@ -523,11 +523,11 @@ send({ type: 'heap_tracking_ready' });
                     self.allocations[addr].freed = True
                     self.allocations[addr].freed_timestamp = payload["timestamp"]
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get heap statistics."""
         return self.script.exports.get_heap_stats()
 
-    def find_leaks(self) -> List[HeapAllocation]:
+    def find_leaks(self) -> list[HeapAllocation]:
         """Find potential memory leaks."""
         leaks = self.script.exports.find_leaks()
         return [self.allocations.get(leak["address"]) for leak in leaks if leak["address"] in self.allocations]
@@ -544,7 +544,7 @@ class FridaThreadMonitor:
 
         """
         self.session = session
-        self.threads: Dict[int, ThreadInfo] = {}
+        self.threads: dict[int, ThreadInfo] = {}
         self.script = None
         self._init_thread_monitor()
 
@@ -717,11 +717,11 @@ send({ type: 'thread_monitor_ready' });
                 if tid in self.threads:
                     self.threads[tid].termination_time = payload["timestamp"]
 
-    def get_threads(self) -> List[ThreadInfo]:
+    def get_threads(self) -> list[ThreadInfo]:
         """Get all tracked threads."""
         return list(self.threads.values())
 
-    def get_current_threads(self) -> List[Dict[str, Any]]:
+    def get_current_threads(self) -> list[dict[str, Any]]:
         """Get current system threads."""
         return self.script.exports.get_current_threads()
 
@@ -737,7 +737,7 @@ class FridaExceptionHooker:
 
         """
         self.session = session
-        self.exceptions: List[ExceptionInfo] = []
+        self.exceptions: list[ExceptionInfo] = []
         self.script = None
         self._init_exception_hooker()
 
@@ -891,7 +891,7 @@ send({ type: 'exception_hooking_ready' });
                 if self.exceptions:
                     self.exceptions[-1].handled = payload["handled"]
 
-    def get_exceptions(self) -> List[ExceptionInfo]:
+    def get_exceptions(self) -> list[ExceptionInfo]:
         """Get all tracked exceptions."""
         return self.exceptions
 
@@ -912,7 +912,7 @@ class FridaNativeReplacer:
 
         """
         self.session = session
-        self.replacements: Dict[int, Dict[str, Any]] = {}
+        self.replacements: dict[int, dict[str, Any]] = {}
         self.script = None
         self._init_replacer()
 
@@ -1064,7 +1064,7 @@ send({ type: 'replacer_ready' });
                 addr = payload["address"]
                 self.replacements[addr] = {"args": payload["args"], "result": payload["result"]}
 
-    def replace_function(self, address: int, impl_name: str, ret_type: str = "int", arg_types: List[str] = None) -> bool:
+    def replace_function(self, address: int, impl_name: str, ret_type: str = "int", arg_types: list[str] = None) -> bool:
         """Replace a native function."""
         try:
             return self.script.exports.replace(address, impl_name, ret_type, arg_types or [])
@@ -1438,11 +1438,11 @@ send({ type: 'rpc_ready' });
         """Write memory."""
         return self.script.exports.memory.write(address, data)
 
-    def memory_scan(self, pattern: str, limit: int = 10) -> List[Dict[str, int]]:
+    def memory_scan(self, pattern: str, limit: int = 10) -> list[dict[str, int]]:
         """Scan memory for pattern."""
         return self.script.exports.memory.scan(pattern, limit)
 
-    def module_find_export(self, module: str, name: str) -> Optional[int]:
+    def module_find_export(self, module: str, name: str) -> int | None:
         """Find module export."""
         return self.script.exports.module.find_export(module, name)
 

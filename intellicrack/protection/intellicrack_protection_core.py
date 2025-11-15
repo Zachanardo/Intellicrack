@@ -264,7 +264,9 @@ class IntellicrackProtectionCore:
 
         """
         if not os.path.exists(file_path):
-            raise FileNotFoundError(f"File not found: {file_path}")
+            error_msg = f"File not found: {file_path}"
+            logger.error(error_msg)
+            raise FileNotFoundError(error_msg)
 
         if not self.icp_backend or not self.icp_backend.is_icp_available():
             logger.warning("Native ICP Engine not available. Using fallback analysis methods.")
@@ -722,7 +724,9 @@ class IntellicrackProtectionCore:
                 )
             return "\n".join(lines)
 
-        raise ValueError(f"Unknown output format: {output_format}")
+        error_msg = f"Unknown output format: {output_format}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
 
 # Convenience function for quick analysis

@@ -54,8 +54,7 @@ def analyze_scan_results(json_file):
 
     for severity in ['critical', 'high', 'medium']:
         severity_findings = findings_by_severity.get(severity, [])[:5]
-        for finding in severity_findings:
-            samples.append(finding)
+        samples.extend(severity_findings)
 
     return {
         'total': total_findings,

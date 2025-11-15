@@ -22,6 +22,8 @@ import shutil
 import subprocess
 import sys
 import time
+from collections.abc import Callable
+from pathlib import Path
 
 from intellicrack.utils.logger import logger
 
@@ -106,60 +108,59 @@ except ImportError as e:
     class Error(Exception):
         """Base psutil error."""
 
-        pass
 
     class NoSuchProcessError(Error):
         """Process does not exist."""
 
-        def __init__(self, pid, name=None, msg=None) -> None:
+        def __init__(self, pid: int, name: str | None = None, msg: str | None = None) -> None:
             """Initialize NoSuchProcess exception with process details."""
-            self.pid = pid
-            self.name = name
-            self.msg = msg or f"process no longer exists (pid={pid})"
+            self.pid: int = pid
+            self.name: str | None = name
+            self.msg: str = msg or f"process no longer exists (pid={pid})"
             super().__init__(self.msg)
 
     class ZombieProcessError(NoSuchProcessError):
         """Process is a zombie."""
 
-        def __init__(self, pid, name=None, ppid=None) -> None:
+        def __init__(self, pid: int, name: str | None = None, ppid: int | None = None) -> None:
             """Initialize ZombieProcess exception with process details."""
-            self.pid = pid
-            self.ppid = ppid
-            self.name = name
+            self.pid: int = pid
+            self.ppid: int | None = ppid
+            self.name: str | None = name
             super().__init__(pid, name, f"process still exists but it's a zombie (pid={pid})")
 
     class AccessDeniedError(Error):
         """Access denied to process information."""
 
-        def __init__(self, pid=None, name=None, msg=None) -> None:
+        def __init__(self, pid: int | None = None, name: str | None = None, msg: str | None = None) -> None:
             """Initialize AccessDenied exception with process details."""
-            self.pid = pid
-            self.name = name
-            self.msg = msg or "access denied"
+            self.pid: int | None = pid
+            self.name: str | None = name
+            self.msg: str = msg or "access denied"
             super().__init__(self.msg)
 
     class TimeoutExpiredError(Error):
         """Timeout expired."""
 
-        def __init__(self, seconds, pid=None, name=None) -> None:
+        def __init__(self, seconds: float, pid: int | None = None, name: str | None = None) -> None:
             """Initialize TimeoutExpired exception with timeout details."""
-            self.seconds = seconds
-            self.pid = pid
-            self.name = name
-            self.msg = f"timeout after {seconds} seconds"
+            self.seconds: float = seconds
+            self.pid: int | None = pid
+            self.name: str | None = name
+            self.msg: str = f"timeout after {seconds} seconds"
             super().__init__(self.msg)
 
     class FallbackProcess:
         """Functional process implementation using platform commands."""
 
-        def __init__(self, pid) -> None:
+        def __init__(self, pid: int) -> None:
             """Initialize process object."""
-            self._pid = pid
-            self._name = None
-            self._ppid = None
-            self._create_time = None
-            self._gone = False
-            self._init_time = time.time()
+            self._pid: int = pid
+            self._name: str | None = None
+            self._ppid: int | None = None
+            self._create_time: float | None = None
+            self._gone: bool = False
+            self._init_time: float = time.time()
             self._get_basic_info()
 
         def _get_basic_info(self) -> None:
@@ -238,20 +239,25 @@ except ImportError as e:
                 self._gone = True
 
         @property
-        def pid(self):
+        def pid(self) -> int:
             """Get process ID."""
             return self._pid
 
-        def name(self):
+        @property
+        def name(self) -> str:
             """Get process name."""
             if self._gone:
-                raise NoSuchProcessError(self._pid)
+                error_msg = f"process no longer exists (pid={self._pid})"
+                logger.error(error_msg)
+                raise NoSuchProcessError(self._pid, msg=error_msg)
             return self._name or f"process-{self._pid}"
 
-        def exe(self):
+        def exe(self) -> str:
             """Get process executable path."""
             if self._gone:
-                raise NoSuchProcessError(self._pid)
+                error_msg = f"process no longer exists (pid={self._pid})"
+                logger.error(error_msg)
+                raise NoSuchProcessError(self._pid, msg=error_msg)
 
             if sys.platform == "win32":
                 try:
@@ -278,16 +284,18 @@ except ImportError as e:
                 proc_exe = f"/proc/{self._pid}/exe"
                 if os.path.exists(proc_exe):
                     try:
-                        return os.readlink(proc_exe)
+                        return str(Path(proc_exe).readlink())
                     except (OSError, FileNotFoundError) as e:
                         logger.debug(f"Failed to read exe link for PID {self._pid}: {e}")
 
             return ""
 
-        def cmdline(self):
+        def cmdline(self) -> list[str]:
             """Get process command line."""
             if self._gone:
-                raise NoSuchProcessError(self._pid)
+                error_msg = f"process no longer exists (pid={self._pid})"
+                logger.error(error_msg)
+                raise NoSuchProcessError(self._pid, msg=error_msg)
 
             if sys.platform == "win32":
                 try:
@@ -321,23 +329,27 @@ except ImportError as e:
 
             return []
 
-        def ppid(self):
+        def ppid(self) -> int | None:
             """Get parent process ID."""
             if self._gone:
-                raise NoSuchProcessError(self._pid)
+                error_msg = f"process no longer exists (pid={self._pid})"
+                logger.error(error_msg)
+                raise NoSuchProcessError(self._pid, msg=error_msg)
             return self._ppid
 
-        def parent(self):
+        def parent(self) -> "FallbackProcess | None":
             """Get parent process."""
             ppid = self.ppid()
             if ppid is not None:
                 return FallbackProcess(ppid)
             return None
 
-        def children(self, recursive=False):
+        def children(self, recursive: bool = False) -> list["FallbackProcess"]:
             """Get child processes."""
             if self._gone:
-                raise NoSuchProcessError(self._pid)
+                error_msg = f"process no longer exists (pid={self._pid})"
+                logger.error(error_msg)
+                raise NoSuchProcessError(self._pid, msg=error_msg)
 
             children = []
             for proc in process_iter():
@@ -351,41 +363,44 @@ except ImportError as e:
 
             return children
 
-        def status(self):
+        def status(self) -> str:
             """Get process status."""
             if self._gone:
-                raise NoSuchProcessError(self._pid)
+                error_msg = f"process no longer exists (pid={self._pid})"
+                logger.error(error_msg)
+                raise NoSuchProcessError(self._pid, msg=error_msg)
 
             # Basic status check
             if sys.platform == "win32":
                 return STATUS_RUNNING  # Windows processes are running if they exist
-            else:
-                # Try reading /proc/pid/stat (Linux)
-                proc_stat = f"/proc/{self._pid}/stat"
-                if os.path.exists(proc_stat):
-                    try:
-                        with open(proc_stat) as f:
-                            stat = f.read()
-                            # Status is the third field after command in parentheses
-                            status_char = stat.split(")")[1].strip()[0]
-                            status_map = {
-                                "R": STATUS_RUNNING,
-                                "S": STATUS_SLEEPING,
-                                "D": STATUS_DISK_SLEEP,
-                                "Z": STATUS_ZOMBIE,
-                                "T": STATUS_STOPPED,
-                                "I": STATUS_IDLE,
-                            }
-                            return status_map.get(status_char, STATUS_RUNNING)
-                    except (OSError, FileNotFoundError, IndexError) as e:
-                        logger.debug(f"Failed to read process status: {e}")
+            # Try reading /proc/pid/stat (Linux)
+            proc_stat = f"/proc/{self._pid}/stat"
+            if os.path.exists(proc_stat):
+                try:
+                    with open(proc_stat) as f:
+                        stat = f.read()
+                        # Status is the third field after command in parentheses
+                        status_char = stat.split(")")[1].strip()[0]
+                        status_map = {
+                            "R": STATUS_RUNNING,
+                            "S": STATUS_SLEEPING,
+                            "D": STATUS_DISK_SLEEP,
+                            "Z": STATUS_ZOMBIE,
+                            "T": STATUS_STOPPED,
+                            "I": STATUS_IDLE,
+                        }
+                        return status_map.get(status_char, STATUS_RUNNING)
+                except (OSError, FileNotFoundError, IndexError) as e:
+                    logger.debug(f"Failed to read process status: {e}")
 
             return STATUS_RUNNING
 
-        def create_time(self):
+        def create_time(self) -> float:
             """Get process creation time."""
             if self._gone:
-                raise NoSuchProcessError(self._pid)
+                error_msg = f"process no longer exists (pid={self._pid})"
+                logger.error(error_msg)
+                raise NoSuchProcessError(self._pid, msg=error_msg)
             return self._create_time or self._init_time
 
         def is_running(self) -> bool:
@@ -400,7 +415,9 @@ except ImportError as e:
         def suspend(self) -> None:
             """Suspend the process."""
             if self._gone:
-                raise NoSuchProcessError(self._pid)
+                error_msg = f"process no longer exists (pid={self._pid})"
+                logger.error(error_msg)
+                raise NoSuchProcessError(self._pid, msg=error_msg)
 
             if sys.platform != "win32":
                 import signal
@@ -410,7 +427,9 @@ except ImportError as e:
         def resume(self) -> None:
             """Resume the process."""
             if self._gone:
-                raise NoSuchProcessError(self._pid)
+                error_msg = f"process no longer exists (pid={self._pid})"
+                logger.error(error_msg)
+                raise NoSuchProcessError(self._pid, msg=error_msg)
 
             if sys.platform != "win32":
                 import signal
@@ -420,7 +439,9 @@ except ImportError as e:
         def terminate(self) -> None:
             """Terminate the process."""
             if self._gone:
-                raise NoSuchProcessError(self._pid)
+                error_msg = f"process no longer exists (pid={self._pid})"
+                logger.error(error_msg)
+                raise NoSuchProcessError(self._pid, msg=error_msg)
 
             if sys.platform == "win32":
                 taskkill_path = shutil.which("taskkill")
@@ -434,7 +455,9 @@ except ImportError as e:
         def kill(self) -> None:
             """Kill the process."""
             if self._gone:
-                raise NoSuchProcessError(self._pid)
+                error_msg = f"process no longer exists (pid={self._pid})"
+                logger.error(error_msg)
+                raise NoSuchProcessError(self._pid, msg=error_msg)
 
             if sys.platform == "win32":
                 taskkill_path = shutil.which("taskkill")
@@ -447,7 +470,7 @@ except ImportError as e:
 
                 os.kill(self._pid, signal.SIGKILL)
 
-        def wait(self, timeout=None) -> int:
+        def wait(self, timeout: float | None = None) -> int:
             """Wait for process to terminate."""
             if self._gone:
                 return 0
@@ -455,38 +478,46 @@ except ImportError as e:
             start_time = time.time()
             while self.is_running():
                 if timeout is not None and (time.time() - start_time) > timeout:
+                    error_msg = f"timeout after {timeout} seconds"
+                    logger.error(error_msg)
                     raise TimeoutExpiredError(timeout, self._pid, self._name)
                 time.sleep(0.1)
 
             return 0
 
-        def cpu_percent(self, interval=None) -> float:
+        def cpu_percent(self, interval: float | None = None) -> float:
             """Get CPU usage percent."""
             if self._gone:
-                raise NoSuchProcessError(self._pid)
+                error_msg = f"process no longer exists (pid={self._pid})"
+                logger.error(error_msg)
+                raise NoSuchProcessError(self._pid, msg=error_msg)
             # Simplified CPU measurement
             return 0.0
 
-        def memory_info(self):
+        def memory_info(self) -> "MemInfo":
             """Get memory information."""
             if self._gone:
-                raise NoSuchProcessError(self._pid)
+                error_msg = f"process no longer exists (pid={self._pid})"
+                logger.error(error_msg)
+                raise NoSuchProcessError(self._pid, msg=error_msg)
 
             class MemInfo:
                 def __init__(self) -> None:
-                    self.rss = 0
-                    self.vms = 0
+                    self.rss: int = 0
+                    self.vms: int = 0
 
             return MemInfo()
 
         def memory_percent(self) -> float:
             """Get memory usage percent."""
             if self._gone:
-                raise NoSuchProcessError(self._pid)
+                error_msg = f"process no longer exists (pid={self._pid})"
+                logger.error(error_msg)
+                raise NoSuchProcessError(self._pid, msg=error_msg)
             return 0.0
 
     # System information functions
-    def cpu_percent(interval=None, percpu=False):
+    def cpu_percent(interval: float | None = None, percpu: bool = False) -> float | list[float]:
         """Get CPU usage percent."""
         if interval:
             time.sleep(interval)
@@ -519,7 +550,7 @@ except ImportError as e:
                     lines = f.readlines()
 
                     # Parse CPU usage from /proc/stat
-                    cpu_times = []
+                    cpu_times: list[float] = []
                     for line in lines:
                         if line.startswith("cpu"):
                             parts = line.split()
@@ -538,13 +569,13 @@ except ImportError as e:
                                     if line.startswith("cpu ") and not percpu:
                                         # Overall CPU usage
                                         return min(100.0, usage)
-                                    elif not line.startswith("cpu "):
+                                    if not line.startswith("cpu "):
                                         # Per-CPU usage
                                         cpu_times.append(min(100.0, usage))
 
                     if percpu and cpu_times:
                         return cpu_times
-                    elif percpu:
+                    if percpu:
                         # Return single CPU if no per-cpu data
                         return [0.0]
                     return 0.0
@@ -555,26 +586,25 @@ except ImportError as e:
             return [0.0]
         return 0.0
 
-    def cpu_count(logical=True):
+    def cpu_count(logical: bool = True) -> int:
         """Get CPU count."""
         try:
             if logical:
                 return os.cpu_count() or 1
-            else:
-                # Physical cores harder to detect, use logical / 2 as estimate
-                return max(1, (os.cpu_count() or 2) // 2)
+            # Physical cores harder to detect, use logical / 2 as estimate
+            return max(1, (os.cpu_count() or 2) // 2)
         except (OSError, AttributeError) as e:
             logger.debug(f"Failed to get CPU count: {e}")
             return 1
 
-    def cpu_freq(percpu=False):
+    def cpu_freq(percpu: bool = False) -> "CPUFreq | list[CPUFreq]":
         """Get CPU frequency."""
 
         class CPUFreq:
-            def __init__(self, current=0.0, min=0.0, max=0.0) -> None:
-                self.current = current
-                self.min = min
-                self.max = max
+            def __init__(self, current: float = 0.0, min: float = 0.0, max: float = 0.0) -> None:
+                self.current: float = current
+                self.min: float = min
+                self.max: float = max
 
         # Try to get frequency info
         freq = CPUFreq(2400.0, 800.0, 3600.0)  # Common defaults
@@ -583,28 +613,28 @@ except ImportError as e:
             return [freq]
         return freq
 
-    def cpu_stats():
+    def cpu_stats() -> "CPUStats":
         """Get CPU statistics."""
 
         class CPUStats:
             def __init__(self) -> None:
-                self.ctx_switches = 0
-                self.interrupts = 0
-                self.soft_interrupts = 0
-                self.syscalls = 0
+                self.ctx_switches: int = 0
+                self.interrupts: int = 0
+                self.soft_interrupts: int = 0
+                self.syscalls: int = 0
 
         return CPUStats()
 
-    def virtual_memory():
+    def virtual_memory() -> "VirtualMemory":
         """Get virtual memory statistics."""
 
         class VirtualMemory:
             def __init__(self) -> None:
-                self.total = 8 * 1024 * 1024 * 1024  # 8GB default
-                self.available = 4 * 1024 * 1024 * 1024  # 4GB
-                self.percent = 50.0
-                self.used = self.total - self.available
-                self.free = self.available
+                self.total: int = 8 * 1024 * 1024 * 1024  # 8GB default
+                self.available: int = 4 * 1024 * 1024 * 1024  # 4GB
+                self.percent: float = 50.0
+                self.used: int = self.total - self.available
+                self.free: int = self.available
 
         # Try to get real values
         if sys.platform == "win32":
@@ -660,29 +690,29 @@ except ImportError as e:
 
         return VirtualMemory()
 
-    def swap_memory():
+    def swap_memory() -> "SwapMemory":
         """Get swap memory statistics."""
 
         class SwapMemory:
             def __init__(self) -> None:
-                self.total = 2 * 1024 * 1024 * 1024  # 2GB default
-                self.used = 512 * 1024 * 1024  # 512MB
-                self.free = self.total - self.used
-                self.percent = 25.0
-                self.sin = 0
-                self.sout = 0
+                self.total: int = 2 * 1024 * 1024 * 1024  # 2GB default
+                self.used: int = 512 * 1024 * 1024  # 512MB
+                self.free: int = self.total - self.used
+                self.percent: float = 25.0
+                self.sin: int = 0
+                self.sout: int = 0
 
         return SwapMemory()
 
-    def disk_usage(path):
+    def disk_usage(path: str) -> "DiskUsage":
         """Get disk usage statistics."""
 
         class DiskUsage:
             def __init__(self) -> None:
-                self.total = 500 * 1024 * 1024 * 1024  # 500GB default
-                self.used = 250 * 1024 * 1024 * 1024  # 250GB
-                self.free = self.total - self.used
-                self.percent = 50.0
+                self.total: int = 500 * 1024 * 1024 * 1024  # 500GB default
+                self.used: int = 250 * 1024 * 1024 * 1024  # 250GB
+                self.free: int = self.total - self.used
+                self.percent: float = 50.0
 
         # Try to get real values
         try:
@@ -699,17 +729,17 @@ except ImportError as e:
             logger.debug(f"Failed to get disk usage for {path}: {e}")
             return DiskUsage()
 
-    def disk_partitions(all=False):
+    def disk_partitions(all: bool = False) -> list["DiskPartition"]:
         """Get disk partitions."""
 
         class DiskPartition:
-            def __init__(self, device, mountpoint, fstype, opts) -> None:
-                self.device = device
-                self.mountpoint = mountpoint
-                self.fstype = fstype
-                self.opts = opts
+            def __init__(self, device: str, mountpoint: str, fstype: str, opts: str) -> None:
+                self.device: str = device
+                self.mountpoint: str = mountpoint
+                self.fstype: str = fstype
+                self.opts: str = opts
 
-        partitions = []
+        partitions: list[DiskPartition] = []
 
         if sys.platform == "win32":
             # Get Windows drives
@@ -725,64 +755,64 @@ except ImportError as e:
 
         return partitions
 
-    def disk_io_counters(perdisk=False):
+    def disk_io_counters(perdisk: bool = False) -> "DiskIOCounters | dict[str, DiskIOCounters]":
         """Get disk I/O statistics."""
 
         class DiskIOCounters:
             def __init__(self) -> None:
-                self.read_count = 0
-                self.write_count = 0
-                self.read_bytes = 0
-                self.write_bytes = 0
-                self.read_time = 0
-                self.write_time = 0
+                self.read_count: int = 0
+                self.write_count: int = 0
+                self.read_bytes: int = 0
+                self.write_bytes: int = 0
+                self.read_time: int = 0
+                self.write_time: int = 0
 
         if perdisk:
             return {"sda": DiskIOCounters()}
         return DiskIOCounters()
 
-    def net_io_counters(pernic=False):
+    def net_io_counters(pernic: bool = False) -> "NetIOCounters | dict[str, NetIOCounters]":
         """Get network I/O statistics."""
 
         class NetIOCounters:
             def __init__(self) -> None:
-                self.bytes_sent = 0
-                self.bytes_recv = 0
-                self.packets_sent = 0
-                self.packets_recv = 0
-                self.errin = 0
-                self.errout = 0
-                self.dropin = 0
-                self.dropout = 0
+                self.bytes_sent: int = 0
+                self.bytes_recv: int = 0
+                self.packets_sent: int = 0
+                self.packets_recv: int = 0
+                self.errin: int = 0
+                self.errout: int = 0
+                self.dropin: int = 0
+                self.dropout: int = 0
 
         if pernic:
             return {"eth0": NetIOCounters()}
         return NetIOCounters()
 
-    def net_connections(kind="all"):
+    def net_connections(kind: str = "all") -> list:
         """Get network connections."""
         return []
 
-    def net_if_addrs():
+    def net_if_addrs() -> dict:
         """Get network interface addresses."""
         return {}
 
-    def net_if_stats():
+    def net_if_stats() -> dict:
         """Get network interface statistics."""
         return {}
 
-    def boot_time():
+    def boot_time() -> float:
         """Get system boot time."""
         # Return approximate boot time
         return time.time() - (7 * 24 * 3600)  # 7 days ago
 
-    def users():
+    def users() -> list:
         """Get logged in users."""
         return []
 
-    def process_iter(attrs=None):
+    def process_iter(attrs: list[str] | None = None) -> list["FallbackProcess"]:
         """Iterate over all processes."""
-        processes = []
+        processes: list[FallbackProcess] = []
 
         if sys.platform == "win32":
             try:
@@ -817,7 +847,7 @@ except ImportError as e:
 
         return processes
 
-    def pid_exists(pid):
+    def pid_exists(pid: int) -> bool:
         """Check if a PID exists."""
         if sys.platform == "win32":
             try:
@@ -842,17 +872,17 @@ except ImportError as e:
             except (OSError, ProcessLookupError):
                 return False
 
-    def wait_procs(procs, timeout=None, callback=None):
+    def wait_procs(procs: list["FallbackProcess"], timeout: float | None = None, callback: Callable[["FallbackProcess"], None] | None = None) -> tuple[list["FallbackProcess"], list["FallbackProcess"]]:
         """Wait for processes to terminate."""
-        gone = []
-        alive = list(procs)
+        gone: list[FallbackProcess] = []
+        alive: list[FallbackProcess] = list(procs)
 
         start_time = time.time()
         while alive:
             if timeout is not None and (time.time() - start_time) > timeout:
                 break
 
-            new_alive = []
+            new_alive: list[FallbackProcess] = []
             for proc in alive:
                 if proc.is_running():
                     new_alive.append(proc)
@@ -861,21 +891,21 @@ except ImportError as e:
                     if callback:
                         callback(proc)
 
-            alive = new_alive
+            alive: list[FallbackProcess] = new_alive
             if alive:
                 time.sleep(0.1)
 
         return gone, alive
 
-    class Popen(subprocess.Popen):
+    class Popen(subprocess.Popen):  # type: ignore
         """Process class that wraps subprocess.Popen."""
 
-        def __init__(self, *args, **kwargs) -> None:
+        def __init__(self, *args: object, **kwargs: object) -> None:
             """Initialize Popen process wrapper with fallback process monitoring capabilities."""
             super().__init__(*args, **kwargs)
-            self._process = FallbackProcess(self.pid) if self.pid else None
+            self._process: FallbackProcess | None = FallbackProcess(self.pid) if self.pid else None
 
-        def as_dict(self, attrs=None):
+        def as_dict(self, attrs: list[str] | None = None) -> dict:
             """Return process info as dict."""
             if not self._process:
                 return {}
@@ -887,7 +917,7 @@ except ImportError as e:
     class ProcessWrapper:
         """Process wrapper that matches psutil.Process() interface."""
 
-        def __new__(cls, pid=None):
+        def __new__(cls, pid: int | None = None) -> FallbackProcess:
             if pid is None:
                 pid = os.getpid()
             return FallbackProcess(pid)

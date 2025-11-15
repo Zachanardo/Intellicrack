@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import IntEnum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
@@ -490,6 +490,8 @@ class TPMEmulator:
 
         h_scm = advapi32.OpenSCManagerW(None, None, SC_MANAGER_ALL_ACCESS)
         if not h_scm:
+            error_msg = "Failed to open Service Control Manager"
+            logger.error(error_msg)
             raise ctypes.WinError()
 
         service_name = "TPMEmulator"
@@ -543,7 +545,7 @@ class TPMEmulator:
 
         return TPM_RC.SUCCESS
 
-    def create_primary_key(self, hierarchy: int, auth: bytes, key_template: Dict[str, Any]) -> Tuple[TPM_RC, Optional[TPMKey]]:
+    def create_primary_key(self, hierarchy: int, auth: bytes, key_template: dict[str, Any]) -> tuple[TPM_RC, TPMKey | None]:
         """Create primary key in hierarchy."""
         if hierarchy not in self.hierarchy_auth:
             return TPM_RC.HIERARCHY, None
@@ -605,7 +607,7 @@ class TPMEmulator:
             encoding=serialization.Encoding.DER, format=serialization.PrivateFormat.PKCS8, encryption_algorithm=serialization.NoEncryption(),
         )
 
-    def sign(self, key_handle: int, data: bytes, auth: bytes) -> Tuple[TPM_RC, Optional[bytes]]:
+    def sign(self, key_handle: int, data: bytes, auth: bytes) -> tuple[TPM_RC, bytes | None]:
         """Sign data with key."""
         if key_handle not in self.keys:
             return TPM_RC.HANDLE, None
@@ -665,7 +667,7 @@ class TPMEmulator:
 
         return TPM_RC.SUCCESS
 
-    def read_pcr(self, pcr_index: int, hash_alg: TPM_ALG) -> Tuple[TPM_RC, Optional[bytes]]:
+    def read_pcr(self, pcr_index: int, hash_alg: TPM_ALG) -> tuple[TPM_RC, bytes | None]:
         """Read PCR value."""
         if pcr_index >= 24:
             return TPM_RC.PCR, None
@@ -675,14 +677,14 @@ class TPMEmulator:
 
         return TPM_RC.SUCCESS, self.pcr_banks[hash_alg][pcr_index]
 
-    def get_random(self, num_bytes: int) -> Tuple[TPM_RC, Optional[bytes]]:
+    def get_random(self, num_bytes: int) -> tuple[TPM_RC, bytes | None]:
         """Generate random bytes."""
         if num_bytes <= 0 or num_bytes > 1024:
             return TPM_RC.SIZE, None
 
         return TPM_RC.SUCCESS, secrets.token_bytes(num_bytes)
 
-    def seal(self, data: bytes, pcr_selection: List[int], auth: bytes) -> Tuple[TPM_RC, Optional[bytes]]:
+    def seal(self, data: bytes, pcr_selection: list[int], auth: bytes) -> tuple[TPM_RC, bytes | None]:
         """Seal data to PCR state."""
         # Create sealed blob structure
         sealed_blob = {"data": data, "pcr_selection": pcr_selection, "pcr_values": {}, "auth": hashlib.sha256(auth).digest()}
@@ -714,7 +716,7 @@ class TPMEmulator:
 
         return TPM_RC.SUCCESS, sealed_data
 
-    def unseal(self, sealed_data: bytes, auth: bytes) -> Tuple[TPM_RC, Optional[bytes]]:
+    def unseal(self, sealed_data: bytes, auth: bytes) -> tuple[TPM_RC, bytes | None]:
         """Unseal data if PCR state matches."""
         # Decrypt sealed blob
         import base64
@@ -768,7 +770,7 @@ class SGXEmulator:
         """Initialize SGX emulation driver."""
         logger.debug("SGX emulation driver initialized")
 
-    def create_enclave(self, enclave_file: Path, debug: bool = False) -> Tuple[int, SGX_ERROR]:
+    def create_enclave(self, enclave_file: Path, debug: bool = False) -> tuple[int, SGX_ERROR]:
         """Create emulated enclave."""
         if not enclave_file.exists():
             return 0, SGX_ERROR.ENCLAVE_FILE_ACCESS
@@ -810,8 +812,8 @@ class SGXEmulator:
         self.sealing_keys[enclave_id] = sealing_key
 
     def get_report(
-        self, enclave_id: int, target_info: Optional[bytes] = None, report_data: Optional[bytes] = None,
-    ) -> Tuple[Optional[SGXReport], SGX_ERROR]:
+        self, enclave_id: int, target_info: bytes | None = None, report_data: bytes | None = None,
+    ) -> tuple[SGXReport | None, SGX_ERROR]:
         """Get enclave report."""
         if enclave_id not in self.enclaves:
             return None, SGX_ERROR.INVALID_ENCLAVE_ID
@@ -830,7 +832,7 @@ class SGXEmulator:
 
         return report, SGX_ERROR.SUCCESS
 
-    def seal_data(self, enclave_id: int, data: bytes) -> Tuple[Optional[bytes], SGX_ERROR]:
+    def seal_data(self, enclave_id: int, data: bytes) -> tuple[bytes | None, SGX_ERROR]:
         """Seal data for enclave."""
         if enclave_id not in self.enclaves:
             return None, SGX_ERROR.INVALID_ENCLAVE_ID
@@ -846,7 +848,7 @@ class SGXEmulator:
 
         return sealed, SGX_ERROR.SUCCESS
 
-    def unseal_data(self, enclave_id: int, sealed_data: bytes) -> Tuple[Optional[bytes], SGX_ERROR]:
+    def unseal_data(self, enclave_id: int, sealed_data: bytes) -> tuple[bytes | None, SGX_ERROR]:
         """Unseal data in enclave."""
         if enclave_id not in self.enclaves:
             return None, SGX_ERROR.INVALID_ENCLAVE_ID
@@ -864,7 +866,7 @@ class SGXEmulator:
         except (InvalidToken, ValueError):
             return None, SGX_ERROR.MAC_MISMATCH
 
-    def get_quote(self, enclave_id: int, report: SGXReport, quote_type: int = 0) -> Tuple[Optional[bytes], SGX_ERROR]:
+    def get_quote(self, enclave_id: int, report: SGXReport, quote_type: int = 0) -> tuple[bytes | None, SGX_ERROR]:
         """Generate quote for remote attestation."""
         if enclave_id not in self.enclaves:
             return None, SGX_ERROR.INVALID_ENCLAVE_ID
@@ -925,7 +927,7 @@ class SecureEnclaveBypass:
         self.intercepted_calls = []
         self.bypass_active = False
 
-    def activate_bypass(self, target_process: Optional[int] = None) -> bool:
+    def activate_bypass(self, target_process: int | None = None) -> bool:
         """Activate TPM/SGX bypass for target process."""
         try:
             if target_process:
@@ -1197,7 +1199,7 @@ class SecureEnclaveBypass:
             elif payload["type"] == "hooks_installed":
                 logger.info("TPM/SGX bypass hooks installed")
 
-    def _handle_tpm_command(self, command_data: List[int]) -> bytes:
+    def _handle_tpm_command(self, command_data: list[int]) -> bytes:
         """Process TPM command through emulator."""
         # Parse command header
         if len(command_data) < 10:
@@ -1384,7 +1386,7 @@ class SecureEnclaveBypass:
         # Generate using TPM emulator as fallback
         return self._emulate_tpm_quote(challenge)
 
-    def _extract_enclave_measurements(self) -> Optional[Dict[str, Any]]:
+    def _extract_enclave_measurements(self) -> dict[str, Any] | None:
         """Extract real enclave measurements from running SGX enclaves."""
         try:
             # Try to read from SGX driver
@@ -1419,7 +1421,7 @@ class SecureEnclaveBypass:
 
         return None
 
-    def _parse_enclave_info(self, data: bytes) -> Dict[str, Any]:
+    def _parse_enclave_info(self, data: bytes) -> dict[str, Any]:
         """Parse enclave information from SGX driver."""
         info = {}
         offset = 0
@@ -1533,7 +1535,7 @@ class SecureEnclaveBypass:
 
         return key
 
-    def _select_pcrs_for_quote(self) -> Tuple[TPM_RC, bytes]:
+    def _select_pcrs_for_quote(self) -> tuple[TPM_RC, bytes]:
         """Select PCRs for attestation quote."""
         # Standard PCR selection for attestation
         selection = bytearray()
@@ -1573,7 +1575,7 @@ class SecureEnclaveBypass:
         # Default name
         return hashlib.sha256(b"AttestationKey").digest()
 
-    def _update_quote_challenge(self, quote_data: bytes, new_challenge: bytes) -> Optional[bytes]:
+    def _update_quote_challenge(self, quote_data: bytes, new_challenge: bytes) -> bytes | None:
         """Update challenge in existing quote while preserving signature validity."""
         # This would require re-signing, so we generate new quote
         return None
@@ -1605,7 +1607,7 @@ class SecureEnclaveBypass:
 
         return ""
 
-    def _extract_platform_certificates(self) -> List[str]:
+    def _extract_platform_certificates(self) -> list[str]:
         """Extract real platform certificates from TPM/SGX."""
         certs = []
 
@@ -1625,7 +1627,7 @@ class SecureEnclaveBypass:
 
         return certs
 
-    def _extract_tpm_ek_certificate(self) -> Optional[bytes]:
+    def _extract_tpm_ek_certificate(self) -> bytes | None:
         """Extract TPM Endorsement Key certificate."""
         try:
             # Try to read from TPM NV
@@ -1640,7 +1642,7 @@ class SecureEnclaveBypass:
 
         return None
 
-    def _extract_sgx_pck_certificate(self) -> Optional[bytes]:
+    def _extract_sgx_pck_certificate(self) -> bytes | None:
         """Extract SGX PCK certificate."""
         try:
             # Try to get from Intel provisioning service
@@ -1652,7 +1654,7 @@ class SecureEnclaveBypass:
 
         return None
 
-    def _generate_platform_certificates(self) -> List[str]:
+    def _generate_platform_certificates(self) -> list[str]:
         """Generate valid platform attestation certificates matching system configuration."""
         certs = []
 
@@ -1672,7 +1674,7 @@ class SecureEnclaveBypass:
 
         return certs
 
-    def _detect_platform_info(self) -> Dict[str, Any]:
+    def _detect_platform_info(self) -> dict[str, Any]:
         """Detect actual platform security capabilities."""
         import cpuinfo
         import wmi
@@ -1707,7 +1709,7 @@ class SecureEnclaveBypass:
 
         return info
 
-    def _generate_tpm_certificate(self, platform_info: Dict[str, Any]) -> bytes:
+    def _generate_tpm_certificate(self, platform_info: dict[str, Any]) -> bytes:
         """Generate TPM Endorsement Key certificate matching platform."""
         from cryptography import x509
         from cryptography.hazmat.backends import default_backend
@@ -1783,7 +1785,7 @@ class SecureEnclaveBypass:
 
         return cert.public_bytes(serialization.Encoding.DER)
 
-    def _generate_sgx_certificate(self, platform_info: Dict[str, Any]) -> bytes:
+    def _generate_sgx_certificate(self, platform_info: dict[str, Any]) -> bytes:
         """Generate SGX Platform Certification Key certificate."""
         from cryptography import x509
         from cryptography.hazmat.backends import default_backend
@@ -1848,7 +1850,7 @@ class SecureEnclaveBypass:
 
         return cert.public_bytes(serialization.Encoding.DER)
 
-    def _capture_platform_manifest(self) -> Dict[str, Any]:
+    def _capture_platform_manifest(self) -> dict[str, Any]:
         """Capture real platform security manifest from system."""
         import cpuinfo
         import wmi
@@ -1957,14 +1959,13 @@ class SecureEnclaveBypass:
                 vendor_id = cpu_info.get("vendor_id_raw", "").lower()
                 if "vmware" in vendor_id:
                     return "vmware"
-                elif "microsoft" in vendor_id:
+                if "microsoft" in vendor_id:
                     return "hyperv"
-                elif "xen" in vendor_id:
+                if "xen" in vendor_id:
                     return "xen"
-                elif "kvm" in vendor_id:
+                if "kvm" in vendor_id:
                     return "kvm"
-                else:
-                    return "unknown"
+                return "unknown"
         except (ValueError, TypeError):
             pass
 

@@ -29,10 +29,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    from intellicrack.core.config_manager import IntellicrackConfig
+from typing import Any
 
 logger = logging.getLogger(__name__)
 

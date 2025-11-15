@@ -80,7 +80,9 @@ class NodeJSInstallWorker(QThread):
 
                 parsed_url = urlparse(node_url)
                 if parsed_url.scheme not in ("http", "https"):
-                    raise ValueError(f"Invalid URL scheme: {parsed_url.scheme}. Only http/https are allowed.")
+                    error_msg = f"Invalid URL scheme: {parsed_url.scheme}. Only http/https are allowed."
+                    logger.error(error_msg)
+                    raise ValueError(error_msg)
 
                 # Use requests library for safer URL handling
                 import requests
@@ -90,8 +92,8 @@ class NodeJSInstallWorker(QThread):
 
                 # Download file in chunks to temp_installer
                 with open(temp_installer, "wb") as f:
-                    for chunk in response.iter_content(chunk_size=8192):
-                        f.write(chunk)
+                    import shutil
+                    shutil.copyfileobj(response.raw, f)
 
                 self.progress_value.emit(70)
 
@@ -255,31 +257,29 @@ class NodeJSSetupDialog(BaseDialog):
         if self.auto_install_radio.isChecked():
             self.start_installation()
             return False  # Don't close dialog yet, wait for installation
-        else:
-            # Test custom path
-            custom_path = self.path_input.text().strip()
-            if not custom_path:
-                self.show_error("Please provide a Node.js installation path.")
-                return False
+        # Test custom path
+        custom_path = self.path_input.text().strip()
+        if not custom_path:
+            self.show_error("Please provide a Node.js installation path.")
+            return False
 
-            import subprocess
+        import subprocess
 
-            node_exe = os.path.join(custom_path, "node.exe")
+        node_exe = os.path.join(custom_path, "node.exe")
 
-            try:
-                # Sanitize node_exe to prevent command injection
-                node_exe_clean = str(node_exe).replace(";", "").replace("|", "").replace("&", "")
-                result = subprocess.run([node_exe_clean, "--version"], capture_output=True, timeout=5, text=True, shell=False)
-                nodejs_found = result.returncode == 0 and result.stdout.startswith("v")
-            except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
-                nodejs_found = False
+        try:
+            # Sanitize node_exe to prevent command injection
+            node_exe_clean = str(node_exe).replace(";", "").replace("|", "").replace("&", "")
+            result = subprocess.run([node_exe_clean, "--version"], capture_output=True, timeout=5, text=True, shell=False)
+            nodejs_found = result.returncode == 0 and result.stdout.startswith("v")
+        except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+            nodejs_found = False
 
-            if nodejs_found:
-                QMessageBox.information(self, "Success", "Node.js found at the specified path!")
-                return True
-            else:
-                self.show_error("Node.js not found at the specified path.\nPlease check the path and try again.")
-                return False
+        if nodejs_found:
+            QMessageBox.information(self, "Success", "Node.js found at the specified path!")
+            return True
+        self.show_error("Node.js not found at the specified path.\nPlease check the path and try again.")
+        return False
 
     def start_installation(self) -> None:
         """Start the Node.js installation process."""

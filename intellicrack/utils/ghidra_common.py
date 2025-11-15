@@ -778,7 +778,7 @@ def get_ghidra_project_info(project_dir: str, project_name: str) -> dict[str, An
             info["exists"] = True
             info["project_file"] = project_path
             info["size"] = os.path.getsize(project_path)
-            info["modified"] = os.path.getmtime(project_path)
+            info["modified"] = Path(project_path).stat().st_mtime
 
             # List project files
             project_files = []

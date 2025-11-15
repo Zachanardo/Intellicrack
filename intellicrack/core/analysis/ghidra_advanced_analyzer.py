@@ -12,7 +12,7 @@ import re
 import struct
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import lief
 import pefile
@@ -31,8 +31,8 @@ class RecoveredVariable:
     offset: int  # Stack or heap offset
     scope: str  # local, global, parameter
     is_pointer: bool
-    pointed_type: Optional[str] = None
-    array_size: Optional[int] = None
+    pointed_type: str | None = None
+    array_size: int | None = None
     usage_count: int = 0
     first_use: int = 0  # Instruction offset
     last_use: int = 0
@@ -45,10 +45,10 @@ class RecoveredStructure:
     name: str
     size: int
     alignment: int
-    members: List[Dict[str, Any]]
-    vtable_offset: Optional[int] = None
-    base_classes: List[str] = field(default_factory=list)
-    methods: List[str] = field(default_factory=list)
+    members: list[dict[str, Any]]
+    vtable_offset: int | None = None
+    base_classes: list[str] = field(default_factory=list)
+    methods: list[str] = field(default_factory=list)
     is_union: bool = False
     is_packed: bool = False
 
@@ -59,11 +59,11 @@ class VTableInfo:
 
     address: int
     class_name: str
-    functions: List[int]  # Function addresses
-    rtti_address: Optional[int] = None
+    functions: list[int]  # Function addresses
+    rtti_address: int | None = None
     base_offset: int = 0
     virtual_base: bool = False
-    destructor_addr: Optional[int] = None
+    destructor_addr: int | None = None
 
 
 @dataclass
@@ -74,9 +74,9 @@ class ExceptionHandlerInfo:
     handler_address: int
     try_start: int
     try_end: int
-    catch_blocks: List[Dict[str, Any]]
-    filter_func: Optional[int] = None
-    unwind_info: Optional[Dict[str, Any]] = None
+    catch_blocks: list[dict[str, Any]]
+    filter_func: int | None = None
+    unwind_info: dict[str, Any] | None = None
 
 
 @dataclass
@@ -84,13 +84,13 @@ class DebugSymbolInfo:
     """Debug symbol information."""
 
     type: str  # PDB, DWARF, STABS
-    path: Optional[str]
-    guid: Optional[str]
-    age: Optional[int]
-    symbols: Dict[int, str]  # Address -> symbol name
-    types: Dict[str, Dict[str, Any]]
-    source_files: List[str]
-    line_numbers: Dict[int, Tuple[str, int]]  # Address -> (file, line)
+    path: str | None
+    guid: str | None
+    age: int | None
+    symbols: dict[int, str]  # Address -> symbol name
+    types: dict[str, dict[str, Any]]
+    source_files: list[str]
+    line_numbers: dict[int, tuple[str, int]]  # Address -> (file, line)
 
 
 class GhidraAdvancedAnalyzer:
@@ -136,7 +136,7 @@ class GhidraAdvancedAnalyzer:
         except Exception as e:
             print(f"Warning: Failed to initialize analyzers: {e}")
 
-    def recover_variables(self, function: GhidraFunction) -> List[RecoveredVariable]:
+    def recover_variables(self, function: GhidraFunction) -> list[RecoveredVariable]:
         """Recover variables with type propagation."""
         variables = []
         stack_vars = {}
@@ -222,9 +222,9 @@ class GhidraAdvancedAnalyzer:
         # Type hints from instructions
         if mnemonic in ["fld", "fstp", "fadd", "fmul"]:
             return "float" if "dword" in inst_lower else "double"
-        elif mnemonic in ["lea"]:
+        if mnemonic in ["lea"]:
             return base_type + "*"  # Pointer
-        elif "str" in mnemonic or "stos" in mnemonic:
+        if "str" in mnemonic or "stos" in mnemonic:
             return "char*"  # String operations
 
         return base_type
@@ -255,7 +255,7 @@ class GhidraAdvancedAnalyzer:
         base_type = type_str.replace("*", "").strip()
         return type_sizes.get(base_type, 4)
 
-    def _propagate_types(self, variables: Dict[int, RecoveredVariable], function: GhidraFunction) -> None:
+    def _propagate_types(self, variables: dict[int, RecoveredVariable], function: GhidraFunction) -> None:
         """Propagate types through data flow analysis."""
         # Analyze function parameters from calling convention
         if function.calling_convention in ["__stdcall", "__cdecl", "__fastcall"]:
@@ -270,15 +270,14 @@ class GhidraAdvancedAnalyzer:
                         if i < len(param_regs):
                             # Register parameters
                             continue
-                        else:
-                            # Stack parameters
-                            stack_param_idx = i - len(param_regs)
-                            expected_offset = 8 + (stack_param_idx * 8)  # Adjust for architecture
-                            if abs(offset - expected_offset) < 16:
-                                var.type = param_type
-                                var.name = param_name if param_name else var.name
+                        # Stack parameters
+                        stack_param_idx = i - len(param_regs)
+                        expected_offset = 8 + (stack_param_idx * 8)  # Adjust for architecture
+                        if abs(offset - expected_offset) < 16:
+                            var.type = param_type
+                            var.name = param_name if param_name else var.name
 
-    def recover_structures(self, analysis_result: GhidraAnalysisResult) -> List[RecoveredStructure]:
+    def recover_structures(self, analysis_result: GhidraAnalysisResult) -> list[RecoveredStructure]:
         """Recover structure definitions from binary."""
         structures = []
         struct_candidates = {}
@@ -331,7 +330,7 @@ class GhidraAdvancedAnalyzer:
 
         return structures
 
-    def _analyze_struct_accesses(self, function: GhidraFunction) -> Dict[str, Dict[int, Dict]]:
+    def _analyze_struct_accesses(self, function: GhidraFunction) -> dict[str, dict[int, dict]]:
         """Analyze structure access patterns in a function."""
         struct_accesses = {}
 
@@ -359,7 +358,7 @@ class GhidraAdvancedAnalyzer:
 
         return struct_accesses
 
-    def analyze_vtables(self, analysis_result: GhidraAnalysisResult) -> List[VTableInfo]:
+    def analyze_vtables(self, analysis_result: GhidraAnalysisResult) -> list[VTableInfo]:
         """Analyze virtual function tables."""
         vtables = []
 
@@ -391,7 +390,7 @@ class GhidraAdvancedAnalyzer:
 
         return vtables
 
-    def _scan_for_vtables(self, data: bytes, base_address: int) -> List[VTableInfo]:
+    def _scan_for_vtables(self, data: bytes, base_address: int) -> list[VTableInfo]:
         """Scan data section for vtable patterns."""
         vtables = []
         ptr_size = 8 if self.md and self.md.mode == CS_MODE_64 else 4
@@ -436,7 +435,7 @@ class GhidraAdvancedAnalyzer:
 
         return False
 
-    def _analyze_vtable_init(self, function: GhidraFunction) -> Dict[int, List[int]]:
+    def _analyze_vtable_init(self, function: GhidraFunction) -> dict[int, list[int]]:
         """Analyze vtable initialization in constructor."""
         vtable_inits = {}
 
@@ -461,7 +460,7 @@ class GhidraAdvancedAnalyzer:
 
         return vtable_inits
 
-    def _extract_vtable_functions(self, vtable_addr: int) -> List[int]:
+    def _extract_vtable_functions(self, vtable_addr: int) -> list[int]:
         """Extract function addresses from vtable."""
         functions = []
 
@@ -488,14 +487,14 @@ class GhidraAdvancedAnalyzer:
 
         return functions
 
-    def _find_destructor(self, func_addrs: List[int]) -> Optional[int]:
+    def _find_destructor(self, func_addrs: list[int]) -> int | None:
         """Identify destructor in vtable functions."""
         # Usually first or second function in vtable
         if len(func_addrs) >= 2:
             return func_addrs[1]  # Common convention
         return None
 
-    def _analyze_rtti(self) -> List[VTableInfo]:
+    def _analyze_rtti(self) -> list[VTableInfo]:
         """Analyze RTTI (Run-Time Type Information)."""
         vtables = []
 
@@ -534,7 +533,7 @@ class GhidraAdvancedAnalyzer:
         # This would need proper RTTI parsing
         return f"rtti_class_{hash(rtti_data) & 0xFFFFFF:06x}"
 
-    def extract_exception_handlers(self, analysis_result: GhidraAnalysisResult) -> List[ExceptionHandlerInfo]:
+    def extract_exception_handlers(self, analysis_result: GhidraAnalysisResult) -> list[ExceptionHandlerInfo]:
         """Extract exception handler information."""
         handlers = []
 
@@ -551,7 +550,7 @@ class GhidraAdvancedAnalyzer:
 
         return handlers
 
-    def _extract_seh(self) -> List[ExceptionHandlerInfo]:
+    def _extract_seh(self) -> list[ExceptionHandlerInfo]:
         """Extract SEH handlers from x86 binaries."""
         handlers = []
 
@@ -560,7 +559,7 @@ class GhidraAdvancedAnalyzer:
 
         return handlers
 
-    def _extract_cpp_eh(self) -> List[ExceptionHandlerInfo]:
+    def _extract_cpp_eh(self) -> list[ExceptionHandlerInfo]:
         """Extract C++ exception handling information."""
         handlers = []
 
@@ -589,7 +588,7 @@ class GhidraAdvancedAnalyzer:
 
         return handlers
 
-    def _extract_veh(self) -> List[ExceptionHandlerInfo]:
+    def _extract_veh(self) -> list[ExceptionHandlerInfo]:
         """Extract VEH handlers."""
         handlers = []
 
@@ -598,7 +597,7 @@ class GhidraAdvancedAnalyzer:
 
         return handlers
 
-    def parse_debug_symbols(self, analysis_result: GhidraAnalysisResult) -> Optional[DebugSymbolInfo]:
+    def parse_debug_symbols(self, analysis_result: GhidraAnalysisResult) -> DebugSymbolInfo | None:
         """Parse debug symbol information."""
         debug_info = None
 
@@ -613,7 +612,7 @@ class GhidraAdvancedAnalyzer:
 
         return debug_info
 
-    def _parse_pdb_info(self) -> Optional[DebugSymbolInfo]:
+    def _parse_pdb_info(self) -> DebugSymbolInfo | None:
         """Parse PDB debug information from PE."""
         if not self.pe or not hasattr(self.pe, "DIRECTORY_ENTRY_DEBUG"):
             return None
@@ -634,12 +633,12 @@ class GhidraAdvancedAnalyzer:
 
         return None
 
-    def _parse_dwarf_info(self) -> Optional[DebugSymbolInfo]:
+    def _parse_dwarf_info(self) -> DebugSymbolInfo | None:
         """Parse DWARF debug information from ELF."""
         # Would require full DWARF parser implementation
         return DebugSymbolInfo(type="DWARF", path=None, guid=None, age=None, symbols={}, types={}, source_files=[], line_numbers={})
 
-    def create_custom_datatypes(self, structures: List[RecoveredStructure]) -> List[GhidraDataType]:
+    def create_custom_datatypes(self, structures: list[RecoveredStructure]) -> list[GhidraDataType]:
         """Create custom data types for Ghidra."""
         custom_types = []
 

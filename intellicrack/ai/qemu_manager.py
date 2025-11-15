@@ -36,7 +36,6 @@ from typing import Any
 import paramiko
 from paramiko import HostKeys, MissingHostKeyPolicy, RSAKey, SSHClient
 
-from intellicrack.core.config_manager import get_config
 from intellicrack.core.logging.audit_logger import (
     AuditEvent,
     AuditEventType,
@@ -49,7 +48,6 @@ from intellicrack.core.logging.audit_logger import (
 from intellicrack.core.resources.resource_manager import VMResource, get_resource_manager
 from intellicrack.utils.logger import get_logger
 
-from ..utils.secrets_manager import get_secret, set_secret
 from .common_types import ExecutionResult
 
 logger = get_logger(__name__)
@@ -97,7 +95,7 @@ class SecureHostKeyPolicy(MissingHostKeyPolicy):
             except Exception as e:
                 logger.warning(f"Could not load known_hosts file: {e}")
 
-    def missing_host_key(self, client, hostname, key) -> None:
+    def missing_host_key(self, client: Any, hostname: str, key: Any) -> None:
         """Handle missing host key by checking and storing it securely."""
         # For QEMU VMs on localhost with dynamic ports, we store by port
         # This is acceptable for local VMs in controlled environments
@@ -136,6 +134,8 @@ class QEMUManager:
         and integrates with existing QEMU emulator if available.
         Creates a working directory for test operations.
         """
+        from intellicrack.core.config_manager import get_config
+
         self.logger = logging.getLogger(__name__ + ".QEMUManager")
         self.snapshots = {}
 
@@ -202,6 +202,8 @@ class QEMUManager:
 
     def _init_ssh_keys(self) -> None:
         """Initialize or load SSH keys for VM access."""
+        from ..utils.secrets_manager import get_secret, set_secret
+
         try:
             # Get or generate SSH key from secrets manager
             ssh_private_key = get_secret("QEMU_SSH_PRIVATE_KEY")
@@ -256,7 +258,7 @@ class QEMUManager:
 
                 # Set secure permissions (Unix only)
                 if platform.system() != "Windows":
-                    os.chmod(recovery_key_path, 0o600)
+                    Path(recovery_key_path).chmod(0o600)
 
                 # Save public key
                 with open(recovery_key_path.with_suffix(".pub"), "w", encoding="utf-8") as f:
@@ -2316,8 +2318,9 @@ exit 0
                                         # Backup original before replacement
                                         backup_path = f"{snapshot.disk_path}.backup"
                                         try:
-                                            os.rename(snapshot.disk_path, backup_path)
-                                            os.rename(str(temp_path), snapshot.disk_path)
+                                            from pathlib import Path
+                                            Path(snapshot.disk_path).rename(backup_path)
+                                            Path(str(temp_path)).rename(snapshot.disk_path)
                                             os.remove(backup_path)
 
                                             optimization_results["space_saved_bytes"] += space_saved
@@ -2337,7 +2340,7 @@ exit 0
                                         except Exception as e:
                                             # Restore backup on error
                                             if os.path.exists(backup_path):
-                                                os.rename(backup_path, snapshot.disk_path)
+                                                Path(backup_path).rename(snapshot.disk_path)
                                             raise Exception(f"Failed to replace snapshot file: {e}") from e
                                     else:
                                         raise Exception(

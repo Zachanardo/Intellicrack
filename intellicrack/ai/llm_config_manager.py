@@ -329,7 +329,7 @@ class LLMConfigManager:
         # Fall back to internal cache if central config is empty
         return self.configs.copy()
 
-    def auto_load_models(self, llm_manager=None):
+    def auto_load_models(self, llm_manager: Any | None = None):
         """Auto-load all saved models into the LLM manager.
 
         Args:

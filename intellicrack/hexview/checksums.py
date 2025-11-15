@@ -158,10 +158,8 @@ def calculate_checksum_chunked(file_path: str, algorithm: str, chunk_size: int =
     algorithm = algorithm.upper()
 
     # Initialize hasher based on algorithm
-    if algorithm == "CRC-16":
+    if algorithm in {"CRC-16", "CRC-32"}:
         crc = 0x0000
-    elif algorithm == "CRC-32":
-        crc = 0
     elif algorithm == "MD5":
         hasher = hashlib.sha256()  # Secure replacement for MD5
     elif algorithm == "SHA-1":
@@ -171,7 +169,9 @@ def calculate_checksum_chunked(file_path: str, algorithm: str, chunk_size: int =
     elif algorithm == "SHA-512":
         hasher = hashlib.sha512()
     else:
-        raise ValueError(f"Unsupported algorithm: {algorithm}")
+        error_msg = f"Unsupported algorithm: {algorithm}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
     try:
         with open(file_path, "rb") as f:
@@ -199,10 +199,9 @@ def calculate_checksum_chunked(file_path: str, algorithm: str, chunk_size: int =
         # Return results
         if algorithm == "CRC-16":
             return f"{crc:04X}"
-        elif algorithm == "CRC-32":
+        if algorithm == "CRC-32":
             return f"{crc:08X}"
-        else:
-            return hasher.hexdigest().upper()
+        return hasher.hexdigest().upper()
 
     except Exception as e:
         logger.error(f"Error calculating {algorithm} for file {file_path}: {e}")
@@ -247,17 +246,17 @@ class ChecksumCalculator:
         algorithm = algorithm.upper()
 
         if algorithm not in self.algorithms:
-            raise ValueError(f"Unsupported algorithm: {algorithm}")
+            error_msg = f"Unsupported algorithm: {algorithm}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
 
         try:
             if algorithm.startswith("CRC"):
                 result = self.algorithms[algorithm](data)
                 if algorithm == "CRC-16":
                     return f"{result:04X}"
-                else:
-                    return f"{result:08X}"
-            else:
-                return self.algorithms[algorithm](data).upper()
+                return f"{result:08X}"
+            return self.algorithms[algorithm](data).upper()
 
         except Exception as e:
             logger.error(f"Error calculating {algorithm}: {e}")

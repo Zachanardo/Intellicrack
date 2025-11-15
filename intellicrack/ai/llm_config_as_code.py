@@ -389,12 +389,9 @@ class ConfigAsCodeManager:
             raise ConfigValidationError(f"Failed to parse configuration file: {e}") from e
         except Exception as e:
             # Handle YAML errors if YAML is available, otherwise generic Exception
-            if HAS_YAML and isinstance(e, yaml.YAMLError):
+            if (HAS_YAML and isinstance(e, yaml.YAMLError)) or not HAS_YAML:
                 raise ConfigValidationError(f"Failed to parse configuration file: {e}") from e
-            elif not HAS_YAML:
-                raise ConfigValidationError(f"Failed to parse configuration file: {e}") from e
-            else:
-                raise
+            raise
 
     def save_config(
         self,
@@ -612,7 +609,7 @@ class ConfigAsCodeManager:
 
         return template
 
-    def export_current_config(self, llm_manager=None, fallback_manager=None) -> dict[str, Any]:
+    def export_current_config(self, llm_manager: Any | None = None, fallback_manager: Any | None = None) -> dict[str, Any]:
         """Export current system configuration.
 
         Args:
@@ -668,7 +665,7 @@ class ConfigAsCodeManager:
 
         return config
 
-    def apply_config(self, config: dict[str, Any], llm_manager=None, fallback_manager=None) -> None:
+    def apply_config(self, config: dict[str, Any], llm_manager: Any | None = None, fallback_manager: Any | None = None) -> None:
         """Apply configuration to the system.
 
         Args:

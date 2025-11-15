@@ -30,7 +30,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import msgpack
 
@@ -81,9 +81,9 @@ class BaseResult:
     source_tool: str
     timestamp: float
     confidence: float = 1.0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
         result = asdict(self)
         result["type"] = self.type.value
@@ -102,16 +102,16 @@ class FunctionResult(BaseResult):
     address: int
     name: str
     size: int
-    return_type: Optional[str] = None
-    parameters: List[Dict[str, Any]] = field(default_factory=list)
-    calling_convention: Optional[str] = None
-    local_vars: List[Dict[str, Any]] = field(default_factory=list)
-    basic_blocks: List[Dict[str, Any]] = field(default_factory=list)
+    return_type: str | None = None
+    parameters: list[dict[str, Any]] = field(default_factory=list)
+    calling_convention: str | None = None
+    local_vars: list[dict[str, Any]] = field(default_factory=list)
+    basic_blocks: list[dict[str, Any]] = field(default_factory=list)
     cyclomatic_complexity: int = 0
-    xrefs_to: List[int] = field(default_factory=list)
-    xrefs_from: List[int] = field(default_factory=list)
-    decompiled_code: Optional[str] = None
-    assembly_code: Optional[str] = None
+    xrefs_to: list[int] = field(default_factory=list)
+    xrefs_from: list[int] = field(default_factory=list)
+    decompiled_code: str | None = None
+    assembly_code: str | None = None
     is_thunk: bool = False
     is_library: bool = False
     stack_frame_size: int = 0
@@ -125,7 +125,7 @@ class StringResult(BaseResult):
     value: str
     encoding: str = "utf-8"
     length: int = 0
-    references: List[int] = field(default_factory=list)
+    references: list[int] = field(default_factory=list)
     is_unicode: bool = False
     is_path: bool = False
     is_url: bool = False
@@ -140,14 +140,14 @@ class CryptoResult(BaseResult):
 
     address: int
     algorithm: str
-    key_size: Optional[int] = None
-    mode: Optional[str] = None
-    key_location: Optional[int] = None
-    iv_location: Optional[int] = None
-    constants: List[int] = field(default_factory=list)
+    key_size: int | None = None
+    mode: str | None = None
+    key_location: int | None = None
+    iv_location: int | None = None
+    constants: list[int] = field(default_factory=list)
     implementation_type: str = "unknown"  # "standard", "custom", "obfuscated"
     vulnerable: bool = False
-    vulnerability_details: Optional[str] = None
+    vulnerability_details: str | None = None
 
 
 @dataclass
@@ -156,14 +156,14 @@ class LicenseCheckResult(BaseResult):
 
     address: int
     check_type: str  # "serial", "hwid", "time", "network", "file"
-    success_path: Optional[int] = None
-    failure_path: Optional[int] = None
-    validation_routine: Optional[int] = None
-    key_generation_algorithm: Optional[str] = None
-    bypass_method: Optional[str] = None
-    patch_locations: List[Dict[str, Any]] = field(default_factory=list)
-    extracted_keys: List[str] = field(default_factory=list)
-    hwid_sources: List[str] = field(default_factory=list)
+    success_path: int | None = None
+    failure_path: int | None = None
+    validation_routine: int | None = None
+    key_generation_algorithm: str | None = None
+    bypass_method: str | None = None
+    patch_locations: list[dict[str, Any]] = field(default_factory=list)
+    extracted_keys: list[str] = field(default_factory=list)
+    hwid_sources: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -172,14 +172,14 @@ class ProtectionResult(BaseResult):
 
     protection_type: str  # "packer", "protector", "obfuscator", "anti-debug"
     name: str
-    version: Optional[str] = None
-    entry_point: Optional[int] = None
-    protected_sections: List[Dict[str, Any]] = field(default_factory=list)
-    unpacking_method: Optional[str] = None
-    oep_address: Optional[int] = None  # Original Entry Point
-    iat_address: Optional[int] = None  # Import Address Table
-    bypass_techniques: List[str] = field(default_factory=list)
-    detection_signatures: List[str] = field(default_factory=list)
+    version: str | None = None
+    entry_point: int | None = None
+    protected_sections: list[dict[str, Any]] = field(default_factory=list)
+    unpacking_method: str | None = None
+    oep_address: int | None = None  # Original Entry Point
+    iat_address: int | None = None  # Import Address Table
+    bypass_techniques: list[str] = field(default_factory=list)
+    detection_signatures: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -192,8 +192,8 @@ class PatchResult(BaseResult):
     patch_type: str  # "nop", "jump", "call", "data", "instruction"
     description: str
     reversible: bool = True
-    dependencies: List[int] = field(default_factory=list)
-    side_effects: List[str] = field(default_factory=list)
+    dependencies: list[int] = field(default_factory=list)
+    side_effects: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -205,7 +205,7 @@ class MemoryDumpResult(BaseResult):
     size: int
     data: bytes
     permissions: str  # "rwx", "r-x", "rw-", etc.
-    section_name: Optional[str] = None
+    section_name: str | None = None
     is_executable: bool = False
     is_writable: bool = False
     contains_code: bool = False
@@ -218,15 +218,15 @@ class ControlFlowResult(BaseResult):
     """Control flow analysis result."""
 
     function_address: int
-    basic_blocks: List[Dict[str, int]] = field(default_factory=list)
-    edges: List[Tuple[int, int]] = field(default_factory=list)
-    loops: List[List[int]] = field(default_factory=list)
-    dominators: Dict[int, int] = field(default_factory=dict)
-    post_dominators: Dict[int, int] = field(default_factory=dict)
+    basic_blocks: list[dict[str, int]] = field(default_factory=list)
+    edges: list[tuple[int, int]] = field(default_factory=list)
+    loops: list[list[int]] = field(default_factory=list)
+    dominators: dict[int, int] = field(default_factory=dict)
+    post_dominators: dict[int, int] = field(default_factory=dict)
     cyclomatic_complexity: int = 0
     max_depth: int = 0
     has_recursion: bool = False
-    unreachable_blocks: List[int] = field(default_factory=list)
+    unreachable_blocks: list[int] = field(default_factory=list)
 
 
 class ResultSerializer:
@@ -317,7 +317,7 @@ class ResultSerializer:
         result_class = self.result_classes.get(result_type, BaseResult)
         return result_class(**result_dict)
 
-    def _binary_serialize(self, data: Dict[str, Any]) -> bytes:
+    def _binary_serialize(self, data: dict[str, Any]) -> bytes:
         """Serialize data with custom binary format for maximum efficiency."""
         # Binary format: [header][type][data_length][data]
         header = b"ICRK"  # Intellicrack magic bytes
@@ -329,7 +329,7 @@ class ResultSerializer:
 
         return header + version + data_length + data_bytes
 
-    def _binary_deserialize(self, data: bytes) -> Dict[str, Any]:
+    def _binary_deserialize(self, data: bytes) -> dict[str, Any]:
         """Deserialize custom binary format."""
         # Check header
         if data[:4] != b"ICRK":
@@ -351,12 +351,11 @@ class ResultSerializer:
         if version == 1:
             # Version 1: Basic msgpack
             return msgpack.unpackb(data_bytes, raw=False)
-        elif version == 2:
+        if version == 2:
             # Version 2: msgpack with strict_map_key
             return msgpack.unpackb(data_bytes, raw=False, strict_map_key=False)
-        else:
-            # Version 3: msgpack with timestamp support
-            return msgpack.unpackb(data_bytes, raw=False, timestamp=3)
+        # Version 3: msgpack with timestamp support
+        return msgpack.unpackb(data_bytes, raw=False, timestamp=3)
 
     def _encrypt_data(self, data: bytes) -> bytes:
         """Encrypt data using AES."""
@@ -392,7 +391,7 @@ class ResultSerializer:
 
         return decrypted
 
-    def batch_serialize(self, results: List[BaseResult]) -> bytes:
+    def batch_serialize(self, results: list[BaseResult]) -> bytes:
         """Serialize multiple results efficiently."""
         batch_data = {
             "batch_id": hashlib.sha256(str(datetime.now()).encode()).hexdigest()[:16],
@@ -402,7 +401,7 @@ class ResultSerializer:
 
         return self.serialize_dict(batch_data)
 
-    def serialize_dict(self, data: Dict[str, Any]) -> bytes:
+    def serialize_dict(self, data: dict[str, Any]) -> bytes:
         """Serialize dictionary directly."""
         if self.format == DataFormat.JSON:
             serialized = json.dumps(data, cls=CustomJSONEncoder).encode()
@@ -424,11 +423,11 @@ class CustomJSONEncoder(json.JSONEncoder):
         """Encode complex objects to JSON-serializable format."""
         if isinstance(obj, bytes):
             return base64.b64encode(obj).decode("ascii")
-        elif isinstance(obj, Enum):
+        if isinstance(obj, Enum):
             return obj.value
-        elif hasattr(obj, "to_dict"):
+        if hasattr(obj, "to_dict"):
             return obj.to_dict()
-        elif isinstance(obj, Path):
+        if isinstance(obj, Path):
             return str(obj)
         return super().default(obj)
 
@@ -437,7 +436,7 @@ class ResultConverter:
     """Convert between different tool formats."""
 
     @staticmethod
-    def ghidra_to_standard(ghidra_data: Dict[str, Any]) -> List[BaseResult]:
+    def ghidra_to_standard(ghidra_data: dict[str, Any]) -> list[BaseResult]:
         """Convert Ghidra output to standard format."""
         results = []
 
@@ -475,7 +474,7 @@ class ResultConverter:
         return results
 
     @staticmethod
-    def ida_to_standard(ida_data: Dict[str, Any]) -> List[BaseResult]:
+    def ida_to_standard(ida_data: dict[str, Any]) -> list[BaseResult]:
         """Convert IDA Pro output to standard format."""
         results = []
 
@@ -510,7 +509,7 @@ class ResultConverter:
         return results
 
     @staticmethod
-    def radare2_to_standard(r2_data: Dict[str, Any]) -> List[BaseResult]:
+    def radare2_to_standard(r2_data: dict[str, Any]) -> list[BaseResult]:
         """Convert Radare2 output to standard format."""
         results = []
 
@@ -546,7 +545,7 @@ class ResultConverter:
         return results
 
     @staticmethod
-    def frida_to_standard(frida_data: Dict[str, Any]) -> List[BaseResult]:
+    def frida_to_standard(frida_data: dict[str, Any]) -> list[BaseResult]:
         """Convert Frida output to standard format."""
         results = []
 
@@ -585,7 +584,7 @@ class ResultConverter:
         return results
 
     @staticmethod
-    def standard_to_json(results: List[BaseResult]) -> str:
+    def standard_to_json(results: list[BaseResult]) -> str:
         """Convert standard results to JSON for export."""
         export_data = {
             "version": "1.0",

@@ -86,11 +86,9 @@ except ImportError:
 
         def on_deleted(self, event) -> None:
             """Handle file deletion events."""
-            pass
 
         def on_moved(self, event) -> None:
             """Handle file move events."""
-            pass
 
 
 from ...utils.logger import get_logger

@@ -83,7 +83,6 @@ try:
         class TaskMeta(type(QRunnable), type(ABC)):
             """Metaclass to resolve conflicts between QRunnable and ABC."""
 
-            pass
     else:
         # ABC is mocked, don't use it
         ABC_BASE = object

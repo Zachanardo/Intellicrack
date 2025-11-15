@@ -7,7 +7,7 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
 from intellicrack.core.monitoring.api_monitor import APIMonitor
 from intellicrack.core.monitoring.base_monitor import MonitorEvent, ProcessInfo
@@ -30,8 +30,8 @@ class MonitoringConfig:
         self.enable_network = False
         self.enable_memory = True
 
-        self.file_watch_paths: Optional[List[str]] = None
-        self.network_ports: Optional[List[int]] = None
+        self.file_watch_paths: list[str] | None = None
+        self.network_ports: list[int] | None = None
         self.memory_scan_interval: float = 5.0
 
 
@@ -42,7 +42,7 @@ class MonitoringSession:
     Provides unified interface for event handling and session control.
     """
 
-    def __init__(self, pid: int, process_path: str, config: Optional[MonitoringConfig] = None) -> None:
+    def __init__(self, pid: int, process_path: str, config: MonitoringConfig | None = None) -> None:
         """Initialize monitoring session.
 
         Args:
@@ -58,7 +58,7 @@ class MonitoringSession:
         self.process_info = ProcessInfo(pid=pid, name=self._get_process_name(process_path), path=process_path)
 
         self.aggregator = EventAggregator()
-        self.monitors: Dict[str, Any] = {}
+        self.monitors: dict[str, Any] = {}
         self.frida_server = FridaServerManager()
         self._running = False
 
@@ -141,7 +141,7 @@ class MonitoringSession:
         """
         return self._running
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get monitoring statistics.
 
         Returns:
@@ -172,7 +172,7 @@ class MonitoringSession:
         """
         self.aggregator.on_event(callback)
 
-    def on_stats_update(self, callback: Callable[[Dict[str, Any]], None]) -> None:
+    def on_stats_update(self, callback: Callable[[dict[str, Any]], None]) -> None:
         """Register callback for statistics updates.
 
         Args:
@@ -194,7 +194,7 @@ class MonitoringSession:
         """Clear event history."""
         self.aggregator.clear_history()
 
-    def get_history(self, limit: int = 100) -> List[MonitorEvent]:
+    def get_history(self, limit: int = 100) -> list[MonitorEvent]:
         """Get recent event history.
 
         Args:
@@ -222,9 +222,8 @@ class MonitoringSession:
 
             if monitor.start():
                 return True
-            else:
-                print(f"[MonitoringSession] Failed to start {name} monitor")
-                return False
+            print(f"[MonitoringSession] Failed to start {name} monitor")
+            return False
 
         except Exception as e:
             print(f"[MonitoringSession] Error starting {name} monitor: {e}")

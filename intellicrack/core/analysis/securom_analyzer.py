@@ -11,7 +11,6 @@ import struct
 from ctypes import wintypes
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 try:
     import pefile
@@ -28,10 +27,10 @@ class ActivationMechanism:
     activation_type: str
     online_validation: bool
     challenge_response: bool
-    activation_server_url: Optional[str]
+    activation_server_url: str | None
     max_activations: int
-    hardware_binding: List[str]
-    encryption_algorithm: Optional[str]
+    hardware_binding: list[str]
+    encryption_algorithm: str | None
 
 
 @dataclass
@@ -53,7 +52,7 @@ class ProductActivationKey:
     key_length: int
     validation_algorithm: str
     example_pattern: str
-    checksum_type: Optional[str]
+    checksum_type: str | None
 
 
 @dataclass
@@ -61,8 +60,8 @@ class DiscAuthRoutine:
     """Disc authentication routine analysis."""
 
     routine_address: int
-    scsi_commands: List[str]
-    signature_checks: List[str]
+    scsi_commands: list[str]
+    signature_checks: list[str]
     fingerprint_method: str
     bypass_difficulty: str
 
@@ -73,9 +72,9 @@ class PhoneHomeMechanism:
 
     mechanism_type: str
     address: int
-    server_urls: List[str]
+    server_urls: list[str]
     frequency: str
-    data_transmitted: List[str]
+    data_transmitted: list[str]
     protocol: str
 
 
@@ -85,7 +84,7 @@ class ChallengeResponseFlow:
 
     challenge_generation_addr: int
     response_validation_addr: int
-    crypto_operations: List[Tuple[int, str]]
+    crypto_operations: list[tuple[int, str]]
     key_derivation_method: str
     difficulty: str
 
@@ -97,8 +96,8 @@ class LicenseValidationFunction:
     address: int
     name: str
     function_type: str
-    checks_performed: List[str]
-    return_values: Dict[str, str]
+    checks_performed: list[str]
+    return_values: dict[str, str]
 
 
 @dataclass
@@ -107,16 +106,16 @@ class SecuROMAnalysis:
 
     target_path: Path
     version: str
-    activation_mechanisms: List[ActivationMechanism]
-    trigger_points: List[TriggerPoint]
-    product_keys: List[ProductActivationKey]
-    disc_auth_routines: List[DiscAuthRoutine]
-    phone_home_mechanisms: List[PhoneHomeMechanism]
-    challenge_response_flows: List[ChallengeResponseFlow]
-    license_validation_functions: List[LicenseValidationFunction]
-    encryption_techniques: List[str]
-    obfuscation_methods: List[str]
-    details: Dict[str, any]
+    activation_mechanisms: list[ActivationMechanism]
+    trigger_points: list[TriggerPoint]
+    product_keys: list[ProductActivationKey]
+    disc_auth_routines: list[DiscAuthRoutine]
+    phone_home_mechanisms: list[PhoneHomeMechanism]
+    challenge_response_flows: list[ChallengeResponseFlow]
+    license_validation_functions: list[LicenseValidationFunction]
+    encryption_techniques: list[str]
+    obfuscation_methods: list[str]
+    details: dict[str, any]
 
 
 class SecuROMAnalyzer:
@@ -277,9 +276,9 @@ class SecuROMAnalyzer:
 
             if b"UserAccess8" in data or b"SR8" in data:
                 return "8.x"
-            elif b"UserAccess7" in data or b"SR7" in data:
+            if b"UserAccess7" in data or b"SR7" in data:
                 return "7.x"
-            elif b"SecuROM" in data:
+            if b"SecuROM" in data:
                 return "7.x or earlier"
 
         except Exception as e:
@@ -287,7 +286,7 @@ class SecuROMAnalyzer:
 
         return "Unknown"
 
-    def _analyze_activation_mechanisms(self, target_path: Path) -> List[ActivationMechanism]:
+    def _analyze_activation_mechanisms(self, target_path: Path) -> list[ActivationMechanism]:
         """Analyze activation mechanisms in protected executable."""
         mechanisms = []
 
@@ -361,7 +360,7 @@ class SecuROMAnalyzer:
 
         return mechanisms
 
-    def _identify_trigger_points(self, target_path: Path) -> List[TriggerPoint]:
+    def _identify_trigger_points(self, target_path: Path) -> list[TriggerPoint]:
         """Identify online validation trigger points."""
         trigger_points = []
 
@@ -407,14 +406,13 @@ class SecuROMAnalyzer:
 
         if b"validate" in keyword_lower or b"verify" in keyword_lower:
             return "Validation"
-        elif b"check" in keyword_lower:
+        if b"check" in keyword_lower:
             return "Status Check"
-        elif b"contact" in keyword_lower or b"send" in keyword_lower:
+        if b"contact" in keyword_lower or b"send" in keyword_lower:
             return "Network Communication"
-        elif b"phone" in keyword_lower:
+        if b"phone" in keyword_lower:
             return "Phone Home"
-        else:
-            return "Unknown"
+        return "Unknown"
 
     def _get_trigger_description(self, keyword: bytes) -> str:
         """Get human-readable description of trigger."""
@@ -439,14 +437,13 @@ class SecuROMAnalyzer:
 
         if b"CreateWaitableTimer" in context or b"SetTimer" in context:
             return "Periodic"
-        elif b"WinMain" in context or b"main" in context:
+        if b"WinMain" in context or b"main" in context:
             return "On Startup"
-        elif b"Button" in context or b"Menu" in context:
+        if b"Button" in context or b"Menu" in context:
             return "On User Action"
-        else:
-            return "Unknown"
+        return "Unknown"
 
-    def _extract_product_key_info(self, target_path: Path) -> List[ProductActivationKey]:
+    def _extract_product_key_info(self, target_path: Path) -> list[ProductActivationKey]:
         """Extract product activation key structure information."""
         keys = []
 
@@ -493,16 +490,15 @@ class SecuROMAnalyzer:
 
         if any(pattern in context for pattern in self.CRYPTO_PATTERNS.get("RSA", [])):
             return "RSA Signature Verification"
-        elif any(pattern in context for pattern in self.CRYPTO_PATTERNS.get("SHA256", [])):
+        if any(pattern in context for pattern in self.CRYPTO_PATTERNS.get("SHA256", [])):
             return "SHA256 Hash Validation"
-        elif b"CRC32" in context or b"crc32" in context:
+        if b"CRC32" in context or b"crc32" in context:
             return "CRC32 Checksum"
-        elif b"Luhn" in context or b"luhn" in context:
+        if b"Luhn" in context or b"luhn" in context:
             return "Luhn Algorithm"
-        else:
-            return "Custom Algorithm"
+        return "Custom Algorithm"
 
-    def _detect_checksum_type(self, data: bytes, keyword: bytes) -> Optional[str]:
+    def _detect_checksum_type(self, data: bytes, keyword: bytes) -> str | None:
         """Detect checksum type used for product key."""
         offset = data.find(keyword)
         if offset == -1:
@@ -512,16 +508,15 @@ class SecuROMAnalyzer:
 
         if b"CRC32" in context or b"crc32" in context:
             return "CRC32"
-        elif b"MD5" in context:
+        if b"MD5" in context:
             return "MD5"
-        elif b"SHA" in context:
+        if b"SHA" in context:
             return "SHA"
-        elif b"Checksum" in context or b"checksum" in context:
+        if b"Checksum" in context or b"checksum" in context:
             return "Custom Checksum"
-        else:
-            return None
+        return None
 
-    def _analyze_disc_authentication(self, target_path: Path) -> List[DiscAuthRoutine]:
+    def _analyze_disc_authentication(self, target_path: Path) -> list[DiscAuthRoutine]:
         """Analyze disc authentication routines."""
         routines = []
 
@@ -555,7 +550,7 @@ class SecuROMAnalyzer:
 
         return routines
 
-    def _extract_scsi_commands(self, data: bytes, offset: int) -> List[str]:
+    def _extract_scsi_commands(self, data: bytes, offset: int) -> list[str]:
         """Extract SCSI commands used in disc authentication."""
         commands = []
         context = data[max(0, offset - 200) : min(len(data), offset + 200)]
@@ -567,7 +562,7 @@ class SecuROMAnalyzer:
 
         return commands
 
-    def _identify_signature_checks(self, data: bytes, offset: int) -> List[str]:
+    def _identify_signature_checks(self, data: bytes, offset: int) -> list[str]:
         """Identify disc signature verification methods."""
         checks = []
         context = data[max(0, offset - 300) : min(len(data), offset + 300)]
@@ -592,25 +587,23 @@ class SecuROMAnalyzer:
 
         if b"Subchannel" in context:
             return "Subchannel-based Fingerprinting"
-        elif b"TOC" in context:
+        if b"TOC" in context:
             return "TOC-based Fingerprinting"
-        elif b"PhysicalSector" in context or b"RawSector" in context:
+        if b"PhysicalSector" in context or b"RawSector" in context:
             return "Physical Sector Analysis"
-        else:
-            return "Unknown Method"
+        return "Unknown Method"
 
-    def _assess_bypass_difficulty(self, scsi_commands: List[str], signature_checks: List[str]) -> str:
+    def _assess_bypass_difficulty(self, scsi_commands: list[str], signature_checks: list[str]) -> str:
         """Assess difficulty of bypassing disc authentication."""
         complexity = len(scsi_commands) + len(signature_checks)
 
         if complexity <= 2:
             return "Low"
-        elif complexity <= 4:
+        if complexity <= 4:
             return "Medium"
-        else:
-            return "High"
+        return "High"
 
-    def _detect_phone_home(self, target_path: Path) -> List[PhoneHomeMechanism]:
+    def _detect_phone_home(self, target_path: Path) -> list[PhoneHomeMechanism]:
         """Detect phone-home mechanisms."""
         mechanisms = []
 
@@ -647,7 +640,7 @@ class SecuROMAnalyzer:
 
         return mechanisms
 
-    def _extract_urls_near_offset(self, data: bytes, offset: int) -> List[str]:
+    def _extract_urls_near_offset(self, data: bytes, offset: int) -> list[str]:
         """Extract URLs near the given offset."""
         urls = []
         context_start = max(0, offset - 1000)
@@ -671,7 +664,7 @@ class SecuROMAnalyzer:
 
         return urls
 
-    def _identify_transmitted_data(self, data: bytes, offset: int) -> List[str]:
+    def _identify_transmitted_data(self, data: bytes, offset: int) -> list[str]:
         """Identify what data is transmitted in phone-home."""
         transmitted = []
         context = data[max(0, offset - 500) : min(len(data), offset + 500)]
@@ -696,12 +689,11 @@ class SecuROMAnalyzer:
         """Detect network protocol used."""
         if b"WinHttp" in api_name or b"Http" in api_name:
             return "HTTP/HTTPS"
-        elif b"WSA" in api_name or b"socket" in api_name.lower():
+        if b"WSA" in api_name or b"socket" in api_name.lower():
             return "TCP/IP"
-        else:
-            return "Unknown"
+        return "Unknown"
 
-    def _analyze_challenge_response(self, target_path: Path) -> List[ChallengeResponseFlow]:
+    def _analyze_challenge_response(self, target_path: Path) -> list[ChallengeResponseFlow]:
         """Analyze challenge-response authentication flows."""
         flows = []
 
@@ -742,7 +734,7 @@ class SecuROMAnalyzer:
 
         return flows
 
-    def _map_license_validation(self, target_path: Path) -> List[LicenseValidationFunction]:
+    def _map_license_validation(self, target_path: Path) -> list[LicenseValidationFunction]:
         """Map license validation functions."""
         functions = []
 
@@ -782,7 +774,7 @@ class SecuROMAnalyzer:
 
         return functions
 
-    def _identify_validation_checks(self, data: bytes, offset: int) -> List[str]:
+    def _identify_validation_checks(self, data: bytes, offset: int) -> list[str]:
         """Identify checks performed in validation function."""
         checks = []
         context = data[max(0, offset - 300) : min(len(data), offset + 300)]
@@ -802,7 +794,7 @@ class SecuROMAnalyzer:
 
         return checks
 
-    def _extract_return_values(self, data: bytes, offset: int) -> Dict[str, str]:
+    def _extract_return_values(self, data: bytes, offset: int) -> dict[str, str]:
         """Extract possible return values from validation function."""
         return {
             "0": "Validation Success",
@@ -813,7 +805,7 @@ class SecuROMAnalyzer:
             "5": "Network Error",
         }
 
-    def _identify_encryption(self, target_path: Path) -> List[str]:
+    def _identify_encryption(self, target_path: Path) -> list[str]:
         """Identify encryption techniques used."""
         techniques = []
 
@@ -835,7 +827,7 @@ class SecuROMAnalyzer:
 
         return list(set(techniques))
 
-    def _detect_obfuscation(self, target_path: Path) -> List[str]:
+    def _detect_obfuscation(self, target_path: Path) -> list[str]:
         """Detect code obfuscation methods."""
         methods = []
 
@@ -866,7 +858,7 @@ class SecuROMAnalyzer:
 
         return methods
 
-    def _get_imports(self, target_path: Path) -> List[str]:
+    def _get_imports(self, target_path: Path) -> list[str]:
         """Get imported functions."""
         if not PEFILE_AVAILABLE or not target_path.exists():
             return []
@@ -891,7 +883,7 @@ class SecuROMAnalyzer:
 
         return imports
 
-    def _get_exports(self, target_path: Path) -> List[str]:
+    def _get_exports(self, target_path: Path) -> list[str]:
         """Get exported functions."""
         if not PEFILE_AVAILABLE or not target_path.exists():
             return []
@@ -913,7 +905,7 @@ class SecuROMAnalyzer:
 
         return exports
 
-    def _analyze_resources(self, target_path: Path) -> Dict[str, int]:
+    def _analyze_resources(self, target_path: Path) -> dict[str, int]:
         """Analyze PE resources."""
         if not PEFILE_AVAILABLE or not target_path.exists():
             return {}
@@ -937,7 +929,7 @@ class SecuROMAnalyzer:
 
         return resources
 
-    def _extract_relevant_strings(self, target_path: Path) -> List[str]:
+    def _extract_relevant_strings(self, target_path: Path) -> list[str]:
         """Extract relevant strings from executable."""
         if not target_path.exists():
             return []
@@ -959,7 +951,7 @@ class SecuROMAnalyzer:
 
         return list(set(strings))[:50]
 
-    def _extract_network_endpoints(self, target_path: Path) -> List[str]:
+    def _extract_network_endpoints(self, target_path: Path) -> list[str]:
         """Extract network endpoints (URLs, IPs)."""
         if not target_path.exists():
             return []
@@ -990,7 +982,7 @@ class SecuROMAnalyzer:
 
         return list(set(endpoints))
 
-    def _identify_registry_access(self, target_path: Path) -> List[str]:
+    def _identify_registry_access(self, target_path: Path) -> list[str]:
         """Identify registry keys accessed."""
         if not target_path.exists():
             return []

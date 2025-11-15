@@ -402,7 +402,7 @@ class IntegratedBackgroundLoader:
     Provides seamless integration with lazy loading and model management.
     """
 
-    def __init__(self, llm_manager, max_concurrent_loads: int = 2) -> None:
+    def __init__(self, llm_manager: Any, max_concurrent_loads: int = 2) -> None:
         """Initialize the integrated background loader.
 
         Args:
@@ -429,18 +429,18 @@ class IntegratedBackgroundLoader:
 
         # Create a callback that notifies all registered callbacks
         class MultiCallback(ProgressCallback):
-            def __init__(self, callbacks) -> None:
+            def __init__(self, callbacks: list[ProgressCallback]) -> None:
                 """Initialize multi-callback handler with list of callbacks."""
                 self.callbacks = callbacks
 
-            def on_progress(self, progress) -> None:
+            def on_progress(self, progress: LoadingProgress) -> None:
                 for callback in self.callbacks:
                     try:
                         callback.on_progress(progress)
                     except Exception as e:
                         logger.warning(f"Error in progress callback: {e}")
 
-            def on_completed(self, model_id, success, error=None) -> None:
+            def on_completed(self, model_id: str, success: bool, error: str | None = None) -> None:
                 for callback in self.callbacks:
                     try:
                         callback.on_completed(model_id, success, error)
@@ -485,7 +485,7 @@ class IntegratedBackgroundLoader:
 _integrated_loader: IntegratedBackgroundLoader | None = None
 
 
-def get_background_loader(llm_manager=None) -> IntegratedBackgroundLoader:
+def get_background_loader(llm_manager: Any | None = None) -> IntegratedBackgroundLoader:
     """Get the global integrated background loader."""
     global _integrated_loader
     if _integrated_loader is None:

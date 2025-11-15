@@ -47,24 +47,33 @@ def validate_file_path(
 
     """
     if not isinstance(path, (str, bytes, os.PathLike)):
-        raise TypeError(f"path must be str, bytes, or PathLike, got {type(path).__name__}")
+        error_msg = f"path must be str, bytes, or PathLike, got {type(path).__name__}"
+        logger.error(error_msg)
+        raise TypeError(error_msg)
 
     path_str = str(path)
 
     if not allow_empty and not path_str.strip():
-        raise ValueError("path cannot be empty or whitespace")
+        error_msg = "path cannot be empty or whitespace"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
-    if check_exists and not os.path.exists(path_str):
-        raise FileNotFoundError(f"Path does not exist: {path_str}")
+        raise FileNotFoundError(error_msg)
 
     if check_exists and not os.path.isfile(path_str):
-        raise ValueError(f"Path is not a file: {path_str}")
+        error_msg = f"Path is not a file: {path_str}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
     if check_readable and not os.access(path_str, os.R_OK):
-        raise PermissionError(f"No read permission for: {path_str}")
+        error_msg = f"No read permission for: {path_str}"
+        logger.error(error_msg)
+        raise PermissionError(error_msg)
 
     if check_writable and not os.access(path_str, os.W_OK):
-        raise PermissionError(f"No write permission for: {path_str}")
+        error_msg = f"No write permission for: {path_str}"
+        logger.error(error_msg)
+        raise PermissionError(error_msg)
 
 
 def validate_integer_range(
@@ -89,16 +98,18 @@ def validate_integer_range(
 
     """
     if not isinstance(value, int):
-        raise TypeError(f"{name} must be int, got {type(value).__name__}")
+        raise TypeError(error_msg)
 
     if not allow_negative and value < 0:
-        raise ValueError(f"{name} cannot be negative, got {value}")
+        raise ValueError(error_msg)
 
     if min_value is not None and value < min_value:
-        raise ValueError(f"{name} must be >= {min_value}, got {value}")
+        raise ValueError(error_msg)
 
     if max_value is not None and value > max_value:
-        raise ValueError(f"{name} must be <= {max_value}, got {value}")
+        error_msg = f"{name} must be <= {max_value}, got {value}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
 
 def validate_bytes_data(
@@ -123,16 +134,24 @@ def validate_bytes_data(
 
     """
     if not isinstance(data, bytes):
-        raise TypeError(f"{name} must be bytes, got {type(data).__name__}")
+        error_msg = f"{name} must be bytes, got {type(data).__name__}"
+        logger.error(error_msg)
+        raise TypeError(error_msg)
 
     if not allow_empty and len(data) == 0:
-        raise ValueError(f"{name} cannot be empty")
+        raise ValueError(error_msg)
 
     if min_size is not None and len(data) < min_size:
-        raise ValueError(f"{name} must be at least {min_size} bytes, got {len(data)}")
+        error_msg = f"{name} must be at least {min_size} bytes, got {len(data)}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+
+        raise ValueError(error_msg)
 
     if max_size is not None and len(data) > max_size:
-        raise ValueError(f"{name} too large: {len(data)} bytes. Maximum: {max_size}")
+        error_msg = f"{name} too large: {len(data)} bytes. Maximum: {max_size}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
 
 def validate_string_list(
@@ -157,20 +176,26 @@ def validate_string_list(
 
     """
     if not isinstance(strings, list):
-        raise TypeError(f"{name} must be list, got {type(strings).__name__}")
+        raise TypeError(error_msg)
 
     if not allow_empty_list and len(strings) == 0:
-        raise ValueError(f"{name} cannot be empty")
+        error_msg = f"{name} cannot be empty"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
     if max_length is not None and len(strings) > max_length:
-        raise ValueError(f"{name} too long: {len(strings)} items. Maximum: {max_length}")
+        error_msg = f"{name} too long: {len(strings)} items. Maximum: {max_length}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
     for i, item in enumerate(strings):
         if not isinstance(item, str):
-            raise TypeError(f"{name}[{i}] must be str, got {type(item).__name__}")
+            raise TypeError(error_msg)
 
         if not allow_empty_strings and not item.strip():
-            raise ValueError(f"{name}[{i}] cannot be empty or whitespace")
+            error_msg = f"{name}[{i}] cannot be empty or whitespace"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
 
 
 def validate_memory_address(
@@ -191,18 +216,28 @@ def validate_memory_address(
 
     """
     if not isinstance(address, int):
-        raise TypeError(f"{name} must be int, got {type(address).__name__}")
+        error_msg = f"{name} must be int, got {type(address).__name__}"
+        logger.error(error_msg)
+        raise TypeError(error_msg)
 
     if not allow_zero and address == 0:
-        raise ValueError(f"{name} cannot be zero (null pointer)")
+        error_msg = f"{name} cannot be zero (null pointer)"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
     if address < 0:
-        raise ValueError(f"{name} cannot be negative, got {address}")
+        error_msg = f"{name} cannot be negative, got {address}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+
+        raise ValueError(error_msg)
 
     # Check for reasonable address ranges (64-bit systems)
     max_address = (1 << 48) - 1  # 48-bit virtual address space
     if address > max_address:
-        raise ValueError(f"{name} too large: 0x{address:x}. Maximum: 0x{max_address:x}")
+        error_msg = f"{name} too large: 0x{address:x}. Maximum: 0x{max_address:x}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
 
 def validate_process_id(pid: Any, name: str = "pid") -> None:
@@ -218,14 +253,20 @@ def validate_process_id(pid: Any, name: str = "pid") -> None:
 
     """
     if not isinstance(pid, int):
-        raise TypeError(f"{name} must be int, got {type(pid).__name__}")
+        error_msg = f"{name} must be int, got {type(pid).__name__}"
+        logger.error(error_msg)
+        raise TypeError(error_msg)
 
     if pid <= 0:
-        raise ValueError(f"{name} must be positive, got {pid}")
+        error_msg = f"{name} must be positive, got {pid}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
     # Maximum PID on most systems is around 4 million
     if pid > 4194304:
-        raise ValueError(f"{name} too large: {pid}. Maximum: 4194304")
+        error_msg = f"{name} too large: {pid}. Maximum: 4194304"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
 
 def create_error_result(error_msg: str, result_template: dict[str, Any] | None = None) -> dict[str, Any]:

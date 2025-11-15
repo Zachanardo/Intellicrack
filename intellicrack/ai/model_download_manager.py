@@ -380,7 +380,7 @@ class ModelDownloadManager:
             }
 
             # Create progress tracker
-            def progress_hook(progress_dict) -> None:
+            def progress_hook(progress_dict: dict[str, Any]) -> None:
                 if progress_callback and "downloaded" in progress_dict:
                     prog = DownloadProgress(
                         total_size=progress_dict.get("total", 0),

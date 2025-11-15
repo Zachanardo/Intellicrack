@@ -540,32 +540,31 @@ class SandboxDetector(BaseDetector):
                 "notepad.exe",
                 "code.exe",
             ]
-        else:
-            return [
-                "systemd",
-                "init",
-                "kernel",
-                "kthreadd",
-                "kworker",
-                "systemd-journald",
-                "systemd-logind",
-                "systemd-resolved",
-                "NetworkManager",
-                "dbus",
-                "polkitd",
-                "chronyd",
-                # Common user applications
-                "chrome",
-                "firefox",
-                "thunderbird",
-                "code",
-                "sublime",
-                "spotify",
-                "discord",
-                "slack",
-                "telegram",
-                "signal",
-            ]
+        return [
+            "systemd",
+            "init",
+            "kernel",
+            "kthreadd",
+            "kworker",
+            "systemd-journald",
+            "systemd-logind",
+            "systemd-resolved",
+            "NetworkManager",
+            "dbus",
+            "polkitd",
+            "chronyd",
+            # Common user applications
+            "chrome",
+            "firefox",
+            "thunderbird",
+            "code",
+            "sublime",
+            "spotify",
+            "discord",
+            "slack",
+            "telegram",
+            "signal",
+        ]
 
     def _profile_system(self) -> None:
         """Profile the current system to establish baseline."""
@@ -2585,20 +2584,20 @@ Sleep(30000);  // 30 seconds
                     time.sleep(5)
                 return "Applied 10x5s sleep loops"
 
-            elif technique == "computation_intensive":
+            if technique == "computation_intensive":
                 result = 0
                 for i in range(10000000):
                     result += i * i % 97
                 return f"Completed computation-intensive loop (result: {result})"
 
-            elif technique == "file_operations":
+            if technique == "file_operations":
                 temp_dir = tempfile.gettempdir()
                 temp_file = os.path.join(temp_dir, f"intellicrack_stall_{uuid.uuid4().hex}.tmp")
 
                 try:
                     with open(temp_file, "wb") as f:
-                        for _ in range(1000):
-                            f.write(b"A" * 1024)
+                        content = (b"A" * 1024) * 1000
+                        f.write(content)
                     os.remove(temp_file)
                     return "Completed file I/O stalling"
                 except Exception as e:

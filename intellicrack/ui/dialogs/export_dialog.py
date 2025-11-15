@@ -80,7 +80,9 @@ class ExportWorker(QThread):
             elif export_format == "html":
                 self._export_html(output_path, analysis_results)
             else:
-                raise ValueError(f"Unsupported export format: {export_format}")
+                error_msg = f"Unsupported export format: {export_format}"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
 
             self.progress_update.emit(100, "Export completed successfully")
             self.export_completed.emit(True, f"Export completed: {output_path}")
@@ -232,7 +234,9 @@ class ExportWorker(QThread):
             from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
         except ImportError as e:
             self.logger.error("Import error in export_dialog: %s", e)
-            raise ImportError("ReportLab is required for PDF export. Install with: pip install reportlab") from None
+            error_msg = "ReportLab is required for PDF export. Install with: pip install reportlab"
+            logger.error(error_msg)
+            raise ImportError(error_msg) from None
 
         self.progress_update.emit(30, "Building PDF report...")
 

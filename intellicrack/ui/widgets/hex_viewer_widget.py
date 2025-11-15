@@ -1092,8 +1092,7 @@ class HexViewerWidget(QWidget):
                     if items:
                         results.append(f"\n[{category}] ({len(items)} strings)")
                         results.append("-" * 40)
-                        for item in items[:100]:  # Limit display
-                            results.append(item)
+                        results.extend(items[:100])  # Limit display
                         if len(items) > 100:
                             results.append(f"... and {len(items) - 100} more")
 

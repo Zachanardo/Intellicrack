@@ -26,7 +26,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Callable
 
 from .dashboard_widgets import DashboardWidget, WidgetData, WidgetType, create_widget
 from .real_time_dashboard import DashboardEvent, DashboardEventType, create_dashboard
@@ -55,9 +55,9 @@ class DataSource:
     name: str
     poll_interval: float = 5.0
     enabled: bool = True
-    config: Dict[str, Any] = field(default_factory=dict)
-    last_poll: Optional[datetime] = None
-    data_callback: Optional[Callable] = None
+    config: dict[str, Any] = field(default_factory=dict)
+    last_poll: datetime | None = None
+    data_callback: Callable | None = None
 
 
 @dataclass
@@ -68,7 +68,7 @@ class DashboardLayout:
     name: str
     rows: int = 3
     columns: int = 4
-    widgets: List[Dict[str, Any]] = field(default_factory=list)
+    widgets: list[dict[str, Any]] = field(default_factory=list)
     theme: str = "dark"
     refresh_rate: float = 1.0
 
@@ -76,7 +76,7 @@ class DashboardLayout:
 class DashboardManager:
     """Manages the overall dashboard system."""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
         """Initialize dashboard manager.
 
         Args:
@@ -88,25 +88,25 @@ class DashboardManager:
 
         # Core components
         self.dashboard = create_dashboard(self.config.get("dashboard_config", {}))
-        self.widgets: Dict[str, DashboardWidget] = {}
-        self.data_sources: Dict[str, DataSource] = {}
-        self.layouts: Dict[str, DashboardLayout] = {}
+        self.widgets: dict[str, DashboardWidget] = {}
+        self.data_sources: dict[str, DataSource] = {}
+        self.layouts: dict[str, DashboardLayout] = {}
 
         # Current state
-        self.current_layout: Optional[DashboardLayout] = None
-        self.active_analyses: Set[str] = set()
+        self.current_layout: DashboardLayout | None = None
+        self.active_analyses: set[str] = set()
 
         # Data routing
-        self.widget_subscriptions: Dict[str, List[str]] = defaultdict(list)
-        self.source_subscriptions: Dict[str, List[str]] = defaultdict(list)
+        self.widget_subscriptions: dict[str, list[str]] = defaultdict(list)
+        self.source_subscriptions: dict[str, list[str]] = defaultdict(list)
 
         # Threading
-        self.polling_thread: Optional[threading.Thread] = None
+        self.polling_thread: threading.Thread | None = None
         self.stop_polling = threading.Event()
         self.update_lock = threading.Lock()
 
         # Tool integrations
-        self.tool_handlers: Dict[str, Any] = {}
+        self.tool_handlers: dict[str, Any] = {}
 
         # Initialize default components
         self._initialize_default_layout()
@@ -310,7 +310,7 @@ class DashboardManager:
         # Shutdown dashboard
         self.dashboard.shutdown()
 
-    def process_analysis_event(self, event_type: str, tool: str, data: Dict[str, Any]) -> None:
+    def process_analysis_event(self, event_type: str, tool: str, data: dict[str, Any]) -> None:
         """Process analysis event from tools.
 
         Args:
@@ -423,7 +423,7 @@ class DashboardManager:
 
             self.stop_polling.wait(timeout=0.5)
 
-    def _distribute_data(self, source_id: str, data: Dict[str, Any]) -> None:
+    def _distribute_data(self, source_id: str, data: dict[str, Any]) -> None:
         """Distribute data to subscribed widgets.
 
         Args:
@@ -439,7 +439,7 @@ class DashboardManager:
                 widget_data = WidgetData(timestamp=datetime.now(), values=data, metadata={"source": source_id})
                 widget.update_data(widget_data)
 
-    def _collect_performance_data(self) -> Dict[str, Any]:
+    def _collect_performance_data(self) -> dict[str, Any]:
         """Collect performance data.
 
         Returns:
@@ -455,7 +455,7 @@ class DashboardManager:
             "cache_hit_rate": metrics.get("cache_hit_rate", 0),
         }
 
-    def _collect_system_data(self) -> Dict[str, Any]:
+    def _collect_system_data(self) -> dict[str, Any]:
         """Collect system data.
 
         Returns:
@@ -477,7 +477,7 @@ class DashboardManager:
             self.logger.warning(f"Failed to collect system data: {e}")
             return {}
 
-    def _collect_tool_data(self, tool_name: str) -> Dict[str, Any]:
+    def _collect_tool_data(self, tool_name: str) -> dict[str, Any]:
         """Collect data from integrated tool.
 
         Args:
@@ -495,10 +495,9 @@ class DashboardManager:
             # Try to get metrics from tool
             if hasattr(handler, "get_metrics"):
                 return handler.get_metrics()
-            elif hasattr(handler, "get_status"):
+            if hasattr(handler, "get_status"):
                 return handler.get_status()
-            else:
-                return {}
+            return {}
         except Exception as e:
             self.logger.error(f"Error collecting data from {tool_name}: {e}")
             return {}
@@ -592,7 +591,7 @@ class DashboardManager:
             self.logger.warning(f"Dashboard event: {event.title} - {event.description}")
 
 
-def create_dashboard_manager(config: Optional[Dict[str, Any]] = None) -> DashboardManager:
+def create_dashboard_manager(config: dict[str, Any] | None = None) -> DashboardManager:
     """Create dashboard manager.
 
     Args:

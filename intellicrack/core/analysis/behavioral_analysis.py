@@ -33,7 +33,7 @@ import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Callable
 
 import psutil
 
@@ -49,17 +49,17 @@ class QEMUConfig:
     machine_type: str = "pc"
     cpu_model: str = "max"
     memory_size: str = "2G"
-    kernel: Optional[Path] = None
-    initrd: Optional[Path] = None
-    disk_image: Optional[Path] = None
+    kernel: Path | None = None
+    initrd: Path | None = None
+    disk_image: Path | None = None
     network_mode: str = "user"
     enable_kvm: bool = True
     enable_gdb: bool = True
     gdb_port: int = 1234
     monitor_port: int = 4444
     qmp_port: int = 5555
-    vnc_display: Optional[int] = 0
-    extra_args: List[str] = field(default_factory=list)
+    vnc_display: int | None = 0
+    extra_args: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -68,8 +68,8 @@ class HookPoint:
 
     module: str
     function: str
-    on_enter: Optional[Callable] = None
-    on_exit: Optional[Callable] = None
+    on_enter: Callable | None = None
+    on_exit: Callable | None = None
     enabled: bool = True
     priority: int = 0
 
@@ -82,10 +82,10 @@ class MonitorEvent:
     event_type: str
     process_id: int
     thread_id: int
-    data: Dict[str, Any]
-    context: Dict[str, Any] = field(default_factory=dict)
+    data: dict[str, Any]
+    context: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert monitor event to dictionary representation."""
         return {
             "timestamp": self.timestamp,
@@ -103,10 +103,10 @@ class QEMUController:
     def __init__(self, config: QEMUConfig) -> None:
         """Initialize QEMU controller with configuration."""
         self.config = config
-        self.process: Optional[subprocess.Popen] = None
-        self.monitor_socket: Optional[socket.socket] = None
-        self.qmp_socket: Optional[socket.socket] = None
-        self.gdb_socket: Optional[socket.socket] = None
+        self.process: subprocess.Popen | None = None
+        self.monitor_socket: socket.socket | None = None
+        self.qmp_socket: socket.socket | None = None
+        self.gdb_socket: socket.socket | None = None
         self.is_running = False
         self._lock = threading.Lock()
 
@@ -214,7 +214,7 @@ class QEMUController:
             logger.error(f"Monitor command failed: {e}")
             return ""
 
-    def send_qmp_command(self, command: Dict[str, Any]) -> Dict[str, Any]:
+    def send_qmp_command(self, command: dict[str, Any]) -> dict[str, Any]:
         """Send QMP command to QEMU."""
         if not self.qmp_socket:
             return {}
@@ -228,7 +228,7 @@ class QEMUController:
             logger.error(f"QMP command failed: {e}")
             return {}
 
-    def _find_qemu_binary(self) -> Optional[str]:
+    def _find_qemu_binary(self) -> str | None:
         """Find QEMU binary on system."""
         possible_names = [
             "qemu-system-x86_64",
@@ -325,9 +325,9 @@ class APIHookingFramework:
 
     def __init__(self) -> None:
         """Initialize API hooking framework."""
-        self.hooks: Dict[str, List[HookPoint]] = defaultdict(list)
-        self.events: List[MonitorEvent] = []
-        self.active_hooks: Set[str] = set()
+        self.hooks: dict[str, list[HookPoint]] = defaultdict(list)
+        self.events: list[MonitorEvent] = []
+        self.active_hooks: set[str] = set()
         self._lock = threading.Lock()
         self._setup_platform_hooks()
 
@@ -404,7 +404,7 @@ class APIHookingFramework:
         with self._lock:
             self.active_hooks.discard(key)
 
-    def _hook_create_file(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
+    def _hook_create_file(self, args: list[Any], context: dict[str, Any]) -> Any | None:
         """Monitor CreateFileW calls."""
         try:
             filename = self._read_wide_string(args[0])
@@ -428,7 +428,7 @@ class APIHookingFramework:
 
         return None
 
-    def _hook_read_file(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
+    def _hook_read_file(self, args: list[Any], context: dict[str, Any]) -> Any | None:
         """Monitor ReadFile calls."""
         try:
             handle = args[0]
@@ -450,7 +450,7 @@ class APIHookingFramework:
 
         return None
 
-    def _hook_write_file(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
+    def _hook_write_file(self, args: list[Any], context: dict[str, Any]) -> Any | None:
         """Monitor WriteFile calls to track file writes."""
         try:
             handle = args[0]
@@ -474,7 +474,7 @@ class APIHookingFramework:
 
         return None
 
-    def _hook_reg_open_key(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
+    def _hook_reg_open_key(self, args: list[Any], context: dict[str, Any]) -> Any | None:
         """Monitor RegOpenKeyExW calls to track registry access."""
         try:
             hkey = args[0]
@@ -497,7 +497,7 @@ class APIHookingFramework:
 
         return None
 
-    def _hook_reg_query_value(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
+    def _hook_reg_query_value(self, args: list[Any], context: dict[str, Any]) -> Any | None:
         """Monitor registry queries via RegQueryValueExW hook."""
         try:
             hkey = args[0]
@@ -518,7 +518,7 @@ class APIHookingFramework:
 
         return None
 
-    def _hook_reg_set_value(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
+    def _hook_reg_set_value(self, args: list[Any], context: dict[str, Any]) -> Any | None:
         """Monitor registry writes via RegSetValueExW hook."""
         try:
             hkey = args[0]
@@ -541,7 +541,7 @@ class APIHookingFramework:
 
         return None
 
-    def _hook_connect(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
+    def _hook_connect(self, args: list[Any], context: dict[str, Any]) -> Any | None:
         """Monitor network connections via connect hook (Windows)."""
         try:
             socket_fd = args[0]
@@ -565,7 +565,7 @@ class APIHookingFramework:
 
         return None
 
-    def _hook_send(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
+    def _hook_send(self, args: list[Any], context: dict[str, Any]) -> Any | None:
         """Monitor network data transmission via send hook."""
         try:
             socket_fd = args[0]
@@ -589,7 +589,7 @@ class APIHookingFramework:
 
         return None
 
-    def _hook_recv(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
+    def _hook_recv(self, args: list[Any], context: dict[str, Any]) -> Any | None:
         """Monitor network data reception via recv hook."""
         try:
             socket_fd = args[0]
@@ -611,7 +611,7 @@ class APIHookingFramework:
 
         return None
 
-    def _hook_create_process(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
+    def _hook_create_process(self, args: list[Any], context: dict[str, Any]) -> Any | None:
         """Monitor process creation via NtCreateProcess hook."""
         try:
             process_handle = args[0]
@@ -633,7 +633,7 @@ class APIHookingFramework:
 
         return None
 
-    def _hook_open_process(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
+    def _hook_open_process(self, args: list[Any], context: dict[str, Any]) -> Any | None:
         """Monitor process access via NtOpenProcess hook."""
         try:
             args[0]
@@ -656,7 +656,7 @@ class APIHookingFramework:
 
         return None
 
-    def _hook_open(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
+    def _hook_open(self, args: list[Any], context: dict[str, Any]) -> Any | None:
         """Monitor file opening via open hook (Linux)."""
         try:
             pathname = self._read_string(args[0])
@@ -677,7 +677,7 @@ class APIHookingFramework:
 
         return None
 
-    def _hook_read(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
+    def _hook_read(self, args: list[Any], context: dict[str, Any]) -> Any | None:
         """Monitor file reading via read hook (Linux)."""
         try:
             fd = args[0]
@@ -699,7 +699,7 @@ class APIHookingFramework:
 
         return None
 
-    def _hook_write(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
+    def _hook_write(self, args: list[Any], context: dict[str, Any]) -> Any | None:
         """Monitor file writing via write hook (Linux)."""
         try:
             fd = args[0]
@@ -723,7 +723,7 @@ class APIHookingFramework:
 
         return None
 
-    def _hook_socket(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
+    def _hook_socket(self, args: list[Any], context: dict[str, Any]) -> Any | None:
         """Monitor network socket creation via socket hook (Linux)."""
         try:
             domain = args[0]
@@ -745,7 +745,7 @@ class APIHookingFramework:
 
         return None
 
-    def _hook_connect_linux(self, args: List[Any], context: Dict[str, Any]) -> Optional[Any]:
+    def _hook_connect_linux(self, args: list[Any], context: dict[str, Any]) -> Any | None:
         """Monitor network connections via connect hook (Linux)."""
         try:
             sockfd = args[0]
@@ -802,7 +802,7 @@ class APIHookingFramework:
         except Exception:
             return f"<unreadable: 0x{address:x}>"
 
-    def _read_bytes(self, address: int, size: int) -> Optional[bytes]:
+    def _read_bytes(self, address: int, size: int) -> bytes | None:
         """Read bytes from memory."""
         try:
             if platform.system() == "Windows":
@@ -818,7 +818,7 @@ class APIHookingFramework:
         except Exception:
             return None
 
-    def _parse_sockaddr(self, address: int) -> Dict[str, Any]:
+    def _parse_sockaddr(self, address: int) -> dict[str, Any]:
         """Parse sockaddr structure."""
         try:
             family_bytes = self._read_bytes(address, 2)
@@ -852,7 +852,7 @@ class AntiAnalysisDetector:
 
     def __init__(self) -> None:
         """Initialize anti-analysis detector."""
-        self.detections: List[Dict[str, Any]] = []
+        self.detections: list[dict[str, Any]] = []
         self.detection_methods = [
             self._detect_debugger_presence,
             self._detect_vm_artifacts,
@@ -864,7 +864,7 @@ class AntiAnalysisDetector:
             self._detect_code_obfuscation,
         ]
 
-    def scan(self, process_id: int) -> List[Dict[str, Any]]:
+    def scan(self, process_id: int) -> list[dict[str, Any]]:
         """Scan process for anti-analysis techniques."""
         self.detections.clear()
 
@@ -1294,11 +1294,11 @@ class BehavioralAnalyzer:
         self.qemu_controller = QEMUController(self.qemu_config)
         self.api_hooks = APIHookingFramework()
         self.anti_analysis = AntiAnalysisDetector()
-        self.events: List[MonitorEvent] = []
-        self.analysis_thread: Optional[threading.Thread] = None
+        self.events: list[MonitorEvent] = []
+        self.analysis_thread: threading.Thread | None = None
         self.stop_flag = threading.Event()
 
-    def run_analysis(self, duration: int = 60) -> Dict[str, Any]:
+    def run_analysis(self, duration: int = 60) -> dict[str, Any]:
         """Run comprehensive behavioral analysis."""
         logger.info(f"Starting behavioral analysis of {self.binary_path}")
 
@@ -1354,7 +1354,7 @@ class BehavioralAnalyzer:
         logger.info("Behavioral analysis complete")
         return results
 
-    def _run_qemu_analysis(self, duration: int) -> Dict[str, Any]:
+    def _run_qemu_analysis(self, duration: int) -> dict[str, Any]:
         """Run analysis in QEMU virtual machine."""
         qemu_results = {"started": False, "snapshots": [], "monitor_output": [], "events": []}
 
@@ -1386,7 +1386,7 @@ class BehavioralAnalyzer:
 
         return qemu_results
 
-    def _run_native_analysis(self, duration: int) -> Dict[str, Any]:
+    def _run_native_analysis(self, duration: int) -> dict[str, Any]:
         """Run analysis natively without virtualization."""
         native_results = {"process_started": False, "pid": None, "memory_usage": {}, "cpu_usage": []}
 
@@ -1422,7 +1422,7 @@ class BehavioralAnalyzer:
 
         return native_results
 
-    def _run_api_monitoring(self, duration: int) -> Dict[str, Any]:
+    def _run_api_monitoring(self, duration: int) -> dict[str, Any]:
         """Run API monitoring."""
         monitoring_results = {"hooks_installed": 0, "events_captured": 0, "unique_apis_called": set()}
 
@@ -1461,7 +1461,7 @@ class BehavioralAnalyzer:
 
         return monitoring_results
 
-    def _analyze_behavioral_patterns(self) -> Dict[str, Any]:
+    def _analyze_behavioral_patterns(self) -> dict[str, Any]:
         """Analyze captured events for behavioral patterns."""
         patterns = {
             "license_checks": [],
@@ -1504,7 +1504,7 @@ class BehavioralAnalyzer:
 
         return patterns
 
-    def _get_target_process_id(self) -> Optional[int]:
+    def _get_target_process_id(self) -> int | None:
         """Get the process ID of the target binary."""
         target_name = self.binary_path.name.lower()
 
@@ -1519,7 +1519,7 @@ class BehavioralAnalyzer:
 
         return None
 
-    def _generate_summary(self, results: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_summary(self, results: dict[str, Any]) -> dict[str, Any]:
         """Generate analysis summary."""
         summary = {
             "total_events": len(self.events),
@@ -1567,7 +1567,7 @@ def create_behavioral_analyzer(binary_path: Path) -> BehavioralAnalyzer:
     return BehavioralAnalyzer(binary_path)
 
 
-def run_behavioral_analysis(binary_path: Path, duration: int = 60) -> Dict[str, Any]:
+def run_behavioral_analysis(binary_path: Path, duration: int = 60) -> dict[str, Any]:
     """Run comprehensive behavioral analysis on a binary."""
     analyzer = create_behavioral_analyzer(binary_path)
     return analyzer.run_analysis(duration)

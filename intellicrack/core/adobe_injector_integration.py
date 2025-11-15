@@ -14,14 +14,16 @@ import json
 import subprocess
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
     PYQT6_AVAILABLE,
+    QCloseEvent,
     QGroupBox,
     QHBoxLayout,
     QLabel,
     QPushButton,
+    QResizeEvent,
     Qt,
     QVBoxLayout,
     QWidget,
@@ -93,8 +95,8 @@ class AdobeInjectorProcess:
     def __init__(self, adobe_injector_path: Path) -> None:
         """Initialize with path to Adobe Injector executable."""
         self.adobe_injector_path = adobe_injector_path
-        self.process: Optional[subprocess.Popen] = None
-        self.hwnd: Optional[int] = None
+        self.process: subprocess.Popen | None = None
+        self.hwnd: int | None = None
         self.embedded = False
         self.config_path = adobe_injector_path.parent / "config.ini"
         self.monitoring_thread = None
@@ -136,15 +138,15 @@ class AdobeInjectorProcess:
             print(f"Failed to start Adobe Injector: {e}")
             return False
 
-    def _find_adobe_injector_window(self, max_attempts: int = 10) -> Optional[int]:
+    def _find_adobe_injector_window(self, max_attempts: int = 10) -> int | None:
         """Find Adobe Injector window by title."""
         window_titles = ["Adobe Injector v", "GenP v"]  # Check both for compatibility
 
         for _attempt in range(max_attempts):
             # Enumerate windows to find Adobe Injector
-            windows = []
+            windows: list[int] = []
 
-            def enum_callback(hwnd, lParam, windows=windows) -> bool:
+            def enum_callback(hwnd: int, lParam: int, windows: list[int] = windows) -> bool:
                 length = Win32API.user32.GetWindowTextLengthW(hwnd)
                 if length > 0:
                     buffer = ctypes.create_unicode_buffer(length + 1)
@@ -226,7 +228,7 @@ class AdobeInjectorWidget(QWidget if PYQT6_AVAILABLE else object):
         status_updated = None
         patch_completed = None
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: Any | None = None) -> None:
         """Initialize the AdobeInjectorWidget.
 
         Args:
@@ -366,14 +368,14 @@ class AdobeInjectorWidget(QWidget if PYQT6_AVAILABLE else object):
 
         self.status_updated.emit("Rebranding configuration created")
 
-    def resizeEvent(self, event) -> None:
+    def resizeEvent(self, event: QResizeEvent) -> None:
         """Handle widget resize to adjust embedded window."""
         super().resizeEvent(event)
         if self.adobe_injector_process and self.adobe_injector_process.embedded:
             size = self.embed_container.size()
             self.adobe_injector_process.resize_to_parent(size.width(), size.height())
 
-    def closeEvent(self, event) -> None:
+    def closeEvent(self, event: QCloseEvent) -> None:
         """Clean up on widget close."""
         if self.adobe_injector_process:
             self.adobe_injector_process.terminate()

@@ -318,8 +318,10 @@ class PEStructureModel(QAbstractItemModel):
         self._add_exports_section()
         self._add_certificates_section()
 
-    def columnCount(self, parent: QModelIndex = QModelIndex()) -> int:
+    def columnCount(self, parent: QModelIndex = None) -> int:
         """Return number of columns."""
+        if parent is None:
+            parent = QModelIndex()
         return self.root_item.column_count()
 
     def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
@@ -371,8 +373,10 @@ class PEStructureModel(QAbstractItemModel):
 
         return None
 
-    def index(self, row: int, column: int, parent: QModelIndex = QModelIndex()) -> QModelIndex:
+    def index(self, row: int, column: int, parent: QModelIndex = None) -> QModelIndex:
         """Create index for row, column under parent."""
+        if parent is None:
+            parent = QModelIndex()
         if not self.hasIndex(row, column, parent):
             return QModelIndex()
 
@@ -399,8 +403,10 @@ class PEStructureModel(QAbstractItemModel):
 
         return self.createIndex(parent_item.row(), 0, parent_item)
 
-    def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:
+    def rowCount(self, parent: QModelIndex = None) -> int:
         """Return number of rows under parent."""
+        if parent is None:
+            parent = QModelIndex()
         if parent.column() > 0:
             return 0
 

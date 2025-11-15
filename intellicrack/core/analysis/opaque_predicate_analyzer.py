@@ -191,11 +191,10 @@ class ConstantPropagationEngine:
                 self._handle_pop(operands, inst, state)
             elif mnemonic == "call":
                 self._invalidate_volatile_registers(state)
-            else:
-                if operands:
-                    dest = self._extract_register(operands[0])
-                    if dest:
-                        state.pop(dest, None)
+            elif operands:
+                dest = self._extract_register(operands[0])
+                if dest:
+                    state.pop(dest, None)
 
         return state
 
@@ -581,14 +580,14 @@ class ConstantPropagationEngine:
         """
         merged = {}
 
-        for reg in state1:
+        for reg, reg_value in state1.items():
             if reg in state2:
                 if (
-                    state1[reg].is_constant
+                    reg_value.is_constant
                     and state2[reg].is_constant
-                    and state1[reg].value == state2[reg].value
+                    and reg_value.value == state2[reg].value
                 ):
-                    merged[reg] = state1[reg]
+                    merged[reg] = reg_value
 
         return merged
 
@@ -702,11 +701,10 @@ class SymbolicExecutionEngine:
             if result_true == z3.sat and result_false == z3.unsat:
                 proof = f"Z3 proved predicate is always TRUE: {condition_expr}"
                 return True, proof
-            elif result_false == z3.sat and result_true == z3.unsat:
+            if result_false == z3.sat and result_true == z3.unsat:
                 proof = f"Z3 proved predicate is always FALSE: {condition_expr}"
                 return False, proof
-            else:
-                return None, None
+            return None, None
 
         except Exception as e:
             self.logger.debug(f"Symbolic execution failed: {e}")
@@ -740,13 +738,13 @@ class SymbolicExecutionEngine:
             if inst_disasm.startswith("cmp"):
                 cmp_inst = inst
                 break
-            elif inst_disasm.startswith("test"):
+            if inst_disasm.startswith("test"):
                 test_inst = inst
                 break
 
         if cmp_inst:
             return self._build_comparison_expr(cmp_inst, disasm, symbolic_vars)
-        elif test_inst:
+        if test_inst:
             return self._build_test_expr(test_inst, disasm, symbolic_vars)
 
         return None
@@ -787,19 +785,19 @@ class SymbolicExecutionEngine:
 
         if "je" in jump_inst or "jz" in jump_inst:
             return op1 == op2
-        elif "jne" in jump_inst or "jnz" in jump_inst:
+        if "jne" in jump_inst or "jnz" in jump_inst:
             return op1 != op2
-        elif "ja" in jump_inst:
+        if "ja" in jump_inst:
             return z3.UGT(op1, op2)
-        elif "jb" in jump_inst:
+        if "jb" in jump_inst:
             return z3.ULT(op1, op2)
-        elif "jg" in jump_inst:
+        if "jg" in jump_inst:
             return op1 > op2
-        elif "jl" in jump_inst:
+        if "jl" in jump_inst:
             return op1 < op2
-        elif "jge" in jump_inst:
+        if "jge" in jump_inst:
             return op1 >= op2
-        elif "jle" in jump_inst:
+        if "jle" in jump_inst:
             return op1 <= op2
 
         return None
@@ -842,7 +840,7 @@ class SymbolicExecutionEngine:
 
         if "jz" in jump_inst or "je" in jump_inst:
             return result == 0
-        elif "jnz" in jump_inst or "jne" in jump_inst:
+        if "jnz" in jump_inst or "jne" in jump_inst:
             return result != 0
 
         return None
@@ -1208,15 +1206,15 @@ class OpaquePredicateAnalyzer:
 
                             if "je" in last_inst or "jz" in last_inst:
                                 return val1 == val2
-                            elif "jne" in last_inst or "jnz" in last_inst:
+                            if "jne" in last_inst or "jnz" in last_inst:
                                 return val1 != val2
-                            elif "jg" in last_inst:
+                            if "jg" in last_inst:
                                 return val1 > val2
-                            elif "jl" in last_inst:
+                            if "jl" in last_inst:
                                 return val1 < val2
-                            elif "jge" in last_inst:
+                            if "jge" in last_inst:
                                 return val1 >= val2
-                            elif "jle" in last_inst:
+                            if "jle" in last_inst:
                                 return val1 <= val2
 
             elif disasm.startswith("test"):
@@ -1233,7 +1231,7 @@ class OpaquePredicateAnalyzer:
                                 last_inst = basic_block.instructions[-1].get("disasm", "").lower()
                                 if "jz" in last_inst or "je" in last_inst:
                                     return val == 0
-                                elif "jnz" in last_inst or "jne" in last_inst:
+                                if "jnz" in last_inst or "jne" in last_inst:
                                     return val != 0
 
         return None
@@ -1295,8 +1293,7 @@ class OpaquePredicateAnalyzer:
         if true_successor and false_successor:
             if always_value:
                 return false_successor
-            else:
-                return true_successor
+            return true_successor
 
         return None
 

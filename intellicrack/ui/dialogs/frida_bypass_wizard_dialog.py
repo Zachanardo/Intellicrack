@@ -6,7 +6,6 @@ Provides comprehensive interface for the Frida Bypass Wizard with real-time moni
 import json
 import os
 from datetime import datetime
-from typing import Optional
 
 import psutil
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
@@ -77,7 +76,9 @@ class FridaWorkerThread(QThread):
                 success = self.wizard.attach_to_process(process_name=self.target_process)
 
             if not success:
-                raise Exception("Failed to attach to target process")
+                error_msg = "Failed to attach to target process"
+                logger.error(error_msg)
+                raise Exception(error_msg)
 
             self.progress_update.emit("Successfully attached to process")
 
@@ -125,7 +126,9 @@ class FridaWorkerThread(QThread):
         """Run manual script injection."""
         script_path = self.options.get("script_path")
         if not script_path:
-            raise Exception("No script path provided")
+            error_msg = "No script path provided"
+            logger.error(error_msg)
+            raise Exception(error_msg)
 
         self.progress_update.emit(f"Loading script: {script_path}")
 
@@ -1435,7 +1438,7 @@ setTimeout(function() {{
 
         self.log_message("Bypass operation stopped", "orange")
 
-    def get_selected_process(self) -> Optional[str]:
+    def get_selected_process(self) -> str | None:
         """Get the selected target process."""
         # Check manual input first
         if self.manual_process_input.text():

@@ -121,7 +121,9 @@ class HexCommand(ABC):
         """
         # Default implementation for commands that don't support merging
         # Subclasses should override this method if they support merging
-        raise ValueError(f"Command type {self.__class__.__name__} does not support merging with {other.__class__.__name__}")
+        error_msg = f"Command type {self.__class__.__name__} does not support merging with {other.__class__.__name__}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
 
 class ReplaceCommand(HexCommand):
@@ -182,7 +184,9 @@ class ReplaceCommand(HexCommand):
     def merge_with(self, other: "HexCommand") -> "HexCommand":
         """Merge with another replace command."""
         if not self.can_merge_with(other):
-            raise ValueError("Cannot merge non-adjacent replace commands")
+            error_msg = "Cannot merge non-adjacent replace commands"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
 
         # Combine the data
         combined_new_data = self.new_data + other.new_data
@@ -266,7 +270,9 @@ class InsertCommand(HexCommand):
 
         """
         if not self.can_merge_with(other):
-            raise ValueError("Cannot merge non-consecutive insert commands")
+            error_msg = "Cannot merge non-consecutive insert commands"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
 
         # Combine the data
         combined_data = self.data + other.data
@@ -363,7 +369,9 @@ class DeleteCommand(HexCommand):
 
         """
         if not self.can_merge_with(other):
-            raise ValueError("Cannot merge non-adjacent delete commands")
+            error_msg = "Cannot merge non-adjacent delete commands"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
 
         # Determine the range of the merged deletion
         min_offset = min(self.offset, other.offset)
@@ -389,21 +397,20 @@ class DeleteCommand(HexCommand):
                 else:
                     # Gap between deletions - shouldn't happen if can_merge_with is correct
                     combined_deleted_data = None
-            else:
-                # Other command comes first
-                if other.offset + other.length >= self.offset:
-                    # Overlapping or adjacent
-                    overlap_start = self.offset - other.offset
-                    overlap_length = min(other.length - overlap_start, self.length)
-                    # Take other.deleted_data and append non-overlapping part of self
-                    if self.offset + self.length > other.offset + other.length:
-                        extra_data = self.deleted_data[overlap_length:]
-                        combined_deleted_data = other.deleted_data + extra_data
-                    else:
-                        combined_deleted_data = other.deleted_data
+            # Other command comes first
+            elif other.offset + other.length >= self.offset:
+                # Overlapping or adjacent
+                overlap_start = self.offset - other.offset
+                overlap_length = min(other.length - overlap_start, self.length)
+                # Take other.deleted_data and append non-overlapping part of self
+                if self.offset + self.length > other.offset + other.length:
+                    extra_data = self.deleted_data[overlap_length:]
+                    combined_deleted_data = other.deleted_data + extra_data
                 else:
-                    # Gap between deletions - shouldn't happen if can_merge_with is correct
-                    combined_deleted_data = None
+                    combined_deleted_data = other.deleted_data
+            else:
+                # Gap between deletions - shouldn't happen if can_merge_with is correct
+                combined_deleted_data = None
 
         # Create new merged command
         return DeleteCommand(min_offset, combined_length, combined_deleted_data)

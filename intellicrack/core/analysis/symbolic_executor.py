@@ -7,7 +7,7 @@ import random
 import struct
 import time
 import traceback
-from typing import Any
+from typing import Any, Optional
 
 from intellicrack.utils.logger import logger
 
@@ -112,8 +112,14 @@ class SymbolicExecutionEngine:
 
         return project, initial_state, symbolic_args
 
-    def _configure_exploration_techniques(self, simgr: Any, vulnerability_types: list[str]) -> None:
-        """Configure advanced exploration techniques for symbolic execution."""
+    def _configure_exploration_techniques(self, simgr: object, vulnerability_types: list[str]) -> None:
+        """Configure advanced exploration techniques for path exploration.
+
+        Args:
+            simgr: Manager object from angr for handling program state exploration and traversal.
+            vulnerability_types: List of vulnerability types to configure exploration for.
+
+        """
         # Add advanced exploration techniques
         if "buffer_overflow" in vulnerability_types:
             simgr.use_technique(angr.exploration_techniques.Spiller())
@@ -131,8 +137,14 @@ class SymbolicExecutionEngine:
         if hasattr(angr.exploration_techniques, "LoopSeer"):
             simgr.use_technique(angr.exploration_techniques.LoopSeer(bound=10))
 
-    def _explore_program_paths(self, simgr: Any, project: Any) -> None:
-        """Explore program paths with custom find/avoid conditions."""
+    def _explore_program_paths(self, simgr: object, project: object) -> None:
+        """Explore program paths with custom find/avoid conditions.
+
+        Args:
+            simgr: Manager object for exploration control.
+            project: Angr project object representing the binary.
+
+        """
         self.logger.info("Exploring program paths with enhanced techniques...")
 
         # Define vulnerability-specific exploration targets
@@ -152,8 +164,14 @@ class SymbolicExecutionEngine:
             timeout=self.timeout,
         )
 
-    def _analyze_integer_overflows(self, simgr: Any, vulnerabilities: list[dict[str, Any]]) -> None:
-        """Analyze states for integer overflow vulnerabilities."""
+    def _analyze_integer_overflows(self, simgr: object, vulnerabilities: list[dict[str, Any]]) -> None:
+        """Analyze states for integer overflow vulnerabilities.
+
+        Args:
+            simgr: Manager object containing program execution states.
+            vulnerabilities: List to append discovered integer overflow vulnerabilities.
+
+        """
         for _state in simgr.deadended + simgr.active:
             # Look for arithmetic operations with insufficient bounds checking
             for _constraint in _state.solver.constraints:
@@ -168,8 +186,15 @@ class SymbolicExecutionEngine:
                         }
                         vulnerabilities.append(vuln)
 
-    def _analyze_format_string_vulns(self, simgr: Any, project: Any, vulnerabilities: list[dict[str, Any]]) -> None:
-        """Analyze states for format string vulnerabilities."""
+    def _analyze_format_string_vulns(self, simgr: object, project: object, vulnerabilities: list[dict[str, Any]]) -> None:
+        """Analyze states for format string vulnerabilities.
+
+        Args:
+            simgr: Manager object containing program execution states.
+            project: Angr project object representing the binary.
+            vulnerabilities: List to append discovered format string vulnerabilities.
+
+        """
         for _state in simgr.active + simgr.deadended:
             if self._check_format_string(_state, project):
                 vuln = {
@@ -181,8 +206,15 @@ class SymbolicExecutionEngine:
                 }
                 vulnerabilities.append(vuln)
 
-    def _analyze_memory_vulns(self, simgr: Any, vulnerability_types: list[str], vulnerabilities: list[dict[str, Any]]) -> None:
-        """Analyze states for use-after-free and double-free vulnerabilities."""
+    def _analyze_memory_vulns(self, simgr: object, vulnerability_types: list[str], vulnerabilities: list[dict[str, Any]]) -> None:
+        """Analyze states for use-after-free and double-free vulnerabilities.
+
+        Args:
+            simgr: Manager object containing program execution states.
+            vulnerability_types: List of vulnerability types to check for.
+            vulnerabilities: List to append discovered memory vulnerabilities.
+
+        """
         # Check for use-after-free vulnerabilities
         if "use_after_free" in vulnerability_types:
             for _state in simgr.active + simgr.deadended + simgr.errored:
@@ -221,9 +253,18 @@ class SymbolicExecutionEngine:
                         freed_ptrs[ptr] = info["freed_at"]
 
     def _analyze_injection_and_race_vulns(
-        self, simgr: Any, project: Any, initial_state: Any, vulnerability_types: list[str], vulnerabilities: list[dict[str, Any]],
+        self, simgr: object, project: object, initial_state: object, vulnerability_types: list[str], vulnerabilities: list[dict[str, Any]],
     ) -> None:
-        """Analyze states for race conditions and command injection vulnerabilities."""
+        """Analyze states for race conditions and command injection vulnerabilities.
+
+        Args:
+            simgr: Manager object containing program execution states.
+            project: Angr project object representing the binary.
+            initial_state: Initial program state for taint tracking reference.
+            vulnerability_types: List of vulnerability types to check for.
+            vulnerabilities: List to append discovered injection and race vulnerabilities.
+
+        """
         # Check for race conditions
         if "race_condition" in vulnerability_types:
             for _state in simgr.active + simgr.deadended:
@@ -259,9 +300,17 @@ class SymbolicExecutionEngine:
                                     vulnerabilities.append(vuln)
 
     def _analyze_type_confusion_vulns(
-        self, simgr: Any, project: Any, vulnerability_types: list[str], vulnerabilities: list[dict[str, Any]],
+        self, simgr: object, project: object, vulnerability_types: list[str], vulnerabilities: list[dict[str, Any]],
     ) -> None:
-        """Analyze states for type confusion vulnerabilities."""
+        """Analyze states for type confusion vulnerabilities.
+
+        Args:
+            simgr: Manager object containing program execution states.
+            project: Angr project object representing the binary.
+            vulnerability_types: List of vulnerability types to check for.
+            vulnerabilities: List to append discovered type confusion vulnerabilities.
+
+        """
         if "type_confusion" in vulnerability_types:
             for _state in simgr.active + simgr.deadended:
                 if self._check_type_confusion(_state, project):
@@ -353,7 +402,7 @@ class SymbolicExecutionEngine:
             self.logger.error(traceback.format_exc())
             return [{"error": f"Symbolic execution failed: {e!s}"}]
 
-    def _check_integer_overflow(self, state, constraint) -> bool:
+    def _check_integer_overflow(self, state: object, constraint: object) -> bool:
         """Check if a constraint could lead to an integer overflow.
 
         Args:
@@ -392,7 +441,7 @@ class SymbolicExecutionEngine:
             self.logger.warning("Error during integer overflow check: %s", e, exc_info=False)
             return False
 
-    def _check_format_string(self, state, project) -> bool:
+    def _check_format_string(self, state: object, project: object) -> bool:
         """Check if state could contain a format string vulnerability.
 
         Args:
@@ -574,8 +623,7 @@ class SymbolicExecutionEngine:
         for i in range(spray_count):
             # Each spray object contains markers and hijacked vtable pointers
             marker = struct.pack("<Q", 0x4141414141410000 + i)
-            # Include potential gadget addresses from module
-            # Note: Using random module for generating memory addresses in simulation, not cryptographic purposes
+            # Include potential gadget addresses from module for heap exploitation analysis
             gadget_addr = base_address + (i * 0x100) + random.randint(0, 0xFF)  # noqa: S311
             spray_payload += marker
             spray_payload += struct.pack("<Q", gadget_addr)
@@ -1182,14 +1230,13 @@ int main() {{
                     # Point to shellcode
                     shellcode_addr = self._allocate_shellcode_addr(process_info)
                     vtable_data += struct.pack("<Q", shellcode_addr)
+            # Keep original or use safe gadget
+            elif vfunc:
+                vtable_data += struct.pack("<Q", vfunc)
             else:
-                # Keep original or use safe gadget
-                if vfunc:
-                    vtable_data += struct.pack("<Q", vfunc)
-                else:
-                    # Use ret gadget for safety
-                    ret_gadget = self._find_ret_gadget(gadgets)
-                    vtable_data += struct.pack("<Q", ret_gadget or 0xDEADBEEF)
+                # Use ret gadget for safety
+                ret_gadget = self._find_ret_gadget(gadgets)
+                vtable_data += struct.pack("<Q", ret_gadget or 0xDEADBEEF)
 
         return {
             "address": vtable_addr,
@@ -1227,10 +1274,9 @@ int main() {{
         # Estimate based on class complexity
         if "Base" in class_name or "Simple" in class_name:
             return 0x20
-        elif "Complex" in class_name or "Manager" in class_name:
+        if "Complex" in class_name or "Manager" in class_name:
             return 0x100
-        else:
-            return 0x40
+        return 0x40
 
     def _extract_vfuncs(self, vtable_addr: int, process_info: dict[str, Any]) -> list[int]:
         """Extract virtual function addresses from vtable."""
@@ -1272,8 +1318,7 @@ int main() {{
 
         if source_bases and target_bases and source_bases[0] == target_bases[0]:
             return "static_cast"  # Same base class
-        else:
-            return "reinterpret_cast"  # Unrelated types
+        return "reinterpret_cast"  # Unrelated types
 
     def _find_exploitable_offset(self, class_info: dict[str, Any]) -> int:
         """Find offset most suitable for exploitation."""
@@ -1351,7 +1396,7 @@ int main() {{
         strings = process_info.get("strings", {})
         if "cmd.exe" in strings:
             return strings["cmd.exe"]
-        elif "/bin/sh" in strings:
+        if "/bin/sh" in strings:
             return strings["/bin/sh"]
 
         # Allocate in writable section
@@ -1446,7 +1491,7 @@ int main() {{
                 shellcode[28:36] = addr_bytes
 
             return shellcode
-        elif os_type == "linux" and arch == "x64":
+        if os_type == "linux" and arch == "x64":
             # Linux x64 execve shellcode
             shellcode = bytearray(
                 [
@@ -1533,8 +1578,16 @@ int main() {{
 
         return min(max(reliability, 0.1), 0.9)
 
-    def _check_memory_violations(self, state) -> bool:
-        """Check for memory violations in the current state."""
+    def _check_memory_violations(self, state: object) -> bool:
+        """Check for memory violations in the current state.
+
+        Args:
+            state: Program state to analyze.
+
+        Returns:
+            True if memory violations detected, False otherwise.
+
+        """
         if not hasattr(state, "memory"):
             return False
 
@@ -1563,8 +1616,16 @@ int main() {{
 
         return False
 
-    def _check_stack_buffer_overflow(self, state) -> bool:
-        """Check for stack buffer overflows by examining stack pointer manipulation."""
+    def _check_stack_buffer_overflow(self, state: object) -> bool:
+        """Check for stack buffer overflows by examining stack pointer manipulation.
+
+        Args:
+            state: Program state to analyze.
+
+        Returns:
+            True if stack buffer overflow detected, False otherwise.
+
+        """
         if not hasattr(state, "regs"):
             return False
 
@@ -1596,8 +1657,17 @@ int main() {{
 
         return False
 
-    def _check_dangerous_function_calls(self, state, project) -> bool:
-        """Check for function calls to dangerous functions with symbolic arguments."""
+    def _check_dangerous_function_calls(self, state: object, project: object) -> bool:
+        """Check for function calls to dangerous functions with symbolic arguments.
+
+        Args:
+            state: Program state to analyze.
+            project: Angr project object.
+
+        Returns:
+            True if dangerous function call with symbolic args detected, False otherwise.
+
+        """
         if not (hasattr(state, "history") and hasattr(state.history, "bbl_addrs")):
             return False
 
@@ -1643,8 +1713,16 @@ int main() {{
 
         return False
 
-    def _check_heap_buffer_overflow(self, state) -> bool:
-        """Check for heap buffer overflows by examining malloc/free patterns."""
+    def _check_heap_buffer_overflow(self, state: object) -> bool:
+        """Check for heap buffer overflows by examining malloc/free patterns.
+
+        Args:
+            state: Program state to analyze.
+
+        Returns:
+            True if heap buffer overflow detected, False otherwise.
+
+        """
         if not hasattr(state, "heap"):
             return False
 
@@ -1670,7 +1748,7 @@ int main() {{
 
         return False
 
-    def _check_buffer_overflow(self, state, project) -> bool:
+    def _check_buffer_overflow(self, state: object, project: object) -> bool:
         """Check if state could contain a buffer overflow vulnerability.
 
         Args:
@@ -1703,7 +1781,7 @@ int main() {{
             self.logger.warning("Error during buffer overflow check: %s", e, exc_info=False)
             return False
 
-    def _analyze_vulnerable_paths(self, simgr, vulnerability_types: list[str], project) -> list[dict[str, Any]]:
+    def _analyze_vulnerable_paths(self, simgr: object, vulnerability_types: list[str], project: object) -> list[dict[str, Any]]:
         """Analyze execution manager paths for vulnerabilities with enhanced detection.
 
         Args:
@@ -2448,8 +2526,16 @@ int main() {{
 
         return unique_vulns
 
-    def _setup_heap_tracking(self, state):
-        """Set up heap tracking for use-after-free detection."""
+    def _setup_heap_tracking(self, state: object) -> dict[str, Any]:
+        """Set up heap tracking for use-after-free detection.
+
+        Args:
+            state: Program state to configure.
+
+        Returns:
+            Dictionary containing heap tracking structures.
+
+        """
         if not hasattr(state, "heap"):
             # Initialize heap tracking structures
             state.heap = {
@@ -2474,8 +2560,13 @@ int main() {{
 
         return state.heap
 
-    def _track_heap_write(self, state) -> None:
-        """Track heap write operations for UAF and overflow detection."""
+    def _track_heap_write(self, state: object) -> None:
+        """Track heap write operations for UAF and overflow detection.
+
+        Args:
+            state: Program state with heap metadata.
+
+        """
         if not hasattr(state, "heap"):
             return
 
@@ -2514,8 +2605,13 @@ int main() {{
                             },
                         )
 
-    def _track_heap_read(self, state) -> None:
-        """Track heap read operations for UAF detection."""
+    def _track_heap_read(self, state: object) -> None:
+        """Track heap read operations for UAF detection.
+
+        Args:
+            state: Program state with heap metadata.
+
+        """
         if not hasattr(state, "heap"):
             return
 
@@ -2563,8 +2659,13 @@ int main() {{
             # Symbol resolution failed - continue without hooks
             pass
 
-    def _malloc_hook(self, state) -> None:
-        """Track allocations by hooking malloc."""
+    def _malloc_hook(self, state: object) -> None:
+        """Track allocations by hooking malloc.
+
+        Args:
+            state: Program state during malloc call.
+
+        """
         size = state.solver.eval(state.regs.rdi if state.arch.bits == 64 else state.regs.eax)
 
         # Perform the allocation
@@ -2581,8 +2682,13 @@ int main() {{
         # Return the allocated address
         state.regs.rax = addr
 
-    def _free_hook(self, state) -> None:
-        """Track deallocations and detect use-after-free by hooking free."""
+    def _free_hook(self, state: object) -> None:
+        """Track deallocations and detect use-after-free by hooking free.
+
+        Args:
+            state: Program state during free call.
+
+        """
         ptr = state.solver.eval(state.regs.rdi if state.arch.bits == 64 else state.regs.eax)
 
         # Check if already freed (double-free)
@@ -2599,8 +2705,13 @@ int main() {{
         # Perform the free
         state.heap._free(ptr)
 
-    def _setup_taint_tracking(self, state) -> None:
-        """Set up taint tracking for data flow analysis."""
+    def _setup_taint_tracking(self, state: object) -> None:
+        """Set up taint tracking for data flow analysis.
+
+        Args:
+            state: Program state to configure with taint tracking.
+
+        """
         # Initialize taint tracking plugin if available
         if hasattr(state, "plugins"):
             state.register_plugin("taint", TaintTracker())
@@ -2613,8 +2724,17 @@ int main() {{
                     if hasattr(state.plugins, "taint"):
                         state.plugins.taint.add_taint(var, "user_input")
 
-    def _check_race_condition(self, state, project) -> bool:
-        """Check for potential race conditions."""
+    def _check_race_condition(self, state: object, project: object) -> bool:
+        """Check for potential race conditions.
+
+        Args:
+            state: Program state to analyze.
+            project: Angr project object.
+
+        Returns:
+            True if race condition indicators detected, False otherwise.
+
+        """
         try:
             # Look for multi-threading indicators
             threading_funcs = ["pthread_create", "CreateThread", "fork", "clone"]
@@ -2627,8 +2747,17 @@ int main() {{
             self.logger.debug(f"Race condition check failed: {e}")
             return False
 
-    def _analyze_synchronization(self, state, project) -> bool:
-        """Analyze synchronization primitives usage."""
+    def _analyze_synchronization(self, state: object, project: object) -> bool:
+        """Analyze synchronization primitives usage.
+
+        Args:
+            state: Program state to analyze.
+            project: Angr project object.
+
+        Returns:
+            True if insufficient synchronization detected, False otherwise.
+
+        """
         # Look for mutex/lock usage
         sync_funcs = [
             "pthread_mutex_lock",
@@ -2650,8 +2779,17 @@ int main() {{
         # If threading is used but few sync primitives, potential race condition
         return sync_count < 2
 
-    def _check_type_confusion(self, state, project) -> bool:
-        """Check for potential type confusion vulnerabilities."""
+    def _check_type_confusion(self, state: object, project: object) -> bool:
+        """Check for potential type confusion vulnerabilities.
+
+        Args:
+            state: Program state to analyze.
+            project: Angr project object.
+
+        Returns:
+            True if type confusion indicators detected, False otherwise.
+
+        """
         try:
             # Look for virtual function tables
             if hasattr(project.loader, "main_object"):
@@ -2689,16 +2827,29 @@ int main() {{
 
         return project, initial_state
 
-    def _setup_symbolic_stdin_for_exploration(self, initial_state: Any, symbolic_stdin: bool, **kwargs) -> None:
-        """Set up symbolic stdin if requested."""
+    def _setup_symbolic_stdin_for_exploration(self, initial_state: object, symbolic_stdin: bool, **kwargs: object) -> None:
+        """Set up symbolic stdin if requested.
+
+        Args:
+            initial_state: Initial program state.
+            symbolic_stdin: Whether to make stdin symbolic.
+            **kwargs: Additional parameters including stdin_size.
+
+        """
         if symbolic_stdin:
             stdin_size = kwargs.get("stdin_size", 256)
             stdin_content = claripy.BVS("stdin", 8 * stdin_size)
             initial_state.posix.stdin.content = stdin_content
             self.logger.info(f"Created symbolic stdin of size {stdin_size}")
 
-    def _apply_concrete_values_for_exploration(self, initial_state: Any, concrete_values: dict) -> None:
-        """Apply concrete values if provided."""
+    def _apply_concrete_values_for_exploration(self, initial_state: object, concrete_values: dict[int, Any]) -> None:
+        """Apply concrete values if provided.
+
+        Args:
+            initial_state: Initial program state.
+            concrete_values: Dictionary mapping addresses to values.
+
+        """
         for addr, value in concrete_values.items():
             if isinstance(value, int):
                 initial_state.memory.store(addr, initial_state.solver.BVV(value, 32))
@@ -2708,16 +2859,29 @@ int main() {{
 
     def _create_custom_step_function(
         self,
-        results: dict,
-        find_addresses: list,
+        results: dict[str, object],
+        find_addresses: list[int],
         track_constraints: bool,
-        covered_blocks: set,
-        path_constraints: dict,
-        execution_paths: list,
-    ) -> Any:
-        """Create custom step function to track execution."""
+        covered_blocks: set[int],
+        path_constraints: dict[int, dict[str, object]],
+        execution_paths: list[object],
+    ) -> object:
+        """Create custom step function to track execution.
 
-        def custom_step(simgr):
+        Args:
+            results: Results dictionary to accumulate findings.
+            find_addresses: List of target addresses to find.
+            track_constraints: Whether to track path constraints.
+            covered_blocks: Set to track covered basic blocks.
+            path_constraints: Dictionary to store path constraints.
+            execution_paths: List to store execution paths.
+
+        Returns:
+            Custom step function that wraps simgr.step().
+
+        """
+
+        def custom_step(simgr: object) -> object:
             for stash in simgr.stashes:
                 for state in simgr.stashes[stash]:
                     # Track covered blocks
@@ -2755,16 +2919,28 @@ int main() {{
 
     def _execute_exploration_loop(
         self,
-        simgr: Any,
-        custom_step: Any,
+        simgr: object,
+        custom_step: object,
         max_depth: int,
         timeout: int,
-        find_addresses: list,
-        avoid_addresses: list,
-        project: Any,
-        results: dict,
+        find_addresses: list[int],
+        avoid_addresses: list[int],
+        project: object,
+        results: dict[str, object],
     ) -> None:
-        """Execute the main exploration loop."""
+        """Execute the main exploration loop.
+
+        Args:
+            simgr: Execution manager for program exploration.
+            custom_step: Custom step function for tracking.
+            max_depth: Maximum exploration depth in steps.
+            timeout: Timeout in seconds for exploration.
+            find_addresses: Addresses to find during exploration.
+            avoid_addresses: Addresses to avoid during exploration.
+            project: Angr project object.
+            results: Results dictionary to accumulate.
+
+        """
         start_time = time.time()
         steps = 0
 
@@ -2790,8 +2966,17 @@ int main() {{
                     if vuln:
                         results["vulnerabilities"].extend(vuln)
 
-    def _analyze_exploration_results(self, simgr: Any, project: Any, start_address: int, covered_blocks: set, results: dict) -> None:
-        """Analyze final exploration results."""
+    def _analyze_exploration_results(self, simgr: object, project: object, start_address: int, covered_blocks: set[int], results: dict[str, Any]) -> None:
+        """Analyze final exploration results.
+
+        Args:
+            simgr: Manager object containing all execution states.
+            project: Angr project object representing the binary.
+            start_address: Initial exploration starting address.
+            covered_blocks: Set of basic block addresses that were covered.
+            results: Results dictionary to populate with analysis findings.
+
+        """
         all_states = simgr.active + simgr.deadended + simgr.found
         results["paths_found"] = len(all_states)
 
@@ -2816,8 +3001,16 @@ int main() {{
                 }
                 results["constraints"].append(constraint_info)
 
-    def _extract_interesting_test_cases(self, simgr: Any, find_addresses: list, start_address: int, results: dict) -> None:
-        """Extract interesting test cases from exploration results."""
+    def _extract_interesting_test_cases(self, simgr: object, find_addresses: list[int], start_address: int, results: dict[str, Any]) -> None:
+        """Extract interesting test cases from exploration results.
+
+        Args:
+            simgr: Manager object containing found and deadended states.
+            find_addresses: List of target addresses that were reached.
+            start_address: Initial exploration starting address.
+            results: Dictionary to populate with interesting test case values.
+
+        """
         interesting_states = simgr.found + [s for s in simgr.deadended if s.addr in find_addresses]
         for state in interesting_states[:10]:  # Limit to 10 most interesting
             try:
@@ -2832,10 +3025,10 @@ int main() {{
             except Exception as e:
                 self.logger.debug(f"Failed to extract concrete values: {e}")
 
-    def explore_from(self, start_address: int, **kwargs) -> dict[str, Any]:
+    def explore_from(self, start_address: int, **kwargs: object) -> dict[str, object]:
         """Explore execution paths from a specific start address.
 
-        This method performs targeted symbolic execution starting from a given address,
+        This method performs targeted dynamic analysis starting from a given address,
         exploring all reachable paths and analyzing program behavior, vulnerabilities,
         and constraints along each path.
 
@@ -2938,8 +3131,17 @@ int main() {{
             results["error"] = str(e)
             return results
 
-    def _native_explore_from(self, start_address: int, **kwargs) -> dict[str, Any]:
-        """Native implementation of explore_from without angr dependency."""
+    def _native_explore_from(self, start_address: int, **kwargs: object) -> dict[str, object]:
+        """Native implementation of explore_from without angr dependency.
+
+        Args:
+            start_address: The address to start exploration from.
+            **kwargs: Additional exploration parameters.
+
+        Returns:
+            Dictionary with exploration results and analysis.
+
+        """
         self.logger.info(f"Starting native exploration from address 0x{start_address:x}")
 
         results = {
@@ -3000,8 +3202,17 @@ int main() {{
             results["error"] = str(e)
             return results
 
-    def _check_state_for_vulnerabilities(self, state, project) -> list[dict[str, Any]]:
-        """Check a single state for various vulnerability patterns."""
+    def _check_state_for_vulnerabilities(self, state: object, project: object) -> list[dict[str, Any]]:
+        """Check a single state for various vulnerability patterns.
+
+        Args:
+            state: Program state to analyze.
+            project: Angr project object for context.
+
+        Returns:
+            List of vulnerabilities found in this state.
+
+        """
         vulnerabilities = []
 
         # Check for buffer overflow
@@ -3041,8 +3252,17 @@ int main() {{
 
         return vulnerabilities
 
-    def _build_execution_tree(self, states, start_address) -> dict[str, Any]:
-        """Build a tree representation of execution paths."""
+    def _build_execution_tree(self, states: list[object], start_address: int) -> dict[str, Any]:
+        """Build a tree representation of execution paths.
+
+        Args:
+            states: List of program states from exploration.
+            start_address: Root address of the execution tree.
+
+        Returns:
+            Dictionary representing the execution tree with nodes and edges.
+
+        """
         tree = {
             "root": hex(start_address),
             "nodes": {},
@@ -3891,16 +4111,38 @@ class TaintTracker:
         self.tainted_data = {}
         self.taint_propagation = {}
 
-    def add_taint(self, data, source) -> None:
-        """Mark data as tainted from a specific source."""
+    def add_taint(self, data: object, source: str) -> None:
+        """Mark data as tainted from a specific source.
+
+        Args:
+            data: The data value to mark as tainted.
+            source: The source identifier for the taint.
+
+        """
         self.tainted_data[str(data)] = source
 
-    def is_tainted(self, data):
-        """Check if data is tainted."""
+    def is_tainted(self, data: object) -> bool:
+        """Check if data is tainted.
+
+        Args:
+            data: The data value to check.
+
+        Returns:
+            True if data is tainted, False otherwise.
+
+        """
         return str(data) in self.tainted_data
 
-    def get_taint_source(self, data):
-        """Get the source of taint for data."""
+    def get_taint_source(self, data: object) -> Optional[str]:
+        """Get the source of taint for data.
+
+        Args:
+            data: The data value to query.
+
+        Returns:
+            The source of taint if data is tainted, None otherwise.
+
+        """
         return self.tainted_data.get(str(data), None)
 
 

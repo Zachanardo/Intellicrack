@@ -85,7 +85,7 @@ class MockIntellicrackApp:
             for file_name in os.listdir(plugin_dir):
                 full_path = os.path.join(plugin_dir, file_name)
                 if os.path.isfile(full_path):
-                    current_mtime = os.path.getmtime(full_path)
+                    current_mtime = Path(full_path).stat().st_mtime
                     if file_name not in remaining or remaining[file_name] != current_mtime:
                         return False, {}
                     del remaining[file_name]
@@ -236,7 +236,7 @@ class MockIntellicrackApp:
                                         "type": plugin_type,
                                         "extension": file_ext,
                                         "size": os.path.getsize(full_path),
-                                        "modified": os.path.getmtime(full_path),
+                                        "modified": Path(full_path).stat().st_mtime,
                                         "valid": True,
                                     }
                                     plugins[plugin_type].append(plugin_info)
@@ -547,7 +547,7 @@ class TestPluginCaching:
         assert plugin_info["type"] == "custom"
         assert plugin_info["extension"] == ".py"
         assert plugin_info["size"] == os.path.getsize(plugin_path)
-        assert abs(plugin_info["modified"] - os.path.getmtime(plugin_path)) < 0.01
+        assert abs(plugin_info["modified"] - Path(plugin_path).stat().st_mtime) < 0.01
         assert plugin_info["valid"] is True
 
     def test_all_supported_extensions(self, mock_app, temp_plugin_dir, cache_file):

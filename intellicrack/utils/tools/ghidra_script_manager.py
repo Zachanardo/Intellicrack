@@ -60,7 +60,7 @@ class GhidraScript:
         self.tags = []
 
         # Runtime info
-        self.last_modified = datetime.fromtimestamp(os.path.getmtime(path))
+        self.last_modified = datetime.fromtimestamp(Path(path).stat().st_mtime)
         self.size = os.path.getsize(path)
         self.is_valid = False
         self.validation_errors = []
@@ -470,7 +470,7 @@ class GhidraScriptManager:
                 path = script_data["path"]
                 if os.path.exists(path):
                     # Check if file hasn't changed
-                    mtime = os.path.getmtime(path)
+                    mtime = Path(path).stat().st_mtime
                     cached_mtime = datetime.fromisoformat(script_data["last_modified"]).timestamp()
 
                     if abs(mtime - cached_mtime) < 1:  # Within 1 second

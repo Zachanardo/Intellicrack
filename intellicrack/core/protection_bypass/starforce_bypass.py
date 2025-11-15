@@ -10,7 +10,6 @@ import winreg
 from ctypes import wintypes
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional
 
 try:
     import pefile
@@ -27,19 +26,19 @@ class BypassResult:
     success: bool
     technique: str
     details: str
-    errors: List[str]
+    errors: list[str]
 
 
 @dataclass
 class StarForceRemovalResult:
     """Results from complete StarForce removal."""
 
-    drivers_removed: List[str]
-    services_stopped: List[str]
-    registry_cleaned: List[str]
-    files_deleted: List[str]
+    drivers_removed: list[str]
+    services_stopped: list[str]
+    registry_cleaned: list[str]
+    files_deleted: list[str]
     success: bool
-    errors: List[str]
+    errors: list[str]
 
 
 class StarForceBypass:
@@ -194,7 +193,7 @@ class StarForceBypass:
             errors=errors,
         )
 
-    def _stop_all_services(self) -> List[str]:
+    def _stop_all_services(self) -> list[str]:
         """Stop all StarForce services."""
         if not self._advapi32:
             return []
@@ -240,7 +239,7 @@ class StarForceBypass:
 
         return stopped
 
-    def _delete_all_services(self) -> List[str]:
+    def _delete_all_services(self) -> list[str]:
         """Delete all StarForce services."""
         if not self._advapi32:
             return []
@@ -273,7 +272,7 @@ class StarForceBypass:
 
         return deleted
 
-    def _clean_registry(self) -> List[str]:
+    def _clean_registry(self) -> list[str]:
         """Clean StarForce registry keys."""
         cleaned = []
 
@@ -303,7 +302,7 @@ class StarForceBypass:
         except OSError:
             return False
 
-    def _remove_driver_files(self) -> List[str]:
+    def _remove_driver_files(self) -> list[str]:
         """Remove StarForce driver files."""
         removed = []
 
@@ -318,7 +317,7 @@ class StarForceBypass:
 
         return removed
 
-    def _remove_application_files(self) -> List[str]:
+    def _remove_application_files(self) -> list[str]:
         """Remove StarForce application files."""
         deleted = []
 
@@ -341,7 +340,7 @@ class StarForceBypass:
 
         return deleted
 
-    def bypass_anti_debug(self, target_process_id: Optional[int] = None) -> BypassResult:
+    def bypass_anti_debug(self, target_process_id: int | None = None) -> BypassResult:
         """Bypass StarForce anti-debugging mechanisms.
 
         Args:
@@ -552,7 +551,7 @@ class StarForceBypass:
         """Configure virtual drive for disc emulation."""
         return True
 
-    def bypass_license_validation(self, target_exe: Path, license_data: Optional[Dict] = None) -> BypassResult:
+    def bypass_license_validation(self, target_exe: Path, license_data: dict | None = None) -> BypassResult:
         """Bypass StarForce license validation.
 
         Args:
@@ -636,7 +635,7 @@ class StarForceBypass:
         except Exception:
             return False
 
-    def _inject_license_data(self, target_exe: Path, license_data: Dict) -> bool:
+    def _inject_license_data(self, target_exe: Path, license_data: dict) -> bool:
         """Inject license data into executable."""
         try:
             pe = pefile.PE(str(target_exe))

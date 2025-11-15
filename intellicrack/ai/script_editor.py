@@ -36,7 +36,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from intellicrack.ai.qemu_manager import QEMUManager
 from intellicrack.utils.logger import logger
@@ -74,9 +74,9 @@ class EditRequest:
     original_script_path: str
     modification_prompt: str
     edit_type: EditType
-    target_addresses: List[str] = field(default_factory=list)
+    target_addresses: list[str] = field(default_factory=list)
     expected_behavior: str = ""
-    test_criteria: Dict[str, Any] = field(default_factory=dict)
+    test_criteria: dict[str, Any] = field(default_factory=dict)
     preserve_functionality: bool = True
 
 
@@ -88,11 +88,11 @@ class ScriptEdit:
     timestamp: str
     edit_type: EditType
     modification_prompt: str
-    changes_made: List[str]
+    changes_made: list[str]
     confidence_score: float
-    validation_result: Optional[ValidationResult] = None
-    performance_metrics: Dict[str, Any] = field(default_factory=dict)
-    rollback_info: Dict[str, Any] = field(default_factory=dict)
+    validation_result: ValidationResult | None = None
+    performance_metrics: dict[str, Any] = field(default_factory=dict)
+    rollback_info: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -101,11 +101,11 @@ class ScriptVersion:
 
     version_number: str
     content: str
-    edit_history: List[ScriptEdit]
+    edit_history: list[ScriptEdit]
     creation_timestamp: str
-    parent_version: Optional[str] = None
-    tags: List[str] = field(default_factory=list)
-    metrics: Dict[str, Any] = field(default_factory=dict)
+    parent_version: str | None = None
+    tags: list[str] = field(default_factory=list)
+    metrics: dict[str, Any] = field(default_factory=dict)
 
 
 class ScriptTester:
@@ -115,7 +115,7 @@ class ScriptTester:
         """Initialize script tester with LLM interface for validation."""
         self.llm_interface = LLMScriptInterface()
 
-    def validate_script(self, script_content: str, script_type: str) -> Tuple[ValidationResult, Dict[str, Any]]:
+    def validate_script(self, script_content: str, script_type: str) -> tuple[ValidationResult, dict[str, Any]]:
         """Validate script using LLM for comprehensive analysis."""
         results = {
             "syntax_check": True,
@@ -180,14 +180,13 @@ Provide only the JSON response, no explanations."""
                 severity = analysis.get("overall_severity", "none")
                 if severity == "critical":
                     return ValidationResult.SECURITY_ISSUE, results
-                elif analysis.get("has_syntax_errors"):
+                if analysis.get("has_syntax_errors"):
                     return ValidationResult.SYNTAX_ERROR, results
-                elif severity == "high":
+                if severity == "high":
                     return ValidationResult.LOGIC_ERROR, results
-                elif len(analysis.get("performance_issues", [])) > 3:
+                if len(analysis.get("performance_issues", [])) > 3:
                     return ValidationResult.PERFORMANCE_POOR, results
-                else:
-                    return ValidationResult.SUCCESS, results
+                return ValidationResult.SUCCESS, results
 
             except json.JSONDecodeError:
                 # If LLM didn't return valid JSON, assume basic validation passed
@@ -203,9 +202,9 @@ Provide only the JSON response, no explanations."""
         self,
         script_content: str,
         script_type: str,
-        binary_path: Optional[str] = None,
+        binary_path: str | None = None,
         timeout: int = 30,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Test script execution in QEMU virtual machine."""
         try:
             qemu_manager = self._get_qemu_manager()
@@ -290,7 +289,7 @@ Provide only the JSON response, no explanations."""
         except Exception:
             return ValidationResult.RUNTIME_ERROR
 
-    def _scan_security_issues(self, script: str) -> Dict[str, Any]:
+    def _scan_security_issues(self, script: str) -> dict[str, Any]:
         """Scan for potential security issues."""
         issues = {"critical_issues": [], "warnings": [], "info": []}
 
@@ -318,7 +317,7 @@ Provide only the JSON response, no explanations."""
 
         return issues
 
-    def _analyze_performance(self, script: str) -> Dict[str, Any]:
+    def _analyze_performance(self, script: str) -> dict[str, Any]:
         """Analyze script performance characteristics."""
         metrics = {
             "complexity_score": 0.0,
@@ -364,8 +363,8 @@ class ScriptVersionManager:
     def create_version(
         self,
         content: str,
-        edit_history: List[ScriptEdit],
-        parent_version: Optional[str] = None,
+        edit_history: list[ScriptEdit],
+        parent_version: str | None = None,
     ) -> ScriptVersion:
         """Create new script version."""
         version_id = self._generate_version_id(content)
@@ -396,7 +395,7 @@ class ScriptVersionManager:
         logger.info(f"Created script version: {version_id}")
         return version
 
-    def get_version_history(self) -> List[ScriptVersion]:
+    def get_version_history(self) -> list[ScriptVersion]:
         """Get version history for a script."""
         versions = []
 
@@ -423,7 +422,7 @@ class ScriptVersionManager:
         versions.sort(key=lambda v: v.creation_timestamp)
         return versions
 
-    def rollback_to_version(self, version_id: str) -> Optional[str]:
+    def rollback_to_version(self, version_id: str) -> str | None:
         """Rollback to a specific version."""
         version_file = self.versions_dir / f"{version_id}.json"
 
@@ -446,7 +445,7 @@ class ScriptVersionManager:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         return f"v_{timestamp}_{content_hash}"
 
-    def _edit_to_dict(self, edit: ScriptEdit) -> Dict[str, Any]:
+    def _edit_to_dict(self, edit: ScriptEdit) -> dict[str, Any]:
         """Convert ScriptEdit to dictionary."""
         return {
             "edit_id": edit.edit_id,
@@ -460,7 +459,7 @@ class ScriptVersionManager:
             "rollback_info": edit.rollback_info,
         }
 
-    def _dict_to_edit(self, data: Dict[str, Any]) -> ScriptEdit:
+    def _dict_to_edit(self, data: dict[str, Any]) -> ScriptEdit:
         """Convert dictionary to ScriptEdit."""
         return ScriptEdit(
             edit_id=data["edit_id"],
@@ -495,9 +494,9 @@ class AIScriptEditor:
         script_path: str,
         modification_prompt: str,
         edit_type: EditType = EditType.ENHANCEMENT,
-        test_binary: Optional[str] = None,
+        test_binary: str | None = None,
         preserve_functionality: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Edit an existing script based on modification prompt.
 
         This is the main entry point for AI script editing.
@@ -569,16 +568,15 @@ class AIScriptEditor:
                     "execution_test": execution_results,
                     "changes_summary": edit_record.changes_made,
                 }
-            else:
-                # Keep original, return issues
-                return {
-                    "success": False,
-                    "error": f"Validation failed: {validation_result.value}",
-                    "modified_content": modified_content,
-                    "validation": validation_details,
-                    "execution_test": execution_results,
-                    "suggested_fixes": self._suggest_fixes(validation_result, validation_details),
-                }
+            # Keep original, return issues
+            return {
+                "success": False,
+                "error": f"Validation failed: {validation_result.value}",
+                "modified_content": modified_content,
+                "validation": validation_details,
+                "execution_test": execution_results,
+                "suggested_fixes": self._suggest_fixes(validation_result, validation_details),
+            }
 
         except Exception as e:
             logger.error(f"Script editing failed: {e}")
@@ -589,10 +587,10 @@ class AIScriptEditor:
     def iterative_improve(
         self,
         script_path: str,
-        improvement_goals: List[str],
+        improvement_goals: list[str],
         max_iterations: int = 5,
-        test_binary: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        test_binary: str | None = None,
+    ) -> dict[str, Any]:
         """Improve a script iteratively through multiple edit cycles using QEMU feedback."""
         results = {
             "iterations": [],
@@ -666,7 +664,7 @@ class AIScriptEditor:
 
         return results
 
-    def compare_versions(self, version1_id: str, version2_id: str) -> Dict[str, Any]:
+    def compare_versions(self, version1_id: str, version2_id: str) -> dict[str, Any]:
         """Compare two script versions."""
         v1_content = self.version_manager.rollback_to_version(version1_id)
         v2_content = self.version_manager.rollback_to_version(version2_id)
@@ -684,7 +682,7 @@ class AIScriptEditor:
             "recommendations": self._generate_version_recommendations(diff_stats),
         }
 
-    def rollback_edit(self, script_path: str, edit_id: str) -> Dict[str, Any]:
+    def rollback_edit(self, script_path: str, edit_id: str) -> dict[str, Any]:
         """Rollback a specific edit."""
         if script_path not in self.edit_history:
             return {"success": False, "error": "No edit history found"}
@@ -723,7 +721,7 @@ class AIScriptEditor:
             "rollback_edit_id": rollback_edit.edit_id,
         }
 
-    def get_edit_suggestions(self, script_path: str, binary_analysis: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    def get_edit_suggestions(self, script_path: str, binary_analysis: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         """Get AI-powered suggestions for script improvements."""
         script_content = self._load_script(script_path)
         if not script_content:
@@ -767,7 +765,7 @@ class AIScriptEditor:
 
         return suggestions
 
-    def _load_script(self, script_path: str) -> Optional[str]:
+    def _load_script(self, script_path: str) -> str | None:
         """Load script content from file."""
         try:
             with open(script_path, encoding="utf-8") as f:
@@ -782,7 +780,8 @@ class AIScriptEditor:
             # Create backup of original
             backup_path = f"{script_path}.backup_{edit_record.edit_id}"
             if os.path.exists(script_path):
-                os.rename(script_path, backup_path)
+                from pathlib import Path
+                Path(script_path).rename(backup_path)
 
             # Save new content
             with open(script_path, "w", encoding="utf-8") as f:
@@ -823,7 +822,7 @@ Generate the complete modified script:"""
 
         return prompt
 
-    def _extract_changes(self, original: str, modified: str) -> List[str]:
+    def _extract_changes(self, original: str, modified: str) -> list[str]:
         """Extract summary of changes between scripts."""
         changes = []
 
@@ -868,7 +867,7 @@ Generate the complete modified script:"""
         """Generate unique edit ID."""
         return f"edit_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{os.urandom(4).hex()}"
 
-    def _analyze_qemu_results_for_goals(self, qemu_result: Dict[str, Any], goals: List[str]) -> bool:
+    def _analyze_qemu_results_for_goals(self, qemu_result: dict[str, Any], goals: list[str]) -> bool:
         """Analyze QEMU execution results to determine if improvement goals are met."""
         if not qemu_result.get("success"):
             return False
@@ -883,7 +882,7 @@ Generate the complete modified script:"""
         achievement_ratio = goals_met / len(goals) if goals else 0.0
         return achievement_ratio >= 0.8
 
-    def _is_goal_met(self, goal: str, output: str, errors: List[str], performance: Dict[str, Any]) -> int:
+    def _is_goal_met(self, goal: str, output: str, errors: list[str], performance: dict[str, Any]) -> int:
         """Check if a specific goal is met based on QEMU results."""
         if "no errors" in goal or "error-free" in goal:
             return int(not errors)
@@ -899,7 +898,7 @@ Generate the complete modified script:"""
         # Generic success check
         return int(not errors)
 
-    def _create_improvement_prompt_with_feedback(self, goals: List[str], qemu_result: Dict[str, Any]) -> str:
+    def _create_improvement_prompt_with_feedback(self, goals: list[str], qemu_result: dict[str, Any]) -> str:
         """Create an improvement prompt that includes QEMU execution feedback."""
         prompt_parts = [
             f"Improve this script to achieve the following goals: {', '.join(goals)}",
@@ -914,20 +913,20 @@ Generate the complete modified script:"""
 
         return "\n".join(prompt_parts)
 
-    def _add_execution_status(self, qemu_result: Dict[str, Any], prompt_parts: List[str]) -> None:
+    def _add_execution_status(self, qemu_result: dict[str, Any], prompt_parts: list[str]) -> None:
         """Add execution status to the prompt."""
         if qemu_result.get("success"):
             prompt_parts.append("OK Script executed successfully")
         else:
             prompt_parts.append("FAIL Script execution failed")
 
-    def _add_output_information(self, qemu_result: Dict[str, Any], prompt_parts: List[str]) -> None:
+    def _add_output_information(self, qemu_result: dict[str, Any], prompt_parts: list[str]) -> None:
         """Add output information to the prompt."""
         output = qemu_result.get("output", "")
         if output:
             prompt_parts.append(f"\nScript output:\n{output[:500]}")  # Limit output length
 
-    def _add_error_information(self, qemu_result: Dict[str, Any], prompt_parts: List[str]) -> None:
+    def _add_error_information(self, qemu_result: dict[str, Any], prompt_parts: list[str]) -> None:
         """Add error information to the prompt."""
         errors = qemu_result.get("errors", [])
         if errors:
@@ -935,7 +934,7 @@ Generate the complete modified script:"""
             for error in errors[:5]:  # Limit to first 5 errors
                 prompt_parts.append(f"  - {error}")
 
-    def _add_performance_metrics(self, qemu_result: Dict[str, Any], prompt_parts: List[str]) -> None:
+    def _add_performance_metrics(self, qemu_result: dict[str, Any], prompt_parts: list[str]) -> None:
         """Add performance metrics to the prompt."""
         performance = qemu_result.get("performance", {})
         if performance:
@@ -945,7 +944,7 @@ Generate the complete modified script:"""
             prompt_parts.append(f"  - Runtime: {runtime}ms")
             prompt_parts.append(f"  - Exit code: {exit_code}")
 
-    def _add_specific_improvements(self, qemu_result: Dict[str, Any], goals: List[str], prompt_parts: List[str]) -> None:
+    def _add_specific_improvements(self, qemu_result: dict[str, Any], goals: list[str], prompt_parts: list[str]) -> None:
         """Add specific improvement suggestions to the prompt."""
         prompt_parts.append("\nSpecific improvements needed:")
 
@@ -965,7 +964,7 @@ Generate the complete modified script:"""
 
         self._add_goal_based_suggestions(goals, qemu_result.get("output", ""), prompt_parts)
 
-    def _add_error_based_suggestions(self, errors: List[str], prompt_parts: List[str]) -> None:
+    def _add_error_based_suggestions(self, errors: list[str], prompt_parts: list[str]) -> None:
         """Add suggestions based on errors."""
         if any("syntax" in str(e).lower() for e in errors):
             prompt_parts.append("- Fix syntax errors in the script")
@@ -974,7 +973,7 @@ Generate the complete modified script:"""
         if any("permission" in str(e).lower() or "access" in str(e).lower() for e in errors):
             prompt_parts.append("- Fix permission/access issues")
 
-    def _add_goal_based_suggestions(self, goals: List[str], output: str, prompt_parts: List[str]) -> None:
+    def _add_goal_based_suggestions(self, goals: list[str], output: str, prompt_parts: list[str]) -> None:
         """Add suggestions based on unmet goals."""
         output_lower = output.lower() if output else ""
         for goal in goals:
@@ -1017,7 +1016,7 @@ Generate the complete modified script:"""
 
         return script_type
 
-    def _calculate_diff_stats(self, content1: str, content2: str) -> Dict[str, Any]:
+    def _calculate_diff_stats(self, content1: str, content2: str) -> dict[str, Any]:
         """Calculate statistics about differences between two scripts."""
         lines1 = content1.split("\n")
         lines2 = content2.split("\n")
@@ -1036,7 +1035,7 @@ Generate the complete modified script:"""
 
         return SequenceMatcher(None, content1, content2).ratio()
 
-    def _generate_version_recommendations(self, diff_stats: Dict[str, Any]) -> List[str]:
+    def _generate_version_recommendations(self, diff_stats: dict[str, Any]) -> list[str]:
         """Generate recommendations based on version comparison."""
         recommendations = []
 
@@ -1051,7 +1050,7 @@ Generate the complete modified script:"""
 
         return recommendations
 
-    def _suggest_fixes(self, validation_result: ValidationResult, validation_details: Dict[str, Any]) -> List[str]:
+    def _suggest_fixes(self, validation_result: ValidationResult, validation_details: dict[str, Any]) -> list[str]:
         """Suggest fixes for validation issues."""
         fixes = []
 
@@ -1073,8 +1072,8 @@ Generate the complete modified script:"""
         return fixes
 
     def _generate_binary_specific_suggestions(
-        self, script_content: str, script_type: str, binary_analysis: Dict[str, Any],
-    ) -> List[Dict[str, Any]]:
+        self, script_content: str, script_type: str, binary_analysis: dict[str, Any],
+    ) -> list[dict[str, Any]]:
         """Generate suggestions specific to the target binary."""
         suggestions = []
 
@@ -1103,7 +1102,7 @@ Generate the complete modified script:"""
 
         return suggestions
 
-    def _edit_to_dict(self, edit: ScriptEdit) -> Dict[str, Any]:
+    def _edit_to_dict(self, edit: ScriptEdit) -> dict[str, Any]:
         """Convert ScriptEdit to dictionary for serialization."""
         return {
             "edit_id": edit.edit_id,

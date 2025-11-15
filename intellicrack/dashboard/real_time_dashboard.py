@@ -29,7 +29,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Set
+from typing import TYPE_CHECKING, Any, Callable
 
 if TYPE_CHECKING:
     from websockets.server import WebSocketServerProtocol
@@ -81,11 +81,11 @@ class DashboardEvent:
     tool: str
     title: str
     description: str
-    data: Dict[str, Any] = field(default_factory=dict)
+    data: dict[str, Any] = field(default_factory=dict)
     severity: str = "info"  # info, warning, error, critical
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
             "event_type": self.event_type.value,
@@ -111,11 +111,11 @@ class AnalysisMetrics:
     memory_usage_mb: float = 0.0
     cpu_usage_percent: float = 0.0
     cache_hit_rate: float = 0.0
-    tools_active: Set[str] = field(default_factory=set)
+    tools_active: set[str] = field(default_factory=set)
     errors_count: int = 0
     warnings_count: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
             "total_functions_analyzed": self.total_functions_analyzed,
@@ -135,7 +135,7 @@ class AnalysisMetrics:
 class RealTimeDashboard:
     """Real-time dashboard for monitoring analysis."""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
         """Initialize real-time dashboard.
 
         Args:
@@ -147,7 +147,7 @@ class RealTimeDashboard:
 
         # Event management
         self.events: deque = deque(maxlen=self.config.get("max_events", 1000))
-        self.event_callbacks: List[Callable] = []
+        self.event_callbacks: list[Callable] = []
         self.events_lock = threading.Lock()
 
         # Metrics tracking
@@ -156,12 +156,12 @@ class RealTimeDashboard:
         self.metrics_lock = threading.Lock()
 
         # Analysis state
-        self.active_analyses: Dict[str, Dict[str, Any]] = {}
-        self.analysis_results: Dict[str, Any] = {}
+        self.active_analyses: dict[str, dict[str, Any]] = {}
+        self.analysis_results: dict[str, Any] = {}
         self.state_lock = threading.Lock()
 
         # WebSocket connections
-        self.websocket_clients: Set[WebSocketServerProtocol] = set()
+        self.websocket_clients: set[WebSocketServerProtocol] = set()
         self.websocket_server = None
         self.websocket_thread = None
 
@@ -227,7 +227,7 @@ class RealTimeDashboard:
         """
         self.event_callbacks.append(callback)
 
-    def start_analysis(self, analysis_id: str, tool: str, target: str, options: Optional[Dict[str, Any]] = None) -> None:
+    def start_analysis(self, analysis_id: str, tool: str, target: str, options: dict[str, Any] | None = None) -> None:
         """Start tracking an analysis.
 
         Args:
@@ -261,7 +261,7 @@ class RealTimeDashboard:
         )
         self.add_event(event)
 
-    def complete_analysis(self, analysis_id: str, results: Dict[str, Any]) -> None:
+    def complete_analysis(self, analysis_id: str, results: dict[str, Any]) -> None:
         """Mark analysis as complete.
 
         Args:
@@ -296,7 +296,7 @@ class RealTimeDashboard:
         )
         self.add_event(event)
 
-    def report_vulnerability(self, tool: str, vulnerability: Dict[str, Any]) -> None:
+    def report_vulnerability(self, tool: str, vulnerability: dict[str, Any]) -> None:
         """Report a vulnerability finding.
 
         Args:
@@ -319,7 +319,7 @@ class RealTimeDashboard:
         )
         self.add_event(event)
 
-    def report_protection(self, tool: str, protection: Dict[str, Any]) -> None:
+    def report_protection(self, tool: str, protection: dict[str, Any]) -> None:
         """Report a protection detection.
 
         Args:
@@ -342,7 +342,7 @@ class RealTimeDashboard:
         )
         self.add_event(event)
 
-    def report_bypass(self, tool: str, bypass: Dict[str, Any]) -> None:
+    def report_bypass(self, tool: str, bypass: dict[str, Any]) -> None:
         """Report a bypass strategy.
 
         Args:
@@ -365,7 +365,7 @@ class RealTimeDashboard:
         )
         self.add_event(event)
 
-    def update_performance(self, tool: str, metrics: Dict[str, Any]) -> None:
+    def update_performance(self, tool: str, metrics: dict[str, Any]) -> None:
         """Update performance metrics.
 
         Args:
@@ -393,7 +393,7 @@ class RealTimeDashboard:
         )
         self.add_event(event)
 
-    def get_dashboard_state(self) -> Dict[str, Any]:
+    def get_dashboard_state(self) -> dict[str, Any]:
         """Get current dashboard state.
 
         Returns:
@@ -421,7 +421,7 @@ class RealTimeDashboard:
             "result_count": len(self.analysis_results),
         }
 
-    def get_metrics_history(self) -> List[Dict[str, Any]]:
+    def get_metrics_history(self) -> list[dict[str, Any]]:
         """Get metrics history.
 
         Returns:
@@ -446,7 +446,7 @@ class RealTimeDashboard:
             elif event.event_type == DashboardEventType.WARNING_RAISED:
                 self.metrics.warnings_count += 1
 
-    def _summarize_results(self, results: Dict[str, Any]) -> Dict[str, Any]:
+    def _summarize_results(self, results: dict[str, Any]) -> dict[str, Any]:
         """Summarize analysis results.
 
         Args:
@@ -488,7 +488,7 @@ class RealTimeDashboard:
             self.logger.warning("WebSockets not available, skipping WebSocket server")
             return
 
-        async def handle_client(websocket, path) -> None:
+        async def handle_client(websocket: Any, path: str) -> None:
             """Handle WebSocket client connection."""
             self.websocket_clients.add(websocket)
             self.logger.info(f"WebSocket client connected: {websocket.remote_address}")
@@ -601,13 +601,12 @@ class RealTimeDashboard:
                 return jsonify(list(self.active_analyses.values()))
 
         @self.flask_app.route("/api/results/<analysis_id>")
-        def get_results(analysis_id):
+        def get_results(analysis_id: str):
             """Get analysis results endpoint."""
             with self.state_lock:
                 if analysis_id in self.analysis_results:
                     return jsonify(self.analysis_results[analysis_id])
-                else:
-                    return jsonify({"error": "Analysis not found"}), 404
+                return jsonify({"error": "Analysis not found"}), 404
 
         def run_flask() -> None:
             """Run Flask server."""
@@ -643,7 +642,7 @@ class RealTimeDashboard:
         thread = threading.Thread(target=update_loop, daemon=True)
         thread.start()
 
-    async def _broadcast_metrics(self, metrics: Dict[str, Any]) -> None:
+    async def _broadcast_metrics(self, metrics: dict[str, Any]) -> None:
         """Broadcast metrics update to WebSocket clients.
 
         Args:
@@ -682,7 +681,7 @@ class RealTimeDashboard:
         # Note: Flask server runs as daemon thread and will stop automatically
 
 
-def create_dashboard(config: Optional[Dict[str, Any]] = None) -> RealTimeDashboard:
+def create_dashboard(config: dict[str, Any] | None = None) -> RealTimeDashboard:
     """Create dashboard.
 
     Args:

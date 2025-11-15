@@ -143,7 +143,7 @@ class FileTreeWidget(QTreeWidget):
                     except (ImportError, AttributeError):
                         pass
                     # Add subdirectories (up to 3 levels deep to avoid performance issues)
-                    if len(str(item).split(os.sep)) - len(str(self.current_root).split(os.sep)) < 3:
+                    if len(item.parts) - len(self.current_root.parts) < 3:
                         self._add_directory_items(tree_item, item)
                 # Set file icon based on extension
                 elif item.suffix.lower() in self.supported_extensions:
@@ -622,7 +622,6 @@ class AICodingAssistantWidget(QWidget):
     def setup_menu_bar(self, layout) -> None:
         """Set up the menu bar."""
         # Simplified menu bar for widget - full implementation when needed
-        pass
 
     def create_file_panel(self) -> QWidget:
         """Create the left file navigation panel with license research project support."""
@@ -797,22 +796,18 @@ class AICodingAssistantWidget(QWidget):
     def setup_status_bar(self, layout) -> None:
         """Set up the status bar."""
         # Simplified status bar for widget
-        pass
 
     def setup_connections(self) -> None:
         """Set up signal connections."""
         # Simplified connections for widget
-        pass
 
     def setup_shortcuts(self) -> None:
         """Set up keyboard shortcuts."""
         # Simplified shortcuts for widget
-        pass
 
     def load_initial_project(self) -> None:
         """Load initial project state."""
         # Simplified initial loading for widget
-        pass
 
     def on_file_selected_for_analysis(self, file_path: str) -> None:
         """Handle file selection for license protection analysis."""
@@ -1803,9 +1798,8 @@ def validate_license_key(key: str) -> bool:
             hash_input = f"{user_info}_license_{secrets.randbelow(9000) + 1000}"
             sha256_hash = hashlib.sha256(hash_input.encode()).hexdigest().upper()
             return f"{sha256_hash[:4]}-{sha256_hash[4:8]}-{sha256_hash[8:12]}-{sha256_hash[12:16]}"
-        else:
-            # Default pattern
-            return f"{secrets.randbelow(9000) + 1000:04X}-{secrets.randbelow(9000) + 1000:04X}-{secrets.randbelow(9000) + 1000:04X}-{secrets.randbelow(9000) + 1000:04X}"
+        # Default pattern
+        return f"{secrets.randbelow(9000) + 1000:04X}-{secrets.randbelow(9000) + 1000:04X}-{secrets.randbelow(9000) + 1000:04X}-{secrets.randbelow(9000) + 1000:04X}"
 
     def _validate_key_from_template(self, config: dict, key: str) -> bool:
         """Validate key using template pattern."""
@@ -3216,7 +3210,7 @@ For strengthening defenses:
 
 WARNING️  This analysis is for defensive security research only."""
 
-            elif any(keyword in message_lower for keyword in ["bypass", "crack", "protection"]):
+            if any(keyword in message_lower for keyword in ["bypass", "crack", "protection"]):
                 return """🔬 Protection Bypass Research (Offline Analysis):
 
 Common protection bypass techniques in security research:
@@ -3237,8 +3231,7 @@ Defensive strengthening strategies:
 
 WARNING️  Use only in controlled research environments for your own software."""
 
-            else:
-                return f"""🔬 License Protection Research (Offline Mode):
+            return f"""🔬 License Protection Research (Offline Mode):
 
 Your query: "{message}"
 
@@ -3575,20 +3568,19 @@ Keep the response focused and actionable while maintaining technical accuracy.""
 
             if any(keyword in message_lower for keyword in ["keygen", "key generation", "generate key"]):
                 return "key_generation"
-            elif any(keyword in message_lower for keyword in ["bypass", "crack", "defeat", "circumvent"]):
+            if any(keyword in message_lower for keyword in ["bypass", "crack", "defeat", "circumvent"]):
                 return "bypass_techniques"
-            elif any(keyword in message_lower for keyword in ["registry", "reg", "regedit"]):
+            if any(keyword in message_lower for keyword in ["registry", "reg", "regedit"]):
                 return "registry_analysis"
-            elif any(keyword in message_lower for keyword in ["frida", "hook", "api", "inject"]):
+            if any(keyword in message_lower for keyword in ["frida", "hook", "api", "inject"]):
                 return "runtime_manipulation"
-            elif any(keyword in message_lower for keyword in ["patch", "binary", "hex", "assembly"]):
+            if any(keyword in message_lower for keyword in ["patch", "binary", "hex", "assembly"]):
                 return "binary_patching"
-            elif any(keyword in message_lower for keyword in ["time", "date", "trial", "expiry"]):
+            if any(keyword in message_lower for keyword in ["time", "date", "trial", "expiry"]):
                 return "time_manipulation"
-            elif any(keyword in message_lower for keyword in ["hwid", "hardware", "fingerprint", "serial"]):
+            if any(keyword in message_lower for keyword in ["hwid", "hardware", "fingerprint", "serial"]):
                 return "hardware_spoofing"
-            else:
-                return "general_license_research"
+            return "general_license_research"
 
         except Exception as e:
             logger.error(f"Failed to classify query: {e}")

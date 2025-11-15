@@ -776,16 +776,15 @@ def _check_patch_safety_and_create(
             "new_bytes": patch_bytes,
             "description": f"Replace function prologue at 0x{start_addr:X} with '{patch_asm}'",
         }
-    else:
-        app.update_output.emit(
-            log_message(
-                f"[License Rewrite] Safety Check FAILED: Patch size ({len(patch_bytes)} bytes) may NOT fit estimated prologue size ({prologue_size} bytes) at 0x{start_addr:X}. Skipping direct rewrite.",
-            ),
-        )
+    app.update_output.emit(
+        log_message(
+            f"[License Rewrite] Safety Check FAILED: Patch size ({len(patch_bytes)} bytes) may NOT fit estimated prologue size ({prologue_size} bytes) at 0x{start_addr:X}. Skipping direct rewrite.",
+        ),
+    )
 
-        # Add suggestions for manual review
-        _add_manual_review_suggestions(app, instructions, start_addr, code_data, code_offset, candidates, patch_bytes)
-        return None
+    # Add suggestions for manual review
+    _add_manual_review_suggestions(app, instructions, start_addr, code_data, code_offset, candidates, patch_bytes)
+    return None
 
 
 def _calculate_safe_prologue_size(instructions: list) -> int:

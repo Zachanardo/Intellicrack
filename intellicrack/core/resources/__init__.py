@@ -6,7 +6,9 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
-try:
+import contextlib
+
+with contextlib.suppress(ImportError):
     from .resource_manager import (
         ManagedResource,
         ProcessResource,
@@ -16,9 +18,6 @@ try:
         VMResource,
         get_resource_manager,
     )
-except ImportError:
-    # Don't set variables if import fails
-    pass
 
 __all__ = [
     "ManagedResource",

@@ -24,6 +24,7 @@ import shutil
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 # Add parent directories to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -44,7 +45,7 @@ class ProjectManager:
         self.projects_dir.mkdir(parents=True, exist_ok=True)
         self.current_project = None
 
-    def create_project(self, name, description=""):
+    def create_project(self, name: str, description: str = ""):
         """Create a new analysis project."""
         project_dir = self.projects_dir / name
 
@@ -78,7 +79,7 @@ class ProjectManager:
         logger.info(f"Created project: {name}")
         return project_dir
 
-    def load_project(self, name):
+    def load_project(self, name: str):
         """Load an existing project."""
         project_dir = self.projects_dir / name
 
@@ -113,7 +114,7 @@ class ProjectManager:
 
         return projects
 
-    def delete_project(self, name) -> None:
+    def delete_project(self, name: str) -> None:
         """Delete a project and all its data."""
         project_dir = self.projects_dir / name
 
@@ -138,7 +139,7 @@ class ProjectManager:
         if self.current_project and self.current_project["name"] == name:
             self.current_project = None
 
-    def add_file_to_project(self, project_name, file_path):
+    def add_file_to_project(self, project_name: str, file_path: str):
         """Add a binary file to project."""
         project_dir = self.projects_dir / project_name
 
@@ -174,7 +175,7 @@ class ProjectManager:
         logger.info(f"Added {source_file.name} to project {project_name}")
         return file_info
 
-    def _calculate_file_hash(self, file_path):
+    def _calculate_file_hash(self, file_path: str):
         """Calculate SHA256 hash of file."""
         import hashlib
 
@@ -185,7 +186,7 @@ class ProjectManager:
 
         return sha256_hash.hexdigest()
 
-    def export_project(self, project_name, output_path=None):
+    def export_project(self, project_name: str, output_path: str | None = None):
         """Export project as archive."""
         project_dir = self.projects_dir / project_name
 
@@ -203,7 +204,7 @@ class ProjectManager:
         logger.info(f"Exported project to: {output_path}")
         return output_path
 
-    def import_project(self, archive_path):
+    def import_project(self, archive_path: str):
         """Import project from archive."""
         archive_path = Path(archive_path)
 

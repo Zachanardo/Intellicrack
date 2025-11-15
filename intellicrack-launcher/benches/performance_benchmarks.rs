@@ -1,7 +1,8 @@
-use criterion::{Criterion, black_box, criterion_group, criterion_main};
+use criterion::{Criterion, criterion_group, criterion_main};
 use intellicrack_launcher::{
     EnvironmentManager, GilSafetyManager, PlatformInfo, PythonIntegration, SecurityManager,
 };
+use std::hint::black_box;
 use std::time::Duration;
 use tokio::runtime::Runtime;
 

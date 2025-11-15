@@ -20,7 +20,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
@@ -183,7 +183,7 @@ class SymbolicExecution:
         finally:
             self._hide_progress_dialog()
 
-    def _get_binary_path(self, app) -> Optional[str]:
+    def _get_binary_path(self, app) -> str | None:
         """Extract binary path from application state."""
         try:
             # Check various possible locations for binary path
@@ -299,8 +299,7 @@ class SymbolicExecution:
                 self.vulnerability_types = [vuln_type for vuln_type, checkbox in vuln_checkboxes.items() if checkbox.isChecked()]
 
                 return True
-            else:
-                return False
+            return False
 
         except Exception as e:
             self.logger.error(f"Failed to show configuration dialog: {e}")
@@ -373,7 +372,7 @@ class SymbolicExecution:
         except Exception as e:
             self.logger.error(f"Failed to hide progress dialog: {e}")
 
-    def _run_symbolic_analysis(self, app, engine) -> Dict[str, Any]:
+    def _run_symbolic_analysis(self, app, engine) -> dict[str, Any]:
         """Run the actual symbolic analysis."""
         results = {"vulnerabilities": [], "paths_explored": 0, "coverage": {}, "constraints": [], "crashed_states": [], "execution_time": 0}
 
@@ -484,7 +483,7 @@ class SymbolicExecution:
             log_warning(f"Failed to check integer overflow constraint: {e}", category="SYMBOLIC")
         return False
 
-    def _fallback_analysis(self, app, engine) -> Dict[str, Any]:
+    def _fallback_analysis(self, app, engine) -> dict[str, Any]:
         """Fallback analysis when full engine features are not available."""
         results = {"vulnerabilities": [], "paths_explored": 0, "coverage": {}, "execution_time": 0, "fallback_mode": True}
 
@@ -569,7 +568,7 @@ class SymbolicExecution:
             results["error"] = str(e)
             return results
 
-    def _process_analysis_results(self, app, results: Dict[str, Any], binary_path: str) -> None:
+    def _process_analysis_results(self, app, results: dict[str, Any], binary_path: str) -> None:
         """Process and display symbolic execution results."""
         try:
             if not results:
@@ -617,7 +616,7 @@ class SymbolicExecution:
             if hasattr(app, "update_output"):
                 app.update_output.emit(f"[ERROR] Failed to process symbolic execution results: {e}")
 
-    def get_analysis_status(self) -> Dict[str, Any]:
+    def get_analysis_status(self) -> dict[str, Any]:
         """Get current symbolic execution status and capabilities.
 
         Returns:

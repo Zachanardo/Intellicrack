@@ -341,7 +341,8 @@ class DataInterpreter:
                 minute = (dos_time >> 5) & 0x3F
                 second = (dos_time & 0x1F) * 2
 
-                dt = datetime.datetime(year, month, day, hour, minute, second)
+                from datetime import timezone
+                dt = datetime.datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc)
                 return dt.strftime("%Y-%m-%d %H:%M:%S")
             except (ValueError, OSError) as e:
                 logger.error("Error in data_inspector: %s", e)
@@ -909,12 +910,16 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
                 # Validate and sanitize user input
                 value_text = value_text.strip()
                 if not value_text.isdigit():
-                    raise ValueError("Decimal value must contain only digits")
+                    error_msg = "Decimal value must contain only digits"
+                    logger.error(error_msg)
+                    raise ValueError(error_msg)
                 value = int(value_text)
                 if 0 <= value <= 255:
                     new_data = bytes([value])
                 else:
-                    raise ValueError("Decimal value must be 0-255")
+                    error_msg = "Decimal value must be 0-255"
+                    logger.error(error_msg)
+                    raise ValueError(error_msg)
 
             elif input_type == "ASCII":
                 new_data = value_text.encode("ascii", errors="replace")

@@ -118,7 +118,6 @@ import json
 import threading
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Optional
 
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
@@ -130,7 +129,7 @@ from intellicrack.core.certificate.cert_chain_generator import CertificateChain
 class CertificateCache:
     """Thread-safe LRU cache for generated certificate chains."""
 
-    def __init__(self, cache_dir: Optional[Path] = None, max_entries: int = 1000) -> None:
+    def __init__(self, cache_dir: Path | None = None, max_entries: int = 1000) -> None:
         """Initialize certificate cache.
 
         Args:
@@ -156,7 +155,7 @@ class CertificateCache:
         if not self.metadata_file.exists():
             self._save_metadata({})
 
-    def _load_metadata(self) -> Dict:
+    def _load_metadata(self) -> dict:
         """Load cache metadata from disk.
 
         Returns:
@@ -169,7 +168,7 @@ class CertificateCache:
         except (FileNotFoundError, json.JSONDecodeError):
             return {}
 
-    def _save_metadata(self, metadata: Dict) -> None:
+    def _save_metadata(self, metadata: dict) -> None:
         """Save cache metadata to disk.
 
         Args:
@@ -203,7 +202,7 @@ class CertificateCache:
         """
         return self.cache_dir / self._domain_hash(domain)
 
-    def get_cached_cert(self, domain: str) -> Optional[CertificateChain]:
+    def get_cached_cert(self, domain: str) -> CertificateChain | None:
         """Retrieve cached certificate chain for domain.
 
         Args:
@@ -341,7 +340,7 @@ class CertificateCache:
             except Exception:
                 return False
 
-    def get_cache_stats(self) -> Dict:
+    def get_cache_stats(self) -> dict:
         """Get cache statistics.
 
         Returns:

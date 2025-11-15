@@ -19,7 +19,7 @@ import tempfile
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import r2pipe
 import yara
@@ -50,8 +50,8 @@ class SignatureMatch:
     offset: int
     size: int
     confidence: float
-    metadata: Dict[str, Any]
-    raw_match: Optional[Any] = None
+    metadata: dict[str, Any]
+    raw_match: Any | None = None
 
 
 @dataclass
@@ -62,7 +62,7 @@ class CompilerInfo:
     version: str
     optimization_level: str
     architecture: str
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
 
 @dataclass
@@ -71,9 +71,9 @@ class LibraryInfo:
 
     name: str
     version: str
-    functions: List[str]
-    imports: List[str]
-    metadata: Dict[str, Any]
+    functions: list[str]
+    imports: list[str]
+    metadata: dict[str, Any]
 
 
 class Radare2SignatureDetector:
@@ -87,13 +87,13 @@ class Radare2SignatureDetector:
 
         """
         self.binary_path = binary_path
-        self.r2: Optional[r2pipe.open] = None
-        self.matches: List[SignatureMatch] = []
-        self.yara_rules: List[yara.Rules] = []
-        self.custom_signatures: Dict[str, bytes] = {}
+        self.r2: r2pipe.open | None = None
+        self.matches: list[SignatureMatch] = []
+        self.yara_rules: list[yara.Rules] = []
+        self.custom_signatures: dict[str, bytes] = {}
         self.file_hash = self._calculate_file_hash()
 
-    def _calculate_file_hash(self) -> Dict[str, str]:
+    def _calculate_file_hash(self) -> dict[str, str]:
         """Calculate various hashes of the binary."""
         hashes = {}
         with open(self.binary_path, "rb") as f:
@@ -494,7 +494,7 @@ rule CryptoAPI_Usage {
 """
         return rules
 
-    def scan_with_yara(self) -> List[SignatureMatch]:
+    def scan_with_yara(self) -> list[SignatureMatch]:
         """Scan binary with loaded YARA rules."""
         matches = []
 
@@ -534,7 +534,7 @@ rule CryptoAPI_Usage {
         self.matches.extend(matches)
         return matches
 
-    def scan_with_clamav(self) -> List[SignatureMatch]:
+    def scan_with_clamav(self) -> list[SignatureMatch]:
         """Scan binary with ClamAV."""
         matches = []
 
@@ -615,7 +615,7 @@ rule CryptoAPI_Usage {
             "Crypto_MD5": b"MD5",
         }
 
-    def scan_custom_signatures(self) -> List[SignatureMatch]:
+    def scan_custom_signatures(self) -> list[SignatureMatch]:
         """Scan with custom signatures."""
         matches = []
 
@@ -654,7 +654,7 @@ rule CryptoAPI_Usage {
         self.matches.extend(matches)
         return matches
 
-    def detect_protection_schemes(self) -> List[SignatureMatch]:
+    def detect_protection_schemes(self) -> list[SignatureMatch]:
         """Detect protection schemes using Radare2 analysis."""
         matches = []
 
@@ -723,7 +723,7 @@ rule CryptoAPI_Usage {
         self.matches.extend(matches)
         return matches
 
-    def _calculate_entropy(self, section: Dict) -> float:
+    def _calculate_entropy(self, section: dict) -> float:
         """Calculate entropy of a section."""
         try:
             data = self.r2.cmdj(f"pxj {section['size']} @ {section['vaddr']}")
@@ -747,7 +747,7 @@ rule CryptoAPI_Usage {
         except Exception:
             return 0.0
 
-    def detect_compiler(self) -> Optional[CompilerInfo]:
+    def detect_compiler(self) -> CompilerInfo | None:
         """Detect compiler and version."""
         try:
             # Get binary info
@@ -816,12 +816,11 @@ rule CryptoAPI_Usage {
                     optimization = "O1"
                 else:
                     optimization = "O2/O3"
+            # Check for function inlining and loop unrolling
+            elif disasm.count("call") < 5:
+                optimization = "O3/Aggressive"
             else:
-                # Check for function inlining and loop unrolling
-                if disasm.count("call") < 5:
-                    optimization = "O3/Aggressive"
-                else:
-                    optimization = "O2/Standard"
+                optimization = "O2/Standard"
 
             return CompilerInfo(
                 compiler=compiler,
@@ -835,7 +834,7 @@ rule CryptoAPI_Usage {
             logger.error(f"Compiler detection failed: {e}")
             return None
 
-    def detect_libraries(self) -> List[LibraryInfo]:
+    def detect_libraries(self) -> list[LibraryInfo]:
         """Detect library versions."""
         libraries = []
 

@@ -109,7 +109,6 @@ PATCH TYPES:
 """
 
 from enum import Enum
-from typing import Optional
 
 
 class Architecture(Enum):
@@ -284,16 +283,15 @@ def generate_nop_sled(size: int, arch: Architecture = Architecture.X86) -> bytes
     """
     if arch in (Architecture.X86, Architecture.X64):
         return bytes([0x90] * size)
-    elif arch == Architecture.ARM32:
+    if arch == Architecture.ARM32:
         nop_count = size // 4
         arm_nop = bytes([0x00, 0x00, 0xA0, 0xE1])
         return arm_nop * nop_count
-    elif arch == Architecture.ARM64:
+    if arch == Architecture.ARM64:
         nop_count = size // 4
         arm64_nop = bytes([0x1F, 0x20, 0x03, 0xD5])
         return arm64_nop * nop_count
-    else:
-        return bytes([0x90] * size)
+    return bytes([0x90] * size)
 
 
 def generate_trampoline_x86(target_addr: int, hook_addr: int) -> bytes:
@@ -334,13 +332,12 @@ def generate_trampoline_x64(target_addr: int, hook_addr: int) -> bytes:
     if -2147483648 <= offset <= 2147483647:
         offset_bytes = offset.to_bytes(4, byteorder='little', signed=True)
         return bytes([0xE9]) + offset_bytes
-    else:
-        hook_bytes = hook_addr.to_bytes(8, byteorder='little')
-        return bytes([
-            0x48, 0xB8,
-        ]) + hook_bytes + bytes([
-            0xFF, 0xE0,
-        ])
+    hook_bytes = hook_addr.to_bytes(8, byteorder='little')
+    return bytes([
+        0x48, 0xB8,
+    ]) + hook_bytes + bytes([
+        0xFF, 0xE0,
+    ])
 
 
 def wrap_patch_stdcall(patch: bytes, arg_count: int = 0) -> bytes:
@@ -544,7 +541,7 @@ def get_patch_for_architecture(
     arch: Architecture,
     patch_type: PatchType,
     **kwargs,
-) -> Optional[bytes]:
+) -> bytes | None:
     """Get appropriate patch for target architecture.
 
     Args:
@@ -559,11 +556,11 @@ def get_patch_for_architecture(
     if patch_type == PatchType.ALWAYS_SUCCEED:
         if arch == Architecture.X86:
             return generate_always_succeed_x86()
-        elif arch == Architecture.X64:
+        if arch == Architecture.X64:
             return generate_always_succeed_x64()
-        elif arch == Architecture.ARM32:
+        if arch == Architecture.ARM32:
             return generate_always_succeed_arm32()
-        elif arch == Architecture.ARM64:
+        if arch == Architecture.ARM64:
             return generate_always_succeed_arm64()
 
     elif patch_type == PatchType.NOP_SLED:
@@ -574,7 +571,7 @@ def get_patch_for_architecture(
         original = kwargs.get('original_bytes', b'')
         if arch in (Architecture.X86, Architecture.X64):
             return generate_conditional_invert_x86(original)
-        elif arch in (Architecture.ARM32, Architecture.ARM64):
+        if arch in (Architecture.ARM32, Architecture.ARM64):
             return generate_conditional_invert_arm(original)
 
     elif patch_type == PatchType.TRAMPOLINE:
@@ -582,7 +579,7 @@ def get_patch_for_architecture(
         hook = kwargs.get('hook_addr', 0)
         if arch == Architecture.X86:
             return generate_trampoline_x86(target, hook)
-        elif arch == Architecture.X64:
+        if arch == Architecture.X64:
             return generate_trampoline_x64(target, hook)
 
     return None

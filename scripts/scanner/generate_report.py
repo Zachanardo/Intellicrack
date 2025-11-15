@@ -8,23 +8,25 @@ recommendations for improving scanner accuracy and reducing detection noise.
 import json
 
 # Load the verification results
-with open('verification_results.json') as f:
+from pathlib import Path
+
+with Path('verification_results.json').open() as f:
     results = json.load(f)
 
 # Generate comprehensive report
-report_content = f'''# Production Code Scanner Audit Report
+report_content = '''# Production Code Scanner Audit Report
 
 ## Executive Summary
 
-- **Total Findings Reviewed**: {results['total_findings_reviewed']}
-- **True Positives**: {results['true_positives']} ({results['true_positive_rate']:.2f}%)
-- **False Positives**: {results['false_positives']} ({results['false_positive_rate']:.2f}%)
-- **Scanner Accuracy Assessment**: {results['scanner_accuracy_assessment']}
+- **Total Findings Reviewed**: {total_findings_reviewed}
+- **True Positives**: {true_positives} ({true_positive_rate:.2f}%)
+- **False Positives**: {false_positives} ({false_positive_rate:.2f}%)
+- **Scanner Accuracy Assessment**: {scanner_accuracy_assessment}
 
 ## Detailed Analysis
 
 ### Classification Summary
-- The scanner performed a mixed accuracy assessment with a significant false positive rate of {results['false_positive_rate']:.2f}%.
+- The scanner performed a mixed accuracy assessment with a significant false positive rate of {false_positive_rate:.2f}%.
 - This exceeds the target of <10% false positives, indicating the scanner patterns need refinement.
 
 ### Most Common False Positive Patterns
@@ -34,7 +36,7 @@ Based on the analysis, the most common false positive patterns were:
 
 2. **Test files**: The scanner flagged legitimate code in test files (files in /tests/ directories or with test_ prefixes) that intentionally contain console logs, artificial delays for testing purposes, and temporary implementations.
 
-3. **Legitimate error handling**: The scanner flagged legitimate empty returns ({results['true_positives'] + results['false_positives']} total findings) in error handling code, where returning empty lists/dictionaries is a valid defensive programming practice.
+3. **Legitimate error handling**: The scanner flagged legitimate empty returns ({total_findings_error_handling}) total findings) in error handling code, where returning empty lists/dictionaries is a valid defensive programming practice.
 
 4. **Purposeful artificial delays**: Some time.sleep() calls were flagged as false positives when they had a legitimate purpose (e.g., allowing for process initialization or UI updates).
 
@@ -56,13 +58,13 @@ Examples of incorrectly flagged patterns include:
 
 **The scanner does NOT meet the acceptance criteria.**
 
-- **FALSE POSITIVE RATE**: {results['false_positive_rate']:.2f}% (Target: <10%)
+- **FALSE POSITIVE RATE**: {false_positive_rate:.2f}% (Target: <10%)
 - **DETECTION COVERAGE**: Unknown (manual check of missed patterns not performed)
 - **ACCEPTANCE CRITERIA MET**: No
 
 ## Recommendations for Scanner Pattern Improvements
 
-{chr(10).join([f'- {rec}' for rec in results['recommendations']])}
+{recommendations_text}
 
 ### Specific Pattern Refinements Recommended:
 
@@ -78,7 +80,7 @@ Examples of incorrectly flagged patterns include:
 
 ## Conclusion
 
-The current scanner implementation has a high false positive rate of {results['false_positive_rate']:.2f}%, which significantly exceeds the target of <10%. While the scanner does identify legitimate non-production code, the number of false positives would create excessive noise in actual usage. The scanner needs significant refinement to distinguish between legitimate code patterns and actual non-production code issues before being suitable for production use.
+The current scanner implementation has a high false positive rate of {false_positive_rate:.2f}%, which significantly exceeds the target of <10%. While the scanner does identify legitimate non-production code, the number of false positives would create excessive noise in actual usage. The scanner needs significant refinement to distinguish between legitimate code patterns and actual non-production code issues before being suitable for production use.
 
 ## Next Steps
 
@@ -87,9 +89,18 @@ The current scanner implementation has a high false positive rate of {results['f
 3. Perform another verification cycle to validate improvements
 4. Consider implementing a tiered confidence system that allows users to focus on high-confidence findings first
 
-'''
+'''.format(
+    total_findings_reviewed=results['total_findings_reviewed'],
+    true_positives=results['true_positives'],
+    true_positive_rate=results['true_positive_rate'],
+    false_positives=results['false_positives'],
+    false_positive_rate=results['false_positive_rate'],
+    scanner_accuracy_assessment=results['scanner_accuracy_assessment'],
+    total_findings_error_handling=results['true_positives'] + results['false_positives'],
+    recommendations_text=chr(10).join(['- ' + rec for rec in results['recommendations']]),
+)
 
-with open('scanner_audit_report.md', 'w') as f:
+with Path('scanner_audit_report.md').open('w') as f:
     f.write(report_content)
 
-print('Comprehensive report generated: scanner_audit_report.md')
+print("Comprehensive report generated: scanner_audit_report.md")

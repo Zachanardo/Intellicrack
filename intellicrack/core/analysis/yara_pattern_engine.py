@@ -639,8 +639,7 @@ rule Basic_PE_Detection
                     error=f"File already scanned and unchanged: {file_path} (skipping duplicate scan)",
                     metadata={"cached": True, "file_hash": cached_hash},
                 )
-            else:
-                logger.debug(f"File changed since last scan, rescanning: {abs_file_path}")
+            logger.debug(f"File changed since last scan, rescanning: {abs_file_path}")
 
         # Generate robust file hash for tracking and metadata
         file_hash = ""

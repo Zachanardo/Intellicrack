@@ -14,7 +14,6 @@ Licensed under GNU General Public License v3.0
 import struct
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple
 
 from intellicrack.utils.logger import get_logger
 
@@ -63,8 +62,8 @@ class VMHandler:
     handler_type: str
     pattern: bytes
     confidence: float
-    opcodes: List[Tuple[int, str]] = field(default_factory=list)
-    xrefs: List[int] = field(default_factory=list)
+    opcodes: list[tuple[int, str]] = field(default_factory=list)
+    xrefs: list[int] = field(default_factory=list)
     complexity: int = 0
 
 
@@ -75,8 +74,8 @@ class VirtualizedRegion:
     start_offset: int
     end_offset: int
     vm_entry: int
-    vm_exit: Optional[int]
-    handlers_used: Set[str]
+    vm_exit: int | None
+    handlers_used: set[str]
     control_flow_complexity: float
     mutation_detected: bool = False
     protection_level: VMProtectLevel = VMProtectLevel.UNKNOWN
@@ -91,13 +90,13 @@ class VMProtectDetection:
     protection_level: VMProtectLevel
     mode: VMProtectMode
     architecture: str
-    handlers: List[VMHandler]
-    virtualized_regions: List[VirtualizedRegion]
-    dispatcher_offset: Optional[int]
-    handler_table_offset: Optional[int]
+    handlers: list[VMHandler]
+    virtualized_regions: list[VirtualizedRegion]
+    dispatcher_offset: int | None
+    handler_table_offset: int | None
     confidence: float
-    technical_details: Dict[str, any] = field(default_factory=dict)
-    bypass_recommendations: List[str] = field(default_factory=list)
+    technical_details: dict[str, any] = field(default_factory=dict)
+    bypass_recommendations: list[str] = field(default_factory=list)
 
 
 class VMProtectDetector:
@@ -251,15 +250,14 @@ class VMProtectDetector:
 
             if machine == 0x14C:
                 return "x86"
-            elif machine == 0x8664:
+            if machine == 0x8664:
                 return "x64"
-            else:
-                return f"unknown_0x{machine:04x}"
+            return f"unknown_0x{machine:04x}"
 
         except Exception:
             return "unknown"
 
-    def _analyze_sections(self, data: bytes) -> Dict[str, any]:
+    def _analyze_sections(self, data: bytes) -> dict[str, any]:
         """Analyze PE sections for VMProtect characteristics."""
         analysis = {
             "vmp_sections": [],
@@ -304,7 +302,7 @@ class VMProtectDetector:
 
         return analysis
 
-    def _detect_vm_handlers(self, data: bytes, architecture: str) -> List[VMHandler]:
+    def _detect_vm_handlers(self, data: bytes, architecture: str) -> list[VMHandler]:
         """Detect VMProtect VM handlers using signature matching."""
         handlers = []
 
@@ -357,9 +355,7 @@ class VMProtectDetector:
                 size = insn.address - offset + insn.size
 
                 if insn.mnemonic in ["ret", "jmp"]:
-                    if insn.mnemonic == "ret":
-                        break
-                    elif insn.mnemonic == "jmp" and insn.op_str.startswith("["):
+                    if insn.mnemonic == "ret" or (insn.mnemonic == "jmp" and insn.op_str.startswith("[")):
                         break
 
                 if size > max_size - 16:
@@ -407,7 +403,7 @@ class VMProtectDetector:
 
         return complexity
 
-    def _extract_opcodes(self, data: bytes, offset: int, size: int, architecture: str) -> List[Tuple[int, str]]:
+    def _extract_opcodes(self, data: bytes, offset: int, size: int, architecture: str) -> list[tuple[int, str]]:
         """Extract opcodes from handler."""
         opcodes = []
 
@@ -428,7 +424,7 @@ class VMProtectDetector:
 
         return opcodes
 
-    def _find_handler_xrefs(self, data: bytes, handler_offset: int) -> List[int]:
+    def _find_handler_xrefs(self, data: bytes, handler_offset: int) -> list[int]:
         """Find cross-references to a handler."""
         xrefs = []
 
@@ -447,7 +443,7 @@ class VMProtectDetector:
 
         return xrefs[:10]
 
-    def _find_dispatcher(self, data: bytes, architecture: str) -> Optional[int]:
+    def _find_dispatcher(self, data: bytes, architecture: str) -> int | None:
         """Find VMProtect dispatcher logic."""
         if not CAPSTONE_AVAILABLE:
             return None
@@ -483,7 +479,7 @@ class VMProtectDetector:
 
         return None
 
-    def _find_handler_table(self, data: bytes, architecture: str) -> Optional[int]:
+    def _find_handler_table(self, data: bytes, architecture: str) -> int | None:
         """Find VMProtect handler table."""
         if not PEFILE_AVAILABLE:
             return None
@@ -508,7 +504,7 @@ class VMProtectDetector:
 
         return None
 
-    def _scan_for_handler_table(self, section_data: bytes, architecture: str) -> Optional[int]:
+    def _scan_for_handler_table(self, section_data: bytes, architecture: str) -> int | None:
         """Scan section for handler table structure."""
         ptr_size = 8 if architecture == "x64" else 4
         min_table_size = 16
@@ -533,7 +529,7 @@ class VMProtectDetector:
 
         return None
 
-    def _identify_virtualized_regions(self, data: bytes, handlers: List[VMHandler], architecture: str) -> List[VirtualizedRegion]:
+    def _identify_virtualized_regions(self, data: bytes, handlers: list[VMHandler], architecture: str) -> list[VirtualizedRegion]:
         """Identify regions of virtualized code."""
         regions = []
 
@@ -568,7 +564,7 @@ class VMProtectDetector:
 
         return regions
 
-    def _find_vm_exit(self, data: bytes, entry_offset: int, architecture: str) -> Optional[int]:
+    def _find_vm_exit(self, data: bytes, entry_offset: int, architecture: str) -> int | None:
         """Find VM exit point."""
         if not CAPSTONE_AVAILABLE:
             return None
@@ -601,7 +597,7 @@ class VMProtectDetector:
 
         return None
 
-    def _calculate_region_complexity(self, data: bytes, start: int, end: Optional[int], architecture: str) -> float:
+    def _calculate_region_complexity(self, data: bytes, start: int, end: int | None, architecture: str) -> float:
         """Calculate control flow complexity of a region."""
         if not CAPSTONE_AVAILABLE or not end:
             return 1.0
@@ -679,9 +675,7 @@ class VMProtectDetector:
                 for insn in cs.disasm(data[i : i + 100], i):
                     total_instructions += 1
 
-                    if insn.mnemonic in ["nop", "xchg"] and "eax" in insn.op_str and "eax" in insn.op_str:
-                        junk_instructions += 1
-                    elif insn.mnemonic == "mov" and insn.op_str.split(",")[0].strip() == insn.op_str.split(",")[1].strip():
+                    if (insn.mnemonic in ["nop", "xchg"] and "eax" in insn.op_str and "eax" in insn.op_str) or (insn.mnemonic == "mov" and insn.op_str.split(",")[0].strip() == insn.op_str.split(",")[1].strip()):
                         junk_instructions += 1
 
         except Exception as e:
@@ -693,7 +687,7 @@ class VMProtectDetector:
         return min(junk_instructions / total_instructions, 1.0)
 
     def _determine_protection_level(
-        self, handlers: List[VMHandler], regions: List[VirtualizedRegion], mutation_score: float,
+        self, handlers: list[VMHandler], regions: list[VirtualizedRegion], mutation_score: float,
     ) -> VMProtectLevel:
         """Determine VMProtect protection level."""
         if not handlers:
@@ -706,20 +700,19 @@ class VMProtectDetector:
 
         if mutation_score > 0.7 or handler_complexity > 80 or avg_region_complexity > 5.0:
             return VMProtectLevel.ULTRA
-        elif mutation_score > 0.4 or handler_complexity > 50 or region_count > 5:
+        if mutation_score > 0.4 or handler_complexity > 50 or region_count > 5:
             return VMProtectLevel.STANDARD
-        elif handlers or regions:
+        if handlers or regions:
             return VMProtectLevel.LITE
-        else:
-            return VMProtectLevel.UNKNOWN
+        return VMProtectLevel.UNKNOWN
 
-    def _detect_version(self, data: bytes, section_analysis: Dict) -> str:
+    def _detect_version(self, data: bytes, section_analysis: dict) -> str:
         """Detect VMProtect version."""
         vmp_sections = section_analysis.get("vmp_sections", [])
 
         if len(vmp_sections) >= 2:
             return "3.x"
-        elif len(vmp_sections) == 1:
+        if len(vmp_sections) == 1:
             return "2.x-3.x"
 
         version_strings = [b"VMProtect 3", b"VMProtect v3", b"3.0", b"3.1", b"3.2", b"3.3", b"3.4", b"3.5", b"3.6"]
@@ -735,7 +728,7 @@ class VMProtectDetector:
 
         return "Unknown (likely 2.x or 3.x)"
 
-    def _analyze_control_flow(self, data: bytes, regions: List[VirtualizedRegion], architecture: str) -> Dict[str, any]:
+    def _analyze_control_flow(self, data: bytes, regions: list[VirtualizedRegion], architecture: str) -> dict[str, any]:
         """Analyze control flow within virtualized regions."""
         analysis = {
             "total_regions": len(regions),
@@ -772,7 +765,7 @@ class VMProtectDetector:
 
         return analysis
 
-    def _scan_strings(self, data: bytes) -> List[str]:
+    def _scan_strings(self, data: bytes) -> list[str]:
         """Scan for VMProtect-related strings."""
         matches = []
 
@@ -782,7 +775,7 @@ class VMProtectDetector:
 
         return matches
 
-    def _generate_bypass_recommendations(self, detection: VMProtectDetection) -> List[str]:
+    def _generate_bypass_recommendations(self, detection: VMProtectDetection) -> list[str]:
         """Generate bypass recommendations based on detection results."""
         recommendations = []
 

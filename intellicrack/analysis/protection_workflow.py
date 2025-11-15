@@ -77,7 +77,7 @@ try:
 except ImportError:
     import logging
 
-    def get_logger(name):
+    def get_logger(name: str):
         """Create a logger instance with the given name.
 
         Args:

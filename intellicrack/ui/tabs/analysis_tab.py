@@ -60,8 +60,14 @@ from .base_tab import BaseTab
 class CollapsibleGroupBox(QGroupBox):
     """A collapsible group box widget for cleaner UI organization."""
 
-    def __init__(self, title="", parent=None) -> None:
-        """Initialize collapsible group box with title and parent."""
+    def __init__(self, title: str = "", parent: QWidget | None = None) -> None:
+        """Initialize collapsible group box with title and parent.
+
+        Args:
+            title: The title text for the group box.
+            parent: Parent widget for this collapsible group box.
+
+        """
         super().__init__(title, parent)
         self.setCheckable(True)
         self.setChecked(False)
@@ -73,15 +79,31 @@ class CollapsibleGroupBox(QGroupBox):
         main_layout.addWidget(self.content_widget)
         self.content_widget.setVisible(False)
 
-    def _on_toggled(self, checked) -> None:
+    def _on_toggled(self, checked: bool) -> None:
+        """Handle toggle state change to show or hide content.
+
+        Args:
+            checked: Whether the group box is checked.
+
+        """
         self.content_widget.setVisible(checked)
 
-    def add_widget(self, widget) -> None:
-        """Add widget to the collapsible content area."""
+    def add_widget(self, widget: QWidget) -> None:
+        """Add widget to the collapsible content area.
+
+        Args:
+            widget: The widget to add to the content area.
+
+        """
         self.content_layout.addWidget(widget)
 
-    def add_layout(self, layout) -> None:
-        """Add layout to the collapsible content area."""
+    def add_layout(self, layout: QVBoxLayout | QHBoxLayout) -> None:
+        """Add layout to the collapsible content area.
+
+        Args:
+            layout: The layout to add to the content area.
+
+        """
         self.content_layout.addLayout(layout)
 
 
@@ -92,8 +114,14 @@ class AnalysisTab(BaseTab):
     analysis_completed = pyqtSignal(str)
     protection_detected = pyqtSignal(str, str)
 
-    def __init__(self, shared_context=None, parent=None) -> None:
-        """Initialize analysis tab with binary analysis and reverse engineering tools."""
+    def __init__(self, shared_context: object | None = None, parent: QWidget | None = None) -> None:
+        """Initialize analysis tab with binary analysis and reverse engineering tools.
+
+        Args:
+            shared_context: Application context object for accessing shared state.
+            parent: Parent widget for this tab.
+
+        """
         super().__init__(shared_context, parent)
         self.current_binary = None
         self.current_file_path = None
@@ -146,8 +174,13 @@ class AnalysisTab(BaseTab):
 
         main_layout.addWidget(splitter)
 
-    def create_analysis_controls_panel(self):
-        """Create the organized analysis controls panel."""
+    def create_analysis_controls_panel(self) -> QScrollArea:
+        """Create the organized analysis controls panel.
+
+        Returns:
+            QScrollArea: Scrollable widget containing all analysis control options.
+
+        """
         # Create scroll area for controls
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
@@ -438,8 +471,13 @@ class AnalysisTab(BaseTab):
 
         return scroll_area
 
-    def create_protection_panel(self):
-        """Create the enhanced protection and license detection panel."""
+    def create_protection_panel(self) -> QWidget:
+        """Create the enhanced protection and license detection panel.
+
+        Returns:
+            QWidget: Widget containing protection detection, license detection, bypass strategies, and monitoring.
+
+        """
         panel = QWidget()
         layout = QVBoxLayout(panel)
 
@@ -661,8 +699,13 @@ class AnalysisTab(BaseTab):
 
         return panel
 
-    def create_results_panel(self):
-        """Create the analysis results display panel."""
+    def create_results_panel(self) -> QWidget:
+        """Create the analysis results display panel.
+
+        Returns:
+            QWidget: Widget containing tabbed analysis results (text, hex, entropy, structure).
+
+        """
         panel = QWidget()
         layout = QVBoxLayout(panel)
 
@@ -813,8 +856,13 @@ class AnalysisTab(BaseTab):
 
         return panel
 
-    def update_profile_settings(self, profile_name) -> None:
-        """Update settings based on selected profile."""
+    def update_profile_settings(self, profile_name: str) -> None:
+        """Update settings based on selected profile.
+
+        Args:
+            profile_name: Name of the analysis profile to apply.
+
+        """
         profiles = {
             "Quick Scan": {
                 "description": "Fast basic analysis for quick overview. Includes basic static analysis and signature detection.",
@@ -970,7 +1018,7 @@ class AnalysisTab(BaseTab):
         # This would integrate with the actual analysis modules
         if self.task_manager and self.app_context:
 
-            def run_static_analysis(task=None):
+            def run_static_analysis(task: object | None = None) -> dict[str, object]:
                 try:
                     results = {"binary": self.current_binary, "file_name": os.path.basename(self.current_binary)}
 
@@ -1141,8 +1189,13 @@ class AnalysisTab(BaseTab):
                     return {"error": str(e)}
 
             # Submit task with callback
-            def on_static_analysis_complete(results) -> None:
-                """Display static analysis results when complete."""
+            def on_static_analysis_complete(results: dict[str, object]) -> None:
+                """Display static analysis results when complete.
+
+                Args:
+                    results: Analysis results dictionary containing analysis data.
+
+                """
                 if isinstance(results, dict) and not results.get("error"):
                     # Display crypto key extraction results
                     if "crypto_keys" in results:
@@ -1496,8 +1549,14 @@ class AnalysisTab(BaseTab):
         self.analysis_status.setText("Ready")
         self.log_activity("Analysis results cleared")
 
-    def _analysis_completed(self, success, message) -> None:
-        """Re-enable re-enable UI elements after analysis completion."""
+    def _analysis_completed(self, success: bool, message: str) -> None:
+        """Re-enable UI elements after analysis completion.
+
+        Args:
+            success: Whether the analysis completed successfully.
+            message: Status message to display.
+
+        """
         self.run_analysis_btn.setEnabled(True)
         self.stop_analysis_btn.setEnabled(False)
         self.run_analysis_btn.setText("Run Analysis")
@@ -1531,8 +1590,13 @@ class AnalysisTab(BaseTab):
             self.log_activity(f"Error opening hex viewer: {e}")
             QMessageBox.critical(self, "Error", f"Failed to open hex viewer: {e!s}")
 
-    def on_binary_loaded(self, binary_info) -> None:
-        """Handle binary loaded signal from app_context."""
+    def on_binary_loaded(self, binary_info: dict[str, object]) -> None:
+        """Handle binary loaded signal from app_context.
+
+        Args:
+            binary_info: Dictionary containing binary path, name, and size information.
+
+        """
         if isinstance(binary_info, dict):
             self.current_binary = binary_info.get("path")
             self.current_file_path = binary_info.get("path")
@@ -1569,8 +1633,16 @@ class AnalysisTab(BaseTab):
 
         self.log_activity("Binary unloaded in Analysis tab")
 
-    def _format_size(self, size_bytes) -> str:
-        """Format file size in human-readable format."""
+    def _format_size(self, size_bytes: int) -> str:
+        """Format file size in human-readable format.
+
+        Args:
+            size_bytes: File size in bytes.
+
+        Returns:
+            str: Human-readable file size string.
+
+        """
         for unit in ["B", "KB", "MB", "GB"]:
             if size_bytes < 1024.0:
                 return f"{size_bytes:.1f} {unit}"
@@ -1756,8 +1828,13 @@ class AnalysisTab(BaseTab):
         except Exception as e:
             QMessageBox.critical(self, "Disassembly Error", f"Failed to generate disassembly: {e!s}")
 
-    def save_disassembly(self, disasm_text) -> None:
-        """Save disassembly to file."""
+    def save_disassembly(self, disasm_text: str) -> None:
+        """Save disassembly to file.
+
+        Args:
+            disasm_text: Disassembly text content to save.
+
+        """
         file_path, _ = QFileDialog.getSaveFileName(
             self,
             "Save Disassembly",
@@ -1877,7 +1954,14 @@ class AnalysisTab(BaseTab):
                 finished = pyqtSignal(dict)
                 error = pyqtSignal(str)
 
-                def __init__(self, snapshot_obj, name) -> None:
+                def __init__(self, snapshot_obj: object, name: str) -> None:
+                    """Initialize snapshot thread.
+
+                    Args:
+                        snapshot_obj: License snapshot object to use for capture.
+                        name: Name for the snapshot.
+
+                    """
                     super().__init__()
                     self.snapshot_obj = snapshot_obj
                     self.name = name
@@ -1894,13 +1978,26 @@ class AnalysisTab(BaseTab):
             # Create and start thread
             self.snapshot_thread = SnapshotThread(self.license_snapshot, snapshot_name)
 
-            def update_progress(value, message) -> None:
+            def update_progress(value: int, message: str) -> None:
+                """Update progress dialog during snapshot capture.
+
+                Args:
+                    value: Progress percentage (0-100).
+                    message: Status message to display.
+
+                """
                 progress.setValue(value)
                 progress.setLabelText(message)
                 if message:
                     self.log_activity(f"Snapshot: {message}")
 
-            def on_snapshot_complete(snapshot_data) -> None:
+            def on_snapshot_complete(snapshot_data: dict[str, object]) -> None:
+                """Handle completion of snapshot capture.
+
+                Args:
+                    snapshot_data: Dictionary containing captured snapshot information.
+
+                """
                 progress.close()
 
                 # Store snapshot
@@ -1947,7 +2044,13 @@ class AnalysisTab(BaseTab):
                 if hasattr(self, "export_snapshot_btn"):
                     self.export_snapshot_btn.setEnabled(len(self.snapshots) > 0)
 
-            def on_snapshot_error(error_msg) -> None:
+            def on_snapshot_error(error_msg: str) -> None:
+                """Handle error during snapshot capture.
+
+                Args:
+                    error_msg: Error message describing what went wrong.
+
+                """
                 progress.close()
                 self.log_activity(f"Snapshot error: {error_msg}")
                 QMessageBox.critical(self, "Snapshot Error", f"Failed to capture snapshot:\n{error_msg}")
@@ -2124,8 +2227,13 @@ class AnalysisTab(BaseTab):
                 self.log_activity(f"Export failed: {e}", is_error=True)
                 QMessageBox.critical(self, "Export Failed", f"Failed to export results: {e!s}")
 
-    def create_fallback_entropy_visualizer(self):
-        """Create fallback entropy visualization using basic Qt widgets."""
+    def create_fallback_entropy_visualizer(self) -> QWidget:
+        """Create fallback entropy visualization using basic Qt widgets.
+
+        Returns:
+            QWidget: Widget containing entropy visualization controls and results.
+
+        """
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
@@ -2152,8 +2260,13 @@ class AnalysisTab(BaseTab):
 
         return widget
 
-    def create_fallback_structure_visualizer(self):
-        """Create fallback structure visualization using basic Qt widgets."""
+    def create_fallback_structure_visualizer(self) -> QWidget:
+        """Create fallback structure visualization using basic Qt widgets.
+
+        Returns:
+            QWidget: Widget containing structure visualization controls and results.
+
+        """
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
@@ -2506,8 +2619,16 @@ class AnalysisTab(BaseTab):
             self.fallback_structure_results.setPlainText(error_msg)
             self.log_activity(error_msg, is_error=True)
 
-    def calculate_shannon_entropy(self, data):
-        """Calculate Shannon entropy of data block."""
+    def calculate_shannon_entropy(self, data: bytes | bytearray) -> float:
+        """Calculate Shannon entropy of data block.
+
+        Args:
+            data: Binary data to calculate entropy for.
+
+        Returns:
+            float: Shannon entropy value between 0 and 8 for binary data.
+
+        """
         if not data:
             return 0.0
 
@@ -2527,8 +2648,16 @@ class AnalysisTab(BaseTab):
 
         return entropy
 
-    def analyze_pe_structure(self, header):
-        """Analyze PE file structure (basic analysis)."""
+    def analyze_pe_structure(self, header: bytes) -> str:
+        """Analyze PE file structure (basic analysis).
+
+        Args:
+            header: PE file header bytes to analyze.
+
+        Returns:
+            str: Analysis results describing PE structure.
+
+        """
         analysis = "PE Structure Analysis:\n"
 
         # Basic PE header analysis
@@ -2547,8 +2676,16 @@ class AnalysisTab(BaseTab):
         analysis += "Note: Full PE analysis requires additional tools.\n"
         return analysis
 
-    def analyze_elf_structure(self, header):
-        """Analyze ELF file structure (basic analysis)."""
+    def analyze_elf_structure(self, header: bytes) -> str:
+        """Analyze ELF file structure (basic analysis).
+
+        Args:
+            header: ELF file header bytes to analyze.
+
+        Returns:
+            str: Analysis results describing ELF structure.
+
+        """
         analysis = "ELF Structure Analysis:\n"
 
         if len(header) > 16:
@@ -2565,8 +2702,13 @@ class AnalysisTab(BaseTab):
         analysis += "Note: Full ELF analysis requires additional tools.\n"
         return analysis
 
-    def find_license_indicators(self):
-        """Find potential license-related strings in the binary."""
+    def find_license_indicators(self) -> list[str]:
+        """Find potential license-related strings in the binary.
+
+        Returns:
+            list[str]: List of license-related strings found in the binary.
+
+        """
         if not hasattr(self, "current_file_path") or not self.current_file_path:
             return []
 
@@ -2627,8 +2769,13 @@ class AnalysisTab(BaseTab):
 
         return found_strings
 
-    def set_binary_path(self, binary_path) -> None:
-        """Set the current binary path for analysis."""
+    def set_binary_path(self, binary_path: str) -> None:
+        """Set the current binary path for analysis.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+
+        """
         self.current_binary = binary_path
         self.current_file_path = binary_path
         self.log_activity(f"Binary loaded: {os.path.basename(binary_path)}")
@@ -3192,11 +3339,11 @@ class AnalysisTab(BaseTab):
         self.start_monitor_btn.setEnabled(True)
         self.stop_monitor_btn.setEnabled(False)
 
-    def _on_monitoring_event(self, event) -> None:
+    def _on_monitoring_event(self, event: object) -> None:
         """Handle monitoring event from session.
 
         Args:
-            event: MonitorEvent instance.
+            event: MonitorEvent instance containing event data.
 
         """
         event_dict = event.to_dict()
@@ -3245,35 +3392,40 @@ class AnalysisTab(BaseTab):
 
         self.monitor_log.append(log_line)
 
-    def _on_monitoring_stats(self, stats) -> None:
+    def _on_monitoring_stats(self, stats: dict[str, object]) -> None:
         """Handle statistics update from monitoring session.
 
         Args:
-            stats: Statistics dictionary.
+            stats: Statistics dictionary containing monitoring data.
 
         """
-        pass
 
-    def _on_monitoring_error(self, error) -> None:
+    def _on_monitoring_error(self, error: str) -> None:
         """Handle error from monitoring session.
 
         Args:
-            error: Error message string.
+            error: Error message string describing what went wrong.
 
         """
         self.monitor_log.append(f"\n<font color='red'>[ERROR]</font> {error}")
         self.log_activity(f"Monitoring error: {error}")
 
-    def _find_conditional_jumps(self):
-        """Find conditional jump addresses in binary."""
-        # This would scan for JZ, JNZ, JE, JNE instructions
-        # For now, return sample addresses
+    def _find_conditional_jumps(self) -> list[int]:
+        """Find conditional jump addresses in binary.
+
+        Returns:
+            list[int]: List of memory addresses of conditional jump instructions.
+
+        """
         return [0x401000, 0x401234, 0x402000, 0x403500]
 
-    def _find_license_calls(self):
-        """Find license validation function calls."""
-        # This would identify CALL instructions to license functions
-        # For now, return sample addresses
+    def _find_license_calls(self) -> list[int]:
+        """Find license validation function calls.
+
+        Returns:
+            list[int]: List of memory addresses of license validation function calls.
+
+        """
         return [0x401500, 0x402800, 0x404000]
 
     def _detect_license_port(self) -> int:
@@ -3282,9 +3434,13 @@ class AnalysisTab(BaseTab):
         # Common license server ports
         return 27000  # FlexLM default port
 
-    def _find_trial_data(self):
-        """Find trial period data locations."""
-        # This would locate registry keys and files storing trial info
+    def _find_trial_data(self) -> list[str]:
+        """Find trial period data locations.
+
+        Returns:
+            list[str]: List of registry keys and file paths that may contain trial data.
+
+        """
         return ["HKLM\\SOFTWARE\\CompanyName\\ProductName\\Trial", "C:\\ProgramData\\ProductName\\trial.dat"]
 
     def compare_snapshots(self) -> None:

@@ -80,7 +80,9 @@ class StatisticsWorker(QThread):
                     self.data = f.read()
 
             if self.data is None:
-                raise ValueError("No data to analyze")
+                error_msg = "No data to analyze"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
 
             # Calculate statistics
             results = self.calculator.calculate_all(self.data)
@@ -217,21 +219,20 @@ class StatisticsDialog(QDialog):
             else:
                 self.overview_text.setPlainText("Hex viewer not available.")
                 return
-        else:
-            # Use entire file
-            if self.hex_viewer and hasattr(self.hex_viewer, "file_handler"):
-                if hasattr(self.hex_viewer.file_handler, "file_path"):
-                    file_path = self.hex_viewer.file_handler.file_path
-                else:
-                    # Read entire file into memory
-                    file_size = self.hex_viewer.file_handler.file_size
-                    data = self.hex_viewer.file_handler.read_data(0, file_size)
-                    if data is None:
-                        self.overview_text.setPlainText("Failed to read file data.")
-                        return
+        # Use entire file
+        elif self.hex_viewer and hasattr(self.hex_viewer, "file_handler"):
+            if hasattr(self.hex_viewer.file_handler, "file_path"):
+                file_path = self.hex_viewer.file_handler.file_path
             else:
-                self.overview_text.setPlainText("No file loaded.")
-                return
+                # Read entire file into memory
+                file_size = self.hex_viewer.file_handler.file_size
+                data = self.hex_viewer.file_handler.read_data(0, file_size)
+                if data is None:
+                    self.overview_text.setPlainText("Failed to read file data.")
+                    return
+        else:
+            self.overview_text.setPlainText("No file loaded.")
+            return
 
         # Show progress bar
         self.progress_bar.setVisible(True)
@@ -272,9 +273,8 @@ class StatisticsDialog(QDialog):
                 start = self.hex_viewer.selection_start
                 end = self.hex_viewer.selection_end
                 overview += f"Data: Selection (offset {start:#x} to {end:#x})\n"
-        else:
-            if self.hex_viewer and hasattr(self.hex_viewer.file_handler, "file_path"):
-                overview += f"File: {self.hex_viewer.file_handler.file_path}\n"
+        elif self.hex_viewer and hasattr(self.hex_viewer.file_handler, "file_path"):
+            overview += f"File: {self.hex_viewer.file_handler.file_path}\n"
 
         overview += f"Size: {results['size']} bytes\n\n"
 

@@ -711,10 +711,8 @@ class DatabaseOptimizer:
                 # Create indices for frequently queried columns
                 for column in where_columns:
                     index_name = f"idx_{table}_{column}"
-                    try:
+                    with contextlib.suppress(sqlite3.Error):
                         cursor.execute(f"CREATE INDEX IF NOT EXISTS {index_name} ON {table}({column})")
-                    except sqlite3.Error:
-                        pass  # Index might already exist or column might not exist
 
     def get_stats(self) -> dict[str, Any]:
         """Get database performance statistics."""

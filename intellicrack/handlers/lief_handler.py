@@ -557,12 +557,11 @@ except ImportError as e:
 
                 if magic[:2] == b"MZ":
                     return FallbackPE(filepath)
-                elif magic == b"\x7fELF":
+                if magic == b"\x7fELF":
                     return FallbackELF(filepath)
-                elif magic in (b"\xfe\xed\xfa\xce", b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xcf", b"\xcf\xfa\xed\xfe"):
+                if magic in (b"\xfe\xed\xfa\xce", b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xcf", b"\xcf\xfa\xed\xfe"):
                     return FallbackMachO(filepath)
-                else:
-                    return FallbackBinary(filepath)
+                return FallbackBinary(filepath)
 
         except Exception as e:
             logger.error("Failed to parse binary %s: %s", filepath, e)

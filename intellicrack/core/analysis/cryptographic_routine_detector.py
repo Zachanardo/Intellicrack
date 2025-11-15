@@ -14,7 +14,7 @@ import struct
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import IntEnum
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 import numpy as np
 from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
@@ -59,11 +59,11 @@ class DataFlowNode:
     address: int
     instruction: str
     mnemonic: str
-    operands: List[str]
-    reads: Set[str] = field(default_factory=set)
-    writes: Set[str] = field(default_factory=set)
-    constants: Set[int] = field(default_factory=set)
-    memory_refs: List[int] = field(default_factory=list)
+    operands: list[str]
+    reads: set[str] = field(default_factory=set)
+    writes: set[str] = field(default_factory=set)
+    constants: set[int] = field(default_factory=set)
+    memory_refs: list[int] = field(default_factory=list)
 
 
 @dataclass
@@ -73,9 +73,9 @@ class CryptoConstant:
     offset: int
     value: bytes
     constant_type: str
-    algorithm: Optional[CryptoAlgorithm] = None
+    algorithm: CryptoAlgorithm | None = None
     confidence: float = 0.0
-    context: Dict[str, Any] = field(default_factory=dict)
+    context: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -87,13 +87,13 @@ class CryptoDetection:
     size: int
     confidence: float
     variant: str
-    key_size: Optional[int] = None
-    mode: Optional[str] = None
-    details: Dict[str, Any] = field(default_factory=dict)
-    code_refs: List[int] = field(default_factory=list)
-    data_refs: List[int] = field(default_factory=list)
-    constants: List[CryptoConstant] = field(default_factory=list)
-    data_flows: List[DataFlowNode] = field(default_factory=list)
+    key_size: int | None = None
+    mode: str | None = None
+    details: dict[str, Any] = field(default_factory=dict)
+    code_refs: list[int] = field(default_factory=list)
+    data_refs: list[int] = field(default_factory=list)
+    constants: list[CryptoConstant] = field(default_factory=list)
+    data_flows: list[DataFlowNode] = field(default_factory=list)
 
 
 class CryptographicRoutineDetector:
@@ -227,15 +227,15 @@ class CryptographicRoutineDetector:
 
     def __init__(self) -> None:
         """Initialize the CryptographicRoutineDetector with disassemblers."""
-        self.detections: List[CryptoDetection] = []
+        self.detections: list[CryptoDetection] = []
         self.md_32 = Cs(CS_ARCH_X86, CS_MODE_32)
         self.md_64 = Cs(CS_ARCH_X86, CS_MODE_64)
         self.md_32.detail = True
         self.md_64.detail = True
-        self.constant_cache: Dict[bytes, CryptoConstant] = {}
-        self.data_flow_cache: Dict[int, List[DataFlowNode]] = {}
+        self.constant_cache: dict[bytes, CryptoConstant] = {}
+        self.data_flow_cache: dict[int, list[DataFlowNode]] = {}
 
-    def detect_all(self, data: bytes, base_addr: int = 0, use_radare2: bool = False, binary_path: Optional[str] = None, quick_mode: bool = False) -> List[CryptoDetection]:
+    def detect_all(self, data: bytes, base_addr: int = 0, use_radare2: bool = False, binary_path: str | None = None, quick_mode: bool = False) -> list[CryptoDetection]:
         """Detect all cryptographic routines in binary data with advanced analysis.
 
         Args:
@@ -934,7 +934,7 @@ class CryptographicRoutineDetector:
                     detection.details["register_usage"] = dict(register_usage)
                     detection.details["data_flow_complexity"] = len(flow_nodes)
 
-    def _analyze_data_flow_region(self, data: bytes, base_addr: int) -> List[DataFlowNode]:
+    def _analyze_data_flow_region(self, data: bytes, base_addr: int) -> list[DataFlowNode]:
         """Analyze data flow in a specific region of code."""
         flow_nodes = []
 
@@ -985,7 +985,7 @@ class CryptographicRoutineDetector:
             elif algorithm in [CryptoAlgorithm.SHA1, CryptoAlgorithm.SHA256, CryptoAlgorithm.MD5]:
                 self._fingerprint_hash(detections)
 
-    def _fingerprint_aes(self, detections: List[CryptoDetection]) -> None:
+    def _fingerprint_aes(self, detections: list[CryptoDetection]) -> None:
         """Fingerprint AES implementation details."""
         has_sbox = any("S-box" in d.variant for d in detections)
         has_aesni = any("AES-NI" in d.variant for d in detections)
@@ -1002,7 +1002,7 @@ class CryptographicRoutineDetector:
             if "obfuscated" in detection.details and detection.details["obfuscated"]:
                 detection.details["implementation"] = "obfuscated"
 
-    def _fingerprint_rsa(self, detections: List[CryptoDetection]) -> None:
+    def _fingerprint_rsa(self, detections: list[CryptoDetection]) -> None:
         """Fingerprint RSA implementation details."""
         has_montgomery = any("Montgomery" in d.variant for d in detections)
 
@@ -1011,7 +1011,7 @@ class CryptographicRoutineDetector:
                 detection.details["optimization"] = "Montgomery multiplication"
                 detection.confidence = min(1.0, detection.confidence + 0.05)
 
-    def _fingerprint_ecc(self, detections: List[CryptoDetection]) -> None:
+    def _fingerprint_ecc(self, detections: list[CryptoDetection]) -> None:
         """Fingerprint ECC implementation details."""
         curve_detections = [d for d in detections if "Field Prime" in d.variant]
 
@@ -1019,7 +1019,7 @@ class CryptographicRoutineDetector:
             if curve_detections:
                 detection.details["curves_present"] = [d.details.get("curve") for d in curve_detections]
 
-    def _fingerprint_hash(self, detections: List[CryptoDetection]) -> None:
+    def _fingerprint_hash(self, detections: list[CryptoDetection]) -> None:
         """Fingerprint hash algorithm implementation details."""
         for detection in detections:
             if detection.details.get("hardware", False):
@@ -1070,7 +1070,7 @@ class CryptographicRoutineDetector:
         final_confidence = (base_confidence * 0.7) + (hamming_factor * 0.3)
         return final_confidence
 
-    def _pack_des_sbox(self, sbox: List[List[int]]) -> bytes:
+    def _pack_des_sbox(self, sbox: list[list[int]]) -> bytes:
         """Pack DES S-box into byte format."""
         packed = bytearray()
         for row in sbox:
@@ -1131,7 +1131,7 @@ class CryptographicRoutineDetector:
         mod_indicators = [b"\xf7", b"\xf6", b"\x0f\xaf", b"\x69", b"\x6b"]
         return any(indicator in window for indicator in mod_indicators)
 
-    def _estimate_rsa_key_size(self, data: bytes, offset: int) -> Optional[int]:
+    def _estimate_rsa_key_size(self, data: bytes, offset: int) -> int | None:
         """Estimate RSA key size from nearby modulus."""
         search_start = max(0, offset - 2048)
         search_end = min(len(data), offset + 2048)
@@ -1252,7 +1252,7 @@ class CryptographicRoutineDetector:
         except (struct.error, IndexError):
             return False
 
-    def analyze_crypto_usage(self, detections: List[CryptoDetection]) -> Dict[str, Any]:
+    def analyze_crypto_usage(self, detections: list[CryptoDetection]) -> dict[str, Any]:
         """Analyze how detected crypto is being used in the binary.
 
         Args:
@@ -1319,7 +1319,7 @@ class CryptographicRoutineDetector:
 
         return analysis
 
-    def export_yara_rules(self, detections: List[CryptoDetection]) -> str:
+    def export_yara_rules(self, detections: list[CryptoDetection]) -> str:
         """Generate YARA rules from crypto detections.
 
         Args:

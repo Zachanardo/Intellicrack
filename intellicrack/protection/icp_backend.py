@@ -37,7 +37,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..utils.logger import get_logger
 
@@ -68,7 +68,9 @@ if platform.system() == "Windows":
 try:
     # Skip icp_engine import during testing to avoid Windows fatal exceptions
     if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
-        raise ImportError("Skipping icp_engine import during testing")
+        error_msg = "Skipping icp_engine import during testing"
+        logger.error(error_msg)
+        raise ImportError(error_msg)
 
     import icp_engine as _icp_module
 
@@ -330,7 +332,7 @@ class ICPEngineError(Exception):
 class NativeICPLibrary:
     """Direct native library interface for ICP Engine."""
 
-    def __init__(self, library_path: Optional[str] = None) -> None:
+    def __init__(self, library_path: str | None = None) -> None:
         """Initialize native library interface."""
         self.lib = None
         self.functions = {}
@@ -421,23 +423,23 @@ class NativeICPLibrary:
         if isinstance(self.lib, type(_icp_module)):
             # Use Python module
             return self.lib.scan_file(file_path, flags)
-        elif "scan" in self.functions:
+        if "scan" in self.functions:
             # Use native function
             result = self.functions["scan"](file_path.encode("utf-8"), flags)
             return result.decode("utf-8") if result else ""
-        else:
-            raise RuntimeError("Native scan function not available")
+        error_msg = "Native scan function not available"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg)
 
     def get_entropy_native(self, file_path: str, max_bytes: int = 0) -> float:
         """Get file entropy using native library call."""
         if isinstance(self.lib, type(_icp_module)):
             # Calculate entropy using Python module or manual calculation
             return self._calculate_entropy_python(file_path, max_bytes)
-        elif "entropy" in self.functions:
+        if "entropy" in self.functions:
             # Use native function
             return self.functions["entropy"](file_path.encode("utf-8"), max_bytes)
-        else:
-            return self._calculate_entropy_python(file_path, max_bytes)
+        return self._calculate_entropy_python(file_path, max_bytes)
 
     def _calculate_entropy_python(self, file_path: str, max_bytes: int = 0) -> float:
         """Calculate Shannon entropy in Python."""
@@ -471,7 +473,7 @@ class NativeICPLibrary:
 class ResultCache:
     """SQLite-based result caching system with invalidation."""
 
-    def __init__(self, cache_dir: Optional[Path] = None) -> None:
+    def __init__(self, cache_dir: Path | None = None) -> None:
         """Initialize cache system."""
         if cache_dir is None:
             cache_dir = Path.home() / ".intellicrack" / "cache"
@@ -547,7 +549,7 @@ class ResultCache:
 
         return sha256_hash.hexdigest()
 
-    def get(self, file_path: str, scan_mode: str) -> Optional[Dict[str, Any]]:
+    def get(self, file_path: str, scan_mode: str) -> dict[str, Any] | None:
         """Get cached result if valid."""
         try:
             # Check memory cache first
@@ -602,7 +604,7 @@ class ResultCache:
             logger.debug(f"Cache get error: {e}")
             return None
 
-    def put(self, file_path: str, scan_mode: str, result: Dict[str, Any]) -> None:
+    def put(self, file_path: str, scan_mode: str, result: dict[str, Any]) -> None:
         """Store result in cache."""
         try:
             # Store in memory cache
@@ -649,7 +651,7 @@ class ResultCache:
         except Exception as e:
             logger.debug(f"Cache invalidate error: {e}")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         stats = self.cache_stats.copy()
 
@@ -690,8 +692,8 @@ class ParallelScanner:
         self.active_scans = set()
 
     async def scan_files_parallel(
-        self, file_paths: List[str], scan_mode: ScanMode, progress_callback: Optional[callable] = None,
-    ) -> Dict[str, ICPScanResult]:
+        self, file_paths: list[str], scan_mode: ScanMode, progress_callback: callable | None = None,
+    ) -> dict[str, ICPScanResult]:
         """Scan multiple files in parallel with progress tracking."""
         results = {}
         total_files = len(file_paths)
@@ -838,7 +840,9 @@ class ICPBackend:
             self.icp_module = self.native_lib
             logger.info("ICP Backend initialized with native library")
         else:
-            raise ICPEngineError("No ICP Engine implementation available")
+            error_msg = "No ICP Engine implementation available"
+            logger.error(error_msg)
+            raise ICPEngineError(error_msg)
 
         # Error recovery state
         self.last_error = None
@@ -1051,7 +1055,7 @@ class ICPBackend:
         file_paths: list[str],
         scan_mode: ScanMode = ScanMode.NORMAL,
         max_concurrent: int = 4,
-        progress_callback: Optional[callable] = None,
+        progress_callback: callable | None = None,
     ) -> dict[str, ICPScanResult]:
         """Analyze multiple files concurrently with native parallel scanning.
 
@@ -1177,32 +1181,30 @@ class ICPBackend:
                     machine = struct.unpack("<H", data[pe_offset + 4 : pe_offset + 6])[0]
                     if machine == 0x8664:
                         return "PE64"
-                    elif machine == 0x014C:
+                    if machine == 0x014C:
                         return "PE32"
             return "PE"
-        elif data[:4] == b"\x7fELF":
+        if data[:4] == b"\x7fELF":
             if len(data) > 4:
                 if data[4] == 2:
                     return "ELF64"
-                elif data[4] == 1:
+                if data[4] == 1:
                     return "ELF32"
             return "ELF"
-        elif data[:4] == b"\xca\xfe\xba\xbe":
+        if data[:4] == b"\xca\xfe\xba\xbe":
             return "Mach-O"
-        elif data[:4] == b"\xce\xfa\xed\xfe":
+        if data[:4] == b"\xce\xfa\xed\xfe" or data[:4] == b"\xcf\xfa\xed\xfe":
             return "Mach-O64"
-        elif data[:4] == b"\xcf\xfa\xed\xfe":
-            return "Mach-O64"
-        elif data[:2] == b"PK":
+        if data[:2] == b"PK":
             return "ZIP/JAR"
-        elif data[:4] == b"Rar!":
+        if data[:4] == b"Rar!":
             return "RAR"
-        elif data[:6] == b"7z\xbc\xaf\x27\x1c":
+        if data[:6] == b"7z\xbc\xaf\x27\x1c":
             return "7Z"
 
         return "Binary"
 
-    def _scan_chunk_for_protections(self, chunk: bytes, offset: int) -> List[ICPDetection]:
+    def _scan_chunk_for_protections(self, chunk: bytes, offset: int) -> list[ICPDetection]:
         """Scan a chunk of data for protection signatures."""
         detections = []
 
@@ -1264,13 +1266,12 @@ class ICPBackend:
         try:
             if isinstance(self.icp_module, NativeICPLibrary):
                 return "ICP Native Library v1.0.0"
-            elif hasattr(self.icp_module, "__version__"):
+            if hasattr(self.icp_module, "__version__"):
                 version = self.icp_module.__version__
                 if hasattr(self.icp_module, "die_version"):
                     return f"ICP Engine {version} (Core {self.icp_module.die_version})"
                 return f"ICP Engine {version}"
-            else:
-                return "ICP Engine (version unknown)"
+            return "ICP Engine (version unknown)"
         except Exception as e:
             logger.error(f"Failed to get engine version: {e}")
             return "Unknown"
@@ -1286,13 +1287,12 @@ class ICPBackend:
                 # Test with a simple operation
                 if isinstance(self.icp_module, NativeICPLibrary):
                     return self.icp_module.lib is not None
-                else:
-                    return True
+                return True
             return False
         except Exception:
             return False
 
-    def get_cache_stats(self) -> Dict[str, Any]:
+    def get_cache_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         if self.cache:
             return self.cache.get_stats()
@@ -1303,7 +1303,7 @@ class ICPBackend:
         if self.cache:
             self.cache.invalidate(file_path)
 
-    def get_error_stats(self) -> Dict[str, Any]:
+    def get_error_stats(self) -> dict[str, Any]:
         """Get error recovery statistics."""
         return {"last_error": self.last_error, "error_count": self.error_count, "max_retries": self.max_retries}
 

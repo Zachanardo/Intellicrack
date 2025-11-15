@@ -25,19 +25,19 @@ class DateTimeEncoder(json.JSONEncoder):
         """Convert non-JSON-serializable objects to JSON-compatible formats."""
         if isinstance(obj, datetime):
             return {"__type__": "datetime", "value": obj.isoformat()}
-        elif isinstance(obj, date):
+        if isinstance(obj, date):
             return {"__type__": "date", "value": obj.isoformat()}
-        elif isinstance(obj, time):
+        if isinstance(obj, time):
             return {"__type__": "time", "value": obj.isoformat()}
-        elif isinstance(obj, timedelta):
+        if isinstance(obj, timedelta):
             return {"__type__": "timedelta", "value": obj.total_seconds()}
-        elif isinstance(obj, Path):
+        if isinstance(obj, Path):
             return {"__type__": "Path", "value": str(obj)}
-        elif isinstance(obj, bytes):
+        if isinstance(obj, bytes):
             return {"__type__": "bytes", "value": obj.hex()}
-        elif isinstance(obj, set):
+        if isinstance(obj, set):
             return {"__type__": "set", "value": list(obj)}
-        elif hasattr(obj, "__dict__"):
+        if hasattr(obj, "__dict__"):
             return {"__type__": "object", "class": obj.__class__.__name__, "value": obj.__dict__}
         return super().default(obj)
 
@@ -52,19 +52,19 @@ def datetime_decoder(dct: dict) -> Any:
 
     if obj_type == "datetime":
         return datetime.fromisoformat(value)
-    elif obj_type == "date":
+    if obj_type == "date":
         return date.fromisoformat(value)
-    elif obj_type == "time":
+    if obj_type == "time":
         return time.fromisoformat(value)
-    elif obj_type == "timedelta":
+    if obj_type == "timedelta":
         return timedelta(seconds=value)
-    elif obj_type == "Path":
+    if obj_type == "Path":
         return Path(value)
-    elif obj_type == "bytes":
+    if obj_type == "bytes":
         return bytes.fromhex(value)
-    elif obj_type == "set":
+    if obj_type == "set":
         return set(value)
-    elif obj_type == "object":
+    if obj_type == "object":
         logger.warning("Cannot deserialize custom object of type %s", dct.get("class", "unknown"))
         return dct
 
@@ -198,7 +198,9 @@ def safe_deserialize(filepath: Path, use_pickle: bool = False) -> Any:
                     ):
                         return getattr(__import__(module, level=0), name)
                     # For other cases, raise an exception
-                    raise pickle.UnpicklingError(f"Global '{module}.{name}' is forbidden")
+                    error_msg = f"Global '{module}.{name}' is forbidden"
+                    logger.error(error_msg)
+                    raise pickle.UnpicklingError(error_msg)
 
             unpickler = RestrictedUnpickler(f)
             return unpickler.load()
@@ -235,7 +237,9 @@ def safe_deserialize(filepath: Path, use_pickle: bool = False) -> Any:
                         ):
                             return getattr(__import__(module, level=0), name)
                         # For other cases, raise an exception
-                        raise pickle.UnpicklingError(f"Global '{module}.{name}' is forbidden")
+                        error_msg = f"Global '{module}.{name}' is forbidden"
+                        logger.error(error_msg)
+                        raise pickle.UnpicklingError(error_msg)
 
                 unpickler = RestrictedUnpickler(f)
                 return unpickler.load()

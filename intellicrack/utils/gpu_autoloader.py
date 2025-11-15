@@ -163,8 +163,7 @@ class GPUAutoLoader:
                         self.gpu_info = {"backend": "Intel Extension for PyTorch (Limited Info)"}
 
                     return True
-                else:
-                    logger.debug("XPU not available or torch.xpu not present")
+                logger.debug("XPU not available or torch.xpu not present")
             except Exception as e:
                 logger.debug(f"XPU availability check failed: {e}")
                 # If XPU check fails due to GIL issues, fall back to CPU with warning
@@ -565,7 +564,9 @@ def detect_gpu_frameworks() -> dict[str, Any]:
 
                 rocm_smi_path = shutil.which("rocm-smi")
                 if not rocm_smi_path:
-                    raise FileNotFoundError("rocm-smi not found in PATH")
+                    error_msg = "rocm-smi not found in PATH"
+                    logger.error(error_msg)
+                    raise FileNotFoundError(error_msg)
                 result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                     [rocm_smi_path, "--version"],
                     capture_output=True,
@@ -641,7 +642,9 @@ def detect_gpu_frameworks() -> dict[str, Any]:
 
         vulkaninfo_path = shutil.which("vulkaninfo")
         if not vulkaninfo_path:
-            raise FileNotFoundError("vulkaninfo not found in PATH")
+            error_msg = "vulkaninfo not found in PATH"
+            logger.error(error_msg)
+            raise FileNotFoundError(error_msg)
         result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
             [vulkaninfo_path, "--summary"],
             capture_output=True,

@@ -96,7 +96,6 @@ TEMPLATE DETAILS:
 """
 
 from dataclasses import dataclass
-from typing import Optional
 
 from intellicrack.core.certificate.patch_generators import (
     Architecture,
@@ -325,7 +324,7 @@ ALL_TEMPLATES = [
 ]
 
 
-def select_template(api_name: str, arch: Architecture) -> Optional[PatchTemplate]:
+def select_template(api_name: str, arch: Architecture) -> PatchTemplate | None:
     """Select appropriate patch template for API and architecture.
 
     Args:

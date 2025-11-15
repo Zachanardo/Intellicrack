@@ -29,7 +29,7 @@ import tempfile
 import webbrowser
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional
 
 from intellicrack.utils.logger import logger
 from intellicrack.utils.subprocess_security import secure_run
@@ -106,7 +106,7 @@ class ReportGenerator:
         default_path.mkdir(parents=True, exist_ok=True)
         return default_path
 
-    def generate_html_report(self, data: Dict[str, Any]) -> str:
+    def generate_html_report(self, data: dict[str, Any]) -> str:
         """Generate an HTML report from analysis data.
 
         Args:
@@ -303,7 +303,7 @@ class ReportGenerator:
         }
         """
 
-    def generate_json_report(self, data: Dict[str, Any]) -> str:
+    def generate_json_report(self, data: dict[str, Any]) -> str:
         """Generate a JSON report from analysis data.
 
         Args:
@@ -325,7 +325,7 @@ class ReportGenerator:
 
         return json.dumps(report_data, indent=2, default=str)
 
-    def generate_text_report(self, data: Dict[str, Any]) -> str:
+    def generate_text_report(self, data: dict[str, Any]) -> str:
         """Generate a text report from analysis data.
 
         Args:
@@ -398,7 +398,7 @@ class ReportGenerator:
 
         return "\n".join(lines)
 
-    def save_report(self, content: str, format: str, filename: Optional[str] = None) -> str:
+    def save_report(self, content: str, format: str, filename: str | None = None) -> str:
         """Save report content to file.
 
         Args:
@@ -451,14 +451,14 @@ class ReportGenerator:
         self.logger.debug(f"Temporary report created: {temp_path}")
         return temp_path
 
-    def get_supported_formats(self) -> List[str]:
+    def get_supported_formats(self) -> list[str]:
         """Get list of supported report formats.
 
         Returns:
             List of supported format extensions
 
         """
-        basic_formats: List[str] = ["html", "json", "txt"]
+        basic_formats: list[str] = ["html", "json", "txt"]
 
         # Add PDF if available
         try:
@@ -468,7 +468,7 @@ class ReportGenerator:
         except ImportError:
             return basic_formats
 
-    def get_format_mime_types(self) -> Dict[str, Union[str, List[str]]]:
+    def get_format_mime_types(self) -> dict[str, str | list[str]]:
         """Get MIME types for supported formats.
 
         Returns:
@@ -497,7 +497,7 @@ class ReportGenerator:
         return None
 
 
-def generate_report(app_instance, format: str = "html", save: bool = True, filename: Optional[str] = None) -> Optional[str]:
+def generate_report(app_instance, format: str = "html", save: bool = True, filename: str | None = None) -> str | None:
     """Generate an analysis report in the specified format.
 
     Args:
@@ -590,8 +590,7 @@ def generate_report(app_instance, format: str = "html", save: bool = True, filen
                 app_instance.update_output.emit(f"Report saved to: {filepath}")
 
             return filepath
-        else:
-            return content
+        return content
 
     except Exception as e:
         logger.error(f"Error generating report: {e}")
@@ -600,7 +599,7 @@ def generate_report(app_instance, format: str = "html", save: bool = True, filen
         return None
 
 
-def view_report(app_instance, filepath: Optional[str] = None) -> bool:
+def view_report(app_instance, filepath: str | None = None) -> bool:
     """View a generated report in the appropriate viewer.
 
     Args:
@@ -624,13 +623,12 @@ def view_report(app_instance, filepath: Optional[str] = None) -> bool:
 
                 if not filepath:
                     return False
+            # Use last generated report if available
+            elif hasattr(app_instance, "last_report_path"):
+                filepath = app_instance.last_report_path
             else:
-                # Use last generated report if available
-                if hasattr(app_instance, "last_report_path"):
-                    filepath = app_instance.last_report_path
-                else:
-                    logger.error("No report file specified")
-                    return False
+                logger.error("No report file specified")
+                return False
 
         # Check if file exists
         if not os.path.exists(filepath):

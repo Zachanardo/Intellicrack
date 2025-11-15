@@ -27,7 +27,7 @@ Legacy profile files are migrated on first run, then only central config is used
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 # Third-party imports
 from rich import box
@@ -217,7 +217,7 @@ class ProfileManager:
         del self.profiles[name]
         return True
 
-    def get_profile(self, name: str) -> Optional[ConfigProfile]:
+    def get_profile(self, name: str) -> ConfigProfile | None:
         """Get a profile by name."""
         profile = self.profiles.get(name)
         if profile:

@@ -28,7 +28,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Union
+from typing import Any
 
 from ..utils.logger import get_logger
 from .learning_engine_simple import get_learning_engine
@@ -230,7 +230,7 @@ class PerformanceOptimizer:
                 operation_type=operation_func.__name__,
                 execution_time=end_time - start_time,
                 memory_usage=(end_memory - start_memory) // (1024 * 1024),  # MB
-                cpu_usage=psutil.cpu_percent() if PSUTIL_AVAILABLE else 0.0 if PSUTIL_AVAILABLE else 0.0,
+                cpu_usage=psutil.cpu_percent() if PSUTIL_AVAILABLE else 0.0,
                 io_operations=0,  # Would need more detailed tracking
                 resource_bottlenecks=[],
             )
@@ -790,7 +790,7 @@ class CacheManager:
 
         logger.info(f"Cache manager initialized with {max_size_mb}MB limit")
 
-    def get(self, key: str) -> Union[Any, None]:
+    def get(self, key: str) -> Any | None:
         """Get value from cache."""
         if key in self.cache:
             # Update access statistics

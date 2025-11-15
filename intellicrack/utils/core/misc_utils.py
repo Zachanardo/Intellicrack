@@ -199,13 +199,17 @@ def parse_size_string(size_str: str) -> int:
     # Match number and unit
     match = re.match(r"^([\d.]+)\s*([KMGTP]?B)?$", size_str)
     if not match:
-        raise ValueError(f"Invalid size string: {size_str}")
+        error_msg = f"Invalid size string: {size_str}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
     number = float(match.group(1))
     unit = match.group(2) or "B"
 
     if unit not in units:
-        raise ValueError(f"Unknown unit: {unit}")
+        error_msg = f"Unknown unit: {unit}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
     return int(number * units[unit])
 

@@ -30,15 +30,7 @@ from intellicrack.handlers.pyqt6_handler import QMessageBox
 print("[DEBUG memory_patcher] pyqt6_handler imported OK")
 sys.stdout.flush()
 
-print("[DEBUG memory_patcher] Importing from protection_detector...")
-sys.stdout.flush()
-from ...protection.protection_detector import (
-    detect_checksum_verification,
-    detect_obfuscation,
-    detect_self_healing_code,
-)
-
-print("[DEBUG memory_patcher] protection_detector imported OK")
+print("[DEBUG memory_patcher] Skipping protection_detector import (will lazy load)")
 sys.stdout.flush()
 
 print("[DEBUG memory_patcher] Getting logger...")
@@ -518,7 +510,7 @@ if __name__ == "__main__":
 
         # Make executable on Unix-like systems
         if sys.platform != "win32":
-            os.chmod(launcher_path, 0o700)  # Owner-only executable launcher
+            Path(launcher_path).chmod(0o700)  # Owner-only executable launcher
 
         app.update_output.emit(log_message(f"[Launcher] Successfully created launcher script: {launcher_path}"))
 
@@ -555,6 +547,12 @@ def setup_memory_patching(app: Any) -> None:
         return
 
     app.update_output.emit(log_message("[Memory Patch] Analyzing protection mechanisms..."))
+
+    from ...protection.protection_detector import (
+        detect_checksum_verification,
+        detect_obfuscation,
+        detect_self_healing_code,
+    )
 
     # Detect various protections
     protections = []

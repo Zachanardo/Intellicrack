@@ -133,8 +133,14 @@ except ImportError as e:
         _widget_counter = 0
         _widget_registry = {}
 
-        def __init__(self, master=None, **kwargs) -> None:
-            """Initialize widget."""
+        def __init__(self, master: "FallbackWidget | None" = None, **kwargs: object) -> None:
+            """Initialize widget.
+
+            Args:
+                master: Parent widget or None for root-level widgets.
+                **kwargs: Widget configuration options.
+
+            """
             FallbackWidget._widget_counter += 1
             self.widget_id = f"widget_{FallbackWidget._widget_counter}"
             FallbackWidget._widget_registry[self.widget_id] = self
@@ -174,58 +180,124 @@ except ImportError as e:
             if self.master:
                 self.master.winfo_children_list.append(self)
 
-        def winfo_children(self):
-            """Get child widgets."""
+        def winfo_children(self) -> list["FallbackWidget"]:
+            """Get child widgets.
+
+            Returns:
+                List of child widgets.
+
+            """
             return self.winfo_children_list
 
-        def winfo_width(self):
-            """Get widget width."""
+        def winfo_width(self) -> int:
+            """Get widget width.
+
+            Returns:
+                Widget width in pixels.
+
+            """
             return self.width
 
-        def winfo_height(self):
-            """Get widget height."""
+        def winfo_height(self) -> int:
+            """Get widget height.
+
+            Returns:
+                Widget height in pixels.
+
+            """
             return self.height
 
-        def winfo_x(self):
-            """Get widget x position."""
+        def winfo_x(self) -> int:
+            """Get widget x position.
+
+            Returns:
+                X coordinate in pixels.
+
+            """
             return self.x
 
-        def winfo_y(self):
-            """Get widget y position."""
+        def winfo_y(self) -> int:
+            """Get widget y position.
+
+            Returns:
+                Y coordinate in pixels.
+
+            """
             return self.y
 
-        def winfo_reqwidth(self):
-            """Get requested width."""
+        def winfo_reqwidth(self) -> int:
+            """Get requested width.
+
+            Returns:
+                Requested width in pixels.
+
+            """
             return self.width
 
-        def winfo_reqheight(self):
-            """Get requested height."""
+        def winfo_reqheight(self) -> int:
+            """Get requested height.
+
+            Returns:
+                Requested height in pixels.
+
+            """
             return self.height
 
-        def configure(self, **kwargs) -> None:
-            """Configure widget."""
+        def configure(self, **kwargs: object) -> None:
+            """Configure widget.
+
+            Args:
+                **kwargs: Configuration options to set.
+
+            """
             for key, value in kwargs.items():
                 if hasattr(self, key):
                     setattr(self, key, value)
                     logger.debug("Widget %s: Set %s = %s", self.widget_id, key, value)
 
-        def config(self, **kwargs):
-            """Alias for configure."""
+        def config(self, **kwargs: object) -> None:
+            """Alias for configure.
+
+            Args:
+                **kwargs: Configuration options to set.
+
+            """
             return self.configure(**kwargs)
 
-        def cget(self, key):
-            """Get configuration value."""
+        def cget(self, key: str) -> object:
+            """Get configuration value.
+
+            Args:
+                key: Configuration key name.
+
+            Returns:
+                Configuration value or None if not found.
+
+            """
             return getattr(self, key, None)
 
-        def bind(self, event, callback, add=None) -> None:
-            """Bind event to callback."""
+        def bind(self, event: str, callback: object, add: str | None = None) -> None:
+            """Bind event to callback.
+
+            Args:
+                event: Event name (e.g., '<Button-1>').
+                callback: Function to call when event occurs.
+                add: Whether to add to existing bindings.
+
+            """
             if event not in self.bindings:
                 self.bindings[event] = []
             self.bindings[event].append(callback)
             logger.debug("Widget %s: Bound %s to callback", self.widget_id, event)
 
-        def unbind(self, event, callback=None) -> None:
-            """Unbind event."""
+        def unbind(self, event: str, callback: object | None = None) -> None:
+            """Unbind event.
+
+            Args:
+                event: Event name to unbind.
+                callback: Specific callback to remove, or None to remove all.
+
+            """
             if event in self.bindings:
                 if callback:
                     self.bindings[event].remove(callback)
@@ -240,12 +312,30 @@ except ImportError as e:
             """Set focus."""
             self.focus()
 
-        def focus_get(self):
-            """Get focused widget."""
+        def focus_get(self) -> "FallbackWidget":
+            """Get focused widget.
+
+            Returns:
+                The widget with focus (self in fallback).
+
+            """
             return self
 
-        def grid(self, row=0, column=0, rowspan=1, columnspan=1, sticky="", padx=0, pady=0, ipadx=0, ipady=0) -> None:
-            """Grid geometry manager."""
+        def grid(self, row: int = 0, column: int = 0, rowspan: int = 1, columnspan: int = 1, sticky: str = "", padx: int = 0, pady: int = 0, ipadx: int = 0, ipady: int = 0) -> None:
+            """Grid geometry manager.
+
+            Args:
+                row: Row position.
+                column: Column position.
+                rowspan: Number of rows to span.
+                columnspan: Number of columns to span.
+                sticky: Alignment string.
+                padx: Horizontal padding.
+                pady: Vertical padding.
+                ipadx: Internal horizontal padding.
+                ipady: Internal vertical padding.
+
+            """
             self.grid_info_dict = {
                 "row": row,
                 "column": column,
@@ -259,12 +349,29 @@ except ImportError as e:
             }
             logger.debug("Widget %s: Gridded at row=%d, column=%d", self.widget_id, row, column)
 
-        def grid_info(self):
-            """Get grid info."""
+        def grid_info(self) -> dict[str, object]:
+            """Get grid info.
+
+            Returns:
+                Dictionary with grid configuration.
+
+            """
             return self.grid_info_dict
 
-        def pack(self, side="top", fill="none", expand=False, padx=0, pady=0, ipadx=0, ipady=0, anchor="center") -> None:
-            """Pack geometry manager."""
+        def pack(self, side: str = "top", fill: str = "none", expand: bool = False, padx: int = 0, pady: int = 0, ipadx: int = 0, ipady: int = 0, anchor: str = "center") -> None:
+            """Pack geometry manager.
+
+            Args:
+                side: Side to pack on ('top', 'bottom', 'left', 'right').
+                fill: Fill direction ('none', 'x', 'y', 'both').
+                expand: Whether to expand to fill space.
+                padx: Horizontal padding.
+                pady: Vertical padding.
+                ipadx: Internal horizontal padding.
+                ipady: Internal vertical padding.
+                anchor: Anchor position.
+
+            """
             self.pack_info_dict = {
                 "side": side,
                 "fill": fill,
@@ -277,12 +384,30 @@ except ImportError as e:
             }
             logger.debug("Widget %s: Packed with side=%s", self.widget_id, side)
 
-        def pack_info(self):
-            """Get pack info."""
+        def pack_info(self) -> dict[str, object]:
+            """Get pack info.
+
+            Returns:
+                Dictionary with pack configuration.
+
+            """
             return self.pack_info_dict
 
-        def place(self, x=0, y=0, width=None, height=None, anchor="nw", relx=0, rely=0, relwidth=None, relheight=None) -> None:
-            """Place geometry manager."""
+        def place(self, x: int = 0, y: int = 0, width: int | None = None, height: int | None = None, anchor: str = "nw", relx: int = 0, rely: int = 0, relwidth: int | None = None, relheight: int | None = None) -> None:
+            """Place geometry manager.
+
+            Args:
+                x: X coordinate.
+                y: Y coordinate.
+                width: Width in pixels or None.
+                height: Height in pixels or None.
+                anchor: Anchor position.
+                relx: Relative x position.
+                rely: Relative y position.
+                relwidth: Relative width or None.
+                relheight: Relative height or None.
+
+            """
             self.place_info_dict = {
                 "x": x,
                 "y": y,
@@ -302,8 +427,13 @@ except ImportError as e:
                 self.height = height
             logger.debug("Widget %s: Placed at x=%d, y=%d", self.widget_id, x, y)
 
-        def place_info(self):
-            """Get place info."""
+        def place_info(self) -> dict[str, object]:
+            """Get place info.
+
+            Returns:
+                Dictionary with place configuration.
+
+            """
             return self.place_info_dict
 
         def destroy(self) -> None:
@@ -353,15 +483,31 @@ except ImportError as e:
             self.iconified = False
             logger.info("Fallback Tk window created: %s", self.widget_id)
 
-        def title(self, string=None):
-            """Get/set window title."""
+        def title(self, string: str | None = None) -> str:
+            """Get/set window title.
+
+            Args:
+                string: Window title or None to get current title.
+
+            Returns:
+                Current window title.
+
+            """
             if string is not None:
                 self.title_text = string
                 logger.debug("Window %s: Title set to '%s'", self.widget_id, string)
             return self.title_text
 
-        def geometry(self, newGeometry=None):
-            """Get/set window geometry."""
+        def geometry(self, newGeometry: str | None = None) -> str:
+            """Get/set window geometry.
+
+            Args:
+                newGeometry: Geometry string (e.g., '800x600+100+100') or None to get.
+
+            Returns:
+                Current geometry string.
+
+            """
             if newGeometry is not None:
                 self.geometry_string = newGeometry
                 # Parse geometry string (e.g., "800x600+100+100")
@@ -382,17 +528,35 @@ except ImportError as e:
                 logger.debug("Window %s: Geometry set to '%s'", self.widget_id, newGeometry)
             return self.geometry_string
 
-        def resizable(self, width=True, height=True) -> None:
-            """Set window resizable."""
+        def resizable(self, width: bool = True, height: bool = True) -> None:
+            """Set window resizable.
+
+            Args:
+                width: Whether to allow resizing horizontally.
+                height: Whether to allow resizing vertically.
+
+            """
             logger.debug("Window %s: Resizable width=%s, height=%s", self.widget_id, width, height)
 
-        def minsize(self, width=None, height=None) -> None:
-            """Set minimum size."""
+        def minsize(self, width: int | None = None, height: int | None = None) -> None:
+            """Set minimum size.
+
+            Args:
+                width: Minimum width in pixels or None.
+                height: Minimum height in pixels or None.
+
+            """
             if width is not None and height is not None:
                 logger.debug("Window %s: Min size set to %dx%d", self.widget_id, width, height)
 
-        def maxsize(self, width=None, height=None) -> None:
-            """Set maximum size."""
+        def maxsize(self, width: int | None = None, height: int | None = None) -> None:
+            """Set maximum size.
+
+            Args:
+                width: Maximum width in pixels or None.
+                height: Maximum height in pixels or None.
+
+            """
             if width is not None and height is not None:
                 logger.debug("Window %s: Max size set to %dx%d", self.widget_id, width, height)
 
@@ -412,8 +576,14 @@ except ImportError as e:
             self.iconified = True
             logger.debug("Window %s: Iconified", self.widget_id)
 
-        def protocol(self, name, func) -> None:
-            """Set protocol handler."""
+        def protocol(self, name: str, func: object) -> None:
+            """Set protocol handler.
+
+            Args:
+                name: Protocol name (e.g., 'WM_DELETE_WINDOW').
+                func: Function to call for this protocol.
+
+            """
             self.protocol_bindings[name] = func
             # For WM_DELETE_WINDOW and similar, queue for immediate processing
             if name in ["WM_DELETE_WINDOW", "WM_SAVE_YOURSELF", "WM_TAKE_FOCUS"]:
@@ -451,16 +621,28 @@ except ImportError as e:
     class FallbackFrame(FallbackWidget):
         """Frame widget."""
 
-        def __init__(self, master=None, **kwargs) -> None:
-            """Initialize frame."""
+        def __init__(self, master: "FallbackWidget | None" = None, **kwargs: object) -> None:
+            """Initialize frame.
+
+            Args:
+                master: Parent widget or None.
+                **kwargs: Widget configuration options.
+
+            """
             super().__init__(master, **kwargs)
             logger.debug("Frame created: %s", self.widget_id)
 
     class FallbackLabel(FallbackWidget):
         """Label widget."""
 
-        def __init__(self, master=None, **kwargs) -> None:
-            """Initialize label."""
+        def __init__(self, master: "FallbackWidget | None" = None, **kwargs: object) -> None:
+            """Initialize label.
+
+            Args:
+                master: Parent widget or None.
+                **kwargs: Widget configuration options.
+
+            """
             super().__init__(master, **kwargs)
             self.text = kwargs.get("text", "")
             self.justify = kwargs.get("justify", "left")
@@ -470,8 +652,14 @@ except ImportError as e:
     class FallbackButton(FallbackWidget):
         """Button widget."""
 
-        def __init__(self, master=None, **kwargs) -> None:
-            """Initialize button."""
+        def __init__(self, master: "FallbackWidget | None" = None, **kwargs: object) -> None:
+            """Initialize button.
+
+            Args:
+                master: Parent widget or None.
+                **kwargs: Widget configuration options.
+
+            """
             super().__init__(master, **kwargs)
             self.text = kwargs.get("text", "Button")
             self.command = kwargs.get("command")
@@ -491,32 +679,60 @@ except ImportError as e:
     class FallbackEntry(FallbackWidget):
         """Entry widget."""
 
-        def __init__(self, master=None, **kwargs) -> None:
-            """Initialize entry."""
+        def __init__(self, master: "FallbackWidget | None" = None, **kwargs: object) -> None:
+            """Initialize entry.
+
+            Args:
+                master: Parent widget or None.
+                **kwargs: Widget configuration options.
+
+            """
             super().__init__(master, **kwargs)
             self.value = kwargs.get("value", "")
             self.show = kwargs.get("show", "")
             logger.debug("Entry created: %s", self.widget_id)
 
-        def get(self):
-            """Get entry value."""
+        def get(self) -> str:
+            """Get entry value.
+
+            Returns:
+                Current entry text.
+
+            """
             return self.value
 
-        def set(self, value) -> None:
-            """Set entry value."""
+        def set(self, value: object) -> None:
+            """Set entry value.
+
+            Args:
+                value: Value to set.
+
+            """
             self.value = str(value)
             logger.debug("Entry %s: Value set to '%s'", self.widget_id, value)
 
-        def insert(self, index, string) -> None:
-            """Insert string at index."""
+        def insert(self, index: int | str, string: str) -> None:
+            """Insert string at index.
+
+            Args:
+                index: Insert position or 'end'.
+                string: String to insert.
+
+            """
             if index == "end":
                 self.value += string
             else:
                 self.value = self.value[:index] + string + self.value[index:]
             logger.debug("Entry %s: Inserted '%s' at %s", self.widget_id, string, index)
 
-        def delete(self, first, last=None) -> None:
-            """Delete text."""
+        def delete(self, first: int | str, last: str | None = None) -> None:
+            """Delete text.
+
+            Args:
+                first: Start position.
+                last: End position or None.
+
+            """
             if first == 0 and last == "end":
                 self.value = ""
             logger.debug("Entry %s: Text deleted", self.widget_id)
@@ -524,52 +740,96 @@ except ImportError as e:
     class FallbackText(FallbackWidget):
         """Text widget."""
 
-        def __init__(self, master=None, **kwargs) -> None:
-            """Initialize text widget."""
+        def __init__(self, master: "FallbackWidget | None" = None, **kwargs: object) -> None:
+            """Initialize text widget.
+
+            Args:
+                master: Parent widget or None.
+                **kwargs: Widget configuration options.
+
+            """
             super().__init__(master, **kwargs)
             self.content = kwargs.get("text", "")
             self.wrap = kwargs.get("wrap", "char")
             logger.debug("Text widget created: %s", self.widget_id)
 
-        def get(self, start, end=None):
-            """Get text content."""
+        def get(self, start: str, end: str | None = None) -> str:
+            """Get text content.
+
+            Args:
+                start: Start position.
+                end: End position or None.
+
+            Returns:
+                Text content.
+
+            """
             if end is None:
                 end = "end"
             if start == "1.0" and end == "end":
                 return self.content
             return self.content
 
-        def insert(self, index, chars) -> None:
-            """Insert text."""
+        def insert(self, index: str, chars: str) -> None:
+            """Insert text.
+
+            Args:
+                index: Insert position.
+                chars: Text to insert.
+
+            """
             if index == "end":
                 self.content += chars
             else:
                 self.content += chars
             logger.debug("Text %s: Inserted text", self.widget_id)
 
-        def delete(self, start, end=None) -> None:
-            """Delete text."""
+        def delete(self, start: str, end: str | None = None) -> None:
+            """Delete text.
+
+            Args:
+                start: Start position.
+                end: End position or None.
+
+            """
             if start == "1.0" and end == "end":
                 self.content = ""
             logger.debug("Text %s: Text deleted", self.widget_id)
 
-        def see(self, index) -> None:
-            """Scroll to index."""
+        def see(self, index: str) -> None:
+            """Scroll to index.
+
+            Args:
+                index: Position to scroll to.
+
+            """
             logger.debug("Text %s: Scrolled to %s", self.widget_id, index)
 
     class FallbackListbox(FallbackWidget):
         """Listbox widget."""
 
-        def __init__(self, master=None, **kwargs) -> None:
-            """Initialize listbox."""
+        def __init__(self, master: "FallbackWidget | None" = None, **kwargs: object) -> None:
+            """Initialize listbox.
+
+            Args:
+                master: Parent widget or None.
+                **kwargs: Widget configuration options.
+
+            """
             super().__init__(master, **kwargs)
             self.items = []
             self.selection = []
             self.selectmode = kwargs.get("selectmode", "browse")
             logger.debug("Listbox created: %s", self.widget_id)
 
-        def insert(self, index, *items) -> None:
-            """Insert items."""
+        def insert(self, index: int | str, *items: object) -> None:
+            """Insert items.
+
+            Args:
+                index: Insert position or 'end'.
+                *items: Items to insert.
+
+            """
             if index == "end":
                 self.items.extend(items)
             else:
@@ -577,30 +837,61 @@ except ImportError as e:
                     self.items.insert(index + i, item)
             logger.debug("Listbox %s: Inserted %d items", self.widget_id, len(items))
 
-        def delete(self, first, last=None) -> None:
-            """Delete items."""
+        def delete(self, first: int | str, last: str | None = None) -> None:
+            """Delete items.
+
+            Args:
+                first: Start position.
+                last: End position or None.
+
+            """
             if last is None:
                 last = first
             if first == 0 and last == "end":
                 self.items.clear()
             logger.debug("Listbox %s: Deleted items", self.widget_id)
 
-        def get(self, first, last=None):
-            """Get items."""
+        def get(self, first: int, last: int | None = None) -> object:
+            """Get items.
+
+            Args:
+                first: Start position.
+                last: End position or None.
+
+            Returns:
+                Item or list of items.
+
+            """
             if last is None:
                 return self.items[first] if 0 <= first < len(self.items) else ""
             return self.items[first : last + 1]
 
-        def size(self):
-            """Get number of items."""
+        def size(self) -> int:
+            """Get number of items.
+
+            Returns:
+                Number of items in listbox.
+
+            """
             return len(self.items)
 
-        def curselection(self):
-            """Get current selection."""
+        def curselection(self) -> tuple[int, ...]:
+            """Get current selection.
+
+            Returns:
+                Tuple of selected indices.
+
+            """
             return tuple(self.selection)
 
-        def selection_set(self, first, last=None) -> None:
-            """Set selection."""
+        def selection_set(self, first: int, last: int | None = None) -> None:
+            """Set selection.
+
+            Args:
+                first: Start position.
+                last: End position or None.
+
+            """
             if last is None:
                 self.selection = [first]
             else:
@@ -610,8 +901,14 @@ except ImportError as e:
     class FallbackCheckbutton(FallbackWidget):
         """Checkbutton widget."""
 
-        def __init__(self, master=None, **kwargs) -> None:
-            """Initialize checkbutton."""
+        def __init__(self, master: "FallbackWidget | None" = None, **kwargs: object) -> None:
+            """Initialize checkbutton.
+
+            Args:
+                master: Parent widget or None.
+                **kwargs: Widget configuration options.
+
+            """
             super().__init__(master, **kwargs)
             self.text = kwargs.get("text", "")
             self.variable = kwargs.get("variable", FallbackIntVar())
@@ -632,8 +929,14 @@ except ImportError as e:
     class FallbackRadiobutton(FallbackWidget):
         """Radiobutton widget."""
 
-        def __init__(self, master=None, **kwargs) -> None:
-            """Initialize radiobutton."""
+        def __init__(self, master: "FallbackWidget | None" = None, **kwargs: object) -> None:
+            """Initialize radiobutton.
+
+            Args:
+                master: Parent widget or None.
+                **kwargs: Widget configuration options.
+
+            """
             super().__init__(master, **kwargs)
             self.text = kwargs.get("text", "")
             self.variable = kwargs.get("variable", FallbackStringVar())
@@ -651,8 +954,14 @@ except ImportError as e:
     class FallbackScale(FallbackWidget):
         """Scale widget."""
 
-        def __init__(self, master=None, **kwargs) -> None:
-            """Initialize scale."""
+        def __init__(self, master: "FallbackWidget | None" = None, **kwargs: object) -> None:
+            """Initialize scale.
+
+            Args:
+                master: Parent widget or None.
+                **kwargs: Widget configuration options.
+
+            """
             super().__init__(master, **kwargs)
             self.from_ = kwargs.get("from_", 0)
             self.to = kwargs.get("to", 100)
@@ -662,12 +971,22 @@ except ImportError as e:
             self.command = kwargs.get("command")
             logger.debug("Scale created: %s", self.widget_id)
 
-        def get(self):
-            """Get scale value."""
+        def get(self) -> object:
+            """Get scale value.
+
+            Returns:
+                Current scale value.
+
+            """
             return self.variable.get()
 
-        def set(self, value) -> None:
-            """Set scale value."""
+        def set(self, value: object) -> None:
+            """Set scale value.
+
+            Args:
+                value: Value to set.
+
+            """
             self.variable.set(value)
             if self.command:
                 self.command(value)
@@ -677,68 +996,134 @@ except ImportError as e:
     class FallbackVariable:
         """Base variable class."""
 
-        def __init__(self, master=None, value=None) -> None:
-            """Initialize variable."""
+        def __init__(self, master: "FallbackWidget | None" = None, value: object = None) -> None:
+            """Initialize variable.
+
+            Args:
+                master: Parent widget or None.
+                value: Initial value.
+
+            """
             self.master = master
             self._value = value
-            self._callbacks = []
+            self._callbacks: list[object] = []
 
-        def get(self):
-            """Get value."""
+        def get(self) -> object:
+            """Get value.
+
+            Returns:
+                Current variable value.
+
+            """
             return self._value
 
-        def set(self, value) -> None:
-            """Set value."""
+        def set(self, value: object) -> None:
+            """Set value.
+
+            Args:
+                value: New value to set.
+
+            """
             self._value = value
             for callback in self._callbacks:
                 callback()
 
-        def trace(self, mode, callback) -> None:
-            """Trace variable changes."""
+        def trace(self, mode: str, callback: object) -> None:
+            """Trace variable changes.
+
+            Args:
+                mode: Trace mode ('r', 'w', 'u').
+                callback: Function to call on change.
+
+            """
             self._callbacks.append(callback)
 
     class FallbackStringVar(FallbackVariable):
         """String variable."""
 
-        def __init__(self, master=None, value="") -> None:
-            """Initialize string variable."""
+        def __init__(self, master: "FallbackWidget | None" = None, value: str = "") -> None:
+            """Initialize string variable.
+
+            Args:
+                master: Parent widget or None.
+                value: Initial string value.
+
+            """
             super().__init__(master, str(value))
 
-        def set(self, value) -> None:
-            """Set string value."""
+        def set(self, value: object) -> None:
+            """Set string value.
+
+            Args:
+                value: Value to set (converted to string).
+
+            """
             super().set(str(value))
 
     class FallbackIntVar(FallbackVariable):
         """Integer variable."""
 
-        def __init__(self, master=None, value=0) -> None:
-            """Initialize integer variable."""
+        def __init__(self, master: "FallbackWidget | None" = None, value: int = 0) -> None:
+            """Initialize integer variable.
+
+            Args:
+                master: Parent widget or None.
+                value: Initial integer value.
+
+            """
             super().__init__(master, int(value))
 
-        def set(self, value) -> None:
-            """Set integer value."""
+        def set(self, value: object) -> None:
+            """Set integer value.
+
+            Args:
+                value: Value to set (converted to int).
+
+            """
             super().set(int(value))
 
     class FallbackDoubleVar(FallbackVariable):
         """Double variable."""
 
-        def __init__(self, master=None, value=0.0) -> None:
-            """Initialize double variable."""
+        def __init__(self, master: "FallbackWidget | None" = None, value: float = 0.0) -> None:
+            """Initialize double variable.
+
+            Args:
+                master: Parent widget or None.
+                value: Initial float value.
+
+            """
             super().__init__(master, float(value))
 
-        def set(self, value) -> None:
-            """Set double value."""
+        def set(self, value: object) -> None:
+            """Set double value.
+
+            Args:
+                value: Value to set (converted to float).
+
+            """
             super().set(float(value))
 
     class FallbackBooleanVar(FallbackVariable):
         """Boolean variable."""
 
-        def __init__(self, master=None, value=False) -> None:
-            """Initialize boolean variable."""
+        def __init__(self, master: "FallbackWidget | None" = None, value: bool = False) -> None:
+            """Initialize boolean variable.
+
+            Args:
+                master: Parent widget or None.
+                value: Initial boolean value.
+
+            """
             super().__init__(master, bool(value))
 
-        def set(self, value) -> None:
-            """Set boolean value."""
+        def set(self, value: object) -> None:
+            """Set boolean value.
+
+            Args:
+                value: Value to set (converted to bool).
+
+            """
             super().set(bool(value))
 
     # Dialog modules
@@ -746,74 +1131,187 @@ except ImportError as e:
         """Message box dialogs."""
 
         @staticmethod
-        def showinfo(title, message, **kwargs) -> str:
-            """Show info dialog."""
+        def showinfo(title: str, message: str, **kwargs: object) -> str:
+            """Show info dialog.
+
+            Args:
+                title: Dialog title.
+                message: Message to display.
+                **kwargs: Additional options.
+
+            Returns:
+                'ok' when closed.
+
+            """
             logger.info("INFO Dialog '%s': %s", title, message)
             return "ok"
 
         @staticmethod
-        def showwarning(title, message, **kwargs) -> str:
-            """Show warning dialog."""
+        def showwarning(title: str, message: str, **kwargs: object) -> str:
+            """Show warning dialog.
+
+            Args:
+                title: Dialog title.
+                message: Message to display.
+                **kwargs: Additional options.
+
+            Returns:
+                'ok' when closed.
+
+            """
             logger.warning("WARNING Dialog '%s': %s", title, message)
             return "ok"
 
         @staticmethod
-        def showerror(title, message, **kwargs) -> str:
-            """Show error dialog."""
+        def showerror(title: str, message: str, **kwargs: object) -> str:
+            """Show error dialog.
+
+            Args:
+                title: Dialog title.
+                message: Message to display.
+                **kwargs: Additional options.
+
+            Returns:
+                'ok' when closed.
+
+            """
             logger.error("ERROR Dialog '%s': %s", title, message)
             return "ok"
 
         @staticmethod
-        def askquestion(title, message, **kwargs) -> str:
-            """Ask yes/no question."""
+        def askquestion(title: str, message: str, **kwargs: object) -> str:
+            """Ask yes/no question.
+
+            Args:
+                title: Dialog title.
+                message: Question to ask.
+                **kwargs: Additional options.
+
+            Returns:
+                'yes' or 'no' response.
+
+            """
             logger.info("QUESTION Dialog '%s': %s", title, message)
-            return "yes"  # Default to yes
+            return "yes"
 
         @staticmethod
-        def askyesno(title, message, **kwargs) -> bool:
-            """Ask yes/no."""
+        def askyesno(title: str, message: str, **kwargs: object) -> bool:
+            """Ask yes/no.
+
+            Args:
+                title: Dialog title.
+                message: Question to ask.
+                **kwargs: Additional options.
+
+            Returns:
+                True for yes, False for no.
+
+            """
             logger.info("YES/NO Dialog '%s': %s", title, message)
-            return True  # Default to yes
+            return True
 
         @staticmethod
-        def askokcancel(title, message, **kwargs) -> bool:
-            """Ask ok/cancel."""
+        def askokcancel(title: str, message: str, **kwargs: object) -> bool:
+            """Ask ok/cancel.
+
+            Args:
+                title: Dialog title.
+                message: Message to display.
+                **kwargs: Additional options.
+
+            Returns:
+                True for ok, False for cancel.
+
+            """
             logger.info("OK/CANCEL Dialog '%s': %s", title, message)
-            return True  # Default to ok
+            return True
 
         @staticmethod
-        def askretrycancel(title, message, **kwargs) -> bool:
-            """Ask retry/cancel."""
+        def askretrycancel(title: str, message: str, **kwargs: object) -> bool:
+            """Ask retry/cancel.
+
+            Args:
+                title: Dialog title.
+                message: Message to display.
+                **kwargs: Additional options.
+
+            Returns:
+                True for retry, False for cancel.
+
+            """
             logger.info("RETRY/CANCEL Dialog '%s': %s", title, message)
-            return True  # Default to retry
+            return True
 
     class FallbackFileDialog:
         """File dialog functions."""
 
         @staticmethod
-        def askopenfilename(title="", initialdir="", filetypes=None, **kwargs):
-            """Ask for open filename."""
+        def askopenfilename(title: str = "", initialdir: str = "", filetypes: list[tuple[str, str]] | None = None, **kwargs: object) -> str:
+            """Ask for open filename.
+
+            Args:
+                title: Dialog title.
+                initialdir: Initial directory.
+                filetypes: File type filters.
+                **kwargs: Additional options.
+
+            Returns:
+                Selected filename path.
+
+            """
             default_file = os.path.join(initialdir or os.getcwd(), "sample_file.txt")
             logger.info("OPEN FILE Dialog '%s': Would return '%s'", title, default_file)
             return default_file
 
         @staticmethod
-        def asksaveasfilename(title="", initialdir="", filetypes=None, **kwargs):
-            """Ask for save filename."""
+        def asksaveasfilename(title: str = "", initialdir: str = "", filetypes: list[tuple[str, str]] | None = None, **kwargs: object) -> str:
+            """Ask for save filename.
+
+            Args:
+                title: Dialog title.
+                initialdir: Initial directory.
+                filetypes: File type filters.
+                **kwargs: Additional options.
+
+            Returns:
+                Selected filename path.
+
+            """
             default_file = os.path.join(initialdir or os.getcwd(), "output_file.txt")
             logger.info("SAVE FILE Dialog '%s': Would return '%s'", title, default_file)
             return default_file
 
         @staticmethod
-        def askdirectory(title="", initialdir="", **kwargs):
-            """Ask for directory."""
+        def askdirectory(title: str = "", initialdir: str = "", **kwargs: object) -> str:
+            """Ask for directory.
+
+            Args:
+                title: Dialog title.
+                initialdir: Initial directory.
+                **kwargs: Additional options.
+
+            Returns:
+                Selected directory path.
+
+            """
             default_dir = initialdir or os.getcwd()
             logger.info("DIRECTORY Dialog '%s': Would return '%s'", title, default_dir)
             return default_dir
 
         @staticmethod
-        def askopenfilenames(title="", initialdir="", filetypes=None, **kwargs):
-            """Ask for multiple open filenames."""
+        def askopenfilenames(title: str = "", initialdir: str = "", filetypes: list[tuple[str, str]] | None = None, **kwargs: object) -> list[str]:
+            """Ask for multiple open filenames.
+
+            Args:
+                title: Dialog title.
+                initialdir: Initial directory.
+                filetypes: File type filters.
+                **kwargs: Additional options.
+
+            Returns:
+                List of selected filename paths.
+
+            """
             default_files = [os.path.join(initialdir or os.getcwd(), "file1.txt"), os.path.join(initialdir or os.getcwd(), "file2.txt")]
             logger.info("OPEN FILES Dialog '%s': Would return %s", title, default_files)
             return default_files
@@ -822,8 +1320,18 @@ except ImportError as e:
         """Color chooser dialog."""
 
         @staticmethod
-        def askcolor(color=None, title="", **kwargs):
-            """Ask for color."""
+        def askcolor(color: str | None = None, title: str = "", **kwargs: object) -> tuple[tuple[int, int, int], str]:
+            """Ask for color.
+
+            Args:
+                color: Initial color.
+                title: Dialog title.
+                **kwargs: Additional options.
+
+            Returns:
+                Tuple of (RGB tuple, hex color string).
+
+            """
             default_rgb = (128, 128, 128)
             default_hex = "#808080"
             logger.info("COLOR Dialog '%s': Would return %s ('%s')", title, default_rgb, default_hex)
@@ -833,8 +1341,17 @@ except ImportError as e:
     class FallbackFont:
         """Font class."""
 
-        def __init__(self, family="TkDefaultFont", size=9, weight="normal", slant="roman", **kwargs) -> None:
-            """Initialize font."""
+        def __init__(self, family: str = "TkDefaultFont", size: int = 9, weight: str = "normal", slant: str = "roman", **kwargs: object) -> None:
+            """Initialize font.
+
+            Args:
+                family: Font family name.
+                size: Font size in points.
+                weight: Font weight ('normal', 'bold').
+                slant: Font slant ('roman', 'italic').
+                **kwargs: Additional font options.
+
+            """
             self.family = family
             self.size = size
             self.weight = weight
@@ -842,25 +1359,52 @@ except ImportError as e:
             self.underline = kwargs.get("underline", False)
             self.overstrike = kwargs.get("overstrike", False)
 
-        def configure(self, **kwargs) -> None:
-            """Configure font."""
+        def configure(self, **kwargs: object) -> None:
+            """Configure font.
+
+            Args:
+                **kwargs: Font options to configure.
+
+            """
             for key, value in kwargs.items():
                 if hasattr(self, key):
                     setattr(self, key, value)
 
-        def cget(self, key):
-            """Get font attribute."""
+        def cget(self, key: str) -> object:
+            """Get font attribute.
+
+            Args:
+                key: Attribute name.
+
+            Returns:
+                Attribute value or None.
+
+            """
             return getattr(self, key, None)
 
-        def metrics(self, *args):
-            """Get font metrics."""
+        def metrics(self, *args: object) -> dict[str, object]:
+            """Get font metrics.
+
+            Args:
+                *args: Metric names to retrieve.
+
+            Returns:
+                Dictionary with font metrics.
+
+            """
             return {"ascent": 10, "descent": 2, "linespace": 12, "fixed": False}
 
     class FallbackScrolledText(FallbackText):
         """Scrolled text widget."""
 
-        def __init__(self, master=None, **kwargs) -> None:
-            """Initialize scrolled text."""
+        def __init__(self, master: "FallbackWidget | None" = None, **kwargs: object) -> None:
+            """Initialize scrolled text.
+
+            Args:
+                master: Parent widget or None.
+                **kwargs: Widget configuration options.
+
+            """
             super().__init__(master, **kwargs)
             self.vbar = FallbackWidget(self)  # Vertical scrollbar
             self.hbar = FallbackWidget(self)  # Horizontal scrollbar
@@ -882,24 +1426,48 @@ except ImportError as e:
         class Combobox(FallbackWidget):
             """Combobox widget."""
 
-            def __init__(self, master=None, **kwargs) -> None:
-                """Initialize combobox."""
+            def __init__(self, master: "FallbackWidget | None" = None, **kwargs: object) -> None:
+                """Initialize combobox.
+
+                Args:
+                    master: Parent widget or None.
+                    **kwargs: Widget configuration options.
+
+                """
                 super().__init__(master, **kwargs)
                 self.values_list = kwargs.get("values", [])
                 self.current_index = 0
                 self.textvariable = kwargs.get("textvariable", FallbackStringVar())
                 logger.debug("Combobox created: %s", self.widget_id)
 
-            def get(self):
-                """Get current value."""
+            def get(self) -> str:
+                """Get current value.
+
+                Returns:
+                    Current selected value.
+
+                """
                 return self.textvariable.get()
 
-            def set(self, value) -> None:
-                """Set current value."""
+            def set(self, value: object) -> None:
+                """Set current value.
+
+                Args:
+                    value: Value to set.
+
+                """
                 self.textvariable.set(value)
 
-            def current(self, index=None):
-                """Get/set current index."""
+            def current(self, index: int | None = None) -> int:
+                """Get/set current index.
+
+                Args:
+                    index: Index to set or None to get current.
+
+                Returns:
+                    Current index.
+
+                """
                 if index is not None:
                     self.current_index = index
                     if 0 <= index < len(self.values_list):
@@ -909,46 +1477,84 @@ except ImportError as e:
         class Progressbar(FallbackWidget):
             """Progressbar widget."""
 
-            def __init__(self, master=None, **kwargs) -> None:
-                """Initialize progressbar."""
+            def __init__(self, master: "FallbackWidget | None" = None, **kwargs: object) -> None:
+                """Initialize progressbar.
+
+                Args:
+                    master: Parent widget or None.
+                    **kwargs: Widget configuration options.
+
+                """
                 super().__init__(master, **kwargs)
                 self.maximum = kwargs.get("maximum", 100)
                 self.value = kwargs.get("value", 0)
                 self.mode = kwargs.get("mode", "determinate")
                 logger.debug("Progressbar created: %s", self.widget_id)
 
-            def configure(self, **kwargs) -> None:
-                """Configure progressbar."""
+            def configure(self, **kwargs: object) -> None:
+                """Configure progressbar.
+
+                Args:
+                    **kwargs: Configuration options.
+
+                """
                 super().configure(**kwargs)
                 if "value" in kwargs:
                     logger.debug("Progressbar %s: Value set to %s", self.widget_id, kwargs["value"])
 
-            def start(self, interval=None) -> None:
-                """Start progress animation."""
+            def start(self, interval: int | None = None) -> None:
+                """Start progress animation.
+
+                Args:
+                    interval: Animation interval in milliseconds or None.
+
+                """
                 logger.debug("Progressbar %s: Started", self.widget_id)
 
             def stop(self) -> None:
                 """Stop progress animation."""
                 logger.debug("Progressbar %s: Stopped", self.widget_id)
 
-            def step(self, delta=1) -> None:
-                """Step progress."""
+            def step(self, delta: int = 1) -> None:
+                """Step progress.
+
+                Args:
+                    delta: Amount to increment progress by.
+
+                """
                 self.value = min(self.maximum, self.value + delta)
                 logger.debug("Progressbar %s: Stepped to %s", self.widget_id, self.value)
 
         class Treeview(FallbackWidget):
             """Treeview widget."""
 
-            def __init__(self, master=None, **kwargs) -> None:
-                """Initialize treeview."""
+            def __init__(self, master: "FallbackWidget | None" = None, **kwargs: object) -> None:
+                """Initialize treeview.
+
+                Args:
+                    master: Parent widget or None.
+                    **kwargs: Widget configuration options.
+
+                """
                 super().__init__(master, **kwargs)
                 self.columns_list = kwargs.get("columns", [])
-                self.items = {}
+                self.items: dict[str, dict[str, object]] = {}
                 self.next_item_id = 1
                 logger.debug("Treeview created: %s", self.widget_id)
 
-            def insert(self, parent, index, iid=None, **kwargs):
-                """Insert item."""
+            def insert(self, parent: str, index: int | str, iid: str | None = None, **kwargs: object) -> str:
+                """Insert item.
+
+                Args:
+                    parent: Parent item ID.
+                    index: Insert position.
+                    iid: Item ID or None to auto-generate.
+                    **kwargs: Item options.
+
+                Returns:
+                    Item ID.
+
+                """
                 if iid is None:
                     iid = f"I{self.next_item_id:03d}"
                     self.next_item_id += 1
@@ -962,31 +1568,61 @@ except ImportError as e:
                 logger.debug("Treeview %s: Inserted item %s", self.widget_id, iid)
                 return iid
 
-            def delete(self, *items) -> None:
-                """Delete items."""
+            def delete(self, *items: str) -> None:
+                """Delete items.
+
+                Args:
+                    *items: Item IDs to delete.
+
+                """
                 for item in items:
                     if item in self.items:
                         del self.items[item]
                 logger.debug("Treeview %s: Deleted %d items", self.widget_id, len(items))
 
-            def get_children(self, item=""):
-                """Get child items."""
+            def get_children(self, item: str = "") -> list[str]:
+                """Get child items.
+
+                Args:
+                    item: Parent item ID.
+
+                Returns:
+                    List of child item IDs.
+
+                """
                 children = []
                 for iid, data in self.items.items():
                     if data["parent"] == item:
                         children.append(iid)
                 return children
 
-            def selection(self):
-                """Get selection."""
-                return ()  # No selection in fallback
+            def selection(self) -> tuple[str, ...]:
+                """Get selection.
 
-            def heading(self, column, **kwargs) -> None:
-                """Configure column heading."""
+                Returns:
+                    Tuple of selected item IDs.
+
+                """
+                return ()
+
+            def heading(self, column: str, **kwargs: object) -> None:
+                """Configure column heading.
+
+                Args:
+                    column: Column identifier.
+                    **kwargs: Heading options.
+
+                """
                 logger.debug("Treeview %s: Heading for column %s configured", self.widget_id, column)
 
-            def column(self, column, **kwargs) -> None:
-                """Configure column."""
+            def column(self, column: str, **kwargs: object) -> None:
+                """Configure column.
+
+                Args:
+                    column: Column identifier.
+                    **kwargs: Column options.
+
+                """
                 logger.debug("Treeview %s: Column %s configured", self.widget_id, column)
 
     # Module assignments

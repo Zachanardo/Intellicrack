@@ -87,7 +87,7 @@ def get_available_capabilities():
     return capabilities
 
 
-def is_capability_available(capability_name):
+def is_capability_available(capability_name: str):
     """Check if a specific analysis capability is available."""
     return capability_name in get_available_capabilities()
 

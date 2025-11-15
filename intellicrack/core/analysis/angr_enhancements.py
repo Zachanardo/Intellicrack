@@ -25,7 +25,7 @@ import hashlib
 import logging
 import time
 from collections import defaultdict
-from typing import Any
+from typing import Any, Dict, List, Optional, Sequence
 
 try:
     import angr
@@ -43,7 +43,7 @@ except ImportError:
 class LicensePathPrioritizer(ExplorationTechnique):
     """Path prioritization strategy for license validation discovery with sophisticated heuristics."""
 
-    def __init__(self, prioritize_license_paths=True, max_loop_iterations=3) -> None:
+    def __init__(self, prioritize_license_paths: bool = True, max_loop_iterations: int = 3) -> None:
         """Initialize path prioritizer with loop detection.
 
         Args:
@@ -80,8 +80,17 @@ class LicensePathPrioritizer(ExplorationTechnique):
         self.coverage_map = set()
         self.logger = logging.getLogger("IntellicrackLogger.LicensePathPrioritizer")
 
-    def setup(self, simgr) -> None:
-        """Initialize prioritizer with project context."""
+    def setup(self, simgr: object) -> None:
+        """Initialize prioritizer with project and keyword mappings.
+
+        Scans the binary for functions and strings containing license-related keywords
+        to identify licensing validation routines. This enables intelligent path
+        prioritization during symbolic execution to focus on licensing checks.
+
+        Args:
+            simgr: Angr exploration manager with loaded project binary and symbols
+
+        """
         self.logger.info("Setting up license path prioritizer")
 
         for func_name in simgr._project.kb.functions:
@@ -100,8 +109,22 @@ class LicensePathPrioritizer(ExplorationTechnique):
                 self.logger.debug(f"Error loading string data at {hex(string_ref)}: {e}")
                 continue
 
-    def step(self, simgr, stash="active", **kwargs):
-        """Prioritize paths based on license relevance with advanced scoring."""
+    def step(self, simgr: object, stash: str = "active", **kwargs: Any) -> object:
+        """Prioritize paths based on license relevance with advanced scoring.
+
+        Applies path scoring heuristics to rank execution paths by their relevance
+        to license validation detection. Paths with higher scores are prioritized,
+        enabling faster discovery of licensing checks.
+
+        Args:
+            simgr: Angr exploration manager object
+            stash: Name of the state stash to process (default: "active")
+            **kwargs: Additional keyword arguments passed to exploration step
+
+        Returns:
+            Modified exploration manager with prioritized paths
+
+        """
         simgr = simgr.step(stash=stash, **kwargs)
 
         if stash in simgr.stashes and self.prioritize_license_paths:
@@ -134,8 +157,20 @@ class LicensePathPrioritizer(ExplorationTechnique):
 
         return simgr
 
-    def _calculate_path_score(self, state) -> float:
-        """Calculate path priority score for license validation relevance."""
+    def _calculate_path_score(self, state: object) -> float:
+        """Calculate path priority score for license validation relevance.
+
+        Computes a composite score based on presence of license-related functions,
+        constraint complexity, path length, and coverage metrics. Higher scores
+        indicate greater relevance to licensing validation routines.
+
+        Args:
+            state: Angr execution state to score
+
+        Returns:
+            float: Prioritization score (higher = more relevant to licensing)
+
+        """
         score = 0.0
 
         if not hasattr(state, "history") or not state.history.bbl_addrs:
@@ -172,8 +207,20 @@ class LicensePathPrioritizer(ExplorationTechnique):
 
         return max(score, 0.0)
 
-    def _check_loop_detection(self, state) -> float:
-        """Detect loops and calculate penalty for excessive iterations."""
+    def _check_loop_detection(self, state: object) -> float:
+        """Detect loops and calculate penalty for excessive iterations.
+
+        Identifies and penalizes paths that repeatedly execute the same address
+        beyond the configured iteration threshold, reducing path explosion from
+        infinite or long-running loops.
+
+        Args:
+            state: Angr execution state to check for loops
+
+        Returns:
+            float: Loop penalty score (higher penalty = more iterations detected)
+
+        """
         penalty = 0.0
 
         if not hasattr(state, "history") or not state.history.bbl_addrs:
@@ -191,8 +238,20 @@ class LicensePathPrioritizer(ExplorationTechnique):
 
         return penalty
 
-    def _compute_state_hash(self, state) -> str:
-        """Compute hash for state deduplication."""
+    def _compute_state_hash(self, state: object) -> str:
+        """Compute hash for state deduplication.
+
+        Generates a deterministic hash based on current address and constraint
+        complexity to identify and deduplicate equivalent states during exploration,
+        reducing computational overhead.
+
+        Args:
+            state: Angr execution state to hash
+
+        Returns:
+            str: 16-character hexadecimal SHA256 hash of state characteristics
+
+        """
         try:
             addr = state.addr
             constraint_count = len(state.solver.constraints)
@@ -209,7 +268,7 @@ class LicensePathPrioritizer(ExplorationTechnique):
 class ConstraintOptimizer(ExplorationTechnique):
     """Advanced constraint optimization for performance with incremental solving."""
 
-    def __init__(self, simplify_interval=10, cache_size=1000, solver_timeout=5000) -> None:
+    def __init__(self, simplify_interval: int = 10, cache_size: int = 1000, solver_timeout: int = 5000) -> None:
         """Initialize constraint optimizer.
 
         Args:
@@ -227,16 +286,37 @@ class ConstraintOptimizer(ExplorationTechnique):
         self.solver_results_cache = {}
         self.logger = logging.getLogger("IntellicrackLogger.ConstraintOptimizer")
 
-    def setup(self, simgr) -> None:
-        """Configure Z3 solver optimizations."""
+    def setup(self, simgr: object) -> None:
+        """Configure Z3 solver optimizations.
+
+        Configures the constraint solver with timeout parameters and
+        optimization settings for improved performance during symbolic execution.
+
+        Args:
+            simgr: Angr exploration manager to configure solver for
+
+        """
         for state in simgr.active:
             if hasattr(state.solver, "_solver"):
                 state.solver._solver.timeout = self.solver_timeout
 
         self.logger.info(f"Constraint optimizer configured (timeout: {self.solver_timeout}ms)")
 
-    def step(self, simgr, stash="active", **kwargs):
-        """Optimize constraints during exploration."""
+    def step(self, simgr: object, stash: str = "active", **kwargs: Any) -> object:
+        """Optimize constraints during exploration.
+
+        Periodically simplifies constraint sets to reduce solver complexity and
+        improve performance. Uses caching to avoid redundant simplifications.
+
+        Args:
+            simgr: Angr exploration manager
+            stash: State stash to process (default: "active")
+            **kwargs: Additional exploration parameters
+
+        Returns:
+            Optimized exploration manager with simplified constraints
+
+        """
         simgr = simgr.step(stash=stash, **kwargs)
 
         if stash in simgr.stashes:
@@ -250,8 +330,16 @@ class ConstraintOptimizer(ExplorationTechnique):
 
         return simgr
 
-    def _optimize_constraints(self, state) -> None:
-        """Optimize state constraints with caching."""
+    def _optimize_constraints(self, state: object) -> None:
+        """Optimize state constraints with caching.
+
+        Applies constraint simplification and maintains a cache of optimized
+        constraint sets to avoid redundant solver operations on equivalent states.
+
+        Args:
+            state: Angr execution state with constraints to optimize
+
+        """
         if not hasattr(state, "solver") or not state.solver.constraints:
             return
 
@@ -273,8 +361,19 @@ class ConstraintOptimizer(ExplorationTechnique):
         if optimized_count < original_count:
             self.logger.debug(f"Simplified constraints: {original_count} -> {optimized_count}")
 
-    def _hash_constraints(self, constraints) -> str:
-        """Generate hash for constraint set."""
+    def _hash_constraints(self, constraints: object) -> str:
+        """Generate hash for constraint set.
+
+        Produces a deterministic hash of the constraint set for caching and
+        deduplication purposes.
+
+        Args:
+            constraints: Sequence of constraints to hash
+
+        Returns:
+            str: 16-character hexadecimal SHA256 hash of constraint set
+
+        """
         constraint_strs = [str(c) for c in constraints[:50]]
         combined = "".join(sorted(constraint_strs))
         return hashlib.sha256(combined.encode()).hexdigest()[:16]
@@ -283,7 +382,7 @@ class ConstraintOptimizer(ExplorationTechnique):
 class StateMerger(ExplorationTechnique):
     """State merging technique to reduce path explosion."""
 
-    def __init__(self, merge_threshold=10, max_merge_count=5) -> None:
+    def __init__(self, merge_threshold: int = 10, max_merge_count: int = 5) -> None:
         """Initialize state merger.
 
         Args:
@@ -296,8 +395,21 @@ class StateMerger(ExplorationTechnique):
         self.max_merge_count = max_merge_count
         self.logger = logging.getLogger("IntellicrackLogger.StateMerger")
 
-    def step(self, simgr, stash="active", **kwargs):
-        """Merge similar states to reduce path explosion."""
+    def step(self, simgr: object, stash: str = "active", **kwargs: Any) -> object:
+        """Merge similar states to reduce path explosion.
+
+        Identifies and merges states at the same address to reduce branching
+        complexity while preserving diverse constraint sets for thorough analysis.
+
+        Args:
+            simgr: Angr exploration manager
+            stash: State stash to process (default: "active")
+            **kwargs: Additional exploration parameters
+
+        Returns:
+            Exploration manager with merged equivalent states
+
+        """
         simgr = simgr.step(stash=stash, **kwargs)
 
         if stash in simgr.stashes and len(simgr.stashes[stash]) >= self.merge_threshold:
@@ -319,8 +431,19 @@ class StateMerger(ExplorationTechnique):
 
         return simgr
 
-    def _identify_mergeable_states(self, states) -> list:
-        """Identify groups of states that can be merged."""
+    def _identify_mergeable_states(self, states: object) -> List[list]:
+        """Identify groups of states that can be merged.
+
+        Groups execution states by their current address and returns groups
+        of sufficient size for merging, limiting to avoid excessive merges.
+
+        Args:
+            states: Sequence of execution states to group
+
+        Returns:
+            List of state groups suitable for merging
+
+        """
         addr_groups = defaultdict(list)
 
         for state in states:
@@ -333,8 +456,19 @@ class StateMerger(ExplorationTechnique):
 
         return mergeable
 
-    def _merge_states(self, states):
-        """Merge multiple states into one."""
+    def _merge_states(self, states: object) -> Optional[object]:
+        """Merge multiple states into one.
+
+        Merges multiple execution states into a single generalized state,
+        combining their constraint sets to maintain exploration coverage.
+
+        Args:
+            states: States to merge into a single representative state
+
+        Returns:
+            Merged state or None if merge fails
+
+        """
         if not states:
             return None
 
@@ -354,8 +488,16 @@ class StateMerger(ExplorationTechnique):
 class WindowsLicensingSimProcedure(SimProcedure):
     """Base class for Windows licensing API simprocedures."""
 
-    def __init__(self, *args, **kwargs) -> None:
-        """Initialize the Windows licensing simprocedure."""
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Initialize the Windows licensing simprocedure.
+
+        Calls parent SimProcedure constructor with all arguments and keyword arguments.
+
+        Args:
+            *args: Variable positional arguments passed to SimProcedure
+            **kwargs: Variable keyword arguments passed to SimProcedure
+
+        """
         super().__init__(*args, **kwargs)
         self.logger = logging.getLogger(f"IntellicrackLogger.{self.__class__.__name__}")
 
@@ -363,8 +505,25 @@ class WindowsLicensingSimProcedure(SimProcedure):
 class CryptVerifySignature(WindowsLicensingSimProcedure):
     """Simprocedure for CryptVerifySignatureW - always returns success."""
 
-    def run(self, hHash, pbSignature, dwSigLen, hPubKey, sDescription, dwFlags) -> int:
-        """Bypass signature verification - return TRUE."""
+    def run(self, hHash: object, pbSignature: object, dwSigLen: object, hPubKey: object, sDescription: object, dwFlags: object) -> int:
+        """Bypass signature verification - return TRUE.
+
+        Returns success status for cryptographic signature verification without
+        validating the actual signature data. Extracts and logs signature details
+        when available for analysis purposes.
+
+        Args:
+            hHash: Hash object handle
+            pbSignature: Pointer to signature data
+            dwSigLen: Length of signature data
+            hPubKey: Public key handle for verification
+            sDescription: Optional signature description
+            dwFlags: Verification flags
+
+        Returns:
+            int: 1 (TRUE) indicating successful verification
+
+        """
         self.logger.info(f"CryptVerifySignature called at {hex(self.state.addr)}")
 
         if not self.state.solver.symbolic(hHash):
@@ -403,8 +562,21 @@ class CryptVerifySignature(WindowsLicensingSimProcedure):
 class WinVerifyTrust(WindowsLicensingSimProcedure):
     """Simprocedure for WinVerifyTrust - always returns trust verification success."""
 
-    def run(self, hwnd, pgActionID, pWinTrustData) -> int:
-        """Bypass trust verification - return ERROR_SUCCESS (0)."""
+    def run(self, hwnd: object, pgActionID: object, pWinTrustData: object) -> int:
+        """Bypass trust verification - return ERROR_SUCCESS (0).
+
+        Returns success status for Windows trust verification without validating
+        digital certificates. Extracts action GUID and trust data for analysis.
+
+        Args:
+            hwnd: Parent window handle
+            pgActionID: Pointer to action GUID for verification type
+            pWinTrustData: Pointer to WINTRUST_DATA structure
+
+        Returns:
+            int: 0 (ERROR_SUCCESS) indicating verified trust status
+
+        """
         self.logger.info(f"WinVerifyTrust called at {hex(self.state.addr)}")
 
         if not self.state.solver.symbolic(pgActionID):
@@ -429,8 +601,24 @@ class WinVerifyTrust(WindowsLicensingSimProcedure):
 class RegQueryValueExW(WindowsLicensingSimProcedure):
     """Simprocedure for RegQueryValueExW - returns symbolic license data."""
 
-    def run(self, hKey, lpValueName, lpReserved, lpType, lpData, lpcbData) -> int:
-        """Return symbolic data for registry-based license checks."""
+    def run(self, hKey: object, lpValueName: object, lpReserved: object, lpType: object, lpData: object, lpcbData: object) -> int:
+        """Return symbolic data for registry-based license checks.
+
+        Intercepts registry queries for license-related values and returns
+        symbolic data to allow constraint-based exploration of license validation paths.
+
+        Args:
+            hKey: Registry key handle
+            lpValueName: Pointer to value name string
+            lpReserved: Reserved parameter (unused)
+            lpType: Pointer to data type output
+            lpData: Pointer to data buffer output
+            lpcbData: Pointer to data size
+
+        Returns:
+            int: 0 (ERROR_SUCCESS) indicating successful registry query
+
+        """
         self.logger.info(f"RegQueryValueExW called at {hex(self.state.addr)}")
 
         if self.state.solver.symbolic(lpValueName):
@@ -469,8 +657,23 @@ class RegQueryValueExW(WindowsLicensingSimProcedure):
 class RegOpenKeyExW(WindowsLicensingSimProcedure):
     """Simprocedure for RegOpenKeyExW - always succeeds for license keys."""
 
-    def run(self, hKey, lpSubKey, ulOptions, samDesired, phkResult) -> int:
-        """Return success for registry key opens."""
+    def run(self, hKey: object, lpSubKey: object, ulOptions: object, samDesired: object, phkResult: object) -> int:
+        """Return success for registry key opens.
+
+        Intercepts registry key open operations and returns symbolic valid handles.
+        Logs registry access rights and options for analysis.
+
+        Args:
+            hKey: Parent registry key handle
+            lpSubKey: Pointer to subkey name
+            ulOptions: Open options flags
+            samDesired: Desired access rights
+            phkResult: Pointer to output key handle
+
+        Returns:
+            int: 0 (ERROR_SUCCESS) indicating successful key open
+
+        """
         self.logger.info(f"RegOpenKeyExW called at {hex(self.state.addr)}")
 
         if not self.state.solver.symbolic(ulOptions):
@@ -507,16 +710,34 @@ class GetVolumeInformationW(WindowsLicensingSimProcedure):
 
     def run(
         self,
-        lpRootPathName,
-        lpVolumeNameBuffer,
-        nVolumeNameSize,
-        lpVolumeSerialNumber,
-        lpMaximumComponentLength,
-        lpFileSystemFlags,
-        lpFileSystemNameBuffer,
-        nFileSystemNameSize,
+        lpRootPathName: object,
+        lpVolumeNameBuffer: object,
+        nVolumeNameSize: object,
+        lpVolumeSerialNumber: object,
+        lpMaximumComponentLength: object,
+        lpFileSystemFlags: object,
+        lpFileSystemNameBuffer: object,
+        nFileSystemNameSize: object,
     ) -> int:
-        """Return symbolic volume serial number for hardware fingerprint bypass."""
+        """Return symbolic volume serial number for hardware fingerprint bypass.
+
+        Provides symbolic volume serial numbers to allow constraint-based exploration
+        of hardware fingerprinting checks in licensing validation.
+
+        Args:
+            lpRootPathName: Pointer to root path name
+            lpVolumeNameBuffer: Pointer to volume name buffer output
+            nVolumeNameSize: Volume name buffer size
+            lpVolumeSerialNumber: Pointer to serial number output
+            lpMaximumComponentLength: Pointer to max component length output
+            lpFileSystemFlags: Pointer to filesystem flags output
+            lpFileSystemNameBuffer: Pointer to filesystem name buffer output
+            nFileSystemNameSize: Filesystem name buffer size
+
+        Returns:
+            int: 1 (TRUE) indicating successful volume information retrieval
+
+        """
         self.logger.info(f"GetVolumeInformationW called at {hex(self.state.addr)}")
 
         if not self.state.solver.symbolic(lpVolumeSerialNumber):
@@ -533,15 +754,32 @@ class CreateFileW(WindowsLicensingSimProcedure):
 
     def run(
         self,
-        lpFileName,
-        dwDesiredAccess,
-        dwShareMode,
-        lpSecurityAttributes,
-        dwCreationDisposition,
-        dwFlagsAndAttributes,
-        hTemplateFile,
-    ):
-        """Process license file open requests and return valid file handles."""
+        lpFileName: object,
+        dwDesiredAccess: object,
+        dwShareMode: object,
+        lpSecurityAttributes: object,
+        dwCreationDisposition: object,
+        dwFlagsAndAttributes: object,
+        hTemplateFile: object,
+    ) -> int:
+        """Process license file open requests and return valid file handles.
+
+        Intercepts file creation operations and tracks license file accesses.
+        Returns valid file handles for license files to enable continued execution.
+
+        Args:
+            lpFileName: Pointer to filename string
+            dwDesiredAccess: Desired access rights
+            dwShareMode: File sharing mode
+            lpSecurityAttributes: Pointer to security attributes
+            dwCreationDisposition: Creation disposition flags
+            dwFlagsAndAttributes: File flags and attributes
+            hTemplateFile: Template file handle
+
+        Returns:
+            int: File handle for opened file
+
+        """
         self.logger.info(f"CreateFileW called at {hex(self.state.addr)}")
 
         if not hasattr(self.state, "globals") or self.state.globals is None:
@@ -627,8 +865,23 @@ class CreateFileW(WindowsLicensingSimProcedure):
 class ReadFile(WindowsLicensingSimProcedure):
     """Simprocedure for ReadFile - returns symbolic license file content."""
 
-    def run(self, hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped) -> int:
-        """Return symbolic data for license file content."""
+    def run(self, hFile: object, lpBuffer: object, nNumberOfBytesToRead: object, lpNumberOfBytesRead: object, lpOverlapped: object) -> int:
+        """Return symbolic data for license file content.
+
+        Intercepts file read operations and returns symbolic data for license file
+        content, enabling constraint-based analysis of license file parsing logic.
+
+        Args:
+            hFile: File handle to read from
+            lpBuffer: Pointer to buffer for read data
+            nNumberOfBytesToRead: Number of bytes to read
+            lpNumberOfBytesRead: Pointer to bytes read output
+            lpOverlapped: Pointer to overlapped I/O structure
+
+        Returns:
+            int: 1 (TRUE) indicating successful file read
+
+        """
         self.logger.info(f"ReadFile called at {hex(self.state.addr)}")
 
         if not self.state.solver.symbolic(hFile):
@@ -665,8 +918,23 @@ class ReadFile(WindowsLicensingSimProcedure):
 class WriteFile(WindowsLicensingSimProcedure):
     """Simprocedure for WriteFile - tracks license file writes."""
 
-    def run(self, hFile, lpBuffer, nNumberOfBytesToWrite, lpNumberOfBytesWritten, lpOverlapped) -> int:
-        """Track license file write operations."""
+    def run(self, hFile: object, lpBuffer: object, nNumberOfBytesToWrite: object, lpNumberOfBytesWritten: object, lpOverlapped: object) -> int:
+        """Track license file write operations.
+
+        Intercepts file write operations to track license file modifications
+        and extract written data for analysis.
+
+        Args:
+            hFile: File handle to write to
+            lpBuffer: Pointer to buffer with data to write
+            nNumberOfBytesToWrite: Number of bytes to write
+            lpNumberOfBytesWritten: Pointer to bytes written output
+            lpOverlapped: Pointer to overlapped I/O structure
+
+        Returns:
+            int: 1 (TRUE) indicating successful file write
+
+        """
         self.logger.info(f"WriteFile called at {hex(self.state.addr)}")
 
         if not self.state.solver.symbolic(hFile):
@@ -706,8 +974,20 @@ class WriteFile(WindowsLicensingSimProcedure):
 class GetComputerNameW(WindowsLicensingSimProcedure):
     """Simprocedure for GetComputerNameW - returns symbolic computer name."""
 
-    def run(self, lpBuffer, nSize) -> int:
-        """Return symbolic computer name for system identification bypass."""
+    def run(self, lpBuffer: object, nSize: object) -> int:
+        """Return symbolic computer name for system identification bypass.
+
+        Provides symbolic computer name values to bypass hardware fingerprinting
+        checks that rely on system identification.
+
+        Args:
+            lpBuffer: Pointer to buffer for computer name output
+            nSize: Size of buffer or pointer to name length
+
+        Returns:
+            int: 1 (TRUE) indicating successful name retrieval
+
+        """
         self.logger.info(f"GetComputerNameW called at {hex(self.state.addr)}")
 
         if not self.state.solver.symbolic(lpBuffer):
@@ -727,8 +1007,16 @@ class GetComputerNameW(WindowsLicensingSimProcedure):
 class GetSystemTime(WindowsLicensingSimProcedure):
     """Simprocedure for GetSystemTime - returns controllable time for trial bypass."""
 
-    def run(self, lpSystemTime) -> None:
-        """Return symbolic system time for trial period bypass."""
+    def run(self, lpSystemTime: object) -> None:
+        """Return symbolic system time for trial period bypass.
+
+        Provides symbolic system time values with constraints to enable exploration
+        of trial period validation logic and time-based licensing checks.
+
+        Args:
+            lpSystemTime: Pointer to SYSTEMTIME structure output
+
+        """
         self.logger.info(f"GetSystemTime called at {hex(self.state.addr)}")
 
         if not self.state.solver.symbolic(lpSystemTime):
@@ -747,8 +1035,16 @@ class GetSystemTime(WindowsLicensingSimProcedure):
 class GetTickCount(WindowsLicensingSimProcedure):
     """Simprocedure for GetTickCount - returns controllable tick count."""
 
-    def run(self):
-        """Return symbolic tick count for timing-based license checks."""
+    def run(self) -> object:
+        """Return symbolic tick count for timing-based license checks.
+
+        Provides symbolic tick count values to enable exploration of timing-based
+        license validation checks and timing attack detection logic.
+
+        Returns:
+            object: Symbolic bitvector representing system tick count
+
+        """
         self.logger.info(f"GetTickCount called at {hex(self.state.addr)}")
 
         symbolic_ticks = claripy.BVS(f"tick_count_{hex(self.state.addr)}", 32)
@@ -762,8 +1058,22 @@ class GetTickCount(WindowsLicensingSimProcedure):
 class VirtualAlloc(WindowsLicensingSimProcedure):
     """Simprocedure for VirtualAlloc - allocates symbolic memory."""
 
-    def run(self, lpAddress, dwSize, flAllocationType, flProtect):
-        """Allocate memory and return symbolic address."""
+    def run(self, lpAddress: object, dwSize: object, flAllocationType: object, flProtect: object) -> int:
+        """Allocate memory and return symbolic address.
+
+        Performs virtual memory allocation operations and returns addresses. Tracks
+        allocations for correlation with other memory operations during analysis.
+
+        Args:
+            lpAddress: Requested allocation address or NULL
+            dwSize: Number of bytes to allocate
+            flAllocationType: Memory allocation type flags
+            flProtect: Memory protection flags
+
+        Returns:
+            int: Allocated memory address or symbolic value
+
+        """
         self.logger.info(f"VirtualAlloc called at {hex(self.state.addr)}")
 
         if not hasattr(self.state, "globals") or self.state.globals is None:
@@ -838,8 +1148,21 @@ class VirtualAlloc(WindowsLicensingSimProcedure):
 class VirtualFree(WindowsLicensingSimProcedure):
     """Simprocedure for VirtualFree - tracks memory frees."""
 
-    def run(self, lpAddress, dwSize, dwFreeType) -> int:
-        """Track memory deallocation."""
+    def run(self, lpAddress: object, dwSize: object, dwFreeType: object) -> int:
+        """Track memory deallocation.
+
+        Monitors virtual memory deallocation operations and logs allocation
+        information for tracking memory usage patterns during analysis.
+
+        Args:
+            lpAddress: Address of memory to deallocate
+            dwSize: Size of memory region
+            dwFreeType: Deallocation type flags
+
+        Returns:
+            int: 1 (TRUE) indicating successful deallocation
+
+        """
         self.logger.info(f"VirtualFree called at {hex(self.state.addr)}")
 
         if not self.state.solver.symbolic(lpAddress):
@@ -867,8 +1190,23 @@ class VirtualFree(WindowsLicensingSimProcedure):
 class NtQueryInformationProcess(WindowsLicensingSimProcedure):
     """Simprocedure for NtQueryInformationProcess - returns safe values."""
 
-    def run(self, ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength, ReturnLength) -> int:
-        """Return safe process information to bypass anti-debugging."""
+    def run(self, ProcessHandle: object, ProcessInformationClass: object, ProcessInformation: object, ProcessInformationLength: object, ReturnLength: object) -> int:
+        """Return safe process information to bypass anti-debugging.
+
+        Intercepts process information queries and returns values that bypass
+        anti-debugging checks, including safe DebugPort and DebugObjectHandle values.
+
+        Args:
+            ProcessHandle: Handle to process
+            ProcessInformationClass: Information class requested
+            ProcessInformation: Pointer to output buffer
+            ProcessInformationLength: Size of output buffer
+            ReturnLength: Pointer to actual data length returned
+
+        Returns:
+            int: 0 (STATUS_SUCCESS) indicating successful query
+
+        """
         self.logger.info(f"NtQueryInformationProcess called at {hex(self.state.addr)}")
 
         if not self.state.solver.symbolic(ProcessHandle):
@@ -910,8 +1248,22 @@ class NtQueryInformationProcess(WindowsLicensingSimProcedure):
 class MessageBoxA(WindowsLicensingSimProcedure):
     """Simprocedure for MessageBoxA - logs and returns OK."""
 
-    def run(self, hWnd, lpText, lpCaption, uType) -> int:
-        """Log message box calls for license validation detection."""
+    def run(self, hWnd: object, lpText: object, lpCaption: object, uType: object) -> int:
+        """Log message box calls for license validation detection.
+
+        Intercepts message box calls and extracts text and captions for analysis.
+        Identifies license validation prompts and tracks them for correlation.
+
+        Args:
+            hWnd: Parent window handle
+            lpText: Pointer to message text
+            lpCaption: Pointer to caption text
+            uType: Message box type and button flags
+
+        Returns:
+            int: 1 (IDOK) indicating user clicked OK button
+
+        """
         self.logger.info(f"MessageBoxA called at {hex(self.state.addr)}")
 
         if not self.state.solver.symbolic(hWnd):
@@ -970,8 +1322,21 @@ class MessageBoxA(WindowsLicensingSimProcedure):
 class Socket(WindowsLicensingSimProcedure):
     """Simprocedure for socket - creates symbolic socket handle."""
 
-    def run(self, af, type, protocol):
-        """Create symbolic socket handle."""
+    def run(self, af: object, type: object, protocol: object) -> object:
+        """Create symbolic socket handle.
+
+        Creates symbolic socket handles for network communication interception.
+        Logs socket parameters for analysis of license server connections.
+
+        Args:
+            af: Address family (AF_INET, AF_INET6, etc.)
+            type: Socket type (SOCK_STREAM, SOCK_DGRAM, etc.)
+            protocol: Protocol type (IPPROTO_TCP, IPPROTO_UDP, etc.)
+
+        Returns:
+            object: Symbolic bitvector representing socket descriptor
+
+        """
         self.logger.info(f"socket called at {hex(self.state.addr)}")
 
         if not self.state.solver.symbolic(af):
@@ -995,8 +1360,21 @@ class Socket(WindowsLicensingSimProcedure):
 class Connect(WindowsLicensingSimProcedure):
     """Simprocedure for connect - always succeeds for license server connections."""
 
-    def run(self, s, name, namelen) -> int:
-        """Return success for network connections."""
+    def run(self, s: object, name: object, namelen: object) -> int:
+        """Return success for network connections.
+
+        Intercepts socket connection operations and returns success status.
+        Extracts and logs connection target addresses for license server analysis.
+
+        Args:
+            s: Socket descriptor
+            name: Pointer to sockaddr structure
+            namelen: Size of sockaddr structure
+
+        Returns:
+            int: 0 (SUCCESS) indicating successful connection
+
+        """
         self.logger.info(f"connect called at {hex(self.state.addr)}")
 
         if not self.state.solver.symbolic(s):
@@ -1034,8 +1412,22 @@ class Connect(WindowsLicensingSimProcedure):
 class Send(WindowsLicensingSimProcedure):
     """Simprocedure for send - tracks outgoing license validation data."""
 
-    def run(self, s, buf, len, flags):
-        """Track sent data for license validation analysis."""
+    def run(self, s: object, buf: object, len: object, flags: object) -> object:
+        """Track sent data for license validation analysis.
+
+        Monitors data sent to license servers and extracts validation data
+        for analysis of license request formats.
+
+        Args:
+            s: Socket descriptor
+            buf: Pointer to data buffer to send
+            len: Number of bytes to send
+            flags: Send operation flags
+
+        Returns:
+            object: Number of bytes sent
+
+        """
         self.logger.info(f"send called at {hex(self.state.addr)}")
 
         if not self.state.solver.symbolic(len):
@@ -1048,8 +1440,22 @@ class Send(WindowsLicensingSimProcedure):
 class Recv(WindowsLicensingSimProcedure):
     """Simprocedure for recv - returns symbolic license server response."""
 
-    def run(self, s, buf, len, flags):
-        """Return symbolic license server response."""
+    def run(self, s: object, buf: object, len: object, flags: object) -> int:
+        """Return symbolic license server response.
+
+        Provides symbolic data for received network packets to enable constraint-based
+        exploration of license server response handling logic.
+
+        Args:
+            s: Socket descriptor
+            buf: Pointer to receive buffer
+            len: Size of receive buffer
+            flags: Receive operation flags
+
+        Returns:
+            int: Number of bytes received
+
+        """
         self.logger.info(f"recv called at {hex(self.state.addr)}")
 
         if not self.state.solver.symbolic(buf) and not self.state.solver.symbolic(len):
@@ -1065,8 +1471,11 @@ class Recv(WindowsLicensingSimProcedure):
         return 0
 
 
-def install_license_simprocedures(project):
+def install_license_simprocedures(project: object) -> int:
     """Install custom simprocedures for Windows licensing APIs.
+
+    Registers all licensing-related Windows API simprocedures with the Angr project,
+    enabling interception and control of licensing checks during symbolic execution.
 
     Args:
         project: Angr project to install simprocedures on
@@ -1142,8 +1551,11 @@ class LicenseValidationDetector:
             "online_check": [b"server", b"validate", b"authenticate", b"verify"],
         }
 
-    def analyze_state(self, state) -> dict[str, Any]:
+    def analyze_state(self, state: object) -> Dict[str, Any]:
         """Analyze state for license validation indicators.
+
+        Examines memory and constraints to identify indicators of license validation
+        operations including serial checks, trial period checks, and activation checks.
 
         Args:
             state: Angr state to analyze
@@ -1177,9 +1589,21 @@ class LicenseValidationDetector:
 
         return results
 
-    def _search_memory_pattern(self, state, pattern: bytes) -> list[str]:
-        """Search memory for specific patterns."""
-        matches = []
+    def _search_memory_pattern(self, state: object, pattern: bytes) -> List[str]:
+        """Search memory for specific patterns.
+
+        Scans memory regions for licensing-related keyword patterns and returns
+        matching addresses for correlation with validation routines.
+
+        Args:
+            state: Angr execution state with memory to search
+            pattern: Byte pattern to search for
+
+        Returns:
+            List of memory addresses where pattern was found
+
+        """
+        matches: List[str] = []
         try:
             for region_start in range(0x400000, 0x500000, 0x1000):
                 try:
@@ -1196,8 +1620,19 @@ class LicenseValidationDetector:
 
         return matches[:5]
 
-    def _analyze_constraints(self, constraints) -> float:
-        """Analyze constraints for license validation indicators."""
+    def _analyze_constraints(self, constraints: object) -> float:
+        """Analyze constraints for license validation indicators.
+
+        Examines solver constraints to identify patterns matching licensing checks
+        such as equality comparisons, range checks, and licensing-related keywords.
+
+        Args:
+            constraints: Set of symbolic constraints to analyze
+
+        Returns:
+            float: Confidence score for license validation indicators
+
+        """
         score = 0.0
 
         for constraint in constraints[:100]:
@@ -1211,16 +1646,19 @@ class LicenseValidationDetector:
         return min(score, 0.5)
 
 
-def create_enhanced_simgr(project, initial_state, enable_state_merging=True):
+def create_enhanced_simgr(project: object, initial_state: object, enable_state_merging: bool = True) -> object:
     """Create angr symbolic execution manager with license-focused exploration techniques.
 
+    Configures an exploration manager with optimization techniques tailored for
+    discovering and analyzing software licensing protections through symbolic execution.
+
     Args:
-        project: Angr project
+        project: Angr project with loaded binary
         initial_state: Initial execution state
         enable_state_merging: Enable state merging to reduce path explosion
 
     Returns:
-        Configured execution manager with advanced exploration techniques
+        Configured exploration manager with advanced exploration techniques
 
     """
     logger = logging.getLogger("IntellicrackLogger.EnhancedSimGr")

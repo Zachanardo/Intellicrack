@@ -26,10 +26,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+from typing import Any
+
+
 def read_file_with_ai_tools(
     file_path: str,
     purpose: str = "File analysis",
-    app_instance=None,
+    app_instance: Any | None = None,
     mode: str = "text",
     encoding: str = "utf-8",
     max_bytes: int | None = None,
@@ -51,7 +54,7 @@ def read_file_with_ai_tools(
 
     """
 
-    def _process_ai_content(raw_content):
+    def _process_ai_content(raw_content: Any):
         """Normalize AI-provided content according to mode and max_bytes."""
         if mode == "binary":
             if isinstance(raw_content, str):
@@ -61,10 +64,9 @@ def read_file_with_ai_tools(
             if max_bytes and isinstance(data, (bytes, bytearray)) and len(data) > max_bytes:
                 return data[:max_bytes]
             return data
-        else:
-            if isinstance(raw_content, (bytes, bytearray)):
-                return raw_content.decode(encoding, errors="ignore")
-            return raw_content
+        if isinstance(raw_content, (bytes, bytearray)):
+            return raw_content.decode(encoding, errors="ignore")
+        return raw_content
 
     content = None
     used_ai_tools = False
@@ -108,7 +110,7 @@ def read_binary_header(
     file_path: str,
     header_size: int = 512,
     purpose: str = "Binary header analysis",
-    app_instance=None,
+    app_instance: Any | None = None,
 ) -> bytes | None:
     """Read the header of a binary file.
 
@@ -135,7 +137,7 @@ def read_binary_header(
 def read_text_file(
     file_path: str,
     purpose: str = "Text file analysis",
-    app_instance=None,
+    app_instance: Any | None = None,
     encoding: str = "utf-8",
 ) -> str | None:
     """Read a text file with encoding support.

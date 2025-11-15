@@ -24,7 +24,7 @@ import time
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
 import frida
 
@@ -54,12 +54,12 @@ class FridaScriptConfig:
     path: Path
     category: ScriptCategory
     description: str
-    parameters: Dict[str, Any] = field(default_factory=dict)
+    parameters: dict[str, Any] = field(default_factory=dict)
     requires_admin: bool = False
     supports_spawn: bool = True
     supports_attach: bool = True
-    output_handlers: Dict[str, Callable] = field(default_factory=dict)
-    dependencies: List[str] = field(default_factory=list)
+    output_handlers: dict[str, Callable] = field(default_factory=dict)
+    dependencies: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -70,11 +70,11 @@ class ScriptResult:
     success: bool
     start_time: float
     end_time: float
-    messages: List[Dict[str, Any]] = field(default_factory=list)
-    errors: List[str] = field(default_factory=list)
-    data: Dict[str, Any] = field(default_factory=dict)
-    memory_dumps: List[bytes] = field(default_factory=list)
-    patches: List[Dict[str, Any]] = field(default_factory=list)
+    messages: list[dict[str, Any]] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+    data: dict[str, Any] = field(default_factory=dict)
+    memory_dumps: list[bytes] = field(default_factory=list)
+    patches: list[dict[str, Any]] = field(default_factory=list)
 
 
 class FridaScriptManager:
@@ -88,9 +88,9 @@ class FridaScriptManager:
 
         """
         self.scripts_dir = scripts_dir
-        self.scripts: Dict[str, FridaScriptConfig] = {}
-        self.active_sessions: Dict[str, frida.core.Session] = {}
-        self.results: Dict[str, ScriptResult] = {}
+        self.scripts: dict[str, FridaScriptConfig] = {}
+        self.active_sessions: dict[str, frida.core.Session] = {}
+        self.results: dict[str, ScriptResult] = {}
         self._load_script_configs()
 
     def _generate_mac_address(self) -> str:
@@ -288,7 +288,7 @@ class FridaScriptManager:
                     )
                     self.scripts[script_file.name] = config
 
-    def _parse_script_metadata(self, script_path: Path) -> Optional[Dict[str, Any]]:
+    def _parse_script_metadata(self, script_path: Path) -> dict[str, Any] | None:
         """Parse metadata from script header."""
         try:
             with open(script_path, encoding="utf-8") as f:
@@ -316,8 +316,8 @@ class FridaScriptManager:
         script_name: str,
         target: str,
         mode: str = "spawn",
-        parameters: Optional[Dict[str, Any]] = None,
-        output_callback: Optional[Callable] = None,
+        parameters: dict[str, Any] | None = None,
+        output_callback: Callable | None = None,
     ) -> ScriptResult:
         """Execute a Frida script.
 
@@ -415,7 +415,7 @@ class FridaScriptManager:
             result.end_time = time.time()
             return result
 
-    def _create_parameter_injection(self, parameters: Dict[str, Any]) -> str:
+    def _create_parameter_injection(self, parameters: dict[str, Any]) -> str:
         """Create JavaScript code to inject parameters."""
         js_params = []
 
@@ -435,7 +435,7 @@ class FridaScriptManager:
 
         return "\n".join(js_params)
 
-    def _handle_message(self, result: ScriptResult, message: Dict[str, Any], data: Any, callback: Optional[Callable]) -> None:
+    def _handle_message(self, result: ScriptResult, message: dict[str, Any], data: Any, callback: Callable | None) -> None:
         """Handle messages from Frida script."""
         try:
             msg_type = message.get("type")
@@ -476,14 +476,14 @@ class FridaScriptManager:
             except Exception as e:
                 logger.error(f"Failed to stop script: {e}")
 
-    def get_script_categories(self) -> List[ScriptCategory]:
+    def get_script_categories(self) -> list[ScriptCategory]:
         """Get all available script categories."""
         categories = set()
         for config in self.scripts.values():
             categories.add(config.category)
         return list(categories)
 
-    def get_scripts_by_category(self, category: ScriptCategory) -> List[str]:
+    def get_scripts_by_category(self, category: ScriptCategory) -> list[str]:
         """Get scripts in a specific category."""
         scripts = []
         for name, config in self.scripts.items():
@@ -491,7 +491,7 @@ class FridaScriptManager:
                 scripts.append(name)
         return scripts
 
-    def get_script_config(self, script_name: str) -> Optional[FridaScriptConfig]:
+    def get_script_config(self, script_name: str) -> FridaScriptConfig | None:
         """Get configuration for a script."""
         return self.scripts.get(script_name)
 
@@ -526,7 +526,7 @@ class FridaScriptManager:
                 dump_file.write_bytes(dump)
 
     def create_custom_script(
-        self, name: str, code: str, category: ScriptCategory, parameters: Optional[Dict[str, Any]] = None,
+        self, name: str, code: str, category: ScriptCategory, parameters: dict[str, Any] | None = None,
     ) -> FridaScriptConfig:
         """Create a custom Frida script."""
         script_path = self.scripts_dir / f"custom_{name}.js"

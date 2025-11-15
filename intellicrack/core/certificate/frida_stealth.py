@@ -109,7 +109,7 @@ import os
 import platform
 import random
 import threading
-from typing import Dict, List, Optional
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -128,17 +128,17 @@ class FridaStealth:
     def __init__(self) -> None:
         """Initialize Frida stealth module."""
         self.platform = platform.system()
-        self.active_techniques: Dict[str, bool] = {
+        self.active_techniques: dict[str, bool] = {
             "thread_randomization": False,
             "dbus_hiding": False,
             "artifact_hiding": False,
             "syscall_mode": False,
             "anti_debugging": False,
         }
-        self._original_thread_names: Dict[int, str] = {}
+        self._original_thread_names: dict[int, str] = {}
         self._lock = threading.Lock()
 
-    def detect_anti_frida(self, pid: Optional[int] = None) -> List[str]:
+    def detect_anti_frida(self, pid: int | None = None) -> list[str]:
         """Detect anti-Frida techniques in target process.
 
         Scans for common detection methods:
@@ -279,8 +279,8 @@ class FridaStealth:
 
             for fd in os.listdir(fd_dir):
                 try:
-                    link = os.readlink(f"{fd_dir}/{fd}")
-                    if 'dbus' in link.lower():
+                    link = Path(f"{fd_dir}/{fd}").readlink()
+                    if 'dbus' in str(link).lower():
                         return True
                 except OSError:
                     continue
@@ -480,15 +480,14 @@ class FridaStealth:
                     self.active_techniques["thread_randomization"] = True
                     logger.info(f"Randomized {renamed_count} thread names")
                     return True
-                else:
-                    logger.warning("No Frida threads found to randomize")
-                    return False
+                logger.warning("No Frida threads found to randomize")
+                return False
 
             except Exception as e:
                 logger.error(f"Thread randomization failed: {e}", exc_info=True)
                 return False
 
-    def _get_common_thread_names(self) -> List[str]:
+    def _get_common_thread_names(self) -> list[str]:
         """Get list of common, benign thread names."""
         if self.platform == "Windows":
             return [
@@ -503,24 +502,23 @@ class FridaStealth:
                 "MainThread",
                 "EventLoop",
             ]
-        else:
-            return [
-                "kworker",
-                "ksoftirqd",
-                "migration",
-                "rcu_sched",
-                "watchdog",
-                "worker_thread",
-                "io_thread",
-                "network_thread",
-                "timer_thread",
-                "async_thread",
-            ]
+        return [
+            "kworker",
+            "ksoftirqd",
+            "migration",
+            "rcu_sched",
+            "watchdog",
+            "worker_thread",
+            "io_thread",
+            "network_thread",
+            "timer_thread",
+            "async_thread",
+        ]
 
     def _randomize_threads_linux(
         self,
-        patterns: List[str],
-        common_names: List[str],
+        patterns: list[str],
+        common_names: list[str],
     ) -> int:
         """Randomize thread names on Linux."""
         renamed_count = 0
@@ -563,8 +561,8 @@ class FridaStealth:
 
     def _randomize_threads_windows(
         self,
-        patterns: List[str],
-        common_names: List[str],
+        patterns: list[str],
+        common_names: list[str],
     ) -> int:
         """Randomize thread names on Windows."""
         renamed_count = 0
@@ -662,8 +660,8 @@ class FridaStealth:
             if os.path.exists(fd_dir):
                 for fd in os.listdir(fd_dir):
                     try:
-                        link = os.readlink(f"{fd_dir}/{fd}")
-                        if 'dbus' in link.lower():
+                        link = Path(f"{fd_dir}/{fd}").readlink()
+                        if 'dbus' in str(link).lower():
                             try:
                                 os.close(int(fd))
                                 closed_count += 1
@@ -677,9 +675,8 @@ class FridaStealth:
                 self.active_techniques["dbus_hiding"] = True
                 logger.info(f"Closed {closed_count} D-Bus file descriptors")
                 return True
-            else:
-                logger.info("No D-Bus file descriptors found")
-                return True
+            logger.info("No D-Bus file descriptors found")
+            return True
 
         except Exception as e:
             logger.error(f"D-Bus hiding failed: {e}", exc_info=True)
@@ -712,9 +709,8 @@ class FridaStealth:
                 self.active_techniques["artifact_hiding"] = True
                 logger.info(f"Obfuscated {obfuscated_count} memory artifacts")
                 return True
-            else:
-                logger.info("No Frida artifacts found to hide")
-                return True
+            logger.info("No Frida artifacts found to hide")
+            return True
 
         except Exception as e:
             logger.error(f"Artifact hiding failed: {e}", exc_info=True)
@@ -835,7 +831,7 @@ class FridaStealth:
             logger.error(f"Syscall mode failed: {e}", exc_info=True)
             return False
 
-    def apply_anti_debugging_bypass(self, pid: Optional[int] = None) -> bool:
+    def apply_anti_debugging_bypass(self, pid: int | None = None) -> bool:
         """Apply counter-measures for anti-debugging techniques.
 
         Bypasses common anti-debugging:
@@ -869,9 +865,8 @@ class FridaStealth:
                 self.active_techniques["anti_debugging"] = True
                 logger.info(f"Bypassed {bypassed_count} anti-debugging techniques")
                 return True
-            else:
-                logger.info("No anti-debugging techniques found")
-                return True
+            logger.info("No anti-debugging techniques found")
+            return True
 
         except Exception as e:
             logger.error(f"Anti-debugging bypass failed: {e}", exc_info=True)
@@ -970,7 +965,7 @@ class FridaStealth:
             logger.debug(f"Linux anti-debug bypass failed: {e}")
             return bypassed_count
 
-    def get_stealth_status(self) -> Dict:
+    def get_stealth_status(self) -> dict:
         """Get current stealth technique status.
 
         Returns:
@@ -992,12 +987,11 @@ class FridaStealth:
 
         if active_count == 0:
             return "none"
-        elif active_count < total_techniques // 2:
+        if active_count < total_techniques // 2:
             return "low"
-        elif active_count < total_techniques:
+        if active_count < total_techniques:
             return "medium"
-        else:
-            return "high"
+        return "high"
 
     def restore_original_state(self) -> bool:
         """Restore original thread names and state.

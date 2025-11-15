@@ -5,7 +5,7 @@ import logging
 import zlib
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable
 
 import z3
 
@@ -25,8 +25,8 @@ class KeyConstraint:
     description: str
     value: Any
     confidence: float
-    source_address: Optional[int] = None
-    assembly_context: Optional[str] = None
+    source_address: int | None = None
+    assembly_context: str | None = None
 
 
 @dataclass
@@ -35,12 +35,12 @@ class ValidationRoutine:
 
     address: int
     size: int
-    instructions: List[Tuple[int, str, str]]
-    constraints: List[KeyConstraint] = field(default_factory=list)
-    algorithm_type: Optional[str] = None
+    instructions: list[tuple[int, str, str]]
+    constraints: list[KeyConstraint] = field(default_factory=list)
+    algorithm_type: str | None = None
     confidence: float = 0.0
-    entry_points: List[int] = field(default_factory=list)
-    xrefs: List[int] = field(default_factory=list)
+    entry_points: list[int] = field(default_factory=list)
+    xrefs: list[int] = field(default_factory=list)
 
 
 @dataclass
@@ -48,10 +48,10 @@ class ExtractedAlgorithm:
     """Represents an extracted license validation algorithm."""
 
     algorithm_name: str
-    parameters: Dict[str, Any]
-    validation_function: Optional[Callable] = None
-    key_format: Optional[SerialFormat] = None
-    constraints: List[KeyConstraint] = field(default_factory=list)
+    parameters: dict[str, Any]
+    validation_function: Callable | None = None
+    key_format: SerialFormat | None = None
+    constraints: list[KeyConstraint] = field(default_factory=list)
     confidence: float = 0.0
 
 
@@ -67,9 +67,9 @@ class ConstraintExtractor:
         """
         self.binary_path = Path(binary_path)
         self.extractor = ConstraintExtractor(binary_path)
-        self.algorithms: List[ExtractedAlgorithm] = []
+        self.algorithms: list[ExtractedAlgorithm] = []
 
-    def analyze_validation_algorithms(self) -> List[ExtractedAlgorithm]:
+    def analyze_validation_algorithms(self) -> list[ExtractedAlgorithm]:
         """Analyze and extract validation algorithms from constraints.
 
         Returns:
@@ -90,7 +90,7 @@ class ConstraintExtractor:
 
         return self.algorithms
 
-    def _group_constraints_by_algorithm(self, constraints: List[KeyConstraint]) -> Dict[str, List[KeyConstraint]]:
+    def _group_constraints_by_algorithm(self, constraints: list[KeyConstraint]) -> dict[str, list[KeyConstraint]]:
         groups = {}
 
         for constraint in constraints:
@@ -105,19 +105,18 @@ class ConstraintExtractor:
 
         return groups
 
-    def _build_algorithm(self, algo_type: str, constraints: List[KeyConstraint]) -> Optional[ExtractedAlgorithm]:
+    def _build_algorithm(self, algo_type: str, constraints: list[KeyConstraint]) -> ExtractedAlgorithm | None:
         if algo_type == "crc":
             return self._build_crc_algorithm(constraints)
-        elif algo_type in {"md5", "sha1", "sha256"}:
+        if algo_type in {"md5", "sha1", "sha256"}:
             return self._build_hash_algorithm(algo_type, constraints)
-        elif algo_type == "multiplicative_hash":
+        if algo_type == "multiplicative_hash":
             return self._build_multiplicative_algorithm(constraints)
-        elif algo_type == "modular":
+        if algo_type == "modular":
             return self._build_modular_algorithm(constraints)
-        else:
-            return self._build_generic_algorithm(constraints)
+        return self._build_generic_algorithm(constraints)
 
-    def _build_crc_algorithm(self, constraints: List[KeyConstraint]) -> ExtractedAlgorithm:
+    def _build_crc_algorithm(self, constraints: list[KeyConstraint]) -> ExtractedAlgorithm:
         polynomial = 0xEDB88320
 
         for constraint in constraints:
@@ -139,7 +138,7 @@ class ConstraintExtractor:
             confidence=0.85,
         )
 
-    def _build_hash_algorithm(self, algo_type: str, constraints: List[KeyConstraint]) -> ExtractedAlgorithm:
+    def _build_hash_algorithm(self, algo_type: str, constraints: list[KeyConstraint]) -> ExtractedAlgorithm:
         hash_functions = {
             "md5": hashlib.md5,
             "sha1": hashlib.sha1,
@@ -160,7 +159,7 @@ class ConstraintExtractor:
             confidence=0.9,
         )
 
-    def _build_multiplicative_algorithm(self, constraints: List[KeyConstraint]) -> ExtractedAlgorithm:
+    def _build_multiplicative_algorithm(self, constraints: list[KeyConstraint]) -> ExtractedAlgorithm:
         def multiplicative_validate(key: str) -> int:
             result = 0
             multiplier = 31
@@ -177,7 +176,7 @@ class ConstraintExtractor:
             confidence=0.75,
         )
 
-    def _build_modular_algorithm(self, constraints: List[KeyConstraint]) -> ExtractedAlgorithm:
+    def _build_modular_algorithm(self, constraints: list[KeyConstraint]) -> ExtractedAlgorithm:
         modulus = 97
 
         def modular_validate(key: str) -> int:
@@ -193,7 +192,7 @@ class ConstraintExtractor:
             confidence=0.7,
         )
 
-    def _build_generic_algorithm(self, constraints: List[KeyConstraint]) -> ExtractedAlgorithm:
+    def _build_generic_algorithm(self, constraints: list[KeyConstraint]) -> ExtractedAlgorithm:
         return ExtractedAlgorithm(
             algorithm_name="Generic",
             parameters={},
@@ -203,7 +202,7 @@ class ConstraintExtractor:
             confidence=0.5,
         )
 
-    def _create_generic_algorithm(self, constraints: List[KeyConstraint]) -> ExtractedAlgorithm:
+    def _create_generic_algorithm(self, constraints: list[KeyConstraint]) -> ExtractedAlgorithm:
         return self._build_generic_algorithm(constraints)
 
 
@@ -219,18 +218,17 @@ class KeySynthesizer:
     def synthesize_key(
         self,
         algorithm: ExtractedAlgorithm,
-        target_data: Optional[Dict[str, Any]] = None,
+        target_data: dict[str, Any] | None = None,
     ) -> GeneratedSerial:
         """Synthesize a license key from the extracted algorithm."""
         if algorithm.validation_function:
             return self._synthesize_with_validation(algorithm, target_data)
-        else:
-            return self._synthesize_from_constraints(algorithm, target_data)
+        return self._synthesize_from_constraints(algorithm, target_data)
 
     def _synthesize_with_validation(
         self,
         algorithm: ExtractedAlgorithm,
-        target_data: Optional[Dict[str, Any]] = None,
+        target_data: dict[str, Any] | None = None,
     ) -> GeneratedSerial:
         constraints = self._build_serial_constraints(algorithm)
 
@@ -259,7 +257,7 @@ class KeySynthesizer:
     def _synthesize_from_constraints(
         self,
         algorithm: ExtractedAlgorithm,
-        target_data: Optional[Dict[str, Any]] = None,
+        target_data: dict[str, Any] | None = None,
     ) -> GeneratedSerial:
         constraints = self._build_serial_constraints(algorithm)
 
@@ -302,7 +300,7 @@ class KeySynthesizer:
         algorithm: ExtractedAlgorithm,
         count: int,
         unique: bool = True,
-    ) -> List[GeneratedSerial]:
+    ) -> list[GeneratedSerial]:
         """Synthesize a batch of license keys.
 
         Args:
@@ -337,8 +335,8 @@ class KeySynthesizer:
         self,
         algorithm: ExtractedAlgorithm,
         username: str,
-        email: Optional[str] = None,
-        hardware_id: Optional[str] = None,
+        email: str | None = None,
+        hardware_id: str | None = None,
     ) -> GeneratedSerial:
         """Synthesize a license key for a specific user.
 
@@ -363,7 +361,7 @@ class KeySynthesizer:
 
         return key
 
-    def synthesize_with_z3(self, constraints: List[KeyConstraint]) -> Optional[str]:
+    def synthesize_with_z3(self, constraints: list[KeyConstraint]) -> str | None:
         """Synthesize a key using Z3 constraint solver."""
         self.solver.reset()
 
@@ -412,7 +410,7 @@ class KeySynthesizer:
 class LicenseKeygen:
     """Main license key generation engine."""
 
-    def __init__(self, binary_path: Optional[Path] = None) -> None:
+    def __init__(self, binary_path: Path | None = None) -> None:
         """Initialize the license key generator.
 
         Args:
@@ -425,7 +423,7 @@ class LicenseKeygen:
         self.synthesizer = KeySynthesizer()
         self.generator = SerialNumberGenerator()
 
-    def crack_license_from_binary(self, count: int = 1) -> List[GeneratedSerial]:
+    def crack_license_from_binary(self, count: int = 1) -> list[GeneratedSerial]:
         """Crack license keys from binary analysis."""
         if not self.analyzer:
             raise ValueError("Binary path required for analysis")
@@ -481,7 +479,7 @@ class LicenseKeygen:
         self,
         product_id: str,
         count: int = 100,
-    ) -> List[GeneratedSerial]:
+    ) -> list[GeneratedSerial]:
         """Generate volume license keys."""
         from cryptography.hazmat.primitives.asymmetric import rsa
 
@@ -543,7 +541,7 @@ class LicenseKeygen:
     def generate_feature_key(
         self,
         base_product: str,
-        features: List[str],
+        features: list[str],
     ) -> GeneratedSerial:
         """Generate a feature-encoded license key."""
         base_serial = self.generate_key_from_algorithm("alphanumeric", length=16, groups=4).serial
@@ -556,10 +554,10 @@ class LicenseKeygen:
     def brute_force_key(
         self,
         partial_key: str,
-        missing_positions: List[int],
+        missing_positions: list[int],
         validation_func: Callable[[str], bool],
         charset: str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-    ) -> Optional[str]:
+    ) -> str | None:
         """Brute force a partial license key."""
         import itertools
 
@@ -582,9 +580,9 @@ class LicenseKeygen:
 
     def reverse_engineer_keygen(
         self,
-        valid_keys: List[str],
-        invalid_keys: Optional[List[str]] = None,
-    ) -> Dict[str, Any]:
+        valid_keys: list[str],
+        invalid_keys: list[str] | None = None,
+    ) -> dict[str, Any]:
         """Reverse engineer key generation algorithm."""
         return self.generator.reverse_engineer_algorithm(
             valid_keys,

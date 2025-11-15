@@ -25,7 +25,7 @@ import threading
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import psutil
 
@@ -43,14 +43,14 @@ class OperationMetrics:
 
     operation_name: str
     start_time: float
-    end_time: Optional[float] = None
-    duration_ms: Optional[float] = None
-    memory_before: Optional[int] = None
-    memory_after: Optional[int] = None
-    memory_delta: Optional[int] = None
-    cpu_percent: Optional[float] = None
+    end_time: float | None = None
+    duration_ms: float | None = None
+    memory_before: int | None = None
+    memory_after: int | None = None
+    memory_delta: int | None = None
+    cpu_percent: float | None = None
     success: bool = False
-    error_message: Optional[str] = None
+    error_message: str | None = None
     command_count: int = 0
     bytes_processed: int = 0
 
@@ -69,7 +69,7 @@ class SessionMetrics:
     peak_memory_mb: float = 0.0
     average_cpu_percent: float = 0.0
     total_bytes_processed: int = 0
-    operations: List[OperationMetrics] = field(default_factory=list)
+    operations: list[OperationMetrics] = field(default_factory=list)
     cache_hits: int = 0
     cache_misses: int = 0
     cache_hit_rate: float = 0.0
@@ -87,12 +87,12 @@ class R2PerformanceMonitor:
         """
         self.logger = logger
         self.enable_real_time = enable_real_time
-        self.current_session: Optional[SessionMetrics] = None
-        self.operation_stack: List[OperationMetrics] = []
+        self.current_session: SessionMetrics | None = None
+        self.operation_stack: list[OperationMetrics] = []
         self.metrics_lock = threading.Lock()
-        self.monitoring_thread: Optional[threading.Thread] = None
+        self.monitoring_thread: threading.Thread | None = None
         self.stop_monitoring = threading.Event()
-        self.process_monitor: Optional[psutil.Process] = None
+        self.process_monitor: psutil.Process | None = None
 
         # Performance thresholds
         self.thresholds = {
@@ -105,7 +105,7 @@ class R2PerformanceMonitor:
         }
 
         # Historical data
-        self.historical_sessions: List[SessionMetrics] = []
+        self.historical_sessions: list[SessionMetrics] = []
         self.max_history_size = 100
 
     def start_session(self, session_id: str) -> SessionMetrics:
@@ -130,7 +130,7 @@ class R2PerformanceMonitor:
             self.logger.info(f"Started metrics session: {session_id}")
             return self.current_session
 
-    def end_session(self) -> Optional[SessionMetrics]:
+    def end_session(self) -> SessionMetrics | None:
         """End the current metrics session.
 
         Returns:
@@ -192,7 +192,7 @@ class R2PerformanceMonitor:
         return metrics
 
     def end_operation(
-        self, operation_metrics: OperationMetrics, success: bool = True, error_message: Optional[str] = None, bytes_processed: int = 0,
+        self, operation_metrics: OperationMetrics, success: bool = True, error_message: str | None = None, bytes_processed: int = 0,
     ) -> OperationMetrics:
         """End tracking an operation.
 
@@ -264,7 +264,7 @@ class R2PerformanceMonitor:
             if self.current_session:
                 self.current_session.cache_misses += 1
 
-    def get_current_metrics(self) -> Dict[str, Any]:
+    def get_current_metrics(self) -> dict[str, Any]:
         """Get current session metrics.
 
         Returns:
@@ -290,7 +290,7 @@ class R2PerformanceMonitor:
                 "active_operations": len(self.operation_stack),
             }
 
-    def get_operation_statistics(self) -> Dict[str, Any]:
+    def get_operation_statistics(self) -> dict[str, Any]:
         """Get statistics about operations.
 
         Returns:
@@ -304,7 +304,7 @@ class R2PerformanceMonitor:
             operations = self.current_session.operations
 
             # Group by operation name
-            by_name: Dict[str, List[OperationMetrics]] = {}
+            by_name: dict[str, list[OperationMetrics]] = {}
             for op in operations:
                 if op.operation_name not in by_name:
                     by_name[op.operation_name] = []
@@ -325,7 +325,7 @@ class R2PerformanceMonitor:
 
             return stats
 
-    def get_performance_report(self) -> Dict[str, Any]:
+    def get_performance_report(self) -> dict[str, Any]:
         """Generate comprehensive performance report.
 
         Returns:

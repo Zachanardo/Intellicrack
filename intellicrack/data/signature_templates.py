@@ -14,14 +14,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-from typing import Dict, List
 
 
 class SignatureTemplates:
     """Collection of signature templates for the ICP editor."""
 
     @staticmethod
-    def get_all_categories() -> List[str]:
+    def get_all_categories() -> list[str]:
         """Get all available template categories."""
         return [
             "Basic Patterns",
@@ -36,10 +35,10 @@ class SignatureTemplates:
         ]
 
     @staticmethod
-    def get_templates_for_category(category: str) -> Dict[str, Dict[str, str]]:
+    def get_templates_for_category(category: str) -> dict[str, dict[str, str]]:
         """Get templates for a specific category."""
-        if category == "Basic Patterns":
-            return {
+        templates = {
+            "Basic Patterns": {
                 "Simple Hex Pattern": {
                     "description": "Basic hexadecimal pattern matching",
                     "template": '''// Name: Simple Pattern
@@ -99,10 +98,8 @@ ep:
     hex = "54 65 73 74";     // Pattern 3
 }''',
                 },
-            }
-
-        elif category == "PE Headers":
-            return {
+            },
+            "PE Headers": {
                 "DOS Header Check": {
                     "description": "Validate DOS MZ header",
                     "template": '''// Name: DOS Header Check
@@ -172,10 +169,8 @@ header:
     hex = "44 61 6E 53";  // "DanS" (stub signature)
 }''',
                 },
-            }
-
-        elif category == "Section Signatures":
-            return {
+            },
+            "Section Signatures": {
                 "Code Section": {
                     "description": "Standard code section patterns",
                     "template": '''// Name: Code Section
@@ -247,10 +242,8 @@ section:
     characteristics = "executable";
 }''',
                 },
-            }
-
-        elif category == "Import Signatures":
-            return {
+            },
+            "Import Signatures": {
                 "Crypto APIs": {
                     "description": "Cryptographic API usage",
                     "template": '''// Name: Crypto APIs
@@ -325,10 +318,8 @@ import:
     api = "OpenProcess";
 }''',
                 },
-            }
-
-        elif category == "String Signatures":
-            return {
+            },
+            "String Signatures": {
                 "ASCII Strings": {
                     "description": "ASCII string matching",
                     "template": '''// Name: ASCII Strings
@@ -391,10 +382,8 @@ string:
     regex = "\\d{4}-\\d{2}-\\d{2}";          // Date pattern
 }''',
                 },
-            }
-
-        elif category == "Packer Signatures":
-            return {
+            },
+            "Packer Signatures": {
                 "UPX Packer": {
                     "description": "UPX packer detection",
                     "template": '''// Name: UPX
@@ -475,10 +464,8 @@ section:
     name = "PEC2TO";
 }''',
                 },
-            }
-
-        elif category == "Protector Signatures":
-            return {
+            },
+            "Protector Signatures": {
                 "Themida": {
                     "description": "Themida/WinLicense protector",
                     "template": '''// Name: Themida
@@ -565,10 +552,8 @@ string:
     ascii = "Oreans";
 }''',
                 },
-            }
-
-        elif category == "Cryptor Signatures":
-            return {
+            },
+            "Cryptor Signatures": {
                 "Custom Cryptor": {
                     "description": "Generic cryptor template",
                     "template": '''// Name: Custom Cryptor
@@ -615,10 +600,8 @@ ep:
     hex = "32 ?? ?? 40 81 F? ?? ?? ?? ?? 75 ??";  // XOR with key
 }''',
                 },
-            }
-
-        elif category == "Complex Rules":
-            return {
+            },
+            "Complex Rules": {
                 "Conditional Logic": {
                     "description": "Complex conditional detection",
                     "template": '''// Name: Conditional Detection
@@ -700,12 +683,13 @@ rule:
     condition = stage1 and (stage2 or stage3);
 }''',
                 },
-            }
+            },
+        }
 
-        return {}
+        return templates.get(category, {})
 
     @staticmethod
-    def get_sample_signatures() -> Dict[str, str]:
+    def get_sample_signatures() -> dict[str, str]:
         """Get sample signature files for testing."""
         return {
             "upx_packer.sg": '''// Name: UPX

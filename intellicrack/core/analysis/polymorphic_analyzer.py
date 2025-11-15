@@ -13,7 +13,7 @@ import hashlib
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
 from intellicrack.utils.logger import get_logger
 
@@ -65,10 +65,10 @@ class InstructionNode:
     """Normalized instruction representation for semantic analysis."""
 
     semantic_class: str
-    operand_types: Tuple[str, ...]
-    data_dependencies: Set[str] = field(default_factory=set)
-    control_dependencies: Set[str] = field(default_factory=set)
-    side_effects: Set[str] = field(default_factory=set)
+    operand_types: tuple[str, ...]
+    data_dependencies: set[str] = field(default_factory=set)
+    control_dependencies: set[str] = field(default_factory=set)
+    side_effects: set[str] = field(default_factory=set)
     semantic_hash: str = ""
 
     def __post_init__(self):
@@ -89,11 +89,11 @@ class CodeBlock:
 
     start_address: int
     end_address: int
-    instructions: List[Any]
-    normalized_instructions: List[InstructionNode] = field(default_factory=list)
+    instructions: list[Any]
+    normalized_instructions: list[InstructionNode] = field(default_factory=list)
     semantic_signature: str = ""
-    mutations_detected: List[MutationType] = field(default_factory=list)
-    invariants: Dict[str, Any] = field(default_factory=dict)
+    mutations_detected: list[MutationType] = field(default_factory=list)
+    invariants: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -102,12 +102,12 @@ class BehaviorPattern:
 
     pattern_id: str
     semantic_signature: str
-    data_flow_graph: Dict[str, Set[str]]
-    control_flow_graph: Dict[int, Set[int]]
-    register_usage: Dict[str, str]
-    memory_accesses: List[Tuple[str, int, int]]
-    api_calls: List[str]
-    constants: Set[int]
+    data_flow_graph: dict[str, set[str]]
+    control_flow_graph: dict[int, set[int]]
+    register_usage: dict[str, str]
+    memory_accesses: list[tuple[str, int, int]]
+    api_calls: list[str]
+    constants: set[int]
     behavioral_hash: str
     confidence: float = 1.0
 
@@ -117,12 +117,12 @@ class PolymorphicAnalysis:
     """Complete analysis result for polymorphic code."""
 
     engine_type: PolymorphicEngine
-    mutation_types: List[MutationType]
-    behavior_patterns: List[BehaviorPattern]
-    invariant_features: Dict[str, Any]
-    decryption_routine: Optional[CodeBlock] = None
+    mutation_types: list[MutationType]
+    behavior_patterns: list[BehaviorPattern]
+    invariant_features: dict[str, Any]
+    decryption_routine: CodeBlock | None = None
     mutation_complexity: float = 0.0
-    evasion_techniques: List[str] = field(default_factory=list)
+    evasion_techniques: list[str] = field(default_factory=list)
 
 
 class PolymorphicAnalyzer:
@@ -181,7 +181,7 @@ class PolymorphicAnalyzer:
         frozenset(["mov reg1, reg2", "xchg reg1, reg2", "xchg reg1, reg2"]): "swap_registers",
     }
 
-    def __init__(self, binary_path: Optional[str] = None, arch: str = "x86", bits: int = 64) -> None:
+    def __init__(self, binary_path: str | None = None, arch: str = "x86", bits: int = 64) -> None:
         """Initialize the polymorphic analyzer.
 
         Args:
@@ -202,8 +202,8 @@ class PolymorphicAnalyzer:
             self.disassembler = None
             logger.warning("Capstone unavailable - disassembly disabled")
 
-        self.semantic_cache: Dict[str, InstructionNode] = {}
-        self.behavior_database: Dict[str, BehaviorPattern] = {}
+        self.semantic_cache: dict[str, InstructionNode] = {}
+        self.behavior_database: dict[str, BehaviorPattern] = {}
 
     def analyze_polymorphic_code(
         self, data: bytes, base_address: int = 0, max_instructions: int = 1000,
@@ -370,7 +370,7 @@ class PolymorphicAnalyzer:
 
         return PolymorphicEngine.UNKNOWN
 
-    def _detect_mutations(self, code_block: CodeBlock) -> List[MutationType]:
+    def _detect_mutations(self, code_block: CodeBlock) -> list[MutationType]:
         """Detect types of mutations present in code block."""
         mutations = []
 
@@ -423,7 +423,7 @@ class PolymorphicAnalyzer:
 
     def _detect_register_renaming(self, code_block: CodeBlock) -> bool:
         """Detect register renaming patterns."""
-        register_uses: Dict[str, int] = defaultdict(int)
+        register_uses: dict[str, int] = defaultdict(int)
 
         for insn in code_block.instructions:
             for operand in insn.operands:
@@ -599,7 +599,7 @@ class PolymorphicAnalyzer:
             side_effects=side_effects,
         )
 
-    def _extract_behavior_patterns(self, code_block: CodeBlock) -> List[BehaviorPattern]:
+    def _extract_behavior_patterns(self, code_block: CodeBlock) -> list[BehaviorPattern]:
         """Extract invariant behavior patterns from code block."""
         patterns = []
 
@@ -636,9 +636,9 @@ class PolymorphicAnalyzer:
         patterns.append(pattern)
         return patterns
 
-    def _analyze_data_flow(self, code_block: CodeBlock) -> Dict[str, Set[str]]:
+    def _analyze_data_flow(self, code_block: CodeBlock) -> dict[str, set[str]]:
         """Analyze data flow between instructions."""
-        data_flow: Dict[str, Set[str]] = defaultdict(set)
+        data_flow: dict[str, set[str]] = defaultdict(set)
 
         for node in code_block.normalized_instructions:
             if node.semantic_class == "data_transfer":
@@ -647,9 +647,9 @@ class PolymorphicAnalyzer:
 
         return dict(data_flow)
 
-    def _analyze_control_flow(self, code_block: CodeBlock) -> Dict[int, Set[int]]:
+    def _analyze_control_flow(self, code_block: CodeBlock) -> dict[int, set[int]]:
         """Analyze control flow graph."""
-        cfg: Dict[int, Set[int]] = defaultdict(set)
+        cfg: dict[int, set[int]] = defaultdict(set)
 
         for i, insn in enumerate(code_block.instructions):
             if insn.mnemonic in ["jmp", "je", "jne", "jl", "jg", "call"]:
@@ -664,9 +664,9 @@ class PolymorphicAnalyzer:
 
         return dict(cfg)
 
-    def _analyze_register_usage(self, code_block: CodeBlock) -> Dict[str, str]:
+    def _analyze_register_usage(self, code_block: CodeBlock) -> dict[str, str]:
         """Analyze register usage patterns."""
-        register_usage: Dict[str, str] = {}
+        register_usage: dict[str, str] = {}
 
         for insn in code_block.instructions:
             for operand in insn.operands:
@@ -677,7 +677,7 @@ class PolymorphicAnalyzer:
 
         return register_usage
 
-    def _analyze_memory_accesses(self, code_block: CodeBlock) -> List[Tuple[str, int, int]]:
+    def _analyze_memory_accesses(self, code_block: CodeBlock) -> list[tuple[str, int, int]]:
         """Analyze memory access patterns."""
         accesses = []
 
@@ -690,7 +690,7 @@ class PolymorphicAnalyzer:
 
         return accesses
 
-    def _extract_api_calls(self, code_block: CodeBlock) -> List[str]:
+    def _extract_api_calls(self, code_block: CodeBlock) -> list[str]:
         """Extract API call patterns."""
         api_calls = []
 
@@ -705,7 +705,7 @@ class PolymorphicAnalyzer:
 
         return api_calls
 
-    def _extract_constants(self, code_block: CodeBlock) -> Set[int]:
+    def _extract_constants(self, code_block: CodeBlock) -> set[int]:
         """Extract constant values used in code."""
         constants = set()
 
@@ -718,7 +718,7 @@ class PolymorphicAnalyzer:
 
         return constants
 
-    def _extract_invariants(self, code_block: CodeBlock) -> Dict[str, Any]:
+    def _extract_invariants(self, code_block: CodeBlock) -> dict[str, Any]:
         """Extract code features that remain constant across mutations."""
         invariants = {}
 
@@ -745,7 +745,7 @@ class PolymorphicAnalyzer:
 
         return invariants
 
-    def _identify_decryption_routine(self, code_block: CodeBlock) -> Optional[CodeBlock]:
+    def _identify_decryption_routine(self, code_block: CodeBlock) -> CodeBlock | None:
         """Identify decryption/decoding routines in polymorphic code."""
         xor_instructions = []
         loop_instructions = []
@@ -772,7 +772,7 @@ class PolymorphicAnalyzer:
         return None
 
     def _calculate_mutation_complexity(
-        self, code_block: CodeBlock, mutations: List[MutationType],
+        self, code_block: CodeBlock, mutations: list[MutationType],
     ) -> float:
         """Calculate mutation complexity score."""
         if not code_block.instructions or not mutations:
@@ -791,7 +791,7 @@ class PolymorphicAnalyzer:
 
         return min(1.0, complexity)
 
-    def _detect_evasion_techniques(self, code_block: CodeBlock) -> List[str]:
+    def _detect_evasion_techniques(self, code_block: CodeBlock) -> list[str]:
         """Detect anti-analysis evasion techniques."""
         techniques = []
 
@@ -817,11 +817,11 @@ class PolymorphicAnalyzer:
 
         return techniques
 
-    def _analyze_data_dependencies(self, code_block: CodeBlock) -> Dict[int, Set[int]]:
+    def _analyze_data_dependencies(self, code_block: CodeBlock) -> dict[int, set[int]]:
         """Analyze data dependencies between instructions."""
-        dependencies: Dict[int, Set[int]] = defaultdict(set)
+        dependencies: dict[int, set[int]] = defaultdict(set)
 
-        register_definitions: Dict[str, int] = {}
+        register_definitions: dict[str, int] = {}
 
         for insn in code_block.instructions:
             for operand in insn.operands:
@@ -844,9 +844,9 @@ class PolymorphicAnalyzer:
 
         if op1.type == X86_OP_REG:
             return op1.reg == op2.reg
-        elif op1.type == X86_OP_IMM:
+        if op1.type == X86_OP_IMM:
             return op1.imm == op2.imm
-        elif op1.type == X86_OP_MEM:
+        if op1.type == X86_OP_MEM:
             return (
                 op1.mem.base == op2.mem.base
                 and op1.mem.index == op2.mem.index
@@ -861,7 +861,7 @@ class PolymorphicAnalyzer:
 
     def compare_code_variants(
         self, variant1: bytes, variant2: bytes, base_address: int = 0,
-    ) -> Tuple[float, Dict[str, Any]]:
+    ) -> tuple[float, dict[str, Any]]:
         """Compare two code variants and determine semantic similarity.
 
         Args:

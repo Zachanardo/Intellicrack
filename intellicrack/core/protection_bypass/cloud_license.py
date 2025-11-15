@@ -37,7 +37,7 @@ import time
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 try:
     import jwt
@@ -126,7 +126,9 @@ class TLSInterceptor:
 
         """
         if not CRYPTOGRAPHY_AVAILABLE:
-            raise ImportError("cryptography library is required for TLS interception. Install with: pip install cryptography")
+            error_msg = "cryptography library is required for TLS interception. Install with: pip install cryptography"
+            logger.error(error_msg)
+            raise ImportError(error_msg)
 
         self.target_host = target_host
         self.target_port = target_port
@@ -206,7 +208,7 @@ class TLSInterceptor:
                     encryption_algorithm=serialization.NoEncryption(),
                 ))
 
-    def generate_certificate(self, hostname: str) -> Tuple[x509.Certificate, rsa.RSAPrivateKey]:
+    def generate_certificate(self, hostname: str) -> tuple[x509.Certificate, rsa.RSAPrivateKey]:
         """Generate a signed TLS certificate for intercepting the target hostname.
 
         Args:
@@ -347,7 +349,7 @@ class ProtocolStateMachine:
             "expires_at": time.time() + 3600,
         }
 
-    def get_token(self, token_type: str) -> Optional[str]:
+    def get_token(self, token_type: str) -> str | None:
         """Retrieve a stored token if not expired.
 
         Args:
@@ -372,7 +374,7 @@ class ProtocolStateMachine:
         """
         self.session_data[key] = value
 
-    def get_session_data(self, key: str) -> Optional[Any]:
+    def get_session_data(self, key: str) -> Any | None:
         """Retrieve stored session data.
 
         Args:
@@ -463,7 +465,7 @@ class ResponseSynthesizer:
             )
         return self.rsa_keys[key_id]
 
-    def generate_jwt(self, payload: Dict[str, Any], algorithm: str = "RS256", key_id: str = "default") -> str:
+    def generate_jwt(self, payload: dict[str, Any], algorithm: str = "RS256", key_id: str = "default") -> str:
         """Generate a signed JWT token for authentication/authorization.
 
         Args:
@@ -479,7 +481,9 @@ class ResponseSynthesizer:
 
         """
         if not JWT_AVAILABLE:
-            raise ImportError("PyJWT library is required for JWT generation. Install with: pip install PyJWT")
+            error_msg = "PyJWT library is required for JWT generation. Install with: pip install PyJWT"
+            logger.error(error_msg)
+            raise ImportError(error_msg)
 
         if "iat" not in payload:
             payload["iat"] = int(time.time())
@@ -495,7 +499,7 @@ class ResponseSynthesizer:
 
         return jwt.encode(payload, key, algorithm=algorithm)
 
-    def synthesize_oauth_response(self, provider: str, config: Dict[str, Any]) -> Dict[str, Any]:
+    def synthesize_oauth_response(self, provider: str, config: dict[str, Any]) -> dict[str, Any]:
         """Synthesize OAuth 2.0 response for various cloud identity providers.
 
         Args:
@@ -508,14 +512,13 @@ class ResponseSynthesizer:
         """
         if provider == "azure":
             return self._synthesize_azure_ad(config)
-        elif provider == "google":
+        if provider == "google":
             return self._synthesize_google_oauth(config)
-        elif provider == "cognito":
+        if provider == "cognito":
             return self._synthesize_aws_cognito(config)
-        else:
-            return self._synthesize_generic_oauth(config)
+        return self._synthesize_generic_oauth(config)
 
-    def _synthesize_azure_ad(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    def _synthesize_azure_ad(self, config: dict[str, Any]) -> dict[str, Any]:
         """Synthesize Azure AD OAuth 2.0 token response with proper JWT claims.
 
         Args:
@@ -554,7 +557,7 @@ class ResponseSynthesizer:
             "refresh_token": base64.b64encode(os.urandom(128)).decode(),
         }
 
-    def _synthesize_google_oauth(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    def _synthesize_google_oauth(self, config: dict[str, Any]) -> dict[str, Any]:
         """Synthesize Google OAuth 2.0 token response with id_token.
 
         Args:
@@ -588,7 +591,7 @@ class ResponseSynthesizer:
             "refresh_token": f"1//{base64.b64encode(os.urandom(32)).decode().rstrip('=')}",
         }
 
-    def _synthesize_aws_cognito(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    def _synthesize_aws_cognito(self, config: dict[str, Any]) -> dict[str, Any]:
         """Synthesize AWS Cognito token response with IdToken and AccessToken.
 
         Args:
@@ -634,7 +637,7 @@ class ResponseSynthesizer:
             "TokenType": "Bearer",
         }
 
-    def _synthesize_generic_oauth(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    def _synthesize_generic_oauth(self, config: dict[str, Any]) -> dict[str, Any]:
         """Synthesize generic OAuth 2.0 token response.
 
         Args:
@@ -660,7 +663,7 @@ class ResponseSynthesizer:
             "refresh_token": base64.b64encode(os.urandom(32)).decode(),
         }
 
-    def synthesize_rest_response(self, endpoint: str, method: str, request_data: Dict) -> Dict[str, Any]:
+    def synthesize_rest_response(self, endpoint: str, method: str, request_data: dict) -> dict[str, Any]:
         """Synthesize REST API license validation response.
 
         Args:
@@ -756,7 +759,7 @@ class ResponseSynthesizer:
 
         return self._encode_protobuf(response_data)
 
-    def _encode_protobuf(self, data: Dict) -> bytes:
+    def _encode_protobuf(self, data: dict) -> bytes:
         """Encode dictionary to protobuf binary format.
 
         Args:
@@ -884,7 +887,7 @@ class ResponseSynthesizer:
 class MITMProxyAddon:
     """mitmproxy addon for intercepting and modifying license server traffic."""
 
-    def __init__(self, intercept_rules: Dict[str, Any], state_machine: ProtocolStateMachine, synthesizer: ResponseSynthesizer) -> None:
+    def __init__(self, intercept_rules: dict[str, Any], state_machine: ProtocolStateMachine, synthesizer: ResponseSynthesizer) -> None:
         """Initialize MITM proxy addon with interception rules.
 
         Args:
@@ -945,7 +948,7 @@ class MITMProxyAddon:
         if should_modify:
             self._synthesize_response(flow)
 
-    def _check_block_rules(self, url: str, method: str, headers: Dict) -> bool:
+    def _check_block_rules(self, url: str, method: str, headers: dict) -> bool:
         """Check if request should be blocked.
 
         Args:
@@ -1037,7 +1040,7 @@ class MITMProxyAddon:
             )
             self.state_machine.transition(LicenseState.ACTIVE)
 
-    def _get_request_json(self, flow: http.HTTPFlow) -> Dict:
+    def _get_request_json(self, flow: http.HTTPFlow) -> dict:
         try:
             return json.loads(flow.request.text)
         except Exception:
@@ -1058,7 +1061,7 @@ class CloudLicenseProtocolHandler:
         self.intercept_rules = {}
 
     def start_interception(self, target_host: str, target_port: int = 443,
-                          listen_port: int = 8080, protocol_type: ProtocolType = ProtocolType.HTTP_REST) -> Dict[str, Any]:
+                          listen_port: int = 8080, protocol_type: ProtocolType = ProtocolType.HTTP_REST) -> dict[str, Any]:
         """Start MITM proxy for intercepting license traffic.
 
         Args:
@@ -1138,7 +1141,7 @@ class CloudLicenseProtocolHandler:
             logger.error(f"MITM proxy error: {e}")
             self.running = False
 
-    def stop_interception(self) -> Dict[str, Any]:
+    def stop_interception(self) -> dict[str, Any]:
         """Stop active MITM proxy interception.
 
         Returns:
@@ -1152,7 +1155,7 @@ class CloudLicenseProtocolHandler:
 
         return {"success": True, "status": "stopped"}
 
-    def handle_flexnet_cloud(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    def handle_flexnet_cloud(self, config: dict[str, Any]) -> dict[str, Any]:
         """Handle FlexNet Cloud license protocol.
 
         Args:
@@ -1185,7 +1188,7 @@ class CloudLicenseProtocolHandler:
 
         return license_response
 
-    def handle_sentinel_cloud(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    def handle_sentinel_cloud(self, config: dict[str, Any]) -> dict[str, Any]:
         """Handle Sentinel Cloud license protocol.
 
         Args:
@@ -1235,16 +1238,15 @@ class CloudLicenseProtocolHandler:
         """
         if protocol == ProtocolType.HTTP_REST:
             return self.synthesizer.synthesize_rest_response(endpoint, "POST", request_data)
-        elif protocol == ProtocolType.SOAP:
+        if protocol == ProtocolType.SOAP:
             return self.synthesizer.synthesize_soap_response(endpoint, str(request_data))
-        elif protocol == ProtocolType.GRPC:
+        if protocol == ProtocolType.GRPC:
             return self.synthesizer.synthesize_grpc_response(endpoint, request_data)
-        elif protocol == ProtocolType.WEBSOCKET:
+        if protocol == ProtocolType.WEBSOCKET:
             return self.synthesizer.synthesize_websocket_frame("license_valid")
-        else:
-            return {"success": True, "status": "active"}
+        return {"success": True, "status": "active"}
 
-    def get_interception_stats(self) -> Dict[str, Any]:
+    def get_interception_stats(self) -> dict[str, Any]:
         """Get cloud interception statistics.
 
         Returns:
@@ -1277,7 +1279,7 @@ class CloudLicenseBypass:
         self.synthesizer = ResponseSynthesizer()
         self.active_bypasses = {}
 
-    def bypass_azure_ad(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    def bypass_azure_ad(self, config: dict[str, Any]) -> dict[str, Any]:
         """Bypass Azure AD authentication for license validation.
 
         Args:
@@ -1291,7 +1293,7 @@ class CloudLicenseBypass:
         response["success"] = True
         return response
 
-    def bypass_google_oauth(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    def bypass_google_oauth(self, config: dict[str, Any]) -> dict[str, Any]:
         """Bypass Google OAuth for license validation.
 
         Args:
@@ -1305,7 +1307,7 @@ class CloudLicenseBypass:
         response["success"] = True
         return response
 
-    def bypass_aws_cognito(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    def bypass_aws_cognito(self, config: dict[str, Any]) -> dict[str, Any]:
         """Bypass AWS Cognito for license validation.
 
         Args:
@@ -1319,7 +1321,7 @@ class CloudLicenseBypass:
         response["success"] = True
         return response
 
-    def bypass_flexnet_cloud(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    def bypass_flexnet_cloud(self, config: dict[str, Any]) -> dict[str, Any]:
         """Bypass FlexNet Cloud licensing.
 
         Args:
@@ -1331,7 +1333,7 @@ class CloudLicenseBypass:
         """
         return self.protocol_handler.handle_flexnet_cloud(config)
 
-    def bypass_sentinel_cloud(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    def bypass_sentinel_cloud(self, config: dict[str, Any]) -> dict[str, Any]:
         """Bypass Sentinel Cloud licensing.
 
         Args:
@@ -1343,7 +1345,7 @@ class CloudLicenseBypass:
         """
         return self.protocol_handler.handle_sentinel_cloud(config)
 
-    def bypass_adobe_creative_cloud(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    def bypass_adobe_creative_cloud(self, config: dict[str, Any]) -> dict[str, Any]:
         """Bypass Adobe Creative Cloud licensing.
 
         Args:
@@ -1384,7 +1386,7 @@ class CloudLicenseBypass:
             "entitlements": entitlements,
         }
 
-    def bypass_microsoft_365(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    def bypass_microsoft_365(self, config: dict[str, Any]) -> dict[str, Any]:
         """Bypass Microsoft 365 licensing.
 
         Args:
@@ -1416,7 +1418,7 @@ class CloudLicenseBypass:
         }
 
     def start_cloud_interception(self, target_host: str, protocol: ProtocolType = ProtocolType.HTTP_REST,
-                                 listen_port: int = 8080) -> Dict[str, Any]:
+                                 listen_port: int = 8080) -> dict[str, Any]:
         """Start intercepting cloud license traffic.
 
         Args:
@@ -1439,7 +1441,7 @@ class CloudLicenseBypass:
 
         return result
 
-    def stop_cloud_interception(self) -> Dict[str, Any]:
+    def stop_cloud_interception(self) -> dict[str, Any]:
         """Stop cloud license interception.
 
         Returns:
@@ -1448,7 +1450,7 @@ class CloudLicenseBypass:
         """
         return self.protocol_handler.stop_interception()
 
-    def get_interception_stats(self) -> Dict[str, Any]:
+    def get_interception_stats(self) -> dict[str, Any]:
         """Get cloud interception statistics.
 
         Returns:

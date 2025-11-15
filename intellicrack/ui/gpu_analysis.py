@@ -19,7 +19,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
     QDialog,
@@ -142,7 +142,7 @@ class GpuAnalysis:
         finally:
             self._hide_progress_dialog()
 
-    def _get_binary_data(self, app) -> Optional[bytes]:
+    def _get_binary_data(self, app) -> bytes | None:
         """Extract binary data from application state."""
         try:
             # Check various possible locations for binary data
@@ -231,7 +231,7 @@ class GpuAnalysis:
         except Exception as e:
             self.logger.error(f"Failed to hide progress dialog: {e}")
 
-    def _process_analysis_results(self, app, results: Dict[str, Any]) -> None:
+    def _process_analysis_results(self, app, results: dict[str, Any]) -> None:
         """Process and display GPU analysis results."""
         try:
             if not results:
@@ -286,7 +286,7 @@ class GpuAnalysis:
             if hasattr(app, "update_output"):
                 app.update_output.emit(f"[ERROR] Failed to process GPU analysis results: {e}")
 
-    def get_gpu_status(self) -> Dict[str, Any]:
+    def get_gpu_status(self) -> dict[str, Any]:
         """Get current GPU status and capabilities.
 
         Returns:

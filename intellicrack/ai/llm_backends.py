@@ -29,7 +29,6 @@ from enum import Enum
 from typing import Any
 
 from ..core.exceptions import ConfigurationError
-from ..utils.secrets_manager import get_secret
 from .background_loader import LoadingTask, QueuedProgressCallback, get_background_loader
 from .llm_types import LoadingState, ProgressCallback
 
@@ -213,6 +212,8 @@ class OpenAIBackend(LLMBackend):
         try:
             import openai
 
+            from ..utils.secrets_manager import get_secret
+
             if not self.config.api_key:
                 # Try secrets manager (checks env vars, keychain, encrypted storage)
                 api_key = get_secret("OPENAI_API_KEY")
@@ -307,6 +308,8 @@ class AnthropicBackend(LLMBackend):
         """Initialize Anthropic client."""
         try:
             import anthropic
+
+            from ..utils.secrets_manager import get_secret
 
             if not self.config.api_key:
                 # Try secrets manager (checks env vars, keychain, encrypted storage)
@@ -526,6 +529,8 @@ class OllamaBackend(LLMBackend):
         # Get URL from configuration first, then secrets, then service config
         from intellicrack.utils.service_utils import get_service_url
 
+        from ..utils.secrets_manager import get_secret
+
         try:
             self.base_url = config.api_base or get_secret("OLLAMA_API_BASE") or get_service_url("ollama_api")
         except Exception as e:
@@ -550,9 +555,8 @@ class OllamaBackend(LLMBackend):
                     self.is_initialized = True
                     logger.info("Ollama backend initialized with model: %s", self.config.model_name)
                     return True
-                else:
-                    logger.warning("Ollama server responded with status %d at %s", response.status_code, self.base_url)
-                    return False
+                logger.warning("Ollama server responded with status %d at %s", response.status_code, self.base_url)
+                return False
             except requests.exceptions.ConnectionError:
                 logger.warning("Ollama server not running at %s - skipping initialization", self.base_url)
                 return False
@@ -2710,6 +2714,8 @@ def _configure_default_llms(manager: LLMManager) -> None:
         manager: The LLM manager instance to configure
 
     """
+    from ..utils.secrets_manager import get_secret
+
     logger.info("Auto-configuring default LLMs for security research environment")
 
     # Configuration priority: Local models > API-based models with fallbacks

@@ -18,13 +18,16 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import hashlib
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
+
+from ..utils.logger import get_logger, log_all_methods
 
 try:
     from intellicrack.handlers.pefile_handler import pefile
 
     HAS_PEFILE = True
 except ImportError:
+    get_logger(__name__).warning("pefile not found, PE analysis will be disabled.")
     HAS_PEFILE = False
 
 try:
@@ -32,6 +35,7 @@ try:
 
     HAS_ELFTOOLS = HAS_PYELFTOOLS
 except ImportError:
+    get_logger(__name__).warning("pyelftools not found, ELF analysis will be disabled.")
     HAS_ELFTOOLS = False
     HAS_PYELFTOOLS = False
     ELFFile = None
@@ -39,10 +43,9 @@ except ImportError:
 try:
     from intellicrack.handlers.lief_handler import HAS_LIEF, lief
 except ImportError:
+    get_logger(__name__).warning("lief not found, some analysis features will be disabled.")
     HAS_LIEF = False
     lief = None
-
-from ..utils.logger import get_logger, log_all_methods
 
 
 @log_all_methods
@@ -56,7 +59,7 @@ class ProtectionAnalyzer:
         self.entropy_threshold_high = 7.5
         self.entropy_threshold_low = 1.0
 
-    def _load_protection_signatures(self) -> Dict[str, Dict[str, Any]]:
+    def _load_protection_signatures(self) -> dict[str, dict[str, Any]]:
         """Load known protection system signatures."""
         signatures = {
             "upx": {
@@ -119,29 +122,60 @@ class ProtectionAnalyzer:
         }
         return signatures
 
-    def analyze(self, file_path: Union[str, Path]) -> Dict[str, Any]:
+    def analyze(self, file_path: str | Path) -> dict[str, Any]:
         """Perform comprehensive protection analysis on a binary file."""
+        self.logger.info(f"Starting protection analysis for {file_path}")
         try:
             file_path = Path(file_path)
             if not file_path.exists():
                 self.logger.error(f"File not found: {file_path}")
                 return {"error": f"File not found: {file_path}"}
 
+            self.logger.debug(f"Reading file: {file_path}")
             try:
                 with open(file_path, "rb") as f:
                     file_data = f.read()
             except OSError as e:
                 self.logger.exception(f"Failed to read file {file_path}: {e}")
                 return {"error": f"Failed to read file: {e}"}
+            self.logger.debug(f"File size: {len(file_data)} bytes")
 
+            self.logger.info("Step 1: Getting file info.")
             file_info = self._get_file_info(file_path, file_data)
+            self.logger.info("Step 1: Completed.")
+
+            self.logger.info("Step 2: Detecting protections.")
             detected_protections = self._detect_protections(file_data)
+            self.logger.info(f"Found {len(detected_protections)} protection(s).")
+            self.logger.info("Step 2: Completed.")
+
+            self.logger.info("Step 3: Analyzing entropy.")
             entropy_analysis = self._analyze_entropy(file_data)
+            self.logger.info("Step 3: Completed.")
+
+            self.logger.info("Step 4: Analyzing sections.")
             section_analysis = self._analyze_sections(file_path, file_data)
+            self.logger.info("Step 4: Completed.")
+
+            self.logger.info("Step 5: Analyzing imports.")
             import_analysis = self._analyze_imports(file_path, file_data)
+            self.logger.info("Step 5: Completed.")
+
+            self.logger.info("Step 6: Detecting anti-analysis techniques.")
             anti_analysis = self._detect_anti_analysis(file_data)
-            recommendations = self._generate_recommendations(detected_protections, entropy_analysis, section_analysis, anti_analysis)
+            self.logger.info("Step 6: Completed.")
+
+            self.logger.info("Step 7: Generating recommendations.")
+            recommendations = self._generate_recommendations(
+                detected_protections, entropy_analysis, section_analysis, anti_analysis,
+            )
+            self.logger.info(f"Generated {len(recommendations)} recommendation(s).")
+            self.logger.info("Step 7: Completed.")
+
+            self.logger.info("Step 8: Calculating risk score.")
             risk_score = self._calculate_risk_score(detected_protections, entropy_analysis, anti_analysis)
+            self.logger.info(f"Calculated risk score: {risk_score}")
+            self.logger.info("Step 8: Completed.")
 
             self.logger.info(f"Protection analysis for {file_path} completed successfully.")
             return {
@@ -160,13 +194,8 @@ class ProtectionAnalyzer:
             self.logger.exception(f"An unexpected error occurred during protection analysis for {file_path}: {e}")
             return {"error": str(e)}
 
-    # ... (the rest of the file with more specific logging)
-    # ... I will add more logging to other methods as well.
-    # ... For brevity, I will only show the changes to __init__ and analyze.
-    # ... The other methods would be updated similarly.
-    def _get_file_info(self, file_path: Path, file_data: bytes) -> Dict[str, Any]:
+    def _get_file_info(self, file_path: Path, file_data: bytes) -> dict[str, Any]:
         """Get basic file information."""
-        # ...
         return {
             "filename": file_path.name,
             "filepath": str(file_path),
@@ -177,8 +206,197 @@ class ProtectionAnalyzer:
             "file_type": self._detect_file_type(file_data),
         }
 
-    def _detect_protections(self, file_data: bytes) -> List[Dict[str, Any]]:
+    def _detect_file_type(self, file_data: bytes) -> str:
+        """Detect binary file type from magic bytes."""
+        if len(file_data) < 4:
+            return "Unknown"
+
+        if file_data[:2] == b"MZ":
+            return "PE"
+        if file_data[:4] == b"\x7fELF":
+            return "ELF"
+        if file_data[:4] in (b"\xfe\xed\xfa\xce", b"\xfe\xed\xfa\xcf", b"\xce\xfa\xed\xfe", b"\xcf\xfa\xed\xfe"):
+            return "Mach-O"
+
+        return "Unknown"
+
+    def _detect_protections(self, file_data: bytes) -> list[dict[str, Any]]:
         """Detect protection systems using signatures and heuristics."""
         detections = []
-        # ... (rest of the method is unchanged)
+
+        for _prot_key, prot_info in self.protection_signatures.items():
+            for sig in prot_info["signatures"]:
+                if sig in file_data:
+                    detections.append({
+                        "name": prot_info["name"],
+                        "type": prot_info["type"],
+                        "severity": prot_info["severity"],
+                        "signatures_matched": [sig.hex() if isinstance(sig, bytes) else sig],
+                    })
+                    break
+
         return detections
+
+    def _analyze_entropy(self, file_data: bytes) -> dict[str, Any]:
+        """Calculate Shannon entropy of file data."""
+        if not file_data:
+            return {
+                "overall_entropy": 0.0,
+                "high_entropy_sections": [],
+                "low_entropy_sections": [],
+            }
+
+        import math
+        from collections import Counter
+
+        byte_counts = Counter(file_data)
+        entropy = 0.0
+        data_len = len(file_data)
+
+        for count in byte_counts.values():
+            if count == 0:
+                continue
+            probability = count / data_len
+            entropy -= probability * math.log2(probability)
+
+        return {
+            "overall_entropy": entropy,
+            "high_entropy_sections": [i for i, _ in enumerate(file_data[::1024]) if _ > 200],
+            "low_entropy_sections": [i for i, _ in enumerate(file_data[::1024]) if _ < 10],
+        }
+
+    def _analyze_sections(self, file_path: Path, file_data: bytes) -> dict[str, Any]:
+        """Analyze binary sections for suspicious characteristics."""
+        sections = []
+
+        if HAS_PEFILE and file_data[:2] == b"MZ":
+            try:
+                pe = pefile.PE(data=file_data)
+                for section in pe.sections:
+                    sections.append({
+                        "name": section.Name.decode().rstrip("\x00"),
+                        "virtual_address": section.VirtualAddress,
+                        "virtual_size": section.Misc_VirtualSize,
+                        "raw_size": section.SizeOfRawData,
+                        "entropy": section.get_entropy(),
+                        "characteristics": section.Characteristics,
+                    })
+            except Exception as e:
+                self.logger.warning(f"Failed to parse PE sections: {e}")
+
+        return {
+            "sections": sections,
+            "suspicious_sections": [s for s in sections if s.get("entropy", 0) > 7.0],
+        }
+
+    def _analyze_imports(self, file_path: Path, file_data: bytes) -> dict[str, Any]:
+        """Analyze import table for suspicious API calls."""
+        imports = []
+        suspicious_imports = []
+
+        suspicious_apis = [
+            "VirtualAlloc", "VirtualProtect", "CreateRemoteThread",
+            "WriteProcessMemory", "IsDebuggerPresent", "CheckRemoteDebuggerPresent",
+            "NtQueryInformationProcess", "ZwQueryInformationProcess",
+        ]
+
+        if HAS_PEFILE and file_data[:2] == b"MZ":
+            try:
+                pe = pefile.PE(data=file_data)
+                if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
+                    for entry in pe.DIRECTORY_ENTRY_IMPORT:
+                        dll_name = entry.dll.decode() if isinstance(entry.dll, bytes) else entry.dll
+                        for imp in entry.imports:
+                            if imp.name:
+                                func_name = imp.name.decode() if isinstance(imp.name, bytes) else imp.name
+                                imports.append(f"{dll_name}!{func_name}")
+                                if any(api in func_name for api in suspicious_apis):
+                                    suspicious_imports.append(f"{dll_name}!{func_name}")
+            except Exception as e:
+                self.logger.warning(f"Failed to parse PE imports: {e}")
+
+        return {
+            "imports": imports[:100],
+            "suspicious_imports": suspicious_imports,
+            "import_count": len(imports),
+        }
+
+    def _detect_anti_analysis(self, file_data: bytes) -> dict[str, Any]:
+        """Detect anti-analysis and anti-debugging techniques."""
+        techniques = []
+
+        anti_debug_signatures = {
+            "IsDebuggerPresent": b"IsDebuggerPresent",
+            "CheckRemoteDebuggerPresent": b"CheckRemoteDebuggerPresent",
+            "NtQueryInformationProcess": b"NtQueryInformationProcess",
+            "OutputDebugString": b"OutputDebugStringA",
+            "RDTSC timing": b"\x0f\x31",
+        }
+
+        for technique, signature in anti_debug_signatures.items():
+            if signature in file_data:
+                techniques.append(technique)
+
+        return {
+            "anti_debug_detected": len(techniques) > 0,
+            "techniques": techniques,
+            "risk_level": "high" if len(techniques) >= 3 else "medium" if techniques else "low",
+        }
+
+    def _generate_recommendations(
+        self,
+        detected_protections: list[dict[str, Any]],
+        entropy_analysis: dict[str, Any],
+        section_analysis: dict[str, Any],
+        anti_analysis: dict[str, Any],
+    ) -> list[str]:
+        """Generate analysis recommendations based on findings."""
+        recommendations = []
+
+        if detected_protections:
+            prot_names = [p["name"] for p in detected_protections]
+            recommendations.append(f"Binary is protected with: {', '.join(prot_names)}")
+            recommendations.append("Consider using specialized unpacking tools for detected protections")
+
+        if entropy_analysis.get("overall_entropy", 0) > self.entropy_threshold_high:
+            recommendations.append("High entropy detected - binary likely encrypted or compressed")
+            recommendations.append("Attempt unpacking before static analysis")
+
+        if section_analysis.get("suspicious_sections"):
+            recommendations.append("Suspicious high-entropy sections detected")
+
+        if anti_analysis.get("anti_debug_detected"):
+            recommendations.append("Anti-debugging techniques detected - use stealth debugging")
+
+        if not recommendations:
+            recommendations.append("No significant protections detected - proceed with standard analysis")
+
+        return recommendations
+
+    def _calculate_risk_score(
+        self,
+        detected_protections: list[dict[str, Any]],
+        entropy_analysis: dict[str, Any],
+        anti_analysis: dict[str, Any],
+    ) -> int:
+        """Calculate overall risk score (0-100)."""
+        risk_score = 0
+
+        risk_score += len(detected_protections) * 15
+        risk_score += min(len([p for p in detected_protections if p.get("severity") == "high"]) * 10, 30)
+
+        entropy = entropy_analysis.get("overall_entropy", 0)
+        if entropy > self.entropy_threshold_high:
+            risk_score += 20
+        elif entropy > 6.5:
+            risk_score += 10
+
+        if anti_analysis.get("anti_debug_detected"):
+            risk_score += len(anti_analysis.get("techniques", [])) * 5
+
+        return min(risk_score, 100)
+
+    def _get_protection_timestamp(self) -> str:
+        """Get current timestamp for analysis."""
+        from datetime import datetime
+        return datetime.utcnow().isoformat() + "Z"

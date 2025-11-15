@@ -485,14 +485,12 @@ class ThemidaHandler:
         """Decrypt Themida VM code."""
         # Themida uses a rolling XOR with key rotation
         result = bytearray()
-        key_pos = 0
 
         for i, byte in enumerate(vm_data):
             # Rotate key based on position
             rotated_key = self._rotate_key(key, i)
-            decrypted_byte = byte ^ rotated_key[key_pos % len(rotated_key)]
+            decrypted_byte = byte ^ rotated_key[i % len(rotated_key)]
             result.append(decrypted_byte)
-            key_pos += 1
 
         return bytes(result)
 
@@ -1478,7 +1476,7 @@ class VMProtectionUnwrapper:
             # Optimized stack-based arithmetic
             if "ADD" in mnemonic:
                 return "add dword [esp], eax"
-            elif "SUB" in mnemonic:
+            if "SUB" in mnemonic:
                 return "sub dword [esp], eax"
 
         # Register allocation for VM registers

@@ -21,6 +21,8 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+from typing import Any
+
 try:
     from PyQt6.QtCore import QObject, QRunnable, QThreadPool, QTimer, pyqtSignal
     from PyQt6.QtGui import QFont, QTextDocument
@@ -41,14 +43,12 @@ except ImportError:
     class QObject:
         """Fallback QObject class when PyQt6 is not available."""
 
-        pass
 
     class QRunnable:
         """Fallback QRunnable class when PyQt6 is not available."""
 
         def run(self) -> None:
             """Execute the runnable task."""
-            pass
 
     class QThreadPool:
         """Fallback QThreadPool class when PyQt6 is not available."""
@@ -61,7 +61,6 @@ except ImportError:
     class QTimer:
         """Fallback QTimer class when PyQt6 is not available."""
 
-        pass
 
     def pyqtSignal(*args) -> None:
         """Fallback pyqtSignal function when PyQt6 is not available."""
@@ -70,53 +69,43 @@ except ImportError:
     class QFont:
         """Fallback QFont class when PyQt6 is not available."""
 
-        pass
 
     class QTextDocument:
         """Fallback QTextDocument class when PyQt6 is not available."""
 
-        pass
 
     # Fallback widget classes
     class QDialog:
         """Fallback QDialog class when PyQt6 is not available."""
 
-        pass
 
     class QFileDialog:
         """Fallback QFileDialog class when PyQt6 is not available."""
 
-        pass
 
     class QHBoxLayout:
         """Fallback QHBoxLayout class when PyQt6 is not available."""
 
-        pass
 
     class QLabel:
         """Fallback QLabel class when PyQt6 is not available."""
 
-        pass
 
     class QMessageBox:
         """Fallback QMessageBox class when PyQt6 is not available."""
 
-        pass
 
     class QPushButton:
         """Fallback QPushButton class when PyQt6 is not available."""
 
-        pass
 
     class QTextEdit:
         """Fallback QTextEdit class when PyQt6 is not available."""
 
-        pass
 
     class QVBoxLayout:
         """Fallback QVBoxLayout class when PyQt6 is not available."""
 
-        pass
 
     PYQT6_AVAILABLE = False
 
@@ -135,7 +124,7 @@ try:
 except ImportError:
     import logging
 
-    def get_logger(name):
+    def get_logger(name: str):
         """Create a logger instance with the given name.
 
         Args:
@@ -237,7 +226,7 @@ class ScriptGenerationWorker(QRunnable):
 class ScriptDisplayDialog(QDialog):
     """Dialog for displaying and managing generated scripts."""
 
-    def __init__(self, script_data: dict, parent=None) -> None:
+    def __init__(self, script_data: dict, parent: Any | None = None) -> None:
         """Initialize the script display dialog.
 
         Args:
@@ -474,7 +463,7 @@ class ScriptGenerationHandler(QObject):
     script_error = pyqtSignal(str)
     script_progress = pyqtSignal(str)
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: Any | None = None) -> None:
         """Initialize the script generation handler.
 
         Args:
@@ -491,7 +480,7 @@ class ScriptGenerationHandler(QObject):
         self.current_result = result
         logger.info(f"Script generation handler received analysis for: {result.file_path}")
 
-    def generate_script(self, script_type: str = "frida", parent_widget=None) -> None:
+    def generate_script(self, script_type: str = "frida", parent_widget: Any | None = None) -> None:
         """Generate a bypass script of the specified type.
 
         Args:
@@ -525,7 +514,7 @@ class ScriptGenerationHandler(QObject):
 
         self.thread_pool.start(worker)
 
-    def _on_script_ready(self, result: dict, parent_widget=None) -> None:
+    def _on_script_ready(self, result: dict, parent_widget: Any | None = None) -> None:
         """Handle script generation completion."""
         if result["success"]:
             # Emit signal
@@ -546,7 +535,7 @@ class ScriptGenerationHandler(QObject):
                     error_msg,
                 )
 
-    def _on_worker_error(self, error_tuple) -> None:
+    def _on_worker_error(self, error_tuple: tuple[type[BaseException], BaseException, str]) -> None:
         """Handle worker thread errors."""
         _exc_type, exc_value, exc_traceback = error_tuple
         error_msg = f"Script generation failed: {exc_value}"

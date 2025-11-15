@@ -21,7 +21,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import joblib
 import Levenshtein
@@ -57,7 +57,7 @@ class CorrelationItem:
     name: str
     address: int
     size: int
-    attributes: Dict[str, Any]
+    attributes: dict[str, Any]
     confidence: float
     timestamp: float
 
@@ -66,11 +66,11 @@ class CorrelationItem:
 class CorrelationResult:
     """Result of correlation."""
 
-    items: List[CorrelationItem]
+    items: list[CorrelationItem]
     correlation_score: float
     confidence: float
     method: str
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
 
 @dataclass
@@ -146,7 +146,7 @@ class FuzzyMatcher:
         # Convert to lowercase
         return name.lower()
 
-    def _tokenize(self, name: str) -> List[str]:
+    def _tokenize(self, name: str) -> list[str]:
         """Tokenize name into components."""
         # Split by common separators
         tokens = re.split(r"[_\-\s]+", name)
@@ -158,7 +158,7 @@ class FuzzyMatcher:
 
         return [t.lower() for t in camel_tokens if t]
 
-    def _calculate_token_similarity(self, tokens1: List[str], tokens2: List[str]) -> float:
+    def _calculate_token_similarity(self, tokens1: list[str], tokens2: list[str]) -> float:
         """Calculate similarity between token lists."""
         if not tokens1 or not tokens2:
             return 0.0
@@ -234,7 +234,7 @@ class FuzzyMatcher:
 
         return class_score * 0.4 + method_score * 0.4 + param_score * 0.2
 
-    def _extract_mangled_components(self, name: str) -> Dict[str, Any]:
+    def _extract_mangled_components(self, name: str) -> dict[str, Any]:
         """Extract components from mangled name."""
         components = {}
 
@@ -255,7 +255,7 @@ class FuzzyMatcher:
 
         return components
 
-    def _compare_parameter_lists(self, params1: List[str], params2: List[str]) -> float:
+    def _compare_parameter_lists(self, params1: list[str], params2: list[str]) -> float:
         """Compare parameter lists."""
         if not params1 and not params2:
             return 1.0
@@ -300,9 +300,9 @@ class AddressTranslator:
 
     def __init__(self) -> None:
         """Initialize the AddressTranslator with empty mappings and base addresses."""
-        self.mappings: List[AddressMapping] = []
-        self.base_addresses: Dict[str, int] = {}
-        self.relocations: Dict[str, List[Tuple[int, int]]] = {}
+        self.mappings: list[AddressMapping] = []
+        self.base_addresses: dict[str, int] = {}
+        self.relocations: dict[str, list[tuple[int, int]]] = {}
 
     def add_mapping(self, mapping: AddressMapping) -> None:
         """Add address space mapping."""
@@ -318,13 +318,13 @@ class AddressTranslator:
             self.relocations[tool] = []
         self.relocations[tool].append((old_addr, new_addr))
 
-    def translate(self, address: int, from_tool: str, to_tool: str) -> Optional[int]:
+    def translate(self, address: int, from_tool: str, to_tool: str) -> int | None:
         """Translate address between tools."""
         # Direct mapping exists
         for mapping in self.mappings:
             if mapping.tool1 == from_tool and mapping.tool2 == to_tool:
                 return self._apply_mapping(address, mapping)
-            elif mapping.tool2 == from_tool and mapping.tool1 == to_tool:
+            if mapping.tool2 == from_tool and mapping.tool1 == to_tool:
                 # Reverse mapping
                 reverse_mapping = AddressMapping(
                     tool1=mapping.tool2,
@@ -359,7 +359,7 @@ class AddressTranslator:
         # Fallback to offset only
         return address + mapping.offset
 
-    def correlate_by_pattern(self, addresses1: List[int], addresses2: List[int]) -> AddressMapping:
+    def correlate_by_pattern(self, addresses1: list[int], addresses2: list[int]) -> AddressMapping:
         """Correlate address spaces by pattern matching."""
         if not addresses1 or not addresses2:
             return None
@@ -454,7 +454,7 @@ class ConfidenceScorer:
 
         return total_score / total_weight if total_weight > 0 else 0
 
-    def _compare_attributes(self, attrs1: Dict, attrs2: Dict) -> float:
+    def _compare_attributes(self, attrs1: dict, attrs2: dict) -> float:
         """Compare attribute dictionaries."""
         if not attrs1 and not attrs2:
             return 1.0
@@ -554,7 +554,7 @@ class AnomalyDetector:
         self.threshold_multiplier = 2.0
         self.min_samples = 10
 
-    def detect_anomalies(self, correlations: List[CorrelationResult]) -> List[CorrelationResult]:
+    def detect_anomalies(self, correlations: list[CorrelationResult]) -> list[CorrelationResult]:
         """Detect anomalous correlations."""
         if len(correlations) < self.min_samples:
             return []
@@ -610,7 +610,7 @@ class AnomalyDetector:
 
         return np.array(features)
 
-    def detect_outliers_statistical(self, values: List[float]) -> List[int]:
+    def detect_outliers_statistical(self, values: list[float]) -> list[int]:
         """Detect statistical outliers using IQR method."""
         if len(values) < 4:
             return []
@@ -639,7 +639,7 @@ class PatternClusterer:
         self.kmeans = None
         self.scaler = StandardScaler()
 
-    def cluster_patterns(self, items: List[CorrelationItem], method: str = "dbscan") -> Dict[int, List[CorrelationItem]]:
+    def cluster_patterns(self, items: list[CorrelationItem], method: str = "dbscan") -> dict[int, list[CorrelationItem]]:
         """Cluster correlation items by patterns."""
         if len(items) < 2:
             return {0: items}
@@ -717,8 +717,8 @@ class PatternClusterer:
         return np.array(features)
 
     def find_similar_patterns(
-        self, query: CorrelationItem, items: List[CorrelationItem], top_k: int = 5,
-    ) -> List[Tuple[CorrelationItem, float]]:
+        self, query: CorrelationItem, items: list[CorrelationItem], top_k: int = 5,
+    ) -> list[tuple[CorrelationItem, float]]:
         """Find items with similar patterns."""
         if not items:
             return []
@@ -751,7 +751,7 @@ class PatternClusterer:
 class MachineLearningCorrelator:
     """Machine learning-based correlation."""
 
-    def __init__(self, model_path: Optional[str] = None) -> None:
+    def __init__(self, model_path: str | None = None) -> None:
         """Initialize the MachineLearningCorrelator with optional model path.
 
         Args:
@@ -759,7 +759,7 @@ class MachineLearningCorrelator:
 
         """
         self.model_path = model_path
-        self.classifier: Optional[RandomForestClassifier] = None
+        self.classifier: RandomForestClassifier | None = None
         self.scaler = StandardScaler()
         self.feature_names = []
         self.training_data = []
@@ -774,7 +774,7 @@ class MachineLearningCorrelator:
         self.classifier = RandomForestClassifier(n_estimators=100, max_depth=10, random_state=42)
 
     def train(
-        self, positive_pairs: List[Tuple[CorrelationItem, CorrelationItem]], negative_pairs: List[Tuple[CorrelationItem, CorrelationItem]],
+        self, positive_pairs: list[tuple[CorrelationItem, CorrelationItem]], negative_pairs: list[tuple[CorrelationItem, CorrelationItem]],
     ) -> None:
         """Train the correlation model."""
         X = []
@@ -808,7 +808,7 @@ class MachineLearningCorrelator:
 
         logger.info(f"Trained model with {len(positive_pairs)} positive and {len(negative_pairs)} negative pairs")
 
-    def predict(self, item1: CorrelationItem, item2: CorrelationItem) -> Tuple[bool, float]:
+    def predict(self, item1: CorrelationItem, item2: CorrelationItem) -> tuple[bool, float]:
         """Predict if items are correlated."""
         if not self.classifier:
             logger.warning("Model not trained")
@@ -910,22 +910,21 @@ class IntelligentCorrelator:
         self.anomaly_detector = AnomalyDetector()
         self.pattern_clusterer = PatternClusterer()
         self.ml_correlator = MachineLearningCorrelator()
-        self.correlation_cache: Dict[str, CorrelationResult] = {}
+        self.correlation_cache: dict[str, CorrelationResult] = {}
 
-    def correlate(self, items: List[CorrelationItem], method: str = "hybrid") -> List[CorrelationResult]:
+    def correlate(self, items: list[CorrelationItem], method: str = "hybrid") -> list[CorrelationResult]:
         """Correlate items using specified method."""
         if method == "fuzzy":
             return self._correlate_fuzzy(items)
-        elif method == "ml":
+        if method == "ml":
             return self._correlate_ml(items)
-        elif method == "pattern":
+        if method == "pattern":
             return self._correlate_pattern(items)
-        elif method == "hybrid":
+        if method == "hybrid":
             return self._correlate_hybrid(items)
-        else:
-            raise ValueError(f"Unknown correlation method: {method}")
+        raise ValueError(f"Unknown correlation method: {method}")
 
-    def _correlate_fuzzy(self, items: List[CorrelationItem]) -> List[CorrelationResult]:
+    def _correlate_fuzzy(self, items: list[CorrelationItem]) -> list[CorrelationResult]:
         """Correlate using fuzzy matching."""
         results = []
 
@@ -958,7 +957,7 @@ class IntelligentCorrelator:
 
         return results
 
-    def _correlate_ml(self, items: List[CorrelationItem]) -> List[CorrelationResult]:
+    def _correlate_ml(self, items: list[CorrelationItem]) -> list[CorrelationResult]:
         """Correlate using machine learning."""
         results = []
 
@@ -982,7 +981,7 @@ class IntelligentCorrelator:
 
         return results
 
-    def _correlate_pattern(self, items: List[CorrelationItem]) -> List[CorrelationResult]:
+    def _correlate_pattern(self, items: list[CorrelationItem]) -> list[CorrelationResult]:
         """Correlate using pattern clustering."""
         results = []
 
@@ -1006,7 +1005,7 @@ class IntelligentCorrelator:
 
         return results
 
-    def _correlate_hybrid(self, items: List[CorrelationItem]) -> List[CorrelationResult]:
+    def _correlate_hybrid(self, items: list[CorrelationItem]) -> list[CorrelationResult]:
         """Hybrid correlation using multiple methods."""
         all_results = []
 
@@ -1034,7 +1033,7 @@ class IntelligentCorrelator:
 
         return all_results
 
-    def _calculate_cluster_confidence(self, items: List[CorrelationItem]) -> float:
+    def _calculate_cluster_confidence(self, items: list[CorrelationItem]) -> float:
         """Calculate confidence for a cluster of items."""
         if len(items) < 2:
             return 0.0
@@ -1048,13 +1047,13 @@ class IntelligentCorrelator:
 
         return np.mean(similarities) if similarities else 0.0
 
-    def _create_result_key(self, items: List[CorrelationItem]) -> str:
+    def _create_result_key(self, items: list[CorrelationItem]) -> str:
         """Create unique key for result items."""
         sorted_items = sorted(items, key=lambda x: (x.tool, x.name, x.address))
         key_parts = [f"{item.tool}:{item.name}:{item.address}" for item in sorted_items]
         return "|".join(key_parts)
 
-    def _combine_results(self, results: List[CorrelationResult]) -> CorrelationResult:
+    def _combine_results(self, results: list[CorrelationResult]) -> CorrelationResult:
         """Combine multiple correlation results."""
         if len(results) == 1:
             return results[0]
@@ -1082,11 +1081,11 @@ class IntelligentCorrelator:
             metadata=metadata,
         )
 
-    def detect_anomalies(self, correlations: List[CorrelationResult]) -> List[CorrelationResult]:
+    def detect_anomalies(self, correlations: list[CorrelationResult]) -> list[CorrelationResult]:
         """Detect anomalous correlations."""
         return self.anomaly_detector.detect_anomalies(correlations)
 
-    def translate_addresses(self, items: List[CorrelationItem], target_tool: str) -> List[CorrelationItem]:
+    def translate_addresses(self, items: list[CorrelationItem], target_tool: str) -> list[CorrelationItem]:
         """Translate addresses to target tool's address space."""
         translated = []
 

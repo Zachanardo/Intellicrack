@@ -71,7 +71,7 @@ except ImportError:
             "memory": {},
         }
 
-    def to_device(tensor_or_model):
+    def to_device(tensor_or_model: Any):
         """Move tensor or model to device (no-op for CPU).
 
         Args:
@@ -83,7 +83,7 @@ except ImportError:
         """
         return tensor_or_model
 
-    def optimize_for_gpu(model):
+    def optimize_for_gpu(model: Any):
         """Optimize model for GPU (no-op for CPU).
 
         Args:

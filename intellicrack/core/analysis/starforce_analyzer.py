@@ -10,7 +10,6 @@ import struct
 from ctypes import wintypes
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 try:
     import pefile
@@ -48,11 +47,11 @@ class LicenseValidationFlow:
     """License validation flow analysis."""
 
     entry_point: int
-    validation_functions: List[Tuple[int, str]]
-    crypto_operations: List[Tuple[int, str]]
-    registry_checks: List[Tuple[int, str]]
-    disc_checks: List[Tuple[int, str]]
-    network_checks: List[Tuple[int, str]]
+    validation_functions: list[tuple[int, str]]
+    crypto_operations: list[tuple[int, str]]
+    registry_checks: list[tuple[int, str]]
+    disc_checks: list[tuple[int, str]]
+    network_checks: list[tuple[int, str]]
 
 
 @dataclass
@@ -61,13 +60,13 @@ class StarForceAnalysis:
 
     driver_path: Path
     driver_version: str
-    ioctl_commands: List[IOCTLCommand]
-    anti_debug_techniques: List[AntiDebugTechnique]
-    license_flow: Optional[LicenseValidationFlow]
-    vm_detection_methods: List[str]
-    disc_auth_mechanisms: List[str]
-    kernel_hooks: List[Tuple[str, int]]
-    details: Dict[str, any]
+    ioctl_commands: list[IOCTLCommand]
+    anti_debug_techniques: list[AntiDebugTechnique]
+    license_flow: LicenseValidationFlow | None
+    vm_detection_methods: list[str]
+    disc_auth_mechanisms: list[str]
+    kernel_hooks: list[tuple[str, int]]
+    details: dict[str, any]
 
 
 class StarForceAnalyzer:
@@ -217,7 +216,7 @@ class StarForceAnalyzer:
 
         return "Unknown"
 
-    def _analyze_ioctls(self, driver_path: Path) -> List[IOCTLCommand]:
+    def _analyze_ioctls(self, driver_path: Path) -> list[IOCTLCommand]:
         """Analyze and extract IOCTL command codes from driver."""
         ioctls = []
 
@@ -256,7 +255,7 @@ class StarForceAnalyzer:
 
         return ioctls
 
-    def _find_custom_ioctls(self, data: bytes) -> List[IOCTLCommand]:
+    def _find_custom_ioctls(self, data: bytes) -> list[IOCTLCommand]:
         """Find custom IOCTL codes through pattern analysis."""
         ioctls = []
 
@@ -294,7 +293,7 @@ class StarForceAnalyzer:
 
         return ioctls
 
-    def _detect_anti_debug(self, driver_path: Path) -> List[AntiDebugTechnique]:
+    def _detect_anti_debug(self, driver_path: Path) -> list[AntiDebugTechnique]:
         """Detect anti-debugging techniques in driver."""
         techniques = []
 
@@ -328,7 +327,7 @@ class StarForceAnalyzer:
 
         return techniques
 
-    def _get_anti_debug_details(self, technique: str) -> Tuple[str, str]:
+    def _get_anti_debug_details(self, technique: str) -> tuple[str, str]:
         """Get detailed information about anti-debugging technique."""
         details = {
             "kernel_debugger_check": (
@@ -348,7 +347,7 @@ class StarForceAnalyzer:
 
         return details.get(technique, ("Unknown technique", "Manual analysis required"))
 
-    def _detect_vm_checks(self, driver_path: Path) -> List[str]:
+    def _detect_vm_checks(self, driver_path: Path) -> list[str]:
         """Detect virtual machine detection methods."""
         vm_methods = []
 
@@ -379,7 +378,7 @@ class StarForceAnalyzer:
 
         return vm_methods
 
-    def _analyze_disc_auth(self, driver_path: Path) -> List[str]:
+    def _analyze_disc_auth(self, driver_path: Path) -> list[str]:
         """Analyze disc authentication mechanisms."""
         mechanisms = []
 
@@ -413,7 +412,7 @@ class StarForceAnalyzer:
 
         return mechanisms
 
-    def _detect_kernel_hooks(self, driver_path: Path) -> List[Tuple[str, int]]:
+    def _detect_kernel_hooks(self, driver_path: Path) -> list[tuple[str, int]]:
         """Detect kernel function hooks."""
         hooks = []
 
@@ -451,7 +450,7 @@ class StarForceAnalyzer:
 
         return hooks
 
-    def _analyze_license_validation(self, driver_path: Path) -> Optional[LicenseValidationFlow]:
+    def _analyze_license_validation(self, driver_path: Path) -> LicenseValidationFlow | None:
         """Analyze license validation flow in driver."""
         if not driver_path.exists():
             return None
@@ -530,7 +529,7 @@ class StarForceAnalyzer:
 
         return 0
 
-    def _find_entry_points(self, driver_path: Path) -> List[Tuple[str, int]]:
+    def _find_entry_points(self, driver_path: Path) -> list[tuple[str, int]]:
         """Find driver entry points and initialization routines."""
         if not PEFILE_AVAILABLE or not driver_path.exists():
             return []
@@ -555,7 +554,7 @@ class StarForceAnalyzer:
 
         return entry_points
 
-    def _get_imports(self, driver_path: Path) -> List[str]:
+    def _get_imports(self, driver_path: Path) -> list[str]:
         """Get imported functions from driver."""
         if not PEFILE_AVAILABLE or not driver_path.exists():
             return []
@@ -580,7 +579,7 @@ class StarForceAnalyzer:
 
         return imports
 
-    def _get_exports(self, driver_path: Path) -> List[str]:
+    def _get_exports(self, driver_path: Path) -> list[str]:
         """Get exported functions from driver."""
         if not PEFILE_AVAILABLE or not driver_path.exists():
             return []
@@ -602,7 +601,7 @@ class StarForceAnalyzer:
 
         return exports
 
-    def _find_dispatch_routines(self, driver_path: Path) -> List[Tuple[str, int]]:
+    def _find_dispatch_routines(self, driver_path: Path) -> list[tuple[str, int]]:
         """Find IRP dispatch routines in driver."""
         if not driver_path.exists():
             return []
@@ -648,7 +647,7 @@ class StarForceAnalyzer:
 
         return dispatch_routines
 
-    def _identify_crypto(self, driver_path: Path) -> List[str]:
+    def _identify_crypto(self, driver_path: Path) -> list[str]:
         """Identify cryptographic algorithms used in driver."""
         if not driver_path.exists():
             return []
@@ -682,7 +681,7 @@ class StarForceAnalyzer:
 
         return list(set(algorithms))
 
-    def probe_ioctl(self, device_name: str, ioctl_code: int, input_data: bytes = b"") -> Optional[bytes]:
+    def probe_ioctl(self, device_name: str, ioctl_code: int, input_data: bytes = b"") -> bytes | None:
         r"""Probe a StarForce device IOCTL command.
 
         Args:

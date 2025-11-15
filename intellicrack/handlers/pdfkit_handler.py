@@ -15,22 +15,22 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
+
+PDFKit Import Handler with Production-Ready Fallbacks
+=====================================================
+
+This module provides a centralized abstraction layer for pdfkit imports.
+When pdfkit is not available, it provides REAL, functional Python-based
+implementations for PDF generation used in Intellicrack reporting.
 """
 
 import base64
 import os
 import re
 import sys
+from typing import Any, Optional
 
 from intellicrack.utils.logger import logger
-
-"""
-PDFKit Import Handler with Production-Ready Fallbacks
-
-This module provides a centralized abstraction layer for pdfkit imports.
-When pdfkit is not available, it provides REAL, functional Python-based
-implementations for PDF generation used in Intellicrack reporting.
-"""
 
 # PDFKit availability detection and import handling
 try:
@@ -55,20 +55,42 @@ except ImportError as e:
     # Production-ready fallback PDF generation for binary analysis reports
 
     class PDFGenerator:
-        """Functional PDF generator using pure Python."""
+        """Functional PDF generator using pure Python.
+
+        Implements a basic PDF 1.4 generator for creating PDF documents
+        without external dependencies. Used as fallback when pdfkit/wkhtmltopdf
+        are unavailable for generating licensing analysis reports.
+        """
 
         def __init__(self) -> None:
-            """Initialize PDF generator."""
-            self.object_count = 0
-            self.objects = []
-            self.xref_table = []
-            self.pages = []
-            self.current_page = None
-            self.fonts = {}
-            self.images = {}
+            """Initialize PDF generator.
 
-        def create_pdf(self, content, output_path=None, options=None):
-            """Create PDF from content."""
+            Sets up internal structures for PDF object management, page tracking,
+            and font/image resource management.
+            """
+            self.object_count: int = 0
+            self.objects: list[dict[str, Any]] = []
+            self.xref_table: list[int] = []
+            self.pages: list[dict[str, Any]] = []
+            self.current_page: Optional[dict[str, Any]] = None
+            self.fonts: dict[str, Any] = {}
+            self.images: dict[str, Any] = {}
+
+        def create_pdf(self, content: str, output_path: Optional[str] = None, options: Optional[dict[str, Any]] = None) -> bytes | bool:
+            """Create PDF from content.
+
+            Converts string or HTML content into a PDF document. Supports both
+            plain text and HTML input with automatic content pagination.
+
+            Args:
+                content: Text or HTML content to convert to PDF.
+                output_path: Optional file path to write PDF. If None, returns PDF bytes.
+                options: Optional dictionary of PDF generation options (page-size, margins, etc.).
+
+            Returns:
+                Bytes of PDF content if output_path is None, True if written to file successfully.
+
+            """
             # Initialize PDF structure
             self.objects = []
             self.xref_table = []
@@ -106,22 +128,39 @@ except ImportError as e:
                 if not output_path:
                     # Return bytes
                     return pdf_data
-                else:
-                    # Write to file
-                    with open(output_path, "wb") as f:
-                        f.write(pdf_data)
-                    return True
-            else:
-                return pdf_data
+                # Write to file
+                with open(output_path, "wb") as f:
+                    f.write(pdf_data)
+                return True
+            return pdf_data
 
-        def _add_object(self, obj_dict):
-            """Add object to PDF."""
+        def _add_object(self, obj_dict: dict[str, Any]) -> int:
+            """Add object to PDF.
+
+            Registers a PDF object dictionary and assigns it an object number.
+
+            Args:
+                obj_dict: Dictionary representing a PDF object with properties.
+
+            Returns:
+                The assigned object number for this PDF object.
+
+            """
             self.object_count += 1
             self.objects.append(obj_dict)
             return self.object_count
 
-        def _create_page(self, content, font_obj) -> None:
-            """Create a PDF page."""
+        def _create_page(self, content: str, font_obj: int) -> None:
+            """Create a PDF page.
+
+            Generates a single PDF page with text content, including content stream
+            and page dictionary objects.
+
+            Args:
+                content: Text content to place on the page.
+                font_obj: Object number of the font resource to use.
+
+            """
             # Create content stream
             stream = self._create_content_stream(content)
             stream_obj = self._add_object({"Length": len(stream)})
@@ -139,8 +178,19 @@ except ImportError as e:
 
             self.pages.append({"obj_num": page_obj, "stream_obj": stream_obj, "stream": stream})
 
-        def _create_content_stream(self, content):
-            """Create PDF content stream."""
+        def _create_content_stream(self, content: str) -> bytes:
+            """Create PDF content stream.
+
+            Converts text content into a PDF content stream using PDF text operators.
+            Handles line wrapping and special character escaping.
+
+            Args:
+                content: Text to convert into PDF content stream format.
+
+            Returns:
+                Bytes representing the PDF content stream with text operators.
+
+            """
             stream = b"BT\n"  # Begin text
             stream += b"/F1 12 Tf\n"  # Set font
             stream += b"50 750 Td\n"  # Move to position
@@ -156,8 +206,19 @@ except ImportError as e:
             stream += b"ET\n"  # End text
             return stream
 
-        def _html_to_pdf_content(self, html):
-            """Convert HTML to PDF content."""
+        def _html_to_pdf_content(self, html: str) -> list[str]:
+            """Convert HTML to PDF content.
+
+            Strips HTML tags and entities to extract plain text content,
+            then paginates the text for PDF generation.
+
+            Args:
+                html: HTML content to convert.
+
+            Returns:
+                List of text strings, one per PDF page.
+
+            """
             # Strip HTML tags for basic conversion
             text = re.sub(r"<[^>]+>", "", html)
 
@@ -185,12 +246,23 @@ except ImportError as e:
 
             return pages if pages else [""]
 
-        def _text_to_pdf_content(self, text):
-            """Convert plain text to PDF content."""
+        def _text_to_pdf_content(self, text: str) -> list[str]:
+            """Convert plain text to PDF content.
+
+            Paginates plain text into multiple PDF pages based on line count.
+            Each page accommodates up to 50 lines of text.
+
+            Args:
+                text: Plain text content to paginate.
+
+            Returns:
+                List of text strings, one per PDF page.
+
+            """
             # Split into pages
             lines = text.split("\n")
-            pages = []
-            current_page = []
+            pages: list[str] = []
+            current_page: list[str] = []
             lines_per_page = 50
 
             for line in lines:
@@ -204,8 +276,16 @@ except ImportError as e:
 
             return pages if pages else [""]
 
-        def _generate_pdf(self):
-            """Generate the final PDF file."""
+        def _generate_pdf(self) -> bytes:
+            """Generate the final PDF file.
+
+            Assembles PDF objects, constructs cross-reference table, and
+            generates a complete PDF 1.4 compliant binary file.
+
+            Returns:
+                Complete PDF file as bytes.
+
+            """
             pdf = b"%PDF-1.4\n"
             pdf += b"%\xe2\xe3\xcf\xd3\n"  # Binary marker
 
@@ -252,10 +332,21 @@ except ImportError as e:
 
             return pdf
 
-        def _dict_to_pdf(self, d):
-            """Convert dictionary to PDF format."""
+        def _dict_to_pdf(self, d: dict[str, Any] | str | float | bool) -> str:
+            """Convert dictionary to PDF format.
+
+            Recursively converts Python dictionaries and values into PDF
+            dictionary syntax with proper operator encoding.
+
+            Args:
+                d: Dictionary or value to convert to PDF format.
+
+            Returns:
+                String representation in PDF dictionary format.
+
+            """
             if isinstance(d, dict):
-                items = []
+                items: list[str] = []
                 for key, value in d.items():
                     if isinstance(value, dict):
                         items.append(f"/{key} {self._dict_to_pdf(value)}")
@@ -266,40 +357,62 @@ except ImportError as e:
                     else:
                         items.append(f"/{key} {value}")
                 return f"<< {' '.join(items)} >>"
-            else:
-                return str(d)
+            return str(d)
 
     class PDFOptions:
-        """PDF generation options."""
+        """PDF generation options.
 
-        def __init__(self, options=None) -> None:
-            """Initialize options."""
-            self.options = options or {}
+        Container for PDF generation configuration settings including page size,
+        margins, and rendering options for compatibility with pdfkit API.
+        """
+
+        def __init__(self, options: Optional[dict[str, Any]] = None) -> None:
+            """Initialize options.
+
+            Sets default PDF generation options and applies user-provided overrides.
+
+            Args:
+                options: Optional dictionary of option overrides.
+
+            """
+            self.options: dict[str, Any] = options or {}
 
             # Default options
-            self.page_size = self.options.get("page-size", "A4")
-            self.orientation = self.options.get("orientation", "Portrait")
-            self.margin_top = self.options.get("margin-top", "10mm")
-            self.margin_right = self.options.get("margin-right", "10mm")
-            self.margin_bottom = self.options.get("margin-bottom", "10mm")
-            self.margin_left = self.options.get("margin-left", "10mm")
-            self.encoding = self.options.get("encoding", "UTF-8")
-            self.no_outline = self.options.get("no-outline", False)
-            self.print_media_type = self.options.get("print-media-type", False)
-            self.disable_smart_shrinking = self.options.get("disable-smart-shrinking", False)
-            self.quiet = self.options.get("quiet", True)
+            self.page_size: str = self.options.get("page-size", "A4")
+            self.orientation: str = self.options.get("orientation", "Portrait")
+            self.margin_top: str = self.options.get("margin-top", "10mm")
+            self.margin_right: str = self.options.get("margin-right", "10mm")
+            self.margin_bottom: str = self.options.get("margin-bottom", "10mm")
+            self.margin_left: str = self.options.get("margin-left", "10mm")
+            self.encoding: str = self.options.get("encoding", "UTF-8")
+            self.no_outline: bool = self.options.get("no-outline", False)
+            self.print_media_type: bool = self.options.get("print-media-type", False)
+            self.disable_smart_shrinking: bool = self.options.get("disable-smart-shrinking", False)
+            self.quiet: bool = self.options.get("quiet", True)
 
     class PDFConfiguration:
-        """PDF generation configuration."""
+        """PDF generation configuration.
 
-        def __init__(self, wkhtmltopdf=None) -> None:
-            """Initialize configuration."""
-            self.wkhtmltopdf = wkhtmltopdf
+        Manages wkhtmltopdf executable detection and configuration for PDF
+        generation. Provides Windows and Unix path detection.
+        """
+
+        def __init__(self, wkhtmltopdf: Optional[str] = None) -> None:
+            """Initialize configuration.
+
+            Configures PDF generator with wkhtmltopdf executable path,
+            attempting auto-detection if not provided.
+
+            Args:
+                wkhtmltopdf: Optional explicit path to wkhtmltopdf executable.
+
+            """
+            self.wkhtmltopdf: Optional[str] = wkhtmltopdf
 
             # Try to find wkhtmltopdf
             if not self.wkhtmltopdf:
                 if sys.platform == "win32":
-                    common_paths = [
+                    common_paths: list[str] = [
                         r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe",
                         r"C:\Program Files (x86)\wkhtmltopdf\bin\wkhtmltopdf.exe",
                     ]
@@ -314,8 +427,25 @@ except ImportError as e:
     # Global PDF generator instance
     _pdf_generator = PDFGenerator()
 
-    def from_string(input, output_path=None, options=None, toc=None, cover=None, configuration=None, cover_first=False):
-        """Generate PDF from string."""
+    def from_string(input: str, output_path: Optional[str] = None, options: Optional[dict[str, Any]] = None, toc: Optional[bool] = None, cover: Optional[str] = None, configuration: Optional[PDFConfiguration] = None, cover_first: bool = False) -> bytes | bool:
+        """Generate PDF from string.
+
+        Converts HTML or plain text string into a PDF document. Provides
+        pdfkit API compatibility for report generation in Intellicrack.
+
+        Args:
+            input: HTML or plain text content to convert.
+            output_path: Optional file path to save PDF. If None, returns bytes.
+            options: Optional PDF generation options dictionary.
+            toc: Unused compatibility parameter.
+            cover: Unused compatibility parameter.
+            configuration: Unused compatibility parameter.
+            cover_first: Unused compatibility parameter.
+
+        Returns:
+            Bytes of PDF if output_path is None, True if written to file, False on error.
+
+        """
         try:
             # Use fallback generator
             return _pdf_generator.create_pdf(input, output_path, options)
@@ -327,14 +457,30 @@ except ImportError as e:
 
                 if not output_path:
                     return minimal_pdf
-                else:
-                    with open(output_path, "wb") as f:
-                        f.write(minimal_pdf)
-                    return True
+                with open(output_path, "wb") as f:
+                    f.write(minimal_pdf)
+                return True
             return False
 
-    def from_url(url, output_path=None, options=None, toc=None, cover=None, configuration=None, cover_first=False):
-        """Generate PDF from URL."""
+    def from_url(url: str, output_path: Optional[str] = None, options: Optional[dict[str, Any]] = None, toc: Optional[bool] = None, cover: Optional[str] = None, configuration: Optional[PDFConfiguration] = None, cover_first: bool = False) -> bytes | bool:
+        """Generate PDF from URL.
+
+        Fetches HTML content from a URL and converts it to PDF. Provides
+        pdfkit API compatibility for report generation.
+
+        Args:
+            url: URL to fetch and convert to PDF.
+            output_path: Optional file path to save PDF. If None, returns bytes.
+            options: Optional PDF generation options dictionary.
+            toc: Unused compatibility parameter.
+            cover: Unused compatibility parameter.
+            configuration: Unused compatibility parameter.
+            cover_first: Unused compatibility parameter.
+
+        Returns:
+            Bytes of PDF if output_path is None, True if written to file, False on error.
+
+        """
         # Try to fetch content from URL
         try:
             import urllib.request
@@ -348,8 +494,25 @@ except ImportError as e:
                 f"<h1>Error</h1><p>Failed to fetch URL: {url}</p>", output_path, options, toc, cover, configuration, cover_first,
             )
 
-    def from_file(input, output_path=None, options=None, toc=None, cover=None, configuration=None, cover_first=False):
-        """Generate PDF from file."""
+    def from_file(input: str, output_path: Optional[str] = None, options: Optional[dict[str, Any]] = None, toc: Optional[bool] = None, cover: Optional[str] = None, configuration: Optional[PDFConfiguration] = None, cover_first: bool = False) -> bytes | bool:
+        """Generate PDF from file.
+
+        Reads HTML or text file and converts it to PDF. Provides pdfkit
+        API compatibility for report generation.
+
+        Args:
+            input: File path to read and convert to PDF.
+            output_path: Optional file path to save PDF. If None, returns bytes.
+            options: Optional PDF generation options dictionary.
+            toc: Unused compatibility parameter.
+            cover: Unused compatibility parameter.
+            configuration: Unused compatibility parameter.
+            cover_first: Unused compatibility parameter.
+
+        Returns:
+            Bytes of PDF if output_path is None, True if written to file, False on error.
+
+        """
         try:
             # Read file content
             with open(input, encoding="utf-8") as f:
@@ -361,68 +524,168 @@ except ImportError as e:
                 f"<h1>Error</h1><p>Failed to read file: {input}</p>", output_path, options, toc, cover, configuration, cover_first,
             )
 
-    def configuration(**kwargs):
-        """Create configuration object."""
+    def configuration(**kwargs: str) -> PDFConfiguration:
+        """Create configuration object.
+
+        Factory function for creating PDFConfiguration instances.
+
+        Args:
+            **kwargs: Configuration keyword arguments passed to PDFConfiguration.
+
+        Returns:
+            PDFConfiguration instance.
+
+        """
         return PDFConfiguration(**kwargs)
 
     # Advanced PDF generation with ReportLab-style functionality
     class PDFCanvas:
-        """Canvas for drawing on PDF pages."""
+        """Canvas for drawing on PDF pages.
 
-        def __init__(self, filename=None) -> None:
-            """Initialize canvas."""
-            self.filename = filename
-            self.pages = []
-            self.current_page = []
-            self.current_x = 50
-            self.current_y = 750
-            self.font_name = "Helvetica"
-            self.font_size = 12
-            self.page_width = 612
-            self.page_height = 792
+        Provides ReportLab-compatible drawing API for PDF generation including
+        text, lines, rectangles, and circles. Used for advanced report layouts.
+        """
 
-        def setFont(self, name, size) -> None:
-            """Set current font."""
+        def __init__(self, filename: Optional[str] = None) -> None:
+            """Initialize canvas.
+
+            Sets up a PDF canvas with default page dimensions and drawing state.
+
+            Args:
+                filename: Optional file path to save PDF. If None, returns bytes.
+
+            """
+            self.filename: Optional[str] = filename
+            self.pages: list[list[dict[str, Any]]] = []
+            self.current_page: list[dict[str, Any]] = []
+            self.current_x: int = 50
+            self.current_y: int = 750
+            self.font_name: str = "Helvetica"
+            self.font_size: int = 12
+            self.page_width: int = 612
+            self.page_height: int = 792
+
+        def setFont(self, name: str, size: int) -> None:
+            """Set current font.
+
+            Changes the active font name and size for subsequent text drawing.
+
+            Args:
+                name: Font name (e.g., "Helvetica", "Times").
+                size: Font size in points.
+
+            """
             self.font_name = name
             self.font_size = size
 
-        def drawString(self, x, y, text) -> None:
-            """Draw string at position."""
+        def drawString(self, x: int, y: int, text: str) -> None:
+            """Draw string at position.
+
+            Adds text to the current page at the specified coordinates.
+
+            Args:
+                x: X coordinate in points.
+                y: Y coordinate in points.
+                text: Text string to draw.
+
+            """
             self.current_page.append({"type": "text", "x": x, "y": y, "text": text, "font": self.font_name, "size": self.font_size})
 
-        def drawCentredString(self, x, y, text) -> None:
-            """Draw centered string."""
+        def drawCentredString(self, x: int, y: int, text: str) -> None:
+            """Draw centered string.
+
+            Draws text centered at the specified coordinates.
+
+            Args:
+                x: Center X coordinate in points.
+                y: Y coordinate in points.
+                text: Text string to draw.
+
+            """
             # Approximate centering
             offset = len(text) * self.font_size * 0.25
             self.drawString(x - offset, y, text)
 
-        def drawRightString(self, x, y, text) -> None:
-            """Draw right-aligned string."""
+        def drawRightString(self, x: int, y: int, text: str) -> None:
+            """Draw right-aligned string.
+
+            Draws text right-aligned at the specified coordinates.
+
+            Args:
+                x: Right X coordinate in points.
+                y: Y coordinate in points.
+                text: Text string to draw.
+
+            """
             # Approximate right alignment
             offset = len(text) * self.font_size * 0.5
             self.drawString(x - offset, y, text)
 
-        def line(self, x1, y1, x2, y2) -> None:
-            """Draw line."""
+        def line(self, x1: int, y1: int, x2: int, y2: int) -> None:
+            """Draw line.
+
+            Adds a line segment to the current page.
+
+            Args:
+                x1: Starting X coordinate in points.
+                y1: Starting Y coordinate in points.
+                x2: Ending X coordinate in points.
+                y2: Ending Y coordinate in points.
+
+            """
             self.current_page.append({"type": "line", "x1": x1, "y1": y1, "x2": x2, "y2": y2})
 
-        def rect(self, x, y, width, height, stroke=1, fill=0) -> None:
-            """Draw rectangle."""
+        def rect(self, x: int, y: int, width: int, height: int, stroke: int = 1, fill: int = 0) -> None:
+            """Draw rectangle.
+
+            Adds a rectangle to the current page.
+
+            Args:
+                x: Left X coordinate in points.
+                y: Bottom Y coordinate in points.
+                width: Rectangle width in points.
+                height: Rectangle height in points.
+                stroke: Whether to stroke the outline (1 for yes, 0 for no).
+                fill: Whether to fill the rectangle (1 for yes, 0 for no).
+
+            """
             self.current_page.append({"type": "rect", "x": x, "y": y, "width": width, "height": height, "stroke": stroke, "fill": fill})
 
-        def circle(self, x, y, radius, stroke=1, fill=0) -> None:
-            """Draw circle."""
+        def circle(self, x: int, y: int, radius: int, stroke: int = 1, fill: int = 0) -> None:
+            """Draw circle.
+
+            Adds a circle to the current page.
+
+            Args:
+                x: Center X coordinate in points.
+                y: Center Y coordinate in points.
+                radius: Circle radius in points.
+                stroke: Whether to stroke the outline (1 for yes, 0 for no).
+                fill: Whether to fill the circle (1 for yes, 0 for no).
+
+            """
             self.current_page.append({"type": "circle", "x": x, "y": y, "radius": radius, "stroke": stroke, "fill": fill})
 
         def showPage(self) -> None:
-            """Start new page."""
+            """Start new page.
+
+            Completes the current page and starts a new one.
+            """
             self.pages.append(self.current_page)
             self.current_page = []
             self.current_x = 50
             self.current_y = 750
 
-        def save(self):
-            """Save PDF to file."""
+        def save(self) -> bytes | None:
+            """Save PDF to file.
+
+            Generates and saves the PDF document to the configured filename,
+            or returns PDF bytes if no filename was set.
+
+            Returns:
+                Bytes if filename is None, None if written to file.
+
+            """
             if self.current_page:
                 self.pages.append(self.current_page)
 
@@ -430,9 +693,9 @@ except ImportError as e:
             pdf_gen = PDFGenerator()
 
             # Convert pages to text content
-            all_content = []
+            all_content: list[str] = []
             for page in self.pages:
-                page_text = []
+                page_text: list[str] = []
                 for item in page:
                     if item["type"] == "text":
                         page_text.append(item["text"])
@@ -441,42 +704,96 @@ except ImportError as e:
             # Create PDF
             if self.filename:
                 pdf_gen.create_pdf("\n\n".join(all_content), self.filename)
+                return None
             else:
                 return pdf_gen.create_pdf("\n\n".join(all_content), False)
 
     class PDFDocument:
-        """High-level PDF document creation."""
+        """High-level PDF document creation.
+
+        Provides a high-level interface for creating PDF documents with
+        metadata, title, author information, and multiple pages.
+        """
 
         def __init__(self) -> None:
-            """Initialize document."""
-            self.title = ""
-            self.author = ""
-            self.subject = ""
-            self.keywords = []
-            self.pages = []
+            """Initialize document.
 
-        def add_page(self, content) -> None:
-            """Add page to document."""
+            Sets up an empty PDF document with default metadata fields.
+            """
+            self.title: str = ""
+            self.author: str = ""
+            self.subject: str = ""
+            self.keywords: list[str] = []
+            self.pages: list[str] = []
+
+        def add_page(self, content: str) -> None:
+            """Add page to document.
+
+            Appends a page with the specified content to the document.
+
+            Args:
+                content: HTML or text content for the page.
+
+            """
             self.pages.append(content)
 
-        def set_title(self, title) -> None:
-            """Set document title."""
+        def set_title(self, title: str) -> None:
+            """Set document title.
+
+            Sets the document's title metadata.
+
+            Args:
+                title: Document title string.
+
+            """
             self.title = title
 
-        def set_author(self, author) -> None:
-            """Set document author."""
+        def set_author(self, author: str) -> None:
+            """Set document author.
+
+            Sets the document's author metadata.
+
+            Args:
+                author: Author name string.
+
+            """
             self.author = author
 
-        def set_subject(self, subject) -> None:
-            """Set document subject."""
+        def set_subject(self, subject: str) -> None:
+            """Set document subject.
+
+            Sets the document's subject metadata.
+
+            Args:
+                subject: Subject description string.
+
+            """
             self.subject = subject
 
-        def add_keyword(self, keyword) -> None:
-            """Add keyword to document."""
+        def add_keyword(self, keyword: str) -> None:
+            """Add keyword to document.
+
+            Adds a keyword to the document's keyword list.
+
+            Args:
+                keyword: Keyword string to add.
+
+            """
             self.keywords.append(keyword)
 
-        def generate(self, output_path=None):
-            """Generate PDF document."""
+        def generate(self, output_path: Optional[str] = None) -> bytes | bool:
+            """Generate PDF document.
+
+            Converts the document structure to HTML and generates a PDF
+            with the configured title, author, and page content.
+
+            Args:
+                output_path: Optional file path to save PDF. If None, returns bytes.
+
+            Returns:
+                Bytes of PDF if output_path is None, True if written to file.
+
+            """
             # Build HTML content
             html = f"""
             <html>
@@ -499,20 +816,44 @@ except ImportError as e:
 
     # ReportLab-style template functionality
     class SimpleDocTemplate:
-        """Perform document template for report generation."""
+        """Simple document template for report generation.
 
-        def __init__(self, filename, pagesize=(612, 792), **kwargs) -> None:
-            """Initialize template."""
-            self.filename = filename
-            self.pagesize = pagesize
-            self.title = kwargs.get("title", "")
-            self.author = kwargs.get("author", "")
-            self.elements = []
+        Provides a ReportLab-compatible interface for building PDF documents
+        from story elements (paragraphs, tables, images, etc.).
+        """
 
-        def build(self, story):
-            """Build document from story elements."""
+        def __init__(self, filename: str, pagesize: tuple[int, int] = (612, 792), **kwargs: str) -> None:
+            """Initialize template.
+
+            Sets up a document template with filename and page dimensions.
+
+            Args:
+                filename: File path to save the PDF.
+                pagesize: Tuple of (width, height) in points. Defaults to letter size.
+                **kwargs: Additional configuration options (title, author, etc.).
+
+            """
+            self.filename: str = filename
+            self.pagesize: tuple[int, int] = pagesize
+            self.title: str = kwargs.get("title", "")
+            self.author: str = kwargs.get("author", "")
+            self.elements: list[Any] = []
+
+        def build(self, story: list[Any]) -> bytes | bool:
+            """Build document from story elements.
+
+            Converts a list of story elements (Paragraph, Table, Image, etc.)
+            into an HTML representation and generates a PDF.
+
+            Args:
+                story: List of document elements with to_html() methods.
+
+            Returns:
+                Bytes of PDF if filename is None, True if written to file.
+
+            """
             # Convert story elements to content
-            content = []
+            content: list[str] = []
             for element in story:
                 if hasattr(element, "to_html"):
                     content.append(element.to_html())
@@ -524,28 +865,61 @@ except ImportError as e:
             return from_string(html_content, self.filename)
 
     class Paragraph:
-        """Paragraph element for documents."""
+        """Paragraph element for documents.
 
-        def __init__(self, text, style=None) -> None:
-            """Initialize paragraph."""
-            self.text = text
-            self.style = style
+        Represents a text paragraph in a PDF document with optional style.
+        """
+
+        def __init__(self, text: str, style: Optional[dict[str, Any]] = None) -> None:
+            """Initialize paragraph.
+
+            Creates a paragraph with text content and optional styling.
+
+            Args:
+                text: Text content of the paragraph.
+                style: Optional style object (compatibility parameter).
+
+            """
+            self.text: str = text
+            self.style: Optional[dict[str, Any]] = style
 
         def to_html(self) -> str:
-            """Convert to HTML."""
+            """Convert to HTML.
+
+            Returns:
+                HTML representation of the paragraph.
+
+            """
             return f"<p>{self.text}</p>"
 
     class Table:
-        """Table element for documents."""
+        """Table element for documents.
 
-        def __init__(self, data, colWidths=None, rowHeights=None) -> None:
-            """Initialize table."""
-            self.data = data
-            self.colWidths = colWidths
-            self.rowHeights = rowHeights
+        Represents a tabular data structure in a PDF document.
+        """
 
-        def to_html(self):
-            """Convert to HTML."""
+        def __init__(self, data: list[list[Any]], colWidths: Optional[list[int]] = None, rowHeights: Optional[list[int]] = None) -> None:
+            """Initialize table.
+
+            Creates a table with data and optional column/row sizing.
+
+            Args:
+                data: List of rows, each row is a list of cell values.
+                colWidths: Optional list of column widths in points.
+                rowHeights: Optional list of row heights in points.
+
+            """
+            self.data: list[list[Any]] = data
+            self.colWidths: Optional[list[int]] = colWidths
+            self.rowHeights: Optional[list[int]] = rowHeights
+
+        def to_html(self) -> str:
+            """Convert to HTML.
+
+            Returns:
+                HTML table representation.
+
+            """
             html = "<table border='1'>"
             for row in self.data:
                 html += "<tr>"
@@ -556,16 +930,33 @@ except ImportError as e:
             return html
 
     class Image:
-        """Image element for documents."""
+        """Image element for documents.
 
-        def __init__(self, filename, width=None, height=None) -> None:
-            """Initialize image."""
-            self.filename = filename
-            self.width = width
-            self.height = height
+        Represents an image embedded in a PDF document.
+        """
 
-        def to_html(self) -> str | None:
-            """Convert to HTML."""
+        def __init__(self, filename: str, width: Optional[int] = None, height: Optional[int] = None) -> None:
+            """Initialize image.
+
+            Creates an image element with optional dimensions.
+
+            Args:
+                filename: File path to the image file.
+                width: Optional width in pixels.
+                height: Optional height in pixels.
+
+            """
+            self.filename: str = filename
+            self.width: Optional[int] = width
+            self.height: Optional[int] = height
+
+        def to_html(self) -> str:
+            """Convert to HTML.
+
+            Returns:
+                HTML image tag with base64 data or file reference.
+
+            """
             style = ""
             if self.width:
                 style += f"width:{self.width}px;"
@@ -582,15 +973,28 @@ except ImportError as e:
                 return f"<img src='{self.filename}' style='{style}'>"
 
     class PageBreak:
-        """Page break element."""
+        """Page break element.
+
+        Represents a page break in a PDF document.
+        """
 
         def to_html(self) -> str:
-            """Convert to HTML."""
+            """Convert to HTML.
+
+            Returns:
+                HTML div with page break styling.
+
+            """
             return "<div style='page-break-after: always;'></div>"
 
     # Create module-like object
     class FallbackPDFKit:
-        """Fallback pdfkit module."""
+        """Fallback pdfkit module.
+
+        Provides a module-like object that mimics the pdfkit API when the
+        actual pdfkit library is unavailable. Contains factory functions
+        and document element classes for PDF generation.
+        """
 
         from_string = staticmethod(from_string)
         from_url = staticmethod(from_url)
@@ -598,17 +1002,17 @@ except ImportError as e:
         configuration = staticmethod(configuration)
 
         # Additional classes
-        PDFCanvas = PDFCanvas
-        PDFDocument = PDFDocument
-        SimpleDocTemplate = SimpleDocTemplate
-        Paragraph = Paragraph
-        Table = Table
-        Image = Image
-        PageBreak = PageBreak
-        PDFOptions = PDFOptions
-        PDFConfiguration = PDFConfiguration
+        PDFCanvas: type[PDFCanvas] = PDFCanvas
+        PDFDocument: type[PDFDocument] = PDFDocument
+        SimpleDocTemplate: type[SimpleDocTemplate] = SimpleDocTemplate
+        Paragraph: type[Paragraph] = Paragraph
+        Table: type[Table] = Table
+        Image: type[Image] = Image
+        PageBreak: type[PageBreak] = PageBreak
+        PDFOptions: type[PDFOptions] = PDFOptions
+        PDFConfiguration: type[PDFConfiguration] = PDFConfiguration
 
-    pdfkit = FallbackPDFKit()
+    pdfkit: FallbackPDFKit = FallbackPDFKit()
 
 
 # Export all pdfkit objects and availability flag

@@ -625,12 +625,11 @@ class ControlFlowDeobfuscator:
 
         if "cmov" in disasm_text.lower() and len(basic_block.successors) > 10:
             return "OLLVM"
-        elif "switch" in disasm_text.lower():
+        if "switch" in disasm_text.lower():
             return "Tigress"
-        elif len(basic_block.successors) > 20:
+        if len(basic_block.successors) > 20:
             return "VMProtect"
-        else:
-            return "Generic"
+        return "Generic"
 
     def _unflatten_control_flow(
         self, r2, cfg: nx.DiGraph, dispatchers: list[DispatcherInfo], function_address: int,
@@ -731,7 +730,7 @@ class ControlFlowDeobfuscator:
                     try:
                         if value_part.startswith("0x"):
                             return int(value_part, 16)
-                        elif value_part.isdigit():
+                        if value_part.isdigit():
                             return int(value_part)
                     except ValueError:
                         continue
@@ -1297,12 +1296,11 @@ class ControlFlowDeobfuscator:
 
         if "ret" in last_inst:
             return "return"
-        elif "call" in last_inst:
+        if "call" in last_inst:
             return "call"
-        elif any(jmp in last_inst for jmp in ["jmp", "je", "jne", "jz", "jnz", "ja", "jb", "jg", "jl"]):
+        if any(jmp in last_inst for jmp in ["jmp", "je", "jne", "jz", "jnz", "ja", "jb", "jg", "jl"]):
             return "branch"
-        else:
-            return "sequential"
+        return "sequential"
 
     def _calculate_block_complexity(self, instructions: list[dict[str, Any]]) -> float:
         """Calculate complexity score for a basic block.

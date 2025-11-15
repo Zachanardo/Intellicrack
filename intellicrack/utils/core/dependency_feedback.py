@@ -23,7 +23,6 @@ including installation instructions, alternative suggestions, and graceful degra
 """
 
 import platform
-from typing import Dict, List
 
 from intellicrack.utils.logger import logger
 
@@ -169,7 +168,7 @@ class DependencyFeedback:
         self.missing_optional = []
         self.available_alternatives = {}
 
-    def get_dependency_status(self, dependency_name: str) -> Dict:
+    def get_dependency_status(self, dependency_name: str) -> dict:
         """Get comprehensive status information for a dependency."""
         if dependency_name not in self.DEPENDENCY_INFO:
             return {"available": False, "info": None, "message": f"Unknown dependency: {dependency_name}", "alternatives": []}
@@ -216,7 +215,7 @@ class DependencyFeedback:
             "alternatives": info["alternatives"],
         }
 
-    def _generate_feedback_message(self, name: str, info: Dict, available: bool) -> str:
+    def _generate_feedback_message(self, name: str, info: dict, available: bool) -> str:
         """Generate comprehensive feedback message for a dependency."""
         if available:
             return f"OK {info['name']} is available and ready to use."
@@ -246,7 +245,7 @@ class DependencyFeedback:
 
         return "\n".join(message_parts)
 
-    def check_all_dependencies(self) -> Dict:
+    def check_all_dependencies(self) -> dict:
         """Check status of all known dependencies."""
         results = {
             "critical_missing": [],
@@ -261,11 +260,10 @@ class DependencyFeedback:
 
             if status["available"]:
                 results["available"].append(dep_name)
+            elif dep_info["critical"]:
+                results["critical_missing"].append(dep_name)
             else:
-                if dep_info["critical"]:
-                    results["critical_missing"].append(dep_name)
-                else:
-                    results["optional_missing"].append(dep_name)
+                results["optional_missing"].append(dep_name)
 
         # Generate summary
         total_available = len(results["available"])
@@ -279,7 +277,7 @@ class DependencyFeedback:
 
         return results
 
-    def get_installation_batch_script(self, missing_deps: List[str]) -> str:
+    def get_installation_batch_script(self, missing_deps: list[str]) -> str:
         """Generate batch installation script for missing dependencies."""
         if not missing_deps:
             return "# All dependencies are available!"
@@ -296,13 +294,12 @@ class DependencyFeedback:
                 script_lines.append(f"# Installing {info['name']} - {info['description']}")
 
                 if self.system in info["install_commands"]:
-                    for cmd in info["install_commands"][self.system]:
-                        script_lines.append(cmd)
+                    script_lines.extend(info["install_commands"][self.system])
                     script_lines.append("")
 
         return "\n".join(script_lines)
 
-    def get_category_alternatives(self, category: str) -> List[str]:
+    def get_category_alternatives(self, category: str) -> list[str]:
         """Get alternative tools for a specific category."""
         alternatives = []
         for _dep_name, dep_info in self.DEPENDENCY_INFO.items():
@@ -310,7 +307,7 @@ class DependencyFeedback:
                 alternatives.extend(dep_info.get("alternatives", []))
         return list(set(alternatives))  # Remove duplicates
 
-    def generate_missing_dependency_report(self, missing_deps: List[str]) -> str:
+    def generate_missing_dependency_report(self, missing_deps: list[str]) -> str:
         """Generate comprehensive report for missing dependencies."""
         if not missing_deps:
             return "OK All required dependencies are available!"

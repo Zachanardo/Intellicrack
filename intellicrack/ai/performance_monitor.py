@@ -24,6 +24,7 @@ import json
 import logging
 import threading
 import time
+import types
 from collections import defaultdict, deque
 from collections.abc import Callable
 from contextlib import contextmanager
@@ -470,7 +471,7 @@ class PerformanceMonitor:
         self.start_monitoring()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType | None):
         """Context manager exit."""
         if exc_type:
             logger.error(f"Performance monitor exiting due to {exc_type.__name__}: {exc_val}")
@@ -541,7 +542,7 @@ class AsyncPerformanceMonitor:
         self.base_monitor = base_monitor
         self.async_operations: dict[str, dict[str, Any]] = {}
 
-    async def profile_async_operation(self, operation_name: str, coro):
+    async def profile_async_operation(self, operation_name: str, coro: Any):
         """Profile an async operation."""
         start_time = time.time()
         start_memory = psutil.Process().memory_info().rss

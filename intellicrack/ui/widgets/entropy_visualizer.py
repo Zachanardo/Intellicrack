@@ -139,13 +139,19 @@ class EntropyVisualizer(QWidget):
         """Load binary data and calculate entropy with comprehensive error handling."""
         try:
             if not isinstance(data, bytes):
-                raise TypeError(f"Expected bytes data, got {type(data)}")
+                error_msg = f"Expected bytes data, got {type(data)}"
+                logger.error(error_msg)
+                raise TypeError(error_msg)
 
             if not data:
-                raise ValueError("Cannot process empty data")
+                error_msg = "Cannot process empty data"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
 
             if block_size <= 0:
-                raise ValueError(f"Block size must be positive, got {block_size}")
+                error_msg = f"Block size must be positive, got {block_size}"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
 
             if len(data) < block_size:
                 block_size = max(1, len(data) // 4)  # Adaptive block size for small files
@@ -169,18 +175,24 @@ class EntropyVisualizer(QWidget):
                 return
 
             if len(self.entropy_data) != len(self.block_positions):
-                raise ValueError("Mismatch between entropy data and position data")
+                error_msg = "Mismatch between entropy data and position data"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
 
             # Update plot with validation
             if hasattr(self, "entropy_curve") and self.entropy_curve:
                 self.entropy_curve.setData(self.block_positions, self.entropy_data)
             else:
-                raise AttributeError("Entropy curve not properly initialized")
+                error_msg = "Entropy curve not properly initialized"
+                logger.error(error_msg)
+                raise AttributeError(error_msg)
 
             # Calculate statistics with error handling
             entropy_array = np.array(self.entropy_data)
             if len(entropy_array) == 0:
-                raise ValueError("Empty entropy data array")
+                error_msg = "Empty entropy data array"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
 
             avg_entropy = np.mean(entropy_array)
             max_entropy = np.max(entropy_array)
@@ -188,7 +200,9 @@ class EntropyVisualizer(QWidget):
 
             # Validate calculated values
             if np.isnan(avg_entropy) or np.isnan(max_entropy) or np.isnan(min_entropy):
-                raise ValueError("Invalid entropy calculations (NaN detected)")
+                error_msg = "Invalid entropy calculations (NaN detected)"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
 
             # Identify interesting regions
             high_entropy_blocks = sum(1 for e in self.entropy_data if e > 7.5)

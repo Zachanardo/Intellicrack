@@ -288,7 +288,9 @@ class AdobeInjectorTab(BaseTab):
 
                 # Validate that cmd contains only safe, expected commands
                 if not isinstance(cmd, list) or not all(isinstance(arg, str) for arg in cmd):
-                    raise ValueError(f"Unsafe command: {cmd}")
+                    error_msg = f"Unsafe command: {cmd}"
+                    logger.error(error_msg)
+                    raise ValueError(error_msg)
                 cwd_str = str(adobe_injector_path.parent).replace(";", "").replace("|", "").replace("&", "")
                 self.adobe_injector_process = subprocess.Popen(
                     cmd,
@@ -308,7 +310,9 @@ class AdobeInjectorTab(BaseTab):
                 # Launch visible
                 # Validate that cmd contains only safe, expected commands
                 if not isinstance(cmd, list) or not all(isinstance(arg, str) for arg in cmd):
-                    raise ValueError(f"Unsafe command: {cmd}")
+                    error_msg = f"Unsafe command: {cmd}"
+                    logger.error(error_msg)
+                    raise ValueError(error_msg)
                 cwd_str = str(adobe_injector_path.parent).replace(";", "").replace("|", "").replace("&", "")
                 self.adobe_injector_process = subprocess.Popen(cmd, cwd=cwd_str, shell=False)
                 self.subprocess_output.append("Adobe Injector launched in visible mode")

@@ -220,11 +220,9 @@ class GoogleRepository(APIRepositoryBase):
                 capabilities.append("embeddings")
 
             # Check for multimodal support
-            input_features = []
-            for input_feature in (
-                model_data.get("inputSchema", {}).get("properties", {}).get("parts", {}).get("items", {}).get("properties", {})
-            ):
-                input_features.append(input_feature)
+            input_features = list(
+                model_data.get("inputSchema", {}).get("properties", {}).get("parts", {}).get("items", {}).get("properties", {}).keys(),
+            )
 
             if "inlineData" in input_features:
                 capabilities.append("vision")

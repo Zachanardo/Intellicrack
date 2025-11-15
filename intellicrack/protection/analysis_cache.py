@@ -139,7 +139,7 @@ class CacheEntry:
                 return False
 
             # Check file modification time
-            current_mtime = os.path.getmtime(file_path)
+            current_mtime = Path(file_path).stat().st_mtime
             if current_mtime > self.file_mtime:
                 return False
 
@@ -283,7 +283,7 @@ class AnalysisCache:
 
         try:
             # Get file metadata
-            file_mtime = os.path.getmtime(file_path)
+            file_mtime = Path(file_path).stat().st_mtime
             file_size = os.path.getsize(file_path)
 
             entry = CacheEntry(

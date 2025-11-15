@@ -25,7 +25,7 @@ import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 try:
     import yara
@@ -61,8 +61,8 @@ class StreamingYaraScanner(StreamingAnalyzer):
 
     def __init__(
         self,
-        rules_path: Optional[Path] = None,
-        rules_source: Optional[str] = None,
+        rules_path: Path | None = None,
+        rules_source: str | None = None,
         max_matches_per_rule: int = 1000,
     ) -> None:
         """Initialize streaming YARA scanner.
@@ -444,9 +444,9 @@ rule License_Check_Function {
 
 def scan_binary_streaming(
     binary_path: Path,
-    rules_path: Optional[Path] = None,
-    rules_source: Optional[str] = None,
-    progress_callback: Optional[Any] = None,
+    rules_path: Path | None = None,
+    rules_source: str | None = None,
+    progress_callback: Any | None = None,
 ) -> dict[str, Any]:
     """Perform streaming YARA scan on large binary.
 

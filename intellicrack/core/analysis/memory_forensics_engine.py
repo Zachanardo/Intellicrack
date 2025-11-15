@@ -1342,8 +1342,8 @@ class MemoryForensicsEngine:
                                     if os.path.exists(fd_path):
                                         for fd in os.listdir(fd_path):
                                             try:
-                                                link = os.readlink(f"{fd_path}/{fd}")
-                                                if f"socket:[{inode}]" in link:
+                                                link = Path(f"{fd_path}/{fd}").readlink()
+                                                if f"socket:[{inode}]" in str(link):
                                                     local_addr = self._parse_linux_addr(fields[1])
                                                     remote_addr = self._parse_linux_addr(fields[2])
                                                     connections.append(

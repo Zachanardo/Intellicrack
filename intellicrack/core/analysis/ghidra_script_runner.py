@@ -24,7 +24,7 @@ import subprocess
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ class GhidraScript:
     name: str
     path: Path
     language: str  # "python" or "java"
-    parameters: Dict[str, Any]
+    parameters: dict[str, Any]
     output_format: str  # "json", "xml", "text"
     timeout: int = 300  # seconds
     requires_project: bool = True
@@ -62,15 +62,14 @@ class GhidraScriptRunner:
 
         self.intellicrack_scripts_dir = Path(__file__).parent.parent.parent / "scripts" / "ghidra"
 
-        self.discovered_scripts: Dict[str, GhidraScript] = {}
+        self.discovered_scripts: dict[str, GhidraScript] = {}
         self._discover_all_scripts()
 
     def _get_headless_path(self) -> Path:
         """Get path to headless analyzer."""
         if os.name == "nt":
             return self.ghidra_path / "support" / "analyzeHeadless.bat"
-        else:
-            return self.ghidra_path / "support" / "analyzeHeadless"
+        return self.ghidra_path / "support" / "analyzeHeadless"
 
     def _discover_all_scripts(self) -> None:
         """Dynamically discover all Ghidra scripts from intellicrack scripts directory."""
@@ -101,7 +100,7 @@ class GhidraScriptRunner:
 
         logger.info(f"Discovered {len(self.discovered_scripts)} Ghidra scripts from {self.intellicrack_scripts_dir}")
 
-    def _parse_script_metadata(self, script_path: Path) -> Dict[str, Any]:
+    def _parse_script_metadata(self, script_path: Path) -> dict[str, Any]:
         """Parse metadata from script header comments.
 
         Supports both Python (#) and Java (//, /*) style comments.
@@ -135,11 +134,11 @@ class GhidraScriptRunner:
         self,
         binary_path: Path,
         script_name: str,
-        output_dir: Optional[Path] = None,
-        parameters: Optional[Dict[str, Any]] = None,
-        project_path: Optional[Path] = None,
+        output_dir: Path | None = None,
+        parameters: dict[str, Any] | None = None,
+        project_path: Path | None = None,
         use_terminal: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Run a Ghidra script on a binary.
 
         Args:
@@ -229,26 +228,25 @@ class GhidraScriptRunner:
                     },
                 }
                 return results
-            else:
-                # Standard execution with captured output
-                # Validate that cmd contains only safe, expected commands
-                if not isinstance(cmd, list) or not all(isinstance(arg, str) for arg in cmd):
-                    raise ValueError(f"Unsafe command: {cmd}")
-                temp_dir_path = str(temp_dir).replace(";", "").replace("|", "").replace("&", "")
-                result = subprocess.run(cmd, capture_output=True, text=True, timeout=script.timeout, cwd=temp_dir_path, shell=False)
+            # Standard execution with captured output
+            # Validate that cmd contains only safe, expected commands
+            if not isinstance(cmd, list) or not all(isinstance(arg, str) for arg in cmd):
+                raise ValueError(f"Unsafe command: {cmd}")
+            temp_dir_path = str(temp_dir).replace(";", "").replace("|", "").replace("&", "")
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=script.timeout, cwd=temp_dir_path, shell=False)
 
-                # Parse results based on output format
-                results = self._parse_script_output(output_dir, script.output_format, result.stdout, result.stderr)
+            # Parse results based on output format
+            results = self._parse_script_output(output_dir, script.output_format, result.stdout, result.stderr)
 
-                # Add execution metadata
-                results["execution"] = {
-                    "script": script_name,
-                    "binary": str(binary_path),
-                    "return_code": result.returncode,
-                    "success": result.returncode == 0,
-                }
+            # Add execution metadata
+            results["execution"] = {
+                "script": script_name,
+                "binary": str(binary_path),
+                "return_code": result.returncode,
+                "success": result.returncode == 0,
+            }
 
-                return results
+            return results
 
         except subprocess.TimeoutExpired:
             logger.error(f"Script {script_name} timed out after {script.timeout} seconds")
@@ -263,7 +261,7 @@ class GhidraScriptRunner:
             if not project_path and temp_dir.exists():
                 shutil.rmtree(temp_dir, ignore_errors=True)
 
-    def run_script_chain(self, binary_path: Path, script_names: List[str], output_dir: Path, share_project: bool = True) -> Dict[str, Any]:
+    def run_script_chain(self, binary_path: Path, script_names: list[str], output_dir: Path, share_project: bool = True) -> dict[str, Any]:
         """Run multiple scripts in sequence, optionally sharing project."""
         results = {}
         project_path = None
@@ -299,7 +297,7 @@ class GhidraScriptRunner:
                 shutil.rmtree(project_path, ignore_errors=True)
 
     def create_custom_script(
-        self, name: str, code: str, language: str = "python", parameters: Optional[Dict[str, Any]] = None,
+        self, name: str, code: str, language: str = "python", parameters: dict[str, Any] | None = None,
     ) -> GhidraScript:
         """Create a custom Ghidra script."""
         # Create custom scripts directory
@@ -338,7 +336,7 @@ class GhidraScriptRunner:
 
         return script
 
-    def _get_script(self, name: str) -> Optional[GhidraScript]:
+    def _get_script(self, name: str) -> GhidraScript | None:
         """Get script by name (case-insensitive)."""
         name_lower = name.lower()
 
@@ -370,7 +368,7 @@ class GhidraScriptRunner:
         logger.warning(f"Script not found: {name}")
         return None
 
-    def _parse_script_output(self, output_dir: Path, format: str, stdout: str, stderr: str) -> Dict[str, Any]:
+    def _parse_script_output(self, output_dir: Path, format: str, stdout: str, stderr: str) -> dict[str, Any]:
         """Parse script output based on format."""
         results = {"stdout": stdout, "stderr": stderr, "files": []}
 
@@ -401,7 +399,7 @@ class GhidraScriptRunner:
 
         return results
 
-    def list_available_scripts(self) -> List[Dict[str, str]]:
+    def list_available_scripts(self) -> list[dict[str, str]]:
         """List all dynamically discovered scripts."""
         scripts = []
 

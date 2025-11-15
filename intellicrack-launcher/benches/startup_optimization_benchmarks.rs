@@ -1,5 +1,6 @@
-use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
+use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use intellicrack_launcher::{discover_and_cache_tools, optimize_process, run_preflight_checks};
+use std::hint::black_box;
 use std::time::Duration;
 
 fn bench_process_optimization(c: &mut Criterion) {

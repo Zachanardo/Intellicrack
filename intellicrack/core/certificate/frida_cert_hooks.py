@@ -119,7 +119,7 @@ import threading
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import frida
 
@@ -163,13 +163,13 @@ class BypassStatus:
     """
 
     active: bool
-    library: Optional[str]
-    platform: Optional[str]
-    hooks_installed: List[str]
-    detected_libraries: List[Dict]
+    library: str | None
+    platform: str | None
+    hooks_installed: list[str]
+    detected_libraries: list[dict]
     message_count: int
-    errors: List[str]
-    intercepted_data: Dict[str, List] = field(default_factory=dict)
+    errors: list[str]
+    intercepted_data: dict[str, list] = field(default_factory=dict)
 
 
 class FridaCertificateHooks:
@@ -209,13 +209,13 @@ class FridaCertificateHooks:
 
         Sets up internal state for managing Frida session, script, messages, and bypass data.
         """
-        self.session: Optional[frida.core.Session] = None
-        self.script: Optional[frida.core.Script] = None
-        self.target: Optional[Union[str, int]] = None
-        self.messages: List[FridaMessage] = []
-        self.intercepted_certificates: List[Dict] = []
-        self.bypassed_connections: List[Dict] = []
-        self.errors: List[str] = []
+        self.session: frida.core.Session | None = None
+        self.script: frida.core.Script | None = None
+        self.target: str | int | None = None
+        self.messages: list[FridaMessage] = []
+        self.intercepted_certificates: list[dict] = []
+        self.bypassed_connections: list[dict] = []
+        self.errors: list[str] = []
         self._message_lock = threading.Lock()
         self._attached = False
         self._script_loaded = False
@@ -254,7 +254,7 @@ class FridaCertificateHooks:
             logger.error(f"Failed to load script {script_name}: {e}")
             raise
 
-    def attach(self, target: Union[str, int]) -> bool:
+    def attach(self, target: str | int) -> bool:
         """Attach to a target process for certificate bypass injection.
 
         Args:
@@ -404,7 +404,7 @@ class FridaCertificateHooks:
             self.errors.append(error_msg)
             return False
 
-    def _on_message(self, message: Dict, data: Optional[bytes]) -> None:
+    def _on_message(self, message: dict, data: bytes | None) -> None:
         """Handle messages received from injected Frida scripts.
 
         This callback processes all messages sent from the JavaScript hooks including
@@ -426,7 +426,7 @@ class FridaCertificateHooks:
             else:
                 logger.warning(f"Unknown message type: {msg_type}")
 
-    def _handle_send_message(self, payload: Any, data: Optional[bytes]) -> None:
+    def _handle_send_message(self, payload: Any, data: bytes | None) -> None:
         """Process 'send' type messages from Frida scripts.
 
         Parses different message types (log, certificate, bypass_success, etc.)
@@ -494,7 +494,7 @@ class FridaCertificateHooks:
             lib_data = payload.get("data", {})
             logger.info(f"Detected TLS library: {lib_data.get('type')} - {lib_data.get('name')}")
 
-    def _handle_error_message(self, message: Dict) -> None:
+    def _handle_error_message(self, message: dict) -> None:
         """Process error messages from Frida scripts.
 
         Logs script errors with stack traces and appends to error list.
@@ -515,7 +515,7 @@ class FridaCertificateHooks:
 
         self.errors.append(error_msg)
 
-    def _on_detached(self, reason: str, crash: Optional[Any]) -> None:
+    def _on_detached(self, reason: str, crash: Any | None) -> None:
         """Handle detachment from target process.
 
         Called when Frida session is detached, either intentionally or due to crash.
@@ -580,7 +580,7 @@ class FridaCertificateHooks:
                 errors=[*self.errors, str(e)],
             )
 
-    def get_intercepted_certificates(self) -> List[Dict]:
+    def get_intercepted_certificates(self) -> list[dict]:
         """Get all intercepted certificate data.
 
         Returns:
@@ -589,7 +589,7 @@ class FridaCertificateHooks:
         """
         return self.intercepted_certificates.copy()
 
-    def get_bypassed_connections(self) -> List[Dict]:
+    def get_bypassed_connections(self) -> list[dict]:
         """Get all bypassed HTTPS connection data.
 
         Returns:
@@ -684,7 +684,7 @@ class FridaCertificateHooks:
             self.errors.append(error_msg)
             return False
 
-    def get_messages(self, count: Optional[int] = None) -> List[FridaMessage]:
+    def get_messages(self, count: int | None = None) -> list[FridaMessage]:
         """Get messages received from Frida scripts.
 
         Args:

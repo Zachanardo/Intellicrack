@@ -12,7 +12,7 @@ import struct
 import time
 from datetime import datetime
 from enum import IntEnum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import psutil
 
@@ -281,7 +281,7 @@ class LicenseAnalyzer:
             logger.debug(f"Exception during attach to process: {e}", exc_info=True)
             return False
 
-    def find_license_checks(self) -> List[Dict[str, Any]]:
+    def find_license_checks(self) -> list[dict[str, Any]]:
         """Scan memory for potential license check locations."""
         if not self.process_handle:
             logger.debug("No process attached. Cannot find license checks.")
@@ -332,7 +332,7 @@ class LicenseAnalyzer:
         logger.debug(f"Finished finding license checks. Total found: {len(license_checks)}")
         return license_checks
 
-    def _analyze_license_check_context(self, address: int) -> Optional[Dict[str, Any]]:
+    def _analyze_license_check_context(self, address: int) -> dict[str, Any] | None:
         """Analyze code around potential license check."""
         logger.debug(f"Analyzing license check context around address 0x{address:X}.")
         # Read surrounding bytes
@@ -372,9 +372,8 @@ class LicenseAnalyzer:
         if context["jumps"] or context["type"] != "unknown":
             logger.debug(f"Context analysis for 0x{address:X} complete. Type: {context['type']}, Jumps: {len(context['jumps'])}")
             return context
-        else:
-            logger.debug(f"No significant context found around 0x{address:X}.")
-            return None
+        logger.debug(f"No significant context found around 0x{address:X}.")
+        return None
 
     def patch_license_check(self, address: int, patch_type: str = "nop") -> bool:
         """Patch a license check at the given address."""
@@ -434,7 +433,7 @@ class LicenseAnalyzer:
 
         return success
 
-    def read_memory(self, address: int, size: int) -> Optional[bytes]:
+    def read_memory(self, address: int, size: int) -> bytes | None:
         """Read memory from attached process."""
         logger.debug(f"Attempting to read {size} bytes from address 0x{address:X}.")
         if not self.process_handle:
@@ -449,9 +448,8 @@ class LicenseAnalyzer:
         if success:
             logger.debug(f"Successfully read {bytes_read.value} bytes from 0x{address:X}.")
             return bytes(buffer)
-        else:
-            logger.debug(f"Failed to read memory from 0x{address:X}. Error: {ctypes.get_last_error()}")
-            return None
+        logger.debug(f"Failed to read memory from 0x{address:X}. Error: {ctypes.get_last_error()}")
+        return None
 
     def write_memory(self, address: int, data: bytes) -> bool:
         """Write memory to attached process."""
@@ -485,7 +483,7 @@ class LicenseAnalyzer:
             logger.debug(f"Failed to write memory to 0x{address:X}. Error: {ctypes.get_last_error()}")
         return bool(success)
 
-    def _get_memory_regions(self) -> List[Dict[str, Any]]:
+    def _get_memory_regions(self) -> list[dict[str, Any]]:
         """Get memory regions of attached process."""
         if not self.process_handle:
             logger.debug("No process attached. Cannot get memory regions.")
@@ -595,7 +593,7 @@ class LicenseAnalyzer:
         self.kernel32.GetProcAddress.argtypes = [ctypes.wintypes.HMODULE, ctypes.c_char_p]
         self.kernel32.GetProcAddress.restype = ctypes.c_void_p
 
-    def scan_pattern(self, pattern: bytes, mask: Optional[bytes] = None) -> List[int]:
+    def scan_pattern(self, pattern: bytes, mask: bytes | None = None) -> list[int]:
         """Scan memory for byte pattern."""
         if not self.process_handle:
             logger.debug("No process attached. Cannot scan pattern.")
@@ -628,7 +626,7 @@ class LicenseAnalyzer:
         logger.debug(f"Finished pattern scan. Total matches found: {len(matches)}")
         return matches
 
-    def _masked_pattern_scan(self, memory: bytes, pattern: bytes, mask: bytes, base_addr: int) -> List[int]:
+    def _masked_pattern_scan(self, memory: bytes, pattern: bytes, mask: bytes, base_addr: int) -> list[int]:
         """Scan with wildcard mask support."""
         matches = []
         pattern_len = len(pattern)
@@ -646,7 +644,7 @@ class LicenseAnalyzer:
         logger.debug(f"Masked pattern scan completed. Found {len(matches)} matches.")
         return matches
 
-    def scan_patterns_concurrent(self, patterns: List[Dict[str, Any]], max_workers: int = 4) -> Dict[str, List[int]]:
+    def scan_patterns_concurrent(self, patterns: list[dict[str, Any]], max_workers: int = 4) -> dict[str, list[int]]:
         """Scan for multiple patterns concurrently using thread pool.
 
         Args:
@@ -678,7 +676,7 @@ class LicenseAnalyzer:
         # Thread-safe result collection
         results_lock = threading.Lock()
 
-        def scan_region_for_patterns(region: Dict[str, Any]) -> Dict[str, List[int]]:
+        def scan_region_for_patterns(region: dict[str, Any]) -> dict[str, list[int]]:
             """Worker function to scan a single region for all patterns."""
             local_results = {pattern["name"]: [] for pattern in patterns}
             logger.debug(f"Worker scanning region 0x{region['base_address']:X} (size: 0x{region['size']:X}).")
@@ -743,14 +741,14 @@ class LicenseAnalyzer:
                     logger.debug(f"Exception processing region 0x{region['base_address']:X}: {e}", exc_info=True)
 
         # Sort results for each pattern
-        for pattern_name in results:
-            results[pattern_name].sort()
+        for _pattern_name, pattern_results in results.items():
+            pattern_results.sort()
 
         logger.info(f"Concurrent scan complete: {sum(len(v) for v in results.values())} total matches")
         logger.debug(f"Final concurrent scan results: {results}")
         return results
 
-    def analyze_cross_references(self, address: int, scan_range: int = 0x10000) -> Dict[str, List[Dict[str, Any]]]:  # noqa: C901
+    def analyze_cross_references(self, address: int, scan_range: int = 0x10000) -> dict[str, list[dict[str, Any]]]:  # noqa: C901
         """Analyze cross-references to/from a given address.
 
         Args:
@@ -943,7 +941,7 @@ class LicenseAnalyzer:
         logger.debug(f"Cross-reference analysis for 0x{address:X} completed. Results: {references}")
         return references
 
-    def generate_signature_from_sample(self, sample_addresses: List[int], context_size: int = 32) -> Dict[str, Any]:
+    def generate_signature_from_sample(self, sample_addresses: list[int], context_size: int = 32) -> dict[str, Any]:
         """Generate signature pattern from sample addresses.
 
         Args:
@@ -1032,7 +1030,7 @@ class LicenseAnalyzer:
         logger.debug(f"Final generated signature: {signature}")
         return signature
 
-    def _find_common_sequences(self, samples: List[bytes], min_length: int = 4) -> List[bytes]:
+    def _find_common_sequences(self, samples: list[bytes], min_length: int = 4) -> list[bytes]:
         """Find common byte sequences across samples."""
         logger.debug(f"Finding common sequences across {len(samples)} samples (min_length: {min_length}).")
         if len(samples) < 2:
@@ -1059,7 +1057,7 @@ class LicenseAnalyzer:
         logger.debug(f"Finished finding common sequences. Total found: {len(common_sequences)}. Top 10: {[s.hex() for s in common_sequences[:10]]}")
         return common_sequences[:10]  # Return top 10 sequences
 
-    def _refine_signature(self, pattern: bytearray, mask: bytearray, common_sequences: List[bytes]) -> tuple[bytearray, bytearray]:
+    def _refine_signature(self, pattern: bytearray, mask: bytearray, common_sequences: list[bytes]) -> tuple[bytearray, bytearray]:
         """Refine signature using common sequences."""
         logger.debug("Refining signature using common sequences.")
         refined_pattern = bytearray(pattern)
@@ -1107,7 +1105,7 @@ class LicenseAnalyzer:
         logger.debug(f"Generated YARA hex string: {yara_hex_string}")
         return yara_hex_string
 
-    def auto_generate_signatures(self, target_functions: List[str]) -> Dict[str, Dict[str, Any]]:
+    def auto_generate_signatures(self, target_functions: list[str]) -> dict[str, dict[str, Any]]:
         """Automatically generate signatures for known protection functions.
 
         Args:
@@ -1184,7 +1182,7 @@ class LicenseAnalyzer:
         logger.debug(f"Auto-signature generation complete. Total signatures: {len(signatures)}")
         return signatures
 
-    def _get_cache_key(self, pattern: bytes, mask: Optional[bytes] = None) -> str:
+    def _get_cache_key(self, pattern: bytes, mask: bytes | None = None) -> str:
         """Generate unique cache key for pattern."""
         import hashlib
 
@@ -1222,7 +1220,7 @@ class LicenseAnalyzer:
                 self._cache_stats["evictions"] += 1
                 logger.debug(f"Evicted cache entry: {oldest_key}")
 
-    def scan_pattern_cached(self, pattern: bytes, mask: Optional[bytes] = None) -> List[int]:
+    def scan_pattern_cached(self, pattern: bytes, mask: bytes | None = None) -> list[int]:
         """Scan memory for byte pattern with caching."""
         import time
 
@@ -1250,7 +1248,7 @@ class LicenseAnalyzer:
 
             return results
 
-    def invalidate_cache(self, pattern: Optional[bytes] = None) -> None:
+    def invalidate_cache(self, pattern: bytes | None = None) -> None:
         """Invalidate cache entries."""
         with self._cache_lock:
             if pattern:
@@ -1271,7 +1269,7 @@ class LicenseAnalyzer:
                 logger.info("Invalidated entire pattern cache")
                 logger.debug("All cache entries invalidated.")
 
-    def get_cache_stats(self) -> Dict[str, Any]:
+    def get_cache_stats(self) -> dict[str, Any]:
         """Get cache performance statistics."""
         with self._cache_lock:
             total_requests = self._cache_stats["hits"] + self._cache_stats["misses"]
@@ -1315,7 +1313,7 @@ class LicenseAnalyzer:
                 logger.debug(f"Cache size decreased to {self._cache_max_size} due to high hit rate and low evictions.")
             logger.debug("Cache optimization complete.")
 
-    def batch_scan_with_cache(self, patterns: List[Dict[str, Any]]) -> Dict[str, List[int]]:
+    def batch_scan_with_cache(self, patterns: list[dict[str, Any]]) -> dict[str, list[int]]:
         """Batch scan multiple patterns with intelligent caching."""
         logger.debug(f"Starting batch scan for {len(patterns)} patterns.")
         results = {}
@@ -1362,7 +1360,7 @@ class LicenseAnalyzer:
         logger.debug(f"Final batch scan results: {results}")
         return results
 
-    def get_peb_address(self) -> Optional[int]:
+    def get_peb_address(self) -> int | None:
         """Get PEB address for current process."""
         logger.debug("Attempting to retrieve PEB address.")
         if not self.process_handle:
@@ -1395,17 +1393,16 @@ class LicenseAnalyzer:
                 peb_address = ctypes.addressof(pbi.PebBaseAddress.contents)
                 logger.debug(f"Successfully retrieved PEB address: 0x{peb_address:X}.")
                 return peb_address
-            else:
-                logger.error(f"NtQueryInformationProcess failed with status: 0x{status:X}")
-                logger.debug(f"NtQueryInformationProcess failed. Status: 0x{status:X}.")
-                return None
+            logger.error(f"NtQueryInformationProcess failed with status: 0x{status:X}")
+            logger.debug(f"NtQueryInformationProcess failed. Status: 0x{status:X}.")
+            return None
 
         except Exception as e:
             logger.error(f"Failed to get PEB address: {e}")
             logger.debug(f"Exception during PEB address retrieval: {e}", exc_info=True)
             return None
 
-    def read_peb(self) -> Optional[Peb]:
+    def read_peb(self) -> Peb | None:
         """Read PEB structure from target process."""
         logger.debug("Attempting to read PEB structure.")
         if not self.process_handle:
@@ -1429,10 +1426,9 @@ class LicenseAnalyzer:
             if success:
                 logger.debug(f"Successfully read PEB from 0x{peb_addr:X}.")
                 return peb
-            else:
-                logger.error(f"Failed to read PEB: {ctypes.GetLastError()}")
-                logger.debug(f"Failed to read PEB. Error: {ctypes.GetLastError()}.")
-                return None
+            logger.error(f"Failed to read PEB: {ctypes.GetLastError()}")
+            logger.debug(f"Failed to read PEB. Error: {ctypes.GetLastError()}.")
+            return None
 
         except Exception as e:
             logger.error(f"Error reading PEB: {e}")
@@ -1547,10 +1543,9 @@ class LicenseAnalyzer:
                 logger.info(f"PEB manipulation complete: {', '.join(modifications_made)}")
                 logger.debug("PEB manipulation successful.")
                 return True
-            else:
-                logger.warning("No PEB modifications were successful")
-                logger.debug("PEB manipulation completed with no successful modifications.")
-                return False
+            logger.warning("No PEB modifications were successful")
+            logger.debug("PEB manipulation completed with no successful modifications.")
+            return False
 
         except Exception as e:
             logger.error(f"PEB manipulation failed: {e}")
@@ -1641,12 +1636,11 @@ class LicenseAnalyzer:
             logger.info(f"Applied {len(techniques_applied)} anti-debug bypass techniques: {', '.join(techniques_applied)}")
             logger.debug("Anti-debug bypass techniques applied successfully.")
             return True
-        else:
-            logger.warning("Failed to apply any anti-debug bypass techniques")
-            logger.debug("No anti-debug bypass techniques were successfully applied.")
-            return False
+        logger.warning("Failed to apply any anti-debug bypass techniques")
+        logger.debug("No anti-debug bypass techniques were successfully applied.")
+        return False
 
-    def check_peb_for_debugger(self) -> Dict[str, bool]:
+    def check_peb_for_debugger(self) -> dict[str, bool]:
         """Check PEB for various debugger indicators."""
         logger.debug("Checking PEB for debugger indicators.")
         indicators = {"BeingDebugged": False, "NtGlobalFlag": False, "HeapFlags": False, "DebuggerPresent": False}
@@ -1766,8 +1760,7 @@ class LicenseAnalyzer:
                     logger.info(f"Modified PEB image path to: {new_path}")
                     logger.debug("PEB image path modified successfully.")
                     return True
-                else:
-                    logger.debug(f"Failed to write updated ProcessParameters back. Error: {ctypes.get_last_error()}")
+                logger.debug(f"Failed to write updated ProcessParameters back. Error: {ctypes.get_last_error()}")
             else:
                 logger.debug(f"Failed to write new image path to allocated memory. Error: {ctypes.get_last_error()}")
 
@@ -1777,7 +1770,7 @@ class LicenseAnalyzer:
 
         return False
 
-    def walk_vad_tree(self) -> List[Dict[str, Any]]:
+    def walk_vad_tree(self) -> list[dict[str, Any]]:
         """Walk Virtual Address Descriptor tree to enumerate all memory regions."""
         logger.debug("Starting VAD tree walk to enumerate memory regions.")
         if not self.process_handle:
@@ -1893,7 +1886,7 @@ class LicenseAnalyzer:
         types = {0x20000: "PRIVATE", 0x40000: "MAPPED", 0x1000000: "IMAGE"}
         return types.get(mem_type, f"UNKNOWN(0x{mem_type:X})")
 
-    def find_hidden_memory_regions(self) -> List[Dict[str, Any]]:
+    def find_hidden_memory_regions(self) -> list[dict[str, Any]]:
         """Find potentially hidden memory regions using VAD analysis."""
         logger.debug("Starting search for potentially hidden memory regions.")
         vad_entries = self.walk_vad_tree()
@@ -1947,7 +1940,7 @@ class LicenseAnalyzer:
         logger.debug(f"Finished searching for hidden memory regions. Total found: {len(hidden_regions)}.")
         return hidden_regions
 
-    def enumerate_executable_regions(self) -> List[Dict[str, Any]]:
+    def enumerate_executable_regions(self) -> list[dict[str, Any]]:
         """Enumerate all executable memory regions."""
         vad_entries = self.walk_vad_tree()
         executable_regions = []
@@ -1986,7 +1979,7 @@ class LicenseAnalyzer:
         logger.info(f"Found {len(executable_regions)} executable regions")
         return executable_regions
 
-    def _get_module_name_at_address(self, address: int) -> Optional[str]:
+    def _get_module_name_at_address(self, address: int) -> str | None:
         """Get module name at specified address."""
         try:
             for module in self.enumerate_modules():
@@ -2002,7 +1995,7 @@ class LicenseAnalyzer:
 
         return None
 
-    def analyze_memory_gaps(self) -> List[Dict[str, Any]]:
+    def analyze_memory_gaps(self) -> list[dict[str, Any]]:
         """Analyze gaps between memory regions for potential hiding spots."""
         vad_entries = self.walk_vad_tree()
         gaps = []
@@ -2040,7 +2033,7 @@ class LicenseAnalyzer:
         logger.info(f"Found {len(gaps)} memory gaps, {sum(1 for g in gaps if g['suitable_for_injection'])} suitable for injection")
         return gaps
 
-    def detect_vad_manipulation(self) -> Dict[str, Any]:
+    def detect_vad_manipulation(self) -> dict[str, Any]:
         """Detect signs of VAD manipulation or hiding techniques."""
         detection_results = {"vad_hiding_detected": False, "anomalies": [], "suspicious_regions": [], "confidence": 0.0}
 
@@ -2104,7 +2097,7 @@ class LicenseAnalyzer:
 
         return detection_results
 
-    def _get_all_memory_regions_raw(self) -> List[Dict[str, Any]]:
+    def _get_all_memory_regions_raw(self) -> list[dict[str, Any]]:
         """Get all memory regions using low-level scanning."""
         regions = []
         current_address = 0
@@ -2133,7 +2126,7 @@ class LicenseAnalyzer:
 
         return regions
 
-    def find_code_caves(self, min_size: int = 16, max_size: int = 0x10000) -> List[Dict[str, Any]]:
+    def find_code_caves(self, min_size: int = 16, max_size: int = 0x10000) -> list[dict[str, Any]]:
         """Find code caves suitable for injection."""
         caves = []
 
@@ -2159,7 +2152,7 @@ class LicenseAnalyzer:
         logger.info(f"Found {len(caves)} code caves suitable for injection")
         return caves
 
-    def _find_section_slack_caves(self, min_size: int, max_size: int) -> List[Dict[str, Any]]:
+    def _find_section_slack_caves(self, min_size: int, max_size: int) -> list[dict[str, Any]]:
         """Find caves in PE section slack space."""
         caves = []
 
@@ -2239,7 +2232,7 @@ class LicenseAnalyzer:
 
         return caves
 
-    def _find_memory_gap_caves(self, min_size: int, max_size: int) -> List[Dict[str, Any]]:
+    def _find_memory_gap_caves(self, min_size: int, max_size: int) -> list[dict[str, Any]]:
         """Find caves in memory gaps between regions."""
         caves = []
         gaps = self.analyze_memory_gaps()
@@ -2271,7 +2264,7 @@ class LicenseAnalyzer:
 
         return caves
 
-    def _find_unused_region_caves(self, min_size: int, max_size: int) -> List[Dict[str, Any]]:
+    def _find_unused_region_caves(self, min_size: int, max_size: int) -> list[dict[str, Any]]:
         """Find caves in allocated but unused memory regions."""
         caves = []
         vad_entries = self.walk_vad_tree()
@@ -2332,7 +2325,7 @@ class LicenseAnalyzer:
 
         return caves
 
-    def _find_padding_caves(self, min_size: int, max_size: int) -> List[Dict[str, Any]]:
+    def _find_padding_caves(self, min_size: int, max_size: int) -> list[dict[str, Any]]:
         """Find caves in padding between functions."""
         caves = []
 
@@ -2413,7 +2406,7 @@ class LicenseAnalyzer:
 
         return caves
 
-    def validate_code_cave(self, address: int, size: int) -> Dict[str, Any]:
+    def validate_code_cave(self, address: int, size: int) -> dict[str, Any]:
         """Validate a code cave for safety and accessibility."""
         validation = {"is_valid": False, "is_safe": False, "is_accessible": False, "issues": [], "score": 0}
 
@@ -2461,7 +2454,7 @@ class LicenseAnalyzer:
 
         return validation
 
-    def select_optimal_cave(self, caves: List[Dict[str, Any]], required_size: int) -> Optional[Dict[str, Any]]:
+    def select_optimal_cave(self, caves: list[dict[str, Any]], required_size: int) -> dict[str, Any] | None:
         """Select the most suitable code cave for injection."""
         suitable_caves = []
 
@@ -2734,7 +2727,7 @@ class LicenseAnalyzer:
 
         return bytes(anti_sled[:length])
 
-    def create_randomized_nop_sled(self, length: int, techniques: List[str] = None) -> bytes:
+    def create_randomized_nop_sled(self, length: int, techniques: list[str] = None) -> bytes:
         """Create a highly randomized NOP sled using multiple techniques."""
         if length <= 0:
             return b""
@@ -2782,7 +2775,7 @@ class LicenseAnalyzer:
         """Patch bytes at specified address."""
         return self.write_memory(address, new_bytes)
 
-    def find_conditional_jumps(self, start_addr: int, size: int = 0x1000) -> List[Dict[str, Any]]:
+    def find_conditional_jumps(self, start_addr: int, size: int = 0x1000) -> list[dict[str, Any]]:
         """Find all conditional jumps in code region."""
         jumps = []
         memory = self.read_memory(start_addr, size)
@@ -2954,7 +2947,7 @@ class LicenseAnalyzer:
 
         return False
 
-    def detect_protection(self) -> Optional[str]:
+    def detect_protection(self) -> str | None:
         """Detect protection scheme used by target."""
         if not self.process_handle:
             return None
@@ -2967,7 +2960,7 @@ class LicenseAnalyzer:
 
         return None
 
-    def read_process_memory(self, address: int, size: int) -> Optional[bytes]:
+    def read_process_memory(self, address: int, size: int) -> bytes | None:
         """Alias for read_memory for compatibility."""
         return self.read_memory(address, size)
 
@@ -2975,7 +2968,7 @@ class LicenseAnalyzer:
         """Alias for write_memory for compatibility."""
         return self.write_memory(address, data)
 
-    def get_module_base(self, module_name: str) -> Optional[int]:
+    def get_module_base(self, module_name: str) -> int | None:
         """Get base address of loaded module."""
         if not self.pid:
             return None
@@ -2990,7 +2983,7 @@ class LicenseAnalyzer:
 
         return None
 
-    def enumerate_processes(self) -> List[Dict[str, Any]]:
+    def enumerate_processes(self) -> list[dict[str, Any]]:
         """Enumerate all running processes."""
         processes = []
 
@@ -3009,7 +3002,7 @@ class LicenseAnalyzer:
 
         return processes
 
-    def enumerate_modules(self, pid: Optional[int] = None) -> List[Dict[str, Any]]:
+    def enumerate_modules(self, pid: int | None = None) -> list[dict[str, Any]]:
         """Enumerate loaded modules in process."""
         target_pid = pid or self.pid
         if not target_pid:
@@ -3095,7 +3088,7 @@ class LicenseAnalyzer:
 
         return bool(success)
 
-    def query_memory(self, address: int) -> Dict[str, Any]:
+    def query_memory(self, address: int) -> dict[str, Any]:
         """Query memory information at specific address.
 
         Args:
@@ -3132,11 +3125,10 @@ class LicenseAnalyzer:
                 "protection": mbi.Protect,
                 "type": mbi.Type,
             }
-        else:
-            logger.error(f"Failed to query memory at 0x{address:X}")
-            return {}
+        logger.error(f"Failed to query memory at 0x{address:X}")
+        return {}
 
-    def enumerate_regions(self) -> List[Dict[str, Any]]:
+    def enumerate_regions(self) -> list[dict[str, Any]]:
         """Enumerate all memory regions in the process.
 
         Returns:

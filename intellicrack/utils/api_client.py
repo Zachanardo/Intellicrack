@@ -25,8 +25,6 @@ import asyncio
 import logging
 from typing import Any
 
-from .secrets_manager import get_secret
-
 logger = logging.getLogger(__name__)
 
 try:
@@ -45,6 +43,8 @@ class APIClient:
 
     def __init__(self, base_url: str | None = None) -> None:
         """Initialize the API client with configuration from environment or defaults."""
+        from .secrets_manager import get_secret
+
         if not HAS_AIOHTTP:
             logger.warning("aiohttp not available - API client will use fallback implementation")
         self.base_url = base_url or get_secret("API_BASE_URL", "https://api.intellicrack.com")
@@ -108,6 +108,8 @@ class APIClient:
         }
 
         # Add API key if available
+        from .secrets_manager import get_secret
+
         api_key = get_secret("API_KEY")
         if api_key:
             default_headers["Authorization"] = f"Bearer {api_key}"
@@ -137,9 +139,11 @@ class APIClient:
 
                         # Don't retry client errors (4xx)
                         if 400 <= response.status < 500:
+                            logger.error(error_msg)
                             raise ValueError(error_msg)
 
                         # Retry server errors (5xx)
+                        logger.error(error_msg)
                         raise aiohttp.ClientError(error_msg)
 
                     # Parse response
@@ -155,7 +159,9 @@ class APIClient:
                 # Wait before retry
                 await asyncio.sleep(self.retry_delay)
 
-        raise RuntimeError("Max retry attempts exceeded")
+        error_msg = "Max retry attempts exceeded"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg)
 
 
 async def make_api_call(endpoint: str, method: str = "GET", data: dict[str, Any] | None = None) -> dict[str, Any]:

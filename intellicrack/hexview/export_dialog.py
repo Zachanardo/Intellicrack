@@ -21,7 +21,6 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import os
-from typing import Optional
 
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -279,7 +278,7 @@ class ExportDialog(QDialog):
             logger.error(f"Export failed: {e}")
             QMessageBox.critical(self, "Export Failed", f"Failed to export data:\n{e!s}")
 
-    def get_export_data(self) -> Optional[bytes]:
+    def get_export_data(self) -> bytes | None:
         """Get the data to export based on selection.
 
         Returns:
@@ -300,17 +299,15 @@ class ExportDialog(QDialog):
                     QMessageBox.warning(self, "Read Error", "Failed to read selected data.")
                     return None
                 return data
-            else:
-                QMessageBox.warning(self, "No Selection", "No data is selected.")
-                return None
-        else:
-            # Export entire file
-            file_size = self.hex_viewer.file_handler.file_size
-            data = self.hex_viewer.file_handler.read_data(0, file_size)
-            if data is None:
-                QMessageBox.warning(self, "Read Error", "Failed to read file data.")
-                return None
-            return data
+            QMessageBox.warning(self, "No Selection", "No data is selected.")
+            return None
+        # Export entire file
+        file_size = self.hex_viewer.file_handler.file_size
+        data = self.hex_viewer.file_handler.read_data(0, file_size)
+        if data is None:
+            QMessageBox.warning(self, "Read Error", "Failed to read file data.")
+            return None
+        return data
 
     def format_hex_text(self, data: bytes) -> str:
         """Format data as hex text.

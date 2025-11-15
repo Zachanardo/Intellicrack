@@ -24,7 +24,7 @@ import threading
 import time
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import capstone
 import pefile
@@ -71,7 +71,7 @@ except ImportError:
             self._children = []
             self._properties = {}
 
-        def setParent(self, parent) -> None:
+        def setParent(self, parent: Any) -> None:  # noqa: ANN401
             """Set parent object for hierarchy management."""
             if self._parent:
                 self._parent._children.remove(self)
@@ -79,19 +79,19 @@ except ImportError:
             if parent:
                 parent._children.append(self)
 
-        def parent(self):
+        def parent(self) -> Any:  # noqa: ANN401
             """Get parent object in hierarchy."""
             return self._parent
 
-        def children(self):
+        def children(self) -> list[Any]:  # noqa: ANN401
             """Get list of child objects."""
             return self._children.copy()
 
-        def setProperty(self, name, value) -> None:
+        def setProperty(self, name: str, value: Any) -> None:  # noqa: ANN401
             """Set property value by name."""
             self._properties[name] = value
 
-        def property(self, name):
+        def property(self, name: str) -> Any:  # noqa: ANN401
             """Get property value by name."""
             return self._properties.get(name)
 
@@ -121,13 +121,13 @@ except ImportError:
             self._stop_event.clear()
             super().start()
 
-        def wait(self, timeout_ms=None) -> bool:
+        def wait(self, timeout_ms: int | None = None) -> bool:
             """Wait for thread completion with optional timeout in milliseconds."""
             timeout = timeout_ms / 1000.0 if timeout_ms else None
             self.join(timeout)
             return not self.is_alive()
 
-        def isRunning(self):
+        def isRunning(self) -> bool:
             """Check if thread is currently running."""
             return self._running and self.is_alive()
 
@@ -135,7 +135,7 @@ except ImportError:
             """Request thread interruption via stop event."""
             self._stop_event.set()
 
-        def isInterruptionRequested(self):
+        def isInterruptionRequested(self) -> bool:
             """Check if thread interruption has been requested."""
             return self._stop_event.is_set()
 
@@ -147,7 +147,6 @@ except ImportError:
         def run(self) -> None:
             """Thread execution method to be overridden in subclass."""
             # Override in subclass
-            pass
 
     class QDialog:
         """Fully functional dialog implementation fallback for PyQt6.QtWidgets.QDialog.
@@ -156,7 +155,7 @@ except ImportError:
         interface when PyQt6 is not available.
         """
 
-        def __init__(self, parent=None) -> None:
+        def __init__(self, parent: Any = None) -> None:  # noqa: ANN401
             """Initialize the VisibilityController with an optional parent and set visibility to False."""
             self._parent = parent
             self._visible = False
@@ -176,7 +175,7 @@ except ImportError:
             self._visible = False
             logger.info(f"Dialog '{self._title}' hidden")
 
-        def exec(self):
+        def exec(self) -> int:
             """Execute modal dialog and return result."""
             self._modal = True
             self._visible = True
@@ -193,15 +192,15 @@ except ImportError:
             self._result = 0
             self.hide()
 
-        def setWindowTitle(self, title) -> None:
+        def setWindowTitle(self, title: str) -> None:
             """Set dialog window title."""
             self._title = title
 
-        def resize(self, width, height) -> None:
+        def resize(self, width: int, height: int) -> None:
             """Resize dialog to specified dimensions."""
             self._size = (width, height)
 
-        def move(self, x, y) -> None:
+        def move(self, x: int, y: int) -> None:
             """Move dialog to specified position."""
             self._position = (x, y)
 
@@ -213,10 +212,9 @@ except ImportError:
             """Activate dialog window in console mode."""
             logger.debug(f"Activating dialog '{self._title}'")
 
-        def closeEvent(self, event) -> None:
+        def closeEvent(self, event: Any) -> None:  # noqa: ANN401
             """Handle close event to be overridden in subclass."""
             # Override in subclass
-            pass
 
     class QWidget:
         """Fully functional widget implementation fallback for PyQt6.QtWidgets.QWidget.
@@ -225,7 +223,7 @@ except ImportError:
         operation when PyQt6 is not available.
         """
 
-        def __init__(self, parent=None) -> None:
+        def __init__(self, parent: Any = None) -> None:  # noqa: ANN401
             """Initialize the ChildManager with an optional parent and empty children list."""
             self._parent = parent
             self._children = []
@@ -239,7 +237,7 @@ except ImportError:
             if parent:
                 parent._children.append(self)
 
-        def setParent(self, parent) -> None:
+        def setParent(self, parent: Any) -> None:  # noqa: ANN401
             """Set parent widget for hierarchy management."""
             if self._parent:
                 self._parent._children.remove(self)
@@ -247,58 +245,58 @@ except ImportError:
             if parent:
                 parent._children.append(self)
 
-        def parent(self):
+        def parent(self) -> Any:  # noqa: ANN401
             """Get parent widget in hierarchy."""
             return self._parent
 
-        def children(self):
+        def children(self) -> list[Any]:
             """Get list of child widgets."""
             return self._children.copy()
 
-        def setVisible(self, visible) -> None:
+        def setVisible(self, visible: bool) -> None:
             """Set widget visibility state."""
             self._visible = visible
 
-        def isVisible(self):
+        def isVisible(self) -> bool:
             """Check if widget is visible."""
             return self._visible
 
-        def setEnabled(self, enabled) -> None:
+        def setEnabled(self, enabled: bool) -> None:
             """Set widget enabled state and propagate to children."""
             self._enabled = enabled
             for child in self._children:
                 if hasattr(child, "setEnabled"):
                     child.setEnabled(enabled)
 
-        def isEnabled(self):
+        def isEnabled(self) -> bool:
             """Check if widget is enabled."""
             return self._enabled
 
-        def setGeometry(self, x, y, width, height) -> None:
+        def setGeometry(self, x: int, y: int, width: int, height: int) -> None:
             """Set widget geometry with position and dimensions."""
             self._geometry = (x, y, width, height)
 
-        def geometry(self):
+        def geometry(self) -> tuple[int, int, int, int]:
             """Get widget geometry tuple."""
             return self._geometry
 
-        def setLayout(self, layout) -> None:
+        def setLayout(self, layout: Any) -> None:  # noqa: ANN401
             """Set widget layout manager."""
             self._layout = layout
 
-        def layout(self):
+        def layout(self) -> Any:  # noqa: ANN401
             """Get widget layout manager."""
             return self._layout
 
-        def setStyleSheet(self, style) -> None:
+        def setStyleSheet(self, style: str) -> None:
             """Set widget style sheet for appearance."""
             self._style_sheet = style
 
-        def setObjectName(self, name) -> None:
+        def setObjectName(self, name: str) -> None:
             """Set widget object name for identification."""
             self._object_name = name
 
-        def objectName(self):
+        def objectName(self) -> str:
             """Get widget object name."""
             return self._object_name
 
@@ -317,7 +315,7 @@ except ImportError:
         observer pattern when PyQt6 is not available.
         """
 
-        def __init__(self, *types) -> None:
+        def __init__(self, *types: Any) -> None:  # noqa: ANN002,ANN401
             """Initialize signal with type signatures.
 
             Args:
@@ -329,7 +327,7 @@ except ImportError:
             self._blocked = False
             self._mutex = threading.RLock()
 
-        def connect(self, slot) -> None:
+        def connect(self, slot: Any) -> None:  # noqa: ANN401
             """Connect a slot function to this signal.
 
             Args:
@@ -340,7 +338,7 @@ except ImportError:
                 if slot not in self.slots:
                     self.slots.append(slot)
 
-        def disconnect(self, slot=None) -> None:
+        def disconnect(self, slot: Any | None = None) -> None:  # noqa: ANN401
             """Disconnect a slot or all slots from this signal.
 
             Args:
@@ -353,7 +351,7 @@ except ImportError:
                 elif slot in self.slots:
                     self.slots.remove(slot)
 
-        def emit(self, *args) -> None:
+        def emit(self, *args: Any) -> None:  # noqa: ANN002,ANN401
             """Emit the signal with given arguments.
 
             Args:
@@ -372,7 +370,7 @@ except ImportError:
                 except Exception as e:
                     logger.error(f"Error in signal slot: {e}")
 
-        def blockSignals(self, blocked) -> None:
+        def blockSignals(self, blocked: bool) -> None:
             """Block or unblock signal emission.
 
             Args:
@@ -381,7 +379,7 @@ except ImportError:
             """
             self._blocked = blocked
 
-        def __get__(self, obj, objtype=None):
+        def __get__(self, obj: Any, objtype: Any | None = None) -> Any:  # noqa: ANN401
             """Support for use as a descriptor in classes."""
             if obj is None:
                 return self
@@ -397,20 +395,20 @@ except ImportError:
     class BoundSignal:
         """Bound signal for specific object instance."""
 
-        def __init__(self, signal, instance) -> None:
+        def __init__(self, signal: Any, instance: Any) -> None:  # noqa: ANN401
             """Initialize the BoundSignal with a signal and instance."""
             self.signal = signal
             self.instance = instance
             self.slots = []
             self._mutex = threading.RLock()
 
-        def connect(self, slot) -> None:
+        def connect(self, slot: Any) -> None:  # noqa: ANN401
             """Connect slot to bound signal instance."""
             with self._mutex:
                 if slot not in self.slots:
                     self.slots.append(slot)
 
-        def disconnect(self, slot=None) -> None:
+        def disconnect(self, slot: Any | None = None) -> None:  # noqa: ANN401
             """Disconnect slot from bound signal instance."""
             with self._mutex:
                 if slot is None:
@@ -418,7 +416,7 @@ except ImportError:
                 elif slot in self.slots:
                     self.slots.remove(slot)
 
-        def emit(self, *args) -> None:
+        def emit(self, *args: Any) -> None:  # noqa: ANN002,ANN401
             """Emit bound signal with arguments to connected slots."""
             if hasattr(self.signal, "_blocked") and self.signal._blocked:
                 return
@@ -447,7 +445,7 @@ class ProcessingStatus(Enum):
 class DistributedTask:
     """Represents a distributed processing task."""
 
-    def __init__(self, task_id: str, task_type: str, parameters: Dict[str, Any]) -> None:
+    def __init__(self, task_id: str, task_type: str, parameters: dict[str, Any]) -> None:
         """Initialize distributed task.
 
         Args:
@@ -461,15 +459,20 @@ class DistributedTask:
         self.parameters = parameters
         self.status = ProcessingStatus.QUEUED
         self.created_time = datetime.now()
-        self.started_time: Optional[datetime] = None
-        self.completed_time: Optional[datetime] = None
+        self.started_time: datetime | None = None
+        self.completed_time: datetime | None = None
         self.progress = 0.0
-        self.results: Optional[Dict[str, Any]] = None
-        self.error_message: Optional[str] = None
-        self.worker_id: Optional[str] = None
+        self.results: dict[str, Any] | None = None
+        self.error_message: str | None = None
+        self.worker_id: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert task to dictionary representation."""
+    def to_dict(self) -> dict[str, Any]:
+        """Convert task to dictionary representation.
+
+        Returns:
+            Dictionary representation of the task with all fields
+
+        """
         return {
             "task_id": self.task_id,
             "task_type": self.task_type,
@@ -492,7 +495,7 @@ class DistributedWorkerThread(QThread):
     task_completed = pyqtSignal(str, dict) if HAS_PYQT6 else None
     task_failed = pyqtSignal(str, str) if HAS_PYQT6 else None
 
-    def __init__(self, worker_id: str, task_queue: List[DistributedTask]) -> None:
+    def __init__(self, worker_id: str, task_queue: list[DistributedTask]) -> None:
         """Initialize distributed worker thread.
 
         Args:
@@ -504,7 +507,7 @@ class DistributedWorkerThread(QThread):
             super().__init__()
         self.worker_id = worker_id
         self.task_queue = task_queue
-        self.current_task: Optional[DistributedTask] = None
+        self.current_task: DistributedTask | None = None
         self.running = False
         self.queue_lock = threading.Lock()
 
@@ -523,7 +526,7 @@ class DistributedWorkerThread(QThread):
 
         logger.info(f"Distributed worker {self.worker_id} stopped")
 
-    def get_next_task(self) -> Optional[DistributedTask]:
+    def get_next_task(self) -> DistributedTask | None:
         """Get the next available task from the queue.
 
         Returns:
@@ -585,7 +588,7 @@ class DistributedWorkerThread(QThread):
         finally:
             self.current_task = None
 
-    def process_binary_analysis(self, task: DistributedTask) -> Dict[str, Any]:
+    def process_binary_analysis(self, task: DistributedTask) -> dict[str, Any]:
         """Process binary analysis task with real PE analysis.
 
         Args:
@@ -694,15 +697,35 @@ class DistributedWorkerThread(QThread):
         return results
 
     def _update_progress(self, task: DistributedTask, progress: float, status: str) -> None:
-        """Update task progress."""
+        """Update task progress.
+
+        Args:
+            task: Task to update progress for
+            progress: Progress percentage (0-100)
+            status: Status message describing current operation
+
+        Raises:
+            Exception: When task is cancelled
+
+        """
         task.progress = progress
         if HAS_PYQT6 and self.progress_updated:
             self.progress_updated.emit(task.task_id, progress)
         if not self.running:
-            raise Exception("Task cancelled")
+            error_msg = "Task cancelled"
+            logger.error(error_msg)
+            raise Exception(error_msg)
 
     def _calculate_entropy(self, data: bytes) -> float:
-        """Calculate Shannon entropy of data."""
+        """Calculate Shannon entropy of data.
+
+        Args:
+            data: Binary data to calculate entropy for
+
+        Returns:
+            Shannon entropy value between 0 and 8
+
+        """
         if not data:
             return 0.0
 
@@ -718,8 +741,17 @@ class DistributedWorkerThread(QThread):
 
         return min(entropy, 8.0)
 
-    def _extract_strings(self, filepath: str, min_length: int = 4) -> List[str]:
-        """Extract ASCII strings from binary."""
+    def _extract_strings(self, filepath: str, min_length: int = 4) -> list[str]:
+        """Extract ASCII strings from binary.
+
+        Args:
+            filepath: Path to binary file
+            min_length: Minimum string length to extract (default 4)
+
+        Returns:
+            List of ASCII strings found in binary
+
+        """
         strings = []
         try:
             with open(filepath, "rb") as f:
@@ -741,8 +773,16 @@ class DistributedWorkerThread(QThread):
 
         return strings
 
-    def _identify_functions(self, filepath: str) -> List[Dict[str, Any]]:
-        """Identify functions using Capstone disassembler."""
+    def _identify_functions(self, filepath: str) -> list[dict[str, Any]]:
+        """Identify functions using Capstone disassembler.
+
+        Args:
+            filepath: Path to binary file
+
+        Returns:
+            List of identified functions with addresses and mnemonics
+
+        """
         functions = []
         try:
             with open(filepath, "rb") as f:
@@ -764,8 +804,17 @@ class DistributedWorkerThread(QThread):
 
         return functions
 
-    def _compute_entropy_map(self, filepath: str, block_size: int = 256) -> Dict[str, float]:
-        """Compute entropy map of file in blocks."""
+    def _compute_entropy_map(self, filepath: str, block_size: int = 256) -> dict[str, float]:
+        """Compute entropy map of file in blocks.
+
+        Args:
+            filepath: Path to binary file
+            block_size: Size of each block for entropy calculation (default 256)
+
+        Returns:
+            Dictionary mapping file offsets (hex strings) to entropy values
+
+        """
         entropy_map = {}
         try:
             with open(filepath, "rb") as f:
@@ -782,7 +831,7 @@ class DistributedWorkerThread(QThread):
 
         return entropy_map
 
-    def process_password_cracking(self, task: DistributedTask) -> Dict[str, Any]:
+    def process_password_cracking(self, task: DistributedTask) -> dict[str, Any]:
         """Process password cracking task with real hash algorithms.
 
         Args:
@@ -841,7 +890,9 @@ class DistributedWorkerThread(QThread):
         batch_size = 100
         for i in range(0, min(len(wordlist), max_attempts), batch_size):
             if not self.running:
-                raise Exception("Task cancelled")
+                error_msg = "Task cancelled"
+                logger.error(error_msg)
+                raise Exception(error_msg)
 
             batch = wordlist[i : i + batch_size]
 
@@ -878,8 +929,13 @@ class DistributedWorkerThread(QThread):
 
         return results
 
-    def _generate_common_passwords(self) -> List[str]:
-        """Generate common password patterns for testing."""
+    def _generate_common_passwords(self) -> list[str]:
+        """Generate common password patterns for testing.
+
+        Returns:
+            List of common password patterns for dictionary attack testing
+
+        """
         passwords = []
 
         # Common base passwords
@@ -913,12 +969,22 @@ class DistributedWorkerThread(QThread):
 
         return passwords
 
-    def _check_password(self, password: str, target_hash: str, hash_func) -> Tuple[str, bool]:
-        """Check if password matches target hash."""
+    def _check_password(self, password: str, target_hash: str, hash_func: Any) -> tuple[str, bool]:  # noqa: ANN401
+        """Check if password matches target hash.
+
+        Args:
+            password: Password candidate to check
+            target_hash: Target hash to match against
+            hash_func: Hash function to use for comparison
+
+        Returns:
+            Tuple of (password, match_boolean)
+
+        """
         computed_hash = hash_func(password.encode()).hexdigest()
         return password, computed_hash == target_hash
 
-    def process_vulnerability_scan(self, task: DistributedTask) -> Dict[str, Any]:
+    def process_vulnerability_scan(self, task: DistributedTask) -> dict[str, Any]:
         """Process vulnerability scanning for license protections.
 
         Args:
@@ -980,8 +1046,16 @@ class DistributedWorkerThread(QThread):
         self._update_progress(task, 100, "Scan complete")
         return results
 
-    def _scan_protections(self, target: str) -> List[Dict[str, Any]]:
-        """Scan for license protection mechanisms."""
+    def _scan_protections(self, target: str) -> list[dict[str, Any]]:
+        """Scan for license protection mechanisms.
+
+        Args:
+            target: Path to binary file to scan
+
+        Returns:
+            List of detected protection mechanisms with details
+
+        """
         protections = []
 
         try:
@@ -1026,8 +1100,17 @@ class DistributedWorkerThread(QThread):
 
         return protections
 
-    def _identify_weak_points(self, target: str, protections: List) -> List[Dict[str, Any]]:
-        """Identify weak points in protection."""
+    def _identify_weak_points(self, target: str, protections: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Identify weak points in protection.
+
+        Args:
+            target: Path to binary file
+            protections: List of detected protections
+
+        Returns:
+            List of identified weak points with severity levels
+
+        """
         weak_points = []
 
         # Check for unprotected entry points
@@ -1057,8 +1140,16 @@ class DistributedWorkerThread(QThread):
 
         return weak_points
 
-    def _check_vulnerabilities(self, target: str) -> List[Dict[str, Any]]:
-        """Check for known vulnerability patterns."""
+    def _check_vulnerabilities(self, target: str) -> list[dict[str, Any]]:
+        """Check for known vulnerability patterns.
+
+        Args:
+            target: Path to binary file
+
+        Returns:
+            List of detected vulnerabilities with descriptions
+
+        """
         vulnerabilities = []
 
         try:
@@ -1122,8 +1213,17 @@ class DistributedWorkerThread(QThread):
 
         return vulnerabilities
 
-    def _analyze_bypass_techniques(self, protections: List, weak_points: List) -> List[Dict[str, str]]:
-        """Determine applicable bypass techniques."""
+    def _analyze_bypass_techniques(self, protections: list[dict[str, Any]], weak_points: list[dict[str, Any]]) -> list[dict[str, str]]:
+        """Determine applicable bypass techniques.
+
+        Args:
+            protections: List of detected protections
+            weak_points: List of identified weak points
+
+        Returns:
+            List of applicable bypass techniques with difficulty levels
+
+        """
         techniques = []
 
         # Based on protections found
@@ -1167,8 +1267,18 @@ class DistributedWorkerThread(QThread):
 
         return techniques
 
-    def _assess_risk(self, protections: List, vulnerabilities: List, weak_points: List) -> Dict[str, Any]:
-        """Assess overall protection risk level."""
+    def _assess_risk(self, protections: list[dict[str, Any]], vulnerabilities: list[dict[str, Any]], weak_points: list[dict[str, Any]]) -> dict[str, Any]:
+        """Assess overall protection risk level.
+
+        Args:
+            protections: List of detected protections
+            vulnerabilities: List of detected vulnerabilities
+            weak_points: List of identified weak points
+
+        Returns:
+            Dictionary containing risk score, level, and component counts
+
+        """
         risk_score = 0
         max_score = 100
 
@@ -1214,8 +1324,16 @@ class DistributedWorkerThread(QThread):
             "weak_points_count": len(weak_points),
         }
 
-    def _generate_recommendations(self, risk_assessment: Dict) -> List[str]:
-        """Generate security recommendations."""
+    def _generate_recommendations(self, risk_assessment: dict[str, Any]) -> list[str]:
+        """Generate security recommendations.
+
+        Args:
+            risk_assessment: Risk assessment dictionary with level and counts
+
+        Returns:
+            List of security recommendations based on risk assessment
+
+        """
         recommendations = []
 
         if risk_assessment["level"] in ["critical", "high"]:
@@ -1233,7 +1351,7 @@ class DistributedWorkerThread(QThread):
 
         return recommendations
 
-    def process_license_analysis(self, task: DistributedTask) -> Dict[str, Any]:
+    def process_license_analysis(self, task: DistributedTask) -> dict[str, Any]:
         """Process license analysis task.
 
         Args:
@@ -1274,8 +1392,16 @@ class DistributedWorkerThread(QThread):
 
         return results
 
-    def _analyze_validation_methods(self, target: str) -> List[Dict[str, Any]]:
-        """Analyze license validation methods."""
+    def _analyze_validation_methods(self, target: str) -> list[dict[str, Any]]:
+        """Analyze license validation methods.
+
+        Args:
+            target: Path to binary file
+
+        Returns:
+            List of detected validation methods with types and confidence
+
+        """
         methods = []
 
         validation_patterns = {
@@ -1301,8 +1427,16 @@ class DistributedWorkerThread(QThread):
 
         return methods
 
-    def _identify_key_algorithms(self, target: str) -> List[str]:
-        """Identify key generation algorithms."""
+    def _identify_key_algorithms(self, target: str) -> list[str]:
+        """Identify key generation algorithms.
+
+        Args:
+            target: Path to binary file
+
+        Returns:
+            List of identified cryptographic algorithms
+
+        """
         algorithms = []
 
         crypto_signatures = {
@@ -1329,23 +1463,40 @@ class DistributedWorkerThread(QThread):
 
         return list(set(algorithms))
 
-    def _determine_license_type(self, validation_methods: List, key_algorithms: List) -> str:
-        """Determine the type of license protection."""
+    def _determine_license_type(self, validation_methods: list[dict[str, Any]], key_algorithms: list[str]) -> str:
+        """Determine the type of license protection.
+
+        Args:
+            validation_methods: List of detected validation methods
+            key_algorithms: List of identified key algorithms
+
+        Returns:
+            String describing the type of license protection
+
+        """
         if any(m["type"] == "online" for m in validation_methods):
             if any(m["type"] == "hardware" for m in validation_methods):
                 return "cloud_hardware_locked"
             return "cloud_based"
-        elif any(m["type"] == "hardware" for m in validation_methods):
+        if any(m["type"] == "hardware" for m in validation_methods):
             return "hardware_locked"
-        elif any(m["type"] == "time" for m in validation_methods):
+        if any(m["type"] == "time" for m in validation_methods):
             return "trial_based"
-        elif key_algorithms:
+        if key_algorithms:
             return "key_based"
-        else:
-            return "simple_check"
+        return "simple_check"
 
-    def _develop_bypass_strategies(self, license_type: str, validation_methods: List) -> List[Dict[str, str]]:
-        """Develop strategies to bypass the license."""
+    def _develop_bypass_strategies(self, license_type: str, validation_methods: list[dict[str, Any]]) -> list[dict[str, str]]:
+        """Develop strategies to bypass the license.
+
+        Args:
+            license_type: Type of license protection
+            validation_methods: List of detected validation methods
+
+        Returns:
+            List of bypass strategies with methods and descriptions
+
+        """
         strategies = []
 
         strategy_map = {
@@ -1379,8 +1530,16 @@ class DistributedWorkerThread(QThread):
 
         return strategies
 
-    def _calculate_confidence(self, results: Dict) -> float:
-        """Calculate confidence score for the analysis."""
+    def _calculate_confidence(self, results: dict[str, Any]) -> float:
+        """Calculate confidence score for the analysis.
+
+        Args:
+            results: Analysis results dictionary
+
+        Returns:
+            Confidence score between 0 and 1
+
+        """
         confidence = 0.0
 
         if results["license_type"] != "unknown":
@@ -1392,7 +1551,7 @@ class DistributedWorkerThread(QThread):
 
         return min(confidence, 1.0)
 
-    def process_generic_task(self, task: DistributedTask) -> Dict[str, Any]:
+    def process_generic_task(self, task: DistributedTask) -> dict[str, Any]:
         """Process generic task type with real operations.
 
         Args:
@@ -1439,15 +1598,20 @@ class DistributedWorkerThread(QThread):
 class DistributedProcessingDialog(QDialog):
     """Dialog for managing distributed processing tasks."""
 
-    def __init__(self, parent=None) -> None:
-        """Initialize distributed processing dialog."""
+    def __init__(self, parent: Any = None) -> None:  # noqa: ANN401
+        """Initialize distributed processing dialog.
+
+        Args:
+            parent: Parent widget (optional)
+
+        """
         if HAS_PYQT6:
             super().__init__(parent)
         self.setWindowTitle("Distributed Processing Manager")
         self.resize(800, 600)
 
-        self.tasks: List[DistributedTask] = []
-        self.workers: List[DistributedWorkerThread] = []
+        self.tasks: list[DistributedTask] = []
+        self.workers: list[DistributedWorkerThread] = []
         self.task_counter = 0
 
         self.setup_ui()
@@ -1513,7 +1677,7 @@ class DistributedProcessingDialog(QDialog):
         progress_group = QGroupBox("Progress")
         progress_layout = QVBoxLayout(progress_group)
 
-        self.progress_bars: Dict[str, QProgressBar] = {}
+        self.progress_bars: dict[str, QProgressBar] = {}
         self.progress_layout = QVBoxLayout()
         progress_layout.addLayout(self.progress_layout)
 
@@ -1599,17 +1763,35 @@ class DistributedProcessingDialog(QDialog):
         logger.info(f"Added task {task_id} of type {task_type}")
 
     def on_task_progress(self, task_id: str, progress: float) -> None:
-        """Handle task progress updates."""
+        """Handle task progress updates.
+
+        Args:
+            task_id: ID of task being updated
+            progress: Progress percentage
+
+        """
         if task_id in self.progress_bars:
             self.progress_bars[task_id].setValue(int(progress))
 
-    def on_task_completed(self, task_id: str, results: Dict[str, Any]) -> None:
-        """Handle task completion."""
+    def on_task_completed(self, task_id: str, results: dict[str, Any]) -> None:
+        """Handle task completion.
+
+        Args:
+            task_id: ID of completed task
+            results: Task results dictionary
+
+        """
         self.update_status_text(f"Task {task_id} completed successfully")
         logger.info(f"Task {task_id} completed")
 
     def on_task_failed(self, task_id: str, error: str) -> None:
-        """Handle task failure."""
+        """Handle task failure.
+
+        Args:
+            task_id: ID of failed task
+            error: Error message
+
+        """
         self.update_status_text(f"Task {task_id} failed: {error}")
         logger.error(f"Task {task_id} failed: {error}")
 
@@ -1627,13 +1809,23 @@ class DistributedProcessingDialog(QDialog):
         self.update_status_text(f"Status summary - {status_summary}")
 
     def update_status_text(self, message: str) -> None:
-        """Update status text display."""
+        """Update status text display.
+
+        Args:
+            message: Status message to display
+
+        """
         if HAS_PYQT6 and hasattr(self, "status_text"):
             timestamp = datetime.now().strftime("%H:%M:%S")
             self.status_text.append(f"[{timestamp}] {message}")
 
-    def closeEvent(self, event) -> None:
-        """Handle dialog close event."""
+    def closeEvent(self, event: Any) -> None:  # noqa: ANN401
+        """Handle dialog close event.
+
+        Args:
+            event: Close event object
+
+        """
         self.stop_workers()
         if HAS_PYQT6:
             super().closeEvent(event)
@@ -1644,15 +1836,18 @@ class DistributedProcessing:
 
     def __init__(self) -> None:
         """Initialize distributed processing manager."""
-        self.tasks: List[DistributedTask] = []
-        self.workers: List[DistributedWorkerThread] = []
-        self.dialog: Optional[DistributedProcessingDialog] = None
+        self.tasks: list[DistributedTask] = []
+        self.workers: list[DistributedWorkerThread] = []
+        self.dialog: DistributedProcessingDialog | None = None
 
-    def run_distributed_processing(self, main_app_instance=None) -> None:
+    def run_distributed_processing(self, main_app_instance: Any = None) -> None:  # noqa: ANN401
         """Launch distributed processing interface.
 
         Args:
             main_app_instance: Main application instance (optional)
+
+        Raises:
+            Exception: If distributed processing interface fails to launch
 
         """
         try:
@@ -1673,7 +1868,7 @@ class DistributedProcessing:
             logger.error(f"Failed to launch distributed processing interface: {e}")
             raise
 
-    def add_task(self, task_type: str, parameters: Dict[str, Any]) -> str:
+    def add_task(self, task_type: str, parameters: dict[str, Any]) -> str:
         """Add a new distributed processing task.
 
         Args:
@@ -1691,7 +1886,7 @@ class DistributedProcessing:
         logger.info(f"Added distributed task {task_id} of type {task_type}")
         return task_id
 
-    def get_task_status(self, task_id: str) -> Optional[Dict[str, Any]]:
+    def get_task_status(self, task_id: str) -> dict[str, Any] | None:
         """Get status of a specific task.
 
         Args:
@@ -1706,7 +1901,7 @@ class DistributedProcessing:
                 return task.to_dict()
         return None
 
-    def get_all_tasks(self) -> List[Dict[str, Any]]:
+    def get_all_tasks(self) -> list[dict[str, Any]]:
         """Get status of all tasks.
 
         Returns:

@@ -68,14 +68,13 @@ except ImportError as e:
             # These values represent typical Windows process limits
             if resource_type == WindowsResourceCompat.RLIMIT_CPU:
                 return (float("inf"), float("inf"))  # No CPU time limit on Windows
-            elif resource_type == WindowsResourceCompat.RLIMIT_FSIZE:
+            if resource_type == WindowsResourceCompat.RLIMIT_FSIZE:
                 return (2**63 - 1, 2**63 - 1)  # Max file size on NTFS
-            elif resource_type == WindowsResourceCompat.RLIMIT_DATA:
+            if resource_type == WindowsResourceCompat.RLIMIT_DATA:
                 return (2**31 - 1, 2**31 - 1)  # 2GB for 32-bit processes
-            elif resource_type == WindowsResourceCompat.RLIMIT_STACK:
+            if resource_type == WindowsResourceCompat.RLIMIT_STACK:
                 return (1024 * 1024, 1024 * 1024)  # 1MB default stack size
-            else:
-                return (1024 * 1024, 1024 * 1024)  # Default 1MB
+            return (1024 * 1024, 1024 * 1024)  # Default 1MB
 
         @staticmethod
         def setrlimit(resource_type, limits) -> None:
@@ -104,6 +103,7 @@ def load_plugins(plugin_dir: str = "intellicrack/intellicrack/plugins") -> dict[
         Dictionary with plugin categories (frida, ghidra, custom) and their plugins
 
     """
+    logger.info(f"Starting plugin loading from directory: {plugin_dir}")
     plugins = {
         "frida": [],
         "ghidra": [],
@@ -112,6 +112,7 @@ def load_plugins(plugin_dir: str = "intellicrack/intellicrack/plugins") -> dict[
 
     # Check if plugin directory exists
     if not os.path.exists(plugin_dir):
+        logger.warning(f"Plugin directory not found: {plugin_dir}. Creating it.")
         os.makedirs(plugin_dir)
 
         # Create subdirectories if needed
@@ -128,6 +129,7 @@ def load_plugins(plugin_dir: str = "intellicrack/intellicrack/plugins") -> dict[
     # Load custom Python modules
     custom_dir = os.path.join(plugin_dir, "custom_modules")
     if os.path.exists(custom_dir):
+        logger.info(f"Loading custom Python plugins from: {custom_dir}")
         # Add to Python path
         sys.path.insert(0, custom_dir)
 
@@ -156,12 +158,18 @@ def load_plugins(plugin_dir: str = "intellicrack/intellicrack/plugins") -> dict[
                                 "description": description,
                             },
                         )
+                        logger.info(f"Successfully loaded custom plugin: {name}")
+                    else:
+                        logger.warning(f"Custom plugin '{plugin_name}' does not have a 'register' function. Skipping.")
                 except (OSError, ValueError, RuntimeError) as e:
-                    logger.exception("Error loading custom plugin %s: %s", file, e)
+                    logger.exception(f"Error loading custom plugin {file}: {e}")
+                    logger.error(traceback.format_exc())
+                except Exception as e:
+                    logger.exception(f"An unexpected error occurred while loading custom plugin {file}: {e}")
                     logger.error(traceback.format_exc())
 
     logger.info(
-        f"Loaded {len(plugins['frida'])} Frida plugins, "
+        f"Plugin loading completed. Loaded {len(plugins['frida'])} Frida plugins, "
         f"{len(plugins['ghidra'])} Ghidra plugins, and "
         f"{len(plugins['custom'])} custom plugins",
     )
@@ -1092,7 +1100,7 @@ def _sandbox_worker(plugin_path: str, function_name: str, args: tuple, result_qu
         result_queue.put(("success", result))
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.exception("Error in plugin_system: %s", e)
+        logger.exception(f"Error in sandboxed plugin execution for {plugin_path}: {e}")
         result_queue.put(("error", str(e)))
 
 
@@ -1140,7 +1148,7 @@ def run_plugin_in_sandbox(plugin_path: str, function_name: str, *args) -> list[s
             return [str(result)]
         return [f"Plugin error: {result}"]
     except Exception as e:
-        logger.exception("Exception in plugin_system: %s", e)
+        logger.exception(f"Failed to retrieve results from sandboxed plugin {plugin_path}: {e}")
         return ["No results returned from plugin"]
 
 
@@ -1207,7 +1215,7 @@ def run_plugin_remotely(app, plugin_info: dict[str, Any]) -> list[str] | None:
         return ["No results returned from remote execution"]
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.exception("Error in plugin_system: %s", e)
+        logger.exception(f"Error during remote plugin execution for {plugin_info['name']}: {e}")
         app.update_output.emit(log_message(f"[Plugin] Remote execution error: {e}"))
         return None
 
@@ -1649,7 +1657,9 @@ class PluginSystem:
                     # Check content size (limit to 10MB)
                     content_length = response.headers.get("Content-Length")
                     if content_length and int(content_length) > 10 * 1024 * 1024:
-                        raise ValueError("Remote plugin too large (>10MB)")
+                        error_msg = "Remote plugin too large (>10MB)"
+                        logger.error(error_msg)
+                        raise ValueError(error_msg)
 
                     # Read content with size limit
                     max_size = 10 * 1024 * 1024
@@ -1660,14 +1670,18 @@ class PluginSystem:
                             break
                         content += chunk
                         if len(content) > max_size:
-                            raise ValueError("Remote plugin too large (>10MB)")
+                            error_msg = "Remote plugin too large (>10MB)"
+                            logger.error(error_msg)
+                            raise ValueError(error_msg)
 
                     # Verify content is text-based (not binary)
                     try:
                         content_text = content.decode("utf-8")
                     except UnicodeDecodeError as e:
                         logger.exception("UnicodeDecodeError in plugin_system: %s", e)
-                        raise ValueError("Remote plugin contains binary data") from e
+                        error_msg = "Remote plugin contains binary data"
+                        logger.error(error_msg)
+                        raise ValueError(error_msg) from e
 
                     # Basic security scan
                     dangerous_patterns = [
@@ -1695,7 +1709,7 @@ class PluginSystem:
                         f.write(content_text)
 
             except Exception as e:
-                self.logger.exception(f"Failed to download remote plugin: {e}")
+                self.logger.exception(f"Failed to download remote plugin from {plugin_url}: {e}")
                 return None
 
             # Execute the downloaded plugin
@@ -1712,7 +1726,7 @@ class PluginSystem:
                 return result
 
             except Exception as e:
-                self.logger.exception(f"Failed to execute downloaded plugin: {e}")
+                self.logger.exception(f"Failed to execute downloaded plugin from {temp_plugin_path}: {e}")
                 # Clean up on error
                 try:
                     os.remove(temp_plugin_path)
@@ -1721,7 +1735,7 @@ class PluginSystem:
                 return None
 
         except Exception as e:
-            self.logger.exception(f"Failed to execute remote plugin: {e}")
+            self.logger.exception(f"An unexpected error occurred during remote plugin execution: {e}")
             self.logger.debug(f"Traceback: {traceback.format_exc()}")
             return None
 
@@ -1769,7 +1783,9 @@ if sys.platform != 'win32':
 
 # Set up timeout handler
 def timeout_handler(signum, frame):
-    raise TimeoutError("Plugin execution timed out")
+    error_msg = "Plugin execution timed out"
+    logger.error(error_msg)
+    raise TimeoutError(error_msg)
 
 signal.signal(signal.SIGALRM, timeout_handler)
 signal.alarm(30)  # 30 second timeout
@@ -1869,7 +1885,7 @@ finally:
             try:
                 stdout, stderr = process.communicate(timeout=35)  # 35 seconds (5 more than internal timeout)
             except subprocess.TimeoutExpired as e:
-                logger.exception("Subprocess timeout in plugin_system: %s", e)
+                logger.exception(f"Subprocess timeout during sandboxed plugin execution for {plugin_path}: {e}")
                 # Kill the process group on timeout
                 if sys.platform != "win32":
                     os.killpg(os.getpgid(process.pid), signal.SIGTERM)
@@ -1898,16 +1914,16 @@ finally:
                             self.logger.debug(f"Traceback: {result['traceback']}")
                         return None
                 except json.JSONDecodeError:
-                    self.logger.exception(f"Failed to parse sandbox output: {stdout}")
+                    self.logger.exception(f"Failed to parse JSON output from sandboxed plugin {plugin_name}. Raw output: {stdout}")
                     if stderr:
-                        self.logger.error(f"Stderr: {stderr}")
+                        self.logger.error(f"Stderr from sandboxed plugin: {stderr}")
                     return None
             else:
-                self.logger.exception(f"No output from sandboxed plugin. Stderr: {stderr}")
+                self.logger.exception(f"No output received from sandboxed plugin {plugin_name}. Stderr: {stderr}")
                 return None
 
         except Exception as e:
-            self.logger.exception(f"Failed to execute sandboxed plugin: {e}")
+            self.logger.exception(f"An unexpected error occurred while executing sandboxed plugin {plugin_name}: {e}")
             self.logger.debug(f"Traceback: {traceback.format_exc()}")
             return None
 
@@ -1917,9 +1933,10 @@ finally:
 try:
     from .plugin_config import PLUGIN_SYSTEM_EXPORTS
 
-    __all__ = ["PluginSystem", "create_plugin_template", *PLUGIN_SYSTEM_EXPORTS]
+    _plugin_system_exports = [str(item) for item in PLUGIN_SYSTEM_EXPORTS] if isinstance(PLUGIN_SYSTEM_EXPORTS, (list, tuple)) else []
+    __all__ = ["PluginSystem", "create_plugin_template", *_plugin_system_exports]
 except ImportError as e:
-    logger.exception("Import error in plugin_system: %s", e)
+    logger.exception(f"Import error in plugin_system, possibly due to missing plugin_config module: {e}")
     # Fallback in case of circular import issues
     __all__ = [
         "PluginSystem",

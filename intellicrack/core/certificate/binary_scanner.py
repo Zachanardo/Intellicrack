@@ -69,7 +69,6 @@ PERFORMANCE NOTES:
 
 import re
 from pathlib import Path
-from typing import List, Optional
 
 try:
     import lief
@@ -92,7 +91,7 @@ class ContextInfo:
         address: int,
         function_name: str = "",
         surrounding_code: str = "",
-        cross_references: Optional[List[int]] = None,
+        cross_references: list[int] | None = None,
     ) -> None:
         """Initialize context information.
 
@@ -123,7 +122,7 @@ class BinaryScanner:
         if not self.binary_path.exists():
             raise FileNotFoundError(f"Binary not found: {binary_path}")
 
-        self.binary: Optional[lief.Binary] = None
+        self.binary: lief.Binary | None = None
         self.r2_handle = None
 
         if LIEF_AVAILABLE:
@@ -132,7 +131,7 @@ class BinaryScanner:
             except Exception as e:
                 raise RuntimeError(f"Failed to parse binary with LIEF: {e}") from e
 
-    def scan_imports(self) -> List[str]:
+    def scan_imports(self) -> list[str]:
         """Scan binary imports and return imported DLL/library names.
 
         Returns:
@@ -156,7 +155,7 @@ class BinaryScanner:
 
         return list(imports)
 
-    def detect_tls_libraries(self, imports: Optional[List[str]] = None) -> List[str]:
+    def detect_tls_libraries(self, imports: list[str] | None = None) -> list[str]:
         """Identify SSL/TLS libraries from imports.
 
         Args:
@@ -182,7 +181,7 @@ class BinaryScanner:
 
         return tls_libs
 
-    def scan_strings(self) -> List[str]:
+    def scan_strings(self) -> list[str]:
         """Extract all strings from binary.
 
         Returns:
@@ -212,7 +211,7 @@ class BinaryScanner:
 
         return list(set(strings))
 
-    def find_certificate_references(self, strings: Optional[List[str]] = None) -> List[str]:
+    def find_certificate_references(self, strings: list[str] | None = None) -> list[str]:
         """Find certificate-related strings in binary.
 
         Args:
@@ -257,7 +256,7 @@ class BinaryScanner:
 
         return True
 
-    def find_api_calls(self, api_name: str) -> List[int]:
+    def find_api_calls(self, api_name: str) -> list[int]:
         """Find all calls to a specific API using radare2.
 
         Args:
@@ -284,7 +283,7 @@ class BinaryScanner:
         except Exception:
             return self._find_api_calls_lief(api_name)
 
-    def _find_api_calls_lief(self, api_name: str) -> List[int]:
+    def _find_api_calls_lief(self, api_name: str) -> list[int]:
         """Fallback method to find API calls using LIEF.
 
         Args:

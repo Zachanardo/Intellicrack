@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-import glob
 import hashlib
 import json
 import logging
@@ -87,8 +86,9 @@ class LocalFileRepository(ModelRepositoryInterface):
     def _scan_for_models(self) -> None:
         """Scan the models directory for GGUF files that are not in the cache."""
         # Find all GGUF files in the models directory
-        gguf_pattern = os.path.join(self.models_directory, "**", "*.gguf")
-        model_files = glob.glob(gguf_pattern, recursive=True)
+        os.path.join(self.models_directory, "**", "*.gguf")
+        from pathlib import Path
+        model_files = [str(p) for p in Path(self.models_directory).rglob("*.gguf")]
 
         # Create model entries for files not already in the cache
         for file_path in model_files:
@@ -343,7 +343,7 @@ class LocalFileRepository(ModelRepositoryInterface):
 
     def __del__(self) -> None:
         """Cleanup on deletion."""
-        try:
+        import contextlib
+
+        with contextlib.suppress(Exception):
             self._executor.shutdown(wait=False)
-        except Exception:  # noqa: S110
-            pass

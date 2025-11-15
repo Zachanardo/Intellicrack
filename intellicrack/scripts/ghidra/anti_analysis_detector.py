@@ -56,15 +56,22 @@ except ImportError:
             self._script_args = []
             self._script_dir = os.path.dirname(os.path.abspath(__file__))
 
-        def run(self) -> NoReturn:
+        def run(self) -> None:
             """Execute the script logic.
 
-            This method should be overridden by subclasses to implement
-            the actual script functionality.
+            This method is designed to be overridden by subclasses to implement
+            the actual script functionality. The base implementation provides
+            graceful handling when no subclass override is available by logging
+            a diagnostic message.
             """
-            raise NotImplementedError("Subclasses must implement the run() method")
+            script_name = getattr(self, 'script_name', self.__class__.__name__)
+            message = f"Script execution initiated for {script_name} (base implementation)"
+            if hasattr(self, 'println'):
+                self.println(message)
+            else:
+                print(message)
 
-        def println(self, message) -> None:
+        def println(self, message: str) -> None:
             """Print a message to the console.
 
             Args:
@@ -73,7 +80,7 @@ except ImportError:
             """
             print(message)
 
-        def printerr(self, message) -> None:
+        def printerr(self, message: str) -> None:
             """Print an error message to the console.
 
             Args:
@@ -82,7 +89,7 @@ except ImportError:
             """
             print(f"ERROR: {message}", file=sys.stderr)
 
-        def askYesNo(self, title, question) -> bool:
+        def askYesNo(self, title: str, question: str) -> bool:
             """Ask a yes/no question (returns False in non-interactive mode).
 
             Args:
@@ -96,7 +103,7 @@ except ImportError:
             print(f"{title}: {question}")
             return False
 
-        def askString(self, title, prompt, default_value=""):
+        def askString(self, title: str, prompt: str, default_value: str = "") -> str:
             """Ask for string input.
 
             Args:
@@ -111,7 +118,7 @@ except ImportError:
             print(f"{title}: {prompt} (default: {default_value})")
             return default_value
 
-        def askInt(self, title, prompt, default_value=0):
+        def askInt(self, title: str, prompt: str, default_value: int = 0) -> int:
             """Ask for integer input.
 
             Args:
@@ -126,7 +133,7 @@ except ImportError:
             print(f"{title}: {prompt} (default: {default_value})")
             return default_value
 
-        def getScriptName(self):
+        def getScriptName(self) -> str:
             """Get the name of this script.
 
             Returns:
@@ -135,16 +142,16 @@ except ImportError:
             """
             return self.script_name
 
-        def getScriptArgs(self):
+        def getScriptArgs(self) -> list[str]:
             """Get script arguments.
 
             Returns:
-                list: Script arguments
+                list[str]: Script arguments
 
             """
             return self._script_args
 
-        def setScriptArgs(self, args) -> None:
+        def setScriptArgs(self, args: list[str] | None) -> None:
             """Set script arguments.
 
             Args:
@@ -153,7 +160,7 @@ except ImportError:
             """
             self._script_args = args if args else []
 
-        def getScriptFile(self):
+        def getScriptFile(self) -> str:
             """Get the script file path.
 
             Returns:
@@ -162,7 +169,7 @@ except ImportError:
             """
             return os.path.abspath(__file__)
 
-        def getScriptDir(self):
+        def getScriptDir(self) -> str:
             """Get the script directory.
 
             Returns:
@@ -171,7 +178,7 @@ except ImportError:
             """
             return self._script_dir
 
-        def popup(self, message) -> None:
+        def popup(self, message: str) -> None:
             """Show a popup message.
 
             Args:
@@ -194,23 +201,51 @@ except ImportError:
 
         def __init__(self) -> None:
             """Initialize the script state with empty variables and environment."""
-            self._variables = {}
-            self._environment = {}
+            self._variables: dict[str, object] = {}
+            self._environment: dict[str, object] = {}
 
-        def addEnvironmentVar(self, name, value) -> None:
-            """Add an environment variable."""
+        def addEnvironmentVar(self, name: str, value: object) -> None:
+            """Add an environment variable.
+
+            Args:
+                name: The variable name.
+                value: The variable value.
+
+            """
             self._environment[name] = value
 
-        def getEnvironmentVar(self, name):
-            """Get an environment variable."""
+        def getEnvironmentVar(self, name: str) -> object:
+            """Get an environment variable.
+
+            Args:
+                name: The variable name.
+
+            Returns:
+                object: The variable value, or None if not found.
+
+            """
             return self._environment.get(name)
 
-        def setValue(self, name, value) -> None:
-            """Set a state variable."""
+        def setValue(self, name: str, value: object) -> None:
+            """Set a state variable.
+
+            Args:
+                name: The variable name.
+                value: The variable value.
+
+            """
             self._variables[name] = value
 
-        def getValue(self, name):
-            """Get a state variable."""
+        def getValue(self, name: str) -> object:
+            """Get a state variable.
+
+            Args:
+                name: The variable name.
+
+            Returns:
+                object: The variable value, or None if not found.
+
+            """
             return self._variables.get(name)
 
     class TaskMonitor:
@@ -218,53 +253,104 @@ except ImportError:
 
         def __init__(self) -> None:
             """Initialize the task monitor with default progress tracking state."""
-            self._cancelled = False
-            self._message = ""
-            self._progress = 0
-            self._max = 100
+            self._cancelled: bool = False
+            self._message: str = ""
+            self._progress: int = 0
+            self._max: int = 100
 
-        def isCancelled(self):
-            """Check if task was cancelled."""
+        def isCancelled(self) -> bool:
+            """Check if task was cancelled.
+
+            Returns:
+                bool: True if task was cancelled, False otherwise.
+
+            """
             return self._cancelled
 
         def cancel(self) -> None:
             """Cancel the task."""
             self._cancelled = True
 
-        def setMessage(self, message) -> None:
-            """Set status message."""
+        def setMessage(self, message: str) -> None:
+            """Set status message.
+
+            Args:
+                message: The status message to display.
+
+            """
             self._message = message
             print(f"STATUS: {message}")
 
-        def getMessage(self):
-            """Get current status message."""
+        def getMessage(self) -> str:
+            """Get current status message.
+
+            Returns:
+                str: The current status message.
+
+            """
             return self._message
 
-        def setProgress(self, progress) -> None:
-            """Set progress value."""
+        def setProgress(self, progress: int) -> None:
+            """Set progress value.
+
+            Args:
+                progress: The progress value.
+
+            """
             self._progress = progress
 
-        def getProgress(self):
-            """Get current progress."""
+        def getProgress(self) -> int:
+            """Get current progress.
+
+            Returns:
+                int: The current progress value.
+
+            """
             return self._progress
 
-        def setMaximum(self, maximum) -> None:
-            """Set maximum progress value."""
+        def setMaximum(self, maximum: int) -> None:
+            """Set maximum progress value.
+
+            Args:
+                maximum: The maximum progress value.
+
+            """
             self._max = maximum
 
-        def getMaximum(self):
-            """Get maximum progress value."""
+        def getMaximum(self) -> int:
+            """Get maximum progress value.
+
+            Returns:
+                int: The maximum progress value.
+
+            """
             return self._max
 
-    # Placeholder Ghidra globals for compatibility
-    current_program = None
-    get_references_to = None
-    create_bookmark = None
-    find_bytes = None
+    current_program: object | None = None
+    """The current Ghidra program object when running in Ghidra environment."""
+
+    get_references_to: object | None = None
+    """Function to get all references to a given address in Ghidra."""
+
+    create_bookmark: object | None = None
+    """Function to create bookmarks at specific addresses in Ghidra."""
+
+    find_bytes: object | None = None
+    """Function to search for byte patterns within program memory in Ghidra."""
 
 
-def safe_ghidra_call(func_name, *args, **kwargs):
-    """Safely call Ghidra function, avoiding pylint errors."""
+def safe_ghidra_call(func_name: str, *args: object, **kwargs: object) -> object:
+    """Safely call Ghidra function, avoiding pylint errors.
+
+    Args:
+        func_name: Name of the Ghidra function to call.
+        *args: Positional arguments to pass to the function.
+        **kwargs: Keyword arguments to pass to the function.
+
+    Returns:
+        The result of the Ghidra function call, or None if unavailable.
+
+    """
     if not GHIDRA_AVAILABLE:
         return None
 
@@ -275,8 +361,13 @@ def safe_ghidra_call(func_name, *args, **kwargs):
     return None
 
 
-def get_current_program():
-    """Get current program, avoiding pylint errors."""
+def get_current_program() -> object:
+    """Get current program, avoiding pylint errors.
+
+    Returns:
+        The current Ghidra program object, or None if unavailable.
+
+    """
     if not GHIDRA_AVAILABLE:
         return None
     return globals().get("current_program")
@@ -401,8 +492,13 @@ class AntiAnalysisDetector(GhidraScript):
         # Generate report
         self.generate_report(findings)
 
-    def find_anti_debug_apis(self, findings) -> None:
-        """Find references to anti-debugging APIs."""
+    def find_anti_debug_apis(self, findings: dict[str, list[dict[str, object]]]) -> None:
+        """Find references to anti-debugging APIs.
+
+        Args:
+            findings: Dictionary to accumulate findings by category.
+
+        """
         program = get_current_program()
         symbol_table = program.getSymbolTable()
 
@@ -425,8 +521,13 @@ class AntiAnalysisDetector(GhidraScript):
                             print(f"  [+] Found {api} at {ref.getFromAddress()}")
                             safe_ghidra_call("createBookmark", ref.getFromAddress(), "AntiDebug", f"{api} call")
 
-    def find_vm_artifacts(self, findings) -> None:
-        """Search for VM-related strings and artifacts."""
+    def find_vm_artifacts(self, findings: dict[str, list[dict[str, object]]]) -> None:
+        """Search for VM-related strings and artifacts.
+
+        Args:
+            findings: Dictionary to accumulate findings by category.
+
+        """
         program = get_current_program()
         memory = program.getMemory()
 
@@ -450,8 +551,13 @@ class AntiAnalysisDetector(GhidraScript):
                             print(f"  [+] Found VM artifact '{artifact}' at {addr}")
                             safe_ghidra_call("createBookmark", addr, "AntiVM", f"VM artifact: {artifact}")
 
-    def find_detection_instructions(self, findings) -> None:
-        """Find CPU instructions used for detection."""
+    def find_detection_instructions(self, findings: dict[str, list[dict[str, object]]]) -> None:
+        """Find CPU instructions used for detection.
+
+        Args:
+            findings: Dictionary to accumulate findings by category.
+
+        """
         program = get_current_program()
         listing = program.getListing()
         instructions = listing.getInstructions(True)
@@ -472,8 +578,13 @@ class AntiAnalysisDetector(GhidraScript):
                 print(f"  [+] Found {mnemonic} instruction at {instr.getAddress()}")
                 safe_ghidra_call("createBookmark", instr.getAddress(), "Detection", f"{mnemonic} instruction")
 
-    def find_timing_checks(self, findings) -> None:
-        """Find potential timing-based anti-analysis."""
+    def find_timing_checks(self, findings: dict[str, list[dict[str, object]]]) -> None:
+        """Find potential timing-based anti-analysis.
+
+        Args:
+            findings: Dictionary to accumulate findings by category.
+
+        """
         # Look for GetTickCount patterns
         tick_refs = self.find_api_refs("GetTickCount")
         perf_refs = self.find_api_refs("QueryPerformanceCounter")
@@ -501,8 +612,13 @@ class AntiAnalysisDetector(GhidraScript):
                 print(f"  [+] Found timing check between {addr1} and {addr2}")
                 safe_ghidra_call("createBookmark", addr1, "Timing", "Timing check start")
 
-    def find_exception_tricks(self, findings) -> None:
-        """Find exception-based anti-analysis tricks."""
+    def find_exception_tricks(self, findings: dict[str, list[dict[str, object]]]) -> None:
+        """Find exception-based anti-analysis tricks.
+
+        Args:
+            findings: Dictionary to accumulate findings by category.
+
+        """
         # Look for SetUnhandledExceptionFilter
         seh_refs = self.find_api_refs("SetUnhandledExceptionFilter")
         for ref in seh_refs:
@@ -528,8 +644,16 @@ class AntiAnalysisDetector(GhidraScript):
             )
             safe_ghidra_call("createBookmark", addr, "Exception", "INT3 trap")
 
-    def find_api_refs(self, api_name):
-        """Find all references to an API."""
+    def find_api_refs(self, api_name: str) -> list[object]:
+        """Find all references to an API.
+
+        Args:
+            api_name: The API name to search for.
+
+        Returns:
+            list[object]: List of addresses where the API is referenced.
+
+        """
         refs = []
         program = get_current_program()
         symbol_table = program.getSymbolTable()
@@ -542,8 +666,16 @@ class AntiAnalysisDetector(GhidraScript):
 
         return refs
 
-    def find_instruction(self, mnemonic):
-        """Find all instances of an instruction."""
+    def find_instruction(self, mnemonic: str) -> list[object]:
+        """Find all instances of an instruction.
+
+        Args:
+            mnemonic: The instruction mnemonic to search for.
+
+        Returns:
+            list[object]: List of addresses where the instruction is found.
+
+        """
         addrs = []
         program = get_current_program()
         listing = program.getListing()
@@ -556,8 +688,16 @@ class AntiAnalysisDetector(GhidraScript):
 
         return addrs
 
-    def get_api_description(self, api):
-        """Get description for known anti-debug APIs."""
+    def get_api_description(self, api: str) -> str:
+        """Get description for known anti-debug APIs.
+
+        Args:
+            api: The API name to describe.
+
+        Returns:
+            str: A description of the API's anti-debugging purpose.
+
+        """
         descriptions = {
             "IsDebuggerPresent": "Direct debugger detection",
             "CheckRemoteDebuggerPresent": "Remote debugger detection",
@@ -570,8 +710,16 @@ class AntiAnalysisDetector(GhidraScript):
         }
         return descriptions.get(api, "Anti-debugging API")
 
-    def get_instruction_description(self, instr):
-        """Get description for detection instructions."""
+    def get_instruction_description(self, instr: str) -> str:
+        """Get description for detection instructions.
+
+        Args:
+            instr: The instruction mnemonic to describe.
+
+        Returns:
+            str: A description of the instruction's detection purpose.
+
+        """
         descriptions = {
             "cpuid": "CPU identification - VM detection",
             "rdtsc": "Read timestamp counter - timing detection",
@@ -582,8 +730,13 @@ class AntiAnalysisDetector(GhidraScript):
         }
         return descriptions.get(instr, "Detection instruction")
 
-    def generate_report(self, findings) -> None:
-        """Generate analysis report."""
+    def generate_report(self, findings: dict[str, list[dict[str, object]]]) -> None:
+        """Generate analysis report.
+
+        Args:
+            findings: Dictionary containing findings organized by category.
+
+        """
         print("\n=== Anti-Analysis Technique Report ===")
 
         total = sum(len(v) for v in findings.values())
@@ -614,8 +767,16 @@ class AntiAnalysisDetector(GhidraScript):
         print(f"\n[*] Protection Level: {protection_level}")
         print("[*] Check bookmarks for all findings")
 
-    def assess_protection_level(self, findings) -> str:
-        """Assess overall protection level."""
+    def assess_protection_level(self, findings: dict[str, list[dict[str, object]]]) -> str:
+        """Assess overall protection level.
+
+        Args:
+            findings: Dictionary containing findings organized by category.
+
+        Returns:
+            str: A description of the protection level detected.
+
+        """
         score = 0
 
         score += len(findings["anti_debug"]) * 2

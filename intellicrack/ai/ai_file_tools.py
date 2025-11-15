@@ -22,7 +22,7 @@ import fnmatch
 import logging
 import os
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from ..handlers.pyqt6_handler import (
     QDialog,
@@ -48,7 +48,7 @@ __all__ = [
 class FileApprovalDialog(QDialog if QDialog is not None else object):
     """Dialog for requesting user approval for AI file operations."""
 
-    def __init__(self, operation_type: str, details: str, parent=None) -> None:
+    def __init__(self, operation_type: str, details: str, parent: Any | None = None) -> None:
         """Initialize file operation confirmation dialog."""
         super().__init__(parent)
         self.setWindowTitle(f"AI File {operation_type} Request")
@@ -91,7 +91,7 @@ class FileApprovalDialog(QDialog if QDialog is not None else object):
         self.setLayout(layout)
 
 
-def create_approval_dialog(operation_type: str, details: str, parent=None) -> bool:
+def create_approval_dialog(operation_type: str, details: str, parent: Any | None = None) -> bool:
     """Create and show approval dialog for AI file operations."""
     dialog = FileApprovalDialog(operation_type, details, parent)
     return dialog.exec() == QDialog.Accepted
@@ -100,7 +100,7 @@ def create_approval_dialog(operation_type: str, details: str, parent=None) -> bo
 class FileSearchTool:
     """Tool for AI to search the file system for licensing-related files."""
 
-    def __init__(self, app_instance: Optional[Any] = None) -> None:
+    def __init__(self, app_instance: Any | None = None) -> None:
         """Initialize file search tool with app instance."""
         self.app_instance = app_instance
         self.common_license_patterns = [
@@ -236,7 +236,7 @@ Purpose: Find licensing-related files for analysis to identify protection mechan
 class FileReadTool:
     """Tool for AI to read files with user approval."""
 
-    def __init__(self, app_instance: Optional[Any] = None, max_file_size: int = 10 * 1024 * 1024) -> None:
+    def __init__(self, app_instance: Any | None = None, max_file_size: int = 10 * 1024 * 1024) -> None:
         """Initialize file read tool with app instance and optional max file size.
 
         Args:
@@ -396,7 +396,7 @@ Files:
 class AIFileTools:
     """Run class providing file system tools for AI analysis."""
 
-    def __init__(self, app_instance: Optional[Any] = None, max_file_size: int = 10 * 1024 * 1024) -> None:
+    def __init__(self, app_instance: Any | None = None, max_file_size: int = 10 * 1024 * 1024) -> None:
         """Initialize AI file tools with app instance and optional max file size.
 
         Args:
@@ -472,7 +472,7 @@ class AIFileTools:
         return analysis
 
 
-def get_ai_file_tools(app_instance=None, max_file_size: int = 10 * 1024 * 1024) -> AIFileTools:
+def get_ai_file_tools(app_instance: Any | None = None, max_file_size: int = 10 * 1024 * 1024) -> AIFileTools:
     """Create AI file tools instance.
 
     Args:

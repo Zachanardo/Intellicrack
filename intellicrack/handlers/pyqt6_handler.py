@@ -246,12 +246,12 @@ except ImportError as e:
     class FallbackWidget:
         """Production-ready widget implementation for headless/server environments."""
 
-        _instances = weakref.WeakSet()
-        _event_queue = queue.Queue()
-        _running = False
-        _cleanup_registered = False
+        _instances: weakref.WeakSet = weakref.WeakSet()
+        _event_queue: queue.Queue = queue.Queue()
+        _running: bool = False
+        _cleanup_registered: bool = False
 
-        def __init__(self, *args, **kwargs) -> None:
+        def __init__(self, *args: object, **kwargs: object) -> None:
             self._properties = {}
             self._children = []
             self._parent = kwargs.get("parent")
@@ -284,26 +284,56 @@ except ImportError as e:
                 self._emit_event("hide")
             return True
 
-        def setEnabled(self, enabled) -> bool:
+        def setEnabled(self, enabled: object) -> bool:
             if not self._destroyed:
                 self._enabled = bool(enabled)
                 logger.debug(f"Widget {self.__class__.__name__} enabled={self._enabled}")
                 self._emit_event("enabledChanged", self._enabled)
             return True
 
-        def isEnabled(self):
+        def isEnabled(self) -> bool:
+            """Check if the widget is enabled and not destroyed.
+
+            Returns:
+                bool: True if widget is enabled and not destroyed, False otherwise.
+
+            """
             return self._enabled and not self._destroyed
 
-        def setText(self, text) -> bool:
+        def setText(self, text: object) -> bool:
+            """Set the widget text.
+
+            Args:
+                text: The text to set.
+
+            Returns:
+                bool: Always True.
+
+            """
             if not self._destroyed:
                 self._text = str(text)
                 self._emit_event("textChanged", self._text)
             return True
 
-        def text(self):
+        def text(self) -> str:
+            """Get the widget text.
+
+            Returns:
+                str: The current widget text, or empty string if destroyed.
+
+            """
             return self._text if not self._destroyed else ""
 
-        def setValue(self, value) -> bool:
+        def setValue(self, value: object) -> bool:
+            """Set the widget value.
+
+            Args:
+                value: The value to set.
+
+            Returns:
+                bool: Always True.
+
+            """
             if not self._destroyed:
                 old_value = self._value
                 self._value = value
@@ -311,26 +341,69 @@ except ImportError as e:
                     self._emit_event("valueChanged", value)
             return True
 
-        def value(self):
+        def value(self) -> object:
+            """Get the widget value.
+
+            Returns:
+                object: The current widget value, or None if destroyed.
+
+            """
             return self._value if not self._destroyed else None
 
-        def setGeometry(self, x, y, w, h) -> bool:
+        def setGeometry(self, x: int, y: int, w: int, h: int) -> bool:
+            """Set the widget geometry.
+
+            Args:
+                x: X coordinate.
+                y: Y coordinate.
+                w: Width.
+                h: Height.
+
+            Returns:
+                bool: Always True.
+
+            """
             if not self._destroyed:
                 self._geometry = {"x": x, "y": y, "width": w, "height": h}
                 self._emit_event("geometryChanged", self._geometry)
             return True
 
-        def geometry(self):
+        def geometry(self) -> dict:
+            """Get the widget geometry.
+
+            Returns:
+                dict: Dictionary with x, y, width, height keys, or empty dict if destroyed.
+
+            """
             return self._geometry.copy() if not self._destroyed else {"x": 0, "y": 0, "width": 0, "height": 0}
 
-        def addWidget(self, widget, *args) -> bool:
+        def addWidget(self, widget: object, *args: object) -> bool:
+            """Add a widget to this widget.
+
+            Args:
+                widget: The widget to add.
+                *args: Additional positional arguments.
+
+            Returns:
+                bool: Always True.
+
+            """
             if not self._destroyed and hasattr(widget, "_properties"):
                 self._children.append(widget)
                 if hasattr(widget, "_parent"):
                     widget._parent = self
             return True
 
-        def setLayout(self, layout) -> bool:
+        def setLayout(self, layout: object) -> bool:
+            """Set the layout for this widget.
+
+            Args:
+                layout: The layout to set.
+
+            Returns:
+                bool: Always True.
+
+            """
             if not self._destroyed and hasattr(layout, "_children"):
                 self._children.extend(layout._children)
                 for child in layout._children:
@@ -339,6 +412,15 @@ except ImportError as e:
             return True
 
         def exec(self) -> int | None:
+            """Execute the widget event loop.
+
+            Returns:
+                int | None: 0 if destroyed, 1 if completed normally, 0 on interrupt.
+
+            Raises:
+                KeyboardInterrupt: When interrupted by user.
+
+            """
             if self._destroyed:
                 return 0
 
@@ -359,36 +441,88 @@ except ImportError as e:
                 FallbackWidget._running = False
 
         def accept(self) -> bool:
+            """Accept the widget dialog.
+
+            Returns:
+                bool: True if accepted, False if destroyed.
+
+            """
             if not self._destroyed:
                 self._emit_event("accepted")
                 return True
             return False
 
         def reject(self) -> bool:
+            """Reject the widget dialog.
+
+            Returns:
+                bool: Always False.
+
+            """
             if not self._destroyed:
                 self._emit_event("rejected")
                 return False
             return False
 
-        def isVisible(self):
+        def isVisible(self) -> bool:
+            """Check if the widget is visible.
+
+            Returns:
+                bool: True if visible and not destroyed, False otherwise.
+
+            """
             return self._visible and not self._destroyed
 
-        def __call__(self, *args, **kwargs):
+        def __call__(self, *args: object, **kwargs: object) -> object:
+            """Make widget callable.
+
+            Args:
+                *args: Positional arguments.
+                **kwargs: Keyword arguments.
+
+            Returns:
+                object: None if destroyed, else self.
+
+            """
             if self._destroyed:
                 return None
             return self
 
         def __int__(self) -> int:
+            """Convert widget to integer.
+
+            Returns:
+                int: 0 if destroyed, 1 otherwise.
+
+            """
             return 0 if self._destroyed else 1
 
         def __str__(self) -> str:
+            """Convert widget to string representation.
+
+            Returns:
+                str: String representation of the widget.
+
+            """
             return f"FallbackWidget({self.__class__.__name__})"
 
         def __bool__(self) -> bool:
+            """Convert widget to boolean.
+
+            Returns:
+                bool: False if destroyed, True otherwise.
+
+            """
             return not self._destroyed
 
         @classmethod
-        def instance(cls):
+        def instance(cls) -> "FallbackWidget":
+            """Get or create a singleton instance.
+
+            Returns:
+                FallbackWidget: The singleton instance.
+
+            """
             if cls._instances:
                 for inst in cls._instances:
                     if isinstance(inst, cls) and not inst._destroyed:
@@ -398,6 +532,7 @@ except ImportError as e:
             return instance
 
         def processEvents(self) -> None:
+            """Process pending events and timers."""
             if self._destroyed:
                 return
 
@@ -427,6 +562,10 @@ except ImportError as e:
                         timer_info["next_fire"] = time.time() + timer_info["interval"]
 
         def quit(self) -> None:
+            """Quit the widget event loop.
+
+            Cleans up all instances and clears the event queue.
+            """
             FallbackWidget._running = False
 
             for instance in list(FallbackWidget._instances):
@@ -444,7 +583,16 @@ except ImportError as e:
 
             logger.info("Application quit (headless mode)")
 
-        def exit(self, code=0):
+        def exit(self, code: int = 0) -> int:
+            """Exit the widget.
+
+            Args:
+                code: Exit code.
+
+            Returns:
+                int: The exit code.
+
+            """
             self.quit()
 
             if code != 0:
@@ -452,14 +600,28 @@ except ImportError as e:
 
             return code
 
-        def connect(self, signal_name, callback) -> None:
+        def connect(self, signal_name: str, callback: object) -> None:
+            """Connect a callback to a signal.
+
+            Args:
+                signal_name: The name of the signal.
+                callback: The callback function.
+
+            """
             if not self._destroyed and callable(callback):
                 if signal_name not in self._signals:
                     self._signals[signal_name] = []
                 self._signals[signal_name].append(callback)
                 logger.debug(f"Connected signal {signal_name} to {callback.__name__}")
 
-        def disconnect(self, signal_name, callback=None) -> None:
+        def disconnect(self, signal_name: str, callback: object = None) -> None:
+            """Disconnect a callback from a signal.
+
+            Args:
+                signal_name: The name of the signal.
+                callback: The callback to disconnect, or None to disconnect all.
+
+            """
             if not self._destroyed and signal_name in self._signals:
                 if callback:
                     if callback in self._signals[signal_name]:
@@ -469,7 +631,15 @@ except ImportError as e:
                     self._signals[signal_name] = []
                     logger.debug(f"Disconnected all from {signal_name}")
 
-        def emit(self, signal_name, *args, **kwargs) -> None:
+        def emit(self, signal_name: str, *args: object, **kwargs: object) -> None:
+            """Emit a signal.
+
+            Args:
+                signal_name: The name of the signal.
+                *args: Positional arguments to pass to callbacks.
+                **kwargs: Keyword arguments to pass to callbacks.
+
+            """
             if not self._destroyed and signal_name in self._signals:
                 for callback in self._signals[signal_name]:
                     try:
@@ -477,16 +647,30 @@ except ImportError as e:
                     except Exception as e:
                         logger.error(f"Signal callback error for {signal_name}: {e}")
 
-        def _emit_event(self, event_type, data=None) -> None:
+        def _emit_event(self, event_type: str, data: object = None) -> None:
+            """Emit an internal event to the event queue.
+
+            Args:
+                event_type: The type of event.
+                data: Optional data associated with the event.
+
+            """
             if not self._destroyed:
                 event = {"type": event_type, "widget": self, "data": data, "timestamp": time.time()}
                 FallbackWidget._event_queue.put(event)
 
-        def _process_event(self, event) -> None:
+        def _process_event(self, event: dict) -> None:
+            """Process a queued event.
+
+            Args:
+                event: The event dictionary to process.
+
+            """
             if event["type"] in self._signals:
                 self.emit(event["type"], event.get("data"))
 
         def _cleanup(self) -> None:
+            """Clean up the widget resources."""
             self._destroyed = True
             self._signals.clear()
             self._timers.clear()
@@ -495,14 +679,34 @@ except ImportError as e:
 
         @classmethod
         def _cleanup_all(cls) -> None:
+            """Clean up all widget instances."""
             for instance in list(cls._instances):
                 if hasattr(instance, "_cleanup"):
                     instance._cleanup()
             cls._instances.clear()
             cls._running = False
 
-        def __getattr__(self, name):
-            def method(*args, **kwargs):
+        def __getattr__(self, name: str) -> object:
+            """Get or create a dynamic method.
+
+            Args:
+                name: The attribute name.
+
+            Returns:
+                object: A callable method.
+
+            """
+            def method(*args: object, **kwargs: object) -> object:
+                """Dynamic method implementation.
+
+                Args:
+                    *args: Positional arguments.
+                    **kwargs: Keyword arguments.
+
+                Returns:
+                    object: Always returns self.
+
+                """
                 if not self._destroyed:
                     self._properties[name] = (args, kwargs)
                     logger.debug(f"Called {name} with args={args}, kwargs={kwargs} (headless)")
@@ -511,14 +715,27 @@ except ImportError as e:
             return method
 
         def deleteLater(self) -> None:
+            """Schedule the widget for deletion."""
             def cleanup() -> None:
+                """Clean up the widget."""
                 self._cleanup()
                 if self in FallbackWidget._instances:
                     FallbackWidget._instances.discard(self)
 
             threading.Timer(0.1, cleanup).start()
 
-        def startTimer(self, interval_ms, callback, single_shot=False):
+        def startTimer(self, interval_ms: int, callback: object, single_shot: bool = False) -> int:
+            """Start a timer.
+
+            Args:
+                interval_ms: The interval in milliseconds.
+                callback: The callback function to call.
+                single_shot: If True, timer fires only once.
+
+            Returns:
+                int: Timer ID, or -1 if widget is destroyed.
+
+            """
             if not self._destroyed and callable(callback):
                 timer_info = {
                     "interval": interval_ms / 1000.0,
@@ -530,13 +747,30 @@ except ImportError as e:
                 return len(self._timers) - 1
             return -1
 
-        def killTimer(self, timer_id) -> None:
+        def killTimer(self, timer_id: int) -> None:
+            """Kill a timer.
+
+            Args:
+                timer_id: The timer ID to kill.
+
+            """
             if 0 <= timer_id < len(self._timers):
                 self._timers[timer_id] = None
                 self._timers = [t for t in self._timers if t is not None]
 
         @classmethod
-        def critical(cls, parent, title, message, buttons=None, default=None):
+        def critical(cls, title: str, message: str, **kwargs: object) -> int:
+            """Display a critical message dialog.
+
+            Args:
+                title: The dialog title.
+                message: The message to display.
+                **kwargs: Additional keyword arguments (ignored for compatibility).
+
+            Returns:
+                int: Always 0.
+
+            """
             timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
             sys.stderr.write(f"[{timestamp}] CRITICAL: {title}: {message}\n")
             sys.stderr.flush()
@@ -548,10 +782,21 @@ except ImportError as e:
                 except Exception as e:
                     logger.debug(f"Log file write failed: {e}")
 
-            return default if default is not None else 0
+            return 0
 
         @classmethod
-        def warning(cls, parent, title, message, buttons=None, default=None):
+        def warning(cls, title: str, message: str, **kwargs: object) -> int:
+            """Display a warning message dialog.
+
+            Args:
+                title: The dialog title.
+                message: The message to display.
+                **kwargs: Additional keyword arguments (ignored for compatibility).
+
+            Returns:
+                int: Always 0.
+
+            """
             timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
             sys.stderr.write(f"[{timestamp}] WARNING: {title}: {message}\n")
             sys.stderr.flush()
@@ -563,10 +808,21 @@ except ImportError as e:
                 except Exception as e:
                     logger.debug(f"Log file write failed: {e}")
 
-            return default if default is not None else 0
+            return 0
 
         @classmethod
-        def information(cls, parent, title, message, buttons=None, default=None):
+        def information(cls, title: str, message: str, **kwargs: object) -> int:
+            """Display an information message dialog.
+
+            Args:
+                title: The dialog title.
+                message: The message to display.
+                **kwargs: Additional keyword arguments (ignored for compatibility).
+
+            Returns:
+                int: Always 0.
+
+            """
             timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
             sys.stdout.write(f"[{timestamp}] INFO: {title}: {message}\n")
             sys.stdout.flush()
@@ -578,10 +834,21 @@ except ImportError as e:
                 except Exception as e:
                     logger.debug(f"Log file write failed: {e}")
 
-            return default if default is not None else 0
+            return 0
 
         @classmethod
-        def question(cls, parent, title, message, buttons=None, default=None):
+        def question(cls, title: str, message: str, **kwargs: object) -> int:
+            """Display a question message dialog.
+
+            Args:
+                title: The dialog title.
+                message: The message to display.
+                **kwargs: Additional keyword arguments (ignored for compatibility).
+
+            Returns:
+                int: Default answer or 0.
+
+            """
             timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
             sys.stdout.write(f"[{timestamp}] QUESTION: {title}: {message}\n")
             sys.stdout.flush()
@@ -597,14 +864,14 @@ except ImportError as e:
                 answer = os.environ.get("INTELLICRACK_AUTO_ANSWER")
                 sys.stdout.write(f"[{timestamp}] AUTO-ANSWER: {answer}\n")
                 sys.stdout.flush()
-                return int(answer) if answer.isdigit() else default
+                return int(answer) if answer and answer.isdigit() else 0
 
-            return default if default is not None else 0
+            return 0
 
     class FallbackQt:
         """Production-ready Qt namespace emulation for headless environments."""
 
-        _enum_values = {
+        _enum_values: dict = {
             "AlignLeft": 0x0001,
             "AlignRight": 0x0002,
             "AlignHCenter": 0x0004,
@@ -647,10 +914,20 @@ except ImportError as e:
         }
 
         def __init__(self) -> None:
-            self._namespace_name = "QtFallback"
-            self._sub_namespaces = {}
+            """Initialize the Qt fallback namespace."""
+            self._namespace_name: str = "QtFallback"
+            self._sub_namespaces: dict = {}
 
-        def __getattr__(self, name):
+        def __getattr__(self, name: str) -> object:
+            """Get an attribute from the Qt namespace.
+
+            Args:
+                name: The attribute name.
+
+            Returns:
+                object: The attribute value or a FallbackWidget.
+
+            """
             if name in self._enum_values:
                 return self._enum_values[name]
 
@@ -677,19 +954,41 @@ except ImportError as e:
 
             return self._sub_namespaces.get(name, FallbackWidget())
 
-        def __call__(self, *args, **kwargs):
+        def __call__(self, *args: object, **kwargs: object) -> int:
+            """Make the Qt namespace callable.
+
+            Args:
+                *args: Positional arguments.
+                **kwargs: Keyword arguments.
+
+            Returns:
+                int: Always 0.
+
+            """
             return 0
 
         def __int__(self) -> int:
+            """Convert to integer.
+
+            Returns:
+                int: Always 0.
+
+            """
             return 0
 
         def __bool__(self) -> bool:
+            """Convert to boolean.
+
+            Returns:
+                bool: Always True.
+
+            """
             return True
 
     class FallbackQtEnum:
         """Production-ready Qt enumeration emulation with real values."""
 
-        _enum_mappings = {
+        _enum_mappings: dict = {
             "ItemDataRole": {
                 "DisplayRole": 0,
                 "DecorationRole": 1,
@@ -840,11 +1139,26 @@ except ImportError as e:
             },
         }
 
-        def __init__(self, enum_type) -> None:
-            self._enum_type = enum_type
-            self._values = self._enum_mappings.get(enum_type, {})
+        def __init__(self, enum_type: str) -> None:
+            """Initialize the Qt enum.
 
-        def __getattr__(self, name):
+            Args:
+                enum_type: The enumeration type name.
+
+            """
+            self._enum_type: str = enum_type
+            self._values: dict = self._enum_mappings.get(enum_type, {})
+
+        def __getattr__(self, name: str) -> int:
+            """Get an enumeration value.
+
+            Args:
+                name: The value name.
+
+            Returns:
+                int: The enumeration value, or 0 if not found.
+
+            """
             if name in self._values:
                 return self._values[name]
 
@@ -852,27 +1166,76 @@ except ImportError as e:
             return 0
 
         def __int__(self) -> int:
+            """Convert to integer.
+
+            Returns:
+                int: Always 0.
+
+            """
             return 0
 
-        def __call__(self, *args, **kwargs):
+        def __call__(self, *args: object, **kwargs: object) -> int:
+            """Make enum callable.
+
+            Args:
+                *args: Positional arguments.
+                **kwargs: Keyword arguments.
+
+            Returns:
+                int: Always 0.
+
+            """
             return 0
 
-        def __or__(self, other):
+        def __or__(self, other: object) -> int:
+            """Bitwise OR operation.
+
+            Args:
+                other: The other operand.
+
+            Returns:
+                int: The other value if it's an int, 0 otherwise.
+
+            """
             if isinstance(other, int):
                 return other
             return 0
 
-        def __and__(self, other):
+        def __and__(self, other: object) -> int:
+            """Bitwise AND operation.
+
+            Args:
+                other: The other operand.
+
+            Returns:
+                int: The other value if it's an int, 0 otherwise.
+
+            """
             if isinstance(other, int):
                 return other
             return 0
 
-        def __xor__(self, other):
+        def __xor__(self, other: object) -> int:
+            """Bitwise XOR operation.
+
+            Args:
+                other: The other operand.
+
+            Returns:
+                int: The other value if it's an int, 0 otherwise.
+
+            """
             if isinstance(other, int):
                 return other
             return 0
 
-        def __invert__(self):
+        def __invert__(self) -> int:
+            """Bitwise NOT operation.
+
+            Returns:
+                int: All bits set.
+
+            """
             return 0xFFFFFFFF
 
     # Fallback classes for headless mode to prevent TypeError: NoneType takes no arguments
@@ -1103,18 +1466,37 @@ except ImportError as e:
         class FallbackSignal:
             """Production-ready signal implementation for headless environments."""
 
-            def __init__(self, *types, **kwargs) -> None:
-                self._types = types
-                self._name = kwargs.get("name", "signal")
-                self._callbacks = []
-                self._enabled = True
+            def __init__(self, *types: object, **kwargs: object) -> None:
+                """Initialize a fallback signal.
 
-            def connect(self, callback) -> None:
+                Args:
+                    *types: The signal argument types.
+                    **kwargs: Additional keyword arguments (name, etc.).
+
+                """
+                self._types: tuple = types
+                self._name: str = kwargs.get("name", "signal")
+                self._callbacks: list = []
+                self._enabled: bool = True
+
+            def connect(self, callback: object) -> None:
+                """Connect a callback to this signal.
+
+                Args:
+                    callback: The callback function to connect.
+
+                """
                 if callable(callback) and callback not in self._callbacks:
                     self._callbacks.append(callback)
                     logger.debug(f"Signal {self._name} connected to {callback.__name__}")
 
-            def disconnect(self, callback=None) -> None:
+            def disconnect(self, callback: object = None) -> None:
+                """Disconnect a callback from this signal.
+
+                Args:
+                    callback: The callback to disconnect, or None to disconnect all.
+
+                """
                 if callback is None:
                     self._callbacks.clear()
                     logger.debug(f"All callbacks disconnected from signal {self._name}")
@@ -1122,7 +1504,13 @@ except ImportError as e:
                     self._callbacks.remove(callback)
                     logger.debug(f"Callback {callback.__name__} disconnected from signal {self._name}")
 
-            def emit(self, *args) -> None:
+            def emit(self, *args: object) -> None:
+                """Emit this signal to all connected callbacks.
+
+                Args:
+                    *args: Arguments to pass to the callbacks.
+
+                """
                 if not self._enabled:
                     return
 
@@ -1132,29 +1520,87 @@ except ImportError as e:
                     except Exception as e:
                         logger.error(f"Signal {self._name} callback error: {e}")
 
-            def setEnabled(self, enabled) -> None:
+            def setEnabled(self, enabled: object) -> None:
+                """Enable or disable the signal.
+
+                Args:
+                    enabled: True to enable, False to disable.
+
+                """
                 self._enabled = bool(enabled)
 
-            def __call__(self, *args):
+            def __call__(self, *args: object) -> None:
+                """Make the signal callable.
+
+                Args:
+                    *args: Arguments to pass to emit.
+
+                """
                 self.emit(*args)
 
             def __bool__(self) -> bool:
+                """Convert to boolean.
+
+                Returns:
+                    bool: Always True.
+
+                """
                 return True
 
-        def pyqtSignal(*types, **kwargs):
-            """Production-ready pyqtSignal implementation for headless environments."""
+        def pyqtSignal(*types: object, **kwargs: object) -> FallbackSignal:
+            """Production-ready pyqtSignal implementation for headless environments.
+
+            Args:
+                *types: The signal argument types.
+                **kwargs: Additional keyword arguments.
+
+            Returns:
+                FallbackSignal: A new signal instance.
+
+            """
             return FallbackSignal(*types, **kwargs)
 
-        def pyqtSlot(*types, **kwargs):
-            """Production-ready pyqtSlot decorator for headless environments."""
+        def pyqtSlot(*types: object, **kwargs: object) -> object:
+            """Production-ready pyqtSlot decorator for headless environments.
 
-            def decorator(func):
+            Args:
+                *types: The slot argument types.
+                **kwargs: Additional keyword arguments.
+
+            Returns:
+                object: A decorator function.
+
+            """
+
+            def decorator(func: object) -> object:
+                """Apply the pyqt slot decorator to a function.
+
+                Args:
+                    func: The function to decorate.
+
+                Returns:
+                    object: The wrapped function.
+
+                """
                 func._pyqt_slot = True
                 func._slot_types = types
                 func._slot_result = kwargs.get("result")
                 func._slot_name = kwargs.get("name", func.__name__)
 
-                def wrapper(*args, **kw):
+                def wrapper(*args: object, **kw: object) -> object:
+                    """Execute the slot function with logging and type checking.
+
+                    Args:
+                        *args: Positional arguments.
+                        **kw: Keyword arguments.
+
+                    Returns:
+                        object: The function result.
+
+                    Raises:
+                        Exception: Any exception from the wrapped function.
+
+                    """
                     try:
                         logger.debug(f"Slot {func._slot_name} called with args={args}, kwargs={kw}")
                         result = func(*args, **kw)
@@ -1180,8 +1626,19 @@ except ImportError as e:
 
             return decorator
 
-        def qRgba(r, g, b, a=255):
-            """Production-ready RGBA color value creation for headless environments."""
+        def qRgba(r: int, g: int, b: int, a: int = 255) -> int:
+            """Production-ready RGBA color value creation for headless environments.
+
+            Args:
+                r: Red component (0-255).
+                g: Green component (0-255).
+                b: Blue component (0-255).
+                a: Alpha component (0-255), default 255.
+
+            Returns:
+                int: The RGBA color value as a 32-bit integer.
+
+            """
             r = max(0, min(255, int(r)))
             g = max(0, min(255, int(g)))
             b = max(0, min(255, int(b)))
@@ -1217,15 +1674,33 @@ except ImportError as e:
         QWizardPage = None
         Qt = None
 
-        def pyqtSignal(*args, **kwargs):
-            """Fallback pyqtSignal implementation for minimal PyQt6 compatibility."""
+        def pyqtSignal(*args: object, **kwargs: object) -> object:
+            """Fallback pyqtSignal implementation for minimal PyQt6 compatibility.
+
+            Args:
+                *args: Positional arguments (ignored).
+                **kwargs: Keyword arguments (ignored).
+
+            Returns:
+                object: A no-op lambda function.
+
+            """
             return lambda: None
 
-        def pyqtSlot(*args, **kwargs):
-            """Fallback pyqtSlot decorator for minimal PyQt6 compatibility."""
+        def pyqtSlot(*args: object, **kwargs: object) -> object:
+            """Fallback pyqtSlot decorator for minimal PyQt6 compatibility.
+
+            Args:
+                *args: Positional arguments (ignored).
+                **kwargs: Keyword arguments (ignored).
+
+            Returns:
+                object: A no-op lambda function.
+
+            """
             return lambda: None
 
-        q_rgba = None
+        q_rgba: None = None
 
 
 # Export all PyQt6 classes and availability flag

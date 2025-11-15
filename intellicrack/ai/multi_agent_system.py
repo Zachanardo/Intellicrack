@@ -545,8 +545,7 @@ class BaseAgent:
         handler = task_handlers.get(task.task_type)
         if handler:
             return await handler(task)
-        else:
-            return await self._handle_generic_task(task)
+        return await self._handle_generic_task(task)
 
     async def _handle_binary_analysis(self, task: AgentTask) -> dict[str, Any]:
         """Handle binary analysis tasks."""
@@ -1025,7 +1024,13 @@ if __name__ == "__main__":
         )
 
         # Execute task asynchronously
-        asyncio.create_task(self._execute_task_async(task, message))
+        task_handle = asyncio.create_task(self._execute_task_async(task, message))
+        # Store task reference to prevent garbage collection
+        if not hasattr(self, '_running_tasks'):
+            self._running_tasks = set()
+        self._running_tasks.add(task_handle)
+        # Remove task from set when it's done
+        task_handle.add_done_callback(self._running_tasks.discard)
 
     async def _execute_task_async(self, task: AgentTask, original_message: AgentMessage) -> None:
         """Execute task asynchronously and send response."""
@@ -1455,11 +1460,7 @@ class StaticAnalysisAgent(BaseAgent):
                     optional_header_offset = pe_offset + 24
                     magic = struct.unpack("<H", mmapped_file[optional_header_offset : optional_header_offset + 2])[0]
 
-                    if magic == 0x10B:  # PE32
-                        entry_point = struct.unpack("<I", mmapped_file[optional_header_offset + 16 : optional_header_offset + 20])[
-                            0
-                        ]
-                    elif magic == 0x20B:  # PE32+
+                    if magic in {267, 523}:  # PE32
                         entry_point = struct.unpack("<I", mmapped_file[optional_header_offset + 16 : optional_header_offset + 20])[
                             0
                         ]
@@ -1604,13 +1605,13 @@ class StaticAnalysisAgent(BaseAgent):
 
         if "def " in code and "import " in code:
             return "python"
-        elif "function " in code or "const " in code or "var " in code:
+        if "function " in code or "const " in code or "var " in code:
             return "javascript"
-        elif "#include" in code or "int main" in code:
+        if "#include" in code or "int main" in code:
             return "c"
-        elif "public class" in code or "private void" in code:
+        if "public class" in code or "private void" in code:
             return "java"
-        elif "<?php" in code:
+        if "<?php" in code:
             return "php"
         return language
 
@@ -1650,7 +1651,7 @@ class StaticAnalysisAgent(BaseAgent):
             logger.error(f"Python AST analysis failed: {e}")
             return {"confidence": 0.5}
 
-    def _check_python_vulnerabilities(self, node) -> list[dict[str, Any]]:
+    def _check_python_vulnerabilities(self, node: Any) -> list[dict[str, Any]]:
         """Check for vulnerabilities in Python AST node."""
         import ast
 
@@ -2515,7 +2516,7 @@ class DynamicAnalysisAgent(BaseAgent):
 
             script = session.create_script(script_code)
 
-            def on_message(message, data) -> None:
+            def on_message(message: dict[str, Any], data: Any) -> None:
                 if message["type"] == "send":
                     payload = message["payload"]
                     if payload["type"] == "api_call":
@@ -2693,14 +2694,13 @@ class ReverseEngineeringAgent(BaseAgent):
 
         if architecture == "x64":
             return Cs(CS_ARCH_X86, CS_MODE_64)
-        elif architecture == "x86":
+        if architecture == "x86":
             return Cs(CS_ARCH_X86, CS_MODE_32)
-        elif architecture == "arm":
+        if architecture == "arm":
             return Cs(CS_ARCH_ARM, CS_MODE_ARM)
-        else:
-            return Cs(CS_ARCH_X86, CS_MODE_32)
+        return Cs(CS_ARCH_X86, CS_MODE_32)
 
-    def _process_capstone_instruction(self, insn, function_boundaries: list, cross_references: list) -> dict[str, Any]:
+    def _process_capstone_instruction(self, insn: Any, function_boundaries: list, cross_references: list) -> dict[str, Any]:
         """Process a single capstone instruction and update boundaries/references."""
         instruction_info = {"address": hex(insn.address), "instruction": f"{insn.mnemonic} {insn.op_str}", "bytes": insn.bytes.hex()}
 
@@ -2733,30 +2733,27 @@ class ReverseEngineeringAgent(BaseAgent):
 
         if opcode == 0x55:  # push ebp/rbp
             return "push ebp", 1
-        elif opcode == 0x89:  # mov
+        if opcode == 0x89:  # mov
             if offset + 1 < len(binary_data):
                 modrm = binary_data[offset + 1]
                 if modrm == 0xE5:
                     return "mov ebp, esp", 2
-                else:
-                    return f"mov [modrm: {modrm:02x}]", 2
+                return f"mov [modrm: {modrm:02x}]", 2
         elif opcode == 0x8B:  # mov reverse
             if offset + 1 < len(binary_data):
                 modrm = binary_data[offset + 1]
                 if modrm == 0xEC:
                     return "mov ebp, esp", 2
-                else:
-                    return f"mov [modrm: {modrm:02x}]", 2
+                return f"mov [modrm: {modrm:02x}]", 2
         elif opcode == 0x83:  # arithmetic with imm8
             if offset + 2 < len(binary_data):
                 modrm = binary_data[offset + 1]
                 imm = binary_data[offset + 2]
                 if modrm == 0xEC:
                     return f"sub esp, {imm}", 3
-                elif modrm == 0xC4:
+                if modrm == 0xC4:
                     return f"add esp, {imm}", 3
-                else:
-                    return f"arith [modrm: {modrm:02x}], {imm}", 3
+                return f"arith [modrm: {modrm:02x}], {imm}", 3
         elif opcode == 0xE8:  # call rel32
             if offset + 4 < len(binary_data):
                 rel = int.from_bytes(binary_data[offset + 1 : offset + 5], "little", signed=True)
@@ -3295,28 +3292,25 @@ int process_data(void* input, int size) {
                 asm_str = str(assembly_code)
                 if "unroll" in asm_str or "vectoriz" in asm_str:
                     return "high"
-                elif len(assembly_code) > 1000:
+                if len(assembly_code) > 1000:
                     return "low"
-                else:
-                    return "medium"
+                return "medium"
             return "unknown"
 
         if any("O2" in p or "O3" in p or "Ox" in p for p in compiler_patterns):
             return "high"
-        elif any("O1" in p or "Os" in p for p in compiler_patterns):
+        if any("O1" in p or "Os" in p for p in compiler_patterns):
             return "medium"
-        elif any("O0" in p or "Od" in p for p in compiler_patterns):
+        if any("O0" in p or "Od" in p for p in compiler_patterns):
             return "low"
-        else:
-            if assembly_code:
-                asm_str = str(assembly_code)
-                if "unroll" in asm_str or "vectoriz" in asm_str:
-                    return "high"
-                elif len(assembly_code) > 1000:
-                    return "low"
-                else:
-                    return "medium"
-            return "unknown"
+        if assembly_code:
+            asm_str = str(assembly_code)
+            if "unroll" in asm_str or "vectoriz" in asm_str:
+                return "high"
+            if len(assembly_code) > 1000:
+                return "low"
+            return "medium"
+        return "unknown"
 
     async def _analyze_algorithms(self, input_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze algorithms in code using real pattern detection."""

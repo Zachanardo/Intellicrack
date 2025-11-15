@@ -338,7 +338,7 @@ class PathDiscovery:
                 continue
 
             if isinstance(args, (list, tuple)) and len(args) > 0:
-                path = strategy(args) if not isinstance(args, dict) else strategy(args)
+                path = strategy(args)
             else:
                 path = strategy(args)
 

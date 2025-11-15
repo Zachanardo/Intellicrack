@@ -109,7 +109,6 @@ USAGE IN BYPASS:
 
 import datetime
 from dataclasses import dataclass
-from typing import Tuple
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
@@ -132,7 +131,7 @@ class CertificateChain:
 class CertificateChainGenerator:
     """Generates complete certificate chains for MITM proxying."""
 
-    def generate_root_ca(self) -> Tuple[x509.Certificate, rsa.RSAPrivateKey]:
+    def generate_root_ca(self) -> tuple[x509.Certificate, rsa.RSAPrivateKey]:
         """Generate self-signed root CA certificate.
 
         Returns:
@@ -191,7 +190,7 @@ class CertificateChainGenerator:
         self,
         root_ca: x509.Certificate,
         root_key: rsa.RSAPrivateKey,
-    ) -> Tuple[x509.Certificate, rsa.RSAPrivateKey]:
+    ) -> tuple[x509.Certificate, rsa.RSAPrivateKey]:
         """Generate intermediate CA certificate signed by root CA.
 
         Args:
@@ -258,7 +257,7 @@ class CertificateChainGenerator:
         domain: str,
         intermediate_ca: x509.Certificate,
         intermediate_key: rsa.RSAPrivateKey,
-    ) -> Tuple[x509.Certificate, rsa.RSAPrivateKey]:
+    ) -> tuple[x509.Certificate, rsa.RSAPrivateKey]:
         """Generate leaf certificate for specific domain.
 
         Args:

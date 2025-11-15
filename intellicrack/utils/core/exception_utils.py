@@ -74,7 +74,9 @@ class RestrictedUnpickler(pickle.Unpickler):
             return super().find_class(module, name)
 
         # Deny everything else
-        raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
+        error_msg = f"Attempted to load unsafe class {module}.{name}"
+        logger.error(error_msg)
+        raise pickle.UnpicklingError(error_msg)
 
 
 def secure_pickle_dump(obj, file_path) -> None:
@@ -110,7 +112,9 @@ def secure_pickle_load(file_path):
     # Verify integrity
     expected_mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
     if not hmac.compare_digest(stored_mac, expected_mac):
-        raise ValueError("Pickle file integrity check failed - possible tampering detected")
+        error_msg = "Pickle file integrity check failed - possible tampering detected"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
     # Load object using RestrictedUnpickler
     import io

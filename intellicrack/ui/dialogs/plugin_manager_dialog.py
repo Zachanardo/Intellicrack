@@ -65,7 +65,7 @@ if not HAS_PYQT:
         Provides minimal interface methods to allow code to run without PyQt6.
         """
 
-        def __init__(self, parent=None) -> None:
+        def __init__(self, parent: object | None = None) -> None:
             """Initialize fallback plugin manager dialog for non-GUI environments."""
             self.parent = parent
 
@@ -160,7 +160,7 @@ else:
     class PluginManagerDialog(QDialog):
         """Dialog for managing Intellicrack plugins."""
 
-        def __init__(self, parent=None, app_context=None) -> None:
+        def __init__(self, parent: object | None = None, app_context: object | None = None) -> None:
             """Initialize plugin manager dialog with plugin discovery and management capabilities."""
             super().__init__(parent)
             self.setWindowTitle("Plugin Manager")
@@ -279,7 +279,7 @@ else:
                 if hasattr(self.app_context, "config") and self.app_context.config.get("plugin_auto_refresh", False):
                     self.auto_refresh_timer.start(300000)  # 5 minutes
 
-        def on_repository_changed(self, repository_name) -> None:
+        def on_repository_changed(self, repository_name: str) -> None:
             """Handle repository selection change."""
             try:
                 # Repository change handled - available plugins functionality removed
@@ -371,7 +371,7 @@ else:
             except Exception as e:
                 logger.warning(f"Update check failed: {e}")
 
-        def _get_plugin_repository_url(self, plugin_info):
+        def _get_plugin_repository_url(self, plugin_info: dict) -> str | None:
             """Determine repository URL for a plugin."""
             try:
                 plugin_name = plugin_info.get("name", "")
@@ -386,9 +386,7 @@ else:
                     lines = content.split("\n")
                     for line in lines[:30]:  # Check first 30 lines
                         line = line.strip()
-                        if line.startswith("# Repository:") or line.startswith("# Repo:"):
-                            return line.split(":", 1)[1].strip()
-                        elif line.startswith("# URL:"):
+                        if line.startswith("# Repository:") or line.startswith("# Repo:") or line.startswith("# URL:"):
                             return line.split(":", 1)[1].strip()
 
                 # Default repository URLs for known plugins
@@ -409,7 +407,7 @@ else:
                 logger.debug(f"Failed to determine repository URL for plugin {plugin_info.get('name', 'unknown')}: {e}")
                 return None
 
-        def _fetch_latest_version(self, repo_url, plugin_name):
+        def _fetch_latest_version(self, repo_url: str, plugin_name: str) -> dict | None:
             """Fetch latest version information from repository."""
             try:
                 import requests
@@ -520,7 +518,7 @@ else:
             except Exception as e:
                 logger.debug(f"Failed to load plugin settings: {e}")
 
-        def setup_installed_tab(self, tab) -> None:
+        def setup_installed_tab(self, tab: object) -> None:
             """Set up the installed plugins tab."""
             layout = QVBoxLayout(tab)
 
@@ -569,7 +567,7 @@ else:
             # Connect selection change
             self.installed_list.itemSelectionChanged.connect(self.on_installed_selection_changed)
 
-        def setup_install_tab(self, tab) -> None:
+        def setup_install_tab(self, tab: object) -> None:
             """Set up the install from file tab."""
             layout = QVBoxLayout(tab)
 
@@ -619,7 +617,7 @@ else:
 
             layout.addStretch()
 
-        def setup_development_tab(self, tab) -> None:
+        def setup_development_tab(self, tab: object) -> None:
             """Set up the plugin development tab."""
             layout = QVBoxLayout(tab)
 
@@ -708,7 +706,7 @@ else:
             except Exception as e:
                 logger.error(f"Error loading installed plugins: {e}")
 
-        def get_plugin_info(self, plugin_path):
+        def get_plugin_info(self, plugin_path: str) -> dict:
             """Extract information about a plugin."""
             info = {
                 "name": os.path.basename(plugin_path),
@@ -761,7 +759,6 @@ Description: {plugin_info.get("description", "No description available")}"""
 
         def on_available_selection_changed(self) -> None:
             """Handle selection change in available plugins list - functionality removed."""
-            pass
 
         def enable_selected_plugin(self) -> None:
             """Enable the selected plugin."""
@@ -1006,9 +1003,8 @@ Path: {plugin_info.get("path", "Unknown")}"""
         def install_selected_plugin(self) -> None:
             """Install the selected available plugin - functionality removed."""
             QMessageBox.information(self, "Information", "Available plugins functionality has been removed.")
-            pass
 
-        def _check_dependencies(self, dependencies):
+        def _check_dependencies(self, dependencies: list) -> list:
             """Check which dependencies are missing."""
             missing = []
 
@@ -1067,7 +1063,7 @@ Path: {plugin_info.get("path", "Unknown")}"""
 
             return missing
 
-        def _start_remote_plugin_installation(self, plugin_info) -> None:
+        def _start_remote_plugin_installation(self, plugin_info: dict) -> None:
             """Start the remote plugin installation process."""
             plugin_name = plugin_info["name"]
             source = plugin_info.get("source", "remote")
@@ -1132,55 +1128,94 @@ Path: {plugin_info.get("path", "Unknown")}"""
                 button_layout.addStretch()
                 layout.addLayout(button_layout)
 
-                # Simulate download and installation process
-                def simulate_installation() -> None:
-                    import time
-
+                # Download and install remote plugin
+                def perform_installation() -> None:
                     try:
+                        import requests
+                        from requests.exceptions import RequestException, Timeout, ConnectionError
+
                         status_label.setText("Downloading plugin...")
                         log_text.append(f"Downloading from: {download_url}")
-                        progress_bar.setValue(25)
-                        time.sleep(0.5)  # Simulate network delay
 
-                        status_label.setText("Extracting plugin files...")
-                        log_text.append("Extracting plugin archive...")
-                        progress_bar.setValue(50)
-                        time.sleep(0.3)
+                        try:
+                            response = requests.get(download_url, timeout=30, stream=True)
+                            response.raise_for_status()
+                            progress_bar.setValue(25)
 
-                        status_label.setText("Validating plugin...")
-                        log_text.append("Validating plugin integrity...")
-                        progress_bar.setValue(75)
-                        time.sleep(0.3)
+                            total_size = int(response.headers.get('content-length', 0))
+                            downloaded = 0
+                            chunk_size = 8192
+                            temp_file = os.path.join(self.temp_dir, f"{plugin_name}_download.zip")
 
-                        # Create the actual plugin file
-                        self._create_fallback_plugin(plugin_info)
+                            with open(temp_file, 'wb') as f:
+                                for chunk in response.iter_content(chunk_size=chunk_size):
+                                    if chunk:
+                                        f.write(chunk)
+                                        downloaded += len(chunk)
+                                        if total_size:
+                                            progress = 25 + int((downloaded / total_size) * 25)
+                                            progress_bar.setValue(min(progress, 49))
+                                        log_text.append(f"Downloaded: {downloaded} bytes")
 
-                        status_label.setText("Installation complete!")
-                        log_text.append(f"Plugin '{plugin_name}' installed successfully")
-                        progress_bar.setValue(100)
+                            progress_bar.setValue(50)
+                            status_label.setText("Extracting plugin files...")
+                            log_text.append("Extracting plugin archive...")
 
-                        # Change cancel button to close
-                        cancel_btn.setText("Close")
-                        cancel_btn.clicked.disconnect()
-                        cancel_btn.clicked.connect(install_dialog.accept)
+                            extract_dir = os.path.join(self.plugins_dir, plugin_name.lower().replace(" ", "_"))
+                            os.makedirs(extract_dir, exist_ok=True)
 
-                        QTimer.singleShot(1000, install_dialog.accept)
+                            if temp_file.endswith('.zip'):
+                                with zipfile.ZipFile(temp_file, 'r') as zip_ref:
+                                    zip_ref.extractall(extract_dir)
+                            else:
+                                shutil.copy2(temp_file, extract_dir)
+
+                            progress_bar.setValue(75)
+                            status_label.setText("Validating plugin...")
+                            log_text.append("Validating plugin integrity...")
+
+                            if os.path.exists(extract_dir):
+                                plugin_files = os.listdir(extract_dir)
+                                if any(f.endswith('.py') for f in plugin_files):
+                                    progress_bar.setValue(100)
+                                    status_label.setText("Installation complete!")
+                                    log_text.append(f"Plugin '{plugin_name}' installed successfully")
+                                else:
+                                    status_label.setText("Installation failed!")
+                                    log_text.append("ERROR: No valid plugin files found in archive")
+                                    return
+
+                            if os.path.exists(temp_file):
+                                os.remove(temp_file)
+
+                            cancel_btn.setText("Close")
+                            cancel_btn.clicked.disconnect()
+                            cancel_btn.clicked.connect(install_dialog.accept)
+
+                            QTimer.singleShot(1000, install_dialog.accept)
+
+                        except (RequestException, Timeout, ConnectionError) as net_error:
+                            status_label.setText("Installation failed!")
+                            log_text.append(f"Network error: {net_error!s}")
+                            progress_bar.setValue(0)
+                            logger.error(f"Network error downloading plugin: {net_error}")
 
                     except Exception as e:
                         status_label.setText("Installation failed!")
                         log_text.append(f"Error: {e!s}")
                         progress_bar.setValue(0)
+                        logger.error(f"Plugin installation error: {e}")
 
                 cancel_btn.clicked.connect(install_dialog.reject)
 
                 # Start installation after dialog shows
-                QTimer.singleShot(500, simulate_installation)
+                QTimer.singleShot(500, perform_installation)
 
                 if install_dialog.exec() == QDialog.Accepted:
                     self.load_installed_plugins()
                     QMessageBox.information(self, "Success", f"Plugin '{plugin_name}' has been installed successfully!")
 
-        def _create_fallback_plugin(self, plugin_info) -> None:
+        def _create_fallback_plugin(self, plugin_info: dict) -> None:
             """Create a realistic plugin file for fallback plugins."""
             plugin_name = plugin_info["name"]
             plugin_version = plugin_info.get("version", "1.0.0")
@@ -1210,7 +1245,7 @@ Path: {plugin_info.get("path", "Unknown")}"""
                 logger.error(f"Failed to create fallback plugin: {e}")
                 raise
 
-        def _generate_analysis_plugin_code(self, name, version, author, description) -> str:
+        def _generate_analysis_plugin_code(self, name: str, version: str, author: str, description: str) -> str:
             """Generate analysis plugin code."""
             class_name = name.replace(" ", "").replace("-", "")
             return f'''#!/usr/bin/env python3
@@ -1508,7 +1543,7 @@ PLUGIN_INFO = {{
 }}
 '''
 
-        def _generate_exploitation_plugin_code(self, name, version, author, description) -> str:
+        def _generate_exploitation_plugin_code(self, name: str, version: str, author: str, description: str) -> str:
             """Generate exploitation plugin code."""
             class_name = name.replace(" ", "").replace("-", "")
             return f'''#!/usr/bin/env python3
@@ -1574,7 +1609,7 @@ PLUGIN_INFO = {{
 }}
 '''
 
-        def _generate_network_plugin_code(self, name, version, author, description) -> str:
+        def _generate_network_plugin_code(self, name: str, version: str, author: str, description: str) -> str:
             """Generate network plugin code."""
             class_name = name.replace(" ", "").replace("-", "")
             return f'''#!/usr/bin/env python3
@@ -1635,7 +1670,7 @@ PLUGIN_INFO = {{
 }}
 '''
 
-        def _generate_generic_plugin_code(self, name, version, author, description) -> str:
+        def _generate_generic_plugin_code(self, name: str, version: str, author: str, description: str) -> str:
             """Generate generic plugin code."""
             class_name = name.replace(" ", "").replace("-", "")
             return f'''#!/usr/bin/env python3
@@ -1690,13 +1725,11 @@ PLUGIN_INFO = {{
         def preview_selected_plugin(self) -> None:
             """Preview the selected available plugin - functionality removed."""
             QMessageBox.information(self, "Information", "Available plugins functionality has been removed.")
-            pass
 
-        def _install_from_preview(self, plugin_info, preview_dialog) -> None:
+        def _install_from_preview(self, plugin_info: dict, preview_dialog: object) -> None:
             """Install plugin directly from preview dialog - functionality removed."""
-            pass
 
-        def _generate_preview_analysis_code(self, plugin_name) -> str:
+        def _generate_preview_analysis_code(self, plugin_name: str) -> str:
             """Generate preview code for analysis plugins."""
             return f'''# {plugin_name} - Analysis Plugin Preview
 
@@ -1734,7 +1767,7 @@ class Plugin:
 
 # ... (additional methods)'''
 
-        def _generate_preview_exploitation_code(self, plugin_name) -> str:
+        def _generate_preview_exploitation_code(self, plugin_name: str) -> str:
             """Generate preview code for exploitation plugins."""
             return f'''# {plugin_name} - Exploitation Plugin Preview
 
@@ -1773,7 +1806,7 @@ class Plugin:
 
 # ... (bypass implementation)'''
 
-        def _generate_preview_network_code(self, plugin_name) -> str:
+        def _generate_preview_network_code(self, plugin_name: str) -> str:
             """Generate preview code for network plugins."""
             return f'''# {plugin_name} - Network Plugin Preview
 
@@ -1810,7 +1843,7 @@ class Plugin:
 
 # ... (network analysis methods)'''
 
-        def _generate_preview_generic_code(self, plugin_name) -> str:
+        def _generate_preview_generic_code(self, plugin_name: str) -> str:
             """Generate preview code for generic plugins."""
             return f'''# {plugin_name} - Generic Plugin Preview
 
@@ -1881,7 +1914,7 @@ def create_plugin():
             self.progress_bar.setValue(0)
             self.install_thread.start()
 
-        def on_installation_finished(self, success, message) -> None:
+        def on_installation_finished(self, success: bool, message: str) -> None:
             """Handle installation completion."""
             self.progress_bar.setVisible(False)
 
@@ -2418,36 +2451,60 @@ PLUGIN_INFO = {{
 }}
 
 if __name__ == '__main__':
-    # Test the plugin
+    import sys
+    import logging
+
+    # Configure logging for testing
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+
+    # Initialize plugin
     plugin = create_plugin()
     print(f"Plugin: {{plugin.name}} v{{plugin.version}}")
     print(f"Description: {{plugin.description}}")
     print(f"Author: {{plugin.author}}")
-    print(f"\\nTesting plugin functionality...")
+    print(f"Category: {{plugin.categories}}")
+    print(f"\\nPlugin initialized successfully")
 
-    # Test with a dummy file
-    import tempfile
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.bin') as tf:
-        tf.write(b'MZ' + b'\\x00' * 100)  # Simple PE header
-        test_file = tf.name
+    # Test with command-line argument if provided
+    if len(sys.argv) > 1:
+        binary_path = sys.argv[1]
+        print(f"\\nTesting with binary: {{binary_path}}")
 
-    # Test validation
-    is_valid, msg = plugin.validate_binary(test_file)
-    print(f"Validation: {{is_valid}} - {{msg}}")
+        # Validate binary
+        is_valid, msg = plugin.validate_binary(binary_path)
+        print(f"Validation: {{is_valid}} - {{msg}}")
 
-    # Test execution
-    result = plugin.execute(test_file)
-    print(f"Execution status: {{result['status']}}")
-    print(f"Message: {{result['message']}}")
+        if is_valid:
+            # Execute plugin
+            result = plugin.execute(binary_path)
+            print(f"Execution status: {{result['status']}}")
+            print(f"Message: {{result['message']}}")
 
-    # Test analyze method
-    analysis = plugin.analyze(test_file)
-    for line in analysis:
-        print(f"  {{line}}")
+            # Display results
+            if result.get('data'):
+                print(f"\\nResults:")
+                for key, value in result['data'].items():
+                    if isinstance(value, dict):
+                        print(f"  {{key}}:")
+                        for k, v in value.items():
+                            print(f"    {{k}}: {{v}}")
+                    elif isinstance(value, list):
+                        print(f"  {{key}}: {{len(value)}} items")
+                        for item in value[:5]:
+                            print(f"    - {{item}}")
+                    else:
+                        print(f"  {{key}}: {{value}}")
+    else:
+        print("\\nUsage: python {{__file__}} <binary_path>")
+        print("Provide a binary file path as argument to run analysis")
+        sys.exit(1)
 
     # Cleanup
     plugin.cleanup()
-    os.unlink(test_file)
+    print("\\nPlugin cleanup completed")
 """
 
             # Save template file
@@ -2537,8 +2594,7 @@ if __name__ == '__main__':
 
         def refresh_available_plugins(self) -> None:
             """Refresh the available plugins list - functionality removed."""
-            pass
 
-        def exec_(self):
+        def exec_(self) -> int:
             """Execute dialog."""
             return 0 if not HAS_PYQT else super().exec()

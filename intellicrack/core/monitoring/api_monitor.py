@@ -8,7 +8,7 @@ Licensed under GNU General Public License v3.0
 """
 
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
 import frida
 
@@ -28,7 +28,7 @@ class APIMonitor(BaseMonitor):
     Hooks licensing-critical APIs: registry, file I/O, network, crypto, time checks.
     """
 
-    def __init__(self, pid: int, process_info: Optional[ProcessInfo] = None) -> None:
+    def __init__(self, pid: int, process_info: ProcessInfo | None = None) -> None:
         """Initialize API monitor.
 
         Args:
@@ -38,8 +38,8 @@ class APIMonitor(BaseMonitor):
         """
         super().__init__("APIMonitor", process_info)
         self.pid = pid
-        self.session: Optional[frida.core.Session] = None
-        self.script: Optional[frida.core.Script] = None
+        self.session: frida.core.Session | None = None
+        self.script: frida.core.Script | None = None
 
     def _start_monitoring(self) -> bool:
         """Start API monitoring.
@@ -79,7 +79,7 @@ class APIMonitor(BaseMonitor):
                 print(f"[APIMonitor] Error detaching session: {e}")
             self.session = None
 
-    def _on_frida_message(self, message: Dict[str, Any], data: Any) -> None:
+    def _on_frida_message(self, message: dict[str, Any], data: Any) -> None:
         """Handle messages from Frida script.
 
         Args:
@@ -96,7 +96,7 @@ class APIMonitor(BaseMonitor):
             elif event_type == "error":
                 self._handle_error(Exception(payload.get("message", "Unknown error")))
 
-    def _handle_api_call(self, payload: Dict[str, Any]) -> None:
+    def _handle_api_call(self, payload: dict[str, Any]) -> None:
         """Handle API call event from Frida.
 
         Args:

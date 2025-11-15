@@ -22,6 +22,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 from datetime import datetime
+from typing import Any
 
 try:
     from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal
@@ -42,14 +43,12 @@ except ImportError:
     class QObject:
         """Fallback QObject class when PyQt6 is not available."""
 
-        pass
 
     class QRunnable:
         """Fallback QRunnable class when PyQt6 is not available."""
 
         def run(self) -> None:
             """Execute the runnable task."""
-            pass
 
     class QThreadPool:
         """Fallback QThreadPool class when PyQt6 is not available."""
@@ -67,42 +66,34 @@ except ImportError:
     class QCheckBox:
         """Fallback QCheckBox class when PyQt6 is not available."""
 
-        pass
 
     class QComboBox:
         """Fallback QComboBox class when PyQt6 is not available."""
 
-        pass
 
     class QDialog:
         """Fallback QDialog class when PyQt6 is not available."""
 
-        pass
 
     class QFileDialog:
         """Fallback QFileDialog class when PyQt6 is not available."""
 
-        pass
 
     class QGroupBox:
         """Fallback QGroupBox class when PyQt6 is not available."""
 
-        pass
 
     class QHBoxLayout:
         """Fallback QHBoxLayout class when PyQt6 is not available."""
 
-        pass
 
     class QPushButton:
         """Fallback QPushButton class when PyQt6 is not available."""
 
-        pass
 
     class QVBoxLayout:
         """Fallback QVBoxLayout class when PyQt6 is not available."""
 
-        pass
 
     PYQT6_AVAILABLE = False
 
@@ -122,7 +113,7 @@ try:
 except ImportError:
     import logging
 
-    def get_logger(name):
+    def get_logger(name: str):
         """Create a logger instance with the given name.
 
         Args:
@@ -208,7 +199,7 @@ class ReportGeneratorWorker(QRunnable):
 class ReportOptionsDialog(QDialog):
     """Dialog for selecting report generation options."""
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: Any | None = None) -> None:
         """Initialize the report options dialog.
 
         Args:
@@ -286,7 +277,7 @@ class ReportOptionsDialog(QDialog):
 
         self.setLayout(layout)
 
-    def _on_format_changed(self, format_text) -> None:
+    def _on_format_changed(self, format_text: str) -> None:
         """Handle format change."""
         # Disable entropy visualization for non-HTML formats
         if format_text != "HTML":
@@ -320,7 +311,7 @@ class ReportGenerationHandler(QObject):
     report_error = pyqtSignal(str)
     report_progress = pyqtSignal(str)
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: Any | None = None) -> None:
         """Initialize the report generation handler.
 
         Args:
@@ -336,7 +327,7 @@ class ReportGenerationHandler(QObject):
         self.current_result = result
         logger.info(f"Report generation handler received analysis for: {result.file_path}")
 
-    def generate_report(self, parent_widget=None) -> None:
+    def generate_report(self, parent_widget: Any | None = None) -> None:
         """Show options dialog and generate report based on user selection."""
         if not self.current_result:
             self.report_error.emit("No analysis result available")
@@ -396,7 +387,7 @@ class ReportGenerationHandler(QObject):
             msg = f"Report saved to:\n{result['path']}"
             logger.info(msg)
 
-    def _on_worker_error(self, error_tuple) -> None:
+    def _on_worker_error(self, error_tuple: tuple[type[BaseException], BaseException, str]) -> None:
         """Handle worker thread errors."""
         _exc_type, exc_value, exc_traceback = error_tuple
         error_msg = f"Report generation failed: {exc_value}"

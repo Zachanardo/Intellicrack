@@ -105,7 +105,9 @@ class R2AnalysisWorker(QThread if QThread is not None else object):
             elif self.analysis_type == "bypass":
                 result = self._run_bypass_analysis()
             else:
-                raise ValueError(f"Unknown analysis type: {self.analysis_type}")
+                error_msg = f"Unknown analysis type: {self.analysis_type}"
+                self.logger.error(error_msg)
+                raise ValueError(error_msg)
 
             self.progress_updated.emit(100)
             self.status_updated.emit(f"{self.analysis_type} analysis completed")

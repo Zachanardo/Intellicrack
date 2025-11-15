@@ -31,7 +31,7 @@ import uuid
 from collections import defaultdict
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
 import msgpack
 import zmq
@@ -81,11 +81,11 @@ class IPCMessage:
 
     id: str
     source: ToolType
-    destination: Optional[ToolType]
+    destination: ToolType | None
     message_type: MessageType
     timestamp: float
-    payload: Dict[str, Any]
-    correlation_id: Optional[str] = None
+    payload: dict[str, Any]
+    correlation_id: str | None = None
     requires_response: bool = False
     priority: int = 5
 
@@ -107,7 +107,7 @@ class IPCMessage:
 class ToolCommunicationBridge:
     """Central communication bridge for all analysis tools."""
 
-    def __init__(self, orchestrator_port: int = 5555, auth_key: Optional[str] = None) -> None:
+    def __init__(self, orchestrator_port: int = 5555, auth_key: str | None = None) -> None:
         """Initialize the communication bridge."""
         self.orchestrator_port = orchestrator_port
         self.auth_key = auth_key or self._generate_auth_key()
@@ -117,13 +117,13 @@ class ToolCommunicationBridge:
         self.publisher = None
         self.subscriber = None
         self.router = None
-        self.dealer_sockets: Dict[ToolType, zmq.Socket] = {}
+        self.dealer_sockets: dict[ToolType, zmq.Socket] = {}
 
         # Message handling
-        self.message_handlers: Dict[MessageType, List[Callable]] = defaultdict(list)
-        self.pending_responses: Dict[str, asyncio.Future] = {}
-        self.message_history: List[IPCMessage] = []
-        self.tool_registry: Dict[ToolType, Dict[str, Any]] = {}
+        self.message_handlers: dict[MessageType, list[Callable]] = defaultdict(list)
+        self.pending_responses: dict[str, asyncio.Future] = {}
+        self.message_history: list[IPCMessage] = []
+        self.tool_registry: dict[ToolType, dict[str, Any]] = {}
 
         # Thread management
         self.running = False
@@ -182,7 +182,7 @@ class ToolCommunicationBridge:
         self.context.term()
         logger.info("Communication bridge stopped")
 
-    def register_tool(self, tool_type: ToolType, capabilities: Dict[str, Any]) -> str:
+    def register_tool(self, tool_type: ToolType, capabilities: dict[str, Any]) -> str:
         """Register a tool with the communication bridge."""
         tool_id = str(uuid.uuid4())
 
@@ -214,7 +214,7 @@ class ToolCommunicationBridge:
 
         logger.info(f"Unregistered tool {tool_type.value}")
 
-    def send_message(self, message: IPCMessage) -> Optional[str]:
+    def send_message(self, message: IPCMessage) -> str | None:
         """Send a message to a specific tool or broadcast."""
         # Add authentication
         message.payload["auth"] = self._generate_message_auth(message)
@@ -262,7 +262,7 @@ class ToolCommunicationBridge:
         expected_auth = self._generate_message_auth(message)
         return hmac.compare_digest(message.payload["auth"], expected_auth)
 
-    async def send_and_wait(self, message: IPCMessage, timeout: float = 30.0) -> Optional[IPCMessage]:
+    async def send_and_wait(self, message: IPCMessage, timeout: float = 30.0) -> IPCMessage | None:
         """Send message and wait for response."""
         message.requires_response = True
         msg_id = self.send_message(message)
@@ -344,7 +344,7 @@ class ToolCommunicationBridge:
             except Exception as e:
                 logger.error(f"Subscriber loop error: {e}")
 
-    def _handle_message(self, message: IPCMessage, identity: Optional[bytes]) -> None:
+    def _handle_message(self, message: IPCMessage, identity: bytes | None) -> None:
         """Handle incoming message."""
         start_time = time.time()
 
@@ -383,7 +383,7 @@ class ToolCommunicationBridge:
         latency = time.time() - start_time
         self.latency_stats[message.message_type].append(latency)
 
-    def broadcast_analysis_event(self, event_type: str, data: Dict[str, Any]) -> None:
+    def broadcast_analysis_event(self, event_type: str, data: dict[str, Any]) -> None:
         """Broadcast an analysis event to all tools."""
         message = IPCMessage(
             id=str(uuid.uuid4()),
@@ -395,7 +395,7 @@ class ToolCommunicationBridge:
         )
         self.send_message(message)
 
-    def request_cross_reference(self, address: int, tool_type: ToolType) -> Optional[Dict[str, Any]]:
+    def request_cross_reference(self, address: int, tool_type: ToolType) -> dict[str, Any] | None:
         """Request cross-reference analysis from specific tool."""
         message = IPCMessage(
             id=str(uuid.uuid4()),
@@ -416,7 +416,7 @@ class ToolCommunicationBridge:
             return response.payload
         return None
 
-    def synchronize_breakpoints(self, breakpoints: List[int]) -> None:
+    def synchronize_breakpoints(self, breakpoints: list[int]) -> None:
         """Synchronize breakpoints across all debugging tools."""
         for tool in [ToolType.FRIDA, ToolType.X64DBG, ToolType.RADARE2]:
             if tool in self.tool_registry:
@@ -430,7 +430,7 @@ class ToolCommunicationBridge:
                 )
                 self.send_message(message)
 
-    def share_function_signature(self, address: int, signature: Dict[str, Any]) -> None:
+    def share_function_signature(self, address: int, signature: dict[str, Any]) -> None:
         """Share discovered function signature with all tools."""
         message = IPCMessage(
             id=str(uuid.uuid4()),
@@ -442,7 +442,7 @@ class ToolCommunicationBridge:
         )
         self.send_message(message)
 
-    def coordinate_patch_operation(self, patches: List[Dict[str, Any]]) -> bool:
+    def coordinate_patch_operation(self, patches: list[dict[str, Any]]) -> bool:
         """Coordinate patch operation across tools."""
         success = True
 
@@ -490,7 +490,7 @@ class ToolCommunicationBridge:
 
         return success
 
-    def get_tool_status(self) -> Dict[ToolType, Dict[str, Any]]:
+    def get_tool_status(self) -> dict[ToolType, dict[str, Any]]:
         """Get status of all registered tools."""
         status = {}
         current_time = time.time()
@@ -507,7 +507,7 @@ class ToolCommunicationBridge:
 
         return status
 
-    def get_performance_metrics(self) -> Dict[str, Any]:
+    def get_performance_metrics(self) -> dict[str, Any]:
         """Get communication performance metrics."""
         metrics = {
             "total_messages": sum(self.message_stats.values()),
@@ -575,7 +575,7 @@ class ToolConnector:
 
         self.context.term()
 
-    def send_result(self, result_type: MessageType, data: Dict[str, Any]) -> None:
+    def send_result(self, result_type: MessageType, data: dict[str, Any]) -> None:
         """Send analysis result to bridge."""
         message = IPCMessage(
             id=str(uuid.uuid4()),

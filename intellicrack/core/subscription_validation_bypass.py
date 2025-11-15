@@ -126,7 +126,9 @@ class JWTManipulator:
         """Split JWT token on periods, base64url decode header and payload sections without signature verification, and return tuple of (header dict, payload dict, raw signature string)."""
         parts = token.split(".")
         if len(parts) != 3:
-            raise ValueError("Invalid JWT token format")
+            error_msg = "Invalid JWT token format"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
 
         header_data = parts[0]
         payload_data = parts[1]
@@ -239,16 +241,15 @@ class JWTManipulator:
 
         if algorithm == "RS256":
             return self.sign_jwt_rs256(modified_payload, key)
-        elif algorithm == "RS512":
+        if algorithm == "RS512":
             return self.sign_jwt_rs512(modified_payload, key)
-        elif algorithm == "ES256":
+        if algorithm == "ES256":
             return self.sign_jwt_es256(modified_payload, key)
-        elif algorithm == "HS256":
+        if algorithm == "HS256":
             return self.sign_jwt_hs256(modified_payload, key)
-        elif algorithm == "HS512":
+        if algorithm == "HS512":
             return self.sign_jwt_hs512(modified_payload, key)
-        else:
-            return self.sign_jwt_rs256(modified_payload, key)
+        return self.sign_jwt_rs256(modified_payload, key)
 
 
 class OAuthTokenGenerator:
@@ -631,7 +632,7 @@ class APIResponseSynthesizer:
                     },
                 },
             }
-        elif query_type == "features":
+        if query_type == "features":
             return {
                 "data": {
                     "features": {
@@ -642,8 +643,7 @@ class APIResponseSynthesizer:
                     },
                 },
             }
-        else:
-            return {"data": {}}
+        return {"data": {}}
 
     def synthesize_grpc_metadata(
         self,
@@ -755,16 +755,15 @@ class SubscriptionValidationBypass:
 
         if service_type == "microsoft365" or "license" in endpoint.lower():
             return self.api_synthesizer.synthesize_microsoft365_validation()
-        elif service_type == "adobe" or "entitlement" in endpoint.lower():
+        if service_type == "adobe" or "entitlement" in endpoint.lower():
             return self.api_synthesizer.synthesize_adobe_validation()
-        elif service_type == "atlassian":
+        if service_type == "atlassian":
             return self.api_synthesizer.synthesize_atlassian_validation()
-        elif service_type == "salesforce":
+        if service_type == "salesforce":
             return self.api_synthesizer.synthesize_salesforce_validation()
-        elif "validate" in endpoint.lower():
+        if "validate" in endpoint.lower():
             return self.api_synthesizer.synthesize_license_validation(product_name, tier)
-        else:
-            return self.api_synthesizer.synthesize_license_validation(product_name, tier)
+        return self.api_synthesizer.synthesize_license_validation(product_name, tier)
 
     def manipulate_per_seat_license(
         self,
@@ -841,21 +840,7 @@ class SubscriptionValidationBypass:
         if subscription_type is None:
             subscription_type = self.detect_subscription_type(product_name)
 
-        if subscription_type == SubscriptionType.CLOUD_BASED:
-            return True
-        elif subscription_type == SubscriptionType.OAUTH:
-            return True
-        elif subscription_type == SubscriptionType.TOKEN_BASED:
-            return True
-        elif subscription_type == SubscriptionType.SAAS:
-            return True
-        elif subscription_type == SubscriptionType.TIME_BASED:
-            return True
-        elif subscription_type == SubscriptionType.USAGE_BASED:
-            return True
-        elif subscription_type == SubscriptionType.FEATURE_BASED:
-            return True
-        elif subscription_type == SubscriptionType.PER_SEAT:
+        if subscription_type in (SubscriptionType.CLOUD_BASED, SubscriptionType.OAUTH, SubscriptionType.TOKEN_BASED, SubscriptionType.SAAS, SubscriptionType.TIME_BASED, SubscriptionType.USAGE_BASED, SubscriptionType.FEATURE_BASED, SubscriptionType.PER_SEAT):
             return True
 
         return True

@@ -283,7 +283,7 @@ class AuditLogger:
             hash_file.write_text(hash_value)
             # Restrict permissions on Unix-like systems
             if platform.system() != "Windows":
-                os.chmod(hash_file, 0o600)
+                Path(hash_file).chmod(0o600)
         except Exception as e:
             logger.error(f"Failed to save hash chain: {e}")
 
@@ -936,7 +936,6 @@ class TelemetryCollector:
             # Get performance metrics
             metrics = self.performance_monitor.get_metrics_summary()
 
-            # Add resource manager stats
             try:
                 from ..resources.resource_manager import resource_manager
 

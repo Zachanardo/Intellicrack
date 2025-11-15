@@ -133,24 +133,34 @@ class DongleMemory:
         """Read from dongle memory region."""
         memory_map = {'rom': self.rom, 'ram': self.ram, 'eeprom': self.eeprom}
         if region not in memory_map:
-            raise ValueError(f"Invalid memory region: {region}")
+            error_msg = f"Invalid memory region: {region}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
         mem = memory_map[region]
         if offset + length > len(mem):
-            raise ValueError(f"Read beyond memory bounds: {offset}+{length} > {len(mem)}")
+            error_msg = f"Read beyond memory bounds: {offset}+{length} > {len(mem)}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
         return bytes(mem[offset:offset + length])
 
     def write(self, region: str, offset: int, data: bytes) -> None:
         """Write to dongle memory region."""
         memory_map = {'rom': self.rom, 'ram': self.ram, 'eeprom': self.eeprom}
         if region not in memory_map:
-            raise ValueError(f"Invalid memory region: {region}")
+            error_msg = f"Invalid memory region: {region}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
         if region == 'rom':
             for start, end in self.read_only_areas:
                 if offset >= start and offset < end:
-                    raise PermissionError("Cannot write to read-only area")
+                    error_msg = "Cannot write to read-only area"
+                    logger.error(error_msg)
+                    raise PermissionError(error_msg)
         mem = memory_map[region]
         if offset + len(data) > len(mem):
-            raise ValueError(f"Write beyond memory bounds: {offset}+{len(data)} > {len(mem)}")
+            error_msg = f"Write beyond memory bounds: {offset}+{len(data)} > {len(mem)}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
         mem[offset:offset + len(data)] = data
 
     def is_protected(self, offset: int, length: int) -> bool:

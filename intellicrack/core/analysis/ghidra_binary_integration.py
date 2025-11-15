@@ -10,7 +10,7 @@ This file is part of Intellicrack.
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .ghidra_script_runner import GhidraScriptRunner
 
@@ -35,7 +35,7 @@ class GhidraBinaryIntegration:
         self,
         binary_path: Path,
         deep_analysis: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Analyze license validation routines in binary.
 
         Args:
@@ -66,7 +66,7 @@ class GhidraBinaryIntegration:
             self.logger.error(f"License validation analysis failed: {e}")
             return {"error": str(e), "success": False}
 
-    def detect_protections(self, binary_path: Path) -> Dict[str, Any]:
+    def detect_protections(self, binary_path: Path) -> dict[str, Any]:
         """Detect protection schemes and packers.
 
         Args:
@@ -106,7 +106,7 @@ class GhidraBinaryIntegration:
             self.logger.error(f"Protection detection failed: {e}")
             return {"error": str(e), "success": False, "protections": []}
 
-    def analyze_crypto_routines(self, binary_path: Path) -> Dict[str, Any]:
+    def analyze_crypto_routines(self, binary_path: Path) -> dict[str, Any]:
         """Analyze cryptographic routines and algorithms.
 
         Args:
@@ -149,7 +149,7 @@ class GhidraBinaryIntegration:
             self.logger.error(f"Crypto analysis failed: {e}")
             return {"error": str(e), "success": False}
 
-    def generate_keygen_template(self, binary_path: Path) -> Dict[str, Any]:
+    def generate_keygen_template(self, binary_path: Path) -> dict[str, Any]:
         """Generate keygen template from license validation algorithm.
 
         Args:
@@ -177,7 +177,7 @@ class GhidraBinaryIntegration:
             self.logger.error(f"Keygen template generation failed: {e}")
             return {"error": str(e), "success": False}
 
-    def deobfuscate_control_flow(self, binary_path: Path) -> Dict[str, Any]:
+    def deobfuscate_control_flow(self, binary_path: Path) -> dict[str, Any]:
         """Deobfuscate control flow and remove junk code.
 
         Args:
@@ -205,7 +205,7 @@ class GhidraBinaryIntegration:
             self.logger.error(f"Control flow deobfuscation failed: {e}")
             return {"error": str(e), "success": False}
 
-    def decrypt_strings(self, binary_path: Path) -> Dict[str, Any]:
+    def decrypt_strings(self, binary_path: Path) -> dict[str, Any]:
         """Automatically decrypt obfuscated strings.
 
         Args:
@@ -235,7 +235,7 @@ class GhidraBinaryIntegration:
             self.logger.error(f"String decryption failed: {e}")
             return {"error": str(e), "success": False}
 
-    def detect_anti_analysis(self, binary_path: Path) -> Dict[str, Any]:
+    def detect_anti_analysis(self, binary_path: Path) -> dict[str, Any]:
         """Detect anti-analysis techniques.
 
         Args:
@@ -279,7 +279,7 @@ class GhidraBinaryIntegration:
         self,
         binary_path: Path,
         include_decompilation: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Perform comprehensive binary analysis using multiple Ghidra scripts.
 
         Args:
@@ -310,7 +310,7 @@ class GhidraBinaryIntegration:
             self.logger.error(f"Comprehensive analysis failed: {e}")
             return {"error": str(e), "success": False}
 
-    def unpack_binary(self, binary_path: Path, max_iterations: int = 10) -> Dict[str, Any]:
+    def unpack_binary(self, binary_path: Path, max_iterations: int = 10) -> dict[str, Any]:
         """Automatically unpack packed binary.
 
         Args:
@@ -339,7 +339,7 @@ class GhidraBinaryIntegration:
             self.logger.error(f"Unpacking failed: {e}")
             return {"error": str(e), "success": False}
 
-    def analyze_network_communication(self, binary_path: Path) -> Dict[str, Any]:
+    def analyze_network_communication(self, binary_path: Path) -> dict[str, Any]:
         """Analyze network communication routines.
 
         Args:
@@ -367,7 +367,7 @@ class GhidraBinaryIntegration:
             self.logger.error(f"Network analysis failed: {e}")
             return {"error": str(e), "success": False}
 
-    def perform_licensing_crack_workflow(self, binary_path: Path) -> Dict[str, Any]:
+    def perform_licensing_crack_workflow(self, binary_path: Path) -> dict[str, Any]:
         """Complete workflow for analyzing and cracking licensing protection.
 
         Combines multiple analysis steps:
@@ -415,7 +415,7 @@ class GhidraBinaryIntegration:
 
         return workflow_results
 
-    def get_available_scripts(self) -> List[Dict[str, Any]]:
+    def get_available_scripts(self) -> list[dict[str, Any]]:
         """Get list of dynamically discovered Ghidra scripts.
 
         Returns:
@@ -424,7 +424,7 @@ class GhidraBinaryIntegration:
         """
         return self.script_runner.list_available_scripts()
 
-    def get_script_info(self, script_name: str) -> Optional[Dict[str, Any]]:
+    def get_script_info(self, script_name: str) -> dict[str, Any] | None:
         """Get information about a specific dynamically discovered script.
 
         Args:

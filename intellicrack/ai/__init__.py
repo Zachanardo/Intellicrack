@@ -26,7 +26,7 @@ logger.debug("AI module loaded")
 _lazy_imports = {}
 
 
-def __getattr__(name):
+def __getattr__(name: str):
     """Lazy load AI module attributes to prevent circular imports."""
     if name in _lazy_imports:
         return _lazy_imports[name]

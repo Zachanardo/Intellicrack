@@ -10,7 +10,7 @@ import struct
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
 import z3
 from cryptography.hazmat.backends import default_backend
@@ -43,12 +43,12 @@ class SerialConstraints:
     format: SerialFormat
     groups: int = 1
     group_separator: str = "-"
-    checksum_algorithm: Optional[str] = None
-    custom_alphabet: Optional[str] = None
-    blacklist_patterns: List[str] = None
-    must_contain: List[str] = None
-    cannot_contain: List[str] = None
-    validation_function: Optional[Callable] = None
+    checksum_algorithm: str | None = None
+    custom_alphabet: str | None = None
+    blacklist_patterns: list[str] = None
+    must_contain: list[str] = None
+    cannot_contain: list[str] = None
+    validation_function: Callable | None = None
 
 
 @dataclass
@@ -58,13 +58,13 @@ class GeneratedSerial:
     serial: str
     format: SerialFormat = None
     confidence: float = 0.0
-    validation_data: Dict[str, Any] = None
+    validation_data: dict[str, Any] = None
     algorithm_used: str = None
     raw_bytes: bytes = None
-    checksum: Optional[str] = None
-    hardware_id: Optional[str] = None
-    expiration: Optional[int] = None
-    features: List[str] = None
+    checksum: str | None = None
+    hardware_id: str | None = None
+    expiration: int | None = None
+    features: list[str] = None
     algorithm: str = None
 
 
@@ -79,7 +79,7 @@ class SerialNumberGenerator:
         self.checksum_functions = self._initialize_checksums()
         self.solver = z3.Solver()
 
-    def _initialize_algorithms(self) -> Dict[str, Callable]:
+    def _initialize_algorithms(self) -> dict[str, Callable]:
         """Initialize common serial generation algorithms."""
         algorithms = {
             "luhn": self._generate_luhn_serial,
@@ -96,7 +96,7 @@ class SerialNumberGenerator:
         logger.debug(f"Initialized {len(algorithms)} serial generation algorithms.")
         return algorithms
 
-    def _initialize_checksums(self) -> Dict[str, Callable]:
+    def _initialize_checksums(self) -> dict[str, Callable]:
         """Initialize checksum calculation functions."""
         checksums = {
             "luhn": self._calculate_luhn,
@@ -114,8 +114,9 @@ class SerialNumberGenerator:
         logger.debug(f"Initialized {len(checksums)} checksum functions.")
         return checksums
 
-    def analyze_serial_algorithm(self, valid_serials: List[str]) -> Dict[str, Any]:
+    def analyze_serial_algorithm(self, valid_serials: list[str]) -> dict[str, Any]:
         """Analyze valid serials to determine generation algorithm."""
+        logger.info(f"Starting serial algorithm analysis for {len(valid_serials)} valid serials.")
         analysis = {
             "format": self._detect_format(valid_serials),
             "length": self._analyze_length(valid_serials),
@@ -127,22 +128,29 @@ class SerialNumberGenerator:
         }
         logger.debug(f"Initial serial analysis: {analysis}")
 
-        # Test various algorithms
+        logger.info("Step 1: Testing various algorithms against provided serials.")
         algorithms_scores = {}
         for algo_name, _algo_func in self.common_algorithms.items():
             score = self._test_algorithm(valid_serials, algo_name)
             algorithms_scores[algo_name] = score
         logger.debug(f"Algorithm scores: {algorithms_scores}")
+        logger.info("Step 1: Completed algorithm testing.")
 
         # Select best matching algorithm
-        best_algo = max(algorithms_scores, key=algorithms_scores.get)
-        analysis["algorithm"] = best_algo
-        analysis["confidence"] = algorithms_scores[best_algo]
-        logger.debug(f"Best matching algorithm: {best_algo} with confidence: {algorithms_scores[best_algo]:.2f}")
+        if algorithms_scores:
+            best_algo = max(algorithms_scores, key=algorithms_scores.get)
+            analysis["algorithm"] = best_algo
+            analysis["confidence"] = algorithms_scores[best_algo]
+            logger.info(f"Best matching algorithm detected: {best_algo} with confidence: {algorithms_scores[best_algo]:.2f}")
+        else:
+            logger.warning("No suitable algorithm found for the provided serials.")
+            analysis["algorithm"] = "unknown"
+            analysis["confidence"] = 0.0
 
+        logger.info("Serial algorithm analysis completed.")
         return analysis
 
-    def _detect_format(self, serials: List[str]) -> SerialFormat:
+    def _detect_format(self, serials: list[str]) -> SerialFormat:
         """Detect the format of serial numbers."""
         if not serials:
             logger.debug("No serials provided, defaulting to CUSTOM format.")
@@ -163,20 +171,20 @@ class SerialNumberGenerator:
         if sample.isdigit():
             logger.debug("Detected Numeric serial format.")
             return SerialFormat.NUMERIC
-        elif sample.isalnum():
+        if sample.isalnum():
             logger.debug("Detected Alphanumeric serial format.")
             return SerialFormat.ALPHANUMERIC
-        elif all(c in "0123456789ABCDEF" for c in sample.upper()):
+        if all(c in "0123456789ABCDEF" for c in sample.upper()):
             logger.debug("Detected Hexadecimal serial format.")
             return SerialFormat.HEXADECIMAL
-        elif all(c in "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567" for c in sample.upper()):  # pragma: allowlist secret
+        if all(c in "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567" for c in sample.upper()):  # pragma: allowlist secret
             logger.debug("Detected Base32 serial format.")
             return SerialFormat.BASE32
 
         logger.debug("Detected Custom serial format.")
         return SerialFormat.CUSTOM
 
-    def _analyze_length(self, serials: List[str]) -> Dict[str, int]:
+    def _analyze_length(self, serials: list[str]) -> dict[str, int]:
         """Analyze length patterns in serials."""
         lengths = [len(s) for s in serials]
         clean_lengths = [len(s.replace("-", "").replace(" ", "")) for s in serials]
@@ -192,7 +200,7 @@ class SerialNumberGenerator:
         logger.debug(f"Serial length analysis: {length_analysis}")
         return length_analysis
 
-    def _analyze_structure(self, serials: List[str]) -> Dict[str, Any]:
+    def _analyze_structure(self, serials: list[str]) -> dict[str, Any]:
         """Analyze structural patterns in serials."""
         structure = {"groups": [], "separators": [], "group_lengths": []}
 
@@ -213,7 +221,7 @@ class SerialNumberGenerator:
         logger.debug(f"Serial structure analysis: {structure}")
         return structure
 
-    def _detect_checksum(self, serials: List[str]) -> Dict[str, Any]:
+    def _detect_checksum(self, serials: list[str]) -> dict[str, Any]:
         """Detect checksum algorithm used in serials."""
         results = {}
 
@@ -245,11 +253,11 @@ class SerialNumberGenerator:
                     if calculated == expected_checksum:
                         return True
 
-            return False
-        except (ValueError, TypeError):
+        except (ValueError, TypeError) as e:
+            logger.debug(f"Error verifying checksum for serial '{serial}' with function {checksum_func.__name__}: {e}")
             return False
 
-    def _detect_patterns(self, serials: List[str]) -> List[Dict[str, Any]]:
+    def _detect_patterns(self, serials: list[str]) -> list[dict[str, Any]]:
         """Detect patterns in serial numbers."""
         patterns = []
 
@@ -285,7 +293,7 @@ class SerialNumberGenerator:
         logger.debug(f"Detected serial patterns: {patterns}")
         return patterns
 
-    def _test_algorithm(self, serials: List[str], algorithm: str) -> float:
+    def _test_algorithm(self, serials: list[str], algorithm: str) -> float:
         """Test how well an algorithm matches the serials."""
         score = 0.0
         tests = min(10, len(serials))  # Test up to 10 serials
@@ -293,17 +301,13 @@ class SerialNumberGenerator:
 
         for serial in serials[:tests]:
             # Try to reverse-engineer the algorithm
-            if algorithm == "luhn" and self._verify_luhn(serial):
-                score += 1.0
-            elif algorithm == "verhoeff" and self._verify_verhoeff(serial):
-                score += 1.0
-            elif algorithm == "crc32" and self._verify_crc32(serial):
+            if (algorithm == "luhn" and self._verify_luhn(serial)) or (algorithm == "verhoeff" and self._verify_verhoeff(serial)) or (algorithm == "crc32" and self._verify_crc32(serial)):
                 score += 1.0
             # Add more algorithm tests
         logger.debug(f"Algorithm '{algorithm}' scored {score}/{tests}.")
         return score / tests if tests > 0 else 0.0
 
-    def generate_serial(self, constraints: SerialConstraints, seed: Optional[Any] = None) -> GeneratedSerial:
+    def generate_serial(self, constraints: SerialConstraints, seed: Any | None = None) -> GeneratedSerial:
         """Generate a serial number based on constraints."""
         logger.debug(f"Generating serial with constraints: {constraints}, seed: {seed}")
         if constraints.validation_function:
@@ -315,15 +319,14 @@ class SerialNumberGenerator:
         if constraints.format == SerialFormat.MICROSOFT:
             logger.debug("Using Microsoft serial format generation.")
             return self._generate_microsoft_serial(constraints)
-        elif constraints.format == SerialFormat.UUID:
+        if constraints.format == SerialFormat.UUID:
             logger.debug("Using UUID serial format generation.")
             return self._generate_uuid_serial(constraints)
-        else:
-            logger.debug("Using Z3 constraint solver for serial generation.")
-            # Use constraint solver for complex requirements
-            return self._generate_constrained_serial(constraints, seed)
+        logger.debug("Using Z3 constraint solver for serial generation.")
+        # Use constraint solver for complex requirements
+        return self._generate_constrained_serial(constraints, seed)
 
-    def _generate_constrained_serial(self, constraints: SerialConstraints, seed: Optional[Any] = None) -> GeneratedSerial:
+    def _generate_constrained_serial(self, constraints: SerialConstraints, seed: Any | None = None) -> GeneratedSerial:
         """Generate serial using Z3 constraint solver."""
         # Create bit vectors for serial characters
         serial_length = constraints.length
@@ -381,7 +384,6 @@ class SerialNumberGenerator:
             self.checksum_functions[constraints.checksum_algorithm]
             # This would require expressing checksum as Z3 constraints
             # Simplified for now
-            pass
 
         # Add seed-based constraints if provided
         if seed:
@@ -402,15 +404,14 @@ class SerialNumberGenerator:
                 value = model.eval(var)
                 if value is not None:
                     serial_chars.append(chr(value.as_long()))
+                # Fallback to random valid character
+                elif constraints.custom_alphabet:
+                    # Note: Using random module for generating serials, not cryptographic purposes
+                    serial_chars.append(random.choice(constraints.custom_alphabet))  # noqa: S311
+                elif constraints.format == SerialFormat.NUMERIC:
+                    serial_chars.append(random.choice("0123456789"))  # noqa: S311
                 else:
-                    # Fallback to random valid character
-                    if constraints.custom_alphabet:
-                        # Note: Using random module for generating serials, not cryptographic purposes
-                        serial_chars.append(random.choice(constraints.custom_alphabet))  # noqa: S311
-                    elif constraints.format == SerialFormat.NUMERIC:
-                        serial_chars.append(random.choice("0123456789"))  # noqa: S311
-                    else:
-                        serial_chars.append(random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"))  # noqa: S311
+                    serial_chars.append(random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"))  # noqa: S311
 
             # Format with groups if specified
             serial = "".join(serial_chars)
@@ -426,10 +427,9 @@ class SerialNumberGenerator:
                 validation_data={"solver": "z3", "constraints_satisfied": True},
                 algorithm_used="constraint_solver",
             )
-        else:
-            logger.debug("Z3 solver found no solution. Falling back to random serial generation.")
-            # Constraints unsatisfiable, use fallback generation
-            return self._generate_random_serial(constraints)
+        logger.debug("Z3 solver found no solution. Falling back to random serial generation.")
+        # Constraints unsatisfiable, use fallback generation
+        return self._generate_random_serial(constraints)
 
     def _generate_random_serial(self, constraints: SerialConstraints) -> GeneratedSerial:
         """Generate random serial as fallback."""
@@ -514,7 +514,7 @@ class SerialNumberGenerator:
         checksum = self._calculate_luhn_digit(digits)
         return str(checksum)
 
-    def _calculate_luhn_digit(self, digits: List[int]) -> int:
+    def _calculate_luhn_digit(self, digits: list[int]) -> int:
         """Calculate Luhn check digit."""
         total = 0
         for i, digit in enumerate(reversed(digits)):
@@ -652,7 +652,8 @@ class SerialNumberGenerator:
             expected_crc = zlib.crc32(data.encode()) & 0xFFFFFFFF
             expected_checksum = format(expected_crc, "08X")
             return checksum == expected_checksum
-        except (ValueError, TypeError):
+        except (ValueError, TypeError) as e:
+            logger.debug(f"Error verifying CRC32 checksum for serial '{serial}': {e}")
             return False
 
     def _calculate_crc32(self, data: str) -> str:
@@ -852,10 +853,9 @@ class SerialNumberGenerator:
         remainder = total % 11
         if remainder == 0:
             return "0"
-        elif remainder == 1:
+        if remainder == 1:
             return "X"
-        else:
-            return str(11 - remainder)
+        return str(11 - remainder)
 
     def _calculate_mod37(self, data: str) -> str:
         """Calculate mod37 checksum."""
@@ -869,10 +869,9 @@ class SerialNumberGenerator:
 
         if value < 10:
             return str(value)
-        else:
-            return chr(ord("A") + value - 10)
+        return chr(ord("A") + value - 10)
 
-    def _generate_with_validation(self, constraints: SerialConstraints, seed: Optional[Any] = None) -> GeneratedSerial:
+    def _generate_with_validation(self, constraints: SerialConstraints, seed: Any | None = None) -> GeneratedSerial:
         """Generate serial with custom validation function."""
         max_attempts = 1000
         attempts = 0
@@ -898,7 +897,7 @@ class SerialNumberGenerator:
             algorithm_used="failed",
         )
 
-    def batch_generate(self, constraints: SerialConstraints, count: int, unique: bool = True) -> List[GeneratedSerial]:
+    def batch_generate(self, constraints: SerialConstraints, count: int, unique: bool = True) -> list[GeneratedSerial]:
         """Generate multiple serial numbers."""
         serials = []
         generated_set = set()
@@ -916,7 +915,7 @@ class SerialNumberGenerator:
         logger.debug(f"Batch generation completed. Generated {len(serials)} serials.")
         return serials
 
-    def reverse_engineer_algorithm(self, valid_serials: List[str], invalid_serials: List[str] = None) -> Dict[str, Any]:
+    def reverse_engineer_algorithm(self, valid_serials: list[str], invalid_serials: list[str] = None) -> dict[str, Any]:
         """Reverse engineer the serial generation algorithm."""
         analysis = self.analyze_serial_algorithm(valid_serials)
         logger.debug(f"Reverse engineering initial analysis: {analysis}")
@@ -950,8 +949,8 @@ class SerialNumberGenerator:
         private_key: rsa.RSAPrivateKey,
         product_id: str,
         user_name: str,
-        features: Optional[List[str]] = None,
-        expiration: Optional[int] = None,
+        features: list[str] | None = None,
+        expiration: int | None = None,
     ) -> GeneratedSerial:
         """Generate RSA-signed serial number with cryptographic validation."""
         license_data = {
@@ -1007,7 +1006,7 @@ class SerialNumberGenerator:
             confidence=0.93,
         )
 
-    def generate_time_based(self, secret_key: bytes, validity_days: int = 30, product_id: Optional[str] = None) -> GeneratedSerial:
+    def generate_time_based(self, secret_key: bytes, validity_days: int = 30, product_id: str | None = None) -> GeneratedSerial:
         """Generate time-based serial number using TOTP-like algorithm."""
         time_counter = int(time.time()) // 86400  # Daily counter
         expiration = int(time.time()) + (validity_days * 86400)
@@ -1046,7 +1045,7 @@ class SerialNumberGenerator:
             confidence=0.88,
         )
 
-    def generate_feature_encoded(self, base_serial: str, features: List[str]) -> GeneratedSerial:
+    def generate_feature_encoded(self, base_serial: str, features: list[str]) -> GeneratedSerial:
         """Generate serial with encoded feature flags."""
         feature_flags = {
             "pro": 0x01,
@@ -1157,7 +1156,7 @@ class SerialNumberGenerator:
             confidence=0.70,
         )
 
-    def brute_force_checksum(self, partial_serial: str, checksum_length: int = 4) -> List[str]:
+    def brute_force_checksum(self, partial_serial: str, checksum_length: int = 4) -> list[str]:
         """Brute force missing checksum digits for incomplete serials."""
         logger.debug(f"Starting brute-force checksum for partial serial: '{partial_serial}' with checksum length: {checksum_length}")
         candidates = []
@@ -1188,9 +1187,9 @@ class SerialNumberGenerator:
         """Test if a serial matches an algorithm."""
         if algorithm == "luhn":
             return self._verify_luhn(serial)
-        elif algorithm == "verhoeff":
+        if algorithm == "verhoeff":
             return self._verify_verhoeff(serial)
-        elif algorithm == "crc32":
+        if algorithm == "crc32":
             return self._verify_crc32(serial)
         # Add more algorithm tests
 

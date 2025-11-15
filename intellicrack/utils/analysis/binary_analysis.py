@@ -27,7 +27,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from intellicrack.utils.subprocess_security import secure_run
 
@@ -90,7 +90,7 @@ except ImportError as e:
     HAS_CAPSTONE = False
 
 
-def analyze_binary_optimized(binary_path: str, detailed: bool = True, use_performance_optimizer: bool = True) -> Dict[str, Any]:
+def analyze_binary_optimized(binary_path: str, detailed: bool = True, use_performance_optimizer: bool = True) -> dict[str, Any]:
     """Optimized binary analysis with performance management for large files.
 
     Args:
@@ -113,11 +113,10 @@ def analyze_binary_optimized(binary_path: str, detailed: bool = True, use_perfor
     # Use performance optimizer for large files
     if use_performance_optimizer and PERFORMANCE_OPTIMIZER_AVAILABLE and file_size_mb > 50:
         return _analyze_with_performance_optimizer(binary_path, detailed)
-    else:
-        return analyze_binary(binary_path, detailed)
+    return analyze_binary(binary_path, detailed)
 
 
-def _analyze_with_performance_optimizer(binary_path: str, detailed: bool) -> Dict[str, Any]:
+def _analyze_with_performance_optimizer(binary_path: str, detailed: bool) -> dict[str, Any]:
     """Analyze binary using performance optimizer."""
     try:
         optimizer = create_performance_optimizer(max_memory_mb=4096)
@@ -166,7 +165,7 @@ def _analyze_with_performance_optimizer(binary_path: str, detailed: bool) -> Dic
         return analyze_binary(binary_path, detailed)
 
 
-def analyze_binary(binary_path: str, detailed: bool = True, enable_ai_integration: bool = True) -> Dict[str, Any]:
+def analyze_binary(binary_path: str, detailed: bool = True, enable_ai_integration: bool = True) -> dict[str, Any]:
     """Run binary analysis orchestrator.
 
     Identifies the binary format and performs appropriate analysis.
@@ -218,7 +217,7 @@ def analyze_binary(binary_path: str, detailed: bool = True, enable_ai_integratio
     return results
 
 
-def _integrate_ai_script_generation(analysis_results: Dict[str, Any], binary_path: str) -> Dict[str, Any]:
+def _integrate_ai_script_generation(analysis_results: dict[str, Any], binary_path: str) -> dict[str, Any]:
     """Integrate AI script generation workflow with binary analysis results.
 
     Args:
@@ -267,7 +266,7 @@ def _integrate_ai_script_generation(analysis_results: Dict[str, Any], binary_pat
     return analysis_results
 
 
-def _generate_ai_script_suggestions(analysis_results: Dict[str, Any], binary_path: str) -> Dict[str, Any]:
+def _generate_ai_script_suggestions(analysis_results: dict[str, Any], binary_path: str) -> dict[str, Any]:
     """Generate AI script suggestions based on analysis results."""
     logger.debug(f"Generating AI script suggestions for binary: {binary_path}")
     suggestions = {
@@ -351,7 +350,7 @@ def _generate_ai_script_suggestions(analysis_results: Dict[str, Any], binary_pat
     return suggestions
 
 
-def _get_recommended_ai_actions(analysis_results: Dict[str, Any]) -> List[str]:
+def _get_recommended_ai_actions(analysis_results: dict[str, Any]) -> list[str]:
     """Get recommended AI actions based on analysis results."""
     actions = []
 
@@ -380,7 +379,7 @@ def _get_recommended_ai_actions(analysis_results: Dict[str, Any]) -> List[str]:
     return actions
 
 
-def _identify_auto_generation_candidates(analysis_results: Dict[str, Any]) -> List[Dict[str, Any]]:
+def _identify_auto_generation_candidates(analysis_results: dict[str, Any]) -> list[dict[str, Any]]:
     """Identify candidates for automatic script generation."""
     candidates = []
 
@@ -429,7 +428,7 @@ def _identify_auto_generation_candidates(analysis_results: Dict[str, Any]) -> Li
     return candidates
 
 
-def _trigger_autonomous_script_generation(orchestrator, analysis_results: Dict[str, Any], binary_path: str) -> None:
+def _trigger_autonomous_script_generation(orchestrator, analysis_results: dict[str, Any], binary_path: str) -> None:
     """Trigger autonomous script generation for high-confidence scenarios."""
     try:
         from ...ai.script_generation_agent import AIAgent
@@ -523,7 +522,7 @@ def identify_binary_format(binary_path: str) -> str:
     return "UNKNOWN"
 
 
-def analyze_pe(binary_path: str, detailed: bool = True) -> Dict[str, Any]:
+def analyze_pe(binary_path: str, detailed: bool = True) -> dict[str, Any]:
     """Analyze a PE (Windows) binary.
 
     Args:
@@ -623,7 +622,7 @@ def analyze_pe(binary_path: str, detailed: bool = True) -> Dict[str, Any]:
         return {"format": "PE", "error": str(e), "basic_info": get_basic_file_info(binary_path)}
 
 
-def analyze_elf(binary_path: str, detailed: bool = True) -> Dict[str, Any]:
+def analyze_elf(binary_path: str, detailed: bool = True) -> dict[str, Any]:
     """Analyze an ELF (Linux) binary.
 
     Args:
@@ -638,24 +637,25 @@ def analyze_elf(binary_path: str, detailed: bool = True) -> Dict[str, Any]:
     # Try LIEF first, then pyelftools
     if LIEF_AVAILABLE:
         return analyze_elf_with_lief(binary_path, detailed)
-    elif PYELFTOOLS_AVAILABLE:
+    if PYELFTOOLS_AVAILABLE:
         return analyze_elf_with_pyelftools(binary_path, detailed)
-    else:
-        return {
-            "format": "ELF",
-            "error": "No ELF analysis library available",
-            "basic_info": get_basic_file_info(binary_path),
-        }
+    return {
+        "format": "ELF",
+        "error": "No ELF analysis library available",
+        "basic_info": get_basic_file_info(binary_path),
+    }
 
 
-def analyze_elf_with_lief(binary_path: str, detailed: bool) -> Dict[str, Any]:
+def analyze_elf_with_lief(binary_path: str, detailed: bool) -> dict[str, Any]:
     """Analyze ELF using LIEF library."""
     _ = detailed
     try:
         if hasattr(lief, "parse"):
             binary = lief.parse(binary_path)
         else:
-            raise ImportError("lief.parse not available")
+            error_msg = "lief.parse not available"
+            logger.error(error_msg)
+            raise ImportError(error_msg)
 
         info = {
             "format": "ELF",
@@ -701,7 +701,7 @@ def analyze_elf_with_lief(binary_path: str, detailed: bool) -> Dict[str, Any]:
         return {"format": "ELF", "error": str(e)}
 
 
-def analyze_elf_with_pyelftools(binary_path: str, detailed: bool) -> Dict[str, Any]:
+def analyze_elf_with_pyelftools(binary_path: str, detailed: bool) -> dict[str, Any]:
     """Analyze ELF using pyelftools."""
     _ = detailed
     try:
@@ -735,7 +735,7 @@ def analyze_elf_with_pyelftools(binary_path: str, detailed: bool) -> Dict[str, A
         return {"format": "ELF", "error": str(e)}
 
 
-def analyze_macho(binary_path: str, detailed: bool = True) -> Dict[str, Any]:
+def analyze_macho(binary_path: str, detailed: bool = True) -> dict[str, Any]:
     """Analyze a Mach-O (macOS) binary.
 
     Args:
@@ -749,24 +749,25 @@ def analyze_macho(binary_path: str, detailed: bool = True) -> Dict[str, Any]:
     _ = detailed
     if LIEF_AVAILABLE:
         return analyze_macho_with_lief(binary_path, detailed)
-    elif MACHOLIB_AVAILABLE:
+    if MACHOLIB_AVAILABLE:
         return analyze_macho_with_macholib(binary_path, detailed)
-    else:
-        return {
-            "format": "MACHO",
-            "error": "No Mach-O analysis library available",
-            "basic_info": get_basic_file_info(binary_path),
-        }
+    return {
+        "format": "MACHO",
+        "error": "No Mach-O analysis library available",
+        "basic_info": get_basic_file_info(binary_path),
+    }
 
 
-def analyze_macho_with_lief(binary_path: str, detailed: bool) -> Dict[str, Any]:
+def analyze_macho_with_lief(binary_path: str, detailed: bool) -> dict[str, Any]:
     """Analyze Mach-O using LIEF library."""
     _ = detailed
     try:
         if hasattr(lief, "parse"):
             binary = lief.parse(binary_path)
         else:
-            raise ImportError("lief.parse not available")
+            error_msg = "lief.parse not available"
+            logger.error(error_msg)
+            raise ImportError(error_msg)
 
         info = {"format": "MACHO", "headers": [], "segments": [], "symbols": [], "libraries": []}
 
@@ -805,7 +806,7 @@ def analyze_macho_with_lief(binary_path: str, detailed: bool) -> Dict[str, Any]:
         return {"format": "MACHO", "error": str(e)}
 
 
-def analyze_macho_with_macholib(binary_path: str, detailed: bool) -> Dict[str, Any]:
+def analyze_macho_with_macholib(binary_path: str, detailed: bool) -> dict[str, Any]:
     """Analyze Mach-O using macholib."""
     _ = detailed
     try:
@@ -830,7 +831,7 @@ def analyze_macho_with_macholib(binary_path: str, detailed: bool) -> Dict[str, A
         return {"format": "MACHO", "error": str(e)}
 
 
-def analyze_patterns(binary_path: str, patterns: Optional[List[bytes]] = None) -> Dict[str, Any]:
+def analyze_patterns(binary_path: str, patterns: list[bytes] | None = None) -> dict[str, Any]:
     """Analyze patterns in a binary file.
 
     Args:
@@ -909,7 +910,7 @@ def analyze_patterns(binary_path: str, patterns: Optional[List[bytes]] = None) -
         return {"error": str(e)}
 
 
-def analyze_traffic(pcap_file: Optional[str] = None, interface: Optional[str] = None, duration: int = 60) -> Dict[str, Any]:
+def analyze_traffic(pcap_file: str | None = None, interface: str | None = None, duration: int = 60) -> dict[str, Any]:
     """Analyze network traffic for license-related communications.
 
     Args:
@@ -1148,12 +1149,11 @@ def _get_suspicious_reason(ip, port) -> str:
     # Include IP in analysis for more specific reasons
     if port in [4444, 4445, 8888, 9999, 1337, 31337]:
         return f"Common backdoor port {port} to {ip}"
-    elif port > 49152:
+    if port > 49152:
         return f"High ephemeral port {port} to external IP {ip}"
-    elif ip.startswith(("10.", "192.168.", "172.")):
+    if ip.startswith(("10.", "192.168.", "172.")):
         return f"Internal network connection to {ip}:{port}"
-    else:
-        return f"Suspicious traffic pattern to {ip}:{port}"
+    return f"Suspicious traffic pattern to {ip}:{port}"
 
 
 # Helper functions
@@ -1165,7 +1165,7 @@ def get_machine_type(machine: int) -> str:
     return machine_types.get(machine, f"Unknown (0x{machine:x})")
 
 
-def get_basic_file_info(file_path: str) -> Dict[str, Any]:
+def get_basic_file_info(file_path: str) -> dict[str, Any]:
     """Get basic file information."""
     try:
         stat = os.stat(file_path)
@@ -1180,7 +1180,7 @@ def get_basic_file_info(file_path: str) -> Dict[str, Any]:
         return {"error": str(e)}
 
 
-def check_suspicious_import(func_name: str, dll_name: str, suspicious_list: List[str]) -> None:
+def check_suspicious_import(func_name: str, dll_name: str, suspicious_list: list[str]) -> None:
     """Check for suspicious imports and add to list."""
     suspicious_imports = {
         "VirtualProtect": "Memory protection modification",
@@ -1198,7 +1198,7 @@ def check_suspicious_import(func_name: str, dll_name: str, suspicious_list: List
         suspicious_list.append(f"{dll_name}!{func_name} - {suspicious_imports[func_name]}")
 
 
-def analyze_pe_resources(pe) -> List[Dict[str, Any]]:
+def analyze_pe_resources(pe) -> list[dict[str, Any]]:
     """Analyze PE resources."""
     resources = []
 
@@ -1225,7 +1225,7 @@ def analyze_pe_resources(pe) -> List[Dict[str, Any]]:
     return resources
 
 
-def extract_binary_info(binary_path: str) -> Dict[str, Any]:
+def extract_binary_info(binary_path: str) -> dict[str, Any]:
     """Extract basic binary information.
 
     Args:
@@ -1253,7 +1253,7 @@ def extract_binary_info(binary_path: str) -> Dict[str, Any]:
     return info
 
 
-def extract_binary_features(binary_path: str) -> Dict[str, Any]:
+def extract_binary_features(binary_path: str) -> dict[str, Any]:
     """Extract features from binary for ML analysis.
 
     Args:
@@ -1312,7 +1312,7 @@ def extract_binary_features(binary_path: str) -> Dict[str, Any]:
     return features
 
 
-def extract_patterns_from_binary(binary_path: str, pattern_size: int = 16, min_frequency: int = 2) -> List[Tuple[bytes, int]]:
+def extract_patterns_from_binary(binary_path: str, pattern_size: int = 16, min_frequency: int = 2) -> list[tuple[bytes, int]]:
     """Extract frequently occurring byte patterns from binary.
 
     Args:
@@ -1353,7 +1353,7 @@ def extract_patterns_from_binary(binary_path: str, pattern_size: int = 16, min_f
         return []
 
 
-def scan_binary(binary_path: str, signatures: Optional[Dict[str, bytes]] = None) -> Dict[str, Any]:
+def scan_binary(binary_path: str, signatures: dict[str, bytes] | None = None) -> dict[str, Any]:
     """Scan binary for known signatures.
 
     Args:
@@ -1404,7 +1404,7 @@ def scan_binary(binary_path: str, signatures: Optional[Dict[str, bytes]] = None)
 
 
 # Optimized analysis functions for performance optimizer
-def _optimized_basic_analysis(data, chunk_info=None) -> Dict[str, Any]:
+def _optimized_basic_analysis(data, chunk_info=None) -> dict[str, Any]:
     """Optimized basic binary analysis for chunks."""
     try:
         results = {"status": "success", "findings": [], "chunk_info": chunk_info}
@@ -1430,7 +1430,7 @@ def _optimized_basic_analysis(data, chunk_info=None) -> Dict[str, Any]:
         return {"status": "failed", "error": str(e)}
 
 
-def _optimized_string_analysis(data, chunk_info=None) -> Dict[str, Any]:
+def _optimized_string_analysis(data, chunk_info=None) -> dict[str, Any]:
     """Optimized string analysis for chunks."""
     try:
         results = {
@@ -1479,7 +1479,7 @@ def _optimized_string_analysis(data, chunk_info=None) -> Dict[str, Any]:
         return {"status": "failed", "error": str(e)}
 
 
-def _optimized_entropy_analysis(data, chunk_info=None) -> Dict[str, Any]:
+def _optimized_entropy_analysis(data, chunk_info=None) -> dict[str, Any]:
     """Optimized entropy analysis for chunks."""
     try:
         results = {"status": "success", "findings": [], "entropy": 0.0, "chunk_info": chunk_info}
@@ -1516,7 +1516,7 @@ def _optimized_entropy_analysis(data, chunk_info=None) -> Dict[str, Any]:
         return {"status": "failed", "error": str(e)}
 
 
-def _optimized_section_analysis(data, chunk_info=None) -> Dict[str, Any]:
+def _optimized_section_analysis(data, chunk_info=None) -> dict[str, Any]:
     """Optimized section analysis for chunks."""
     try:
         results = {
@@ -1550,7 +1550,7 @@ def _optimized_section_analysis(data, chunk_info=None) -> Dict[str, Any]:
         return {"status": "failed", "error": str(e)}
 
 
-def _optimized_import_analysis(data, chunk_info=None) -> Dict[str, Any]:
+def _optimized_import_analysis(data, chunk_info=None) -> dict[str, Any]:
     """Optimized import analysis for chunks."""
     try:
         results = {
@@ -1589,7 +1589,7 @@ def _optimized_import_analysis(data, chunk_info=None) -> Dict[str, Any]:
         return {"status": "failed", "error": str(e)}
 
 
-def _optimized_pattern_analysis(data, chunk_info=None) -> Dict[str, Any]:
+def _optimized_pattern_analysis(data, chunk_info=None) -> dict[str, Any]:
     """Optimized pattern analysis for chunks."""
     try:
         results = {
@@ -1620,7 +1620,7 @@ def _optimized_pattern_analysis(data, chunk_info=None) -> Dict[str, Any]:
         return {"status": "failed", "error": str(e)}
 
 
-def get_quick_disassembly(binary_path: str, max_instructions: int = 50) -> List[str]:
+def get_quick_disassembly(binary_path: str, max_instructions: int = 50) -> list[str]:
     """Get quick disassembly of binary entry point for UI display.
 
     Args:
@@ -1661,14 +1661,12 @@ def get_quick_disassembly(binary_path: str, max_instructions: int = 50) -> List[
         disasm_lines = []
         instructions = md.disasm(data[entry_offset : entry_offset + 512], entry_offset)
 
-        count = 0
-        for insn in instructions:
+        for count, insn in enumerate(instructions):
             if count >= max_instructions:
                 break
 
             line = f"0x{insn.address:08x}: {insn.mnemonic:10} {insn.op_str}"
             disasm_lines.append(line)
-            count += 1
 
         if not disasm_lines:
             return _get_basic_disassembly_info(binary_path)
@@ -1680,7 +1678,7 @@ def get_quick_disassembly(binary_path: str, max_instructions: int = 50) -> List[
         return _get_basic_disassembly_info(binary_path)
 
 
-def _get_basic_disassembly_info(binary_path: str) -> List[str]:
+def _get_basic_disassembly_info(binary_path: str) -> list[str]:
     """Get basic binary information when disassembly isn't available."""
     try:
         info = extract_binary_info(binary_path)
@@ -1740,8 +1738,8 @@ def _get_elf_entry_point(binary_path: str) -> int:
 
 
 def disassemble_with_objdump(
-    binary_path: str, extra_args: Optional[List[str]] = None, timeout: int = 30, parse_func=None,
-) -> Optional[List[Any]]:
+    binary_path: str, extra_args: list[str] | None = None, timeout: int = 30, parse_func=None,
+) -> list[Any] | None:
     """Provide objdump disassembly fallback function.
 
     Args:

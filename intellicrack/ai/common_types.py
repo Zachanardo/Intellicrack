@@ -20,7 +20,6 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
 
 
 @dataclass
@@ -32,7 +31,7 @@ class ExecutionResult:
     error: str
     exit_code: int
     runtime_ms: int
-    timestamp: Optional[datetime] = None
+    timestamp: datetime | None = None
 
     def __post_init__(self) -> None:
         """Initialize timestamp if not provided."""

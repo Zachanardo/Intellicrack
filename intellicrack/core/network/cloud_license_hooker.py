@@ -30,7 +30,7 @@ import struct
 import threading
 import time
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ class CloudLicenseResponseGenerator:
     authentication protocols and encryption.
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
         """Initialize the cloud license response generator.
 
         Args:
@@ -158,7 +158,7 @@ class CloudLicenseResponseGenerator:
         try:
             listener_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             listener_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            listener_socket.bind(("0.0.0.0", port))
+            listener_socket.bind(("127.0.0.1", port))
             listener_socket.listen(5)
             listener_socket.settimeout(1.0)
 
@@ -180,7 +180,7 @@ class CloudLicenseResponseGenerator:
         except Exception as e:
             logger.error(f"Failed to start listener on port {port}: {e}")
 
-    def _handle_connection(self, client_socket: socket.socket, address: Tuple[str, int], port: int) -> None:
+    def _handle_connection(self, client_socket: socket.socket, address: tuple[str, int], port: int) -> None:
         """Handle an incoming connection.
 
         Args:
@@ -266,7 +266,7 @@ class CloudLicenseResponseGenerator:
 
         return "custom"
 
-    def _generate_response(self, request_info: Dict[str, Any]) -> Optional[bytes]:
+    def _generate_response(self, request_info: dict[str, Any]) -> bytes | None:
         """Generate a license validation response.
 
         Args:
@@ -283,7 +283,7 @@ class CloudLicenseResponseGenerator:
 
         return None
 
-    def _handle_http_request(self, request_info: Dict[str, Any]) -> bytes:
+    def _handle_http_request(self, request_info: dict[str, Any]) -> bytes:
         """Handle HTTP license validation request.
 
         Args:
@@ -322,7 +322,7 @@ class CloudLicenseResponseGenerator:
 
         return response
 
-    def _handle_https_request(self, request_info: Dict[str, Any]) -> bytes:
+    def _handle_https_request(self, request_info: dict[str, Any]) -> bytes:
         """Handle HTTPS license validation request.
 
         Args:
@@ -336,7 +336,7 @@ class CloudLicenseResponseGenerator:
         # This is a simplified version
         return self._handle_http_request(request_info)
 
-    def _handle_websocket_request(self, request_info: Dict[str, Any]) -> bytes:
+    def _handle_websocket_request(self, request_info: dict[str, Any]) -> bytes:
         """Handle WebSocket license validation request.
 
         Args:
@@ -367,7 +367,7 @@ class CloudLicenseResponseGenerator:
 
         return bytes(frame)
 
-    def _handle_grpc_request(self, request_info: Dict[str, Any]) -> bytes:
+    def _handle_grpc_request(self, request_info: dict[str, Any]) -> bytes:
         """Handle gRPC license validation request.
 
         Args:
@@ -391,7 +391,7 @@ class CloudLicenseResponseGenerator:
 
         return bytes(message)
 
-    def _handle_custom_protocol(self, request_info: Dict[str, Any]) -> bytes:
+    def _handle_custom_protocol(self, request_info: dict[str, Any]) -> bytes:
         """Handle custom protocol license validation request.
 
         Args:
@@ -414,7 +414,7 @@ class CloudLicenseResponseGenerator:
 
         return response
 
-    def _create_license_response(self, template_name: str) -> Dict[str, Any]:
+    def _create_license_response(self, template_name: str) -> dict[str, Any]:
         """Create a license response from template.
 
         Args:
@@ -439,7 +439,7 @@ class CloudLicenseResponseGenerator:
 
         return response
 
-    def _generate_signature(self, data: Dict[str, Any]) -> str:
+    def _generate_signature(self, data: dict[str, Any]) -> str:
         """Generate a signature for license data.
 
         Args:
@@ -461,14 +461,12 @@ class CloudLicenseResponseGenerator:
         """Install hooks on socket functions for active interception."""
         # This would require more advanced hooking techniques
         # such as using ctypes or system-specific APIs
-        pass
 
     def _remove_socket_hooks(self) -> None:
         """Remove installed socket hooks."""
         # Remove any installed hooks
-        pass
 
-    def get_intercepted_requests(self) -> List[Dict[str, Any]]:
+    def get_intercepted_requests(self) -> list[dict[str, Any]]:
         """Get list of intercepted license requests.
 
         Returns:
@@ -477,7 +475,7 @@ class CloudLicenseResponseGenerator:
         """
         return self.intercepted_requests
 
-    def get_generated_responses(self) -> List[Dict[str, Any]]:
+    def get_generated_responses(self) -> list[dict[str, Any]]:
         """Get list of generated license responses.
 
         Returns:
@@ -486,7 +484,7 @@ class CloudLicenseResponseGenerator:
         """
         return self.generated_responses
 
-    def set_response_template(self, name: str, template: Dict[str, Any]) -> None:
+    def set_response_template(self, name: str, template: dict[str, Any]) -> None:
         """Set a custom response template.
 
         Args:

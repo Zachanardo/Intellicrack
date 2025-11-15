@@ -559,7 +559,7 @@ class AIAssistantWidget(QWidget):
                 f"4. Review protection mechanisms and potential bypasses"
             )
 
-        elif any(word in message_lower for word in ["reverse", "disassemble", "analyze"]):
+        if any(word in message_lower for word in ["reverse", "disassemble", "analyze"]):
             return (
                 f"Binary analysis approach with {model}:\n"
                 f"1. Load binary in disassembler (Ghidra, Radare2, etc.)\n"
@@ -568,7 +568,7 @@ class AIAssistantWidget(QWidget):
                 f"4. Look for anti-analysis techniques"
             )
 
-        elif any(word in message_lower for word in ["debug", "trace", "monitor"]):
+        if any(word in message_lower for word in ["debug", "trace", "monitor"]):
             return (
                 f"Dynamic analysis with {model}:\n"
                 f"1. Set up controlled debugging environment\n"
@@ -577,7 +577,7 @@ class AIAssistantWidget(QWidget):
                 f"4. Document findings and potential attack vectors"
             )
 
-        elif any(word in message_lower for word in ["protect", "secure", "harden"]):
+        if any(word in message_lower for word in ["protect", "secure", "harden"]):
             return (
                 "Security hardening recommendations:\n"
                 "1. Implement input validation and sanitization\n"
@@ -586,18 +586,17 @@ class AIAssistantWidget(QWidget):
                 "4. Regular security audits and penetration testing"
             )
 
-        else:
-            # Generic intelligent response
-            return (
-                f"Analysis using {model} (temp={temperature}):\n"
-                f"Your question: '{message}'\n\n"
-                f"For comprehensive security research, consider:\n"
-                f" Static analysis of target binaries\n"
-                f" Dynamic runtime analysis\n"
-                f" Network traffic monitoring\n"
-                f" Vulnerability assessment\n\n"
-                f"{'Context considered: ' + context if context else 'No additional context provided'}"
-            )
+        # Generic intelligent response
+        return (
+            f"Analysis using {model} (temp={temperature}):\n"
+            f"Your question: '{message}'\n\n"
+            f"For comprehensive security research, consider:\n"
+            f" Static analysis of target binaries\n"
+            f" Dynamic runtime analysis\n"
+            f" Network traffic monitoring\n"
+            f" Vulnerability assessment\n\n"
+            f"{'Context considered: ' + context if context else 'No additional context provided'}"
+        )
 
     def clear_chat(self) -> None:
         """Clear the chat history."""

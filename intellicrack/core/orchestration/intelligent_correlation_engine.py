@@ -26,7 +26,7 @@ import logging
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import networkx as nx
 import numpy as np
@@ -69,9 +69,9 @@ class Correlation:
 
     id: str
     type: CorrelationType
-    source_results: List[str]  # Result IDs
+    source_results: list[str]  # Result IDs
     confidence: float
-    evidence: Dict[str, Any] = field(default_factory=dict)
+    evidence: dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=time.time)
     description: str = ""
 
@@ -81,11 +81,11 @@ class CorrelationCluster:
     """Group of highly correlated results."""
 
     id: str
-    results: List[BaseResult]
-    correlations: List[Correlation]
+    results: list[BaseResult]
+    correlations: list[Correlation]
     cluster_type: str
     confidence: float
-    summary: Dict[str, Any] = field(default_factory=dict)
+    summary: dict[str, Any] = field(default_factory=dict)
 
 
 class IntelligentCorrelationEngine:
@@ -93,9 +93,9 @@ class IntelligentCorrelationEngine:
 
     def __init__(self) -> None:
         """Initialize the correlation engine."""
-        self.results: Dict[str, BaseResult] = {}
-        self.correlations: List[Correlation] = []
-        self.clusters: List[CorrelationCluster] = []
+        self.results: dict[str, BaseResult] = {}
+        self.correlations: list[Correlation] = []
+        self.clusters: list[CorrelationCluster] = []
         self.correlation_graph = nx.Graph()
 
         # Correlation thresholds
@@ -113,7 +113,7 @@ class IntelligentCorrelationEngine:
         self.tfidf_vectorizer = TfidfVectorizer(max_features=1000)
         self.function_embeddings = {}
 
-    def _load_license_patterns(self) -> Dict[str, Any]:
+    def _load_license_patterns(self) -> dict[str, Any]:
         """Load known license check patterns."""
         return {
             "serial_validation": {
@@ -142,7 +142,7 @@ class IntelligentCorrelationEngine:
             },
         }
 
-    def _load_crypto_patterns(self) -> Dict[str, Any]:
+    def _load_crypto_patterns(self) -> dict[str, Any]:
         """Load cryptographic algorithm patterns."""
         return {
             "aes": {
@@ -177,7 +177,7 @@ class IntelligentCorrelationEngine:
             },
         }
 
-    def _load_protection_patterns(self) -> Dict[str, Any]:
+    def _load_protection_patterns(self) -> dict[str, Any]:
         """Load protection scheme patterns."""
         return {
             "vmprotect": {
@@ -205,7 +205,7 @@ class IntelligentCorrelationEngine:
         # Trigger incremental correlation
         self._correlate_with_existing(result)
 
-    def add_results_batch(self, results: List[BaseResult]) -> None:
+    def add_results_batch(self, results: list[BaseResult]) -> None:
         """Add multiple results and perform batch correlation."""
         for result in results:
             self.results[result.id] = result
@@ -536,7 +536,7 @@ class IntelligentCorrelationEngine:
 
             self.clusters.append(cluster)
 
-    def _extract_feature_vector(self, result: BaseResult) -> Optional[np.ndarray]:
+    def _extract_feature_vector(self, result: BaseResult) -> np.ndarray | None:
         """Extract numerical feature vector from result."""
         features = []
 
@@ -599,7 +599,7 @@ class IntelligentCorrelationEngine:
 
                     self.clusters.append(cluster)
 
-    def get_high_confidence_findings(self, min_confidence: float = 0.85) -> List[Dict[str, Any]]:
+    def get_high_confidence_findings(self, min_confidence: float = 0.85) -> list[dict[str, Any]]:
         """Get findings with high correlation confidence."""
         findings = []
 
@@ -631,7 +631,7 @@ class IntelligentCorrelationEngine:
 
         return findings
 
-    def generate_correlation_report(self) -> Dict[str, Any]:
+    def generate_correlation_report(self) -> dict[str, Any]:
         """Generate comprehensive correlation report."""
         report = {
             "timestamp": time.time(),

@@ -212,7 +212,7 @@ class FullFunctionalityValidator:
         properties = {
             "exists": os.path.exists(file_path),
             "size": os.path.getsize(file_path) if os.path.exists(file_path) else 0,
-            "modified_time": datetime.fromtimestamp(os.path.getmtime(file_path)).isoformat() if os.path.exists(file_path) else "",
+            "modified_time": datetime.fromtimestamp(Path(file_path).stat().st_mtime).isoformat() if os.path.exists(file_path) else "",
             "watermark_detected": False,
             "trial_indicators": []
         }

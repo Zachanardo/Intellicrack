@@ -23,7 +23,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 try:
     from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal
@@ -34,14 +34,12 @@ except ImportError:
     class QObject:
         """Fallback QObject class when PyQt6 is not available."""
 
-        pass
 
     class QRunnable:
         """Fallback QRunnable class when PyQt6 is not available."""
 
         def run(self) -> None:
             """Execute the runnable task."""
-            pass
 
     class QThreadPool:
         """Fallback QThreadPool class when PyQt6 is not available."""
@@ -75,7 +73,7 @@ try:
 except ImportError:
     import logging
 
-    def get_logger(name):
+    def get_logger(name: str):
         """Create a logger instance with the given name.
 
         Args:
@@ -252,7 +250,7 @@ class LLMHandler(QObject):
     #: Signal emitted to report LLM operation progress (type: str)
     llm_progress = pyqtSignal(str)
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: Any | None = None) -> None:
         """Initialize the LLM handler.
 
         Args:
@@ -261,7 +259,7 @@ class LLMHandler(QObject):
         """
         super().__init__(parent)
         self.thread_pool = QThreadPool.globalInstance()
-        self.current_result: Optional[UnifiedProtectionResult] = None
+        self.current_result: UnifiedProtectionResult | None = None
         self.icp_tool = ICPAnalysisTool()
 
         # Register the tool with LLM manager
@@ -321,7 +319,7 @@ class LLMHandler(QObject):
 
         self.thread_pool.start(worker)
 
-    def get_cached_result(self) -> Optional[UnifiedProtectionResult]:
+    def get_cached_result(self) -> UnifiedProtectionResult | None:
         """Get the current cached analysis result."""
         return self.current_result
 
@@ -362,7 +360,7 @@ class LLMHandler(QObject):
         else:
             self.llm_error.emit(result.get("error", "Unknown error"))
 
-    def _on_worker_error(self, error_tuple) -> None:
+    def _on_worker_error(self, error_tuple: tuple[type[BaseException], BaseException, str]) -> None:
         """Handle worker thread errors."""
         _exc_type, exc_value, exc_traceback = error_tuple
         error_msg = f"LLM operation failed: {exc_value}"

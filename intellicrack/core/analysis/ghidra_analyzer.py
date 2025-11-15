@@ -33,7 +33,7 @@ except ImportError:
 from dataclasses import dataclass, field
 from pathlib import Path
 from threading import Thread
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from intellicrack.core.config_manager import get_config
 from intellicrack.utils.subprocess_security import secure_popen
@@ -48,13 +48,13 @@ class GhidraFunction:
     size: int
     signature: str
     return_type: str
-    parameters: List[Tuple[str, str]]  # (type, name) pairs
-    local_variables: List[Tuple[str, str, int]]  # (type, name, offset) triples
+    parameters: list[tuple[str, str]]  # (type, name) pairs
+    local_variables: list[tuple[str, str, int]]  # (type, name, offset) triples
     decompiled_code: str
     assembly_code: str
-    xrefs_to: List[int]  # addresses that reference this function
-    xrefs_from: List[int]  # addresses this function references
-    comments: Dict[int, str]  # offset -> comment mapping
+    xrefs_to: list[int]  # addresses that reference this function
+    xrefs_from: list[int]  # addresses this function references
+    comments: dict[int, str]  # offset -> comment mapping
     is_thunk: bool = False
     is_external: bool = False
     calling_convention: str = "__cdecl"
@@ -67,8 +67,8 @@ class GhidraDataType:
     name: str
     size: int
     category: str  # struct, enum, typedef, etc.
-    members: List[Dict[str, Any]] = field(default_factory=list)
-    base_type: Optional[str] = None
+    members: list[dict[str, Any]] = field(default_factory=list)
+    base_type: str | None = None
     alignment: int = 1
 
 
@@ -79,17 +79,17 @@ class GhidraAnalysisResult:
     binary_path: str
     architecture: str
     compiler: str
-    functions: Dict[int, GhidraFunction]  # address -> function mapping
-    data_types: Dict[str, GhidraDataType]  # name -> type mapping
-    strings: List[Tuple[int, str]]  # (address, string) pairs
-    imports: List[Tuple[str, str, int]]  # (library, function, address) triples
-    exports: List[Tuple[str, int]]  # (name, address) pairs
-    sections: List[Dict[str, Any]]
+    functions: dict[int, GhidraFunction]  # address -> function mapping
+    data_types: dict[str, GhidraDataType]  # name -> type mapping
+    strings: list[tuple[int, str]]  # (address, string) pairs
+    imports: list[tuple[str, str, int]]  # (library, function, address) triples
+    exports: list[tuple[str, int]]  # (name, address) pairs
+    sections: list[dict[str, Any]]
     entry_point: int
     image_base: int
-    vtables: Dict[int, List[int]]  # address -> vtable function pointers
-    exception_handlers: List[Dict[str, Any]]
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    vtables: dict[int, list[int]]  # address -> vtable function pointers
+    exception_handlers: list[dict[str, Any]]
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class GhidraOutputParser:
@@ -362,7 +362,7 @@ class GhidraOutputParser:
         except Exception as e:
             raise ValueError(f"Failed to parse JSON output: {e}") from e
 
-    def _parse_json_function(self, func_data: Dict) -> GhidraFunction:
+    def _parse_json_function(self, func_data: dict) -> GhidraFunction:
         """Parse function data from JSON."""
         return GhidraFunction(
             name=func_data.get("name", "unknown"),
@@ -382,7 +382,7 @@ class GhidraOutputParser:
             calling_convention=func_data.get("callingConvention", "__cdecl"),
         )
 
-    def _parse_json_datatype(self, dt_data: Dict) -> GhidraDataType:
+    def _parse_json_datatype(self, dt_data: dict) -> GhidraDataType:
         """Parse data type from JSON."""
         return GhidraDataType(
             name=dt_data.get("name", "unknown"),
@@ -696,7 +696,7 @@ class GhidraScriptManager:
         self.user_scripts_dir = Path.home() / "ghidra_scripts"
         self.custom_scripts = self._load_custom_scripts()
 
-    def _load_custom_scripts(self) -> List[Dict[str, Any]]:
+    def _load_custom_scripts(self) -> list[dict[str, Any]]:
         """Load custom Intellicrack Ghidra scripts."""
         custom_scripts = []
         script_dirs = [self.scripts_dir, self.user_scripts_dir]
@@ -724,7 +724,7 @@ class GhidraScriptManager:
         except (OSError, UnicodeDecodeError):
             return False
 
-    def _parse_script_metadata(self, script_file: Path) -> Dict[str, Any]:
+    def _parse_script_metadata(self, script_file: Path) -> dict[str, Any]:
         """Parse script metadata from comments."""
         metadata = {"name": script_file.name, "path": str(script_file), "params": {}, "output_format": "text", "description": ""}
 
@@ -746,7 +746,7 @@ class GhidraScriptManager:
 
         return metadata
 
-    def get_script_for_analysis(self, analysis_type: str) -> List[Dict[str, Any]]:
+    def get_script_for_analysis(self, analysis_type: str) -> list[dict[str, Any]]:
         """Select appropriate script based on analysis type."""
         analysis_map = {
             "licensing": ["FindSerialValidation.py", "ExtractCryptoRoutines.py"],
@@ -773,7 +773,7 @@ class GhidraScriptManager:
 
         return selected_scripts if selected_scripts else [self.LICENSING_SCRIPTS[0]]
 
-    def build_script_chain(self, scripts: List[Dict[str, Any]]) -> List[str]:
+    def build_script_chain(self, scripts: list[dict[str, Any]]) -> list[str]:
         """Build command-line arguments for script chaining."""
         script_args = []
 
@@ -792,7 +792,7 @@ class GhidraScriptManager:
         return script_args
 
 
-def run_advanced_ghidra_analysis(main_app, analysis_type: str = "comprehensive", scripts: Optional[List[str]] = None) -> None:
+def run_advanced_ghidra_analysis(main_app, analysis_type: str = "comprehensive", scripts: list[str] | None = None) -> None:
     """Launch a Ghidra headless analysis session with intelligent script selection."""
     if not main_app.current_binary:
         main_app.update_output.emit("[Ghidra] Error: No binary loaded.")
@@ -878,7 +878,7 @@ def run_advanced_ghidra_analysis(main_app, analysis_type: str = "comprehensive",
     main_app.update_output.emit("[Ghidra] Headless analysis task submitted with production script chain.")
 
 
-def _identify_licensing_functions(result: GhidraAnalysisResult) -> List[Tuple[int, GhidraFunction]]:
+def _identify_licensing_functions(result: GhidraAnalysisResult) -> list[tuple[int, GhidraFunction]]:
     """Identify functions potentially related to licensing/protection."""
     licensing_keywords = [
         "license",

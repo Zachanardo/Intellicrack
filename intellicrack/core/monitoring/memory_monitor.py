@@ -9,7 +9,6 @@ Licensed under GNU General Public License v3.0
 
 import threading
 import time
-from typing import Optional, Set
 
 import frida
 
@@ -29,7 +28,7 @@ class MemoryMonitor(BaseMonitor):
     Periodically scans process memory for patterns indicating license data.
     """
 
-    def __init__(self, pid: int, process_info: Optional[ProcessInfo] = None, scan_interval: float = 5.0) -> None:
+    def __init__(self, pid: int, process_info: ProcessInfo | None = None, scan_interval: float = 5.0) -> None:
         """Initialize memory monitor.
 
         Args:
@@ -41,10 +40,10 @@ class MemoryMonitor(BaseMonitor):
         super().__init__("MemoryMonitor", process_info)
         self.pid = pid
         self.scan_interval = scan_interval
-        self.session: Optional[frida.core.Session] = None
-        self.script: Optional[frida.core.Script] = None
-        self._scan_thread: Optional[threading.Thread] = None
-        self._found_patterns: Set[str] = set()
+        self.session: frida.core.Session | None = None
+        self.script: frida.core.Script | None = None
+        self._scan_thread: threading.Thread | None = None
+        self._found_patterns: set[str] = set()
 
         self.patterns = {
             "serial_key": [

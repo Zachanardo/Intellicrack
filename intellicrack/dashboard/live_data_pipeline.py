@@ -22,7 +22,7 @@ from collections import defaultdict, deque
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
 import numpy as np
 
@@ -45,12 +45,12 @@ class DataEvent:
     timestamp: float
     source: str
     event_type: str
-    data: Dict[str, Any]
+    data: dict[str, Any]
     priority: DataPriority = DataPriority.NORMAL
     sequence_id: int = 0
-    correlation_id: Optional[str] = None
+    correlation_id: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "timestamp": self.timestamp,
@@ -66,7 +66,7 @@ class DataEvent:
 class LiveDataPipeline:
     """Live data pipeline for real-time event processing."""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
         """Initialize live data pipeline.
 
         Args:
@@ -225,9 +225,9 @@ class LiveDataPipeline:
         self,
         source: str,
         event_type: str,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         priority: DataPriority = DataPriority.NORMAL,
-        correlation_id: Optional[str] = None,
+        correlation_id: str | None = None,
     ) -> None:
         """Add event to the pipeline.
 
@@ -411,7 +411,7 @@ class LiveDataPipeline:
                             # Keep only recent events
                             event_types[event_type] = recent_events
 
-    def _calculate_aggregates(self, source: str, event_type: str, events: List[DataEvent]) -> Dict[str, Any]:
+    def _calculate_aggregates(self, source: str, event_type: str, events: list[DataEvent]) -> dict[str, Any]:
         """Calculate aggregates for events.
 
         Args:
@@ -453,7 +453,7 @@ class LiveDataPipeline:
 
         return aggregated
 
-    def _send_aggregated_data(self, aggregated: Dict[str, Any]) -> None:
+    def _send_aggregated_data(self, aggregated: dict[str, Any]) -> None:
         """Send aggregated data to clients.
 
         Args:
@@ -521,7 +521,7 @@ class LiveDataPipeline:
         for alert in alerts:
             self._send_alert(alert)
 
-    def _send_alert(self, alert: Dict[str, Any]) -> None:
+    def _send_alert(self, alert: dict[str, Any]) -> None:
         """Send alert to clients.
 
         Args:
@@ -546,7 +546,7 @@ class LiveDataPipeline:
 
         self._broadcast_to_websockets(message)
 
-    def _broadcast_to_websockets(self, message: Dict[str, Any]) -> None:
+    def _broadcast_to_websockets(self, message: dict[str, Any]) -> None:
         """Broadcast message to all WebSocket connections.
 
         Args:
@@ -627,7 +627,7 @@ class LiveDataPipeline:
         except Exception as e:
             self.logger.error(f"Error storing metrics: {e}")
 
-    def add_websocket_connection(self, connection) -> None:
+    def add_websocket_connection(self, connection: Any) -> None:
         """Add WebSocket connection.
 
         Args:
@@ -637,7 +637,7 @@ class LiveDataPipeline:
         with self.websocket_lock:
             self.websocket_connections.add(connection)
 
-    def remove_websocket_connection(self, connection) -> None:
+    def remove_websocket_connection(self, connection: Any) -> None:
         """Remove WebSocket connection.
 
         Args:
@@ -666,8 +666,8 @@ class LiveDataPipeline:
         self.alert_callbacks.append(callback)
 
     def get_historical_events(
-        self, start_time: float, end_time: float, source: Optional[str] = None, event_type: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        self, start_time: float, end_time: float, source: str | None = None, event_type: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Get historical events from database.
 
         Args:
@@ -725,7 +725,7 @@ class LiveDataPipeline:
             self.logger.error(f"Error getting historical events: {e}")
             return []
 
-    def get_metrics_history(self, start_time: float, end_time: float, metric_name: Optional[str] = None) -> List[Dict[str, Any]]:
+    def get_metrics_history(self, start_time: float, end_time: float, metric_name: str | None = None) -> list[dict[str, Any]]:
         """Get metrics history from database.
 
         Args:

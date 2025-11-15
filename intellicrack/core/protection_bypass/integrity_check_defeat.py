@@ -14,7 +14,7 @@ import zlib
 from dataclasses import dataclass, field
 from enum import IntEnum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import capstone
 import frida
@@ -67,7 +67,7 @@ class BypassStrategy:
     """Strategy for bypassing integrity check."""
 
     name: str
-    check_types: List[IntegrityCheckType]
+    check_types: list[IntegrityCheckType]
     frida_script: str
     success_rate: float
     priority: int
@@ -90,8 +90,8 @@ class ChecksumRecalculation:
     original_sha512: str
     patched_sha512: str
     pe_checksum: int
-    sections: Dict[str, Dict[str, str]] = field(default_factory=dict)
-    hmac_keys: List[Dict[str, str]] = field(default_factory=list)
+    sections: dict[str, dict[str, str]] = field(default_factory=dict)
+    hmac_keys: list[dict[str, str]] = field(default_factory=list)
 
 
 @dataclass
@@ -115,7 +115,7 @@ class ChecksumRecalculator:
         self.crc32_reversed_table = self._generate_crc32_reversed_table()
         self.crc64_table = self._generate_crc64_table()
 
-    def _generate_crc32_table(self) -> List[int]:
+    def _generate_crc32_table(self) -> list[int]:
         """Generate CRC32 lookup table using standard polynomial."""
         polynomial = 0xEDB88320
         table = []
@@ -129,7 +129,7 @@ class ChecksumRecalculator:
             table.append(crc)
         return table
 
-    def _generate_crc32_reversed_table(self) -> List[int]:
+    def _generate_crc32_reversed_table(self) -> list[int]:
         """Generate reversed CRC32 table for forward computation."""
         polynomial = 0x04C11DB7
         table = []
@@ -144,7 +144,7 @@ class ChecksumRecalculator:
             table.append(crc)
         return table
 
-    def _generate_crc64_table(self) -> List[int]:
+    def _generate_crc64_table(self) -> list[int]:
         """Generate CRC64 lookup table using ECMA-182 polynomial."""
         polynomial = 0x42F0E1EBA9EA3693
         table = []
@@ -199,7 +199,7 @@ class ChecksumRecalculator:
         hash_func = getattr(hashlib, algorithm)
         return hmac.new(key, data, hash_func).hexdigest()
 
-    def calculate_all_hashes(self, data: bytes) -> Dict[str, str]:
+    def calculate_all_hashes(self, data: bytes) -> dict[str, str]:
         """Calculate all supported hash algorithms."""
         return {
             "crc32": hex(self.calculate_crc32_zlib(data)),
@@ -244,7 +244,7 @@ class ChecksumRecalculator:
             logger.error(f"PE checksum calculation failed: {e}")
             return 0
 
-    def recalculate_section_hashes(self, binary_path: str) -> Dict[str, Dict[str, str]]:
+    def recalculate_section_hashes(self, binary_path: str) -> dict[str, dict[str, str]]:
         """Recalculate hashes for individual PE sections."""
         section_hashes = {}
 
@@ -272,7 +272,7 @@ class ChecksumRecalculator:
 
         return section_hashes
 
-    def extract_hmac_keys(self, binary_path: str) -> List[Dict[str, Union[str, int]]]:
+    def extract_hmac_keys(self, binary_path: str) -> list[dict[str, str | int]]:
         """Extract potential HMAC keys from binary using entropy and pattern analysis."""
         hmac_keys = []
 
@@ -359,7 +359,7 @@ class ChecksumRecalculator:
 
         return min(confidence, 1.0)
 
-    def find_checksum_locations(self, binary_path: str) -> List[ChecksumLocation]:
+    def find_checksum_locations(self, binary_path: str) -> list[ChecksumLocation]:
         """Automatically identify locations where checksums are stored in binary."""
         locations = []
 
@@ -514,7 +514,7 @@ class IntegrityCheckDetector:
         self.check_patterns = self._load_check_patterns()
         self.api_signatures = self._load_api_signatures()
 
-    def _load_check_patterns(self) -> Dict[str, Dict]:
+    def _load_check_patterns(self) -> dict[str, dict]:
         """Load patterns for detecting integrity checks."""
         return {
             "crc32": {
@@ -594,7 +594,7 @@ class IntegrityCheckDetector:
             },
         }
 
-    def _load_api_signatures(self) -> Dict[str, IntegrityCheckType]:
+    def _load_api_signatures(self) -> dict[str, IntegrityCheckType]:
         """Load Windows API signatures for integrity checks."""
         return {
             "GetFileSize": IntegrityCheckType.SIZE_CHECK,
@@ -629,7 +629,7 @@ class IntegrityCheckDetector:
             "memcmp_s": IntegrityCheckType.CHECKSUM,
         }
 
-    def detect_checks(self, binary_path: str) -> List[IntegrityCheck]:
+    def detect_checks(self, binary_path: str) -> list[IntegrityCheck]:
         """Detect integrity checks in binary."""
         checks = []
 
@@ -657,7 +657,7 @@ class IntegrityCheckDetector:
 
         return checks
 
-    def _scan_api_imports(self, pe: pefile.PE, binary_path: str) -> List[IntegrityCheck]:
+    def _scan_api_imports(self, pe: pefile.PE, binary_path: str) -> list[IntegrityCheck]:
         """Scan for integrity check API imports."""
         checks = []
 
@@ -685,7 +685,7 @@ class IntegrityCheckDetector:
 
         return checks
 
-    def _scan_inline_checks(self, pe: pefile.PE, binary_path: str) -> List[IntegrityCheck]:
+    def _scan_inline_checks(self, pe: pefile.PE, binary_path: str) -> list[IntegrityCheck]:
         """Scan for inline integrity checks."""
         checks = []
 
@@ -720,7 +720,7 @@ class IntegrityCheckDetector:
 
         return checks
 
-    def _scan_antitamper(self, pe: pefile.PE, binary_path: str) -> List[IntegrityCheck]:
+    def _scan_antitamper(self, pe: pefile.PE, binary_path: str) -> list[IntegrityCheck]:
         """Scan for anti-tamper mechanisms."""
         checks = []
 
@@ -772,7 +772,7 @@ class IntegrityCheckDetector:
 
         return checks
 
-    def _scan_elf_checks(self, binary: lief.Binary, binary_path: str) -> List[IntegrityCheck]:
+    def _scan_elf_checks(self, binary: lief.Binary, binary_path: str) -> list[IntegrityCheck]:
         """Scan ELF binaries for integrity checks."""
         checks = []
 
@@ -830,7 +830,7 @@ class IntegrityBypassEngine:
         self.checksum_calc = ChecksumRecalculator()
         self.original_bytes_cache = {}
 
-    def _load_bypass_strategies(self) -> List[BypassStrategy]:
+    def _load_bypass_strategies(self) -> list[BypassStrategy]:
         """Load bypass strategies for different check types."""
         strategies = []
 
@@ -1424,7 +1424,7 @@ class IntegrityBypassEngine:
 
         return strategies
 
-    def bypass_checks(self, process_name: str, checks: List[IntegrityCheck]) -> bool:
+    def bypass_checks(self, process_name: str, checks: list[IntegrityCheck]) -> bool:
         """Bypass detected integrity checks using runtime hooks."""
         try:
             self.session = frida.attach(process_name)
@@ -1442,7 +1442,7 @@ class IntegrityBypassEngine:
             logger.error(f"Failed to bypass integrity checks: {e}")
             return False
 
-    def _build_bypass_script(self, checks: List[IntegrityCheck]) -> str:
+    def _build_bypass_script(self, checks: list[IntegrityCheck]) -> str:
         """Build combined Frida script for all checks."""
         script_parts = []
 
@@ -1461,7 +1461,7 @@ class IntegrityBypassEngine:
 
         return "\n".join(script_parts)
 
-    def _get_best_strategy(self, check_type: IntegrityCheckType) -> Optional[BypassStrategy]:
+    def _get_best_strategy(self, check_type: IntegrityCheckType) -> BypassStrategy | None:
         """Get best bypass strategy for check type."""
         best_strategy = None
         best_priority = 999
@@ -1474,7 +1474,7 @@ class IntegrityBypassEngine:
 
         return best_strategy
 
-    def _customize_script(self, script_template: str, checks: List[IntegrityCheck]) -> str:
+    def _customize_script(self, script_template: str, checks: list[IntegrityCheck]) -> str:
         """Customize script template with actual recalculated values."""
         script = script_template
 
@@ -1572,8 +1572,8 @@ class BinaryPatcher:
         self.patch_history = []
 
     def patch_integrity_checks(
-        self, binary_path: str, checks: List[IntegrityCheck], output_path: str = None,
-    ) -> Tuple[bool, Optional[ChecksumRecalculation]]:
+        self, binary_path: str, checks: list[IntegrityCheck], output_path: str = None,
+    ) -> tuple[bool, ChecksumRecalculation | None]:
         """Patch binary to remove integrity checks and recalculate all checksums."""
         if output_path is None:
             output_path = str(Path(binary_path).with_suffix('.patched' + Path(binary_path).suffix))
@@ -1644,7 +1644,7 @@ class BinaryPatcher:
             logger.error(f"Binary patching failed: {e}")
             return False, None
 
-    def _rva_to_offset(self, pe: pefile.PE, rva: int) -> Optional[int]:
+    def _rva_to_offset(self, pe: pefile.PE, rva: int) -> int | None:
         """Convert RVA to file offset."""
         for section in pe.sections:
             if section.VirtualAddress <= rva < section.VirtualAddress + section.Misc_VirtualSize:
@@ -1662,16 +1662,16 @@ class IntegrityCheckDefeatSystem:
         self.patcher = BinaryPatcher()
         self.checksum_calc = ChecksumRecalculator()
 
-    def find_embedded_checksums(self, binary_path: str) -> List[ChecksumLocation]:
+    def find_embedded_checksums(self, binary_path: str) -> list[ChecksumLocation]:
         """Find locations where checksums are embedded in the binary."""
         return self.checksum_calc.find_checksum_locations(binary_path)
 
-    def extract_hmac_keys(self, binary_path: str) -> List[Dict[str, Union[str, int]]]:
+    def extract_hmac_keys(self, binary_path: str) -> list[dict[str, str | int]]:
         """Extract potential HMAC keys from binary."""
         return self.checksum_calc.extract_hmac_keys(binary_path)
 
     def patch_embedded_checksums(
-        self, binary_path: str, checksum_locations: List[ChecksumLocation], output_path: str = None,
+        self, binary_path: str, checksum_locations: list[ChecksumLocation], output_path: str = None,
     ) -> bool:
         """Patch embedded checksums in binary with recalculated values."""
         if output_path is None:
@@ -1698,7 +1698,7 @@ class IntegrityCheckDefeatSystem:
 
     def defeat_integrity_checks(
         self, binary_path: str, process_name: str = None, patch_binary: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Complete integrity check defeat workflow."""
         result = {
             "success": False,

@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import os
 import threading
 import time
+import types
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
@@ -62,7 +63,7 @@ except ImportError:
             self.snapshots = {}
             logger.warning("QEMUManager fallback initialized")
 
-        def validate_script_in_vm(self, script, target_binary, vm_config=None):
+        def validate_script_in_vm(self, script: str, target_binary: str, vm_config: dict[str, Any] | None = None):
             """Real VM script testing implementation."""
             logger.info(f"Executing real VM testing for script on {target_binary}")
 
@@ -96,7 +97,7 @@ except ImportError:
                         import shutil
 
                         shutil.copy2(target_binary, target_file)
-                        os.chmod(target_file, 0o700)  # Owner-only executable for security analysis
+                        Path(target_file).chmod(0o700)  # Owner-only executable for security analysis
                     else:
                         # Generate real binary for testing with minimal protection
                         self._create_protected_binary(target_file)
@@ -147,7 +148,7 @@ except ImportError:
                     },
                 }
 
-        def _analyze_script_content(self, script):
+        def _analyze_script_content(self, script: str):
             """Analyze script content to determine type and characteristics."""
             try:
                 if not script:
@@ -209,7 +210,7 @@ Script Analysis:
                     "analysis": f"Analysis failed: {analysis_error}",
                 }
 
-        def _create_protected_binary(self, target_path) -> None:
+        def _create_protected_binary(self, target_path: str) -> None:
             """Create a protected binary with real license checking for testing."""
             try:
                 import struct
@@ -290,7 +291,7 @@ Script Analysis:
                     f.write(b"\x00" * (0x200 - f.tell() % 0x200))  # Align to file alignment
                     f.write(license_code)
 
-                os.chmod(target_path, 0o700)  # Restrictive permissions: only owner can read/write/execute
+                Path(target_path).chmod(0o700)  # Restrictive permissions: only owner can read/write/execute
 
             except Exception as create_error:
                 logger.error(f"Protected binary creation error: {create_error}")
@@ -304,7 +305,7 @@ Script Analysis:
                     elf_header += b"\x00" * 32  # Rest of header
                     f.write(elf_header)
 
-        def _execute_script_in_environment(self, script, script_file, target_file, vm_config, execution_dir):
+        def _execute_script_in_environment(self, script: str, script_file: str, target_file: str, vm_config: dict[str, Any] | None, execution_dir: str):
             """Execute script in controlled environment with multiple fallback methods."""
             try:
                 # Method 1: Try QEMU execution
@@ -336,7 +337,7 @@ Script Analysis:
                     "method": "error_fallback",
                 }
 
-        def _try_qemu_execution(self, script_file, target_file, vm_config):
+        def _try_qemu_execution(self, script_file: str, target_file: str, vm_config: dict[str, Any]):
             """Attempt QEMU-based script execution."""
             try:
                 import subprocess
@@ -373,7 +374,7 @@ Script Analysis:
             except (FileNotFoundError, subprocess.TimeoutExpired) as qemu_error:
                 raise Exception(f"QEMU not available: {qemu_error}") from qemu_error
 
-        def _try_native_execution(self, script, script_file, target_file, execution_dir):
+        def _try_native_execution(self, script: str, script_file: Any, target_file: str, execution_dir: str):
             """Attempt native script execution in sandbox."""
             try:
                 import subprocess
@@ -408,7 +409,7 @@ Script Analysis:
             except Exception as native_error:
                 raise RuntimeError(f"Native execution failed: {native_error}") from native_error
 
-        def _perform_script_validation(self, script, script_file, target_file):
+        def _perform_script_validation(self, script: str, script_file: Any, target_file: str):
             """Perform script validation and static analysis."""
             try:
                 validation_results = []
@@ -1096,7 +1097,7 @@ class IntegrationManager:
         self.start()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: types.TracebackType | None):
         """Context manager exit."""
         if exc_type:
             logger.error(f"Integration manager exiting due to {exc_type.__name__}: {exc_val}")
